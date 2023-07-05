@@ -1,5 +1,5 @@
 use crate::{Color, CustomParseError, InsetKeyword, Length, Parse};
-use cssparser::{ParseError, Parser};
+use cssparser::{ParseError, Parser, ParserInput};
 
 /// A box shadow adding a shadow effect around an element's frame.
 #[derive(Debug, Default, Clone, PartialEq)]
@@ -55,6 +55,14 @@ impl<'i> Parse<'i> for BoxShadow {
 impl<'i> Parse<'i> for Vec<BoxShadow> {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         input.parse_comma_separated(BoxShadow::parse)
+    }
+}
+
+impl From<&str> for BoxShadow {
+    fn from(s: &str) -> Self {
+        let mut input = ParserInput::new(s);
+        let mut parser = Parser::new(&mut input);
+        BoxShadow::parse(&mut parser).unwrap_or_default()
     }
 }
 

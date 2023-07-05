@@ -144,12 +144,12 @@ pub trait LayoutModifiers: internal::Modifiable {
     /// Sets the space for all sides of the view.
     fn space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+        value.set_or_bind(self.context(), entity, |cx, v| {
             let value = v.get_val(cx).into();
-            cx.style.left.insert(entity, value);
-            cx.style.right.insert(entity, value);
-            cx.style.top.insert(entity, value);
-            cx.style.bottom.insert(entity, value);
+            cx.style.left.insert(cx.current, value);
+            cx.style.right.insert(cx.current, value);
+            cx.style.top.insert(cx.current, value);
+            cx.style.bottom.insert(cx.current, value);
 
             cx.style.needs_relayout();
         });
@@ -174,10 +174,10 @@ pub trait LayoutModifiers: internal::Modifiable {
     /// Sets the width and height of the view.
     fn size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+        value.set_or_bind(self.context(), entity, |cx, v| {
             let value = v.get_val(cx).into();
-            cx.style.width.insert(entity, value);
-            cx.style.height.insert(entity, value);
+            cx.style.width.insert(cx.current, value);
+            cx.style.height.insert(cx.current, value);
 
             cx.style.needs_relayout();
         });
@@ -226,12 +226,12 @@ pub trait LayoutModifiers: internal::Modifiable {
     /// The child_space works by overriding the `Auto` space properties of its children.
     fn child_space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+        value.set_or_bind(self.context(), entity, |cx, v| {
             let value = v.get_val(cx).into();
-            cx.style.child_left.insert(entity, value);
-            cx.style.child_right.insert(entity, value);
-            cx.style.child_top.insert(entity, value);
-            cx.style.child_bottom.insert(entity, value);
+            cx.style.child_left.insert(cx.current, value);
+            cx.style.child_right.insert(cx.current, value);
+            cx.style.child_top.insert(cx.current, value);
+            cx.style.child_bottom.insert(cx.current, value);
 
             cx.style.needs_relayout();
         });
@@ -270,10 +270,10 @@ pub trait LayoutModifiers: internal::Modifiable {
     /// Sets the minimum width and minimum height of the view.
     fn min_size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+        value.set_or_bind(self.context(), entity, |cx, v| {
             let value = v.get_val(cx).into();
-            cx.style.min_width.insert(entity, value);
-            cx.style.min_height.insert(entity, value);
+            cx.style.min_width.insert(cx.current, value);
+            cx.style.min_height.insert(cx.current, value);
 
             cx.needs_relayout();
         });
@@ -298,10 +298,10 @@ pub trait LayoutModifiers: internal::Modifiable {
     /// Sets the maximum width and maximum height of the view.
     fn max_size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+        value.set_or_bind(self.context(), entity, |cx, v| {
             let value = v.get_val(cx).into();
-            cx.style.max_width.insert(entity, value);
-            cx.style.max_height.insert(entity, value);
+            cx.style.max_width.insert(cx.current, value);
+            cx.style.max_height.insert(cx.current, value);
 
             cx.needs_relayout();
         });
@@ -340,12 +340,12 @@ pub trait LayoutModifiers: internal::Modifiable {
     /// Sets the minimum space for all sides of the view.
     fn min_space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+        value.set_or_bind(self.context(), entity, |cx, v| {
             let value = v.get_val(cx).into();
-            cx.style.min_left.insert(entity, value);
-            cx.style.min_right.insert(entity, value);
-            cx.style.min_top.insert(entity, value);
-            cx.style.min_bottom.insert(entity, value);
+            cx.style.min_left.insert(cx.current, value);
+            cx.style.min_right.insert(cx.current, value);
+            cx.style.min_top.insert(cx.current, value);
+            cx.style.min_bottom.insert(cx.current, value);
 
             cx.style.needs_relayout();
         });
@@ -384,12 +384,12 @@ pub trait LayoutModifiers: internal::Modifiable {
     /// Sets the maximum space for all sides of the view.
     fn max_space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+        value.set_or_bind(self.context(), entity, |cx, v| {
             let value = v.get_val(cx).into();
-            cx.style.max_left.insert(entity, value);
-            cx.style.max_right.insert(entity, value);
-            cx.style.max_top.insert(entity, value);
-            cx.style.max_bottom.insert(entity, value);
+            cx.style.max_left.insert(cx.current, value);
+            cx.style.max_right.insert(cx.current, value);
+            cx.style.max_top.insert(cx.current, value);
+            cx.style.max_bottom.insert(cx.current, value);
 
             cx.style.needs_relayout();
         });

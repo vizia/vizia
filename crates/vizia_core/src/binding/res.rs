@@ -18,10 +18,11 @@ macro_rules! impl_res_simple {
 
             fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
             where
-                F: 'static + Fn(&mut Context, Entity, &Self),
+                F: 'static + Fn(&mut EventContext, &Self),
             {
                 cx.with_current(entity, |cx| {
-                    (closure)(cx, entity, self);
+                    let cx = &mut EventContext::new_with_current(cx, entity);
+                    (closure)(cx, self);
                 });
             }
         }
@@ -41,10 +42,11 @@ macro_rules! impl_res_clone {
 
             fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
             where
-                F: 'static + Fn(&mut Context, Entity, &Self),
+                F: 'static + Fn(&mut EventContext, &Self),
             {
                 cx.with_current(entity, |cx| {
-                    (closure)(cx, entity, self);
+                    let cx = &mut EventContext::new_with_current(cx, entity);
+                    (closure)(cx, self);
                 });
             }
         }
@@ -66,7 +68,7 @@ pub trait Res<T> {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Entity, &Self);
+        F: 'static + Clone + Fn(&mut EventContext, &Self);
 }
 
 impl_res_simple!(i8);
@@ -104,7 +106,7 @@ impl_res_clone!(Translate);
 impl_res_clone!(Scale);
 impl_res_clone!(Position);
 
-impl<T, L> Res<T> for L
+impl<L> Res<L::Target> for L
 where
     L: Lens<Target = T>,
     T: Clone + Data,
@@ -123,7 +125,8 @@ where
     {
         cx.with_current(entity, |cx| {
             Binding::new(cx, self.clone(), move |cx, val| {
-                (closure)(cx, entity, &val);
+                let cx = &mut EventContext::new_with_current(cx, entity);
+                (closure)(cx, &val);
             });
         });
     }
@@ -138,7 +141,8 @@ impl<'i> Res<FontFamily<'i>> for FontFamily<'i> {
     where
         F: 'static + Fn(&mut Context, Entity, &Self),
     {
-        (closure)(cx, entity, self);
+        let cx = &mut EventContext::new_with_current(cx, entity);
+        (closure)(cx, self);
     }
 }
 
@@ -151,7 +155,8 @@ impl<'i> Res<BackgroundImage<'i>> for BackgroundImage<'i> {
     where
         F: 'static + Fn(&mut Context, Entity, &Self),
     {
-        (closure)(cx, entity, self);
+        let cx = &mut EventContext::new_with_current(cx, entity);
+        (closure)(cx, self);
     }
 }
 
@@ -162,9 +167,10 @@ impl<'s> Res<&'s str> for &'s str {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, &Self),
+        F: 'static + Fn(&mut EventContext, &Self),
     {
-        (closure)(cx, entity, self);
+        let cx = &mut EventContext::new_with_current(cx, entity);
+        (closure)(cx, self);
     }
 }
 
@@ -175,9 +181,10 @@ impl<'s> Res<&'s String> for &'s String {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, &Self),
+        F: 'static + Fn(&mut EventContext, &Self),
     {
-        (closure)(cx, entity, self);
+        let cx = &mut EventContext::new_with_current(cx, entity);
+        (closure)(cx, self);
     }
 }
 
@@ -190,7 +197,8 @@ impl<'s> Res<String> for String {
     where
         F: 'static + Fn(&mut Context, Entity, &Self),
     {
-        (closure)(cx, entity, self);
+        let cx = &mut EventContext::new_with_current(cx, entity);
+        (closure)(cx, self);
     }
 }
 
@@ -201,9 +209,10 @@ impl Res<Transform> for Transform {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, &Self),
+        F: 'static + Fn(&mut EventContext, &Self),
     {
-        (closure)(cx, entity, self);
+        let cx = &mut EventContext::new_with_current(cx, entity);
+        (closure)(cx, self);
     }
 }
 
@@ -216,6 +225,7 @@ impl Res<Color> for Color {
     where
         F: 'static + Fn(&mut Context, Entity, &Self),
     {
+        let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, entity, self);
     }
 }
@@ -229,6 +239,7 @@ impl Res<LinearGradient> for LinearGradient {
     where
         F: 'static + Fn(&mut Context, Entity, &Self),
     {
+        let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, entity, self);
     }
 }
@@ -242,6 +253,7 @@ impl Res<Units> for Units {
     where
         F: 'static + Fn(&mut Context, Entity, &Self),
     {
+        let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, entity, self);
     }
 }
@@ -255,6 +267,7 @@ impl Res<Visibility> for Visibility {
     where
         F: 'static + Fn(&mut Context, Entity, &Self),
     {
+        let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, entity, self);
     }
 }
@@ -268,6 +281,7 @@ impl Res<Display> for Display {
     where
         F: 'static + Fn(&mut Context, Entity, &Self),
     {
+        let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, entity, self);
     }
 }
@@ -281,6 +295,7 @@ impl Res<LayoutType> for LayoutType {
     where
         F: 'static + Fn(&mut Context, Entity, &Self),
     {
+        let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, entity, self);
     }
 }
@@ -294,6 +309,7 @@ impl Res<PositionType> for PositionType {
     where
         F: 'static + Fn(&mut Context, Entity, &Self),
     {
+        let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, entity, self);
     }
 }
@@ -307,6 +323,7 @@ impl<T: Clone + Res<T>> Res<Option<T>> for Option<T> {
     where
         F: 'static + Clone + Fn(&mut Context, Entity, &Option<T>),
     {
+        let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, entity, self)
     }
 }
@@ -320,6 +337,7 @@ impl Res<Length> for Length {
     where
         F: 'static + Clone + Fn(&mut Context, Entity, &Self),
     {
+        let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, entity, self)
     }
 }
@@ -333,6 +351,7 @@ impl Res<LengthOrPercentage> for LengthOrPercentage {
     where
         F: 'static + Clone + Fn(&mut Context, Entity, &Self),
     {
+        let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, entity, self)
     }
 }
@@ -346,6 +365,7 @@ impl Res<RGBA> for RGBA {
     where
         F: 'static + Clone + Fn(&mut Context, Entity, &Self),
     {
+        let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, entity, self)
     }
 }
@@ -359,6 +379,7 @@ impl<T: Clone + Res<T>> Res<Vec<T>> for Vec<T> {
     where
         F: 'static + Clone + Fn(&mut Context, Entity, &Vec<T>),
     {
+        let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, entity, self)
     }
 }
@@ -372,6 +393,7 @@ impl<T: Clone + Res<T>, const N: usize> Res<[T; N]> for [T; N] {
     where
         F: 'static + Clone + Fn(&mut Context, Entity, &Self),
     {
+        let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, entity, self)
     }
 }
@@ -385,6 +407,7 @@ impl Res<FamilyOwned> for FamilyOwned {
     where
         F: 'static + Clone + Fn(&mut Context, Entity, &FamilyOwned),
     {
+        let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, entity, self)
     }
 }
@@ -398,6 +421,7 @@ impl<T1: Clone, T2: Clone> Res<(T1, T2)> for (T1, T2) {
     where
         F: 'static + Clone + Fn(&mut Context, Entity, &(T1, T2)),
     {
+        let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, entity, self);
     }
 }
@@ -411,6 +435,7 @@ impl<T1: Clone, T2: Clone, T3: Clone> Res<(T1, T2, T3)> for (T1, T2, T3) {
     where
         F: 'static + Clone + Fn(&mut Context, Entity, &(T1, T2, T3)),
     {
+        let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, entity, self);
     }
 }
@@ -424,6 +449,7 @@ impl<T1: Clone, T2: Clone, T3: Clone, T4: Clone> Res<(T1, T2, T3, T4)> for (T1, 
     where
         F: 'static + Clone + Fn(&mut Context, Entity, &(T1, T2, T3, T4)),
     {
+        let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, entity, self);
     }
 }

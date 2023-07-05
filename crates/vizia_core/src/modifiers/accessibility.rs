@@ -15,11 +15,11 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     }
 
     /// Sets the accessibility name of the view.
-    fn name<U: ToString>(mut self, name: impl Res<U>) -> Self {
+    fn name<U: ToStringLocalized>(mut self, name: impl Res<U>) -> Self {
         let entity = self.entity();
-        name.set_or_bind(self.context(), entity, |cx, id, name| {
-            cx.style.name.insert(id, name.get_val(cx).to_string());
-            cx.style.needs_access_update(id);
+        name.set_or_bind(self.context(), entity, |cx, name| {
+            cx.style.name.insert(cx.current, name.get_val(cx).to_string_local(cx));
+            cx.style.needs_access_update(cx.current);
         });
 
         self
@@ -48,9 +48,9 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     /// Sets whether the view should be hidden from accessibility.
     fn hidden<U: Into<bool>>(mut self, hidden: impl Res<U>) -> Self {
         let entity = self.entity();
-        hidden.set_or_bind(self.context(), entity, |cx, id, hidden| {
-            cx.style.hidden.insert(id, hidden.get_val(cx).into());
-            cx.style.needs_access_update(id);
+        hidden.set_or_bind(self.context(), entity, |cx, hidden| {
+            cx.style.hidden.insert(cx.current, hidden.get_val(cx).into());
+            cx.style.needs_access_update(cx.current);
         });
 
         self
@@ -59,11 +59,11 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     /// Sets the accessibility numeric value for the view.
     fn numeric_value<U: Into<f64>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, id, val| {
+        value.set_or_bind(self.context(), entity, |cx, val| {
             let v = val.get_val(cx).into();
 
-            cx.style.numeric_value.insert(id, v);
-            cx.style.needs_access_update(id);
+            cx.style.numeric_value.insert(cx.current, v);
+            cx.style.needs_access_update(cx.current);
         });
 
         self
@@ -72,9 +72,9 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     /// Sets the accessibility text value for the view.
     fn text_value<U: ToString>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, id, val| {
-            cx.style.text_value.insert(id, val.get_val(cx).to_string());
-            cx.style.needs_access_update(id);
+        value.set_or_bind(self.context(), entity, |cx, val| {
+            cx.style.text_value.insert(cx.current, val.get_val(cx).to_string());
+            cx.style.needs_access_update(cx.current);
         });
 
         self

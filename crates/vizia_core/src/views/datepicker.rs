@@ -8,7 +8,7 @@ use super::spinbox::SpinboxIcons;
 #[derive(Lens)]
 pub struct Datepicker {
     view_date: NaiveDate,
-    months: Vec<String>,
+    months: Vec<Localized>,
     selected_month: usize,
 
     #[lens(ignore)]
@@ -30,7 +30,8 @@ const MONTHS: [&str; 12] = [
     "December",
 ];
 
-const DAYS_HEADER: [&str; 7] = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+const DAYS_HEADER: [&str; 7] =
+    ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 pub enum DatepickerEvent {
     IncrementMonth,
@@ -117,7 +118,7 @@ impl Datepicker {
         let view_date = lens.get_val(cx);
 
         Self {
-            months: MONTHS.to_vec().iter_mut().map(|v| v.to_string()).collect(),
+            months: MONTHS.iter().map(|m| Localized::new(m)).collect::<Vec<_>>(),
             selected_month: view_date.month() as usize - 1,
             view_date: NaiveDate::from_ymd_opt(view_date.year(), view_date.month(), 1).unwrap(),
             on_select: None,
@@ -158,7 +159,8 @@ impl Datepicker {
                 // Days of the week
                 HStack::new(cx, |cx| {
                     for h in DAYS_HEADER {
-                        Label::new(cx, h).class("datepicker-calendar-header");
+                        Label::new(cx, Localized::new(h).map(|day| day[0..2].to_string()))
+                            .class("datepicker-calendar-header");
                     }
                 })
                 .class("datepicker-calendar-headers");

@@ -3,9 +3,6 @@
 #![allow(clippy::single_match)]
 // To allow enum names with the same prefix
 #![allow(clippy::enum_variant_names)]
-#[cfg(feature = "serde")]
-#[macro_use]
-extern crate serde;
 
 #[doc(hidden)]
 mod accessibility;
@@ -18,7 +15,6 @@ pub mod context;
 pub mod entity;
 pub mod environment;
 pub mod events;
-mod fonts;
 pub mod input;
 pub mod layout;
 pub mod localization;
@@ -48,9 +44,11 @@ pub mod image {
 }
 
 /// A collection of codepoints for built-in icons.
-pub mod icons {
-    pub use super::fonts::icons::*;
-}
+pub mod icons;
+pub use icons::*;
+
+pub mod fonts;
+pub use fonts::*;
 
 #[doc(hidden)]
 pub mod backend {
@@ -82,7 +80,7 @@ pub mod prelude {
     pub use super::include_style;
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
     pub use super::layout::{BoundingBox, GeoChanged};
-    pub use super::localization::Localized;
+    pub use super::localization::{Localized, ToStringLocalized};
     pub use super::modifiers::{
         AbilityModifiers, AccessibilityModifiers, ActionModifiers, BoxShadowBuilder,
         LayoutModifiers, LinearGradientBuilder, StyleModifiers, TextModifiers,
@@ -102,6 +100,7 @@ pub mod prelude {
     pub use super::style::*;
 
     pub use cosmic_text::FamilyOwned;
+    pub use instant::{Duration, Instant};
     pub use morphorm::Units::*;
     pub use morphorm::{LayoutType, PositionType, Units};
     pub use unic_langid::{langid, LanguageIdentifier};

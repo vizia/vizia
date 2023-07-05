@@ -61,7 +61,7 @@
 //! ```
 
 use fnv::FnvHashMap;
-use instant::Duration;
+use instant::{Duration, Instant};
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::HashSet;
 use std::fmt::Debug;
@@ -155,6 +155,8 @@ pub struct Style {
     // Creates and destroys animation ids
     pub(crate) animation_manager: IdManager<Animation>,
     pub(crate) animations: FnvHashMap<String, Animation>,
+    // List of animations to be started on the next frame
+    pub(crate) pending_animations: Vec<(Entity, Animation, Duration)>,
 
     // List of rules
     pub(crate) rules: Vec<(Rule, SelectorList<Selectors>)>,
@@ -622,73 +624,93 @@ impl Style {
         animation_id
     }
 
-    pub(crate) fn play_animation(
+    pub(crate) fn enqueue_animation(
         &mut self,
         entity: Entity,
         animation: Animation,
         duration: Duration,
     ) {
-        self.display.play_animation(entity, animation, duration);
-        self.opacity.play_animation(entity, animation, duration);
-        self.clip_path.play_animation(entity, animation, duration);
+        self.pending_animations.push((entity, animation, duration));
+    }
 
-        self.transform.play_animation(entity, animation, duration);
-        self.transform_origin.play_animation(entity, animation, duration);
-        self.translate.play_animation(entity, animation, duration);
-        self.rotate.play_animation(entity, animation, duration);
-        self.scale.play_animation(entity, animation, duration);
+    pub(crate) fn play_pending_animations(&mut self) {
+        let start_time = instant::Instant::now();
 
-        self.border_width.play_animation(entity, animation, duration);
-        self.border_color.play_animation(entity, animation, duration);
+        let pending_animations = self.pending_animations.drain(..).collect::<Vec<_>>();
 
-        self.border_top_left_radius.play_animation(entity, animation, duration);
-        self.border_top_right_radius.play_animation(entity, animation, duration);
-        self.border_bottom_left_radius.play_animation(entity, animation, duration);
-        self.border_bottom_right_radius.play_animation(entity, animation, duration);
+        for (entity, animation, duration) in pending_animations {
+            self.play_animation(entity, animation, start_time, duration)
+        }
+    }
 
-        self.outline_width.play_animation(entity, animation, duration);
-        self.outline_color.play_animation(entity, animation, duration);
-        self.outline_offset.play_animation(entity, animation, duration);
+    pub(crate) fn play_animation(
+        &mut self,
+        entity: Entity,
+        animation: Animation,
+        start_time: Instant,
+        duration: Duration,
+    ) {
+        self.display.play_animation(entity, animation, start_time, duration);
+        self.opacity.play_animation(entity, animation, start_time, duration);
+        self.clip_path.play_animation(entity, animation, start_time, duration);
 
-        self.background_color.play_animation(entity, animation, duration);
-        self.background_image.play_animation(entity, animation, duration);
-        self.background_size.play_animation(entity, animation, duration);
+        self.transform.play_animation(entity, animation, start_time, duration);
+        self.transform_origin.play_animation(entity, animation, start_time, duration);
+        self.translate.play_animation(entity, animation, start_time, duration);
+        self.rotate.play_animation(entity, animation, start_time, duration);
+        self.scale.play_animation(entity, animation, start_time, duration);
 
-        self.box_shadow.play_animation(entity, animation, duration);
+        self.border_width.play_animation(entity, animation, start_time, duration);
+        self.border_color.play_animation(entity, animation, start_time, duration);
 
-        self.font_color.play_animation(entity, animation, duration);
-        self.font_size.play_animation(entity, animation, duration);
-        self.caret_color.play_animation(entity, animation, duration);
-        self.selection_color.play_animation(entity, animation, duration);
+        self.border_top_left_radius.play_animation(entity, animation, start_time, duration);
+        self.border_top_right_radius.play_animation(entity, animation, start_time, duration);
+        self.border_bottom_left_radius.play_animation(entity, animation, start_time, duration);
+        self.border_bottom_right_radius.play_animation(entity, animation, start_time, duration);
 
-        self.left.play_animation(entity, animation, duration);
-        self.right.play_animation(entity, animation, duration);
-        self.top.play_animation(entity, animation, duration);
-        self.bottom.play_animation(entity, animation, duration);
+        self.outline_width.play_animation(entity, animation, start_time, duration);
+        self.outline_color.play_animation(entity, animation, start_time, duration);
+        self.outline_offset.play_animation(entity, animation, start_time, duration);
 
-        self.child_left.play_animation(entity, animation, duration);
-        self.child_right.play_animation(entity, animation, duration);
-        self.child_top.play_animation(entity, animation, duration);
-        self.child_bottom.play_animation(entity, animation, duration);
-        self.col_between.play_animation(entity, animation, duration);
-        self.row_between.play_animation(entity, animation, duration);
+        self.background_color.play_animation(entity, animation, start_time, duration);
+        self.background_image.play_animation(entity, animation, start_time, duration);
+        self.background_size.play_animation(entity, animation, start_time, duration);
 
-        self.width.play_animation(entity, animation, duration);
-        self.height.play_animation(entity, animation, duration);
+        self.box_shadow.play_animation(entity, animation, start_time, duration);
 
-        self.min_width.play_animation(entity, animation, duration);
-        self.max_width.play_animation(entity, animation, duration);
-        self.min_height.play_animation(entity, animation, duration);
-        self.max_height.play_animation(entity, animation, duration);
+        self.font_color.play_animation(entity, animation, start_time, duration);
+        self.font_size.play_animation(entity, animation, start_time, duration);
+        self.caret_color.play_animation(entity, animation, start_time, duration);
+        self.selection_color.play_animation(entity, animation, start_time, duration);
 
-        self.min_left.play_animation(entity, animation, duration);
-        self.max_left.play_animation(entity, animation, duration);
-        self.min_right.play_animation(entity, animation, duration);
-        self.max_right.play_animation(entity, animation, duration);
-        self.min_top.play_animation(entity, animation, duration);
-        self.max_top.play_animation(entity, animation, duration);
-        self.min_bottom.play_animation(entity, animation, duration);
-        self.max_bottom.play_animation(entity, animation, duration);
+        self.left.play_animation(entity, animation, start_time, duration);
+        self.right.play_animation(entity, animation, start_time, duration);
+        self.top.play_animation(entity, animation, start_time, duration);
+        self.bottom.play_animation(entity, animation, start_time, duration);
+
+        self.child_left.play_animation(entity, animation, start_time, duration);
+        self.child_right.play_animation(entity, animation, start_time, duration);
+        self.child_top.play_animation(entity, animation, start_time, duration);
+        self.child_bottom.play_animation(entity, animation, start_time, duration);
+        self.col_between.play_animation(entity, animation, start_time, duration);
+        self.row_between.play_animation(entity, animation, start_time, duration);
+
+        self.width.play_animation(entity, animation, start_time, duration);
+        self.height.play_animation(entity, animation, start_time, duration);
+
+        self.min_width.play_animation(entity, animation, start_time, duration);
+        self.max_width.play_animation(entity, animation, start_time, duration);
+        self.min_height.play_animation(entity, animation, start_time, duration);
+        self.max_height.play_animation(entity, animation, start_time, duration);
+
+        self.min_left.play_animation(entity, animation, start_time, duration);
+        self.max_left.play_animation(entity, animation, start_time, duration);
+        self.min_right.play_animation(entity, animation, start_time, duration);
+        self.max_right.play_animation(entity, animation, start_time, duration);
+        self.min_top.play_animation(entity, animation, start_time, duration);
+        self.max_top.play_animation(entity, animation, start_time, duration);
+        self.min_bottom.play_animation(entity, animation, start_time, duration);
+        self.max_bottom.play_animation(entity, animation, start_time, duration);
     }
 
     pub(crate) fn is_animating(&self, entity: Entity, animation: Animation) -> bool {

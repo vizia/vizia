@@ -18,7 +18,7 @@ impl PickList {
     ) -> Handle<Self>
     where
         L1: Lens<Target = Vec<T>>,
-        T: 'static + Data + ToString,
+        T: 'static + Data + ToStringLocalized,
         L2: Lens<Target = usize>,
     {
         Self { on_select: None }.build(cx, |cx| {

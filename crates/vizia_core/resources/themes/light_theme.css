@@ -228,8 +228,6 @@ chip:disabled .icon {
 
 dropdown {
     border-radius: 4px;
-    border-width: 1px;
-    border-color: #d2d2d2;
     background-color: #fdfdfd;
 }
 
@@ -240,6 +238,12 @@ dropdown:over {
 dropdown:active {
     border-color: #ebebeb;
     background-color: #fafafa;
+}
+
+dropdown .title {
+    border-width: 1px;
+    border-color: #d2d2d2;
+    border-radius: 4px;
 }
 
 dropdown:active .title {
@@ -380,6 +384,24 @@ popup:checked {
     opacity: 100%;
     transition: opacity 100ms;
 } */
+
+/* PROGRESSBAR */
+
+progressbar {
+    background-color: #51afef20;
+}
+
+progressbar:disabled {
+    background-color: #d2d2d2;
+}
+
+progressbar .progressbar-bar {
+    background-color: #51afef;
+}
+
+progressbar:disabled .progressbar-bar {
+    background-color: #418abb;
+}
 
 /* KNOB */
 

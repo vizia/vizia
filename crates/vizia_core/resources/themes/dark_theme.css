@@ -457,6 +457,25 @@ popup:checked {
     transition: opacity 100ms;
 }
 
+/* PROGRESSBAR */
+/* update and add things like disabled */
+
+progressbar {
+    background-color: #1d1d1d;
+}
+
+progressbar:disabled {
+    background-color: #404040
+}
+
+progressbar .progressbar-bar {
+    background-color: #51afef;
+}
+
+progressbar:disabled .progressbar-bar {
+    background-color: #418abb;
+}
+
 /* RADIOBUTTON */
 
 radiobutton {

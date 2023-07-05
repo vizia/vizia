@@ -319,28 +319,36 @@ impl Node for Entity {
 
     fn border_left(&self, store: &Self::Store) -> Option<morphorm::Units> {
         store.border_width.get(*self).map(|border_width| match border_width {
-            LengthOrPercentage::Length(val) => Units::Pixels(val.to_px().unwrap_or_default()),
+            LengthOrPercentage::Length(val) => {
+                Units::Pixels(store.logical_to_physical(val.to_px().unwrap_or_default()))
+            }
             LengthOrPercentage::Percentage(val) => Units::Percentage(*val),
         })
     }
 
     fn border_right(&self, store: &Self::Store) -> Option<morphorm::Units> {
         store.border_width.get(*self).map(|border_width| match border_width {
-            LengthOrPercentage::Length(val) => Units::Pixels(val.to_px().unwrap_or_default()),
+            LengthOrPercentage::Length(val) => {
+                Units::Pixels(store.logical_to_physical(val.to_px().unwrap_or_default()))
+            }
             LengthOrPercentage::Percentage(val) => Units::Percentage(*val),
         })
     }
 
     fn border_top(&self, store: &Self::Store) -> Option<morphorm::Units> {
         store.border_width.get(*self).map(|border_width| match border_width {
-            LengthOrPercentage::Length(val) => Units::Pixels(val.to_px().unwrap_or_default()),
+            LengthOrPercentage::Length(val) => {
+                Units::Pixels(store.logical_to_physical(val.to_px().unwrap_or_default()))
+            }
             LengthOrPercentage::Percentage(val) => Units::Percentage(*val),
         })
     }
 
     fn border_bottom(&self, store: &Self::Store) -> Option<morphorm::Units> {
         store.border_width.get(*self).map(|border_width| match border_width {
-            LengthOrPercentage::Length(val) => Units::Pixels(val.to_px().unwrap_or_default()),
+            LengthOrPercentage::Length(val) => {
+                Units::Pixels(store.logical_to_physical(val.to_px().unwrap_or_default()))
+            }
             LengthOrPercentage::Percentage(val) => Units::Percentage(*val),
         })
     }

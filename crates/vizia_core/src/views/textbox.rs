@@ -437,7 +437,7 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
     }
 
     pub fn placeholder<T: ToString>(self, text: impl Res<T>) -> Self {
-        text.set_or_bind(self.cx, self.entity, |cx, entity, val| {
+        text.set_or_bind(self.cx, self.entity, |cx, val| {
             // self.modify(|textbox| textbox.placeholder = val.to_string());
             cx.with_current(entity, |cx| {
                 cx.emit(TextEvent::SetPlaceholder(val.get_val(cx).to_string()));

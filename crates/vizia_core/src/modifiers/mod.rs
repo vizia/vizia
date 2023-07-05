@@ -46,7 +46,7 @@ macro_rules! modifier {
         #[allow(unused_variables)]
         fn $name<U: Into<$t>>(mut self, value: impl Res<U>) -> Self {
             let entity = self.entity();
-            value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            value.set_or_bind(self.context(), entity, |cx, v| {
                 cx.style.$name.insert(entity, v.get_val(cx).into());
 
                 cx.style.system_flags |= $flags;

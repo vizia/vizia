@@ -6,13 +6,13 @@ use vizia_style::{FontSize, FontStretch, FontStyle, FontWeight};
 /// Modifiers for changing the text properties of a view.
 pub trait TextModifiers: internal::Modifiable {
     /// Sets the text content of the view.
-    fn text<U: ToString>(mut self, value: impl Res<U>) -> Self {
+    fn text<T: ToStringLocalized>(mut self, value: impl Res<T>) -> Self {
         let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, entity, v| {
-            let text_data = v.get_val(cx).to_string();
-            cx.text_context.set_text(entity, &text_data);
+        value.set_or_bind(self.context(), entity, |cx, v| {
+            let text_data = v.get_val(cx).to_string_local();
+            cx.text_context.set_text(cx.current, &text_data);
 
-            cx.style.needs_text_layout.insert(entity, true);
+            cx.style.needs_text_layout.insert(cx.current, true);
             cx.needs_relayout();
             cx.needs_redraw();
         });
@@ -53,8 +53,8 @@ pub trait TextModifiers: internal::Modifiable {
     /// Sets the text color of the view.
     fn color<U: Clone + Into<Color>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, entity, v| {
-            cx.style.font_color.insert(entity, v.get_val(cx).into());
+        value.set_or_bind(self.context(), entity, |cx, v| {
+            cx.style.font_color.insert(cx.current, v.get_val(cx).into());
             cx.style.needs_redraw();
         });
         self
@@ -63,8 +63,8 @@ pub trait TextModifiers: internal::Modifiable {
     /// Sets the font size of the view.
     fn font_size<U: Into<FontSize>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, entity, v| {
-            cx.style.font_size.insert(entity, v.get_val(cx).into());
+        value.set_or_bind(self.context(), entity, |cx, v| {
+            cx.style.font_size.insert(cx.current, v.get_val(cx).into());
             cx.style.system_flags |= SystemFlags::REFLOW;
         });
         self

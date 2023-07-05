@@ -37,7 +37,7 @@ impl Spinbox {
         icons: SpinboxIcons,
     ) -> Handle<Spinbox>
     where
-        <L as Lens>::Target: Data + ToString,
+        <L as Lens>::Target: Data + ToStringLocalized,
     {
         Self::custom(cx, move |cx| Label::new(cx, lens.clone()), kind, icons)
     }

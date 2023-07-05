@@ -8,7 +8,6 @@ mod event;
 mod proxy;
 mod resource;
 
-use cosmic_text::Shaping;
 use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
@@ -19,9 +18,8 @@ use std::sync::Mutex;
 use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
-use cosmic_text::{fontdb::Database, Attrs, AttrsList, BufferLine, FamilyOwned};
+use cosmic_text::{fontdb::Database, FamilyOwned};
 use fnv::FnvHashMap;
-use replace_with::replace_with_or_abort;
 
 use unic_langid::LanguageIdentifier;
 
@@ -461,37 +459,20 @@ impl Context {
         self.global_listeners.push(Box::new(listener));
     }
 
-    /// Add a font from memory to the application.
-    ///
-    ///
-    /// The `include_bytes!()` macro can be used to embed a font into the application binary.
-    /// # Example
-    /// ```
-    /// # use vizia_core::prelude::*;
-    /// # let cx = &mut Context::default();
-    /// cx.add_fonts_mem(&[include_bytes!("../../resources/fonts/Roboto-Regular.ttf")]);
-    /// ```
-    pub fn add_fonts_mem(&mut self, data: &[&[u8]]) {
-        self.text_context.take_buffers();
-        replace_with_or_abort(&mut self.text_context, |mut ccx| {
-            let buffers = ccx.take_buffers();
-            let (locale, mut db) = ccx.into_font_system().into_locale_and_db();
-            for font_data in data {
-                db.load_font_data(Vec::from(*font_data));
+    /// Sets the language used by the application for localization.
+    pub fn set_language(&mut self, lang: LanguageIdentifier) {
+        let cx = &mut EventContext::new(self);
+        if let Some(mut model_data_store) = cx.data.remove(Entity::root()) {
+            if let Some(model) = model_data_store.models.get_mut(&TypeId::of::<Environment>()) {
+                model.event(cx, &mut Event::new(EnvironmentEvent::SetLocale(lang)));
             }
-            let mut new_ccx = TextContext::new_from_locale_and_db(locale, db);
-            for (entity, lines) in buffers {
-                new_ccx.with_buffer(entity, move |_, buf| {
-                    buf.lines = lines
-                        .into_iter()
-                        .map(|line| {
-                            BufferLine::new(line, AttrsList::new(Attrs::new()), Shaping::Advanced)
-                        })
-                        .collect();
-                });
-            }
-            new_ccx
-        });
+
+            self.data.insert(Entity::root(), model_data_store);
+        }
+    }
+
+    pub fn add_font_mem(&mut self, data: impl AsRef<[u8]>) {
+        self.text_context.font_system().db_mut().load_font_data(data.as_ref().to_vec());
     }
 
     /// Sets the global default font for the application.
@@ -542,7 +523,6 @@ impl Context {
 
     pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: impl ToString) {
         self.resource_manager.add_translation(lang, ftl.to_string());
-        self.emit(EnvironmentEvent::SetLocale(self.resource_manager.language.clone()));
     }
 
     pub fn load_image(

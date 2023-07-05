@@ -73,9 +73,11 @@ use crate::prelude::*;
 use fluent_bundle::FluentArgs;
 use fluent_bundle::FluentValue;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 pub(crate) trait FluentStore {
-    fn get_val(&self, cx: &Context) -> FluentValue<'static>;
+    fn get_val(&self, cx: &EventContext) -> FluentValue<'static>;
+    fn get_val2(&self, cx: &Context) -> FluentValue<'static>;
     fn make_clone(&self) -> Box<dyn FluentStore>;
     fn bind(&self, cx: &mut Context, closure: Box<dyn Fn(&mut Context)>);
 }
@@ -95,7 +97,17 @@ where
     L: Lens,
     <L as Lens>::Target: Into<FluentValue<'static>> + Data,
 {
-    fn get_val(&self, cx: &Context) -> FluentValue<'static> {
+    fn get_val(&self, cx: &EventContext) -> FluentValue<'static> {
+        self.lens
+            .view(
+                cx.data()
+                    .expect("Failed to get data from context. Has it been built into the tree?"),
+            )
+            .map(|t| t.into_owned().into())
+            .unwrap_or_else(|| "".into())
+    }
+
+    fn get_val2(&self, cx: &Context) -> FluentValue<'static> {
         self.lens
             .view(
                 cx.data()
@@ -118,7 +130,11 @@ impl<T> FluentStore for ValState<T>
 where
     T: 'static + Clone + Into<FluentValue<'static>>,
 {
-    fn get_val(&self, _cx: &Context) -> FluentValue<'static> {
+    fn get_val(&self, _cx: &EventContext) -> FluentValue<'static> {
+        self.val.clone().into()
+    }
+
+    fn get_val2(&self, _cx: &Context) -> FluentValue<'static> {
         self.val.clone().into()
     }
 
@@ -135,6 +151,13 @@ where
 pub struct Localized {
     key: String,
     args: HashMap<String, Box<dyn FluentStore>>,
+    map: Rc<dyn Fn(&str) -> String + 'static>,
+}
+
+impl PartialEq for Localized {
+    fn eq(&self, other: &Self) -> bool {
+        self.key == other.key
+    }
 }
 
 impl Clone for Localized {
@@ -142,15 +165,24 @@ impl Clone for Localized {
         Self {
             key: self.key.clone(),
             args: self.args.iter().map(|(k, v)| (k.clone(), v.make_clone())).collect(),
+            map: self.map.clone(),
         }
     }
 }
 
 impl Localized {
-    fn get_args(&self, cx: &Context) -> FluentArgs {
+    fn get_args(&self, cx: &EventContext) -> FluentArgs {
         let mut res = FluentArgs::new();
         for (name, arg) in &self.args {
             res.set(name.to_owned(), arg.get_val(cx));
+        }
+        res
+    }
+
+    fn get_args2(&self, cx: &Context) -> FluentArgs {
+        let mut res = FluentArgs::new();
+        for (name, arg) in &self.args {
+            res.set(name.to_owned(), arg.get_val2(cx));
         }
         res
     }
@@ -169,7 +201,14 @@ impl Localized {
     /// })
     /// .run();
     pub fn new(key: &str) -> Self {
-        Self { key: key.to_owned(), args: HashMap::new() }
+        Self { key: key.to_owned(), args: HashMap::new(), map: Rc::new(|s| s.to_string()) }
+    }
+
+    /// Sets a mapping function to apply to the translated text.
+    pub fn map(mut self, mapping: impl Fn(&str) -> String + 'static) -> Self {
+        self.map = Rc::new(mapping);
+
+        self
     }
 
     /// Add a variable argument binding to the Localized type.
@@ -231,21 +270,21 @@ impl Res<String> for Localized {
         let message = if let Some(msg) = bundle.get_message(&self.key) {
             msg
         } else {
-            return format!("{{MISSING: {}}}", self.key);
+            return (self.map)(&self.key);
         };
 
         let value = if let Some(value) = message.value() {
             value
         } else {
-            return format!("{{MISSING: {}}}", self.key);
+            return (self.map)(&self.key);
         };
 
         let mut err = vec![];
-        let args = self.get_args(cx);
+        let args = self.get_args2(cx);
         let res = bundle.format_pattern(value, Some(&args), &mut err);
 
         if err.is_empty() {
-            res.to_string()
+            (self.map)(&res)
         } else {
             format!("{} {{ERROR: {:?}}}", res, err)
         }
@@ -253,7 +292,7 @@ impl Res<String> for Localized {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Entity, &Localized),
+        F: 'static + Clone + Fn(&mut EventContext, &Localized),
     {
         let self2 = self.clone();
         cx.with_current(entity, move |cx| {
@@ -262,7 +301,9 @@ impl Res<String> for Localized {
                 let self3 = self2.clone();
                 let closure = closure.clone();
                 bind_recursive(cx, &lenses, move |cx| {
-                    closure(cx, entity, &self3);
+                    let val = self3.get_val(cx);
+                    let cx = &mut EventContext::new_with_current(cx, entity);
+                    closure(cx, val);
                 });
             });
         });
@@ -283,5 +324,45 @@ where
         );
     } else {
         closure(cx);
+    }
+}
+
+impl<T: ToString> ToStringLocalized for T {
+    fn to_string_local(&self, _cx: &EventContext) -> String {
+        self.to_string()
+    }
+}
+
+pub trait ToStringLocalized {
+    fn to_string_local(&self, cx: &EventContext) -> String;
+}
+
+impl ToStringLocalized for Localized {
+    fn to_string_local(&self, cx: &EventContext) -> String {
+        let locale = &cx.environment().locale;
+        let bundle = cx.resource_manager.current_translation(locale);
+        let message = if let Some(msg) = bundle.get_message(&self.key) {
+            msg
+        } else {
+            // Warn here of missing key
+            return (self.map)(&self.key);
+        };
+
+        let value = if let Some(value) = message.value() {
+            value
+        } else {
+            // Warn here of missing value
+            return (self.map)(&self.key);
+        };
+
+        let mut err = vec![];
+        let args = self.get_args(cx);
+        let res = bundle.format_pattern(value, Some(&args), &mut err);
+
+        if err.is_empty() {
+            (self.map)(&res)
+        } else {
+            format!("{} {{ERROR: {:?}}}", res, err)
+        }
     }
 }

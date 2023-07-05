@@ -472,11 +472,11 @@ impl View for TickKnob {
         let opacity = cx.opacity();
         //let mut background_color: femtovg::Color = cx.current.get_background_color(cx).into();
         // background_color.set_alphaf(background_color.a * opacity);
-        let foreground_color = cx.background_color();
-        let background_color = femtovg::Color::rgb(54, 54, 54);
+        let foreground_color = cx.font_color();
+        let background_color = cx.background_color();
         //et mut foreground_color = femtovg::Color::rgb(50, 50, 200);
         let bounds = cx.bounds();
-        // Clalculate arc center
+        // Calculate arc center
         let centerx = bounds.x + 0.5 * bounds.w;
         let centery = bounds.y + 0.5 * bounds.h;
         // Convert start and end angles to radians and rotate origin direction to be upwards instead of to the right
@@ -492,7 +492,7 @@ impl View for TickKnob {
         let mut path = Path::new();
         path.circle(centerx, centery, radius);
         // path.arc(centerx, centery, radius - span / 2.0, end, start, Solidity::Solid);
-        let mut paint = Paint::color(background_color);
+        let mut paint = Paint::color(background_color.into());
         paint.set_line_width(tick_width);
         paint.set_line_cap(LineCap::Round);
         canvas.fill_path(&path, &paint);

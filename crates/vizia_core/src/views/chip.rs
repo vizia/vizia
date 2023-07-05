@@ -10,7 +10,7 @@ pub struct Chip {
 impl Chip {
     pub fn new<T>(cx: &mut Context, text: impl Res<T> + Clone) -> Handle<Self>
     where
-        T: ToString,
+        T: ToStringLocalized,
     {
         Self { on_close: None }
             .build(cx, move |cx| {

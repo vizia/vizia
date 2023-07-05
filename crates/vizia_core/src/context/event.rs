@@ -88,10 +88,58 @@ pub struct EventContext<'a> {
     pub(crate) drop_data: &'a mut Option<DropData>,
 }
 
+macro_rules! get_length_property {
+    (
+        $(#[$meta:meta])*
+        $name:ident
+    ) => {
+        $(#[$meta])*
+        pub fn $name(&self) -> f32 {
+            if let Some(length) = self.style.$name.get(self.current) {
+                let bounds = self.bounds();
+
+                let px = length.to_pixels(bounds.w.min(bounds.h), self.scale_factor());
+                return px.round();
+            }
+
+            0.0
+        }
+    };
+}
+
 impl<'a> EventContext<'a> {
     pub fn new(cx: &'a mut Context) -> Self {
         Self {
             current: cx.current,
+            captured: &mut cx.captured,
+            focused: &mut cx.focused,
+            hovered: &cx.hovered,
+            entity_identifiers: &cx.entity_identifiers,
+            style: &mut cx.style,
+            cache: &mut cx.cache,
+            tree: &cx.tree,
+            data: &mut cx.data,
+            views: &mut cx.views,
+            listeners: &mut cx.listeners,
+            resource_manager: &mut cx.resource_manager,
+            text_context: &mut cx.text_context,
+            modifiers: &cx.modifiers,
+            mouse: &cx.mouse,
+            event_queue: &mut cx.event_queue,
+            cursor_icon_locked: &mut cx.cursor_icon_locked,
+            window_size: &mut cx.window_size,
+            user_scale_factor: &mut cx.user_scale_factor,
+            #[cfg(feature = "clipboard")]
+            clipboard: &mut cx.clipboard,
+            event_proxy: &mut cx.event_proxy,
+            ignore_default_theme: &cx.ignore_default_theme,
+            drop_data: &mut cx.drop_data,
+        }
+    }
+
+    pub fn new_with_current(cx: &'a mut Context, current: Entity) -> Self {
+        Self {
+            current,
             captured: &mut cx.captured,
             focused: &mut cx.focused,
             hovered: &cx.hovered,
@@ -144,6 +192,10 @@ impl<'a> EventContext<'a> {
 
     pub fn nth_child(&self, n: usize) -> Option<Entity> {
         self.tree.get_child(self.current, n)
+    }
+
+    pub fn last_child(&self) -> Option<Entity> {
+        self.tree.get_last_child(self.current).copied()
     }
 
     pub fn with_current<T>(&mut self, entity: Entity, f: impl FnOnce(&mut Self) -> T) -> T {
@@ -297,7 +349,7 @@ impl<'a> EventContext<'a> {
     /// Trigger an animation with the given id to play on the current view.
     pub fn play_animation(&mut self, anim_id: impl AnimId, duration: Duration) {
         if let Some(animation_id) = anim_id.get(self) {
-            self.style.play_animation(self.current, animation_id, duration);
+            self.style.enqueue_animation(self.current, animation_id, duration);
         }
     }
 
@@ -305,7 +357,7 @@ impl<'a> EventContext<'a> {
     pub fn play_animation_for(&mut self, anim_id: impl AnimId, target: &str, duration: Duration) {
         if let Some(target_entity) = self.resolve_entity_identifier(target) {
             if let Some(animation_id) = anim_id.get(self) {
-                self.style.play_animation(target_entity, animation_id, duration);
+                self.style.enqueue_animation(target_entity, animation_id, duration)
             }
         }
     }
@@ -337,6 +389,17 @@ impl<'a> EventContext<'a> {
                 }
             }),
         );
+    }
+
+    /// Sets the language used by the application for localization.
+    pub fn set_language(&mut self, lang: LanguageIdentifier) {
+        if let Some(mut model_data_store) = self.data.remove(Entity::root()) {
+            if let Some(model) = model_data_store.models.get_mut(&TypeId::of::<Environment>()) {
+                model.event(self, &mut Event::new(EnvironmentEvent::SetLocale(lang)));
+            }
+
+            self.data.insert(Entity::root(), model_data_store);
+        }
     }
 
     /// Capture mouse input for the current view.
@@ -566,6 +629,10 @@ impl<'a> EventContext<'a> {
     pub fn needs_relayout(&mut self) {
         self.style.needs_relayout();
         self.style.needs_redraw();
+    }
+
+    pub fn needs_restyle(&mut self) {
+        self.style.needs_restyle();
     }
 
     /// Reloads the stylesheets linked to the application.
@@ -936,6 +1003,19 @@ impl<'a> EventContext<'a> {
         self.needs_relayout();
         self.needs_redraw();
     }
+
+    // GETTERS
+    get_length_property!(
+        /// Returns the border width of the current view in physical pixels.
+        border_width
+    );
+
+    /// Returns the font-size of the current view in physical pixels.
+    pub fn font_size(&self) -> f32 {
+        self.logical_to_physical(
+            self.style.font_size.get(self.current).copied().map(|f| f.0).unwrap_or(16.0),
+        )
+    }
 }
 
 impl<'a> DataContext for EventContext<'a> {
@@ -983,5 +1063,23 @@ impl<'a> EmitContext for EventContext<'a> {
 
     fn emit_custom(&mut self, event: Event) {
         self.event_queue.push_back(event);
+    }
+}
+
+/// Trait for querying properties of the tree from a context.
+pub trait TreeProps {
+    /// Returns the id of the parent of the current view.
+    fn parent(&self) -> Entity;
+    /// Returns the id of the first_child of the current view.
+    fn first_child(&self) -> Entity;
+}
+
+impl<'a> TreeProps for EventContext<'a> {
+    fn parent(&self) -> Entity {
+        self.tree.get_layout_parent(self.current).unwrap()
+    }
+
+    fn first_child(&self) -> Entity {
+        self.tree.get_layout_first_child(self.current).unwrap()
     }
 }
