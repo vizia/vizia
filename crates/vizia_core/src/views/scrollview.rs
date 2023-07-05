@@ -184,7 +184,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
             panic!("ScrollView::custom requires a ScrollData to be built into a parent");
         }
 
-        Self { data: data.clone(), scroll_to_cursor: false }.build(cx, |cx| {
+        Self { data, scroll_to_cursor: false }.build(cx, |cx| {
             Self::common_builder(cx, data, content, scroll_x, scroll_y);
         })
     }
@@ -193,7 +193,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
     where
         F: 'static + FnOnce(&mut Context),
     {
-        ScrollContent::new(cx, content).bind(data.clone(), |handle, data| {
+        ScrollContent::new(cx, content).bind(data, |handle, data| {
             let scale_factor = handle.scale_factor();
             let data = data.get(handle.cx);
             let left =
@@ -206,9 +206,8 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         if scroll_y {
             Scrollbar::new(
                 cx,
-                data.clone().then(ScrollData::scroll_y),
-                data.clone()
-                    .then(RatioLens::new(ScrollData::container_height, ScrollData::inner_height)),
+                data.then(ScrollData::scroll_y),
+                data.then(RatioLens::new(ScrollData::container_height, ScrollData::inner_height)),
                 Orientation::Vertical,
                 |cx, value| {
                     cx.emit(ScrollEvent::SetY(value));
@@ -221,7 +220,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         if scroll_x {
             Scrollbar::new(
                 cx,
-                data.clone().then(ScrollData::scroll_x),
+                data.then(ScrollData::scroll_x),
                 data.then(RatioLens::new(ScrollData::container_width, ScrollData::inner_width)),
                 Orientation::Horizontal,
                 |cx, value| {

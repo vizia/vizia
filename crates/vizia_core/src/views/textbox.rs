@@ -74,9 +74,8 @@ where
     }
 
     fn new_core(cx: &mut Context, lens: L, kind: TextboxKind) -> Handle<Self> {
-        let text_lens = lens.clone();
         Self {
-            lens: lens.clone(),
+            lens,
             kind,
             edit: false,
             transform: (0.0, 0.0),
@@ -108,7 +107,7 @@ where
             let parent = cx.current;
 
             Binding::new(cx, Self::placeholder, move |cx, placeholder| {
-                Binding::new(cx, lens.clone(), move |cx, text| {
+                Binding::new(cx, lens, move |cx, text| {
                     let mut ex = EventContext::new(cx);
                     ex.with_current(parent, |ex| {
                         if !ex.is_checked() {
@@ -136,7 +135,7 @@ where
         // .cursor(CursorIcon::Text)
         .navigable(true)
         .role(Role::TextField)
-        .text_value(text_lens)
+        .text_value(lens)
         // .cursor(CursorIcon::Text)
         .default_action_verb(DefaultActionVerb::Focus)
     }
