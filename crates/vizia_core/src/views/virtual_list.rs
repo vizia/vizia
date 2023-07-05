@@ -74,7 +74,6 @@ impl View for VirtualList {
             }
 
             VirtualListEvent::SetScrollY(scrolly) => {
-                // println!("{}", scrolly);
                 self.scrolly = *scrolly;
                 let current = cx.current();
                 let dpi = cx.scale_factor();
@@ -83,10 +82,10 @@ impl View for VirtualList {
                 let offsety = ((total_height - container_height) * *scrolly).round() * dpi;
                 self.offset = (offsety / self.item_height / dpi).ceil() as usize;
                 self.offset = self.offset.saturating_sub(1);
-                // let num_visible = self.visible_items.len();
+
                 let num_items =
                     ((container_height + self.item_height) / self.item_height).ceil() as usize;
-                //println!("list: {} {}", offset_num, offset_num+num_visible);
+
                 self.visible_items.clear();
                 for i in self.offset..(self.offset + num_items) {
                     self.visible_items.push(i);
@@ -102,15 +101,14 @@ impl View for VirtualList {
                     let current = cx.current();
                     let dpi = cx.scale_factor();
                     let container_height = cx.cache.get_height(current) / dpi;
+                    let num_items =
+                        ((container_height + self.item_height) / self.item_height).ceil() as usize;
 
                     let total_height = self.num_items as f32 * self.item_height;
                     let offsety = ((total_height - container_height) * self.scrolly).round() * dpi;
                     self.offset = (offsety / self.item_height / dpi).ceil() as usize;
                     self.offset = self.offset.saturating_sub(1);
 
-                    let num_items =
-                        ((container_height + self.item_height) / self.item_height).ceil() as usize;
-                    // println!("list: {} {}", self.offset, self.offset + num_items);
                     self.visible_items.clear();
                     for i in self.offset..(self.offset + num_items) {
                         self.visible_items.push(i);

@@ -91,15 +91,29 @@ impl Model for ScrollData {
                     }
                 }
 
-                ScrollEvent::ChildGeo(x, y) => {
-                    self.inner_width = *x;
-                    self.inner_height = *y;
+                ScrollEvent::ChildGeo(w, h) => {
+                    self.inner_width = *w;
+                    self.inner_height = *h;
                     self.reset();
                 }
-
                 ScrollEvent::ParentGeo(w, h) => {
+                    let scale_factor = cx.scale_factor();
+                    let top = ((self.inner_height - self.container_height) * self.scroll_y).round()
+                        / scale_factor;
+                    let left = ((self.inner_width - self.container_width) * self.scroll_x).round()
+                        / scale_factor;
                     self.container_width = *w;
                     self.container_height = *h;
+                    self.scroll_y = ((top * scale_factor)
+                        / (self.inner_height - self.container_height))
+                        .clamp(0.0, 1.0);
+                    self.scroll_x = ((left * scale_factor)
+                        / (self.inner_width - self.container_width))
+                        .clamp(0.0, 1.0);
+                    if let Some(callback) = &self.on_scroll {
+                        (callback)(cx, self.scroll_x, self.scroll_y);
+                    }
+
                     self.reset();
                 }
 
@@ -180,15 +194,13 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         F: 'static + FnOnce(&mut Context),
     {
         ScrollContent::new(cx, content).bind(data.clone(), |handle, data| {
-            let dpi_factor = handle.scale_factor();
-            if dpi_factor > 0.0 {
-                let data = data.get(handle.cx);
-                let left = ((data.inner_width - data.container_width) * data.scroll_x).round()
-                    / handle.cx.style.dpi_factor as f32;
-                let top = ((data.inner_height - data.container_height) * data.scroll_y).round()
-                    / handle.cx.style.dpi_factor as f32;
-                handle.left(Units::Pixels(-left.abs())).top(Units::Pixels(-top.abs()));
-            }
+            let scale_factor = handle.scale_factor();
+            let data = data.get(handle.cx);
+            let left =
+                ((data.inner_width - data.container_width) * data.scroll_x).round() / scale_factor;
+            let top = ((data.inner_height - data.container_height) * data.scroll_y).round()
+                / scale_factor;
+            handle.left(Units::Pixels(-left.abs())).top(Units::Pixels(-top.abs()));
         });
 
         if scroll_y {
