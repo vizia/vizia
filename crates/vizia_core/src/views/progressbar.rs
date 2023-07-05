@@ -133,7 +133,7 @@ impl<'a> Handle<'a, ProgressBar> {
         color.set_or_bind(self.cx, self.entity, move |cx, val| {
             let first_child = cx.first_child();
             cx.with_current(first_child, |cx| {
-                cx.set_background_color(val);
+                cx.set_background_color(val.get_val(cx));
             })
         });
 

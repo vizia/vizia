@@ -285,7 +285,7 @@ where
         let focus_event = Box::new(f);
         self.cx.with_current(self.entity, |cx| {
             cx.add_listener(move |popup: &mut MenuPopup<L>, cx, event| {
-                let flag: bool = popup.lens.get_val(cx).into();
+                let flag: bool = popup.lens.get_val(cx);
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
                         if flag && meta.origin != cx.current() {

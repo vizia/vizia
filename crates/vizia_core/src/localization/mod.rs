@@ -301,9 +301,8 @@ impl Res<String> for Localized {
                 let self3 = self2.clone();
                 let closure = closure.clone();
                 bind_recursive(cx, &lenses, move |cx| {
-                    let val = self3.get_val(cx);
                     let cx = &mut EventContext::new_with_current(cx, entity);
-                    closure(cx, val);
+                    closure(cx, &self3);
                 });
             });
         });

@@ -439,11 +439,9 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
     pub fn placeholder<T: ToString>(self, text: impl Res<T>) -> Self {
         text.set_or_bind(self.cx, self.entity, |cx, val| {
             // self.modify(|textbox| textbox.placeholder = val.to_string());
-            cx.with_current(entity, |cx| {
-                cx.emit(TextEvent::SetPlaceholder(val.get_val(cx).to_string()));
-                cx.needs_relayout();
-                cx.needs_redraw();
-            });
+            cx.emit(TextEvent::SetPlaceholder(val.get_val(cx).to_string()));
+            cx.needs_relayout();
+            cx.needs_redraw();
         });
 
         self
@@ -964,7 +962,7 @@ where
                     // cx.capture();
                     cx.set_checked(true);
 
-                    if let Some(source) = cx.data::<L::Source>() {
+                    if let Some(_source) = cx.data::<L::Source>() {
                         let text = self.lens.get(cx).map(|x| x.to_string()).unwrap_or_default();
 
                         self.select_all(cx);
@@ -985,7 +983,7 @@ where
                 cx.set_checked(false);
                 cx.release();
 
-                if let Some(source) = cx.data::<L::Source>() {
+                if let Some(_source) = cx.data::<L::Source>() {
                     let mut text = self.lens.get(cx).map(|x| x.to_string()).unwrap_or_default();
 
                     if text.is_empty() {

@@ -31,7 +31,7 @@ fn main() {
         AppData { text: String::from("This is some text"), text2: String::from("سلام") }.build(cx);
         VStack::new(cx, |cx| {
             TabView::new(cx, StaticLens::new(STATIC_LIST.as_ref()), |cx, item| {
-                match item.get(cx) {
+                match *item.get(cx).unwrap() {
                     "Wrapping" => TabPair::new(
                         move |cx| {
                             Label::new(cx, item).hoverable(false);

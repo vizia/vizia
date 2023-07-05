@@ -108,20 +108,20 @@ impl_res_clone!(Position);
 
 impl<L> Res<L::Target> for L
 where
-    L: Lens<Target = T>,
-    T: Clone + Data,
+    L: Lens,
+    L::Target: Data,
 {
-    fn get<'a, 'b>(&'a self, cx: &'b impl DataContext) -> Option<LensValue<'a, 'b, T>> {
+    fn get<'a, 'b>(&'a self, cx: &'b impl DataContext) -> Option<LensValue<'a, 'b, L::Target>> {
         self.view(cx.data()?)
     }
 
-    fn get_val(&self, cx: &impl DataContext) -> T {
+    fn get_val(&self, cx: &impl DataContext) -> L::Target {
         self.get(cx).unwrap().into_owned()
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, &Self),
+        F: 'static + Fn(&mut EventContext, &Self),
     {
         cx.with_current(entity, |cx| {
             Binding::new(cx, self.clone(), move |cx, val| {
@@ -139,7 +139,7 @@ impl<'i> Res<FontFamily<'i>> for FontFamily<'i> {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, &Self),
+        F: 'static + Fn(&mut EventContext, &Self),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, self);
@@ -153,7 +153,7 @@ impl<'i> Res<BackgroundImage<'i>> for BackgroundImage<'i> {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, &Self),
+        F: 'static + Fn(&mut EventContext, &Self),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, self);
@@ -176,7 +176,7 @@ impl<'s> Res<&'s str> for &'s str {
 
 impl<'s> Res<&'s String> for &'s String {
     fn get_val(&self, _: &impl DataContext) -> Self {
-        *self
+        self
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
@@ -188,14 +188,14 @@ impl<'s> Res<&'s String> for &'s String {
     }
 }
 
-impl<'s> Res<String> for String {
+impl Res<String> for String {
     fn get_val(&self, _: &impl DataContext) -> Self {
         self.clone()
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, &Self),
+        F: 'static + Fn(&mut EventContext, &Self),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
         (closure)(cx, self);
@@ -223,10 +223,10 @@ impl Res<Color> for Color {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, &Self),
+        F: 'static + Fn(&mut EventContext, &Self),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
-        (closure)(cx, entity, self);
+        (closure)(cx, self);
     }
 }
 
@@ -237,10 +237,10 @@ impl Res<LinearGradient> for LinearGradient {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, &Self),
+        F: 'static + Fn(&mut EventContext, &Self),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
-        (closure)(cx, entity, self);
+        (closure)(cx, self);
     }
 }
 
@@ -251,10 +251,10 @@ impl Res<Units> for Units {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, &Self),
+        F: 'static + Fn(&mut EventContext, &Self),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
-        (closure)(cx, entity, self);
+        (closure)(cx, self);
     }
 }
 
@@ -265,10 +265,10 @@ impl Res<Visibility> for Visibility {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, &Self),
+        F: 'static + Fn(&mut EventContext, &Self),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
-        (closure)(cx, entity, self);
+        (closure)(cx, self);
     }
 }
 
@@ -279,10 +279,10 @@ impl Res<Display> for Display {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, &Self),
+        F: 'static + Fn(&mut EventContext, &Self),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
-        (closure)(cx, entity, self);
+        (closure)(cx, self);
     }
 }
 
@@ -293,10 +293,10 @@ impl Res<LayoutType> for LayoutType {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, &Self),
+        F: 'static + Fn(&mut EventContext, &Self),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
-        (closure)(cx, entity, self);
+        (closure)(cx, self);
     }
 }
 
@@ -307,10 +307,10 @@ impl Res<PositionType> for PositionType {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, &Self),
+        F: 'static + Fn(&mut EventContext, &Self),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
-        (closure)(cx, entity, self);
+        (closure)(cx, self);
     }
 }
 
@@ -321,10 +321,10 @@ impl<T: Clone + Res<T>> Res<Option<T>> for Option<T> {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Entity, &Option<T>),
+        F: 'static + Clone + Fn(&mut EventContext, &Option<T>),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
-        (closure)(cx, entity, self)
+        (closure)(cx, self)
     }
 }
 
@@ -335,10 +335,10 @@ impl Res<Length> for Length {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Entity, &Self),
+        F: 'static + Clone + Fn(&mut EventContext, &Self),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
-        (closure)(cx, entity, self)
+        (closure)(cx, self)
     }
 }
 
@@ -349,10 +349,10 @@ impl Res<LengthOrPercentage> for LengthOrPercentage {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Entity, &Self),
+        F: 'static + Clone + Fn(&mut EventContext, &Self),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
-        (closure)(cx, entity, self)
+        (closure)(cx, self)
     }
 }
 
@@ -363,10 +363,10 @@ impl Res<RGBA> for RGBA {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Entity, &Self),
+        F: 'static + Clone + Fn(&mut EventContext, &Self),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
-        (closure)(cx, entity, self)
+        (closure)(cx, self)
     }
 }
 
@@ -377,10 +377,10 @@ impl<T: Clone + Res<T>> Res<Vec<T>> for Vec<T> {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Entity, &Vec<T>),
+        F: 'static + Clone + Fn(&mut EventContext, &Vec<T>),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
-        (closure)(cx, entity, self)
+        (closure)(cx, self)
     }
 }
 
@@ -391,10 +391,10 @@ impl<T: Clone + Res<T>, const N: usize> Res<[T; N]> for [T; N] {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Entity, &Self),
+        F: 'static + Clone + Fn(&mut EventContext, &Self),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
-        (closure)(cx, entity, self)
+        (closure)(cx, self)
     }
 }
 
@@ -405,10 +405,10 @@ impl Res<FamilyOwned> for FamilyOwned {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Entity, &FamilyOwned),
+        F: 'static + Clone + Fn(&mut EventContext, &FamilyOwned),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
-        (closure)(cx, entity, self)
+        (closure)(cx, self)
     }
 }
 
@@ -419,10 +419,10 @@ impl<T1: Clone, T2: Clone> Res<(T1, T2)> for (T1, T2) {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Entity, &(T1, T2)),
+        F: 'static + Clone + Fn(&mut EventContext, &(T1, T2)),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
-        (closure)(cx, entity, self);
+        (closure)(cx, self);
     }
 }
 
@@ -433,10 +433,10 @@ impl<T1: Clone, T2: Clone, T3: Clone> Res<(T1, T2, T3)> for (T1, T2, T3) {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Entity, &(T1, T2, T3)),
+        F: 'static + Clone + Fn(&mut EventContext, &(T1, T2, T3)),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
-        (closure)(cx, entity, self);
+        (closure)(cx, self);
     }
 }
 
@@ -447,9 +447,9 @@ impl<T1: Clone, T2: Clone, T3: Clone, T4: Clone> Res<(T1, T2, T3, T4)> for (T1, 
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Entity, &(T1, T2, T3, T4)),
+        F: 'static + Clone + Fn(&mut EventContext, &(T1, T2, T3, T4)),
     {
         let cx = &mut EventContext::new_with_current(cx, entity);
-        (closure)(cx, entity, self);
+        (closure)(cx, self);
     }
 }

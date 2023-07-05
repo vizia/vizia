@@ -176,12 +176,13 @@ pub trait StyleModifiers: internal::Modifiable {
     /// Views with a higher z-index will be rendered on top of those with a lower z-order.
     /// Views with the same z-index are rendered in tree order.
     fn z_index<U: Into<i32>>(mut self, value: impl Res<U>) -> Self {
-        let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, entity, v| {
-            let value = v.get_val(cx).into();
-            cx.tree.set_z_index(entity, value);
-            cx.needs_redraw();
-        });
+        // let entity = self.entity();
+        // value.set_or_bind(self.context(), entity, |cx, v| {
+        let cx = self.context();
+        let value = value.get_val(cx).into();
+        cx.tree.set_z_index(cx.current, value);
+        cx.needs_redraw();
+        // });
 
         self
     }

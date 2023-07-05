@@ -19,8 +19,9 @@ pub trait AbilityModifiers: internal::Modifiable {
     fn hoverable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
         state.set_or_bind(self.context(), entity, |cx, v| {
+            let val = v.get_val(cx).into();
             if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
-                abilities.set(Abilities::HOVERABLE, v.get_val(cx).into());
+                abilities.set(Abilities::HOVERABLE, val);
                 cx.needs_restyle();
             }
         });
@@ -41,8 +42,9 @@ pub trait AbilityModifiers: internal::Modifiable {
     fn focusable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
         state.set_or_bind(self.context(), entity, |cx, v| {
+            let val = v.get_val(cx).into();
             if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
-                let state = v.get_val(cx).into();
+                let state = val;
                 abilities.set(Abilities::FOCUSABLE, state);
 
                 // If an element is not focusable then it can't be keyboard navigable.
@@ -70,8 +72,9 @@ pub trait AbilityModifiers: internal::Modifiable {
     fn checkable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
         state.set_or_bind(self.context(), entity, |cx, v| {
+            let val = v.get_val(cx).into();
             if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
-                let state = v.get_val(cx).into();
+                let state = val;
                 abilities.set(Abilities::CHECKABLE, state);
                 cx.needs_restyle();
             }
@@ -94,8 +97,9 @@ pub trait AbilityModifiers: internal::Modifiable {
     fn navigable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
         state.set_or_bind(self.context(), entity, |cx, v| {
+            let val = v.get_val(cx).into();
             if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
-                abilities.set(Abilities::NAVIGABLE, v.get_val(cx).into());
+                abilities.set(Abilities::NAVIGABLE, val);
                 cx.needs_restyle();
             }
         });

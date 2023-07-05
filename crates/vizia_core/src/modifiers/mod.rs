@@ -47,7 +47,7 @@ macro_rules! modifier {
         fn $name<U: Into<$t>>(mut self, value: impl Res<U>) -> Self {
             let entity = self.entity();
             value.set_or_bind(self.context(), entity, |cx, v| {
-                cx.style.$name.insert(entity, v.get_val(cx).into());
+                cx.style.$name.insert(cx.current, v.get_val(cx).into());
 
                 cx.style.system_flags |= $flags;
             });

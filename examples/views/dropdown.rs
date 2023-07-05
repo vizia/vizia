@@ -28,7 +28,7 @@ fn main() {
                             //.child_bottom(Stretch(1.0))
                             .cursor(CursorIcon::Hand)
                             .bind(AppData::choice, move |handle, selected| {
-                                if item.get(&handle) == selected.get(&handle) {
+                                if item.get_val(&handle) == selected.get_val(&handle) {
                                     handle.checked(true);
                                 }
                             })

@@ -4,8 +4,6 @@ use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ops::{BitAnd, BitOr, Deref};
 
-use crate::context::DataContext;
-
 use super::{next_uuid, StoreId};
 
 /// A Lens allows the construction of a reference to a piece of some data, e.g. a field of a struct.
@@ -39,7 +37,7 @@ impl<T: Clone> Clone for LensValue<'_, '_, T> {
         match self {
             LensValue::Borrowed(v) => LensValue::Borrowed(*v),
             LensValue::Owned(v) => LensValue::Owned(v.clone()),
-            LensValue::Local(v) => LensValue::Local(v.clone()),
+            LensValue::Local(v) => LensValue::Local(*v),
         }
     }
 }
@@ -223,9 +221,9 @@ where
         let val = match val {
             LensValue::Borrowed(val) => return self.b.view(val),
             LensValue::Local(val) => val,
-            LensValue::Owned(ref val) => &val,
+            LensValue::Owned(ref val) => val,
         };
-        match self.b.view(&val)? {
+        match self.b.view(val)? {
             LensValue::Local(val) => Some(LensValue::Local(val)),
             LensValue::Owned(val) => Some(LensValue::Owned(val)),
             _ => None,
@@ -277,7 +275,7 @@ where
     type Target = T;
 
     fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'_, 'a, Self::Target>> {
-        source.get(self.index.clone()).map(|t| LensValue::Borrowed(t))
+        source.get(self.index).map(|t| LensValue::Borrowed(t))
     }
 }
 

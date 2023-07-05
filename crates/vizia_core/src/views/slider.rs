@@ -162,7 +162,7 @@ where
                                 cx.emit(SliderEventInternal::SetThumbSize(bounds.w, bounds.h));
                             }
                         })
-                        .bind(lens.clone(), move |handle, value| {
+                        .bind(lens, move |handle, value| {
                             let val = value.get_val(handle.cx);
                             let normal_val = (val - range.start) / (range.end - range.start);
                             let px = normal_val * (1.0 - (thumb_size / size));
