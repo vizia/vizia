@@ -30,7 +30,7 @@ impl Color {
             Color::RGBA(rgba) => rgba,
         }
     }
-    
+
     pub fn r(&self) -> u8 {
         match self {
             Color::CurrentColor => 0,
