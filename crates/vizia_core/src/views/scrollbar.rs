@@ -30,7 +30,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
         F: 'static + Fn(&mut EventContext, f32),
     {
         Self {
-            value: value.clone(),
+            value,
             orientation,
             reference_points: None,
             on_changing: Some(Box::new(callback)),

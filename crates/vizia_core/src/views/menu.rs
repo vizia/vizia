@@ -252,20 +252,20 @@ where
     where
         F: 'static + Fn(&mut Context),
     {
-        Self { lens: lens.clone() }
+        Self { lens }
             .build(cx, |cx| {
                 let parent = cx.current;
 
                 (content)(cx);
 
-                Binding::new(cx, lens.clone(), move |cx, _| {
+                Binding::new(cx, lens, move |cx, _| {
                     if let Some(geo) = cx.cache.geo_changed.get_mut(parent) {
                         geo.set(GeoChanged::WIDTH_CHANGED, true);
                     }
                 });
             })
             .role(Role::Dialog)
-            .checked(lens.clone())
+            .checked(lens)
             .position_type(PositionType::SelfDirected)
             .z_index(100)
     }

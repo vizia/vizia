@@ -52,7 +52,7 @@ where
         cx.style.add(id);
         cx.tree.set_ignored(id, true);
 
-        let binding = Self { entity: id, lens: lens.clone(), content: Some(Box::new(builder)) };
+        let binding = Self { entity: id, lens, content: Some(Box::new(builder)) };
 
         let ancestors = cx.current().parent_iter(&cx.tree).collect::<HashSet<_>>();
         let new_ancestors = id.parent_iter(&cx.tree).collect::<Vec<_>>();
@@ -153,7 +153,7 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
 
         if let Some(builder) = &self.content {
             CURRENT.with(|f| *f.borrow_mut() = self.entity);
-            (builder)(cx, self.lens.clone());
+            (builder)(cx, self.lens);
         }
     }
 

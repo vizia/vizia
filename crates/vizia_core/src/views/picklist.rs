@@ -22,22 +22,18 @@ impl PickList {
         L2: Lens<Target = usize>,
     {
         Self { on_select: None }.build(cx, |cx| {
-            let s = selected.clone();
-            let l = list_lens.clone();
             // Dropdown List
             Dropdown::new(
                 cx,
                 move |cx| {
-                    let l = l.clone();
-                    let s = s.clone();
                     // A Label and an Icon
                     HStack::new(cx, move |cx| {
                         Label::new(cx, "")
-                            .bind(l.clone(), move |handle, list| {
-                                handle.bind(s.clone(), move |handle, sel| {
+                            .bind(list_lens, move |handle, list| {
+                                handle.bind(selected, move |handle, sel| {
                                     let selected_index = sel.get(handle.cx);
 
-                                    handle.text(list.clone().index(selected_index));
+                                    handle.text(list.index(selected_index));
                                 });
                             })
                             .hoverable(false);
@@ -48,16 +44,14 @@ impl PickList {
                     .col_between(Stretch(1.0))
                 },
                 move |cx| {
-                    let s = selected.clone();
-                    let l = list_lens.clone();
                     let window_height = cx.cache.get_height(Entity::root());
                     let scale = cx.scale_factor();
                     ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
-                        List::new(cx, l, move |cx, index, item| {
+                        List::new(cx, list_lens, move |cx, index, item| {
                             Label::new(cx, item)
                                 .child_top(Stretch(1.0))
                                 .child_bottom(Stretch(1.0))
-                                .checked(s.clone().map(move |selected| *selected == index))
+                                .checked(selected.map(move |selected| *selected == index))
                                 .navigable(true)
                                 .on_press(move |cx| {
                                     cx.emit(PickListEvent::SetOption(index));

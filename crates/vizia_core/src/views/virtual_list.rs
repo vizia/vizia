@@ -41,7 +41,7 @@ impl VirtualList {
                 VStack::new(cx, |cx| {
                     Binding::new(cx, VirtualList::visible_items, move |cx, visible_list| {
                         for i in visible_list.get(cx) {
-                            let ptr = list.clone().index(i);
+                            let ptr = list.index(i);
                             (item)(cx, i, ptr)
                                 .top(Pixels(i as f32 * height))
                                 .height(Pixels(height))
