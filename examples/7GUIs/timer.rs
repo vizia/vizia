@@ -119,6 +119,5 @@ fn main() {
     })
     .title("Timer")
     .inner_size((300, 150))
-    .resizable(false)
     .run()
 }

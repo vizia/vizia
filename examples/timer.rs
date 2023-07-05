@@ -17,7 +17,7 @@ impl Model for AppState {
         event.map(|app_event, _| match app_event {
             AppEvent::Increment => {
                 self.count += 1;
-                if self.count == 100 {
+                if self.count >= 100 {
                     cx.stop_timer(self.timer, Some(Duration::from_secs(2)));
                 }
             }
@@ -62,7 +62,7 @@ fn main() {
             Button::new(
                 cx,
                 move |cx| {
-                    cx.stop_timer(timer, Some(Duration::from_secs(2)));
+                    cx.stop_timer(timer, Some(Duration::from_secs(0)));
                 },
                 |cx| Label::new(cx, "Stop"),
             );

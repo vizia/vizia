@@ -1079,6 +1079,7 @@ impl<'a> EventContext<'a> {
             start_time: Instant::now(),
             callback: Rc::new(callback),
             ticking: false,
+            stopping: false,
         });
 
         id
@@ -1088,17 +1089,21 @@ impl<'a> EventContext<'a> {
     ///
     /// Events sent within the timer callback provided in `add_timer()` will target the current view.
     pub fn start_timer(&mut self, timer: Timer, delay: Option<Duration>) {
-        if self.timer_is_running(timer) {
-            self.stop_timer(timer, None);
+        let current = self.current;
+        if !self.timer_is_running(timer) {
+            let timer_state = self.timers[timer.0].clone();
+            // Copy timer state from pending to playing
+            self.running_timers.push(timer_state);
         }
-        // Copy timer state from pending to playing
-        let mut timer_state = self.timers[timer.0].clone();
-        let now = instant::Instant::now();
-        timer_state.start_time = now + delay.unwrap_or(Duration::ZERO);
-        timer_state.time = now + delay.unwrap_or(Duration::ZERO);
-        timer_state.entity = self.current;
 
-        self.running_timers.push(timer_state);
+        self.modify_timer(timer, |timer_state| {
+            let now = instant::Instant::now();
+            timer_state.start_time = now + delay.unwrap_or(Duration::ZERO);
+            timer_state.time = now + delay.unwrap_or(Duration::ZERO);
+            timer_state.entity = current;
+            timer_state.ticking = false;
+            timer_state.stopping = false;
+        });
     }
 
     /// Modifies the state of an existing timer with the provided `Timer` id.
@@ -1140,9 +1145,12 @@ impl<'a> EventContext<'a> {
         if let Some(delay) = delay {
             if self.timer_is_running(timer) {
                 self.modify_timer(timer, |timer_state| {
-                    let current_time = timer_state.time;
-                    let duration = (current_time + delay) - timer_state.start_time;
-                    timer_state.set_duration(Some(duration));
+                    if !timer_state.stopping {
+                        let current_time = timer_state.time;
+                        let duration = (current_time + delay) - timer_state.start_time;
+                        timer_state.set_duration(Some(duration));
+                        timer_state.stopping = true;
+                    }
                 })
             }
         } else {
