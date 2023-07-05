@@ -2,7 +2,7 @@ use std::any::TypeId;
 use std::collections::{HashMap, HashSet};
 
 use crate::binding::{BasicStore, LensCache, Store, StoreId};
-use crate::context::{CURRENT, MAPS};
+use crate::context::CURRENT;
 use crate::model::ModelOrView;
 use crate::prelude::*;
 
@@ -146,13 +146,10 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
     fn update(&mut self, cx: &mut Context) {
         cx.remove_children(cx.current());
 
-        // Remove any maps associated with this binding
-        MAPS.with(|f| {
-            f.borrow_mut().retain(|map| map.0 != self.entity);
-        });
+        let parent = cx.tree.get_layout_parent(self.entity).unwrap();
 
         if let Some(builder) = &self.content {
-            CURRENT.with(|f| *f.borrow_mut() = self.entity);
+            CURRENT.with(|f| *f.borrow_mut() = parent);
             (builder)(cx, self.lens);
         }
     }
