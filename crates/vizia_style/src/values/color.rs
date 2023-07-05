@@ -23,6 +23,14 @@ impl Color {
         Self::RGBA(RGBA::rgba(red, green, blue, alpha))
     }
 
+    /// Return a new [RGBA] from the Color
+    pub fn get_rgba(&self) -> RGBA {
+        match self {
+            Color::CurrentColor => RGBA::rgba(0, 0, 0, 0),
+            Color::RGBA(rgba) => rgba,
+        }
+    }
+
     pub fn r(&self) -> u8 {
         match self {
             Color::CurrentColor => 0,
@@ -543,6 +551,12 @@ pub struct RGBA {
     pub blue: u8,
     /// The alpha component.
     pub alpha: u8,
+}
+
+impl From<Color> for RGBA {
+    fn from(color: Color) -> Self {
+        color.get_rgba()
+    }
 }
 
 impl From<cssparser::RGBA> for RGBA {
