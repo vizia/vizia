@@ -124,7 +124,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
 
             impl #lens_ty_generics Clone for #field_name#lens_ty_generics  {
                 fn clone(&self) -> #field_name#lens_ty_generics {
-                    Self(#(#phantom_inits),*)
+                    *self
                 }
             }
 
@@ -212,7 +212,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
 
             impl #lens_ty_generics Clone for root#lens_ty_generics  {
                 fn clone(&self) -> root#lens_ty_generics {
-                    Self(#(#phantom_inits),*)
+                    *self
                 }
             }
 
