@@ -13,6 +13,6 @@ cssparser = "0.29.6"
 femtovg = "0.7.0"
 selectors = { version = "0.23.0", path = "./selectors" }
 # morphorm = {path = "../../../morphorm" }
-morphorm = {git = "https://github.com/vizia/morphorm", rev = "8bae565241845d0d36a491d072cbd0ad797e7d54" }
+morphorm = {git = "https://github.com/vizia/morphorm", rev = "b7afddf587b139061fcb18898c2f0fba36570d33" }
 smallvec = "1.0"
 bitflags = "2.1.0"
