@@ -3,10 +3,10 @@ use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ops::{BitAnd, BitOr, Deref};
 
-use crate::context::{CURRENT, MAPS};
+use crate::context::{CURRENT, MAPS, MAP_MANAGER};
 use crate::prelude::*;
 
-use super::{next_uuid, StoreId};
+use super::{next_uuid, MapId, StoreId};
 
 /// A Lens allows the construction of a reference to a piece of some data, e.g. a field of a struct.
 ///
@@ -108,9 +108,11 @@ pub trait LensExt: Lens {
     }
 
     fn map<O: 'static, F: 'static + Fn(&Self::Target) -> O>(self, map: F) -> Map<Self, O> {
-        let id = MAPS.with(|f| f.borrow().len());
+        let id = MAP_MANAGER.with(|f| f.borrow_mut().create());
         let entity = CURRENT.with(|f| *f.borrow());
-        MAPS.with(|f| f.borrow_mut().push((entity, Box::new(MapState { closure: Box::new(map) }))));
+        MAPS.with(|f| {
+            f.borrow_mut().insert(id, (entity, Box::new(MapState { closure: Box::new(map) })))
+        });
         Map { id, lens: self, o: PhantomData }
     }
 
@@ -138,7 +140,7 @@ pub struct MapState<T, O: 'static> {
 
 #[derive(Debug)]
 pub struct Map<L: Lens, O> {
-    id: usize,
+    id: MapId,
     lens: L,
     o: PhantomData<O>,
 }
@@ -167,7 +169,7 @@ impl<L: Lens, O: 'static> Lens for Map<L, O> {
                 if let Some(t) = target {
                     // Get and apply mapping function from thread local store.
                     MAPS.with(|f| {
-                        if let Some(map) = f.borrow().get(self.id) {
+                        if let Some(map) = f.borrow().get(&self.id) {
                             if let Some(mapping) = map.1.downcast_ref::<MapState<L::Target, O>>() {
                                 value = Some((mapping.closure)(t));
                             }
