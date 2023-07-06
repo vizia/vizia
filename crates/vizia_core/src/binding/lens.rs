@@ -147,7 +147,7 @@ impl<L: Lens, O: 'static> std::marker::Copy for Map<L, O> {}
 
 impl<L: Lens, O: 'static> Clone for Map<L, O> {
     fn clone(&self) -> Self {
-        Map { id: self.id, lens: self.lens, o: PhantomData }
+        *self
     }
 }
 
