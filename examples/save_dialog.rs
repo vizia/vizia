@@ -4,13 +4,15 @@ const STYLE: &str = r#"
 
     .modal {
         space: 1s;
+        child-space: 8px;
+        child-left: 1s;
+        child-right: 1s;
         background-color: white;
         border-radius: 3px;
         border-width: 1px;
         border-color: #999999;
         outer-shadow: 0 3 10 #00000055;
         overflow: visible;
-        child-space: 10px;
     }
 
     .modal>vstack>label {
@@ -26,8 +28,8 @@ const STYLE: &str = r#"
     }
 
     .modal hstack {
-        child-space: 1s;
         col-between: 20px;
+        size: auto;
     }
 "#;
 
@@ -108,8 +110,10 @@ fn main() {
                         |cx| Label::new(cx, "Cancel"),
                     )
                     .width(Pixels(120.0));
-                });
+                })
+                .size(Auto);
             })
+            .size(Auto)
             .row_between(Pixels(20.0))
             .height(Auto);
         })

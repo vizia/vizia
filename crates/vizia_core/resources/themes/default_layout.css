@@ -828,30 +828,3 @@ tooltip .tooltip-button-wrapper {
     background-color: #51afef;
     border-radius: 2px;
 }
-
-/* Modal */
-
-.modal {
-    width: 200px;
-    space: 1s;
-    overflow: visible;
-    child-space: 8px;
-    row-between: 16px;
-}
-
-.modal label {
-    width: auto;
-    height: auto;
-}
-
-.modal button {
-    top: 8px;
-}
-
-.modal .title {
-    bottom: 4px;
-}
-
-.modal .accent {
-    left: 1s;
-}
