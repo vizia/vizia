@@ -107,6 +107,7 @@ pub struct Context {
     pub(crate) click_time: Instant,
     pub(crate) clicks: usize,
     pub(crate) click_pos: (f32, f32),
+    pub(crate) click_button: MouseButton,
 
     pub ignore_default_theme: bool,
     pub window_has_focus: bool,
@@ -190,6 +191,7 @@ impl Context {
             click_time: Instant::now(),
             clicks: 0,
             click_pos: (0.0, 0.0),
+            click_button: MouseButton::Left,
 
             ignore_default_theme: false,
             window_has_focus: true,

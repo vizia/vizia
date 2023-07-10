@@ -191,25 +191,28 @@ fn context_update(context: &mut Context, window_event: &WindowEvent, meta: &mut 
             context.mouse.cursory = *y;
         }
 
-        WindowEvent::MouseDown(button) => match button {
-            MouseButton::Left => {
-                context.mouse.left.state = MouseButtonState::Pressed;
-                context.mouse.left.pos_down = (context.mouse.cursorx, context.mouse.cursory);
-                context.mouse.left.pressed = context.hovered;
-                context.triggered = context.hovered;
+        WindowEvent::MouseDown(button) => {
+            context.click_button = *button;
+            match button {
+                MouseButton::Left => {
+                    context.mouse.left.state = MouseButtonState::Pressed;
+                    context.mouse.left.pos_down = (context.mouse.cursorx, context.mouse.cursory);
+                    context.mouse.left.pressed = context.hovered;
+                    context.triggered = context.hovered;
+                }
+                MouseButton::Right => {
+                    context.mouse.right.state = MouseButtonState::Pressed;
+                    context.mouse.right.pos_down = (context.mouse.cursorx, context.mouse.cursory);
+                    context.mouse.right.pressed = context.hovered;
+                }
+                MouseButton::Middle => {
+                    context.mouse.middle.state = MouseButtonState::Pressed;
+                    context.mouse.middle.pos_down = (context.mouse.cursorx, context.mouse.cursory);
+                    context.mouse.middle.pressed = context.hovered;
+                }
+                _ => {}
             }
-            MouseButton::Right => {
-                context.mouse.right.state = MouseButtonState::Pressed;
-                context.mouse.right.pos_down = (context.mouse.cursorx, context.mouse.cursory);
-                context.mouse.right.pressed = context.hovered;
-            }
-            MouseButton::Middle => {
-                context.mouse.middle.state = MouseButtonState::Pressed;
-                context.mouse.middle.pos_down = (context.mouse.cursorx, context.mouse.cursory);
-                context.mouse.middle.pressed = context.hovered;
-            }
-            _ => {}
-        },
+        }
 
         WindowEvent::MouseUp(button) => match button {
             MouseButton::Left => {
@@ -299,11 +302,14 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 );
             }
 
-            // track double-click
+            // track double/triple -click
             let new_click_time = Instant::now();
             let click_duration = new_click_time - context.click_time;
             let new_click_pos = (context.mouse.cursorx, context.mouse.cursory);
-            if click_duration <= DOUBLE_CLICK_INTERVAL && new_click_pos == context.click_pos {
+            if click_duration <= DOUBLE_CLICK_INTERVAL
+                && new_click_pos == context.click_pos
+                && *button == context.click_button
+            {
                 if context.clicks <= 2 {
                     context.clicks += 1;
                     let event = if context.clicks == 3 {
@@ -319,29 +325,9 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             }
             context.click_time = new_click_time;
             context.click_pos = new_click_pos;
-
             mutate_direct_or_up(meta, context.captured, context.hovered, true);
         }
         WindowEvent::MouseUp(button) => {
-            match button {
-                MouseButton::Left => {
-                    context.mouse.left.pos_up = (context.mouse.cursorx, context.mouse.cursory);
-                    context.mouse.left.released = context.hovered;
-                    context.mouse.left.state = MouseButtonState::Released;
-                }
-                MouseButton::Right => {
-                    context.mouse.right.pos_up = (context.mouse.cursorx, context.mouse.cursory);
-                    context.mouse.right.released = context.hovered;
-                    context.mouse.right.state = MouseButtonState::Released;
-                }
-                MouseButton::Middle => {
-                    context.mouse.middle.pos_up = (context.mouse.cursorx, context.mouse.cursory);
-                    context.mouse.middle.released = context.hovered;
-                    context.mouse.middle.state = MouseButtonState::Released;
-                }
-                _ => {}
-            }
-
             if matches!(button, MouseButton::Left) {
                 if context.hovered == context.triggered {
                     emit_direct_or_up(
