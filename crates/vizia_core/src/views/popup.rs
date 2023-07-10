@@ -56,13 +56,16 @@ where
                     }
 
                     if lens.get(cx) {
-                        if capture_focus {
-                            VStack::new(cx, &content).lock_focus_to_within();
-                        } else {
-                            (content)(cx);
-                        }
+                        (content)(cx);
                     }
                 });
+            })
+            .bind(lens.clone(), move |handle, val| {
+                if val.get(&handle) {
+                    if capture_focus {
+                        handle.lock_focus_to_within();
+                    }
+                }
             })
             .role(Role::Dialog)
             .checked(lens)
