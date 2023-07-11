@@ -83,7 +83,7 @@ pub struct EventContext<'a> {
     user_scale_factor: &'a mut f64,
     #[cfg(feature = "clipboard")]
     clipboard: &'a mut Box<dyn ClipboardProvider>,
-    event_proxy: &'a mut Option<Box<dyn crate::context::EventProxy>>,
+    pub(crate) event_proxy: &'a mut Option<Box<dyn crate::context::EventProxy>>,
     pub(crate) ignore_default_theme: &'a bool,
     pub(crate) drop_data: &'a mut Option<DropData>,
 }
