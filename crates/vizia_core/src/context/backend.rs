@@ -116,7 +116,7 @@ impl<'a> BackendContext<'a> {
 
         self.0.style.disabled.insert(Entity::root(), false);
 
-        self.0.style.pseudo_classes.insert(Entity::root(), PseudoClassFlags::empty());
+        self.0.style.pseudo_classes.insert(Entity::root(), PseudoClassFlags::OVER);
 
         self.0.canvases.insert(Entity::root(), canvas);
     }
