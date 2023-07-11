@@ -10,11 +10,11 @@ use vizia_storage::{LayoutChildIterator, LayoutParentIterator};
 
 // Determines the hovered entity based on the mouse cursor position.
 pub(crate) fn hover_system(cx: &mut Context) {
-    // if let Some(pseudo_classes) = cx.style.pseudo_classes.get(Entity::root()) {
-    //     if !pseudo_classes.contains(PseudoClassFlags::OVER) {
-    //         return;
-    //     }
-    // }
+    if let Some(pseudo_classes) = cx.style.pseudo_classes.get(Entity::root()) {
+        if !pseudo_classes.contains(PseudoClassFlags::OVER) {
+            return;
+        }
+    }
 
     let mut queue = BinaryHeap::new();
     let pointer_events: bool =
@@ -132,6 +132,10 @@ fn hover_entity(
 
     let cursorx = cx.mouse.cursorx;
     let cursory = cx.mouse.cursory;
+
+    if cursorx < 0.0 || cursory < 0.0 {
+        return;
+    }
 
     let mut transform = parent_transform;
 
