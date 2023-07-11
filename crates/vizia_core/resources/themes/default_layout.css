@@ -688,6 +688,7 @@ tabview.vertical > scrollview.vertical > scroll_content {
 tabheader {
     width: auto;
     height: 32px;
+    cursor: hand;
 }
 
 tabheader label {

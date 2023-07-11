@@ -271,6 +271,9 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
                     self.is_dragging = true;
                     cx.capture();
                     cx.focus_with_visibility(false);
+                    cx.with_current(Entity::root(), |cx| {
+                        cx.set_pointer_events(false);
+                    });
 
                     let thumb_size = self.internal.thumb_size;
                     let min = self.internal.range.start;
@@ -314,6 +317,9 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
                 self.is_dragging = false;
                 cx.focus_with_visibility(false);
                 cx.release();
+                cx.with_current(Entity::root(), |cx| {
+                    cx.set_pointer_events(true);
+                });
             }
 
             WindowEvent::MouseMove(x, y) => {

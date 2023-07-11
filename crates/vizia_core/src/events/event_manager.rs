@@ -7,8 +7,8 @@ use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use instant::{Duration, Instant};
 use std::any::Any;
 use vizia_id::GenerationalId;
-use vizia_storage::TreeExt;
 use vizia_storage::TreeIterator;
+use vizia_storage::{LayoutParentIterator, TreeExt};
 
 const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 
@@ -576,6 +576,32 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
         }
         WindowEvent::CharInput(_) => {
             meta.target = context.focused;
+        }
+        WindowEvent::FocusOut => {
+            context.set_focus_pseudo_classes(context.focused, false, true);
+            context.focused = Entity::null();
+        }
+        WindowEvent::FocusIn => {
+            context.focused = meta.target;
+            context.set_focus_pseudo_classes(context.focused, true, true);
+        }
+        WindowEvent::MouseEnter => {
+            if let Some(pseudo_class) = context.style.pseudo_classes.get_mut(Entity::root()) {
+                pseudo_class.set(PseudoClassFlags::OVER, true);
+            }
+        }
+        WindowEvent::MouseLeave => {
+            if let Some(pseudo_class) = context.style.pseudo_classes.get_mut(Entity::root()) {
+                pseudo_class.set(PseudoClassFlags::OVER, false);
+            }
+
+            let parent_iter = LayoutParentIterator::new(&context.tree, Some(context.hovered));
+            for ancestor in parent_iter {
+                if let Some(pseudo_classes) = context.style.pseudo_classes.get_mut(ancestor) {
+                    pseudo_classes.set(PseudoClassFlags::HOVER, false);
+                    context.style.needs_restyle();
+                }
+            }
         }
         _ => {}
     }

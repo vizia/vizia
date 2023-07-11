@@ -74,8 +74,8 @@ pub use vizia_style::{
     CursorIcon, Display, Filter, FontFamily, FontSize, FontStretch, FontStyle, FontWeight,
     FontWeightKeyword, GenericFontFamily, Gradient, HorizontalPosition, HorizontalPositionKeyword,
     Length, LengthOrPercentage, LengthValue, LineDirection, LinearGradient, Matrix, Opacity,
-    Overflow, Position, Scale, TextAlign, Transform, Transition, Translate, VerticalPosition,
-    VerticalPositionKeyword, Visibility, RGBA,
+    Overflow, PointerEvents, Position, Scale, TextAlign, Transform, Transition, Translate,
+    VerticalPosition, VerticalPositionKeyword, Visibility, RGBA,
 };
 
 use vizia_style::{
@@ -254,6 +254,8 @@ pub struct Style {
 
     // cursor Icon
     pub(crate) cursor: StyleSet<CursorIcon>,
+
+    pub(crate) pointer_events: StyleSet<PointerEvents>,
 
     // LAYOUT
 
@@ -1525,6 +1527,10 @@ impl Style {
                 self.cursor.insert_rule(rule_id, cursor);
             }
 
+            Property::PointerEvents(pointer_events) => {
+                self.pointer_events.insert_rule(rule_id, pointer_events);
+            }
+
             // Unparsed. TODO: Log the error.
             Property::Unparsed(unparsed) => {
                 println!("Unparsed: {}", unparsed.name);
@@ -1696,6 +1702,13 @@ impl Style {
         self.min_bottom.remove(entity);
         self.max_bottom.remove(entity);
 
+        // Cursor
+        self.cursor.remove(entity);
+
+        self.pointer_events.remove(entity);
+
+        self.name.remove(entity);
+
         self.needs_text_layout.remove(entity);
         self.needs_access_update.remove(entity);
     }
@@ -1828,6 +1841,8 @@ impl Style {
         self.caret_color.clear_rules();
 
         self.cursor.clear_rules();
+
+        self.pointer_events.clear_rules();
 
         self.name.clear_rules();
     }

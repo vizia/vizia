@@ -504,6 +504,14 @@ impl Application {
                             cx.modifiers().set(Modifiers::LOGO, modifiers_state.logo());
                         }
 
+                        winit::event::WindowEvent::CursorEntered { device_id: _ } => {
+                            cx.emit_origin(WindowEvent::MouseEnter);
+                        }
+
+                        winit::event::WindowEvent::CursorLeft { device_id: _ } => {
+                            cx.emit_origin(WindowEvent::MouseLeave);
+                        }
+
                         _ => {}
                     }
                 }

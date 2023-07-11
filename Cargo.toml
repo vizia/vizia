@@ -323,7 +323,6 @@ path = "examples/style/properties.rs"
 [features]
 default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts"]
 clipboard = ["vizia_core/clipboard", "vizia_winit?/clipboard"]
-serde = ["vizia_core/serde"]
 winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]
 x11 = ["vizia_winit?/x11", "vizia_core/x11"]
@@ -336,9 +335,6 @@ vizia_winit = { version = "0.1.0", path = "crates/vizia_winit", optional = true 
 vizia_baseview = { version = "0.1.0", path = "crates/vizia_baseview", optional = true }
 
 [dev-dependencies]
-english-numbers = "0.3.3"
 lazy_static = "1.4.0"
 chrono = "0.4.19"
-image = { version = "0.24.0", default-features = false, features = ["png"] }
-reqwest = { version = "0.11.9", features = ["blocking"] }
-instant = "0.1.12"
+reqwest = { version = "0.11.18", features = ["blocking"] }

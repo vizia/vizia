@@ -15,7 +15,7 @@ fn main() {
 fn main() {
     let app = Application::new(|_| {})
         .on_idle(|_| {
-            println!("On Idle: {:?}", instant::Instant::now());
+            println!("On Idle: {:?}", Instant::now());
         })
         .title("Proxy");
 

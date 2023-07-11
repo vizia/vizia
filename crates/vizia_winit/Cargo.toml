@@ -9,8 +9,8 @@ description = "Winit backend for vizia"
 rust-version = "1.60"
 
 [features]
-x11 = ["winit/x11", "glutin?/x11"]
-wayland = ["winit/wayland", "winit/wayland-dlopen", "winit/wayland-csd-adwaita", "copypasta?/wayland"]
+x11 = ["winit/x11", "glutin?/x11", "glutin-winit/x11"]
+wayland = ["winit/wayland", "winit/wayland-dlopen", "winit/wayland-csd-adwaita", "glutin-winit/wayland", "copypasta?/wayland"]
 clipboard = ["copypasta"]
 
 [dependencies]
@@ -20,20 +20,19 @@ vizia_id = { path = "../vizia_id" }
 vizia_window = { path = "../vizia_window" }
 
 accesskit = "0.11.0"
-winit = { version = "0.28.1", default-features = false }
+winit = { version = "0.28.6", default-features = false }
 femtovg = "0.7.0"
-glutin = { version = "0.30.3", default-features = false, optional = true }
-copypasta = {version = "0.8.1", optional = true, default-features = false }
+glutin = { version = "0.30.8", default-features = false, optional = true }
+copypasta = {version = "0.8.2", optional = true, default-features = false }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 accesskit_winit = "0.14.0"
-glutin = { version = "0.30.3", default-features = false }
+glutin = { version = "0.30.8", default-features = false }
 femtovg = "0.7.0"
-glutin-winit = "0.3.0"
-raw-window-handle = "0.5.0"
-
+glutin-winit = { version = "0.3.0", default-features = false, features = ["egl", "glx", "wgl"] }
+raw-window-handle = "0.5.2"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { version = "0.2" }
-web_sys = { version = "0.3", package = "web-sys", features=["console", "WebGlContextAttributes"] }
+web_sys = { version = "0.3", package = "web-sys", features = ["console", "WebGlContextAttributes"] }
 console_error_panic_hook = "0.1.5"

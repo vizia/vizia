@@ -12,6 +12,7 @@ use vizia_core::prelude::*;
 /// Handles a vizia_baseview application
 pub(crate) struct ViziaWindow {
     application: ApplicationRunner,
+    #[allow(clippy::type_complexity)]
     on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
 }
 
