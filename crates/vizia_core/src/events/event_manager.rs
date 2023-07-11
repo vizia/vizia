@@ -325,6 +325,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             }
             context.click_time = new_click_time;
             context.click_pos = new_click_pos;
+            context.click_button = *button;
             mutate_direct_or_up(meta, context.captured, context.hovered, true);
         }
         WindowEvent::MouseUp(button) => {
