@@ -2,9 +2,6 @@ use chrono::{NaiveDate, Utc};
 use vizia::prelude::*;
 use vizia_core::icons::{ICON_CHECK, ICON_CLIPBOARD, ICON_COPY, ICON_CUT, ICON_PENCIL, ICON_TRASH};
 
-mod helpers;
-use helpers::*;
-
 const COLORS: [Color; 3] =
     [Color::rgb(240, 100, 100), Color::rgb(100, 240, 100), Color::rgb(100, 100, 240)];
 

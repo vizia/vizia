@@ -54,7 +54,7 @@ pub fn checkbox(cx: &mut Context) {
                 .child_top(Stretch(1.0))
                 .child_bottom(Stretch(1.0))
                 .col_between(Pixels(5.0));
-    
+
                 HStack::new(cx, |cx| {
                     Checkbox::new(cx, CheckboxData::check2)
                         .id("checky")
@@ -65,7 +65,7 @@ pub fn checkbox(cx: &mut Context) {
                 .child_top(Stretch(1.0))
                 .child_bottom(Stretch(1.0))
                 .col_between(Pixels(5.0));
-    
+
                 HStack::new(cx, |cx| {
                     Checkbox::new(cx, CheckboxData::check1)
                         .id("checky")
@@ -124,38 +124,40 @@ pub fn checkbox(cx: &mut Context) {
     .class("panel");
 }
 
-
-pub struct CheckboxInput {
-
-}
+pub struct CheckboxInput {}
 
 impl CheckboxInput {
-    pub fn new<T: ToString>(cx: &mut Context, action: impl Fn(&mut EventContext) + 'static, lens: impl Lens<Target = bool>, label: impl Res<T> + Clone) -> Handle<Self> {
+    pub fn new<T: ToString>(
+        cx: &mut Context,
+        action: impl Fn(&mut EventContext) + 'static,
+        lens: impl Lens<Target = bool>,
+        label: impl Res<T> + Clone,
+    ) -> Handle<Self> {
         let id = cx.current().to_string();
-        Self{}.build(cx, |cx|{
-            Checkbox::new(cx, lens)
-                .id(&id)
-                .on_toggle(action);
-            Label::new(cx, label).describing(&id);
-        })
-        .layout_type(LayoutType::Row)
-        .size(Auto)
-        .child_top(Stretch(1.0))
-        .child_bottom(Stretch(1.0))
-        .col_between(Pixels(5.0))
+        Self {}
+            .build(cx, |cx| {
+                Checkbox::new(cx, lens).id(&id).on_toggle(action);
+                Label::new(cx, label).describing(&id);
+            })
+            .layout_type(LayoutType::Row)
+            .size(Auto)
+            .child_top(Stretch(1.0))
+            .child_bottom(Stretch(1.0))
+            .col_between(Pixels(5.0))
     }
 }
 
-impl View for CheckboxInput {
-    
-}
+impl View for CheckboxInput {}
 
 pub struct Group {}
 
 impl Group {
-    pub fn new<T: ToString>(cx: &mut Context, label: impl  Res<T> + Clone, content: impl FnOnce(&mut Context)) -> Handle<Self> {
-        Group{}.build(cx, |cx|{
-
+    pub fn new<T: ToString>(
+        cx: &mut Context,
+        label: impl Res<T> + Clone,
+        content: impl FnOnce(&mut Context),
+    ) -> Handle<Self> {
+        Group {}.build(cx, |cx| {
             let has_text = !label.get_val(cx).to_string().is_empty();
             Label::new(cx, label.clone()).class("legend").display(has_text);
 

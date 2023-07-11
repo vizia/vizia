@@ -2,7 +2,8 @@ use lazy_static::lazy_static;
 use vizia::prelude::*;
 
 lazy_static! {
-    pub static ref STATIC_LIST: Vec<&'static str> = vec!["Background Image", "Background Size", "Border", "Box Shadow"];
+    pub static ref STATIC_LIST: Vec<&'static str> =
+        vec!["Background Image", "Background Size", "Border", "Box Shadow"];
 }
 
 const BACKGROUND_IMAGE_STYLE: &str = r#"
@@ -233,7 +234,7 @@ const STYLE: &str = r#"
 
 fn main() {
     Application::new(|cx| {
-        cx.set_image_loader(|cx, name|{
+        cx.set_image_loader(|cx, name| {
             if name == "sample.png" {
                 // Load an image into the binary
                 cx.load_image(
@@ -306,7 +307,6 @@ fn background_image(cx: &mut Context) {
                 .width(Stretch(1.0))
                 .position_type(PositionType::SelfDirected)
                 .space(Pixels(10.0));
-    
         Element::new(cx).class("auto-size");
         Element::new(cx).class("fixed-size");
         Element::new(cx).class("web-image");
@@ -316,13 +316,14 @@ fn background_image(cx: &mut Context) {
 }
 
 fn background_size(cx: &mut Context) {
-    VStack::new(cx, |cx|{
+    VStack::new(cx, |cx| {
         Element::new(cx).class("auto").class("image_element");
         Element::new(cx).class("length").class("image_element");
         Element::new(cx).class("percentage").class("image_element");
         Element::new(cx).class("contain").class("image_element");
         Element::new(cx).class("cover").class("image_element");
-    }).class("container");
+    })
+    .class("container");
 }
 
 fn border(cx: &mut Context) {

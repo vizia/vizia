@@ -42,7 +42,7 @@ pub fn button2(cx: &mut Context) {
         .class("paragraph");
 
         Label::new(cx, r#"Button::new(cx, |cx|{...}, |cx| Label::new(cx, "Press Me"));"#).class("code");
-        
+
         Label::new(cx, "Basic buttons").class("header");
         HStack::new(cx, |cx| {
             Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
@@ -51,7 +51,7 @@ pub fn button2(cx: &mut Context) {
             Button::new(cx, |_| {}, |cx| Label::new(cx, "Ghost Button")).class("ghost");
         })
         .class("region");;
-    
+
     Label::new(cx, "Buttons with icons and label").class("header");
     Label::new(cx, "An HStack can be used to add an icon as well as a label to a button. The icon can be positioned before or after the label by changing the order of the declarations.")
     .class("paragraph");
