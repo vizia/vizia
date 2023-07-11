@@ -61,10 +61,8 @@ where
                 });
             })
             .bind(lens.clone(), move |handle, val| {
-                if val.get(&handle) {
-                    if capture_focus {
-                        handle.lock_focus_to_within();
-                    }
+                if val.get(&handle) && capture_focus {
+                    handle.lock_focus_to_within();
                 }
             })
             .role(Role::Dialog)

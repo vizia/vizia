@@ -182,7 +182,7 @@ fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {
     }
 }
 
-fn context_update(context: &mut Context, window_event: &WindowEvent, meta: &mut EventMeta) {
+fn context_update(context: &mut Context, window_event: &WindowEvent, _meta: &mut EventMeta) {
     match window_event {
         WindowEvent::MouseMove(x, y) => {
             context.mouse.previous_cursorx = context.mouse.cursorx;
@@ -244,7 +244,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             context.drop_data = Some(drop_data.clone());
         }
 
-        WindowEvent::MouseMove(x, y) => {
+        WindowEvent::MouseMove(_x, _y) => {
             hover_system(context);
             mutate_direct_or_up(meta, context.captured, context.hovered, false);
 
