@@ -5,6 +5,7 @@ use crate::style::{Abilities, PseudoClassFlags};
 use crate::systems::{compute_matched_rules, hover_system};
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use instant::{Duration, Instant};
+use log::debug;
 use std::any::Any;
 use vizia_id::GenerationalId;
 use vizia_storage::TreeIterator;
@@ -372,7 +373,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
 
             #[cfg(debug_assertions)]
             if *code == Code::KeyI && context.modifiers.contains(Modifiers::CTRL) {
-                println!("Entity tree");
+                debug!("Entity tree");
                 let (tree, views, cache) = (&context.tree, &context.views, &context.cache);
                 let has_next_sibling = |entity| tree.get_next_sibling(entity).is_some();
                 let root_indents = |entity: Entity| {
@@ -401,7 +402,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                                 class_names += &format!(".{}", class);
                             }
                         }
-                        println!(
+                        debug!(
                             "{}{} {}{} [x: {} y: {} w: {} h: {}]",
                             indents(entity),
                             entity,
@@ -445,7 +446,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 compute_matched_rules(context, context.hovered, &mut result);
 
                 let entity = context.hovered;
-                println!("/* Matched rules for Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",
+                debug!("/* Matched rules for Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",
                     entity,
                     entity.parent(&context.tree),
                     context
@@ -460,7 +461,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 for rule in result.into_iter() {
                     for selectors in context.style.rules.iter() {
                         if selectors.0 == rule.0 {
-                            println!("{:?}", selectors.1);
+                            debug!("{:?}", selectors.1);
                         }
                     }
                 }
@@ -470,9 +471,9 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             if *code == Code::KeyT
                 && context.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
             {
-                println!("Loaded font face info:");
+                debug!("Loaded font face info:");
                 for face in context.text_context.font_system().db().faces() {
-                    println!(
+                    debug!(
                         "family: {:?}\npost_script_name: {:?}\nstyle: {:?}\nweight: {:?}\nstretch: {:?}\nmonospaced: {:?}\n",
                         face.families,
                         face.post_script_name,

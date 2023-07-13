@@ -104,14 +104,3 @@ pub mod prelude {
     pub use morphorm::{LayoutType, PositionType, Units};
     pub use unic_langid::{langid, LanguageIdentifier};
 }
-
-/// One very small function for abstracting debugging between web and desktop programming.
-/// On the desktop, it will print to stdout, and on the web, it will print to the console log.
-#[cfg(not(target_arch = "wasm32"))]
-pub fn log(text: &str) {
-    println!("{}", text);
-}
-#[cfg(target_arch = "wasm32")]
-pub fn log(text: &str) {
-    web_sys::console::log_1(&text.into());
-}

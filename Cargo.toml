@@ -348,3 +348,5 @@ vizia_baseview = { version = "0.1.0", path = "crates/vizia_baseview", optional =
 lazy_static = "1.4.0"
 chrono = "0.4.19"
 reqwest = { version = "0.11.18", features = ["blocking"] }
+log = "0.4.19"
+fern = { version = "0.6" }

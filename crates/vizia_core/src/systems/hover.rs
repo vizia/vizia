@@ -5,6 +5,7 @@ use crate::{
     style::{Abilities, PseudoClassFlags},
 };
 use femtovg::Transform2D;
+use log::debug;
 use vizia_id::GenerationalId;
 use vizia_storage::{LayoutChildIterator, LayoutParentIterator};
 
@@ -54,8 +55,7 @@ pub(crate) fn hover_system(cx: &mut Context) {
 
     if hovered != cx.hovered {
         // Useful for debugging
-        #[cfg(debug_assertions)]
-        println!(
+        debug!(
             "Hover changed to {:?} parent: {:?}, view: {}, posx: {}, posy: {} width: {} height: {}",
             hovered,
             cx.tree.get_parent(hovered),

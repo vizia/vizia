@@ -102,6 +102,8 @@ impl ExamplePage {
         })
     }
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
+        // setup_logging().expect("Failed to setup logging");
+
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
 
         Self {}.build(cx, |cx| {
