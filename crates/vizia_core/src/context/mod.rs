@@ -9,6 +9,7 @@ mod proxy;
 mod resource;
 
 use instant::Instant;
+use log::debug;
 use std::any::{Any, TypeId};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
@@ -296,9 +297,8 @@ impl Context {
         enabled: bool,
         focus_visible: bool,
     ) {
-        #[cfg(debug_assertions)]
         if enabled {
-            println!(
+            debug!(
             "Focus changed to {:?} parent: {:?}, view: {}, posx: {}, posy: {} width: {} height: {}",
             focused,
             self.tree.get_parent(focused),

@@ -41,6 +41,7 @@ chrono = "0.4.22"
 # cosmic-text = "0.8.0"
 cosmic-text = { git="https://github.com/pop-os/cosmic-text", rev="79275d15e857428e9b8874f28413197e878f3788" }
 swash = "0.1.8"
+log = "0.4.19"
 # reqwest = { version = "0.11.9", features = ["blocking"] }
 
 # Required so that doc tests will compile

@@ -62,6 +62,7 @@
 
 use fnv::FnvHashMap;
 use instant::{Duration, Instant};
+use log::warn;
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::HashSet;
 use std::fmt::Debug;
@@ -1533,12 +1534,12 @@ impl Style {
 
             // Unparsed. TODO: Log the error.
             Property::Unparsed(unparsed) => {
-                println!("Unparsed: {}", unparsed.name);
+                warn!("Unparsed: {}", unparsed.name);
             }
 
             // TODO: Custom property support
             Property::Custom(custom) => {
-                println!("Custom Property: {}", custom.name);
+                warn!("Custom Property: {}", custom.name);
             }
 
             _ => {}

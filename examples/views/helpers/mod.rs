@@ -4,6 +4,9 @@ use vizia::{
     prelude::*,
 };
 
+use log::LevelFilter;
+use std::error::Error;
+
 use lazy_static::lazy_static;
 
 lazy_static! {
@@ -43,6 +46,8 @@ pub struct ExamplePage {}
 
 impl ExamplePage {
     pub fn vertical(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
+        setup_logging().expect("Failed to init logging");
+
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
 
         Self {}.build(cx, |cx| {
@@ -102,6 +107,8 @@ impl ExamplePage {
         })
     }
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
+        setup_logging().expect("Failed to init logging");
+
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
 
         Self {}.build(cx, |cx| {
@@ -163,3 +170,27 @@ impl ExamplePage {
 }
 
 impl View for ExamplePage {}
+
+pub fn setup_logging() -> Result<(), Box<dyn Error>> {
+    #[cfg(debug_assertions)]
+    const MAIN_LOG_LEVEL: LevelFilter = LevelFilter::Debug;
+    #[cfg(not(debug_assertions))]
+    const MAIN_LOG_LEVEL: LevelFilter = LevelFilter::Info;
+
+    fern::Dispatch::new()
+        // Perform allocation-free log formatting
+        .format(move |out, message, record| {
+            out.finish(format_args!("[{}][{}] {}", record.target(), record.level(), message))
+        })
+        // Add blanket level filter
+        .level(MAIN_LOG_LEVEL)
+        .level_for("cosmic_text::buffer", LevelFilter::Warn)
+        .level_for("selectors::matching", LevelFilter::Warn)
+        .level_for("cosmic_text::font::system::std", LevelFilter::Warn)
+        // Output to stdout
+        .chain(std::io::stdout())
+        // Apply globally
+        .apply()?;
+
+    Ok(())
+}
