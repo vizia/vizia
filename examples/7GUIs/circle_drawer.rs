@@ -37,7 +37,7 @@ const STYLE: &str = r#"
 
     .dialog-box vstack {
         child-space: 1s;
-        row-between: 10px;
+        row-between: 15px;
     }
 
     .dialog-box vstack slider {
@@ -64,17 +64,17 @@ struct CircleData {
     selected: Option<usize>,
 }
 
-enum UndoRedoState {
+enum UndoRedoAction {
     Circle(Circle),
-    ChangeRadius(usize, f32),
+    RadiusChange(usize, f32),
 }
 
 #[derive(Lens)]
 struct CircleDrawerData {
     circles_data: CircleData,
     /// Undo redo
-    undo_list: Vec<UndoRedoState>,
-    redo_list: Vec<UndoRedoState>,
+    undo_list: Vec<UndoRedoAction>,
+    redo_list: Vec<UndoRedoAction>,
     radius_before: f32,
     /// is right click menu open
     menu_open: bool,
@@ -101,12 +101,12 @@ impl Default for CircleDrawerData {
 
 enum CircleDrawerEvent {
     AddCircle(f32, f32),
+    TrySelectCircle(f32, f32),
+    ChangeRadius(f32),
     Undo,
     Redo,
-    TrySelectCircle(f32, f32),
     ToggleRightMenu,
     ToggleDialog,
-    ChangeRadius(f32),
 }
 
 impl CircleDrawerData {
@@ -124,19 +124,29 @@ impl Model for CircleDrawerData {
                     let circle = Circle { x, y, r: 26.0 };
                     self.circles_data.selected = Some(self.circles_data.circles.len());
                     self.circles_data.circles.push(circle);
-                    self.undo_list.push(UndoRedoState::Circle(circle));
+                    self.undo_list.push(UndoRedoAction::Circle(circle));
                     self.redo_list.clear(); // we need to clear redo list in each new event
+                }
+                CircleDrawerEvent::TrySelectCircle(x, y) => {
+                    if !(self.dialog_open || self.menu_open) {
+                        self.update_selected(x, y)
+                    }
+                }
+                CircleDrawerEvent::ChangeRadius(r) => {
+                    if let Some(idx) = self.circles_data.selected {
+                        self.circles_data.circles[idx].r = r;
+                    }
                 }
                 CircleDrawerEvent::Undo => {
                     let last = self.undo_list.remove(self.undo_list.len() - 1);
 
                     match last {
-                        UndoRedoState::Circle(_) => {
+                        UndoRedoAction::Circle(_) => {
                             self.redo_list.push(last);
                             self.circles_data.circles.pop(); // remove the last circle
                         }
-                        UndoRedoState::ChangeRadius(idx, r) => {
-                            self.redo_list.push(UndoRedoState::ChangeRadius(
+                        UndoRedoAction::RadiusChange(idx, r) => {
+                            self.redo_list.push(UndoRedoAction::RadiusChange(
                                 idx,
                                 self.circles_data.circles[idx].r, // store the current radius in redo list
                             ));
@@ -148,22 +158,17 @@ impl Model for CircleDrawerData {
                     let last = self.redo_list.remove(self.redo_list.len() - 1);
 
                     match last {
-                        UndoRedoState::Circle(c) => {
+                        UndoRedoAction::Circle(c) => {
                             self.undo_list.push(last);
                             self.circles_data.circles.push(c);
                         }
-                        UndoRedoState::ChangeRadius(idx, r) => {
-                            self.undo_list.push(UndoRedoState::ChangeRadius(
+                        UndoRedoAction::RadiusChange(idx, r) => {
+                            self.undo_list.push(UndoRedoAction::RadiusChange(
                                 idx,
                                 self.circles_data.circles[idx].r, // store the current radius in undo list
                             ));
                             self.circles_data.circles[idx].r = r // update the radius
                         }
-                    }
-                }
-                CircleDrawerEvent::TrySelectCircle(x, y) => {
-                    if !(self.dialog_open || self.menu_open) {
-                        self.update_selected(x, y)
                     }
                 }
                 CircleDrawerEvent::ToggleRightMenu => {
@@ -174,11 +179,12 @@ impl Model for CircleDrawerData {
                         self.menu_open = true;
                         self.menu_posx = Pixels(x);
                         self.menu_posy = Pixels(y);
-                    } else if !self.dialog_open {
-                        self.menu_open = false;
-                        self.update_selected(x, y);
                     } else {
                         self.menu_open = false;
+                    }
+
+                    if !self.dialog_open {
+                        self.update_selected(x, y);
                     }
                 }
                 CircleDrawerEvent::ToggleDialog => {
@@ -191,7 +197,7 @@ impl Model for CircleDrawerData {
                         self.radius_before = radius;
                     } else {
                         if self.radius_before != radius {
-                            self.undo_list.push(UndoRedoState::ChangeRadius(
+                            self.undo_list.push(UndoRedoAction::RadiusChange(
                                 self.circles_data.selected.unwrap(),
                                 self.radius_before,
                             ));
@@ -202,11 +208,6 @@ impl Model for CircleDrawerData {
                         let y = cx.mouse().cursory;
 
                         self.update_selected(x, y);
-                    }
-                }
-                CircleDrawerEvent::ChangeRadius(r) => {
-                    if let Some(idx) = self.circles_data.selected {
-                        self.circles_data.circles[idx].r = r;
                     }
                 }
             }
@@ -232,16 +233,16 @@ impl View for CircleDrawerCanvas {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|event, _| match event {
-            WindowEvent::MouseDown(button) => {
-                let x = cx.mouse().cursorx;
-                let y = cx.mouse().cursory;
+            WindowEvent::MouseDown(button) => match button {
+                MouseButton::Left => {
+                    let x = cx.mouse().cursorx;
+                    let y = cx.mouse().cursory;
 
-                match button {
-                    MouseButton::Left => cx.emit(CircleDrawerEvent::AddCircle(x, y)),
-                    MouseButton::Right => cx.emit(CircleDrawerEvent::ToggleRightMenu),
-                    _ => (),
+                    cx.emit(CircleDrawerEvent::AddCircle(x, y))
                 }
-            }
+                MouseButton::Right => cx.emit(CircleDrawerEvent::ToggleRightMenu),
+                _ => (),
+            },
             WindowEvent::MouseMove(x, y) => cx.emit(CircleDrawerEvent::TrySelectCircle(*x, *y)),
             _ => (),
         })
