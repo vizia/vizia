@@ -106,7 +106,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         quote! {
             #[doc = #struct_docs]
             #[allow(non_camel_case_types)]
-            #[derive(Copy, Clone, Hash, PartialEq, Eq)]
+            #[derive(Hash, PartialEq, Eq)]
             #struct_vis struct #field_name#lens_ty_generics(#(#phantom_decls),*);
 
             impl #lens_ty_generics #field_name#lens_ty_generics{
@@ -121,6 +121,16 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
                     write!(f,"{}:{}",stringify!(#struct_type), stringify!(#field_name))
                 }
             }
+
+            impl #lens_ty_generics Clone for #field_name#lens_ty_generics  {
+                fn clone(&self) -> #field_name#lens_ty_generics {
+                    *self
+                }
+            }
+
+            impl #lens_ty_generics Copy for #field_name#lens_ty_generics {}
+
+
         }
     });
 
@@ -189,7 +199,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         #[doc = #mod_docs]
         #module_vis mod #twizzled_name {
             #(#defs)*
-            #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+            #[derive(Debug, Hash, PartialEq, Eq)]
             #[doc = #root_docs]
             #[allow(non_camel_case_types)]
             #struct_vis struct root#lens_ty_generics(#(#phantom_decls),*);
@@ -199,6 +209,14 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
                     Self(#(#phantom_inits),*)
                 }
             }
+
+            impl #lens_ty_generics Clone for root#lens_ty_generics  {
+                fn clone(&self) -> root#lens_ty_generics {
+                    *self
+                }
+            }
+
+            impl #lens_ty_generics Copy for root#lens_ty_generics {}
         }
 
         #(#impls)*

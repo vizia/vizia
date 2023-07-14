@@ -10,9 +10,11 @@ mod resource;
 
 use instant::Instant;
 use std::any::{Any, TypeId};
+use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Mutex;
+use vizia_id::IdManager;
 
 #[cfg(all(feature = "clipboard", feature = "x11"))]
 use copypasta::ClipboardContext;
@@ -29,7 +31,7 @@ pub use event::*;
 pub use proxy::*;
 pub use resource::*;
 
-use crate::binding::BindingHandler;
+use crate::binding::{BindingHandler, MapId};
 use crate::cache::CachedData;
 use crate::environment::{Environment, ThemeMode};
 use crate::events::ViewHandler;
@@ -42,7 +44,6 @@ use crate::prelude::*;
 use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::style::{PseudoClassFlags, Style};
 use crate::text::{TextConfig, TextContext};
-use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::TreeExt;
 use vizia_storage::{ChildIterator, SparseSet};
@@ -54,6 +55,14 @@ static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css"
 type Views = FnvHashMap<Entity, Box<dyn ViewHandler>>;
 type Models = SparseSet<ModelDataStore>;
 type Bindings = FnvHashMap<Entity, Box<dyn BindingHandler>>;
+
+thread_local! {
+    pub static MAP_MANAGER: RefCell<IdManager<MapId>> = RefCell::new(IdManager::new());
+    // Store of mapping functions used for lens maps.
+    pub static MAPS: RefCell<HashMap<MapId, (Entity, Box<dyn Any>)>> = RefCell::new(HashMap::new());
+    // The 'current' entity which is used for storing lens map mapping functions as per above.
+    pub static CURRENT: RefCell<Entity> = RefCell::new(Entity::root());
+}
 
 /// The main storage and control object for a Vizia application.
 pub struct Context {
@@ -231,7 +240,9 @@ impl Context {
     pub fn with_current<T>(&mut self, e: Entity, f: impl FnOnce(&mut Context) -> T) -> T {
         let prev = self.current;
         self.current = e;
+        CURRENT.with(|f| *f.borrow_mut() = e);
         let ret = f(self);
+        CURRENT.with(|f| *f.borrow_mut() = prev);
         self.current = prev;
         ret
     }
@@ -418,6 +429,25 @@ impl Context {
                     }
                 }
             }
+
+            // Remove any map lenses associated with the entity.
+            let ids = MAPS.with(|f| {
+                let ids = f
+                    .borrow()
+                    .iter()
+                    .filter(|(_, map)| map.0 == *entity)
+                    .map(|(id, _)| *id)
+                    .collect::<Vec<_>>();
+                f.borrow_mut().retain(|_, map| map.0 != *entity);
+
+                ids
+            });
+
+            MAP_MANAGER.with(|f| {
+                for id in ids {
+                    f.borrow_mut().destroy(id);
+                }
+            });
 
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);

@@ -325,6 +325,10 @@ path = "examples/custom_modifiers.rs"
 name = "keyframes"
 path = "examples/keyframes.rs"
 
+[[example]]
+name = "lens_map"
+path = "examples/lens_map.rs"
+
 
 [features]
 default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts"]
