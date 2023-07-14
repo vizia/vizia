@@ -60,7 +60,7 @@ where
                     }
                 });
             })
-            .bind(lens.clone(), move |handle, val| {
+            .bind(lens, move |handle, val| {
                 if val.get(&handle) && capture_focus {
                     handle.lock_focus_to_within();
                 }
