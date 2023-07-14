@@ -106,8 +106,14 @@ enum CircleDrawerEvent {
 
 impl CircleDrawerData {
     fn update_selected(&mut self, x: f32, y: f32) {
-        self.circles_data.selected =
-            self.circles_data.circles.iter().rev().position(|c| distance(c.x, c.y, x, y) < c.r);
+        self.circles_data.selected = self
+            .circles_data
+            .circles
+            .iter()
+            .enumerate()
+            .rev()
+            .find(|(_, c)| distance(c.x, c.y, x, y) < c.r)
+            .map(|(i, _)| i);
     }
 }
 
