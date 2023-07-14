@@ -19,15 +19,14 @@ impl TabView {
     {
         Self { selected_index: 0, is_vertical: false }
             .build(cx, move |cx| {
-                let lens2 = lens.clone();
                 let content2 = content.clone();
                 // Tab headers
-                ScrollView::new(cx, 0.0, 0.0, true, true, |cx| {
+                ScrollView::new(cx, 0.0, 0.0, true, true, move |cx| {
                     //VStack::new(cx, move |cx| {
-                    Binding::new(cx, lens.clone().map(|list| list.len()), move |cx, list_length| {
+                    Binding::new(cx, lens.map(|list| list.len()), move |cx, list_length| {
                         let list_length = list_length.get_fallible(cx).map_or(0, |d| d);
                         for index in 0..list_length {
-                            let l = lens.clone().index(index);
+                            let l = lens.index(index);
                             let builder = (content2)(cx, l).header;
                             TabHeader::new(cx, index, builder)
                                 .bind(TabView::selected_index, move |handle, selected_index| {
@@ -52,7 +51,7 @@ impl TabView {
                 VStack::new(cx, |cx| {
                     Binding::new(cx, TabView::selected_index, move |cx, selected| {
                         let selected = selected.get(cx);
-                        let l = lens2.clone().index(selected);
+                        let l = lens.index(selected);
                         ((content)(cx, l).content)(cx);
                     });
                 })

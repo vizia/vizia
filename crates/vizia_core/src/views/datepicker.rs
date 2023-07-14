@@ -170,7 +170,6 @@ impl Datepicker {
                     for y in 0..6 {
                         HStack::new(cx, |cx| {
                             for x in 0..7 {
-                                let l = lens.clone();
                                 Label::new(cx, "").bind(
                                     Datepicker::view_date,
                                     move |handle, view_date| {
@@ -179,7 +178,7 @@ impl Datepicker {
                                         let (day_number, disabled) =
                                             Self::get_day_number(y, x, &view_date);
 
-                                        handle.bind(l.clone(), move |handle, selected_date| {
+                                        handle.bind(lens, move |handle, selected_date| {
                                             let selected_date = selected_date.get(handle.cx);
 
                                             handle

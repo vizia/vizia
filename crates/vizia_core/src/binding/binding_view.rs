@@ -1,7 +1,8 @@
 use std::any::TypeId;
 use std::collections::{HashMap, HashSet};
 
-use crate::binding::{BasicStore, LensCache, Store, StoreId};
+use crate::binding::{BasicStore, Store, StoreId};
+use crate::context::{CURRENT, MAPS, MAP_MANAGER};
 use crate::model::ModelOrView;
 use crate::prelude::*;
 
@@ -51,7 +52,9 @@ where
         cx.style.add(id);
         cx.tree.set_ignored(id, true);
 
-        let binding = Self { entity: id, lens: lens.clone(), content: Some(Box::new(builder)) };
+        let binding = Self { entity: id, lens, content: Some(Box::new(builder)) };
+
+        CURRENT.with(|f| *f.borrow_mut() = id);
 
         let ancestors = cx.current().parent_iter(&cx.tree).collect::<HashSet<_>>();
         let new_ancestors = id.parent_iter(&cx.tree).collect::<Vec<_>>();
@@ -65,7 +68,7 @@ where
         ) where
             L::Target: Data,
         {
-            let key = lens.cache_key();
+            let key = lens.id();
 
             if let Some(store) = stores.get_mut(&key) {
                 let observers = store.observers();
@@ -144,8 +147,30 @@ pub(crate) trait BindingHandler {
 impl<L: 'static + Lens> BindingHandler for Binding<L> {
     fn update(&mut self, cx: &mut Context) {
         cx.remove_children(cx.current());
+
+        let ids = MAPS.with(|f| {
+            let ids = f
+                .borrow()
+                .iter()
+                .filter(|(_, map)| map.0 == self.entity)
+                .map(|(id, _)| *id)
+                .collect::<Vec<_>>();
+            f.borrow_mut().retain(|_, map| map.0 != self.entity);
+
+            ids
+        });
+
+        MAP_MANAGER.with(|f| {
+            for id in ids {
+                f.borrow_mut().destroy(id);
+            }
+        });
+
+        // let parent = cx.tree.get_layout_parent(self.entity).unwrap();
+
         if let Some(builder) = &self.content {
-            (builder)(cx, self.lens.clone());
+            CURRENT.with(|f| *f.borrow_mut() = self.entity);
+            (builder)(cx, self.lens);
         }
     }
 
@@ -154,7 +179,7 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
             if let Some(model_data_store) = cx.data.get_mut(&entity) {
                 // Check for model store
                 if model_data_store.models.get(&TypeId::of::<L::Source>()).is_some() {
-                    let key = self.lens.cache_key();
+                    let key = self.lens.id();
 
                     if let Some(store) = model_data_store.stores.get_mut(&key) {
                         store.remove_observer(&self.entity);
@@ -170,7 +195,7 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
                 // Check for view store
                 if let Some(view_handler) = cx.views.get(&entity) {
                     if view_handler.as_any_ref().is::<L::Source>() {
-                        let key = self.lens.cache_key();
+                        let key = self.lens.id();
 
                         if let Some(store) = model_data_store.stores.get_mut(&key) {
                             store.remove_observer(&self.entity);

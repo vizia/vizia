@@ -353,6 +353,21 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             }
 
             #[cfg(debug_assertions)]
+            if *code == Code::KeyP && context.modifiers.contains(Modifiers::CTRL) {
+                for entity in TreeIterator::full(&context.tree) {
+                    if let Some(model_data_store) = context.data.get(entity) {
+                        print!(
+                            "{}{:?}",
+                            entity,
+                            model_data_store.models.keys().collect::<Vec<_>>()
+                        );
+                        print!("{:?}", model_data_store.stores.keys().collect::<Vec<_>>());
+                        println!();
+                    }
+                }
+            }
+
+            #[cfg(debug_assertions)]
             if *code == Code::KeyI && context.modifiers.contains(Modifiers::CTRL) {
                 println!("Entity tree");
                 let (tree, views, cache) = (&context.tree, &context.views, &context.cache);

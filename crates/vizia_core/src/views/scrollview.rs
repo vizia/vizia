@@ -137,7 +137,7 @@ impl Model for ScrollData {
 
 #[derive(Lens)]
 pub struct ScrollView<L: Lens> {
-    data: L,
+    lens: L,
     scroll_to_cursor: bool,
 }
 
@@ -153,7 +153,7 @@ impl ScrollView<Wrapper<scroll_data_derived_lenses::root>> {
     where
         F: 'static + FnOnce(&mut Context),
     {
-        Self { data: ScrollData::root, scroll_to_cursor: false }
+        Self { lens: ScrollData::root, scroll_to_cursor: false }
             .build(cx, move |cx| {
                 ScrollData {
                     scroll_x: initial_x,
@@ -190,7 +190,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
             panic!("ScrollView::custom requires a ScrollData to be built into a parent");
         }
 
-        Self { data: lens.clone(), scroll_to_cursor: false }.build(cx, |cx| {
+        Self { lens, scroll_to_cursor: false }.build(cx, |cx| {
             Self::common_builder(cx, lens, content, scroll_x, scroll_y);
         })
     }
@@ -199,7 +199,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
     where
         F: 'static + FnOnce(&mut Context),
     {
-        ScrollContent::new(cx, content).bind(lens.clone(), |handle, data| {
+        ScrollContent::new(cx, content).bind(lens, |handle, data| {
             let scale_factor = handle.scale_factor();
             let data = data.get(handle.cx);
             let left =
@@ -212,9 +212,8 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         if scroll_y {
             Scrollbar::new(
                 cx,
-                lens.clone().then(ScrollData::scroll_y),
-                lens.clone()
-                    .then(RatioLens::new(ScrollData::container_height, ScrollData::inner_height)),
+                lens.then(ScrollData::scroll_y),
+                lens.then(RatioLens::new(ScrollData::container_height, ScrollData::inner_height)),
                 Orientation::Vertical,
                 |cx, value| {
                     cx.emit(ScrollEvent::SetY(value));
@@ -227,7 +226,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         if scroll_x {
             Scrollbar::new(
                 cx,
-                lens.clone().then(ScrollData::scroll_x),
+                lens.then(ScrollData::scroll_x),
                 lens.then(RatioLens::new(ScrollData::container_width, ScrollData::inner_width)),
                 Orientation::Horizontal,
                 |cx, value| {
@@ -262,7 +261,7 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
                     if cx.modifiers.contains(Modifiers::SHIFT) { (-*y, -*x) } else { (-*x, -*y) };
 
                 // What percentage of the negative space does this cross?
-                let data = self.data.get(cx);
+                let data = self.lens.get(cx);
                 if x != 0.0 && data.inner_width > data.container_width {
                     let negative_space = data.inner_width - data.container_width;
                     let logical_delta = x * SCROLL_SENSITIVITY / negative_space;

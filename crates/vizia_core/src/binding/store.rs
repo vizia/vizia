@@ -10,8 +10,8 @@ pub(crate) fn next_uuid() -> u64 {
     UUID.fetch_add(1, Ordering::Relaxed)
 }
 
-#[derive(Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) enum StoreId {
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum StoreId {
     Type(TypeId),
     Uuid(u64),
 }

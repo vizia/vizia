@@ -36,7 +36,7 @@ impl Timepicker {
     {
         Self { on_change: None }
             .build(cx, move |cx| {
-                DigitalTimepicker::new(cx, lens.clone())
+                DigitalTimepicker::new(cx, lens)
                     .on_change(|cx, time| cx.emit(TimepickerEvent::Change(time)));
                 AnalogTimepicker::new(cx, lens)
                     .on_change(|cx, time| cx.emit(TimepickerEvent::Change(time)))
@@ -103,24 +103,21 @@ where
     T: Timelike + Data,
 {
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
-        Self { lens: lens.clone(), p: PhantomData, on_change: None }
+        Self { lens, p: PhantomData, on_change: None }
             .build(cx, move |cx| {
                 Spinbox::custom(
                     cx,
                     |cx| {
-                        Textbox::new(
-                            cx,
-                            lens.clone().map(|time| format!("{:#02}", time.hour12().1)),
-                        )
-                        .on_submit(|cx, text, _| {
-                            if let Ok(parsed) = text.parse::<u32>() {
-                                if parsed < 24 {
-                                    cx.emit(DigitalTimepickerEvent::SetHour(parsed))
+                        Textbox::new(cx, lens.map(|time| format!("{:#02}", time.hour12().1)))
+                            .on_submit(|cx, text, _| {
+                                if let Ok(parsed) = text.parse::<u32>() {
+                                    if parsed < 24 {
+                                        cx.emit(DigitalTimepickerEvent::SetHour(parsed))
+                                    }
                                 }
-                            }
-                        })
-                        .width(Pixels(38.))
-                        .overflow(Overflow::Hidden)
+                            })
+                            .width(Pixels(38.))
+                            .overflow(Overflow::Hidden)
                     },
                     SpinboxKind::Vertical,
                     SpinboxIcons::PlusMinus,
@@ -138,7 +135,7 @@ where
                 Spinbox::custom(
                     cx,
                     |cx| {
-                        Textbox::new(cx, lens.clone().map(|time| format!("{:#02}", time.minute())))
+                        Textbox::new(cx, lens.map(|time| format!("{:#02}", time.minute())))
                             .on_submit(|cx, text, _| {
                                 if let Ok(parsed) = text.parse::<u32>() {
                                     if parsed < 60 {
@@ -375,7 +372,7 @@ where
 {
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
         Self {
-            lens: lens.clone(),
+            lens,
             p: PhantomData,
             page: AnalogTimepickerPage::Hours,
             on_change: None,
@@ -386,7 +383,7 @@ where
             HStack::new(cx, move |cx| {
                 Binding::new(cx, Self::page, move |cx, page| match page.get(cx) {
                     AnalogTimepickerPage::Hours => {
-                        Binding::new(cx, lens.clone().map(|time| time.hour()), |cx, hours| {
+                        Binding::new(cx, lens.map(|time| time.hour()), |cx, hours| {
                             let hours = hours.get(cx);
 
                             let angle = (hours) as f32 * 30.0;
@@ -421,14 +418,12 @@ where
                                 .position_type(PositionType::SelfDirected)
                                 .on_press(move |ex| ex.emit(AnalogTimepickerEvent::SetHours(i + 1)))
                                 .class("marker")
-                                .checked(
-                                    lens.clone().map(move |time| time.hour12().1 == (i + 1) as u32),
-                                );
+                                .checked(lens.map(move |time| time.hour12().1 == (i + 1) as u32));
                         }
                     }
 
                     AnalogTimepickerPage::Minutes => {
-                        Binding::new(cx, lens.clone().map(|time| time.minute()), |cx, minutes| {
+                        Binding::new(cx, lens.map(|time| time.minute()), |cx, minutes| {
                             let minutes = minutes.get(cx);
 
                             let angle = (minutes / 5) as f32 * 30.0;
@@ -456,14 +451,12 @@ where
                                     ex.emit(AnalogTimepickerEvent::SetMinutes(i * 5))
                                 })
                                 .class("marker")
-                                .checked(
-                                    lens.clone().map(move |time| time.minute() / 5 == i as u32),
-                                );
+                                .checked(lens.map(move |time| time.minute() / 5 == i as u32));
                         }
                     }
 
                     AnalogTimepickerPage::Seconds => {
-                        Binding::new(cx, lens.clone().map(|time| time.second()), |cx, seconds| {
+                        Binding::new(cx, lens.map(|time| time.second()), |cx, seconds| {
                             let seconds = seconds.get(cx);
 
                             let angle = (seconds / 5) as f32 * 30.0;
@@ -482,9 +475,7 @@ where
                                     ex.emit(AnalogTimepickerEvent::SetSeconds(i * 5))
                                 })
                                 .class("marker")
-                                .checked(
-                                    lens.clone().map(move |time| time.second() / 5 == i as u32),
-                                );
+                                .checked(lens.map(move |time| time.second() / 5 == i as u32));
                         }
                     }
                 });
