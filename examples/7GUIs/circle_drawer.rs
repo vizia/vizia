@@ -1,5 +1,5 @@
 use vizia::prelude::*;
-use vizia_core::vg::{Paint, Path};
+use vizia::vg::{Paint, Path};
 
 const STYLE: &str = r#"
     :root {
@@ -25,13 +25,10 @@ const STYLE: &str = r#"
         child-space: 1s;
         width: 460px;
         height: 100px;
-        top: 1s;
-        left: 1s;
-        right: 1s;
+        space: 1s;
         bottom: 40px;
         background-color: rgba(255, 255, 255, 0.7);
-        border-color: black;
-        border-width: 1px;
+        border: 1px black;
         border-radius: 10%;
     }
 
@@ -58,9 +55,7 @@ struct Circle {
 
 #[derive(Clone, Default, Data, Lens)]
 struct CircleData {
-    /// circles
     circles: Vec<Circle>,
-    /// index of current selected circle
     selected: Option<usize>,
 }
 
@@ -112,7 +107,7 @@ enum CircleDrawerEvent {
 impl CircleDrawerData {
     fn update_selected(&mut self, x: f32, y: f32) {
         self.circles_data.selected =
-            self.circles_data.circles.iter().position(|c| distance(c.x, c.y, x, y) < c.r);
+            self.circles_data.circles.iter().rev().position(|c| distance(c.x, c.y, x, y) < c.r);
     }
 }
 
@@ -138,7 +133,7 @@ impl Model for CircleDrawerData {
                     }
                 }
                 CircleDrawerEvent::Undo => {
-                    let last = self.undo_list.remove(self.undo_list.len() - 1);
+                    let last = self.undo_list.pop().unwrap();
 
                     match last {
                         UndoRedoAction::Circle(_) => {
@@ -155,7 +150,7 @@ impl Model for CircleDrawerData {
                     }
                 }
                 CircleDrawerEvent::Redo => {
-                    let last = self.redo_list.remove(self.redo_list.len() - 1);
+                    let last = self.redo_list.pop().unwrap();
 
                     match last {
                         UndoRedoAction::Circle(c) => {
