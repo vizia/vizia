@@ -23,19 +23,11 @@ pub trait Lens: 'static + Copy {
     fn name(&self) -> Option<&'static str> {
         None
     }
-}
 
-pub(crate) trait LensCache: Lens {
-    fn cache_key(&self) -> StoreId {
-        if std::mem::size_of::<Self>() == 0 {
-            StoreId::Type(TypeId::of::<Self>())
-        } else {
-            StoreId::Uuid(next_uuid())
-        }
+    fn id(&self) -> StoreId {
+        StoreId::Type(TypeId::of::<Self>())
     }
 }
-
-impl<T: Lens> LensCache for T {}
 
 /// Helpers for constructing more complex `Lens`es.
 pub trait LensExt: Lens {
@@ -114,7 +106,7 @@ pub trait LensExt: Lens {
         MAPS.with(|f| {
             f.borrow_mut().insert(id, (entity, Box::new(MapState { closure: Rc::new(map) })))
         });
-        Map { id, lens: self, o: PhantomData }
+        Map { id, store_id: next_uuid(), lens: self, o: PhantomData }
     }
 
     fn map_ref<O: 'static, F: 'static + Fn(&Self::Target) -> &O>(self, map: F) -> MapRef<Self, O> {
@@ -155,6 +147,7 @@ pub struct MapRefState<T, O> {
 #[derive(Debug)]
 pub struct Map<L: Lens, O> {
     id: MapId,
+    store_id: u64,
     lens: L,
     o: PhantomData<O>,
 }
@@ -188,6 +181,10 @@ impl<L: Lens, O: 'static> Lens for Map<L, O> {
             });
             map(t.map(|tt| (closure.unwrap())(tt)).as_ref())
         })
+    }
+
+    fn id(&self) -> StoreId {
+        StoreId::Uuid(self.store_id)
     }
 }
 
@@ -273,13 +270,14 @@ impl<T: Copy, U: Copy> Copy for Then<T, U> {}
 
 pub struct Index<A, T> {
     index: usize,
+    id: u64,
     pa: PhantomData<A>,
     pt: PhantomData<T>,
 }
 
 impl<A, T> Index<A, T> {
     pub fn new(index: usize) -> Self {
-        Self { index, pa: PhantomData, pt: PhantomData }
+        Self { index, id: next_uuid(), pa: PhantomData, pt: PhantomData }
     }
 
     pub fn idx(&self) -> usize {
@@ -311,6 +309,10 @@ where
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
         let data = source.get(self.index);
         map(data)
+    }
+
+    fn id(&self) -> StoreId {
+        StoreId::Uuid(self.id)
     }
 }
 
