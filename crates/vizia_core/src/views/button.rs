@@ -129,3 +129,17 @@ impl View for Button {
         });
     }
 }
+
+pub struct ButtonGroup {}
+
+impl ButtonGroup {
+    pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context) + 'static) -> Handle<Self> {
+        Self {}.build(cx, content).layout_type(LayoutType::Row)
+    }
+}
+
+impl View for ButtonGroup {
+    fn element(&self) -> Option<&'static str> {
+        Some("button-group")
+    }
+}

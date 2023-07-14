@@ -50,7 +50,7 @@ pub fn button2(cx: &mut Context) {
             Button::new(cx, |_| {}, |cx| Label::new(cx, "Outline Button")).class("outline");
             Button::new(cx, |_| {}, |cx| Label::new(cx, "Ghost Button")).class("ghost");
         })
-        .class("region");;
+        .class("region");
 
     Label::new(cx, "Buttons with icons and label").class("header");
     Label::new(cx, "An HStack can be used to add an icon as well as a label to a button. The icon can be positioned before or after the label by changing the order of the declarations.")

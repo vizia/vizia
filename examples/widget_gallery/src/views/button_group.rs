@@ -1,17 +1,26 @@
+use vizia::{prelude::*, ICON_TRASH, ICON_PENCIL, ICON_CHECK};
+
 pub fn button_group(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "Button").class("title");
-        Label::new(cx, "A button can be used to send an event when pressed. Typically they are used to trigger an action.")
+        Label::new(cx, "Button Group").class("title");
+        Label::new(cx, "Buttons can be grouped by wrapping them in a ButtonGroup view.")
         .class("paragraph");
 
-        Label::new(cx, r#"Button::new(cx, |cx|{...}, |cx| Label::new(cx, "Press Me"));"#).class("code");
+        Label::new(cx, r#"ButtonGroup::new(cx, |cx|{
+    Button::new(cx, |_| {}, |cx| Label::new(cx, "One"));
+    Button::new(cx, |_| {}, |cx| Label::new(cx, "Two"));
+    Button::new(cx, |_| {}, |cx| Label::new(cx, "Three"));
+});"#).class("code");
+
+        
         
         Label::new(cx, "Basic Buttons").class("header");
         HStack::new(cx, |cx| {
-            Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
-            Button::new(cx, |_| {}, |cx| Label::new(cx, "Accent Button")).class("accent");
-            Button::new(cx, |_| {}, |cx| Label::new(cx, "Outline Button")).class("outline");
-            Button::new(cx, |_| {}, |cx| Label::new(cx, "Ghost Button")).class("ghost");
+            ButtonGroup::new(cx, |cx|{
+                Button::new(cx, |_| {}, |cx| Label::new(cx, "One"));
+                Button::new(cx, |_| {}, |cx| Label::new(cx, "Two"));
+                Button::new(cx, |_| {}, |cx| Label::new(cx, "Three"));
+            });
         })
         .class("region");;
     

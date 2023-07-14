@@ -20,7 +20,7 @@ fn main() {
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
                         button(cx);
-                        checkbox(cx);
+                        // checkbox(cx);
                         // chip(cx);
                         // combobox(cx);
                         // datepicker(cx);
@@ -56,6 +56,18 @@ fn main() {
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
                         button2(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
+
+            "Button Group" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).class("tab-name").hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        button_group(cx);
                     })
                     .class("widgets");
                 },
@@ -211,7 +223,7 @@ fn main() {
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                        // radiobutton(cx);
+                        radiobutton(cx);
                     })
                     .class("widgets");
                 },
@@ -355,6 +367,6 @@ fn main() {
         .vertical();
     })
     .title("Widget Gallery")
-    .inner_size((1100, 600))
+    .inner_size((1400, 600))
     .run();
 }

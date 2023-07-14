@@ -13,6 +13,7 @@ impl AppData {
             tabs: vec![
                 "All",
                 "Button",
+                "Button Group",
                 "Label",
                 "Checkbox",
                 "Chip",

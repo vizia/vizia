@@ -49,6 +49,23 @@ label.paragraph {
     bottom: 12px;
 }
 
+demo-region {
+    border-width: 1px;
+    border-color: rgb(210, 210, 210);
+    border-radius: 10px;
+    child-space: 40px;
+    child-left: 1s;
+    child-right: 1s;
+    height: auto;
+    col-between: 12px;
+}
+
+demo-region > .divider {
+    height: 1px;
+    width: 1s;
+    background-color: rgb(210, 210, 210);
+}
+
 hstack.region {
     border-width: 1px;
     border-color: rgb(210, 210, 210);
@@ -65,12 +82,12 @@ vstack.group {
     row-between: 12px;
 }
 
-group {
+form-group {
     size: auto;
     row-between: 12px;
 }
 
-group > .legend {
+form-group > .legend {
     bottom: 8px;
     color: gray;
 }
