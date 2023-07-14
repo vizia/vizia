@@ -355,7 +355,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             #[cfg(debug_assertions)]
             if *code == Code::KeyP && context.modifiers.contains(Modifiers::CTRL) {
                 for entity in TreeIterator::full(&context.tree) {
-                    if let Some(model_data_store) = context.data.get(entity) {
+                    if let Some(model_data_store) = context.data.get(&entity) {
                         print!(
                             "{}{:?}",
                             entity,

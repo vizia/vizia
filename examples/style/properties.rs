@@ -1,4 +1,5 @@
 use lazy_static::lazy_static;
+use vizia::image;
 use vizia::prelude::*;
 
 lazy_static! {
