@@ -59,17 +59,92 @@ struct CircleData {
     selected: Option<usize>,
 }
 
+impl CircleData {
+    fn add_circle(&mut self, circle: Circle) {
+        self.selected = Some(self.circles.len());
+        self.circles.push(circle);
+    }
+
+    fn change_radius(&mut self, r: f32) {
+        if let Some(idx) = self.selected {
+            self.circles[idx].r = r;
+        }
+    }
+
+    fn update_selected(&mut self, x: f32, y: f32) {
+        self.selected = self
+            .circles
+            .iter()
+            .enumerate()
+            .rev()
+            .find(|(_, c)| distance(c.x, c.y, x, y) < c.r)
+            .map(|(i, _)| i);
+    }
+
+    fn get_selected_radius(&self) -> Option<f32> {
+        self.selected.map(|idx| self.circles[idx].r)
+    }
+}
+
 enum UndoRedoAction {
     Circle(Circle),
     RadiusChange(usize, f32),
 }
 
-#[derive(Lens)]
+#[derive(Default, Lens)]
+struct UndoRedo {
+    undo_list: Vec<UndoRedoAction>,
+    redo_list: Vec<UndoRedoAction>,
+}
+
+impl UndoRedo {
+    fn add_action(&mut self, action: UndoRedoAction) {
+        self.undo_list.push(action);
+        self.redo_list.clear(); // empty the redo list
+    }
+
+    fn undo(&mut self, circles: &mut Vec<Circle>) {
+        let last = self.undo_list.pop().unwrap();
+
+        match last {
+            UndoRedoAction::Circle(_) => {
+                self.redo_list.push(last);
+                circles.pop(); // remove the last circle
+            }
+            UndoRedoAction::RadiusChange(idx, r) => {
+                self.redo_list.push(UndoRedoAction::RadiusChange(
+                    idx,
+                    circles[idx].r, // store the current radius in redo list
+                ));
+                circles[idx].r = r; // update the radius to the old one
+            }
+        }
+    }
+
+    fn redo(&mut self, circles: &mut Vec<Circle>) {
+        let last = self.redo_list.pop().unwrap();
+
+        match last {
+            UndoRedoAction::Circle(c) => {
+                self.undo_list.push(last);
+                circles.push(c);
+            }
+            UndoRedoAction::RadiusChange(idx, r) => {
+                self.undo_list.push(UndoRedoAction::RadiusChange(
+                    idx,
+                    circles[idx].r, // store the current radius in undo list
+                ));
+                circles[idx].r = r; // restore the radius
+            }
+        }
+    }
+}
+
+#[derive(Default, Lens)]
 struct CircleDrawerData {
     circles_data: CircleData,
     /// Undo redo
-    undo_list: Vec<UndoRedoAction>,
-    redo_list: Vec<UndoRedoAction>,
+    undo_redo: UndoRedo,
     radius_before: f32,
     /// is right click menu open
     menu_open: bool,
@@ -77,21 +152,6 @@ struct CircleDrawerData {
     menu_posy: Units,
     /// is dialog box open
     dialog_open: bool,
-}
-
-impl Default for CircleDrawerData {
-    fn default() -> Self {
-        Self {
-            circles_data: CircleData::default(),
-            undo_list: Vec::new(),
-            redo_list: Vec::new(),
-            radius_before: 0.0,
-            menu_open: false,
-            menu_posx: Default::default(),
-            menu_posy: Default::default(),
-            dialog_open: false,
-        }
-    }
 }
 
 enum CircleDrawerEvent {
@@ -104,79 +164,27 @@ enum CircleDrawerEvent {
     ToggleDialog,
 }
 
-impl CircleDrawerData {
-    fn update_selected(&mut self, x: f32, y: f32) {
-        self.circles_data.selected = self
-            .circles_data
-            .circles
-            .iter()
-            .enumerate()
-            .rev()
-            .find(|(_, c)| distance(c.x, c.y, x, y) < c.r)
-            .map(|(i, _)| i);
-    }
-}
-
 impl Model for CircleDrawerData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         if let Some(event) = event.take() {
             match event {
                 CircleDrawerEvent::AddCircle(x, y) => {
                     let circle = Circle { x, y, r: 26.0 };
-                    self.circles_data.selected = Some(self.circles_data.circles.len());
-                    self.circles_data.circles.push(circle);
-                    self.undo_list.push(UndoRedoAction::Circle(circle));
-                    self.redo_list.clear(); // we need to clear redo list in each new event
+                    self.circles_data.add_circle(circle);
+                    self.undo_redo.add_action(UndoRedoAction::Circle(circle));
                 }
                 CircleDrawerEvent::TrySelectCircle(x, y) => {
                     if !(self.dialog_open || self.menu_open) {
-                        self.update_selected(x, y)
+                        self.circles_data.update_selected(x, y)
                     }
                 }
-                CircleDrawerEvent::ChangeRadius(r) => {
-                    if let Some(idx) = self.circles_data.selected {
-                        self.circles_data.circles[idx].r = r;
-                    }
-                }
-                CircleDrawerEvent::Undo => {
-                    let last = self.undo_list.pop().unwrap();
-
-                    match last {
-                        UndoRedoAction::Circle(_) => {
-                            self.redo_list.push(last);
-                            self.circles_data.circles.pop(); // remove the last circle
-                        }
-                        UndoRedoAction::RadiusChange(idx, r) => {
-                            self.redo_list.push(UndoRedoAction::RadiusChange(
-                                idx,
-                                self.circles_data.circles[idx].r, // store the current radius in redo list
-                            ));
-                            self.circles_data.circles[idx].r = r // update the radius to the old one
-                        }
-                    }
-                }
-                CircleDrawerEvent::Redo => {
-                    let last = self.redo_list.pop().unwrap();
-
-                    match last {
-                        UndoRedoAction::Circle(c) => {
-                            self.undo_list.push(last);
-                            self.circles_data.circles.push(c);
-                        }
-                        UndoRedoAction::RadiusChange(idx, r) => {
-                            self.undo_list.push(UndoRedoAction::RadiusChange(
-                                idx,
-                                self.circles_data.circles[idx].r, // store the current radius in undo list
-                            ));
-                            self.circles_data.circles[idx].r = r // update the radius
-                        }
-                    }
-                }
+                CircleDrawerEvent::ChangeRadius(r) => self.circles_data.change_radius(r),
+                CircleDrawerEvent::Undo => self.undo_redo.undo(&mut self.circles_data.circles),
+                CircleDrawerEvent::Redo => self.undo_redo.redo(&mut self.circles_data.circles),
                 CircleDrawerEvent::ToggleRightMenu => {
-                    let x = cx.mouse().cursorx;
-                    let y = cx.mouse().cursory;
-
                     if !self.menu_open && self.circles_data.selected.is_some() {
+                        let (x, y) = cx.mouse().left.pos_down;
+
                         self.menu_open = true;
                         self.menu_posx = Pixels(x);
                         self.menu_posy = Pixels(y);
@@ -185,30 +193,32 @@ impl Model for CircleDrawerData {
                     }
 
                     if !self.dialog_open {
-                        self.update_selected(x, y);
+                        let x = cx.mouse().cursorx;
+                        let y = cx.mouse().cursory;
+
+                        self.circles_data.update_selected(x, y);
                     }
                 }
                 CircleDrawerEvent::ToggleDialog => {
                     self.dialog_open ^= true;
 
-                    let radius = self.circles_data.circles[self.circles_data.selected.unwrap()].r;
+                    let radius = self.circles_data.get_selected_radius().unwrap();
 
                     if self.dialog_open {
                         // if dialog just opened save the current radius as before radius
                         self.radius_before = radius;
                     } else {
                         if self.radius_before != radius {
-                            self.undo_list.push(UndoRedoAction::RadiusChange(
+                            self.undo_redo.add_action(UndoRedoAction::RadiusChange(
                                 self.circles_data.selected.unwrap(),
                                 self.radius_before,
                             ));
-                            self.redo_list.clear(); // we need to clear redo list in each new event
                         }
 
                         let x = cx.mouse().cursorx;
                         let y = cx.mouse().cursory;
 
-                        self.update_selected(x, y);
+                        self.circles_data.update_selected(x, y);
                     }
                 }
             }
@@ -329,11 +339,15 @@ impl CircleDrawer {
 
             HStack::new(cx, |cx| {
                 Button::new(cx, |_| {}, |cx| Label::new(cx, "Undo"))
-                    .disabled(CircleDrawerData::undo_list.map(|v| v.is_empty()))
+                    .disabled(
+                        CircleDrawerData::undo_redo.then(UndoRedo::undo_list).map(|v| v.is_empty()),
+                    )
                     .on_press(|cx| cx.emit(CircleDrawerEvent::Undo));
 
                 Button::new(cx, |_| {}, |cx| Label::new(cx, "Redo"))
-                    .disabled(CircleDrawerData::redo_list.map(|v| v.is_empty()))
+                    .disabled(
+                        CircleDrawerData::undo_redo.then(UndoRedo::redo_list).map(|v| v.is_empty()),
+                    )
                     .on_press(|cx| cx.emit(CircleDrawerEvent::Redo));
             })
             .size(Auto)
