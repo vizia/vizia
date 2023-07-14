@@ -183,7 +183,7 @@ impl Model for CircleDrawerData {
                 CircleDrawerEvent::Redo => self.undo_redo.redo(&mut self.circles_data.circles),
                 CircleDrawerEvent::ToggleRightMenu => {
                     if !self.menu_open && self.circles_data.selected.is_some() {
-                        let (x, y) = cx.mouse().left.pos_down;
+                        let (x, y) = cx.mouse().right.pos_down;
 
                         self.menu_open = true;
                         self.menu_posx = Pixels(x);
