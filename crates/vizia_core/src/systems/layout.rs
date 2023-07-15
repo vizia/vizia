@@ -139,7 +139,6 @@ pub(crate) fn layout_system(cx: &mut Context) {
 
         // A relayout, retransform, or reclip, can cause the element under the cursor to change. So we push a mouse move event here to force
         // a new event cycle and the hover system to trigger.
-        #[cfg(feature = "winit")]
         if let Some(proxy) = &cx.event_proxy {
             let event = Event::new(WindowEvent::MouseMove(cx.mouse.cursorx, cx.mouse.cursory))
                 .target(Entity::root())

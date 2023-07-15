@@ -261,11 +261,14 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 );
             }
 
-            // track double-click
+            // track double/triple -click
             let new_click_time = Instant::now();
             let click_duration = new_click_time - context.click_time;
             let new_click_pos = (context.mouse.cursorx, context.mouse.cursory);
-            if click_duration <= DOUBLE_CLICK_INTERVAL && new_click_pos == context.click_pos {
+            if click_duration <= DOUBLE_CLICK_INTERVAL
+                && new_click_pos == context.click_pos
+                && *button == context.click_button
+            {
                 if context.clicks <= 2 {
                     context.clicks += 1;
                     let event = if context.clicks == 3 {
@@ -281,7 +284,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             }
             context.click_time = new_click_time;
             context.click_pos = new_click_pos;
-
+            context.click_button = *button;
             mutate_direct_or_up(meta, context.captured, context.hovered, true);
         }
         WindowEvent::MouseUp(button) => {

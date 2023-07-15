@@ -49,13 +49,34 @@ impl VirtualList {
                         }
                     });
                 })
-                .height(Pixels(num_items as f32 * height));
+                .height(list.map(move |l| Pixels(l.len() as f32 * height)));
             })
             .scroll_to_cursor(true)
             .on_scroll(|cx, _, y| {
                 cx.emit(VirtualListEvent::SetScrollY(y));
             });
         })
+        .bind(list.map(|list| list.len()), |mut handle, len| {
+            let len = len.get(&handle);
+            handle.context().emit(VirtualListEvent::SetNumItems(len));
+        })
+    }
+
+    fn recalc(&mut self, cx: &mut EventContext) {
+        let current = cx.current();
+        let dpi = cx.scale_factor();
+        let container_height = cx.cache.get_height(current) / dpi;
+        let num_items = ((container_height + self.item_height) / self.item_height).ceil() as usize;
+
+        let total_height = self.num_items as f32 * self.item_height;
+        let offsety = ((total_height - container_height) * self.scrolly).round() * dpi;
+        self.offset = (offsety / self.item_height / dpi).ceil() as usize;
+        self.offset = self.offset.saturating_sub(1);
+
+        self.visible_items.clear();
+        for i in self.offset..(self.offset + num_items) {
+            self.visible_items.push(i);
+        }
     }
 }
 
@@ -67,10 +88,21 @@ impl View for VirtualList {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|virtual_list_event, _| match virtual_list_event {
             VirtualListEvent::SetNumItems(num_items) => {
-                self.visible_items.clear();
-                for i in 0..*num_items {
-                    self.visible_items.push(i);
+                if self.num_items != *num_items {
+                    self.num_items = *num_items;
+                    self.recalc(cx);
+                    // Bit of a hack until scrollview is changed to take a lens for x/y
+                    cx.emit_custom(
+                        Event::new(ScrollEvent::SetY(0.0))
+                            .propagate(Propagation::Subtree)
+                            .origin(cx.current)
+                            .target(cx.current),
+                    );
                 }
+                // self.visible_items.clear();
+                // for i in 0..*num_items {
+                //     self.visible_items.push(i);
+                // }
             }
 
             VirtualListEvent::SetScrollY(scrolly) => {
@@ -98,21 +130,7 @@ impl View for VirtualList {
                 if geo.contains(GeoChanged::WIDTH_CHANGED)
                     || geo.contains(GeoChanged::HEIGHT_CHANGED)
                 {
-                    let current = cx.current();
-                    let dpi = cx.scale_factor();
-                    let container_height = cx.cache.get_height(current) / dpi;
-                    let num_items =
-                        ((container_height + self.item_height) / self.item_height).ceil() as usize;
-
-                    let total_height = self.num_items as f32 * self.item_height;
-                    let offsety = ((total_height - container_height) * self.scrolly).round() * dpi;
-                    self.offset = (offsety / self.item_height / dpi).ceil() as usize;
-                    self.offset = self.offset.saturating_sub(1);
-
-                    self.visible_items.clear();
-                    for i in self.offset..(self.offset + num_items) {
-                        self.visible_items.push(i);
-                    }
+                    self.recalc(cx);
                 }
             }
 

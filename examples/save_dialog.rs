@@ -4,6 +4,9 @@ const STYLE: &str = r#"
 
     .modal {
         space: 1s;
+        child-space: 8px;
+        child-left: 1s;
+        child-right: 1s;
         background-color: white;
         border-radius: 3px;
         border-width: 1px;
@@ -27,8 +30,8 @@ const STYLE: &str = r#"
     }
 
     .modal hstack {
-        child-space: 1s;
         col-between: 20px;
+        size: auto;
     }
 "#;
 
@@ -112,6 +115,7 @@ fn main() {
                 })
                 .height(Auto);
             })
+            .size(Auto)
             .row_between(Pixels(20.0))
             .height(Auto);
         })

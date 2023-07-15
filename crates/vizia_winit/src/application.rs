@@ -256,6 +256,12 @@ impl Application {
         let mut cursor_moved = false;
         let mut cursor = (0.0f32, 0.0f32);
 
+        // cx.process_events();
+
+        cx.process_data_updates();
+        cx.process_style_updates();
+        cx.process_visual_updates();
+
         let mut main_events = false;
         event_loop.run(move |event, _, control_flow| {
             let mut cx = BackendContext::new_with_event_manager(&mut context);

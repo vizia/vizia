@@ -484,7 +484,7 @@ progressbar {
 }
 
 progressbar:disabled {
-    background-color: #404040
+    background-color: #404040;
 }
 
 progressbar .progressbar-bar {

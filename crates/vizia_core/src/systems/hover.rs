@@ -48,7 +48,6 @@ pub(crate) fn hover_system(cx: &mut Context) {
                 && !pseudo_classes.contains(PseudoClassFlags::HOVER)
             {
                 pseudo_classes.set(PseudoClassFlags::HOVER, true);
-                cx.style.needs_restyle();
             }
         }
     }
@@ -134,6 +133,10 @@ fn hover_entity(
     let cursorx = cx.mouse.cursorx;
     let cursory = cx.mouse.cursory;
 
+    if cursorx < 0.0 || cursory < 0.0 {
+        return;
+    }
+
     let mut transform = parent_transform;
 
     transform.premultiply(&cx.transform());
@@ -164,6 +167,8 @@ fn hover_entity(
             {
                 if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.current) {
                     pseudo_class.set(PseudoClassFlags::OVER, true);
+
+                    cx.needs_restyle();
                 }
             }
         } else if cx
@@ -176,6 +181,8 @@ fn hover_entity(
         {
             if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.current) {
                 pseudo_class.set(PseudoClassFlags::OVER, false);
+
+                cx.needs_restyle();
             }
         }
     }

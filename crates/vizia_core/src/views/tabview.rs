@@ -8,6 +8,9 @@ pub enum TabEvent {
 pub struct TabView {
     selected_index: usize,
     is_vertical: bool,
+
+    #[lens(ignore)]
+    on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
 }
 
 impl TabView {
@@ -17,7 +20,7 @@ impl TabView {
         T: Clone + 'static,
         F: 'static + Clone + Fn(&mut Context, Then<L, Index<Vec<T>, T>>) -> TabPair,
     {
-        Self { selected_index: 0, is_vertical: false }
+        Self { selected_index: 0, is_vertical: false, on_select: None }
             .build(cx, move |cx| {
                 let content2 = content.clone();
                 // Tab headers
@@ -66,10 +69,13 @@ impl View for TabView {
         Some("tabview")
     }
 
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|tab_event, meta| match tab_event {
             TabEvent::SetSelected(index) => {
                 self.selected_index = *index;
+                if let Some(callback) = &self.on_select {
+                    (callback)(cx, self.selected_index);
+                }
                 meta.consume();
             }
         });
@@ -79,6 +85,20 @@ impl View for TabView {
 impl<'a> Handle<'a, TabView> {
     pub fn vertical(self) -> Self {
         self.modify(|tabview: &mut TabView| tabview.is_vertical = true)
+    }
+
+    pub fn on_select(self, callback: impl Fn(&mut EventContext, usize) + 'static) -> Self {
+        self.modify(|tabview: &mut TabView| tabview.on_select = Some(Box::new(callback)))
+    }
+
+    pub fn with_selected<U: Into<usize>>(mut self, selected: impl Res<U>) -> Self {
+        let entity = self.entity();
+        selected.set_or_bind(self.context(), entity, |cx, selected| {
+            let index = selected.into();
+            cx.emit(TabEvent::SetSelected(index));
+        });
+
+        self
     }
 }
 
@@ -118,9 +138,7 @@ impl View for TabHeader {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _meta| match window_event {
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                //if meta.target == cx.current() {
                 cx.emit(TabEvent::SetSelected(self.index));
-                //}
             }
 
             _ => {}
