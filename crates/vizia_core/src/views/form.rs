@@ -1,6 +1,9 @@
 use crate::prelude::*;
 
-pub struct FormControl {}
+#[derive(Lens)]
+pub struct FormControl {
+    label_placement: Placement,
+}
 
 impl FormControl {
     pub fn new<T: ToString, V: View>(
@@ -8,21 +11,47 @@ impl FormControl {
         control: impl Fn(&mut Context) -> Handle<V> + 'static,
         label: impl Res<T> + Clone,
     ) -> Handle<Self> {
-        Self {}
+        Self { label_placement: Placement::Start }
             .build(cx, |cx| {
                 let id = cx.current().to_string();
+                Label::new(cx, label.clone()).describing(&id);
                 (control)(cx).id(&id);
                 Label::new(cx, label).describing(&id);
             })
-            .layout_type(LayoutType::Row)
-            .size(Auto)
-            .child_top(Stretch(1.0))
-            .child_bottom(Stretch(1.0))
-            .col_between(Pixels(5.0))
+            .toggle_class(
+                "pos-start",
+                FormControl::label_placement.map(|placement| {
+                    *placement == Placement::Start || *placement == Placement::Top
+                }),
+            )
+            .toggle_class(
+                "vertical",
+                FormControl::label_placement.map(|placement| {
+                    *placement == Placement::Top || *placement == Placement::Bottom
+                }),
+            )
     }
 }
 
-impl View for FormControl {}
+impl View for FormControl {
+    fn element(&self) -> Option<&'static str> {
+        Some("form-control")
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Placement {
+    Top,
+    Start,
+    Bottom,
+    End,
+}
+
+impl<'a> Handle<'a, FormControl> {
+    pub fn label_placement(self, placement: Placement) -> Self {
+        self.modify(|form_control| form_control.label_placement = placement)
+    }
+}
 
 pub struct FormGroup {}
 

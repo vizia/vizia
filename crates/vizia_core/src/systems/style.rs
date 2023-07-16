@@ -52,7 +52,7 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
     }
 
     fn parent_element(&self) -> Option<Self> {
-        self.tree.get_parent(self.entity).map(|parent| Node {
+        self.tree.get_layout_parent(self.entity).map(|parent| Node {
             entity: parent,
             store: self.store,
             tree: self.tree,

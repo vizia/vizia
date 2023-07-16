@@ -41,7 +41,7 @@ pub use combobox::*;
 pub use datepicker::Datepicker;
 pub use dropdown::Dropdown;
 pub use element::Element;
-pub use form::{FormControl, FormGroup};
+pub use form::{FormControl, FormGroup, Placement};
 pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
 pub use label::{Icon, Label};
 pub use list::List;

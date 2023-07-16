@@ -53,6 +53,34 @@ demo-region {
     border-width: 1px;
     border-color: rgb(210, 210, 210);
     border-radius: 10px;
+    /* child-space: 40px; */
+    /* child-left: 1s;
+    child-right: 1s; */
+    height: auto;
+}
+
+demo-region {
+    border: 1px rgb(210, 210, 210);
+}
+
+demo-region > vstack.region {
+    border-width: 0px;
+}
+
+demo-region > hstack.region {
+    border-width: 0px;
+}
+
+demo-region label.code {
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+    height: auto;
+}
+
+hstack.region {
+    border-width: 1px;
+    border-color: rgb(210, 210, 210);
+    border-radius: 10px;
     child-space: 40px;
     child-left: 1s;
     child-right: 1s;
@@ -60,13 +88,7 @@ demo-region {
     col-between: 12px;
 }
 
-demo-region > .divider {
-    height: 1px;
-    width: 1s;
-    background-color: rgb(210, 210, 210);
-}
-
-hstack.region {
+vstack.region {
     border-width: 1px;
     border-color: rgb(210, 210, 210);
     border-radius: 10px;

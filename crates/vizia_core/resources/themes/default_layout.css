@@ -218,6 +218,37 @@ dropdown vstack {
     child-space: auto;
 }
 
+/* FORM CONTROL */
+form-control {
+    layout-type: row;
+    size: auto;
+    child-top: 1s;
+    child-bottom: 1s;
+    col-between: 5px;
+    row-between: 5px;
+}
+
+form-control.vertical {
+    layout-type: column;
+}
+
+/* form-control > label:first-child {
+    display: none;
+}
+
+form-control > label:last-child {
+    display: flex;
+} */
+/* 
+form-control.pos-start > label:first-child {
+    display: none;
+} */
+
+form-control > label:last-child {
+    display: none;
+    background-color: red;
+}
+
 /* IMAGE */
 
 image {

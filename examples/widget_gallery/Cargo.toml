@@ -5,3 +5,6 @@ edition = "2021"
 
 [dependencies]
 vizia = {path = "../../../vizia"}
+
+[profile.dev.package."*"]
+opt-level = 3

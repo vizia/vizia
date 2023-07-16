@@ -1,4 +1,4 @@
-use crate::{LayoutChildIterator, TreeError, TreeExt, TreeIterator};
+use crate::{LayoutChildIterator, LayoutSiblingIterator, TreeError, TreeExt, TreeIterator};
 use vizia_id::GenerationalId;
 
 /// The [Tree] describes the tree of entities.
@@ -146,6 +146,7 @@ where
 
     /// Returns the next sibling of an entity or `None` if t here isn't one.
     pub fn get_next_sibling(&self, entity: I) -> Option<I> {
+        // LayoutSiblingIterator::new(self, entity).next()
         self.next_sibling.get(entity.index()).and_then(|&next_sibling| next_sibling)
     }
 

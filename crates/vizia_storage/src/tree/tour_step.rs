@@ -1,5 +1,6 @@
 /// Where to go next after entering or leaving a node.
 #[non_exhaustive]
+#[derive(Debug)]
 pub enum TourStep {
     /// Leave this node instead of descending to the children. The next call will be
     /// `cb(current, TourDirection::Leaving)`. Should not be returned if the current direction is

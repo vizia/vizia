@@ -23,7 +23,11 @@ impl Cache for CachedData {
     type Node = Entity;
 
     fn set_bounds(&mut self, node: &Self::Node, posx: f32, posy: f32, width: f32, height: f32) {
-        let mut geo_changed = self.geo_changed.get(*node).copied().unwrap();
+        let mut geo_changed = self
+            .geo_changed
+            .get(*node)
+            .copied()
+            .expect(&format!("Failed to get geo changed for: {}", node));
         if let Some(bounds) = self.bounds.get_mut(*node) {
             if bounds.w != width {
                 geo_changed.set(GeoChanged::WIDTH_CHANGED, true);
