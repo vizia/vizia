@@ -6,7 +6,7 @@ use crate::prelude::*;
 use crate::text::{enforce_text_bounds, ensure_visible, Direction, Movement};
 use crate::views::scrollview::SCROLL_SENSITIVITY;
 use accesskit::{ActionData, ActionRequest, TextDirection, TextPosition, TextSelection};
-use cosmic_text::{Action, Attrs, Cursor, Edit, Editor, FontSystem, Shaping};
+use cosmic_text::{Action, Cursor, Edit, Editor, FontSystem};
 use unicode_segmentation::UnicodeSegmentation;
 use vizia_input::Code;
 use vizia_storage::TreeExt;
@@ -17,21 +17,37 @@ pub enum TextEvent {
     InsertText(String),
     /// Reset the text of the textbox to the bound data.
     Clear,
+    /// Delete a section of text, determined by the `Movement`.
     DeleteText(Movement),
+    /// Move the cursor and selection.
     MoveCursor(Movement, bool),
+    /// Select all text.
     SelectAll,
+    /// Select the word at the current cursor position.
     SelectWord,
+    /// Select the paragraph at the current cursor position.
     SelectParagraph,
+    /// Toggle the textbox to allow text input.
     StartEdit,
+    /// Toggle the textbox to *not* allow text input.
     EndEdit,
+    /// Trigger the `on_submit` callback with the current text.
     Submit(bool),
+    /// Specify the 'hit' position of the mouse cursor.
     Hit(f32, f32),
+    /// Specify the 'drag' position of the mouse cursor.
     Drag(f32, f32),
+    /// Specify the scroll offset of the textbox.
     Scroll(f32, f32),
+    /// Copy the textbox buffer to the clipboard.
     Copy,
+    /// Paste the clipboard buffer into the textbox.
     Paste,
+    /// Cut the textbox text and place it in the clipboard.
     Cut,
+    /// Set the placeholder text of the textbox.
     SetPlaceholder(String),
+    /// Trigger the `on_blur` callback.
     Blur,
 }
 
@@ -48,6 +64,7 @@ pub struct Textbox<L: Lens> {
     on_cancel: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
     validate: Option<Box<dyn Fn(&String) -> bool>>,
     placeholder: String,
+    placeholder_shown: bool,
 }
 
 // Determines whether the enter key submits the text or inserts a new line.
@@ -62,10 +79,52 @@ impl<L: Lens> Textbox<L>
 where
     <L as Lens>::Target: Data + Clone + ToString,
 {
+    /// Creates a new single-line textbox.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// #
+    /// # #[derive(Lens)]
+    /// # struct AppData {
+    /// #     text: String,
+    /// # }
+    /// #
+    /// # impl Model for AppData {}
+    /// #
+    /// # let cx = &mut Context::default();
+    /// #
+    /// # AppData { text: String::from("Hello World") }.build(cx);
+    /// #
+    /// Textbox::new(cx, AppData::text);
+    /// ```
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
         Self::new_core(cx, lens, TextboxKind::SingleLine)
     }
 
+    /// Creates a new multi-line textbox.
+    ///
+    /// The `wrap` parameter determines whether text which is too long for the textbox
+    /// should soft-wrap onto multiple lines. If false, then only hard-wraps from line breaks
+    /// will cause the text to span multiple lines.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// #
+    /// # #[derive(Lens)]
+    /// # struct AppData {
+    /// #     text: String,
+    /// # }
+    /// #
+    /// # impl Model for AppData {}
+    /// #
+    /// # let cx = &mut Context::default();
+    /// #
+    /// # AppData { text: String::from("Hello World") }.build(cx);
+    /// #
+    /// Textbox::new_multiline(cx, AppData::text);
+    /// ```
     pub fn new_multiline(cx: &mut Context, lens: L, wrap: bool) -> Handle<Self> {
         Self::new_core(
             cx,
@@ -86,19 +145,15 @@ where
             on_cancel: None,
             validate: None,
             placeholder: String::from(""),
+            placeholder_shown: true,
         }
         .build(cx, move |cx| {
             cx.add_listener(move |textbox: &mut Self, cx, event| {
                 let flag: bool = textbox.edit;
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
-                        if flag && meta.origin != cx.current() {
-                            // Check if the mouse was pressed outside of any descendants
-                            if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
-                                cx.emit(TextEvent::Blur);
-                                // TODO: This might be needed
-                                // meta.consume();
-                            }
+                        if flag && meta.origin != cx.current() && cx.hovered() != cx.current() {
+                            cx.emit(TextEvent::Blur);
                         }
                     }
 
@@ -106,44 +161,41 @@ where
                 });
             });
 
-            let parent = cx.current;
+            Binding::new(cx, lens, move |cx: &mut Context, text| {
+                Binding::new(cx, Self::edit, move |cx, edit| {
+                    if !edit.get(cx) {
+                        let text_str = text.get(cx).to_string();
+                        cx.emit(TextEvent::SelectAll);
+                        cx.emit(TextEvent::InsertText(text_str));
+                        cx.emit(TextEvent::Scroll(0.0, 0.0));
+                    }
+                })
+            });
 
-            Binding::new(cx, Self::placeholder, move |cx, placeholder| {
-                Binding::new(cx, lens, move |cx, text| {
-                    let mut ex = EventContext::new(cx);
-                    ex.with_current(parent, |ex| {
-                        if !ex.is_checked() {
-                            let mut text_str = text.view(
-                                ex.data().expect("Failed to find data, is it built into the tree?"),
-                                |text| text.map(|x| x.to_string()).unwrap_or_else(|| "".to_owned()),
-                            );
-
-                            if text_str.is_empty() {
-                                text_str = placeholder.get(ex);
-                            }
-
-                            ex.text_context.with_buffer(parent, |fs, buf| {
-                                buf.set_text(fs, &text_str, Attrs::new(), Shaping::Advanced);
-                            });
-
-                            ex.needs_redraw();
-                        }
-                    });
-                });
+            Binding::new(cx, Self::placeholder, |cx, placeholder| {
+                let placeholder_string = placeholder.get(cx).to_string();
+                if !placeholder_string.is_empty() {
+                    Label::new(cx, &placeholder_string)
+                        .size(Stretch(1.0))
+                        .space(Pixels(0.0))
+                        .display(Self::placeholder_shown)
+                        .hoverable(false)
+                        .position_type(PositionType::SelfDirected)
+                        .hidden(true)
+                        .class("placeholder");
+                }
             });
         })
         .toggle_class("multiline", kind == TextboxKind::MultiLineWrapped)
         .text_wrap(kind == TextboxKind::MultiLineWrapped)
-        // .cursor(CursorIcon::Text)
         .navigable(true)
         .role(Role::TextField)
         .text_value(lens)
-        // .cursor(CursorIcon::Text)
         .default_action_verb(DefaultActionVerb::Focus)
     }
 
     fn set_caret(&mut self, cx: &mut EventContext) {
-        // calculate visible area for content and container
+        // Calculate visible area for content and container
         let mut text_bounds = cx.text_context.get_bounds(cx.current).unwrap_or_default();
         let mut bounds = cx.bounds();
 
@@ -168,7 +220,6 @@ where
 
         cx.text_context.sync_styles(cx.current, cx.style);
 
-        // do the computation
         let (mut tx, mut ty) = self.transform;
 
         (tx, ty) = enforce_text_bounds(&text_bounds, &bounds, (tx, ty));
@@ -191,7 +242,7 @@ where
     }
 
     pub fn insert_text(&mut self, cx: &mut EventContext, text: &str) {
-        cx.text_context.with_editor(cx.current, |_, buf| {
+        cx.text_context.with_editor(cx.current, |_: &mut FontSystem, buf| {
             buf.insert_string(text, None);
         });
         cx.needs_relayout();
@@ -223,6 +274,8 @@ where
         cx.text_context.with_editor(cx.current, |_, buf| {
             buf.delete_selection();
         });
+        cx.needs_relayout();
+        cx.needs_redraw();
     }
 
     pub fn move_cursor(&mut self, cx: &mut EventContext, movement: Movement, selection: bool) {
@@ -389,11 +442,11 @@ where
     }
 
     #[allow(dead_code)]
-    pub fn clone_selected(&self, cx: &mut EventContext) -> Option<String> {
+    fn clone_selected(&self, cx: &mut EventContext) -> Option<String> {
         cx.text_context.with_editor(cx.current, |_, buf| buf.copy_selection())
     }
 
-    pub fn clone_text(&self, cx: &mut EventContext) -> String {
+    fn clone_text(&self, cx: &mut EventContext) -> String {
         cx.text_context.with_buffer(cx.current, |_, buf| {
             buf.lines.iter().map(|line| line.text()).collect::<Vec<_>>().join("\n")
         })
@@ -422,11 +475,20 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
         self.modify(|textbox: &mut Textbox<L>| textbox.on_submit = Some(Box::new(callback)))
     }
 
+    /// Sets the callback triggered when a textbox is blurred, i.e. the mouse is pressed outside of the textbox.
     pub fn on_blur<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
         self.modify(|textbox: &mut Textbox<L>| textbox.on_blur = Some(Box::new(callback)))
+    }
+
+    /// Sets the callback triggered when a textbox edit is cancelled, i.e. the escape key is pressed while editing.
+    pub fn on_cancel<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext) + Send + Sync,
+    {
+        self.modify(|textbox: &mut Textbox<L>| textbox.on_cancel = Some(Box::new(callback)))
     }
 
     /// Sets a validation closure which is called when the textbox is edited and sets the validity attribute to the output of the closure.
@@ -439,9 +501,9 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
         self.modify(|textbox| textbox.validate = Some(Box::new(is_valid)))
     }
 
+    /// Sets the placeholder text that appears when the textbox has no value.
     pub fn placeholder<T: ToString>(self, text: impl Res<T>) -> Self {
         text.set_or_bind(self.cx, self.entity, |cx, val| {
-            // self.modify(|textbox| textbox.placeholder = val.to_string());
             cx.emit(TextEvent::SetPlaceholder(val.to_string()));
             cx.needs_relayout();
             cx.needs_redraw();
@@ -626,17 +688,6 @@ where
                     }
                 } else {
                     cx.emit(TextEvent::Submit(false));
-                    // if let Some(source) = cx.data::<L::Source>() {
-                    //     let text = self.lens.view(source, |t| {
-                    //         if let Some(t) = t {
-                    //             t.to_string()
-                    //         } else {
-                    //             "".to_owned()
-                    //         }
-                    //     });
-
-                    //     cx.emit(TextEvent::ResetText(text));
-                    // };
                     cx.release();
                     cx.set_checked(false);
 
@@ -696,7 +747,9 @@ where
                     *c != '\u{9}' && // Tab
                     *c != '\u{7f}' && // Delete
                     *c != '\u{0d}' && // Carriage return
-                    !cx.modifiers.contains(Modifiers::CTRL)
+                    !cx.modifiers.contains(Modifiers::CTRL) &&
+                    self.edit &&
+                    !cx.is_read_only()
                 {
                     cx.emit(TextEvent::InsertText(String::from(*c)));
                 }
@@ -704,26 +757,12 @@ where
 
             WindowEvent::KeyDown(code, _) => match code {
                 Code::Enter => {
-                    // Finish editing
                     if matches!(self.kind, TextboxKind::SingleLine) {
                         cx.emit(TextEvent::Submit(true));
-                        // if let Some(source) = cx.data::<L::Source>() {
-                        //     let text = self.lens.view(source, |t| {
-                        //         if let Some(t) = t {
-                        //             t.to_string()
-                        //         } else {
-                        //             "".to_owned()
-                        //         }
-                        //     });
-
-                        //     // cx.emit(TextEvent::SelectAll);
-                        //     // cx.emit(TextEvent::InsertText(text));
-                        //     // cx.emit(TextEvent::EndEdit);
-                        // };
 
                         cx.set_checked(false);
                         cx.release();
-                    } else {
+                    } else if !cx.is_read_only() {
                         cx.emit(TextEvent::InsertText("\n".to_owned()));
                     }
                 }
@@ -773,18 +812,24 @@ where
                 }
 
                 Code::Backspace => {
-                    if cx.modifiers.contains(Modifiers::CTRL) {
-                        cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Upstream)));
-                    } else {
-                        cx.emit(TextEvent::DeleteText(Movement::Grapheme(Direction::Upstream)));
+                    if !cx.is_read_only() {
+                        if cx.modifiers.contains(Modifiers::CTRL) {
+                            cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Upstream)));
+                        } else {
+                            cx.emit(TextEvent::DeleteText(Movement::Grapheme(Direction::Upstream)));
+                        }
                     }
                 }
 
                 Code::Delete => {
-                    if cx.modifiers.contains(Modifiers::CTRL) {
-                        cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Downstream)));
-                    } else {
-                        cx.emit(TextEvent::DeleteText(Movement::Grapheme(Direction::Downstream)));
+                    if !cx.is_read_only() {
+                        if cx.modifiers.contains(Modifiers::CTRL) {
+                            cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Downstream)));
+                        } else {
+                            cx.emit(TextEvent::DeleteText(Movement::Grapheme(
+                                Direction::Downstream,
+                            )));
+                        }
                     }
                 }
 
@@ -841,7 +886,9 @@ where
                 }
 
                 Code::KeyX if cx.modifiers == &Modifiers::CTRL => {
-                    cx.emit(TextEvent::Cut);
+                    if !cx.is_read_only() {
+                        cx.emit(TextEvent::Cut);
+                    }
                 }
 
                 _ => {}
@@ -909,20 +956,19 @@ where
         // Textbox Events
         event.map(|text_event, _| match text_event {
             TextEvent::InsertText(text) => {
-                if self.edit {
-                    self.insert_text(cx, text);
-                    self.set_caret(cx);
+                self.insert_text(cx, text);
+                self.set_caret(cx);
 
-                    if let Some(validate) = &self.validate {
-                        let text = self.clone_text(cx);
-                        cx.set_valid(validate(&text));
-                    }
+                if let Some(validate) = &self.validate {
+                    let text = self.clone_text(cx);
+                    cx.set_valid(validate(&text));
+                }
+                let text = self.clone_text(cx);
 
-                    if let Some(callback) = &self.on_edit {
-                        let text = self.clone_text(cx);
+                self.placeholder_shown = text.is_empty();
 
-                        (callback)(cx, text);
-                    }
+                if let Some(callback) = &self.on_edit {
+                    (callback)(cx, text);
                 }
             }
 
@@ -943,8 +989,11 @@ where
                         cx.set_valid(validate(&text));
                     }
 
+                    let text = self.clone_text(cx);
+
+                    self.placeholder_shown = text.is_empty();
+
                     if let Some(callback) = &self.on_edit {
-                        let text = self.clone_text(cx);
                         (callback)(cx, text);
                     }
                 }
@@ -962,7 +1011,7 @@ where
             }
 
             TextEvent::StartEdit => {
-                if !cx.is_disabled() && !self.edit && !cx.is_read_only() {
+                if !cx.is_disabled() && !self.edit {
                     self.edit = true;
                     cx.focus_with_visibility(false);
                     // cx.capture();
@@ -973,16 +1022,17 @@ where
                             if let Some(t) = t {
                                 t.to_string()
                             } else {
-                                "".to_owned()
+                                String::from("")
                             }
                         });
+
+                        self.placeholder_shown = text.is_empty();
 
                         self.select_all(cx);
                         self.insert_text(cx, &text);
                         self.set_caret(cx);
 
                         if let Some(validate) = &self.validate {
-                            let text = self.clone_text(cx);
                             cx.set_valid(validate(&text));
                         }
                     };
@@ -996,7 +1046,7 @@ where
                 cx.release();
 
                 if let Some(source) = cx.data::<L::Source>() {
-                    let mut text = self.lens.view(source, |t| {
+                    let text = self.lens.view(source, |t| {
                         if let Some(t) = t {
                             t.to_string()
                         } else {
@@ -1004,9 +1054,7 @@ where
                         }
                     });
 
-                    if text.is_empty() {
-                        text = self.placeholder.clone();
-                    };
+                    self.placeholder_shown = text.is_empty();
 
                     self.select_all(cx);
                     self.insert_text(cx, &text);
@@ -1020,6 +1068,7 @@ where
             }
 
             TextEvent::Blur => {
+                cx.set_checked(false);
                 if let Some(callback) = &self.on_blur {
                     (callback)(cx);
                 } else {

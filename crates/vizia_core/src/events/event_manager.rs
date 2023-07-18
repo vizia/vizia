@@ -190,8 +190,12 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             context.mouse.cursorx = *x;
             context.mouse.cursory = *y;
 
-            hover_system(context);
-            mutate_direct_or_up(meta, context.captured, context.hovered, false);
+            if context.mouse.cursorx != context.mouse.previous_cursorx
+                || context.mouse.cursory != context.mouse.previous_cursory
+            {
+                hover_system(context);
+                mutate_direct_or_up(meta, context.captured, context.hovered, false);
+            }
 
             // if let Some(dropped_file) = context.dropped_file.take() {
             //     emit_direct_or_up(
