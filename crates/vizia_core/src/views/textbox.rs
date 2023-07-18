@@ -52,7 +52,7 @@ pub enum TextEvent {
 }
 
 #[derive(Lens)]
-pub struct Textbox<L: Lens> {
+pub struct Textbox<L: Lens, T: 'static> {
     lens: L,
     #[lens(ignore)]
     kind: TextboxKind,
@@ -62,9 +62,11 @@ pub struct Textbox<L: Lens> {
     on_submit: Option<Box<dyn Fn(&mut EventContext, String, bool) + Send + Sync>>,
     on_blur: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
     on_cancel: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
-    validate: Option<Box<dyn Fn(&String) -> bool>>,
+    on_change: Option<Box<dyn Fn(&mut EventContext, Option<T>) + Send + Sync>>,
+    validate: Option<Box<dyn Fn(&T) -> bool>>,
     placeholder: String,
     placeholder_shown: bool,
+    value: Option<T>,
 }
 
 // Determines whether the enter key submits the text or inserts a new line.
@@ -75,7 +77,7 @@ enum TextboxKind {
     MultiLineWrapped,
 }
 
-impl<L: Lens> Textbox<L>
+impl<L: Lens> Textbox<L, String>
 where
     <L as Lens>::Target: Data + Clone + ToString,
 {
@@ -132,6 +134,19 @@ where
             if wrap { TextboxKind::MultiLineWrapped } else { TextboxKind::MultiLineUnwrapped },
         )
     }
+}
+
+impl<L: Lens, T: 'static + std::str::FromStr> Textbox<L, T>
+where
+    <L as Lens>::Target: Data + Clone + ToString,
+{
+    pub fn new_input_value(
+        cx: &mut Context,
+        lens: L,
+        validator: impl 'static + Fn(&T) -> bool + Send + Sync,
+    ) -> Handle<Self> {
+        Self::new_core(cx, lens, TextboxKind::SingleLine).validate(validator)
+    }
 
     fn new_core(cx: &mut Context, lens: L, kind: TextboxKind) -> Handle<Self> {
         Self {
@@ -143,9 +158,11 @@ where
             on_submit: None,
             on_blur: None,
             on_cancel: None,
+            on_change: None,
             validate: None,
             placeholder: String::from(""),
             placeholder_shown: true,
+            value: None,
         }
         .build(cx, move |cx| {
             cx.add_listener(move |textbox: &mut Self, cx, event| {
@@ -453,7 +470,7 @@ where
     }
 }
 
-impl<'a, L: Lens> Handle<'a, Textbox<L>> {
+impl<'a, L: Lens, T: 'static> Handle<'a, Textbox<L, T>> {
     /// Sets the callback triggered when a textbox is edited, i.e. text is inserted/deleted.
     ///
     /// Callback provides the current text of the textbox.
@@ -461,7 +478,7 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
     where
         F: 'static + Fn(&mut EventContext, String) + Send + Sync,
     {
-        self.modify(|textbox: &mut Textbox<L>| textbox.on_edit = Some(Box::new(callback)))
+        self.modify(|textbox: &mut Textbox<L, T>| textbox.on_edit = Some(Box::new(callback)))
     }
 
     /// Sets the callback triggered when a textbox is submitted,
@@ -472,7 +489,7 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
     where
         F: 'static + Fn(&mut EventContext, String, bool) + Send + Sync,
     {
-        self.modify(|textbox: &mut Textbox<L>| textbox.on_submit = Some(Box::new(callback)))
+        self.modify(|textbox: &mut Textbox<L, T>| textbox.on_submit = Some(Box::new(callback)))
     }
 
     /// Sets the callback triggered when a textbox is blurred, i.e. the mouse is pressed outside of the textbox.
@@ -480,7 +497,7 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        self.modify(|textbox: &mut Textbox<L>| textbox.on_blur = Some(Box::new(callback)))
+        self.modify(|textbox: &mut Textbox<L, T>| textbox.on_blur = Some(Box::new(callback)))
     }
 
     /// Sets the callback triggered when a textbox edit is cancelled, i.e. the escape key is pressed while editing.
@@ -488,7 +505,7 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        self.modify(|textbox: &mut Textbox<L>| textbox.on_cancel = Some(Box::new(callback)))
+        self.modify(|textbox: &mut Textbox<L, T>| textbox.on_cancel = Some(Box::new(callback)))
     }
 
     /// Sets a validation closure which is called when the textbox is edited and sets the validity attribute to the output of the closure.
@@ -496,13 +513,13 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
     /// If a textbox is modified with the validate modifier then the `on_submit` will not be called if the text is invalid.
     pub fn validate<F>(self, is_valid: F) -> Self
     where
-        F: 'static + Fn(&String) -> bool + Send + Sync,
+        F: 'static + Fn(&T) -> bool + Send + Sync,
     {
         self.modify(|textbox| textbox.validate = Some(Box::new(is_valid)))
     }
 
     /// Sets the placeholder text that appears when the textbox has no value.
-    pub fn placeholder<T: ToString>(self, text: impl Res<T>) -> Self {
+    pub fn placeholder<P: ToString>(self, text: impl Res<P>) -> Self {
         text.set_or_bind(self.cx, self.entity, |cx, val| {
             cx.emit(TextEvent::SetPlaceholder(val.to_string()));
             cx.needs_relayout();
@@ -513,7 +530,7 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
     }
 }
 
-impl<L: Lens> View for Textbox<L>
+impl<L: Lens, T: 'static + std::str::FromStr> View for Textbox<L, T>
 where
     <L as Lens>::Target: Data + ToString,
 {
@@ -959,11 +976,15 @@ where
                 self.insert_text(cx, text);
                 self.set_caret(cx);
 
-                if let Some(validate) = &self.validate {
-                    let text = self.clone_text(cx);
-                    cx.set_valid(validate(&text));
-                }
                 let text = self.clone_text(cx);
+
+                self.value = text.parse::<T>().ok();
+
+                if let Some(validate) = &self.validate {
+                    if let Some(value) = &self.value {
+                        cx.set_valid(validate(value));
+                    }
+                }
 
                 self.placeholder_shown = text.is_empty();
 
@@ -984,12 +1005,15 @@ where
                     self.delete_text(cx, *movement);
                     self.set_caret(cx);
 
-                    if let Some(validate) = &self.validate {
-                        let text = self.clone_text(cx);
-                        cx.set_valid(validate(&text));
-                    }
-
                     let text = self.clone_text(cx);
+
+                    self.value = text.parse::<T>().ok();
+
+                    if let Some(validate) = &self.validate {
+                        if let Some(value) = &self.value {
+                            cx.set_valid(validate(value));
+                        }
+                    }
 
                     self.placeholder_shown = text.is_empty();
 
@@ -1032,8 +1056,12 @@ where
                         self.insert_text(cx, &text);
                         self.set_caret(cx);
 
+                        self.value = text.parse::<T>().ok();
+
                         if let Some(validate) = &self.validate {
-                            cx.set_valid(validate(&text));
+                            if let Some(value) = &self.value {
+                                cx.set_valid(validate(value));
+                            }
                         }
                     };
                 }
@@ -1060,9 +1088,12 @@ where
                     self.insert_text(cx, &text);
                     self.set_caret(cx);
 
+                    self.value = text.parse::<T>().ok();
+
                     if let Some(validate) = &self.validate {
-                        let text = self.clone_text(cx);
-                        cx.set_valid(validate(&text));
+                        if let Some(value) = &self.value {
+                            cx.set_valid(validate(value));
+                        }
                     }
                 };
             }
@@ -1147,9 +1178,15 @@ where
                             cx.set_clipboard(selected_text)
                                 .expect("Failed to add text to clipboard");
                             self.delete_text(cx, Movement::Grapheme(Direction::Upstream));
+
+                            let text = self.clone_text(cx);
+
+                            self.value = text.parse::<T>().ok();
+
                             if let Some(validate) = &self.validate {
-                                let text = self.clone_text(cx);
-                                cx.set_valid(validate(&text));
+                                if let Some(value) = &self.value {
+                                    cx.set_valid(validate(value));
+                                }
                             }
                             if let Some(callback) = self.on_edit.take() {
                                 let text = self.clone_text(cx);
