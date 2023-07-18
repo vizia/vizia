@@ -1088,7 +1088,7 @@ impl<'a> EventContext<'a> {
     /// Starts a timer with the provided timer id.
     ///
     /// Events sent within the timer callback provided in `add_timer()` will target the current view.
-    pub fn start_timer(&mut self, timer: Timer, delay: Option<Duration>) {
+    pub fn start_timer(&mut self, timer: Timer) {
         let current = self.current;
         if !self.timer_is_running(timer) {
             let timer_state = self.timers[timer.0].clone();
@@ -1098,8 +1098,8 @@ impl<'a> EventContext<'a> {
 
         self.modify_timer(timer, |timer_state| {
             let now = instant::Instant::now();
-            timer_state.start_time = now + delay.unwrap_or(Duration::ZERO);
-            timer_state.time = now + delay.unwrap_or(Duration::ZERO);
+            timer_state.start_time = now;
+            timer_state.time = now;
             timer_state.entity = current;
             timer_state.ticking = false;
             timer_state.stopping = false;
@@ -1141,26 +1141,13 @@ impl<'a> EventContext<'a> {
     /// Stops the timer with the given timer id.
     ///
     /// Any events emitted in response to the timer stopping, as determined by the callback provided in `add_timer()`, will target the view which called `start_timer()`.
-    pub fn stop_timer(&mut self, timer: Timer, delay: Option<Duration>) {
-        if let Some(delay) = delay {
-            if self.timer_is_running(timer) {
-                self.modify_timer(timer, |timer_state| {
-                    if !timer_state.stopping {
-                        let current_time = timer_state.time;
-                        let duration = (current_time + delay) - timer_state.start_time;
-                        timer_state.set_duration(Some(duration));
-                        timer_state.stopping = true;
-                    }
-                })
-            }
-        } else {
-            while let Some(next_timer_state) = self.running_timers.peek() {
-                if next_timer_state.id == timer {
-                    let timer_state = self.running_timers.pop().unwrap();
-                    self.with_current(timer_state.entity, |cx| {
-                        (timer_state.callback)(cx, TimerAction::Stop);
-                    });
-                }
+    pub fn stop_timer(&mut self, timer: Timer) {
+        while let Some(next_timer_state) = self.running_timers.peek() {
+            if next_timer_state.id == timer {
+                let timer_state = self.running_timers.pop().unwrap();
+                self.with_current(timer_state.entity, |cx| {
+                    (timer_state.callback)(cx, TimerAction::Stop);
+                });
             }
         }
     }

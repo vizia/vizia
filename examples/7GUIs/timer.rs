@@ -39,12 +39,7 @@ enum TimerEvent {
 
 impl TimerData {
     fn new(timer: Timer) -> Self {
-        Self {
-            timer,
-            total_time: Duration::ZERO,
-            elapsed_time: Duration::ZERO,
-            progress: 0.0,
-        }
+        Self { timer, total_time: Duration::ZERO, elapsed_time: Duration::ZERO, progress: 0.0 }
     }
 
     fn is_finisehd(&self) -> bool {
@@ -65,22 +60,22 @@ impl Model for TimerData {
                     .clamp(0.0, 1.0);
 
                 if self.is_finisehd() {
-                    cx.stop_timer(self.timer, None);
+                    cx.stop_timer(self.timer);
                 }
             }
             TimerEvent::SetDuration(v) => {
                 self.total_time = Duration::from_secs_f32(*v);
 
                 if !self.should_start() {
-                    cx.stop_timer(self.timer, None);
+                    cx.stop_timer(self.timer);
                 } else if !cx.timer_is_running(self.timer) {
-                    cx.start_timer(self.timer, None);
+                    cx.start_timer(self.timer);
                 }
             }
             TimerEvent::Reset => {
                 self.elapsed_time = Duration::default();
                 if self.should_start() && !cx.timer_is_running(self.timer) {
-                    cx.start_timer(self.timer, None);
+                    cx.start_timer(self.timer);
                 }
             }
         })

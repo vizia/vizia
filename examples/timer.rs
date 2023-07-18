@@ -18,7 +18,7 @@ impl Model for AppState {
             AppEvent::Increment => {
                 self.count += 1;
                 if self.count >= 100 {
-                    cx.stop_timer(self.timer, Some(Duration::from_secs(2)));
+                    cx.stop_timer(self.timer);
                 }
             }
 
@@ -42,7 +42,6 @@ fn main() {
             }
 
             TimerAction::Tick(_delta) => {
-                // println!("Tick timer: {:?}", delta);
                 cx.emit(AppEvent::Increment);
             }
         });
@@ -55,14 +54,14 @@ fn main() {
             Button::new(
                 cx,
                 move |cx| {
-                    cx.start_timer(timer, Some(Duration::from_secs(2)));
+                    cx.start_timer(timer);
                 },
                 |cx| Label::new(cx, "Start"),
             );
             Button::new(
                 cx,
                 move |cx| {
-                    cx.stop_timer(timer, Some(Duration::from_secs(0)));
+                    cx.stop_timer(timer);
                 },
                 |cx| Label::new(cx, "Stop"),
             );
