@@ -123,7 +123,7 @@ where
     /// #
     /// # AppData { text: String::from("Hello World") }.build(cx);
     /// #
-    /// Textbox::new_multiline(cx, AppData::text);
+    /// Textbox::new_multiline(cx, AppData::text, true);
     /// ```
     pub fn new_multiline(cx: &mut Context, lens: L, wrap: bool) -> Handle<Self> {
         Self::new_core(
