@@ -710,6 +710,20 @@ textbox {
     cursor: text;
 }
 
+textbox > label.placeholder {
+    child-left: 10px;
+    child-top: 1s;
+    child-bottom: 1s;
+}
+
+textbox.icon-before {
+    child-left: 30px;
+}
+
+textbox.icon-before > label.placeholder {
+    child-left: 30px;
+}
+
 textbox.multiline {
     height: auto;
     child-top: 4px;

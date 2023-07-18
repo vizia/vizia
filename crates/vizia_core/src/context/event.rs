@@ -838,12 +838,29 @@ impl<'a> EventContext<'a> {
         self.style.needs_restyle();
     }
 
+    pub fn set_placeholder_shown(&mut self, flag: bool) {
+        let current = self.current();
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
+            pseudo_classes.set(PseudoClassFlags::PLACEHOLDER_SHOWN, flag);
+        }
+
+        self.style.needs_restyle();
+    }
+
     // TODO: Move me
     pub fn is_valid(&self) -> bool {
         self.style
             .pseudo_classes
             .get(self.current)
             .map(|pseudo_classes| pseudo_classes.contains(PseudoClassFlags::VALID))
+            .unwrap_or_default()
+    }
+
+    pub fn is_placeholder_shown(&self) -> bool {
+        self.style
+            .pseudo_classes
+            .get(self.current)
+            .map(|pseudo_classes| pseudo_classes.contains(PseudoClassFlags::PLACEHOLDER_SHOWN))
             .unwrap_or_default()
     }
 

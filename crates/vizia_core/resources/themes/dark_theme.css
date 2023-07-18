@@ -774,7 +774,7 @@ tabview .tabview-divider {
 textbox {
     border-width: 1px;
     border-radius: 4px;
-    border-color: #323232;
+    border-color: #32323200;
     background-color: #323232;
     transition: border-color 100ms;
     transition: background-color 100ms;
@@ -784,8 +784,13 @@ textbox:checked {
     border-color: #51afef;
     background-color: #323232;
     transition: border-color 100ms;
-    caret-color: red;
+    caret-color: #c4c4c4;
     selection-color: #6464c888;
+}
+
+textbox > label.placeholder {
+    caret-color: transparent;
+    color: gray;
 }
 
 textbox:read-only {

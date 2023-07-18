@@ -746,8 +746,13 @@ textbox {
 textbox:checked {
     border-color: #51afef;
     transition: border-color 100ms;
-    caret-color: red;
+    caret-color: #181818;
     selection-color: #6464c888;
+}
+
+textbox > label.placeholder {
+    caret-color: transparent;
+    color: gray;
 }
 
 textbox:read-only {
