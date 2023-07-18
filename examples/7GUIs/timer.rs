@@ -42,10 +42,6 @@ impl TimerData {
         Self { timer, total_time: Duration::ZERO, elapsed_time: Duration::ZERO, progress: 0.0 }
     }
 
-    fn is_finisehd(&self) -> bool {
-        self.elapsed_time >= self.total_time
-    }
-
     fn should_start(&self) -> bool {
         self.total_time > self.elapsed_time
     }
