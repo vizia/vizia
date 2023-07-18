@@ -45,6 +45,7 @@ pub struct Textbox<L: Lens> {
     on_edit: Option<Box<dyn Fn(&mut EventContext, String) + Send + Sync>>,
     on_submit: Option<Box<dyn Fn(&mut EventContext, String, bool) + Send + Sync>>,
     on_blur: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
+    on_cancel: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
     validate: Option<Box<dyn Fn(&String) -> bool>>,
     placeholder: String,
 }
@@ -82,6 +83,7 @@ where
             on_edit: None,
             on_submit: None,
             on_blur: None,
+            on_cancel: None,
             validate: None,
             placeholder: String::from(""),
         }
@@ -789,6 +791,9 @@ where
                 Code::Escape => {
                     cx.emit(TextEvent::EndEdit);
                     cx.set_checked(false);
+                    if let Some(callback) = &self.on_cancel {
+                        (callback)(cx);
+                    }
                 }
 
                 Code::Home => {
