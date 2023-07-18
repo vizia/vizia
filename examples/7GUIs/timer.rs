@@ -59,10 +59,11 @@ impl Model for TimerData {
                 self.progress = (self.elapsed_time.as_secs_f32() / self.total_time.as_secs_f32())
                     .clamp(0.0, 1.0);
 
-                if self.is_finisehd() {
+                if self.progress == 1.0 {
                     cx.stop_timer(self.timer);
                 }
             }
+
             TimerEvent::SetDuration(v) => {
                 self.total_time = Duration::from_secs_f32(*v);
 
@@ -72,6 +73,7 @@ impl Model for TimerData {
                     cx.start_timer(self.timer);
                 }
             }
+
             TimerEvent::Reset => {
                 self.elapsed_time = Duration::default();
                 if self.should_start() && !cx.timer_is_running(self.timer) {
@@ -86,11 +88,8 @@ fn main() {
     Application::new(|cx: &mut Context| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        let timer = cx.add_timer(Duration::from_millis(100), None, |cx, action| {
-            if let TimerAction::Tick(_) = action {
-                cx.emit(TimerEvent::Tick)
-            }
-        });
+        let timer =
+            cx.add_timer(Duration::from_millis(100), None, |cx, _| cx.emit(TimerEvent::Tick));
 
         TimerData::new(timer).build(cx);
 
