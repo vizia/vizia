@@ -60,7 +60,7 @@ pub(crate) fn layout_system(cx: &mut Context) {
                         .unwrap_or_default()
                         .to_pixels(width, cx.scale_factor());
                     let width = width.ceil() - child_left - child_right - 2.0 * border_width;
-                    cx.text_context.sync_styles(entity, cx.style);
+                    cx.text_context.sync_styles(entity, cx.style, cx.tree);
                     let (text_width, text_height) =
                         cx.text_context.with_buffer(entity, |fs, buf| {
                             buf.set_size(fs, width, f32::MAX);

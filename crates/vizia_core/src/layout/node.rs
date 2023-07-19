@@ -146,6 +146,7 @@ impl Node for Entity {
     fn content_size(
         &self,
         store: &Self::Store,
+        tree: &Self::Tree,
         sublayout: &mut Self::SubLayout<'_>,
         width: Option<f32>,
         height: Option<f32>,
@@ -192,7 +193,7 @@ impl Node for Entity {
                 child_space_y += val;
             }
 
-            sublayout.text_context.sync_styles(*self, store);
+            sublayout.text_context.sync_styles(*self, store, tree);
             let (text_width, mut text_height) =
                 sublayout.text_context.with_buffer(*self, |fs, buffer| {
                     buffer.set_size(fs, max_width as f32, f32::MAX);

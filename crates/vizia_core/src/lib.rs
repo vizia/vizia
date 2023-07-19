@@ -23,7 +23,7 @@ pub mod modifiers;
 pub mod resource;
 pub mod style;
 mod systems;
-pub(crate) mod text;
+pub mod text;
 #[doc(hidden)]
 pub mod tree;
 pub mod util;
@@ -85,6 +85,7 @@ pub mod prelude {
         LayoutModifiers, LinearGradientBuilder, StyleModifiers, TextModifiers,
     };
     pub use super::resource::ImageRetentionPolicy;
+    pub use super::text::TextCursor;
     pub use super::util::{IntoCssStr, CSS};
     pub use super::view::{Canvas, Handle, View};
     pub use super::views::*;

@@ -69,6 +69,7 @@ use std::fmt::Debug;
 use vizia_id::GenerationalId;
 
 use crate::prelude::*;
+use crate::text::TextCursor;
 
 pub use vizia_style::{
     Angle, BackgroundImage, BackgroundSize, BorderCornerShape, BoxShadow, ClipPath, Color, CssRule,
@@ -252,6 +253,7 @@ pub struct Style {
     pub(crate) font_stretch: StyleSet<FontStretch>,
     pub(crate) caret_color: AnimatableSet<Color>,
     pub(crate) selection_color: AnimatableSet<Color>,
+    pub(crate) span: SparseSet<(TextCursor, TextCursor)>,
 
     // cursor Icon
     pub(crate) cursor: StyleSet<CursorIcon>,
@@ -1697,6 +1699,7 @@ impl Style {
         self.font_size.remove(entity);
         self.selection_color.remove(entity);
         self.caret_color.remove(entity);
+        self.span.remove(entity);
 
         // Cursor
         self.cursor.remove(entity);

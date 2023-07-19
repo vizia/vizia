@@ -337,6 +337,10 @@ path = "examples/lens_map.rs"
 name = "timers"
 path = "examples/timers.rs"
 
+[[example]]
+name = "rich_text"
+path = "examples/rich_text.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts"]
 clipboard = ["vizia_core/clipboard", "vizia_winit?/clipboard"]
@@ -357,3 +361,4 @@ chrono = "0.4.19"
 reqwest = { version = "0.11.18", features = ["blocking"] }
 log = "0.4.19"
 fern = { version = "0.6" }
+syntect = "5.0"
