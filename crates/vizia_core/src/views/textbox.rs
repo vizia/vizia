@@ -51,6 +51,12 @@ pub enum TextEvent {
     Blur,
 }
 
+/// The `Textbox` view provides an input control for editing a value as a string.
+///
+/// The textbox takes a lens to some value, which must be a type which can convert to and from a `String`,
+/// as determined by the `ToString` and `FromStr` traits. The value type is used for validation and returned by
+/// the `on_submit` callback, which is triggered when the textbox is submitted with the enter key or when the textbox
+/// loses keyboard focus.
 #[derive(Lens)]
 pub struct Textbox<L: Lens> {
     lens: L,
@@ -241,7 +247,7 @@ where
         self.transform = (tx.round(), ty.round());
     }
 
-    pub fn insert_text(&mut self, cx: &mut EventContext, text: &str) {
+    fn insert_text(&mut self, cx: &mut EventContext, text: &str) {
         cx.text_context.with_editor(cx.current, |_: &mut FontSystem, buf| {
             buf.insert_string(text, None);
         });
@@ -249,7 +255,7 @@ where
         cx.needs_redraw();
     }
 
-    pub fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
+    fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
         let x = |_: &mut FontSystem, buf: &mut Editor| {
             let no_selection = match (buf.cursor(), buf.select_opt()) {
                 (cursor, Some(selection)) => cursor == selection,
@@ -269,7 +275,7 @@ where
         cx.needs_redraw();
     }
 
-    pub fn reset_text(&mut self, cx: &mut EventContext) {
+    fn reset_text(&mut self, cx: &mut EventContext) {
         self.select_all(cx);
         cx.text_context.with_editor(cx.current, |_, buf| {
             buf.delete_selection();
@@ -278,7 +284,7 @@ where
         cx.needs_redraw();
     }
 
-    pub fn move_cursor(&mut self, cx: &mut EventContext, movement: Movement, selection: bool) {
+    fn move_cursor(&mut self, cx: &mut EventContext, movement: Movement, selection: bool) {
         cx.text_context.with_editor(cx.current, |fs, buf| {
             if selection {
                 if buf.select_opt().is_none() {
@@ -319,7 +325,7 @@ where
         cx.needs_redraw();
     }
 
-    pub fn select_all(&mut self, cx: &mut EventContext) {
+    fn select_all(&mut self, cx: &mut EventContext) {
         cx.text_context.with_editor(cx.current, |fs, buf| {
             buf.action(fs, Action::BufferStart);
             buf.set_select_opt(Some(buf.cursor()));
@@ -328,7 +334,7 @@ where
         cx.needs_redraw();
     }
 
-    pub fn select_word(&mut self, cx: &mut EventContext) {
+    fn select_word(&mut self, cx: &mut EventContext) {
         cx.text_context.with_editor(cx.current, |fs, buf| {
             buf.action(fs, Action::PreviousWord);
             buf.set_select_opt(Some(buf.cursor()));
@@ -337,7 +343,7 @@ where
         cx.needs_redraw();
     }
 
-    pub fn select_paragraph(&mut self, cx: &mut EventContext) {
+    fn select_paragraph(&mut self, cx: &mut EventContext) {
         cx.text_context.with_editor(cx.current, |fs, buf| {
             buf.action(fs, Action::ParagraphStart);
             buf.set_select_opt(Some(buf.cursor()));
@@ -346,7 +352,7 @@ where
         cx.needs_redraw();
     }
 
-    pub fn deselect(&mut self, cx: &mut EventContext) {
+    fn deselect(&mut self, cx: &mut EventContext) {
         cx.text_context.with_editor(cx.current, |_, buf| {
             buf.set_select_opt(None);
         });
@@ -356,7 +362,7 @@ where
     /// These input coordinates should be physical coordinates, i.e. what the mouse events provide.
     /// The output text coordinates will also be physical, but relative to the top of the text
     /// glyphs, appropriate for passage to cosmic.
-    pub fn coordinates_global_to_text(&self, cx: &mut EventContext, x: f32, y: f32) -> (f32, f32) {
+    fn coordinates_global_to_text(&self, cx: &mut EventContext, x: f32, y: f32) -> (f32, f32) {
         let bounds = cx.bounds();
 
         let child_left = cx.style.child_left.get(cx.current).copied().unwrap_or_default();
@@ -393,7 +399,7 @@ where
     }
 
     /// This function takes window-global physical coordinates.
-    pub fn hit(&mut self, cx: &mut EventContext, x: f32, y: f32) {
+    fn hit(&mut self, cx: &mut EventContext, x: f32, y: f32) {
         let (x, y) = self.coordinates_global_to_text(cx, x, y);
         cx.text_context.with_editor(cx.current, |fs, buf| {
             buf.action(fs, Action::Click { x: x as i32, y: y as i32 });
@@ -402,7 +408,7 @@ where
     }
 
     /// This function takes window-global physical coordinates.
-    pub fn drag(&mut self, cx: &mut EventContext, x: f32, y: f32) {
+    fn drag(&mut self, cx: &mut EventContext, x: f32, y: f32) {
         let (x, y) = self.coordinates_global_to_text(cx, x, y);
         cx.text_context.with_editor(cx.current, |fs, buf| {
             buf.action(fs, Action::Drag { x: x as i32, y: y as i32 });
@@ -411,7 +417,7 @@ where
     }
 
     /// This function takes window-global physical dimensions.
-    pub fn scroll(&mut self, cx: &mut EventContext, x: f32, y: f32) {
+    fn scroll(&mut self, cx: &mut EventContext, x: f32, y: f32) {
         let entity = cx.current;
         let mut bounds = cx.cache.get_bounds(entity);
 
