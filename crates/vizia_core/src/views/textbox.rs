@@ -434,17 +434,18 @@ where
         let child_right = child_right.to_px(logical_parent_width, 0.0) * cx.scale_factor();
         let child_bottom = child_bottom.to_px(logical_parent_height, 0.0) * cx.scale_factor();
 
-        let mut text_bounds = cx.text_context.get_bounds(entity).unwrap();
-        text_bounds.x = bounds.x;
-        text_bounds.y = bounds.y;
-        bounds.h -= child_top + child_bottom;
-        bounds.w -= child_left + child_right;
-        let (mut tx, mut ty) = self.transform;
-        tx += x * SCROLL_SENSITIVITY;
-        ty += y * SCROLL_SENSITIVITY;
-        (tx, ty) = enforce_text_bounds(&text_bounds, &bounds, (tx, ty));
-        self.transform = (tx, ty);
-        cx.needs_redraw();
+        if let Some(mut text_bounds) = cx.text_context.get_bounds(entity) {
+            text_bounds.x = bounds.x;
+            text_bounds.y = bounds.y;
+            bounds.h -= child_top + child_bottom;
+            bounds.w -= child_left + child_right;
+            let (mut tx, mut ty) = self.transform;
+            tx += x * SCROLL_SENSITIVITY;
+            ty += y * SCROLL_SENSITIVITY;
+            (tx, ty) = enforce_text_bounds(&text_bounds, &bounds, (tx, ty));
+            self.transform = (tx, ty);
+            cx.needs_redraw();
+        }
     }
 
     #[allow(dead_code)]
