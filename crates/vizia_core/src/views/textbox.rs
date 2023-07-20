@@ -731,9 +731,6 @@ where
             WindowEvent::MouseUp(MouseButton::Left) => {
                 cx.unlock_cursor_icon();
                 cx.release();
-                // if cx.mouse.left.pressed == cx.current() {
-                //     cx.emit(TextEvent::StartEdit);
-                // }
             }
 
             WindowEvent::MouseMove(_, _) => {
@@ -766,9 +763,6 @@ where
                 Code::Enter => {
                     if matches!(self.kind, TextboxKind::SingleLine) {
                         cx.emit(TextEvent::Submit(true));
-
-                        cx.set_checked(false);
-                        cx.release();
                     } else if !cx.is_read_only() {
                         cx.emit(TextEvent::InsertText("\n".to_owned()));
                     }
@@ -1032,7 +1026,7 @@ where
                 if !cx.is_disabled() && !self.edit {
                     self.edit = true;
                     cx.focus_with_visibility(false);
-                    // cx.capture();
+                    cx.capture();
                     cx.set_checked(true);
 
                     if let Some(source) = cx.data::<L::Source>() {
@@ -1102,6 +1096,7 @@ where
                     (callback)(cx);
                 } else {
                     cx.emit(TextEvent::Submit(false));
+                    cx.emit(TextEvent::EndEdit);
                 }
             }
 
@@ -1114,7 +1109,6 @@ where
                         }
                     }
                 }
-                cx.emit(TextEvent::EndEdit);
             }
 
             TextEvent::SelectAll => {
@@ -1191,11 +1185,8 @@ where
                                 cx.set_valid(false);
                             }
 
-                            if let Some(callback) = self.on_edit.take() {
-                                let text = self.clone_text(cx);
+                            if let Some(callback) = &self.on_edit {
                                 (callback)(cx, text);
-
-                                self.on_edit = Some(callback);
                             }
                         }
                     }
