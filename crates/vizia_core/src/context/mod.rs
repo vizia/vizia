@@ -45,15 +45,15 @@ use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredIm
 use crate::style::{PseudoClassFlags, Style};
 use crate::text::{TextConfig, TextContext};
 use vizia_input::{Modifiers, MouseState};
+use vizia_storage::ChildIterator;
 use vizia_storage::TreeExt;
-use vizia_storage::{ChildIterator, SparseSet};
 
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
 static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css");
 
 type Views = FnvHashMap<Entity, Box<dyn ViewHandler>>;
-type Models = SparseSet<ModelDataStore>;
+type Models = FnvHashMap<Entity, ModelDataStore>;
 type Bindings = FnvHashMap<Entity, Box<dyn BindingHandler>>;
 
 thread_local! {
@@ -156,7 +156,7 @@ impl Context {
             tree: Tree::new(),
             current: Entity::root(),
             views: FnvHashMap::default(),
-            data: SparseSet::new(),
+            data: FnvHashMap::default(),
             bindings: FnvHashMap::default(),
             style: Style::default(),
             cache,
@@ -452,7 +452,7 @@ impl Context {
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
             self.style.remove(*entity);
-            self.data.remove(*entity);
+            self.data.remove(entity);
             self.views.remove(entity);
             self.entity_manager.destroy(*entity);
             self.text_context.clear_buffer(*entity);
@@ -494,7 +494,7 @@ impl Context {
     /// Sets the language used by the application for localization.
     pub fn set_language(&mut self, lang: LanguageIdentifier) {
         let cx = &mut EventContext::new(self);
-        if let Some(mut model_data_store) = cx.data.remove(Entity::root()) {
+        if let Some(mut model_data_store) = cx.data.remove(&Entity::root()) {
             if let Some(model) = model_data_store.models.get_mut(&TypeId::of::<Environment>()) {
                 model.event(cx, &mut Event::new(EnvironmentEvent::SetLocale(lang)));
             }
@@ -648,7 +648,7 @@ impl DataContext for Context {
 
         for entity in self.current.parent_iter(&self.tree) {
             // Return any model data.
-            if let Some(model_data_store) = self.data.get(entity) {
+            if let Some(model_data_store) = self.data.get(&entity) {
                 if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }

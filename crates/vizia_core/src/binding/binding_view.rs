@@ -93,7 +93,7 @@ where
         // Check if there's already a store with the same lens somewhere up the tree. If there is, add this binding as an observer,
         // else create a new store with this binding as an observer.
         for entity in new_ancestors {
-            if let Some(model_data_store) = cx.data.get_mut(entity) {
+            if let Some(model_data_store) = cx.data.get_mut(&entity) {
                 // Check for model store
                 if let Some(model_data) = model_data_store.models.get(&TypeId::of::<L::Source>()) {
                     insert_store(
@@ -176,7 +176,7 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
 
     fn remove(&self, cx: &mut Context) {
         for entity in self.entity.parent_iter(&cx.tree) {
-            if let Some(model_data_store) = cx.data.get_mut(entity) {
+            if let Some(model_data_store) = cx.data.get_mut(&entity) {
                 // Check for model store
                 if model_data_store.models.get(&TypeId::of::<L::Source>()).is_some() {
                     let key = self.lens.id();
