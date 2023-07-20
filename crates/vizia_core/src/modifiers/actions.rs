@@ -460,7 +460,7 @@ pub trait ActionModifiers<V> {
 fn build_action_model(cx: &mut Context, entity: Entity) {
     if cx
         .data
-        .get(entity)
+        .get(&entity)
         .and_then(|model_data_store| model_data_store.models.get(&TypeId::of::<ActionsModel>()))
         .is_none()
     {
@@ -473,7 +473,7 @@ fn build_action_model(cx: &mut Context, entity: Entity) {
 fn build_tooltip_model(cx: &mut Context, entity: Entity) {
     if cx
         .data
-        .get(entity)
+        .get(&entity)
         .and_then(|model_data_store| model_data_store.models.get(&TypeId::of::<TooltipModel>()))
         .is_none()
     {

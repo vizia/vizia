@@ -63,7 +63,7 @@ pub trait Model: 'static + Sized {
     /// }
     /// ```
     fn build(self, cx: &mut Context) {
-        if let Some(model_data_store) = cx.data.get_mut(cx.current()) {
+        if let Some(model_data_store) = cx.data.get_mut(&cx.current()) {
             model_data_store.models.insert(TypeId::of::<Self>(), Box::new(self));
         } else {
             let mut models: HashMap<TypeId, Box<dyn ModelData>> = HashMap::new();

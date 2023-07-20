@@ -19,7 +19,6 @@ use crate::style::{Abilities, IntoTransform, PseudoClassFlags, Style, SystemFlag
 use crate::window::DropData;
 use vizia_id::GenerationalId;
 use vizia_input::{Modifiers, MouseState};
-use vizia_storage::SparseSet;
 
 use crate::context::EmitContext;
 use crate::text::TextContext;
@@ -69,7 +68,7 @@ pub struct EventContext<'a> {
     pub(crate) entity_identifiers: &'a HashMap<String, Entity>,
     pub cache: &'a mut CachedData,
     pub(crate) tree: &'a Tree<Entity>,
-    pub(crate) data: &'a mut SparseSet<ModelDataStore>,
+    pub(crate) data: &'a mut FnvHashMap<Entity, ModelDataStore>,
     pub(crate) views: &'a mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
     pub(crate) listeners:
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
@@ -393,7 +392,7 @@ impl<'a> EventContext<'a> {
 
     /// Sets the language used by the application for localization.
     pub fn set_language(&mut self, lang: LanguageIdentifier) {
-        if let Some(mut model_data_store) = self.data.remove(Entity::root()) {
+        if let Some(mut model_data_store) = self.data.remove(&Entity::root()) {
             if let Some(model) = model_data_store.models.get_mut(&TypeId::of::<Environment>()) {
                 model.event(self, &mut Event::new(EnvironmentEvent::SetLocale(lang)));
             }
@@ -1031,7 +1030,7 @@ impl<'a> DataContext for EventContext<'a> {
 
         for entity in self.current.parent_iter(self.tree) {
             // Return model data.
-            if let Some(model_data_store) = self.data.get(entity) {
+            if let Some(model_data_store) = self.data.get(&entity) {
                 if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }
