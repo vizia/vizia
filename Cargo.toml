@@ -210,6 +210,10 @@ name = "crud"
 path = "examples/7GUIs/crud.rs"
 
 [[example]]
+name = "timer"
+path = "examples/7GUIs/timer.rs"
+
+[[example]]
 name = "keymap_basic"
 path = "examples/keymap_basic.rs"
 
@@ -329,6 +333,9 @@ path = "examples/keyframes.rs"
 name = "lens_map"
 path = "examples/lens_map.rs"
 
+[[example]]
+name = "timers"
+path = "examples/timers.rs"
 
 [features]
 default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts"]
