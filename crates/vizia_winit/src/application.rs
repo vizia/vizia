@@ -181,6 +181,11 @@ impl Application {
 
         let (window, canvas) = Window::new(&event_loop, &self.window_description);
 
+        // On windows cloak (hide) the window initially, we later reveal it after the first draw.
+        // This is a workaround to hide the "white flash" that occurs during application startup.
+        #[cfg(target_os = "windows")]
+        let mut is_initially_cloaked = window.set_cloak(true);
+
         #[cfg(not(target_arch = "wasm32"))]
         let event_loop_proxy = event_loop.create_proxy();
 
@@ -371,6 +376,17 @@ impl Application {
                         cx.mutate_window(|_, window: &Window| {
                             window.swap_buffers();
                         });
+
+                        // Un-cloak
+                        #[cfg(target_os = "windows")]
+                        if is_initially_cloaked {
+                            is_initially_cloaked = false;
+                            cx.draw();
+                            cx.mutate_window(|_, window: &Window| {
+                                window.swap_buffers();
+                                window.set_cloak(false);
+                            });
+                        }
                     }
                 }
 
