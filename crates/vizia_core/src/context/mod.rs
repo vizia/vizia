@@ -679,15 +679,19 @@ impl Context {
     ///
     /// Any events emitted in response to the timer stopping, as determined by the callback provided in `add_timer()`, will target the view which called `start_timer()`.
     pub fn stop_timer(&mut self, timer: Timer) {
-        while let Some(next_timer_state) = self.running_timers.peek() {
-            if next_timer_state.id == timer {
-                let timer_state = self.running_timers.pop().unwrap();
+        let mut running_timers = self.running_timers.clone();
+
+        for timer_state in running_timers.iter() {
+            if timer_state.id == timer {
                 (timer_state.callback)(
                     &mut EventContext::new_with_current(self, timer_state.entity),
                     TimerAction::Stop,
                 );
             }
         }
+
+        self.running_timers =
+            running_timers.drain().filter(|timer_state| timer_state.id != timer).collect();
     }
 
     // Tick all timers.
@@ -704,11 +708,12 @@ impl Context {
                             TimerAction::Start,
                         );
                         timer_state.ticking = true;
+                    } else {
+                        (timer_state.callback)(
+                            &mut EventContext::new_with_current(self, timer_state.entity),
+                            TimerAction::Tick(now - timer_state.time),
+                        );
                     }
-                    (timer_state.callback)(
-                        &mut EventContext::new_with_current(self, timer_state.entity),
-                        TimerAction::Tick(now - timer_state.time),
-                    );
                     timer_state.time = now + timer_state.interval - (now - timer_state.time);
                     self.running_timers.push(timer_state);
                 } else {

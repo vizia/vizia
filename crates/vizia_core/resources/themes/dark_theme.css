@@ -784,8 +784,12 @@ textbox:checked {
     border-color: #51afef;
     background-color: #323232;
     transition: border-color 100ms;
-    caret-color: #c4c4c4;
+    caret-color: transparent;
     selection-color: #6464c888;
+}
+
+textbox:checked.caret {
+    caret-color: #c4c4c4;
 }
 
 textbox > label.placeholder {
