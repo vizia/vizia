@@ -160,8 +160,6 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
     let impls = fields.iter().filter(|f| !f.attrs.ignore).map(|f| {
         let field_name = &f.ident.unwrap_named();
         let field_ty = &f.ty;
-        let name = format!("{}:{}", struct_type, field_name);
-
         quote! {
 
             impl #impl_generics Lens for #twizzled_name::#field_name#lens_ty_generics #where_clause {

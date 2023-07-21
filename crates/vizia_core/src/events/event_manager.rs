@@ -419,10 +419,8 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                             if w == f32::MAX { "inf".to_string() } else { w.to_string() },
                             if h == f32::MAX { "inf".to_string() } else { h.to_string() },
                         );
-                    } else if let Some(binding_name) = context
-                        .bindings
-                        .get(&entity)
-                        .and_then(|binding| Some(format!("{:?}", binding)))
+                    } else if let Some(binding_name) =
+                        context.bindings.get(&entity).map(|binding| format!("{:?}", binding))
                     {
                         println!(
                             "{}{} binding observing {}",
