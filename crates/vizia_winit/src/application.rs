@@ -619,7 +619,7 @@ impl WindowModifiers for Application {
         self
     }
 
-    fn icon(mut self, image: Vec<u8>, width: u32, height: u32) -> Self {
+    fn icon(mut self, width: u32, height: u32, image: Vec<u8>) -> Self {
         self.window_description.icon = Some(image);
         self.window_description.icon_width = width;
         self.window_description.icon_height = height;
