@@ -1,13 +1,23 @@
 use crate::{
     convert::{scan_code_to_code, virtual_key_code_to_code, virtual_key_code_to_key},
-    window::Window,
+    window::{apply_window_description, Window},
     window_modifiers::WindowModifiers,
 };
 #[cfg(not(target_arch = "wasm32"))]
 use accesskit::{Action, NodeBuilder, TreeUpdate};
 #[cfg(not(target_arch = "wasm32"))]
 use accesskit_winit;
-use std::{cell::RefCell, collections::HashMap};
+use femtovg::renderer::OpenGl;
+use glutin::{
+    config::ConfigTemplateBuilder,
+    context::{ContextApi, ContextAttributesBuilder},
+    display::GetGlDisplay,
+    prelude::{GlConfig, GlDisplay, NotCurrentGlContextSurfaceAccessor},
+    surface::{GlSurface, SurfaceAttributesBuilder, SwapInterval, WindowSurface},
+};
+use glutin_winit::DisplayBuilder;
+use raw_window_handle::HasRawWindowHandle;
+use std::{cell::RefCell, collections::HashMap, num::NonZeroU32, rc::Rc};
 use vizia_core::backend::*;
 #[cfg(not(target_arch = "wasm32"))]
 use vizia_core::context::EventProxy;
@@ -29,6 +39,7 @@ use winit::platform::wayland::WindowExtWayland;
 use winit::{
     event::VirtualKeyCode,
     event_loop::{ControlFlow, EventLoop},
+    window::WindowBuilder,
 };
 use winit::{event_loop::EventLoopBuilder, window::WindowId};
 
@@ -180,7 +191,91 @@ impl Application {
 
         let event_loop = self.event_loop;
 
-        let (window, canvas) = Window::create(&event_loop, &self.window_description);
+        let window_builder = WindowBuilder::new();
+
+        // Create the main window
+        let window_builder = apply_window_description(window_builder, &self.window_description);
+
+        let template = ConfigTemplateBuilder::new().with_alpha_size(8).with_transparency(true);
+        let display_builder = DisplayBuilder::new().with_window_builder(Some(window_builder));
+
+        let (window, gl_config) = display_builder
+            .build(&event_loop, template, |configs| {
+                // Find the config with the maximum number of samples, so our triangle will
+                // be smooth.
+                configs
+                    .reduce(|accum, config| {
+                        let transparency_check = config.supports_transparency().unwrap_or(false)
+                            & !accum.supports_transparency().unwrap_or(false);
+
+                        if transparency_check || config.num_samples() < accum.num_samples() {
+                            config
+                        } else {
+                            accum
+                        }
+                    })
+                    .unwrap()
+            })
+            .unwrap();
+
+        let window = window.unwrap();
+
+        let gl_display = gl_config.display();
+
+        let raw_window_handle = Some(window.raw_window_handle());
+
+        let context_attributes = ContextAttributesBuilder::new().build(raw_window_handle);
+        let fallback_context_attributes = ContextAttributesBuilder::new()
+            .with_context_api(ContextApi::Gles(None))
+            .build(raw_window_handle);
+        let mut not_current_gl_context = Some(unsafe {
+            gl_display.create_context(&gl_config, &context_attributes).unwrap_or_else(|_| {
+                gl_display
+                    .create_context(&gl_config, &fallback_context_attributes)
+                    .expect("failed to create context")
+            })
+        });
+
+        let (width, height): (u32, u32) = window.inner_size().into();
+        let raw_window_handle = window.raw_window_handle();
+        let attrs = SurfaceAttributesBuilder::<WindowSurface>::new().build(
+            raw_window_handle,
+            NonZeroU32::new(width).unwrap(),
+            NonZeroU32::new(height).unwrap(),
+        );
+
+        let surface =
+            unsafe { gl_config.display().create_window_surface(&gl_config, &attrs).unwrap() };
+
+        let gl_context =
+            Rc::new(not_current_gl_context.take().unwrap().make_current(&surface).unwrap());
+
+        // Build the femtovg renderer
+        let renderer = unsafe {
+            OpenGl::new_from_function_cstr(|s| gl_display.get_proc_address(s) as *const _)
+        }
+        .expect("Cannot create renderer");
+
+        if self.window_description.vsync {
+            surface
+                .set_swap_interval(&gl_context, SwapInterval::Wait(NonZeroU32::new(1).unwrap()))
+                .expect("Failed to set vsync");
+        }
+
+        let mut canvas = Canvas::new(renderer).expect("Failed to create canvas");
+
+        let size = window.inner_size();
+        canvas.set_size(size.width, size.height, 1.0);
+        canvas.clear_rect(0, 0, size.width, size.height, Color::rgb(255, 80, 80).into());
+
+        let window = Window {
+            id: Some(window.id()),
+            context: Some(gl_context.clone()),
+            surface: Some(surface),
+            window: Some(window),
+            should_close: false,
+        };
+        // let (window, canvas) = Window::create(&event_loop, &self.window_description);
 
         let root_window_id = window.id.unwrap();
 
@@ -289,6 +384,7 @@ impl Application {
         let mut windows: HashMap<WindowId, Entity> = HashMap::new();
         windows.insert(root_window_id, Entity::root());
 
+        let gl_context = gl_context.clone();
         event_loop.run(move |event, event_loop_window_target, control_flow| {
             let mut cx = BackendContext::new_with_event_manager(&mut context);
 
@@ -329,9 +425,13 @@ impl Application {
 
                 winit::event::Event::MainEventsCleared => {
                     main_events = true;
-
-                    cx.build_subwindows::<Window, WindowId>(&mut windows, |win_desc| {
-                        let (window, canvas) = Window::create(event_loop_window_target, win_desc);
+                    let gl_context = gl_context.clone();
+                    cx.build_subwindows::<Window, WindowId>(&mut windows, move |win_desc| {
+                        let (window, canvas) = Window::create_subwindow(
+                            event_loop_window_target,
+                            win_desc,
+                            gl_context.clone(),
+                        );
                         window.window().set_visible(true);
                         let window_id = window.id.unwrap();
 

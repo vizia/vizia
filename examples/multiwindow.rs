@@ -27,10 +27,11 @@ fn main() {
             Element::new(cx).size(Pixels(50.0)).class("two");
             // Button::new(cx, |cx| cx.emit(WindowEvent::WindowClose), |cx| Label::new(cx, "C2"));
         })
+        .always_on_top(true)
         .title("Secondary")
         .inner_size((400, 400));
 
-        // Button::new(cx, |cx| cx.emit(WindowEvent::WindowClose), |cx| Label::new(cx, "C1"));
+        Button::new(cx, |cx| cx.emit(WindowEvent::WindowClose), |cx| Label::new(cx, "C1"));
     })
     .title("Main")
     .run();

@@ -1,12 +1,13 @@
 use crate::{application::UserEvent, window_modifiers::WindowModifiers};
 #[cfg(not(target_arch = "wasm32"))]
 use std::num::NonZeroU32;
-use std::{println, todo};
+use std::{println, rc::Rc, todo};
 // use std::task::Context;
 
 use crate::convert::cursor_icon_to_cursor_icon;
 use femtovg::{renderer::OpenGl, Canvas, Color};
 
+use glutin::context::AsRawContext;
 #[cfg(not(target_arch = "wasm32"))]
 use glutin::surface::SwapInterval;
 #[cfg(not(target_arch = "wasm32"))]
@@ -33,10 +34,10 @@ use winit::{dpi::*, window::WindowId};
 pub struct Window {
     pub id: Option<WindowId>,
     #[cfg(not(target_arch = "wasm32"))]
-    context: Option<glutin::context::PossiblyCurrentContext>,
+    pub context: Option<Rc<glutin::context::PossiblyCurrentContext>>,
     #[cfg(not(target_arch = "wasm32"))]
-    surface: Option<glutin::surface::Surface<glutin::surface::WindowSurface>>,
-    window: Option<winit::window::Window>,
+    pub surface: Option<glutin::surface::Surface<glutin::surface::WindowSurface>>,
+    pub window: Option<winit::window::Window>,
     pub should_close: bool,
 }
 
@@ -145,6 +146,109 @@ impl Window {
         )
     }
 
+    pub fn create_subwindow(
+        events_loop: &EventLoopWindowTarget<UserEvent>,
+        window_description: &WindowDescription,
+        context: Rc<glutin::context::PossiblyCurrentContext>,
+    ) -> (Self, Canvas<OpenGl>) {
+        let window_builder = WindowBuilder::new();
+
+        //Windows COM doesn't play nicely with winit's drag and drop right now
+        #[cfg(target_os = "windows")]
+        let window_builder = {
+            use winit::platform::windows::WindowBuilderExtWindows;
+            window_builder.with_drag_and_drop(false)
+        };
+
+        // Apply generic WindowBuilder properties
+        let window_builder = apply_window_description(window_builder, window_description);
+
+        let template = ConfigTemplateBuilder::new().with_alpha_size(8).with_transparency(true);
+        let display_builder = DisplayBuilder::new().with_window_builder(Some(window_builder));
+
+        let (window, gl_config) = display_builder
+            .build(events_loop, template, |configs| {
+                // Find the config with the maximum number of samples, so our triangle will
+                // be smooth.
+                configs
+                    .reduce(|accum, config| {
+                        let transparency_check = config.supports_transparency().unwrap_or(false)
+                            & !accum.supports_transparency().unwrap_or(false);
+
+                        if transparency_check || config.num_samples() < accum.num_samples() {
+                            config
+                        } else {
+                            accum
+                        }
+                    })
+                    .unwrap()
+            })
+            .unwrap();
+
+        let window = window.unwrap();
+
+        let gl_display = gl_config.display();
+
+        let raw_window_handle = Some(window.raw_window_handle());
+
+        let context_attributes =
+            ContextAttributesBuilder::new().with_sharing(&*context).build(raw_window_handle);
+        let fallback_context_attributes = ContextAttributesBuilder::new()
+            .with_context_api(ContextApi::Gles(None))
+            .build(raw_window_handle);
+        let mut not_current_gl_context = Some(unsafe {
+            gl_display.create_context(&gl_config, &context_attributes).unwrap_or_else(|_| {
+                gl_display
+                    .create_context(&gl_config, &fallback_context_attributes)
+                    .expect("failed to create context")
+            })
+        });
+
+        let (width, height): (u32, u32) = window.inner_size().into();
+        let raw_window_handle = window.raw_window_handle();
+        let attrs = SurfaceAttributesBuilder::<WindowSurface>::new().build(
+            raw_window_handle,
+            NonZeroU32::new(width).unwrap(),
+            NonZeroU32::new(height).unwrap(),
+        );
+
+        let surface =
+            unsafe { gl_config.display().create_window_surface(&gl_config, &attrs).unwrap() };
+
+        let gl_context =
+            Rc::new(not_current_gl_context.take().unwrap().make_current(&surface).unwrap());
+
+        // context.make_current(&surface).unwrap();
+        // Build the femtovg renderer
+        let renderer = unsafe {
+            OpenGl::new_from_function_cstr(|s| gl_display.get_proc_address(s) as *const _)
+        }
+        .expect("Cannot create renderer");
+
+        if window_description.vsync {
+            surface
+                .set_swap_interval(&*context, SwapInterval::Wait(NonZeroU32::new(1).unwrap()))
+                .expect("Failed to set vsync");
+        }
+
+        let mut canvas = Canvas::new(renderer).expect("Failed to create canvas");
+
+        let size = window.inner_size();
+        canvas.set_size(size.width, size.height, 1.0);
+        canvas.clear_rect(0, 0, size.width, size.height, Color::rgb(255, 80, 80));
+
+        // Build our window
+        let win = Window {
+            id: Some(window.id()),
+            context: Some(gl_context.clone()),
+            surface: Some(surface),
+            window: Some(window),
+            should_close: false,
+        };
+
+        (win, canvas)
+    }
+
     pub fn create(
         events_loop: &EventLoopWindowTarget<UserEvent>,
         window_description: &WindowDescription,
@@ -235,7 +339,7 @@ impl Window {
         // Build our window
         let win = Window {
             id: Some(window.id()),
-            context: Some(gl_context),
+            context: Some(Rc::new(gl_context)),
             surface: Some(surface),
             window: Some(window),
             should_close: false,
@@ -246,6 +350,10 @@ impl Window {
 
     pub fn window(&self) -> &winit::window::Window {
         self.window.as_ref().unwrap()
+    }
+
+    pub fn context(&self) -> &glutin::context::PossiblyCurrentContext {
+        self.context.as_ref().unwrap()
     }
 
     pub fn resize(&self, size: PhysicalSize<u32>) {
@@ -502,7 +610,7 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
     }
 }
 
-fn apply_window_description(
+pub fn apply_window_description(
     mut builder: WindowBuilder,
     description: &WindowDescription,
 ) -> WindowBuilder {
