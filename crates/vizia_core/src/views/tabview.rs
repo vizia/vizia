@@ -15,9 +15,10 @@ pub struct TabView {
 impl TabView {
     pub fn new<L, T, F>(cx: &mut Context, lens: L, content: F) -> Handle<Self>
     where
-        L: Lens<Target = Vec<T>>,
+        L: Lens,
+        <L as Lens>::Target: std::ops::Deref<Target = [T]>,
         T: Clone + 'static,
-        F: 'static + Clone + Fn(&mut Context, Then<L, Index<Vec<T>, T>>) -> TabPair,
+        F: 'static + Clone + Fn(&mut Context, Index<L, T>) -> TabPair,
     {
         Self { selected_index: 0, on_select: None }.build(cx, move |cx| {
             let content2 = content.clone();

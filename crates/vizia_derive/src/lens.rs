@@ -172,10 +172,6 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
                 fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &#struct_type#ty_generics, map: F) -> O {
                     map(Some(&source.#field_name))
                 }
-
-                fn name(&self) -> Option<&'static str>{
-                    Some(#name)
-                }
             }
         }
     });
@@ -199,7 +195,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         #[doc = #mod_docs]
         #module_vis mod #twizzled_name {
             #(#defs)*
-            #[derive(Debug, Hash, PartialEq, Eq)]
+            #[derive(Hash, PartialEq, Eq)]
             #[doc = #root_docs]
             #[allow(non_camel_case_types)]
             #struct_vis struct root#lens_ty_generics(#(#phantom_decls),*);
@@ -207,6 +203,12 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
             impl #lens_ty_generics root#lens_ty_generics{
                 pub const fn new()->Self{
                     Self(#(#phantom_inits),*)
+                }
+            }
+
+            impl #lens_ty_generics std::fmt::Debug for root#lens_ty_generics {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    write!(f,"{}",stringify!(#struct_type))
                 }
             }
 
@@ -371,9 +373,11 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
                         None
                     })
                 }
+            }
 
-                fn name(&self) -> Option<&'static str>{
-                    Some(#name)
+            impl std::fmt::Debug for #twizzled_name::#variant_name {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    f.write_str(#name)
                 }
             }
         }

@@ -141,7 +141,7 @@ where
 pub(crate) trait BindingHandler {
     fn update(&mut self, cx: &mut Context);
     fn remove(&self, cx: &mut Context);
-    fn name(&self) -> Option<&'static str>;
+    fn debug(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result;
 }
 
 impl<L: 'static + Lens> BindingHandler for Binding<L> {
@@ -212,7 +212,13 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
         }
     }
 
-    fn name(&self) -> Option<&'static str> {
-        self.lens.name()
+    fn debug(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        self.lens.fmt(f)
+    }
+}
+
+impl std::fmt::Debug for dyn BindingHandler {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.debug(f)
     }
 }

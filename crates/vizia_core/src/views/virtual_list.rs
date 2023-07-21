@@ -20,10 +20,12 @@ impl VirtualList {
         cx: &mut Context,
         list: L,
         height: f32,
-        item: impl Fn(&mut Context, usize, Then<L, Index<Vec<T>, T>>) -> Handle<V> + 'static,
+        item: impl Fn(&mut Context, usize, Index<L, T>) -> Handle<V> + 'static,
     ) -> Handle<Self>
     where
-        L: Lens<Target = Vec<T>>,
+        L: Lens,
+        <L as Lens>::Target: Clone,
+        <L as Lens>::Target: std::ops::Deref<Target = [T]>,
         T: Data + 'static,
     {
         let num_items = list.get(cx).len();
