@@ -47,10 +47,10 @@ where
     where
         F: 'static + Fn(&mut Context),
     {
-        Self { lens: lens.clone() }
+        Self { lens }
             .build(cx, |cx| {
                 let parent = cx.current;
-                Binding::new(cx, lens.clone(), move |cx, lens| {
+                Binding::new(cx, lens, move |cx, lens| {
                     if let Some(geo) = cx.cache.geo_changed.get_mut(parent) {
                         geo.set(GeoChanged::WIDTH_CHANGED, true);
                     }
@@ -60,7 +60,7 @@ where
                     }
                 });
             })
-            .bind(lens.clone(), move |handle, val| {
+            .bind(lens, move |handle, val| {
                 if val.get(&handle) && capture_focus {
                     handle.lock_focus_to_within();
                 }

@@ -8,11 +8,15 @@ mod event;
 mod proxy;
 mod resource;
 
-use instant::Instant;
+use instant::{Duration, Instant};
+use log::debug;
 use std::any::{Any, TypeId};
+use std::cell::RefCell;
 use std::collections::hash_map::Entry;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
+use std::rc::Rc;
 use std::sync::Mutex;
+use vizia_id::IdManager;
 
 #[cfg(all(feature = "clipboard", feature = "x11"))]
 use copypasta::ClipboardContext;
@@ -29,10 +33,10 @@ pub use event::*;
 pub use proxy::*;
 pub use resource::*;
 
-use crate::binding::BindingHandler;
+use crate::binding::{BindingHandler, MapId};
 use crate::cache::CachedData;
 use crate::environment::{Environment, ThemeMode};
-use crate::events::ViewHandler;
+use crate::events::{TimedEvent, TimedEventHandle, Timer, TimerState, ViewHandler};
 #[cfg(feature = "embedded_fonts")]
 use crate::fonts;
 
@@ -42,18 +46,25 @@ use crate::prelude::*;
 use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::style::{PseudoClassFlags, Style};
 use crate::text::{TextConfig, TextContext};
-use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
+use vizia_storage::ChildIterator;
 use vizia_storage::TreeExt;
-use vizia_storage::{ChildIterator, SparseSet};
 
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
 static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css");
 
 type Views = FnvHashMap<Entity, Box<dyn ViewHandler>>;
-type Models = SparseSet<ModelDataStore>;
+type Models = FnvHashMap<Entity, ModelDataStore>;
 type Bindings = FnvHashMap<Entity, Box<dyn BindingHandler>>;
+
+thread_local! {
+    pub static MAP_MANAGER: RefCell<IdManager<MapId>> = RefCell::new(IdManager::new());
+    // Store of mapping functions used for lens maps.
+    pub static MAPS: RefCell<HashMap<MapId, (Entity, Box<dyn Any>)>> = RefCell::new(HashMap::new());
+    // The 'current' entity which is used for storing lens map mapping functions as per above.
+    pub static CURRENT: RefCell<Entity> = RefCell::new(Entity::root());
+}
 
 /// The main storage and control object for a Vizia application.
 pub struct Context {
@@ -65,6 +76,10 @@ pub struct Context {
     pub(crate) data: Models,
     pub(crate) bindings: Bindings,
     pub(crate) event_queue: VecDeque<Event>,
+    pub(crate) event_schedule: BinaryHeap<TimedEvent>,
+    pub(crate) next_event_id: usize,
+    pub(crate) timers: Vec<TimerState>,
+    pub(crate) running_timers: BinaryHeap<TimerState>,
     pub(crate) tree_updates: Vec<accesskit::TreeUpdate>,
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
@@ -147,12 +162,16 @@ impl Context {
             tree: Tree::new(),
             current: Entity::root(),
             views: FnvHashMap::default(),
-            data: SparseSet::new(),
+            data: FnvHashMap::default(),
             bindings: FnvHashMap::default(),
             style: Style::default(),
             cache,
             canvases: HashMap::new(),
             event_queue: VecDeque::new(),
+            event_schedule: BinaryHeap::new(),
+            next_event_id: 0,
+            timers: Vec::new(),
+            running_timers: BinaryHeap::new(),
             tree_updates: Vec::new(),
             listeners: HashMap::default(),
             global_listeners: vec![],
@@ -231,7 +250,9 @@ impl Context {
     pub fn with_current<T>(&mut self, e: Entity, f: impl FnOnce(&mut Context) -> T) -> T {
         let prev = self.current;
         self.current = e;
+        CURRENT.with(|f| *f.borrow_mut() = e);
         let ret = f(self);
+        CURRENT.with(|f| *f.borrow_mut() = prev);
         self.current = prev;
         ret
     }
@@ -285,9 +306,8 @@ impl Context {
         enabled: bool,
         focus_visible: bool,
     ) {
-        #[cfg(debug_assertions)]
         if enabled {
-            println!(
+            debug!(
             "Focus changed to {:?} parent: {:?}, view: {}, posx: {}, posy: {} width: {} height: {}",
             focused,
             self.tree.get_parent(focused),
@@ -419,10 +439,29 @@ impl Context {
                 }
             }
 
+            // Remove any map lenses associated with the entity.
+            let ids = MAPS.with(|f| {
+                let ids = f
+                    .borrow()
+                    .iter()
+                    .filter(|(_, map)| map.0 == *entity)
+                    .map(|(id, _)| *id)
+                    .collect::<Vec<_>>();
+                f.borrow_mut().retain(|_, map| map.0 != *entity);
+
+                ids
+            });
+
+            MAP_MANAGER.with(|f| {
+                for id in ids {
+                    f.borrow_mut().destroy(id);
+                }
+            });
+
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
             self.style.remove(*entity);
-            self.data.remove(*entity);
+            self.data.remove(entity);
             self.views.remove(entity);
             self.entity_manager.destroy(*entity);
             self.text_context.clear_buffer(*entity);
@@ -464,7 +503,7 @@ impl Context {
     /// Sets the language used by the application for localization.
     pub fn set_language(&mut self, lang: LanguageIdentifier) {
         let cx = &mut EventContext::new(self);
-        if let Some(mut model_data_store) = cx.data.remove(Entity::root()) {
+        if let Some(mut model_data_store) = cx.data.remove(&Entity::root()) {
             if let Some(model) = model_data_store.models.get_mut(&TypeId::of::<Environment>()) {
                 model.event(cx, &mut Event::new(EnvironmentEvent::SetLocale(lang)));
             }
@@ -525,6 +564,159 @@ impl Context {
 
     pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: impl ToString) {
         self.resource_manager.add_translation(lang, ftl.to_string());
+    }
+
+    /// Adds a timer to the application.
+    ///
+    /// `interval` - The time between ticks of the timer.
+    /// `duration` - An optional duration for the timer. Pass `None` for a continuos timer.
+    /// `callback` - A callback which is called on when the timer is started, ticks, and stops. Disambiguated by the `TimerAction` parameter of the callback.
+    ///
+    /// Returns a `Timer` id which can be used to start and stop the timer.  
+    ///
+    /// # Example
+    /// Creates a timer which calls the provided callback every second for 5 seconds:
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use instant::{Instant, Duration};
+    /// # let cx = &mut Context::default();
+    /// let timer = cx.add_timer(Duration::from_secs(1), Some(Duration::from_secs(5)), |cx, reason|{
+    ///     match reason {
+    ///         TimerAction::Start => {
+    ///             println!("Start timer");
+    ///         }
+    ///     
+    ///         TimerAction::Tick(delta) => {
+    ///             println!("Tick timer: {:?}", delta);
+    ///         }
+    ///
+    ///         TimerAction::Stop => {
+    ///             println!("Stop timer");
+    ///         }
+    ///     }
+    /// });
+    /// ```
+    pub fn add_timer(
+        &mut self,
+        interval: Duration,
+        duration: Option<Duration>,
+        callback: impl Fn(&mut EventContext, TimerAction) + 'static,
+    ) -> Timer {
+        let id = Timer(self.timers.len());
+        self.timers.push(TimerState {
+            entity: Entity::root(),
+            id,
+            time: Instant::now(),
+            interval,
+            duration,
+            start_time: Instant::now(),
+            callback: Rc::new(callback),
+            ticking: false,
+            stopping: false,
+        });
+
+        id
+    }
+
+    /// Starts a timer with the provided timer id.
+    ///
+    /// Events sent within the timer callback provided in `add_timer()` will target the current view.
+    pub fn start_timer(&mut self, timer: Timer) {
+        let current = self.current;
+        if !self.timer_is_running(timer) {
+            let timer_state = self.timers[timer.0].clone();
+            // Copy timer state from pending to playing
+            self.running_timers.push(timer_state);
+        }
+
+        self.modify_timer(timer, |timer_state| {
+            let now = instant::Instant::now();
+            timer_state.start_time = now;
+            timer_state.time = now;
+            timer_state.entity = current;
+            timer_state.ticking = false;
+            timer_state.stopping = false;
+        });
+    }
+
+    /// Modifies the state of an existing timer with the provided `Timer` id.
+    pub fn modify_timer(&mut self, timer: Timer, timer_function: impl Fn(&mut TimerState)) {
+        while let Some(next_timer_state) = self.running_timers.peek() {
+            if next_timer_state.id == timer {
+                let mut timer_state = self.running_timers.pop().unwrap();
+
+                (timer_function)(&mut timer_state);
+
+                self.running_timers.push(timer_state);
+
+                return;
+            }
+        }
+
+        for pending_timer in self.timers.iter_mut() {
+            if pending_timer.id == timer {
+                (timer_function)(pending_timer);
+            }
+        }
+    }
+
+    /// Returns true if the timer with the provided timer id is currently running.
+    pub fn timer_is_running(&mut self, timer: Timer) -> bool {
+        for timer_state in self.running_timers.iter() {
+            if timer_state.id == timer {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    /// Stops the timer with the given timer id.
+    ///
+    /// Any events emitted in response to the timer stopping, as determined by the callback provided in `add_timer()`, will target the view which called `start_timer()`.
+    pub fn stop_timer(&mut self, timer: Timer) {
+        while let Some(next_timer_state) = self.running_timers.peek() {
+            if next_timer_state.id == timer {
+                let timer_state = self.running_timers.pop().unwrap();
+                (timer_state.callback)(
+                    &mut EventContext::new_with_current(self, timer_state.entity),
+                    TimerAction::Stop,
+                );
+            }
+        }
+    }
+
+    // Tick all timers.
+    pub(crate) fn tick_timers(&mut self) {
+        let now = Instant::now();
+        while let Some(next_timer_state) = self.running_timers.peek() {
+            if next_timer_state.time <= now {
+                let mut timer_state = self.running_timers.pop().unwrap();
+
+                if timer_state.end_time().unwrap_or_else(|| now + Duration::from_secs(1)) >= now {
+                    if !timer_state.ticking {
+                        (timer_state.callback)(
+                            &mut EventContext::new_with_current(self, timer_state.entity),
+                            TimerAction::Start,
+                        );
+                        timer_state.ticking = true;
+                    }
+                    (timer_state.callback)(
+                        &mut EventContext::new_with_current(self, timer_state.entity),
+                        TimerAction::Tick(now - timer_state.time),
+                    );
+                    timer_state.time = now + timer_state.interval - (now - timer_state.time);
+                    self.running_timers.push(timer_state);
+                } else {
+                    (timer_state.callback)(
+                        &mut EventContext::new_with_current(self, timer_state.entity),
+                        TimerAction::Stop,
+                    );
+                }
+            } else {
+                break;
+            }
+        }
     }
 
     pub fn load_image(
@@ -602,11 +794,114 @@ pub trait DataContext {
 
 pub trait EmitContext {
     /// Send an event containing the provided message up the tree from the current entity.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use instant::{Instant, Duration};
+    /// # let cx = &mut Context::default();
+    /// # enum AppEvent {Increment}
+    /// cx.emit(AppEvent::Increment);
+    /// ```
     fn emit<M: Any + Send>(&mut self, message: M);
+
     /// Send an event containing the provided message directly to a specified entity from the current entity.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use instant::{Instant, Duration};
+    /// # let cx = &mut Context::default();
+    /// # enum AppEvent {Increment}
+    /// cx.emit_to(Entity::root(), AppEvent::Increment);
+    /// ```
     fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M);
+
     /// Send a custom event with custom origin and propagation information.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use instant::{Instant, Duration};
+    /// # let cx = &mut Context::default();
+    /// # enum AppEvent {Increment}
+    /// cx.emit_custom(
+    ///     Event::new(AppEvent::Increment)
+    ///         .origin(cx.current())
+    ///         .target(Entity::root())
+    ///         .propagate(Propagation::Subtree)
+    /// );
+    /// ```
     fn emit_custom(&mut self, event: Event);
+
+    /// Send an event containing the provided message up the tree at a particular time instant.
+    ///
+    /// Returns a `TimedEventHandle` which can be used to cancel the scheduled event.
+    ///
+    /// # Example
+    /// Emit an event after a delay of 2 seconds:
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use instant::{Instant, Duration};
+    /// # let cx = &mut Context::default();
+    /// # enum AppEvent {Increment}
+    /// cx.schedule_emit(AppEvent::Increment, Instant::now() + Duration::from_secs(2));
+    /// ```
+    fn schedule_emit<M: Any + Send>(&mut self, message: M, at: Instant) -> TimedEventHandle;
+
+    /// Send an event containing the provided message directly to a specified view at a particular time instant.
+    ///
+    /// Returns a `TimedEventHandle` which can be used to cancel the scheduled event.
+    ///
+    /// # Example
+    /// Emit an event to the root view (window) after a delay of 2 seconds:
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use instant::{Instant, Duration};
+    /// # let cx = &mut Context::default();
+    /// # enum AppEvent {Increment}
+    /// cx.schedule_emit_to(Entity::root(), AppEvent::Increment, Instant::now() + Duration::from_secs(2));
+    /// ```
+    fn schedule_emit_to<M: Any + Send>(
+        &mut self,
+        target: Entity,
+        message: M,
+        at: Instant,
+    ) -> TimedEventHandle;
+
+    /// Send a custom event with custom origin and propagation information at a particular time instant.
+    ///
+    /// Returns a `TimedEventHandle` which can be used to cancel the scheduled event.
+    ///
+    /// # Example
+    /// Emit a custom event after a delay of 2 seconds:
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use instant::{Instant, Duration};
+    /// # let cx = &mut Context::default();
+    /// # enum AppEvent {Increment}
+    /// cx.schedule_emit_custom(    
+    ///     Event::new(AppEvent::Increment)
+    ///         .target(Entity::root())
+    ///         .origin(cx.current())
+    ///         .propagate(Propagation::Subtree),
+    ///     Instant::now() + Duration::from_secs(2)
+    /// );
+    /// ```
+    fn schedule_emit_custom(&mut self, event: Event, at: Instant) -> TimedEventHandle;
+
+    /// Cancel a scheduled event before it is sent.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use instant::{Instant, Duration};
+    /// # let cx = &mut Context::default();
+    /// # enum AppEvent {Increment}
+    /// let timed_event = cx.schedule_emit_to(Entity::root(), AppEvent::Increment, Instant::now() + Duration::from_secs(2));
+    /// cx.cancel_scheduled(timed_event);
+    /// ```
+    fn cancel_scheduled(&mut self, handle: TimedEventHandle);
 }
 
 impl DataContext for Context {
@@ -618,7 +913,7 @@ impl DataContext for Context {
 
         for entity in self.current.parent_iter(&self.tree) {
             // Return any model data.
-            if let Some(model_data_store) = self.data.get(entity) {
+            if let Some(model_data_store) = self.data.get(&entity) {
                 if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }
@@ -654,5 +949,39 @@ impl EmitContext for Context {
 
     fn emit_custom(&mut self, event: Event) {
         self.event_queue.push_back(event);
+    }
+
+    fn schedule_emit<M: Any + Send>(&mut self, message: M, at: Instant) -> TimedEventHandle {
+        self.schedule_emit_custom(
+            Event::new(message)
+                .target(self.current)
+                .origin(self.current)
+                .propagate(Propagation::Up),
+            at,
+        )
+    }
+
+    fn schedule_emit_to<M: Any + Send>(
+        &mut self,
+        target: Entity,
+        message: M,
+        at: Instant,
+    ) -> TimedEventHandle {
+        self.schedule_emit_custom(
+            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
+            at,
+        )
+    }
+
+    fn schedule_emit_custom(&mut self, event: Event, at: Instant) -> TimedEventHandle {
+        let handle = TimedEventHandle(self.next_event_id);
+        self.event_schedule.push(TimedEvent { event, time: at, ident: handle });
+        self.next_event_id += 1;
+        handle
+    }
+
+    fn cancel_scheduled(&mut self, handle: TimedEventHandle) {
+        self.event_schedule =
+            self.event_schedule.drain().filter(|item| item.ident != handle).collect();
     }
 }

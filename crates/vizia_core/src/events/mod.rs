@@ -90,9 +90,14 @@ mod event_manager;
 pub(crate) use event_manager::EventManager;
 
 mod event;
-pub use event::{Event, EventMeta, Propagation};
+pub(crate) use event::TimedEvent;
+pub use event::{Event, EventMeta, Propagation, TimedEventHandle};
 
 mod event_handler;
 pub(crate) use event_handler::ViewHandler;
+
+mod timer;
+pub(crate) use timer::TimerState;
+pub use timer::{Timer, TimerAction};
 
 pub use crate::window::WindowEvent;

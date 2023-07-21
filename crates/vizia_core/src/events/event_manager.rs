@@ -5,6 +5,7 @@ use crate::style::{Abilities, PseudoClassFlags};
 use crate::systems::{compute_matched_rules, hover_system};
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use instant::{Duration, Instant};
+use log::debug;
 use std::any::Any;
 use vizia_id::GenerationalId;
 use vizia_storage::TreeIterator;
@@ -142,13 +143,13 @@ fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {
     // Send event to models attached to the entity
     if let Some(ids) = cx
         .data
-        .get(entity)
+        .get(&entity)
         .map(|model_data_store| model_data_store.models.keys().cloned().collect::<Vec<_>>())
     {
         for id in ids {
             if let Some(mut model) = cx
                 .data
-                .get_mut(entity)
+                .get_mut(&entity)
                 .and_then(|model_data_store| model_data_store.models.remove(&id))
             {
                 cx.current = entity;
@@ -156,7 +157,7 @@ fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {
                 model.event(cx, event);
 
                 cx.data
-                    .get_mut(entity)
+                    .get_mut(&entity)
                     .and_then(|model_data_store| model_data_store.models.insert(id, model));
             }
         }
@@ -356,8 +357,23 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             }
 
             #[cfg(debug_assertions)]
+            if *code == Code::KeyP && context.modifiers.contains(Modifiers::CTRL) {
+                for entity in TreeIterator::full(&context.tree) {
+                    if let Some(model_data_store) = context.data.get(&entity) {
+                        print!(
+                            "{}{:?}",
+                            entity,
+                            model_data_store.models.keys().collect::<Vec<_>>()
+                        );
+                        print!("{:?}", model_data_store.stores.keys().collect::<Vec<_>>());
+                        println!();
+                    }
+                }
+            }
+
+            #[cfg(debug_assertions)]
             if *code == Code::KeyI && context.modifiers.contains(Modifiers::CTRL) {
-                println!("Entity tree");
+                debug!("Entity tree");
                 let (tree, views, cache) = (&context.tree, &context.views, &context.cache);
                 let has_next_sibling = |entity| tree.get_next_sibling(entity).is_some();
                 let root_indents = |entity: Entity| {
@@ -386,7 +402,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                                 class_names += &format!(".{}", class);
                             }
                         }
-                        println!(
+                        debug!(
                             "{}{} {}{} [x: {} y: {} w: {} h: {}]",
                             indents(entity),
                             entity,
@@ -430,7 +446,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 compute_matched_rules(context, context.hovered, &mut result);
 
                 let entity = context.hovered;
-                println!("/* Matched rules for Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",
+                debug!("/* Matched rules for Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",
                     entity,
                     entity.parent(&context.tree),
                     context
@@ -445,7 +461,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 for rule in result.into_iter() {
                     for selectors in context.style.rules.iter() {
                         if selectors.0 == rule.0 {
-                            println!("{:?}", selectors.1);
+                            debug!("{:?}", selectors.1);
                         }
                     }
                 }
@@ -455,9 +471,9 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             if *code == Code::KeyT
                 && context.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
             {
-                println!("Loaded font face info:");
+                debug!("Loaded font face info:");
                 for face in context.text_context.font_system().db().faces() {
-                    println!(
+                    debug!(
                         "family: {:?}\npost_script_name: {:?}\nstyle: {:?}\nweight: {:?}\nstretch: {:?}\nmonospaced: {:?}\n",
                         face.families,
                         face.post_script_name,

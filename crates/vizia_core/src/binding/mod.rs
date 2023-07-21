@@ -210,3 +210,6 @@ pub use res::*;
 
 mod ray;
 pub use ray::*;
+
+mod map;
+pub(crate) use map::MapId;

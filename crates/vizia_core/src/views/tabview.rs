@@ -7,6 +7,9 @@ pub enum TabEvent {
 #[derive(Lens)]
 pub struct TabView {
     selected_index: usize,
+
+    #[lens(ignore)]
+    on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
 }
 
 impl TabView {
@@ -16,15 +19,14 @@ impl TabView {
         T: Clone + 'static,
         F: 'static + Clone + Fn(&mut Context, Then<L, Index<Vec<T>, T>>) -> TabPair,
     {
-        Self { selected_index: 0 }.build(cx, move |cx| {
-            let lens2 = lens.clone();
+        Self { selected_index: 0, on_select: None }.build(cx, move |cx| {
             let content2 = content.clone();
             // Tab headers
             VStack::new(cx, move |cx| {
-                Binding::new(cx, lens.clone().map(|list| list.len()), move |cx, list_length| {
+                Binding::new(cx, lens.map(|list| list.len()), move |cx, list_length| {
                     let list_length = list_length.get_fallible(cx).map_or(0, |d| d);
                     for index in 0..list_length {
-                        let l = lens.clone().index(index);
+                        let l = lens.index(index);
                         let builder = (content2)(cx, l).header;
                         TabHeader::new(cx, index, builder).bind(
                             TabView::selected_index,
@@ -44,7 +46,7 @@ impl TabView {
             VStack::new(cx, |cx| {
                 Binding::new(cx, TabView::selected_index, move |cx, selected| {
                     let selected = selected.get(cx);
-                    let l = lens2.clone().index(selected);
+                    let l = lens.index(selected);
                     ((content)(cx, l).content)(cx);
                 });
             })
@@ -58,13 +60,32 @@ impl View for TabView {
         Some("tabview")
     }
 
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|tab_event, meta| match tab_event {
             TabEvent::SetSelected(index) => {
                 self.selected_index = *index;
+                if let Some(callback) = &self.on_select {
+                    (callback)(cx, self.selected_index);
+                }
                 meta.consume();
             }
         });
+    }
+}
+
+impl<'a> Handle<'a, TabView> {
+    pub fn on_select(self, callback: impl Fn(&mut EventContext, usize) + 'static) -> Self {
+        self.modify(|tabview: &mut TabView| tabview.on_select = Some(Box::new(callback)))
+    }
+
+    pub fn with_selected<U: Into<usize>>(mut self, selected: impl Res<U>) -> Self {
+        let entity = self.entity();
+        selected.set_or_bind(self.context(), entity, |cx, selected| {
+            let index = selected.into();
+            cx.emit(TabEvent::SetSelected(index));
+        });
+
+        self
     }
 }
 
@@ -104,9 +125,7 @@ impl View for TabHeader {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _meta| match window_event {
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                //if meta.target == cx.current() {
                 cx.emit(TabEvent::SetSelected(self.index));
-                //}
             }
 
             _ => {}

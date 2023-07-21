@@ -2,17 +2,19 @@ use std::any::TypeId;
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ops::{BitAnd, BitOr, Deref};
+use std::rc::Rc;
 
+use crate::context::{CURRENT, MAPS, MAP_MANAGER};
 use crate::prelude::*;
 
-use super::{next_uuid, StoreId};
+use super::{next_uuid, MapId, StoreId};
 
 /// A Lens allows the construction of a reference to a piece of some data, e.g. a field of a struct.
 ///
 /// When deriving the `Lens` trait on a struct, the derive macro constructs a static type which implements the `Lens` trait for each field.
 /// The `view()` method takes a reference to the struct type as input and outputs a reference to the field.
 /// This provides a way to specify a binding to a specific field of some application data.
-pub trait Lens: 'static + Clone {
+pub trait Lens: 'static + Copy {
     type Source;
     type Target;
 
@@ -21,19 +23,11 @@ pub trait Lens: 'static + Clone {
     fn name(&self) -> Option<&'static str> {
         None
     }
-}
 
-pub(crate) trait LensCache: Lens {
-    fn cache_key(&self) -> StoreId {
-        if std::mem::size_of::<Self>() == 0 {
-            StoreId::Type(TypeId::of::<Self>())
-        } else {
-            StoreId::Uuid(next_uuid())
-        }
+    fn id(&self) -> StoreId {
+        StoreId::Type(TypeId::of::<Self>())
     }
 }
-
-impl<T: Lens> LensCache for T {}
 
 /// Helpers for constructing more complex `Lens`es.
 pub trait LensExt: Lens {
@@ -106,11 +100,22 @@ pub trait LensExt: Lens {
         self.then(Index::new(index))
     }
 
-    fn map<G: Clone, B: 'static + Clone>(self, get: G) -> Then<Self, Map<G, Self::Target, B>>
-    where
-        G: 'static + Fn(&Self::Target) -> B,
-    {
-        self.then(Map::new(get))
+    fn map<O: 'static, F: 'static + Fn(&Self::Target) -> O>(self, map: F) -> Map<Self, O> {
+        let id = MAP_MANAGER.with(|f| f.borrow_mut().create());
+        let entity = CURRENT.with(|f| *f.borrow());
+        MAPS.with(|f| {
+            f.borrow_mut().insert(id, (entity, Box::new(MapState { closure: Rc::new(map) })))
+        });
+        Map { id, store_id: next_uuid(), lens: self, o: PhantomData }
+    }
+
+    fn map_ref<O: 'static, F: 'static + Fn(&Self::Target) -> &O>(self, map: F) -> MapRef<Self, O> {
+        let id = MAP_MANAGER.with(|f| f.borrow_mut().create());
+        let entity = CURRENT.with(|f| *f.borrow());
+        MAPS.with(|f| {
+            f.borrow_mut().insert(id, (entity, Box::new(MapRefState { closure: Rc::new(map) })))
+        });
+        MapRef { id, lens: self, o: PhantomData }
     }
 
     fn unwrap<T: 'static>(self) -> Then<Self, UnwrapLens<T>>
@@ -131,32 +136,32 @@ pub trait LensExt: Lens {
 // Implement LensExt for all types which implement Lens.
 impl<T: Lens> LensExt for T {}
 
-pub struct Map<G, I, O> {
-    get: G,
-    i: PhantomData<I>,
+pub struct MapState<T, O> {
+    closure: Rc<dyn Fn(&T) -> O>,
+}
+
+pub struct MapRefState<T, O> {
+    closure: Rc<dyn Fn(&T) -> &O>,
+}
+
+#[derive(Debug)]
+pub struct Map<L: Lens, O> {
+    id: MapId,
+    store_id: u64,
+    lens: L,
     o: PhantomData<O>,
 }
 
-impl<G: Copy, I: Clone, O: Clone> std::marker::Copy for Map<G, I, O> {}
+impl<L: Lens, O: 'static> std::marker::Copy for Map<L, O> {}
 
-impl<G: Clone, I, O> Clone for Map<G, I, O> {
+impl<L: Lens, O: 'static> Clone for Map<L, O> {
     fn clone(&self) -> Self {
-        Map { get: self.get.clone(), i: PhantomData, o: PhantomData }
+        *self
     }
 }
 
-impl<G, I, O> Map<G, I, O> {
-    pub fn new(get: G) -> Self
-    where
-        G: Fn(&I) -> O,
-    {
-        Self { get, i: PhantomData, o: PhantomData }
-    }
-}
-
-impl<G: 'static + Clone + Fn(&I) -> O, I: 'static, O: 'static> Lens for Map<G, I, O> {
-    // TODO can we get rid of these static bounds?
-    type Source = I;
+impl<L: Lens, O: 'static> Lens for Map<L, O> {
+    type Source = L::Source;
     type Target = O;
 
     fn view<VO, F: FnOnce(Option<&Self::Target>) -> VO>(
@@ -164,8 +169,61 @@ impl<G: 'static + Clone + Fn(&I) -> O, I: 'static, O: 'static> Lens for Map<G, I
         source: &Self::Source,
         map: F,
     ) -> VO {
-        let data = (self.get)(source);
-        map(Some(&data))
+        self.lens.view(source, |t| {
+            let closure = MAPS.with(|f| {
+                if let Some(lens_map) = f.borrow().get(&self.id) {
+                    if let Some(mapping) = lens_map.1.downcast_ref::<MapState<L::Target, O>>() {
+                        return Some(mapping.closure.clone());
+                    }
+                }
+
+                None
+            });
+            map(t.map(|tt| (closure.unwrap())(tt)).as_ref())
+        })
+    }
+
+    fn id(&self) -> StoreId {
+        StoreId::Uuid(self.store_id)
+    }
+}
+
+#[derive(Debug)]
+pub struct MapRef<L: Lens, O> {
+    id: MapId,
+    lens: L,
+    o: PhantomData<O>,
+}
+
+impl<L: Lens, O: 'static> std::marker::Copy for MapRef<L, O> {}
+
+impl<L: Lens, O: 'static> Clone for MapRef<L, O> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<L: Lens, O: 'static> Lens for MapRef<L, O> {
+    type Source = L::Source;
+    type Target = O;
+
+    fn view<VO, F: FnOnce(Option<&Self::Target>) -> VO>(
+        &self,
+        source: &Self::Source,
+        map: F,
+    ) -> VO {
+        self.lens.view(source, |t| {
+            let closure = MAPS.with(|f| {
+                if let Some(lens_map) = f.borrow().get(&self.id) {
+                    if let Some(mapping) = lens_map.1.downcast_ref::<MapRefState<L::Target, O>>() {
+                        return Some(mapping.closure.clone());
+                    }
+                }
+
+                None
+            });
+            map(t.map(|tt| (closure.unwrap())(tt)))
+        })
     }
 }
 
@@ -212,13 +270,14 @@ impl<T: Copy, U: Copy> Copy for Then<T, U> {}
 
 pub struct Index<A, T> {
     index: usize,
+    id: u64,
     pa: PhantomData<A>,
     pt: PhantomData<T>,
 }
 
 impl<A, T> Index<A, T> {
     pub fn new(index: usize) -> Self {
-        Self { index, pa: PhantomData, pt: PhantomData }
+        Self { index, id: next_uuid(), pa: PhantomData, pt: PhantomData }
     }
 
     pub fn idx(&self) -> usize {
@@ -250,6 +309,10 @@ where
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
         let data = source.get(self.index);
         map(data)
+    }
+
+    fn id(&self) -> StoreId {
+        StoreId::Uuid(self.id)
     }
 }
 
@@ -381,6 +444,7 @@ where
     }
 }
 
+#[derive(Debug, Copy)]
 pub struct OrLens<L1, L2> {
     lens1: L1,
     lens2: L2,
@@ -480,10 +544,9 @@ where
     }
 }
 
-impl<G: 'static + Clone + Fn(&I) -> bool, I: 'static, L2: Lens<Target = bool>> BitOr<L2>
-    for Map<G, I, bool>
+impl<L, L2: Lens<Target = bool>> BitOr<L2> for Map<L, bool>
 where
-    I: Lens<Source = L2::Source>,
+    L: Lens<Source = L2::Source>,
 {
     type Output = OrLens<Self, L2>;
     fn bitor(self, rhs: L2) -> Self::Output {
@@ -491,6 +554,7 @@ where
     }
 }
 
+#[derive(Debug, Copy)]
 pub struct AndLens<L1, L2> {
     lens1: L1,
     lens2: L2,
@@ -573,10 +637,9 @@ where
     }
 }
 
-impl<G: 'static + Clone + Fn(&I) -> bool, I: 'static, L2: Lens<Target = bool>> BitAnd<L2>
-    for Map<G, I, bool>
+impl<L, L2: Lens<Target = bool>> BitAnd<L2> for Map<L, bool>
 where
-    I: Lens<Source = L2::Source>,
+    L: Lens<Source = L2::Source>,
 {
     type Output = AndLens<Self, L2>;
     fn bitand(self, rhs: L2) -> Self::Output {

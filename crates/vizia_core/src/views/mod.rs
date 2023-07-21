@@ -25,7 +25,7 @@ mod slider;
 mod spinbox;
 mod stack;
 mod switch;
-mod tab;
+mod tabview;
 mod textbox;
 mod timepicker;
 mod tooltip;
@@ -56,7 +56,7 @@ pub use slider::{NamedSlider, Slider};
 pub use spinbox::{Spinbox, SpinboxEvent, SpinboxIcons, SpinboxKind};
 pub use stack::{HStack, VStack, ZStack};
 pub use switch::Switch;
-pub use tab::{TabPair, TabView};
+pub use tabview::{TabPair, TabView};
 pub use textbox::{TextEvent, Textbox};
 pub use timepicker::{
     AMOrPM, AnalogTimepicker, AnalogTimepickerEvent, AnalogTimepickerPage, DayTime,

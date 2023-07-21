@@ -157,7 +157,7 @@ where
         event.map(|combobox_event, _| match combobox_event {
             ComboBoxEvent::SetOption(index) => {
                 // Set the placeholder text to the selected item.
-                let selected_item = self.list_lens.clone().index(*index).get(cx);
+                let selected_item = self.list_lens.index(*index).get(cx);
                 self.placeholder = selected_item.to_string();
 
                 // Call the on_select callback.
@@ -358,7 +358,7 @@ impl ComboPopup {
         Self {}
             .build(cx, |cx| {
                 let parent = cx.current;
-                Binding::new(cx, lens.clone(), move |cx, lens| {
+                Binding::new(cx, lens, move |cx, lens| {
                     if let Some(geo) = cx.cache.geo_changed.get_mut(parent) {
                         geo.set(GeoChanged::WIDTH_CHANGED, true);
                     }

@@ -151,3 +151,6 @@ pub const ICON_ADJUSTMENTS_ALT: &str = "\u{ec37}";
 pub const ICON_POINTER: &str = "\u{f265}";
 pub const ICON_SEARCH: &str = "\u{eb1c}";
 pub const ICON_SLICE: &str = "\u{ebdb}";
+
+pub const ICON_MENU: &str = "\u{eaeb}";
+pub const ICON_MENU_2: &str = "\u{ec42}";
