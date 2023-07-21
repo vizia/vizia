@@ -210,6 +210,10 @@ name = "crud"
 path = "examples/7GUIs/crud.rs"
 
 [[example]]
+name = "circle_drawer"
+path = "examples/7GUIs/circle_drawer.rs"
+
+[[example]]
 name = "timer"
 path = "examples/7GUIs/timer.rs"
 
