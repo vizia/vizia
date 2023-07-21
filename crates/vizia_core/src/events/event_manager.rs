@@ -2,9 +2,12 @@ use crate::context::{InternalEvent, ResourceContext};
 use crate::events::EventMeta;
 use crate::prelude::*;
 use crate::style::{Abilities, PseudoClassFlags};
-use crate::systems::{compute_matched_rules, hover_system};
+#[cfg(debug_assertions)]
+use crate::systems::compute_matched_rules;
+use crate::systems::hover_system;
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use instant::{Duration, Instant};
+#[cfg(debug_assertions)]
 use log::debug;
 use std::any::Any;
 use vizia_id::GenerationalId;

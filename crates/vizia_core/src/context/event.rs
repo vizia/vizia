@@ -1159,14 +1159,18 @@ impl<'a> EventContext<'a> {
     ///
     /// Any events emitted in response to the timer stopping, as determined by the callback provided in `add_timer()`, will target the view which called `start_timer()`.
     pub fn stop_timer(&mut self, timer: Timer) {
-        while let Some(next_timer_state) = self.running_timers.peek() {
-            if next_timer_state.id == timer {
-                let timer_state = self.running_timers.pop().unwrap();
+        let mut running_timers = self.running_timers.clone();
+
+        for timer_state in running_timers.iter() {
+            if timer_state.id == timer {
                 self.with_current(timer_state.entity, |cx| {
                     (timer_state.callback)(cx, TimerAction::Stop);
                 });
             }
         }
+
+        *self.running_timers =
+            running_timers.drain().filter(|timer_state| timer_state.id != timer).collect();
     }
 }
 

@@ -49,6 +49,8 @@ pub enum TextEvent {
     SetPlaceholder(String),
     /// Trigger the `on_blur` callback.
     Blur,
+
+    ToggleCaret,
 }
 
 /// The `Textbox` view provides an input control for editing a value as a string.
@@ -71,6 +73,8 @@ pub struct Textbox<L: Lens> {
     validate: Option<Box<dyn Fn(&L::Target) -> bool>>,
     placeholder: String,
     placeholder_shown: bool,
+    show_caret: bool,
+    caret_timer: Timer,
 }
 
 // Determines whether the enter key submits the text or inserts a new line.
@@ -140,6 +144,12 @@ where
     }
 
     fn new_core(cx: &mut Context, lens: L, kind: TextboxKind) -> Handle<Self> {
+        let caret_timer = cx.add_timer(Duration::from_millis(530), None, |cx, action| {
+            if matches!(action, TimerAction::Tick(_)) {
+                cx.emit(TextEvent::ToggleCaret);
+            }
+        });
+
         Self {
             lens,
             kind,
@@ -152,6 +162,8 @@ where
             validate: None,
             placeholder: String::from(""),
             placeholder_shown: true,
+            show_caret: true,
+            caret_timer,
         }
         .build(cx, move |cx| {
             cx.add_listener(move |textbox: &mut Self, cx, event| {
@@ -198,6 +210,7 @@ where
         .role(Role::TextField)
         .text_value(lens)
         .default_action_verb(DefaultActionVerb::Focus)
+        .toggle_class("caret", Self::show_caret)
     }
 
     fn set_caret(&mut self, cx: &mut EventContext) {
@@ -458,6 +471,12 @@ where
             buf.lines.iter().map(|line| line.text()).collect::<Vec<_>>().join("\n")
         })
     }
+
+    fn reset_caret_timer(&mut self, cx: &mut EventContext) {
+        cx.stop_timer(self.caret_timer);
+        self.show_caret = true;
+        cx.start_timer(self.caret_timer);
+    }
 }
 
 impl<'a, L: Lens> Handle<'a, Textbox<L>> {
@@ -690,7 +709,10 @@ where
                         cx.set_checked(true);
                         cx.lock_cursor_icon();
 
-                        cx.emit(TextEvent::StartEdit);
+                        if !self.edit {
+                            cx.emit(TextEvent::StartEdit);
+                        }
+                        self.reset_caret_timer(cx);
                         cx.emit(TextEvent::Hit(cx.mouse.cursorx, cx.mouse.cursory));
                     }
                 } else {
@@ -729,6 +751,7 @@ where
             }
 
             WindowEvent::MouseUp(MouseButton::Left) => {
+                self.reset_caret_timer(cx);
                 cx.unlock_cursor_icon();
                 cx.release();
             }
@@ -737,6 +760,11 @@ where
                 if cx.mouse.left.state == MouseButtonState::Pressed
                     && cx.mouse.left.pressed == cx.current
                 {
+                    if self.edit {
+                        cx.stop_timer(self.caret_timer);
+                        self.show_caret = true;
+                        cx.start_timer(self.caret_timer);
+                    }
                     cx.emit(TextEvent::Drag(cx.mouse.cursorx, cx.mouse.cursory));
                 }
             }
@@ -755,6 +783,7 @@ where
                     self.edit &&
                     !cx.is_read_only()
                 {
+                    self.reset_caret_timer(cx);
                     cx.emit(TextEvent::InsertText(String::from(*c)));
                 }
             }
@@ -764,11 +793,13 @@ where
                     if matches!(self.kind, TextboxKind::SingleLine) {
                         cx.emit(TextEvent::Submit(true));
                     } else if !cx.is_read_only() {
+                        self.reset_caret_timer(cx);
                         cx.emit(TextEvent::InsertText("\n".to_owned()));
                     }
                 }
 
                 Code::ArrowLeft => {
+                    self.reset_caret_timer(cx);
                     let movement = if cx.modifiers.contains(Modifiers::CTRL) {
                         Movement::Word(Direction::Left)
                     } else {
@@ -782,6 +813,7 @@ where
                 }
 
                 Code::ArrowRight => {
+                    self.reset_caret_timer(cx);
                     let movement = if cx.modifiers.contains(Modifiers::CTRL) {
                         Movement::Word(Direction::Right)
                     } else {
@@ -795,6 +827,7 @@ where
                 }
 
                 Code::ArrowUp => {
+                    self.reset_caret_timer(cx);
                     if self.kind != TextboxKind::SingleLine {
                         cx.emit(TextEvent::MoveCursor(
                             Movement::Line(Direction::Upstream),
@@ -804,6 +837,7 @@ where
                 }
 
                 Code::ArrowDown => {
+                    self.reset_caret_timer(cx);
                     if self.kind != TextboxKind::SingleLine {
                         cx.emit(TextEvent::MoveCursor(
                             Movement::Line(Direction::Downstream),
@@ -813,6 +847,7 @@ where
                 }
 
                 Code::Backspace => {
+                    self.reset_caret_timer(cx);
                     if !cx.is_read_only() {
                         if cx.modifiers.contains(Modifiers::CTRL) {
                             cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Upstream)));
@@ -823,6 +858,7 @@ where
                 }
 
                 Code::Delete => {
+                    self.reset_caret_timer(cx);
                     if !cx.is_read_only() {
                         if cx.modifiers.contains(Modifiers::CTRL) {
                             cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Downstream)));
@@ -843,6 +879,7 @@ where
                 }
 
                 Code::Home => {
+                    self.reset_caret_timer(cx);
                     cx.emit(TextEvent::MoveCursor(
                         Movement::LineStart,
                         cx.modifiers.contains(Modifiers::SHIFT),
@@ -850,6 +887,7 @@ where
                 }
 
                 Code::End => {
+                    self.reset_caret_timer(cx);
                     cx.emit(TextEvent::MoveCursor(
                         Movement::LineEnd,
                         cx.modifiers.contains(Modifiers::SHIFT),
@@ -857,6 +895,7 @@ where
                 }
 
                 Code::PageUp | Code::PageDown => {
+                    self.reset_caret_timer(cx);
                     let direction = if *code == Code::PageUp {
                         Direction::Upstream
                     } else {
@@ -1028,6 +1067,7 @@ where
                     cx.focus_with_visibility(false);
                     cx.capture();
                     cx.set_checked(true);
+                    cx.start_timer(self.caret_timer);
 
                     if let Some(source) = cx.data::<L::Source>() {
                         let text = self.lens.view(source, |t| {
@@ -1062,6 +1102,7 @@ where
                 self.edit = false;
                 cx.set_checked(false);
                 cx.release();
+                cx.stop_timer(self.caret_timer);
 
                 if let Some(source) = cx.data::<L::Source>() {
                     let text = self.lens.view(source, |t| {
@@ -1191,6 +1232,10 @@ where
                         }
                     }
                 }
+            }
+
+            TextEvent::ToggleCaret => {
+                self.show_caret ^= true;
             }
         });
     }
