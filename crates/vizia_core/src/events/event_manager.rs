@@ -338,42 +338,33 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             meta.target = context.focused;
 
             #[cfg(debug_assertions)]
-            if *code == Code::KeyH {
-                for entity in context.tree.into_iter() {
-                    println!(
-                        "Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",
-                        entity,
-                        entity.parent(&context.tree),
-                        context
-                            .views
-                            .get(&entity)
-                            .map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")),
-                        context.cache.get_posx(entity),
-                        context.cache.get_posy(entity),
-                        context.cache.get_width(entity),
-                        context.cache.get_height(entity)
-                    );
-                }
-            }
-
-            #[cfg(debug_assertions)]
             if *code == Code::KeyP && context.modifiers.contains(Modifiers::CTRL) {
                 for entity in TreeIterator::full(&context.tree) {
                     if let Some(model_data_store) = context.data.get(&entity) {
-                        print!(
-                            "{}{:?}",
-                            entity,
-                            model_data_store.models.keys().collect::<Vec<_>>()
-                        );
-                        print!("{:?}", model_data_store.stores.keys().collect::<Vec<_>>());
-                        println!();
+                        if !model_data_store.models.is_empty() {
+                            println!("Models for {}", entity);
+                            for (_, model) in model_data_store.models.iter() {
+                                println!("M: {:?}", model.name())
+                            }
+                        }
+
+                        if !model_data_store.stores.is_empty() {
+                            println!("Stores for {}", entity);
+                            for (_, store) in model_data_store.stores.iter() {
+                                println!(
+                                    "S: [{}] - Observers {:?}",
+                                    store.name(),
+                                    store.observers()
+                                )
+                            }
+                        }
                     }
                 }
             }
 
             #[cfg(debug_assertions)]
             if *code == Code::KeyI && context.modifiers.contains(Modifiers::CTRL) {
-                debug!("Entity tree");
+                println!("Entity tree");
                 let (tree, views, cache) = (&context.tree, &context.views, &context.cache);
                 let has_next_sibling = |entity| tree.get_next_sibling(entity).is_some();
                 let root_indents = |entity: Entity| {
@@ -402,7 +393,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                                 class_names += &format!(".{}", class);
                             }
                         }
-                        debug!(
+                        println!(
                             "{}{} {}{} [x: {} y: {} w: {} h: {}]",
                             indents(entity),
                             entity,
@@ -413,28 +404,27 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                             if w == f32::MAX { "inf".to_string() } else { w.to_string() },
                             if h == f32::MAX { "inf".to_string() } else { h.to_string() },
                         );
+                    } else if let Some(binding_name) =
+                        context.bindings.get(&entity).map(|binding| format!("{:?}", binding))
+                    {
+                        println!(
+                            "{}{} binding observing {}",
+                            indents(entity),
+                            entity,
+                            binding_name
+                        );
+                    } else {
+                        println!(
+                            "{}{} {}",
+                            indents(entity),
+                            entity,
+                            if views.get(&entity).is_some() {
+                                "unnamed view"
+                            } else {
+                                "no binding or view"
+                            }
+                        );
                     }
-                    // else if let Some(binding_name) =
-                    //     context.bindings.get(&entity).and_then(|binding| binding.name())
-                    // {
-                    //     println!(
-                    //         "{}{} binding observing {}",
-                    //         indents(entity),
-                    //         entity,
-                    //         binding_name
-                    //     );
-                    // } else {
-                    //     println!(
-                    //         "{}{} {}",
-                    //         indents(entity),
-                    //         entity,
-                    //         if views.get(&entity).is_some() {
-                    //             "unnamed view"
-                    //         } else {
-                    //             "no binding or view"
-                    //         }
-                    //     );
-                    // }
                 }
             }
 

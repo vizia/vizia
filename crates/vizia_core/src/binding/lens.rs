@@ -1,5 +1,6 @@
 use std::any::TypeId;
 use std::fmt::{Debug, Formatter};
+use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use std::ops::{BitAnd, BitOr, Deref};
 use std::rc::Rc;
@@ -7,26 +8,18 @@ use std::rc::Rc;
 use crate::context::{CURRENT, MAPS, MAP_MANAGER};
 use crate::prelude::*;
 
-use super::{next_uuid, MapId, StoreId};
+use super::MapId;
 
 /// A Lens allows the construction of a reference to a piece of some data, e.g. a field of a struct.
 ///
 /// When deriving the `Lens` trait on a struct, the derive macro constructs a static type which implements the `Lens` trait for each field.
 /// The `view()` method takes a reference to the struct type as input and outputs a reference to the field.
 /// This provides a way to specify a binding to a specific field of some application data.
-pub trait Lens: 'static + Copy {
+pub trait Lens: 'static + Copy + std::fmt::Debug + std::hash::Hash {
     type Source;
     type Target;
 
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O;
-
-    fn name(&self) -> Option<&'static str> {
-        None
-    }
-
-    fn id(&self) -> StoreId {
-        StoreId::Type(TypeId::of::<Self>())
-    }
 }
 
 /// Helpers for constructing more complex `Lens`es.
@@ -92,12 +85,12 @@ pub trait LensExt: Lens {
         Then::new(self, other)
     }
 
-    fn index<T>(self, index: usize) -> Then<Self, Index<Self::Target, T>>
+    fn index<T>(self, index: usize) -> Index<Self, T>
     where
         T: 'static,
         Self::Target: Deref<Target = [T]>,
     {
-        self.then(Index::new(index))
+        Index::new(self, index)
     }
 
     fn map<O: 'static, F: 'static + Fn(&Self::Target) -> O>(self, map: F) -> Map<Self, O> {
@@ -106,7 +99,7 @@ pub trait LensExt: Lens {
         MAPS.with(|f| {
             f.borrow_mut().insert(id, (entity, Box::new(MapState { closure: Rc::new(map) })))
         });
-        Map { id, store_id: next_uuid(), lens: self, o: PhantomData }
+        Map { id, lens: self, o: PhantomData }
     }
 
     fn map_ref<O: 'static, F: 'static + Fn(&Self::Target) -> &O>(self, map: F) -> MapRef<Self, O> {
@@ -144,10 +137,8 @@ pub struct MapRefState<T, O> {
     closure: Rc<dyn Fn(&T) -> &O>,
 }
 
-#[derive(Debug)]
 pub struct Map<L: Lens, O> {
     id: MapId,
-    store_id: u64,
     lens: L,
     o: PhantomData<O>,
 }
@@ -182,13 +173,22 @@ impl<L: Lens, O: 'static> Lens for Map<L, O> {
             map(t.map(|tt| (closure.unwrap())(tt)).as_ref())
         })
     }
+}
 
-    fn id(&self) -> StoreId {
-        StoreId::Uuid(self.store_id)
+impl<L: Lens, O: 'static> std::fmt::Debug for Map<L, O> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{:?}.map(?)", self.lens))
     }
 }
 
-#[derive(Debug)]
+impl<L: Lens, O: 'static> Hash for Map<L, O> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.lens.hash(state);
+        self.id.hash(state);
+    }
+}
+
+// #[derive(Debug)]
 pub struct MapRef<L: Lens, O> {
     id: MapId,
     lens: L,
@@ -227,7 +227,21 @@ impl<L: Lens, O: 'static> Lens for MapRef<L, O> {
     }
 }
 
+impl<L: Lens, O: 'static> std::fmt::Debug for MapRef<L, O> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{:?}.map(?)", self.lens))
+    }
+}
+
+impl<L: Lens, O: 'static> Hash for MapRef<L, O> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.lens.hash(state);
+        self.id.hash(state);
+    }
+}
+
 /// `Lens` composed of two lenses joined together
+#[derive(Hash)]
 pub struct Then<A, B> {
     a: A,
     b: B,
@@ -254,10 +268,6 @@ where
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
         self.a.view(source, |t| if let Some(t) = t { self.b.view(t, map) } else { map(None) })
     }
-
-    fn name(&self) -> Option<&'static str> {
-        self.a.name()
-    }
 }
 
 impl<T: Clone, U: Clone> Clone for Then<T, U> {
@@ -266,18 +276,23 @@ impl<T: Clone, U: Clone> Clone for Then<T, U> {
     }
 }
 
+impl<A: Lens, B: Lens> std::fmt::Debug for Then<A, B> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{:?}.then({:?})", self.a, self.b))
+    }
+}
+
 impl<T: Copy, U: Copy> Copy for Then<T, U> {}
 
-pub struct Index<A, T> {
+pub struct Index<L, T> {
+    lens: L,
     index: usize,
-    id: u64,
-    pa: PhantomData<A>,
     pt: PhantomData<T>,
 }
 
-impl<A, T> Index<A, T> {
-    pub fn new(index: usize) -> Self {
-        Self { index, id: next_uuid(), pa: PhantomData, pt: PhantomData }
+impl<L, T> Index<L, T> {
+    pub fn new(lens: L, index: usize) -> Self {
+        Self { lens, index, pt: PhantomData }
     }
 
     pub fn idx(&self) -> usize {
@@ -285,34 +300,36 @@ impl<A, T> Index<A, T> {
     }
 }
 
-impl<A, T> Clone for Index<A, T> {
+impl<L: Lens, T> Clone for Index<L, T> {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl<A, T> Copy for Index<A, T> {}
+impl<L: Lens, T> Copy for Index<L, T> {}
 
-// impl<A,I> Debug for Index<A,I> {
-//     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-//         f.debug_struct("Index").field("index", &self.index).finish()
-//     }
-// }
+impl<L: Lens, T> Debug for Index<L, T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{:?}.index({:?})", self.lens, self.index))
+    }
+}
 
-impl<A, T: 'static> Lens for Index<A, T>
+impl<L: Lens, T> Hash for Index<L, T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.lens.hash(state);
+        self.index.hash(state);
+    }
+}
+
+impl<L: Lens, T: 'static> Lens for Index<L, T>
 where
-    A: 'static + std::ops::Deref<Target = [T]>,
+    <L as Lens>::Target: std::ops::Deref<Target = [T]>,
 {
-    type Source = A;
+    type Source = L::Source;
     type Target = T;
 
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
-        let data = source.get(self.index);
-        map(data)
-    }
-
-    fn id(&self) -> StoreId {
-        StoreId::Uuid(self.id)
+        self.lens.view(source, |t| if let Some(t) = t { map(t.get(self.index)) } else { map(None) })
     }
 }
 
@@ -336,6 +353,13 @@ impl<T> Debug for StaticLens<T> {
     }
 }
 
+impl<T> Hash for StaticLens<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let id = TypeId::of::<Self>();
+        id.hash(state);
+    }
+}
+
 impl<T> Lens for StaticLens<T> {
     type Source = ();
     type Target = T;
@@ -351,7 +375,7 @@ impl<T> StaticLens<T> {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct UnwrapLens<T> {
     t: PhantomData<T>,
 }
@@ -379,7 +403,20 @@ impl<T: 'static> Lens for UnwrapLens<T> {
     }
 }
 
-#[derive(Debug, Default)]
+impl<T: 'static> std::fmt::Debug for UnwrapLens<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str("unwrap")
+    }
+}
+
+impl<T: 'static> Hash for UnwrapLens<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let id = TypeId::of::<Self>();
+        id.hash(state);
+    }
+}
+
+#[derive(Default)]
 pub struct IntoLens<T, U> {
     t: PhantomData<T>,
     u: PhantomData<U>,
@@ -409,7 +446,20 @@ impl<T: 'static + Clone + TryInto<U>, U: 'static> Lens for IntoLens<T, U> {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+impl<T, U> std::fmt::Debug for IntoLens<T, U> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str("into")
+    }
+}
+
+impl<T: 'static, U: 'static> Hash for IntoLens<T, U> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let id = TypeId::of::<Self>();
+        id.hash(state);
+    }
+}
+
+#[derive(Hash, Copy, Clone, Debug)]
 pub struct RatioLens<L1, L2> {
     numerator: L1,
     denominator: L2,
@@ -444,7 +494,7 @@ where
     }
 }
 
-#[derive(Debug, Copy)]
+#[derive(Hash, Debug, Copy)]
 pub struct OrLens<L1, L2> {
     lens1: L1,
     lens2: L2,
@@ -483,10 +533,6 @@ where
             }
         })
     }
-
-    fn name(&self) -> Option<&'static str> {
-        self.lens1.name()
-    }
 }
 
 impl<L1: Clone, L2: Clone> Clone for OrLens<L1, L2> {
@@ -495,7 +541,7 @@ impl<L1: Clone, L2: Clone> Clone for OrLens<L1, L2> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Hash, Clone)]
 pub struct Wrapper<L>(pub L);
 
 impl<L: Copy> Copy for Wrapper<L> {}
@@ -506,9 +552,11 @@ impl<L: Lens> Lens for Wrapper<L> {
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
         self.0.view(source, map)
     }
+}
 
-    fn name(&self) -> Option<&'static str> {
-        self.0.name()
+impl<L: Lens> std::fmt::Debug for Wrapper<L> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }
 
@@ -554,7 +602,7 @@ where
     }
 }
 
-#[derive(Debug, Copy)]
+#[derive(Hash, Debug, Copy)]
 pub struct AndLens<L1, L2> {
     lens1: L1,
     lens2: L2,
@@ -592,10 +640,6 @@ where
                 map(None)
             }
         })
-    }
-
-    fn name(&self) -> Option<&'static str> {
-        self.lens1.name()
     }
 }
 
