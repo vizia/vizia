@@ -338,32 +338,13 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             meta.target = context.focused;
 
             #[cfg(debug_assertions)]
-            if *code == Code::KeyH {
-                for entity in context.tree.into_iter() {
-                    println!(
-                        "Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",
-                        entity,
-                        entity.parent(&context.tree),
-                        context
-                            .views
-                            .get(&entity)
-                            .map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")),
-                        context.cache.get_posx(entity),
-                        context.cache.get_posy(entity),
-                        context.cache.get_width(entity),
-                        context.cache.get_height(entity)
-                    );
-                }
-            }
-
-            #[cfg(debug_assertions)]
             if *code == Code::KeyP && context.modifiers.contains(Modifiers::CTRL) {
                 for entity in TreeIterator::full(&context.tree) {
                     if let Some(model_data_store) = context.data.get(&entity) {
                         if !model_data_store.models.is_empty() {
                             println!("Models for {}", entity);
                             for (_, model) in model_data_store.models.iter() {
-                                println!("Model: {:?}", model.name())
+                                println!("M: {:?}", model.name())
                             }
                         }
 
@@ -371,7 +352,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                             println!("Stores for {}", entity);
                             for (_, store) in model_data_store.stores.iter() {
                                 println!(
-                                    "Store: [{}] - Observers {:?}",
+                                    "S: [{}] - Observers {:?}",
                                     store.name(),
                                     store.observers()
                                 )
