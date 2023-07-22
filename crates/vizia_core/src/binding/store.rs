@@ -23,6 +23,8 @@ pub(crate) trait Store {
     fn remove_observer(&mut self, observer: &Entity);
     /// Returns the number of obersers for the store.
     fn num_observers(&self) -> usize;
+
+    fn name(&self) -> String;
 }
 
 pub(crate) struct BasicStore<L: Lens, T> {
@@ -66,5 +68,9 @@ where
 
     fn num_observers(&self) -> usize {
         self.observers.len()
+    }
+
+    fn name(&self) -> String {
+        format!("{:?}", self.lens)
     }
 }

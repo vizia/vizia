@@ -360,19 +360,23 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             if *code == Code::KeyP && context.modifiers.contains(Modifiers::CTRL) {
                 for entity in TreeIterator::full(&context.tree) {
                     if let Some(model_data_store) = context.data.get(&entity) {
-                        for (_, model) in model_data_store.models.iter() {
-                            println!("{} Model: {:?}", entity, model.name())
+                        if !model_data_store.models.is_empty() {
+                            println!("Models for {}", entity);
+                            for (_, model) in model_data_store.models.iter() {
+                                println!("Model: {:?}", model.name())
+                            }
                         }
-                        for (id, store) in model_data_store.stores.iter() {
-                            println!("{} Store: [{:?}] {:?}", entity, id, store.observers())
+
+                        if !model_data_store.stores.is_empty() {
+                            println!("Stores for {}", entity);
+                            for (_, store) in model_data_store.stores.iter() {
+                                println!(
+                                    "Store: [{}] - Observers {:?}",
+                                    store.name(),
+                                    store.observers()
+                                )
+                            }
                         }
-                        // print!(
-                        //     "{}{:?}",
-                        //     entity,
-                        //     model_data_store.models.keys().collect::<Vec<_>>()
-                        // );
-                        // print!("{:?}", model_data_store.stores.keys().collect::<Vec<_>>());
-                        // println!();
                     }
                 }
             }
