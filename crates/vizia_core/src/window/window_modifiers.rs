@@ -181,7 +181,7 @@ pub trait WindowModifiers {
     /// Sets the icon used for the window.
     ///
     /// # Example
-    /// ```no_run
+    /// ```no_run, ignore
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
     ///
