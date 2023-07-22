@@ -124,8 +124,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
 
             impl #lens_ty_generics_decls std::hash::Hash for #field_name#lens_ty_generics {
                 fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-                    let id = std::any::TypeId::of::<Self>();
-                    id.hash(state);
+                    std::any::TypeId::of::<Self>().hash(state);
                 }
             }
 
@@ -219,8 +218,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
 
             impl #lens_ty_generics_decls std::hash::Hash for root#lens_ty_generics {
                 fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-                    let id = std::any::TypeId::of::<Self>();
-                    id.hash(state);
+                    std::any::TypeId::of::<Self>().hash(state);
                 }
             }
 
