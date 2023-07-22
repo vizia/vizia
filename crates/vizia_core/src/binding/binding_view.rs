@@ -1,7 +1,7 @@
 use std::any::TypeId;
 use std::collections::{HashMap, HashSet};
 
-use crate::binding::{BasicStore, Store, StoreId};
+use crate::binding::{get_storeid, BasicStore, Store, StoreId};
 use crate::context::{CURRENT, MAPS, MAP_MANAGER};
 use crate::model::ModelOrView;
 use crate::prelude::*;
@@ -68,7 +68,7 @@ where
         ) where
             L::Target: Data,
         {
-            let key = lens.id();
+            let key = get_storeid(&lens);
 
             if let Some(store) = stores.get_mut(&key) {
                 let observers = store.observers();
@@ -166,8 +166,6 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
             }
         });
 
-        // let parent = cx.tree.get_layout_parent(self.entity).unwrap();
-
         if let Some(builder) = &self.content {
             CURRENT.with(|f| *f.borrow_mut() = self.entity);
             (builder)(cx, self.lens);
@@ -177,10 +175,10 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
     fn remove(&self, cx: &mut Context) {
         for entity in self.entity.parent_iter(&cx.tree) {
             if let Some(model_data_store) = cx.data.get_mut(&entity) {
+                let key = get_storeid(&self.lens);
+
                 // Check for model store
                 if model_data_store.models.get(&TypeId::of::<L::Source>()).is_some() {
-                    let key = self.lens.id();
-
                     if let Some(store) = model_data_store.stores.get_mut(&key) {
                         store.remove_observer(&self.entity);
 
@@ -195,8 +193,6 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
                 // Check for view store
                 if let Some(view_handler) = cx.views.get(&entity) {
                     if view_handler.as_any_ref().is::<L::Source>() {
-                        let key = self.lens.id();
-
                         if let Some(store) = model_data_store.stores.get_mut(&key) {
                             store.remove_observer(&self.entity);
 

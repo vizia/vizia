@@ -1,19 +1,15 @@
-use std::{any::TypeId, collections::HashSet};
+use std::collections::{hash_map::DefaultHasher, HashSet};
+use std::hash::{Hash, Hasher};
 
 use crate::{model::ModelOrView, prelude::*};
 
-use std::sync::atomic::{AtomicU64, Ordering};
-
-// Generates a unique ID.
-pub(crate) fn next_uuid() -> u64 {
-    static UUID: AtomicU64 = AtomicU64::new(0);
-    UUID.fetch_add(1, Ordering::Relaxed)
-}
-
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub enum StoreId {
-    Type(TypeId),
-    Uuid(u64),
+pub struct StoreId(pub u64);
+
+pub(crate) fn get_storeid<T: Hash>(t: &T) -> StoreId {
+    let mut s = DefaultHasher::new();
+    t.hash(&mut s);
+    StoreId(s.finish())
 }
 
 pub(crate) trait Store {

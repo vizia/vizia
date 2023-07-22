@@ -74,10 +74,12 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
     let mut lens_ty_idents = Vec::new();
     let mut phantom_decls = Vec::new();
     let mut phantom_inits = Vec::new();
+    let mut lens_ty_decls = Vec::new();
 
     for gp in input.generics.params.iter() {
         if let GenericParam::Type(TypeParam { ident, .. }) = gp {
             lens_ty_idents.push(quote! {#ident});
+            lens_ty_decls.push(quote! {#ident: 'static});
             phantom_decls.push(quote! {std::marker::PhantomData<*const #ident>});
             phantom_inits.push(quote! {std::marker::PhantomData});
         }
@@ -85,6 +87,10 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
 
     let lens_ty_generics = quote! {
         <#(#lens_ty_idents),*>
+    };
+
+    let lens_ty_generics_decls = quote! {
+        <#(#lens_ty_decls),*>
     };
 
     // Define lens types for each field
@@ -106,13 +112,20 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         quote! {
             #[doc = #struct_docs]
             #[allow(non_camel_case_types)]
-            #[derive(Hash, PartialEq, Eq)]
+            #[derive(PartialEq, Eq)]
             #struct_vis struct #field_name#lens_ty_generics(#(#phantom_decls),*);
 
             impl #lens_ty_generics #field_name#lens_ty_generics{
                 #[doc = #fn_docs]
                 pub const fn new()->Self{
                     Self(#(#phantom_inits),*)
+                }
+            }
+
+            impl #lens_ty_generics_decls std::hash::Hash for #field_name#lens_ty_generics {
+                fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+                    let id = std::any::TypeId::of::<Self>();
+                    id.hash(state);
                 }
             }
 
@@ -193,7 +206,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         #[doc = #mod_docs]
         #module_vis mod #twizzled_name {
             #(#defs)*
-            #[derive(Hash, PartialEq, Eq)]
+            #[derive(PartialEq, Eq)]
             #[doc = #root_docs]
             #[allow(non_camel_case_types)]
             #struct_vis struct root#lens_ty_generics(#(#phantom_decls),*);
@@ -201,6 +214,13 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
             impl #lens_ty_generics root#lens_ty_generics{
                 pub const fn new()->Self{
                     Self(#(#phantom_inits),*)
+                }
+            }
+
+            impl #lens_ty_generics_decls std::hash::Hash for root#lens_ty_generics {
+                fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+                    let id = std::any::TypeId::of::<Self>();
+                    id.hash(state);
                 }
             }
 
