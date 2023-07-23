@@ -458,6 +458,10 @@ impl Context {
                 }
             });
 
+            if let Some(parent) = self.tree.get_layout_parent(*entity) {
+                self.style.needs_access_update(parent);
+            }
+
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
             self.style.remove(*entity);
