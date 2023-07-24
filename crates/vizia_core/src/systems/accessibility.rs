@@ -16,59 +16,59 @@ pub(crate) fn accessibility_system(cx: &mut Context) {
     let iterator = LayoutTreeIterator::full(&cx.tree);
 
     for entity in iterator {
-        if cx.style.needs_access_update.get(entity).filter(|flag| **flag).is_some() {
-            let mut access_context = AccessContext {
-                current: entity,
-                tree: &cx.tree,
-                cache: &cx.cache,
-                style: &cx.style,
-                text_context: &mut cx.text_context,
-            };
+        // if cx.style.needs_access_update.get(entity).filter(|flag| **flag).is_some() {
+        let mut access_context = AccessContext {
+            current: entity,
+            tree: &cx.tree,
+            cache: &cx.cache,
+            style: &cx.style,
+            text_context: &mut cx.text_context,
+        };
 
-            if let Some(mut node) = get_access_node(&mut access_context, &mut cx.views, entity) {
-                let navigable = cx
-                    .style
-                    .abilities
-                    .get(entity)
-                    .copied()
-                    .unwrap_or_default()
-                    .contains(Abilities::NAVIGABLE);
+        if let Some(mut node) = get_access_node(&mut access_context, &mut cx.views, entity) {
+            let navigable = cx
+                .style
+                .abilities
+                .get(entity)
+                .copied()
+                .unwrap_or_default()
+                .contains(Abilities::NAVIGABLE);
 
-                if node.node_builder.role() == Role::Unknown && !navigable {
-                    continue;
-                }
-
-                let child_ids =
-                    node.children.iter().map(|child_node| child_node.node_id()).collect::<Vec<_>>();
-
-                if !child_ids.is_empty() {
-                    node.node_builder.set_children(child_ids);
-                }
-
-                let mut nodes = vec![(
-                    node.node_id(),
-                    node.node_builder.build(&mut cx.style.accesskit_node_classes),
-                )];
-
-                // If child nodes were generated then append them to the nodes list
-                if !node.children.is_empty() {
-                    nodes.extend(node.children.into_iter().map(|child_node| {
-                        (
-                            child_node.node_id(),
-                            child_node.node_builder.build(&mut cx.style.accesskit_node_classes),
-                        )
-                    }));
-                }
-
-                cx.tree_updates.push(TreeUpdate {
-                    nodes,
-                    tree: None,
-                    focus: cx.window_has_focus.then_some(cx.focused.accesskit_id()),
-                });
+            if node.node_builder.role() == Role::Unknown && !navigable {
+                continue;
             }
 
-            cx.style.needs_access_update.insert(entity, false);
+            let child_ids =
+                node.children.iter().map(|child_node| child_node.node_id()).collect::<Vec<_>>();
+
+            if !child_ids.is_empty() {
+                node.node_builder.set_children(child_ids);
+            }
+
+            let mut nodes = vec![(
+                node.node_id(),
+                node.node_builder.build(&mut cx.style.accesskit_node_classes),
+            )];
+
+            // If child nodes were generated then append them to the nodes list
+            if !node.children.is_empty() {
+                nodes.extend(node.children.into_iter().map(|child_node| {
+                    (
+                        child_node.node_id(),
+                        child_node.node_builder.build(&mut cx.style.accesskit_node_classes),
+                    )
+                }));
+            }
+
+            cx.tree_updates.push(TreeUpdate {
+                nodes,
+                tree: None,
+                focus: cx.window_has_focus.then_some(cx.focused.accesskit_id()),
+            });
         }
+
+        cx.style.needs_access_update.insert(entity, false);
+        // }
     }
 }
 
