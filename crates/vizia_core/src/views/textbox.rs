@@ -780,6 +780,7 @@ where
                     *c != '\u{7f}' && // Delete
                     *c != '\u{0d}' && // Carriage return
                     !cx.modifiers.contains(Modifiers::CTRL) &&
+                    !cx.modifiers.contains(Modifiers::LOGO) &&
                     self.edit &&
                     !cx.is_read_only()
                 {
@@ -912,21 +913,45 @@ where
                 }
 
                 Code::KeyA => {
-                    if cx.modifiers.contains(Modifiers::CTRL) {
+                    #[cfg(target_os = "macos")]
+                    let modifier = Modifiers::LOGO;
+                    #[cfg(not(target_os = "macos"))]
+                    let modifier = Modifiers::CTRL;
+
+                    if cx.modifiers == &modifier {
                         cx.emit(TextEvent::SelectAll);
                     }
                 }
 
-                Code::KeyC if cx.modifiers == &Modifiers::CTRL => {
-                    cx.emit(TextEvent::Copy);
+                Code::KeyC => {
+                    #[cfg(target_os = "macos")]
+                    let modifier = Modifiers::LOGO;
+                    #[cfg(not(target_os = "macos"))]
+                    let modifier = Modifiers::CTRL;
+
+                    if cx.modifiers == &modifier {
+                        cx.emit(TextEvent::Copy);
+                    }
                 }
 
-                Code::KeyV if cx.modifiers == &Modifiers::CTRL => {
-                    cx.emit(TextEvent::Paste);
+                Code::KeyV => {
+                    #[cfg(target_os = "macos")]
+                    let modifier = Modifiers::LOGO;
+                    #[cfg(not(target_os = "macos"))]
+                    let modifier = Modifiers::CTRL;
+
+                    if cx.modifiers == &modifier {
+                        cx.emit(TextEvent::Paste);
+                    }
                 }
 
-                Code::KeyX if cx.modifiers == &Modifiers::CTRL => {
-                    if !cx.is_read_only() {
+                Code::KeyX => {
+                    #[cfg(target_os = "macos")]
+                    let modifier = Modifiers::LOGO;
+                    #[cfg(not(target_os = "macos"))]
+                    let modifier = Modifiers::CTRL;
+
+                    if cx.modifiers == &modifier && !cx.is_read_only() {
                         cx.emit(TextEvent::Cut);
                     }
                 }
