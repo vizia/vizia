@@ -474,8 +474,10 @@ where
 
     fn reset_caret_timer(&mut self, cx: &mut EventContext) {
         cx.stop_timer(self.caret_timer);
-        self.show_caret = true;
-        cx.start_timer(self.caret_timer);
+        if !cx.is_read_only() {
+            self.show_caret = true;
+            cx.start_timer(self.caret_timer);
+        }
     }
 }
 
@@ -761,9 +763,7 @@ where
                     && cx.mouse.left.pressed == cx.current
                 {
                     if self.edit {
-                        cx.stop_timer(self.caret_timer);
-                        self.show_caret = true;
-                        cx.start_timer(self.caret_timer);
+                        self.reset_caret_timer(cx);
                     }
                     cx.emit(TextEvent::Drag(cx.mouse.cursorx, cx.mouse.cursory));
                 }
@@ -1067,7 +1067,7 @@ where
                     cx.focus_with_visibility(false);
                     cx.capture();
                     cx.set_checked(true);
-                    cx.start_timer(self.caret_timer);
+                    self.reset_caret_timer(cx);
 
                     if let Some(source) = cx.data::<L::Source>() {
                         let text = self.lens.view(source, |t| {

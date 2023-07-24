@@ -784,8 +784,6 @@ textbox:checked {
     border-color: #51afef;
     background-color: #323232;
     transition: border-color 100ms;
-    caret-color: transparent;
-    selection-color: #6464c888;
 }
 
 textbox:checked.caret {
@@ -800,8 +798,6 @@ textbox > label.placeholder {
 textbox:read-only {
     background-color: transparent;
     border-width: 0px;
-    caret-color: transparent;
-    selection-color: #6464c888;
 }
 
 textbox:disabled {
