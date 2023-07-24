@@ -708,6 +708,20 @@ textbox {
     child-top: 1s;
     child-bottom: 1s;
     cursor: text;
+    caret-color: transparent;
+    selection-color: #6464c888;
+}
+
+textbox:checked.caret {
+    caret-color: #181818;
+}
+
+textbox:read-only {
+    caret-color: transparent;
+}
+
+textbox:checked:read-only.caret {
+    caret-color: transparent;
 }
 
 textbox > label.placeholder {
