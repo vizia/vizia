@@ -25,7 +25,7 @@ pub(crate) fn accessibility_system(cx: &mut Context) {
             text_context: &mut cx.text_context,
         };
 
-        if let Some(mut node) = get_access_node(&mut access_context, &mut cx.views, entity) {
+        if let Some(node) = get_access_node(&mut access_context, &mut cx.views, entity) {
             let navigable = cx
                 .style
                 .abilities
@@ -36,13 +36,6 @@ pub(crate) fn accessibility_system(cx: &mut Context) {
 
             if node.node_builder.role() == Role::Unknown && !navigable {
                 continue;
-            }
-
-            let child_ids =
-                node.children.iter().map(|child_node| child_node.node_id()).collect::<Vec<_>>();
-
-            if !child_ids.is_empty() {
-                node.node_builder.set_children(child_ids);
             }
 
             let mut nodes = vec![(
@@ -167,12 +160,6 @@ pub(crate) fn get_access_node(
         }
     }
 
-    let children =
-        entity.child_iter(cx.tree).map(|entity| entity.accesskit_id()).collect::<Vec<_>>();
-    if !children.is_empty() {
-        node_builder.set_children(children);
-    }
-
     let mut node =
         AccessNode { node_id: entity.accesskit_id(), node_builder, children: Vec::new() };
 
@@ -180,6 +167,20 @@ pub(crate) fn get_access_node(
         view.accessibility(cx, &mut node);
 
         views.insert(entity, view);
+    }
+
+    // Layout children
+    let children =
+        entity.child_iter(cx.tree).map(|entity| entity.accesskit_id()).collect::<Vec<_>>();
+
+    // Children added by `accessibility` function
+    let mut child_ids =
+        node.children.iter().map(|child_node| child_node.node_id()).collect::<Vec<_>>();
+
+    child_ids.extend(children);
+
+    if !child_ids.is_empty() {
+        node.node_builder.set_children(child_ids);
     }
 
     Some(node)
