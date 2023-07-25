@@ -45,7 +45,6 @@ pub mod image {
 
 /// A collection of codepoints for built-in icons.
 pub mod icons;
-pub use icons::*;
 
 pub mod fonts;
 pub use fonts::*;

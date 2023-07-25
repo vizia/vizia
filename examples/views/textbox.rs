@@ -1,7 +1,7 @@
 mod helpers;
 use helpers::*;
+use vizia::icons::ICON_SEARCH;
 use vizia::prelude::*;
-use vizia_core::ICON_SEARCH;
 
 #[derive(Lens, Setter, Model)]
 pub struct AppData {

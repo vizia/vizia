@@ -154,3 +154,73 @@ pub const ICON_SLICE: &str = "\u{ebdb}";
 
 pub const ICON_MENU: &str = "\u{eaeb}";
 pub const ICON_MENU_2: &str = "\u{ec42}";
+
+pub const ICON_FOLDER_BOLT: &str = "\u{f90c}";
+pub const ICON_FOLDER_CANCEL: &str = "\u{f90d}";
+pub const ICON_FOLDER_CHECK: &str = "\u{f90e}";
+pub const ICON_FOLDER_CODE: &str = "\u{f90f}";
+pub const ICON_FOLDER_COG: &str = "\u{f910}";
+pub const ICON_FOLDER_DOLLAR: &str = "\u{f911}";
+pub const ICON_FOLDER_DOWN: &str = "\u{f912}";
+pub const ICON_FOLDER_EXCLAMATION: &str = "\u{f913}";
+pub const ICON_FOLDER_FILLED: &str = "\u{f749}";
+pub const ICON_FOLDER_HEART: &str = "\u{f914}";
+pub const ICON_FOLDER_MINUS: &str = "\u{eaaa}";
+pub const ICON_FOLDER_OFF: &str = "\u{ed14}";
+pub const ICON_FOLDER_OPEN: &str = "\u{faf7}";
+pub const ICON_FOLDER_PAUSE: &str = "\u{f915}";
+pub const ICON_FOLDER_PIN: &str = "\u{f916}";
+pub const ICON_FOLDER_PLUS: &str = "\u{eaab}";
+pub const ICON_FOLDER_QUESTION: &str = "\u{f917}";
+pub const ICON_FOLDER_SEARCH: &str = "\u{f918}";
+pub const ICON_FOLDER_SHARE: &str = "\u{f919}";
+pub const ICON_FOLDER_STAR: &str = "\u{f91a}";
+pub const ICON_FOLDER_SYMLINK: &str = "\u{f91b}";
+pub const ICON_FOLDER_UP: &str = "\u{f91c}";
+pub const ICON_FOLDER_X: &str = "\u{eaac}";
+pub const ICON_FOLDER: &str = "\u{eaad}";
+pub const ICON_FOLDERS_OFF: &str = "\u{f133}";
+pub const ICON_FOLDERS: &str = "\u{eaae}";
+
+pub const ICON_LIST_SEARCH: &str = "\u{eea9}";
+pub const ICON_LIST_TREE: &str = "\u{fafa}";
+pub const ICON_LIST: &str = "\u{eb6b}";
+
+pub const ICON_PLAYLIST_ADD: &str = "\u{f008}";
+pub const ICON_PLAYLIST_OFF: &str = "\u{f17f}";
+pub const ICON_PLAYLIST_X: &str = "\u{f009}";
+pub const ICON_PLAYLIST: &str = "\u{eec0}";
+
+pub const ICON_BOOKMARK_OFF: &str = "\u{eced}";
+pub const ICON_BOOKMARK: &str = "\u{ea3a}";
+pub const ICON_BOOKMARKS_OFF: &str = "\u{f0bd}";
+pub const ICON_BOOKMARKS: &str = "\u{ed08}";
+
+pub const ICON_TAG_OFF: &str = "\u{efc0}";
+pub const ICON_TAG: &str = "\u{eb34}";
+pub const ICON_TAGS_OFF: &str = "\u{efc1}";
+pub const ICON_TAGS: &str = "\u{ef86}";
+
+pub const ICON_ARROWS_SORT: &str = "\u{eb5a}";
+pub const ICON_SORT_0_9: &str = "\u{f54d}";
+pub const ICON_SORT_9_0: &str = "\u{f54e}";
+pub const ICON_SORT_A_Z: &str = "\u{f54f}";
+pub const ICON_SORT_ASCENDING_2: &str = "\u{eee2}";
+pub const ICON_SORT_ASCENDING_LETTERS: &str = "\u{ef18}";
+pub const ICON_SORT_ASCENDING_NUMBERS: &str = "\u{ef19}";
+pub const ICON_SORT_ASCENDING: &str = "\u{eb26}";
+pub const ICON_SORT_DESCENDING_2: &str = "\u{eee3}";
+pub const ICON_SORT_DESCENDING_LETTERS: &str = "\u{ef1a}";
+pub const ICON_SORT_DESCENDING_NUMBERS: &str = "\u{ef1b}";
+pub const ICON_SORT_DESCENDING: &str = "\u{eb27}";
+pub const ICON_SORT_Z_A: &str = "\u{f54f}";
+
+pub const ICON_WAVE_SAW_TOOL: &str = "\u{ecd3}";
+pub const ICON_WAVE_SINE: &str = "\u{ecd4}";
+pub const ICON_WAVE_SQUARE: &str = "\u{ecd5}";
+
+pub const ICON_WEIGHT: &str = "\u{f589}";
+
+pub const ICON_CLOCK: &str = "\u{ea70}";
+pub const ICON_CALENDAR: &str = "\u{ea53}";
+pub const ICON_CALENDAR_TIME: &str = "\u{ee21}";
