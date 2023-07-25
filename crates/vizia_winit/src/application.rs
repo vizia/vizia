@@ -282,7 +282,7 @@ impl Application {
                         let node_id = action_request_event.request.target;
 
                         if action_request_event.request.action != Action::ScrollIntoView {
-                            let entity = Entity::new(node_id.0.get() as u32 - 1, 0);
+                            let entity = Entity::new(node_id.0.get() as u64 - 1, 0);
 
                             // Handle focus action from screen reader
                             if action_request_event.request.action == Action::Focus {
