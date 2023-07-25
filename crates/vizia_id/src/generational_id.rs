@@ -1,14 +1,14 @@
 /// The bits used for the index.
-pub const GENERATIONAL_ID_INDEX_BITS: u32 = 24;
+pub const GENERATIONAL_ID_INDEX_BITS: u64 = 48;
 
 /// The mask of the bits used for the index.
-pub const GENERATIONAL_ID_INDEX_MASK: u32 = (1 << GENERATIONAL_ID_INDEX_BITS) - 1;
+pub const GENERATIONAL_ID_INDEX_MASK: u64 = (1 << GENERATIONAL_ID_INDEX_BITS) - 1;
 
 /// The bits used for the generation.
-pub const GENERATIONAL_ID_GENERATION_BITS: u32 = 8;
+pub const GENERATIONAL_ID_GENERATION_BITS: u64 = 16;
 
 /// The mask of the bits used for the generation.
-pub const GENERATIONAL_ID_GENERATION_MASK: u32 = (1 << GENERATIONAL_ID_GENERATION_BITS) - 1;
+pub const GENERATIONAL_ID_GENERATION_MASK: u64 = (1 << GENERATIONAL_ID_GENERATION_BITS) - 1;
 
 /// A trait implemented by any generational id.
 ///
@@ -16,7 +16,7 @@ pub const GENERATIONAL_ID_GENERATION_MASK: u32 = (1 << GENERATIONAL_ID_GENERATIO
 /// arrays and the generation is used to check if the id is still valid or alive.
 pub trait GenerationalId: Copy + PartialEq {
     /// Creates a new generational id from an index and a generation.
-    fn new(index: u32, generation: u32) -> Self;
+    fn new(index: u64, generation: u64) -> Self;
 
     /// Returns the index of the generational id.
     ///
@@ -67,7 +67,7 @@ macro_rules! impl_generational_id {
         }
 
         impl GenerationalId for $impl_type {
-            fn new(index: u32, generation: u32) -> Self {
+            fn new(index: u64, generation: u64) -> Self {
                 assert!(index < GENERATIONAL_ID_INDEX_MASK);
                 assert!(generation < GENERATIONAL_ID_GENERATION_MASK);
                 Self(index | generation << GENERATIONAL_ID_INDEX_BITS)
@@ -82,7 +82,7 @@ macro_rules! impl_generational_id {
             }
 
             fn null() -> Self {
-                Self(u32::MAX)
+                Self(u64::MAX)
             }
 
             fn is_null(&self) -> bool {
