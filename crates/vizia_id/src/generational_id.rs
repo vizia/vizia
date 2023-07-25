@@ -26,7 +26,7 @@ pub trait GenerationalId: Copy + PartialEq {
     /// Returns the generation of the generational id.
     ///
     /// This is used to determine whether this generational id is still valid.
-    fn generation(&self) -> u8;
+    fn generation(&self) -> u16;
 
     /// Creates a null or invalid generational id.
     ///
@@ -77,8 +77,8 @@ macro_rules! impl_generational_id {
                 (self.0 & GENERATIONAL_ID_INDEX_MASK) as usize
             }
 
-            fn generation(&self) -> u8 {
-                ((self.0 >> GENERATIONAL_ID_INDEX_BITS) & GENERATIONAL_ID_GENERATION_MASK) as u8
+            fn generation(&self) -> u16 {
+                ((self.0 >> GENERATIONAL_ID_INDEX_BITS) & GENERATIONAL_ID_GENERATION_MASK) as u16
             }
 
             fn null() -> Self {

@@ -11,7 +11,7 @@ pub struct IdManager<I>
 where
     I: GenerationalId,
 {
-    generation: Vec<u8>,
+    generation: Vec<u16>,
     free_list: VecDeque<u64>,
 
     p: PhantomData<I>,
@@ -67,7 +67,7 @@ where
         if self.is_alive(id) {
             let index = id.index();
             assert!(index < self.generation.len(), "ID is invalid");
-            assert!(self.generation[index] != u8::MAX, "ID generation is at maximum");
+            assert!(self.generation[index] != u16::MAX, "ID generation is at maximum");
             self.generation[index] += 1;
             self.free_list.push_back(index as u64);
             true
