@@ -24,11 +24,10 @@ impl VirtualList {
     ) -> Handle<Self>
     where
         L: Lens,
-        <L as Lens>::Target: Clone,
         <L as Lens>::Target: std::ops::Deref<Target = [T]>,
         T: Data + 'static,
     {
-        let num_items = list.get(cx).len();
+        let num_items = list.map(|l| l.len()).get(cx);
 
         Self {
             offset: 0,
