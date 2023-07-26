@@ -163,8 +163,8 @@ impl ScrollView<Wrapper<scroll_data_derived_lenses::root>> {
                 Self::common_builder(cx, ScrollData::root, content, scroll_x, scroll_y);
             })
             .checked(ScrollData::root.map(|data| {
-                (data.container_height != data.inner_height)
-                    || (data.container_width != data.inner_width)
+                (data.container_height < data.inner_height)
+                    || (data.container_width < data.inner_width)
             }))
     }
 }
