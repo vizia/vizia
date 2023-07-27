@@ -1038,8 +1038,10 @@ where
 
                 self.placeholder_shown = text.is_empty();
 
-                if let Some(callback) = &self.on_edit {
-                    (callback)(cx, text);
+                if self.edit {
+                    if let Some(callback) = &self.on_edit {
+                        (callback)(cx, text);
+                    }
                 }
             }
 
