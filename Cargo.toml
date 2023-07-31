@@ -330,6 +330,10 @@ name = "custom_modifiers"
 path = "examples/custom_modifiers.rs"
 
 [[example]]
+name = "custom_view"
+path = "examples/custom_view.rs"
+
+[[example]]
 name = "keyframes"
 path = "examples/keyframes.rs"
 
