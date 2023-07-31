@@ -489,13 +489,18 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             if *code == Code::Tab {
                 let lock_focus_to = context.tree.lock_focus_within(context.focused);
                 if context.modifiers.contains(Modifiers::SHIFT) {
-                    let prev_focused = if let Some(prev_focused) =
-                        focus_backward(context, context.focused, lock_focus_to)
-                    {
+                    let prev_focused = if let Some(prev_focused) = focus_backward(
+                        &context.tree,
+                        &context.style,
+                        context.focused,
+                        lock_focus_to,
+                    ) {
                         prev_focused
                     } else {
                         TreeIterator::full(&context.tree)
-                            .filter(|node| is_navigatable(context, *node, lock_focus_to))
+                            .filter(|node| {
+                                is_navigatable(&context.tree, &context.style, *node, lock_focus_to)
+                            })
                             .next_back()
                             .unwrap_or(Entity::root())
                     };
@@ -522,12 +527,14 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                     }
                 } else {
                     let next_focused = if let Some(next_focused) =
-                        focus_forward(context, context.focused, lock_focus_to)
+                        focus_forward(&context.tree, &context.style, context.focused, lock_focus_to)
                     {
                         next_focused
                     } else {
                         TreeIterator::full(&context.tree)
-                            .find(|node| is_navigatable(context, *node, lock_focus_to))
+                            .find(|node| {
+                                is_navigatable(&context.tree, &context.style, *node, lock_focus_to)
+                            })
                             .unwrap_or(Entity::root())
                     };
 
@@ -612,6 +619,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 }
             }
         }
+
         _ => {}
     }
 }
