@@ -18,7 +18,7 @@ impl View for CustomView {
 
 fn main() {
     Application::new(|cx| {
-        CustomView(cx);
+        CustomView::new(cx);
     })
     .run();
 }
