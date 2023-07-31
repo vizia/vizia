@@ -7,6 +7,7 @@ use std::rc::Rc;
 use femtovg::Transform2D;
 use fnv::FnvHashMap;
 use instant::{Duration, Instant};
+use vizia_storage::TreeIterator;
 use vizia_style::{ClipPath, Filter, Scale, Translate};
 
 use crate::animation::{AnimId, Interpolator};
@@ -17,6 +18,7 @@ use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::style::{Abilities, IntoTransform, PseudoClassFlags, Style, SystemFlags};
+use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use crate::window::DropData;
 use vizia_id::GenerationalId;
 use vizia_input::{Modifiers, MouseState};
@@ -65,6 +67,7 @@ pub struct EventContext<'a> {
     pub(crate) captured: &'a mut Entity,
     pub(crate) focused: &'a mut Entity,
     pub(crate) hovered: &'a Entity,
+    pub(crate) triggered: &'a mut Entity,
     pub(crate) style: &'a mut Style,
     pub(crate) entity_identifiers: &'a HashMap<String, Entity>,
     pub cache: &'a mut CachedData,
@@ -118,6 +121,7 @@ impl<'a> EventContext<'a> {
             captured: &mut cx.captured,
             focused: &mut cx.focused,
             hovered: &cx.hovered,
+            triggered: &mut cx.triggered,
             entity_identifiers: &cx.entity_identifiers,
             style: &mut cx.style,
             cache: &mut cx.cache,
@@ -151,6 +155,7 @@ impl<'a> EventContext<'a> {
             captured: &mut cx.captured,
             focused: &mut cx.focused,
             hovered: &cx.hovered,
+            triggered: &mut cx.triggered,
             entity_identifiers: &cx.entity_identifiers,
             style: &mut cx.style,
             cache: &mut cx.cache,
@@ -470,6 +475,64 @@ impl<'a> EventContext<'a> {
             .filter(|class| class.contains(PseudoClassFlags::FOCUS_VISIBLE))
             .is_some();
         self.focus_with_visibility(old_focus_visible)
+    }
+
+    /// Moves the keyboard focus to the next navigable view.
+    pub fn focus_next(&mut self) {
+        let lock_focus_to = self.tree.lock_focus_within(*self.focused);
+        let next_focused = if let Some(next_focused) =
+            focus_forward(&self.tree, &self.style, *self.focused, lock_focus_to)
+        {
+            next_focused
+        } else {
+            TreeIterator::full(self.tree)
+                .find(|node| is_navigatable(self.tree, self.style, *node, lock_focus_to))
+                .unwrap_or(Entity::root())
+        };
+
+        if next_focused != *self.focused {
+            self.event_queue.push_back(
+                Event::new(WindowEvent::FocusOut).target(*self.focused).origin(Entity::root()),
+            );
+            self.event_queue.push_back(
+                Event::new(WindowEvent::FocusIn).target(next_focused).origin(Entity::root()),
+            );
+
+            if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(*self.triggered) {
+                pseudo_classes.set(PseudoClassFlags::ACTIVE, false);
+            }
+            self.needs_restyle();
+            *self.triggered = Entity::null();
+        }
+    }
+
+    pub fn focus_prev(&mut self) {
+        let lock_focus_to = self.tree.lock_focus_within(*self.focused);
+        let prev_focused = if let Some(prev_focused) =
+            focus_backward(self.tree, self.style, *self.focused, lock_focus_to)
+        {
+            prev_focused
+        } else {
+            TreeIterator::full(self.tree)
+                .filter(|node| is_navigatable(self.tree, self.style, *node, lock_focus_to))
+                .next_back()
+                .unwrap_or(Entity::root())
+        };
+
+        if prev_focused != *self.focused {
+            self.event_queue.push_back(
+                Event::new(WindowEvent::FocusOut).target(*self.focused).origin(Entity::root()),
+            );
+            self.event_queue.push_back(
+                Event::new(WindowEvent::FocusIn).target(prev_focused).origin(Entity::root()),
+            );
+
+            if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(*self.triggered) {
+                pseudo_classes.set(PseudoClassFlags::ACTIVE, false);
+            }
+            self.needs_restyle();
+            *self.triggered = Entity::null();
+        }
     }
 
     /// Returns the currently hovered view.

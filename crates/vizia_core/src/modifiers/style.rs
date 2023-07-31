@@ -87,7 +87,7 @@ pub trait StyleModifiers: internal::Modifiable {
     // PseudoClassFlags
     // TODO: Should these have their own modifiers trait?
 
-    /// Sets the state of the view to checked.
+    /// Sets the checked state of the view.
     fn checked<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
 
@@ -100,6 +100,26 @@ pub trait StyleModifiers: internal::Modifiable {
             let val = val.into();
             if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
                 pseudo_classes.set(PseudoClassFlags::CHECKED, val);
+            }
+
+            cx.needs_restyle();
+        });
+
+        self
+    }
+
+    /// Sets the focused state of the view.
+    ///
+    /// Since only one view can have keyboard focus at a time, subsequent calls to this
+    /// function on other views will cause those views to gain focus and this view to lose it.
+    fn focused<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
+        let entity = self.entity();
+
+        state.set_or_bind(self.context(), entity, |cx, val| {
+            let val = val.into();
+
+            if val {
+                cx.focus();
             }
 
             cx.needs_restyle();

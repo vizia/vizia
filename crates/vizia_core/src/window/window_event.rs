@@ -110,6 +110,10 @@ pub enum WindowEvent {
     Restyle,
     /// Requests a relayout.
     Relayout,
+    /// Move keyboard focus to the next navigable view.
+    FocusNext,
+    /// Move keyboard focus to the previous navigable view.
+    FocusPrev,
     /// Prints the debug message to the console.
     Debug(String),
     ActionRequest(accesskit::ActionRequest),

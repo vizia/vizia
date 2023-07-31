@@ -289,6 +289,14 @@ impl View for Window {
                 self.should_close = true;
             }
 
+            WindowEvent::FocusNext => {
+                cx.focus_next();
+            }
+
+            WindowEvent::FocusPrev => {
+                cx.focus_prev();
+            }
+
             _ => {}
         })
     }
