@@ -22,3 +22,10 @@ fn main() {
     })
     .run();
 }
+
+fn main() {
+    Application::new(|cx| {
+        CustomView(cx);
+    })
+    .run();
+}
