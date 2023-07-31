@@ -15,3 +15,10 @@ impl View for CustomView {
         Some("custom-view")
     }
 }
+
+fn main() {
+    Application::new(|cx| {
+        CustomView(cx);
+    })
+    .run();
+}
