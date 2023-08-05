@@ -171,6 +171,8 @@ dropdown .title {
 dropdown popup {
     width: 100%;
     height: auto;
+    top: 100%;
+    translate: 0px 4px;
 }
 
 dropdown popup list {
