@@ -63,7 +63,7 @@ pub(crate) fn focus_backward(
     lock_focus_to: Entity,
 ) -> Option<Entity> {
     let mut iter = TreeIterator::new(
-        &tree,
+        tree,
         DoubleEndedTreeTour::new_raw(
             TreeTour::new(Some(Entity::root())),
             TreeTour::with_direction(Some(node), TourDirection::Leaving),
