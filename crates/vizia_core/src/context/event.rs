@@ -481,7 +481,7 @@ impl<'a> EventContext<'a> {
     pub fn focus_next(&mut self) {
         let lock_focus_to = self.tree.lock_focus_within(*self.focused);
         let next_focused = if let Some(next_focused) =
-            focus_forward(&self.tree, &self.style, *self.focused, lock_focus_to)
+            focus_forward(self.tree, self.style, *self.focused, lock_focus_to)
         {
             next_focused
         } else {
