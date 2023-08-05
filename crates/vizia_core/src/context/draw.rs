@@ -1311,10 +1311,15 @@ impl<'a> DrawContext<'a> {
 
     /// Draw any text for the current view.
     pub fn draw_text(&mut self, canvas: &mut Canvas, bounds: BoundingBox, justify: (f32, f32)) {
-        if let Ok(draw_commands) =
-            self.text_context.fill_to_cmds(canvas, self.current, bounds, justify, *self.text_config)
-        {
-            let opacity = self.opacity();
+        let opacity = self.opacity();
+        if let Ok(draw_commands) = self.text_context.fill_to_cmds(
+            canvas,
+            self.current,
+            bounds,
+            justify,
+            *self.text_config,
+            opacity,
+        ) {
             for (color, cmds) in draw_commands.into_iter() {
                 let font_color = Color::rgba(
                     color.r(),

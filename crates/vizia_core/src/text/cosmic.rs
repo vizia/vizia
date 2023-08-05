@@ -222,6 +222,7 @@ impl TextContext {
         bounds: BoundingBox,
         justify: (f32, f32),
         config: TextConfig,
+        opacity: f32,
     ) -> Result<Vec<(FontColor, GlyphDrawCommands)>, ErrorKind> {
         if !self.has_buffer(entity) {
             return Ok(vec![]);
@@ -298,14 +299,14 @@ impl TextContext {
 
                             let mut src_buf = Vec::with_capacity(content_w * content_h);
                             match rendered.content {
-                                Content::Mask => {
+                                Content::Mask | Content::SubpixelMask => {
                                     for chunk in rendered.data.chunks_exact(1) {
                                         src_buf.push(RGBA8::new(chunk[0], 0, 0, 0));
                                     }
                                 }
-                                Content::Color | Content::SubpixelMask => {
+                                Content::Color => {
                                     for chunk in rendered.data.chunks_exact(4) {
-                                        src_buf.push(RGBA8::new(chunk[0], chunk[1], chunk[2], chunk[3]));
+                                        src_buf.push(RGBA8::new(chunk[0], chunk[1], chunk[2], (chunk[3] as f32 * opacity) as u8));
                                     }
                                 }
                             }
