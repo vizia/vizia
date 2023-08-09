@@ -248,3 +248,8 @@ pub const ICON_FILTER_STAR: &str = "\u{fa03}";
 pub const ICON_FILTER_UP: &str = "\u{fb89}";
 pub const ICON_FILTER_X: &str = "\u{fa04}";
 pub const ICON_FILTER: &str = "\u{eaa5}";
+
+pub const ICON_LETTER_CASE_LOWER: &str = "\u{eea2}";
+pub const ICON_LETTER_CASE_TOGGLE: &str = "\u{eea3}";
+pub const ICON_LETTER_CASE_UPPER: &str = "\u{eea4}";
+pub const ICON_LETTER_CASE: &str = "\u{eea5}";
