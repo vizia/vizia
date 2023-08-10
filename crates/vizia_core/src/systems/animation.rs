@@ -40,9 +40,9 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
         | cx.style.clip_path.tick(time);
 
     // Properties which affect layout
-    let needs_relayout =
+    let needs_relayout = cx.style.display.tick(time)
         // Border Width
-        cx.style.border_width.tick(time)
+        | cx.style.border_width.tick(time)
         // Font Size
         | cx.style.font_size.tick(time)
         // Space
