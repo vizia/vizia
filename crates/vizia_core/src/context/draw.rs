@@ -743,9 +743,9 @@ impl<'a> DrawContext<'a> {
         let bounds = self.bounds();
 
         let border_top_left_radius = self.border_top_left_radius();
-        let border_top_right_radius = self.border_top_left_radius();
-        let border_bottom_right_radius = self.border_top_left_radius();
-        let border_bottom_left_radius = self.border_top_left_radius();
+        let border_top_right_radius = self.border_top_right_radius();
+        let border_bottom_right_radius = self.border_bottom_right_radius();
+        let border_bottom_left_radius = self.border_bottom_left_radius();
 
         let outline_width = self.outline_width();
         let outline_offset = self.outline_offset();
