@@ -2,7 +2,9 @@ use crate::entity::Entity;
 use crate::prelude::Style;
 use crate::style::{Abilities, Display};
 use vizia_id::GenerationalId;
-use vizia_storage::{DoubleEndedTreeTour, TourDirection, Tree, TreeExt, TreeIterator, TreeTour};
+use vizia_storage::{
+    DoubleEndedTreeTour, FocusTreeIterator, TourDirection, Tree, TreeExt, TreeTour,
+};
 
 /// Should the user be able to navigate to the entity with tab?
 pub(crate) fn is_navigatable(
@@ -50,9 +52,16 @@ pub(crate) fn focus_forward(
     node: Entity,
     lock_focus_to: Entity,
 ) -> Option<Entity> {
-    TreeIterator::new(tree, DoubleEndedTreeTour::new(Some(node), Some(Entity::root())))
-        .skip(1)
-        .find(|node| is_navigatable(tree, style, *node, lock_focus_to))
+    FocusTreeIterator::new(
+        tree,
+        DoubleEndedTreeTour::new(Some(node), Some(Entity::root())),
+        |node| {
+            style.display.get(node).copied().unwrap_or_default() == Display::None
+            // false
+        },
+    )
+    .skip(1)
+    .find(|node| is_navigatable(tree, style, *node, lock_focus_to))
 }
 
 /// Get the next entity to be focused during backward keybaord navigation.
@@ -62,12 +71,23 @@ pub(crate) fn focus_backward(
     node: Entity,
     lock_focus_to: Entity,
 ) -> Option<Entity> {
-    let mut iter = TreeIterator::new(
+    let mut iter = FocusTreeIterator::new(
         tree,
         DoubleEndedTreeTour::new_raw(
             TreeTour::new(Some(Entity::root())),
             TreeTour::with_direction(Some(node), TourDirection::Leaving),
         ),
+        |node| {
+            // Check if any ancestors are not displayed.
+            // TODO: Think of a better way to do thus.
+            for ancestor in node.parent_iter(tree) {
+                if style.display.get(ancestor).copied().unwrap_or_default() == Display::None {
+                    return true;
+                }
+            }
+
+            false
+        },
     );
     iter.next_back();
     iter.filter(|node| is_navigatable(tree, style, *node, lock_focus_to)).next_back()
