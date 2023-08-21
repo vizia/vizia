@@ -28,12 +28,13 @@ mod switch;
 mod tabview;
 mod textbox;
 mod timepicker;
+mod toggle_button;
 mod tooltip;
 mod virtual_list;
 
 pub use self::image::Image;
 pub use crate::binding::Binding;
-pub use button::Button;
+pub use button::{Button, ButtonGroup, ButtonModifiers, ButtonVariant, IconButton};
 pub use checkbox::Checkbox;
 pub use chip::Chip;
 pub use combobox::*;
@@ -62,6 +63,7 @@ pub use timepicker::{
     AMOrPM, AnalogTimepicker, AnalogTimepickerEvent, AnalogTimepickerPage, DayTime,
     DigitalTimepicker, DigitalTimepickerEvent, Timepicker,
 };
+pub use toggle_button::ToggleButton;
 pub use tooltip::Tooltip;
 pub use virtual_list::*;
 

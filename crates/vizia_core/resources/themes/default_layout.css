@@ -15,6 +15,7 @@ button {
     child-right: 1s;
     child-top: 1s;
     child-bottom: 1s;
+    cursor: hand;
 }
 
 button > .inner {
@@ -33,6 +34,11 @@ button > icon.inner {
 button.icon {
     size: 32px;
     child-space: 1s;
+}
+
+/* BUTTON GROUP */
+button-group {
+    layout-type: row;
 }
 
 /* CHECKBOX */

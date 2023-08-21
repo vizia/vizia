@@ -31,7 +31,7 @@ button {
     color: #181818;
 }
 
-button:over {
+button:hover {
     background-color: #f9f9f9;
     transition: background-color 100ms;
 }
@@ -48,35 +48,40 @@ button:focus-visible {
     outline-offset: 3px;
 }
 
-button.accent {
+button.accent,
+button-group.accent > button {
     border-width: 0px;
     background-color: #51afef;
     transition: background-color 100ms;
     color: #181818;
 }
 
-button.accent:over {
+button.accent:hover,
+button-group.accent > button:hover {
     background-color: #73bff2;
     transition: background-color 100ms;
     transition: border-color 100ms;
 }
 
-button.accent:active {
-    /* background-color: #59a4d9; */
+button.accent:active,
+button-group.accent > button:active {
+    background-color: #59a4d9;
     color: #363636;
     transition: background-color 100ms;
     transition: border-color 100ms;
 }
 
-button.accent:disabled {
+button.accent:disabled,
+button-group.accent:disabled > button {
     background-color: #c4c4c4;
     color: white;
     transition: background-color 100ms;
     transition: border-color 100ms;
 }
 
-button.outline {
-    background-color: transparent;
+button.outline,
+button-group.outline > button {
+    background-color: #80caff00;
     border-width: 1px;
     border-color: #51afef;
     color: #51afef;
@@ -84,41 +89,50 @@ button.outline {
     transition: border-color 100ms;
 }
 
-button.outline:over {
-    background-color: #80caff10;
+button.outline:hover,
+button-group.outline > button:hover {
+    background-color: #80caff40;
     transition: background-color 100ms;
 }
 
-button.outline:active {
+button.outline:active,
+button-group.outline > button:active {
     background-color: #3995d610;
 }
 
-button.outline:disabled {
+button.outline:disabled,
+button-group.outline:disabled > button {
     border-color: #ebebeb;
+    background-color: #80caff00;
     color: #626262;
     transition: background-color 100ms;
     transition: border-color 100ms;
 }
 
-button.ghost {
+button.text,
+button-group.text > button {
     border-width: 0px;
     background-color: #80caff00;
     transition: background-color 100ms;
     color: #51afef;
 }
 
-button.ghost:over {
+button.text:hover,
+button-group.text > button:hover {
     background-color: #80caff40;
     transition: background-color 100ms;
 }
 
-button.ghost:active {
+button.text:active,
+button-group.text > button:active {
     background-color: #3995d610;
     transition: background-color 100ms;
 }
 
-button.ghost:disabled {
+button.text:disabled,
+button-group.text:disabled > button {
     color: #626262;
+    background-color: #80caff00;
     transition: background-color 100ms;
     transition: border-color 100ms;
 }
@@ -126,8 +140,39 @@ button.ghost:disabled {
 button:disabled {
     border-color: #ebebeb;
     color: #626262;
+    background-color: #fdfdfd;
     transition: background-color 100ms;
     transition: border-color 100ms;
+}
+
+/* BUTTON GROUP */
+
+button-group > button {
+    border-radius: 0px;
+}
+
+button-group > :first-child {
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+    right: -1px;
+}
+
+button-group > :last-child {
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    left: -1px;
+}
+
+button-group.accent {
+    col-between: 1px;
+}
+
+button-group.accent > :first-child {
+    right: auto;
+}
+
+button-group.accent > :last-child {
+    left: auto;
 }
 
 /* CHECKBOX */

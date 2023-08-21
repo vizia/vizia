@@ -112,6 +112,10 @@ name = "timepicker"
 path = "examples/views/timepicker.rs"
 
 [[example]]
+name = "toggle_button"
+path = "examples/views/toggle_button.rs"
+
+[[example]]
 name = "spinbox"
 path = "examples/views/spinbox.rs"
 
