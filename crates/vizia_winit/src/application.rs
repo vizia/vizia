@@ -508,6 +508,14 @@ impl Application {
                             cx.needs_refresh();
                         }
 
+                        winit::event::WindowEvent::ThemeChanged(theme) => {
+                            let theme = match theme {
+                                winit::window::Theme::Light => ThemeMode::LightMode,
+                                winit::window::Theme::Dark => ThemeMode::DarkMode,
+                            };
+                            cx.emit_origin(WindowEvent::ThemeChanged(theme));
+                        }
+
                         winit::event::WindowEvent::ModifiersChanged(modifiers_state) => {
                             cx.modifiers().set(Modifiers::SHIFT, modifiers_state.shift());
                             cx.modifiers().set(Modifiers::ALT, modifiers_state.alt());
