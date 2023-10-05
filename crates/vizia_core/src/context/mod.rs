@@ -35,7 +35,7 @@ pub use resource::*;
 
 use crate::binding::{BindingHandler, MapId};
 use crate::cache::CachedData;
-use crate::environment::{AppTheme, Environment, ThemeMode};
+use crate::environment::{Environment, ThemeMode};
 use crate::events::{TimedEvent, TimedEventHandle, Timer, TimerState, ViewHandler};
 #[cfg(feature = "embedded_fonts")]
 use crate::fonts;
@@ -551,12 +551,7 @@ impl Context {
         self.add_theme(DEFAULT_LAYOUT);
         if !self.ignore_default_theme {
             let environment = self.data::<Environment>().expect("Failed to get environment");
-            let theme_mode = match environment.app_theme {
-                AppTheme::System => environment.sys_theme.unwrap_or_default(),
-                AppTheme::BuiltIn(theme) => theme,
-            };
-
-            match theme_mode {
+            match environment.theme.get_current_theme() {
                 ThemeMode::LightMode => self.add_theme(LIGHT_THEME),
                 ThemeMode::DarkMode => self.add_theme(DARK_THEME),
             }

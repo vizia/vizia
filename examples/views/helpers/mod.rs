@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use vizia::{
-    icons::{ICON_MOON, ICON_SETTINGS_AUTOMATION, ICON_SUN},
+    icons::{ICON_MOON, ICON_SUN},
     prelude::*,
 };
 
@@ -72,12 +72,9 @@ impl ExamplePage {
                     |cx| {
                         Label::new(
                             cx,
-                            Environment::app_theme.map(|mode| match mode {
-                                AppTheme::System => ICON_SETTINGS_AUTOMATION,
-                                AppTheme::BuiltIn(theme) => match theme {
-                                    ThemeMode::DarkMode => ICON_SUN,
-                                    ThemeMode::LightMode => ICON_MOON,
-                                },
+                            Environment::theme.map(|theme| match theme.get_current_theme() {
+                                ThemeMode::DarkMode => ICON_SUN,
+                                ThemeMode::LightMode => ICON_MOON,
                             }),
                         )
                         .class("icon")
@@ -133,12 +130,9 @@ impl ExamplePage {
                     |cx| {
                         Label::new(
                             cx,
-                            Environment::app_theme.map(|mode| match mode {
-                                AppTheme::System => ICON_SETTINGS_AUTOMATION,
-                                AppTheme::BuiltIn(theme) => match theme {
-                                    ThemeMode::DarkMode => ICON_SUN,
-                                    ThemeMode::LightMode => ICON_MOON,
-                                },
+                            Environment::theme.map(|theme| match theme.get_current_theme() {
+                                ThemeMode::DarkMode => ICON_SUN,
+                                ThemeMode::LightMode => ICON_MOON,
                             }),
                         )
                         .class("icon")

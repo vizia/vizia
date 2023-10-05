@@ -19,15 +19,36 @@ pub enum AppTheme {
     // Custom(String),
 }
 
+#[derive(Lens)]
+pub struct Theme {
+    /// The current application theme
+    pub app_theme: AppTheme,
+    /// The current system theme
+    pub sys_theme: Option<ThemeMode>,
+}
+
+impl Default for Theme {
+    fn default() -> Self {
+        Self { app_theme: AppTheme::BuiltIn(ThemeMode::LightMode), sys_theme: None }
+    }
+}
+
+impl Theme {
+    pub fn get_current_theme(&self) -> ThemeMode {
+        match self.app_theme {
+            AppTheme::System => self.sys_theme.unwrap_or_default(),
+            AppTheme::BuiltIn(theme) => theme,
+        }
+    }
+}
+
 /// A model for system specific state which can be accessed by any model or view.
 #[derive(Lens)]
 pub struct Environment {
-    // The locale used for localization.
+    /// The locale used for localization.
     pub locale: LanguageIdentifier,
-    // The current application theme
-    pub app_theme: AppTheme,
-    // The current system theme
-    pub sys_theme: Option<ThemeMode>,
+    /// Current application and system theme.
+    pub theme: Theme,
 }
 
 impl Default for Environment {
@@ -40,14 +61,7 @@ impl Environment {
     pub fn new() -> Self {
         let locale = sys_locale::get_locale().and_then(|l| l.parse().ok()).unwrap_or_default();
 
-        Self { locale, app_theme: AppTheme::BuiltIn(ThemeMode::LightMode), sys_theme: None }
-    }
-
-    pub fn get_current_theme(&self) -> ThemeMode {
-        match self.app_theme {
-            AppTheme::System => self.sys_theme.unwrap_or_default(),
-            AppTheme::BuiltIn(theme) => theme,
-        }
+        Self { locale, theme: Theme::default() }
     }
 }
 
@@ -71,10 +85,10 @@ impl Model for Environment {
                 self.locale = locale.clone();
             }
 
-            EnvironmentEvent::SetThemeMode(theme_mode) => {
-                self.app_theme = theme_mode.to_owned();
+            EnvironmentEvent::SetThemeMode(theme) => {
+                self.theme.app_theme = theme.to_owned();
 
-                cx.set_theme_mode(self.get_current_theme());
+                cx.set_theme_mode(self.theme.get_current_theme());
                 cx.reload_styles().unwrap();
             }
 
@@ -84,12 +98,12 @@ impl Model for Environment {
             }
 
             EnvironmentEvent::ToggleThemeMode => {
-                let theme_mode = match self.get_current_theme() {
+                let theme_mode = match self.theme.get_current_theme() {
                     ThemeMode::DarkMode => ThemeMode::LightMode,
                     ThemeMode::LightMode => ThemeMode::DarkMode,
                 };
 
-                self.app_theme = AppTheme::BuiltIn(theme_mode);
+                self.theme.app_theme = AppTheme::BuiltIn(theme_mode);
 
                 cx.set_theme_mode(theme_mode);
                 cx.reload_styles().unwrap();
@@ -98,8 +112,8 @@ impl Model for Environment {
 
         event.map(|event, _| match event {
             WindowEvent::ThemeChanged(theme) => {
-                self.sys_theme = Some(*theme);
-                if self.app_theme == AppTheme::System {
+                self.theme.sys_theme = Some(*theme);
+                if self.theme.app_theme == AppTheme::System {
                     cx.set_theme_mode(*theme);
                     cx.reload_styles().unwrap();
                 }
