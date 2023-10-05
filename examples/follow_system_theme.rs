@@ -6,7 +6,7 @@ pub struct AppData {
 }
 
 impl Model for AppData {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|event, _| {
             if let WindowEvent::ThemeChanged(theme) = event {
                 self.current_theme = match theme {
@@ -14,8 +14,6 @@ impl Model for AppData {
                     ThemeMode::LightMode => "Light Mode",
                 }
                 .to_owned();
-
-                cx.emit(EnvironmentEvent::SetThemeMode(*theme))
             }
         })
     }
@@ -24,6 +22,8 @@ impl Model for AppData {
 fn main() {
     Application::new(|cx: &mut Context| {
         AppData { current_theme: "Light mode".to_owned() }.build(cx);
+
+        cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System));
 
         VStack::new(cx, |cx| {
             Label::new(cx, "This example follow system theme change");
