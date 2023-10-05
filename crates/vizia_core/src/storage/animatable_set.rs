@@ -646,7 +646,9 @@ where
 
                     let duration = transition_state.duration;
 
-                    if transition_state.from_rule != transition_state.to_rule {
+                    if transition_state.from_rule != DataIndex::null().index()
+                        && transition_state.from_rule != transition_state.to_rule
+                    {
                         self.play_animation(
                             entity,
                             rule_animation,
