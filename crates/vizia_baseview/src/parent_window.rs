@@ -5,9 +5,9 @@ pub struct ParentWindow(pub *mut ::std::ffi::c_void);
 #[cfg(target_os = "macos")]
 unsafe impl HasRawWindowHandle for ParentWindow {
     fn raw_window_handle(&self) -> RawWindowHandle {
-        use raw_window_handle::AppKitHandle;
+        use raw_window_handle::AppKitWindowHandle;
 
-        let mut handle = AppKitHandle::empty();
+        let mut handle = AppKitWindowHandle::empty();
         handle.ns_view = self.0;
 
         RawWindowHandle::AppKit(handle)
