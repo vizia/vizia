@@ -247,7 +247,7 @@ impl ApplicationRunner {
         }
 
         // Force restyle on every frame for baseview backend to avoid style inheritance issues
-        cx.style().needs_restyle();
+        // cx.style().needs_restyle();
         cx.process_data_updates();
 
         let context = window.gl_context().expect("Window was created without OpenGL support");
@@ -343,6 +343,15 @@ impl ApplicationRunner {
 
                     cx.emit_origin(WindowEvent::MouseScroll(lines_x, lines_y));
                 }
+
+                baseview::MouseEvent::CursorEntered => {
+                    cx.emit_origin(WindowEvent::MouseEnter);
+                }
+
+                baseview::MouseEvent::CursorLeft => {
+                    cx.emit_origin(WindowEvent::MouseLeave);
+                }
+
                 _ => {}
             },
             baseview::Event::Keyboard(event) => {
