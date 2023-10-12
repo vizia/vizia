@@ -213,7 +213,6 @@ impl ApplicationRunner {
         while let Some(event) = queue_get() {
             cx.send_event(event);
         }
-
         // Events
         cx.process_events();
 

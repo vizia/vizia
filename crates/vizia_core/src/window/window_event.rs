@@ -49,6 +49,8 @@ pub enum WindowEvent {
     },
     /// Emitted when the mouse cursor is moved
     MouseMove(f32, f32),
+    /// Emitted when relayout has been performed & interface elements under the cursor may have moved.
+    InterfaceMoved,
     /// Emitted when the mouse scroll wheel is scrolled.
     MouseScroll(f32, f32),
     /// Emitted when the mouse cursor enters the bounding box of an entity.

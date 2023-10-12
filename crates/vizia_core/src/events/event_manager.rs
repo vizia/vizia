@@ -187,6 +187,11 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             context.drop_data = Some(drop_data.clone());
         }
 
+        WindowEvent::InterfaceMoved => {
+            hover_system(context);
+            mutate_direct_or_up(meta, context.captured, context.hovered, false);
+        }
+
         WindowEvent::MouseMove(x, y) => {
             context.mouse.previous_cursorx = context.mouse.cursorx;
             context.mouse.previous_cursory = context.mouse.cursory;
