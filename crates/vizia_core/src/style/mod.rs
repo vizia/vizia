@@ -62,6 +62,7 @@
 
 use fnv::FnvHashMap;
 use instant::{Duration, Instant};
+use log::warn;
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::HashSet;
 use std::fmt::Debug;
@@ -1533,12 +1534,12 @@ impl Style {
 
             // Unparsed. TODO: Log the error.
             Property::Unparsed(unparsed) => {
-                println!("Unparsed: {}", unparsed.name);
+                warn!("Unparsed: {}", unparsed.name);
             }
 
             // TODO: Custom property support
             Property::Custom(custom) => {
-                println!("Custom Property: {}", custom.name);
+                warn!("Custom Property: {}", custom.name);
             }
 
             _ => {}
@@ -1679,8 +1680,8 @@ impl Style {
         self.child_right.remove(entity);
         self.child_top.remove(entity);
         self.child_bottom.remove(entity);
-        self.row_between.remove(entity);
         self.col_between.remove(entity);
+        self.row_between.remove(entity);
 
         // Size
         self.width.remove(entity);
@@ -1702,12 +1703,7 @@ impl Style {
         self.min_bottom.remove(entity);
         self.max_bottom.remove(entity);
 
-        // Cursor
-        self.cursor.remove(entity);
-
         self.pointer_events.remove(entity);
-
-        self.name.remove(entity);
 
         self.needs_text_layout.remove(entity);
         self.needs_access_update.remove(entity);

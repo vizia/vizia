@@ -52,8 +52,12 @@ impl Interpolator for Units {
 }
 
 impl Interpolator for Display {
-    fn interpolate(_start: &Self, end: &Self, _t: f32) -> Self {
-        *end
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        if t < 0.5 {
+            *start
+        } else {
+            *end
+        }
     }
 }
 

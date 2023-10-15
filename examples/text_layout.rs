@@ -30,8 +30,10 @@ fn main() {
     Application::new(|cx| {
         AppData { text: String::from("This is some text"), text2: String::from("سلام") }.build(cx);
         VStack::new(cx, |cx| {
-            TabView::new(cx, StaticLens::new(STATIC_LIST.as_ref()), |cx, item| {
-                match item.get(cx) {
+            TabView::new(
+                cx,
+                StaticLens::<Vec<&'static str>>::new(STATIC_LIST.as_ref()),
+                |cx, item| match item.get(cx) {
                     "Wrapping" => TabPair::new(
                         move |cx| {
                             Label::new(cx, item).hoverable(false);
@@ -93,8 +95,8 @@ fn main() {
                     ),
 
                     _ => unreachable!(),
-                }
-            });
+                },
+            );
 
             // Textbox::new(cx, AppData::text.index(0))
             //     .on_submit(|ex, txt, _| ex.emit(AppEvent::SetText(0, txt.clone())));

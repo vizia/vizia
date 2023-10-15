@@ -267,6 +267,11 @@ impl Application {
             let mut cx = BackendContext::new_with_event_manager(&mut context);
 
             match event {
+                winit::event::Event::NewEvents(_) => {
+                    cx.process_timers();
+                    cx.emit_scheduled_events();
+                }
+
                 winit::event::Event::UserEvent(user_event) => match user_event {
                     UserEvent::Event(event) => {
                         cx.send_event(event);
@@ -525,7 +530,13 @@ impl Application {
                 _ => {}
             }
 
-            *control_flow = *stored_control_flow.borrow();
+            if *stored_control_flow.borrow() == ControlFlow::Exit {
+                *control_flow = ControlFlow::Exit;
+            } else if let Some(timer_time) = cx.get_next_timer_time() {
+                *control_flow = ControlFlow::WaitUntil(timer_time);
+            } else {
+                *control_flow = *stored_control_flow.borrow();
+            }
         });
     }
 }
@@ -608,7 +619,7 @@ impl WindowModifiers for Application {
         self
     }
 
-    fn icon(mut self, image: Vec<u8>, width: u32, height: u32) -> Self {
+    fn icon(mut self, width: u32, height: u32, image: Vec<u8>) -> Self {
         self.window_description.icon = Some(image);
         self.window_description.icon_width = width;
         self.window_description.icon_height = height;

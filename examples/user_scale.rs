@@ -28,11 +28,9 @@ fn app_main(cx: &mut Context) {
                 .bottom(Pixels(5.0))
                 .top(Pixels(-5.0));
             Textbox::new(cx, AppData::user_scale_factor).width(Percentage(100.0)).on_submit(
-                |cx, value, success| {
-                    if success {
-                        if let Ok(factor) = value.parse() {
-                            cx.set_user_scale_factor(factor);
-                        }
+                |cx, value, blur| {
+                    if blur {
+                        cx.set_user_scale_factor(value);
                     }
                 },
             );

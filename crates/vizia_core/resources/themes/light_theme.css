@@ -898,15 +898,20 @@ textbox {
 textbox:checked {
     border-color: #51afef;
     transition: border-color 100ms;
-    caret-color: red;
-    selection-color: #6464c888;
+}
+
+textbox:checked.caret {
+    caret-color: #181818;
+}
+
+textbox > label.placeholder {
+    caret-color: transparent;
+    color: gray;
 }
 
 textbox:read-only {
     background-color: transparent;
     border-width: 0px;
-    caret-color: transparent;
-    selection-color: #6464c888;
 }
 
 textbox:disabled {

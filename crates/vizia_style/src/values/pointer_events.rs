@@ -3,7 +3,7 @@ use crate::{macros::define_enum, Parse};
 define_enum! {
     /// Determines whether an entity will receive pointer events.
     pub enum PointerEvents {
-        /// The entity will receive pointer events.
+        /// The entity will receive pointer events unless its parent does not.
         "auto": Auto,
         /// The entity will not receive pointer events.
         "none": None,

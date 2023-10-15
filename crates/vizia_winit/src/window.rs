@@ -161,8 +161,8 @@ impl Window {
         let raw_window_handle = window.raw_window_handle();
         let attrs = SurfaceAttributesBuilder::<WindowSurface>::new().build(
             raw_window_handle,
-            NonZeroU32::new(width).unwrap(),
-            NonZeroU32::new(height).unwrap(),
+            NonZeroU32::new(width.max(1)).unwrap(),
+            NonZeroU32::new(height.max(1)).unwrap(),
         );
 
         let surface =
@@ -287,6 +287,14 @@ impl View for Window {
 
             WindowEvent::WindowClose => {
                 self.should_close = true;
+            }
+
+            WindowEvent::FocusNext => {
+                cx.focus_next();
+            }
+
+            WindowEvent::FocusPrev => {
+                cx.focus_prev();
             }
 
             _ => {}

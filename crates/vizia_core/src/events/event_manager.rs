@@ -2,9 +2,13 @@ use crate::context::{InternalEvent, ResourceContext};
 use crate::events::EventMeta;
 use crate::prelude::*;
 use crate::style::{Abilities, PseudoClassFlags};
-use crate::systems::{compute_matched_rules, hover_system};
+#[cfg(debug_assertions)]
+use crate::systems::compute_matched_rules;
+use crate::systems::hover_system;
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use instant::{Duration, Instant};
+#[cfg(debug_assertions)]
+use log::debug;
 use std::any::Any;
 use vizia_id::GenerationalId;
 use vizia_storage::TreeIterator;
@@ -189,9 +193,13 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             context.mouse.cursorx = *x;
             context.mouse.cursory = *y;
 
+            // if context.mouse.cursorx != context.mouse.previous_cursorx
+            //     || context.mouse.cursory != context.mouse.previous_cursory
+            // {
+            // }
+
             hover_system(context);
             mutate_direct_or_up(meta, context.captured, context.hovered, false);
-
             // if let Some(dropped_file) = context.dropped_file.take() {
             //     emit_direct_or_up(
             //         context,
@@ -337,35 +345,26 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             meta.target = context.focused;
 
             #[cfg(debug_assertions)]
-            if *code == Code::KeyH {
-                for entity in context.tree.into_iter() {
-                    println!(
-                        "Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",
-                        entity,
-                        entity.parent(&context.tree),
-                        context
-                            .views
-                            .get(&entity)
-                            .map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")),
-                        context.cache.get_posx(entity),
-                        context.cache.get_posy(entity),
-                        context.cache.get_width(entity),
-                        context.cache.get_height(entity)
-                    );
-                }
-            }
-
-            #[cfg(debug_assertions)]
             if *code == Code::KeyP && context.modifiers.contains(Modifiers::CTRL) {
                 for entity in TreeIterator::full(&context.tree) {
                     if let Some(model_data_store) = context.data.get(&entity) {
-                        print!(
-                            "{}{:?}",
-                            entity,
-                            model_data_store.models.keys().collect::<Vec<_>>()
-                        );
-                        print!("{:?}", model_data_store.stores.keys().collect::<Vec<_>>());
-                        println!();
+                        if !model_data_store.models.is_empty() {
+                            println!("Models for {}", entity);
+                            for (_, model) in model_data_store.models.iter() {
+                                println!("M: {:?}", model.name())
+                            }
+                        }
+
+                        if !model_data_store.stores.is_empty() {
+                            println!("Stores for {}", entity);
+                            for (_, store) in model_data_store.stores.iter() {
+                                println!(
+                                    "S: [{}] - Observers {:?}",
+                                    store.name(),
+                                    store.observers()
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -413,7 +412,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                             if h == f32::MAX { "inf".to_string() } else { h.to_string() },
                         );
                     } else if let Some(binding_name) =
-                        context.bindings.get(&entity).and_then(|binding| binding.name())
+                        context.bindings.get(&entity).map(|binding| format!("{:?}", binding))
                     {
                         println!(
                             "{}{} binding observing {}",
@@ -444,7 +443,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 compute_matched_rules(context, context.hovered, &mut result);
 
                 let entity = context.hovered;
-                println!("/* Matched rules for Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",
+                debug!("/* Matched rules for Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",
                     entity,
                     entity.parent(&context.tree),
                     context
@@ -459,7 +458,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 for rule in result.into_iter() {
                     for selectors in context.style.rules.iter() {
                         if selectors.0 == rule.0 {
-                            println!("{:?}", selectors.1);
+                            debug!("{:?}", selectors.1);
                         }
                     }
                 }
@@ -469,9 +468,9 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             if *code == Code::KeyT
                 && context.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
             {
-                println!("Loaded font face info:");
+                debug!("Loaded font face info:");
                 for face in context.text_context.font_system().db().faces() {
-                    println!(
+                    debug!(
                         "family: {:?}\npost_script_name: {:?}\nstyle: {:?}\nweight: {:?}\nstretch: {:?}\nmonospaced: {:?}\n",
                         face.families,
                         face.post_script_name,
@@ -490,13 +489,18 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             if *code == Code::Tab {
                 let lock_focus_to = context.tree.lock_focus_within(context.focused);
                 if context.modifiers.contains(Modifiers::SHIFT) {
-                    let prev_focused = if let Some(prev_focused) =
-                        focus_backward(context, context.focused, lock_focus_to)
-                    {
+                    let prev_focused = if let Some(prev_focused) = focus_backward(
+                        &context.tree,
+                        &context.style,
+                        context.focused,
+                        lock_focus_to,
+                    ) {
                         prev_focused
                     } else {
                         TreeIterator::full(&context.tree)
-                            .filter(|node| is_navigatable(context, *node, lock_focus_to))
+                            .filter(|node| {
+                                is_navigatable(&context.tree, &context.style, *node, lock_focus_to)
+                            })
                             .next_back()
                             .unwrap_or(Entity::root())
                     };
@@ -527,12 +531,14 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                     }
                 } else {
                     let next_focused = if let Some(next_focused) =
-                        focus_forward(context, context.focused, lock_focus_to)
+                        focus_forward(&context.tree, &context.style, context.focused, lock_focus_to)
                     {
                         next_focused
                     } else {
                         TreeIterator::full(&context.tree)
-                            .find(|node| is_navigatable(context, *node, lock_focus_to))
+                            .find(|node| {
+                                is_navigatable(&context.tree, &context.style, *node, lock_focus_to)
+                            })
                             .unwrap_or(Entity::root())
                     };
 
@@ -621,6 +627,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 }
             }
         }
+
         _ => {}
     }
 }

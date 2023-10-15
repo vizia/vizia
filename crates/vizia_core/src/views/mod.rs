@@ -48,7 +48,7 @@ pub use list::List;
 pub use menu::*;
 pub use notification::Notification;
 pub use picklist::PickList;
-pub use popup::{Popup, PopupData, PopupEvent};
+pub use popup::*;
 pub use progressbar::ProgressBar;
 pub use radio::RadioButton;
 pub use rating::Rating;
