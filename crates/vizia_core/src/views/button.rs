@@ -104,6 +104,7 @@ impl View for Button {
             }
 
             WindowEvent::Press { .. } => {
+                println!("do this");
                 if meta.target == cx.current() {
                     if let Some(callback) = &self.action {
                         (callback)(cx);

@@ -74,12 +74,6 @@ where
     I: GenerationalId,
 {
     pub fn new(tree: &'a Tree<I>, node: I) -> Self {
-        let mut last_sibling =
-            tree.get_parent(node).and_then(|parent| tree.get_last_child(parent)).copied();
-        if last_sibling.is_none() {
-            last_sibling = Some(node);
-        }
-
         let mut first_sibling =
             tree.get_parent(node).and_then(|parent| tree.get_first_child(parent));
         if first_sibling.is_none() {

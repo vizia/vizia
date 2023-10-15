@@ -1,4 +1,5 @@
-use vizia::{prelude::*, ICON_TRASH, ICON_PENCIL, ICON_CHECK};
+use vizia::prelude::*;
+use vizia::icons::{ICON_TRASH, ICON_PENCIL, ICON_CHECK};
 
 pub fn button_group(cx: &mut Context) {
     VStack::new(cx, |cx| {
@@ -22,7 +23,7 @@ pub fn button_group(cx: &mut Context) {
                 Button::new(cx, |_| {}, |cx| Label::new(cx, "Three"));
             });
         })
-        .class("region");;
+        .class("region");
     
     Label::new(cx, "Buttons with icons and label").class("header");
     Label::new(cx, "An HStack can be used to add an icon as well as a label to a button. The icon can be positioned before or after the label by changing the order of the declarations.")

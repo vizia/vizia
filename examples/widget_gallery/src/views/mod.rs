@@ -9,3 +9,6 @@ pub use checkbox::*;
 
 pub mod radiobutton;
 pub use radiobutton::*;
+
+pub mod chip;
+pub use chip::*;

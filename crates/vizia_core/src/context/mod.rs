@@ -151,6 +151,7 @@ impl Context {
             db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
             db.load_font_data(Vec::from(fonts::ROBOTO_BOLD));
             db.load_font_data(Vec::from(fonts::ROBOTO_ITALIC));
+            db.load_font_data(Vec::from(fonts::FIRACODE_REGULAR))
         }
 
         // Add icon font

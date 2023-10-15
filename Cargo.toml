@@ -150,20 +150,8 @@ name = "proxy"
 path = "examples/proxy.rs"
 
 [[example]]
-name = "save_dialog"
-path = "examples/save_dialog.rs"
-
-[[example]]
 name = "text_layout"
 path = "examples/text_layout.rs"
-
-[[example]]
-name = "user_scale"
-path = "examples/user_scale.rs"
-
-[[example]]
-name = "widget_gallery"
-path = "examples/widget_gallery.rs"
 
 [[example]]
 name = "window_modifiers"
@@ -338,72 +326,8 @@ name = "long_list"
 path = "examples/lists/long_list.rs"
 
 [[example]]
-name = "locale_binding"
-path = "examples/localization/locale_binding.rs"
-
-[[example]]
-name = "inline"
-path = "examples/style/inline.rs"
-
-[[example]]
-name = "outline"
-path = "examples/style/outline.rs"
-
-[[example]]
-name = "fluent_translation"
-path = "examples/localization/fluent_translation.rs"
-
-[[example]]
-name = "fluent_variables"
-path = "examples/localization/fluent_variables.rs"
-
-[[example]]
 name = "save_dialog"
 path = "examples/save_dialog.rs"
-
-[[example]]
-name = "dragdrop"
-path = "examples/dragdrop.rs"
-
-[[example]]
-name = "transform"
-path = "examples/style/transform.rs"
-
-[[example]]
-name = "transform_origin"
-path = "examples/style/transform_origin.rs"
-
-[[example]]
-name = "gradient"
-path = "examples/style/gradient.rs"
-
-[[example]]
-name = "box_shadow"
-path = "examples/style/box_shadow.rs"
-
-[[example]]
-name = "border"
-path = "examples/style/border.rs"
-
-[[example]]
-name = "text"
-path = "examples/style/text.rs"
-
-[[example]]
-name = "filter"
-path = "examples/style/filter.rs"
-
-[[example]]
-name = "clipping"
-path = "examples/style/clipping.rs"
-
-[[example]]
-name = "transition"
-path = "examples/style/transition.rs"
-
-[[example]]
-name = "zorder"
-path = "examples/style/zorder.rs"
 
 [[example]]
 name = "combinators"
@@ -416,14 +340,6 @@ path = "examples/style/selectors.rs"
 [[example]]
 name = "pseudo_classes"
 path = "examples/style/pseudo_classes.rs"
-
-[[example]]
-name = "background_size"
-path = "examples/style/background_size.rs"
-
-[[example]]
-name = "text_layout"
-path = "examples/text_layout.rs"
 
 [[example]]
 name = "custom_modifiers"

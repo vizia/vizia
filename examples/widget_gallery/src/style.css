@@ -115,9 +115,9 @@ form-group > .legend {
 }
 
 label.code {
-    background-color: rgb(24, 24, 49);
+    background-color: #2d343f;
     color: white;
-    font-family: monospace;
+    font-family: "Fira Code";
     width: 1s;
     child-space: 20px;
     border-radius: 10px;

@@ -191,7 +191,7 @@ checkbox:checked {
     background-color: #51afef;
     border-color: #51afef;
     color: #fff;
-    transition: background-color 200ms;
+    transition: background-color 100ms;
     transition: border-color 100ms;
 }
 
@@ -881,6 +881,11 @@ tabheader:checked .indicator {
 }
 
 tabview .tabview-divider {
+    background-color: #c4c4c4;
+}
+
+.divider {
+    height: 1px;
     background-color: #c4c4c4;
 }
 
