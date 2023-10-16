@@ -62,7 +62,7 @@ impl Eq for TimerState {}
 
 impl PartialOrd for TimerState {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.time.partial_cmp(&other.time).map(|ord| ord.reverse())
+        Some(self.cmp(other))
     }
 }
 
