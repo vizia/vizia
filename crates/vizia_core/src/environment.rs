@@ -14,7 +14,10 @@ use crate::{binding::Lens, context::EventContext, events::Event};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AppTheme {
+    /// System theme, if we choose this as our theme vizia
+    /// will follow system theme in supported platforms.
     System,
+    /// builtin vizia themes
     BuiltIn(ThemeMode),
     // Custom(String),
 }
