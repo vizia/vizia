@@ -551,7 +551,7 @@ impl Context {
         self.add_theme(DEFAULT_LAYOUT);
         if !self.ignore_default_theme {
             let environment = self.data::<Environment>().expect("Failed to get environment");
-            match environment.theme_mode {
+            match environment.theme.get_current_theme() {
                 ThemeMode::LightMode => self.add_theme(LIGHT_THEME),
                 ThemeMode::DarkMode => self.add_theme(DARK_THEME),
             }

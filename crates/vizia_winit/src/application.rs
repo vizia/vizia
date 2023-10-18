@@ -191,6 +191,15 @@ impl Application {
 
         let mut cx = BackendContext::new(&mut context);
 
+        // update the sys theme if any
+        if let Some(theme) = window.window().theme() {
+            let theme = match theme {
+                winit::window::Theme::Light => ThemeMode::LightMode,
+                winit::window::Theme::Dark => ThemeMode::DarkMode,
+            };
+            cx.emit_origin(WindowEvent::ThemeChanged(theme));
+        }
+
         #[cfg(not(target_arch = "wasm32"))]
         let root_node = NodeBuilder::new(Role::Window).build(cx.accesskit_node_classes());
         #[cfg(not(target_arch = "wasm32"))]
@@ -543,6 +552,14 @@ impl Application {
                             );
 
                             cx.needs_refresh();
+                        }
+
+                        winit::event::WindowEvent::ThemeChanged(theme) => {
+                            let theme = match theme {
+                                winit::window::Theme::Light => ThemeMode::LightMode,
+                                winit::window::Theme::Dark => ThemeMode::DarkMode,
+                            };
+                            cx.emit_origin(WindowEvent::ThemeChanged(theme));
                         }
 
                         winit::event::WindowEvent::ModifiersChanged(modifiers_state) => {
