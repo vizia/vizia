@@ -40,6 +40,15 @@ button.icon {
     child-space: 1s;
 }
 
+/* BUTTON GROUP */
+button-group {
+    layout-type: row;
+}
+
+button-group.vertical {
+    layout-type: column;
+}
+
 /* CHECKBOX */
 
 checkbox {

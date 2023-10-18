@@ -54,7 +54,7 @@ impl DemoRegion {
                 .left(Stretch(1.0))
                 .position_type(PositionType::SelfDirected)
                 .tooltip(|cx| {
-                    Label::new(cx, "Toggle Dark/Light Mode");
+                    Label::new(cx, "Toggle Code");
                 });
         })
     }

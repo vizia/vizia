@@ -131,16 +131,27 @@ impl View for Button {
     }
 }
 
-pub struct ButtonGroup {}
+#[derive(Lens)]
+pub struct ButtonGroup {
+    is_vertical: bool,
+}
 
 impl ButtonGroup {
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context) + 'static) -> Handle<Self> {
-        Self {}.build(cx, content).layout_type(LayoutType::Row)
+        Self { is_vertical: false }
+            .build(cx, content)
+            .toggle_class("vertical", ButtonGroup::is_vertical)
     }
 }
 
 impl View for ButtonGroup {
     fn element(&self) -> Option<&'static str> {
         Some("button-group")
+    }
+}
+
+impl<'a> Handle<'a, ButtonGroup> {
+    pub fn vertical(self) -> Self {
+        self.modify(|button_group: &mut ButtonGroup| button_group.is_vertical = true)
     }
 }
