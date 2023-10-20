@@ -618,6 +618,8 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                     context.style.needs_restyle();
                 }
             }
+
+            context.hovered = Entity::null();
         }
 
         _ => {}
