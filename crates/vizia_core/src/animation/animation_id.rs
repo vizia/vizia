@@ -7,7 +7,7 @@ use crate::context::EventContext;
 
 /// An id used to reference style animations stored in style.
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Animation(u32);
+pub struct Animation(u64);
 
 impl_generational_id!(Animation);
 

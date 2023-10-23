@@ -188,10 +188,14 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
         }
 
         WindowEvent::MouseMove(x, y) => {
-            context.mouse.previous_cursorx = context.mouse.cursorx;
-            context.mouse.previous_cursory = context.mouse.cursory;
-            context.mouse.cursorx = *x;
-            context.mouse.cursory = *y;
+            if !x.is_nan() && !y.is_nan() {
+                context.mouse.previous_cursorx = context.mouse.cursorx;
+                context.mouse.previous_cursory = context.mouse.cursory;
+                context.mouse.cursorx = *x;
+                context.mouse.cursory = *y;
+
+                mutate_direct_or_up(meta, context.captured, context.hovered, false);
+            }
 
             // if context.mouse.cursorx != context.mouse.previous_cursorx
             //     || context.mouse.cursory != context.mouse.previous_cursory
@@ -199,7 +203,6 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             // }
 
             hover_system(context);
-            mutate_direct_or_up(meta, context.captured, context.hovered, false);
             // if let Some(dropped_file) = context.dropped_file.take() {
             //     emit_direct_or_up(
             //         context,
@@ -626,6 +629,8 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                     context.style.needs_restyle();
                 }
             }
+
+            context.hovered = Entity::null();
         }
 
         _ => {}
