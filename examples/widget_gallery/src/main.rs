@@ -10,6 +10,9 @@ use app_data::*;
 mod views;
 use views::*;
 
+mod components;
+use components::*;
+
 pub fn setup_logging() -> Result<(), Box<dyn Error>> {
     #[cfg(debug_assertions)]
     const MAIN_LOG_LEVEL: LevelFilter = LevelFilter::Debug;
@@ -51,12 +54,9 @@ fn main() {
                     |cx| {
                         Label::new(
                             cx,
-                            Environment::theme_mode.map(|mode| {
-                                if *mode == ThemeMode::DarkMode {
-                                    ICON_SUN
-                                } else {
-                                    ICON_MOON
-                                }
+                            Environment::theme.map(|theme| match theme.app_theme {
+                                AppTheme::BuiltIn(ThemeMode::LightMode) => ICON_SUN,
+                                _ => ICON_MOON,
                             }),
                         )
                         .class("icon")
