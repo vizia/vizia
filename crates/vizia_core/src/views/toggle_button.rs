@@ -5,14 +5,14 @@ pub struct ToggleButton {
 }
 
 impl ToggleButton {
-    pub fn new<V>(
+    pub fn new<V: View>(
         cx: &mut Context,
         lens: impl Lens<Target = bool>,
         content: impl Fn(&mut Context) -> Handle<V> + 'static,
     ) -> Handle<Self> {
         Self { on_toggle: None }
             .build(cx, |cx| {
-                (content)(cx).hoverable(false);
+                (content)(cx).hoverable(false).class("inner");
             })
             .role(Role::ToggleButton)
             .navigable(true)
@@ -70,5 +70,27 @@ pub trait ToggleButtonModifiers {
 impl<'a> ToggleButtonModifiers for Handle<'a, ToggleButton> {
     fn on_toggle(self, callback: impl Fn(&mut EventContext) + 'static) -> Self {
         self.modify(|toggle_button| toggle_button.on_toggle = Some(Box::new(callback)))
+    }
+}
+
+pub struct Toolbar {}
+
+impl Toolbar {
+    pub fn new<F>(cx: &mut Context, content: F) -> Handle<Self>
+    where
+        F: FnOnce(&mut Context),
+    {
+        Self {}
+            .build(cx, |cx| {
+                (content)(cx);
+            })
+            .layout_type(LayoutType::Row)
+            .role(Role::GenericContainer)
+    }
+}
+
+impl View for Toolbar {
+    fn element(&self) -> Option<&'static str> {
+        Some("toolbar")
     }
 }

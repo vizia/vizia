@@ -295,3 +295,6 @@ pub const ICON_COLUMN_INSERT_LEFT: &str = "\u{ee44}";
 pub const ICON_COLUMN_INSERT_RIGHT: &str = "\u{ee45}";
 pub const ICON_SQUARE_PLUS: &str = "\u{eb2a}";
 pub const ICON_BOX_MARGIN: &str = "\u{ee0b}";
+pub const ICON_BOLD: &str = "\u{eb7b}";
+pub const ICON_ITALIC: &str = "\u{eb93}";
+pub const ICON_UNDERLINE: &str = "\u{eba2}";

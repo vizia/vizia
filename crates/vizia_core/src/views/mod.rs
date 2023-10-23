@@ -63,7 +63,7 @@ pub use timepicker::{
     AMOrPM, AnalogTimepicker, AnalogTimepickerEvent, AnalogTimepickerPage, DayTime,
     DigitalTimepicker, DigitalTimepickerEvent, Timepicker,
 };
-pub use toggle_button::ToggleButton;
+pub use toggle_button::{ToggleButton, ToggleButtonModifiers, Toolbar};
 pub use tooltip::Tooltip;
 pub use virtual_list::*;
 

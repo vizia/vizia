@@ -39,6 +39,48 @@ button.icon {
 /* BUTTON GROUP */
 button-group {
     layout-type: row;
+    size: auto;
+}
+
+button-group.vertical {
+    layout-type: column;
+}
+
+/* TOGGLE BUTTON */
+toggle-button {
+    width: auto;
+    height: 32px;
+    child-left: 1s;
+    child-right: 1s;
+    child-top: 1s;
+    child-bottom: 1s;
+    cursor: hand;
+}
+
+toggle-button > .inner {
+    size: auto;
+    child-space: 1s;
+    col-between: 4px;
+    min-left: 8px;
+    min-right: 8px;
+}
+
+toggle-button > icon.inner {
+    min-left: 0px;
+    min-right: 0px;
+    width: 32px;
+}
+
+toggle-button.icon {
+    size: 32px;
+    child-space: 1s;
+}
+
+/* TOOLBAR */
+toolbar {
+    size: auto;
+    child-space: 2px;
+    col-between: 2px;
 }
 
 /* CHECKBOX */

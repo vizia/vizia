@@ -147,7 +147,8 @@ button:disabled {
 
 /* BUTTON GROUP */
 
-button-group > button {
+button-group > button,
+button-group > toggle-button {
     border-radius: 0px;
 }
 
@@ -173,6 +174,60 @@ button-group.accent > :first-child {
 
 button-group.accent > :last-child {
     left: auto;
+}
+
+/* TOGGLE BUTTON */
+toggle-button {
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #d2d2d2;
+    background-color: #fdfdfd;
+    transition: background-color 100ms;
+    color: #181818;
+}
+
+toggle-button:hover {
+    background-color: #f9f9f9;
+    transition: background-color 100ms;
+}
+
+toggle-button:active {
+    background-color: #fafafa;
+    border-color: #ebebeb;
+    color: #626262;
+}
+
+toggle-button:focus-visible {
+    outline-width: 2px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+toggle-button:checked {
+    background-color: #e0e0e0;
+    transition: background-color 100ms;
+}
+
+toggle-button:disabled {
+    border-color: #ebebeb;
+    color: #626262;
+    background-color: #fdfdfd;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+/* TOOLBAR */
+toolbar {
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #d2d2d2;
+    background-color: #ffffff;
+    transition: background-color 100ms;
+    color: #181818;
+}
+
+toolbar > toggle-button {
+    border-width: 0px;
 }
 
 /* CHECKBOX */
