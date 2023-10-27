@@ -99,6 +99,23 @@ macro_rules! get_color_property {
     };
 }
 
+macro_rules! get_background_color_property {
+    (
+        $(#[$meta:meta])*
+        $name:ident
+    ) => {
+        $(#[$meta])*
+        pub fn $name(&self) -> Color {
+            let opacity = self.opacity();
+            if let Some(col) = self.style.$name.get(self.current, &self.style.custom_color_props) {
+                Color::rgba(col.r(), col.g(), col.b(), (opacity * col.a() as f32) as u8)
+            } else {
+                Color::rgba(0, 0, 0, 0)
+            }
+        }
+    };
+}
+
 macro_rules! get_length_property {
     (
         $(#[$meta:meta])*
@@ -367,7 +384,7 @@ impl<'a> DrawContext<'a> {
         child_bottom
     );
 
-    get_color_property!(background_color);
+    get_background_color_property!(background_color);
     get_color_property!(border_color);
 
     get_color_property!(selection_color);

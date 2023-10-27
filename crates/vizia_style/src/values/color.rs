@@ -553,6 +553,12 @@ pub struct RGBA {
     pub alpha: u8,
 }
 
+impl RGBA {
+    pub fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
+        Self { red: r, green: g, blue: b, alpha: a }
+    }
+}
+
 impl From<Color> for RGBA {
     fn from(color: Color) -> Self {
         color.get_rgba()

@@ -1081,6 +1081,24 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug example 'variables'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=variables",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "variables",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug unit tests in example 'counter'",
             "cargo": {
                 "args": [

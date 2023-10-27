@@ -349,6 +349,10 @@ path = "examples/timers.rs"
 name = "follow_system_theme"
 path = "examples/follow_system_theme.rs"
 
+[[example]]
+name = "variables"
+path = "examples/style/variables.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts"]
 clipboard = ["vizia_core/clipboard", "vizia_winit?/clipboard"]

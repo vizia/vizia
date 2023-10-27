@@ -60,3 +60,45 @@ where
         })
     }
 }
+
+/// Iterator for iterating through the tree in depth first preorder.
+pub struct StyleTreeIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    tree: &'a Tree<I>,
+    tours: DoubleEndedTreeTour<I>,
+}
+
+impl<'a, I> StyleTreeIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    pub fn full(tree: &'a Tree<I>) -> Self {
+        Self::subtree(tree, I::root())
+    }
+
+    pub fn subtree(tree: &'a Tree<I>, root: I) -> Self {
+        Self { tree, tours: DoubleEndedTreeTour::new_same(Some(root)) }
+    }
+}
+
+impl<'a, I> Iterator for StyleTreeIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    type Item = (I, bool);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.tours.next_with(self.tree, |node, direction| match direction {
+            TourDirection::Entering => {
+                if self.tree.is_ignored(node) {
+                    (None, TourStep::EnterFirstChild)
+                } else {
+                    (Some((node, true)), TourStep::EnterFirstChild)
+                }
+            }
+            TourDirection::Leaving => (Some((node, false)), TourStep::EnterNextSibling),
+        })
+    }
+}

@@ -1,3 +1,5 @@
+use std::collections::{hash_map::Entry, HashMap};
+
 use crate::{
     events::ViewHandler,
     prelude::*,
@@ -5,7 +7,7 @@ use crate::{
 };
 use fnv::FnvHashMap;
 use vizia_id::GenerationalId;
-use vizia_storage::LayoutTreeIterator;
+use vizia_storage::{LayoutParentIterator, LayoutTreeIterator, StyleTreeIterator};
 use vizia_style::{
     matches_selector_list,
     selectors::{
@@ -269,7 +271,12 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context) {
     }
 }
 
-fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
+fn link_style_data(
+    style: &mut Style,
+    entity: Entity,
+    matched_rules: &[Rule],
+    variables: &HashMap<u64, Vec<Rule>>,
+) {
     let mut should_relayout = false;
     let mut should_redraw = false;
 
@@ -466,7 +473,7 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
     }
 
     // Background
-    if style.background_color.link(entity, matched_rules) {
+    if style.background_color.link(entity, matched_rules, variables, &style.custom_color_props) {
         should_redraw = true;
     }
 
@@ -585,6 +592,12 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
         should_redraw = true;
     }
 
+    for (_, prop) in style.custom_color_props.iter_mut() {
+        if prop.link(entity, matched_rules) {
+            should_redraw = true;
+        }
+    }
+
     //
     if should_relayout {
         style.system_flags.set(SystemFlags::RELAYOUT, true);
@@ -623,22 +636,107 @@ pub(crate) fn compute_matched_rules(
 // Iterates the tree and determines the matching style rules for each entity, then links the entity to the corresponding style rule data.
 pub(crate) fn style_system(cx: &mut Context) {
     if cx.style.system_flags.contains(SystemFlags::RESTYLE) {
-        let iterator = LayoutTreeIterator::full(&cx.tree);
+        let mut variables = HashMap::<u64, Vec<Rule>>::new();
+        let iter = StyleTreeIterator::full(&cx.tree);
+        for (node, flag) in iter {
+            if flag {
+                println!("Entering {}", node);
+                // Get linked variables and add to the appropriate stack
+                for (name_hash, store) in cx.style.custom_color_props.iter() {
+                    // Get the rule linked to the node
+                    if let Some(rule) = store.get_shared_rule(node) {
+                        match variables.entry(*name_hash) {
+                            Entry::Occupied(mut occ) => {
+                                occ.get_mut().push(rule);
+                            }
 
-        // Restyle the entire application.
-        // TODO: Make this incremental.
-        for entity in iterator {
-            let mut matched_rules = Vec::with_capacity(5);
-            compute_matched_rules(cx, entity, &mut matched_rules);
+                            Entry::Vacant(vac) => {
+                                vac.insert(vec![rule]);
+                            }
+                        }
+                    }
+                }
 
-            if !matched_rules.is_empty() {
-                link_style_data(
-                    &mut cx.style,
-                    entity,
-                    &matched_rules.iter().map(|(rule, _)| *rule).collect::<Vec<_>>(),
-                );
+                let mut matched_rules = Vec::with_capacity(5);
+                compute_matched_rules(cx, node, &mut matched_rules);
+
+                if !matched_rules.is_empty() {
+                    link_style_data(
+                        &mut cx.style,
+                        node,
+                        &matched_rules.iter().map(|(rule, _)| *rule).collect::<Vec<_>>(),
+                        &variables,
+                    );
+                }
+
+                println!("variables {:?}", variables);
+
+                if let Some(name_hash) = cx.style.background_color.variable_name_hash(node) {
+                    if let Some(rule) = variables.get(&name_hash).and_then(|store| store.last()) {
+                        if let Some(entry) = cx.style.background_color.variable_data.get_mut(node) {
+                            entry.rule_id = *rule;
+                        }
+                    }
+                }
+            } else {
+                println!("Leaving {}", node);
+                for (name_hash, store) in cx.style.custom_color_props.iter() {
+                    if let Some(_value) = store.get_shared_rule(node) {
+                        match variables.entry(*name_hash) {
+                            Entry::Occupied(mut occ) => {
+                                occ.get_mut().pop();
+
+                                let stack = occ.get();
+                                if stack.is_empty() {
+                                    occ.remove();
+                                }
+                            }
+
+                            _ => {}
+                        }
+                    }
+                }
+                println!("variables {:?}", variables);
             }
         }
+
+        // let iterator = LayoutTreeIterator::full(&cx.tree);
+
+        // // Restyle the entire application.
+        // // TODO: Make this incremental.
+        // for entity in iterator {
+        //     let mut matched_rules = Vec::with_capacity(5);
+        //     compute_matched_rules(cx, entity, &mut matched_rules);
+
+        //     if !matched_rules.is_empty() {
+        //         link_style_data(
+        //             &mut cx.style,
+        //             entity,
+        //             &matched_rules.iter().map(|(rule, _)| *rule).collect::<Vec<_>>(),
+        //         );
+        //     }
+
+        //     // Iterate up tree to fill in variables
+        //     // let parent_iterator = LayoutParentIterator::new(&cx.tree, Some(entity));
+        //     // for ancestor in parent_iterator {
+        //     //     // Get variable name
+        //     //     // Search for matching variable name in ancestors
+        //     //     // Substitute variable
+        //     //     if let Some((name_hash, matched_rule)) =
+        //     //         cx.style.background_color.variable_name_hash(entity)
+        //     //     {
+        //     //         if let Some(store) = cx.style.custom_color_props.get(&name_hash) {
+        //     //             if let Some(color) = store.get(ancestor) {
+        //     //                 if let Some(entry) =
+        //     //                     cx.style.background_color.shared_data.get_mut(matched_rule)
+        //     //                 {
+        //     //                     entry.value = color.clone();
+        //     //                 }
+        //     //             }
+        //     //         }
+        //     //     }
+        //     // }
+        // }
 
         cx.style.system_flags.set(SystemFlags::RESTYLE, false);
     }

@@ -803,7 +803,11 @@ impl<'a> EventContext<'a> {
     ///
     /// Returns a transparent color if the view does not have a background color.
     pub fn background_color(&mut self) -> Color {
-        self.style.background_color.get(self.current).copied().unwrap_or_default()
+        self.style
+            .background_color
+            .get(self.current, &self.style.custom_color_props)
+            .copied()
+            .unwrap_or_default()
     }
 
     // Setters

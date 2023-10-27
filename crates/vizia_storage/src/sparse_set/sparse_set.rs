@@ -1,3 +1,6 @@
+use std::ops::{Deref, DerefMut};
+use std::slice;
+
 use crate::{Entry, SparseSetIndex};
 use vizia_id::GenerationalId;
 
@@ -29,6 +32,18 @@ where
     /// Create a new empty sparse set
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn with_capacity(size: usize) -> Self {
+        Self { dense: Vec::with_capacity(size), sparse: Vec::with_capacity(size) }
+    }
+
+    pub fn len(&self) -> usize {
+        self.dense.len()
+    }
+
+    pub fn capacity(&self) -> usize {
+        self.sparse.len()
     }
 
     pub fn clear(&mut self) {
@@ -107,6 +122,67 @@ where
         } else {
             None
         }
+    }
+}
+
+/// Deref to a slice.
+impl<I, T> Deref for SparseSetGeneric<I, T>
+where
+    I: SparseSetIndex,
+{
+    type Target = [Entry<I, T>];
+
+    fn deref(&self) -> &Self::Target {
+        &self.dense[..]
+    }
+}
+
+/// Deref to a mutable slice.
+impl<I, T> DerefMut for SparseSetGeneric<I, T>
+where
+    I: SparseSetIndex,
+{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.dense[..]
+    }
+}
+
+/// Move into an interator, consuming the SparseSet.
+impl<I, T> IntoIterator for SparseSetGeneric<I, T>
+where
+    I: SparseSetIndex,
+{
+    type Item = Entry<I, T>;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.dense.into_iter()
+    }
+}
+
+/// An interator over the elements of the SparseSet.
+impl<'a, I, T> IntoIterator for &'a SparseSetGeneric<I, T>
+where
+    I: SparseSetIndex,
+{
+    type Item = &'a Entry<I, T>;
+    type IntoIter = slice::Iter<'a, Entry<I, T>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+/// An interator over mutable elements of the SparseSet.
+impl<'a, I, T> IntoIterator for &'a mut SparseSetGeneric<I, T>
+where
+    I: SparseSetIndex,
+{
+    type Item = &'a mut Entry<I, T>;
+    type IntoIter = slice::IterMut<'a, Entry<I, T>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
     }
 }
 

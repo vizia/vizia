@@ -1,6 +1,6 @@
 use cssparser::*;
 
-use crate::{CustomParseError, DashedIdent, Parse};
+use crate::{Color, CustomParseError, DashedIdent, Parse, RGBA};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct CustomProperty<'i> {
@@ -137,8 +137,8 @@ impl<'i> TokenList<'i> {
                     }
                 }
                 Ok(&cssparser::Token::Hash(ref h)) | Ok(&cssparser::Token::IDHash(ref h)) => {
-                    if let Ok(color) = Color::parse_hash(h.as_bytes()) {
-                        tokens.push(TokenOrValue::Color(color));
+                    if let Ok(csscolor) = cssparser::Color::parse_hash(h.as_bytes()) {
+                        tokens.push(TokenOrValue::Color(csscolor.into()));
                     } else {
                         tokens.push(Token::Hash(h.clone()).into());
                     }

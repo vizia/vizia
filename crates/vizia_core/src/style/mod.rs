@@ -64,11 +64,14 @@ use fnv::FnvHashMap;
 use instant::{Duration, Instant};
 use log::warn;
 use morphorm::{LayoutType, PositionType, Units};
-use std::collections::HashSet;
+use std::collections::hash_map::DefaultHasher;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
+use std::hash::{Hash, Hasher};
 use vizia_id::GenerationalId;
 
 use crate::prelude::*;
+use crate::storage::animatable_set_test::AnimatableSet2;
 
 pub use vizia_style::{
     Angle, BackgroundImage, BackgroundSize, BorderCornerShape, BoxShadow, ClipPath, Color, CssRule,
@@ -81,6 +84,7 @@ pub use vizia_style::{
 
 use vizia_style::{
     EasingFunction, KeyframeSelector, ParserOptions, Property, SelectorList, Selectors, StyleSheet,
+    TokenOrValue,
 };
 
 mod rule;
@@ -234,7 +238,7 @@ pub struct Style {
     pub(crate) outline_offset: AnimatableSet<LengthOrPercentage>,
 
     // Background
-    pub(crate) background_color: AnimatableSet<Color>,
+    pub(crate) background_color: AnimatableSet2<Color>,
     pub(crate) background_image: AnimatableSet<Vec<ImageOrGradient>>,
     pub(crate) background_size: AnimatableSet<Vec<BackgroundSize>>,
 
@@ -310,6 +314,8 @@ pub struct Style {
 
     /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
     pub(crate) dpi_factor: f64,
+
+    pub(crate) custom_color_props: HashMap<u64, AnimatableSet<Color>>,
 }
 
 impl Style {
@@ -467,7 +473,7 @@ impl Style {
 
                 // BACKGROUND
                 Property::BackgroundColor(value) => {
-                    insert_keyframe(&mut self.background_color, animation_id, time, *value);
+                    // insert_keyframe(&mut self.background_color, animation_id, time, *value);
                 }
 
                 Property::BackgroundImage(images) => {
@@ -1534,12 +1540,47 @@ impl Style {
 
             // Unparsed. TODO: Log the error.
             Property::Unparsed(unparsed) => {
-                warn!("Unparsed: {}", unparsed.name);
+                // println!("Unparsed: {} {:?}", unparsed.name, unparsed.value);
+                match unparsed.name.as_ref() {
+                    "background-color" => {
+                        // Store in background-color storage somehow that this is a variable
+                        // so a system can link it to an ancestor custom prop.
+                        if let TokenOrValue::Var(var) = unparsed.value.0.first().unwrap() {
+                            let mut s = DefaultHasher::new();
+                            var.name.hash(&mut s);
+                            let variable_name_hash = s.finish();
+                            println!("do this");
+                            self.background_color.insert_variable_rule(rule_id, variable_name_hash)
+                        }
+                    }
+
+                    n => println!("Unparsed {} {:?}", n, unparsed.value),
+                }
             }
 
             // TODO: Custom property support
             Property::Custom(custom) => {
-                warn!("Custom Property: {}", custom.name);
+                println!("custom: {} {:?}", custom.name, custom.value);
+                let mut s = DefaultHasher::new();
+                custom.name.hash(&mut s);
+                let variable_name_hash = s.finish();
+                // Parse custom properties and store them
+                for token in custom.value.0.iter() {
+                    // Try parsing colors
+                    if let TokenOrValue::Color(color) = token {
+                        if let Some(store) = self.custom_color_props.get_mut(&variable_name_hash) {
+                            store.insert_rule(rule_id, color.clone());
+                        } else {
+                            println!("then this");
+                            let mut store = AnimatableSet::default();
+                            store.insert_rule(rule_id, color.clone());
+                            self.custom_color_props.insert(variable_name_hash, store);
+                        }
+                    }
+                }
+
+                // Hash the name for storage?
+                // Then store this hash in the animatable set so it can be retrieved later?
             }
 
             _ => {}
@@ -1707,6 +1748,10 @@ impl Style {
 
         self.needs_text_layout.remove(entity);
         self.needs_access_update.remove(entity);
+
+        for (_, prop) in self.custom_color_props.iter_mut() {
+            prop.remove(entity);
+        }
     }
 
     pub fn needs_restyle(&mut self) {
@@ -1841,5 +1886,9 @@ impl Style {
         self.pointer_events.clear_rules();
 
         self.name.clear_rules();
+
+        for (_, prop) in self.custom_color_props.iter_mut() {
+            prop.clear_rules();
+        }
     }
 }

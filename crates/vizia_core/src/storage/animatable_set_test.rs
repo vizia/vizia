@@ -7,6 +7,8 @@ use instant::{Duration, Instant};
 use vizia_id::GenerationalId;
 use vizia_storage::{SparseSet, SparseSetGeneric, SparseSetIndex};
 
+use super::animatable_set::AnimatableSet;
+
 const INDEX_MASK: u32 = u32::MAX / 4;
 const INLINE_MASK: u32 = 1 << 31;
 const INHERITED_MASK: u32 = 1 << 30;
@@ -76,7 +78,7 @@ impl std::fmt::Debug for DataIndex {
     }
 }
 
-/// An Index is used by the AnimatableSet and contains a data index and an animation index.
+/// An Index is used by the AnimatableSet2 and contains a data index and an animation index.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct InlineIndex {
     data_index: DataIndex,
@@ -154,7 +156,7 @@ pub(crate) enum ValueOrVariable<'a, T> {
 /// Animations are moved from animations to active_animations when played. This allows the active
 /// animations to be quickly iterated to update the value.
 #[derive(Default, Debug)]
-pub(crate) struct AnimatableSet<T: Interpolator> {
+pub(crate) struct AnimatableSet2<T: Interpolator> {
     /// Shared data determined by style rules
     pub(crate) shared_data: SparseSetGeneric<SharedIndex, SharedData<T>>,
     /// Inline data defined on specific entities
@@ -167,7 +169,7 @@ pub(crate) struct AnimatableSet<T: Interpolator> {
     active_animations: Vec<AnimationState<T>>,
 }
 
-impl<T> AnimatableSet<T>
+impl<T> AnimatableSet2<T>
 where
     T: 'static + Default + Clone + Interpolator + PartialEq + std::fmt::Debug,
 {
@@ -530,14 +532,31 @@ where
     }
 
     // /// Returns a reference to any shared data for a given rule if it exists.
-    // pub(crate) fn get_shared(&self, rule: Rule) -> Option<&T> {
-    //     self.shared_data.get(rule)
-    // }
+    pub(crate) fn get_shared<'a>(
+        &'a self,
+        rule: Rule,
+        variables: &'a HashMap<u64, Vec<Rule>>,
+        variable_store: &'a HashMap<u64, AnimatableSet<T>>,
+    ) -> Option<&T> {
+        self.shared_data.get(rule).and_then(|shared_data| {
+            if shared_data.variable_name_hash != u64::MAX {
+                variables.get(&shared_data.variable_name_hash).and_then(|s| s.last()).and_then(
+                    |r| {
+                        variable_store
+                            .get(&shared_data.variable_name_hash)
+                            .and_then(|store| store.get_shared(*r))
+                    },
+                )
+            } else {
+                Some(&shared_data.value)
+            }
+        })
+    }
 
     // /// Returns a mutable reference to any shared data for a given rule if it exists.
-    // pub(crate) fn get_shared_mut(&mut self, rule: Rule) -> Option<&mut T> {
-    //     self.shared_data.get_mut(rule)
-    // }
+    pub(crate) fn get_shared_mut(&mut self, rule: Rule) -> Option<&mut SharedData<T>> {
+        self.shared_data.get_mut(rule)
+    }
 
     pub(crate) fn get_animation_mut(
         &mut self,
@@ -561,7 +580,11 @@ where
     }
 
     /// Get the animated, inline, or shared data value from the storage.
-    pub fn get(&self, entity: Entity) -> Option<&T> {
+    pub fn get<'a>(
+        &'a self,
+        entity: Entity,
+        variable_store: &'a HashMap<u64, AnimatableSet<T>>,
+    ) -> Option<&T> {
         let entity_index = entity.index();
         if entity_index < self.inline_data.sparse.len() {
             // Animations override inline and shared styling
@@ -577,6 +600,14 @@ where
                     return Some(&self.inline_data.dense[data_index.index()].value);
                 }
             } else {
+                if let Some(var) = self.variable_data.get(entity) {
+                    if let Some(store) = variable_store.get(&var.name_hash) {
+                        if let Some(data) = store.shared_data.get(var.rule_id) {
+                            return Some(&data.value);
+                        }
+                    }
+                }
+
                 let key = Rule::new(data_index.index() as u64, 0);
                 return self.shared_data.get(key).map(|data| &data.value);
                 // return Some(&self.shared_data.dense[data_index.index()].value.value);
@@ -586,27 +617,14 @@ where
         None
     }
 
-    pub fn get_shared_rule(&self, entity: Entity) -> Option<Rule> {
-        if let Some(inline_index) = self.inline_data.sparse.get(entity.index()) {
-            let data_index = inline_index.data_index;
-
-            if !data_index.is_inline() {
-                let key = Rule::new(data_index.index() as u64, 0);
-                if data_index != DataIndex::null() {
-                    return Some(key);
-                }
-            }
-        }
-
-        None
-    }
-
-    pub(crate) fn get_shared(&self, rule: Rule) -> Option<&T> {
-        self.shared_data.get(rule).map(|s| &s.value)
-    }
-
     /// Link an entity to some shared data.
-    pub(crate) fn link(&mut self, entity: Entity, rules: &[Rule]) -> bool {
+    pub(crate) fn link(
+        &mut self,
+        entity: Entity,
+        rules: &[Rule],
+        variables: &HashMap<u64, Vec<Rule>>,
+        variable_store: &HashMap<u64, AnimatableSet<T>>,
+    ) -> bool {
         let entity_index = entity.index();
 
         // Check if the entity already has some data
@@ -633,7 +651,8 @@ where
                 let entity_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
                 if entity_anim_index < self.active_animations.len() {
                     // Already animating
-                    let current_value = self.get(entity).cloned().unwrap_or_default();
+                    let current_value =
+                        self.get(entity, variable_store).cloned().unwrap_or_default();
                     let current_anim_state = &mut self.active_animations[entity_anim_index];
                     let rule_data_index = shared_data_index.data_index as usize;
 
@@ -644,30 +663,96 @@ where
                                 // Transitioning back to previous rule
                                 current_anim_state.from_rule = current_anim_state.to_rule;
                                 current_anim_state.to_rule = rule_data_index;
-                                current_anim_state.keyframes.first_mut().unwrap().value =
-                                    self.shared_data.dense[current_anim_state.from_rule]
-                                        .value
-                                        .value
-                                        .clone();
 
-                                current_anim_state.keyframes.last_mut().unwrap().value =
-                                    self.shared_data.dense[current_anim_state.to_rule]
-                                        .value
-                                        .value
-                                        .clone();
+                                let mut start = current_value.clone();
+
+                                if let Some(shared_data) = self
+                                    .shared_data
+                                    .get(Rule::new(current_anim_state.from_rule as u64, 0))
+                                {
+                                    if shared_data.variable_name_hash != u64::MAX {
+                                        if let Some(rule_id) = variables
+                                            .get(&shared_data.variable_name_hash)
+                                            .and_then(|s| s.last())
+                                        {
+                                            if let Some(data) = variable_store
+                                                .get(&shared_data.variable_name_hash)
+                                                .and_then(|store| store.shared_data.get(*rule_id))
+                                            {
+                                                start = data.value.clone()
+                                            }
+                                        }
+                                    } else {
+                                        start = self.shared_data.dense[current_anim_state.from_rule]
+                                            .value
+                                            .value
+                                            .clone()
+                                    }
+                                }
+
+                                current_anim_state.keyframes.first_mut().unwrap().value = start;
+
+                                let mut end = current_value.clone();
+                                if let Some(shared_data) = self
+                                    .shared_data
+                                    .get(Rule::new(current_anim_state.to_rule as u64, 0))
+                                {
+                                    if shared_data.variable_name_hash != u64::MAX {
+                                        if let Some(rule_id) = variables
+                                            .get(&shared_data.variable_name_hash)
+                                            .and_then(|s| s.last())
+                                        {
+                                            if let Some(data) = variable_store
+                                                .get(&shared_data.variable_name_hash)
+                                                .and_then(|store| store.shared_data.get(*rule_id))
+                                            {
+                                                end = data.value.clone()
+                                            }
+                                        }
+                                    } else {
+                                        end = self.shared_data.dense[current_anim_state.to_rule]
+                                            .value
+                                            .value
+                                            .clone()
+                                    }
+                                }
+
+                                current_anim_state.keyframes.last_mut().unwrap().value = end;
 
                                 current_anim_state.delay = current_anim_state.t - 1.0;
                                 current_anim_state.start_time = instant::Instant::now();
                             } else {
                                 // Transitioning to new rule
                                 current_anim_state.to_rule = rule_data_index;
+                                let mut end = current_value.clone();
                                 current_anim_state.keyframes.first_mut().unwrap().value =
                                     current_value;
-                                current_anim_state.keyframes.last_mut().unwrap().value =
-                                    self.shared_data.dense[current_anim_state.to_rule]
-                                        .value
-                                        .value
-                                        .clone();
+
+                                if let Some(shared_data) = self
+                                    .shared_data
+                                    .get(Rule::new(current_anim_state.from_rule as u64, 0))
+                                {
+                                    if shared_data.variable_name_hash != u64::MAX {
+                                        if let Some(rule_id) = variables
+                                            .get(&shared_data.variable_name_hash)
+                                            .and_then(|s| s.last())
+                                        {
+                                            if let Some(data) = variable_store
+                                                .get(&shared_data.variable_name_hash)
+                                                .and_then(|store| store.shared_data.get(*rule_id))
+                                            {
+                                                end = data.value.clone()
+                                            }
+                                        }
+                                    } else {
+                                        end = self.shared_data.dense[current_anim_state.from_rule]
+                                            .value
+                                            .value
+                                            .clone()
+                                    }
+                                }
+
+                                current_anim_state.keyframes.last_mut().unwrap().value = end;
                                 current_anim_state.t = 0.0;
                                 current_anim_state.start_time = instant::Instant::now();
                             }
@@ -675,7 +760,32 @@ where
                     }
                 } else if let Some(transition_state) = self.animations.get_mut(rule_animation) {
                     // Safe to unwrap because already checked that the rule exists
-                    let end = self.shared_data.get(*rule).unwrap();
+                    let mut end = self.shared_data.get(*rule).unwrap().value.clone();
+
+                    if let Some(shared_data) = self.shared_data.get(*rule) {
+                        if shared_data.variable_name_hash != u64::MAX {
+                            if let Some(rule_id) = variables
+                                .get(&shared_data.variable_name_hash)
+                                .and_then(|s| s.last())
+                            {
+                                if let Some(data) = variable_store
+                                    .get(&shared_data.variable_name_hash)
+                                    .and_then(|store| store.shared_data.get(*rule_id))
+                                {
+                                    end = data.value.clone();
+                                }
+                            }
+                        }
+                    }
+
+                    // let variable_name_hash = self.shared_data.get(*rule).unwrap().variable_name_hash;
+
+                    // if variable_name_hash != u64::MAX {
+                    //     if let Some(store) = variable_store.get(&variable_name_hash) {
+                    //         self.variable_data.get(key)
+                    //         if let Some(value) = store.shared_data.get(key)
+                    //     }
+                    // }
 
                     let entity_data_index = self.inline_data.sparse[entity_index].data_index;
 
@@ -686,10 +796,27 @@ where
                             self.shared_data.dense[entity_data_index.index()].value.value.clone();
                         transition_state.keyframes.first_mut().unwrap().value = start_data;
                     } else {
-                        transition_state.keyframes.first_mut().unwrap().value = end.value.clone();
+                        let mut start = end.clone();
+                        let name_hash = self
+                            .shared_data
+                            .get(Rule::new(entity_data_index.index() as u64, 0))
+                            .map(|s| s.variable_name_hash)
+                            .unwrap_or(u64::MAX);
+                        if name_hash != u64::MAX {
+                            if let Some(var_rule) = variables.get(&name_hash).and_then(|s| s.last())
+                            {
+                                if let Some(var_data) = variable_store
+                                    .get(&name_hash)
+                                    .and_then(|s| s.shared_data.get(*var_rule))
+                                {
+                                    start = var_data.value.clone();
+                                }
+                            }
+                        }
+                        transition_state.keyframes.first_mut().unwrap().value = start;
                     }
 
-                    transition_state.keyframes.last_mut().unwrap().value = end.value.clone();
+                    transition_state.keyframes.last_mut().unwrap().value = end.clone();
                     transition_state.from_rule =
                         self.inline_data.sparse[entity_index].data_index.index();
                     transition_state.to_rule = shared_data_index.index();
@@ -706,9 +833,7 @@ where
                             duration,
                         );
                     }
-                    //}
                 }
-                //}
 
                 let data_index = self.inline_data.sparse[entity_index].data_index;
                 // Already linked
@@ -716,17 +841,20 @@ where
                     return false;
                 }
 
-                println!("link to shared: {} {}", entity, rule.index());
+                // Link to shared
                 self.inline_data.sparse[entity_index].data_index = DataIndex::shared(rule.index());
 
+                // Link any variables
                 if let Some(shared_data) = self.shared_data.get(*rule) {
                     if shared_data.variable_name_hash != u64::MAX {
+                        let rule_id = variables
+                            .get(&shared_data.variable_name_hash)
+                            .and_then(|s| s.last())
+                            .copied()
+                            .unwrap_or(Rule::null());
                         self.variable_data.insert(
                             entity,
-                            Variable {
-                                name_hash: shared_data.variable_name_hash,
-                                rule_id: Rule::null(),
-                            },
+                            Variable { name_hash: shared_data.variable_name_hash, rule_id },
                         );
                     }
                 }
@@ -770,7 +898,7 @@ where
         }
     }
 
-    pub fn variable_name_hash(&self, entity: Entity) -> Option<(u64, Rule)> {
+    pub fn variable_name_hash(&self, entity: Entity) -> Option<u64> {
         if let Some(data_index) =
             self.inline_data.sparse.get(entity.index()).map(|inline_index| inline_index.data_index)
         {
@@ -779,10 +907,7 @@ where
                     self.shared_data.get(Rule::new(data_index.index() as u64, 0))
                 {
                     if shared_data.variable_name_hash != u64::MAX {
-                        return Some((
-                            shared_data.variable_name_hash,
-                            Rule::new(data_index.index() as u64, 0),
-                        ));
+                        return Some(shared_data.variable_name_hash);
                     }
                 }
             }
@@ -849,7 +974,7 @@ mod tests {
     /// Test for constructing a new empty animatable storage.
     #[test]
     fn new() {
-        let animatable_storage = AnimatableSet::<f32>::default();
+        let animatable_storage = AnimatableSet2::<f32>::default();
         assert_eq!(animatable_storage.inline_data.is_empty(), true);
         assert_eq!(animatable_storage.shared_data.is_empty(), true);
         assert_eq!(animatable_storage.animations.is_empty(), true);
@@ -859,7 +984,7 @@ mod tests {
     /// Test inserting inline data into the storage.
     #[test]
     fn insert_inline() {
-        let mut animatable_storage = AnimatableSet::default();
+        let mut animatable_storage = AnimatableSet2::default();
         animatable_storage.insert(Entity::root(), 5.0);
         //assert_eq!(animatable_storage.entity_indices.first().unwrap().data_index, DataIndex::inline(0));
     }

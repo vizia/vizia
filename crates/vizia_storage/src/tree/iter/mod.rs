@@ -14,7 +14,7 @@ pub use self::{
     draw_iter::DrawIterator,
     focus_iter::FocusTreeIterator,
     layout_child_iter::LayoutChildIterator,
-    layout_tree_iter::LayoutTreeIterator,
+    layout_tree_iter::{LayoutTreeIterator, StyleTreeIterator},
     parent_iter::{LayoutParentIterator, ParentIterator},
     tree_depth_iter::TreeDepthIterator,
     tree_iter::TreeIterator,
