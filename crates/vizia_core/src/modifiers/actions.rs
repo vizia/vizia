@@ -504,6 +504,26 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
+        if let Some(view) = self
+            .cx
+            .views
+            .get_mut(&self.entity)
+            .and_then(|view_handler| view_handler.downcast_mut::<Button>())
+        {
+            view.action = Some(Box::new(action));
+            return self;
+        }
+
+        if let Some(view) = self
+            .cx
+            .views
+            .get_mut(&self.entity)
+            .and_then(|view_handler| view_handler.downcast_mut::<IconButton>())
+        {
+            view.action = Some(Box::new(action));
+            return self;
+        }
+
         build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(

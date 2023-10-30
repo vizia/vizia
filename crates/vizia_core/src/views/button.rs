@@ -1,13 +1,13 @@
 use crate::prelude::*;
 
-/// A simple push button with an action and a contained view.
+/// A simple push button with a contained view.
 ///
 /// # Examples
 ///
 /// ## Button with an action
 ///
-/// A button can be used to call an action when pressed. Usually this is an
-/// event that is being emitted.
+/// A button can be used to call an action when interacted with. Usually this is an
+/// event that is being emitted when the button is [pressed](crate::modifiers::ActionModifiers::on_press).
 ///
 /// ```
 /// # use vizia_core::prelude::*;
@@ -18,7 +18,8 @@ use crate::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
-/// Button::new(cx, |cx| cx.emit(AppEvent::Action), |cx| Label::new(cx, "Text"));
+/// Button::new(cx, |cx| Label::new(cx, "Text"))
+///     .on_press(|ex| ex.emit(AppEvent::Action))
 /// ```
 ///
 /// ## Button without an action
@@ -32,7 +33,7 @@ use crate::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
-/// Button::new(cx, |_| {}, |cx| Label::new(cx, "Text"));
+/// Button::new(cx, |cx| Label::new(cx, "Text"));
 /// ```
 ///
 /// ## Button containing multiple views
@@ -47,7 +48,6 @@ use crate::prelude::*;
 /// #
 /// Button::new(
 ///     cx,
-///     |_| {},
 ///     |cx| {
 ///         HStack::new(cx, |cx| {
 ///             Label::new(cx, "Hello");
@@ -56,8 +56,22 @@ use crate::prelude::*;
 ///     },
 /// );
 /// ```
+///
+/// # Button Variants
+///
+/// The style of a button can be modified using the [`variant`](ButtonModifiers::variant) modifier from the [`ButtonModifiers`] trait
+/// by specifying the [`ButtonVariant`].
+///
+/// ```
+/// # use vizia_core::prelude::*;
+/// #
+/// # let cx = &mut Context::default();
+/// #
+/// Button::new(cx, |cx| Label::new(cx, "Text"))
+///     .variant(ButtonVariant::Accent);
+/// ```
 pub struct Button {
-    action: Box<dyn Fn(&mut EventContext)>,
+    pub(crate) action: Option<Box<dyn Fn(&mut EventContext)>>,
 }
 
 impl Button {
@@ -71,13 +85,12 @@ impl Button {
     /// #
     /// Button::new(cx, |cx| cx.emit(AppEvent::TriggerAction), |cx| Label::new(cx, "Press Me"));
     /// ```
-    pub fn new<A, C, V>(cx: &mut Context, action: A, content: C) -> Handle<Self>
+    pub fn new<C, V>(cx: &mut Context, content: C) -> Handle<Self>
     where
-        A: 'static + Fn(&mut EventContext),
         C: FnOnce(&mut Context) -> Handle<V>,
         V: View,
     {
-        Self { action: Box::new(action) }
+        Self { action: None }
             .build(cx, move |cx| {
                 (content)(cx).hoverable(false).class("inner");
             })
@@ -103,7 +116,9 @@ impl View for Button {
 
             WindowEvent::Press { .. } => {
                 if meta.target == cx.current() {
-                    (self.action)(cx);
+                    if let Some(action) = &self.action {
+                        (action)(cx);
+                    }
                 }
             }
 
@@ -113,7 +128,9 @@ impl View for Button {
 
             WindowEvent::ActionRequest(action) => match action.action {
                 Action::Default => {
-                    (self.action)(cx);
+                    if let Some(action) = &self.action {
+                        (action)(cx);
+                    }
                 }
 
                 _ => {}
@@ -124,6 +141,7 @@ impl View for Button {
     }
 }
 
+/// Used in conjunction with the [`variant`](ButtonModifiers::variant) modifier for selecting the style variant of a button or button group.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ButtonVariant {
     Normal,
@@ -132,7 +150,20 @@ pub enum ButtonVariant {
     Text,
 }
 
+/// Modifiers for changing the appearance of buttons.
 pub trait ButtonModifiers {
+    /// Selects the style variant to be used by the button or button group.
+    ///
+    /// # Example
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// #
+    /// #
+    /// # let cx = &mut Context::default();
+    /// #
+    /// Button::new(cx, |cx| Label::new(cx, "Text"))
+    ///     .variant(ButtonVariant::Accent);
+    /// ```
     fn variant<U: Into<ButtonVariant>>(self, variant: impl Res<U>) -> Self;
 }
 
@@ -173,16 +204,32 @@ impl<'a> ButtonModifiers for Handle<'a, Button> {
 }
 
 pub struct IconButton {
-    action: Box<dyn Fn(&mut EventContext)>,
+    pub(crate) action: Option<Box<dyn Fn(&mut EventContext)>>,
 }
 
 impl IconButton {
-    pub fn new<A, S>(cx: &mut Context, action: A, icon: impl Res<S> + Clone) -> Handle<Self>
+    /// Creates a new `IconButton` with the specified icon code.
+    ///
+    /// # Example
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// #
+    /// # enum AppEvent {
+    /// #     Share,
+    /// # }
+    ///
+    /// # let cx = &mut Context::default();
+    /// #
+    /// use vizia::icons::ICON_SHARE;
+    ///
+    /// IconButton::new(cx, ICON_SHARE)
+    ///     .on_press(|ex| ex.emit(AppEvent::Share))
+    /// ```
+    pub fn new<S>(cx: &mut Context, icon: impl Res<S> + Clone) -> Handle<Self>
     where
-        A: 'static + Fn(&mut EventContext),
         S: ToString,
     {
-        Self { action: Box::new(action) }
+        Self { action: None }
             .build(cx, move |cx| {
                 Icon::new(cx, icon).hoverable(false).class("inner");
             })
@@ -209,7 +256,9 @@ impl View for IconButton {
 
             WindowEvent::Press { .. } => {
                 if meta.target == cx.current() {
-                    (self.action)(cx);
+                    if let Some(action) = &self.action {
+                        (action)(cx);
+                    }
                 }
             }
 
@@ -219,7 +268,9 @@ impl View for IconButton {
 
             WindowEvent::ActionRequest(action) => match action.action {
                 Action::Default => {
-                    (self.action)(cx);
+                    if let Some(action) = &self.action {
+                        (action)(cx);
+                    }
                 }
 
                 _ => {}
@@ -269,6 +320,26 @@ impl<'a> ButtonModifiers for Handle<'a, IconButton> {
 pub struct ButtonGroup {}
 
 impl ButtonGroup {
+    /// Creates a new button group.
+    ///
+    /// # Example
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// #
+    /// # enum AppEvent {
+    /// #     Share,
+    /// # }
+    ///
+    /// # let cx = &mut Context::default();
+    /// #
+    /// use vizia::icons::ICON_SHARE;
+    ///
+    /// ButtonGroup::new(cx, |cx| {
+    ///     Button::new(cx, |cx| Label::new(cx, "ONE"));
+    ///     Button::new(cx, |cx| Label::new(cx, "TWO"));
+    ///     Button::new(cx, |cx| Label::new(cx, "THREE"));
+    /// });
+    /// ```
     pub fn new<C>(cx: &mut Context, content: C) -> Handle<Self>
     where
         C: FnOnce(&mut Context),
@@ -320,26 +391,3 @@ impl<'a> ButtonModifiers for Handle<'a, ButtonGroup> {
         self
     }
 }
-
-// pub struct ToggleButton {
-//     on_toggle: Box<dyn Fn(&mut EventContext)>,
-// }
-
-// impl ToggleButton {
-//     pub fn new<A, C, V>(cx: &mut Context, on_toggle: A, content: C) -> Handle<Self>
-//     where
-//         A: 'static + Fn(&mut EventContext),
-//         C: FnOnce(&mut Context) -> Handle<V>,
-//         V: View,
-//     {
-//         Self { on_toggle: Box::new(on_toggle) }.build(cx, |cx| {
-//             (content)(cx);
-//         })
-//     }
-// }
-
-// impl View for ToggleButton {
-//     fn element(&self) -> Option<&'static str> {
-//         Some("toggle-button")
-//     }
-// }

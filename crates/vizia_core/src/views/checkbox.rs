@@ -3,7 +3,7 @@ use crate::prelude::*;
 
 /// A checkbox used to display and toggle a boolean state.
 ///
-/// Clicking on the checkbox with the left mouse button triggers the `on_toggle` callback.
+/// Pressing on the checkbox with the primary mouse button triggers the [`on_toggle`](Checkbox::on_toggle) callback.
 ///
 /// # Examples
 ///
@@ -155,7 +155,7 @@ impl Checkbox {
             .build(cx, |_| {})
             .bind(checked, move |handle, c| {
                 handle.bind(intermediate, move |handle, i| {
-                    if c.get(handle.cx) {
+                    if c.get(&handle) {
                         handle.text(ICON_CHECK).toggle_class("intermediate", false);
                     } else if i.get(handle.cx) {
                         handle.text("-").toggle_class("intermediate", true);

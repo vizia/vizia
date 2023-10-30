@@ -21,28 +21,24 @@ impl Notification {
                 HStack::new(cx, move |cx| {
                     Label::new(cx, &header);
                     if some_text {
-                        Button::new(
-                            cx,
-                            |ex| ex.emit(NotificationEvent::ToggleContainer),
-                            |cx| {
-                                Label::new(
-                                    cx,
-                                    Notification::container_open.map(|open| {
-                                        if *open {
-                                            ICON_CHEVRON_DOWN
-                                        } else {
-                                            ICON_CHEVRON_RIGHT
-                                        }
-                                    }),
-                                )
-                                .class("icon")
-                            },
-                        )
+                        Button::new(cx, |cx| {
+                            Label::new(
+                                cx,
+                                Notification::container_open.map(|open| {
+                                    if *open {
+                                        ICON_CHEVRON_DOWN
+                                    } else {
+                                        ICON_CHEVRON_RIGHT
+                                    }
+                                }),
+                            )
+                            .class("icon")
+                        })
+                        .on_press(|ex| ex.emit(NotificationEvent::ToggleContainer))
                         .class("icon")
                         .checked(Notification::container_open);
                     }
-                    Button::new(cx, |_| (), |cx| Label::new(cx, ICON_X).class("icon"))
-                        .class("icon");
+                    Button::new(cx, |cx| Label::new(cx, ICON_X).class("icon")).class("icon");
                 })
                 .class("notification-header");
 

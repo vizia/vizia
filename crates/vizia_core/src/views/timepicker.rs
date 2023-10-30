@@ -155,19 +155,16 @@ where
                     cx.emit(TimepickerEvent::ChangePage(AnalogTimepickerPage::Minutes))
                 });
                 VStack::new(cx, |cx| {
-                    Button::new(
-                        cx,
-                        |cx| cx.emit(DigitalTimepickerEvent::ToggleAMOrPM),
-                        |cx| {
-                            Label::new(
-                                cx,
-                                lens.map(|time| match time.hour12().0 {
-                                    false => "AM",
-                                    true => "PM",
-                                }),
-                            )
-                        },
-                    );
+                    Button::new(cx, |cx| {
+                        Label::new(
+                            cx,
+                            lens.map(|time| match time.hour12().0 {
+                                false => "AM",
+                                true => "PM",
+                            }),
+                        )
+                    })
+                    .on_press(|cx| cx.emit(DigitalTimepickerEvent::ToggleAMOrPM));
                 })
                 .class("digitaltimepicker-button-wrapper");
             })
