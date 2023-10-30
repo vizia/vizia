@@ -1,19 +1,15 @@
-use std::{any::TypeId, collections::HashSet};
+use std::collections::{hash_map::DefaultHasher, HashSet};
+use std::hash::{Hash, Hasher};
 
 use crate::{model::ModelOrView, prelude::*};
 
-use std::sync::atomic::{AtomicU64, Ordering};
-
-// Generates a unique ID.
-pub(crate) fn next_uuid() -> u64 {
-    static UUID: AtomicU64 = AtomicU64::new(0);
-    UUID.fetch_add(1, Ordering::Relaxed)
-}
-
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub enum StoreId {
-    Type(TypeId),
-    Uuid(u64),
+pub struct StoreId(pub u64);
+
+pub(crate) fn get_storeid<T: Hash>(t: &T) -> StoreId {
+    let mut s = DefaultHasher::new();
+    t.hash(&mut s);
+    StoreId(s.finish())
 }
 
 pub(crate) trait Store {
@@ -27,6 +23,8 @@ pub(crate) trait Store {
     fn remove_observer(&mut self, observer: &Entity);
     /// Returns the number of obersers for the store.
     fn num_observers(&self) -> usize;
+
+    fn name(&self) -> String;
 }
 
 pub(crate) struct BasicStore<L: Lens, T> {
@@ -70,5 +68,9 @@ where
 
     fn num_observers(&self) -> usize {
         self.observers.len()
+    }
+
+    fn name(&self) -> String {
+        format!("{:?}", self.lens)
     }
 }

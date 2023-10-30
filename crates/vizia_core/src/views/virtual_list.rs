@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use crate::prelude::*;
 
 #[derive(Lens)]
@@ -8,6 +10,7 @@ pub struct VirtualList {
     visible_items: Vec<usize>,
     scrolly: f32,
     scroll_to_cursor: bool,
+    on_change: Option<Box<dyn Fn(&mut EventContext, Range<usize>)>>,
 }
 
 pub enum VirtualListEvent {
@@ -20,13 +23,14 @@ impl VirtualList {
         cx: &mut Context,
         list: L,
         height: f32,
-        item: impl Fn(&mut Context, usize, Then<L, Index<Vec<T>, T>>) -> Handle<V> + 'static,
+        item: impl Fn(&mut Context, usize, Index<L, T>) -> Handle<V> + 'static,
     ) -> Handle<Self>
     where
-        L: Lens<Target = Vec<T>>,
+        L: Lens,
+        <L as Lens>::Target: std::ops::Deref<Target = [T]>,
         T: Data + 'static,
     {
-        let num_items = list.get(cx).len();
+        let num_items = list.map(|l| l.len()).get(cx);
 
         Self {
             offset: 0,
@@ -35,6 +39,7 @@ impl VirtualList {
             visible_items: (0..10).collect::<Vec<_>>(),
             scrolly: 0.0,
             scroll_to_cursor: true,
+            on_change: None,
         }
         .build(cx, |cx| {
             ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
@@ -73,9 +78,16 @@ impl VirtualList {
         self.offset = (offsety / self.item_height / dpi).ceil() as usize;
         self.offset = self.offset.saturating_sub(1);
 
+        let start = self.offset;
+        let end = (self.offset + num_items).clamp(0, self.num_items);
+
         self.visible_items.clear();
-        for i in self.offset..(self.offset + num_items) {
+        for i in start..end {
             self.visible_items.push(i);
+        }
+
+        if let Some(callback) = &self.on_change {
+            (callback)(cx, start..end)
         }
     }
 }
@@ -118,9 +130,15 @@ impl View for VirtualList {
                 let num_items =
                     ((container_height + self.item_height) / self.item_height).ceil() as usize;
 
+                let start = self.offset;
+                let end = (self.offset + num_items).clamp(0, self.num_items);
                 self.visible_items.clear();
-                for i in self.offset..(self.offset + num_items) {
+                for i in start..end {
                     self.visible_items.push(i);
+                }
+
+                if let Some(callback) = &self.on_change {
+                    (callback)(cx, start..end)
                 }
             }
         });
@@ -144,5 +162,9 @@ impl<'a> Handle<'a, VirtualList> {
         self.modify(|virtual_list: &mut VirtualList| {
             virtual_list.scroll_to_cursor = flag;
         })
+    }
+
+    pub fn on_change(self, callback: impl Fn(&mut EventContext, Range<usize>) + 'static) -> Self {
+        self.modify(|virtual_list| virtual_list.on_change = Some(Box::new(callback)))
     }
 }

@@ -159,6 +159,15 @@ where
         let entity_index = entity.index();
 
         if entity_index < self.inline_data.sparse.len() {
+            let active_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
+
+            if active_anim_index < self.active_animations.len() {
+                let anim_state = &mut self.active_animations[active_anim_index];
+                anim_state.t = 1.0;
+
+                self.remove_innactive_animations();
+            }
+
             let data_index = self.inline_data.sparse[entity_index].data_index;
             if data_index.is_inline() && !data_index.is_inherited() {
                 self.inline_data.remove(entity)
@@ -637,7 +646,9 @@ where
 
                     let duration = transition_state.duration;
 
-                    if transition_state.from_rule != transition_state.to_rule {
+                    if transition_state.from_rule != DataIndex::null().index()
+                        && transition_state.from_rule != transition_state.to_rule
+                    {
                         self.play_animation(
                             entity,
                             rule_animation,

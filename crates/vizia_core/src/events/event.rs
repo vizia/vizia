@@ -206,7 +206,7 @@ impl PartialEq<Self> for TimedEvent {
 impl Eq for TimedEvent {}
 impl PartialOrd for TimedEvent {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.time.partial_cmp(&other.time).map(|ord| ord.reverse())
+        Some(self.cmp(other))
     }
 }
 impl Ord for TimedEvent {

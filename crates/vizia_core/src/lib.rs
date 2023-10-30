@@ -45,7 +45,6 @@ pub mod image {
 
 /// A collection of codepoints for built-in icons.
 pub mod icons;
-pub use icons::*;
 
 pub mod fonts;
 pub use fonts::*;
@@ -74,7 +73,7 @@ pub mod prelude {
         EventContext, ProxyEmitError,
     };
     pub use super::entity::Entity;
-    pub use super::environment::{Environment, EnvironmentEvent, ThemeMode};
+    pub use super::environment::{AppTheme, Environment, EnvironmentEvent, ThemeMode};
     pub use super::events::{Event, Propagation, Timer, TimerAction};
     pub use super::include_style;
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};

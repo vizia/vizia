@@ -107,6 +107,10 @@ pub trait Model: 'static + Sized {
     /// ```
     #[allow(unused_variables)]
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {}
+
+    fn name(&self) -> Option<&'static str> {
+        None
+    }
 }
 
 pub(crate) trait ModelData: Any {
@@ -114,6 +118,8 @@ pub(crate) trait ModelData: Any {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {}
 
     fn as_any_ref(&self) -> &dyn Any;
+
+    fn name(&self) -> Option<&'static str>;
 }
 
 impl dyn ModelData {
@@ -129,6 +135,10 @@ impl<T: Model> ModelData for T {
 
     fn as_any_ref(&self) -> &dyn Any {
         self
+    }
+
+    fn name(&self) -> Option<&'static str> {
+        <T as Model>::name(self)
     }
 }
 

@@ -1,17 +1,8 @@
 #![allow(dead_code)]
-use vizia::{
-    icons::{ICON_MOON, ICON_SUN},
-    prelude::*,
-};
+use vizia::prelude::*;
 
 use log::LevelFilter;
 use std::error::Error;
-
-use lazy_static::lazy_static;
-
-lazy_static! {
-    pub static ref THEME_MODES: Vec<&'static str> = vec!["Light", "Dark"];
-}
 
 pub const CENTER_LAYOUT: &str = r#"
     .container {
@@ -26,23 +17,41 @@ pub const CENTER_LAYOUT: &str = r#"
 #[derive(Lens)]
 pub struct ControlsData {
     pub disabled: bool,
+    pub theme_options: Vec<&'static str>,
+    pub selected_theme: usize,
+}
+
+impl Default for ControlsData {
+    fn default() -> Self {
+        Self { disabled: false, theme_options: vec!["System", "Dark", "Light"], selected_theme: 0 }
+    }
 }
 
 pub enum ControlsEvent {
     ToggleDisabled,
+    SetThemeMode(usize),
 }
 
 impl Model for ControlsData {
-    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             ControlsEvent::ToggleDisabled => {
                 self.disabled ^= true;
+            }
+            ControlsEvent::SetThemeMode(theme_mode) => {
+                self.selected_theme = *theme_mode;
+                cx.emit(EnvironmentEvent::SetThemeMode(match theme_mode {
+                    0 /* system */ => AppTheme::System,
+                    1 /* Dark */ => AppTheme::BuiltIn(ThemeMode::DarkMode),
+                    2 /* Light */ => AppTheme::BuiltIn(ThemeMode::LightMode),
+                    _ => unreachable!(),
+                }));
             }
         });
     }
 }
 
-pub struct ExamplePage {}
+pub struct ExamplePage;
 
 impl ExamplePage {
     pub fn vertical(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
@@ -50,8 +59,9 @@ impl ExamplePage {
 
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
 
-        Self {}.build(cx, |cx| {
-            ControlsData { disabled: false }.build(cx);
+        Self.build(cx, |cx| {
+            ControlsData::default().build(cx);
+            cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System)); // set system theme
 
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
@@ -66,27 +76,7 @@ impl ExamplePage {
                 .bottom(Stretch(1.0))
                 .size(Auto);
 
-                Button::new(
-                    cx,
-                    |ex| ex.emit(EnvironmentEvent::ToggleThemeMode),
-                    |cx| {
-                        Label::new(
-                            cx,
-                            Environment::theme_mode.map(|mode| {
-                                if *mode == ThemeMode::DarkMode {
-                                    ICON_SUN
-                                } else {
-                                    ICON_MOON
-                                }
-                            }),
-                        )
-                        .class("icon")
-                    },
-                )
-                .class("icon")
-                .tooltip(|cx| {
-                    Label::new(cx, "Toggle Dark/Light Mode");
-                });
+                theme_selection_dropdown(cx);
             })
             .height(Auto)
             .width(Stretch(1.0))
@@ -106,13 +96,15 @@ impl ExamplePage {
             .class("container");
         })
     }
+
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
         setup_logging().expect("Failed to init logging");
 
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
 
-        Self {}.build(cx, |cx| {
-            ControlsData { disabled: false }.build(cx);
+        Self.build(cx, |cx| {
+            ControlsData::default().build(cx);
+            cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System)); // set system theme
 
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
@@ -127,27 +119,7 @@ impl ExamplePage {
                 .bottom(Stretch(1.0))
                 .size(Auto);
 
-                Button::new(
-                    cx,
-                    |ex| ex.emit(EnvironmentEvent::ToggleThemeMode),
-                    |cx| {
-                        Label::new(
-                            cx,
-                            Environment::theme_mode.map(|mode| {
-                                if *mode == ThemeMode::DarkMode {
-                                    ICON_SUN
-                                } else {
-                                    ICON_MOON
-                                }
-                            }),
-                        )
-                        .class("icon")
-                    },
-                )
-                .class("icon")
-                .tooltip(|cx| {
-                    Label::new(cx, "Toggle dark/light mode");
-                });
+                theme_selection_dropdown(cx);
             })
             .height(Auto)
             .width(Stretch(1.0))
@@ -170,6 +142,15 @@ impl ExamplePage {
 }
 
 impl View for ExamplePage {}
+
+fn theme_selection_dropdown(cx: &mut Context) {
+    PickList::new(cx, ControlsData::theme_options, ControlsData::selected_theme, true)
+        .on_select(|cx, index| cx.emit(ControlsEvent::SetThemeMode(index)))
+        .width(Pixels(85.0))
+        .tooltip(|cx| {
+            Label::new(cx, "Select Theme Mode");
+        });
+}
 
 pub fn setup_logging() -> Result<(), Box<dyn Error>> {
     #[cfg(debug_assertions)]

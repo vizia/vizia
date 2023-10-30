@@ -1,8 +1,8 @@
 use crate::GenerationalId;
 use std::{collections::VecDeque, marker::PhantomData};
 
-const MINIMUM_FREE_INDICES: usize = 1024;
-const IDX_MAX: u32 = std::u32::MAX >> 8;
+const MINIMUM_FREE_INDICES: usize = 4096;
+const IDX_MAX: u64 = std::u64::MAX >> 16;
 
 /// The IdManager is responsible for allocating and destroying generational IDs.
 ///
@@ -11,8 +11,8 @@ pub struct IdManager<I>
 where
     I: GenerationalId,
 {
-    generation: Vec<u8>,
-    free_list: VecDeque<u32>,
+    generation: Vec<u16>,
+    free_list: VecDeque<u64>,
 
     p: PhantomData<I>,
 }
@@ -51,13 +51,13 @@ where
         let index = if self.free_list.len() >= MINIMUM_FREE_INDICES {
             self.free_list.pop_front().unwrap()
         } else {
-            let idx = (self.generation.len()) as u32;
+            let idx = (self.generation.len()) as u64;
             self.generation.push(0);
             assert!(idx < IDX_MAX, "ID index exceeds maximum allowed value of {}", IDX_MAX);
             idx
         };
 
-        I::new(index, self.generation[index as usize] as u32)
+        I::new(index, self.generation[index as usize] as u64)
     }
 
     /// Destroys an ID returning false if the ID has already been destroyed.
@@ -67,9 +67,9 @@ where
         if self.is_alive(id) {
             let index = id.index();
             assert!(index < self.generation.len(), "ID is invalid");
-            assert!(self.generation[index] != u8::MAX, "ID generation is at maximum");
+            assert!(self.generation[index] != u16::MAX, "ID generation is at maximum");
             self.generation[index] += 1;
-            self.free_list.push_back(index as u32);
+            self.free_list.push_back(index as u64);
             true
         } else {
             false
@@ -93,7 +93,7 @@ mod tests {
     };
 
     #[derive(Copy, Clone, PartialEq)]
-    struct Entity(u32);
+    struct Entity(u64);
 
     impl_generational_id!(Entity);
 
@@ -145,7 +145,7 @@ mod tests {
         let success = id_manager.destroy(id);
         assert_eq!(success, true);
         assert_eq!(id_manager.generation[id.index()], 1);
-        assert_eq!(*id_manager.free_list.front().unwrap(), id.index() as u32);
+        assert_eq!(*id_manager.free_list.front().unwrap(), id.index() as u64);
     }
 
     /// Test of removing an invalid id.

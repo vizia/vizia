@@ -1,4 +1,4 @@
-use crate::binding::{Index, Then};
+use crate::binding::Index;
 use crate::prelude::*;
 use std::marker::PhantomData;
 use vizia_input::Code;
@@ -6,7 +6,8 @@ use vizia_input::Code;
 /// A view for creating a list of items from a binding to a `Vec<T>`
 pub struct List<L, T: 'static>
 where
-    L: Lens<Target = Vec<T>>,
+    L: Lens,
+    <L as Lens>::Target: std::ops::Deref<Target = [T]>,
 {
     p: PhantomData<L>,
     increment_callback: Option<Box<dyn Fn(&mut EventContext)>>,
@@ -14,11 +15,14 @@ where
     clear_callback: Option<Box<dyn Fn(&mut EventContext)>>,
 }
 
-impl<L: 'static + Lens<Target = Vec<T>>, T: Clone> List<L, T> {
+impl<L: Lens, T: Clone> List<L, T>
+where
+    <L as Lens>::Target: std::ops::Deref<Target = [T]>,
+{
     /// Creates a new List view with a binding to the given lens and a template for constructing the list items
     pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
     where
-        F: 'static + Fn(&mut Context, usize, Then<L, Index<Vec<T>, T>>),
+        F: 'static + Fn(&mut Context, usize, Index<L, T>),
     {
         //let item_template = Rc::new(item);
         List {
@@ -43,7 +47,10 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Clone> List<L, T> {
     }
 }
 
-impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
+impl<L: Lens, T> View for List<L, T>
+where
+    <L as Lens>::Target: std::ops::Deref<Target = [T]>,
+{
     fn element(&self) -> Option<&'static str> {
         Some("list")
     }

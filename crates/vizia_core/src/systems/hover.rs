@@ -118,7 +118,10 @@ fn hover_entity(
         .pointer_events
         .get(cx.current)
         .copied()
-        .map(|pointer_events| pointer_events.into())
+        .map(|pointer_events| match pointer_events {
+            PointerEvents::Auto => parent_pointer_events,
+            PointerEvents::None => false,
+        })
         .unwrap_or(parent_pointer_events);
 
     // Push to queue if the z-index is higher than the current z-index.

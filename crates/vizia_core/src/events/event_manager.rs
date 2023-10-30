@@ -2,9 +2,12 @@ use crate::context::{InternalEvent, ResourceContext};
 use crate::events::EventMeta;
 use crate::prelude::*;
 use crate::style::{Abilities, PseudoClassFlags};
-use crate::systems::{compute_matched_rules, hover_system};
+#[cfg(debug_assertions)]
+use crate::systems::compute_matched_rules;
+use crate::systems::hover_system;
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use instant::{Duration, Instant};
+#[cfg(debug_assertions)]
 use log::debug;
 use std::any::Any;
 use vizia_id::GenerationalId;
@@ -185,14 +188,21 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
         }
 
         WindowEvent::MouseMove(x, y) => {
-            context.mouse.previous_cursorx = context.mouse.cursorx;
-            context.mouse.previous_cursory = context.mouse.cursory;
-            context.mouse.cursorx = *x;
-            context.mouse.cursory = *y;
+            if !x.is_nan() && !y.is_nan() {
+                context.mouse.previous_cursorx = context.mouse.cursorx;
+                context.mouse.previous_cursory = context.mouse.cursory;
+                context.mouse.cursorx = *x;
+                context.mouse.cursory = *y;
+
+                mutate_direct_or_up(meta, context.captured, context.hovered, false);
+            }
+
+            // if context.mouse.cursorx != context.mouse.previous_cursorx
+            //     || context.mouse.cursory != context.mouse.previous_cursory
+            // {
+            // }
 
             hover_system(context);
-            mutate_direct_or_up(meta, context.captured, context.hovered, false);
-
             // if let Some(dropped_file) = context.dropped_file.take() {
             //     emit_direct_or_up(
             //         context,
@@ -338,42 +348,33 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             meta.target = context.focused;
 
             #[cfg(debug_assertions)]
-            if *code == Code::KeyH {
-                for entity in context.tree.into_iter() {
-                    println!(
-                        "Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",
-                        entity,
-                        entity.parent(&context.tree),
-                        context
-                            .views
-                            .get(&entity)
-                            .map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")),
-                        context.cache.get_posx(entity),
-                        context.cache.get_posy(entity),
-                        context.cache.get_width(entity),
-                        context.cache.get_height(entity)
-                    );
-                }
-            }
-
-            #[cfg(debug_assertions)]
             if *code == Code::KeyP && context.modifiers.contains(Modifiers::CTRL) {
                 for entity in TreeIterator::full(&context.tree) {
                     if let Some(model_data_store) = context.data.get(&entity) {
-                        print!(
-                            "{}{:?}",
-                            entity,
-                            model_data_store.models.keys().collect::<Vec<_>>()
-                        );
-                        print!("{:?}", model_data_store.stores.keys().collect::<Vec<_>>());
-                        println!();
+                        if !model_data_store.models.is_empty() {
+                            println!("Models for {}", entity);
+                            for (_, model) in model_data_store.models.iter() {
+                                println!("M: {:?}", model.name())
+                            }
+                        }
+
+                        if !model_data_store.stores.is_empty() {
+                            println!("Stores for {}", entity);
+                            for (_, store) in model_data_store.stores.iter() {
+                                println!(
+                                    "S: [{}] - Observers {:?}",
+                                    store.name(),
+                                    store.observers()
+                                )
+                            }
+                        }
                     }
                 }
             }
 
             #[cfg(debug_assertions)]
             if *code == Code::KeyI && context.modifiers.contains(Modifiers::CTRL) {
-                debug!("Entity tree");
+                println!("Entity tree");
                 let (tree, views, cache) = (&context.tree, &context.views, &context.cache);
                 let has_next_sibling = |entity| tree.get_next_sibling(entity).is_some();
                 let root_indents = |entity: Entity| {
@@ -402,7 +403,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                                 class_names += &format!(".{}", class);
                             }
                         }
-                        debug!(
+                        println!(
                             "{}{} {}{} [x: {} y: {} w: {} h: {}]",
                             indents(entity),
                             entity,
@@ -413,28 +414,27 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                             if w == f32::MAX { "inf".to_string() } else { w.to_string() },
                             if h == f32::MAX { "inf".to_string() } else { h.to_string() },
                         );
+                    } else if let Some(binding_name) =
+                        context.bindings.get(&entity).map(|binding| format!("{:?}", binding))
+                    {
+                        println!(
+                            "{}{} binding observing {}",
+                            indents(entity),
+                            entity,
+                            binding_name
+                        );
+                    } else {
+                        println!(
+                            "{}{} {}",
+                            indents(entity),
+                            entity,
+                            if views.get(&entity).is_some() {
+                                "unnamed view"
+                            } else {
+                                "no binding or view"
+                            }
+                        );
                     }
-                    // else if let Some(binding_name) =
-                    //     context.bindings.get(&entity).and_then(|binding| binding.name())
-                    // {
-                    //     println!(
-                    //         "{}{} binding observing {}",
-                    //         indents(entity),
-                    //         entity,
-                    //         binding_name
-                    //     );
-                    // } else {
-                    //     println!(
-                    //         "{}{} {}",
-                    //         indents(entity),
-                    //         entity,
-                    //         if views.get(&entity).is_some() {
-                    //             "unnamed view"
-                    //         } else {
-                    //             "no binding or view"
-                    //         }
-                    //     );
-                    // }
                 }
             }
 
@@ -492,13 +492,18 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             if *code == Code::Tab {
                 let lock_focus_to = context.tree.lock_focus_within(context.focused);
                 if context.modifiers.contains(Modifiers::SHIFT) {
-                    let prev_focused = if let Some(prev_focused) =
-                        focus_backward(context, context.focused, lock_focus_to)
-                    {
+                    let prev_focused = if let Some(prev_focused) = focus_backward(
+                        &context.tree,
+                        &context.style,
+                        context.focused,
+                        lock_focus_to,
+                    ) {
                         prev_focused
                     } else {
                         TreeIterator::full(&context.tree)
-                            .filter(|node| is_navigatable(context, *node, lock_focus_to))
+                            .filter(|node| {
+                                is_navigatable(&context.tree, &context.style, *node, lock_focus_to)
+                            })
                             .next_back()
                             .unwrap_or(Entity::root())
                     };
@@ -525,12 +530,14 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                     }
                 } else {
                     let next_focused = if let Some(next_focused) =
-                        focus_forward(context, context.focused, lock_focus_to)
+                        focus_forward(&context.tree, &context.style, context.focused, lock_focus_to)
                     {
                         next_focused
                     } else {
                         TreeIterator::full(&context.tree)
-                            .find(|node| is_navigatable(context, *node, lock_focus_to))
+                            .find(|node| {
+                                is_navigatable(&context.tree, &context.style, *node, lock_focus_to)
+                            })
                             .unwrap_or(Entity::root())
                     };
 
@@ -614,7 +621,10 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                     context.style.needs_restyle();
                 }
             }
+
+            context.hovered = Entity::null();
         }
+
         _ => {}
     }
 }
