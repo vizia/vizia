@@ -592,8 +592,8 @@ fn link_style_data(
         should_redraw = true;
     }
 
-    for (_, prop) in style.custom_color_props.iter_mut() {
-        if prop.link(entity, matched_rules) {
+    for (nh, prop) in style.custom_color_props.iter_mut() {
+        if prop.link(entity, matched_rules, variables, &HashMap::default()) {
             should_redraw = true;
         }
     }
@@ -641,21 +641,6 @@ pub(crate) fn style_system(cx: &mut Context) {
         for (node, flag) in iter {
             if flag {
                 println!("Entering {}", node);
-                // Get linked variables and add to the appropriate stack
-                for (name_hash, store) in cx.style.custom_color_props.iter() {
-                    // Get the rule linked to the node
-                    if let Some(rule) = store.get_shared_rule(node) {
-                        match variables.entry(*name_hash) {
-                            Entry::Occupied(mut occ) => {
-                                occ.get_mut().push(rule);
-                            }
-
-                            Entry::Vacant(vac) => {
-                                vac.insert(vec![rule]);
-                            }
-                        }
-                    }
-                }
 
                 let mut matched_rules = Vec::with_capacity(5);
                 compute_matched_rules(cx, node, &mut matched_rules);
@@ -669,7 +654,59 @@ pub(crate) fn style_system(cx: &mut Context) {
                     );
                 }
 
+                // Get linked variables and add to the appropriate stack
+                for (name_hash, store) in cx.style.custom_color_props.iter() {
+                    // Get the rule linked to the node
+                    if let Some(rule) = store.get_shared_rule(node, &variables) {
+                        match variables.entry(*name_hash) {
+                            Entry::Occupied(mut occ) => {
+                                occ.get_mut().push(rule);
+                            }
+
+                            Entry::Vacant(vac) => {
+                                vac.insert(vec![rule]);
+                            }
+                        }
+                    }
+                }
+
                 println!("variables {:?}", variables);
+
+                // Resolve variables here?
+
+                let mut vars = Vec::default();
+
+                for (prop, store) in cx.style.custom_color_props.iter() {
+                    // let mut data = Color::default();
+
+                    if let Some(s) = store.get_shared_rule(node, &variables) {
+                        if let Some(shared_data) = store.shared_data.get(s) {
+                            if shared_data.variable_name_hash != u64::MAX {
+                                if let Some(store2) =
+                                    cx.style.custom_color_props.get(&shared_data.variable_name_hash)
+                                {
+                                    if let Some(new_rule) = variables
+                                        .get(&shared_data.variable_name_hash)
+                                        .and_then(|s| s.last())
+                                    {
+                                        if let Some(sd) = store2.shared_data.get(*new_rule) {
+                                            // data = sd.value.clone();
+                                            vars.push((*prop, s, sd.value.clone()));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                for (prop, rule, data) in vars.iter() {
+                    if let Some(store) = cx.style.custom_color_props.get_mut(prop) {
+                        if let Some(shared_data) = store.shared_data.get_mut(*rule) {
+                            shared_data.value = data.clone();
+                        }
+                    }
+                }
 
                 if let Some(name_hash) = cx.style.background_color.variable_name_hash(node) {
                     if let Some(rule) = variables.get(&name_hash).and_then(|store| store.last()) {
@@ -681,7 +718,7 @@ pub(crate) fn style_system(cx: &mut Context) {
             } else {
                 println!("Leaving {}", node);
                 for (name_hash, store) in cx.style.custom_color_props.iter() {
-                    if let Some(_value) = store.get_shared_rule(node) {
+                    if let Some(_value) = store.get_shared_rule(node, &variables) {
                         match variables.entry(*name_hash) {
                             Entry::Occupied(mut occ) => {
                                 occ.get_mut().pop();

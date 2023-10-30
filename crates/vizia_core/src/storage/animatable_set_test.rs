@@ -553,6 +553,33 @@ where
         })
     }
 
+    pub(crate) fn get_shared_rule<'a>(
+        &self,
+        entity: Entity,
+        variables: &'a HashMap<u64, Vec<Rule>>,
+    ) -> Option<Rule> {
+        if let Some(inline_index) = self.inline_data.sparse.get(entity.index()) {
+            let data_index = inline_index.data_index;
+
+            if data_index != DataIndex::null() && !data_index.is_inline() {
+                let key: Rule = Rule::new(data_index.index() as u64, 0);
+                // if let Some(shared_data) = self.shared_data.get(key) {
+                //     if shared_data.variable_name_hash != u64::MAX {
+                //         return variables
+                //             .get(&shared_data.variable_name_hash)
+                //             .and_then(|s| s.last())
+                //             .copied();
+                //     } else {
+                //         return Some(key);
+                //     }
+                // }
+                return Some(key);
+            }
+        }
+
+        None
+    }
+
     // /// Returns a mutable reference to any shared data for a given rule if it exists.
     pub(crate) fn get_shared_mut(&mut self, rule: Rule) -> Option<&mut SharedData<T>> {
         self.shared_data.get_mut(rule)
@@ -583,7 +610,7 @@ where
     pub fn get<'a>(
         &'a self,
         entity: Entity,
-        variable_store: &'a HashMap<u64, AnimatableSet<T>>,
+        variable_store: &'a HashMap<u64, AnimatableSet2<T>>,
     ) -> Option<&T> {
         let entity_index = entity.index();
         if entity_index < self.inline_data.sparse.len() {
@@ -623,7 +650,7 @@ where
         entity: Entity,
         rules: &[Rule],
         variables: &HashMap<u64, Vec<Rule>>,
-        variable_store: &HashMap<u64, AnimatableSet<T>>,
+        variable_store: &HashMap<u64, AnimatableSet2<T>>,
     ) -> bool {
         let entity_index = entity.index();
 

@@ -315,7 +315,7 @@ pub struct Style {
     /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
     pub(crate) dpi_factor: f64,
 
-    pub(crate) custom_color_props: HashMap<u64, AnimatableSet<Color>>,
+    pub(crate) custom_color_props: HashMap<u64, AnimatableSet2<Color>>,
 }
 
 impl Style {
@@ -1572,8 +1572,22 @@ impl Style {
                             store.insert_rule(rule_id, color.clone());
                         } else {
                             println!("then this");
-                            let mut store = AnimatableSet::default();
+                            let mut store = AnimatableSet2::default();
                             store.insert_rule(rule_id, color.clone());
+                            self.custom_color_props.insert(variable_name_hash, store);
+                        }
+                    }
+
+                    if let TokenOrValue::Var(var) = token {
+                        let mut s = DefaultHasher::new();
+                        var.name.hash(&mut s);
+                        let name_hash = s.finish();
+                        if let Some(store) = self.custom_color_props.get_mut(&variable_name_hash) {
+                            store.insert_variable_rule(rule_id, name_hash);
+                        } else {
+                            println!("then this");
+                            let mut store = AnimatableSet2::default();
+                            store.insert_variable_rule(rule_id, name_hash);
                             self.custom_color_props.insert(variable_name_hash, store);
                         }
                     }
