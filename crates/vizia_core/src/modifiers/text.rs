@@ -89,7 +89,7 @@ pub trait TextModifiers: internal::Modifiable {
     }
 
     modifier!(
-        /// Sets the ext caret color of the view.
+        /// Sets the text caret color of the view.
         caret_color,
         Color,
         SystemFlags::REDRAW
