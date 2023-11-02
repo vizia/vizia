@@ -69,10 +69,12 @@
 //! Label::new(cx, Localized::new("welcome").arg("user", AppData::user));
 //! ```
 
+use crate::binding::ResMap;
 use crate::prelude::*;
 use fluent_bundle::FluentArgs;
 use fluent_bundle::FluentValue;
 use std::collections::HashMap;
+use std::marker::PhantomData;
 use std::rc::Rc;
 
 pub(crate) trait FluentStore {
@@ -263,6 +265,7 @@ impl Localized {
 }
 
 impl Res<String> for Localized {
+    type M<O> = ResMap<String, Self, O> where O: Data;
     fn get_val(&self, cx: &impl DataContext) -> String {
         let cx = cx.as_context().expect("Failed to get context");
         let locale = &cx.environment().locale;
@@ -305,6 +308,13 @@ impl Res<String> for Localized {
                 });
             });
         });
+    }
+
+    fn map_res<F, O: Data>(self, mapping: F) -> Self::M<O>
+    where
+        F: 'static + Fn(&String) -> O,
+    {
+        ResMap { val: self, o: PhantomData, closure: Box::new(mapping) }
     }
 }
 

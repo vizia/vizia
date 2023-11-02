@@ -135,7 +135,7 @@ impl Checkbox {
     /// #
     /// Checkbox::new(cx, AppData::value);
     /// ```
-    pub fn new(cx: &mut Context, checked: impl Lens<Target = bool>) -> Handle<Self> {
+    pub fn new(cx: &mut Context, checked: impl Res<bool> + Copy) -> Handle<Self> {
         Self { on_toggle: None }
             .build(cx, |_| {})
             .text(checked.map(|flag| if *flag { ICON_CHECK } else { "" }))
