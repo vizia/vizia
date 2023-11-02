@@ -173,13 +173,13 @@ impl Datepicker {
                                 Label::new(cx, "").bind(
                                     Datepicker::view_date,
                                     move |handle, view_date| {
-                                        let view_date = view_date.get_val(handle.cx);
+                                        let view_date = view_date.get_val(&handle);
 
                                         let (day_number, disabled) =
                                             Self::get_day_number(y, x, &view_date);
 
                                         handle.bind(lens, move |handle, selected_date| {
-                                            let selected_date = selected_date.get_val(handle.cx);
+                                            let selected_date = selected_date.get_val(&handle);
 
                                             handle
                                                 .text(&day_number.to_string())

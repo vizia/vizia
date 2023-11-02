@@ -57,7 +57,7 @@ impl Spinbox {
                 Label::new(cx, "")
                     .class("icon")
                     .bind(Spinbox::kind, move |handle, spinbox_kind| {
-                        match spinbox_kind.get_val(handle.cx) {
+                        match spinbox_kind.get_val(&handle) {
                             SpinboxKind::Horizontal => {
                                 handle
                                     .text(match icons {
@@ -82,7 +82,7 @@ impl Spinbox {
                 Label::new(cx, "")
                     .class("icon")
                     .bind(Spinbox::kind, move |handle, spinbox_kind| {
-                        match spinbox_kind.get_val(handle.cx) {
+                        match spinbox_kind.get_val(&handle) {
                             SpinboxKind::Horizontal => {
                                 handle
                                     .text(match icons {

@@ -162,7 +162,7 @@ where
                             }
                         })
                         .bind(lens, move |handle, value| {
-                            let val = value.get_val(handle.cx);
+                            let val = value.get_val(&handle);
                             let normal_val = (val - range.start) / (range.end - range.start);
                             let px = normal_val * (1.0 - (thumb_size / size));
                             if orientation == Orientation::Horizontal {

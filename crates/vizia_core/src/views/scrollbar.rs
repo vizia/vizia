@@ -42,7 +42,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
                 .class("thumb")
                 .focusable(true)
                 .bind(value, move |handle, value| {
-                    let value = value.get_val(handle.cx);
+                    let value = value.get_val(&handle);
                     match orientation {
                         Orientation::Horizontal => {
                             handle.left(Units::Stretch(value)).right(Units::Stretch(1.0 - value))
@@ -53,7 +53,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
                     };
                 })
                 .bind(ratio, move |handle, ratio| {
-                    let ratio = ratio.get_val(handle.cx);
+                    let ratio = ratio.get_val(&handle);
                     match orientation {
                         Orientation::Horizontal => handle.width(Units::Percentage(ratio * 100.0)),
                         Orientation::Vertical => handle.height(Units::Percentage(ratio * 100.0)),
