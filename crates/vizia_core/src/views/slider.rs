@@ -102,9 +102,8 @@ where
     ///     });
     /// ```
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
-        let value_lens = lens.clone();
         Self {
-            lens: lens.clone(),
+            lens,
             is_dragging: false,
 
             internal: SliderDataInternal {
@@ -120,7 +119,6 @@ where
         }
         .build(cx, move |cx| {
             Binding::new(cx, Slider::<L>::internal, move |cx, slider_data| {
-                let lens = lens.clone();
                 ZStack::new(cx, move |cx| {
                     let slider_data = slider_data.get_val(cx);
                     let thumb_size = slider_data.thumb_size;
@@ -129,8 +127,9 @@ where
                     let range = slider_data.range;
 
                     // Active track
-                    Element::new(cx).class("active").bind(lens.clone(), move |handle, value| {
-                        let val = value.get_val(handle.cx);
+                    Element::new(cx).class("active").bind(lens, move |handle, value| {
+                        let val = value.get_val(&handle);
+
                         let normal_val = (val - range.start) / (range.end - range.start);
                         let min = thumb_size / size;
                         let max = 1.0;
@@ -184,8 +183,8 @@ where
             });
         })
         .role(Role::Slider)
-        .numeric_value(value_lens.clone().map(|val| (*val as f64 * 100.0).round() / 100.0))
-        .text_value(value_lens.map(|val| {
+        .numeric_value(lens.map(|val| (*val as f64 * 100.0).round() / 100.0))
+        .text_value(lens.map(|val| {
             let v = (*val as f64 * 100.0).round() / 100.0;
             format!("{}", v)
         }))
@@ -270,6 +269,9 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
                     self.is_dragging = true;
                     cx.capture();
                     cx.focus_with_visibility(false);
+                    cx.with_current(Entity::root(), |cx| {
+                        cx.set_pointer_events(false);
+                    });
 
                     let thumb_size = self.internal.thumb_size;
                     let min = self.internal.range.start;
@@ -313,6 +315,9 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
                 self.is_dragging = false;
                 cx.focus_with_visibility(false);
                 cx.release();
+                cx.with_current(Entity::root(), |cx| {
+                    cx.set_pointer_events(true);
+                });
             }
 
             WindowEvent::MouseMove(x, y) => {
@@ -526,14 +531,14 @@ impl NamedSlider {
         let name = name.get_val(cx).to_string();
         Self { on_changing: None }
             .build(cx, move |cx| {
-                Binding::new(cx, lens.clone(), move |cx, lens| {
+                Binding::new(cx, lens, move |cx, lens| {
                     Textbox::new(cx, lens.map(|v| format!("{:.2}", v))).on_submit(|cx, txt, _| {
                         if let Ok(val) = txt.parse() {
                             cx.emit(NamedSliderEvent::Change(val));
                         }
                     });
                 });
-                Slider::custom(cx, lens.clone(), move |cx| {
+                Slider::custom(cx, lens, move |cx| {
                     Binding::new(cx, Slider::<L>::internal, move |cx, slider_data| {
                         ZStack::new(cx, |cx| {
                             let slider_data = slider_data.get_val(cx);
@@ -542,23 +547,19 @@ impl NamedSlider {
                             let range = slider_data.range;
 
                             // Active track
-                            Element::new(cx).class("active").bind(
-                                lens.clone(),
-                                move |handle, value| {
-                                    let val = value.get_val(handle.cx);
-                                    let normal_val =
-                                        (val - range.start) / (range.end - range.start);
-                                    let min = thumb_size / size;
-                                    let max = 1.0;
-                                    let dx = min + normal_val * (max - min);
+                            Element::new(cx).class("active").bind(lens, move |handle, value| {
+                                let val = value.get_val(&handle);
+                                let normal_val = (val - range.start) / (range.end - range.start);
+                                let min = thumb_size / size;
+                                let max = 1.0;
+                                let dx = min + normal_val * (max - min);
 
-                                    handle
-                                        .height(Stretch(1.0))
-                                        .left(Pixels(0.0))
-                                        .right(Stretch(1.0))
-                                        .width(Percentage(dx * 100.0));
-                                },
-                            );
+                                handle
+                                    .height(Stretch(1.0))
+                                    .left(Pixels(0.0))
+                                    .right(Stretch(1.0))
+                                    .width(Percentage(dx * 100.0));
+                            });
 
                             Label::new(cx, &name);
                         });

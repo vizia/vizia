@@ -1,23 +1,58 @@
 use crate::prelude::LensValue;
-use crate::{model::Model, prelude::Wrapper};
+//! A model for system specific state which can be accessed by any model or view.
+use crate::{model::Model, prelude::Wrapper, window::WindowEvent};
 use unic_langid::LanguageIdentifier;
 use vizia_derive::Lens;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum ThemeMode {
+    #[default]
     DarkMode,
     LightMode,
 }
 
 use crate::{binding::Lens, context::EventContext, events::Event};
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum AppTheme {
+    /// System theme, if we choose this as our theme vizia
+    /// will follow system theme in supported platforms.
+    System,
+    /// builtin vizia themes
+    BuiltIn(ThemeMode),
+    // Custom(String),
+}
+
+#[derive(Lens)]
+pub struct Theme {
+    /// The current application theme
+    pub app_theme: AppTheme,
+    /// The current system theme
+    pub sys_theme: Option<ThemeMode>,
+}
+
+impl Default for Theme {
+    fn default() -> Self {
+        Self { app_theme: AppTheme::BuiltIn(ThemeMode::LightMode), sys_theme: None }
+    }
+}
+
+impl Theme {
+    pub fn get_current_theme(&self) -> ThemeMode {
+        match self.app_theme {
+            AppTheme::System => self.sys_theme.unwrap_or_default(),
+            AppTheme::BuiltIn(theme) => theme,
+        }
+    }
+}
+
 /// A model for system specific state which can be accessed by any model or view.
 #[derive(Lens)]
 pub struct Environment {
-    // The locale used for localization.
+    /// The locale used for localization.
     pub locale: LanguageIdentifier,
-    // The theme mode used when using the built-in theming.
-    pub theme_mode: ThemeMode,
+    /// Current application and system theme.
+    pub theme: Theme,
 }
 
 impl Default for Environment {
@@ -30,7 +65,7 @@ impl Environment {
     pub fn new() -> Self {
         let locale = sys_locale::get_locale().and_then(|l| l.parse().ok()).unwrap_or_default();
 
-        Self { locale, theme_mode: ThemeMode::LightMode }
+        Self { locale, theme: Theme::default() }
     }
 }
 
@@ -39,7 +74,8 @@ pub enum EnvironmentEvent {
     /// Set the locale used for the whole application.
     SetLocale(LanguageIdentifier),
     /// Set the default theme mode.
-    SetThemeMode(ThemeMode),
+    // TODO: add SetSysTheme event when the winit `set_theme` fixed.
+    SetThemeMode(AppTheme),
     /// Reset the locale to use the system provided locale.
     UseSystemLocale,
     /// Alternate between dark and light theme modes.
@@ -53,9 +89,10 @@ impl Model for Environment {
                 self.locale = locale.clone();
             }
 
-            EnvironmentEvent::SetThemeMode(theme_mode) => {
-                self.theme_mode = *theme_mode;
-                cx.set_theme_mode(self.theme_mode);
+            EnvironmentEvent::SetThemeMode(theme) => {
+                self.theme.app_theme = theme.to_owned();
+
+                cx.set_theme_mode(self.theme.get_current_theme());
                 cx.reload_styles().unwrap();
             }
 
@@ -65,15 +102,27 @@ impl Model for Environment {
             }
 
             EnvironmentEvent::ToggleThemeMode => {
-                let theme_mode = match self.theme_mode {
+                let theme_mode = match self.theme.get_current_theme() {
                     ThemeMode::DarkMode => ThemeMode::LightMode,
                     ThemeMode::LightMode => ThemeMode::DarkMode,
                 };
 
-                self.theme_mode = theme_mode;
-                cx.set_theme_mode(self.theme_mode);
+                self.theme.app_theme = AppTheme::BuiltIn(theme_mode);
+
+                cx.set_theme_mode(theme_mode);
                 cx.reload_styles().unwrap();
             }
         });
+
+        event.map(|event, _| match event {
+            WindowEvent::ThemeChanged(theme) => {
+                self.theme.sys_theme = Some(*theme);
+                if self.theme.app_theme == AppTheme::System {
+                    cx.set_theme_mode(*theme);
+                    cx.reload_styles().unwrap();
+                }
+            }
+            _ => (),
+        })
     }
 }

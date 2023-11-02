@@ -181,10 +181,24 @@ impl Application {
 
         let (window, canvas) = Window::new(&event_loop, &self.window_description);
 
+        // On windows cloak (hide) the window initially, we later reveal it after the first draw.
+        // This is a workaround to hide the "white flash" that occurs during application startup.
+        #[cfg(target_os = "windows")]
+        let mut is_initially_cloaked = window.set_cloak(true);
+
         #[cfg(not(target_arch = "wasm32"))]
         let event_loop_proxy = event_loop.create_proxy();
 
         let mut cx = BackendContext::new(&mut context);
+
+        // update the sys theme if any
+        if let Some(theme) = window.window().theme() {
+            let theme = match theme {
+                winit::window::Theme::Light => ThemeMode::LightMode,
+                winit::window::Theme::Dark => ThemeMode::DarkMode,
+            };
+            cx.emit_origin(WindowEvent::ThemeChanged(theme));
+        }
 
         #[cfg(not(target_arch = "wasm32"))]
         let root_node = NodeBuilder::new(Role::Window).build(cx.accesskit_node_classes());
@@ -255,12 +269,25 @@ impl Application {
 
         let mut cursor_moved = false;
         let mut cursor = (0.0f32, 0.0f32);
+        #[cfg(target_os = "windows")]
+        let mut inside_window = false;
+
+        // cx.process_events();
+
+        cx.process_data_updates();
+        cx.process_style_updates();
+        cx.process_visual_updates();
 
         let mut main_events = false;
         event_loop.run(move |event, _, control_flow| {
             let mut cx = BackendContext::new_with_event_manager(&mut context);
 
             match event {
+                winit::event::Event::NewEvents(_) => {
+                    cx.process_timers();
+                    cx.emit_scheduled_events();
+                }
+
                 winit::event::Event::UserEvent(user_event) => match user_event {
                     UserEvent::Event(event) => {
                         cx.send_event(event);
@@ -271,7 +298,7 @@ impl Application {
                         let node_id = action_request_event.request.target;
 
                         if action_request_event.request.action != Action::ScrollIntoView {
-                            let entity = Entity::new(node_id.0.get() as u32 - 1, 0);
+                            let entity = Entity::new(node_id.0.get() as u64 - 1, 0);
 
                             // Handle focus action from screen reader
                             if action_request_event.request.action == Action::Focus {
@@ -360,6 +387,17 @@ impl Application {
                         cx.mutate_window(|_, window: &Window| {
                             window.swap_buffers();
                         });
+
+                        // Un-cloak
+                        #[cfg(target_os = "windows")]
+                        if is_initially_cloaked {
+                            is_initially_cloaked = false;
+                            cx.draw();
+                            cx.mutate_window(|_, window: &Window| {
+                                window.swap_buffers();
+                                window.set_cloak(false);
+                            });
+                        }
                     }
                 }
 
@@ -407,6 +445,25 @@ impl Application {
                                 cursor_moved = true;
                                 cursor.0 = position.x as f32;
                                 cursor.1 = position.y as f32;
+                            }
+
+                            // Temporary fix for windows platform until winit merge #3154
+                            #[cfg(target_os = "windows")]
+                            {
+                                let size = self.window_description.inner_size;
+
+                                let x = position.x.is_positive()
+                                    && (0..size.width).contains(&(position.x as u32));
+                                let y = position.y.is_positive()
+                                    && (0..size.height).contains(&(position.y as u32));
+
+                                if !inside_window && x && y {
+                                    inside_window = true;
+                                    cx.emit_origin(WindowEvent::MouseEnter);
+                                } else if inside_window && !(x && y) {
+                                    inside_window = false;
+                                    cx.emit_origin(WindowEvent::MouseLeave);
+                                }
                             }
                         }
 
@@ -497,11 +554,35 @@ impl Application {
                             cx.needs_refresh();
                         }
 
+                        winit::event::WindowEvent::ThemeChanged(theme) => {
+                            let theme = match theme {
+                                winit::window::Theme::Light => ThemeMode::LightMode,
+                                winit::window::Theme::Dark => ThemeMode::DarkMode,
+                            };
+                            cx.emit_origin(WindowEvent::ThemeChanged(theme));
+                        }
+
                         winit::event::WindowEvent::ModifiersChanged(modifiers_state) => {
                             cx.modifiers().set(Modifiers::SHIFT, modifiers_state.shift());
                             cx.modifiers().set(Modifiers::ALT, modifiers_state.alt());
                             cx.modifiers().set(Modifiers::CTRL, modifiers_state.ctrl());
                             cx.modifiers().set(Modifiers::LOGO, modifiers_state.logo());
+                        }
+
+                        winit::event::WindowEvent::CursorEntered { device_id: _ } => {
+                            #[cfg(target_os = "windows")]
+                            {
+                                inside_window = true;
+                            }
+                            cx.emit_origin(WindowEvent::MouseEnter);
+                        }
+
+                        winit::event::WindowEvent::CursorLeft { device_id: _ } => {
+                            #[cfg(target_os = "windows")]
+                            {
+                                inside_window = false;
+                            }
+                            cx.emit_origin(WindowEvent::MouseLeave);
                         }
 
                         _ => {}
@@ -511,7 +592,13 @@ impl Application {
                 _ => {}
             }
 
-            *control_flow = *stored_control_flow.borrow();
+            if *stored_control_flow.borrow() == ControlFlow::Exit {
+                *control_flow = ControlFlow::Exit;
+            } else if let Some(timer_time) = cx.get_next_timer_time() {
+                *control_flow = ControlFlow::WaitUntil(timer_time);
+            } else {
+                *control_flow = *stored_control_flow.borrow();
+            }
         });
     }
 }
@@ -594,7 +681,7 @@ impl WindowModifiers for Application {
         self
     }
 
-    fn icon(mut self, image: Vec<u8>, width: u32, height: u32) -> Self {
+    fn icon(mut self, width: u32, height: u32, image: Vec<u8>) -> Self {
         self.window_description.icon = Some(image);
         self.window_description.icon_width = width;
         self.window_description.icon_height = height;

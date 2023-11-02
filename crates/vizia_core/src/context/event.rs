@@ -1,25 +1,27 @@
 use std::any::{Any, TypeId};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
 #[cfg(feature = "clipboard")]
 use std::error::Error;
+use std::rc::Rc;
 
 use femtovg::Transform2D;
 use fnv::FnvHashMap;
-use instant::Duration;
+use instant::{Duration, Instant};
+use vizia_storage::TreeIterator;
 use vizia_style::{ClipPath, Filter, Scale, Translate};
 
 use crate::animation::{AnimId, Interpolator};
 use crate::cache::CachedData;
 use crate::environment::ThemeMode;
-use crate::events::ViewHandler;
+use crate::events::{TimedEvent, TimedEventHandle, Timer, TimerState, ViewHandler};
 use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::style::{Abilities, IntoTransform, PseudoClassFlags, Style, SystemFlags};
+use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use crate::window::DropData;
 use vizia_id::GenerationalId;
 use vizia_input::{Modifiers, MouseState};
-use vizia_storage::SparseSet;
 
 use crate::context::EmitContext;
 use crate::text::TextContext;
@@ -65,11 +67,12 @@ pub struct EventContext<'a> {
     pub(crate) captured: &'a mut Entity,
     pub(crate) focused: &'a mut Entity,
     pub(crate) hovered: &'a Entity,
+    pub(crate) triggered: &'a mut Entity,
     pub(crate) style: &'a mut Style,
     pub(crate) entity_identifiers: &'a HashMap<String, Entity>,
     pub cache: &'a mut CachedData,
     pub(crate) tree: &'a Tree<Entity>,
-    pub(crate) data: &'a mut SparseSet<ModelDataStore>,
+    pub(crate) data: &'a mut FnvHashMap<Entity, ModelDataStore>,
     pub(crate) views: &'a mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
     pub(crate) listeners:
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
@@ -78,12 +81,16 @@ pub struct EventContext<'a> {
     pub(crate) modifiers: &'a Modifiers,
     pub(crate) mouse: &'a MouseState<Entity>,
     pub(crate) event_queue: &'a mut VecDeque<Event>,
+    pub(crate) event_schedule: &'a mut BinaryHeap<TimedEvent>,
+    pub(crate) next_event_id: &'a mut usize,
+    pub(crate) timers: &'a mut Vec<TimerState>,
+    pub(crate) running_timers: &'a mut BinaryHeap<TimerState>,
     cursor_icon_locked: &'a mut bool,
     window_size: &'a mut WindowSize,
     user_scale_factor: &'a mut f64,
     #[cfg(feature = "clipboard")]
     clipboard: &'a mut Box<dyn ClipboardProvider>,
-    event_proxy: &'a mut Option<Box<dyn crate::context::EventProxy>>,
+    pub(crate) event_proxy: &'a mut Option<Box<dyn crate::context::EventProxy>>,
     pub(crate) ignore_default_theme: &'a bool,
     pub(crate) drop_data: &'a mut Option<DropData>,
 }
@@ -114,6 +121,7 @@ impl<'a> EventContext<'a> {
             captured: &mut cx.captured,
             focused: &mut cx.focused,
             hovered: &cx.hovered,
+            triggered: &mut cx.triggered,
             entity_identifiers: &cx.entity_identifiers,
             style: &mut cx.style,
             cache: &mut cx.cache,
@@ -126,6 +134,10 @@ impl<'a> EventContext<'a> {
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
             event_queue: &mut cx.event_queue,
+            event_schedule: &mut cx.event_schedule,
+            next_event_id: &mut cx.next_event_id,
+            timers: &mut cx.timers,
+            running_timers: &mut cx.running_timers,
             cursor_icon_locked: &mut cx.cursor_icon_locked,
             window_size: &mut cx.window_size,
             user_scale_factor: &mut cx.user_scale_factor,
@@ -143,6 +155,7 @@ impl<'a> EventContext<'a> {
             captured: &mut cx.captured,
             focused: &mut cx.focused,
             hovered: &cx.hovered,
+            triggered: &mut cx.triggered,
             entity_identifiers: &cx.entity_identifiers,
             style: &mut cx.style,
             cache: &mut cx.cache,
@@ -155,6 +168,10 @@ impl<'a> EventContext<'a> {
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
             event_queue: &mut cx.event_queue,
+            event_schedule: &mut cx.event_schedule,
+            next_event_id: &mut cx.next_event_id,
+            timers: &mut cx.timers,
+            running_timers: &mut cx.running_timers,
             cursor_icon_locked: &mut cx.cursor_icon_locked,
             window_size: &mut cx.window_size,
             user_scale_factor: &mut cx.user_scale_factor,
@@ -393,7 +410,7 @@ impl<'a> EventContext<'a> {
 
     /// Sets the language used by the application for localization.
     pub fn set_language(&mut self, lang: LanguageIdentifier) {
-        if let Some(mut model_data_store) = self.data.remove(Entity::root()) {
+        if let Some(mut model_data_store) = self.data.remove(&Entity::root()) {
             if let Some(model) = model_data_store.models.get_mut(&TypeId::of::<Environment>()) {
                 model.event(self, &mut Event::new(EnvironmentEvent::SetLocale(lang)));
             }
@@ -458,6 +475,64 @@ impl<'a> EventContext<'a> {
             .filter(|class| class.contains(PseudoClassFlags::FOCUS_VISIBLE))
             .is_some();
         self.focus_with_visibility(old_focus_visible)
+    }
+
+    /// Moves the keyboard focus to the next navigable view.
+    pub fn focus_next(&mut self) {
+        let lock_focus_to = self.tree.lock_focus_within(*self.focused);
+        let next_focused = if let Some(next_focused) =
+            focus_forward(self.tree, self.style, *self.focused, lock_focus_to)
+        {
+            next_focused
+        } else {
+            TreeIterator::full(self.tree)
+                .find(|node| is_navigatable(self.tree, self.style, *node, lock_focus_to))
+                .unwrap_or(Entity::root())
+        };
+
+        if next_focused != *self.focused {
+            self.event_queue.push_back(
+                Event::new(WindowEvent::FocusOut).target(*self.focused).origin(Entity::root()),
+            );
+            self.event_queue.push_back(
+                Event::new(WindowEvent::FocusIn).target(next_focused).origin(Entity::root()),
+            );
+
+            if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(*self.triggered) {
+                pseudo_classes.set(PseudoClassFlags::ACTIVE, false);
+            }
+            self.needs_restyle();
+            *self.triggered = Entity::null();
+        }
+    }
+
+    pub fn focus_prev(&mut self) {
+        let lock_focus_to = self.tree.lock_focus_within(*self.focused);
+        let prev_focused = if let Some(prev_focused) =
+            focus_backward(self.tree, self.style, *self.focused, lock_focus_to)
+        {
+            prev_focused
+        } else {
+            TreeIterator::full(self.tree)
+                .filter(|node| is_navigatable(self.tree, self.style, *node, lock_focus_to))
+                .next_back()
+                .unwrap_or(Entity::root())
+        };
+
+        if prev_focused != *self.focused {
+            self.event_queue.push_back(
+                Event::new(WindowEvent::FocusOut).target(*self.focused).origin(Entity::root()),
+            );
+            self.event_queue.push_back(
+                Event::new(WindowEvent::FocusIn).target(prev_focused).origin(Entity::root()),
+            );
+
+            if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(*self.triggered) {
+                pseudo_classes.set(PseudoClassFlags::ACTIVE, false);
+            }
+            self.needs_restyle();
+            *self.triggered = Entity::null();
+        }
     }
 
     /// Returns the currently hovered view.
@@ -826,12 +901,29 @@ impl<'a> EventContext<'a> {
         self.style.needs_restyle();
     }
 
+    pub fn set_placeholder_shown(&mut self, flag: bool) {
+        let current = self.current();
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
+            pseudo_classes.set(PseudoClassFlags::PLACEHOLDER_SHOWN, flag);
+        }
+
+        self.style.needs_restyle();
+    }
+
     // TODO: Move me
     pub fn is_valid(&self) -> bool {
         self.style
             .pseudo_classes
             .get(self.current)
             .map(|pseudo_classes| pseudo_classes.contains(PseudoClassFlags::VALID))
+            .unwrap_or_default()
+    }
+
+    pub fn is_placeholder_shown(&self) -> bool {
+        self.style
+            .pseudo_classes
+            .get(self.current)
+            .map(|pseudo_classes| pseudo_classes.contains(PseudoClassFlags::PLACEHOLDER_SHOWN))
             .unwrap_or_default()
     }
 
@@ -1004,6 +1096,10 @@ impl<'a> EventContext<'a> {
         self.needs_redraw();
     }
 
+    pub fn set_pointer_events(&mut self, pointer_events: impl Into<PointerEvents>) {
+        self.style.pointer_events.insert(self.current, pointer_events.into());
+    }
+
     // GETTERS
     get_length_property!(
         /// Returns the border width of the current view in physical pixels.
@@ -1016,6 +1112,129 @@ impl<'a> EventContext<'a> {
             self.style.font_size.get(self.current).copied().map(|f| f.0).unwrap_or(16.0),
         )
     }
+
+    /// Adds a timer to the application.
+    ///
+    /// `interval` - The time between ticks of the timer.
+    /// `duration` - An optional duration for the timer. Pass `None` for a continuos timer.
+    /// `callback` - A callback which is called on when the timer is started, ticks, and stops. Disambiguated by the `TimerAction` parameter of the callback.
+    ///
+    /// Returns a `Timer` id which can be used to start and stop the timer.  
+    ///
+    /// # Example
+    /// Creates a timer which calls the provided callback every second for 5 seconds:
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use instant::{Instant, Duration};
+    /// # let cx = &mut Context::default();
+    /// let timer = cx.add_timer(Duration::from_secs(1), Some(Duration::from_secs(5)), |cx, reason|{
+    ///     match reason {
+    ///         TimerAction::Start => {
+    ///             println!("Start timer");
+    ///         }
+    ///     
+    ///         TimerAction::Tick(delta) => {
+    ///             println!("Tick timer: {:?}", delta);
+    ///         }
+    ///
+    ///         TimerAction::Stop => {
+    ///             println!("Stop timer");
+    ///         }
+    ///     }
+    /// });
+    /// ```
+    pub fn add_timer(
+        &mut self,
+        interval: Duration,
+        duration: Option<Duration>,
+        callback: impl Fn(&mut EventContext, TimerAction) + 'static,
+    ) -> Timer {
+        let id = Timer(self.timers.len());
+        self.timers.push(TimerState {
+            entity: Entity::root(),
+            id,
+            time: Instant::now(),
+            interval,
+            duration,
+            start_time: Instant::now(),
+            callback: Rc::new(callback),
+            ticking: false,
+            stopping: false,
+        });
+
+        id
+    }
+
+    /// Starts a timer with the provided timer id.
+    ///
+    /// Events sent within the timer callback provided in `add_timer()` will target the current view.
+    pub fn start_timer(&mut self, timer: Timer) {
+        let current = self.current;
+        if !self.timer_is_running(timer) {
+            let timer_state = self.timers[timer.0].clone();
+            // Copy timer state from pending to playing
+            self.running_timers.push(timer_state);
+        }
+
+        self.modify_timer(timer, |timer_state| {
+            let now = instant::Instant::now();
+            timer_state.start_time = now;
+            timer_state.time = now;
+            timer_state.entity = current;
+            timer_state.ticking = false;
+            timer_state.stopping = false;
+        });
+    }
+
+    /// Modifies the state of an existing timer with the provided `Timer` id.
+    pub fn modify_timer(&mut self, timer: Timer, timer_function: impl Fn(&mut TimerState)) {
+        while let Some(next_timer_state) = self.running_timers.peek() {
+            if next_timer_state.id == timer {
+                let mut timer_state = self.running_timers.pop().unwrap();
+
+                (timer_function)(&mut timer_state);
+
+                self.running_timers.push(timer_state);
+
+                return;
+            }
+        }
+
+        for pending_timer in self.timers.iter_mut() {
+            if pending_timer.id == timer {
+                (timer_function)(pending_timer);
+            }
+        }
+    }
+
+    /// Returns true if the timer with the provided timer id is currently running.
+    pub fn timer_is_running(&mut self, timer: Timer) -> bool {
+        for timer_state in self.running_timers.iter() {
+            if timer_state.id == timer {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    /// Stops the timer with the given timer id.
+    ///
+    /// Any events emitted in response to the timer stopping, as determined by the callback provided in `add_timer()`, will target the view which called `start_timer()`.
+    pub fn stop_timer(&mut self, timer: Timer) {
+        let mut running_timers = self.running_timers.clone();
+
+        for timer_state in running_timers.iter() {
+            if timer_state.id == timer {
+                self.with_current(timer_state.entity, |cx| {
+                    (timer_state.callback)(cx, TimerAction::Stop);
+                });
+            }
+        }
+
+        *self.running_timers =
+            running_timers.drain().filter(|timer_state| timer_state.id != timer).collect();
+    }
 }
 
 impl<'a> DataContext for EventContext<'a> {
@@ -1027,7 +1246,7 @@ impl<'a> DataContext for EventContext<'a> {
 
         for entity in self.current.parent_iter(self.tree) {
             // Return model data.
-            if let Some(model_data_store) = self.data.get(entity) {
+            if let Some(model_data_store) = self.data.get(&entity) {
                 if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }
@@ -1063,6 +1282,37 @@ impl<'a> EmitContext for EventContext<'a> {
 
     fn emit_custom(&mut self, event: Event) {
         self.event_queue.push_back(event);
+    }
+
+    fn schedule_emit<M: Any + Send>(&mut self, message: M, at: Instant) -> TimedEventHandle {
+        self.schedule_emit_custom(
+            Event::new(message)
+                .target(self.current)
+                .origin(self.current)
+                .propagate(Propagation::Up),
+            at,
+        )
+    }
+    fn schedule_emit_to<M: Any + Send>(
+        &mut self,
+        target: Entity,
+        message: M,
+        at: Instant,
+    ) -> TimedEventHandle {
+        self.schedule_emit_custom(
+            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
+            at,
+        )
+    }
+    fn schedule_emit_custom(&mut self, event: Event, at: Instant) -> TimedEventHandle {
+        let handle = TimedEventHandle(*self.next_event_id);
+        self.event_schedule.push(TimedEvent { event, time: at, ident: handle });
+        *self.next_event_id += 1;
+        handle
+    }
+    fn cancel_scheduled(&mut self, handle: TimedEventHandle) {
+        *self.event_schedule =
+            self.event_schedule.drain().filter(|item| item.ident != handle).collect();
     }
 }
 

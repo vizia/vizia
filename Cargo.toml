@@ -210,6 +210,14 @@ name = "crud"
 path = "examples/7GUIs/crud.rs"
 
 [[example]]
+name = "circle_drawer"
+path = "examples/7GUIs/circle_drawer.rs"
+
+[[example]]
+name = "timer"
+path = "examples/7GUIs/timer.rs"
+
+[[example]]
 name = "keymap_basic"
 path = "examples/keymap_basic.rs"
 
@@ -322,9 +330,24 @@ name = "custom_modifiers"
 path = "examples/custom_modifiers.rs"
 
 [[example]]
+name = "custom_view"
+path = "examples/custom_view.rs"
+
+[[example]]
 name = "keyframes"
 path = "examples/keyframes.rs"
 
+[[example]]
+name = "lens_map"
+path = "examples/lens_map.rs"
+
+[[example]]
+name = "timers"
+path = "examples/timers.rs"
+
+[[example]]
+name = "follow_system_theme"
+path = "examples/follow_system_theme.rs"
 
 [features]
 default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts"]
@@ -344,3 +367,5 @@ vizia_baseview = { version = "0.1.0", path = "crates/vizia_baseview", optional =
 lazy_static = "1.4.0"
 chrono = "0.4.19"
 reqwest = { version = "0.11.18", features = ["blocking"] }
+log = "0.4.19"
+fern = { version = "0.6" }

@@ -5,14 +5,14 @@ use crate::layout::BoundingBox;
 
 /// Trait for converting a transform definition into a `Transform2D`.
 pub(crate) trait IntoTransform {
-    fn as_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D;
+    fn as_transform(&self, bounds: BoundingBox, scale_factor: f32) -> Transform2D;
 }
 
 impl IntoTransform for Translate {
-    fn as_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D {
+    fn as_transform(&self, bounds: BoundingBox, scale_factor: f32) -> Transform2D {
         let mut result = Transform2D::identity();
-        let tx = self.x.to_pixels(parent_bounds.w, scale_factor);
-        let ty = self.y.to_pixels(parent_bounds.h, scale_factor);
+        let tx = self.x.to_pixels(bounds.w, scale_factor);
+        let ty = self.y.to_pixels(bounds.h, scale_factor);
 
         result.translate(tx, ty);
 
@@ -21,7 +21,7 @@ impl IntoTransform for Translate {
 }
 
 impl IntoTransform for Scale {
-    fn as_transform(&self, _parent_bounds: BoundingBox, _scale_factor: f32) -> Transform2D {
+    fn as_transform(&self, _bounds: BoundingBox, _scale_factor: f32) -> Transform2D {
         let mut result = Transform2D::identity();
         let sx = self.x.to_factor();
         let sy = self.y.to_factor();
@@ -32,7 +32,7 @@ impl IntoTransform for Scale {
 }
 
 impl IntoTransform for Angle {
-    fn as_transform(&self, _parent_bounds: BoundingBox, _scale_factor: f32) -> Transform2D {
+    fn as_transform(&self, _bounds: BoundingBox, _scale_factor: f32) -> Transform2D {
         let mut result = Transform2D::identity();
         let r = self.to_radians();
         result.rotate(r);
@@ -42,26 +42,26 @@ impl IntoTransform for Angle {
 }
 
 impl IntoTransform for Vec<Transform> {
-    fn as_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D {
+    fn as_transform(&self, bounds: BoundingBox, scale_factor: f32) -> Transform2D {
         let mut result = Transform2D::identity();
         for transform in self.iter() {
             let mut t = Transform2D::identity();
             match transform {
                 Transform::Translate(translate) => {
-                    let tx = translate.0.to_pixels(parent_bounds.w, scale_factor);
-                    let ty = translate.1.to_pixels(parent_bounds.h, scale_factor);
+                    let tx = translate.0.to_pixels(bounds.w, scale_factor);
+                    let ty = translate.1.to_pixels(bounds.h, scale_factor);
 
                     t.translate(tx, ty);
                 }
 
                 Transform::TranslateX(x) => {
-                    let tx = x.to_pixels(parent_bounds.h, scale_factor);
+                    let tx = x.to_pixels(bounds.w, scale_factor);
 
                     t.translate(tx, 0.0)
                 }
 
                 Transform::TranslateY(y) => {
-                    let ty = y.to_pixels(parent_bounds.h, scale_factor);
+                    let ty = y.to_pixels(bounds.h, scale_factor);
 
                     t.translate(0.0, ty)
                 }

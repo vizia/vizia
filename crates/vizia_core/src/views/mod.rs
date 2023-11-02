@@ -25,7 +25,7 @@ mod slider;
 mod spinbox;
 mod stack;
 mod switch;
-mod tab;
+mod tabview;
 mod textbox;
 mod timepicker;
 mod tooltip;
@@ -46,7 +46,7 @@ pub use list::List;
 pub use menu::*;
 pub use notification::Notification;
 pub use picklist::PickList;
-pub use popup::{Popup, PopupData, PopupEvent};
+pub use popup::*;
 pub use progressbar::ProgressBar;
 pub use radio::RadioButton;
 pub use rating::Rating;
@@ -56,7 +56,7 @@ pub use slider::{NamedSlider, Slider};
 pub use spinbox::{Spinbox, SpinboxEvent, SpinboxIcons, SpinboxKind};
 pub use stack::{HStack, VStack, ZStack};
 pub use switch::Switch;
-pub use tab::{TabPair, TabView};
+pub use tabview::{TabPair, TabView};
 pub use textbox::{TextEvent, Textbox};
 pub use timepicker::{
     AMOrPM, AnalogTimepicker, AnalogTimepickerEvent, AnalogTimepickerPage, DayTime,

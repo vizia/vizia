@@ -15,7 +15,6 @@ use crate::style::{ImageOrGradient, IntoTransform, Style};
 use crate::text::{TextConfig, TextContext};
 use crate::vg::{Paint, Path};
 use vizia_input::{Modifiers, MouseState};
-use vizia_storage::SparseSet;
 use vizia_style::{
     BackgroundSize, BoxShadow, ClipPath, Filter, Gradient, HorizontalPositionKeyword,
     LengthPercentageOrAuto, LineDirection, VerticalPositionKeyword,
@@ -56,7 +55,7 @@ pub struct DrawContext<'a> {
     pub(crate) style: &'a Style,
     pub(crate) cache: &'a mut CachedData,
     pub(crate) tree: &'a Tree<Entity>,
-    pub(crate) data: &'a SparseSet<ModelDataStore>,
+    pub(crate) data: &'a FnvHashMap<Entity, ModelDataStore>,
     pub(crate) views: &'a mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
     pub(crate) resource_manager: &'a ResourceManager,
     pub(crate) text_context: &'a mut TextContext,
@@ -744,9 +743,9 @@ impl<'a> DrawContext<'a> {
         let bounds = self.bounds();
 
         let border_top_left_radius = self.border_top_left_radius();
-        let border_top_right_radius = self.border_top_left_radius();
-        let border_bottom_right_radius = self.border_top_left_radius();
-        let border_bottom_left_radius = self.border_top_left_radius();
+        let border_top_right_radius = self.border_top_right_radius();
+        let border_bottom_right_radius = self.border_bottom_right_radius();
+        let border_bottom_left_radius = self.border_bottom_left_radius();
 
         let outline_width = self.outline_width();
         let outline_offset = self.outline_offset();
@@ -1185,7 +1184,7 @@ impl<'a> DrawContext<'a> {
                                 bounds.y + start_y,
                                 bounds.x + end_x,
                                 bounds.y + end_y,
-                                stops.into_iter(),
+                                stops,
                             );
 
                             canvas.fill_path(path, &paint);
@@ -1228,7 +1227,7 @@ impl<'a> DrawContext<'a> {
                                 bounds.center().1,
                                 0.0,
                                 bounds.w.max(bounds.h),
-                                stops.into_iter(),
+                                stops,
                             );
 
                             canvas.fill_path(path, &paint);
@@ -1383,7 +1382,7 @@ impl<'a> DataContext for DrawContext<'a> {
 
         for entity in self.current.parent_iter(self.tree) {
             // Return model data.
-            if let Some(model_data_store) = self.data.get(entity) {
+            if let Some(model_data_store) = self.data.get(&entity) {
                 if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }

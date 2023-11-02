@@ -63,6 +63,8 @@ impl_data_simple!(std::path::PathBuf);
 impl_data_simple!(LanguageIdentifier);
 impl_data_simple!(Transform);
 impl_data_simple!(Translate);
+impl_data_simple!(Display);
+impl_data_simple!(Visibility);
 impl_data_simple!(NaiveDate);
 impl_data_simple!(NaiveTime);
 impl_data_simple!(Angle);

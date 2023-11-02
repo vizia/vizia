@@ -37,6 +37,36 @@ pub struct Window {
     pub should_close: bool,
 }
 
+#[cfg(target_os = "windows")]
+impl Window {
+    /// Cloaks the window such that it is not visible to the user, but will still be composited.
+    /// We use this to work around the "blank window flash" startup bug on windows.
+    ///
+    /// <https://learn.microsoft.com/en-us/windows/win32/api/dwmapi/ne-dwmapi-dwmwindowattribute>
+    ///
+    pub(crate) fn set_cloak(&self, state: bool) -> bool {
+        use raw_window_handle::RawWindowHandle::Win32;
+        use winapi::shared::minwindef::{BOOL, FALSE, TRUE};
+        use winapi::um::dwmapi::{DwmSetWindowAttribute, DWMWA_CLOAK};
+
+        let Win32(handle) = self.window.raw_window_handle() else {
+            unreachable!();
+        };
+
+        let value = if state { TRUE } else { FALSE };
+        let result = unsafe {
+            DwmSetWindowAttribute(
+                handle.hwnd as _,
+                DWMWA_CLOAK,
+                &value as *const BOOL as *const _,
+                std::mem::size_of::<BOOL>() as u32,
+            )
+        };
+
+        result == 0 // success
+    }
+}
+
 #[cfg(target_arch = "wasm32")]
 impl Window {
     pub fn new(
@@ -161,8 +191,8 @@ impl Window {
         let raw_window_handle = window.raw_window_handle();
         let attrs = SurfaceAttributesBuilder::<WindowSurface>::new().build(
             raw_window_handle,
-            NonZeroU32::new(width).unwrap(),
-            NonZeroU32::new(height).unwrap(),
+            NonZeroU32::new(width.max(1)).unwrap(),
+            NonZeroU32::new(height.max(1)).unwrap(),
         );
 
         let surface =
@@ -287,6 +317,14 @@ impl View for Window {
 
             WindowEvent::WindowClose => {
                 self.should_close = true;
+            }
+
+            WindowEvent::FocusNext => {
+                cx.focus_next();
+            }
+
+            WindowEvent::FocusPrev => {
+                cx.focus_prev();
             }
 
             _ => {}

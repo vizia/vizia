@@ -746,15 +746,20 @@ textbox {
 textbox:checked {
     border-color: #51afef;
     transition: border-color 100ms;
-    caret-color: red;
-    selection-color: #6464c888;
+}
+
+textbox:checked.caret {
+    caret-color: #181818;
+}
+
+textbox > label.placeholder {
+    caret-color: transparent;
+    color: gray;
 }
 
 textbox:read-only {
     background-color: transparent;
     border-width: 0px;
-    caret-color: transparent;
-    selection-color: #6464c888;
 }
 
 textbox:disabled {
@@ -771,40 +776,6 @@ textbox:invalid {
     border-color: #ef5151;
     transition: border-color 100ms;
     border-width: 2px;
-}
-
-/* MODAL */
-
-.modal {
-    space: 1s;
-    background-color: #e4e4e4;
-    border-radius: 4px;
-    border-width: 1px;
-    border-color: #b6b6b6;
-    overflow: visible;
-    child-space: 8px;
-    width: 200px;
-    row-between: 16px;
-}
-
-.modal label {
-    width: auto;
-    height: auto;
-    color: #888;
-}
-
-.modal button {
-    top: 8px;
-}
-
-.modal .title {
-    color: #000000;
-    font-size: 18;
-    bottom: 4px;
-}
-
-.modal .accent {
-    left: 1s;
 }
 
 /* TIMEPICKER */

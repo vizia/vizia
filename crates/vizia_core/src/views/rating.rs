@@ -26,7 +26,7 @@ impl Rating {
                         .role(Role::RadioButton)
                         .default_action_verb(DefaultActionVerb::Click)
                         .class("icon")
-                        .checked(lens.clone().map(move |val| *val >= i))
+                        .checked(lens.map(move |val| *val >= i))
                         .toggle_class("foo", Rating::rating.map(move |val| *val >= i))
                         .on_hover(move |ex| ex.emit(RatingEvent::SetRating(i)))
                         .on_press(|ex| ex.emit(RatingEvent::EmitRating));
@@ -35,8 +35,8 @@ impl Rating {
             .numeric_value(Self::rating)
             .navigable(true)
             .role(Role::RadioGroup)
-            .bind(lens.clone(), |handle, lens| {
-                let val = lens.get_val(handle.cx);
+            .bind(lens), |handle, lens| {
+                let val = lens.get_val(&handle);
                 handle.modify(|rating| rating.rating = val);
             })
     }

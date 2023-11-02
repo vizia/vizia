@@ -63,7 +63,7 @@ pub trait Model: 'static + Sized {
     /// }
     /// ```
     fn build(self, cx: &mut Context) {
-        if let Some(model_data_store) = cx.data.get_mut(cx.current()) {
+        if let Some(model_data_store) = cx.data.get_mut(&cx.current()) {
             model_data_store.models.insert(TypeId::of::<Self>(), Box::new(self));
         } else {
             let mut models: HashMap<TypeId, Box<dyn ModelData>> = HashMap::new();
@@ -107,6 +107,10 @@ pub trait Model: 'static + Sized {
     /// ```
     #[allow(unused_variables)]
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {}
+
+    fn name(&self) -> Option<&'static str> {
+        None
+    }
 }
 
 pub(crate) trait ModelData: Any {
@@ -114,6 +118,8 @@ pub(crate) trait ModelData: Any {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {}
 
     fn as_any_ref(&self) -> &dyn Any;
+
+    fn name(&self) -> Option<&'static str>;
 }
 
 impl dyn ModelData {
@@ -129,6 +135,10 @@ impl<T: Model> ModelData for T {
 
     fn as_any_ref(&self) -> &dyn Any {
         self
+    }
+
+    fn name(&self) -> Option<&'static str> {
+        <T as Model>::name(self)
     }
 }
 

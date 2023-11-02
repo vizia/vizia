@@ -20,7 +20,7 @@ impl<'a, V> DataContext for Handle<'a, V> {
 
         for entity in self.entity.parent_iter(&self.cx.tree) {
             // Return any model data.
-            if let Some(model_data_store) = self.cx.data.get(entity) {
+            if let Some(model_data_store) = self.cx.data.get(&entity) {
                 if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }
@@ -65,7 +65,14 @@ impl<'a, V> Handle<'a, V> {
         self.cx.focus_stack.push(self.cx.focused);
         if !self.cx.focused.is_descendant_of(&self.cx.tree, self.entity) {
             let new_focus = vizia_storage::TreeIterator::subtree(&self.cx.tree, self.entity)
-                .find(|node| crate::tree::is_navigatable(self.cx, *node, Entity::root()))
+                .find(|node| {
+                    crate::tree::is_navigatable(
+                        &self.cx.tree,
+                        &self.cx.style,
+                        *node,
+                        Entity::root(),
+                    )
+                })
                 .unwrap_or(self.cx.focus_stack.pop().unwrap());
             self.cx.with_current(new_focus, |cx| cx.focus());
         }

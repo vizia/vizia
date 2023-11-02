@@ -77,7 +77,7 @@ mod test {
     };
 
     #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-    pub struct Entity(u32);
+    pub struct Entity(u64);
 
     impl_generational_id!(Entity);
 

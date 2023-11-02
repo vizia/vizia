@@ -91,15 +91,29 @@ impl Model for ScrollData {
                     }
                 }
 
-                ScrollEvent::ChildGeo(x, y) => {
-                    self.inner_width = *x;
-                    self.inner_height = *y;
+                ScrollEvent::ChildGeo(w, h) => {
+                    self.inner_width = *w;
+                    self.inner_height = *h;
                     self.reset();
                 }
-
                 ScrollEvent::ParentGeo(w, h) => {
+                    let scale_factor = cx.scale_factor();
+                    let top = ((self.inner_height - self.container_height) * self.scroll_y).round()
+                        / scale_factor;
+                    let left = ((self.inner_width - self.container_width) * self.scroll_x).round()
+                        / scale_factor;
                     self.container_width = *w;
                     self.container_height = *h;
+                    self.scroll_y = ((top * scale_factor)
+                        / (self.inner_height - self.container_height))
+                        .clamp(0.0, 1.0);
+                    self.scroll_x = ((left * scale_factor)
+                        / (self.inner_width - self.container_width))
+                        .clamp(0.0, 1.0);
+                    if let Some(callback) = &self.on_scroll {
+                        (callback)(cx, self.scroll_x, self.scroll_y);
+                    }
+
                     self.reset();
                 }
 
@@ -115,8 +129,10 @@ impl Model for ScrollData {
     }
 }
 
-pub struct ScrollView<L> {
+#[derive(Lens)]
+pub struct ScrollView<L: Lens> {
     data: L,
+    scroll_to_cursor: bool,
 }
 
 impl ScrollView<Wrapper<scroll_data_derived_lenses::root>> {
@@ -131,7 +147,7 @@ impl ScrollView<Wrapper<scroll_data_derived_lenses::root>> {
     where
         F: 'static + FnOnce(&mut Context),
     {
-        Self { data: ScrollData::root }
+        Self { data: ScrollData::root, scroll_to_cursor: false }
             .build(cx, move |cx| {
                 ScrollData {
                     scroll_x: initial_x,
@@ -147,8 +163,8 @@ impl ScrollView<Wrapper<scroll_data_derived_lenses::root>> {
                 Self::common_builder(cx, ScrollData::root, content, scroll_x, scroll_y);
             })
             .checked(ScrollData::root.map(|data| {
-                (data.container_height != data.inner_height)
-                    || (data.container_width != data.inner_width)
+                (data.container_height < data.inner_height)
+                    || (data.container_width < data.inner_width)
             }))
     }
 }
@@ -168,7 +184,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
             panic!("ScrollView::custom requires a ScrollData to be built into a parent");
         }
 
-        Self { data: data.clone() }.build(cx, |cx| {
+        Self { data, scroll_to_cursor: false }.build(cx, |cx| {
             Self::common_builder(cx, data, content, scroll_x, scroll_y);
         })
     }
@@ -177,43 +193,42 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
     where
         F: 'static + FnOnce(&mut Context),
     {
-        ScrollContent::new(cx, content).bind(data.clone(), |handle, data| {
-            let dpi_factor = handle.scale_factor();
-            if dpi_factor > 0.0 {
-                let data = data.get_val(handle.cx);
-                let left = ((data.inner_width - data.container_width) * data.scroll_x).round()
-                    / handle.cx.style.dpi_factor as f32;
-                let top = ((data.inner_height - data.container_height) * data.scroll_y).round()
-                    / handle.cx.style.dpi_factor as f32;
-                handle.left(Units::Pixels(-left.abs())).top(Units::Pixels(-top.abs()));
-            }
+        ScrollContent::new(cx, content).bind(data, |handle, data| {
+            let scale_factor = handle.scale_factor();
+            let data = data.get_val(handle.cx);
+            let left =
+                ((data.inner_width - data.container_width) * data.scroll_x).round() / scale_factor;
+            let top = ((data.inner_height - data.container_height) * data.scroll_y).round()
+                / scale_factor;
+            handle.left(Units::Pixels(-left.abs())).top(Units::Pixels(-top.abs()));
         });
 
         if scroll_y {
             Scrollbar::new(
                 cx,
-                data.clone().then(ScrollData::scroll_y),
-                data.clone()
-                    .then(RatioLens::new(ScrollData::container_height, ScrollData::inner_height)),
+                data.then(ScrollData::scroll_y),
+                data.then(RatioLens::new(ScrollData::container_height, ScrollData::inner_height)),
                 Orientation::Vertical,
                 |cx, value| {
                     cx.emit(ScrollEvent::SetY(value));
                 },
             )
-            .position_type(PositionType::SelfDirected);
+            .position_type(PositionType::SelfDirected)
+            .scroll_to_cursor(Self::scroll_to_cursor);
         }
 
         if scroll_x {
             Scrollbar::new(
                 cx,
-                data.clone().then(ScrollData::scroll_x),
+                data.then(ScrollData::scroll_x),
                 data.then(RatioLens::new(ScrollData::container_width, ScrollData::inner_width)),
                 Orientation::Horizontal,
                 |cx, value| {
                     cx.emit(ScrollEvent::SetX(value));
                 },
             )
-            .position_type(PositionType::SelfDirected);
+            .position_type(PositionType::SelfDirected)
+            .scroll_to_cursor(Self::scroll_to_cursor);
         }
     }
 }
@@ -270,6 +285,10 @@ impl<'a, L: Lens> Handle<'a, ScrollView<L>> {
     ) -> Self {
         self.cx.emit_to(self.entity(), ScrollEvent::SetOnScroll(Some(Arc::new(callback))));
         self
+    }
+
+    pub fn scroll_to_cursor(self, scroll_to_cursor: bool) -> Self {
+        self.modify(|scrollview: &mut ScrollView<L>| scrollview.scroll_to_cursor = scroll_to_cursor)
     }
 }
 

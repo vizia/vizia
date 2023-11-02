@@ -138,7 +138,7 @@ impl Checkbox {
     pub fn new(cx: &mut Context, checked: impl Lens<Target = bool>) -> Handle<Self> {
         Self { on_toggle: None }
             .build(cx, |_| {})
-            .text(checked.clone().map(|flag| if *flag { ICON_CHECK } else { "" }))
+            .text(checked.map(|flag| if *flag { ICON_CHECK } else { "" }))
             .checked(checked)
             .role(Role::CheckBox)
             .default_action_verb(DefaultActionVerb::Click)
@@ -153,8 +153,7 @@ impl Checkbox {
     ) -> Handle<Self> {
         Self { on_toggle: None }
             .build(cx, |_| {})
-            .bind(checked.clone(), move |handle, c| {
-                let intermediate = intermediate.clone();
+            .bind(checked, move |handle, c| {
                 handle.bind(intermediate, move |handle, i| {
                     if c.get_val(handle.cx) {
                         handle.text(ICON_CHECK).toggle_class("intermediate", false);

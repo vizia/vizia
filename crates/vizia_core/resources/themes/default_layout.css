@@ -171,6 +171,8 @@ dropdown .title {
 dropdown popup {
     width: 100%;
     height: auto;
+    top: 100%;
+    translate: 0px 4px;
 }
 
 dropdown popup list {
@@ -678,6 +680,7 @@ tabview.vertical .tabview-tabheader-wrapper {
 tabheader {
     width: auto;
     height: 32px;
+    cursor: hand;
 }
 
 tabheader label {
@@ -707,6 +710,34 @@ textbox {
     child-top: 1s;
     child-bottom: 1s;
     cursor: text;
+    caret-color: transparent;
+    selection-color: #6464c888;
+}
+
+textbox:checked.caret {
+    caret-color: #181818;
+}
+
+textbox:read-only {
+    caret-color: transparent;
+}
+
+textbox:checked:read-only.caret {
+    caret-color: transparent;
+}
+
+textbox > label.placeholder {
+    child-left: 10px;
+    child-top: 1s;
+    child-bottom: 1s;
+}
+
+textbox.icon-before {
+    child-left: 30px;
+}
+
+textbox.icon-before > label.placeholder {
+    child-left: 30px;
 }
 
 textbox.multiline {
@@ -826,31 +857,4 @@ tooltip .tooltip-button-wrapper {
     height: 12px;
     background-color: #51afef;
     border-radius: 2px;
-}
-
-/* Modal */
-
-.modal {
-    width: 200px;
-    space: 1s;
-    overflow: visible;
-    child-space: 8px;
-    row-between: 16px;
-}
-
-.modal label {
-    width: auto;
-    height: auto;
-}
-
-.modal button {
-    top: 8px;
-}
-
-.modal .title {
-    bottom: 4px;
-}
-
-.modal .accent {
-    left: 1s;
 }

@@ -139,9 +139,8 @@ pub(crate) fn layout_system(cx: &mut Context) {
 
         // A relayout, retransform, or reclip, can cause the element under the cursor to change. So we push a mouse move event here to force
         // a new event cycle and the hover system to trigger.
-        #[cfg(feature = "winit")]
         if let Some(proxy) = &cx.event_proxy {
-            let event = Event::new(WindowEvent::MouseMove(cx.mouse.cursorx, cx.mouse.cursory))
+            let event = Event::new(WindowEvent::MouseMove(f32::NAN, f32::NAN))
                 .target(Entity::root())
                 .origin(Entity::root())
                 .propagate(Propagation::Up);
@@ -157,13 +156,13 @@ fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {
     // Send event to models attached to the entity
     if let Some(ids) = cx
         .data
-        .get(entity)
+        .get(&entity)
         .map(|model_data_store| model_data_store.models.keys().cloned().collect::<Vec<_>>())
     {
         for id in ids {
             if let Some(mut model) = cx
                 .data
-                .get_mut(entity)
+                .get_mut(&entity)
                 .and_then(|model_data_store| model_data_store.models.remove(&id))
             {
                 cx.current = entity;
@@ -171,7 +170,7 @@ fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {
                 model.event(cx, event);
 
                 cx.data
-                    .get_mut(entity)
+                    .get_mut(&entity)
                     .and_then(|model_data_store| model_data_store.models.insert(id, model));
             }
         }

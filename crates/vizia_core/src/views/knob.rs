@@ -37,7 +37,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
         centered: bool,
     ) -> Handle<Self> {
         Self {
-            lens: lens.clone(),
+            lens,
             default_normal: normalized_default.get_val(cx),
 
             is_dragging: false,
@@ -62,7 +62,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
                     150.,
                     KnobMode::Continuous,
                 )
-                .value(lens.clone())
+                .value(lens)
                 .class("knob-track");
 
                 HStack::new(cx, |cx| {
@@ -85,7 +85,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
         F: 'static + Fn(&mut Context, L) -> Handle<V>,
     {
         Self {
-            lens: lens.clone(),
+            lens,
             default_normal,
 
             is_dragging: false,

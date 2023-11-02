@@ -120,7 +120,7 @@ mod tests {
     };
 
     #[derive(Copy, Clone, PartialEq)]
-    struct Entity(u32);
+    struct Entity(u64);
 
     impl_generational_id!(Entity);
 

@@ -45,7 +45,6 @@ pub mod image {
 
 /// A collection of codepoints for built-in icons.
 pub mod icons;
-pub use icons::*;
 
 pub mod fonts;
 pub use fonts::*;
@@ -75,8 +74,8 @@ pub mod prelude {
         EventContext, ProxyEmitError,
     };
     pub use super::entity::Entity;
-    pub use super::environment::{Environment, EnvironmentEvent, ThemeMode};
-    pub use super::events::{Event, Propagation};
+    pub use super::environment::{AppTheme, Environment, EnvironmentEvent, ThemeMode};
+    pub use super::events::{Event, Propagation, Timer, TimerAction};
     pub use super::include_style;
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
     pub use super::layout::{BoundingBox, GeoChanged};
@@ -104,15 +103,4 @@ pub mod prelude {
     pub use morphorm::Units::*;
     pub use morphorm::{LayoutType, PositionType, Units};
     pub use unic_langid::{langid, LanguageIdentifier};
-}
-
-/// One very small function for abstracting debugging between web and desktop programming.
-/// On the desktop, it will print to stdout, and on the web, it will print to the console log.
-#[cfg(not(target_arch = "wasm32"))]
-pub fn log(text: &str) {
-    println!("{}", text);
-}
-#[cfg(target_arch = "wasm32")]
-pub fn log(text: &str) {
-    web_sys::console::log_1(&text.into());
 }

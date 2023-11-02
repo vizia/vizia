@@ -52,7 +52,7 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
     }
 
     fn parent_element(&self) -> Option<Self> {
-        self.tree.get_parent(self.entity).map(|parent| Node {
+        self.tree.get_layout_parent(self.entity).map(|parent| Node {
             entity: parent,
             store: self.store,
             tree: self.tree,
@@ -557,6 +557,10 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
     }
 
     if style.cursor.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.pointer_events.link(entity, matched_rules) {
         should_redraw = true;
     }
 

@@ -128,8 +128,6 @@ pub trait View: 'static + Sized {
         let parent_id = cx.tree.get_layout_parent(id).unwrap();
         let parent_node_id = parent_id.accesskit_id();
         let node_id = id.accesskit_id();
-        let children =
-            parent_id.child_iter(&cx.tree).map(|entity| entity.accesskit_id()).collect::<Vec<_>>();
 
         let mut access_context = AccessContext {
             current: id,
@@ -139,10 +137,7 @@ pub trait View: 'static + Sized {
             text_context: &mut cx.text_context,
         };
 
-        if let Some(mut parent_node) =
-            get_access_node(&mut access_context, &mut cx.views, parent_id)
-        {
-            parent_node.node_builder.set_children(children);
+        if let Some(parent_node) = get_access_node(&mut access_context, &mut cx.views, parent_id) {
             let parent_node = parent_node.node_builder.build(&mut cx.style.accesskit_node_classes);
             let node = NodeBuilder::default().build(&mut cx.style.accesskit_node_classes);
             cx.tree_updates.push(TreeUpdate {

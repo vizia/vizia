@@ -74,10 +74,12 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
     let mut lens_ty_idents = Vec::new();
     let mut phantom_decls = Vec::new();
     let mut phantom_inits = Vec::new();
+    let mut lens_ty_decls = Vec::new();
 
     for gp in input.generics.params.iter() {
         if let GenericParam::Type(TypeParam { ident, .. }) = gp {
             lens_ty_idents.push(quote! {#ident});
+            lens_ty_decls.push(quote! {#ident: 'static});
             phantom_decls.push(quote! {std::marker::PhantomData<*const #ident>});
             phantom_inits.push(quote! {std::marker::PhantomData});
         }
@@ -85,6 +87,10 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
 
     let lens_ty_generics = quote! {
         <#(#lens_ty_idents),*>
+    };
+
+    let lens_ty_generics_decls = quote! {
+        <#(#lens_ty_decls),*>
     };
 
     // Define lens types for each field
@@ -106,7 +112,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         quote! {
             #[doc = #struct_docs]
             #[allow(non_camel_case_types)]
-            #[derive(Copy, Clone, Hash, PartialEq, Eq)]
+            #[derive(PartialEq, Eq)]
             #struct_vis struct #field_name#lens_ty_generics(#(#phantom_decls),*);
 
             impl #lens_ty_generics #field_name#lens_ty_generics{
@@ -116,11 +122,27 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
                 }
             }
 
+            impl #lens_ty_generics_decls std::hash::Hash for #field_name#lens_ty_generics {
+                fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+                    std::any::TypeId::of::<Self>().hash(state);
+                }
+            }
+
             impl #lens_ty_generics std::fmt::Debug for #field_name#lens_ty_generics {
                 fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                     write!(f,"{}:{}",stringify!(#struct_type), stringify!(#field_name))
                 }
             }
+
+            impl #lens_ty_generics Clone for #field_name#lens_ty_generics  {
+                fn clone(&self) -> #field_name#lens_ty_generics {
+                    *self
+                }
+            }
+
+            impl #lens_ty_generics Copy for #field_name#lens_ty_generics {}
+
+
         }
     });
 
@@ -150,8 +172,6 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
     let impls = fields.iter().filter(|f| !f.attrs.ignore).map(|f| {
         let field_name = &f.ident.unwrap_named();
         let field_ty = &f.ty;
-        let name = format!("{}:{}", struct_type, field_name);
-
         quote! {
 
             impl #impl_generics Lens for #twizzled_name::#field_name#lens_ty_generics #where_clause {
@@ -161,10 +181,6 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
 
                 fn view<'a>(&self, source: &'a #struct_type#ty_generics) -> Option<LensValue<'a, Self::Target>> {
                     Some(LensValue::Borrowed(&source.#field_name))
-                }
-
-                fn name(&self) -> Option<&'static str>{
-                    Some(#name)
                 }
             }
         }
@@ -189,7 +205,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         #[doc = #mod_docs]
         #module_vis mod #twizzled_name {
             #(#defs)*
-            #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+            #[derive(PartialEq, Eq)]
             #[doc = #root_docs]
             #[allow(non_camel_case_types)]
             #struct_vis struct root#lens_ty_generics(#(#phantom_decls),*);
@@ -199,6 +215,26 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
                     Self(#(#phantom_inits),*)
                 }
             }
+
+            impl #lens_ty_generics_decls std::hash::Hash for root#lens_ty_generics {
+                fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+                    std::any::TypeId::of::<Self>().hash(state);
+                }
+            }
+
+            impl #lens_ty_generics std::fmt::Debug for root#lens_ty_generics {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    write!(f,"{}",stringify!(#struct_type))
+                }
+            }
+
+            impl #lens_ty_generics Clone for root#lens_ty_generics  {
+                fn clone(&self) -> root#lens_ty_generics {
+                    *self
+                }
+            }
+
+            impl #lens_ty_generics Copy for root#lens_ty_generics {}
         }
 
         #(#impls)*
@@ -354,9 +390,11 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
                     }
 
                 }
+            }
 
-                fn name(&self) -> Option<&'static str>{
-                    Some(#name)
+            impl std::fmt::Debug for #twizzled_name::#variant_name {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    f.write_str(#name)
                 }
             }
         }

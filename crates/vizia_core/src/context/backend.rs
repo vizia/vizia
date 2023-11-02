@@ -1,6 +1,7 @@
 use std::any::Any;
 
 use femtovg::{renderer::OpenGl, Canvas};
+use instant::Instant;
 use vizia_window::WindowDescription;
 
 use super::EventProxy;
@@ -115,6 +116,8 @@ impl<'a> BackendContext<'a> {
             .insert(Entity::root(), Units::Pixels(window_description.inner_size.height as f32));
 
         self.0.style.disabled.insert(Entity::root(), false);
+
+        self.0.style.pseudo_classes.insert(Entity::root(), PseudoClassFlags::OVER);
 
         self.0.canvases.insert(Entity::root(), canvas);
     }
@@ -263,5 +266,32 @@ impl<'a> BackendContext<'a> {
 
     pub fn needs_refresh(&mut self) {
         self.0.style.system_flags = SystemFlags::all();
+    }
+
+    pub fn process_timers(&mut self) {
+        self.0.tick_timers();
+    }
+
+    pub fn get_next_timer_time(&self) -> Option<instant::Instant> {
+        let timer_time = self.0.running_timers.peek().map(|timer_state| timer_state.time);
+        let scheduled_event_time = self.0.event_schedule.peek().map(|timed_event| timed_event.time);
+
+        match (timer_time, scheduled_event_time) {
+            (Some(t1), Some(t2)) => Some(t1.min(t2)),
+            (Some(t), None) => Some(t),
+            (None, Some(t)) => Some(t),
+            _ => None,
+        }
+    }
+
+    pub fn emit_scheduled_events(&mut self) {
+        let now = Instant::now();
+        while let Some(timed_event) = self.0.event_schedule.peek() {
+            if timed_event.time <= now {
+                self.0.event_queue.push_back(self.0.event_schedule.pop().unwrap().event);
+            } else {
+                break;
+            }
+        }
     }
 }

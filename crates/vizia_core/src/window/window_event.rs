@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::{entity::Entity, layout::cache::GeoChanged};
+use crate::{entity::Entity, environment::ThemeMode, layout::cache::GeoChanged};
 use vizia_input::{Code, Key, MouseButton};
 use vizia_style::CursorIcon;
 use vizia_window::{Position, WindowSize};
@@ -69,6 +69,8 @@ pub enum WindowEvent {
     KeyDown(Code, Option<Key>),
     /// Emitted when a keyboard key is released.
     KeyUp(Code, Option<Key>),
+    /// Emited when the system window theme has changed.
+    ThemeChanged(ThemeMode),
     /// Sets the mouse cursor icon.
     SetCursor(CursorIcon),
     /// Grabs the mouse cursor, preventing it from leaving the window.
@@ -110,6 +112,10 @@ pub enum WindowEvent {
     Restyle,
     /// Requests a relayout.
     Relayout,
+    /// Move keyboard focus to the next navigable view.
+    FocusNext,
+    /// Move keyboard focus to the previous navigable view.
+    FocusPrev,
     /// Prints the debug message to the console.
     Debug(String),
     ActionRequest(accesskit::ActionRequest),

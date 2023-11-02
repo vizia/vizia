@@ -11,7 +11,7 @@ fn main() {
     Application::new(|cx| {
         cx.add_stylesheet(include_style!("examples/resources/themes/test.css"))
             .expect("Failed to add stylesheet");
-        Element::new(cx);
+        Element::new(cx).class("foo");
     })
     .run();
 }
