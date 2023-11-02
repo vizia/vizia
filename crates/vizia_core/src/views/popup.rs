@@ -61,7 +61,7 @@ where
                 });
             })
             .bind(lens, move |handle, val| {
-                if val.get(&handle) && capture_focus {
+                if val.get_val(&handle) && capture_focus {
                     handle.lock_focus_to_within();
                 }
             })

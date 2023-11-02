@@ -265,18 +265,18 @@ impl View for CircleDrawerCanvas {
 
         let paint = Paint::color(Color::black().into()).with_line_width(2.0);
 
-        for (idx, Circle { x, y, r }) in
-            CircleDrawerData::circles_data.get(cx).circles.into_iter().enumerate()
-        {
-            let mut path = Path::new();
-            path.circle(x, y, r);
+        if let Some(circle_data) = CircleDrawerData::circles_data.get(cx) {
+            for (idx, Circle { x, y, r }) in circle_data.circles.iter().copied().enumerate() {
+                let mut path = Path::new();
+                path.circle(x, y, r);
 
-            if CircleDrawerData::circles_data.get(cx).selected.is_some_and(|i| i == idx) {
-                let paint = Paint::color(Color::gray().into());
-                canvas.fill_path(&path, &paint);
+                if circle_data.selected.is_some_and(|i| i == idx) {
+                    let paint = Paint::color(Color::gray().into());
+                    canvas.fill_path(&path, &paint);
+                }
+
+                canvas.stroke_path(&path, &paint);
             }
-
-            canvas.stroke_path(&path, &paint);
         }
     }
 }
@@ -307,7 +307,7 @@ impl CircleDrawer {
 
             Popup::new(cx, CircleDrawerData::dialog_open, true, |cx| {
                 let selected =
-                    CircleDrawerData::circles_data.then(CircleData::selected).get(cx).unwrap();
+                    CircleDrawerData::circles_data.then(CircleData::selected).get_val(cx).unwrap();
 
                 VStack::new(cx, |cx| {
                     Label::new(
@@ -316,10 +316,8 @@ impl CircleDrawer {
                             "Adjust diameter of circle at {:?}.",
                             CircleDrawerData::circles_data
                                 .then(CircleData::circles)
-                                .get(cx)
-                                .get(selected)
+                                .index(selected)
                                 .map(|c| (c.x, c.y))
-                                .unwrap()
                         ),
                     );
 

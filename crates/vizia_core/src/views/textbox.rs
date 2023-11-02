@@ -181,8 +181,8 @@ where
 
             Binding::new(cx, lens, move |cx: &mut Context, text| {
                 Binding::new(cx, Self::edit, move |cx, edit| {
-                    if !edit.get(cx) {
-                        let text_str = text.get(cx).to_string();
+                    if !edit.get_val(cx) {
+                        let text_str = text.get_val(cx).to_string();
                         cx.emit(TextEvent::SelectAll);
                         cx.emit(TextEvent::InsertText(text_str));
                         cx.emit(TextEvent::Scroll(0.0, 0.0));
@@ -191,7 +191,7 @@ where
             });
 
             Binding::new(cx, Self::placeholder, |cx, placeholder| {
-                let placeholder_string = placeholder.get(cx).to_string();
+                let placeholder_string = placeholder.get_val(cx);
                 if !placeholder_string.is_empty() {
                     Label::new(cx, &placeholder_string)
                         .size(Stretch(1.0))
@@ -532,7 +532,7 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
     /// Sets the placeholder text that appears when the textbox has no value.
     pub fn placeholder<P: ToString>(self, text: impl Res<P>) -> Self {
         text.set_or_bind(self.cx, self.entity, |cx, val| {
-            cx.emit(TextEvent::SetPlaceholder(val.to_string()));
+            cx.emit(TextEvent::SetPlaceholder(val.get_val(cx).to_string()));
             cx.needs_relayout();
             cx.needs_redraw();
         });
@@ -1096,15 +1096,8 @@ where
                     cx.set_checked(true);
                     self.reset_caret_timer(cx);
 
-                    if let Some(source) = cx.data::<L::Source>() {
-                        let text = self.lens.view(source, |t| {
-                            if let Some(t) = t {
-                                t.to_string()
-                            } else {
-                                String::from("")
-                            }
-                        });
-
+                    if let Some(text) = self.lens.get(cx) {
+                        let text = text.to_string_local(cx);
                         self.placeholder_shown = text.is_empty();
 
                         self.select_all(cx);
@@ -1120,7 +1113,7 @@ where
                         } else {
                             cx.set_valid(false);
                         }
-                    };
+                    }
                 }
             }
 
@@ -1131,15 +1124,8 @@ where
                 cx.release();
                 cx.stop_timer(self.caret_timer);
 
-                if let Some(source) = cx.data::<L::Source>() {
-                    let text = self.lens.view(source, |t| {
-                        if let Some(t) = t {
-                            t.to_string()
-                        } else {
-                            "".to_owned()
-                        }
-                    });
-
+                if let Some(text) = self.lens.get(cx) {
+                    let text = text.to_string_local(cx);
                     self.placeholder_shown = text.is_empty();
 
                     self.select_all(cx);
@@ -1155,7 +1141,7 @@ where
                     } else {
                         cx.set_valid(false);
                     }
-                };
+                }
             }
 
             TextEvent::Blur => {

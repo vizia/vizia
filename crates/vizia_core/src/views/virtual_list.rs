@@ -30,7 +30,7 @@ impl VirtualList {
         <L as Lens>::Target: std::ops::Deref<Target = [T]>,
         T: Data + 'static,
     {
-        let num_items = list.map(|l| l.len()).get(cx);
+        let num_items = list.map(|l| l.len()).get_val(cx);
 
         Self {
             offset: 0,
@@ -45,7 +45,7 @@ impl VirtualList {
             ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
                 VStack::new(cx, |cx| {
                     Binding::new(cx, VirtualList::visible_items, move |cx, visible_list| {
-                        for i in visible_list.get(cx) {
+                        for i in visible_list.get_val(cx) {
                             let ptr = list.index(i);
                             (item)(cx, i, ptr)
                                 .top(Pixels(i as f32 * height))
@@ -62,7 +62,7 @@ impl VirtualList {
             });
         })
         .bind(list.map(|list| list.len()), |mut handle, len| {
-            let len = len.get(&handle);
+            let len = len.get_val(&handle);
             handle.context().emit(VirtualListEvent::SetNumItems(len));
         })
     }

@@ -1,5 +1,6 @@
 use std::collections::{hash_map::DefaultHasher, HashSet};
 use std::hash::{Hash, Hasher};
+use std::ops::Deref;
 
 use crate::{model::ModelOrView, prelude::*};
 
@@ -39,9 +40,7 @@ where
     <L as Lens>::Target: Data,
 {
     fn update(&mut self, model: ModelOrView) -> bool {
-        let Some(data) = model.downcast_ref::<L::Source>() else {
-            return false
-        };
+        let Some(data) = model.downcast_ref::<L::Source>() else { return false };
         let Some(new_data) = self.lens.view(data) else { return false };
 
         if matches!(&self.old, Some(old) if old.same(&new_data)) {

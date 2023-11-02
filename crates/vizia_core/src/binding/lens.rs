@@ -7,7 +7,6 @@ use std::ops::{BitAnd, BitOr, Deref};
 use std::rc::Rc;
 
 use crate::context::{CURRENT, MAPS, MAP_MANAGER};
-use crate::prelude::*;
 
 use super::MapId;
 
@@ -37,8 +36,8 @@ pub enum LensValue<'a, T> {
 
 impl<T: Clone> Clone for LensValue<'_, T> {
     fn clone(&self) -> Self {
-        match *self {
-            LensValue::Borrowed(v) => LensValue::Borrowed(v),
+        match self {
+            LensValue::Borrowed(v) => LensValue::Borrowed(*v),
             LensValue::Owned(v) => LensValue::Owned(v.clone()),
         }
     }
@@ -74,18 +73,6 @@ where
         }
     }
 }
-
-pub(crate) trait LensCache: Lens {
-    fn cache_key(&self) -> StoreId {
-        if std::mem::size_of::<Self>() == 0 {
-            StoreId::Type(TypeId::of::<Self>())
-        } else {
-            StoreId::Uuid(next_uuid())
-        }
-    }
-}
-
-impl<T: Lens> LensCache for T {}
 
 /// Helpers for constructing more complex `Lens`es.
 pub trait LensExt: Lens {
@@ -170,7 +157,7 @@ pub trait LensExt: Lens {
 }
 
 // Implement LensExt for all types which implement Lens.
-impl<T: Lens> LensExt for T {}
+impl<T: Lens + ?Sized> LensExt for T {}
 
 pub struct MapState<T, O> {
     closure: Rc<dyn Fn(&T) -> O>,
@@ -194,19 +181,17 @@ impl<L: Lens, O: 'static> Clone for Map<L, O> {
     }
 }
 
-impl<L: Lens, O: 'static> Lens for Map<L, O> {
+impl<L: Lens, O: 'static> Lens for Map<L, O>
+// where
+//     L::Target: Clone,
+{
     type Source = L::Source;
     type Target = O;
 
     // fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
     //     Some(LensValue::Owned((self.get)(source)))
 
-    fn view<VO, F: FnOnce(Option<&Self::Target>) -> VO>(
-        &self,
-        source: &Self::Source,
-        map: F,
-    ) -> VO {
-
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
         self.lens.view(source).map(|t| {
             let closure = MAPS.with(|f| {
                 if let Some(lens_map) = f.borrow().get(&self.id) {
@@ -217,7 +202,7 @@ impl<L: Lens, O: 'static> Lens for Map<L, O> {
 
                 None
             });
-            LensValue::Owned((closure)(t))
+            LensValue::Owned((closure.unwrap())(&*t))
         })
 
         // self.lens.view(source, |t| {
@@ -263,16 +248,15 @@ impl<L: Lens, O: 'static> Clone for MapRef<L, O> {
     }
 }
 
-impl<L: Lens, O: 'static> Lens for MapRef<L, O> {
+impl<L: Lens, O: 'static> Lens for MapRef<L, O>
+where
+    L::Target: Clone,
+{
     type Source = L::Source;
     type Target = O;
 
-    fn view<VO, F: FnOnce(Option<&Self::Target>) -> VO>(
-        &self,
-        source: &Self::Source,
-        map: F,
-    ) -> VO {
-        self.lens.view(source, |t| {
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        self.lens.view(source).map(|t| {
             let closure = MAPS.with(|f| {
                 if let Some(lens_map) = f.borrow().get(&self.id) {
                     if let Some(mapping) = lens_map.1.downcast_ref::<MapRefState<L::Target, O>>() {
@@ -282,7 +266,10 @@ impl<L: Lens, O: 'static> Lens for MapRef<L, O> {
 
                 None
             });
-            map(t.map(|tt| (closure.unwrap())(tt)))
+            match t {
+                LensValue::Borrowed(b) => LensValue::Borrowed((closure.unwrap())(b)),
+                LensValue::Owned(_) => unreachable!(),
+            }
         })
     }
 }
@@ -397,7 +384,15 @@ where
     type Target = T;
 
     fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
-        source.get(self.index).map(|t| LensValue::Borrowed(t))
+        self.lens.view(source).and_then(|t| {
+            // (*t).index(self.index).map(|t| LensValue::Borrowed(t))
+            // let tt = t;
+            // let ii = tt.as_ref().deref();
+            match t {
+                LensValue::Borrowed(v) => v.get(self.index).map(LensValue::Borrowed),
+                LensValue::Owned(_) => unreachable!(),
+            }
+        })
     }
 }
 

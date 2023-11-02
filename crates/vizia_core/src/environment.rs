@@ -1,5 +1,5 @@
-use crate::prelude::LensValue;
 //! A model for system specific state which can be accessed by any model or view.
+use crate::prelude::LensValue;
 use crate::{model::Model, prelude::Wrapper, window::WindowEvent};
 use unic_langid::LanguageIdentifier;
 use vizia_derive::Lens;

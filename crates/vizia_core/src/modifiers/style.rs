@@ -117,7 +117,7 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
 
         state.set_or_bind(self.context(), entity, |cx, val| {
-            let val = val.into();
+            let val = val.get_val(cx).into();
 
             if val {
                 cx.focus();
@@ -476,7 +476,7 @@ pub trait StyleModifiers: internal::Modifiable {
     fn pointer_events<U: Into<PointerEvents>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            let value = v.into();
+            let value = v.get_val(cx).into();
             cx.style.pointer_events.insert(cx.current, value);
         });
 

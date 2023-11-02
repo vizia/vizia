@@ -178,7 +178,7 @@ impl Datepicker {
                                         let (day_number, disabled) =
                                             Self::get_day_number(y, x, &view_date);
 
-                                        handle.bind(l, move |handle, selected_date| {
+                                        handle.bind(lens, move |handle, selected_date| {
                                             let selected_date = selected_date.get_val(handle.cx);
 
                                             handle

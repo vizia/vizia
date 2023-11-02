@@ -35,7 +35,7 @@ impl Rating {
             .numeric_value(Self::rating)
             .navigable(true)
             .role(Role::RadioGroup)
-            .bind(lens), |handle, lens| {
+            .bind(lens, |handle, lens| {
                 let val = lens.get_val(&handle);
                 handle.modify(|rating| rating.rating = val);
             })

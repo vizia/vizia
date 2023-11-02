@@ -29,8 +29,8 @@ impl PickList {
                     // A Label and an Icon
                     HStack::new(cx, move |cx| {
                         Label::new(cx, "")
-                            .bind(l, move |handle, list| {
-                                handle.bind(s.clone(), move |handle, sel| {
+                            .bind(list_lens, move |handle, list| {
+                                handle.bind(selected, move |handle, sel| {
                                     let selected_index = sel.get_val(handle.cx);
 
                                     handle.text(list.index(selected_index));
