@@ -1,11 +1,8 @@
-use std::ops::Deref;
-
 use vizia::prelude::*;
 use vizia::vg;
-use vizia_core::vg::Paint;
 
 pub struct CustomView<C: 'static + Res<Color>> {
-    // View local state
+    // View local state (could be value or lens)
     color: C,
 }
 
@@ -18,17 +15,12 @@ impl<C: 'static + Res<Color>> CustomView<C> {
 }
 
 impl<C: 'static + Res<Color>> View for CustomView<C> {
-    fn element(&self) -> Option<&'static str> {
-        Some("custom-view")
-    }
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         if let Some(col) = self.color.get(cx) {
             let bounds = cx.bounds();
             let mut path = vg::Path::new();
             path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
-            canvas.fill_path(&path, &Paint::color((*col).into()));
-        } else {
-            println!("failed");
+            canvas.fill_path(&path, &vg::Paint::color((*col).into()));
         }
     }
 }
