@@ -44,9 +44,8 @@ swash = "0.1.8"
 log = "0.4.19"
 # reqwest = { version = "0.11.9", features = ["blocking"] }
 
-# Required so that doc tests will compile
-[dev-dependencies]
-vizia_winit = {version = "0.1.0", path = "../vizia_winit" }
+[lib]
+doctest = false
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web_sys = { version = "0.3", package = "web-sys", features = ["console"] }
