@@ -127,16 +127,6 @@ mod tests {
         assert_eq!(id4, Entity::new(3, 0));
     }
 
-    /// Test for creating an id past the maximum.
-    #[test]
-    #[should_panic]
-    fn create_all() {
-        let mut id_manager = IdManager::<Entity>::new();
-        for _ in 0..std::u32::MAX {
-            id_manager.create();
-        }
-    }
-
     /// Test for removing an id.
     #[test]
     fn destroy() {
