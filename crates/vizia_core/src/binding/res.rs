@@ -8,8 +8,8 @@ use crate::{
 macro_rules! impl_res_simple {
     ($t:ty) => {
         impl Res<$t> for $t {
-            fn get<'a, 'b>(&'a self, _: &'b impl DataContext) -> Option<LensValue<'a, 'b, $t>> {
-                Some(LensValue::Local(self))
+            fn get<'a>(&self, _: &impl DataContext) -> Option<LensValue<$t>> {
+                Some(LensValue::Borrowed(self))
             }
 
             fn get_val(&self, _: &impl DataContext) -> $t {
@@ -32,8 +32,8 @@ macro_rules! impl_res_simple {
 macro_rules! impl_res_clone {
     ($t:ty) => {
         impl Res<$t> for $t {
-            fn get<'a, 'b>(&'a self, _: &'b impl DataContext) -> Option<LensValue<'a, 'b, $t>> {
-                Some(LensValue::Local(self))
+            fn get<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, $t>> {
+                Some(LensValue::Borrowed(self))
             }
 
             fn get_val(&self, _: &impl DataContext) -> $t {
@@ -60,7 +60,7 @@ macro_rules! impl_res_clone {
 /// such as `String` or `&str`, or a lens to a type which implements `ToString`.
 pub trait Res<T> {
     #[allow(unused_variables)]
-    fn get<'a, 'b>(&'a self, cx: &'b impl DataContext) -> Option<LensValue<'a, 'b, T>> {
+    fn get<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, T>> {
         None
     }
 
@@ -111,7 +111,7 @@ where
     L: Lens,
     L::Target: Data,
 {
-    fn get<'a, 'b>(&'a self, cx: &'b impl DataContext) -> Option<LensValue<'a, 'b, L::Target>> {
+    fn get<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, L::Target>> {
         self.view(cx.data()?)
     }
 
