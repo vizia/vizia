@@ -84,9 +84,9 @@ pub enum EnvironmentEvent {
 
 impl Model for Environment {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|event, _| match event {
+        event.take(|event, _| match event {
             EnvironmentEvent::SetLocale(locale) => {
-                self.locale = locale.clone();
+                self.locale = locale;
             }
 
             EnvironmentEvent::SetThemeMode(theme) => {

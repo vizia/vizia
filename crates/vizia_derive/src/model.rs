@@ -26,7 +26,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
     Ok(quote! {
         impl Model for #struct_type {
             fn event(&mut self, _: &mut EventContext, event: &mut Event) {
-                event.take::<#ray_type>().map(|setter| setter.apply(self));
+                event.take(|setter: #ray_type, _| setter.apply(self));
             }
         }
     })

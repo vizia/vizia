@@ -129,21 +129,22 @@ impl Event {
     /// # }
     /// # impl Model for AppData {
     /// #     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-    /// if let Some(app_event) = event.take() {
-    ///     match app_event {
-    ///         AppEvent::Increment => {
-    ///             self.count += 1;
-    ///         }
-    ///
-    ///         AppEvent::Decrement => {
-    ///             self.count -= 1;
-    ///         }
+    /// event.take(|app_event, meta| match app_event {
+    ///     AppEvent::Increment => {
+    ///         self.count += 1;
     ///     }
-    /// }
+    ///
+    ///     AppEvent::Decrement => {
+    ///         self.count -= 1;
+    ///     }
+    /// });
     /// #     }
     /// # }
     /// ```
-    pub fn take<M: Any + Send>(&mut self) -> Option<M> {
+    pub fn take<M: Any + Send, F>(&mut self, f: F)
+    where
+        F: FnOnce(M, &mut EventMeta),
+    {
         if let Some(message) = &self.message {
             if message.as_ref().is::<M>() {
                 // Safe to unwrap because we already checked it exists
@@ -151,10 +152,9 @@ impl Event {
                 // Safe to unwrap because we already checked it can be cast to M
                 let v = m.downcast().unwrap();
                 self.meta.consume();
-                return Some(*v);
+                (f)(*v, &mut self.meta);
             }
         }
-        None
     }
 }
 

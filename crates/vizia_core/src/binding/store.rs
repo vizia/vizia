@@ -1,6 +1,5 @@
 use std::collections::{hash_map::DefaultHasher, HashSet};
 use std::hash::{Hash, Hasher};
-use std::ops::Deref;
 
 use crate::{model::ModelOrView, prelude::*};
 
@@ -24,6 +23,7 @@ pub(crate) trait Store {
     fn remove_observer(&mut self, observer: &Entity);
     /// Returns the number of obersers for the store.
     fn num_observers(&self) -> usize;
+    /// Returns true if the model or view is the source of the store.
     fn contains_source(&self, model: ModelOrView) -> bool;
 
     fn name(&self) -> String;
@@ -51,7 +51,7 @@ where
             return false;
         }
 
-        self.old = Some(new_data.deref().clone());
+        self.old = Some(new_data.into_owned());
 
         true
     }

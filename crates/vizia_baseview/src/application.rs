@@ -376,13 +376,13 @@ impl ApplicationRunner {
 
                 match s {
                     MouseButtonState::Pressed => {
-                        cx.emit_origin(WindowEvent::KeyDown(event.code, Some(event.key.clone())));
-
                         if let vizia_input::Key::Character(written) = &event.key {
                             for chr in written.chars() {
                                 cx.emit_origin(WindowEvent::CharInput(chr));
                             }
                         }
+
+                        cx.emit_origin(WindowEvent::KeyDown(event.code, Some(event.key)));
                     }
 
                     MouseButtonState::Released => {

@@ -75,7 +75,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 pub(crate) trait FluentStore {
-    fn get(&self, cx: &EventContext) -> FluentValue<'static>;
+    fn get_val(&self, cx: &EventContext) -> FluentValue<'static>;
     fn get_val2(&self, cx: &Context) -> FluentValue<'static>;
     fn make_clone(&self) -> Box<dyn FluentStore>;
     fn bind(&self, cx: &mut Context, closure: Box<dyn Fn(&mut Context)>);
@@ -96,7 +96,7 @@ where
     L: Lens,
     <L as Lens>::Target: Into<FluentValue<'static>> + Data,
 {
-    fn get(&self, cx: &EventContext) -> FluentValue<'static> {
+    fn get_val(&self, cx: &EventContext) -> FluentValue<'static> {
         self.lens
             .view(
                 cx.data()
@@ -129,7 +129,7 @@ impl<T> FluentStore for ValState<T>
 where
     T: 'static + Clone + Into<FluentValue<'static>>,
 {
-    fn get(&self, _cx: &EventContext) -> FluentValue<'static> {
+    fn get_val(&self, _cx: &EventContext) -> FluentValue<'static> {
         self.val.clone().into()
     }
 
@@ -173,7 +173,7 @@ impl Localized {
     fn get_args(&self, cx: &EventContext) -> FluentArgs {
         let mut res = FluentArgs::new();
         for (name, arg) in &self.args {
-            res.set(name.to_owned(), arg.get(cx));
+            res.set(name.to_owned(), arg.get_val(cx));
         }
         res
     }

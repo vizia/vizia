@@ -121,7 +121,7 @@ impl ResourceManager {
         let default_ref = &default; // ???
         let langs = fluent_langneg::negotiate::negotiate_languages(
             &[locale],
-            available.as_slice(),
+            &available,
             Some(&default_ref),
             fluent_langneg::NegotiationStrategy::Filtering,
         );
