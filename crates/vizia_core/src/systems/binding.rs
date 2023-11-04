@@ -1,5 +1,8 @@
 use crate::{binding::StoreId, model::ModelOrView, prelude::*};
-use std::{any::TypeId, collections::HashMap};
+use std::{
+    any::TypeId,
+    collections::{HashMap, HashSet},
+};
 
 pub(crate) fn binding_system(cx: &mut Context) {
     let mut observers: HashMap<Entity, (Entity, Option<TypeId>, StoreId)> = HashMap::new();
@@ -47,6 +50,16 @@ pub(crate) fn binding_system(cx: &mut Context) {
             .filter_map(|ent| observers.get(&ent).map(|e| (ent, *e)))
             .collect::<Vec<_>>();
 
+        // println!(
+        //     "{:?}",
+        //     ordered_observers
+        //         .iter()
+        //         .map(|(ob, (src, _, _))| (ob.index(), src.index()))
+        //         .collect::<Vec<_>>()
+        // );
+
+        let mut updated_stores: HashSet<StoreId> = HashSet::new();
+
         // Update observers in tree order.
         for (observer, (source, model_id, store_id)) in ordered_observers.into_iter() {
             // Skip observers that have been destroyed.
@@ -54,29 +67,38 @@ pub(crate) fn binding_system(cx: &mut Context) {
                 continue;
             }
 
-            if let Some(model_data_store) = cx.data.get_mut(&source) {
-                if let Some(store) = model_data_store.stores.get_mut(&store_id) {
-                    let model_or_view = if let Some(model_id) = model_id {
-                        model_data_store
-                            .models
-                            .get(&model_id)
-                            .map(|model| ModelOrView::Model(model.as_ref()))
-                    } else {
-                        cx.views.get(&source).map(|view| ModelOrView::View(view.as_ref()))
-                    };
+            if updated_stores.contains(&store_id) {
+                update_binding(cx, observer);
+            } else {
+                if let Some(model_data_store) = cx.data.get_mut(&source) {
+                    if let Some(store) = model_data_store.stores.get_mut(&store_id) {
+                        let model_or_view = if let Some(model_id) = model_id {
+                            model_data_store
+                                .models
+                                .get(&model_id)
+                                .map(|model| ModelOrView::Model(model.as_ref()))
+                        } else {
+                            cx.views.get(&source).map(|view| ModelOrView::View(view.as_ref()))
+                        };
 
-                    if let Some(model_or_view) = model_or_view {
-                        if store.update(model_or_view) {
-                            if let Some(mut binding) = cx.bindings.remove(&observer) {
-                                cx.with_current(observer, |cx| {
-                                    binding.update(cx);
-                                });
-                                cx.bindings.insert(observer, binding);
+                        if let Some(model_or_view) = model_or_view {
+                            if store.update(model_or_view) {
+                                updated_stores.insert(store_id);
+                                update_binding(cx, observer);
                             }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+fn update_binding(cx: &mut Context, observer: Entity) {
+    if let Some(mut binding) = cx.bindings.remove(&observer) {
+        cx.with_current(observer, |cx| {
+            binding.update(cx);
+        });
+        cx.bindings.insert(observer, binding);
     }
 }
