@@ -69,23 +69,21 @@ pub(crate) fn binding_system(cx: &mut Context) {
 
             if updated_stores.contains(&store_id) {
                 update_binding(cx, observer);
-            } else {
-                if let Some(model_data_store) = cx.data.get_mut(&source) {
-                    if let Some(store) = model_data_store.stores.get_mut(&store_id) {
-                        let model_or_view = if let Some(model_id) = model_id {
-                            model_data_store
-                                .models
-                                .get(&model_id)
-                                .map(|model| ModelOrView::Model(model.as_ref()))
-                        } else {
-                            cx.views.get(&source).map(|view| ModelOrView::View(view.as_ref()))
-                        };
+            } else if let Some(model_data_store) = cx.data.get_mut(&source) {
+                if let Some(store) = model_data_store.stores.get_mut(&store_id) {
+                    let model_or_view = if let Some(model_id) = model_id {
+                        model_data_store
+                            .models
+                            .get(&model_id)
+                            .map(|model| ModelOrView::Model(model.as_ref()))
+                    } else {
+                        cx.views.get(&source).map(|view| ModelOrView::View(view.as_ref()))
+                    };
 
-                        if let Some(model_or_view) = model_or_view {
-                            if store.update(model_or_view) {
-                                updated_stores.insert(store_id);
-                                update_binding(cx, observer);
-                            }
+                    if let Some(model_or_view) = model_or_view {
+                        if store.update(model_or_view) {
+                            updated_stores.insert(store_id);
+                            update_binding(cx, observer);
                         }
                     }
                 }
