@@ -882,11 +882,11 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--example=7guis_crud",
+                    "--example=crud",
                     "--package=vizia"
                 ],
                 "filter": {
-                    "name": "7guis_crud",
+                    "name": "crud",
                     "kind": "example"
                 }
             },

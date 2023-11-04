@@ -96,23 +96,21 @@ where
                             let f = Self::filter_text.get_val(cx);
                             // List view doesn't have an option for filtering (yet) so we do it manually instead.
                             VStack::new(cx, |cx| {
-                                let ll: Vec<usize> = if let Some(l) = list.get(cx) {
-                                    l.iter()
-                                        .enumerate()
-                                        .filter(|(_, item)| {
-                                            if f.is_empty() {
-                                                true
-                                            } else {
-                                                item.to_string()
-                                                    .to_ascii_lowercase()
-                                                    .contains(&f.to_ascii_lowercase())
-                                            }
-                                        })
-                                        .map(|(idx, _)| idx)
-                                        .collect::<Vec<_>>()
-                                } else {
-                                    Vec::new()
-                                };
+                                let ll = list
+                                    .get(cx)
+                                    .iter()
+                                    .enumerate()
+                                    .filter(|(_, item)| {
+                                        if f.is_empty() {
+                                            true
+                                        } else {
+                                            item.to_string()
+                                                .to_ascii_lowercase()
+                                                .contains(&f.to_ascii_lowercase())
+                                        }
+                                    })
+                                    .map(|(idx, _)| idx)
+                                    .collect::<Vec<_>>();
 
                                 for index in ll.into_iter() {
                                     let item = list.index(index);
@@ -240,23 +238,19 @@ where
                     }
                 };
 
-                if let Some(list) = self.list_lens.get(cx) {
-                    if let Some((next_index, _)) = list
+                let list = self.list_lens.get(cx);
+                if let Some((next_index, _)) =
+                    list.iter().enumerate().skip_while(|(idx, _)| *idx != self.hovered).find(filter)
+                {
+                    self.hovered = next_index;
+                } else {
+                    let list_len = list.len();
+                    self.hovered = list
                         .iter()
                         .enumerate()
-                        .skip_while(|(idx, _)| *idx != self.hovered)
                         .find(filter)
-                    {
-                        self.hovered = next_index;
-                    } else {
-                        let list_len = list.len();
-                        self.hovered = list
-                            .iter()
-                            .enumerate()
-                            .find(filter)
-                            .map(|(index, _)| index)
-                            .unwrap_or(list_len);
-                    }
+                        .map(|(index, _)| index)
+                        .unwrap_or(list_len);
                 }
             }
 
@@ -300,18 +294,17 @@ where
                             }
                         };
 
-                        if let Some(list) = self.list_lens.get(cx) {
-                            if let Some((next_index, _)) = list
-                                .iter()
-                                .enumerate()
-                                .filter(filter)
-                                .skip_while(|(idx, _)| *idx != self.hovered)
-                                .nth(1)
-                            {
-                                self.hovered = next_index;
-                            } else {
-                                self.hovered = list.iter().enumerate().find(filter).unwrap().0;
-                            }
+                        let list = self.list_lens.get(cx);
+                        if let Some((next_index, _)) = list
+                            .iter()
+                            .enumerate()
+                            .filter(filter)
+                            .skip_while(|(idx, _)| *idx != self.hovered)
+                            .nth(1)
+                        {
+                            self.hovered = next_index;
+                        } else {
+                            self.hovered = list.iter().enumerate().find(filter).unwrap().0;
                         }
                     }
                 }
@@ -328,20 +321,18 @@ where
                             }
                         };
 
-                        if let Some(list) = self.list_lens.get(cx) {
-                            if let Some((next_index, _)) = list
-                                .iter()
-                                .enumerate()
-                                .rev()
-                                .filter(filter)
-                                .skip_while(|(idx, _)| *idx != self.hovered)
-                                .nth(1)
-                            {
-                                self.hovered = next_index;
-                            } else {
-                                self.hovered =
-                                    list.iter().enumerate().rev().find(filter).unwrap().0;
-                            }
+                        let list = self.list_lens.get(cx);
+                        if let Some((next_index, _)) = list
+                            .iter()
+                            .enumerate()
+                            .rev()
+                            .filter(filter)
+                            .skip_while(|(idx, _)| *idx != self.hovered)
+                            .nth(1)
+                        {
+                            self.hovered = next_index;
+                        } else {
+                            self.hovered = list.iter().enumerate().rev().find(filter).unwrap().0;
                         }
                     }
                 }

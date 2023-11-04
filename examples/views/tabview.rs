@@ -14,7 +14,7 @@ fn main() {
         AppData { list: vec!["Tab1", "Tab2"] }.build(cx);
 
         ExamplePage::new(cx, |cx| {
-            TabView::new(cx, AppData::list, |cx, item| match *item.get(cx).unwrap() {
+            TabView::new(cx, AppData::list, |cx, item| match item.get_val(cx) {
                 "Tab1" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).hoverable(false);

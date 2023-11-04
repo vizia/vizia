@@ -102,8 +102,8 @@ where
                 cx.data()
                     .expect("Failed to get data from context. Has it been built into the tree?"),
             )
-            .map(|t| t.into_owned().into())
-            .unwrap_or_else(|| "".into())
+            .into_owned()
+            .into()
     }
 
     fn get_val2(&self, cx: &Context) -> FluentValue<'static> {
@@ -112,8 +112,8 @@ where
                 cx.data()
                     .expect("Failed to get data from context. Has it been built into the tree?"),
             )
-            .map(|t| t.into_owned().into())
-            .unwrap_or_else(|| "".into())
+            .into_owned()
+            .into()
     }
 
     fn make_clone(&self) -> Box<dyn FluentStore> {
@@ -262,6 +262,10 @@ impl Localized {
 }
 
 impl Res<String> for Localized {
+    fn get<'a>(&'a self, cx: &'a impl DataContext) -> LensValue<'a, String> {
+        LensValue::Owned(self.get_val(cx))
+    }
+
     fn get_val(&self, cx: &impl DataContext) -> String {
         let cx = cx.as_context().expect("Failed to get context");
         let locale = &cx.environment().locale;

@@ -24,6 +24,7 @@ pub(crate) trait Store {
     fn remove_observer(&mut self, observer: &Entity);
     /// Returns the number of obersers for the store.
     fn num_observers(&self) -> usize;
+    fn contains_source(&self, model: ModelOrView) -> bool;
 
     fn name(&self) -> String;
 }
@@ -39,9 +40,12 @@ where
     L: Lens<Target = T>,
     <L as Lens>::Target: Data,
 {
+    fn contains_source(&self, model: ModelOrView) -> bool {
+        model.downcast_ref::<L::Source>().is_some()
+    }
     fn update(&mut self, model: ModelOrView) -> bool {
         let Some(data) = model.downcast_ref::<L::Source>() else { return false };
-        let Some(new_data) = self.lens.view(data) else { return false };
+        let new_data = self.lens.view(data);
 
         if matches!(&self.old, Some(old) if old.same(&new_data)) {
             return false;

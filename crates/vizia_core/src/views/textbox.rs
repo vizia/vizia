@@ -1096,35 +1096,7 @@ where
                     cx.set_checked(true);
                     self.reset_caret_timer(cx);
 
-                    if let Some(text) = self.lens.get(cx) {
-                        let text = text.to_string_local(cx);
-                        self.placeholder_shown = text.is_empty();
-
-                        self.select_all(cx);
-                        self.insert_text(cx, &text);
-                        self.set_caret(cx);
-
-                        if let Ok(value) = &text.parse::<L::Target>() {
-                            if let Some(validate) = &self.validate {
-                                cx.set_valid(validate(value));
-                            } else {
-                                cx.set_valid(true);
-                            }
-                        } else {
-                            cx.set_valid(false);
-                        }
-                    }
-                }
-            }
-
-            TextEvent::EndEdit => {
-                self.deselect(cx);
-                self.edit = false;
-                cx.set_checked(false);
-                cx.release();
-                cx.stop_timer(self.caret_timer);
-
-                if let Some(text) = self.lens.get(cx) {
+                    let text = self.lens.get(cx);
                     let text = text.to_string_local(cx);
                     self.placeholder_shown = text.is_empty();
 
@@ -1141,6 +1113,32 @@ where
                     } else {
                         cx.set_valid(false);
                     }
+                }
+            }
+
+            TextEvent::EndEdit => {
+                self.deselect(cx);
+                self.edit = false;
+                cx.set_checked(false);
+                cx.release();
+                cx.stop_timer(self.caret_timer);
+
+                let text = self.lens.get(cx);
+                let text = text.to_string_local(cx);
+                self.placeholder_shown = text.is_empty();
+
+                self.select_all(cx);
+                self.insert_text(cx, &text);
+                self.set_caret(cx);
+
+                if let Ok(value) = &text.parse::<L::Target>() {
+                    if let Some(validate) = &self.validate {
+                        cx.set_valid(validate(value));
+                    } else {
+                        cx.set_valid(true);
+                    }
+                } else {
+                    cx.set_valid(false);
                 }
             }
 

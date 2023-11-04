@@ -8,8 +8,8 @@ use crate::{
 macro_rules! impl_res_simple {
     ($t:ty) => {
         impl Res<$t> for $t {
-            fn get<'a>(&self, _: &impl DataContext) -> Option<LensValue<$t>> {
-                Some(LensValue::Borrowed(self))
+            fn get<'a>(&self, _: &impl DataContext) -> LensValue<$t> {
+                LensValue::Borrowed(self)
             }
 
             fn get_val(&self, _: &impl DataContext) -> $t {
@@ -31,8 +31,8 @@ macro_rules! impl_res_simple {
 macro_rules! impl_res_clone {
     ($t:ty) => {
         impl Res<$t> for $t {
-            fn get<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, $t>> {
-                Some(LensValue::Borrowed(self))
+            fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, $t> {
+                LensValue::Borrowed(self)
             }
 
             fn get_val(&self, _: &impl DataContext) -> $t {
@@ -58,9 +58,7 @@ macro_rules! impl_res_clone {
 /// such as `String` or `&str`, or a lens to a type which implements `ToString`.
 pub trait Res<T> {
     #[allow(unused_variables)]
-    fn get<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, T>> {
-        None
-    }
+    fn get<'a>(&'a self, cx: &'a impl DataContext) -> LensValue<'a, T>;
 
     fn get_val(&self, _: &impl DataContext) -> T;
 
@@ -110,12 +108,12 @@ where
     L: Lens,
     L::Target: Data,
 {
-    fn get<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, L::Target>> {
-        self.view(cx.data()?)
+    fn get<'a>(&'a self, cx: &'a impl DataContext) -> LensValue<'a, L::Target> {
+        self.view(cx.data().expect("Failed to get data from context"))
     }
 
     fn get_val(&self, cx: &impl DataContext) -> L::Target {
-        self.get(cx).unwrap().into_owned()
+        self.get(cx).into_owned()
     }
 
     fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
@@ -123,7 +121,7 @@ where
         F: 'static + Fn(&mut Context, Self),
     {
         cx.with_current(entity, |cx| {
-            Binding::new(cx, self.clone(), move |cx, val| {
+            Binding::new(cx, self, move |cx, val| {
                 cx.with_current(entity, |cx| {
                     (closure)(cx, val);
                 });
@@ -133,6 +131,10 @@ where
 }
 
 impl<'i> Res<FontFamily<'i>> for FontFamily<'i> {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> Self {
         self.clone()
     }
@@ -148,6 +150,10 @@ impl<'i> Res<FontFamily<'i>> for FontFamily<'i> {
 }
 
 impl<'i> Res<BackgroundImage<'i>> for BackgroundImage<'i> {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> Self {
         self.clone()
     }
@@ -163,6 +169,10 @@ impl<'i> Res<BackgroundImage<'i>> for BackgroundImage<'i> {
 }
 
 impl<'s> Res<&'s str> for &'s str {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> &'s str {
         self
     }
@@ -178,6 +188,10 @@ impl<'s> Res<&'s str> for &'s str {
 }
 
 impl<'s> Res<&'s String> for &'s String {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> Self {
         self
     }
@@ -193,6 +207,10 @@ impl<'s> Res<&'s String> for &'s String {
 }
 
 impl Res<String> for String {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> Self {
         self.clone()
     }
@@ -208,6 +226,10 @@ impl Res<String> for String {
 }
 
 impl Res<Transform> for Transform {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> Transform {
         self.clone()
     }
@@ -223,8 +245,8 @@ impl Res<Transform> for Transform {
 }
 
 impl Res<Color> for Color {
-    fn get<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Color>> {
-        Some(LensValue::Borrowed(self))
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
     }
 
     fn get_val(&self, _: &impl DataContext) -> Color {
@@ -242,6 +264,10 @@ impl Res<Color> for Color {
 }
 
 impl Res<LinearGradient> for LinearGradient {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> LinearGradient {
         self.clone()
     }
@@ -257,6 +283,10 @@ impl Res<LinearGradient> for LinearGradient {
 }
 
 impl Res<Units> for Units {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> Units {
         *self
     }
@@ -272,6 +302,10 @@ impl Res<Units> for Units {
 }
 
 impl Res<Visibility> for Visibility {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> Visibility {
         *self
     }
@@ -287,6 +321,10 @@ impl Res<Visibility> for Visibility {
 }
 
 impl Res<Display> for Display {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> Display {
         *self
     }
@@ -302,6 +340,10 @@ impl Res<Display> for Display {
 }
 
 impl Res<LayoutType> for LayoutType {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> LayoutType {
         *self
     }
@@ -317,6 +359,10 @@ impl Res<LayoutType> for LayoutType {
 }
 
 impl Res<PositionType> for PositionType {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> PositionType {
         *self
     }
@@ -332,6 +378,10 @@ impl Res<PositionType> for PositionType {
 }
 
 impl<T: Clone + Res<T>> Res<Option<T>> for Option<T> {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> Option<T> {
         self.clone()
     }
@@ -345,6 +395,10 @@ impl<T: Clone + Res<T>> Res<Option<T>> for Option<T> {
 }
 
 impl Res<Length> for Length {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> Self {
         self.clone()
     }
@@ -358,6 +412,10 @@ impl Res<Length> for Length {
 }
 
 impl Res<LengthOrPercentage> for LengthOrPercentage {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> Self {
         self.clone()
     }
@@ -371,6 +429,10 @@ impl Res<LengthOrPercentage> for LengthOrPercentage {
 }
 
 impl Res<RGBA> for RGBA {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> Self {
         *self
     }
@@ -384,6 +446,10 @@ impl Res<RGBA> for RGBA {
 }
 
 impl<T: Clone + Res<T>> Res<Vec<T>> for Vec<T> {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> Vec<T> {
         self.clone()
     }
@@ -397,6 +463,10 @@ impl<T: Clone + Res<T>> Res<Vec<T>> for Vec<T> {
 }
 
 impl<T: Clone + Res<T>, const N: usize> Res<[T; N]> for [T; N] {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> Self {
         self.clone()
     }
@@ -410,6 +480,10 @@ impl<T: Clone + Res<T>, const N: usize> Res<[T; N]> for [T; N] {
 }
 
 impl Res<FamilyOwned> for FamilyOwned {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _: &impl DataContext) -> FamilyOwned {
         self.clone()
     }
@@ -423,6 +497,10 @@ impl Res<FamilyOwned> for FamilyOwned {
 }
 
 impl<T1: Clone, T2: Clone> Res<(T1, T2)> for (T1, T2) {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _cx: &impl DataContext) -> (T1, T2) {
         self.clone()
     }
@@ -438,6 +516,10 @@ impl<T1: Clone, T2: Clone> Res<(T1, T2)> for (T1, T2) {
 }
 
 impl<T1: Clone, T2: Clone, T3: Clone> Res<(T1, T2, T3)> for (T1, T2, T3) {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _cx: &impl DataContext) -> (T1, T2, T3) {
         self.clone()
     }
@@ -453,6 +535,10 @@ impl<T1: Clone, T2: Clone, T3: Clone> Res<(T1, T2, T3)> for (T1, T2, T3) {
 }
 
 impl<T1: Clone, T2: Clone, T3: Clone, T4: Clone> Res<(T1, T2, T3, T4)> for (T1, T2, T3, T4) {
+    fn get<'a>(&'a self, _: &'a impl DataContext) -> LensValue<'a, Self> {
+        LensValue::Borrowed(self)
+    }
+
     fn get_val(&self, _cx: &impl DataContext) -> (T1, T2, T3, T4) {
         self.clone()
     }

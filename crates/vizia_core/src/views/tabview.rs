@@ -25,7 +25,7 @@ impl TabView {
             // Tab headers
             VStack::new(cx, move |cx| {
                 Binding::new(cx, lens.map(|list| list.len()), move |cx, list_length| {
-                    let list_length = list_length.get(cx).map_or(0, |d| *d);
+                    let list_length = list_length.get_val(cx);
                     for index in 0..list_length {
                         let l = lens.index(index);
                         let builder = (content2)(cx, l).header;
