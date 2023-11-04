@@ -195,7 +195,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
     {
         ScrollContent::new(cx, content).bind(data, |handle, data| {
             let scale_factor = handle.scale_factor();
-            let data = data.get_val(&handle);
+            let data = data.get(&handle);
             let left =
                 ((data.inner_width - data.container_width) * data.scroll_x).round() / scale_factor;
             let top = ((data.inner_height - data.container_height) * data.scroll_y).round()
@@ -255,7 +255,7 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
                     if cx.modifiers.contains(Modifiers::SHIFT) { (-*y, -*x) } else { (-*x, -*y) };
 
                 // What percentage of the negative space does this cross?
-                let data = self.data.get_val(cx);
+                let data = self.data.get(cx);
                 if x != 0.0 && data.inner_width > data.container_width {
                     let negative_space = data.inner_width - data.container_width;
                     let logical_delta = x * SCROLL_SENSITIVITY / negative_space;

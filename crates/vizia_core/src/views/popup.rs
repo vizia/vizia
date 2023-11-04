@@ -55,13 +55,13 @@ where
                         geo.set(GeoChanged::WIDTH_CHANGED, true);
                     }
 
-                    if lens.get_val(cx) {
+                    if lens.get(cx) {
                         (content)(cx);
                     }
                 });
             })
             .bind(lens, move |handle, val| {
-                if val.get_val(&handle) && capture_focus {
+                if val.get(&handle) && capture_focus {
                     handle.lock_focus_to_within();
                 }
             })
@@ -86,7 +86,7 @@ where
         let focus_event = Box::new(f);
         self.cx.with_current(self.entity, |cx| {
             cx.add_listener(move |popup: &mut Popup<L>, cx, event| {
-                let flag: bool = popup.lens.get_val(cx).into();
+                let flag: bool = popup.lens.get(cx).into();
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
                         if flag && meta.origin != cx.current() {

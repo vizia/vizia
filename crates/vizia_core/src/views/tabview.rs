@@ -25,14 +25,14 @@ impl TabView {
             // Tab headers
             VStack::new(cx, move |cx| {
                 Binding::new(cx, lens.map(|list| list.len()), move |cx, list_length| {
-                    let list_length = list_length.get_val(cx);
+                    let list_length = list_length.get(cx);
                     for index in 0..list_length {
                         let l = lens.index(index);
                         let builder = (content2)(cx, l).header;
                         TabHeader::new(cx, index, builder).bind(
                             TabView::selected_index,
                             move |handle, selected_index| {
-                                let selected_index = selected_index.get_val(&handle);
+                                let selected_index = selected_index.get(&handle);
                                 handle.checked(selected_index == index);
                             },
                         );
@@ -46,7 +46,7 @@ impl TabView {
             // Tab content
             VStack::new(cx, |cx| {
                 Binding::new(cx, TabView::selected_index, move |cx, selected| {
-                    let selected = selected.get_val(cx);
+                    let selected = selected.get(cx);
                     let l = lens.index(selected);
                     ((content)(cx, l).content)(cx);
                 });
@@ -82,7 +82,7 @@ impl<'a> Handle<'a, TabView> {
     pub fn with_selected<U: Into<usize>>(mut self, selected: impl Res<U>) -> Self {
         let entity = self.entity();
         selected.set_or_bind(self.context(), entity, |cx, selected| {
-            let index = selected.get_val(cx).into();
+            let index = selected.get(cx).into();
             cx.emit(TabEvent::SetSelected(index));
         });
 

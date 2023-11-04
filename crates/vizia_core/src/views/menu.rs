@@ -118,7 +118,7 @@ impl Submenu {
 
         if handle.data::<MenuBar>().is_some() {
             handle.bind(MenuBar::is_open, |handle, is_open| {
-                let is_open = is_open.get_val(&handle);
+                let is_open = is_open.get(&handle);
                 handle.modify(|menu_button| menu_button.open_on_hover = is_open);
             })
         } else {
@@ -285,7 +285,7 @@ where
         let focus_event = Box::new(f);
         self.cx.with_current(self.entity, |cx| {
             cx.add_listener(move |popup: &mut MenuPopup<L>, cx, event| {
-                let flag: bool = popup.lens.get_val(cx);
+                let flag: bool = popup.lens.get(cx);
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
                         if flag && meta.origin != cx.current() {

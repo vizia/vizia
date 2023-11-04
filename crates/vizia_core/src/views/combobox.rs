@@ -48,7 +48,7 @@ where
             selected,
             p: PhantomData,
             is_open: false,
-            hovered: selected.get_val(cx),
+            hovered: selected.get(cx),
             placeholder: String::from("One"),
         }
         .build(cx, |cx| {
@@ -93,7 +93,7 @@ where
                         // Seems that the layout bugs out when rebuilding the contents of a scrollview that's been scrolled to 100%.
                         // So instead we just rebuild the whole scrollview.
                         ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
-                            let f = Self::filter_text.get_val(cx);
+                            let f = Self::filter_text.get(cx);
                             // List view doesn't have an option for filtering (yet) so we do it manually instead.
                             VStack::new(cx, |cx| {
                                 let ll = list
@@ -174,7 +174,7 @@ where
             .height(Auto);
         })
         .bind(selected, move |handle, selected| {
-            let selected_item = list_lens.index(selected.get_val(&handle)).get_val(&handle);
+            let selected_item = list_lens.index(selected.get(&handle)).get(&handle);
             handle.modify(|combobox| combobox.placeholder = selected_item.to_string());
         })
     }
@@ -194,7 +194,7 @@ where
         event.map(|combobox_event, _| match combobox_event {
             ComboBoxEvent::SetOption(index) => {
                 // Set the placeholder text to the selected item.
-                let selected_item = self.list_lens.index(*index).get_val(cx);
+                let selected_item = self.list_lens.index(*index).get(cx);
                 self.placeholder = selected_item.to_string();
 
                 // Call the on_select callback.
@@ -263,12 +263,12 @@ where
             // User pressed on the textbox or focused it
             TextEvent::StartEdit => {
                 self.is_open = true;
-                self.hovered = self.selected.get_val(cx);
+                self.hovered = self.selected.get(cx);
             }
 
             TextEvent::Submit(enter) => {
-                let selected = self.selected.get_val(cx);
-                if *enter && self.hovered < self.list_lens.get_val(cx).len() {
+                let selected = self.selected.get(cx);
+                if *enter && self.hovered < self.list_lens.get(cx).len() {
                     // User pressed the enter key
                     cx.emit(ComboBoxEvent::SetOption(self.hovered));
                 } else {
@@ -397,7 +397,7 @@ impl ComboPopup {
                         geo.set(GeoChanged::WIDTH_CHANGED, true);
                     }
 
-                    if lens.get_val(cx) {
+                    if lens.get(cx) {
                         if capture_focus {
                             VStack::new(cx, &content).lock_focus_to_within();
                         } else {

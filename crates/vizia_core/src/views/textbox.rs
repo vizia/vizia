@@ -181,8 +181,8 @@ where
 
             Binding::new(cx, lens, move |cx: &mut Context, text| {
                 Binding::new(cx, Self::edit, move |cx, edit| {
-                    if !edit.get_val(cx) {
-                        let text_str = text.get_val(cx).to_string();
+                    if !edit.get(cx) {
+                        let text_str = text.get(cx).to_string();
                         cx.emit(TextEvent::SelectAll);
                         cx.emit(TextEvent::InsertText(text_str));
                         cx.emit(TextEvent::Scroll(0.0, 0.0));
@@ -191,7 +191,7 @@ where
             });
 
             Binding::new(cx, Self::placeholder, |cx, placeholder| {
-                let placeholder_string = placeholder.get_val(cx);
+                let placeholder_string = placeholder.get(cx);
                 if !placeholder_string.is_empty() {
                     Label::new(cx, &placeholder_string)
                         .size(Stretch(1.0))
@@ -532,7 +532,7 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
     /// Sets the placeholder text that appears when the textbox has no value.
     pub fn placeholder<P: ToString>(self, text: impl Res<P>) -> Self {
         text.set_or_bind(self.cx, self.entity, |cx, val| {
-            cx.emit(TextEvent::SetPlaceholder(val.get_val(cx).to_string()));
+            cx.emit(TextEvent::SetPlaceholder(val.get(cx).to_string()));
             cx.needs_relayout();
             cx.needs_redraw();
         });

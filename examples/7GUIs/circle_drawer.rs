@@ -306,7 +306,7 @@ impl CircleDrawer {
 
             Popup::new(cx, CircleDrawerData::dialog_open, true, |cx| {
                 let selected =
-                    CircleDrawerData::circles_data.then(CircleData::selected).get_val(cx).unwrap();
+                    CircleDrawerData::circles_data.then(CircleData::selected).get(cx).unwrap();
 
                 VStack::new(cx, |cx| {
                     Label::new(

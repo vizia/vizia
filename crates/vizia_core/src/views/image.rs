@@ -7,7 +7,7 @@ pub struct Image {}
 impl Image {
     pub fn new<T: ToString>(cx: &mut Context, img: impl Res<T>) -> Handle<'_, Self> {
         // TODO: Make this reactive
-        let img = vec![BackgroundImage::Url(Url { url: img.get_val(cx).to_string().into() })];
+        let img = vec![BackgroundImage::Url(Url { url: img.get(cx).to_string().into() })];
         Self {}.build(cx, |_| {}).background_image(img)
     }
 }

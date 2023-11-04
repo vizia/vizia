@@ -155,9 +155,9 @@ impl Checkbox {
             .build(cx, |_| {})
             .bind(checked, move |handle, c| {
                 handle.bind(intermediate, move |handle, i| {
-                    if c.get_val(&handle) {
+                    if c.get(&handle) {
                         handle.text(ICON_CHECK).toggle_class("intermediate", false);
-                    } else if i.get_val(&handle) {
+                    } else if i.get(&handle) {
                         handle.text("-").toggle_class("intermediate", true);
                     } else {
                         handle.text("").toggle_class("intermediate", false);

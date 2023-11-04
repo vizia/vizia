@@ -28,12 +28,12 @@ fn main() {
                             //.child_bottom(Stretch(1.0))
                             .cursor(CursorIcon::Hand)
                             .bind(AppData::choice, move |handle, selected| {
-                                if item.get_val(&handle) == selected.get_val(&handle) {
+                                if item.get(&handle) == selected.get(&handle) {
                                     handle.checked(true);
                                 }
                             })
                             .on_press(move |cx| {
-                                cx.emit(AppDataSetter::Choice(item.get_val(cx)));
+                                cx.emit(AppDataSetter::Choice(item.get(cx)));
                                 cx.emit(PopupEvent::Close);
                             });
                     })

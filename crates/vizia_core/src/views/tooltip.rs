@@ -14,7 +14,7 @@ impl Tooltip {
             .hoverable(false)
             .on_build(|ex| {
                 ex.add_listener(move |_: &mut Tooltip, ex, event| {
-                    let flag = TooltipModel::tooltip_visible.get_val(ex);
+                    let flag = TooltipModel::tooltip_visible.get(ex);
                     event.map(|window_event, meta| match window_event {
                         WindowEvent::MouseDown(_) => {
                             if flag && meta.origin != ex.current() {

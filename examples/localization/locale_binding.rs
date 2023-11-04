@@ -27,7 +27,7 @@ fn main() {
         .height(Auto);
 
         Binding::new(cx, Environment::locale, |cx, locale| {
-            match locale.get_val(cx).to_string().as_ref() {
+            match locale.get(cx).to_string().as_ref() {
                 "en-US" => {
                     Element::new(cx)
                         .background_color(Color::from("#006847"))

@@ -42,7 +42,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
                 .class("thumb")
                 .focusable(true)
                 .bind(value, move |handle, value| {
-                    let value = value.get_val(&handle);
+                    let value = value.get(&handle);
                     match orientation {
                         Orientation::Horizontal => {
                             handle.left(Units::Stretch(value)).right(Units::Stretch(1.0 - value))
@@ -53,7 +53,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
                     };
                 })
                 .bind(ratio, move |handle, ratio| {
-                    let ratio = ratio.get_val(&handle);
+                    let ratio = ratio.get(&handle);
                     match orientation {
                         Orientation::Horizontal => handle.width(Units::Percentage(ratio * 100.0)),
                         Orientation::Vertical => handle.height(Units::Percentage(ratio * 100.0)),
@@ -122,7 +122,7 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
             match window_event {
                 WindowEvent::MouseDown(MouseButton::Left) => {
                     if meta.target != cx.current() {
-                        self.reference_points = Some((pos, self.value.get_val(cx)));
+                        self.reference_points = Some((pos, self.value.get(cx)));
                         cx.capture();
                         cx.set_active(true);
                         self.dragging = true;
@@ -182,7 +182,7 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                             }
                         };
                         let changed =
-                            self.compute_new_value(cx, physical_delta, self.value.get_val(cx));
+                            self.compute_new_value(cx, physical_delta, self.value.get(cx));
                         self.change(cx, changed);
                     }
                 }
@@ -242,7 +242,7 @@ impl<'a, L1: 'static + Lens<Target = f32>> Handle<'a, Scrollbar<L1>> {
     pub fn scroll_to_cursor(mut self, scroll_to_cursor: impl Res<bool>) -> Self {
         let entity = self.entity();
         scroll_to_cursor.set_or_bind(self.context(), entity, |cx, val| {
-            let v = val.get_val(cx);
+            let v = val.get(cx);
             cx.emit(ScrollBarEvent::SetScrollToCursor(v));
         });
 

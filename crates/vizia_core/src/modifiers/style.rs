@@ -70,7 +70,7 @@ pub trait StyleModifiers: internal::Modifiable {
         let name = name.to_owned();
         let entity = self.entity();
         applied.set_or_bind(self.context(), entity, move |cx, applied| {
-            let applied = applied.get_val(cx);
+            let applied = applied.get(cx);
             if let Some(class_list) = cx.style.classes.get_mut(entity) {
                 if applied {
                     class_list.insert(name.clone());
@@ -98,7 +98,7 @@ pub trait StyleModifiers: internal::Modifiable {
         }
 
         state.set_or_bind(self.context(), entity, |cx, val| {
-            let val = val.get_val(cx).into();
+            let val = val.get(cx).into();
             if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
                 pseudo_classes.set(PseudoClassFlags::CHECKED, val);
             }
@@ -117,7 +117,7 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
 
         state.set_or_bind(self.context(), entity, |cx, val| {
-            let val = val.get_val(cx).into();
+            let val = val.get(cx).into();
 
             if val {
                 cx.focus();
@@ -132,7 +132,7 @@ pub trait StyleModifiers: internal::Modifiable {
     fn read_only<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
         state.set_or_bind(self.context(), entity, |cx, val| {
-            let val = val.get_val(cx).into();
+            let val = val.get(cx).into();
             if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
                 pseudo_classes.set(PseudoClassFlags::READ_ONLY, val);
             }
@@ -146,7 +146,7 @@ pub trait StyleModifiers: internal::Modifiable {
     fn read_write<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
         state.set_or_bind(self.context(), entity, |cx, val| {
-            let val = val.get_val(cx).into();
+            let val = val.get(cx).into();
             if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
                 pseudo_classes.set(PseudoClassFlags::READ_WRITE, val);
             }
@@ -201,7 +201,7 @@ pub trait StyleModifiers: internal::Modifiable {
         // let entity = self.entity();
         // value.set_or_bind(self.context(), entity, |cx, v| {
         let cx = self.context();
-        let value = value.get_val(cx).into();
+        let value = value.get(cx).into();
         cx.tree.set_z_index(cx.current, value);
         cx.needs_redraw();
         // });
@@ -213,7 +213,7 @@ pub trait StyleModifiers: internal::Modifiable {
     fn clip_path<U: Into<ClipPath>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            let value = v.get_val(cx).into();
+            let value = v.get(cx).into();
             cx.style.clip_path.insert(cx.current, value);
 
             cx.needs_redraw();
@@ -225,7 +225,7 @@ pub trait StyleModifiers: internal::Modifiable {
     fn overflow<U: Into<Overflow>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            let value = v.get_val(cx).into();
+            let value = v.get(cx).into();
             cx.style.overflowx.insert(cx.current, value);
             cx.style.overflowy.insert(cx.current, value);
 
@@ -257,7 +257,7 @@ pub trait StyleModifiers: internal::Modifiable {
     fn backdrop_filter<U: Into<Filter>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            let value = v.get_val(cx).into();
+            let value = v.get(cx).into();
             cx.style.backdrop_filter.insert(cx.current, value);
 
             cx.needs_redraw();
@@ -270,7 +270,7 @@ pub trait StyleModifiers: internal::Modifiable {
     fn box_shadow<U: Into<BoxShadow>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            let value = v.get_val(cx).into();
+            let value = v.get(cx).into();
             if let Some(box_shadows) = cx.style.box_shadow.get_inline_mut(cx.current) {
                 box_shadows.push(value);
             } else {
@@ -286,7 +286,7 @@ pub trait StyleModifiers: internal::Modifiable {
     fn background_gradient<U: Into<Gradient>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            let value = v.get_val(cx).into();
+            let value = v.get(cx).into();
             if let Some(background_images) = cx.style.background_image.get_inline_mut(cx.current) {
                 background_images.push(ImageOrGradient::Gradient(value));
             } else {
@@ -315,7 +315,7 @@ pub trait StyleModifiers: internal::Modifiable {
     ) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, val| {
-            let images = val.get_val(cx).into();
+            let images = val.get(cx).into();
             let images = images
                 .into_iter()
                 .filter_map(|img| match img {
@@ -383,7 +383,7 @@ pub trait StyleModifiers: internal::Modifiable {
     ) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            let value = v.get_val(cx).into();
+            let value = v.get(cx).into();
             cx.style.border_top_left_radius.insert(cx.current, value.top_left);
             cx.style.border_top_right_radius.insert(cx.current, value.top_right);
             cx.style.border_bottom_left_radius.insert(cx.current, value.bottom_left);
@@ -430,7 +430,7 @@ pub trait StyleModifiers: internal::Modifiable {
     ) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            let value = v.get_val(cx).into();
+            let value = v.get(cx).into();
             cx.style.border_top_left_shape.insert(cx.current, value.0);
             cx.style.border_top_right_shape.insert(cx.current, value.1);
             cx.style.border_bottom_right_shape.insert(cx.current, value.2);
@@ -476,7 +476,7 @@ pub trait StyleModifiers: internal::Modifiable {
     fn pointer_events<U: Into<PointerEvents>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            let value = v.get_val(cx).into();
+            let value = v.get(cx).into();
             cx.style.pointer_events.insert(cx.current, value);
         });
 
@@ -487,7 +487,7 @@ pub trait StyleModifiers: internal::Modifiable {
     fn transform<U: Into<Vec<Transform>>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            let value = v.get_val(cx).into();
+            let value = v.get(cx).into();
             cx.style.transform.insert(cx.current, value);
             cx.needs_redraw();
         });
@@ -499,7 +499,7 @@ pub trait StyleModifiers: internal::Modifiable {
     fn transform_origin<U: Into<Position>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            let value: Position = v.get_val(cx).into();
+            let value: Position = v.get(cx).into();
             let x = value.x.to_length_or_percentage();
             let y = value.y.to_length_or_percentage();
             cx.style.transform_origin.insert(cx.current, Translate { x, y });

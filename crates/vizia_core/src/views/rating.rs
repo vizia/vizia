@@ -16,7 +16,7 @@ pub(crate) enum RatingEvent {
 
 impl Rating {
     pub fn new(cx: &mut Context, max_rating: u32, lens: impl Lens<Target = u32>) -> Handle<Self> {
-        Self { rating: lens.get_val(cx), max_rating, on_change: None }
+        Self { rating: lens.get(cx), max_rating, on_change: None }
             .build(cx, |cx| {
                 for i in 1..max_rating + 1 {
                     Label::new(cx, ICON_STAR_FILLED)
@@ -36,7 +36,7 @@ impl Rating {
             .navigable(true)
             .role(Role::RadioGroup)
             .bind(lens, |handle, lens| {
-                let val = lens.get_val(&handle);
+                let val = lens.get(&handle);
                 handle.modify(|rating| rating.rating = val);
             })
     }

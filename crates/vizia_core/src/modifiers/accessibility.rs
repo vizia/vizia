@@ -19,7 +19,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         let entity = self.entity();
         name.set_or_bind(self.context(), entity, |cx, name| {
             let cx = &mut EventContext::new_with_current(cx, cx.current);
-            cx.style.name.insert(cx.current, name.get_val(cx).to_string_local(cx));
+            cx.style.name.insert(cx.current, name.get(cx).to_string_local(cx));
             cx.style.needs_access_update(cx.current);
         });
 
@@ -50,7 +50,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     fn hidden<U: Into<bool>>(mut self, hidden: impl Res<U>) -> Self {
         let entity = self.entity();
         hidden.set_or_bind(self.context(), entity, |cx, hidden| {
-            cx.style.hidden.insert(cx.current, hidden.get_val(cx).into());
+            cx.style.hidden.insert(cx.current, hidden.get(cx).into());
             cx.style.needs_access_update(cx.current);
         });
 
@@ -61,7 +61,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     fn numeric_value<U: Into<f64>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, val| {
-            let v = val.get_val(cx).into();
+            let v = val.get(cx).into();
 
             cx.style.numeric_value.insert(cx.current, v);
             cx.style.needs_access_update(cx.current);
@@ -74,7 +74,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     fn text_value<U: ToString>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, val| {
-            cx.style.text_value.insert(cx.current, val.get_val(cx).to_string());
+            cx.style.text_value.insert(cx.current, val.get(cx).to_string());
             cx.style.needs_access_update(cx.current);
         });
 

@@ -133,7 +133,7 @@ impl<'a> Handle<'a, ProgressBar> {
         self.bind(color, |mut h, c| {
             let first_child = h.entity.first_child(&h.cx.tree).unwrap();
             h.entity = first_child;
-            let val = c.get_val(&h);
+            let val = c.get(&h);
             h.background_color(val);
         })
     }

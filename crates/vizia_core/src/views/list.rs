@@ -38,7 +38,7 @@ where
                 // then remove and rebuild all the children
                 let list_len = list_len.get(cx);
 
-                for index in 0..*list_len {
+                for index in 0..list_len {
                     let ptr = lens.index(index);
                     (item)(cx, index, ptr);
                 }

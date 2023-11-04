@@ -120,7 +120,7 @@ where
         .build(cx, move |cx| {
             Binding::new(cx, Slider::<L>::internal, move |cx, slider_data| {
                 ZStack::new(cx, move |cx| {
-                    let slider_data = slider_data.get_val(cx);
+                    let slider_data = slider_data.get(cx);
                     let thumb_size = slider_data.thumb_size;
                     let orientation = slider_data.orientation;
                     let size = slider_data.size;
@@ -128,7 +128,7 @@ where
 
                     // Active track
                     Element::new(cx).class("active").bind(lens, move |handle, value| {
-                        let val = value.get_val(&handle);
+                        let val = value.get(&handle);
 
                         let normal_val = (val - range.start) / (range.end - range.start);
                         let min = thumb_size / size;
@@ -162,7 +162,7 @@ where
                             }
                         })
                         .bind(lens, move |handle, value| {
-                            let val = value.get_val(&handle);
+                            let val = value.get(&handle);
                             let normal_val = (val - range.start) / (range.end - range.start);
                             let px = normal_val * (1.0 - (thumb_size / size));
                             if orientation == Orientation::Horizontal {
@@ -361,7 +361,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
                 let min = self.internal.range.start;
                 let max = self.internal.range.end;
                 let step = self.internal.step;
-                let mut val = self.lens.get_val(cx) + step;
+                let mut val = self.lens.get(cx) + step;
                 // val = step * (val / step).ceil();
                 val = val.clamp(min, max);
                 if let Some(callback) = &self.on_changing {
@@ -373,7 +373,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
                 let min = self.internal.range.start;
                 let max = self.internal.range.end;
                 let step = self.internal.step;
-                let mut val = self.lens.get_val(cx) - step;
+                let mut val = self.lens.get(cx) - step;
                 // val = step * (val / step).ceil();
                 val = val.clamp(min, max);
                 if let Some(callback) = &self.on_changing {
@@ -386,7 +386,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
                     let min = self.internal.range.start;
                     let max = self.internal.range.end;
                     let step = self.internal.step;
-                    let mut val = self.lens.get_val(cx) + step;
+                    let mut val = self.lens.get(cx) + step;
                     val = step * (val / step).ceil();
                     val = val.clamp(min, max);
                     if let Some(callback) = &self.on_changing {
@@ -398,7 +398,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
                     let min = self.internal.range.start;
                     let max = self.internal.range.end;
                     let step = self.internal.step;
-                    let mut val = self.lens.get_val(cx) - step;
+                    let mut val = self.lens.get(cx) - step;
                     val = step * (val / step).ceil();
                     val = val.clamp(min, max);
                     if let Some(callback) = &self.on_changing {
@@ -528,7 +528,7 @@ impl NamedSlider {
         L: Lens<Target = f32>,
         T: ToString,
     {
-        let name = name.get_val(cx).to_string();
+        let name = name.get(cx).to_string();
         Self { on_changing: None }
             .build(cx, move |cx| {
                 Binding::new(cx, lens, move |cx, lens| {
@@ -541,14 +541,14 @@ impl NamedSlider {
                 Slider::custom(cx, lens, move |cx| {
                     Binding::new(cx, Slider::<L>::internal, move |cx, slider_data| {
                         ZStack::new(cx, |cx| {
-                            let slider_data = slider_data.get_val(cx);
+                            let slider_data = slider_data.get(cx);
                             let thumb_size = slider_data.thumb_size;
                             let size = slider_data.size;
                             let range = slider_data.range;
 
                             // Active track
                             Element::new(cx).class("active").bind(lens, move |handle, value| {
-                                let val = value.get_val(&handle);
+                                let val = value.get(&handle);
                                 let normal_val = (val - range.start) / (range.end - range.start);
                                 let min = thumb_size / size;
                                 let max = 1.0;

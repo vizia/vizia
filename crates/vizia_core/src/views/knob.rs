@@ -38,11 +38,11 @@ impl<L: Lens<Target = f32>> Knob<L> {
     ) -> Handle<Self> {
         Self {
             lens,
-            default_normal: normalized_default.get_val(cx),
+            default_normal: normalized_default.get(cx),
 
             is_dragging: false,
             prev_drag_y: 0.0,
-            continuous_normal: lens.get_val(cx),
+            continuous_normal: lens.get(cx),
 
             drag_scalar: DEFAULT_DRAG_SCALAR,
             wheel_scalar: DEFAULT_WHEEL_SCALAR,
@@ -90,7 +90,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
 
             is_dragging: false,
             prev_drag_y: 0.0,
-            continuous_normal: lens.get_val(cx),
+            continuous_normal: lens.get(cx),
 
             drag_scalar: DEFAULT_DRAG_SCALAR,
             wheel_scalar: DEFAULT_WHEEL_SCALAR,
@@ -144,13 +144,13 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
                 cx.capture();
                 cx.focus_with_visibility(false);
 
-                self.continuous_normal = self.lens.get_val(cx);
+                self.continuous_normal = self.lens.get(cx);
             }
 
             WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                 self.is_dragging = false;
 
-                self.continuous_normal = self.lens.get_val(cx);
+                self.continuous_normal = self.lens.get(cx);
 
                 cx.release();
             }
@@ -188,12 +188,12 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
             }
 
             WindowEvent::KeyDown(Code::ArrowUp | Code::ArrowRight, _) => {
-                self.continuous_normal = self.lens.get_val(cx);
+                self.continuous_normal = self.lens.get(cx);
                 move_virtual_slider(self, cx, self.continuous_normal + self.arrow_scalar);
             }
 
             WindowEvent::KeyDown(Code::ArrowDown | Code::ArrowLeft, _) => {
-                self.continuous_normal = self.lens.get_val(cx);
+                self.continuous_normal = self.lens.get(cx);
                 move_virtual_slider(self, cx, self.continuous_normal - self.arrow_scalar);
             }
 
@@ -317,7 +317,7 @@ impl Handle<'_, ArcTrack> {
     pub fn value<L: Lens<Target = f32>>(self, lens: L) -> Self {
         let entity = self.entity;
         Binding::new(self.cx, lens, move |cx, value| {
-            let value = value.get_val(cx);
+            let value = value.get(cx);
             if let Some(view) = cx.views.get_mut(&entity) {
                 if let Some(knob) = view.downcast_mut::<ArcTrack>() {
                     knob.normalized_value = value;
@@ -527,7 +527,7 @@ impl Handle<'_, TickKnob> {
     pub fn value<L: Lens<Target = f32>>(self, lens: L) -> Self {
         let entity = self.entity;
         Binding::new(self.cx, lens, move |cx, value| {
-            let value = value.get_val(cx);
+            let value = value.get(cx);
             if let Some(view) = cx.views.get_mut(&entity) {
                 if let Some(knob) = view.downcast_mut::<TickKnob>() {
                     knob.normalized_value = value;

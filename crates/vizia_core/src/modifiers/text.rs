@@ -10,7 +10,7 @@ pub trait TextModifiers: internal::Modifiable {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
             let cx: &mut EventContext<'_> = &mut EventContext::new_with_current(cx, cx.current);
-            let text_data = v.get_val(cx).to_string_local(cx);
+            let text_data = v.get(cx).to_string_local(cx);
             cx.text_context.set_text(cx.current, &text_data);
 
             cx.style.needs_text_layout.insert(cx.current, true);
@@ -55,7 +55,7 @@ pub trait TextModifiers: internal::Modifiable {
     fn color<U: Clone + Into<Color>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            cx.style.font_color.insert(cx.current, v.get_val(cx).into());
+            cx.style.font_color.insert(cx.current, v.get(cx).into());
             cx.style.needs_redraw();
         });
         self
@@ -65,7 +65,7 @@ pub trait TextModifiers: internal::Modifiable {
     fn font_size<U: Into<FontSize>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            cx.style.font_size.insert(cx.current, v.get_val(cx).into());
+            cx.style.font_size.insert(cx.current, v.get(cx).into());
             cx.style.system_flags |= SystemFlags::REFLOW;
         });
         self

@@ -19,7 +19,7 @@ pub trait AbilityModifiers: internal::Modifiable {
     fn hoverable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
         state.set_or_bind(self.context(), entity, |cx, v| {
-            let val = v.get_val(cx).into();
+            let val = v.get(cx).into();
             if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
                 abilities.set(Abilities::HOVERABLE, val);
                 cx.needs_restyle();
@@ -42,7 +42,7 @@ pub trait AbilityModifiers: internal::Modifiable {
     fn focusable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
         state.set_or_bind(self.context(), entity, |cx, v| {
-            let val = v.get_val(cx).into();
+            let val = v.get(cx).into();
             if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
                 let state = val;
                 abilities.set(Abilities::FOCUSABLE, state);
@@ -72,7 +72,7 @@ pub trait AbilityModifiers: internal::Modifiable {
     fn checkable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
         state.set_or_bind(self.context(), entity, |cx, v| {
-            let val = v.get_val(cx).into();
+            let val = v.get(cx).into();
             if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
                 let state = val;
                 abilities.set(Abilities::CHECKABLE, state);
@@ -97,7 +97,7 @@ pub trait AbilityModifiers: internal::Modifiable {
     fn navigable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
         state.set_or_bind(self.context(), entity, |cx, v| {
-            let val = v.get_val(cx).into();
+            let val = v.get(cx).into();
             if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
                 abilities.set(Abilities::NAVIGABLE, val);
                 cx.needs_restyle();

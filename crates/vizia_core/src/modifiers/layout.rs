@@ -145,7 +145,7 @@ pub trait LayoutModifiers: internal::Modifiable {
     fn space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            let value = v.get_val(cx).into();
+            let value = v.get(cx).into();
             cx.style.left.insert(cx.current, value);
             cx.style.right.insert(cx.current, value);
             cx.style.top.insert(cx.current, value);
@@ -175,7 +175,7 @@ pub trait LayoutModifiers: internal::Modifiable {
     fn size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            let value = v.get_val(cx).into();
+            let value = v.get(cx).into();
             cx.style.width.insert(cx.current, value);
             cx.style.height.insert(cx.current, value);
 
@@ -227,7 +227,7 @@ pub trait LayoutModifiers: internal::Modifiable {
     fn child_space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            let value = v.get_val(cx).into();
+            let value = v.get(cx).into();
             cx.style.child_left.insert(cx.current, value);
             cx.style.child_right.insert(cx.current, value);
             cx.style.child_top.insert(cx.current, value);
@@ -271,7 +271,7 @@ pub trait LayoutModifiers: internal::Modifiable {
     fn min_size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            let value = v.get_val(cx).into();
+            let value = v.get(cx).into();
             cx.style.min_width.insert(cx.current, value);
             cx.style.min_height.insert(cx.current, value);
 
@@ -299,7 +299,7 @@ pub trait LayoutModifiers: internal::Modifiable {
     fn max_size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            let value = v.get_val(cx).into();
+            let value = v.get(cx).into();
             cx.style.max_width.insert(cx.current, value);
             cx.style.max_height.insert(cx.current, value);
 
@@ -341,7 +341,7 @@ pub trait LayoutModifiers: internal::Modifiable {
     fn min_space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            let value = v.get_val(cx).into();
+            let value = v.get(cx).into();
             cx.style.min_left.insert(cx.current, value);
             cx.style.min_right.insert(cx.current, value);
             cx.style.min_top.insert(cx.current, value);
@@ -385,7 +385,7 @@ pub trait LayoutModifiers: internal::Modifiable {
     fn max_space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, v| {
-            let value = v.get_val(cx).into();
+            let value = v.get(cx).into();
             cx.style.max_left.insert(cx.current, value);
             cx.style.max_right.insert(cx.current, value);
             cx.style.max_top.insert(cx.current, value);
