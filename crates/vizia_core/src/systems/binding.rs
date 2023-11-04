@@ -21,7 +21,7 @@ pub(crate) fn binding_system(cx: &mut Context) {
             }
 
             // Determine observers of view data.
-            if let Some(view_handler) = cx.views.get(&entity) {
+            if let Some(view_handler) = cx.views.get(entity) {
                 let view = ModelOrView::View(view_handler.as_ref());
 
                 if store.contains_source(view) {
