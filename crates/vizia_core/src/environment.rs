@@ -1,5 +1,13 @@
 //! A model for system specific state which can be accessed by any model or view.
-use crate::{model::Model, prelude::Wrapper, window::WindowEvent};
+use crate::{
+    context::{Context, EmitContext},
+    events::{Timer, TimerAction},
+    model::Model,
+    prelude::Wrapper,
+    views::TextEvent,
+    window::WindowEvent,
+};
+use instant::Duration;
 use unic_langid::LanguageIdentifier;
 use vizia_derive::Lens;
 
@@ -52,19 +60,19 @@ pub struct Environment {
     pub locale: LanguageIdentifier,
     /// Current application and system theme.
     pub theme: Theme,
-}
 
-impl Default for Environment {
-    fn default() -> Self {
-        Environment::new()
-    }
+    pub(crate) caret_timer: Timer,
 }
 
 impl Environment {
-    pub fn new() -> Self {
+    pub fn new(cx: &mut Context) -> Self {
         let locale = sys_locale::get_locale().and_then(|l| l.parse().ok()).unwrap_or_default();
-
-        Self { locale, theme: Theme::default() }
+        let caret_timer = cx.add_timer(Duration::from_millis(530), None, |cx, action| {
+            if matches!(action, TimerAction::Tick(_)) {
+                cx.emit(TextEvent::ToggleCaret);
+            }
+        });
+        Self { locale, theme: Theme::default(), caret_timer }
     }
 }
 
