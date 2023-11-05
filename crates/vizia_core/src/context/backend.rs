@@ -161,8 +161,8 @@ impl<'a> BackendContext<'a> {
 
         let logical_width = self.0.style.physical_to_logical(physical_width);
         let logical_height = self.0.style.physical_to_logical(physical_height);
-        self.0.window_size.width = logical_width as u32;
-        self.0.window_size.height = logical_height as u32;
+        self.0.window_size.width = logical_width.round() as u32;
+        self.0.window_size.height = logical_height.round() as u32;
         self.0.style.width.insert(Entity::root(), Units::Pixels(logical_width));
         self.0.style.height.insert(Entity::root(), Units::Pixels(logical_height));
     }
