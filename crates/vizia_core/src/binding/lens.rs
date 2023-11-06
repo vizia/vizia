@@ -189,7 +189,7 @@ impl<L: Lens, O: 'static> Lens for Map<L, O> {
 
                 None
             });
-            return Some(LensValue::Owned((closure.unwrap())(&*t)));
+            return Some(LensValue::Owned((closure?)(&*t)));
         }
 
         None
@@ -242,7 +242,7 @@ where
                 None
             });
             match t {
-                LensValue::Borrowed(b) => return Some(LensValue::Borrowed((closure.unwrap())(b))),
+                LensValue::Borrowed(b) => return Some(LensValue::Borrowed((closure?)(b))),
                 LensValue::Owned(_) => unreachable!(),
             }
         }
@@ -364,8 +364,8 @@ where
     type Target = T;
 
     fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
-        self.lens.view(source).map(|v| match v {
-            LensValue::Borrowed(v) => LensValue::Borrowed(v.get(self.index).unwrap()),
+        self.lens.view(source).and_then(|v| match v {
+            LensValue::Borrowed(v) => v.get(self.index).map(LensValue::Borrowed),
             LensValue::Owned(_) => unreachable!(),
         })
     }
