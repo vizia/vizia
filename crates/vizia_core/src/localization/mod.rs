@@ -102,6 +102,7 @@ where
                 cx.data()
                     .expect("Failed to get data from context. Has it been built into the tree?"),
             )
+            .unwrap()
             .into_owned()
             .into()
     }
@@ -240,8 +241,8 @@ impl Localized {
 }
 
 impl Res<String> for Localized {
-    fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> LensValue<'a, String> {
-        LensValue::Owned(self.get(cx))
+    fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, String>> {
+        Some(LensValue::Owned(self.get(cx)))
     }
 
     fn get(&self, cx: &impl DataContext) -> String {

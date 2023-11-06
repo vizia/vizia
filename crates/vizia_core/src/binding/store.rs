@@ -47,7 +47,7 @@ where
     }
     fn update(&mut self, model: ModelOrView) -> bool {
         let Some(data) = model.downcast_ref::<L::Source>() else { return false };
-        let new_data = self.lens.view(data);
+        let Some(new_data) = self.lens.view(data) else { return false };
 
         if matches!(&self.old, Some(old) if old.same(&new_data)) {
             return false;

@@ -19,7 +19,7 @@ pub trait Lens: 'static + Copy + std::fmt::Debug + std::hash::Hash {
     type Source;
     type Target;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> LensValue<'a, Self::Target>;
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>>;
 
     fn name(&self) -> Option<&'static str> {
         None
@@ -178,18 +178,21 @@ impl<L: Lens, O: 'static> Lens for Map<L, O> {
     type Source = L::Source;
     type Target = O;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> LensValue<'a, Self::Target> {
-        let t = self.lens.view(source);
-        let closure = MAPS.with(|f| {
-            if let Some(lens_map) = f.borrow().get(&self.id) {
-                if let Some(mapping) = lens_map.1.downcast_ref::<MapState<L::Target, O>>() {
-                    return Some(mapping.closure.clone());
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        if let Some(t) = self.lens.view(source) {
+            let closure = MAPS.with(|f| {
+                if let Some(lens_map) = f.borrow().get(&self.id) {
+                    if let Some(mapping) = lens_map.1.downcast_ref::<MapState<L::Target, O>>() {
+                        return Some(mapping.closure.clone());
+                    }
                 }
-            }
 
-            None
-        });
-        LensValue::Owned((closure.unwrap())(&*t))
+                None
+            });
+            return Some(LensValue::Owned((closure.unwrap())(&*t)));
+        }
+
+        None
     }
 }
 
@@ -227,21 +230,24 @@ where
     type Source = L::Source;
     type Target = O;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> LensValue<'a, Self::Target> {
-        let t = self.lens.view(source);
-        let closure = MAPS.with(|f| {
-            if let Some(lens_map) = f.borrow().get(&self.id) {
-                if let Some(mapping) = lens_map.1.downcast_ref::<MapRefState<L::Target, O>>() {
-                    return Some(mapping.closure.clone());
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        if let Some(t) = self.lens.view(source) {
+            let closure = MAPS.with(|f| {
+                if let Some(lens_map) = f.borrow().get(&self.id) {
+                    if let Some(mapping) = lens_map.1.downcast_ref::<MapRefState<L::Target, O>>() {
+                        return Some(mapping.closure.clone());
+                    }
                 }
-            }
 
-            None
-        });
-        match t {
-            LensValue::Borrowed(b) => LensValue::Borrowed((closure.unwrap())(b)),
-            LensValue::Owned(_) => unreachable!(),
+                None
+            });
+            match t {
+                LensValue::Borrowed(b) => return Some(LensValue::Borrowed((closure.unwrap())(b))),
+                LensValue::Owned(_) => unreachable!(),
+            }
         }
+
+        None
     }
 }
 
@@ -283,16 +289,19 @@ where
     type Source = A::Source;
     type Target = B::Target;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> LensValue<'a, Self::Target> {
-        let val = self.a.view(source);
-        let val = match val {
-            LensValue::Borrowed(val) => return self.b.view(val),
-            LensValue::Owned(ref val) => val,
-        };
-        match self.b.view(val) {
-            LensValue::Owned(val) => LensValue::Owned(val),
-            _ => unreachable!(),
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        if let Some(val) = self.a.view(source) {
+            let val = match val {
+                LensValue::Borrowed(val) => return self.b.view(val),
+                LensValue::Owned(ref val) => val,
+            };
+            match self.b.view(val) {
+                Some(LensValue::Owned(val)) => return Some(LensValue::Owned(val)),
+                _ => unreachable!(),
+            }
         }
+
+        None
     }
 }
 
@@ -354,11 +363,11 @@ where
     type Source = L::Source;
     type Target = T;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> LensValue<'a, Self::Target> {
-        match self.lens.view(source) {
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        self.lens.view(source).map(|v| match v {
             LensValue::Borrowed(v) => LensValue::Borrowed(v.get(self.index).unwrap()),
             LensValue::Owned(_) => unreachable!(),
-        }
+        })
     }
 }
 
@@ -393,8 +402,8 @@ impl<T> Lens for StaticLens<T> {
     type Source = ();
     type Target = T;
 
-    fn view<'a>(&self, _: &'a Self::Source) -> LensValue<'a, Self::Target> {
-        LensValue::Borrowed(self.data)
+    fn view<'a>(&self, _: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        Some(LensValue::Borrowed(self.data))
     }
 }
 
@@ -427,8 +436,8 @@ impl<T: 'static> Lens for UnwrapLens<T> {
     type Source = Option<T>;
     type Target = T;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> LensValue<'a, Self::Target> {
-        source.as_ref().map(LensValue::Borrowed).unwrap()
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        source.as_ref().map(LensValue::Borrowed)
     }
 }
 
@@ -469,8 +478,8 @@ impl<T: 'static + Clone + TryInto<U>, U: 'static> Lens for IntoLens<T, U> {
     type Source = T;
     type Target = U;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> LensValue<'a, Self::Target> {
-        source.clone().try_into().ok().map(|t| LensValue::Owned(t)).unwrap()
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        source.clone().try_into().ok().map(|t| LensValue::Owned(t))
     }
 }
 
@@ -507,10 +516,10 @@ where
     type Source = L1::Source;
     type Target = f32;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> LensValue<'a, f32> {
-        let num = self.numerator.view(source).into_owned();
-        let den = self.denominator.view(source).into_owned();
-        LensValue::Owned(num / den)
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, f32>> {
+        let num = self.numerator.view(source)?.into_owned();
+        let den = self.denominator.view(source)?.into_owned();
+        Some(LensValue::Owned(num / den))
     }
 }
 
@@ -538,11 +547,11 @@ where
     type Source = L1::Source;
     type Target = bool;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> LensValue<'a, Self::Target> {
-        let v1 = self.lens1.view(source).into_owned();
-        let v2 = self.lens2.view(source).into_owned();
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        let v1 = self.lens1.view(source)?.into_owned();
+        let v2 = self.lens2.view(source)?.into_owned();
 
-        LensValue::Owned(v1 | v2)
+        Some(LensValue::Owned(v1 | v2))
     }
 }
 
@@ -561,7 +570,7 @@ impl<L: Lens> Lens for Wrapper<L> {
     type Source = L::Source;
     type Target = L::Target;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> LensValue<'a, Self::Target> {
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
         self.0.view(source)
     }
 }
@@ -638,11 +647,11 @@ where
     type Source = L1::Source;
     type Target = bool;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> LensValue<'a, Self::Target> {
-        let v1 = self.lens1.view(source).into_owned();
-        let v2 = self.lens2.view(source).into_owned();
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        let v1 = self.lens1.view(source)?.into_owned();
+        let v2 = self.lens2.view(source)?.into_owned();
 
-        LensValue::Owned(v1 | v2)
+        Some(LensValue::Owned(v1 | v2))
     }
 }
 
