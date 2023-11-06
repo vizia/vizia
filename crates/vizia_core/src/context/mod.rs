@@ -793,6 +793,40 @@ pub(crate) enum InternalEvent {
     },
 }
 
+pub struct LocalizationContext<'a> {
+    pub(crate) current: Entity,
+    pub(crate) resource_manager: &'a ResourceManager,
+    pub(crate) data: &'a FnvHashMap<Entity, ModelDataStore>,
+    pub(crate) views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    pub(crate) tree: &'a Tree<Entity>,
+}
+
+impl<'a> LocalizationContext<'a> {
+    pub(crate) fn from_context(cx: &'a Context) -> Self {
+        Self {
+            current: cx.current,
+            resource_manager: &cx.resource_manager,
+            data: &cx.data,
+            views: &cx.views,
+            tree: &cx.tree,
+        }
+    }
+
+    pub(crate) fn from_event_context(cx: &'a EventContext) -> Self {
+        Self {
+            current: cx.current,
+            resource_manager: cx.resource_manager,
+            data: cx.data,
+            views: cx.views,
+            tree: cx.tree,
+        }
+    }
+
+    pub(crate) fn environment(&self) -> &Environment {
+        self.data::<Environment>().unwrap()
+    }
+}
+
 /// A trait for any Context-like object that lets you access stored model data.
 ///
 /// This lets e.g Lens::get be generic over any of these types.
@@ -800,7 +834,7 @@ pub trait DataContext {
     /// Get model/view data from the context. Returns `None` if the data does not exist.
     fn data<T: 'static>(&self) -> Option<&T>;
 
-    fn as_context(&self) -> Option<&Context> {
+    fn as_context(&self) -> Option<LocalizationContext<'_>> {
         None
     }
 }
@@ -943,8 +977,35 @@ impl DataContext for Context {
         None
     }
 
-    fn as_context(&self) -> Option<&Context> {
-        Some(self)
+    fn as_context(&self) -> Option<LocalizationContext<'_>> {
+        Some(LocalizationContext::from_context(self))
+    }
+}
+
+impl<'a> DataContext for LocalizationContext<'a> {
+    fn data<T: 'static>(&self) -> Option<&T> {
+        // return data for the static model.
+        if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
+            return Some(t);
+        }
+
+        for entity in self.current.parent_iter(self.tree) {
+            // Return any model data.
+            if let Some(model_data_store) = self.data.get(&entity) {
+                if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
+                    return model.downcast_ref::<T>();
+                }
+            }
+
+            // Return any view data.
+            if let Some(view_handler) = self.views.get(&entity) {
+                if let Some(data) = view_handler.downcast_ref::<T>() {
+                    return Some(data);
+                }
+            }
+        }
+
+        None
     }
 }
 
