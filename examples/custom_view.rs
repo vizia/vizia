@@ -16,7 +16,7 @@ impl<C: 'static + Res<Color>> CustomView<C> {
 
 impl<C: 'static + Res<Color>> View for CustomView<C> {
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        let col = self.color.get_ref(cx);
+        let col = self.color.get_ref(cx).unwrap();
         let bounds = cx.bounds();
         let mut path = vg::Path::new();
         path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
