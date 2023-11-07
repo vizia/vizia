@@ -7,7 +7,7 @@ use cosmic_text::{
     fontdb::Database, Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Edit, Editor,
     FontSystem, Metrics, SubpixelBin, Weight, Wrap,
 };
-use cosmic_text::{Align, Cursor, FamilyOwned, Shaping};
+use cosmic_text::{Align, AttrsOwned, Cursor, Family, Shaping};
 use femtovg::imgref::{Img, ImgRef};
 use femtovg::rgb::RGBA8;
 use femtovg::{
@@ -22,7 +22,7 @@ use swash::scale::image::Content;
 use swash::scale::{Render, ScaleContext, Source, StrikeWith};
 use swash::zeno::{Format, Vector};
 use unicode_segmentation::UnicodeSegmentation;
-use vizia_storage::SparseSet;
+use vizia_storage::{ChildIterator, SparseSet, Tree};
 use vizia_style::{FontStretch, FontStyle, TextAlign};
 
 const GLYPH_PADDING: u32 = 1;
@@ -98,64 +98,72 @@ impl TextContext {
         self.bounds.get(entity).copied()
     }
 
-    /// Sync the style data from vizia with the style attribites stored in cosmic-text buffers.
-    pub(crate) fn sync_styles(&mut self, entity: Entity, style: &Style) {
-        let (families, font_weight, font_style) = {
-            let families = style
-                .font_family
+    // Get the text attributes of an entity
+    pub(crate) fn get_attributes<'a>(
+        font_system: &mut FontSystem,
+        entity: Entity,
+        style: &'a Style,
+    ) -> AttrsOwned {
+        let families = style
+            .font_family
+            .get(entity)
+            .unwrap_or(&style.default_font)
+            .iter()
+            .map(|x| x.as_family())
+            .collect::<Vec<_>>();
+        let query = Query {
+            families: families.as_slice(),
+            weight: Weight(style.font_weight.get(entity).copied().unwrap_or_default().into()),
+            stretch: style
+                .font_stretch
                 .get(entity)
-                .unwrap_or(&style.default_font)
-                .iter()
-                .map(|x| x.as_family())
-                .collect::<Vec<_>>();
-            let query = Query {
-                families: families.as_slice(),
-                weight: Weight(style.font_weight.get(entity).copied().unwrap_or_default().into()),
-                stretch: style
-                    .font_stretch
-                    .get(entity)
-                    .map(|stretch| match stretch {
-                        FontStretch::UltraCondensed => cosmic_text::Stretch::UltraCondensed,
-                        FontStretch::ExtraCondensed => cosmic_text::Stretch::ExtraCondensed,
-                        FontStretch::Condensed => cosmic_text::Stretch::Condensed,
-                        FontStretch::SemiCondensed => cosmic_text::Stretch::SemiCondensed,
-                        FontStretch::Normal => cosmic_text::Stretch::Normal,
-                        FontStretch::SemiExpanded => cosmic_text::Stretch::SemiExpanded,
-                        FontStretch::Expanded => cosmic_text::Stretch::Expanded,
-                        FontStretch::ExtraExpanded => cosmic_text::Stretch::ExtraExpanded,
-                        FontStretch::UltraExpanded => cosmic_text::Stretch::UltraExpanded,
-                    })
-                    .unwrap_or_default(),
-                style: style
-                    .font_style
-                    .get(entity)
-                    .map(|style| match style {
-                        FontStyle::Italic => cosmic_text::Style::Italic,
-                        FontStyle::Normal => cosmic_text::Style::Normal,
-                        FontStyle::Oblique => cosmic_text::Style::Oblique,
-                    })
-                    .unwrap_or_default(),
-            };
-            let id = self
-                .font_system
-                .db()
-                .query(&query)
-                .unwrap_or_else(|| panic!("Failed to find font: {:?}", query)); // TODO worst-case default handling
-            let info = self.font_system.db().face(id).unwrap();
-            (info.families.clone(), info.weight, info.style)
+                .map(|stretch| match stretch {
+                    FontStretch::UltraCondensed => cosmic_text::Stretch::UltraCondensed,
+                    FontStretch::ExtraCondensed => cosmic_text::Stretch::ExtraCondensed,
+                    FontStretch::Condensed => cosmic_text::Stretch::Condensed,
+                    FontStretch::SemiCondensed => cosmic_text::Stretch::SemiCondensed,
+                    FontStretch::Normal => cosmic_text::Stretch::Normal,
+                    FontStretch::SemiExpanded => cosmic_text::Stretch::SemiExpanded,
+                    FontStretch::Expanded => cosmic_text::Stretch::Expanded,
+                    FontStretch::ExtraExpanded => cosmic_text::Stretch::ExtraExpanded,
+                    FontStretch::UltraExpanded => cosmic_text::Stretch::UltraExpanded,
+                })
+                .unwrap_or_default(),
+            style: style
+                .font_style
+                .get(entity)
+                .map(|style| match style {
+                    FontStyle::Italic => cosmic_text::Style::Italic,
+                    FontStyle::Normal => cosmic_text::Style::Normal,
+                    FontStyle::Oblique => cosmic_text::Style::Oblique,
+                })
+                .unwrap_or_default(),
         };
-
+        let id = font_system
+            .db()
+            .query(&query)
+            .unwrap_or_else(|| panic!("Failed to find font: {:?}", query)); // TODO worst-case default handling
+        let info = font_system.db().face(id).unwrap();
         let font_color = style.font_color.get(entity).copied().unwrap_or(Color::rgb(0, 0, 0));
 
         let font_families =
-            families.into_iter().map(|(name, _)| FamilyOwned::Name(name)).collect::<Vec<_>>();
+            info.families.iter().map(|(name, _)| Family::Name(name)).collect::<Vec<_>>();
 
         let family = if let Some(font_family) = font_families.first() {
-            font_family.as_family()
+            *font_family
         } else {
             style.default_font.first().unwrap().as_family()
         };
 
+        AttrsOwned::new(
+            Attrs::new().family(family).weight(info.weight).style(info.style).color(
+                FontColor::rgba(font_color.r(), font_color.g(), font_color.b(), font_color.a()),
+            ),
+        )
+    }
+
+    /// Sync the style data from vizia with the style attribites stored in cosmic-text buffers.
+    pub(crate) fn sync_styles(&mut self, entity: Entity, style: &Style, tree: &Tree<Entity>) {
         let child_left = style.child_left.get(entity).copied().unwrap_or_default();
         let col_between = style.col_between.get(entity).copied().unwrap_or_default();
         let child_right = style.child_right.get(entity).copied().unwrap_or_default();
@@ -189,9 +197,9 @@ impl TextContext {
         }
 
         self.with_buffer(entity, |fs, buf| {
-            let attrs = Attrs::new().family(family).weight(font_weight).style(font_style).color(
-                FontColor::rgba(font_color.r(), font_color.g(), font_color.b(), font_color.a()),
-            );
+            // let attrs = Attrs::new().family(family).weight(font_weight).style(font_style).color(
+            //     FontColor::rgba(font_color.r(), font_color.g(), font_color.b(), font_color.a()),
+            // );
 
             let wrap = if style.text_wrap.get(entity).copied().unwrap_or(true) {
                 Wrap::Word
@@ -199,9 +207,28 @@ impl TextContext {
                 Wrap::None
             };
             buf.set_wrap(fs, wrap);
-            for line in buf.lines.iter_mut() {
+            let base_attributes = Self::get_attributes(fs, entity, style);
+            let child_attributes = ChildIterator::new(tree, entity)
+                .filter_map(|child| style.span.get(child).map(|range| (range.clone(), child)))
+                .collect::<Vec<_>>();
+            for (line_index, line) in buf.lines.iter_mut().enumerate() {
                 // TODO spans
-                line.set_attrs_list(AttrsList::new(attrs));
+                let mut attribute_list = AttrsList::new(base_attributes.as_attrs());
+                for ((cursor_start, cursor_end), child) in child_attributes.iter() {
+                    let child_attributes = Self::get_attributes(fs, *child, style);
+
+                    if cursor_start.line <= line_index && line_index <= cursor_end.line {
+                        let start =
+                            if cursor_start.line == line_index { cursor_start.offset } else { 0 };
+                        let end = if cursor_end.line == line_index {
+                            cursor_end.offset
+                        } else {
+                            line.text().len()
+                        };
+                        attribute_list.add_span(start..end, child_attributes.as_attrs());
+                    }
+                }
+                line.set_attrs_list(attribute_list);
                 line.set_align(alignment);
             }
             let font_size = style.font_size.get(entity).copied().map(|f| f.0).unwrap_or(16.0)

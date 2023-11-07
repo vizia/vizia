@@ -346,6 +346,10 @@ name = "timers"
 path = "examples/timers.rs"
 
 [[example]]
+name = "rich_text"
+path = "examples/rich_text.rs"
+
+[[example]]
 name = "follow_system_theme"
 path = "examples/follow_system_theme.rs"
 
@@ -369,3 +373,4 @@ chrono = "0.4.19"
 reqwest = { version = "0.11.18", features = ["blocking"] }
 log = "0.4.19"
 fern = { version = "0.6" }
+syntect = "5.0"

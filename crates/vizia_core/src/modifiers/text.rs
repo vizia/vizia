@@ -1,5 +1,5 @@
 use super::internal;
-use crate::{prelude::*, style::SystemFlags};
+use crate::{prelude::*, style::SystemFlags, text::TextCursor};
 use cosmic_text::FamilyOwned;
 use vizia_style::{FontSize, FontStretch, FontStyle, FontWeight};
 
@@ -70,8 +70,26 @@ pub trait TextModifiers: internal::Modifiable {
         self
     }
 
+    fn span(
+        mut self,
+        cursor_start: TextCursor,
+        cursor_end: TextCursor,
+        setter: impl Fn(Handle<Element>) -> Handle<Element>,
+    ) -> Self {
+        let entity = self.entity();
+        let context = self.context();
+        context.with_current(entity, |cx| {
+            let mut element = Element::new(cx).ignore();
+            element = (setter)(element);
+            let element_entity = element.entity();
+            element.context().style.span.insert(element_entity, (cursor_start, cursor_end));
+        });
+
+        self
+    }
+
     modifier!(
-        /// Sets the ext caret color of the view.
+        /// Sets the text caret color of the view.
         caret_color,
         Color,
         SystemFlags::REDRAW

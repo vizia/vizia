@@ -233,7 +233,7 @@ where
         bounds.h -= child_top + child_bottom;
         bounds.w -= child_left + child_right;
 
-        cx.text_context.sync_styles(cx.current, cx.style);
+        cx.text_context.sync_styles(cx.current, cx.style, cx.tree);
 
         let (mut tx, mut ty) = self.transform;
 

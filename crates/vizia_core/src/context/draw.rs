@@ -720,7 +720,7 @@ impl<'a> DrawContext<'a> {
             // let origin_x = box_x;
             // let origin_y = box_y;
 
-            self.text_context.sync_styles(self.current, self.style);
+            self.text_context.sync_styles(self.current, self.style, self.tree);
 
             self.draw_text_selection(canvas, bounds, (justify_x, justify_y));
             self.draw_text_caret(canvas, bounds, (justify_x, justify_y), 1.0);
