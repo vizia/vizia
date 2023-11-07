@@ -203,7 +203,12 @@ where
         .toggle_class("multiline", kind == TextboxKind::MultiLineWrapped)
         .text_wrap(kind == TextboxKind::MultiLineWrapped)
         .navigable(true)
-        .role(Role::TextField)
+        .role(match kind {
+            TextboxKind::SingleLine => Role::TextInput,
+            TextboxKind::MultiLineUnwrapped | TextboxKind::MultiLineWrapped => {
+                Role::MultilineTextInput
+            }
+        })
         .text_value(lens)
         .default_action_verb(DefaultActionVerb::Focus)
         .toggle_class("caret", Self::show_caret)
@@ -678,16 +683,6 @@ where
                 },
             });
 
-            match self.kind {
-                TextboxKind::MultiLineUnwrapped | TextboxKind::MultiLineWrapped => {
-                    node.node_builder.set_multiline();
-                }
-
-                _ => {
-                    node.node_builder.clear_multiline();
-                }
-            }
-
             node.node_builder.set_default_action_verb(DefaultActionVerb::Focus);
         });
     }
@@ -775,8 +770,8 @@ where
                     *c != '\u{9}' && // Tab
                     *c != '\u{7f}' && // Delete
                     *c != '\u{0d}' && // Carriage return
-                    !cx.modifiers.contains(Modifiers::CTRL) &&
-                    !cx.modifiers.contains(Modifiers::LOGO) &&
+                    !cx.modifiers.intersects(Modifiers::CONTROL) &&
+                    !cx.modifiers.intersects(Modifiers::SUPER) &&
                     self.edit &&
                     !cx.is_read_only()
                 {
@@ -797,7 +792,7 @@ where
 
                 Code::ArrowLeft => {
                     self.reset_caret_timer(cx);
-                    let movement = if cx.modifiers.contains(Modifiers::CTRL) {
+                    let movement = if cx.modifiers.intersects(Modifiers::CONTROL) {
                         Movement::Word(Direction::Left)
                     } else {
                         Movement::Grapheme(Direction::Left)
@@ -805,13 +800,13 @@ where
 
                     cx.emit(TextEvent::MoveCursor(
                         movement,
-                        cx.modifiers.contains(Modifiers::SHIFT),
+                        cx.modifiers.intersects(Modifiers::SHIFT),
                     ));
                 }
 
                 Code::ArrowRight => {
                     self.reset_caret_timer(cx);
-                    let movement = if cx.modifiers.contains(Modifiers::CTRL) {
+                    let movement = if cx.modifiers.intersects(Modifiers::CONTROL) {
                         Movement::Word(Direction::Right)
                     } else {
                         Movement::Grapheme(Direction::Right)
@@ -819,7 +814,7 @@ where
 
                     cx.emit(TextEvent::MoveCursor(
                         movement,
-                        cx.modifiers.contains(Modifiers::SHIFT),
+                        cx.modifiers.intersects(Modifiers::SHIFT),
                     ));
                 }
 
@@ -828,7 +823,7 @@ where
                     if self.kind != TextboxKind::SingleLine {
                         cx.emit(TextEvent::MoveCursor(
                             Movement::Line(Direction::Upstream),
-                            cx.modifiers.contains(Modifiers::SHIFT),
+                            cx.modifiers.intersects(Modifiers::SHIFT),
                         ));
                     }
                 }
@@ -838,7 +833,7 @@ where
                     if self.kind != TextboxKind::SingleLine {
                         cx.emit(TextEvent::MoveCursor(
                             Movement::Line(Direction::Downstream),
-                            cx.modifiers.contains(Modifiers::SHIFT),
+                            cx.modifiers.intersects(Modifiers::SHIFT),
                         ));
                     }
                 }
@@ -846,7 +841,7 @@ where
                 Code::Backspace => {
                     self.reset_caret_timer(cx);
                     if !cx.is_read_only() {
-                        if cx.modifiers.contains(Modifiers::CTRL) {
+                        if cx.modifiers.intersects(Modifiers::CONTROL) {
                             cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Upstream)));
                         } else {
                             cx.emit(TextEvent::DeleteText(Movement::Grapheme(Direction::Upstream)));
@@ -857,7 +852,7 @@ where
                 Code::Delete => {
                     self.reset_caret_timer(cx);
                     if !cx.is_read_only() {
-                        if cx.modifiers.contains(Modifiers::CTRL) {
+                        if cx.modifiers.intersects(Modifiers::CONTROL) {
                             cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Downstream)));
                         } else {
                             cx.emit(TextEvent::DeleteText(Movement::Grapheme(
@@ -879,7 +874,7 @@ where
                     self.reset_caret_timer(cx);
                     cx.emit(TextEvent::MoveCursor(
                         Movement::LineStart,
-                        cx.modifiers.contains(Modifiers::SHIFT),
+                        cx.modifiers.intersects(Modifiers::SHIFT),
                     ));
                 }
 
@@ -887,7 +882,7 @@ where
                     self.reset_caret_timer(cx);
                     cx.emit(TextEvent::MoveCursor(
                         Movement::LineEnd,
-                        cx.modifiers.contains(Modifiers::SHIFT),
+                        cx.modifiers.intersects(Modifiers::SHIFT),
                     ));
                 }
 
@@ -899,56 +894,84 @@ where
                         Direction::Downstream
                     };
                     cx.emit(TextEvent::MoveCursor(
-                        if cx.modifiers.contains(Modifiers::CTRL) {
+                        if cx.modifiers.intersects(Modifiers::CONTROL) {
                             Movement::Body(direction)
                         } else {
                             Movement::Page(direction)
                         },
-                        cx.modifiers.contains(Modifiers::SHIFT),
+                        cx.modifiers.intersects(Modifiers::SHIFT),
                     ));
                 }
 
                 Code::KeyA => {
                     #[cfg(target_os = "macos")]
-                    let modifier = Modifiers::LOGO;
+                    {
+                        if cx.modifiers == &Modifiers::LSUPER || cx.modifiers == &Modifiers::RSUPER
+                        {
+                            cx.emit(TextEvent::SelectAll);
+                        }
+                    }
                     #[cfg(not(target_os = "macos"))]
-                    let modifier = Modifiers::CTRL;
-
-                    if cx.modifiers == &modifier {
-                        cx.emit(TextEvent::SelectAll);
+                    {
+                        if cx.modifiers == &Modifiers::LCONTROL
+                            || cx.modifiers == &Modifiers::RCONTROL
+                        {
+                            cx.emit(TextEvent::SelectAll);
+                        }
                     }
                 }
 
                 Code::KeyC => {
                     #[cfg(target_os = "macos")]
-                    let modifier = Modifiers::LOGO;
+                    {
+                        if cx.modifiers == &Modifiers::LSUPER || cx.modifiers == &Modifiers::RSUPER
+                        {
+                            cx.emit(TextEvent::Copy);
+                        }
+                    }
                     #[cfg(not(target_os = "macos"))]
-                    let modifier = Modifiers::CTRL;
-
-                    if cx.modifiers == &modifier {
-                        cx.emit(TextEvent::Copy);
+                    {
+                        if cx.modifiers == &Modifiers::LCONTROL
+                            || cx.modifiers == &Modifiers::RCONTROL
+                        {
+                            cx.emit(TextEvent::Copy);
+                        }
                     }
                 }
 
                 Code::KeyV => {
                     #[cfg(target_os = "macos")]
-                    let modifier = Modifiers::LOGO;
+                    {
+                        if cx.modifiers == &Modifiers::LSUPER || cx.modifiers == &Modifiers::RSUPER
+                        {
+                            cx.emit(TextEvent::Paste);
+                        }
+                    }
                     #[cfg(not(target_os = "macos"))]
-                    let modifier = Modifiers::CTRL;
-
-                    if cx.modifiers == &modifier {
-                        cx.emit(TextEvent::Paste);
+                    {
+                        if cx.modifiers == &Modifiers::LCONTROL
+                            || cx.modifiers == &Modifiers::RCONTROL
+                        {
+                            cx.emit(TextEvent::Paste);
+                        }
                     }
                 }
 
                 Code::KeyX => {
                     #[cfg(target_os = "macos")]
-                    let modifier = Modifiers::LOGO;
+                    {
+                        if cx.modifiers == &Modifiers::LSUPER || cx.modifiers == &Modifiers::RSUPER
+                        {
+                            cx.emit(TextEvent::Cut);
+                        }
+                    }
                     #[cfg(not(target_os = "macos"))]
-                    let modifier = Modifiers::CTRL;
-
-                    if cx.modifiers == &modifier && !cx.is_read_only() {
-                        cx.emit(TextEvent::Cut);
+                    {
+                        if cx.modifiers == &Modifiers::LCONTROL
+                            || cx.modifiers == &Modifiers::RCONTROL
+                        {
+                            cx.emit(TextEvent::Cut);
+                        }
                     }
                 }
 

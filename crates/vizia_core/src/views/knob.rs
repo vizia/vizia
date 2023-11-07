@@ -161,7 +161,7 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
 
                     self.prev_drag_y = *y;
 
-                    if cx.modifiers.contains(Modifiers::SHIFT) {
+                    if cx.modifiers.intersects(Modifiers::SHIFT) {
                         delta_normal *= self.modifier_scalar;
                     }
 
