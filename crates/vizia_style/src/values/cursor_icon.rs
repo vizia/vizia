@@ -100,7 +100,6 @@ impl std::fmt::Display for CursorIcon {
                 CursorIcon::Default => "default",
                 CursorIcon::Crosshair => "crosshair",
                 CursorIcon::Hand => "hand",
-                CursorIcon::Arrow => "arrow",
                 CursorIcon::Move => "move",
                 CursorIcon::Text => "text",
                 CursorIcon::Wait => "wait",
