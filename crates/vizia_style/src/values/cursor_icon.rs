@@ -5,8 +5,6 @@ define_enum! {
     pub enum CursorIcon {
         /// The platform-dependent default cursor. Typically an arrow.
         "default": Default,
-        /// An arrow which is usually also the default cursor icon.
-        "arrow": Arrow,
         /// No cursor is rendered.
         "none": None,
 

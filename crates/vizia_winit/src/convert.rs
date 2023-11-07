@@ -9,7 +9,6 @@ pub fn cursor_icon_to_cursor_icon(cursor_icon: ViziaCursorIcon) -> Option<WinitC
         ViziaCursorIcon::Default => Some(WinitCursorIcon::Default),
         ViziaCursorIcon::Crosshair => Some(WinitCursorIcon::Crosshair),
         ViziaCursorIcon::Hand => Some(WinitCursorIcon::Pointer),
-        ViziaCursorIcon::Arrow => Some(WinitCursorIcon::Default),
         ViziaCursorIcon::Move => Some(WinitCursorIcon::Move),
         ViziaCursorIcon::Text => Some(WinitCursorIcon::Text),
         ViziaCursorIcon::Wait => Some(WinitCursorIcon::Wait),

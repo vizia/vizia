@@ -348,8 +348,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             meta.target = context.focused;
 
             #[cfg(debug_assertions)]
-            // we may want to check for both left and right modifers here
-            if *code == Code::KeyP && context.modifiers.contains(Modifiers::LCONTROL) {
+            if *code == Code::KeyP && context.modifiers.intersects(Modifiers::CONTROL) {
                 for entity in TreeIterator::full(&context.tree) {
                     if let Some(model_data_store) = context.data.get(&entity) {
                         if !model_data_store.models.is_empty() {
@@ -374,7 +373,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             }
 
             #[cfg(debug_assertions)]
-            if *code == Code::KeyI && context.modifiers.contains(Modifiers::LCONTROL) {
+            if *code == Code::KeyI && context.modifiers.intersects(Modifiers::CONTROL) {
                 println!("Entity tree");
                 let (tree, views, cache) = (&context.tree, &context.views, &context.cache);
                 let has_next_sibling = |entity| tree.get_next_sibling(entity).is_some();
@@ -441,7 +440,10 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
 
             #[cfg(debug_assertions)]
             if *code == Code::KeyS
-                && context.modifiers == Modifiers::LCONTROL | Modifiers::LSHIFT | Modifiers::LALT
+                // TODO: we should be able to use modifiers from both sides
+                && (context.modifiers == Modifiers::LCONTROL | Modifiers::LSHIFT | Modifiers::LALT
+                    || context.modifiers
+                        == Modifiers::RCONTROL | Modifiers::RSHIFT | Modifiers::RALT)
             {
                 let mut result = vec![];
                 compute_matched_rules(context, context.hovered, &mut result);
@@ -470,7 +472,10 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
 
             #[cfg(debug_assertions)]
             if *code == Code::KeyT
-                && context.modifiers == Modifiers::LCONTROL | Modifiers::LSHIFT | Modifiers::LALT
+                // TODO: we should be able to use modifiers from both sides
+                && (context.modifiers == Modifiers::LCONTROL | Modifiers::LSHIFT | Modifiers::LALT
+                    || context.modifiers
+                        == Modifiers::RCONTROL | Modifiers::RSHIFT | Modifiers::RALT)
             {
                 debug!("Loaded font face info:");
                 for face in context.text_context.font_system().db().faces() {
@@ -492,7 +497,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
 
             if *code == Code::Tab {
                 let lock_focus_to = context.tree.lock_focus_within(context.focused);
-                if context.modifiers.contains(Modifiers::LSHIFT) {
+                if context.modifiers.intersects(Modifiers::SHIFT) {
                     let prev_focused = if let Some(prev_focused) = focus_backward(
                         &context.tree,
                         &context.style,

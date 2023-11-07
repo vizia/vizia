@@ -21,9 +21,3 @@ bitflags! {
         const RSUPER   = 0b1000_0000;
     }
 }
-
-impl Modifiers {
-    pub fn contains_any(&self, first: Self, secound: Self) -> bool {
-        self.contains(first) || secound.contains(secound)
-    }
-}
