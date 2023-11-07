@@ -87,26 +87,14 @@ fn main() {
             });
 
             HStack::new(cx, |cx| {
-                Button::new(
-                    cx,
-                    |cx| cx.emit(AppEvent::ChangeColor(Color::red())),
-                    |cx| Label::new(cx, "Red"),
-                );
-                Button::new(
-                    cx,
-                    |cx| cx.emit(AppEvent::ChangeColor(Color::green())),
-                    |cx| Label::new(cx, "Green"),
-                );
-                Button::new(
-                    cx,
-                    |cx| cx.emit(AppEvent::ChangeColor(Color::blue())),
-                    |cx| Label::new(cx, "Blue"),
-                );
-                Button::new(
-                    cx,
-                    |cx| cx.emit(AppEvent::ChangeColor(Color::yellow())),
-                    |cx| Label::new(cx, "Yellow"),
-                );
+                Button::new(cx, |cx| Label::new(cx, "Red"))
+                    .on_press(|cx| cx.emit(AppEvent::ChangeColor(Color::red())));
+                Button::new(cx, |cx| Label::new(cx, "Green"))
+                    .on_press(|cx| cx.emit(AppEvent::ChangeColor(Color::green())));
+                Button::new(cx, |cx| Label::new(cx, "Blue"))
+                    .on_press(|cx| cx.emit(AppEvent::ChangeColor(Color::blue())));
+                Button::new(cx, |cx| Label::new(cx, "Yellow"))
+                    .on_press(|cx| cx.emit(AppEvent::ChangeColor(Color::yellow())));
             })
             .child_space(Stretch(1.0))
             .col_between(Pixels(5.0));

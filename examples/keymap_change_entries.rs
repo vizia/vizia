@@ -32,9 +32,8 @@ fn main() {
         .build(cx);
 
         // Create a new button that changes our key chords.
-        Button::new(
-            cx,
-            |cx| {
+        Button::new(cx, |cx| Label::new(cx, "Change key chords"))
+            .on_press(|cx| {
                 // Insert `Action::One` that triggers on `Code::KeyX`.
                 cx.emit(KeymapEvent::InsertAction(
                     KeyChord::new(Modifiers::empty(), Code::KeyX),
@@ -58,10 +57,8 @@ fn main() {
                     KeyChord::new(Modifiers::empty(), Code::KeyZ),
                     KeymapEntry::new(Action::Three, |_| println!("Action Three using Z")),
                 ))
-            },
-            |cx| Label::new(cx, "Change key chords"),
-        )
-        .space(Pixels(10.0));
+            })
+            .space(Pixels(10.0));
     })
     .title("Keymap - Change Key Chords")
     .run();

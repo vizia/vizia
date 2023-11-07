@@ -39,12 +39,14 @@ fn main() {
 
         AppData { show_modal: false }.build(cx);
 
-        Button::new(cx, |cx| cx.emit(AppEvent::ShowModal), |cx| Label::new(cx, "Show Modal"));
+        Button::new(cx, |cx| Label::new(cx, "Show Modal"))
+            .on_press(|cx| cx.emit(AppEvent::ShowModal));
 
         Popup::new(cx, AppData::show_modal, true, |cx| {
             Label::new(cx, "Modal Title").class("title");
             Label::new(cx, "This is a message");
-            Button::new(cx, |cx| cx.emit(AppEvent::HideModal), |cx| Label::new(cx, "Ok"))
+            Button::new(cx, |cx| Label::new(cx, "Ok"))
+                .on_press(|cx| cx.emit(AppEvent::HideModal))
                 .class("accent");
         })
         .on_blur(|cx| cx.emit(AppEvent::HideModal))

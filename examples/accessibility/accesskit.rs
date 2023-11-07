@@ -97,20 +97,16 @@ fn main() {
 
             VStack::new(cx, |cx| {
                 Label::new(cx, "Buttons").font_size(24.0);
-                Button::new(cx, |_| {}, |cx| Label::new(cx, "Push"));
-                Button::new(
-                    cx,
-                    |_| {},
-                    |cx| {
-                        HStack::new(cx, |cx| {
-                            Label::new(cx, ICON_CHECK).class("icon");
-                            Label::new(cx, "Button with Icon");
-                        })
-                        .size(Auto)
-                        .child_space(Stretch(1.0))
-                        .col_between(Pixels(2.0))
-                    },
-                );
+                Button::new(cx, |cx| Label::new(cx, "Push"));
+                Button::new(cx, |cx| {
+                    HStack::new(cx, |cx| {
+                        Label::new(cx, ICON_CHECK).class("icon");
+                        Label::new(cx, "Button with Icon");
+                    })
+                    .size(Auto)
+                    .child_space(Stretch(1.0))
+                    .col_between(Pixels(2.0))
+                });
             })
             .height(Auto)
             .row_between(Pixels(10.0));

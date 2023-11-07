@@ -8,11 +8,8 @@ fn main() {
 
         let anim_id = cx.add_animation(animation);
 
-        Button::new(
-            cx,
-            move |cx| cx.play_animation(anim_id, Duration::from_secs(2)),
-            |cx| Label::new(cx, "Animate"),
-        );
+        Button::new(cx, |cx| Label::new(cx, "Animate"))
+            .on_press(move |cx| cx.play_animation(anim_id, Duration::from_secs(2)));
     })
     .run();
 }

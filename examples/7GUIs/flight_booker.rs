@@ -74,7 +74,7 @@ fn main() {
             input_box(cx, AppData::start_date, AppEvent::SetStartDate);
             input_box(cx, AppData::end_date, AppEvent::SetEndDate);
 
-            Button::new(cx, |_| {}, |cx| Label::new(cx, "Book"));
+            Button::new(cx, |cx| Label::new(cx, "Book"));
         })
         .class("container");
     })

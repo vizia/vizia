@@ -38,7 +38,7 @@ fn main() {
         AppData { list: vec![12, 5, 65, 31, 18, 7] }.build(cx);
 
         VStack::new(cx, |cx| {
-            Button::new(cx, |cx| cx.emit(AppEvent::Sort), |cx| Label::new(cx, "Sort"));
+            Button::new(cx, |cx| Label::new(cx, "Sort")).on_press(|cx| cx.emit(AppEvent::Sort));
 
             List::new(cx, AppData::list, move |cx, _, item| {
                 Label::new(cx, item)

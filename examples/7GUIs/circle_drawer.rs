@@ -291,14 +291,11 @@ impl CircleDrawer {
 
         Self.build(cx, |cx| {
             Popup::new(cx, CircleDrawerData::menu_open, true, |cx| {
-                Button::new(
-                    cx,
-                    |cx| {
-                        cx.emit(CircleDrawerEvent::ToggleDialog);
-                        cx.emit(CircleDrawerEvent::ToggleRightMenu);
-                    },
-                    |cx| Label::new(cx, "Adjust diameter.."),
-                );
+                Button::new(cx, |cx| Label::new(cx, "Adjust diameter.."));
+            })
+            .on_press(|cx| {
+                cx.emit(CircleDrawerEvent::ToggleDialog);
+                cx.emit(CircleDrawerEvent::ToggleRightMenu);
             })
             .size(Auto)
             .left(CircleDrawerData::menu_posx)
@@ -338,13 +335,13 @@ impl CircleDrawer {
             .on_blur(|cx| cx.emit(CircleDrawerEvent::ToggleDialog));
 
             HStack::new(cx, |cx| {
-                Button::new(cx, |_| {}, |cx| Label::new(cx, "Undo"))
+                Button::new(cx, |cx| Label::new(cx, "Undo"))
                     .disabled(
                         CircleDrawerData::undo_redo.then(UndoRedo::undo_list).map(|v| v.is_empty()),
                     )
                     .on_press(|cx| cx.emit(CircleDrawerEvent::Undo));
 
-                Button::new(cx, |_| {}, |cx| Label::new(cx, "Redo"))
+                Button::new(cx, |cx| Label::new(cx, "Redo"))
                     .disabled(
                         CircleDrawerData::undo_redo.then(UndoRedo::redo_list).map(|v| v.is_empty()),
                     )

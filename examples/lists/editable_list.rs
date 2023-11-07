@@ -55,19 +55,13 @@ fn main() {
         AppData { list, selected: 0 }.build(cx);
 
         VStack::new(cx, |cx| {
-            Button::new(
-                cx,
-                |cx| cx.emit(AppEvent::Add(20)),
-                |cx| Label::new(cx, "Add").width(Stretch(1.0)),
-            )
-            .width(Stretch(1.0));
+            Button::new(cx, |cx| Label::new(cx, "Add").width(Stretch(1.0)))
+                .on_press(|cx| cx.emit(AppEvent::Add(20)))
+                .width(Stretch(1.0));
 
-            Button::new(
-                cx,
-                |cx| cx.emit(AppEvent::RemoveSelected),
-                |cx| Label::new(cx, "Remove").width(Stretch(1.0)),
-            )
-            .width(Stretch(1.0));
+            Button::new(cx, |cx| Label::new(cx, "Remove").width(Stretch(1.0)))
+                .on_press(|cx| cx.emit(AppEvent::RemoveSelected))
+                .width(Stretch(1.0));
 
             List::new(cx, AppData::list, move |cx, index, item| {
                 Label::new(cx, item)

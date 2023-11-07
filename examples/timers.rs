@@ -51,36 +51,20 @@ fn main() {
         VStack::new(cx, |cx| {
             Label::new(cx, AppState::count).font_size(100.0);
 
-            Button::new(
-                cx,
-                move |cx| {
-                    cx.start_timer(timer);
-                },
-                |cx| Label::new(cx, "Start"),
-            );
-            Button::new(
-                cx,
-                move |cx| {
-                    cx.stop_timer(timer);
-                },
-                |cx| Label::new(cx, "Stop"),
-            );
-            Button::new(
-                cx,
-                move |cx| {
-                    cx.schedule_emit(AppEvent::Reset, Instant::now() + Duration::from_secs(2));
-                },
-                |cx| Label::new(cx, "Reset"),
-            );
-            Button::new(
-                cx,
-                move |cx| {
-                    cx.modify_timer(timer, |timer_state| {
-                        timer_state.set_interval(Duration::from_secs(1));
-                    });
-                },
-                |cx| Label::new(cx, "1s Interval"),
-            );
+            Button::new(cx, |cx| Label::new(cx, "Start")).on_press(move |cx| {
+                cx.start_timer(timer);
+            });
+            Button::new(cx, |cx| Label::new(cx, "Stop")).on_press(move |cx| {
+                cx.stop_timer(timer);
+            });
+            Button::new(cx, |cx| Label::new(cx, "Reset")).on_press(move |cx| {
+                cx.schedule_emit(AppEvent::Reset, Instant::now() + Duration::from_secs(2));
+            });
+            Button::new(cx, |cx| Label::new(cx, "1s Interval")).on_press(move |cx| {
+                cx.modify_timer(timer, |timer_state| {
+                    timer_state.set_interval(Duration::from_secs(1));
+                });
+            });
         })
         .size(Auto)
         .space(Units::Stretch(1.0))

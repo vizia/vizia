@@ -143,24 +143,20 @@ fn main() {
 pub fn button(cx: &mut Context) -> Handle<impl View> {
     HStack::new(cx, |cx| {
         // Basic Button
-        Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
+        Button::new(cx, |cx| Label::new(cx, "Button"));
         // Accent Button
-        Button::new(cx, |_| {}, |cx| Label::new(cx, "Accent Button")).class("accent");
+        Button::new(cx, |cx| Label::new(cx, "Accent Button")).class("accent");
         // Outline Button
-        Button::new(cx, |_| {}, |cx| Label::new(cx, "Outline Button")).class("outline");
+        Button::new(cx, |cx| Label::new(cx, "Outline Button")).class("outline");
         // Ghost Button
-        Button::new(cx, |_| {}, |cx| Label::new(cx, "Ghost Button")).class("ghost");
+        Button::new(cx, |cx| Label::new(cx, "Ghost Button")).class("ghost");
         // Button with Icon
-        Button::new(
-            cx,
-            |_| {},
-            |cx| {
-                HStack::new(cx, |cx| {
-                    Label::new(cx, ICON_CHECK).class("icon");
-                    Label::new(cx, "Button with Icon");
-                })
-            },
-        );
+        Button::new(cx, |cx| {
+            HStack::new(cx, |cx| {
+                Label::new(cx, ICON_CHECK).class("icon");
+                Label::new(cx, "Button with Icon");
+            })
+        });
     })
     .col_between(Pixels(15.0))
     .size(Auto)

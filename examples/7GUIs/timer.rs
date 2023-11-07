@@ -104,7 +104,7 @@ fn main() {
                     .on_changing(|cx, v| cx.emit(TimerEvent::SetDuration(v)));
             });
 
-            Button::new(cx, |cx| cx.emit(TimerEvent::Reset), |cx| Label::new(cx, "Reset"));
+            Button::new(cx, |cx| Label::new(cx, "Reset")).on_press(|cx| cx.emit(TimerEvent::Reset));
         });
     })
     .title("Timer")

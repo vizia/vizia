@@ -26,16 +26,10 @@ fn main() {
 
         Element::new(cx).background_color(Color::red()).size(Pixels(100.0)).id("elem");
 
-        Button::new(
-            cx,
-            |cx| cx.play_animation_for("slidein", "elem", Duration::from_secs(2)),
-            |cx| Label::new(cx, "Play 1"),
-        );
-        Button::new(
-            cx,
-            move |cx| cx.play_animation_for(anim_id, "elem", Duration::from_secs(2)),
-            |cx| Label::new(cx, "Play 2"),
-        );
+        Button::new(cx, |cx| Label::new(cx, "Play 1"))
+            .on_press(|cx| cx.play_animation_for("slidein", "elem", Duration::from_secs(2)));
+        Button::new(cx, |cx| Label::new(cx, "Play 2"))
+            .on_press(move |cx| cx.play_animation_for(anim_id, "elem", Duration::from_secs(2)));
     })
     .run();
 }

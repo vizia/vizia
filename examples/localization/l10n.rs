@@ -67,11 +67,8 @@ fn main() {
             .col_between(Pixels(5.0));
             Label::new(cx, Localized::new("intro").arg("name", AppData::name));
             Label::new(cx, Localized::new("emails").arg("unread_emails", AppData::emails));
-            Button::new(
-                cx,
-                |cx| cx.emit(AppEvent::ReceiveEmail),
-                |cx| Label::new(cx, Localized::new("refresh")),
-            );
+            Button::new(cx, |cx| Label::new(cx, Localized::new("refresh")))
+                .on_press(|cx| cx.emit(AppEvent::ReceiveEmail));
         })
         .row_between(Pixels(10.0))
         .space(Pixels(10.0));
