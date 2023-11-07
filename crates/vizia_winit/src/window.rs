@@ -171,14 +171,14 @@ impl Window {
 
         let window = window.unwrap();
 
-        let raw_window_handle = Some(window.raw_window_handle());
+        let raw_window_handle = window.raw_window_handle();
 
         let gl_display = gl_config.display();
 
-        let context_attributes = ContextAttributesBuilder::new().build(raw_window_handle);
+        let context_attributes = ContextAttributesBuilder::new().build(Some(raw_window_handle));
         let fallback_context_attributes = ContextAttributesBuilder::new()
             .with_context_api(ContextApi::Gles(None))
-            .build(raw_window_handle);
+            .build(Some(raw_window_handle));
         let mut not_current_gl_context = Some(unsafe {
             gl_display.create_context(&gl_config, &context_attributes).unwrap_or_else(|_| {
                 gl_display
@@ -188,7 +188,6 @@ impl Window {
         });
 
         let (width, height): (u32, u32) = window.inner_size().into();
-        let raw_window_handle = window.raw_window_handle();
         let attrs = SurfaceAttributesBuilder::<WindowSurface>::new().build(
             raw_window_handle,
             NonZeroU32::new(width.max(1)).unwrap(),
@@ -274,7 +273,7 @@ impl View for Window {
             }
 
             WindowEvent::SetSize(size) => {
-                self.window().set_inner_size(LogicalSize::new(size.width, size.height));
+                self.window().request_inner_size(LogicalSize::new(size.width, size.height));
             }
 
             WindowEvent::SetMinSize(size) => {

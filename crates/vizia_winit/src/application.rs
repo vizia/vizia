@@ -13,7 +13,6 @@ use vizia_core::context::EventProxy;
 use vizia_core::prelude::*;
 use vizia_id::GenerationalId;
 use vizia_window::Position;
-use winit::event_loop::EventLoopBuilder;
 #[cfg(all(
     feature = "clipboard",
     feature = "wayland",
@@ -27,8 +26,8 @@ use winit::event_loop::EventLoopBuilder;
 ))]
 use winit::platform::wayland::WindowExtWayland;
 use winit::{
-    event::VirtualKeyCode,
-    event_loop::{ControlFlow, EventLoop},
+    event_loop::{ControlFlow, EventLoop, EventLoopBuilder},
+    keyboard::ModifiersKeyState,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -107,7 +106,8 @@ impl Application {
         #[allow(unused_mut)]
         let mut context = Context::new(WindowSize::new(1, 1), 1.0);
 
-        let event_loop = EventLoopBuilder::with_user_event().build();
+        let event_loop =
+            EventLoopBuilder::with_user_event().build().expect("Failed to create event loop");
         #[cfg(not(target_arch = "wasm32"))]
         {
             let mut cx = BackendContext::new(&mut context);
@@ -214,7 +214,7 @@ impl Application {
                 TreeUpdate {
                     nodes: vec![(root_id, root_node)],
                     tree: Some(Tree::new(root_id)),
-                    focus: Some(Entity::root().accesskit_id()),
+                    focus: Entity::root().accesskit_id(),
                 }
             },
             event_loop_proxy,
@@ -279,7 +279,7 @@ impl Application {
         cx.process_visual_updates();
 
         let mut main_events = false;
-        event_loop.run(move |event, _, control_flow| {
+        event_loop.run(move |event, elwt| {
             let mut cx = BackendContext::new_with_event_manager(&mut context);
 
             match event {
@@ -298,7 +298,7 @@ impl Application {
                         let node_id = action_request_event.request.target;
 
                         if action_request_event.request.action != Action::ScrollIntoView {
-                            let entity = Entity::new(node_id.0.get() as u64 - 1, 0);
+                            let entity = Entity::new(node_id.0 as u64, 0);
 
                             // Handle focus action from screen reader
                             if action_request_event.request.action == Action::Focus {
@@ -317,7 +317,8 @@ impl Application {
                     }
                 },
 
-                winit::event::Event::MainEventsCleared => {
+                // Im not sure about this https://github.com/rust-windowing/winit/issues/2900
+                winit::event::Event::AboutToWait => {
                     main_events = true;
 
                     *stored_control_flow.borrow_mut() =
@@ -375,34 +376,34 @@ impl Application {
 
                     cx.mutate_window(|_, window: &Window| {
                         if window.should_close {
-                            *stored_control_flow.borrow_mut() = ControlFlow::Exit;
+                            elwt.exit();
                         }
                     });
                 }
 
-                winit::event::Event::RedrawRequested(_) => {
-                    if main_events {
-                        // Redraw
-                        cx.draw();
-                        cx.mutate_window(|_, window: &Window| {
-                            window.swap_buffers();
-                        });
-
-                        // Un-cloak
-                        #[cfg(target_os = "windows")]
-                        if is_initially_cloaked {
-                            is_initially_cloaked = false;
-                            cx.draw();
-                            cx.mutate_window(|_, window: &Window| {
-                                window.swap_buffers();
-                                window.set_cloak(false);
-                            });
-                        }
-                    }
-                }
-
                 winit::event::Event::WindowEvent { window_id: _, event } => {
                     match event {
+                        winit::event::WindowEvent::RedrawRequested => {
+                            if main_events {
+                                // Redraw
+                                cx.draw();
+                                cx.mutate_window(|_, window: &Window| {
+                                    window.swap_buffers();
+                                });
+
+                                // Un-cloak
+                                #[cfg(target_os = "windows")]
+                                if is_initially_cloaked {
+                                    is_initially_cloaked = false;
+                                    cx.draw();
+                                    cx.mutate_window(|_, window: &Window| {
+                                        window.swap_buffers();
+                                        window.set_cloak(false);
+                                    });
+                                }
+                            }
+                        }
+
                         winit::event::WindowEvent::CloseRequested => {
                             cx.emit_origin(WindowEvent::WindowClose);
                         }
@@ -413,19 +414,18 @@ impl Application {
                             accesskit.update_if_active(|| TreeUpdate {
                                 nodes: vec![],
                                 tree: None,
-                                focus: is_focused.then_some(cx.focused().accesskit_id()),
+                                focus: if is_focused {
+                                    cx.focused().accesskit_id()
+                                } else {
+                                    Entity::root().accesskit_id()
+                                },
                             });
                         }
 
                         winit::event::WindowEvent::ScaleFactorChanged {
                             scale_factor,
-                            new_inner_size,
+                            inner_size_writer: _,
                         } => {
-                            cx.set_scale_factor(scale_factor);
-                            cx.set_window_size(
-                                new_inner_size.width as f32,
-                                new_inner_size.height as f32,
-                            );
                             cx.needs_refresh();
                         }
 
@@ -434,11 +434,7 @@ impl Application {
                         }
 
                         #[allow(deprecated)]
-                        winit::event::WindowEvent::CursorMoved {
-                            device_id: _,
-                            position,
-                            modifiers: _,
-                        } => {
+                        winit::event::WindowEvent::CursorMoved { device_id: _, position } => {
                             // To avoid calling the hover system multiple times in one frame when multiple cursor moved
                             // events are received, instead we set a flag here and emit the MouseMove event during MainEventsCleared.
                             if !cursor_moved {
@@ -475,16 +471,13 @@ impl Application {
                         }
 
                         #[allow(deprecated)]
-                        winit::event::WindowEvent::MouseInput {
-                            device_id: _,
-                            button,
-                            state,
-                            modifiers: _,
-                        } => {
+                        winit::event::WindowEvent::MouseInput { device_id: _, button, state } => {
                             let button = match button {
                                 winit::event::MouseButton::Left => MouseButton::Left,
                                 winit::event::MouseButton::Right => MouseButton::Right,
                                 winit::event::MouseButton::Middle => MouseButton::Middle,
+                                winit::event::MouseButton::Back => MouseButton::Back,
+                                winit::event::MouseButton::Forward => MouseButton::Forward,
                                 winit::event::MouseButton::Other(val) => MouseButton::Other(val),
                             };
 
@@ -518,9 +511,10 @@ impl Application {
 
                         winit::event::WindowEvent::KeyboardInput {
                             device_id: _,
-                            input,
+                            event,
                             is_synthetic: _,
                         } => {
+                            // TODO
                             // Prefer virtual keycodes to scancodes, as scancodes aren't uniform between platforms
                             let code = if let Some(vkey) = input.virtual_keycode {
                                 virtual_key_code_to_code(vkey)
@@ -532,7 +526,7 @@ impl Application {
                                 input.virtual_keycode.unwrap_or(VirtualKeyCode::NoConvert),
                             );
 
-                            let event = match input.state {
+                            let event = match event.state {
                                 winit::event::ElementState::Pressed => {
                                     WindowEvent::KeyDown(code, key)
                                 }
@@ -570,10 +564,41 @@ impl Application {
                         }
 
                         winit::event::WindowEvent::ModifiersChanged(modifiers_state) => {
-                            cx.modifiers().set(Modifiers::SHIFT, modifiers_state.shift());
-                            cx.modifiers().set(Modifiers::ALT, modifiers_state.alt());
-                            cx.modifiers().set(Modifiers::CTRL, modifiers_state.ctrl());
-                            cx.modifiers().set(Modifiers::LOGO, modifiers_state.logo());
+                            cx.modifiers().set(
+                                Modifiers::LSHIFT,
+                                modifiers_state.lshift_state() == ModifiersKeyState::Pressed,
+                            );
+                            cx.modifiers().set(
+                                Modifiers::RSHIFT,
+                                modifiers_state.rshift_state() == ModifiersKeyState::Pressed,
+                            );
+
+                            cx.modifiers().set(
+                                Modifiers::LCONTROL,
+                                modifiers_state.lcontrol_state() == ModifiersKeyState::Pressed,
+                            );
+                            cx.modifiers().set(
+                                Modifiers::RCONTROL,
+                                modifiers_state.rcontrol_state() == ModifiersKeyState::Pressed,
+                            );
+
+                            cx.modifiers().set(
+                                Modifiers::LALT,
+                                modifiers_state.lalt_state() == ModifiersKeyState::Pressed,
+                            );
+                            cx.modifiers().set(
+                                Modifiers::RALT,
+                                modifiers_state.ralt_state() == ModifiersKeyState::Pressed,
+                            );
+
+                            cx.modifiers().set(
+                                Modifiers::LSUPER,
+                                modifiers_state.lsuper_state() == ModifiersKeyState::Pressed,
+                            );
+                            cx.modifiers().set(
+                                Modifiers::RSUPER,
+                                modifiers_state.rsuper_state() == ModifiersKeyState::Pressed,
+                            );
                         }
 
                         winit::event::WindowEvent::CursorEntered { device_id: _ } => {
@@ -599,12 +624,10 @@ impl Application {
                 _ => {}
             }
 
-            if *stored_control_flow.borrow() == ControlFlow::Exit {
-                *control_flow = ControlFlow::Exit;
-            } else if let Some(timer_time) = cx.get_next_timer_time() {
-                *control_flow = ControlFlow::WaitUntil(timer_time);
+            if let Some(timer_time) = cx.get_next_timer_time() {
+                elwt.set_control_flow(ControlFlow::WaitUntil(timer_time));
             } else {
-                *control_flow = *stored_control_flow.borrow();
+                elwt.set_control_flow(*stored_control_flow.borrow());
             }
         });
     }

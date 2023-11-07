@@ -281,12 +281,21 @@ impl ApplicationRunner {
         let mut update_modifiers = |modifiers: vizia_input::KeyboardModifiers| {
             cx.modifiers()
                 .set(Modifiers::SHIFT, modifiers.contains(vizia_input::KeyboardModifiers::SHIFT));
+
+            cx.modifiers().set(
+                Modifiers::CONTROL,
+                modifiers.contains(vizia_input::KeyboardModifiers::CONTROL),
+            );
+
             cx.modifiers()
-                .set(Modifiers::CTRL, modifiers.contains(vizia_input::KeyboardModifiers::CONTROL));
+                .set(Modifiers::SUPER, modifiers.contains(vizia_input::KeyboardModifiers::META));
+
             cx.modifiers()
-                .set(Modifiers::LOGO, modifiers.contains(vizia_input::KeyboardModifiers::META));
-            cx.modifiers()
-                .set(Modifiers::ALT, modifiers.contains(vizia_input::KeyboardModifiers::ALT));
+                .set(Modifiers::LALT, modifiers.contains(vizia_input::KeyboardModifiers::ALT));
+            cx.modifiers().set(
+                Modifiers::RALT,
+                modifiers.contains(vizia_input::KeyboardModifiers::ALT_GRAPH),
+            );
         };
 
         match event {
@@ -361,16 +370,14 @@ impl ApplicationRunner {
                 };
 
                 match event.code {
-                    Code::ShiftLeft | Code::ShiftRight => {
-                        cx.modifiers().set(Modifiers::SHIFT, pressed)
-                    }
-                    Code::ControlLeft | Code::ControlRight => {
-                        cx.modifiers().set(Modifiers::CTRL, pressed)
-                    }
-                    Code::AltLeft | Code::AltRight => cx.modifiers().set(Modifiers::ALT, pressed),
-                    Code::MetaLeft | Code::MetaRight => {
-                        cx.modifiers().set(Modifiers::LOGO, pressed)
-                    }
+                    Code::ShiftLeft => cx.modifiers().set(Modifiers::LSHIFT, pressed),
+                    Code::ShiftRight => cx.modifiers().set(Modifiers::RSHIFT, pressed),
+                    Code::ControlLeft => cx.modifiers().set(Modifiers::LCONTROL, pressed),
+                    Code::ControlRight => cx.modifiers().set(Modifiers::RCONTROL, pressed),
+                    Code::AltLeft => cx.modifiers().set(Modifiers::LALT, pressed),
+                    Code::AltRight => cx.modifiers().set(Modifiers::RALT, pressed),
+                    Code::MetaLeft => cx.modifiers().set(Modifiers::LSUPER, pressed),
+                    Code::MetaRight => cx.modifiers().set(Modifiers::RSUPER, pressed),
                     _ => (),
                 }
 

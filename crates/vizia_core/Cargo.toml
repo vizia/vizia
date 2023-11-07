@@ -21,7 +21,7 @@ vizia_id = { path = "../vizia_id" }
 vizia_input = { path = "../vizia_input" }
 vizia_window = { path = "../vizia_window" }
 vizia_style = { path = "../vizia_style"}
-accesskit = "0.11.0"
+accesskit = "0.12"
 
 femtovg = "0.7.0"
 image = { version = "0.24.6", default-features = false, features = ["png"] } # inherited from femtovg

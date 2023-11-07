@@ -150,7 +150,7 @@ impl Dropdown {
 
                 (label)(cx)
                     .class("title")
-                    .role(Role::PopupButton)
+                    .role(Role::ComboBox)
                     .width(Stretch(1.0))
                     .cursor(CursorIcon::Hand)
                     .checked(PopupData::is_open)
