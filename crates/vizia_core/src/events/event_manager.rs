@@ -440,10 +440,10 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
 
             #[cfg(debug_assertions)]
             if *code == Code::KeyS
-                // TODO: we should be able to use modifiers from both sides
-                && (context.modifiers == Modifiers::LCONTROL | Modifiers::LSHIFT | Modifiers::LALT
-                    || context.modifiers
-                        == Modifiers::RCONTROL | Modifiers::RSHIFT | Modifiers::RALT)
+                && context
+                    .modifiers
+                    .intersects(Modifiers::CONTROL | Modifiers::SHIFT | Modifiers::ALT)
+                && !context.modifiers.intersects(Modifiers::SUPER)
             {
                 let mut result = vec![];
                 compute_matched_rules(context, context.hovered, &mut result);
@@ -472,10 +472,10 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
 
             #[cfg(debug_assertions)]
             if *code == Code::KeyT
-                // TODO: we should be able to use modifiers from both sides
-                && (context.modifiers == Modifiers::LCONTROL | Modifiers::LSHIFT | Modifiers::LALT
-                    || context.modifiers
-                        == Modifiers::RCONTROL | Modifiers::RSHIFT | Modifiers::RALT)
+                && context
+                    .modifiers
+                    .intersects(Modifiers::CONTROL | Modifiers::SHIFT | Modifiers::ALT)
+                && !context.modifiers.intersects(Modifiers::SUPER)
             {
                 debug!("Loaded font face info:");
                 for face in context.text_context.font_system().db().faces() {
