@@ -876,3 +876,13 @@ analogtimepicker .time-selector-wrapper button .indicator {
 }
 
 /* TOOLTIP */
+
+tooltip {
+    position-type: self-directed;
+    z-index: 100;
+    size: auto;
+}
+
+tooltip arrow {
+    position-type: self-directed;
+}

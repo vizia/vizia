@@ -965,3 +965,7 @@ tooltip.vis {
     opacity: 1;
     transition: opacity 100ms 500ms;
 }
+
+tooltip arrow {
+    background-color: #fafafa;
+}

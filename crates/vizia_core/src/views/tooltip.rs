@@ -2,84 +2,133 @@ use crate::context::TreeProps;
 use crate::vg;
 use crate::{modifiers::TooltipModel, prelude::*};
 
+/// A tooltip view.
+///
+/// Should be used with the [tooltip](crate::modifiers::ActionModifiers::tooltip) modifier.
+///
+/// # Example
+/// ```
+/// # use vizia_core::prelude::*;
+/// #
+/// # enum AppEvent {
+/// #     Action,
+/// # }
+/// #
+/// # let cx = &mut Context::default();
+/// #
+/// Button::new(cx, |cx| Label::new(cx, "Text"))
+///     .tooltip(|cx|{
+///         Tooltip::new(cx, |cx|{
+///             Label::new(cx, "Tooltip Text");
+///         })
+///     })
+/// ```
 #[derive(Lens)]
 pub struct Tooltip {
     default_placement: Placement,
     placement: Placement,
+    show_arrow: bool,
 }
 
 impl Tooltip {
+    /// Creates a new Tooltip view with the given content.
+    ///
+    /// Should be used with the [tooltip](crate::modifiers::ActionModifiers::tooltip) modifier.
+    ///
+    /// # Example
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// #
+    /// # enum AppEvent {
+    /// #     Action,
+    /// # }
+    /// #
+    /// # let cx = &mut Context::default();
+    /// #
+    /// Button::new(cx, |cx| Label::new(cx, "Text"))
+    ///     .tooltip(|cx|{
+    ///         Tooltip::new(cx, |cx|{
+    ///             Label::new(cx, "Tooltip Text");
+    ///         })
+    ///     })
+    /// ```
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
-        Self { placement: Placement::Bottom, default_placement: Placement::Bottom }
-            .build(cx, |cx| {
-                Arrow::new(cx);
-                (content)(cx);
-            })
-            .position_type(PositionType::SelfDirected)
-            .z_index(100)
-            .size(Auto)
-            .bind(Tooltip::placement, |handle, placement| {
-                let (t, b) = match placement.get(&handle) {
-                    Placement::TopStart | Placement::Top | Placement::TopEnd => {
-                        (Auto, Percentage(100.0))
-                    }
-                    Placement::BottomStart | Placement::Bottom | Placement::BottomEnd => {
-                        (Percentage(100.0), Stretch(1.0))
-                    }
-                    Placement::LeftStart | Placement::RightStart => (Pixels(0.0), Stretch(1.0)),
-                    Placement::LeftEnd | Placement::RightEnd => (Stretch(1.0), Pixels(0.0)),
-                    Placement::Left | Placement::Right | Placement::Over => {
-                        (Stretch(1.0), Stretch(1.0))
-                    }
-                };
+        Self {
+            placement: Placement::Bottom,
+            default_placement: Placement::Bottom,
+            show_arrow: true,
+        }
+        .build(cx, |cx| {
+            Binding::new(cx, Tooltip::show_arrow, |cx, show_arrow| {
+                if show_arrow.get(cx) {
+                    Arrow::new(cx);
+                }
+            });
+            (content)(cx);
+        })
+        .z_index(100)
+        .bind(Tooltip::placement, |handle, placement| {
+            let (t, b) = match placement.get(&handle) {
+                Placement::TopStart | Placement::Top | Placement::TopEnd => {
+                    (Auto, Percentage(100.0))
+                }
+                Placement::BottomStart | Placement::Bottom | Placement::BottomEnd => {
+                    (Percentage(100.0), Stretch(1.0))
+                }
+                Placement::LeftStart | Placement::RightStart => (Pixels(0.0), Stretch(1.0)),
+                Placement::LeftEnd | Placement::RightEnd => (Stretch(1.0), Pixels(0.0)),
+                Placement::Left | Placement::Right | Placement::Over => {
+                    (Stretch(1.0), Stretch(1.0))
+                }
+            };
 
-                let (l, r) = match placement.get(&handle) {
-                    Placement::TopStart | Placement::BottomStart => (Pixels(0.0), Stretch(1.0)),
-                    Placement::TopEnd | Placement::BottomEnd => (Stretch(1.0), Pixels(0.0)),
-                    Placement::Left | Placement::LeftStart | Placement::LeftEnd => {
-                        (Stretch(1.0), Percentage(100.0))
-                    }
-                    Placement::Right | Placement::RightStart | Placement::RightEnd => {
-                        (Percentage(100.0), Stretch(1.0))
-                    }
-                    Placement::Top | Placement::Bottom | Placement::Over => {
-                        (Stretch(1.0), Stretch(1.0))
-                    }
-                };
+            let (l, r) = match placement.get(&handle) {
+                Placement::TopStart | Placement::BottomStart => (Pixels(0.0), Stretch(1.0)),
+                Placement::TopEnd | Placement::BottomEnd => (Stretch(1.0), Pixels(0.0)),
+                Placement::Left | Placement::LeftStart | Placement::LeftEnd => {
+                    (Stretch(1.0), Percentage(100.0))
+                }
+                Placement::Right | Placement::RightStart | Placement::RightEnd => {
+                    (Percentage(100.0), Stretch(1.0))
+                }
+                Placement::Top | Placement::Bottom | Placement::Over => {
+                    (Stretch(1.0), Stretch(1.0))
+                }
+            };
 
-                let translate = match placement.get(&handle) {
-                    Placement::Top | Placement::TopStart | Placement::TopEnd => {
-                        (Pixels(0.0), Pixels(-8.0))
-                    }
-                    Placement::Bottom | Placement::BottomStart | Placement::BottomEnd => {
-                        (Pixels(0.0), Pixels(8.0))
-                    }
-                    Placement::Left | Placement::LeftStart | Placement::LeftEnd => {
-                        (Pixels(-8.0), Pixels(0.0))
-                    }
-                    Placement::Right | Placement::RightStart | Placement::RightEnd => {
-                        (Pixels(8.0), Pixels(0.0))
-                    }
-                    _ => (Pixels(0.0), Pixels(0.0)),
-                };
+            let translate = match placement.get(&handle) {
+                Placement::Top | Placement::TopStart | Placement::TopEnd => {
+                    (Pixels(0.0), Pixels(-8.0))
+                }
+                Placement::Bottom | Placement::BottomStart | Placement::BottomEnd => {
+                    (Pixels(0.0), Pixels(8.0))
+                }
+                Placement::Left | Placement::LeftStart | Placement::LeftEnd => {
+                    (Pixels(-8.0), Pixels(0.0))
+                }
+                Placement::Right | Placement::RightStart | Placement::RightEnd => {
+                    (Pixels(8.0), Pixels(0.0))
+                }
+                _ => (Pixels(0.0), Pixels(0.0)),
+            };
 
-                handle.top(t).bottom(b).left(l).right(r).translate(translate);
-            })
-            .hoverable(false)
-            .on_build(|ex| {
-                ex.add_listener(move |_: &mut Tooltip, ex, event| {
-                    let flag = TooltipModel::tooltip_visible.get(ex);
-                    event.map(|window_event, meta| match window_event {
-                        WindowEvent::MouseDown(_) => {
-                            if flag && meta.origin != ex.current() {
-                                ex.toggle_class("vis", false);
-                            }
+            handle.top(t).bottom(b).left(l).right(r).translate(translate);
+        })
+        .hoverable(false)
+        .on_build(|ex| {
+            ex.add_listener(move |_: &mut Tooltip, ex, event| {
+                let flag = TooltipModel::tooltip_visible.get(ex);
+                event.map(|window_event, meta| match window_event {
+                    WindowEvent::MouseDown(_) => {
+                        if flag && meta.origin != ex.current() {
+                            ex.toggle_class("vis", false);
                         }
+                    }
 
-                        _ => {}
-                    });
+                    _ => {}
                 });
-            })
+            });
+        })
     }
 
     fn place(&mut self, dist_top: f32, dist_bottom: f32, dist_left: f32, dist_right: f32) {
@@ -154,6 +203,7 @@ impl View for Tooltip {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _| match window_event {
+            // Reposition tooltip if there isn't enough room for it.
             WindowEvent::GeometryChanged(_) => {
                 let parent = cx.parent();
                 let parent_bounds = cx.cache.get_bounds(parent);
@@ -175,6 +225,7 @@ impl View for Tooltip {
     }
 }
 
+/// Describes the placement of a tooltip relative to its parent element.
 #[derive(Debug, Clone, Copy, Data, PartialEq, Eq)]
 pub enum Placement {
     TopStart,
@@ -192,67 +243,71 @@ pub enum Placement {
     Over,
 }
 
-impl Placement {}
-
 impl<'a> Handle<'a, Tooltip> {
+    // TODO: Change this to use Res when lens value PR is merged
+    /// Sets the position where the tooltip should appear relative to its parent element.
+    /// Defaults to `Placement::Bottom`.
     pub fn placement(self, placement: Placement) -> Self {
         self.modify(|tooltip| {
             tooltip.placement = placement;
             tooltip.default_placement = placement;
         })
     }
+
+    // TODO: Change this to use Res when lens value PR is merged
+    /// Sets whether the tooltip should include an arrow. Defaults to true.
+    pub fn arrow(self, show_arrow: bool) -> Self {
+        self.modify(|tooltip| tooltip.show_arrow = show_arrow)
+    }
 }
 
-pub struct Arrow {}
+/// An arrow view used by the Tooltip view.
+pub(crate) struct Arrow {}
 
 impl Arrow {
-    pub fn new(cx: &mut Context) -> Handle<Self> {
-        Self {}
-            .build(cx, |_| {})
-            .background_color(Color::from("#181818"))
-            .position_type(PositionType::SelfDirected)
-            .bind(Tooltip::placement, |handle, placement| {
-                let (t, b) = match placement.get(&handle) {
-                    Placement::TopStart | Placement::Top | Placement::TopEnd => {
-                        (Percentage(100.0), Stretch(1.0))
-                    }
-                    Placement::BottomStart | Placement::Bottom | Placement::BottomEnd => {
-                        (Stretch(1.0), Percentage(100.0))
-                    }
-                    _ => (Stretch(1.0), Stretch(1.0)),
-                };
+    pub(crate) fn new(cx: &mut Context) -> Handle<Self> {
+        Self {}.build(cx, |_| {}).bind(Tooltip::placement, |handle, placement| {
+            let (t, b) = match placement.get(&handle) {
+                Placement::TopStart | Placement::Top | Placement::TopEnd => {
+                    (Percentage(100.0), Stretch(1.0))
+                }
+                Placement::BottomStart | Placement::Bottom | Placement::BottomEnd => {
+                    (Stretch(1.0), Percentage(100.0))
+                }
+                _ => (Stretch(1.0), Stretch(1.0)),
+            };
 
-                let (l, r) = match placement.get(&handle) {
-                    Placement::LeftStart | Placement::Left | Placement::LeftEnd => {
-                        (Percentage(100.0), Stretch(1.0))
-                    }
-                    Placement::RightStart | Placement::Right | Placement::RightEnd => {
-                        (Stretch(1.0), Percentage(100.0))
-                    }
-                    Placement::TopStart | Placement::BottomStart => {
-                        // TODO: Use border radius
-                        (Pixels(8.0), Stretch(1.0))
-                    }
-                    Placement::TopEnd | Placement::BottomEnd => {
-                        // TODO: Use border radius
-                        (Stretch(1.0), Pixels(8.0))
-                    }
-                    _ => (Stretch(1.0), Stretch(1.0)),
-                };
+            let (l, r) = match placement.get(&handle) {
+                Placement::LeftStart | Placement::Left | Placement::LeftEnd => {
+                    (Percentage(100.0), Stretch(1.0))
+                }
+                Placement::RightStart | Placement::Right | Placement::RightEnd => {
+                    (Stretch(1.0), Percentage(100.0))
+                }
+                Placement::TopStart | Placement::BottomStart => {
+                    // TODO: Use border radius
+                    (Pixels(8.0), Stretch(1.0))
+                }
+                Placement::TopEnd | Placement::BottomEnd => {
+                    // TODO: Use border radius
+                    (Stretch(1.0), Pixels(8.0))
+                }
+                _ => (Stretch(1.0), Stretch(1.0)),
+            };
 
-                let (w, h) = match placement.get(&handle) {
-                    Placement::Top
-                    | Placement::Bottom
-                    | Placement::TopStart
-                    | Placement::BottomStart
-                    | Placement::TopEnd
-                    | Placement::BottomEnd => (Pixels(16.0), Pixels(8.0)),
+            let (w, h) = match placement.get(&handle) {
+                Placement::Top
+                | Placement::Bottom
+                | Placement::TopStart
+                | Placement::BottomStart
+                | Placement::TopEnd
+                | Placement::BottomEnd => (Pixels(16.0), Pixels(8.0)),
 
-                    _ => (Pixels(8.0), Pixels(16.0)),
-                };
+                _ => (Pixels(8.0), Pixels(16.0)),
+            };
 
-                handle.top(t).bottom(b).left(l).right(r).width(w).height(h);
-            })
+            handle.top(t).bottom(b).left(l).right(r).width(w).height(h);
+        })
     }
 }
 
@@ -292,12 +347,7 @@ impl View for Arrow {
                 path.line_to(bounds.top_right().1, bounds.top_right().0);
             }
 
-            _ => {
-                path.move_to(bounds.bottom_left().1, bounds.bottom_left().0);
-                path.line_to(bounds.center_top().0, bounds.center_top().1);
-                path.line_to(bounds.bottom_right().1, bounds.bottom_right().0);
-                path.line_to(bounds.bottom_left().1, bounds.bottom_left().0);
-            }
+            Placement::Over => {}
         }
         path.close();
 
