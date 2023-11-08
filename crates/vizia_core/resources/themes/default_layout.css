@@ -876,33 +876,3 @@ analogtimepicker .time-selector-wrapper button .indicator {
 }
 
 /* TOOLTIP */
-
-tooltip {
-    height: auto;
-}
-
-tooltip .tooltip-wrapper {
-    child-space: 8px;
-}
-
-tooltip .tooltip-button-wrapper {
-    top: 8px;
-    left: 1s;
-    width: auto;
-    height: auto;
-    col-between: 8px;
-}
-
-.tooltip-pointer-wrapper {
-    width: 16px;
-    height: 12px;
-    overflow: hidden;
-    left: 4px;
-}
-
-.tooltip-pointer {
-    width: 12px;
-    height: 12px;
-    background-color: #51afef;
-    border-radius: 2px;
-}

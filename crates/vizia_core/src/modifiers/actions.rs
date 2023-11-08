@@ -445,7 +445,7 @@ pub trait ActionModifiers<V> {
     where
         F: 'static + Fn(&mut EventContext, GeoChanged) + Send + Sync;
 
-    fn tooltip<C: FnOnce(&mut Context)>(self, content: C) -> Self;
+    fn tooltip<C: FnOnce(&mut Context) -> Handle<'_, Tooltip>>(self, content: C) -> Self;
 
     fn on_drag<F>(self, action: F) -> Self
     where
@@ -484,7 +484,7 @@ fn build_tooltip_model(cx: &mut Context, entity: Entity) {
 }
 
 impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
-    fn tooltip<C: FnOnce(&mut Context)>(self, content: C) -> Self {
+    fn tooltip<C: FnOnce(&mut Context) -> Handle<'_, Tooltip>>(self, content: C) -> Self {
         let entity = self.entity();
 
         build_tooltip_model(self.cx, entity);
@@ -494,7 +494,14 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
             .on_hover_out(|cx| cx.emit(TooltipEvent::HideTooltip));
 
         s.cx.with_current(entity, |cx| {
-            Tooltip::new(cx, content).toggle_class("vis", TooltipModel::tooltip_visible);
+            (content)(cx).bind(TooltipModel::tooltip_visible, |mut handle, vis| {
+                let is_visible = vis.get(&handle);
+                handle = handle.toggle_class("vis", is_visible);
+
+                if is_visible {
+                    handle.context().emit(WindowEvent::GeometryChanged(GeoChanged::empty()));
+                }
+            });
         });
 
         s

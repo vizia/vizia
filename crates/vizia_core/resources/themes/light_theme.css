@@ -987,7 +987,7 @@ tabview .tabview-divider {
 /* TOOLTIP */
 
 tooltip {
-    child-space: 4px;
+    child-space: 8px;
     background-color: #181818;
     border-radius: 4px;
     color: #fafafa;

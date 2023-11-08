@@ -64,7 +64,7 @@ pub use timepicker::{
     DigitalTimepicker, DigitalTimepickerEvent, Timepicker,
 };
 pub use toggle_button::{ToggleButton, ToggleButtonModifiers, Toolbar};
-pub use tooltip::Tooltip;
+pub use tooltip::{Placement, Tooltip};
 pub use virtual_list::*;
 
 use crate::prelude::*;

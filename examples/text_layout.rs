@@ -142,7 +142,7 @@ fn wrapping(cx: &mut Context) {
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .child_space(Pixels(50.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {

@@ -148,7 +148,9 @@ fn theme_selection_dropdown(cx: &mut Context) {
         .on_select(|cx, index| cx.emit(ControlsEvent::SetThemeMode(index)))
         .width(Pixels(85.0))
         .tooltip(|cx| {
-            Label::new(cx, "Select Theme Mode");
+            Tooltip::new(cx, |cx| {
+                Label::new(cx, "Select Theme Mode");
+            })
         });
 }
 
