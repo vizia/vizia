@@ -222,6 +222,12 @@ impl BoundingBox {
         x_hit && y_hit
     }
 
+    pub fn contains_point(&self, x: f32, y: f32) -> bool {
+        let x_hit = x >= self.x && x < self.x + self.w;
+        let y_hit = y >= self.y && y < self.y + self.h;
+        x_hit && y_hit
+    }
+
     pub fn transform(&self, transform: &Transform2D) -> Self {
         let (tl, tt) = transform.transform_point(self.x, self.y);
         let (tr, tb) = transform.transform_point(self.right(), self.bottom());

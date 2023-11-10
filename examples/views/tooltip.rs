@@ -25,7 +25,6 @@ fn main() {
                         .child_space(Pixels(4.0))
                         .size(Auto)
                         .placement(Placement::TopStart)
-                        .arrow_size(Pixels(20.0))
                     })
                     .class("test");
 
@@ -175,8 +174,37 @@ fn main() {
             })
             .size(Auto)
             .col_between(Pixels(8.0));
+
+            HStack::new(cx, |cx| {
+                Element::new(cx)
+                    .text("Over")
+                    .tooltip(|cx| {
+                        Tooltip::new(cx, |cx| {
+                            Label::new(cx, "This is a tooltip").child_space(Pixels(4.0));
+                        })
+                        .child_space(Pixels(4.0))
+                        .size(Auto)
+                        .placement(Placement::Over)
+                    })
+                    .class("test");
+
+                Element::new(cx)
+                    .text("Cursor")
+                    .tooltip(|cx| {
+                        Tooltip::new(cx, |cx| {
+                            Label::new(cx, "This is a tooltip").child_space(Pixels(4.0));
+                        })
+                        .child_space(Pixels(4.0))
+                        .size(Auto)
+                        .placement(Placement::Cursor)
+                    })
+                    .class("test");
+            })
+            .size(Auto)
+            .col_between(Pixels(8.0));
         });
     })
     .title("Tooltip")
+    .inner_size((800, 800))
     .run();
 }

@@ -82,6 +82,8 @@ impl Tooltip {
                 Placement::Left | Placement::Right | Placement::Over => {
                     (Stretch(1.0), Stretch(1.0))
                 }
+
+                _ => (Stretch(1.0), Stretch(1.0)),
             };
 
             let (l, r) = match placement.get(&handle) {
@@ -96,6 +98,8 @@ impl Tooltip {
                 Placement::Top | Placement::Bottom | Placement::Over => {
                     (Stretch(1.0), Stretch(1.0))
                 }
+
+                _ => (Stretch(1.0), Stretch(1.0)),
             };
 
             handle = handle.top(t).bottom(b).left(l).right(r);
@@ -122,12 +126,30 @@ impl Tooltip {
         })
         .hoverable(false)
         .on_build(|ex| {
-            ex.add_listener(move |_: &mut Tooltip, ex, event| {
+            ex.add_listener(move |tooltip: &mut Tooltip, ex, event| {
                 let flag = TooltipModel::tooltip_visible.get(ex);
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
                         if flag && meta.origin != ex.current() {
                             ex.toggle_class("vis", false);
+                        }
+                    }
+
+                    WindowEvent::MouseMove(x, y) => {
+                        if tooltip.placement == Placement::Cursor {
+                            if !x.is_nan() && !y.is_nan() {
+                                println!("{} {} {}", x, y, ex.bounds());
+                                let scale = ex.scale_factor();
+                                let parent = ex.parent();
+                                let parent_bounds = ex.cache.get_bounds(parent);
+                                if parent_bounds.contains_point(*x, *y) {
+                                    ex.set_left(Pixels(
+                                        ((*x - parent_bounds.x) - ex.bounds().width() / 2.0)
+                                            / scale,
+                                    ));
+                                    ex.set_top(Pixels((*y - parent_bounds.y) / scale));
+                                }
+                            }
                         }
                     }
 
@@ -364,6 +386,7 @@ pub enum Placement {
     Right,
     RightEnd,
     Over,
+    Cursor,
 }
 
 impl<'a> Handle<'a, Tooltip> {
@@ -479,7 +502,7 @@ impl View for Arrow {
                 path.line_to(bounds.top_right().1, bounds.top_right().0);
             }
 
-            Placement::Over => {}
+            _ => {}
         }
         path.close();
 
