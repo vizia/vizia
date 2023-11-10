@@ -189,6 +189,10 @@ name = "static_list"
 path = "examples/lists/static_list.rs"
 
 [[example]]
+name = "menubar"
+path = "examples/views/menubar.rs"
+
+[[example]]
 name = "menu"
 path = "examples/views/menu.rs"
 

@@ -1,6 +1,6 @@
 use crate::context::TreeProps;
 use crate::vg;
-use crate::{modifiers::TooltipModel, prelude::*};
+use crate::{modifiers::ModalModel, prelude::*};
 
 /// A tooltip view.
 ///
@@ -127,7 +127,7 @@ impl Tooltip {
         .hoverable(false)
         .on_build(|ex| {
             ex.add_listener(move |tooltip: &mut Tooltip, ex, event| {
-                let flag = TooltipModel::tooltip_visible.get(ex);
+                let flag = ModalModel::tooltip_visible.get(ex);
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
                         if flag && meta.origin != ex.current() {
@@ -138,7 +138,6 @@ impl Tooltip {
                     WindowEvent::MouseMove(x, y) => {
                         if tooltip.placement == Placement::Cursor {
                             if !x.is_nan() && !y.is_nan() {
-                                println!("{} {} {}", x, y, ex.bounds());
                                 let scale = ex.scale_factor();
                                 let parent = ex.parent();
                                 let parent_bounds = ex.cache.get_bounds(parent);

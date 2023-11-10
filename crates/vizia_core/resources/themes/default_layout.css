@@ -346,7 +346,8 @@ submenu {
     child-right: 8px;
 }
 
-submenu submenu {
+submenu submenu,
+menu submenu {
     width: 1s;
 }
 
@@ -354,6 +355,7 @@ menubutton label {
     child-top: 1s;
     child-bottom: 1s;
     width: 1s;
+    height: 1s;
 }
 
 menubutton .icon,
@@ -382,7 +384,8 @@ submenu > label {
     width: auto;
 }
 
-submenu submenu label {
+submenu submenu label,
+menu submenu label {
     child-top: 1s;
     child-bottom: 1s;
     size: 1s;
@@ -398,17 +401,20 @@ submenu > popup {
     right: 1s;
 }
 
-submenu submenu > popup {
+submenu submenu > popup,
+menu submenu > popup {
     opacity: 0;
     display: none;
 }
 
-submenu submenu > popup:checked {
+submenu submenu > popup:checked,
+menu submenu > popup:checked {
     opacity: 1;
     display: flex;
 }
 
-submenu submenu > popup {
+submenu submenu > popup,
+menu submenu > popup {
     top: 0px;
     left: 100%;
 }
@@ -432,7 +438,8 @@ submenu > .arrow {
     display: none;
 }
 
-submenu submenu > .arrow {
+submenu submenu > .arrow,
+menu submenu > .arrow {
     display: flex;
 }
 
@@ -885,4 +892,10 @@ tooltip {
 
 tooltip arrow {
     position-type: self-directed;
+}
+
+menu {
+    position-type: self-directed;
+    z-index: 100;
+    size: auto;
 }

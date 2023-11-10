@@ -434,7 +434,8 @@ menubar submenu {
     border-width: 0px;
 }
 
-submenu submenu {
+submenu submenu,
+menu submenu {
     border-width: 0px;
 }
 
@@ -1002,4 +1003,21 @@ tooltip.vis {
 
 tooltip arrow {
     background-color: #181818;
+}
+
+menu {
+    border-width: 1px;
+    border-color: #d2d2d2;
+    background-color: #fdfdfd;
+    child-space: 8px;
+    border-radius: 4px;
+    box-shadow: 0px 2px 16px #4f4f4f38;
+    width: 160px;
+    opacity: 0;
+    transition: opacity 100ms;
+}
+
+menu.vis {
+    opacity: 1;
+    transition: opacity 100ms;
 }
