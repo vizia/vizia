@@ -28,6 +28,7 @@ pub struct Tooltip {
     default_placement: Placement,
     placement: Placement,
     show_arrow: bool,
+    arrow_size: Length,
 }
 
 impl Tooltip {
@@ -57,6 +58,7 @@ impl Tooltip {
             placement: Placement::Bottom,
             default_placement: Placement::Bottom,
             show_arrow: true,
+            arrow_size: Length::Value(LengthValue::Px(8.0)),
         }
         .build(cx, |cx| {
             Binding::new(cx, Tooltip::show_arrow, |cx, show_arrow| {
@@ -67,7 +69,7 @@ impl Tooltip {
             (content)(cx);
         })
         .z_index(100)
-        .bind(Tooltip::placement, |handle, placement| {
+        .bind(Tooltip::placement, |mut handle, placement| {
             let (t, b) = match placement.get(&handle) {
                 Placement::TopStart | Placement::Top | Placement::TopEnd => {
                     (Auto, Percentage(100.0))
@@ -96,23 +98,27 @@ impl Tooltip {
                 }
             };
 
-            let translate = match placement.get(&handle) {
-                Placement::Top | Placement::TopStart | Placement::TopEnd => {
-                    (Pixels(0.0), Pixels(-8.0))
-                }
-                Placement::Bottom | Placement::BottomStart | Placement::BottomEnd => {
-                    (Pixels(0.0), Pixels(8.0))
-                }
-                Placement::Left | Placement::LeftStart | Placement::LeftEnd => {
-                    (Pixels(-8.0), Pixels(0.0))
-                }
-                Placement::Right | Placement::RightStart | Placement::RightEnd => {
-                    (Pixels(8.0), Pixels(0.0))
-                }
-                _ => (Pixels(0.0), Pixels(0.0)),
-            };
+            handle = handle.top(t).bottom(b).left(l).right(r);
 
-            handle.top(t).bottom(b).left(l).right(r).translate(translate);
+            handle.subbind(Tooltip::arrow_size, move |handle, arrow_size| {
+                let arrow_size = arrow_size.get(&handle).to_px().unwrap_or(8.0);
+                let translate = match placement.get(&handle) {
+                    Placement::Top | Placement::TopStart | Placement::TopEnd => {
+                        (Pixels(0.0), Pixels(-arrow_size))
+                    }
+                    Placement::Bottom | Placement::BottomStart | Placement::BottomEnd => {
+                        (Pixels(0.0), Pixels(arrow_size))
+                    }
+                    Placement::Left | Placement::LeftStart | Placement::LeftEnd => {
+                        (Pixels(-arrow_size), Pixels(0.0))
+                    }
+                    Placement::Right | Placement::RightStart | Placement::RightEnd => {
+                        (Pixels(arrow_size), Pixels(0.0))
+                    }
+                    _ => (Pixels(0.0), Pixels(0.0)),
+                };
+                handle.translate(translate);
+            });
         })
         .hoverable(false)
         .on_build(|ex| {
@@ -210,11 +216,16 @@ impl View for Tooltip {
                 let bounds = cx.bounds();
                 let window_bounds = cx.cache.get_bounds(Entity::root());
 
-                let dist_bottom =
-                    window_bounds.bottom() - (parent_bounds.bottom() + bounds.height());
-                let dist_top = (parent_bounds.top() - bounds.height()) - window_bounds.top();
-                let dist_left = (parent_bounds.left() - bounds.width()) - window_bounds.left();
-                let dist_right = window_bounds.right() - (parent_bounds.right() + bounds.width());
+                let arrow_size = self.arrow_size.to_px().unwrap();
+
+                let dist_bottom = window_bounds.bottom()
+                    - (parent_bounds.bottom() + bounds.height() + arrow_size);
+                let dist_top =
+                    (parent_bounds.top() - bounds.height() - arrow_size) - window_bounds.top();
+                let dist_left =
+                    (parent_bounds.left() - bounds.width() - arrow_size) - window_bounds.left();
+                let dist_right =
+                    window_bounds.right() - (parent_bounds.right() + bounds.width() + arrow_size);
 
                 self.placement = self.default_placement;
                 self.place(dist_top, dist_bottom, dist_left, dist_right);
@@ -259,6 +270,10 @@ impl<'a> Handle<'a, Tooltip> {
     pub fn arrow(self, show_arrow: bool) -> Self {
         self.modify(|tooltip| tooltip.show_arrow = show_arrow)
     }
+
+    pub fn arrow_size(self, size: impl Into<Length>) -> Self {
+        self.modify(|tooltip| tooltip.arrow_size = size.into())
+    }
 }
 
 /// An arrow view used by the Tooltip view.
@@ -266,7 +281,7 @@ pub(crate) struct Arrow {}
 
 impl Arrow {
     pub(crate) fn new(cx: &mut Context) -> Handle<Self> {
-        Self {}.build(cx, |_| {}).bind(Tooltip::placement, |handle, placement| {
+        Self {}.build(cx, |_| {}).bind(Tooltip::placement, |mut handle, placement| {
             let (t, b) = match placement.get(&handle) {
                 Placement::TopStart | Placement::Top | Placement::TopEnd => {
                     (Percentage(100.0), Stretch(1.0))
@@ -295,18 +310,23 @@ impl Arrow {
                 _ => (Stretch(1.0), Stretch(1.0)),
             };
 
-            let (w, h) = match placement.get(&handle) {
-                Placement::Top
-                | Placement::Bottom
-                | Placement::TopStart
-                | Placement::BottomStart
-                | Placement::TopEnd
-                | Placement::BottomEnd => (Pixels(16.0), Pixels(8.0)),
+            handle = handle.top(t).bottom(b).left(l).right(r);
 
-                _ => (Pixels(8.0), Pixels(16.0)),
-            };
+            handle.subbind(Tooltip::arrow_size, move |handle, arrow_size| {
+                let arrow_size = arrow_size.get(&handle).to_px().unwrap_or(8.0);
+                let (w, h) = match placement.get(&handle) {
+                    Placement::Top
+                    | Placement::Bottom
+                    | Placement::TopStart
+                    | Placement::BottomStart
+                    | Placement::TopEnd
+                    | Placement::BottomEnd => (Pixels(arrow_size * 2.0), Pixels(arrow_size)),
 
-            handle.top(t).bottom(b).left(l).right(r).width(w).height(h);
+                    _ => (Pixels(arrow_size), Pixels(arrow_size * 2.0)),
+                };
+
+                handle.width(w).height(h);
+            });
         })
     }
 }

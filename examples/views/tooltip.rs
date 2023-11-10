@@ -25,6 +25,7 @@ fn main() {
                         .child_space(Pixels(4.0))
                         .size(Auto)
                         .placement(Placement::TopStart)
+                        .arrow_size(Pixels(20.0))
                     })
                     .class("test");
 

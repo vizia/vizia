@@ -11,8 +11,8 @@ use instant::{Duration, Instant};
 use log::debug;
 use std::any::Any;
 use vizia_id::GenerationalId;
-use vizia_storage::TreeIterator;
 use vizia_storage::{LayoutParentIterator, TreeExt};
+use vizia_storage::{ParentIterator, TreeIterator};
 
 const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 
@@ -378,8 +378,8 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 let (tree, views, cache) = (&context.tree, &context.views, &context.cache);
                 let has_next_sibling = |entity| tree.get_next_sibling(entity).is_some();
                 let root_indents = |entity: Entity| {
-                    entity
-                        .parent_iter(tree)
+                    let parent_iter = ParentIterator::new(tree, Some(entity));
+                    parent_iter
                         .skip(1)
                         .collect::<Vec<_>>()
                         .into_iter()
@@ -421,7 +421,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                             "{}{} binding observing {}",
                             indents(entity),
                             entity,
-                            binding_name
+                            binding_name,
                         );
                     } else {
                         println!(

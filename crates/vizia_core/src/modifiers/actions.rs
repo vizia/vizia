@@ -490,8 +490,8 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
         build_tooltip_model(self.cx, entity);
 
         let s = self
-            .on_hover(|cx| cx.emit(TooltipEvent::ShowTooltip))
-            .on_hover_out(|cx| cx.emit(TooltipEvent::HideTooltip));
+            .on_over(|cx| cx.emit(TooltipEvent::ShowTooltip))
+            .on_over_out(|cx| cx.emit(TooltipEvent::HideTooltip));
 
         s.cx.with_current(entity, |cx| {
             (content)(cx).bind(TooltipModel::tooltip_visible, |mut handle, vis| {

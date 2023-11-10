@@ -120,10 +120,26 @@ impl<'a, V> Handle<'a, V> {
             Binding::new(cx, lens, move |cx, data| {
                 let new_handle = Handle { entity, p: Default::default(), cx };
 
-                new_handle.cx.set_current(new_handle.entity);
+                // new_handle.cx.set_current(new_handle.entity);
                 (closure)(new_handle, data);
             });
         });
+        self
+    }
+
+    pub fn subbind<L, F>(self, lens: L, closure: F) -> Self
+    where
+        L: Lens,
+        <L as Lens>::Target: Data,
+        F: 'static + Fn(Handle<'_, V>, L),
+    {
+        let entity = self.entity();
+        Binding::new(self.cx, lens, move |cx, data| {
+            let new_handle = Handle { entity, p: Default::default(), cx };
+            // new_handle.cx.set_current(new_handle.entity);
+            (closure)(new_handle, data);
+        });
+
         self
     }
 
