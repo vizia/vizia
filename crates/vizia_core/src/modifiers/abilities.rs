@@ -18,11 +18,14 @@ pub trait AbilityModifiers: internal::Modifiable {
     /// ```
     fn hoverable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
-        state.set_or_bind(self.context(), entity, |cx, v| {
-            if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
-                abilities.set(Abilities::HOVERABLE, v.into());
-                cx.needs_restyle();
-            }
+        let current = self.entity();
+        self.context().with_current(current, |cx| {
+            state.set_or_bind(cx, entity, |cx, v| {
+                if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
+                    abilities.set(Abilities::HOVERABLE, v.into());
+                    cx.needs_restyle();
+                }
+            });
         });
 
         self
@@ -40,18 +43,21 @@ pub trait AbilityModifiers: internal::Modifiable {
     /// ```
     fn focusable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
-        state.set_or_bind(self.context(), entity, |cx, v| {
-            if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
-                let state = v.into();
-                abilities.set(Abilities::FOCUSABLE, state);
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            state.set_or_bind(cx, entity, |cx, v| {
+                if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
+                    let state = v.into();
+                    abilities.set(Abilities::FOCUSABLE, state);
 
-                // If an element is not focusable then it can't be keyboard navigable.
-                if !state {
-                    abilities.set(Abilities::NAVIGABLE, false);
+                    // If an element is not focusable then it can't be keyboard navigable.
+                    if !state {
+                        abilities.set(Abilities::NAVIGABLE, false);
+                    }
+
+                    cx.needs_restyle();
                 }
-
-                cx.needs_restyle();
-            }
+            });
         });
 
         self
@@ -69,13 +75,16 @@ pub trait AbilityModifiers: internal::Modifiable {
     /// ```
     fn checkable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
-        state.set_or_bind(self.context(), entity, |cx, v| {
-            if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
-                let state = v.into();
-                abilities.set(Abilities::CHECKABLE, state);
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            state.set_or_bind(cx, entity, |cx, v| {
+                if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
+                    let state = v.into();
+                    abilities.set(Abilities::CHECKABLE, state);
 
-                cx.needs_restyle();
-            }
+                    cx.needs_restyle();
+                }
+            });
         });
 
         self
@@ -94,11 +103,14 @@ pub trait AbilityModifiers: internal::Modifiable {
     /// ```
     fn navigable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
-        state.set_or_bind(self.context(), entity, |cx, v| {
-            if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
-                abilities.set(Abilities::NAVIGABLE, v.into());
-                cx.needs_restyle();
-            }
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            state.set_or_bind(cx, entity, |cx, v| {
+                if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
+                    abilities.set(Abilities::NAVIGABLE, v.into());
+                    cx.needs_restyle();
+                }
+            });
         });
 
         self

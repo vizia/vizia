@@ -29,12 +29,15 @@ impl PickList {
                     // A Label and an Icon
                     HStack::new(cx, move |cx| {
                         Label::new(cx, "")
-                            .bind(list_lens, move |handle, list| {
-                                handle.bind(selected, move |handle, sel| {
-                                    let selected_index = sel.get(handle.cx);
-
-                                    handle.text(list.index(selected_index));
-                                });
+                            // .bind(list_lens, move |handle, list| {
+                            //     handle.subbind(selected, move |handle, sel| {
+                            //         let selected_index = sel.get(handle.cx);
+                            //         handle.text(list.index(selected_index));
+                            //     });
+                            // })
+                            .bind(selected, move |handle, sel| {
+                                let selected_index = sel.get(handle.cx);
+                                handle.text(list_lens.index(selected_index));
                             })
                             .hoverable(false);
                         if show_handle {

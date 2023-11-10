@@ -33,6 +33,6 @@ fn main() {
         });
     })
     .title("Knob")
-    .inner_size((250, 250))
+    .inner_size((300, 300))
     .run();
 }

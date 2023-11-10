@@ -1,3 +1,4 @@
+use std::any::TypeId;
 use std::collections::{hash_map::DefaultHasher, HashSet};
 use std::hash::{Hash, Hasher};
 
@@ -6,8 +7,9 @@ use crate::{model::ModelOrView, prelude::*};
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct StoreId(pub u64);
 
-pub(crate) fn get_storeid<T: Hash>(t: &T) -> StoreId {
+pub(crate) fn get_storeid<T: Hash + 'static>(t: &T) -> StoreId {
     let mut s = DefaultHasher::new();
+    TypeId::of::<T>().hash(&mut s);
     t.hash(&mut s);
     StoreId(s.finish())
 }

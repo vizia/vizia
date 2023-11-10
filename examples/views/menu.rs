@@ -19,7 +19,7 @@ fn main() {
                 |cx| {
                     MenuButton::new(
                         cx,
-                        |_| println!("File"),
+                        |_| println!("New"),
                         |cx| {
                             HStack::new(cx, |cx| {
                                 Label::new(cx, "New");

@@ -46,8 +46,9 @@ macro_rules! modifier {
         #[allow(unused_variables)]
         fn $name<U: Into<$t>>(mut self, value: impl Res<U>) -> Self {
             let entity = self.entity();
-            value.set_or_bind(self.context(), entity, |cx, v| {
-                cx.style.$name.insert(cx.current, v.into());
+            let current = self.current();
+            value.set_or_bind(self.context(), current, move |cx, v| {
+                cx.style.$name.insert(entity, v.into());
 
                 cx.style.system_flags |= $flags;
             });
@@ -65,6 +66,7 @@ mod internal {
     pub trait Modifiable: Sized {
         fn context(&mut self) -> &mut Context;
         fn entity(&self) -> Entity;
+        fn current(&self) -> Entity;
     }
 
     impl<'a, V> Modifiable for Handle<'a, V> {
@@ -74,6 +76,10 @@ mod internal {
 
         fn entity(&self) -> Entity {
             self.entity
+        }
+
+        fn current(&self) -> Entity {
+            self.current
         }
     }
 }

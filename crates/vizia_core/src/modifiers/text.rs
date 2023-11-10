@@ -8,13 +8,16 @@ pub trait TextModifiers: internal::Modifiable {
     /// Sets the text content of the view.
     fn text<T: ToStringLocalized>(mut self, value: impl Res<T>) -> Self {
         let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, val| {
-            let text_data = val.to_string_local(cx);
-            cx.text_context.set_text(cx.current, &text_data);
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            value.set_or_bind(cx, entity, move |cx, val| {
+                let text_data = val.to_string_local(cx);
+                cx.text_context.set_text(cx.current, &text_data);
 
-            cx.style.needs_text_layout.insert(cx.current, true);
-            cx.needs_relayout();
-            cx.needs_redraw();
+                cx.style.needs_text_layout.insert(cx.current, true);
+                cx.needs_relayout();
+                cx.needs_redraw();
+            });
         });
 
         self
@@ -53,9 +56,12 @@ pub trait TextModifiers: internal::Modifiable {
     /// Sets the text color of the view.
     fn color<U: Into<Color>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, v| {
-            cx.style.font_color.insert(cx.current, v.into());
-            cx.style.needs_redraw();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            value.set_or_bind(cx, entity, |cx, v| {
+                cx.style.font_color.insert(cx.current, v.into());
+                cx.style.needs_redraw();
+            });
         });
         self
     }
@@ -63,9 +69,12 @@ pub trait TextModifiers: internal::Modifiable {
     /// Sets the font size of the view.
     fn font_size<U: Into<FontSize>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, v| {
-            cx.style.font_size.insert(cx.current, v.into());
-            cx.style.needs_text_layout.insert(cx.current, true);
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            value.set_or_bind(cx, entity, move |cx, v| {
+                cx.style.font_size.insert(cx.current, v.into());
+                cx.style.needs_text_layout.insert(cx.current, true);
+            });
         });
         self
     }

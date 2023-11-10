@@ -6,6 +6,7 @@ use std::{
 
 /// A handle to a view which has been already built into the tree.
 pub struct Handle<'a, V> {
+    pub(crate) current: Entity,
     pub(crate) entity: Entity,
     pub(crate) p: PhantomData<V>,
     pub(crate) cx: &'a mut Context,
@@ -42,6 +43,10 @@ impl<'a, V> Handle<'a, V> {
     /// Returns the [`Entity`] id of the view.
     pub fn entity(&self) -> Entity {
         self.entity
+    }
+
+    pub fn current(&self) -> Entity {
+        self.current
     }
 
     /// Returns a mutable reference to the context.
@@ -116,9 +121,10 @@ impl<'a, V> Handle<'a, V> {
         F: 'static + Fn(Handle<'_, V>, L),
     {
         let entity = self.entity();
-        self.cx.with_current(entity, |cx| {
+        let current = self.current();
+        self.cx.with_current(current, |cx| {
             Binding::new(cx, lens, move |cx, data| {
-                let new_handle = Handle { entity, p: Default::default(), cx };
+                let new_handle = Handle { current: cx.current, entity, p: Default::default(), cx };
 
                 // new_handle.cx.set_current(new_handle.entity);
                 (closure)(new_handle, data);
@@ -127,21 +133,21 @@ impl<'a, V> Handle<'a, V> {
         self
     }
 
-    pub fn subbind<L, F>(self, lens: L, closure: F) -> Self
-    where
-        L: Lens,
-        <L as Lens>::Target: Data,
-        F: 'static + Fn(Handle<'_, V>, L),
-    {
-        let entity = self.entity();
-        Binding::new(self.cx, lens, move |cx, data| {
-            let new_handle = Handle { entity, p: Default::default(), cx };
-            // new_handle.cx.set_current(new_handle.entity);
-            (closure)(new_handle, data);
-        });
+    // pub fn subbind<L, F>(self, lens: L, closure: F) -> Self
+    // where
+    //     L: Lens,
+    //     <L as Lens>::Target: Data,
+    //     F: 'static + Fn(Handle<'_, V>, L),
+    // {
+    //     let entity = self.entity();
+    //     Binding::new(self.cx, lens, move |cx, data| {
+    //         let new_handle = Handle { entity, p: Default::default(), cx };
+    //         // new_handle.cx.set_current(new_handle.entity);
+    //         (closure)(new_handle, data);
+    //     });
 
-        self
-    }
+    //     self
+    // }
 
     /// Marks the view as needing a relayout.
     pub fn needs_relayout(&mut self) {

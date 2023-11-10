@@ -100,7 +100,7 @@ impl Tooltip {
 
             handle = handle.top(t).bottom(b).left(l).right(r);
 
-            handle.subbind(Tooltip::arrow_size, move |handle, arrow_size| {
+            handle.bind(Tooltip::arrow_size, move |handle, arrow_size| {
                 let arrow_size = arrow_size.get(&handle).to_px().unwrap_or(8.0);
                 let translate = match placement.get(&handle) {
                     Placement::Top | Placement::TopStart | Placement::TopEnd => {
@@ -312,7 +312,7 @@ impl Arrow {
 
             handle = handle.top(t).bottom(b).left(l).right(r);
 
-            handle.subbind(Tooltip::arrow_size, move |handle, arrow_size| {
+            handle.bind(Tooltip::arrow_size, move |handle, arrow_size| {
                 let arrow_size = arrow_size.get(&handle).to_px().unwrap_or(8.0);
                 let (w, h) = match placement.get(&handle) {
                     Placement::Top

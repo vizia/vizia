@@ -149,7 +149,7 @@ pub trait View: 'static + Sized {
 
         cx.data.insert(id, ModelDataStore::default());
 
-        let handle = Handle { entity: id, p: Default::default(), cx };
+        let handle = Handle { current: id, entity: id, p: Default::default(), cx };
 
         handle.cx.with_current(handle.entity, content);
 

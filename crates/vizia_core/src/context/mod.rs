@@ -239,12 +239,12 @@ impl Context {
         self.current
     }
 
-    /// Set the current entity. This is useful in user code when you're performing black magic and
-    /// want to trick other parts of the code into thinking you're processing some other part of the
-    /// tree.
-    pub(crate) fn set_current(&mut self, e: Entity) {
-        self.current = e;
-    }
+    // /// Set the current entity. This is useful in user code when you're performing black magic and
+    // /// want to trick other parts of the code into thinking you're processing some other part of the
+    // /// tree.
+    // pub(crate) fn set_current(&mut self, e: Entity) {
+    //     self.current = e;
+    // }
 
     /// Makes the above black magic more explicit
     pub fn with_current<T>(&mut self, e: Entity, f: impl FnOnce(&mut Context) -> T) -> T {
