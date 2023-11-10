@@ -155,6 +155,34 @@ impl Tooltip {
                 self.place(dist_top, dist_bottom, dist_left, dist_right);
             }
 
+            Placement::Bottom if dist_left < 0.0 => {
+                if dist_left < 0.0 && dist_right < 0.0 {
+                    return;
+                }
+
+                self.placement = Placement::BottomStart;
+                self.place(dist_top, dist_bottom, dist_left, dist_right);
+            }
+
+            Placement::Bottom if dist_right < 0.0 => {
+                if dist_left < 0.0 && dist_right < 0.0 {
+                    return;
+                }
+
+                self.placement = Placement::BottomEnd;
+                self.place(dist_top, dist_bottom, dist_left, dist_right);
+            }
+
+            Placement::BottomEnd if dist_left < 0.0 => {
+                self.placement = Placement::Bottom;
+                self.place(dist_top, dist_bottom, dist_left, dist_right);
+            }
+
+            Placement::BottomStart if dist_right < 0.0 => {
+                self.placement = Placement::Bottom;
+                self.place(dist_top, dist_bottom, dist_left, dist_right);
+            }
+
             Placement::Top | Placement::TopStart | Placement::TopEnd if dist_top < 0.0 => {
                 if dist_bottom < 0.0 && dist_left < 0.0 && dist_right < 0.0 {
                     self.placement = Placement::Over;
@@ -166,6 +194,34 @@ impl Tooltip {
                 } else {
                     self.placement = Placement::Bottom;
                 }
+                self.place(dist_top, dist_bottom, dist_left, dist_right);
+            }
+
+            Placement::Top if dist_left < 0.0 => {
+                if dist_left < 0.0 && dist_right < 0.0 {
+                    return;
+                }
+
+                self.placement = Placement::TopStart;
+                self.place(dist_top, dist_bottom, dist_left, dist_right);
+            }
+
+            Placement::Top if dist_right < 0.0 => {
+                if dist_left < 0.0 && dist_right < 0.0 {
+                    return;
+                }
+
+                self.placement = Placement::TopEnd;
+                self.place(dist_top, dist_bottom, dist_left, dist_right);
+            }
+
+            Placement::TopEnd if dist_left < 0.0 => {
+                self.placement = Placement::Top;
+                self.place(dist_top, dist_bottom, dist_left, dist_right);
+            }
+
+            Placement::TopStart if dist_right < 0.0 => {
+                self.placement = Placement::Top;
                 self.place(dist_top, dist_bottom, dist_left, dist_right);
             }
 
@@ -183,6 +239,34 @@ impl Tooltip {
                 self.place(dist_top, dist_bottom, dist_left, dist_right);
             }
 
+            Placement::Left if dist_top < 0.0 => {
+                if dist_top < 0.0 && dist_bottom < 0.0 {
+                    return;
+                }
+
+                self.placement = Placement::LeftStart;
+                self.place(dist_top, dist_bottom, dist_left, dist_right);
+            }
+
+            Placement::Left if dist_bottom < 0.0 => {
+                if dist_top < 0.0 && dist_bottom < 0.0 {
+                    return;
+                }
+
+                self.placement = Placement::LeftEnd;
+                self.place(dist_top, dist_bottom, dist_left, dist_right);
+            }
+
+            Placement::LeftEnd if dist_top < 0.0 => {
+                self.placement = Placement::Left;
+                self.place(dist_top, dist_bottom, dist_left, dist_right);
+            }
+
+            Placement::LeftStart if dist_bottom < 0.0 => {
+                self.placement = Placement::Left;
+                self.place(dist_top, dist_bottom, dist_left, dist_right);
+            }
+
             Placement::Right | Placement::RightStart | Placement::RightEnd if dist_right < 0.0 => {
                 if dist_top < 0.0 && dist_left < 0.0 && dist_bottom < 0.0 {
                     self.placement = Placement::Over;
@@ -194,6 +278,34 @@ impl Tooltip {
                 } else {
                     self.placement = Placement::Left;
                 }
+                self.place(dist_top, dist_bottom, dist_left, dist_right);
+            }
+
+            Placement::Right if dist_top < 0.0 => {
+                if dist_top < 0.0 && dist_bottom < 0.0 {
+                    return;
+                }
+
+                self.placement = Placement::RightStart;
+                self.place(dist_top, dist_bottom, dist_left, dist_right);
+            }
+
+            Placement::Right if dist_bottom < 0.0 => {
+                if dist_top < 0.0 && dist_bottom < 0.0 {
+                    return;
+                }
+
+                self.placement = Placement::RightEnd;
+                self.place(dist_top, dist_bottom, dist_left, dist_right);
+            }
+
+            Placement::RightEnd if dist_top < 0.0 => {
+                self.placement = Placement::Right;
+                self.place(dist_top, dist_bottom, dist_left, dist_right);
+            }
+
+            Placement::RightStart if dist_bottom < 0.0 => {
+                self.placement = Placement::Right;
                 self.place(dist_top, dist_bottom, dist_left, dist_right);
             }
 
