@@ -161,6 +161,8 @@ impl<'a> BackendContext<'a> {
 
         let logical_width = self.0.style.physical_to_logical(physical_width);
         let logical_height = self.0.style.physical_to_logical(physical_height);
+        self.0.window_size.width = logical_width.round() as u32;
+        self.0.window_size.height = logical_height.round() as u32;
         self.0.style.width.insert(Entity::root(), Units::Pixels(logical_width));
         self.0.style.height.insert(Entity::root(), Units::Pixels(logical_height));
     }
@@ -171,6 +173,11 @@ impl<'a> BackendContext<'a> {
         self.0.current = e;
         f(self.0);
         self.0.current = prev;
+    }
+
+    /// Returns the scale factor.
+    pub fn scale_factor(&self) -> f32 {
+        self.0.scale_factor()
     }
 
     /// You should not call this method unless you are writing a windowing backend, in which case

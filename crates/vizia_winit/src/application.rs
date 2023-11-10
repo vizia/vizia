@@ -450,12 +450,19 @@ impl Application {
                             // Temporary fix for windows platform until winit merge #3154
                             #[cfg(target_os = "windows")]
                             {
-                                let size = self.window_description.inner_size;
+                                let (width, height) = {
+                                    let scale_factor = cx.scale_factor();
+                                    let size = cx.window_size();
+                                    (
+                                        (size.width as f32 * scale_factor).round() as u32,
+                                        (size.height as f32 * scale_factor).round() as u32,
+                                    )
+                                };
 
                                 let x = position.x.is_positive()
-                                    && (0..size.width).contains(&(position.x as u32));
+                                    && (0..width).contains(&(position.x as u32));
                                 let y = position.y.is_positive()
-                                    && (0..size.height).contains(&(position.y as u32));
+                                    && (0..height).contains(&(position.y as u32));
 
                                 if !inside_window && x && y {
                                     inside_window = true;
