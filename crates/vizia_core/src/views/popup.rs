@@ -144,6 +144,12 @@ where
                 }
             }
 
+            WindowEvent::FocusOut => {
+                if !cx.focused.is_descendant_of(cx.tree, cx.current) {
+                    cx.emit(PopupEvent::Close);
+                }
+            }
+
             _ => {}
         });
     }

@@ -159,7 +159,7 @@ fn main() {
                 false,
             ));
     })
-    .title("Box Shadows")
+    .title("Box Shadow")
     .inner_size((1000, 600))
     .run();
 }

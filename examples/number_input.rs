@@ -3,18 +3,9 @@
 use vizia::prelude::*;
 
 const STYLE: &str = r#"
-textbox:invalid {
-    border-color: #ff0000;
-}
-
-.validation_error_label {
-    display: none;
-    color: red;
-}
-
-.validation_error_label.validation_error {
-    display: flex;
-}
+    textbox:invalid {
+        border-color: #ff0000;
+    }
 "#;
 
 #[derive(Lens)]
@@ -72,6 +63,7 @@ fn main() {
         .child_bottom(Stretch(1.0))
         .height(Auto)
         .space(Stretch(1.0))
+        .child_space(Stretch(1.0))
         .col_between(Pixels(10.0));
     })
     .title("Number Input")

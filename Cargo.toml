@@ -8,19 +8,155 @@ autoexamples = false
 rust-version = "1.60"
 
 [workspace]
-members = [ "crates/*", "run-wasm" ]
+members = [ "crates/*", "run-wasm", "examples/widget_gallery"]
 
 [[example]]
-name = "accesskit"
-path = "examples/accessibility/accesskit.rs"
+name = "counter"
+path = "examples/7GUIs/counter.rs"
 
 [[example]]
-name = "action_modifier"
-path = "examples/action_modifier.rs"
+name = "crud"
+path = "examples/7GUIs/crud.rs"
+
+[[example]]
+name = "flight_booker"
+path = "examples/7GUIs/flight_booker.rs"
+
+[[example]]
+name = "temperature_converter"
+path = "examples/7GUIs/temperature_converter.rs"
+
+[[example]]
+name = "editable_list"
+path = "examples/lists/editable_list.rs"
+
+[[example]]
+name = "multiselectable_list"
+path = "examples/lists/multiselectable_list.rs"
+
+[[example]]
+name = "selectable_list"
+path = "examples/lists/selectable_list.rs"
+
+[[example]]
+name = "sortable_list"
+path = "examples/lists/sortable_list.rs"
+
+[[example]]
+name = "static_list"
+path = "examples/lists/static_list.rs"
+
+[[example]]
+name = "virtual_list"
+path = "examples/views/virtual_list.rs"
+
+[[example]]
+name = "fluent_translation"
+path = "examples/localization/fluent_translation.rs"
+
+[[example]]
+name = "fluent_variables"
+path = "examples/localization/fluent_variables.rs"
+
+[[example]]
+name = "l10n"
+path = "examples/localization/l10n.rs"
+
+[[example]]
+name = "locale_binding"
+path = "examples/localization/locale_binding.rs"
+
+
+
+[[example]]
+name = "inline"
+path = "examples/style/inline.rs"
+
+[[example]]
+name = "outline"
+path = "examples/style/outline.rs"
+
+
+
+
+
+[[example]]
+name = "transform"
+path = "examples/style/transform.rs"
+
+[[example]]
+name = "transform_origin"
+path = "examples/style/transform_origin.rs"
+
+[[example]]
+name = "gradient"
+path = "examples/style/gradient.rs"
+
+[[example]]
+name = "box_shadow"
+path = "examples/style/box_shadow.rs"
+
+[[example]]
+name = "border"
+path = "examples/style/border.rs"
+
+[[example]]
+name = "text"
+path = "examples/style/text.rs"
+
+[[example]]
+name = "filter"
+path = "examples/style/filter.rs"
+
+[[example]]
+name = "clipping"
+path = "examples/style/clipping.rs"
+
+[[example]]
+name = "transition"
+path = "examples/style/transition.rs"
+
+[[example]]
+name = "zorder"
+path = "examples/style/zorder.rs"
+
+[[example]]
+name = "background_size"
+path = "examples/style/background_size.rs"
+
 
 [[example]]
 name = "animation"
 path = "examples/animation.rs"
+
+[[example]]
+name = "cursor_icon"
+path = "examples/cursor_icon.rs"
+
+[[example]]
+name = "dragdrop"
+path = "examples/dragdrop.rs"
+
+[[example]]
+name = "keymap"
+path = "examples/keymap.rs"
+
+[[example]]
+name = "number_input"
+path = "examples/number_input.rs"
+
+[[example]]
+name = "proxy"
+path = "examples/proxy.rs"
+
+[[example]]
+name = "text_layout"
+path = "examples/text_layout.rs"
+
+[[example]]
+name = "window_modifiers"
+path = "examples/window_modifiers.rs"
+
 
 [[example]]
 name = "datepicker"
@@ -35,21 +171,15 @@ path = "examples/views/picklist.rs"
 name = "combobox"
 path = "examples/views/combobox.rs"
 
-[[example]]
-name = "cursor_icon"
-path = "examples/cursor_icon.rs"
 
-[[example]]
-name = "l10n"
-path = "examples/localization/l10n.rs"
+
+
 
 [[example]]
 name = "modal"
 path = "examples/modal.rs"
 
-[[example]]
-name = "proxy"
-path = "examples/proxy.rs"
+
 
 [[example]]
 name = "scrollview"
@@ -123,7 +253,6 @@ path = "examples/views/spinbox.rs"
 name = "slider"
 path = "examples/views/slider.rs"
 
-
 [[example]]
 name = "radiobutton"
 path = "examples/views/radiobutton.rs"
@@ -152,45 +281,13 @@ path = "examples/views/progressbar.rs"
 name = "textbox"
 path = "examples/views/textbox.rs"
 
-[[example]]
-name = "number_input"
-path = "examples/number_input.rs"
 
-[[example]]
-name = "widget_gallery"
-path = "examples/widget_gallery.rs"
+
+
 
 [[example]]
 name = "list"
 path = "examples/views/list.rs"
-
-[[example]]
-name = "virtual_list"
-path = "examples/views/virtual_list.rs"
-
-[[example]]
-name = "selectable_list"
-path = "examples/lists/selectable_list.rs"
-
-[[example]]
-name = "editable_list"
-path = "examples/lists/editable_list.rs"
-
-[[example]]
-name = "multiselectable_list"
-path = "examples/lists/multiselectable_list.rs"
-
-[[example]]
-name = "sortable_list"
-path = "examples/lists/sortable_list.rs"
-
-[[example]]
-name = "static_list"
-path = "examples/lists/static_list.rs"
-
-[[example]]
-name = "menubar"
-path = "examples/views/menubar.rs"
 
 [[example]]
 name = "menu"
@@ -201,21 +298,14 @@ name = "tabview"
 path = "examples/views/tabview.rs"
 
 
-[[example]]
-name = "counter"
-path = "examples/7GUIs/counter.rs"
+
+
 
 [[example]]
-name = "temperature_converter"
-path = "examples/7GUIs/temperature_converter.rs"
+name = "properties"
+path = "examples/style/properties.rs"
 
-[[example]]
-name = "flight_booker"
-path = "examples/7GUIs/flight_booker.rs"
 
-[[example]]
-name = "crud"
-path = "examples/7GUIs/crud.rs"
 
 [[example]]
 name = "circle_drawer"
@@ -229,13 +319,7 @@ path = "examples/7GUIs/timer.rs"
 name = "keymap_basic"
 path = "examples/keymap_basic.rs"
 
-[[example]]
-name = "keymap_change_entries"
-path = "examples/keymap_change_entries.rs"
 
-[[example]]
-name = "window_modifiers"
-path = "examples/window_modifiers.rs"
 
 [[example]]
 name = "user_scale"
@@ -246,72 +330,8 @@ name = "long_list"
 path = "examples/lists/long_list.rs"
 
 [[example]]
-name = "locale_binding"
-path = "examples/localization/locale_binding.rs"
-
-[[example]]
-name = "inline"
-path = "examples/style/inline.rs"
-
-[[example]]
-name = "outline"
-path = "examples/style/outline.rs"
-
-[[example]]
-name = "fluent_translation"
-path = "examples/localization/fluent_translation.rs"
-
-[[example]]
-name = "fluent_variables"
-path = "examples/localization/fluent_variables.rs"
-
-[[example]]
 name = "save_dialog"
 path = "examples/save_dialog.rs"
-
-[[example]]
-name = "dragdrop"
-path = "examples/dragdrop.rs"
-
-[[example]]
-name = "transform"
-path = "examples/style/transform.rs"
-
-[[example]]
-name = "transform_origin"
-path = "examples/style/transform_origin.rs"
-
-[[example]]
-name = "gradient"
-path = "examples/style/gradient.rs"
-
-[[example]]
-name = "box_shadow"
-path = "examples/style/box_shadow.rs"
-
-[[example]]
-name = "border"
-path = "examples/style/border.rs"
-
-[[example]]
-name = "text"
-path = "examples/style/text.rs"
-
-[[example]]
-name = "filter"
-path = "examples/style/filter.rs"
-
-[[example]]
-name = "clipping"
-path = "examples/style/clipping.rs"
-
-[[example]]
-name = "transition"
-path = "examples/style/transition.rs"
-
-[[example]]
-name = "zorder"
-path = "examples/style/zorder.rs"
 
 [[example]]
 name = "combinators"
@@ -324,14 +344,6 @@ path = "examples/style/selectors.rs"
 [[example]]
 name = "pseudo_classes"
 path = "examples/style/pseudo_classes.rs"
-
-[[example]]
-name = "background_size"
-path = "examples/style/background_size.rs"
-
-[[example]]
-name = "text_layout"
-path = "examples/text_layout.rs"
 
 [[example]]
 name = "custom_modifiers"

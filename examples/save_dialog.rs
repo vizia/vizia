@@ -13,6 +13,8 @@ const STYLE: &str = r#"
         border-color: #999999;
         outer-shadow: 0 3 10 #00000055;
         overflow: visible;
+        child-space: 10px;
+        height: auto;
     }
 
     .modal>vstack>label {
@@ -106,7 +108,7 @@ fn main() {
                         .on_press(|cx| cx.emit(AppEvent::HideModal))
                         .width(Pixels(120.0));
                 })
-                .size(Auto);
+                .height(Auto);
             })
             .size(Auto)
             .row_between(Pixels(20.0))

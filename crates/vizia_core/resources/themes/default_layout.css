@@ -2,7 +2,7 @@
 
 icon {
     font-family: "tabler-icons", sans-serif;
-    size: 32px;
+    size: 24px;
     child-space: 1s;
 }
 
@@ -26,9 +26,14 @@ button > .inner {
     min-right: 8px;
 }
 
-button > icon.inner {
+button icon.inner {
     min-left: 0px;
     min-right: 0px;
+    size: 32px;
+}
+
+button .inner > icon {
+    size: 16px;
 }
 
 button.icon {
@@ -261,6 +266,37 @@ dropdown .list label {
 
 dropdown vstack {
     child-space: auto;
+}
+
+/* FORM CONTROL */
+form-control {
+    layout-type: row;
+    size: auto;
+    child-top: 1s;
+    child-bottom: 1s;
+    col-between: 5px;
+    row-between: 5px;
+}
+
+form-control.vertical {
+    layout-type: column;
+}
+
+/* form-control > label:first-child {
+    display: none;
+}
+
+form-control > label:last-child {
+    display: flex;
+} */
+/* 
+form-control.pos-start > label:first-child {
+    display: none;
+} */
+
+form-control > label:last-child {
+    display: none;
+    background-color: red;
 }
 
 /* IMAGE */
@@ -524,6 +560,10 @@ popup:checked {
     opacity: 1;
 }
 
+popup vstack {
+    height: auto;
+}
+
 /* RADIOBUTTON */
 
 radiobutton {
@@ -711,25 +751,26 @@ tabview {
     height: 1s;
 }
 
+tabview > scrollview {
+    width: 1s;
+    height: auto;
+}
+
 tabview.vertical {
     layout-type: row;
 }
 
-tabview.vertical tabheader {
+tabview.vertical > scrollview.vertical {
+    width: auto;
+    height: 1s;
+}
+
+tabview > scrollview > scroll_content {
     layout-type: row;
 }
 
-tabview .tabview-tabheader-wrapper {
-    layout-type: row;
-}
-
-tabview.vertical .tabview-tabheader-wrapper {
+tabview.vertical > scrollview.vertical > scroll_content {
     layout-type: column;
-}
-
-.tabview-tabheader-wrapper {
-    height: auto;
-    col-between: 1px;
 }
 
 tabheader {
@@ -739,7 +780,7 @@ tabheader {
 }
 
 tabheader label {
-    height: 30px;
+    height: 32px;
     child-left: 12px;
     child-right: 12px;
     child-top: 1s;
@@ -748,10 +789,22 @@ tabheader label {
 
 tabheader .indicator {
     height: 2px;
+    width: 1s;
 }
 
-tabview .tabview-divider {
+tabheader.vertical .indicator {
+    width: 2px;
+    height: 1s;
+}
+
+.tabview-divider {
     height: 1px;
+    width: 1s;
+}
+
+.tabview-divider.vertical {
+    width: 1px;
+    height: 1s;
 }
 
 /* TEXTBOX */

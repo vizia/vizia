@@ -35,7 +35,7 @@ const STYLE: &str = r#"
     }
 
     list {
-        border-color: white;
+        border-color: #d2d2d2;
         border-width: 1px;
         width: 1s;
         height: 1s;

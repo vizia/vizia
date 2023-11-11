@@ -146,6 +146,7 @@ where
 
     /// Returns the next sibling of an entity or `None` if t here isn't one.
     pub fn get_next_sibling(&self, entity: I) -> Option<I> {
+        // LayoutSiblingIterator::new(self, entity).next()
         self.next_sibling.get(entity.index()).and_then(|&next_sibling| next_sibling)
     }
 

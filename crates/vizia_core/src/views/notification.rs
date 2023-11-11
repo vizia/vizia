@@ -32,6 +32,8 @@ impl Notification {
                             }),
                         )
                         .on_press(|ex| ex.emit(NotificationEvent::ToggleContainer))
+                        .class("ghost")
+                        .class("icon")
                         .checked(Notification::container_open);
                     }
                     IconButton::new(cx, ICON_X);

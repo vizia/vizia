@@ -3,12 +3,26 @@ use helpers::*;
 use vizia::icons::ICON_SEARCH;
 use vizia::prelude::*;
 
-#[derive(Lens, Setter, Model)]
+#[derive(Lens)]
 pub struct AppData {
     editable_text: String,
     multiline_text: String,
     non_editable_text: String,
     non_editable_multiline_text: String,
+}
+
+impl Model for AppData {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            AppEvent::SetEditableText(text) => self.editable_text = text.clone(),
+            AppEvent::SetMultilineText(text) => self.multiline_text = text.clone(),
+        });
+    }
+}
+
+pub enum AppEvent {
+    SetEditableText(String),
+    SetMultilineText(String),
 }
 
 fn main() {

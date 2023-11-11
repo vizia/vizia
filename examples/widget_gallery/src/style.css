@@ -1,0 +1,125 @@
+.container {
+    child-space: 0px;
+}
+
+scrollview.widgets > scroll_content {
+    child-space: 20px;
+    child-left: 1s;
+    child-right: 1s;
+    row-between: 15px;
+}
+
+tabview.widgets > scrollview > scroll_content {
+    child-space: 8px;
+}
+
+tabview.widgets tabheader label.tab-name {
+    width: 220px;
+}
+
+tabview.widgets tabheader:checked label.tab-name {
+    border-radius: 4px;
+    background-color: #51afef;
+}
+
+vstack.panel {
+    height: auto;
+    row-between: 12px;
+    bottom: 20px;
+    width: 3s;
+    min-width: 500px;
+    max-width: 700px;
+}
+
+label.title {
+    font-size: 30;
+    font-weight: bold;
+    bottom: 20px;
+}
+
+label.header {
+    font-size: 20;
+    font-weight: bold;
+    bottom: 12px;
+}
+
+label.paragraph {
+    width: 1s;
+    text-wrap: true;
+    bottom: 12px;
+}
+
+demo-region {
+    border-width: 1px;
+    border-color: rgb(210, 210, 210);
+    border-radius: 10px;
+    /* child-space: 40px; */
+    /* child-left: 1s;
+    child-right: 1s; */
+    height: auto;
+}
+
+demo-region {
+    border: 1px rgb(210, 210, 210);
+}
+
+demo-region > vstack.region {
+    border-width: 0px;
+}
+
+demo-region > hstack.region {
+    border-width: 0px;
+}
+
+demo-region label.code {
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+    height: auto;
+}
+
+hstack.region {
+    border-width: 1px;
+    border-color: rgb(210, 210, 210);
+    border-radius: 10px;
+    child-space: 40px;
+    child-left: 1s;
+    child-right: 1s;
+    height: auto;
+    col-between: 12px;
+}
+
+vstack.region {
+    border-width: 1px;
+    border-color: rgb(210, 210, 210);
+    border-radius: 10px;
+    child-space: 40px;
+    child-left: 1s;
+    child-right: 1s;
+    height: auto;
+    col-between: 12px;
+}
+
+vstack.group {
+    size: auto;
+    row-between: 12px;
+}
+
+form-group {
+    size: auto;
+    row-between: 12px;
+}
+
+form-group > .legend {
+    bottom: 8px;
+    color: gray;
+}
+
+label.code {
+    background-color: #2d343f;
+    color: white;
+    font-family: "Fira Code";
+    width: 1s;
+    child-space: 20px;
+    border-radius: 10px;
+    font-size: 14;
+}

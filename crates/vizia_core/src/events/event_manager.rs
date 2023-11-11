@@ -509,6 +509,8 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                     };
 
                     if prev_focused != context.focused {
+                        context.set_focus_pseudo_classes(context.focused, false, true);
+                        context.set_focus_pseudo_classes(prev_focused, true, true);
                         context.event_queue.push_back(
                             Event::new(WindowEvent::FocusOut)
                                 .target(context.focused)
@@ -519,6 +521,8 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                                 .target(prev_focused)
                                 .origin(Entity::root()),
                         );
+
+                        context.focused = prev_focused;
 
                         if let Some(pseudo_classes) =
                             context.style.pseudo_classes.get_mut(context.triggered)
@@ -542,6 +546,8 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                     };
 
                     if next_focused != context.focused {
+                        context.set_focus_pseudo_classes(context.focused, false, true);
+                        context.set_focus_pseudo_classes(next_focused, true, true);
                         context.event_queue.push_back(
                             Event::new(WindowEvent::FocusOut)
                                 .target(context.focused)
@@ -552,6 +558,8 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                                 .target(next_focused)
                                 .origin(Entity::root()),
                         );
+
+                        context.focused = next_focused;
 
                         if let Some(pseudo_classes) =
                             context.style.pseudo_classes.get_mut(context.triggered)

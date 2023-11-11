@@ -298,3 +298,5 @@ pub const ICON_BOX_MARGIN: &str = "\u{ee0b}";
 pub const ICON_BOLD: &str = "\u{eb7b}";
 pub const ICON_ITALIC: &str = "\u{eb93}";
 pub const ICON_UNDERLINE: &str = "\u{eba2}";
+
+pub const ICON_CODE: &str = "\u{ea77}";

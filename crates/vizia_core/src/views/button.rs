@@ -257,6 +257,7 @@ impl View for IconButton {
             }
 
             WindowEvent::Press { .. } => {
+                println!("do this");
                 if meta.target == cx.current() {
                     if let Some(action) = &self.action {
                         (action)(cx);

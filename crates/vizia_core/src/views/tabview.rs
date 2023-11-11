@@ -7,6 +7,7 @@ pub enum TabEvent {
 #[derive(Lens)]
 pub struct TabView {
     selected_index: usize,
+    is_vertical: bool,
 
     #[lens(ignore)]
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
@@ -20,39 +21,47 @@ impl TabView {
         T: Clone + 'static,
         F: 'static + Clone + Fn(&mut Context, Index<L, T>) -> TabPair,
     {
-        Self { selected_index: 0, on_select: None }.build(cx, move |cx| {
-            let content2 = content.clone();
-            // Tab headers
-            VStack::new(cx, move |cx| {
-                Binding::new(cx, lens.map(|list| list.len()), move |cx, list_length| {
-                    let list_length = list_length.get_fallible(cx).map_or(0, |d| d);
-                    for index in 0..list_length {
-                        let l = lens.index(index);
-                        let builder = (content2)(cx, l).header;
-                        TabHeader::new(cx, index, builder).bind(
-                            TabView::selected_index,
-                            move |handle, selected_index| {
-                                let selected_index = selected_index.get(handle.cx);
-                                handle.checked(selected_index == index);
-                            },
-                        );
-                    }
+        Self { selected_index: 0, is_vertical: false, on_select: None }
+            .build(cx, move |cx| {
+                let content2 = content.clone();
+                // Tab headers
+                ScrollView::new(cx, 0.0, 0.0, true, true, move |cx| {
+                    //VStack::new(cx, move |cx| {
+                    Binding::new(cx, lens.map(|list| list.len()), move |cx, list_length| {
+                        let list_length = list_length.get_fallible(cx).map_or(0, |d| d);
+                        for index in 0..list_length {
+                            let l = lens.index(index);
+                            let builder = (content2)(cx, l).header;
+                            TabHeader::new(cx, index, builder)
+                                .bind(TabView::selected_index, move |handle, selected_index| {
+                                    let selected_index = selected_index.get(handle.cx);
+                                    handle.checked(selected_index == index);
+                                })
+                                .toggle_class("vertical", TabView::is_vertical)
+                                .cursor(CursorIcon::Hand);
+                        }
+                    })
+                    //})
+                    //.toggle_class("vertical", TabView::is_vertical)
+                    //.class("tabview-tabheader-wrapper");
                 })
-            })
-            .class("tabview-tabheader-wrapper");
+                .toggle_class("vertical", TabView::is_vertical);
 
-            Element::new(cx).class("tabview-divider");
+                Element::new(cx)
+                    .class("tabview-divider")
+                    .toggle_class("vertical", TabView::is_vertical);
 
-            // Tab content
-            VStack::new(cx, |cx| {
-                Binding::new(cx, TabView::selected_index, move |cx, selected| {
-                    let selected = selected.get(cx);
-                    let l = lens.index(selected);
-                    ((content)(cx, l).content)(cx);
-                });
+                // Tab content
+                VStack::new(cx, |cx| {
+                    Binding::new(cx, TabView::selected_index, move |cx, selected| {
+                        let selected = selected.get(cx);
+                        let l = lens.index(selected);
+                        ((content)(cx, l).content)(cx);
+                    });
+                })
+                .class("tabview-content-wrapper");
             })
-            .class("tabview-content-wrapper");
-        })
+            .toggle_class("vertical", TabView::is_vertical)
     }
 }
 
@@ -75,6 +84,10 @@ impl View for TabView {
 }
 
 impl<'a> Handle<'a, TabView> {
+    pub fn vertical(self) -> Self {
+        self.modify(|tabview: &mut TabView| tabview.is_vertical = true)
+    }
+
     pub fn on_select(self, callback: impl Fn(&mut EventContext, usize) + 'static) -> Self {
         self.modify(|tabview: &mut TabView| tabview.on_select = Some(Box::new(callback)))
     }

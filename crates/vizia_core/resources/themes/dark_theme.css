@@ -10,12 +10,6 @@
     color: #fafafa;
 }
 
-/* LABEL */
-
-label:disabled {
-    color: #585858;
-}
-
 /* BACKGROUNDS */
 
 .bg-default {
@@ -345,12 +339,15 @@ dropdown popup {
 }
 
 dropdown list label {
-    color: #888;
     cursor: hand;
 }
 
+dropdown list label:hover {
+    background-color: #51afef11;
+}
+
 dropdown list label:checked {
-    color: #fff;
+    background-color: #5dc4ec;
 }
 
 dropdown list label:focus-visible {
@@ -359,8 +356,22 @@ dropdown list label:focus-visible {
     outline-offset: 3px;
 }
 
-dropdown list label:hover {
-    background-color: #51afef11;
+dropdown .list label {
+    cursor: hand;
+}
+
+dropdown .list label.nav {
+    background-color: #51b0ef34;
+}
+
+dropdown .list label:checked {
+    background-color: #5dc4ec;
+}
+
+dropdown .list label:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
 }
 
 /* KNOB */
@@ -402,6 +413,12 @@ knob:disabled .knob-tick {
     background-color: #c4c4c4;
 }
 
+/* LABEL */
+
+label:disabled {
+    color: #585858;
+}
+
 /* MENU */
 
 menubutton {
@@ -410,11 +427,15 @@ menubutton {
 }
 
 menubutton:focus {
-    background-color: #f0f0f0;
+    background-color: #333333;
 }
 
 menubutton:hover {
-    background-color: #f0f0f0;
+    background-color: #333333;
+}
+
+menubutton:disabled {
+    background-color: transparent;
 }
 
 menubutton .shortcut {
@@ -425,8 +446,6 @@ menubutton .shortcut {
 submenu {
     background-color: transparent;
     border-radius: 4px;
-    border-width: 1px;
-    border-color: #d2d2d2;
 }
 
 menubar submenu {
@@ -438,24 +457,26 @@ submenu submenu {
 }
 
 submenu:checked {
-    background-color: #f0f0f0;
+    background-color: #333333;
 }
 
 submenu:focus {
-    background-color: #f0f0f0;
+    background-color: #333333;
 }
 
 submenu:hover {
-    background-color: #f0f0f0;
+    background-color: #333333;
+}
+
+submenu:disabled {
+    background-color: transparent;
 }
 
 submenu > popup {
-    border-width: 1px;
-    border-color: #d2d2d2;
-    background-color: #fdfdfd;
+    background-color: #242424;
     child-space: 8px;
     border-radius: 4px;
-    box-shadow: 0px 2px 16px #4f4f4f38;
+    box-shadow: 0px 2px 16px #00000038;
 }
 
 menu-divider {
@@ -467,32 +488,30 @@ menu-divider {
 
 menu-divider .line {
     height: 1px;
-    background-color: #d2d2d2;
+    background-color: #565656;
 }
 
 /* NOTIFICATION */
 
 notification {
     background-color: #242424;
-}
-
-notification .notification-header button {
-    background-color: transparent;
+    child-space: 8px;
+    border-radius: 4px;
+    box-shadow: 0px 2px 16px #00000038;
 }
 
 /* PICKLIST */
+
+picklist:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef;
+    outline-offset: 3px;
+}
 
 /* POPUP */
 
 popup {
     box-shadow: 0px 0px 8px #00000026;
-    opacity: 0%;
-    transition: opacity 100ms;
-}
-
-popup:checked {
-    opacity: 100%;
-    transition: opacity 100ms;
 }
 
 /* PROGRESSBAR */
@@ -769,6 +788,7 @@ switch:checked:hover:disabled * {
     background-color: #404040;
     transition: background-color 100ms;
 }
+
 /* TABVIEW */
 
 tabview tabheader label {
@@ -804,6 +824,11 @@ tabview tabheader:checked .indicator {
 }
 
 tabview .tabview-divider {
+    background-color: #c4c4c4;
+}
+
+.divider {
+    height: 1px;
     background-color: #c4c4c4;
 }
 
@@ -860,22 +885,6 @@ textbox:invalid {
 timepicker {
     background-color: #343434;
     border-radius: 4px;
-}
-
-/* Digital Time Picker */
-
-digitaltimepicker {
-    background-color: #343434;
-    border-radius: 4px;
-}
-
-digitaltimepicker .digitaltimepicker-dot {
-    border-radius: 4px;
-    background-color: #282828;
-}
-
-digitaltimepicker textbox {
-    font-size: 24;
 }
 
 /* Radial Time Picker */

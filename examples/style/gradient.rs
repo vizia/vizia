@@ -47,5 +47,6 @@ fn main() {
                 .add_stop(Color::blue()),
         );
     })
+    .title("Gradient")
     .run();
 }

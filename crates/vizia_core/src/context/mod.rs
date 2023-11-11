@@ -151,6 +151,7 @@ impl Context {
             db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
             db.load_font_data(Vec::from(fonts::ROBOTO_BOLD));
             db.load_font_data(Vec::from(fonts::ROBOTO_ITALIC));
+            db.load_font_data(Vec::from(fonts::FIRACODE_REGULAR))
         }
 
         // Add icon font
@@ -479,8 +480,8 @@ impl Context {
             self.style.remove(*entity);
             self.data.remove(entity);
             self.views.remove(entity);
-            self.entity_manager.destroy(*entity);
             self.text_context.clear_buffer(*entity);
+            self.entity_manager.destroy(*entity);
         }
     }
 

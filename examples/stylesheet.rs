@@ -11,7 +11,11 @@ fn main() {
     Application::new(|cx| {
         cx.add_stylesheet(include_style!("examples/resources/themes/test.css"))
             .expect("Failed to add stylesheet");
-        Element::new(cx).class("foo");
+        HStack::new(cx, |cx| {
+            Element::new(cx).class("foo");
+        })
+        .size(Pixels(200.0))
+        .class("bar");
     })
     .run();
 }

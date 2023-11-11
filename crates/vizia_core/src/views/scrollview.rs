@@ -29,6 +29,12 @@ pub struct ScrollData {
     pub container_height: f32,
 }
 
+impl std::fmt::Debug for ScrollData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.scroll_x.to_string())
+    }
+}
+
 pub enum ScrollEvent {
     /// Sets the progress of scroll position between 0 and 1 for the x axis
     SetX(f32),
@@ -131,7 +137,7 @@ impl Model for ScrollData {
 
 #[derive(Lens)]
 pub struct ScrollView<L: Lens> {
-    data: L,
+    lens: L,
     scroll_to_cursor: bool,
 }
 
@@ -147,7 +153,7 @@ impl ScrollView<Wrapper<scroll_data_derived_lenses::root>> {
     where
         F: 'static + FnOnce(&mut Context),
     {
-        Self { data: ScrollData::root, scroll_to_cursor: false }
+        Self { lens: ScrollData::root, scroll_to_cursor: false }
             .build(cx, move |cx| {
                 ScrollData {
                     scroll_x: initial_x,
@@ -174,7 +180,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         cx: &mut Context,
         scroll_x: bool,
         scroll_y: bool,
-        data: L,
+        lens: L,
         content: F,
     ) -> Handle<Self>
     where
@@ -184,16 +190,16 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
             panic!("ScrollView::custom requires a ScrollData to be built into a parent");
         }
 
-        Self { data, scroll_to_cursor: false }.build(cx, |cx| {
-            Self::common_builder(cx, data, content, scroll_x, scroll_y);
+        Self { lens, scroll_to_cursor: false }.build(cx, |cx| {
+            Self::common_builder(cx, lens, content, scroll_x, scroll_y);
         })
     }
 
-    fn common_builder<F>(cx: &mut Context, data: L, content: F, scroll_x: bool, scroll_y: bool)
+    fn common_builder<F>(cx: &mut Context, lens: L, content: F, scroll_x: bool, scroll_y: bool)
     where
         F: 'static + FnOnce(&mut Context),
     {
-        ScrollContent::new(cx, content).bind(data, |handle, data| {
+        ScrollContent::new(cx, content).bind(lens, |handle, data| {
             let scale_factor = handle.scale_factor();
             let data = data.get(handle.cx);
             let left =
@@ -206,8 +212,8 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         if scroll_y {
             Scrollbar::new(
                 cx,
-                data.then(ScrollData::scroll_y),
-                data.then(RatioLens::new(ScrollData::container_height, ScrollData::inner_height)),
+                lens.then(ScrollData::scroll_y),
+                lens.then(RatioLens::new(ScrollData::container_height, ScrollData::inner_height)),
                 Orientation::Vertical,
                 |cx, value| {
                     cx.emit(ScrollEvent::SetY(value));
@@ -220,8 +226,8 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         if scroll_x {
             Scrollbar::new(
                 cx,
-                data.then(ScrollData::scroll_x),
-                data.then(RatioLens::new(ScrollData::container_width, ScrollData::inner_width)),
+                lens.then(ScrollData::scroll_x),
+                lens.then(RatioLens::new(ScrollData::container_width, ScrollData::inner_width)),
                 Orientation::Horizontal,
                 |cx, value| {
                     cx.emit(ScrollEvent::SetX(value));
@@ -239,7 +245,7 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|window_event, _| match window_event {
+        event.map(|window_event, meta| match window_event {
             WindowEvent::GeometryChanged(geo) => {
                 if geo.contains(GeoChanged::WIDTH_CHANGED)
                     || geo.contains(GeoChanged::HEIGHT_CHANGED)
@@ -255,16 +261,20 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
                     if cx.modifiers.contains(Modifiers::SHIFT) { (-*y, -*x) } else { (-*x, -*y) };
 
                 // What percentage of the negative space does this cross?
-                let data = self.data.get(cx);
+                let data = self.lens.get(cx);
                 if x != 0.0 && data.inner_width > data.container_width {
                     let negative_space = data.inner_width - data.container_width;
                     let logical_delta = x * SCROLL_SENSITIVITY / negative_space;
                     cx.emit(ScrollEvent::ScrollX(logical_delta));
+                    // Prevent event propagating to ancestor scrollviews.
+                    meta.consume();
                 }
                 if y != 0.0 && data.inner_height > data.container_height {
                     let negative_space = data.inner_height - data.container_height;
                     let logical_delta = y * SCROLL_SENSITIVITY / negative_space;
                     cx.emit(ScrollEvent::ScrollY(logical_delta));
+                    // Prevent event propagating to ancestor scrollviews.
+                    meta.consume();
                 }
             }
 
@@ -296,7 +306,7 @@ struct ScrollContent {}
 
 impl ScrollContent {
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
-        Self {}.build(cx, content).class("scroll_content")
+        Self {}.build(cx, content)
     }
 }
 

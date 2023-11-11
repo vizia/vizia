@@ -1,3 +1,5 @@
+mod helpers;
+use helpers::*;
 use vizia::prelude::*;
 use vizia_core::{
     icons::{ICON_CLIPBOARD, ICON_COPY, ICON_CUT},
@@ -6,11 +8,6 @@ use vizia_core::{
 
 mod helpers;
 use helpers::*;
-
-#[derive(Lens)]
-pub struct AppData {}
-
-impl Model for AppData {}
 
 fn main() {
     Application::new(|cx: &mut Context| {

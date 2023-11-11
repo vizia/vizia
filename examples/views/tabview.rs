@@ -4,17 +4,17 @@ use vizia::prelude::*;
 
 #[derive(Lens)]
 pub struct AppData {
-    list: Vec<&'static str>,
+    tabs: Vec<&'static str>,
 }
 
 impl Model for AppData {}
 
 fn main() {
     Application::new(|cx| {
-        AppData { list: vec!["Tab1", "Tab2"] }.build(cx);
+        AppData { tabs: vec!["Tab1", "Tab2"] }.build(cx);
 
         ExamplePage::new(cx, |cx| {
-            TabView::new(cx, AppData::list, |cx, item| match item.get(cx) {
+            TabView::new(cx, AppData::tabs, |cx, item| match item.get(cx) {
                 "Tab1" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).hoverable(false);
@@ -41,6 +41,6 @@ fn main() {
             .height(Pixels(300.0));
         });
     })
-    .title("Tabs")
+    .title("Tabview")
     .run();
 }

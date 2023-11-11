@@ -7,6 +7,7 @@ mod combobox;
 mod datepicker;
 mod dropdown;
 mod element;
+mod form;
 mod image;
 mod knob;
 mod label;
@@ -41,6 +42,7 @@ pub use combobox::*;
 pub use datepicker::Datepicker;
 pub use dropdown::Dropdown;
 pub use element::Element;
+pub use form::{FormControl, FormGroup, Placement};
 pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
 pub use label::{Icon, Label};
 pub use list::List;
@@ -57,7 +59,7 @@ pub use slider::{NamedSlider, Slider};
 pub use spinbox::{Spinbox, SpinboxEvent, SpinboxIcons, SpinboxKind};
 pub use stack::{HStack, VStack, ZStack};
 pub use switch::Switch;
-pub use tabview::{TabPair, TabView};
+pub use tabview::{TabEvent, TabPair, TabView};
 pub use textbox::{TextEvent, Textbox};
 pub use timepicker::{
     AMOrPM, AnalogTimepicker, AnalogTimepickerEvent, AnalogTimepickerPage, DayTime,
