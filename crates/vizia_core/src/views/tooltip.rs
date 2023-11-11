@@ -136,18 +136,15 @@ impl Tooltip {
                     }
 
                     WindowEvent::MouseMove(x, y) => {
-                        if tooltip.placement == Placement::Cursor {
-                            if !x.is_nan() && !y.is_nan() {
-                                let scale = ex.scale_factor();
-                                let parent = ex.parent();
-                                let parent_bounds = ex.cache.get_bounds(parent);
-                                if parent_bounds.contains_point(*x, *y) {
-                                    ex.set_left(Pixels(
-                                        ((*x - parent_bounds.x) - ex.bounds().width() / 2.0)
-                                            / scale,
-                                    ));
-                                    ex.set_top(Pixels((*y - parent_bounds.y) / scale));
-                                }
+                        if tooltip.placement == Placement::Cursor && !x.is_nan() && !y.is_nan() {
+                            let scale = ex.scale_factor();
+                            let parent = ex.parent();
+                            let parent_bounds = ex.cache.get_bounds(parent);
+                            if parent_bounds.contains_point(*x, *y) {
+                                ex.set_left(Pixels(
+                                    ((*x - parent_bounds.x) - ex.bounds().width() / 2.0) / scale,
+                                ));
+                                ex.set_top(Pixels((*y - parent_bounds.y) / scale));
                             }
                         }
                     }

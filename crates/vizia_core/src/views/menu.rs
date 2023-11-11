@@ -1,3 +1,4 @@
+use crate::modifiers::{ModalEvent, ModalModel};
 use crate::{icons::ICON_CHEVRON_RIGHT, prelude::*};
 
 #[derive(Lens)]
@@ -112,6 +113,7 @@ impl Submenu {
                 // .on_press_down(|cx| cx.emit(MenuEvent::CloseAll));
                 // .on_blur(|cx| cx.emit(MenuEvent::CloseAll));
             })
+            // .navigable(true)
             .checked(Submenu::is_open)
             .layout_type(LayoutType::Row)
             .on_press(|cx| cx.emit(MenuEvent::ToggleOpen));
@@ -214,8 +216,11 @@ impl MenuButton {
             .on_press(move |cx| {
                 (action)(cx);
                 cx.emit(MenuEvent::CloseAll);
+                cx.emit(ModalEvent::HideMenu);
                 // cx.emit(MenuEvent::Close);
             })
+            .role(Role::MenuItem)
+        // .navigable(true)
     }
 }
 
@@ -355,11 +360,8 @@ impl View for MenuDivider {
 
 use crate::context::TreeProps;
 use crate::vg;
-use crate::{modifiers::ModalModel, prelude::*};
 
-/// A tooltip view.
-///
-/// Should be used with the [tooltip](crate::modifiers::ActionModifiers::tooltip) modifier.
+/// A Menu view.
 ///
 /// # Example
 /// ```
@@ -387,9 +389,7 @@ pub struct Menu {
 }
 
 impl Menu {
-    /// Creates a new Tooltip view with the given content.
-    ///
-    /// Should be used with the [tooltip](crate::modifiers::ActionModifiers::tooltip) modifier.
+    /// Creates a new Menu view with the given content.
     ///
     /// # Example
     /// ```
@@ -480,6 +480,31 @@ impl Menu {
             });
         })
         .on_build(|ex| {
+            ex.add_listener(move |menu: &mut Menu, cx, event| {
+                let flag = ModalModel::menu_visible.get(cx);
+                event.map(|window_event, meta| match window_event {
+                    WindowEvent::MouseDown(_) => {
+                        if flag && meta.origin != cx.current() {
+                            // Check if the mouse was pressed outside of any descendants
+                            if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
+                                // cx.toggle_class("vis", false);
+                                cx.emit(ModalEvent::HideMenu);
+                                meta.consume();
+                            }
+                        }
+                    }
+
+                    WindowEvent::KeyDown(code, _) => {
+                        if flag && *code == Code::Escape {
+                            cx.emit(ModalEvent::HideMenu);
+                            // cx.toggle_class("vis", false);
+                        }
+                    }
+
+                    _ => {}
+                });
+            });
+
             // ex.add_listener(move |menu: &mut Menu, ex, event| {
             //     let flag = ModalModel::tooltip_visible.get(ex);
             //     event.map(|window_event, meta| match window_event {

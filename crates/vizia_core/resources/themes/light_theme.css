@@ -1015,9 +1015,11 @@ menu {
     width: 160px;
     opacity: 0;
     transition: opacity 100ms;
+    display: none;
 }
 
 menu.vis {
     opacity: 1;
     transition: opacity 100ms;
+    display: flex;
 }

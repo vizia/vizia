@@ -4,6 +4,9 @@ use vizia_core::{
     modifiers::ModalEvent,
 };
 
+mod helpers;
+use helpers::*;
+
 #[derive(Lens)]
 pub struct AppData {}
 
@@ -12,6 +15,8 @@ impl Model for AppData {}
 fn main() {
     Application::new(|cx: &mut Context| {
         // cx.add_stylesheet(STYLE);
+
+        // setup_logging();
 
         AppData {}.build(cx);
 
