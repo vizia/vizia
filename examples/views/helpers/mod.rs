@@ -66,7 +66,12 @@ impl ExamplePage {
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
                     Switch::new(cx, ControlsData::disabled)
-                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
+                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, "Toggle disabled");
+                            })
+                        });
                     Label::new(cx, "Toggle Disabled");
                 })
                 .child_top(Stretch(1.0))
@@ -109,7 +114,12 @@ impl ExamplePage {
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
                     Switch::new(cx, ControlsData::disabled)
-                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
+                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, "Toggle disabled");
+                            })
+                        });
                     Label::new(cx, "Toggle Disabled");
                 })
                 .child_top(Stretch(1.0))
