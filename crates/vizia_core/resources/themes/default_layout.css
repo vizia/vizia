@@ -302,6 +302,39 @@ submenu submenu {
     width: 1s;
 }
 
+rightclickmenu {
+    height: auto;
+    width: auto;
+}
+
+rightclickmenu submenu {
+    width: 1s;
+}
+
+rightclickmenu > popup {
+    top: 100%;
+    height: auto;
+    width: 160px;
+    child-space: 8px;
+    left: 1s;
+    right: 1s;
+}
+
+rightclickmenu submenu > popup {
+    opacity: 0;
+    display: none;
+}
+
+rightclickmenu submenu > popup:checked {
+    opacity: 1;
+    display: flex;
+}
+
+rightclickmenu submenu > popup {
+    top: 0px;
+    left: 100%;
+}
+
 menubutton label {
     child-top: 1s;
     child-bottom: 1s;
