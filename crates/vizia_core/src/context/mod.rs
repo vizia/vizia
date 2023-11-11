@@ -224,7 +224,7 @@ impl Context {
         result.style.needs_redraw();
 
         // Build the environment model at the root.
-        Environment::new().build(&mut result);
+        Environment::new(&mut result).build(&mut result);
 
         result.entity_manager.create();
         result.set_default_font(&["Roboto"]);
@@ -461,6 +461,18 @@ impl Context {
 
             if let Some(parent) = self.tree.get_layout_parent(*entity) {
                 self.style.needs_access_update(parent);
+            }
+
+            let mut stopped_timers = Vec::new();
+
+            for timer in self.running_timers.iter() {
+                if timer.entity == *entity {
+                    stopped_timers.push(timer.id);
+                }
+            }
+
+            for timer in stopped_timers {
+                self.stop_timer(timer);
             }
 
             self.tree.remove(*entity).expect("");

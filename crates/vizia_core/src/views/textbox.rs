@@ -144,11 +144,7 @@ where
     }
 
     fn new_core(cx: &mut Context, lens: L, kind: TextboxKind) -> Handle<Self> {
-        let caret_timer = cx.add_timer(Duration::from_millis(530), None, |cx, action| {
-            if matches!(action, TimerAction::Tick(_)) {
-                cx.emit(TextEvent::ToggleCaret);
-            }
-        });
+        let caret_timer = cx.environment().caret_timer;
 
         Self {
             lens,
