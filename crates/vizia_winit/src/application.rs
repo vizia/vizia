@@ -274,6 +274,7 @@ impl Application {
             surface: Some(surface),
             window: Some(window),
             should_close: false,
+            needs_redraw: true,
         };
         // let (window, canvas) = Window::create(&event_loop, &self.window_description);
 
@@ -464,8 +465,10 @@ impl Application {
                             .expect("Failed to send redraw event");
 
                         for (_, window_entity) in windows.iter() {
-                            cx.mutate_window(window_entity, |_, window: &Window| {
-                                window.window().request_redraw();
+                            cx.mutate_window(window_entity, |_, window: &mut Window| {
+                                if window.needs_redraw {
+                                    window.window().request_redraw();
+                                }
                             });
                         }
                     }
@@ -480,7 +483,7 @@ impl Application {
                     });
 
                     for (_, window_entity) in windows.iter() {
-                        cx.mutate_window(window_entity, |_, window: &Window| {
+                        cx.mutate_window(window_entity, |_, window: &mut Window| {
                             window.window().request_redraw();
                         });
                     }
@@ -511,14 +514,15 @@ impl Application {
                     let mut window_delete_list = Vec::new();
 
                     for (window_id, window_entity) in windows.iter() {
-                        if cx.mutate_window(window_entity, |_, window: &Window| window.should_close)
-                        {
+                        if cx.mutate_window(window_entity, |_, window: &mut Window| {
+                            window.should_close
+                        }) {
                             window_delete_list.push((*window_id, *window_entity));
                         }
                     }
 
                     for (window_id, window_entity) in window_delete_list.iter() {
-                        cx.mutate_window(window_entity, |_, window: &Window| {
+                        cx.mutate_window(window_entity, |_, window: &mut Window| {
                             window.make_current();
                         });
                         cx.0.remove(*window_entity);
@@ -543,15 +547,18 @@ impl Application {
                     if main_events {
                         // Redraw
                         if let Some(window_entity) = windows.get(&window_id) {
-                            cx.mutate_window(window_entity, |_, window: &Window| {
-                                window.make_current();
+                            cx.mutate_window(window_entity, |cx, window: &mut Window| {
+                                if window.needs_redraw {
+                                    window.make_current();
+                                    cx.draw(*window_entity);
+                                    window.swap_buffers();
+                                    window.needs_redraw = false;
+                                }
                             });
 
-                            cx.draw(*window_entity);
+                            // cx.draw(*window_entity);
 
-                            cx.mutate_window(window_entity, |_, window: &Window| {
-                                window.swap_buffers();
-                            });
+                            // cx.mutate_window(window_entity, |_, window: &mut Window| {});
                         }
                     }
                 }
@@ -565,7 +572,7 @@ impl Application {
                                 if *window_entity == Entity::root() {
                                     *stored_control_flow.borrow_mut() = ControlFlow::Exit;
                                 } else {
-                                    cx.mutate_window(window_entity, |_, window: &Window| {
+                                    cx.mutate_window(window_entity, |_, window: &mut Window| {
                                         window.make_current();
                                     });
                                     cx.0.remove(*window_entity);
@@ -728,7 +735,7 @@ impl Application {
 
                         winit::event::WindowEvent::Resized(physical_size) => {
                             if let Some(window_entity) = windows.get(&window_id) {
-                                cx.mutate_window(window_entity, |_, window: &Window| {
+                                cx.mutate_window(window_entity, |_, window: &mut Window| {
                                     window.resize(physical_size);
                                 });
 
@@ -740,6 +747,7 @@ impl Application {
                             }
 
                             cx.needs_refresh();
+                            cx.emit_window_event(window_entity, WindowEvent::Redraw);
                         }
 
                         winit::event::WindowEvent::ThemeChanged(theme) => {
@@ -762,7 +770,7 @@ impl Application {
                             {
                                 inside_window = true;
                             }
-                            cx.emit_origin(WindowEvent::MouseEnter);
+                            cx.emit_window_event(window_entity, WindowEvent::MouseEnter);
                         }
 
                         winit::event::WindowEvent::CursorLeft { device_id: _ } => {
@@ -770,7 +778,7 @@ impl Application {
                             {
                                 inside_window = false;
                             }
-                            cx.emit_origin(WindowEvent::MouseLeave);
+                            cx.emit_window_event(window_entity, WindowEvent::MouseLeave);
                         }
 
                         _ => {}

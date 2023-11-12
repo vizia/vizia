@@ -21,10 +21,10 @@ const STYLE: &str = r#"
 fn main() {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE);
-        // Element::new(cx).size(Pixels(100.0)).class("one");
+        Element::new(cx).size(Pixels(100.0)).class("one");
 
         Window::new(cx, |cx| {
-            // Element::new(cx).size(Pixels(50.0)).class("two");
+            Element::new(cx).size(Pixels(50.0)).class("two");
             Label::new(cx, "Subwindow");
         })
         .always_on_top(true)

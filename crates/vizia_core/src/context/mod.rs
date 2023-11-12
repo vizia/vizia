@@ -292,16 +292,19 @@ impl Context {
     /// Mark the application as needing to rerun the draw method
     pub fn needs_redraw(&mut self) {
         self.style.needs_redraw();
+        self.emit(WindowEvent::Redraw);
     }
 
     /// Mark the application as needing to recompute view styles
     pub fn needs_restyle(&mut self) {
         self.style.needs_restyle();
+        self.emit(WindowEvent::Redraw);
     }
 
     /// Mark the application as needing to rerun layout computations
     pub fn needs_relayout(&mut self) {
         self.style.needs_relayout();
+        self.emit(WindowEvent::Redraw);
     }
 
     /// Enables or disables PseudoClasses for the focus of an entity

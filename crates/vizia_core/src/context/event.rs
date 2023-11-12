@@ -698,16 +698,19 @@ impl<'a> EventContext<'a> {
     /// Marks the current view as needing to be redrawn.
     pub fn needs_redraw(&mut self) {
         self.style.needs_redraw();
+        self.emit(WindowEvent::Redraw);
     }
 
     /// Marks the current view as needing a layout computation.
     pub fn needs_relayout(&mut self) {
         self.style.needs_relayout();
         self.style.needs_redraw();
+        self.emit(WindowEvent::Redraw);
     }
 
     pub fn needs_restyle(&mut self) {
         self.style.needs_restyle();
+        self.emit(WindowEvent::Redraw);
     }
 
     /// Reloads the stylesheets linked to the application.

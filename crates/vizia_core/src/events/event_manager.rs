@@ -607,12 +607,12 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             context.set_focus_pseudo_classes(context.focused, true, true);
         }
         WindowEvent::MouseEnter => {
-            if let Some(pseudo_class) = context.style.pseudo_classes.get_mut(Entity::root()) {
+            if let Some(pseudo_class) = context.style.pseudo_classes.get_mut(meta.origin) {
                 pseudo_class.set(PseudoClassFlags::OVER, true);
             }
         }
         WindowEvent::MouseLeave => {
-            if let Some(pseudo_class) = context.style.pseudo_classes.get_mut(Entity::root()) {
+            if let Some(pseudo_class) = context.style.pseudo_classes.get_mut(meta.origin) {
                 pseudo_class.set(PseudoClassFlags::OVER, false);
             }
 

@@ -39,6 +39,7 @@ pub struct Window {
     pub surface: Option<glutin::surface::Surface<glutin::surface::WindowSurface>>,
     pub window: Option<winit::window::Window>,
     pub should_close: bool,
+    pub needs_redraw: bool,
 }
 
 #[cfg(target_os = "windows")]
@@ -136,14 +137,19 @@ impl Window {
 #[cfg(not(target_arch = "wasm32"))]
 impl Window {
     pub fn new(cx: &mut Context, content: impl Fn(&mut Context)) -> Handle<Self> {
-        Self { id: None, context: None, surface: None, window: None, should_close: false }.build(
-            cx,
-            |cx| {
-                cx.subwindows
-                    .insert(cx.current(), WindowDescription::new().with_title("Second Window"));
-                (content)(cx);
-            },
-        )
+        Self {
+            id: None,
+            context: None,
+            surface: None,
+            window: None,
+            should_close: false,
+            needs_redraw: true,
+        }
+        .build(cx, |cx| {
+            cx.subwindows
+                .insert(cx.current(), WindowDescription::new().with_title("Second Window"));
+            (content)(cx);
+        })
     }
 
     pub fn create_subwindow(
@@ -244,6 +250,7 @@ impl Window {
             surface: Some(surface),
             window: Some(window),
             should_close: false,
+            needs_redraw: true,
         };
 
         (win, canvas)
@@ -343,6 +350,7 @@ impl Window {
             surface: Some(surface),
             window: Some(window),
             should_close: false,
+            needs_redraw: true,
         };
 
         (win, canvas)
@@ -469,6 +477,10 @@ impl View for Window {
                 WindowEvent::WindowClose => {
                     println!("close window: {}", cx.current());
                     self.should_close = true;
+                }
+                WindowEvent::Redraw => {
+                    self.needs_redraw = true;
+                    meta.consume();
                 }
 
                 _ => {}

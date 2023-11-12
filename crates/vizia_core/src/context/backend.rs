@@ -31,14 +31,16 @@ impl<'a> BackendContext<'a> {
     }
 
     /// Helper function for mutating the state of the root window.
-    pub fn mutate_window<W: Any, F: Fn(&BackendContext, &W) -> T, T>(
-        &self,
+    pub fn mutate_window<W: Any, F: Fn(&mut BackendContext, &mut W) -> T, T>(
+        &mut self,
         window_entity: &Entity,
         f: F,
     ) -> T {
-        if let Some(window_event_handler) = self.0.views.get(&window_entity) {
-            if let Some(window) = window_event_handler.downcast_ref::<W>() {
-                f(self, window)
+        if let Some(mut window_event_handler) = self.0.views.remove(&window_entity) {
+            if let Some(window) = window_event_handler.downcast_mut::<W>() {
+                let t = f(self, window);
+                self.0.views.insert(*window_entity, window_event_handler);
+                return t;
             } else {
                 panic!();
             }
