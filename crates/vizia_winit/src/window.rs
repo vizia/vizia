@@ -598,7 +598,7 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
         self
     }
 
-    fn icon(mut self, image: Vec<u8>, width: u32, height: u32) -> Self {
+    fn icon(mut self, width: u32, height: u32, image: Vec<u8>) -> Self {
         let entity = self.entity();
         if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
             win_desc.icon = Some(image);

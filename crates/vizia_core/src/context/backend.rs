@@ -277,7 +277,7 @@ impl<'a> BackendContext<'a> {
 
     /// Calls the accessibility system and updates the accesskit node tree.
     pub fn process_tree_updates(&mut self, process: impl Fn(&Vec<accesskit::TreeUpdate>)) {
-        accessibility_system(self.0);
+        // accessibility_system(self.0);
 
         (process)(&self.0.tree_updates);
 
