@@ -1,3 +1,6 @@
+pub mod avatar;
+pub use avatar::*;
+
 pub mod button;
 pub use button::*;
 

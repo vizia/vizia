@@ -14,7 +14,7 @@ impl DemoRegion {
     pub fn new(
         cx: &mut Context,
         content: impl Fn(&mut Context),
-        code: impl Fn(&mut Context),
+        code: impl Fn(&mut Context) + 'static,
     ) -> Handle<Self> {
         Self { open: false }.build(cx, |cx| {
             HStack::new(cx, |cx| {
@@ -23,17 +23,24 @@ impl DemoRegion {
             .class("region");
             // Element::new(cx).class("divider");
             HStack::new(cx, |cx| {
-                (code)(cx);
+                ScrollView::new(cx, 0.0, 0.0, true, true, move |cx| {
+                    (code)(cx);
+                })
+                .height(Auto);
             })
+            .class("code")
             .height(Auto)
             .display(DemoRegion::open);
 
-            Button::new(cx, |ex| ex.emit(DemoRegionEvent::Toggle), |cx| Icon::new(cx, ICON_CODE))
+            Button::new(cx, |cx| Icon::new(cx, ICON_CODE))
+                .on_press(|ex| ex.emit(DemoRegionEvent::Toggle))
                 .space(Pixels(8.0))
                 .left(Stretch(1.0))
                 .position_type(PositionType::SelfDirected)
                 .tooltip(|cx| {
-                    Label::new(cx, "Toggle Dark/Light Mode");
+                    Tooltip::new(cx, |cx| {
+                        Label::new(cx, "Toggle Dark/Light Mode");
+                    })
                 });
         })
     }

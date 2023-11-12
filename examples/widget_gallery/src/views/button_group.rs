@@ -13,9 +13,9 @@ pub fn button_group(cx: &mut Context) {
         Label::new(cx, "Button Group").class("header");
         DemoRegion::new(cx, |cx|{
             ButtonGroup::new(cx, |cx|{
-                Button::new(cx, |_| {}, |cx| Label::new(cx, "One"));
-                Button::new(cx, |_| {}, |cx| Label::new(cx, "Two"));
-                Button::new(cx, |_| {}, |cx| Label::new(cx, "Three"));
+                Button::new(cx, |cx| Label::new(cx, "One"));
+                Button::new(cx, |cx| Label::new(cx, "Two"));
+                Button::new(cx, |cx| Label::new(cx, "Three"));
             });
         }, |cx|{
             Label::new(cx, r#"ButtonGroup::new(cx, |cx|{
@@ -28,10 +28,11 @@ pub fn button_group(cx: &mut Context) {
         Label::new(cx, "Button Group Vertical").class("header");
         DemoRegion::new(cx, |cx|{
             ButtonGroup::new(cx, |cx|{
-                Button::new(cx, |_| {}, |cx| Label::new(cx, "One"));
-                Button::new(cx, |_| {}, |cx| Label::new(cx, "Two"));
-                Button::new(cx, |_| {}, |cx| Label::new(cx, "Three"));
-            }).vertical();
+                Button::new(cx, |cx| Label::new(cx, "One"));
+                Button::new(cx, |cx| Label::new(cx, "Two"));
+                Button::new(cx, |cx| Label::new(cx, "Three"));
+            });
+            //.vertical();
         }, |cx|{
             Label::new(cx, r#"ButtonGroup::new(cx, |cx|{
     Button::new(cx, |_| {}, |cx| Label::new(cx, "One"));
@@ -47,7 +48,6 @@ pub fn button_group(cx: &mut Context) {
         HStack::new(cx, |cx| {
             Button::new(
                 cx,
-                |_| {},
                 |cx| {
                     HStack::new(cx, |cx| {
                         Icon::new(cx, ICON_TRASH);
@@ -59,7 +59,6 @@ pub fn button_group(cx: &mut Context) {
 
             Button::new(
                 cx,
-                |_| {},
                 |cx| {
                     HStack::new(cx, |cx| {
                         Label::new(cx, "Edit");
@@ -70,7 +69,7 @@ pub fn button_group(cx: &mut Context) {
             .class("accent");
 
             // Icon Button
-            Button::new(cx, |_| {}, |cx| Icon::new(cx, ICON_CHECK));
+            Button::new(cx, |cx| Icon::new(cx, ICON_CHECK));
         })
         .class("region");
 

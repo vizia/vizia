@@ -37,6 +37,17 @@ pub fn setup_logging() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn theme_selection_dropdown(cx: &mut Context) {
+    PickList::new(cx, AppData::theme_options, AppData::selected_theme, true)
+        .on_select(|cx, index| cx.emit(AppEvent::SetThemeMode(index)))
+        .width(Pixels(85.0))
+        .tooltip(|cx| {
+            Tooltip::new(cx, |cx| {
+                Label::new(cx, "Select Theme Mode");
+            })
+        });
+}
+
 fn main() {
     setup_logging();
 
@@ -48,27 +59,28 @@ fn main() {
         VStack::new(cx, |cx| {
             // Header
             HStack::new(cx, |cx| {
-                Button::new(
-                    cx,
-                    |ex| ex.emit(EnvironmentEvent::ToggleThemeMode),
-                    |cx| {
-                        Label::new(
-                            cx,
-                            Environment::theme.map(|theme| match theme.app_theme {
-                                AppTheme::BuiltIn(ThemeMode::LightMode) => ICON_SUN,
-                                _ => ICON_MOON,
-                            }),
-                        )
-                        .class("icon")
-                    },
-                )
-                .left(Stretch(1.0))
-                .class("icon")
-                .tooltip(|cx| {
-                    Label::new(cx, "Toggle Dark/Light Mode");
-                });
+                HStack::new(cx, |cx| {
+                    Switch::new(cx, AppData::disabled)
+                        .on_toggle(|cx| cx.emit(AppEvent::ToggleDisabled))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, "Toggle disabled");
+                            })
+                        });
+                    Label::new(cx, "Toggle Disabled");
+                })
+                .child_top(Stretch(1.0))
+                .child_bottom(Stretch(1.0))
+                .col_between(Pixels(5.0))
+                .top(Stretch(1.0))
+                .bottom(Stretch(1.0))
+                .size(Auto);
+
+                theme_selection_dropdown(cx);
             })
             .child_space(Pixels(8.0))
+            .child_left(Stretch(1.0))
+            .col_between(Pixels(20.0))
             .height(Auto);
 
             Element::new(cx).class("divider");
@@ -110,6 +122,18 @@ fn main() {
                     },
                 ),
 
+                "Avatar" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).class("tab-name").hoverable(false);
+                    },
+                    |cx| {
+                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                            avatar(cx);
+                        })
+                        .class("widgets");
+                    },
+                ),
+
                 "Button" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).class("tab-name").hoverable(false);
@@ -129,6 +153,18 @@ fn main() {
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
                             button_group(cx);
+                        })
+                        .class("widgets");
+                    },
+                ),
+
+                "Floating Action Button" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).class("tab-name").hoverable(false);
+                    },
+                    |cx| {
+                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                            // floating_action_button(cx);
                         })
                         .class("widgets");
                     },

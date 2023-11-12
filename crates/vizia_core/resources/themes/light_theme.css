@@ -10,8 +10,31 @@
     color: #181818;
 }
 
-/* BUTTON  */
+/* AVATAR */
+avatar {
+    color: white;
+}
 
+/* BADGE */
+badge {
+    border-width: 2px;
+    border-color: white;
+    background-color: rgb(0, 98, 255);
+}
+
+badge.success {
+    background-color: rgb(0, 171, 20);
+}
+
+badge.warning {
+    background-color: rgb(255, 170, 0);
+}
+
+badge.error {
+    background-color: rgb(255, 45, 45);
+}
+
+/* BUTTON  */
 button {
     border-radius: 4px;
     border: 1px #d2d2d2;

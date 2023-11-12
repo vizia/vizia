@@ -359,6 +359,12 @@ impl View for ButtonGroup {
     }
 }
 
+impl<'a> Handle<'a, ButtonGroup> {
+    pub fn vertical(self, is_vertical: impl Res<bool>) -> Self {
+        self.toggle_class("vertical", is_vertical)
+    }
+}
+
 impl<'a> ButtonModifiers for Handle<'a, ButtonGroup> {
     fn variant<U: Into<ButtonVariant>>(mut self, variant: impl Res<U>) -> Self {
         let entity = self.entity();
@@ -392,5 +398,16 @@ impl<'a> ButtonModifiers for Handle<'a, ButtonGroup> {
         });
 
         self
+    }
+}
+
+/// Floating action button
+pub struct Fab {}
+
+impl Fab {}
+
+impl View for Fab {
+    fn element(&self) -> Option<&'static str> {
+        Some("fab")
     }
 }

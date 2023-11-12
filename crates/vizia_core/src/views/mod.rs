@@ -1,10 +1,13 @@
 //! Built-in views provided by vizia.
 
+mod avatar;
+mod badge;
 mod button;
 mod checkbox;
 mod chip;
 mod combobox;
 mod datepicker;
+mod divider;
 mod dropdown;
 mod element;
 mod form;
@@ -35,14 +38,17 @@ mod virtual_list;
 
 pub use self::image::Image;
 pub use crate::binding::Binding;
+pub use avatar::*;
+pub use badge::*;
 pub use button::{Button, ButtonGroup, ButtonModifiers, ButtonVariant, IconButton};
 pub use checkbox::Checkbox;
 pub use chip::Chip;
 pub use combobox::*;
 pub use datepicker::Datepicker;
+pub use divider::*;
 pub use dropdown::Dropdown;
 pub use element::Element;
-pub use form::{FormControl, FormGroup, Placement};
+pub use form::{FormControl, FormGroup, FormPlacement};
 pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
 pub use label::{Icon, Label};
 pub use list::List;

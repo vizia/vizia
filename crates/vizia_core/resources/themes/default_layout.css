@@ -6,6 +6,41 @@ icon {
     child-space: 1s;
 }
 
+/* AVATAR */
+avatar {
+    size: 50px;
+    border-radius: 50%;
+    background-color: gray;
+    child-space: 1s;
+}
+
+avatar > icon {
+    size: 50px;
+    font-size: 24;
+}
+
+avatar > image {
+    size: 100%;
+    background-size: cover;
+}
+
+/* BADGE */
+badge {
+    position-type: self-directed;
+    size: 20px;
+    border-radius: 50%;
+    child-space: 1s;
+    font-size: 16;
+}
+
+badge > label {
+    font-size: 12;
+}
+
+badge > icon {
+    font-size: 24;
+}
+
 /* BUTTON */
 
 button {

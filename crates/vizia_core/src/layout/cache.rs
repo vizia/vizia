@@ -37,8 +37,8 @@ impl Cache for CachedData {
                 geo_changed.set(GeoChanged::HEIGHT_CHANGED, true);
             }
 
-            bounds.x = posx;
-            bounds.y = posy;
+            bounds.x = posx.round();
+            bounds.y = posy.round();
             bounds.w = width;
             bounds.h = height;
         }
@@ -52,8 +52,8 @@ impl Cache for CachedData {
                 geo_changed.set(GeoChanged::POSY_CHANGED, true);
             }
 
-            relative_position.x = posx;
-            relative_position.y = posy;
+            relative_position.x = posx.round();
+            relative_position.y = posy.round();
         }
 
         if let Some(geo) = self.geo_changed.get_mut(*node) {

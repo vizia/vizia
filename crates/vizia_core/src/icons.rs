@@ -300,3 +300,4 @@ pub const ICON_ITALIC: &str = "\u{eb93}";
 pub const ICON_UNDERLINE: &str = "\u{eba2}";
 
 pub const ICON_CODE: &str = "\u{ea77}";
+pub const ICON_USER: &str = "\u{eb4d}";

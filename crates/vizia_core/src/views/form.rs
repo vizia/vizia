@@ -2,7 +2,7 @@ use crate::prelude::*;
 
 #[derive(Lens)]
 pub struct FormControl {
-    label_placement: Placement,
+    label_placement: FormPlacement,
 }
 
 impl FormControl {
@@ -11,7 +11,7 @@ impl FormControl {
         control: impl Fn(&mut Context) -> Handle<V> + 'static,
         label: impl Res<T> + Clone,
     ) -> Handle<Self> {
-        Self { label_placement: Placement::Start }
+        Self { label_placement: FormPlacement::Start }
             .build(cx, |cx| {
                 let id = cx.current().to_string();
                 Label::new(cx, label.clone()).describing(&id);
@@ -21,13 +21,13 @@ impl FormControl {
             .toggle_class(
                 "pos-start",
                 FormControl::label_placement.map(|placement| {
-                    *placement == Placement::Start || *placement == Placement::Top
+                    *placement == FormPlacement::Start || *placement == FormPlacement::Top
                 }),
             )
             .toggle_class(
                 "vertical",
                 FormControl::label_placement.map(|placement| {
-                    *placement == Placement::Top || *placement == Placement::Bottom
+                    *placement == FormPlacement::Top || *placement == FormPlacement::Bottom
                 }),
             )
     }
@@ -40,7 +40,7 @@ impl View for FormControl {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Placement {
+pub enum FormPlacement {
     Top,
     Start,
     Bottom,
@@ -48,7 +48,7 @@ pub enum Placement {
 }
 
 impl<'a> Handle<'a, FormControl> {
-    pub fn label_placement(self, placement: Placement) -> Self {
+    pub fn label_placement(self, placement: FormPlacement) -> Self {
         self.modify(|form_control| form_control.label_placement = placement)
     }
 }
