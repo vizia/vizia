@@ -96,6 +96,7 @@ impl_res_clone!(Scale);
 impl_res_clone!(Position);
 impl_res_simple!(PointerEvents);
 impl_res_simple!(ButtonVariant);
+impl_res_simple!(AvatarVariant);
 
 impl<L> Res<L::Target> for L
 where

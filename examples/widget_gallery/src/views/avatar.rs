@@ -19,13 +19,13 @@ pub fn avatar(cx: &mut Context) {
 
     VStack::new(cx, |cx|{
         Label::new(cx, "Avatar").class("title");
-        Label::new(cx, "An avatar is used to visually represent a person or entity and can contain text, icons, and images.").class("paragraph");
+        Label::new(cx, "An avatar is used to visually represent a person or entity and can contain text, an icon, or an image.").class("paragraph");
 
         // Divider here
         Element::new(cx).height(Pixels(1.0))
             .background_color(Color::rgb(210, 210, 210))
-            .top(Pixels(20.0))
-            .bottom(Pixels(30.0));
+            .top(Pixels(12.0))
+            .bottom(Pixels(12.0));
 
         Label::new(cx, "Avatar").class("header");
         DemoRegion::new(cx, |cx|{
@@ -52,6 +52,27 @@ pub fn avatar(cx: &mut Context) {
             Avatar::new(cx, |cx|{
                 Image::new(cx, "vizia.png");
             });
+        }, |cx| {Label::new(cx, r#"Avatar::new(cx, |cx|{
+    Icon::new(cx, ICON_USER)
+})"#).class("code");
+        });
+
+
+        Label::new(cx, "Variant").class("header");
+        Label::new(cx, "The variant modifier can be used to select between a circle (default), square, and rounded avatar shape.").class("paragraph");
+
+        DemoRegion::new(cx, |cx|{
+            Avatar::new(cx, |cx|{
+                Icon::new(cx, ICON_USER);
+            });
+
+            Avatar::new(cx, |cx|{
+                Label::new(cx, "GA");
+            }).variant(AvatarVariant::Square);
+
+            Avatar::new(cx, |cx|{
+                Image::new(cx, "vizia.png");
+            }).variant(AvatarVariant::Rounded);
         }, |cx| {Label::new(cx, r#"Avatar::new(cx, |cx|{
     Icon::new(cx, ICON_USER)
 })"#).class("code");
