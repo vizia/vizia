@@ -11,8 +11,8 @@ use cosmic_text::{Align, Cursor, FamilyOwned, Shaping};
 use femtovg::imgref::{Img, ImgRef};
 use femtovg::rgb::RGBA8;
 use femtovg::{
-    Atlas, Canvas, DrawCommand, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource,
-    Quad, Renderer,
+    Atlas, Canvas, DrawCommand, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageInfo,
+    ImageSource, Quad, Renderer,
 };
 use fnv::FnvHashMap;
 use morphorm::Units;
@@ -215,9 +215,9 @@ impl TextContext {
     }
 
     /// Generate a series of canvas path operations to render the text of a particular entity.
-    pub(crate) fn fill_to_cmds<T: Renderer>(
+    pub(crate) fn fill_to_cmds(
         &mut self,
-        canvas: &mut Canvas<T>,
+        canvas: &mut Canvas<femtovg::renderer::OpenGl>,
         entity: Entity,
         bounds: BoundingBox,
         justify: (f32, f32),
@@ -311,10 +311,15 @@ impl TextContext {
                                         ImageFlags::empty(),
                                     )
                                     .unwrap();
+                                let native_texture = canvas.get_native_texture(image_id).unwrap();
                                 let texture_index = self.glyph_textures.len();
                                 let (x, y) =
                                     atlas.add_rect(alloc_w as usize, alloc_h as usize).unwrap();
-                                self.glyph_textures.push(FontTexture { atlas, image_id });
+                                self.glyph_textures.push(FontTexture {
+                                    atlas,
+                                    image_id,
+                                    native_texture,
+                                });
                                 (texture_index, x, y)
                             });
 
@@ -337,6 +342,19 @@ impl TextContext {
                                 }
                             }
                         }
+
+                        if canvas.get_image(self.glyph_textures[texture_index].image_id).is_none() {
+                            canvas.create_image_from_native_texture(
+                                self.glyph_textures[texture_index].native_texture,
+                                ImageInfo::new(
+                                    ImageFlags::empty(),
+                                    TEXTURE_SIZE,
+                                    TEXTURE_SIZE,
+                                    femtovg::PixelFormat::Rgba8,
+                                ),
+                            );
+                        }
+
                         canvas
                             .update_image::<ImageSource>(
                                 self.glyph_textures[texture_index].image_id,
@@ -344,7 +362,10 @@ impl TextContext {
                                 atlas_content_x as usize,
                                 atlas_content_y as usize,
                             )
-                            .unwrap();
+                            .expect(&format!(
+                                "Unable to find image: {} {:?}",
+                                texture_index, self.glyph_textures[texture_index].image_id
+                            ));
                         RenderedGlyph {
                             texture_index,
                             width: used_w,
@@ -560,6 +581,7 @@ impl TextContext {
 pub(crate) struct FontTexture {
     atlas: Atlas,
     image_id: ImageId,
+    native_texture: <femtovg::renderer::OpenGl as Renderer>::NativeTexture,
 }
 
 #[derive(Copy, Clone, Debug)]

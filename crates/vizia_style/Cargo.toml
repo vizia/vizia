@@ -10,7 +10,8 @@ rust-version = "1.60"
 
 [dependencies]
 cssparser = "0.29.6"
-femtovg = "0.7.0"
+# femtovg = "0.7.0"
+femtovg = { path = "../../../femtovg"}
 selectors = { version = "0.23.0", path = "./selectors" }
 # morphorm = {path = "../../../morphorm" }
 morphorm = "0.6.4"

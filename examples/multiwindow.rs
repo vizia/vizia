@@ -21,17 +21,17 @@ const STYLE: &str = r#"
 fn main() {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE);
-        Element::new(cx).size(Pixels(100.0)).class("one");
+        // Element::new(cx).size(Pixels(100.0)).class("one");
 
         Window::new(cx, |cx| {
-            Element::new(cx).size(Pixels(50.0)).class("two");
-            // Button::new(cx, |cx| cx.emit(WindowEvent::WindowClose), |cx| Label::new(cx, "C2"));
+            // Element::new(cx).size(Pixels(50.0)).class("two");
+            Label::new(cx, "Subwindow");
         })
         .always_on_top(true)
         .title("Secondary")
         .inner_size((400, 400));
 
-        Button::new(cx, |cx| cx.emit(WindowEvent::WindowClose), |cx| Label::new(cx, "C1"));
+        Label::new(cx, "Main window");
     })
     .title("Main")
     .run();
