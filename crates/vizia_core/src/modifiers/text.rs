@@ -8,12 +8,12 @@ pub trait TextModifiers: internal::Modifiable {
     /// Sets the text content of the view.
     fn text<T: ToStringLocalized>(mut self, value: impl Res<T>) -> Self {
         let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, v| {
+        value.set_or_bind(self.context(), entity, move |cx, v| {
             let cx: &mut EventContext<'_> = &mut EventContext::new_with_current(cx, cx.current);
             let text_data = v.get(cx).to_string_local(cx);
-            cx.text_context.set_text(cx.current, &text_data);
+            cx.text_context.set_text(entity, &text_data);
 
-            cx.style.needs_text_layout.insert(cx.current, true);
+            cx.style.needs_text_layout.insert(entity, true);
             cx.needs_relayout();
             cx.needs_redraw();
         });

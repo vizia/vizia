@@ -130,36 +130,6 @@ where
                                             cx.emit(ComboBoxEvent::SetOption(index));
                                         });
                                 }
-
-                                // if let Some(l) = list.get(cx) {
-                                //     for (index, item) in l.iter().enumerate().filter(|(_, item)| {
-                                //         if f.is_empty() {
-                                //             true
-                                //         } else {
-                                //             item.to_string()
-                                //                 .to_ascii_lowercase()
-                                //                 .contains(&f.to_ascii_lowercase())
-                                //         }
-                                //     }) {
-                                //         Label::new(cx, &item.to_string())
-                                //             .child_top(Stretch(1.0))
-                                //             .child_bottom(Stretch(1.0))
-                                //             .checked(
-                                //                 selected.map(move |selected| *selected == index),
-                                //             )
-                                //             .navigable(true)
-                                //             .toggle_class(
-                                //                 "nav",
-                                //                 Self::hovered.map(move |nav| *nav == index),
-                                //             )
-                                //             .on_hover(move |cx| {
-                                //                 cx.emit(ComboBoxEvent::SetHovered(index))
-                                //             })
-                                //             .on_press(move |cx| {
-                                //                 cx.emit(ComboBoxEvent::SetOption(index));
-                                //             });
-                                //     }
-                                // }
                             })
                             .height(Auto)
                             .class("list");

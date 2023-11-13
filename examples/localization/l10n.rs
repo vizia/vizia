@@ -44,7 +44,7 @@ fn main() {
 
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
-                Checkbox::new(cx, Environment::locale.map(|locale| *locale == "en-US"))
+                Checkbox::new(cx, Environment::locale.map(|locale| *locale != "fr"))
                     .id("toggle-language")
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleLanguage));
                 Label::new(cx, "Toggle Language").describing("toggle-language").hidden(true);

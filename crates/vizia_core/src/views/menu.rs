@@ -273,8 +273,8 @@ where
 
 impl<'a, L> Handle<'a, MenuPopup<L>>
 where
-    L: Lens + Res<bool>,
-    L::Target: Clone + Into<bool>,
+    L: Lens,
+    L::Target: Clone + Data + Into<bool>,
 {
     /// Registers a callback for when the user clicks off of the popup, usually with the intent of
     /// closing it.
@@ -285,7 +285,7 @@ where
         let focus_event = Box::new(f);
         self.cx.with_current(self.entity, |cx| {
             cx.add_listener(move |popup: &mut MenuPopup<L>, cx, event| {
-                let flag: bool = popup.lens.get(cx);
+                let flag: bool = popup.lens.get(cx).into();
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
                         if flag && meta.origin != cx.current() {

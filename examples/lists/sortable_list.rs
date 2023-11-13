@@ -49,11 +49,7 @@ fn main() {
             })
             .row_between(Pixels(5.0));
         })
-        .row_between(Pixels(5.0))
-        .size(Auto)
-        .space(Stretch(1.0))
-        .top(Pixels(100.0))
-        .child_space(Stretch(1.0));
+        .class("container");
     })
     .title("Sortable List")
     .run();

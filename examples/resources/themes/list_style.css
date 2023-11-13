@@ -22,3 +22,11 @@ list label:checked {
     background-color: blue;
     color: white;
 }
+
+vstack.container {
+    child-space: 1s;
+    row-between: 5px;
+    size: auto;
+    space: 1s;
+    top: 100px;
+}

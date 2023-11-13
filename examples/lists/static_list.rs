@@ -40,28 +40,26 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet(include_style!("../resources/themes/list_style.css"))
+        cx.add_stylesheet(include_style!("examples/resources/themes/list_style.css"))
             .expect("Failed to add stylesheet");
 
         AppData { selected: 0 }.build(cx);
 
         VStack::new(cx, move |cx| {
             List::new(cx, StaticLens::new(STATIC_LIST.as_ref()), move |cx, index, item| {
-                VStack::new(cx, move |cx| {
-                    Label::new(cx, item)
-                        .class("list_item")
-                        // Set the checked state based on whether this item is selected
-                        .checked(AppData::selected.map(move |selected| *selected == index))
-                        // Set the selected item to this one if pressed
-                        .on_press(move |cx| cx.emit(AppEvent::Select(index)));
-                });
+                Label::new(cx, item)
+                    // Set the checked state based on whether this item is selected
+                    .checked(AppData::selected.map(move |selected| *selected == index))
+                    // Set the selected item to this one if pressed
+                    .on_press(move |cx| cx.emit(AppEvent::Select(index)));
             })
             .on_increment(move |cx| cx.emit(AppEvent::IncrementSelection))
             .on_decrement(move |cx| cx.emit(AppEvent::DecrementSelection));
 
-            Binding::new(cx, AppData::selected, move |cx, selected_item| {
-                Label::new(cx, &format!("You have selected: {}", selected_item.get(cx),));
-            });
+            Label::new(
+                cx,
+                AppData::selected.map(|selected| format!("You have selected: {}", selected)),
+            );
         })
         .class("container");
     })
