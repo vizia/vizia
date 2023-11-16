@@ -82,7 +82,7 @@ where
 
                 let model = model_data.downcast_ref::<L::Source>().unwrap();
 
-                let old = lens.view(model, |t| t.cloned());
+                let old = lens.view(model).map(|val| val.into_owned());
 
                 let store = Box::new(BasicStore { lens, old, observers });
 

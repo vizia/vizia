@@ -43,11 +43,11 @@ impl EventManager {
         // Loop over the events in the event queue
         'events: for event in self.event_queue.iter_mut() {
             // Handle internal events
-            event.map(|internal_event, _| match internal_event {
+            event.take(|internal_event, _| match internal_event {
                 InternalEvent::Redraw => cx.needs_redraw(),
                 InternalEvent::LoadImage { path, image, policy } => {
                     if let Some(image) = image.lock().unwrap().take() {
-                        ResourceContext::new(cx).load_image(path.clone(), image, *policy);
+                        ResourceContext::new(cx).load_image(path, image, policy);
                     }
                 }
             });

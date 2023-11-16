@@ -21,6 +21,7 @@ pub trait AbilityModifiers: internal::Modifiable {
         let current = self.entity();
         self.context().with_current(current, |cx| {
             state.set_or_bind(cx, entity, |cx, v| {
+                let val = v.get(cx).into();
                 if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
                     abilities.set(Abilities::HOVERABLE, v.into());
                     cx.needs_restyle();
@@ -46,6 +47,7 @@ pub trait AbilityModifiers: internal::Modifiable {
         let current = self.current();
         self.context().with_current(current, |cx| {
             state.set_or_bind(cx, entity, |cx, v| {
+                let val = v.get(cx).into();
                 if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
                     let state = v.into();
                     abilities.set(Abilities::FOCUSABLE, state);
@@ -78,6 +80,7 @@ pub trait AbilityModifiers: internal::Modifiable {
         let current = self.current();
         self.context().with_current(current, |cx| {
             state.set_or_bind(cx, entity, |cx, v| {
+                let val = v.get(cx).into();
                 if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
                     let state = v.into();
                     abilities.set(Abilities::CHECKABLE, state);
@@ -106,6 +109,7 @@ pub trait AbilityModifiers: internal::Modifiable {
         let current = self.current();
         self.context().with_current(current, |cx| {
             state.set_or_bind(cx, entity, |cx, v| {
+                let val = v.get(cx).into();
                 if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
                     abilities.set(Abilities::NAVIGABLE, v.into());
                     cx.needs_restyle();

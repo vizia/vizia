@@ -1,4 +1,5 @@
 //! A model for system specific state which can be accessed by any model or view.
+use crate::prelude::LensValue;
 use crate::{
     context::{Context, EmitContext},
     events::{Timer, TimerAction},
@@ -7,6 +8,7 @@ use crate::{
     views::TextEvent,
     window::WindowEvent,
 };
+
 use instant::Duration;
 use unic_langid::LanguageIdentifier;
 use vizia_derive::Lens;
@@ -91,9 +93,9 @@ pub enum EnvironmentEvent {
 
 impl Model for Environment {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|event, _| match event {
+        event.take(|event, _| match event {
             EnvironmentEvent::SetLocale(locale) => {
-                self.locale = locale.clone();
+                self.locale = locale;
             }
 
             EnvironmentEvent::SetThemeMode(theme) => {

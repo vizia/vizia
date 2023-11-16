@@ -279,7 +279,7 @@ where
 impl<'a, L> Handle<'a, MenuPopup<L>>
 where
     L: Lens,
-    L::Target: Clone + Into<bool>,
+    L::Target: Clone + Data + Into<bool>,
 {
     /// Registers a callback for when the user clicks off of the popup, usually with the intent of
     /// closing it.

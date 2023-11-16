@@ -71,17 +71,15 @@
 //!         // Alternatively, `event.take()` will attempt to cast the event message to the
 //!         // desired type and return the value of the message (not a reference),
 //!         // removing it from the event and thus preventing it from propagating further.
-//!         if let Some(app_event) = event.take() {
-//!             match app_event {
-//!                 AppEvent::Increment => {
-//!                     self.count += 1;
-//!                 }
-//!
-//!                 AppEvent::Decrement => {
-//!                     self.count -= 1;
-//!                 }
+//!         event.take(|app_event, meta| match app_event {
+//!             AppEvent::Increment => {
+//!                 self.count += 1;
 //!             }
-//!         }
+//!
+//!             AppEvent::Decrement => {
+//!                 self.count -= 1;
+//!             }
+//!         });
 //!     }
 //! }
 //! ```

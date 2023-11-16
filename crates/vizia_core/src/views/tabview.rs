@@ -28,7 +28,7 @@ impl TabView {
                 ScrollView::new(cx, 0.0, 0.0, true, true, move |cx| {
                     //VStack::new(cx, move |cx| {
                     Binding::new(cx, lens.map(|list| list.len()), move |cx, list_length| {
-                        let list_length = list_length.get_fallible(cx).map_or(0, |d| d);
+                        let list_length = list_length.get(cx).map_or(0, |d| d);
                         for index in 0..list_length {
                             let l = lens.index(index);
                             let builder = (content2)(cx, l).header;
@@ -95,7 +95,7 @@ impl<'a> Handle<'a, TabView> {
     pub fn with_selected<U: Into<usize>>(mut self, selected: impl Res<U>) -> Self {
         let entity = self.entity();
         selected.set_or_bind(self.context(), entity, |cx, selected| {
-            let index = selected.into();
+            let index = selected.get(cx).into();
             cx.emit(TabEvent::SetSelected(index));
         });
 

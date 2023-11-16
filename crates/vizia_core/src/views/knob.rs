@@ -38,7 +38,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
     ) -> Handle<Self> {
         Self {
             lens,
-            default_normal: normalized_default.get_val(cx),
+            default_normal: normalized_default.get(cx),
 
             is_dragging: false,
             prev_drag_y: 0.0,

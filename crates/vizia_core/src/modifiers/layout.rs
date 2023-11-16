@@ -147,7 +147,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         let current = self.current();
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, |cx, v| {
-                let value = v.into();
+                let value = v.get(cx).into();
                 cx.style.left.insert(cx.current, value);
                 cx.style.right.insert(cx.current, value);
                 cx.style.top.insert(cx.current, value);
@@ -180,7 +180,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         let current = self.current();
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.into();
+                let value = v.get(cx).into();
                 cx.style.width.insert(cx.current, value);
                 cx.style.height.insert(cx.current, value);
 
@@ -235,7 +235,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         let current = self.current();
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.into();
+                let value = v.get(cx).into();
                 cx.style.child_left.insert(cx.current, value);
                 cx.style.child_right.insert(cx.current, value);
                 cx.style.child_top.insert(cx.current, value);
@@ -282,7 +282,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         let current = self.current();
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.into();
+                let value = v.get(cx).into();
                 cx.style.min_width.insert(cx.current, value);
                 cx.style.min_height.insert(cx.current, value);
 
@@ -313,7 +313,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         let current = self.current();
         self.context().with_current(entity, |cx| {
             value.set_or_bind(cx, current, move |cx, v| {
-                let value = v.into();
+                let value = v.get(cx).into();
                 cx.style.max_width.insert(cx.current, value);
                 cx.style.max_height.insert(cx.current, value);
 
@@ -358,7 +358,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         let current = self.current();
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.into();
+                let value = v.get(cx).into();
                 cx.style.min_left.insert(cx.current, value);
                 cx.style.min_right.insert(cx.current, value);
                 cx.style.min_top.insert(cx.current, value);
@@ -405,7 +405,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         let current = self.current();
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.into();
+                let value = v.get(cx).into();
                 cx.style.max_left.insert(cx.current, value);
                 cx.style.max_right.insert(cx.current, value);
                 cx.style.max_top.insert(cx.current, value);

@@ -48,7 +48,7 @@ macro_rules! modifier {
             let entity = self.entity();
             let current = self.current();
             value.set_or_bind(self.context(), current, move |cx, v| {
-                cx.style.$name.insert(entity, v.into());
+                cx.style.$name.insert(entity, v.get(cx).into());
 
                 cx.style.system_flags |= $flags;
             });

@@ -96,8 +96,11 @@ where
                             let f = Self::filter_text.get(cx);
                             // List view doesn't have an option for filtering (yet) so we do it manually instead.
                             VStack::new(cx, |cx| {
-                                for (index, item) in
-                                    list.get(cx).iter().enumerate().filter(|(_, item)| {
+                                let ll = list
+                                    .get(cx)
+                                    .iter()
+                                    .enumerate()
+                                    .filter(|(_, item)| {
                                         if f.is_empty() {
                                             true
                                         } else {
@@ -106,8 +109,12 @@ where
                                                 .contains(&f.to_ascii_lowercase())
                                         }
                                     })
-                                {
-                                    Label::new(cx, &item.to_string())
+                                    .map(|(idx, _)| idx)
+                                    .collect::<Vec<_>>();
+
+                                for index in ll.into_iter() {
+                                    let item = list.index(index);
+                                    Label::new(cx, item)
                                         .child_top(Stretch(1.0))
                                         .child_bottom(Stretch(1.0))
                                         .checked(selected.map(move |selected| *selected == index))
@@ -202,7 +209,6 @@ where
                 };
 
                 let list = self.list_lens.get(cx);
-
                 if let Some((next_index, _)) =
                     list.iter().enumerate().skip_while(|(idx, _)| *idx != self.hovered).find(filter)
                 {
@@ -259,7 +265,6 @@ where
                         };
 
                         let list = self.list_lens.get(cx);
-
                         if let Some((next_index, _)) = list
                             .iter()
                             .enumerate()
@@ -287,7 +292,6 @@ where
                         };
 
                         let list = self.list_lens.get(cx);
-
                         if let Some((next_index, _)) = list
                             .iter()
                             .enumerate()

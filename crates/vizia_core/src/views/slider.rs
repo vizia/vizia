@@ -128,7 +128,7 @@ where
 
                     // Active track
                     Element::new(cx).class("active").bind(lens, move |handle, value| {
-                        let val = value.get(handle.cx);
+                        let val = value.get(&handle);
 
                         let normal_val = (val - range.start) / (range.end - range.start);
                         let min = thumb_size / size;
@@ -162,7 +162,7 @@ where
                             }
                         })
                         .bind(lens, move |handle, value| {
-                            let val = value.get(handle.cx);
+                            let val = value.get(&handle);
                             let normal_val = (val - range.start) / (range.end - range.start);
                             let px = normal_val * (1.0 - (thumb_size / size));
                             if orientation == Orientation::Horizontal {
@@ -528,7 +528,7 @@ impl NamedSlider {
         L: Lens<Target = f32>,
         T: ToString,
     {
-        let name = name.get_val(cx).to_string();
+        let name = name.get(cx).to_string();
         Self { on_changing: None }
             .build(cx, move |cx| {
                 Binding::new(cx, lens, move |cx, lens| {
@@ -548,7 +548,7 @@ impl NamedSlider {
 
                             // Active track
                             Element::new(cx).class("active").bind(lens, move |handle, value| {
-                                let val = value.get(handle.cx);
+                                let val = value.get(&handle);
                                 let normal_val = (val - range.start) / (range.end - range.start);
                                 let min = thumb_size / size;
                                 let max = 1.0;

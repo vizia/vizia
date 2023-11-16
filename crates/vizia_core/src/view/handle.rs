@@ -114,23 +114,21 @@ impl<'a, V> Handle<'a, V> {
         self
     }
 
-    pub fn bind<L, F>(self, lens: L, closure: F) -> Self
+    pub fn bind<R, T, F>(mut self, res: R, closure: F) -> Self
     where
-        L: Lens,
-        <L as Lens>::Target: Data,
-        F: 'static + Fn(Handle<'_, V>, L),
+        R: Res<T>,
+        F: 'static + Clone + Fn(Handle<'_, V>, R),
     {
         let entity = self.entity();
         let current = self.current();
         self.cx.with_current(current, |cx| {
-            Binding::new(cx, lens, move |cx, data| {
-                let new_handle = Handle { current: cx.current, entity, p: Default::default(), cx };
-
-                // new_handle.cx.set_current(new_handle.entity);
-                (closure)(new_handle, data);
+            res.set_or_bind(self.context(), current, move |cx, r| {
+                let new_handle = Handle { entity, current: cx.current, p: Default::default(), cx };
+                new_handle.cx.set_current(new_handle.entity);
+                (closure)(new_handle, r);
             });
+            self
         });
-        self
     }
 
     // pub fn subbind<L, F>(self, lens: L, closure: F) -> Self

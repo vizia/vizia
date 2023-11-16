@@ -20,6 +20,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         let current = self.current();
         self.context().with_current(current, |cx| {
             name.set_or_bind(cx, entity, |cx, name| {
+                let cx = &mut EventContext::new_with_current(cx, cx.current);
                 cx.style.name.insert(cx.current, name.to_string_local(cx));
                 cx.style.needs_access_update(cx.current);
             });
@@ -54,7 +55,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         let current = self.current();
         self.context().with_current(current, |cx| {
             hidden.set_or_bind(cx, entity, |cx, hidden| {
-                cx.style.hidden.insert(cx.current, hidden.into());
+                cx.style.hidden.insert(cx.current, hidden.get(cx).into());
                 cx.style.needs_access_update(cx.current);
             });
         });
@@ -68,7 +69,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         let current = self.current();
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, |cx, val| {
-                let v = val.into();
+                let v = val.get(cx).into();
 
                 cx.style.numeric_value.insert(cx.current, v);
                 cx.style.needs_access_update(cx.current);
@@ -84,7 +85,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         let current = self.current();
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, |cx, val| {
-                cx.style.text_value.insert(cx.current, val.to_string());
+                cx.style.text_value.insert(cx.current, val.get(cx).to_string());
                 cx.style.needs_access_update(cx.current);
             });
         });

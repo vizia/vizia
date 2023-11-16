@@ -11,7 +11,8 @@ pub trait TextModifiers: internal::Modifiable {
         let current = self.current();
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, move |cx, val| {
-                let text_data = val.to_string_local(cx);
+                let cx: &mut EventContext<'_> = &mut EventContext::new_with_current(cx, cx.current);
+                let text_data = v.get(cx).to_string_local(cx);
                 cx.text_context.set_text(cx.current, &text_data);
 
                 cx.style.needs_text_layout.insert(cx.current, true);
@@ -54,12 +55,12 @@ pub trait TextModifiers: internal::Modifiable {
     );
 
     /// Sets the text color of the view.
-    fn color<U: Into<Color>>(mut self, value: impl Res<U>) -> Self {
+    fn color<U: Clone + Into<Color>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, |cx, v| {
-                cx.style.font_color.insert(cx.current, v.into());
+                cx.style.font_color.insert(cx.current, v.get(cx).into());
                 cx.style.needs_redraw();
             });
         });
@@ -72,7 +73,7 @@ pub trait TextModifiers: internal::Modifiable {
         let current = self.current();
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, move |cx, v| {
-                cx.style.font_size.insert(cx.current, v.into());
+                cx.style.font_size.insert(cx.current, v.get(cx).into());
                 cx.style.needs_text_layout.insert(cx.current, true);
             });
         });

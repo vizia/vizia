@@ -68,7 +68,7 @@
 //! # }
 //! Label::new(cx, Localized::new("welcome").arg("user", AppData::user));
 //! ```
-
+use crate::context::LocalizationContext;
 use crate::prelude::*;
 use fluent_bundle::FluentArgs;
 use fluent_bundle::FluentValue;
@@ -76,8 +76,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 pub(crate) trait FluentStore {
-    fn get_val(&self, cx: &EventContext) -> FluentValue<'static>;
-    fn get_val2(&self, cx: &Context) -> FluentValue<'static>;
+    fn get_val(&self, cx: &LocalizationContext) -> FluentValue<'static>;
     fn make_clone(&self) -> Box<dyn FluentStore>;
     fn bind(&self, cx: &mut Context, closure: Box<dyn Fn(&mut Context)>);
 }
@@ -97,24 +96,15 @@ where
     L: Lens,
     <L as Lens>::Target: Into<FluentValue<'static>> + Data,
 {
-    fn get_val(&self, cx: &EventContext) -> FluentValue<'static> {
-        self.lens.view(
-            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
-            |data| match data {
-                Some(x) => x.clone().into(),
-                None => "".into(),
-            },
-        )
-    }
-
-    fn get_val2(&self, cx: &Context) -> FluentValue<'static> {
-        self.lens.view(
-            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
-            |data| match data {
-                Some(x) => x.clone().into(),
-                None => "".into(),
-            },
-        )
+    fn get_val(&self, cx: &LocalizationContext) -> FluentValue<'static> {
+        self.lens
+            .view(
+                cx.data()
+                    .expect("Failed to get data from context. Has it been built into the tree?"),
+            )
+            .unwrap()
+            .into_owned()
+            .into()
     }
 
     fn make_clone(&self) -> Box<dyn FluentStore> {
@@ -130,11 +120,7 @@ impl<T> FluentStore for ValState<T>
 where
     T: 'static + Clone + Into<FluentValue<'static>>,
 {
-    fn get_val(&self, _cx: &EventContext) -> FluentValue<'static> {
-        self.val.clone().into()
-    }
-
-    fn get_val2(&self, _cx: &Context) -> FluentValue<'static> {
+    fn get_val(&self, _cx: &LocalizationContext) -> FluentValue<'static> {
         self.val.clone().into()
     }
 
@@ -171,18 +157,10 @@ impl Clone for Localized {
 }
 
 impl Localized {
-    fn get_args(&self, cx: &EventContext) -> FluentArgs {
+    fn get_args(&self, cx: &LocalizationContext) -> FluentArgs {
         let mut res = FluentArgs::new();
         for (name, arg) in &self.args {
             res.set(name.to_owned(), arg.get_val(cx));
-        }
-        res
-    }
-
-    fn get_args2(&self, cx: &Context) -> FluentArgs {
-        let mut res = FluentArgs::new();
-        for (name, arg) in &self.args {
-            res.set(name.to_owned(), arg.get_val2(cx));
         }
         res
     }
@@ -263,7 +241,12 @@ impl Localized {
 }
 
 impl Res<String> for Localized {
-    fn get_val(&self, cx: &Context) -> String {
+    fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, String>> {
+        Some(LensValue::Owned(self.get(cx)))
+    }
+
+    fn get(&self, cx: &impl DataContext) -> String {
+        let cx = cx.as_context().expect("Failed to get context");
         let locale = &cx.environment().locale;
         let bundle = cx.resource_manager.current_translation(locale);
         let message = if let Some(msg) = bundle.get_message(&self.key) {
@@ -279,7 +262,7 @@ impl Res<String> for Localized {
         };
 
         let mut err = vec![];
-        let args = self.get_args2(cx);
+        let args = self.get_args(&cx);
         let res = bundle.format_pattern(value, Some(&args), &mut err);
 
         if err.is_empty() {
@@ -289,9 +272,9 @@ impl Res<String> for Localized {
         }
     }
 
-    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut EventContext, String),
+        F: 'static + Clone + Fn(&mut Context, Localized),
     {
         let self2 = self.clone();
         cx.with_current(entity, move |cx| {
@@ -300,9 +283,7 @@ impl Res<String> for Localized {
                 let self3 = self2.clone();
                 let closure = closure.clone();
                 bind_recursive(cx, &lenses, move |cx| {
-                    let val = self3.get_val(cx);
-                    let cx = &mut EventContext::new_with_current(cx, entity);
-                    closure(cx, val);
+                    closure(cx, self3.clone());
                 });
             });
         });
@@ -327,17 +308,19 @@ where
 }
 
 impl<T: ToString> ToStringLocalized for T {
-    fn to_string_local(&self, _cx: &EventContext) -> String {
+    fn to_string_local(&self, _cx: &impl DataContext) -> String {
         self.to_string()
     }
 }
 
 pub trait ToStringLocalized {
-    fn to_string_local(&self, cx: &EventContext) -> String;
+    fn to_string_local(&self, cx: &impl DataContext) -> String;
 }
 
 impl ToStringLocalized for Localized {
-    fn to_string_local(&self, cx: &EventContext) -> String {
+    fn to_string_local(&self, cx: &impl DataContext) -> String {
+        let cx = cx.as_context().expect("Failed to get context");
+
         let locale = &cx.environment().locale;
         let bundle = cx.resource_manager.current_translation(locale);
         let message = if let Some(msg) = bundle.get_message(&self.key) {
@@ -355,7 +338,7 @@ impl ToStringLocalized for Localized {
         };
 
         let mut err = vec![];
-        let args = self.get_args(cx);
+        let args = self.get_args(&cx);
         let res = bundle.format_pattern(value, Some(&args), &mut err);
 
         if err.is_empty() {

@@ -28,7 +28,7 @@ use crate::text::TextContext;
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
-use super::{DARK_THEME, LIGHT_THEME};
+use super::{LocalizationContext, DARK_THEME, LIGHT_THEME};
 
 /// A context used when handling events.
 ///
@@ -1261,6 +1261,10 @@ impl<'a> DataContext for EventContext<'a> {
         }
 
         None
+    }
+
+    fn as_context(&self) -> Option<LocalizationContext<'_>> {
+        Some(LocalizationContext::from_event_context(self))
     }
 }
 

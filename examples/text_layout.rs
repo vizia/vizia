@@ -33,7 +33,7 @@ fn main() {
             TabView::new(
                 cx,
                 StaticLens::<Vec<&'static str>>::new(STATIC_LIST.as_ref()),
-                |cx, item| match item.get(cx) {
+                |cx, item| match *item.get_ref(cx).unwrap() {
                     "Wrapping" => TabPair::new(
                         move |cx| {
                             Label::new(cx, item).hoverable(false);

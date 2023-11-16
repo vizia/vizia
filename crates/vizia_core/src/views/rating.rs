@@ -36,7 +36,7 @@ impl Rating {
             .navigable(true)
             .role(Role::RadioGroup)
             .bind(lens, |handle, lens| {
-                let val = lens.get(handle.cx);
+                let val = lens.get(&handle);
                 handle.modify(|rating| rating.rating = val);
             })
     }

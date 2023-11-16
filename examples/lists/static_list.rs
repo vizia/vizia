@@ -47,21 +47,19 @@ fn main() {
 
         VStack::new(cx, move |cx| {
             List::new(cx, StaticLens::new(STATIC_LIST.as_ref()), move |cx, index, item| {
-                VStack::new(cx, move |cx| {
-                    Label::new(cx, item)
-                        .class("list_item")
-                        // Set the checked state based on whether this item is selected
-                        .checked(AppData::selected.map(move |selected| *selected == index))
-                        // Set the selected item to this one if pressed
-                        .on_press(move |cx| cx.emit(AppEvent::Select(index)));
-                });
+                Label::new(cx, item)
+                    // Set the checked state based on whether this item is selected
+                    .checked(AppData::selected.map(move |selected| *selected == index))
+                    // Set the selected item to this one if pressed
+                    .on_press(move |cx| cx.emit(AppEvent::Select(index)));
             })
             .on_increment(move |cx| cx.emit(AppEvent::IncrementSelection))
             .on_decrement(move |cx| cx.emit(AppEvent::DecrementSelection));
 
-            Binding::new(cx, AppData::selected, move |cx, selected_item| {
-                Label::new(cx, &format!("You have selected: {}", selected_item.get(cx),));
-            });
+            Label::new(
+                cx,
+                AppData::selected.map(|selected| format!("You have selected: {}", selected)),
+            );
         })
         .class("container");
     })

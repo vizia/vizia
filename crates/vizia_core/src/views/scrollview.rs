@@ -201,7 +201,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
     {
         ScrollContent::new(cx, content).bind(lens, |handle, data| {
             let scale_factor = handle.scale_factor();
-            let data = data.get(handle.cx);
+            let data = data.get(&handle);
             let left =
                 ((data.inner_width - data.container_width) * data.scroll_x).round() / scale_factor;
             let top = ((data.inner_height - data.container_height) * data.scroll_y).round()
