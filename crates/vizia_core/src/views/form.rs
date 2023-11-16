@@ -62,7 +62,7 @@ impl FormGroup {
         content: impl FnOnce(&mut Context),
     ) -> Handle<Self> {
         Self {}.build(cx, |cx| {
-            let has_text = !label.get_val(cx).to_string().is_empty();
+            let has_text = !label.get(cx).to_string().is_empty();
             Label::new(cx, label.clone()).class("legend").display(has_text);
 
             (content)(cx);

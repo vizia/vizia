@@ -795,6 +795,32 @@ impl Context {
     pub fn resolve_entity_identifier(&self, identity: &str) -> Option<Entity> {
         self.entity_identifiers.get(identity).cloned()
     }
+
+    /// Toggles the addition/removal of a class name for the current view.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # let context = &mut Context::default();
+    /// # let mut cx = &mut EventContext::new(context);
+    /// cx.toggle_class("foo", true);
+    /// ```
+    pub fn toggle_class(&mut self, class_name: &str, applied: bool) {
+        let current = self.current();
+        if let Some(class_list) = self.style.classes.get_mut(current) {
+            if applied {
+                class_list.insert(class_name.to_string());
+            } else {
+                class_list.remove(class_name);
+            }
+        } else if applied {
+            let mut class_list = HashSet::new();
+            class_list.insert(class_name.to_string());
+            self.style.classes.insert(current, class_list);
+        }
+
+        self.style.needs_restyle();
+    }
 }
 
 pub(crate) enum InternalEvent {

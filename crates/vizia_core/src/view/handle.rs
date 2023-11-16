@@ -122,13 +122,13 @@ impl<'a, V> Handle<'a, V> {
         let entity = self.entity();
         let current = self.current();
         self.cx.with_current(current, |cx| {
-            res.set_or_bind(self.context(), current, move |cx, r| {
+            res.set_or_bind(cx, current, move |cx, r| {
                 let new_handle = Handle { entity, current: cx.current, p: Default::default(), cx };
-                new_handle.cx.set_current(new_handle.entity);
+                // new_handle.cx.set_current(new_handle.entity);
                 (closure)(new_handle, r);
             });
-            self
         });
+        self
     }
 
     // pub fn subbind<L, F>(self, lens: L, closure: F) -> Self

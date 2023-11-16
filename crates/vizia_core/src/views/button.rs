@@ -173,7 +173,7 @@ impl<'a> ButtonModifiers for Handle<'a, Button> {
     fn variant<U: Into<ButtonVariant>>(mut self, variant: impl Res<U>) -> Self {
         let entity = self.entity();
         variant.set_or_bind(self.context(), entity, |cx, val| {
-            let var: ButtonVariant = val.into();
+            let var: ButtonVariant = val.get(cx).into();
             match var {
                 ButtonVariant::Normal => {
                     cx.toggle_class("accent", false);
@@ -288,7 +288,7 @@ impl<'a> ButtonModifiers for Handle<'a, IconButton> {
     fn variant<U: Into<ButtonVariant>>(mut self, variant: impl Res<U>) -> Self {
         let entity = self.entity();
         variant.set_or_bind(self.context(), entity, |cx, val| {
-            let var: ButtonVariant = val.into();
+            let var: ButtonVariant = val.get(cx).into();
             match var {
                 ButtonVariant::Normal => {
                     cx.toggle_class("accent", false);
@@ -369,7 +369,7 @@ impl<'a> ButtonModifiers for Handle<'a, ButtonGroup> {
     fn variant<U: Into<ButtonVariant>>(mut self, variant: impl Res<U>) -> Self {
         let entity = self.entity();
         variant.set_or_bind(self.context(), entity, |cx, val| {
-            let var: ButtonVariant = val.into();
+            let var: ButtonVariant = val.get(cx).into();
             match var {
                 ButtonVariant::Normal => {
                     cx.toggle_class("accent", false);

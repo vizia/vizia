@@ -6,16 +6,13 @@ use vizia_core::{
     modifiers::ModalEvent,
 };
 
-mod helpers;
-use helpers::*;
-
 fn main() {
     Application::new(|cx: &mut Context| {
         // cx.add_stylesheet(STYLE);
 
         // setup_logging();
 
-        AppData {}.build(cx);
+        // AppData {}.build(cx);
 
         Button::new(cx, |cx| Label::new(cx, "Show Menu"))
             .on_press(|cx| cx.emit(ModalEvent::ShowMenu))

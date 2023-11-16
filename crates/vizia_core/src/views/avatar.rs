@@ -31,7 +31,7 @@ impl<'a> Handle<'a, Avatar> {
     pub fn variant<U: Into<AvatarVariant>>(mut self, variant: impl Res<U>) -> Self {
         let entity = self.entity();
         variant.set_or_bind(self.context(), entity, |cx, val| {
-            let var: AvatarVariant = val.into();
+            let var: AvatarVariant = val.get(cx).into();
             match var {
                 AvatarVariant::Circle => {
                     cx.toggle_class("circle", true);

@@ -21,7 +21,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         self.context().with_current(current, |cx| {
             name.set_or_bind(cx, entity, |cx, name| {
                 let cx = &mut EventContext::new_with_current(cx, cx.current);
-                cx.style.name.insert(cx.current, name.to_string_local(cx));
+                cx.style.name.insert(cx.current, name.get(cx).to_string_local(cx));
                 cx.style.needs_access_update(cx.current);
             });
         });

@@ -41,14 +41,14 @@ fn main() {
             Textbox::new(cx, AppData::editable_text)
                 .width(Pixels(300.0))
                 .placeholder("Type something...")
-                .on_edit(|cx, text| cx.emit(AppDataSetter::EditableText(text)));
+                .on_edit(|cx, text| cx.emit(AppEvent::SetEditableText(text)));
 
             HStack::new(cx, |cx| {
                 Textbox::new(cx, AppData::editable_text)
                     .class("icon-before")
                     .width(Stretch(1.0))
                     .placeholder("Search")
-                    .on_edit(|cx, text| cx.emit(AppDataSetter::EditableText(text)));
+                    .on_edit(|cx, text| cx.emit(AppEvent::SetEditableText(text)));
                 Icon::new(cx, ICON_SEARCH)
                     .color(Color::gray())
                     .position_type(PositionType::SelfDirected);
