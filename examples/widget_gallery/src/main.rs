@@ -59,6 +59,34 @@ fn main() {
         VStack::new(cx, |cx| {
             // Header
             HStack::new(cx, |cx| {
+                ButtonGroup::new(cx, |cx| {
+                    ToggleButton::new(
+                        cx,
+                        AppData::current_page.map(|page| *page == Page::Overview),
+                        |cx| Label::new(cx, "Overview"),
+                    )
+                    .width(Pixels(120.0))
+                    .on_press(|cx| cx.emit(AppEvent::SetPage(Page::Overview)));
+                    ToggleButton::new(
+                        cx,
+                        AppData::current_page.map(|page| *page == Page::API),
+                        |cx| Label::new(cx, "API"),
+                    )
+                    .width(Pixels(120.0))
+                    .on_press(|cx| cx.emit(AppEvent::SetPage(Page::API)));
+                    ToggleButton::new(
+                        cx,
+                        AppData::current_page.map(|page| *page == Page::Accessibility),
+                        |cx| Label::new(cx, "Accessibility"),
+                    )
+                    .width(Pixels(120.0))
+                    .on_press(|cx| cx.emit(AppEvent::SetPage(Page::Accessibility)));
+                })
+                .class("page-toggle-group")
+                .height(Auto)
+                .right(Stretch(1.0))
+                .child_space(Stretch(1.0));
+
                 HStack::new(cx, |cx| {
                     Switch::new(cx, AppData::disabled)
                         .on_toggle(|cx| cx.emit(AppEvent::ToggleDisabled))
@@ -79,7 +107,6 @@ fn main() {
                 theme_selection_dropdown(cx);
             })
             .child_space(Pixels(8.0))
-            .child_left(Stretch(1.0))
             .col_between(Pixels(20.0))
             .height(Auto);
 
@@ -140,7 +167,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            button2(cx);
+                            button(cx);
                         })
                         .class("widgets");
                     },
@@ -200,7 +227,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // combobox(cx);
+                            combobox(cx);
                         })
                         .class("widgets");
                     },
@@ -212,7 +239,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // datepicker(cx);
+                            datepicker(cx);
                         })
                         .class("widgets");
                     },
@@ -236,7 +263,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // knob(cx);
+                            knob(cx);
                         })
                         .class("widgets");
                     },
@@ -248,7 +275,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // label(cx);
+                            label(cx);
                         })
                         .class("widgets");
                     },
@@ -260,19 +287,19 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // list(cx);
+                            list(cx);
                         })
                         .class("widgets");
                     },
                 ),
 
-                "Menu" => TabPair::new(
+                "MenuBar" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // menu(cx);
+                            menu_bar(cx);
                         })
                         .class("widgets");
                     },
@@ -284,7 +311,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // notification(cx);
+                            notification(cx);
                         })
                         .class("widgets");
                     },
@@ -296,7 +323,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // picklist(cx);
+                            picklist(cx);
                         })
                         .class("widgets");
                     },
@@ -332,7 +359,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // rating(cx);
+                            rating(cx);
                         })
                         .class("widgets");
                     },
@@ -356,7 +383,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // slider(cx);
+                            slider(cx);
                         })
                         .class("widgets");
                     },
@@ -368,7 +395,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // spinbox(cx);
+                            spinbox(cx);
                         })
                         .class("widgets");
                     },
@@ -380,7 +407,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // switch(cx);
+                            switch(cx);
                         })
                         .class("widgets");
                     },
@@ -404,7 +431,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // textbox(cx);
+                            textbox(cx);
                         })
                         .class("widgets");
                     },
@@ -428,7 +455,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // tooltip(cx);
+                            tooltip(cx);
                         })
                         .class("widgets");
                     },

@@ -114,7 +114,7 @@ impl<'a, V> Handle<'a, V> {
         self
     }
 
-    pub fn bind<R, T, F>(mut self, res: R, closure: F) -> Self
+    pub fn bind<R, T, F>(self, res: R, closure: F) -> Self
     where
         R: Res<T>,
         F: 'static + Clone + Fn(Handle<'_, V>, R),
@@ -122,7 +122,7 @@ impl<'a, V> Handle<'a, V> {
         let entity = self.entity();
         let current = self.current();
         self.cx.with_current(current, |cx| {
-            res.set_or_bind(cx, current, move |cx, r| {
+            res.set_or_bind(cx, entity, move |cx, r| {
                 let new_handle = Handle { entity, current: cx.current, p: Default::default(), cx };
                 // new_handle.cx.set_current(new_handle.entity);
                 (closure)(new_handle, r);

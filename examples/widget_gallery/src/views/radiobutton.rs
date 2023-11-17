@@ -1,5 +1,7 @@
 use vizia::prelude::*;
 
+use crate::components::DemoRegion;
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Options {
     First,
@@ -45,17 +47,20 @@ pub fn radiobutton(cx: &mut Context) {
         Label::new(cx, "A checkbox can be used to display a boolean value, or to select one or more items from a set of options.")
         .class("paragraph");
 
-
-        Label::new(cx, r#"RadioButton::new(cx, AppData::option.map(|opt| *opt == Opt::First))
-    .on_select(|cx| cx.emit(AppEvent::SetOption(Opt::First)));"#).class("code");
-
         Label::new(cx, "Basic radiobutton").class("header");
 
-        HStack::new(cx, |cx|{
-            RadioButton::new(cx, RadioData::option.map(|option| *option == Options::First)).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::First)));
-            RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Second)).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Second)));
-            RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Third)).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Third)));
-        }).class("region");
+        DemoRegion::new(
+            cx,
+            |cx| {
+                RadioButton::new(cx, RadioData::option.map(|option| *option == Options::First)).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::First)));
+                RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Second)).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Second)));
+                RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Third)).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Third)));
+
+            },
+            |cx| {
+                Label::new(cx, r#"TODO"#).class("code");
+            },
+        );
 
         Label::new(cx, "Radiobutton and label").class("header");
         Label::new(cx, "The describing modifier can be used to link a label to a particular radiobutton. Pressing on the label will then toggle the corresponding radiobutton. Alternatively, a FormControl can be used.")

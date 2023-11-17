@@ -32,7 +32,6 @@ impl PickList {
                             .bind(list_lens, move |handle, list| {
                                 handle.bind(selected, move |handle, sel| {
                                     let selected_index = sel.get(&handle);
-
                                     handle.text(list.index(selected_index));
                                 });
                             })

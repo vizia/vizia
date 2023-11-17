@@ -156,7 +156,7 @@ checkbox {
 
 chip {
     width: auto;
-    height: 20px;
+    height: 24px;
     child-left: 8px;
     child-right: 8px;
     child-top: 1s;

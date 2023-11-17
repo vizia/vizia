@@ -244,7 +244,7 @@ impl View for Datepicker {
                     )
                     .unwrap();
                 }
-                self.selected_month = self.view_date.month() as usize;
+                self.selected_month = self.view_date.month() as usize - 1;
             }
 
             DatepickerEvent::DecrementMonth => {
@@ -263,7 +263,7 @@ impl View for Datepicker {
                     )
                     .unwrap();
                 }
-                self.selected_month = self.view_date.month() as usize;
+                self.selected_month = self.view_date.month() as usize - 1;
             }
 
             DatepickerEvent::SelectMonth(month) => {

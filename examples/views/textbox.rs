@@ -58,7 +58,7 @@ fn main() {
 
             Textbox::new_multiline(cx, AppData::multiline_text, true)
                 .width(Pixels(300.0))
-                .on_edit(|cx, text| cx.emit(AppDataSetter::MultilineText(text)));
+                .on_edit(|cx, text| cx.emit(AppEvent::SetMultilineText(text)));
 
             Textbox::new(cx, AppData::non_editable_text).width(Auto).read_only(true);
             Textbox::new_multiline(cx, AppData::non_editable_multiline_text, true)

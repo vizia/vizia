@@ -7,6 +7,7 @@ edition = "2021"
 vizia = {path = "../../../vizia"}
 fern = "0.6.2"
 log = "0.4.19"
+chrono = "*"
 
 [profile.dev.package."*"]
 opt-level = 3

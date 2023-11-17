@@ -6,10 +6,21 @@ pub struct AppData {
     pub selected_theme: usize,
     pub disabled: bool,
     pub tabs: Vec<&'static str>,
+    pub pages: Vec<&'static str>,
+    pub current_page: Page,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Page {
+    Overview,
+    API,
+    Accessibility,
+}
+
 pub enum AppEvent {
     ToggleDisabled,
     SetThemeMode(usize),
+    SetPage(Page),
 }
 
 impl Model for AppData {
@@ -27,6 +38,7 @@ impl Model for AppData {
                     _ => unreachable!(),
                 }));
             }
+            AppEvent::SetPage(page) => self.current_page = *page,
         });
     }
 }
@@ -37,20 +49,21 @@ impl AppData {
             theme_options: vec!["System", "Dark", "Light"],
             selected_theme: 0,
             disabled: false,
+            pages: vec!["Overview", "API", "Accessibility"],
             tabs: vec![
                 "All",
                 "Avatar",
                 "Button",
                 "Button Group",
-                "Label",
                 "Checkbox",
                 "Chip",
                 "Combobox",
                 "Datepicker",
                 "HStack",
                 "Knob",
+                "Label",
                 "List",
-                "Menu",
+                "MenuBar",
                 "Notification",
                 "Picklist",
                 "Popup",
@@ -67,6 +80,7 @@ impl AppData {
                 "VStack",
                 "ZStack",
             ],
+            current_page: Page::Overview,
         }
     }
 }

@@ -40,8 +40,6 @@ impl Badge {
                     }
 
                     BadgePlacement::Left | BadgePlacement::Right => (Stretch(1.0), Stretch(1.0)),
-
-                    _ => (Stretch(1.0), Stretch(1.0)),
                 };
 
                 let (l, r) = match placement.get(&handle) {
@@ -54,8 +52,6 @@ impl Badge {
                     BadgePlacement::Left => (Stretch(1.0), Percentage(100.0)),
                     BadgePlacement::Right => (Percentage(100.0), Stretch(1.0)),
                     BadgePlacement::Top | BadgePlacement::Bottom => (Stretch(1.0), Stretch(1.0)),
-
-                    _ => (Stretch(1.0), Stretch(1.0)),
                 };
 
                 handle = handle.top(t).bottom(b).left(l).right(r);
@@ -69,7 +65,6 @@ impl Badge {
                     BadgePlacement::BottomRight => (Percentage(-50.0), Percentage(-50.0)),
                     BadgePlacement::Left => (Percentage(50.0), Percentage(0.0)),
                     BadgePlacement::Right => (Percentage(-50.0), Percentage(0.0)),
-                    _ => (Pixels(0.0), Pixels(0.0)),
                 };
                 handle.translate(translate);
             },

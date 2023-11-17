@@ -224,7 +224,7 @@ impl Node for Entity {
                 BoundingBox { w: text_width, h: text_height, ..Default::default() },
             );
 
-            Some((width, height))
+            Some((width.ceil(), height.ceil()))
         } else if let Some(images) = store.background_image.get(*self) {
             let mut max_width = 0.0f32;
             let mut max_height = 0.0f32;

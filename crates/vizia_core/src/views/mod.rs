@@ -42,7 +42,7 @@ pub use avatar::*;
 pub use badge::*;
 pub use button::{Button, ButtonGroup, ButtonModifiers, ButtonVariant, IconButton};
 pub use checkbox::Checkbox;
-pub use chip::Chip;
+pub use chip::*;
 pub use combobox::*;
 pub use datepicker::Datepicker;
 pub use divider::*;

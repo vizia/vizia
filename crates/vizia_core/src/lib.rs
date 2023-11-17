@@ -66,6 +66,8 @@ pub mod prelude {
         Wrapper,
     };
 
+    pub use super::impl_res_simple;
+
     pub use crate::model::Model;
 
     pub use super::animation::{Animation, AnimationBuilder, KeyframeBuilder};

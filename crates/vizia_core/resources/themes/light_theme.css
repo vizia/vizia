@@ -162,18 +162,21 @@ button:disabled {
 button-group > button,
 button-group > toggle-button {
     border-radius: 0px;
+    right: -1px;
 }
 
 button-group > :first-child {
     border-top-left-radius: 4px;
     border-bottom-left-radius: 4px;
     right: -1px;
+    left: auto;
 }
 
 button-group > :last-child {
     border-top-right-radius: 4px;
     border-bottom-right-radius: 4px;
     left: -1px;
+    right: auto;
 }
 
 button-group.accent {
@@ -314,7 +317,14 @@ checkbox:checked:disabled {
 /* CHIP */
 
 chip {
-    border-radius: 4px;
+    border-radius: 50%;
+    background-color: #d5d5d5;
+}
+
+chip.outline {
+    border-width: 1px;
+    border-color: #d5d5d5;
+    background-color: transparent;
 }
 
 chip .icon {
@@ -980,6 +990,11 @@ tabview .tabview-divider {
 }
 
 .divider {
+    height: 1px;
+    background-color: #c4c4c4;
+}
+
+divider {
     height: 1px;
     background-color: #c4c4c4;
 }

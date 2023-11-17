@@ -1,5 +1,3 @@
-use std::default;
-
 use crate::prelude::*;
 
 #[derive(Debug, Default, Clone, Copy, Data, PartialEq)]

@@ -45,6 +45,8 @@ impl TabView {
                     //.toggle_class("vertical", TabView::is_vertical)
                     //.class("tabview-tabheader-wrapper");
                 })
+                .class("tabview-header")
+                .z_index(1)
                 .toggle_class("vertical", TabView::is_vertical);
 
                 Element::new(cx)
@@ -59,6 +61,7 @@ impl TabView {
                         ((content)(cx, l).content)(cx);
                     });
                 })
+                .overflow(Overflow::Hidden)
                 .class("tabview-content-wrapper");
             })
             .toggle_class("vertical", TabView::is_vertical)

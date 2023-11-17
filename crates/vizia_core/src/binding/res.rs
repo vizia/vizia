@@ -5,6 +5,7 @@ use crate::{
     prelude::*,
 };
 
+#[macro_export]
 macro_rules! impl_res_simple {
     ($t:ty) => {
         impl Res<$t> for $t {

@@ -37,7 +37,7 @@ pub fn avatar(cx: &mut Context) {
 })"#).class("code");
         });
 
-        Label::new(cx, "Content").class("header");
+        Label::new(cx, "Avatar content").class("header");
         Label::new(cx, "An avatar can contain an icon, text, or an image.").class("paragraph");
 
         DemoRegion::new(cx, |cx|{
@@ -53,12 +53,20 @@ pub fn avatar(cx: &mut Context) {
                 Image::new(cx, "vizia.png");
             });
         }, |cx| {Label::new(cx, r#"Avatar::new(cx, |cx|{
-    Icon::new(cx, ICON_USER)
-})"#).class("code");
+    Icon::new(cx, ICON_USER);
+});
+
+Avatar::new(cx, |cx|{
+    Label::new(cx, "GA");
+});
+
+Avatar::new(cx, |cx|{
+    Image::new(cx, "vizia.png");
+});"#).class("code");
         });
 
 
-        Label::new(cx, "Variant").class("header");
+        Label::new(cx, "Avatar variants").class("header");
         Label::new(cx, "The variant modifier can be used to select between a circle (default), square, and rounded avatar shape.").class("paragraph");
 
         DemoRegion::new(cx, |cx|{
@@ -74,11 +82,19 @@ pub fn avatar(cx: &mut Context) {
                 Image::new(cx, "vizia.png");
             }).variant(AvatarVariant::Rounded);
         }, |cx| {Label::new(cx, r#"Avatar::new(cx, |cx|{
-    Icon::new(cx, ICON_USER)
-})"#).class("code");
+    Icon::new(cx, ICON_USER);
+});
+
+Avatar::new(cx, |cx|{
+    Label::new(cx, "GA");
+}).variant(AvatarVariant::Square);
+
+Avatar::new(cx, |cx|{
+    Image::new(cx, "vizia.png");
+}).variant(AvatarVariant::Rounded);"#).class("code");
         });
 
-        Label::new(cx, "With badge").class("header");
+        Label::new(cx, "Avatar with badge").class("header");
         Label::new(cx, "The badge modifier can be used to add a badge to an avatar.").class("paragraph");
 
 
@@ -114,8 +130,6 @@ Avatar::new(cx, |cx|{
     Icon::new(cx, ICON_USER);
 }).badge(|cx| Badge::new(cx, |cx| {Label::new(cx, "2");}));"#).class("code");
         });
-
-
 
     }).class("panel");
 }

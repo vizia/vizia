@@ -8,6 +8,16 @@ pub struct Chip {
 }
 
 impl Chip {
+    /// Creates a new Chip view.
+    ///
+    /// # Example
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// #
+    /// # let cx = &mut Context::default();
+    /// #
+    /// Chip::new(cx, "Chip");
+    /// ```
     pub fn new<T>(cx: &mut Context, text: impl Res<T> + Clone) -> Handle<Self>
     where
         T: ToStringLocalized,
@@ -44,10 +54,34 @@ impl View for Chip {
     }
 }
 
+#[derive(Debug, Clone, Copy, Data, PartialEq, Eq)]
+pub enum ChipVariant {
+    Filled,
+    Outline,
+}
+
+impl_res_simple!(ChipVariant);
+
 impl<'a> Handle<'a, Chip> {
     pub fn on_close(self, callback: impl 'static + Fn(&mut EventContext) + Send + Sync) -> Self {
         self.modify(|chip: &mut Chip| {
             chip.on_close = Some(Arc::new(callback));
+        })
+    }
+
+    pub fn variant<U: Into<ChipVariant>>(self, variant: impl Res<U>) -> Self {
+        self.bind(variant, |handle, variant| {
+            let variant = variant.get(&handle).into();
+
+            match variant {
+                ChipVariant::Filled => {
+                    handle.toggle_class("outline", false);
+                }
+
+                ChipVariant::Outline => {
+                    handle.toggle_class("outline", true);
+                }
+            }
         })
     }
 }
