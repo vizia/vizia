@@ -23,9 +23,9 @@ pub fn button_group(cx: &mut Context) {
                 Label::new(
                     cx,
                     r#"ButtonGroup::new(cx, |cx|{
-    Button::new(cx, |_| {}, |cx| Label::new(cx, "One"));
-    Button::new(cx, |_| {}, |cx| Label::new(cx, "Two"));
-    Button::new(cx, |_| {}, |cx| Label::new(cx, "Three"));
+    Button::new(cx, |cx| Label::new(cx, "One"));
+    Button::new(cx, |cx| Label::new(cx, "Two"));
+    Button::new(cx, |cx| Label::new(cx, "Three"));
 });"#,
                 )
                 .class("code");
@@ -47,10 +47,10 @@ pub fn button_group(cx: &mut Context) {
                 Label::new(
                     cx,
                     r#"ButtonGroup::new(cx, |cx|{
-    Button::new(cx, |_| {}, |cx| Label::new(cx, "One"));
-    Button::new(cx, |_| {}, |cx| Label::new(cx, "Two"));
-    Button::new(cx, |_| {}, |cx| Label::new(cx, "Three"));
-});"#,
+    Button::new(cx, |cx| Label::new(cx, "One"));
+    Button::new(cx, |cx| Label::new(cx, "Two"));
+    Button::new(cx, |cx| Label::new(cx, "Three"));
+}).orientation(Orientation::Vertical);"#,
                 )
                 .class("code");
             },

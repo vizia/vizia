@@ -40,7 +40,7 @@ label.title {
 label.header {
     font-size: 20;
     font-weight: bold;
-    bottom: 12px;
+    bottom: 6px;
     top: 24px;
 }
 
@@ -126,29 +126,4 @@ hstack.code {
     border-top-left-radius: 0px;
     border-top-right-radius: 0px;
     font-size: 14;
-}
-
-demo-region label.code {
-    color: white;
-}
-
-label.code {
-    color: #006ab0;
-    font-family: "Fira Code";
-}
-
-label.code-block {
-    color: #006ab0;
-    font-family: "Fira Code";
-    font-size: 12;
-    border-width: 1px;
-    border-color: #d0e4fc;
-    background-color: #f3f8fe;
-    child-space: 6px;
-    border-radius: 4px;
-}
-
-divider {
-    top: 12px;
-    bottom: 12px;
 }

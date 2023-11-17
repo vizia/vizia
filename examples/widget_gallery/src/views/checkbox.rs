@@ -48,10 +48,6 @@ pub fn checkbox(cx: &mut Context) {
         Label::new(cx, "A checkbox can be used to display a boolean value, or to select one or more items from a set of options.")
             .class("paragraph");
 
-        Label::new(cx, r#"Checkbox::new(cx, AppData::flag)
-    .on_toggle(|cx| cx.emit(AppEvent::ToggleFlag));"#).class("code");
-
-
         Label::new(cx, "Basic checkboxes").class("header");
 
         DemoRegion::new(cx, |cx|{

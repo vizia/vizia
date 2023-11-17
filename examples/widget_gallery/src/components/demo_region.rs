@@ -16,7 +16,7 @@ impl DemoRegion {
         content: impl Fn(&mut Context),
         code: impl Fn(&mut Context) + 'static,
     ) -> Handle<Self> {
-        Self { open: false }.build(cx, |cx| {
+        Self { open: true }.build(cx, |cx| {
             HStack::new(cx, |cx| {
                 (content)(cx);
             })
@@ -32,14 +32,14 @@ impl DemoRegion {
             .height(Auto)
             .display(DemoRegion::open);
 
-            Button::new(cx, |cx| Icon::new(cx, ICON_CODE))
+            ToggleButton::new(cx, DemoRegion::open, |cx| Icon::new(cx, ICON_CODE))
                 .on_press(|ex| ex.emit(DemoRegionEvent::Toggle))
                 .space(Pixels(8.0))
                 .left(Stretch(1.0))
                 .position_type(PositionType::SelfDirected)
                 .tooltip(|cx| {
                     Tooltip::new(cx, |cx| {
-                        Label::new(cx, "Toggle Dark/Light Mode");
+                        Label::new(cx, "Toggle Code");
                     })
                 });
         })

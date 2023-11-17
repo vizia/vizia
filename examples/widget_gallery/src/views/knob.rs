@@ -36,7 +36,12 @@ pub fn knob(cx: &mut Context) {
                     .on_changing(|cx, val| cx.emit(KnobEvent::SetValue(val)));
             },
             |cx| {
-                Label::new(cx, r#"Todo"#).class("code");
+                Label::new(
+                    cx,
+                    r#"Knob::new(cx, 0.5, KnobState::value, false)
+    .on_changing(|cx, val| cx.emit(KnobEvent::SetValue(val)));"#,
+                )
+                .class("code");
             },
         );
     })

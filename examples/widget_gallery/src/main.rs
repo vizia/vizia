@@ -59,34 +59,6 @@ fn main() {
         VStack::new(cx, |cx| {
             // Header
             HStack::new(cx, |cx| {
-                ButtonGroup::new(cx, |cx| {
-                    ToggleButton::new(
-                        cx,
-                        AppData::current_page.map(|page| *page == Page::Overview),
-                        |cx| Label::new(cx, "Overview"),
-                    )
-                    .width(Pixels(120.0))
-                    .on_press(|cx| cx.emit(AppEvent::SetPage(Page::Overview)));
-                    ToggleButton::new(
-                        cx,
-                        AppData::current_page.map(|page| *page == Page::API),
-                        |cx| Label::new(cx, "API"),
-                    )
-                    .width(Pixels(120.0))
-                    .on_press(|cx| cx.emit(AppEvent::SetPage(Page::API)));
-                    ToggleButton::new(
-                        cx,
-                        AppData::current_page.map(|page| *page == Page::Accessibility),
-                        |cx| Label::new(cx, "Accessibility"),
-                    )
-                    .width(Pixels(120.0))
-                    .on_press(|cx| cx.emit(AppEvent::SetPage(Page::Accessibility)));
-                })
-                .class("page-toggle-group")
-                .height(Auto)
-                .right(Stretch(1.0))
-                .child_space(Stretch(1.0));
-
                 HStack::new(cx, |cx| {
                     Switch::new(cx, AppData::disabled)
                         .on_toggle(|cx| cx.emit(AppEvent::ToggleDisabled))
