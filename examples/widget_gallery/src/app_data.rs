@@ -48,6 +48,7 @@ impl AppData {
                 "Combobox",
                 "Datepicker",
                 "HStack",
+                "Icon",
                 "Knob",
                 "Label",
                 "List",

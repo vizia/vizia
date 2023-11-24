@@ -33,17 +33,15 @@ impl Chip {
                 Binding::new(cx, Chip::on_close.map(|on_close| on_close.is_some()), |cx, val| {
                     if val.get(cx) {
                         let on_close = Chip::on_close.get(cx).unwrap();
-                        Label::new(cx, ICON_X)
-                            .class("icon")
+                        Icon::new(cx, ICON_X)
+                            .class("close-icon")
                             .height(Pixels(16.0))
                             .width(Pixels(16.0))
-                            .right(Pixels(2.0))
                             .child_space(Stretch(1.0))
                             .on_press(move |cx| (on_close)(cx));
                     }
                 });
             })
-            .col_between(Pixels(4.0))
             .layout_type(LayoutType::Row)
     }
 }

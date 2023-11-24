@@ -68,7 +68,7 @@ impl Tooltip {
             });
             (content)(cx);
         })
-        .z_index(100)
+        .z_index(110)
         .bind(Tooltip::placement, |mut handle, placement| {
             let (t, b) = match placement.get(&handle) {
                 Placement::TopStart | Placement::Top | Placement::TopEnd => {

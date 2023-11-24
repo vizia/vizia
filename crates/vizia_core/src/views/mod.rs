@@ -60,7 +60,7 @@ pub use progressbar::ProgressBar;
 pub use radio::RadioButton;
 pub use rating::Rating;
 pub use scrollbar::Scrollbar;
-pub use scrollview::{ScrollData, ScrollEvent, ScrollView};
+pub use scrollview::{ScrollEvent, ScrollView};
 pub use slider::{NamedSlider, Slider};
 pub use spinbox::{Spinbox, SpinboxEvent, SpinboxIcons, SpinboxKind};
 pub use stack::{HStack, VStack, ZStack};

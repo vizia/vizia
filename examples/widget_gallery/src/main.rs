@@ -48,6 +48,25 @@ fn theme_selection_dropdown(cx: &mut Context) {
         });
 }
 
+fn toggle_disabled_switch(cx: &mut Context) {
+    HStack::new(cx, |cx| {
+        Switch::new(cx, AppData::disabled)
+            .on_toggle(|cx| cx.emit(AppEvent::ToggleDisabled))
+            .tooltip(|cx| {
+                Tooltip::new(cx, |cx| {
+                    Label::new(cx, "Toggle disabled");
+                })
+            });
+        Label::new(cx, "Toggle Disabled");
+    })
+    .child_top(Stretch(1.0))
+    .child_bottom(Stretch(1.0))
+    .col_between(Pixels(5.0))
+    .top(Stretch(1.0))
+    .bottom(Stretch(1.0))
+    .size(Auto);
+}
+
 fn main() {
     setup_logging();
 
@@ -59,26 +78,11 @@ fn main() {
         VStack::new(cx, |cx| {
             // Header
             HStack::new(cx, |cx| {
-                HStack::new(cx, |cx| {
-                    Switch::new(cx, AppData::disabled)
-                        .on_toggle(|cx| cx.emit(AppEvent::ToggleDisabled))
-                        .tooltip(|cx| {
-                            Tooltip::new(cx, |cx| {
-                                Label::new(cx, "Toggle disabled");
-                            })
-                        });
-                    Label::new(cx, "Toggle Disabled");
-                })
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .col_between(Pixels(5.0))
-                .top(Stretch(1.0))
-                .bottom(Stretch(1.0))
-                .size(Auto);
-
+                toggle_disabled_switch(cx);
                 theme_selection_dropdown(cx);
             })
             .child_space(Pixels(8.0))
+            .child_left(Stretch(1.0))
             .col_between(Pixels(20.0))
             .height(Auto);
 
@@ -224,6 +228,18 @@ fn main() {
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
                             // hstack(cx);
+                        })
+                        .class("widgets");
+                    },
+                ),
+
+                "Icon" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).class("tab-name").hoverable(false);
+                    },
+                    |cx| {
+                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                            icon(cx);
                         })
                         .class("widgets");
                     },
@@ -465,5 +481,6 @@ fn main() {
     })
     .title("Widget Gallery")
     .inner_size((1400, 600))
+    .min_inner_size(Some((900, 300)))
     .run();
 }

@@ -19,6 +19,9 @@ pub use combobox::*;
 pub mod datepicker;
 pub use datepicker::*;
 
+pub mod icon;
+pub use icon::*;
+
 pub mod knob;
 pub use knob::*;
 

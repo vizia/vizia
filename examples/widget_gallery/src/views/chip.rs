@@ -48,7 +48,10 @@ Chip::new(cx, "Outline")
             |cx| {
                 Chip::new(cx, "Clickable").on_press(|cx| {});
                 Chip::new(cx, "Closable").on_close(|cx| {});
-                Chip::new(cx, "Clickable & Closable").on_press(|cx| {}).on_close(|cx| {});
+                Chip::new(cx, "Clickable & Closable")
+                    .variant(ChipVariant::Outline)
+                    .on_press(|cx| {})
+                    .on_close(|cx| {});
             },
             |cx| {
                 Label::new(
@@ -58,6 +61,7 @@ Chip::new(cx, "Outline")
 Chip::new(cx, "Closable")
     .on_close(|cx| {...});
 Chip::new(cx, "Clickable & Closable")
+    .variant(ChipVariant::Outline)
     .on_press(|cx| {...})
     .on_close(|cx| {...});"#,
                 )

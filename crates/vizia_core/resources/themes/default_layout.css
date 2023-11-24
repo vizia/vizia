@@ -1,16 +1,7 @@
-/* ICON */
-
-icon {
-    font-family: "tabler-icons", sans-serif;
-    size: 24px;
-    child-space: 1s;
-}
-
 /* AVATAR */
+
 avatar {
     size: 50px;
-    border-radius: 50%;
-    background-color: gray;
     child-space: 1s;
 }
 
@@ -27,7 +18,7 @@ avatar.rounded {
 }
 
 avatar > icon {
-    size: 50px;
+    size: 100%;
     font-size: 24;
 }
 
@@ -62,7 +53,6 @@ badge > icon {
 }
 
 /* BUTTON */
-
 button {
     width: auto;
     height: 32px;
@@ -161,12 +151,17 @@ chip {
     child-right: 8px;
     child-top: 1s;
     child-bottom: 1s;
+    col-between: 4px;
     font-size: small;
 }
 
 chip label {
     height: auto;
     width: auto;
+}
+
+chip .close-icon {
+    right: 4px;
 }
 
 /* DATEPICKER */
@@ -349,9 +344,28 @@ form-control.pos-start > label:first-child {
     display: none;
 } */
 
+form-control > label:first-child {
+    display: flex;
+}
+
 form-control > label:last-child {
     display: none;
-    background-color: red;
+}
+
+form-control.pos-start > label:first-child {
+    display: none;
+}
+
+form-control.pos-start > label:last-child {
+    display: flex;
+}
+
+/* ICON */
+
+icon {
+    font-family: "tabler-icons", sans-serif;
+    size: 24px;
+    child-space: 1s;
 }
 
 /* IMAGE */
@@ -608,6 +622,7 @@ popup {
     height: auto;
     display: none;
     opacity: 0;
+    z-index: 100;
 }
 
 popup:checked {
@@ -994,7 +1009,7 @@ analogtimepicker .time-selector-wrapper button .indicator {
 
 tooltip {
     position-type: self-directed;
-    z-index: 100;
+    z-index: 110;
     size: auto;
 }
 

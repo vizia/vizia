@@ -146,7 +146,6 @@ where
 
     /// Returns the next sibling of an entity or `None` if t here isn't one.
     pub fn get_next_sibling(&self, entity: I) -> Option<I> {
-        // LayoutSiblingIterator::new(self, entity).next()
         let mut next = self.next_sibling.get(entity.index()).and_then(|&next_sibling| next_sibling);
         while let Some(next_sibling) = next {
             if !self.is_ignored(next_sibling) {
@@ -161,7 +160,16 @@ where
 
     /// Returns the previous sibling of an entity or `None` if there isn't one.
     pub fn get_prev_sibling(&self, entity: I) -> Option<I> {
-        self.prev_sibling.get(entity.index()).and_then(|&prev_sibling| prev_sibling)
+        let mut prev = self.prev_sibling.get(entity.index()).and_then(|&prev_sibling| prev_sibling);
+        while let Some(prev_sibling) = prev {
+            if !self.is_ignored(prev_sibling) {
+                return prev;
+            }
+
+            prev =
+                self.prev_sibling.get(prev_sibling.index()).and_then(|&prev_sibling| prev_sibling);
+        }
+        None
     }
 
     /// Returns true if the entity is the first child of its parent.

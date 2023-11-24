@@ -11,11 +11,14 @@
 }
 
 /* AVATAR */
+
 avatar {
+    background-color: #c4c4c4;
     color: white;
 }
 
 /* BADGE */
+
 badge {
     border-width: 2px;
     border-color: white;
@@ -35,6 +38,7 @@ badge.error {
 }
 
 /* BUTTON  */
+
 button {
     border-radius: 4px;
     border: 1px #d2d2d2;
@@ -192,6 +196,7 @@ button-group.accent > :last-child {
 }
 
 /* TOGGLE BUTTON */
+
 toggle-button {
     border-radius: 4px;
     border-width: 1px;
@@ -232,6 +237,7 @@ toggle-button:disabled {
 }
 
 /* TOOLBAR */
+
 toolbar {
     border-radius: 4px;
     border-width: 1px;
@@ -327,23 +333,19 @@ chip.outline {
     background-color: transparent;
 }
 
-chip .icon {
-    scale: 1;
-    transition: scale 100ms;
+chip .close-icon {
+    background-color: #b2b2b2;
     transition: background-color 100ms;
     border-radius: 50%;
 }
 
-chip .icon:hover {
-    background-color: #00000022;
-    scale: 1.2;
-    transition: scale 100ms;
+chip .close-icon:hover {
+    background-color: #949494;
     transition: background-color 100ms;
 }
 
 chip:disabled .icon {
     background-color: transparent;
-    scale: 1;
 }
 
 /* DATEPICKER */
@@ -483,12 +485,6 @@ dropdown .list label:checked {
     background-color: #5dc4ec;
 }
 
-/* dropdown .list label:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
-} */
-
 /* KNOB */
 
 knob {
@@ -616,12 +612,6 @@ menu-divider .line {
 notification {
     background-color: #242424;
 }
-
-/* 
-popup:checked {
-    opacity: 100%;
-    transition: opacity 100ms;
-} */
 
 /* PROGRESSBAR */
 
@@ -782,20 +772,13 @@ scrollview > scrollbar {
     display: none;
 }
 
-scrollview:checked > scrollbar {
+scrollview.horizontal > scrollbar,
+scrollview.vertical > scrollbar {
     display: flex;
 }
 
 scrollbar {
     background-color: transparent;
-}
-
-scrollbar.horizontal {
-    height: 8px;
-}
-
-scrollbar.vertical {
-    width: 8px;
 }
 
 scrollbar .thumb {
@@ -805,34 +788,28 @@ scrollbar .thumb {
     transition: opacity 200ms 0s linear;
 }
 
-scrollbar.horizontal .thumb {
-    height: 1s;
-}
-
-scrollbar.vertical .thumb {
-    width: 1s;
-}
-
-scrollview:checked > scrollbar:over .thumb {
+scrollview.horizontal > scrollbar.horizontal:hover > .thumb,
+scrollview.vertical > scrollbar.vertical:hover > .thumb {
     background-color: #b6b6b6;
     opacity: 1;
     transition: opacity 200ms 0s linear;
 }
 
-scrollview:checked:active scrollbar .thumb {
+scrollview.horizontal:active > scrollbar.horizontal > .thumb,
+scrollview.vertical:active > scrollbar.vertical > .thumb {
     background-color: #b6b6b6;
     opacity: 1;
     transition: opacity 200ms 0s linear;
 }
 
-scrollview:checked > scrollbar:active .thumb {
+scrollview.horizontal > scrollbar.horizontal:active > .thumb,
+scrollview.vertical > scrollbar.vertical:active > .thumb {
     background-color: #b6b6b6;
     opacity: 1;
     transition: opacity 200ms 0s linear;
 }
 
 /* SLIDER */
-
 slider * {
     background-color: #51afef20;
     border-radius: 2px;
@@ -859,7 +836,6 @@ slider .thumb {
 }
 
 /* SPINBOX */
-
 spinbox {
     background-color: #fff;
     border-radius: 4px;
@@ -905,7 +881,6 @@ spinbox:focus-visible {
 }
 
 /* SWITCH */
-
 switch {
     border-radius: 4px;
 }
@@ -972,7 +947,6 @@ switch:checked:hover:disabled * {
 }
 
 /* TABVIEW */
-
 tabheader:disabled {
     background-color: transparent;
 }
@@ -1000,7 +974,6 @@ divider {
 }
 
 /* TEXTBOX */
-
 textbox {
     border-width: 1px;
     border-radius: 4px;
@@ -1046,7 +1019,6 @@ textbox:invalid {
 }
 
 /* TIMEPICKER */
-
 timepicker {
     background-color: #fff;
     border-radius: 4px;
@@ -1076,7 +1048,6 @@ timepicker .timepicker-dot {
 }
 
 /* TOOLTIP */
-
 tooltip {
     child-space: 8px;
     background-color: #181818;

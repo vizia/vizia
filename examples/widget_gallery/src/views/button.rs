@@ -14,7 +14,7 @@ pub fn button(cx: &mut Context) {
         Label::new(cx, "Button").class("title");
         Label::new(cx, "A button can be used to send an event when pressed. Typically they are used to trigger an action.")
             .class("paragraph");
-    
+
         Label::new(cx, "Basic button").class("header");
         DemoRegion::new(
             cx,
@@ -25,7 +25,7 @@ pub fn button(cx: &mut Context) {
                 Label::new(cx, r#"Button::new(cx, |cx| Label::new(cx, "Button"));"#).class("code");
             },
         );
-    
+
         Label::new(cx, "Button variants").class("header");
         DemoRegion::new(
             cx,
@@ -46,11 +46,11 @@ Button::new(cx, |cx| Label::new(cx, "Text")).variant(ButtonVariant::Text);"#,
                 .class("code");
             },
         );
-    
+
         Label::new(cx, "Button with icon and label").class("header");
         Label::new(cx, "An HStack can be used to add an icon as well as a label to a button. The icon can be positioned before or after the label by changing the order of the declarations.")
             .class("paragraph");
-    
+
         DemoRegion::new(
             cx,
             |cx| {
@@ -61,7 +61,7 @@ Button::new(cx, |cx| Label::new(cx, "Text")).variant(ButtonVariant::Text);"#,
                     })
                 })
                 .class("outline");
-    
+
                 Button::new(cx, |cx| {
                     HStack::new(cx, |cx| {
                         Label::new(cx, "Edit");

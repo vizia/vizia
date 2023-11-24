@@ -634,21 +634,41 @@ rating .icon:checked:disabled {
 }
 
 /* SCROLL BAR */
+scrollview > scrollbar {
+    display: none;
+}
+
+scrollview:checked > scrollbar {
+    display: flex;
+}
 
 scrollbar {
-    background-color: #181818;
+    background-color: transparent;
 }
 
 scrollbar .thumb {
     background-color: #404040;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 200ms 0s linear;
 }
 
-scrollbar .thumb:hover {
-    background-color: #888;
+scrollview:checked > scrollbar:hover .thumb {
+    background-color: #404040;
+    opacity: 1;
+    transition: opacity 200ms 0s linear;
 }
 
-scrollbar .thumb:focus {
-    background-color: #888;
+scrollview:checked:active scrollbar .thumb {
+    background-color: #404040;
+    opacity: 1;
+    transition: opacity 200ms 0s linear;
+}
+
+scrollview:checked > scrollbar:active .thumb {
+    background-color: #404040;
+    opacity: 1;
+    transition: opacity 200ms 0s linear;
 }
 
 /* SLIDER */
