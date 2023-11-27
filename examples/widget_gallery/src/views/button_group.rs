@@ -40,8 +40,8 @@ pub fn button_group(cx: &mut Context) {
                     Button::new(cx, |cx| Label::new(cx, "One"));
                     Button::new(cx, |cx| Label::new(cx, "Two"));
                     Button::new(cx, |cx| Label::new(cx, "Three"));
-                });
-                //.vertical();
+                })
+                .vertical(true);
             },
             |cx| {
                 Label::new(

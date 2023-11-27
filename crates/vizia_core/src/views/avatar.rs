@@ -8,6 +8,16 @@ pub enum AvatarVariant {
     Rounded,
 }
 
+/// An avatar is used to visually represent a person or entity and can contain text, an icon, or an image.
+///
+/// # Example
+/// ```
+/// # use vizia_core::prelude::*;
+/// # let cx = &mut Context::default();
+/// Avatar::new(cx, |cx|{
+///     Icon::new(cx, ICON_USER);
+/// });
+/// ```
 pub struct Avatar {}
 
 impl Avatar {
