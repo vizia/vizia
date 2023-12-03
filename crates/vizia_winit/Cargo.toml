@@ -22,7 +22,7 @@ vizia_window = { path = "../vizia_window" }
 accesskit = "0.11.0"
 winit = { version = "0.28.6", default-features = false }
 # femtovg = "0.7.0"
-femtovg = { path = "../../../femtovg"}
+femtovg = { git = "https://github.com/femtovg/femtovg", rev = "63be8501e88129770bfaebe743e91808dead3c84"}
 glutin = { version = "0.30.8", default-features = false, optional = true }
 copypasta = {version = "0.8.2", optional = true, default-features = false }
 
@@ -30,7 +30,7 @@ copypasta = {version = "0.8.2", optional = true, default-features = false }
 accesskit_winit = "0.14.0"
 glutin = { version = "0.30.8", default-features = false }
 # femtovg = "0.7.0"
-femtovg = { path = "../../../femtovg"}
+femtovg = { git = "https://github.com/femtovg/femtovg", rev = "63be8501e88129770bfaebe743e91808dead3c84"}
 glutin-winit = { version = "0.3.0", default-features = false, features = ["egl", "glx", "wgl"] }
 raw-window-handle = "0.5.2"
 

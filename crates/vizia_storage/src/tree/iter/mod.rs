@@ -14,7 +14,7 @@ pub use self::{
     child_iter::MorphormChildIter,
     draw_iter::DrawIterator,
     focus_iter::FocusTreeIterator,
-    layout_child_iter::LayoutChildIterator,
+    layout_child_iter::{AccessibilityChildIterator, LayoutChildIterator},
     layout_tree_iter::LayoutTreeIterator,
     parent_iter::{LayoutParentIterator, ParentIterator},
     tree_depth_iter::TreeDepthIterator,

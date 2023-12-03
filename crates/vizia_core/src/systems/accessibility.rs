@@ -7,7 +7,7 @@ use crate::{
 };
 use accesskit::{CheckedState, NodeBuilder, Rect, TreeUpdate};
 use fnv::FnvHashMap;
-use vizia_storage::LayoutTreeIterator;
+use vizia_storage::{AccessibilityChildIterator, LayoutTreeIterator};
 
 /// Updates node properties from view properties
 /// Should be run after layout so that things like bounding box are correct.
@@ -169,9 +169,10 @@ pub(crate) fn get_access_node(
         views.insert(entity, view);
     }
 
+    let child_iter = AccessibilityChildIterator::new(&cx.tree, entity);
+
     // Layout children
-    let children =
-        entity.child_iter(cx.tree).map(|entity| entity.accesskit_id()).collect::<Vec<_>>();
+    let children = child_iter.map(|entity| entity.accesskit_id()).collect::<Vec<_>>();
 
     // Children added by `accessibility` function
     let mut child_ids =

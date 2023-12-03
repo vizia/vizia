@@ -491,7 +491,6 @@ impl Context {
             }
 
             if self.tree.is_window(*entity) {
-                println!("close window: {:?}", entity);
                 for glyph_texture in self.text_context.glyph_textures.iter_mut() {
                     glyph_texture.image_ids.remove(entity);
                 }
