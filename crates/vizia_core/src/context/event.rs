@@ -258,8 +258,6 @@ impl<'a> EventContext<'a> {
         let overflowx = self.style.overflowx.get(self.current).copied().unwrap_or_default();
         let overflowy = self.style.overflowy.get(self.current).copied().unwrap_or_default();
 
-        // let root_bounds = self.cache.get_bounds(Entity::root());
-
         let scale = self.scale_factor();
 
         let clip_bounds = self
@@ -705,12 +703,10 @@ impl<'a> EventContext<'a> {
     pub fn needs_relayout(&mut self) {
         self.style.needs_relayout();
         self.style.needs_redraw();
-        self.emit(WindowEvent::Redraw);
     }
 
     pub fn needs_restyle(&mut self) {
         self.style.needs_restyle();
-        self.emit(WindowEvent::Redraw);
     }
 
     /// Reloads the stylesheets linked to the application.

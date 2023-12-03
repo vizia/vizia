@@ -125,6 +125,22 @@ impl<'a> DrawContext<'a> {
         self.cache.get_bounds(self.current)
     }
 
+    pub fn window_bounds(&self) -> BoundingBox {
+        let mut window = self.window();
+        self.cache.get_bounds(window)
+    }
+
+    pub fn window(&self) -> Entity {
+        let mut window = Entity::root();
+        for parent in self.current.parent_iter(self.tree) {
+            if self.tree.is_window(parent) {
+                window = parent;
+                break;
+            }
+        }
+        return window;
+    }
+
     /// Returns the scale factor.
     pub fn scale_factor(&self) -> f32 {
         self.style.dpi_factor as f32
@@ -145,8 +161,6 @@ impl<'a> DrawContext<'a> {
         let bounds = self.bounds();
         let overflowx = self.style.overflowx.get(self.current).copied().unwrap_or_default();
         let overflowy = self.style.overflowy.get(self.current).copied().unwrap_or_default();
-
-        // let root_bounds = self.cache.get_bounds(Entity::root());
 
         let scale = self.scale_factor();
 
@@ -525,8 +539,7 @@ impl<'a> DrawContext<'a> {
 
     /// Draw backdrop filters for the current view.
     pub fn draw_backdrop_filter(&mut self, canvas: &mut Canvas, path: &mut Path) {
-        let window_width = self.cache.get_width(Entity::root());
-        let window_height = self.cache.get_height(Entity::root());
+        let window_bounds = self.window_bounds();
         let bounds = self.bounds();
 
         let blur_radius = self.backdrop_filter().map(|filter| match filter {
@@ -621,8 +634,8 @@ impl<'a> DrawContext<'a> {
                     screenshot_image_id,
                     -bounds.x,
                     -bounds.y,
-                    window_width,
-                    window_height,
+                    window_bounds.width(),
+                    window_bounds.height(),
                     0.0,
                     1.0,
                 ),
@@ -1312,10 +1325,16 @@ impl<'a> DrawContext<'a> {
 
     /// Draw any text for the current view.
     pub fn draw_text(&mut self, canvas: &mut Canvas, bounds: BoundingBox, justify: (f32, f32)) {
-        println!("draw text: {} {:?}", self.current, canvas.width());
-        if let Ok(draw_commands) =
-            self.text_context.fill_to_cmds(canvas, self.current, bounds, justify, *self.text_config)
-        {
+        // println!("draw text: {} {:?}", self.current, canvas.width());
+        let window_entity = self.window();
+        if let Ok(draw_commands) = self.text_context.fill_to_cmds(
+            canvas,
+            window_entity,
+            self.current,
+            bounds,
+            justify,
+            *self.text_config,
+        ) {
             let opacity = self.opacity();
             for (color, cmds) in draw_commands.into_iter() {
                 let font_color = Color::rgba(

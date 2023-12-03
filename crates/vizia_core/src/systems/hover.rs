@@ -56,7 +56,7 @@ pub(crate) fn hover_system(cx: &mut Context, window_entity: Entity) {
 
     if hovered != cx.hovered {
         // Useful for debugging
-        debug!(
+        println!(
             "Hover changed to {:?} parent: {:?}, view: {}, posx: {}, posy: {} width: {} height: {}",
             hovered,
             cx.tree.get_parent(hovered),
@@ -70,7 +70,9 @@ pub(crate) fn hover_system(cx: &mut Context, window_entity: Entity) {
         let cursor = cx.style.cursor.get(hovered).cloned().unwrap_or_default();
         // TODO: Decide if not changing the cursor when the view is disabled is the correct thing to do
         if !cx.cursor_icon_locked && !cx.style.disabled.get(hovered).cloned().unwrap_or_default() {
-            cx.emit(WindowEvent::SetCursor(cursor));
+            cx.with_current(hovered, |cx| {
+                cx.emit(WindowEvent::SetCursor(cursor));
+            });
         }
 
         // Send mouse enter/leave events directly to entity.

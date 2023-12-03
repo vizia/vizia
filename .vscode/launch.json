@@ -674,6 +674,24 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug example 'multiwindow'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=multiwindow",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "multiwindow",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug unit tests in example 'sortable_list'",
             "cargo": {
                 "args": [

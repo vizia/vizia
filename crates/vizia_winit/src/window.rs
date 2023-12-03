@@ -146,8 +146,10 @@ impl Window {
             needs_redraw: true,
         }
         .build(cx, |cx| {
-            cx.subwindows
-                .insert(cx.current(), WindowDescription::new().with_title("Second Window"));
+            cx.subwindows.insert(
+                cx.current(),
+                (WindowDescription::new().with_title("Second Window"), false),
+            );
             (content)(cx);
         })
     }
@@ -392,6 +394,10 @@ impl Window {
 }
 
 impl View for Window {
+    fn element(&self) -> Option<&'static str> {
+        Some("window")
+    }
+
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| {
             match window_event {
@@ -475,7 +481,6 @@ impl View for Window {
                 }
 
                 WindowEvent::WindowClose => {
-                    println!("close window: {}", cx.current());
                     self.should_close = true;
                 }
                 WindowEvent::Redraw => {
@@ -495,7 +500,7 @@ impl View for Window {
 impl<'a> WindowModifiers for Handle<'a, Window> {
     fn title<T: ToString>(mut self, title: T) -> Self {
         let entity = self.entity();
-        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
             win_desc.title = title.to_string();
         }
 
@@ -504,7 +509,7 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
 
     fn inner_size<S: Into<WindowSize>>(mut self, size: S) -> Self {
         let entity = self.entity();
-        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
             win_desc.inner_size = size.into();
         }
 
@@ -513,7 +518,7 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
 
     fn min_inner_size<S: Into<WindowSize>>(mut self, size: Option<S>) -> Self {
         let entity = self.entity();
-        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
             win_desc.min_inner_size = size.map(|size| size.into())
         }
 
@@ -522,7 +527,7 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
 
     fn max_inner_size<S: Into<WindowSize>>(mut self, size: Option<S>) -> Self {
         let entity = self.entity();
-        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
             win_desc.max_inner_size = size.map(|size| size.into())
         }
 
@@ -531,7 +536,7 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
 
     fn position<P: Into<vizia_window::Position>>(mut self, position: P) -> Self {
         let entity = self.entity();
-        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
             win_desc.position = Some(position.into())
         }
 
@@ -540,7 +545,7 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
 
     fn resizable(mut self, flag: bool) -> Self {
         let entity = self.entity();
-        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
             win_desc.resizable = flag
         }
 
@@ -549,7 +554,7 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
 
     fn minimized(mut self, flag: bool) -> Self {
         let entity = self.entity();
-        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
             win_desc.minimized = flag
         }
 
@@ -558,7 +563,7 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
 
     fn maximized(mut self, flag: bool) -> Self {
         let entity = self.entity();
-        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
             win_desc.maximized = flag
         }
 
@@ -567,7 +572,7 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
 
     fn visible(mut self, flag: bool) -> Self {
         let entity = self.entity();
-        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
             win_desc.visible = flag
         }
 
@@ -576,7 +581,7 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
 
     fn transparent(mut self, flag: bool) -> Self {
         let entity = self.entity();
-        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
             win_desc.transparent = flag
         }
 
@@ -585,7 +590,7 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
 
     fn decorations(mut self, flag: bool) -> Self {
         let entity = self.entity();
-        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
             win_desc.decorations = flag
         }
 
@@ -594,7 +599,7 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
 
     fn always_on_top(mut self, flag: bool) -> Self {
         let entity = self.entity();
-        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
             win_desc.always_on_top = flag
         }
 
@@ -603,7 +608,7 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
 
     fn vsync(mut self, flag: bool) -> Self {
         let entity = self.entity();
-        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
             win_desc.vsync = flag
         }
 
@@ -612,7 +617,7 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
 
     fn icon(mut self, width: u32, height: u32, image: Vec<u8>) -> Self {
         let entity = self.entity();
-        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
             win_desc.icon = Some(image);
             win_desc.icon_width = width;
             win_desc.icon_height = height;

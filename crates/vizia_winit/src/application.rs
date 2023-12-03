@@ -280,7 +280,7 @@ impl Application {
 
         let root_window_id = window.id.unwrap();
 
-        context.subwindows.insert(Entity::root(), self.window_description.clone());
+        context.subwindows.insert(Entity::root(), (self.window_description.clone(), false));
 
         // On windows cloak (hide) the window initially, we later reveal it after the first draw.
         // This is a workaround to hide the "white flash" that occurs during application startup.
@@ -460,11 +460,13 @@ impl Application {
                     if cx.process_animations() {
                         *stored_control_flow.borrow_mut() = ControlFlow::Poll;
 
-                        event_loop_proxy
-                            .send_event(UserEvent::Event(Event::new(WindowEvent::Redraw)))
-                            .expect("Failed to send redraw event");
-
                         for (_, window_entity) in windows.iter() {
+                            event_loop_proxy
+                                .send_event(UserEvent::Event(
+                                    Event::new(WindowEvent::Redraw).target(*window_entity),
+                                ))
+                                .expect("Failed to send redraw event");
+
                             cx.mutate_window(window_entity, |_, window: &mut Window| {
                                 if window.needs_redraw {
                                     window.window().request_redraw();
@@ -514,11 +516,16 @@ impl Application {
                     let mut window_delete_list = Vec::new();
 
                     for (window_id, window_entity) in windows.iter() {
-                        if cx.mutate_window(window_entity, |_, window: &mut Window| {
-                            window.should_close
-                        }) {
-                            window_delete_list.push((*window_id, *window_entity));
-                        }
+                        let should_close =
+                            cx.0.subwindows
+                                .get(window_entity)
+                                .map(|(_, should_close)| *should_close)
+                                .unwrap_or_default();
+                        cx.mutate_window(window_entity, |_, window: &mut Window| {
+                            if window.should_close | should_close {
+                                window_delete_list.push((*window_id, *window_entity));
+                            }
+                        });
                     }
 
                     for (window_id, window_entity) in window_delete_list.iter() {
@@ -614,7 +621,10 @@ impl Application {
                         }
 
                         winit::event::WindowEvent::DroppedFile(path) => {
-                            cx.emit_origin(WindowEvent::Drop(DropData::File(path)));
+                            cx.emit_window_event(
+                                window_entity,
+                                WindowEvent::Drop(DropData::File(path)),
+                            );
                         }
 
                         #[allow(deprecated)]
@@ -682,7 +692,7 @@ impl Application {
                                 }
                             };
 
-                            cx.emit_origin(event);
+                            cx.emit_window_event(window_entity, event);
                         }
 
                         winit::event::WindowEvent::MouseWheel { delta, phase: _, .. } => {
@@ -698,7 +708,7 @@ impl Application {
                                 }
                             };
 
-                            cx.emit_origin(out_event);
+                            cx.emit_window_event(window_entity, out_event);
                         }
 
                         winit::event::WindowEvent::KeyboardInput {
@@ -726,11 +736,11 @@ impl Application {
                                 }
                             };
 
-                            cx.emit_origin(event);
+                            cx.emit_window_event(window_entity, event);
                         }
 
                         winit::event::WindowEvent::ReceivedCharacter(character) => {
-                            cx.emit_origin(WindowEvent::CharInput(character));
+                            cx.emit_window_event(window_entity, WindowEvent::CharInput(character));
                         }
 
                         winit::event::WindowEvent::Resized(physical_size) => {

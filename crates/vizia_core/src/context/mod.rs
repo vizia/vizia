@@ -125,7 +125,7 @@ pub struct Context {
     pub(crate) click_pos: (f32, f32),
     pub(crate) click_button: MouseButton,
 
-    pub subwindows: HashMap<Entity, WindowDescription>,
+    pub subwindows: HashMap<Entity, (WindowDescription, bool)>,
 
     pub ignore_default_theme: bool,
     pub window_has_focus: bool,
@@ -262,6 +262,16 @@ impl Context {
         ret
     }
 
+    pub fn window(&self) -> Entity {
+        for parent in self.current.parent_iter(&self.tree) {
+            if self.tree.is_window(parent) {
+                return parent;
+            }
+        }
+
+        Entity::root()
+    }
+
     /// Returns a reference to the [Environment] model.
     pub fn environment(&self) -> &Environment {
         self.data::<Environment>().unwrap()
@@ -298,13 +308,11 @@ impl Context {
     /// Mark the application as needing to recompute view styles
     pub fn needs_restyle(&mut self) {
         self.style.needs_restyle();
-        self.emit(WindowEvent::Redraw);
     }
 
     /// Mark the application as needing to rerun layout computations
     pub fn needs_relayout(&mut self) {
         self.style.needs_relayout();
-        self.emit(WindowEvent::Redraw);
     }
 
     /// Enables or disables PseudoClasses for the focus of an entity
@@ -480,6 +488,16 @@ impl Context {
 
             for timer in stopped_timers {
                 self.stop_timer(timer);
+            }
+
+            if self.tree.is_window(*entity) {
+                println!("close window: {:?}", entity);
+                for glyph_texture in self.text_context.glyph_textures.iter_mut() {
+                    glyph_texture.image_ids.remove(entity);
+                }
+                if let Some((_, should_close)) = self.subwindows.get_mut(entity) {
+                    *should_close = true;
+                }
             }
 
             self.tree.remove(*entity).expect("");

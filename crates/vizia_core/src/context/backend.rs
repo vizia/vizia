@@ -31,21 +31,16 @@ impl<'a> BackendContext<'a> {
     }
 
     /// Helper function for mutating the state of the root window.
-    pub fn mutate_window<W: Any, F: Fn(&mut BackendContext, &mut W) -> T, T>(
+    pub fn mutate_window<W: Any, F: FnMut(&mut BackendContext, &mut W)>(
         &mut self,
         window_entity: &Entity,
-        f: F,
-    ) -> T {
+        mut f: F,
+    ) {
         if let Some(mut window_event_handler) = self.0.views.remove(&window_entity) {
             if let Some(window) = window_event_handler.downcast_mut::<W>() {
                 let t = f(self, window);
-                self.0.views.insert(*window_entity, window_event_handler);
-                return t;
-            } else {
-                panic!();
             }
-        } else {
-            panic!();
+            self.0.views.insert(*window_entity, window_event_handler);
         }
     }
 
@@ -97,7 +92,7 @@ impl<'a> BackendContext<'a> {
         builder: impl Fn(&WindowDescription) -> (W, I, Canvas<OpenGl>),
     ) {
         if self.0.subwindows.len() != windows.len() {
-            for (win_entity, win_desc) in self.0.subwindows.clone() {
+            for (win_entity, (win_desc, _)) in self.0.subwindows.clone() {
                 if win_entity == Entity::root() {
                     continue;
                 }
@@ -161,6 +156,7 @@ impl<'a> BackendContext<'a> {
 
         self.0.tree.set_window(window_entity, true);
 
+        println!("create {}", window_entity);
         self.0.canvases.insert(window_entity, canvas);
     }
 
