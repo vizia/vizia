@@ -37,7 +37,7 @@ pub fn tooltip(cx: &mut Context) {
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::TopStart));
-                    
+
                     Button::new(cx, |cx|{
                         Label::new(cx, "LEFT-START")
                     })
@@ -71,7 +71,7 @@ pub fn tooltip(cx: &mut Context) {
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::Top));
-                    
+
                     Button::new(cx, |cx|{
                         Label::new(cx, "LEFT")
                     })
@@ -105,7 +105,7 @@ pub fn tooltip(cx: &mut Context) {
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::TopEnd));
-                    
+
                     Button::new(cx, |cx|{
                         Label::new(cx, "LEFT-END")
                     })
@@ -130,7 +130,6 @@ pub fn tooltip(cx: &mut Context) {
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::BottomEnd));
                 }).row_between(Pixels(8.0)).size(Auto);
-                
             },
             |cx| {
                 Label::new(cx, r#"IconButton::new(cx, ICON_TRASH).tooltip(|cx| Tooltip::new(cx, |cx|{
