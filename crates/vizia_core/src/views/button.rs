@@ -75,7 +75,7 @@ pub struct Button {
 }
 
 impl Button {
-    /// Creates a new button with a specified action and content.
+    /// Creates a new button with specified content.
     ///
     /// # Example
     /// ```
@@ -83,7 +83,7 @@ impl Button {
     /// #
     /// # let cx = &mut Context::default();
     /// #
-    /// Button::new(cx, |cx| cx.emit(AppEvent::TriggerAction), |cx| Label::new(cx, "Press Me"));
+    /// Button::new(cx, |cx| Label::new(cx, "Press Me"));
     /// ```
     pub fn new<C, V>(cx: &mut Context, content: C) -> Handle<Self>
     where
@@ -107,25 +107,18 @@ impl View for Button {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
-            WindowEvent::PressDown { mouse } => {
+            WindowEvent::PressDown { mouse: _ } => {
                 if meta.target == cx.current {
-                    if *mouse {
-                        cx.capture()
-                    }
                     cx.focus();
                 }
             }
 
             WindowEvent::Press { .. } => {
-                if meta.target == cx.current() {
+                if meta.target == cx.current {
                     if let Some(action) = &self.action {
                         (action)(cx);
                     }
                 }
-            }
-
-            WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
-                cx.release();
             }
 
             WindowEvent::ActionRequest(action) => match action.action {
@@ -250,15 +243,16 @@ impl View for IconButton {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
             WindowEvent::PressDown { mouse } => {
-                if *mouse {
-                    cx.capture()
+                if meta.target == cx.current {
+                    if *mouse {
+                        cx.capture()
+                    }
+                    cx.focus();
                 }
-                cx.focus();
             }
 
             WindowEvent::Press { .. } => {
-                println!("do this");
-                if meta.target == cx.current() {
+                if meta.target == cx.current {
                     if let Some(action) = &self.action {
                         (action)(cx);
                     }

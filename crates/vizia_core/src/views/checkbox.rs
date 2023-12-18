@@ -210,9 +210,14 @@ impl View for Checkbox {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
-            WindowEvent::Press { mouse } => {
-                let over = if *mouse { cx.mouse.left.pressed } else { cx.focused() };
-                if over == cx.current() && meta.target == cx.current() && !cx.is_disabled() {
+            WindowEvent::PressDown { mouse: _ } => {
+                if meta.target == cx.current {
+                    cx.focus();
+                }
+            }
+
+            WindowEvent::Press { mouse: _ } => {
+                if meta.target == cx.current {
                     if let Some(callback) = &self.on_toggle {
                         (callback)(cx);
                     }

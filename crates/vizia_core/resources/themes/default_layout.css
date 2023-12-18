@@ -258,11 +258,13 @@ datepicker {
 
 /* DROPDOWN */
 
-dropdown {
+dropdown,
+combobox {
     height: 32px;
 }
 
-dropdown .title {
+dropdown .title,
+combobox .title {
     width: 1s;
     height: 1s;
     child-left: 8px;
@@ -271,34 +273,39 @@ dropdown .title {
     child-bottom: 1s;
 }
 
-dropdown popup {
+dropdown popup,
+combobox popup {
     width: 100%;
     height: auto;
     top: 100%;
     translate: 0px 4px;
 }
 
-dropdown popup list {
+dropdown popup list,
+combobox popup list {
     width: 100%;
     height: auto;
     child-top: 4px;
     child-bottom: 4px;
 }
 
-dropdown popup .list {
+dropdown popup .list,
+combobox popup .list {
     width: 100%;
     height: auto;
     child-top: 4px;
     child-bottom: 4px;
 }
 
-dropdown popup scrollview scrollbar.vertical {
+dropdown popup scrollview scrollbar.vertical,
+combobox popup scrollview scrollbar.vertical {
     top: 4px;
     bottom: 4px;
     right: 2px;
 }
 
-dropdown list label {
+dropdown list label,
+combobox list label {
     width: 100%;
     height: 32px;
     child-left: 6px;
@@ -306,7 +313,8 @@ dropdown list label {
     child-bottom: 1s;
 }
 
-dropdown .list label {
+dropdown .list label,
+combobox .list label {
     width: 100%;
     height: 32px;
     child-left: 6px;
@@ -314,7 +322,8 @@ dropdown .list label {
     child-bottom: 1s;
 }
 
-dropdown vstack {
+dropdown vstack,
+combobox vstack {
     child-space: auto;
 }
 

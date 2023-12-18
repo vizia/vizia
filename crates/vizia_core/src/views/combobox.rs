@@ -27,7 +27,6 @@ pub struct ComboBox<
 }
 
 pub enum ComboBoxEvent {
-    ///
     SetOption(usize),
     SetFilterText(String),
     SetHovered(usize),
@@ -80,6 +79,8 @@ where
                 .on_edit(|cx, txt| cx.emit(ComboBoxEvent::SetFilterText(txt)))
                 // Prevent the textbox from losing focus on blur. We control that with the listener instead.
                 .on_blur(|_| {})
+                // Prevent the textbox from losing focus on cancel (escape key press).
+                .on_cancel(|_| {})
                 .width(Stretch(1.0))
                 .height(Pixels(32.0))
                 .space(Pixels(0.0))
@@ -157,7 +158,7 @@ where
     L2: Lens<Target = usize>,
 {
     fn element(&self) -> Option<&'static str> {
-        Some("dropdown")
+        Some("combobox")
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
@@ -175,17 +176,19 @@ where
                 // Close the popup.
                 self.is_open = false;
 
+                // Set the hovered index to the selected index.
+                self.hovered = *index;
+
                 // Reset the filter text.
                 self.filter_text = String::new();
 
                 // Set the textbox to non-edit state.
+                // TODO: Add a modifier to textbox and bind to some state in combobox.
                 cx.emit_custom(
                     Event::new(TextEvent::EndEdit)
                         .target(cx.current)
                         .propagate(Propagation::Subtree),
                 );
-
-                // cx.needs_redraw();
             }
 
             ComboBoxEvent::SetHovered(index) => {
@@ -230,7 +233,7 @@ where
         });
 
         event.map(|textbox_event, _| match textbox_event {
-            // User pressed on the textbox or focused it
+            // User pressed on the textbox or focused it.
             TextEvent::StartEdit => {
                 self.is_open = true;
                 self.hovered = self.selected.get(cx);
@@ -239,10 +242,10 @@ where
             TextEvent::Submit(enter) => {
                 let selected = self.selected.get(cx);
                 if *enter && self.hovered < self.list_lens.get(cx).len() {
-                    // User pressed the enter key
+                    // User pressed the enter key.
                     cx.emit(ComboBoxEvent::SetOption(self.hovered));
                 } else {
-                    // User clicked outside the combobox
+                    // User clicked outside the textbox.
                     cx.emit(ComboBoxEvent::SetOption(selected));
                 }
             }
@@ -251,9 +254,18 @@ where
         });
 
         event.map(|window_event, _| match window_event {
+            WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
+                if !self.is_open {
+                    self.is_open = true;
+                    self.hovered = self.selected.get(cx);
+                }
+            }
+
             WindowEvent::KeyDown(code, _) => match code {
                 Code::ArrowDown => {
-                    if self.is_open {
+                    if !self.is_open {
+                        self.is_open = true;
+                    } else {
                         let filter = |(_, txt): &(usize, &T)| {
                             if self.filter_text.is_empty() {
                                 true
@@ -280,7 +292,9 @@ where
                 }
 
                 Code::ArrowUp => {
-                    if self.is_open {
+                    if !self.is_open {
+                        self.is_open = true;
+                    } else {
                         let filter = |(_, txt): &(usize, &T)| {
                             if self.filter_text.is_empty() {
                                 true
@@ -309,15 +323,8 @@ where
 
                 Code::Escape => {
                     if self.is_open {
-                        // The textbox will receive the key event first and defocus so send an event to refocus the textbox
-                        cx.emit_custom(
-                            Event::new(TextEvent::StartEdit)
-                                .target(cx.current)
-                                .propagate(Propagation::Subtree),
-                        );
-
-                        // Emit an event instead of setting is_open because the StartEdit will cause the popup to reopen
-                        cx.emit(ComboBoxEvent::Close);
+                        self.is_open = false;
+                        self.hovered = self.selected.get(cx);
                     } else {
                         cx.emit(TextEvent::Submit(false));
                     }

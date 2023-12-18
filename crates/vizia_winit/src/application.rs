@@ -330,8 +330,6 @@ impl Application {
 
                     cx.process_events();
 
-                    cx.process_data_updates();
-
                     cx.process_style_updates();
 
                     if cx.process_animations() {

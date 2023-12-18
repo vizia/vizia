@@ -868,10 +868,10 @@ where
                 }
 
                 Code::Escape => {
-                    cx.emit(TextEvent::EndEdit);
-                    cx.set_checked(false);
                     if let Some(callback) = &self.on_cancel {
                         (callback)(cx);
+                    } else {
+                        cx.emit(TextEvent::EndEdit);
                     }
                 }
 

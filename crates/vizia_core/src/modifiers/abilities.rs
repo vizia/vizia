@@ -3,7 +3,7 @@ use crate::{prelude::*, style::Abilities};
 
 /// Modifiers for changing the abilities of a view.
 pub trait AbilityModifiers: internal::Modifiable {
-    /// Sets whether the view can be hovered by the mouse.
+    /// Sets whether the view can be hovered by the mouse and receive mouse events.
     ///
     /// Accepts a bool or a lens to some boolean state.
     /// Views which cannot be hovered will not receive mouse input events unless

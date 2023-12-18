@@ -1,6 +1,6 @@
 use femtovg::Transform2D;
 
-/// Respresents the axis-aligned bounding box of a view.
+/// Represents the axis-aligned bounding box of a view.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct BoundingBox {
     pub x: f32,

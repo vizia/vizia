@@ -9,7 +9,8 @@ fn main() {
         ExamplePage::vertical(cx, |cx| {
             HStack::new(cx, |cx| {
                 // Basic Button
-                Button::new(cx, |cx| Label::new(cx, "Button"));
+                Button::new(cx, |cx| Label::new(cx, "Button"))
+                    .on_press(|cx| println!("Button Pressed!"));
                 // Accent Button
                 Button::new(cx, |cx| Label::new(cx, "Accent Button"))
                     .variant(ButtonVariant::Accent);

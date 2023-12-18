@@ -1,5 +1,6 @@
 use crate::prelude::*;
 
+/// Enum which represents the geometric variants of an avatar view.
 #[derive(Debug, Default, Clone, Copy, Data, PartialEq)]
 pub enum AvatarVariant {
     #[default]
@@ -36,6 +37,7 @@ impl View for Avatar {
 }
 
 impl<'a> Handle<'a, Avatar> {
+    /// Selects the style variant for the Avatar.
     pub fn variant<U: Into<AvatarVariant>>(mut self, variant: impl Res<U>) -> Self {
         let entity = self.entity();
         variant.set_or_bind(self.context(), entity, |cx, val| {
@@ -64,6 +66,7 @@ impl<'a> Handle<'a, Avatar> {
         self
     }
 
+    /// Adds a badge to the Avatar.
     pub fn badge<F>(mut self, content: F) -> Self
     where
         F: FnOnce(&mut Context) -> Handle<'_, Badge>,
