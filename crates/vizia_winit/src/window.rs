@@ -1,10 +1,13 @@
-use crate::application::UserEvent;
+use crate::{application::UserEvent, window_modifiers::WindowModifiers};
 #[cfg(not(target_arch = "wasm32"))]
 use std::num::NonZeroU32;
+use std::{println, rc::Rc, todo};
+// use std::task::Context;
 
 use crate::convert::cursor_icon_to_cursor_icon;
 use femtovg::{renderer::OpenGl, Canvas, Color};
 
+use glutin::context::AsRawContext;
 #[cfg(not(target_arch = "wasm32"))]
 use glutin::surface::SwapInterval;
 #[cfg(not(target_arch = "wasm32"))]
@@ -23,18 +26,20 @@ use glutin::{
 
 use vizia_core::backend::*;
 use vizia_core::prelude::*;
-use winit::event_loop::EventLoop;
+use vizia_window::WindowDescription;
+use winit::event_loop::{EventLoop, EventLoopWindowTarget};
 use winit::window::{CursorGrabMode, WindowBuilder, WindowLevel};
 use winit::{dpi::*, window::WindowId};
 
 pub struct Window {
-    pub id: WindowId,
+    pub id: Option<WindowId>,
     #[cfg(not(target_arch = "wasm32"))]
-    context: glutin::context::PossiblyCurrentContext,
+    pub context: Option<Rc<glutin::context::PossiblyCurrentContext>>,
     #[cfg(not(target_arch = "wasm32"))]
-    surface: glutin::surface::Surface<glutin::surface::WindowSurface>,
-    window: winit::window::Window,
+    pub surface: Option<glutin::surface::Surface<glutin::surface::WindowSurface>>,
+    pub window: Option<winit::window::Window>,
     pub should_close: bool,
+    pub needs_redraw: bool,
 }
 
 #[cfg(target_os = "windows")]
@@ -69,7 +74,7 @@ impl Window {
 
 #[cfg(target_arch = "wasm32")]
 impl Window {
-    pub fn new(
+    pub fn create(
         events_loop: &EventLoop<UserEvent>,
         window_description: &WindowDescription,
     ) -> (Self, Canvas<OpenGl>) {
@@ -131,8 +136,130 @@ impl Window {
 
 #[cfg(not(target_arch = "wasm32"))]
 impl Window {
-    pub fn new(
-        events_loop: &EventLoop<UserEvent>,
+    pub fn new(cx: &mut Context, content: impl Fn(&mut Context)) -> Handle<Self> {
+        Self {
+            id: None,
+            context: None,
+            surface: None,
+            window: None,
+            should_close: false,
+            needs_redraw: true,
+        }
+        .build(cx, |cx| {
+            cx.subwindows.insert(
+                cx.current(),
+                (WindowDescription::new().with_title("Second Window"), false),
+            );
+            (content)(cx);
+        })
+    }
+
+    pub fn create_subwindow(
+        events_loop: &EventLoopWindowTarget<UserEvent>,
+        window_description: &WindowDescription,
+        context: Rc<glutin::context::PossiblyCurrentContext>,
+    ) -> (Self, Canvas<OpenGl>) {
+        let window_builder = WindowBuilder::new();
+
+        //Windows COM doesn't play nicely with winit's drag and drop right now
+        #[cfg(target_os = "windows")]
+        let window_builder = {
+            use winit::platform::windows::WindowBuilderExtWindows;
+            window_builder.with_drag_and_drop(false)
+        };
+
+        // Apply generic WindowBuilder properties
+        let window_builder = apply_window_description(window_builder, window_description);
+
+        let template = ConfigTemplateBuilder::new().with_alpha_size(8).with_transparency(true);
+        let display_builder = DisplayBuilder::new().with_window_builder(Some(window_builder));
+
+        let (window, gl_config) = display_builder
+            .build(events_loop, template, |configs| {
+                // Find the config with the maximum number of samples, so our triangle will
+                // be smooth.
+                configs
+                    .reduce(|accum, config| {
+                        let transparency_check = config.supports_transparency().unwrap_or(false)
+                            & !accum.supports_transparency().unwrap_or(false);
+
+                        if transparency_check || config.num_samples() < accum.num_samples() {
+                            config
+                        } else {
+                            accum
+                        }
+                    })
+                    .unwrap()
+            })
+            .unwrap();
+
+        let window = window.unwrap();
+
+        let gl_display = gl_config.display();
+
+        let raw_window_handle = Some(window.raw_window_handle());
+
+        let context_attributes =
+            ContextAttributesBuilder::new().with_sharing(&*context).build(raw_window_handle);
+        let fallback_context_attributes = ContextAttributesBuilder::new()
+            .with_context_api(ContextApi::Gles(None))
+            .build(raw_window_handle);
+        let mut not_current_gl_context = Some(unsafe {
+            gl_display.create_context(&gl_config, &context_attributes).unwrap_or_else(|_| {
+                gl_display
+                    .create_context(&gl_config, &fallback_context_attributes)
+                    .expect("failed to create context")
+            })
+        });
+
+        let (width, height): (u32, u32) = window.inner_size().into();
+        let raw_window_handle = window.raw_window_handle();
+        let attrs = SurfaceAttributesBuilder::<WindowSurface>::new().build(
+            raw_window_handle,
+            NonZeroU32::new(width).unwrap(),
+            NonZeroU32::new(height).unwrap(),
+        );
+
+        let surface =
+            unsafe { gl_config.display().create_window_surface(&gl_config, &attrs).unwrap() };
+
+        let gl_context =
+            Rc::new(not_current_gl_context.take().unwrap().make_current(&surface).unwrap());
+
+        // context.make_current(&surface).unwrap();
+        // Build the femtovg renderer
+        let renderer = unsafe {
+            OpenGl::new_from_function_cstr(|s| gl_display.get_proc_address(s) as *const _)
+        }
+        .expect("Cannot create renderer");
+
+        if window_description.vsync {
+            surface
+                .set_swap_interval(&*context, SwapInterval::Wait(NonZeroU32::new(1).unwrap()))
+                .expect("Failed to set vsync");
+        }
+
+        let mut canvas = Canvas::new(renderer).expect("Failed to create canvas");
+
+        let size = window.inner_size();
+        canvas.set_size(size.width, size.height, 1.0);
+        canvas.clear_rect(0, 0, size.width, size.height, Color::rgb(255, 80, 80));
+
+        // Build our window
+        let win = Window {
+            id: Some(window.id()),
+            context: Some(gl_context.clone()),
+            surface: Some(surface),
+            window: Some(window),
+            should_close: false,
+            needs_redraw: true,
+        };
+
+        (win, canvas)
+    }
+
+    pub fn create(
+        events_loop: &EventLoopWindowTarget<UserEvent>,
         window_description: &WindowDescription,
     ) -> (Self, Canvas<OpenGl>) {
         let window_builder = WindowBuilder::new();
@@ -220,120 +347,288 @@ impl Window {
         canvas.clear_rect(0, 0, size.width, size.height, Color::rgb(255, 80, 80));
 
         // Build our window
-        let win =
-            Window { id: window.id(), context: gl_context, surface, window, should_close: false };
+        let win = Window {
+            id: Some(window.id()),
+            context: Some(Rc::new(gl_context)),
+            surface: Some(surface),
+            window: Some(window),
+            should_close: false,
+            needs_redraw: true,
+        };
 
         (win, canvas)
     }
 
     pub fn window(&self) -> &winit::window::Window {
-        &self.window
+        self.window.as_ref().unwrap()
+    }
+
+    pub fn context(&self) -> &glutin::context::PossiblyCurrentContext {
+        self.context.as_ref().unwrap()
     }
 
     pub fn resize(&self, size: PhysicalSize<u32>) {
-        if size.width != 0 && size.height != 0 {
-            self.surface.resize(
-                &self.context,
-                size.width.try_into().unwrap(),
-                size.height.try_into().unwrap(),
-            );
+        if let Some(surface) = &self.surface {
+            if size.width != 0 && size.height != 0 {
+                surface.resize(
+                    self.context.as_ref().unwrap(),
+                    size.width.try_into().unwrap(),
+                    size.height.try_into().unwrap(),
+                );
+            }
+        }
+    }
+
+    pub fn make_current(&self) {
+        if let Some(context) = &self.context {
+            context.make_current(self.surface.as_ref().unwrap()).unwrap();
         }
     }
 
     pub fn swap_buffers(&self) {
-        self.surface.swap_buffers(&self.context).expect("Failed to swap buffers");
+        self.surface
+            .as_ref()
+            .unwrap()
+            .swap_buffers(self.context.as_ref().unwrap())
+            .expect("Failed to swap buffers");
     }
 }
 
 impl View for Window {
+    fn element(&self) -> Option<&'static str> {
+        Some("window")
+    }
+
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|window_event, _| match window_event {
-            WindowEvent::GrabCursor(flag) => {
-                let grab_mode = if *flag { CursorGrabMode::Locked } else { CursorGrabMode::None };
-                self.window().set_cursor_grab(grab_mode).expect("Failed to set cursor grab");
-            }
-
-            WindowEvent::SetCursorPosition(x, y) => {
-                self.window()
-                    .set_cursor_position(winit::dpi::Position::Physical(PhysicalPosition::new(
-                        *x as i32, *y as i32,
-                    )))
-                    .expect("Failed to set cursor position");
-            }
-
-            WindowEvent::SetCursor(cursor) => {
-                if let Some(icon) = cursor_icon_to_cursor_icon(*cursor) {
-                    self.window().set_cursor_visible(true);
-                    self.window().set_cursor_icon(icon);
-                } else {
-                    self.window().set_cursor_visible(false);
+        event.map(|window_event, meta| {
+            match window_event {
+                WindowEvent::GrabCursor(flag) => {
+                    let grab_mode =
+                        if *flag { CursorGrabMode::Locked } else { CursorGrabMode::None };
+                    self.window().set_cursor_grab(grab_mode).expect("Failed to set cursor grab");
                 }
-            }
 
-            WindowEvent::SetTitle(title) => {
-                self.window().set_title(title);
-            }
+                WindowEvent::SetCursorPosition(x, y) => {
+                    self.window()
+                        .set_cursor_position(winit::dpi::Position::Physical(PhysicalPosition::new(
+                            *x as i32, *y as i32,
+                        )))
+                        .expect("Failed to set cursor position");
+                }
 
-            WindowEvent::SetSize(size) => {
-                self.window().set_inner_size(LogicalSize::new(size.width, size.height));
-            }
+                WindowEvent::SetCursor(cursor) => {
+                    if let Some(icon) = cursor_icon_to_cursor_icon(*cursor) {
+                        self.window().set_cursor_visible(true);
+                        self.window().set_cursor_icon(icon);
+                    } else {
+                        self.window().set_cursor_visible(false);
+                    }
+                }
 
-            WindowEvent::SetMinSize(size) => {
-                self.window()
-                    .set_min_inner_size(size.map(|size| LogicalSize::new(size.width, size.height)));
-            }
+                WindowEvent::SetTitle(title) => {
+                    self.window().set_title(title);
+                }
 
-            WindowEvent::SetMaxSize(size) => {
-                self.window()
-                    .set_max_inner_size(size.map(|size| LogicalSize::new(size.width, size.height)));
-            }
+                WindowEvent::SetSize(size) => {
+                    self.window().set_inner_size(LogicalSize::new(size.width, size.height));
+                }
 
-            WindowEvent::SetPosition(pos) => {
-                self.window().set_outer_position(LogicalPosition::new(pos.x, pos.y));
-            }
+                WindowEvent::SetMinSize(size) => {
+                    self.window().set_min_inner_size(
+                        size.map(|size| LogicalSize::new(size.width, size.height)),
+                    );
+                }
 
-            WindowEvent::SetResizable(flag) => {
-                self.window().set_resizable(*flag);
-            }
+                WindowEvent::SetMaxSize(size) => {
+                    self.window().set_max_inner_size(
+                        size.map(|size| LogicalSize::new(size.width, size.height)),
+                    );
+                }
 
-            WindowEvent::SetMinimized(flag) => {
-                self.window().set_minimized(*flag);
-            }
+                WindowEvent::SetPosition(pos) => {
+                    self.window().set_outer_position(LogicalPosition::new(pos.x, pos.y));
+                }
 
-            WindowEvent::SetMaximized(flag) => {
-                self.window().set_maximized(*flag);
-            }
+                WindowEvent::SetResizable(flag) => {
+                    self.window().set_resizable(*flag);
+                }
 
-            WindowEvent::SetVisible(flag) => {
-                self.window().set_visible(*flag);
-            }
+                WindowEvent::SetMinimized(flag) => {
+                    self.window().set_minimized(*flag);
+                }
 
-            WindowEvent::SetDecorations(flag) => {
-                self.window().set_decorations(*flag);
-            }
+                WindowEvent::SetMaximized(flag) => {
+                    self.window().set_maximized(*flag);
+                }
 
-            WindowEvent::ReloadStyles => {
-                cx.reload_styles().unwrap();
-            }
+                WindowEvent::SetVisible(flag) => {
+                    self.window().set_visible(*flag);
+                }
 
-            WindowEvent::WindowClose => {
-                self.should_close = true;
-            }
+                WindowEvent::SetDecorations(flag) => {
+                    self.window().set_decorations(*flag);
+                }
 
-            WindowEvent::FocusNext => {
-                cx.focus_next();
-            }
+                WindowEvent::FocusNext => {
+                    cx.focus_next();
+                }
 
-            WindowEvent::FocusPrev => {
-                cx.focus_prev();
-            }
+                WindowEvent::FocusPrev => {
+                    cx.focus_prev();
+                }
 
-            _ => {}
+                WindowEvent::ReloadStyles => {
+                    cx.reload_styles().unwrap();
+                }
+
+                WindowEvent::WindowClose => {
+                    self.should_close = true;
+                }
+                WindowEvent::Redraw => {
+                    self.needs_redraw = true;
+                    meta.consume();
+                }
+
+                _ => {}
+            };
+
+            // Prevent event from propagating to other windows.
+            meta.consume()
         })
     }
 }
 
-fn apply_window_description(
+impl<'a> WindowModifiers for Handle<'a, Window> {
+    fn title<T: ToString>(mut self, title: T) -> Self {
+        let entity = self.entity();
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
+            win_desc.title = title.to_string();
+        }
+
+        self
+    }
+
+    fn inner_size<S: Into<WindowSize>>(mut self, size: S) -> Self {
+        let entity = self.entity();
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
+            win_desc.inner_size = size.into();
+        }
+
+        self
+    }
+
+    fn min_inner_size<S: Into<WindowSize>>(mut self, size: Option<S>) -> Self {
+        let entity = self.entity();
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
+            win_desc.min_inner_size = size.map(|size| size.into())
+        }
+
+        self
+    }
+
+    fn max_inner_size<S: Into<WindowSize>>(mut self, size: Option<S>) -> Self {
+        let entity = self.entity();
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
+            win_desc.max_inner_size = size.map(|size| size.into())
+        }
+
+        self
+    }
+
+    fn position<P: Into<vizia_window::Position>>(mut self, position: P) -> Self {
+        let entity = self.entity();
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
+            win_desc.position = Some(position.into())
+        }
+
+        self
+    }
+
+    fn resizable(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
+            win_desc.resizable = flag
+        }
+
+        self
+    }
+
+    fn minimized(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
+            win_desc.minimized = flag
+        }
+
+        self
+    }
+
+    fn maximized(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
+            win_desc.maximized = flag
+        }
+
+        self
+    }
+
+    fn visible(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
+            win_desc.visible = flag
+        }
+
+        self
+    }
+
+    fn transparent(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
+            win_desc.transparent = flag
+        }
+
+        self
+    }
+
+    fn decorations(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
+            win_desc.decorations = flag
+        }
+
+        self
+    }
+
+    fn always_on_top(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
+            win_desc.always_on_top = flag
+        }
+
+        self
+    }
+
+    fn vsync(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
+            win_desc.vsync = flag
+        }
+
+        self
+    }
+
+    fn icon(mut self, width: u32, height: u32, image: Vec<u8>) -> Self {
+        let entity = self.entity();
+        if let Some((win_desc, _)) = self.context().subwindows.get_mut(&entity) {
+            win_desc.icon = Some(image);
+            win_desc.icon_width = width;
+            win_desc.icon_height = height;
+        }
+
+        self
+    }
+}
+
+pub fn apply_window_description(
     mut builder: WindowBuilder,
     description: &WindowDescription,
 ) -> WindowBuilder {

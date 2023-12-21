@@ -17,6 +17,7 @@ use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
 use std::rc::Rc;
 use std::sync::Mutex;
 use vizia_id::IdManager;
+use vizia_window::WindowDescription;
 
 #[cfg(all(feature = "clipboard", feature = "x11"))]
 use copypasta::ClipboardContext;
@@ -124,6 +125,8 @@ pub struct Context {
     pub(crate) click_pos: (f32, f32),
     pub(crate) click_button: MouseButton,
 
+    pub subwindows: HashMap<Entity, (WindowDescription, bool)>,
+
     pub ignore_default_theme: bool,
     pub window_has_focus: bool,
 
@@ -212,6 +215,8 @@ impl Context {
             click_pos: (0.0, 0.0),
             click_button: MouseButton::Left,
 
+            subwindows: HashMap::new(),
+
             ignore_default_theme: false,
             window_has_focus: true,
 
@@ -257,6 +262,16 @@ impl Context {
         ret
     }
 
+    pub fn window(&self) -> Entity {
+        for parent in self.current.parent_iter(&self.tree) {
+            if self.tree.is_window(parent) {
+                return parent;
+            }
+        }
+
+        Entity::root()
+    }
+
     /// Returns a reference to the [Environment] model.
     pub fn environment(&self) -> &Environment {
         self.data::<Environment>().unwrap()
@@ -287,6 +302,7 @@ impl Context {
     /// Mark the application as needing to rerun the draw method
     pub fn needs_redraw(&mut self) {
         self.style.needs_redraw();
+        self.emit(WindowEvent::Redraw);
     }
 
     /// Mark the application as needing to recompute view styles
@@ -373,7 +389,7 @@ impl Context {
     }
 
     /// Removes the provided entity from the application.
-    pub(crate) fn remove(&mut self, entity: Entity) {
+    pub fn remove(&mut self, entity: Entity) {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
         if !delete_list.is_empty() {
@@ -472,6 +488,15 @@ impl Context {
 
             for timer in stopped_timers {
                 self.stop_timer(timer);
+            }
+
+            if self.tree.is_window(*entity) {
+                for glyph_texture in self.text_context.glyph_textures.iter_mut() {
+                    glyph_texture.image_ids.remove(entity);
+                }
+                if let Some((_, should_close)) = self.subwindows.get_mut(entity) {
+                    *should_close = true;
+                }
             }
 
             self.tree.remove(*entity).expect("");

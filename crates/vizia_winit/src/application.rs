@@ -1,19 +1,29 @@
 use crate::{
     convert::{scan_code_to_code, virtual_key_code_to_code, virtual_key_code_to_key},
-    window::Window,
+    window::{apply_window_description, Window},
+    window_modifiers::WindowModifiers,
 };
 #[cfg(not(target_arch = "wasm32"))]
 use accesskit::{Action, NodeBuilder, TreeUpdate};
 #[cfg(not(target_arch = "wasm32"))]
 use accesskit_winit;
-use std::cell::RefCell;
+use femtovg::renderer::OpenGl;
+use glutin::{
+    config::ConfigTemplateBuilder,
+    context::{ContextApi, ContextAttributesBuilder},
+    display::GetGlDisplay,
+    prelude::{GlConfig, GlDisplay, NotCurrentGlContextSurfaceAccessor},
+    surface::{GlSurface, SurfaceAttributesBuilder, SwapInterval, WindowSurface},
+};
+use glutin_winit::DisplayBuilder;
+use raw_window_handle::HasRawWindowHandle;
+use std::{cell::RefCell, collections::HashMap, num::NonZeroU32, rc::Rc};
 use vizia_core::backend::*;
 #[cfg(not(target_arch = "wasm32"))]
 use vizia_core::context::EventProxy;
 use vizia_core::prelude::*;
 use vizia_id::GenerationalId;
 use vizia_window::Position;
-use winit::event_loop::EventLoopBuilder;
 #[cfg(all(
     feature = "clipboard",
     feature = "wayland",
@@ -29,7 +39,9 @@ use winit::platform::wayland::WindowExtWayland;
 use winit::{
     event::VirtualKeyCode,
     event_loop::{ControlFlow, EventLoop},
+    window::WindowBuilder,
 };
+use winit::{event_loop::EventLoopBuilder, window::WindowId};
 
 #[cfg(not(target_arch = "wasm32"))]
 use winit::event_loop::EventLoopProxy;
@@ -179,7 +191,96 @@ impl Application {
 
         let event_loop = self.event_loop;
 
-        let (window, canvas) = Window::new(&event_loop, &self.window_description);
+        let window_builder = WindowBuilder::new();
+
+        // Create the main window
+        let window_builder = apply_window_description(window_builder, &self.window_description);
+
+        let template = ConfigTemplateBuilder::new().with_alpha_size(8).with_transparency(true);
+        let display_builder = DisplayBuilder::new().with_window_builder(Some(window_builder));
+
+        let (window, gl_config) = display_builder
+            .build(&event_loop, template, |configs| {
+                // Find the config with the maximum number of samples, so our triangle will
+                // be smooth.
+                configs
+                    .reduce(|accum, config| {
+                        let transparency_check = config.supports_transparency().unwrap_or(false)
+                            & !accum.supports_transparency().unwrap_or(false);
+
+                        if transparency_check || config.num_samples() < accum.num_samples() {
+                            config
+                        } else {
+                            accum
+                        }
+                    })
+                    .unwrap()
+            })
+            .unwrap();
+
+        let window = window.unwrap();
+
+        let gl_display = gl_config.display();
+
+        let raw_window_handle = Some(window.raw_window_handle());
+
+        let context_attributes = ContextAttributesBuilder::new().build(raw_window_handle);
+        let fallback_context_attributes = ContextAttributesBuilder::new()
+            .with_context_api(ContextApi::Gles(None))
+            .build(raw_window_handle);
+        let mut not_current_gl_context = Some(unsafe {
+            gl_display.create_context(&gl_config, &context_attributes).unwrap_or_else(|_| {
+                gl_display
+                    .create_context(&gl_config, &fallback_context_attributes)
+                    .expect("failed to create context")
+            })
+        });
+
+        let (width, height): (u32, u32) = window.inner_size().into();
+        let raw_window_handle = window.raw_window_handle();
+        let attrs = SurfaceAttributesBuilder::<WindowSurface>::new().build(
+            raw_window_handle,
+            NonZeroU32::new(width).unwrap(),
+            NonZeroU32::new(height).unwrap(),
+        );
+
+        let surface =
+            unsafe { gl_config.display().create_window_surface(&gl_config, &attrs).unwrap() };
+
+        let gl_context =
+            Rc::new(not_current_gl_context.take().unwrap().make_current(&surface).unwrap());
+
+        // Build the femtovg renderer
+        let renderer = unsafe {
+            OpenGl::new_from_function_cstr(|s| gl_display.get_proc_address(s) as *const _)
+        }
+        .expect("Cannot create renderer");
+
+        if self.window_description.vsync {
+            surface
+                .set_swap_interval(&gl_context, SwapInterval::Wait(NonZeroU32::new(1).unwrap()))
+                .expect("Failed to set vsync");
+        }
+
+        let mut canvas = Canvas::new(renderer).expect("Failed to create canvas");
+
+        let size = window.inner_size();
+        canvas.set_size(size.width, size.height, 1.0);
+        canvas.clear_rect(0, 0, size.width, size.height, Color::rgb(255, 80, 80).into());
+
+        let window = Window {
+            id: Some(window.id()),
+            context: Some(gl_context.clone()),
+            surface: Some(surface),
+            window: Some(window),
+            should_close: false,
+            needs_redraw: true,
+        };
+        // let (window, canvas) = Window::create(&event_loop, &self.window_description);
+
+        let root_window_id = window.id.unwrap();
+
+        context.subwindows.insert(Entity::root(), (self.window_description.clone(), false));
 
         // On windows cloak (hide) the window initially, we later reveal it after the first draw.
         // This is a workaround to hide the "white flash" that occurs during application startup.
@@ -244,7 +345,7 @@ impl Application {
         }
 
         let scale_factor = window.window().scale_factor() as f32;
-        cx.add_main_window(&self.window_description, canvas, scale_factor);
+        cx.add_main_window(Entity::root(), &self.window_description, canvas, scale_factor);
         cx.add_window(window);
 
         cx.0.remove_user_themes();
@@ -271,6 +372,7 @@ impl Application {
         let mut cursor = (0.0f32, 0.0f32);
         #[cfg(target_os = "windows")]
         let mut inside_window = false;
+        let mut active_window = Entity::root();
 
         // cx.process_events();
 
@@ -279,7 +381,12 @@ impl Application {
         cx.process_visual_updates();
 
         let mut main_events = false;
-        event_loop.run(move |event, _, control_flow| {
+
+        let mut windows: HashMap<WindowId, Entity> = HashMap::new();
+        windows.insert(root_window_id, Entity::root());
+
+        let gl_context = gl_context.clone();
+        event_loop.run(move |event, event_loop_window_target, control_flow| {
             let mut cx = BackendContext::new_with_event_manager(&mut context);
 
             match event {
@@ -319,12 +426,28 @@ impl Application {
 
                 winit::event::Event::MainEventsCleared => {
                     main_events = true;
+                    let gl_context = gl_context.clone();
+                    cx.build_subwindows::<Window, WindowId>(&mut windows, move |win_desc| {
+                        let (window, canvas) = Window::create_subwindow(
+                            event_loop_window_target,
+                            win_desc,
+                            gl_context.clone(),
+                        );
+                        window.window().set_visible(true);
+                        let window_id = window.id.unwrap();
+
+                        (window, window_id, canvas)
+                    });
 
                     *stored_control_flow.borrow_mut() =
                         if default_should_poll { ControlFlow::Poll } else { ControlFlow::Wait };
 
                     if cursor_moved {
-                        cx.emit_origin(WindowEvent::MouseMove(cursor.0, cursor.1));
+                        // cx.emit_origin(WindowEvent::MouseMove(cursor.0, cursor.1));
+                        cx.emit_window_event(
+                            active_window,
+                            WindowEvent::MouseMove(cursor.0, cursor.1),
+                        );
                         cursor_moved = false;
                     }
 
@@ -337,13 +460,19 @@ impl Application {
                     if cx.process_animations() {
                         *stored_control_flow.borrow_mut() = ControlFlow::Poll;
 
-                        event_loop_proxy
-                            .send_event(UserEvent::Event(Event::new(WindowEvent::Redraw)))
-                            .expect("Failed to send redraw event");
+                        for (_, window_entity) in windows.iter() {
+                            event_loop_proxy
+                                .send_event(UserEvent::Event(
+                                    Event::new(WindowEvent::Redraw).target(*window_entity),
+                                ))
+                                .expect("Failed to send redraw event");
 
-                        cx.mutate_window(|_, window: &Window| {
-                            window.window().request_redraw();
-                        });
+                            cx.mutate_window(window_entity, |_, window: &mut Window| {
+                                if window.needs_redraw {
+                                    window.window().request_redraw();
+                                }
+                            });
+                        }
                     }
 
                     cx.process_visual_updates();
@@ -355,11 +484,11 @@ impl Application {
                         }
                     });
 
-                    cx.mutate_window(|cx, window: &Window| {
-                        cx.style().should_redraw(|| {
+                    for (_, window_entity) in windows.iter() {
+                        cx.mutate_window(window_entity, |_, window: &mut Window| {
                             window.window().request_redraw();
                         });
-                    });
+                    }
 
                     if let Some(idle_callback) = &on_idle {
                         cx.set_current(Entity::root());
@@ -373,38 +502,97 @@ impl Application {
                             .expect("Failed to send event");
                     }
 
-                    cx.mutate_window(|_, window: &Window| {
-                        if window.should_close {
-                            *stored_control_flow.borrow_mut() = ControlFlow::Exit;
-                        }
-                    });
-                }
-
-                winit::event::Event::RedrawRequested(_) => {
-                    if main_events {
-                        // Redraw
+                    // Un-cloak
+                    #[cfg(target_os = "windows")]
+                    if is_initially_cloaked {
+                        is_initially_cloaked = false;
                         cx.draw();
                         cx.mutate_window(|_, window: &Window| {
                             window.swap_buffers();
+                            window.set_cloak(false);
                         });
+                    }
 
-                        // Un-cloak
-                        #[cfg(target_os = "windows")]
-                        if is_initially_cloaked {
-                            is_initially_cloaked = false;
-                            cx.draw();
-                            cx.mutate_window(|_, window: &Window| {
-                                window.swap_buffers();
-                                window.set_cloak(false);
+                    let mut window_delete_list = Vec::new();
+
+                    for (window_id, window_entity) in windows.iter() {
+                        let should_close =
+                            cx.0.subwindows
+                                .get(window_entity)
+                                .map(|(_, should_close)| *should_close)
+                                .unwrap_or_default();
+                        cx.mutate_window(window_entity, |_, window: &mut Window| {
+                            if window.should_close | should_close {
+                                window_delete_list.push((*window_id, *window_entity));
+                            }
+                        });
+                    }
+
+                    for (window_id, window_entity) in window_delete_list.iter() {
+                        cx.mutate_window(window_entity, |_, window: &mut Window| {
+                            window.make_current();
+                        });
+                        cx.0.remove(*window_entity);
+                        cx.0.subwindows.remove(window_entity);
+                        windows.remove(&window_id);
+                    }
+
+                    if windows.is_empty() {
+                        *stored_control_flow.borrow_mut() = ControlFlow::Exit;
+                    }
+
+                    // for (_, window_entity) in windows.iter() {
+                    //     cx.mutate_window(window_entity, |_, window: &Window| {
+                    //         if window.should_close {
+                    //             *stored_control_flow.borrow_mut() = ControlFlow::Exit;
+                    //         }
+                    //     });
+                    // }
+                }
+
+                winit::event::Event::RedrawRequested(window_id) => {
+                    if main_events {
+                        // Redraw
+                        if let Some(window_entity) = windows.get(&window_id) {
+                            cx.mutate_window(window_entity, |cx, window: &mut Window| {
+                                if window.needs_redraw {
+                                    window.make_current();
+                                    cx.draw(*window_entity);
+                                    window.swap_buffers();
+                                    window.needs_redraw = false;
+                                }
                             });
+
+                            // cx.draw(*window_entity);
+
+                            // cx.mutate_window(window_entity, |_, window: &mut Window| {});
                         }
                     }
                 }
 
-                winit::event::Event::WindowEvent { window_id: _, event } => {
+                winit::event::Event::WindowEvent { window_id, event } => {
+                    let window_entity = windows.get(&window_id).cloned().unwrap_or(Entity::root());
+
                     match event {
                         winit::event::WindowEvent::CloseRequested => {
-                            cx.emit_origin(WindowEvent::WindowClose);
+                            if let Some(window_entity) = windows.get(&window_id) {
+                                if *window_entity == Entity::root() {
+                                    *stored_control_flow.borrow_mut() = ControlFlow::Exit;
+                                } else {
+                                    cx.mutate_window(window_entity, |_, window: &mut Window| {
+                                        window.make_current();
+                                    });
+                                    cx.0.remove(*window_entity);
+                                    cx.0.subwindows.remove(window_entity);
+                                    windows.remove(&window_id);
+                                }
+                            }
+
+                            if windows.is_empty() {
+                                *stored_control_flow.borrow_mut() = ControlFlow::Exit;
+                            }
+
+                            // cx.emit_origin(WindowEvent::WindowClose);
                         }
 
                         winit::event::WindowEvent::Focused(is_focused) => {
@@ -421,16 +609,22 @@ impl Application {
                             scale_factor,
                             new_inner_size,
                         } => {
-                            cx.set_scale_factor(scale_factor);
-                            cx.set_window_size(
-                                new_inner_size.width as f32,
-                                new_inner_size.height as f32,
-                            );
+                            if let Some(window_entity) = windows.get(&window_id) {
+                                cx.set_scale_factor(scale_factor);
+                                cx.set_window_size(
+                                    *window_entity,
+                                    new_inner_size.width as f32,
+                                    new_inner_size.height as f32,
+                                );
+                            }
                             cx.needs_refresh();
                         }
 
                         winit::event::WindowEvent::DroppedFile(path) => {
-                            cx.emit_origin(WindowEvent::Drop(DropData::File(path)));
+                            cx.emit_window_event(
+                                window_entity,
+                                WindowEvent::Drop(DropData::File(path)),
+                            );
                         }
 
                         #[allow(deprecated)]
@@ -439,6 +633,7 @@ impl Application {
                             position,
                             modifiers: _,
                         } => {
+                            active_window = window_entity;
                             // To avoid calling the hover system multiple times in one frame when multiple cursor moved
                             // events are received, instead we set a flag here and emit the MouseMove event during MainEventsCleared.
                             if !cursor_moved {
@@ -497,7 +692,7 @@ impl Application {
                                 }
                             };
 
-                            cx.emit_origin(event);
+                            cx.emit_window_event(window_entity, event);
                         }
 
                         winit::event::WindowEvent::MouseWheel { delta, phase: _, .. } => {
@@ -513,7 +708,7 @@ impl Application {
                                 }
                             };
 
-                            cx.emit_origin(out_event);
+                            cx.emit_window_event(window_entity, out_event);
                         }
 
                         winit::event::WindowEvent::KeyboardInput {
@@ -541,24 +736,28 @@ impl Application {
                                 }
                             };
 
-                            cx.emit_origin(event);
+                            cx.emit_window_event(window_entity, event);
                         }
 
                         winit::event::WindowEvent::ReceivedCharacter(character) => {
-                            cx.emit_origin(WindowEvent::CharInput(character));
+                            cx.emit_window_event(window_entity, WindowEvent::CharInput(character));
                         }
 
                         winit::event::WindowEvent::Resized(physical_size) => {
-                            cx.mutate_window(|_, window: &Window| {
-                                window.resize(physical_size);
-                            });
+                            if let Some(window_entity) = windows.get(&window_id) {
+                                cx.mutate_window(window_entity, |_, window: &mut Window| {
+                                    window.resize(physical_size);
+                                });
 
-                            cx.set_window_size(
-                                physical_size.width as f32,
-                                physical_size.height as f32,
-                            );
+                                cx.set_window_size(
+                                    *window_entity,
+                                    physical_size.width as f32,
+                                    physical_size.height as f32,
+                                );
+                            }
 
                             cx.needs_refresh();
+                            cx.emit_window_event(window_entity, WindowEvent::Redraw);
                         }
 
                         winit::event::WindowEvent::ThemeChanged(theme) => {
@@ -581,7 +780,7 @@ impl Application {
                             {
                                 inside_window = true;
                             }
-                            cx.emit_origin(WindowEvent::MouseEnter);
+                            cx.emit_window_event(window_entity, WindowEvent::MouseEnter);
                         }
 
                         winit::event::WindowEvent::CursorLeft { device_id: _ } => {
@@ -589,7 +788,7 @@ impl Application {
                             {
                                 inside_window = false;
                             }
-                            cx.emit_origin(WindowEvent::MouseLeave);
+                            cx.emit_window_event(window_entity, WindowEvent::MouseLeave);
                         }
 
                         _ => {}

@@ -45,7 +45,12 @@ impl ViziaWindow {
         };
         let dpi_factor = window_scale_factor * win_desc.user_scale_factor;
 
-        BackendContext::new(&mut cx).add_main_window(&win_desc, canvas, dpi_factor as f32);
+        BackendContext::new(&mut cx).add_main_window(
+            Entity::root(),
+            &win_desc,
+            canvas,
+            dpi_factor as f32,
+        );
 
         cx.remove_user_themes();
         if let Some(builder) = builder {

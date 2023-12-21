@@ -87,7 +87,7 @@ pub mod prelude {
     pub use super::util::{IntoCssStr, CSS};
     pub use super::view::{Canvas, Handle, View};
     pub use super::views::*;
-    pub use super::window::{DropData, WindowEvent, WindowModifiers};
+    pub use super::window::{DropData, WindowEvent};
     pub use accesskit::{Action, DefaultActionVerb, Live, Role};
     pub use vizia_derive::{Data, Lens, Model, Setter};
     pub use vizia_id::GenerationalId;

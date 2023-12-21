@@ -1,4 +1,5 @@
 use std::any::Any;
+use std::collections::HashMap;
 
 use femtovg::{renderer::OpenGl, Canvas};
 use instant::Instant;
@@ -30,13 +31,16 @@ impl<'a> BackendContext<'a> {
     }
 
     /// Helper function for mutating the state of the root window.
-    pub fn mutate_window<W: Any, F: Fn(&mut BackendContext, &W)>(&mut self, f: F) {
-        if let Some(window_event_handler) = self.0.views.remove(&Entity::root()) {
-            if let Some(window) = window_event_handler.downcast_ref::<W>() {
-                f(self, window);
+    pub fn mutate_window<W: Any, F: FnMut(&mut BackendContext, &mut W)>(
+        &mut self,
+        window_entity: &Entity,
+        mut f: F,
+    ) {
+        if let Some(mut window_event_handler) = self.0.views.remove(&window_entity) {
+            if let Some(window) = window_event_handler.downcast_mut::<W>() {
+                let t = f(self, window);
             }
-
-            self.0.views.insert(Entity::root(), window_event_handler);
+            self.0.views.insert(*window_entity, window_event_handler);
         }
     }
 
@@ -82,8 +86,38 @@ impl<'a> BackendContext<'a> {
         self.0.user_scale_factor
     }
 
+    pub fn build_subwindows<W: 'static, I: std::cmp::Eq + std::hash::Hash>(
+        &mut self,
+        windows: &mut HashMap<I, Entity>,
+        builder: impl Fn(&WindowDescription) -> (W, I, Canvas<OpenGl>),
+    ) {
+        if self.0.subwindows.len() != windows.len() {
+            for (win_entity, (win_desc, _)) in self.0.subwindows.clone() {
+                if win_entity == Entity::root() {
+                    continue;
+                }
+
+                if let Some(win) = self
+                    .0
+                    .views
+                    .get_mut(&win_entity)
+                    .and_then(|win_view| win_view.downcast_mut::<W>())
+                {
+                    let (window, win_id, canvas) = (builder)(&win_desc);
+
+                    windows.insert(win_id, win_entity);
+
+                    *win = window;
+
+                    self.add_main_window(win_entity, &win_desc, canvas, 2.0);
+                }
+            }
+        }
+    }
+
     pub fn add_main_window(
         &mut self,
+        window_entity: Entity,
         window_description: &WindowDescription,
         mut canvas: Canvas<OpenGl>,
         dpi_factor: f32,
@@ -103,23 +137,27 @@ impl<'a> BackendContext<'a> {
 
         self.0.style.dpi_factor = dpi_factor as f64;
 
-        self.0.cache.set_width(Entity::root(), physical_width);
-        self.0.cache.set_height(Entity::root(), physical_height);
+        self.0.cache.set_width(window_entity, physical_width);
+        self.0.cache.set_height(window_entity, physical_height);
 
         self.0
             .style
             .width
-            .insert(Entity::root(), Units::Pixels(window_description.inner_size.width as f32));
+            .insert(window_entity, Units::Pixels(window_description.inner_size.width as f32));
         self.0
             .style
             .height
-            .insert(Entity::root(), Units::Pixels(window_description.inner_size.height as f32));
+            .insert(window_entity, Units::Pixels(window_description.inner_size.height as f32));
 
-        self.0.style.disabled.insert(Entity::root(), false);
+        self.0.style.disabled.insert(window_entity, false);
 
         self.0.style.pseudo_classes.insert(Entity::root(), PseudoClassFlags::OVER);
+        self.0.style.position_type.insert(window_entity, PositionType::SelfDirected);
 
-        self.0.canvases.insert(Entity::root(), canvas);
+        self.0.tree.set_window(window_entity, true);
+
+        self.0.canvases.insert(window_entity, canvas);
+        self.0.style.role.insert(window_entity, Role::Window);
     }
 
     /// Returns a reference to the [`Environment`] model.
@@ -133,8 +171,8 @@ impl<'a> BackendContext<'a> {
     }
 
     /// Calls the draw system.
-    pub fn draw(&mut self) {
-        draw_system(self.0);
+    pub fn draw(&mut self, window_entity: Entity) {
+        draw_system(self.0, window_entity);
     }
 
     /// Set the current entity. This is useful in user code when you're performing black magic and
@@ -155,16 +193,22 @@ impl<'a> BackendContext<'a> {
     }
 
     /// Sets the size of the root window.
-    pub fn set_window_size(&mut self, physical_width: f32, physical_height: f32) {
-        self.0.cache.set_width(Entity::root(), physical_width);
-        self.0.cache.set_height(Entity::root(), physical_height);
+    pub fn set_window_size(
+        &mut self,
+        window_entity: Entity,
+        physical_width: f32,
+        physical_height: f32,
+    ) {
+        self.0.cache.set_width(window_entity, physical_width);
+        self.0.cache.set_height(window_entity, physical_height);
 
         let logical_width = self.0.style.physical_to_logical(physical_width);
         let logical_height = self.0.style.physical_to_logical(physical_height);
+
         self.0.window_size.width = logical_width.round() as u32;
         self.0.window_size.height = logical_height.round() as u32;
-        self.0.style.width.insert(Entity::root(), Units::Pixels(logical_width));
-        self.0.style.height.insert(Entity::root(), Units::Pixels(logical_height));
+        self.0.style.width.insert(window_entity, Units::Pixels(logical_width));
+        self.0.style.height.insert(window_entity, Units::Pixels(logical_height));
     }
 
     /// Temporarily sets the current entity, calls the provided closure, and then resets the current entity back to previous.
@@ -267,6 +311,15 @@ impl<'a> BackendContext<'a> {
             Event::new(message)
                 .target(self.0.current)
                 .origin(Entity::root())
+                .propagate(Propagation::Up),
+        );
+    }
+
+    pub fn emit_window_event<M: Send + Any>(&mut self, window_entity: Entity, message: M) {
+        self.0.event_queue.push_back(
+            Event::new(message)
+                .target(window_entity)
+                .origin(window_entity)
                 .propagate(Propagation::Up),
         );
     }

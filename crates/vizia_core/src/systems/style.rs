@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{
     events::ViewHandler,
     prelude::*,
@@ -269,7 +271,7 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context) {
     }
 }
 
-fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
+fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) -> bool {
     let mut should_relayout = false;
     let mut should_redraw = false;
 
@@ -593,6 +595,8 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
     if should_redraw {
         style.system_flags.set(SystemFlags::REDRAW, true);
     }
+
+    return should_redraw;
 }
 
 /// Compute a list of matching style rules for a given entity.
@@ -623,6 +627,8 @@ pub(crate) fn compute_matched_rules(
 // Iterates the tree and determines the matching style rules for each entity, then links the entity to the corresponding style rule data.
 pub(crate) fn style_system(cx: &mut Context) {
     if cx.style.system_flags.contains(SystemFlags::RESTYLE) {
+        let mut redraw_windows = HashSet::new();
+
         let iterator = LayoutTreeIterator::full(&cx.tree);
 
         // Restyle the entire application.
@@ -632,12 +638,27 @@ pub(crate) fn style_system(cx: &mut Context) {
             compute_matched_rules(cx, entity, &mut matched_rules);
 
             if !matched_rules.is_empty() {
-                link_style_data(
+                if link_style_data(
                     &mut cx.style,
                     entity,
                     &matched_rules.iter().map(|(rule, _)| *rule).collect::<Vec<_>>(),
-                );
+                ) {
+                    let mut window = Entity::root();
+                    for parent in entity.parent_iter(&cx.tree) {
+                        if cx.tree.is_window(parent) {
+                            window = parent;
+                            break;
+                        }
+                    }
+                    redraw_windows.insert(window);
+                }
             }
+        }
+
+        for window in redraw_windows {
+            cx.with_current(window, |cx| {
+                cx.emit(WindowEvent::Redraw);
+            })
         }
 
         cx.style.system_flags.set(SystemFlags::RESTYLE, false);

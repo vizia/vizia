@@ -11,8 +11,8 @@ use cosmic_text::{Align, Cursor, FamilyOwned, Shaping};
 use femtovg::imgref::{Img, ImgRef};
 use femtovg::rgb::RGBA8;
 use femtovg::{
-    Atlas, Canvas, DrawCommand, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource,
-    Quad, Renderer,
+    Atlas, Canvas, DrawCommand, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageInfo,
+    ImageSource, Quad, Renderer,
 };
 use fnv::FnvHashMap;
 use morphorm::Units;
@@ -45,7 +45,7 @@ pub struct TextContext {
     font_system: FontSystem,
     scale_context: ScaleContext,
     rendered_glyphs: FnvHashMap<CacheKey, Option<RenderedGlyph>>,
-    glyph_textures: Vec<FontTexture>,
+    pub(crate) glyph_textures: Vec<FontTexture>,
     buffers: HashMap<Entity, Editor>,
     bounds: SparseSet<BoundingBox>,
 }
@@ -215,9 +215,10 @@ impl TextContext {
     }
 
     /// Generate a series of canvas path operations to render the text of a particular entity.
-    pub(crate) fn fill_to_cmds<T: Renderer>(
+    pub(crate) fn fill_to_cmds(
         &mut self,
-        canvas: &mut Canvas<T>,
+        canvas: &mut Canvas<femtovg::renderer::OpenGl>,
+        window: Entity,
         entity: Entity,
         bounds: BoundingBox,
         justify: (f32, f32),
@@ -311,10 +312,17 @@ impl TextContext {
                                         ImageFlags::empty(),
                                     )
                                     .unwrap();
+                                let native_texture = canvas.get_native_texture(image_id).unwrap();
                                 let texture_index = self.glyph_textures.len();
                                 let (x, y) =
                                     atlas.add_rect(alloc_w as usize, alloc_h as usize).unwrap();
-                                self.glyph_textures.push(FontTexture { atlas, image_id });
+                                let mut h = HashMap::new();
+                                h.insert(window, image_id);
+                                self.glyph_textures.push(FontTexture {
+                                    atlas,
+                                    image_ids: h,
+                                    native_texture,
+                                });
                                 (texture_index, x, y)
                             });
 
@@ -337,14 +345,35 @@ impl TextContext {
                                 }
                             }
                         }
-                        canvas
-                            .update_image::<ImageSource>(
-                                self.glyph_textures[texture_index].image_id,
-                                ImgRef::new(&src_buf, content_w, content_h).into(),
-                                atlas_content_x as usize,
-                                atlas_content_y as usize,
-                            )
-                            .unwrap();
+
+                        let mut a =
+                            self.glyph_textures[texture_index].image_ids.get(&window).cloned();
+
+                        if a.is_none() || canvas.get_image(a.unwrap()).is_none() {
+                            a = Some(
+                                canvas
+                                    .create_image_from_native_texture(
+                                        self.glyph_textures[texture_index].native_texture,
+                                        ImageInfo::new(
+                                            ImageFlags::empty(),
+                                            TEXTURE_SIZE,
+                                            TEXTURE_SIZE,
+                                            femtovg::PixelFormat::Rgba8,
+                                        ),
+                                    )
+                                    .expect("Failed"),
+                            );
+                        }
+
+                        canvas.update_image::<ImageSource>(
+                            a.unwrap(),
+                            ImgRef::new(&src_buf, content_w, content_h).into(),
+                            atlas_content_x as usize,
+                            atlas_content_y as usize,
+                        );
+
+                        self.glyph_textures[texture_index].image_ids.insert(window, a.unwrap());
+
                         RenderedGlyph {
                             texture_index,
                             width: used_w,
@@ -360,6 +389,21 @@ impl TextContext {
                     continue;
                 };
 
+                if !self.glyph_textures[rendered.texture_index].image_ids.contains_key(&window) {
+                    let image_id = canvas
+                        .create_image_from_native_texture(
+                            self.glyph_textures[rendered.texture_index].native_texture,
+                            ImageInfo::new(
+                                ImageFlags::empty(),
+                                TEXTURE_SIZE,
+                                TEXTURE_SIZE,
+                                femtovg::PixelFormat::Rgba8,
+                            ),
+                        )
+                        .expect("Failed");
+                    self.glyph_textures[rendered.texture_index].image_ids.insert(window, image_id);
+                }
+
                 let cmd_map = if rendered.color_glyph {
                     &mut color_cmd_map
                 } else {
@@ -369,7 +413,11 @@ impl TextContext {
                 };
 
                 let cmd = cmd_map.entry(rendered.texture_index).or_insert_with(|| DrawCommand {
-                    image_id: self.glyph_textures[rendered.texture_index].image_id,
+                    image_id: self.glyph_textures[rendered.texture_index]
+                        .image_ids
+                        .get(&window)
+                        .cloned()
+                        .unwrap(),
                     quads: Vec::new(),
                 });
 
@@ -559,7 +607,8 @@ impl TextContext {
 
 pub(crate) struct FontTexture {
     atlas: Atlas,
-    image_id: ImageId,
+    pub(crate) image_ids: HashMap<Entity, ImageId>,
+    native_texture: <femtovg::renderer::OpenGl as Renderer>::NativeTexture,
 }
 
 #[derive(Copy, Clone, Debug)]

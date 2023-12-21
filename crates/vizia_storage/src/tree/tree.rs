@@ -12,6 +12,7 @@ where
     pub next_sibling: Vec<Option<I>>,
     pub prev_sibling: Vec<Option<I>>,
     pub ignored: Vec<bool>,
+    pub window: Vec<bool>,
     pub lock_focus_within: Vec<bool>,
     pub changed: bool,
     pub z_index: Vec<i32>,
@@ -29,10 +30,16 @@ where
             next_sibling: vec![None],
             prev_sibling: vec![None],
             ignored: vec![false],
+            window: vec![false],
             lock_focus_within: vec![true],
             changed: true,
             z_index: vec![0],
         }
+    }
+
+    /// Returns true if the node should be skipped by layout
+    pub fn is_window(&self, entity: I) -> bool {
+        self.window.get(entity.index()).map_or_else(|| false, |window| *window)
     }
 
     pub fn get_child_index(&self, entity: I) -> Option<usize> {
@@ -242,6 +249,7 @@ where
         self.prev_sibling[entity_index] = None;
         self.parent[entity_index] = None;
         self.ignored[entity_index] = false;
+        self.window[entity_index] = false;
         self.lock_focus_within[entity_index] = false;
 
         // Set the changed flag
@@ -467,6 +475,10 @@ where
         }
     }
 
+    pub fn set_window(&mut self, entity: I, flag: bool) {
+        self.window.get_mut(entity.index()).and_then(|window| Some(*window = flag));
+    }
+
     /// Adds an entity to the tree with the specified parent.
     pub fn add(&mut self, entity: I, parent: I) -> Result<(), TreeError> {
         if entity == I::null() || parent == I::null() {
@@ -487,6 +499,7 @@ where
             self.next_sibling.resize(entity_index + 1, None);
             self.prev_sibling.resize(entity_index + 1, None);
             self.ignored.resize(entity_index + 1, false);
+            self.window.resize(entity_index + 1, false);
             self.lock_focus_within.resize(entity_index + 1, false);
             self.z_index.resize(entity_index + 1, 0);
         }
@@ -496,6 +509,7 @@ where
         self.next_sibling[entity_index] = None;
         self.prev_sibling[entity_index] = None;
         self.ignored[entity_index] = false;
+        self.window[entity_index] = false;
         self.lock_focus_within[entity_index] = false;
         self.z_index[entity_index] = 0;
 
