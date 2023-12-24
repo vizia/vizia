@@ -281,6 +281,18 @@ fn main() {
                     },
                 ),
 
+                "Menu" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).class("tab-name").hoverable(false);
+                    },
+                    |cx| {
+                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                            menu(cx);
+                        })
+                        .class("widgets");
+                    },
+                ),
+
                 "MenuBar" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).class("tab-name").hoverable(false);

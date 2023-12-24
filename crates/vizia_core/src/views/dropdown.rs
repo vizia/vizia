@@ -132,7 +132,7 @@ impl Dropdown {
     /// #
     /// Dropdown::new(cx, |cx| Label::new(cx, "Text"), |_| {});
     /// ```
-    pub fn new<F, L, V>(cx: &mut Context, label: L, content: F) -> Handle<Self>
+    pub fn new<F, L, V>(cx: &mut Context, trigger: L, content: F) -> Handle<Self>
     where
         L: 'static + Fn(&mut Context) -> Handle<V>,
         F: 'static + Fn(&mut Context),
@@ -142,7 +142,7 @@ impl Dropdown {
             .build(cx, move |cx| {
                 PopupData::default().build(cx);
 
-                (label)(cx)
+                (trigger)(cx)
                     .class("title")
                     .role(Role::PopupButton)
                     .width(Stretch(1.0))
@@ -150,11 +150,14 @@ impl Dropdown {
                     .checked(PopupData::is_open)
                     .navigable(true)
                     .on_press(|cx| cx.emit(PopupEvent::Switch));
-
-                Popup::new(cx, PopupData::is_open, false, move |cx| {
-                    (content)(cx);
+                Binding::new(cx, PopupData::is_open, move |cx, is_open| {
+                    if is_open.get(cx) {
+                        Popup::new(cx, |cx| {
+                            (content)(cx);
+                        })
+                        .on_blur(|cx| cx.emit(PopupEvent::Close));
+                    }
                 })
-                .on_blur(|cx| cx.emit(PopupEvent::Close));
             })
             .cursor(CursorIcon::Hand)
     }

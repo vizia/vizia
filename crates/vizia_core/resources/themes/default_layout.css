@@ -276,21 +276,12 @@ combobox .title {
 dropdown popup,
 combobox popup {
     width: 100%;
+    min-width: 100%;
     height: auto;
-    top: 100%;
-    translate: 0px 4px;
 }
 
 dropdown popup list,
 combobox popup list {
-    width: 100%;
-    height: auto;
-    child-top: 4px;
-    child-bottom: 4px;
-}
-
-dropdown popup .list,
-combobox popup .list {
     width: 100%;
     height: auto;
     child-top: 4px;
@@ -306,15 +297,6 @@ combobox popup scrollview scrollbar.vertical {
 
 dropdown list label,
 combobox list label {
-    width: 100%;
-    height: 32px;
-    child-left: 6px;
-    child-top: 1s;
-    child-bottom: 1s;
-}
-
-dropdown .list label,
-combobox .list label {
     width: 100%;
     height: 32px;
     child-left: 6px;
@@ -629,15 +611,21 @@ picklist {
 popup {
     width: auto;
     height: auto;
-    display: none;
-    opacity: 0;
+    /* display: none; */
+    /* opacity: 0; */
+    position-type: self-directed;
     z-index: 100;
 }
 
-popup:checked {
+/* popup:checked {
     display: flex;
     opacity: 1;
 }
+
+popup.vis {
+    display: flex;
+    opacity: 1;
+} */
 
 popup vstack {
     height: auto;

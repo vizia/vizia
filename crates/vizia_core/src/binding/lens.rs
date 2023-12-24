@@ -20,10 +20,6 @@ pub trait Lens: 'static + Copy + std::fmt::Debug + std::hash::Hash {
     type Target;
 
     fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>>;
-
-    fn name(&self) -> Option<&'static str> {
-        None
-    }
 }
 
 /// A type returned by `Lens::view()` which contains either a reference to model data or an owned value.

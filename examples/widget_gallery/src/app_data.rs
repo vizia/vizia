@@ -52,6 +52,7 @@ impl AppData {
                 "Knob",
                 "Label",
                 "List",
+                "Menu",
                 "MenuBar",
                 "Notification",
                 "Picklist",

@@ -112,7 +112,9 @@ where
     L::Target: Data,
 {
     fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, L::Target>> {
-        self.view(cx.data().expect("Failed to get data from context"))
+        self.view(
+            cx.data().expect(&format!("Failed to get data from context for lens: {:?}", self)),
+        )
     }
 
     fn get(&self, cx: &impl DataContext) -> L::Target {

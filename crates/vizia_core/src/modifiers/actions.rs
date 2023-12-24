@@ -505,7 +505,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
             .on_over_out(|cx| cx.emit(ModalEvent::HideTooltip));
 
         s.cx.with_current(entity, |cx| {
-            (content)(cx).bind(ModalModel::tooltip_visible, |mut handle, vis| {
+            (content)(cx).class("tooltip").bind(ModalModel::tooltip_visible, |mut handle, vis| {
                 let is_visible = vis.get(&handle);
                 handle = handle.toggle_class("vis", is_visible);
 

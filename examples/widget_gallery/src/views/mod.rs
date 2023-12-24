@@ -31,6 +31,9 @@ pub use label::*;
 pub mod list;
 pub use list::*;
 
+pub mod menu;
+pub use menu::*;
+
 pub mod menu_bar;
 pub use menu_bar::*;
 

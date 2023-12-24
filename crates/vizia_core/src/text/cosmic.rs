@@ -37,7 +37,7 @@ pub struct TextConfig {
 
 impl Default for TextConfig {
     fn default() -> Self {
-        Self { hint: true, subpixel: false }
+        Self { hint: false, subpixel: false }
     }
 }
 
