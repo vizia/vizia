@@ -277,8 +277,8 @@ impl Res<String> for Localized {
         F: 'static + Clone + Fn(&mut Context, Localized),
     {
         let self2 = self.clone();
-        cx.with_current(entity, move |cx| {
-            Binding::new(cx, Environment::locale, move |cx, _| {
+        Binding::new(cx, Environment::locale, move |cx, _| {
+            cx.with_current(entity, |cx| {
                 let lenses = self2.args.values().map(|x| x.make_clone()).collect::<Vec<_>>();
                 let self3 = self2.clone();
                 let closure = closure.clone();
