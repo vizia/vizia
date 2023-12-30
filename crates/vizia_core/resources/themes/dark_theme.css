@@ -633,12 +633,13 @@ rating .icon:checked:disabled {
     color: #3c3826;
 }
 
-/* SCROLL BAR */
+/* SCROLLVIEW */
 scrollview > scrollbar {
     display: none;
 }
 
-scrollview:checked > scrollbar {
+scrollview.horizontal > scrollbar,
+scrollview.vertical > scrollbar {
     display: flex;
 }
 
@@ -653,19 +654,22 @@ scrollbar .thumb {
     transition: opacity 200ms 0s linear;
 }
 
-scrollview:checked > scrollbar:hover .thumb {
+scrollview.horizontal > scrollbar.horizontal:hover > .thumb,
+scrollview.vertical > scrollbar.vertical:hover > .thumb {
     background-color: #404040;
     opacity: 1;
     transition: opacity 200ms 0s linear;
 }
 
-scrollview:checked:active scrollbar .thumb {
+scrollview.horizontal:active > scrollbar.horizontal > .thumb,
+scrollview.vertical:active > scrollbar.vertical > .thumb {
     background-color: #404040;
     opacity: 1;
     transition: opacity 200ms 0s linear;
 }
 
-scrollview:checked > scrollbar:active .thumb {
+scrollview.horizontal > scrollbar.horizontal:active > .thumb,
+scrollview.vertical > scrollbar.vertical:active > .thumb {
     background-color: #404040;
     opacity: 1;
     transition: opacity 200ms 0s linear;
