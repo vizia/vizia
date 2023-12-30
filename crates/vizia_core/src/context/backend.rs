@@ -156,8 +156,10 @@ impl<'a> BackendContext<'a> {
 
     /// Sets the size of the root window.
     pub fn set_window_size(&mut self, physical_width: f32, physical_height: f32) {
-        self.0.cache.set_width(Entity::root(), physical_width);
-        self.0.cache.set_height(Entity::root(), physical_height);
+        self.0.cache.set_bounds(
+            Entity::root(),
+            BoundingBox::from_min_max(0.0, 0.0, physical_width, physical_height),
+        );
 
         let logical_width = self.0.style.physical_to_logical(physical_width);
         let logical_height = self.0.style.physical_to_logical(physical_height);
