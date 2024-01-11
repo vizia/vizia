@@ -868,8 +868,8 @@ scrollview > scrollbar {
     display: none;
 }
 
-scrollview.horizontal > scrollbar,
-scrollview.vertical > scrollbar {
+scrollview.h-scroll > scrollbar,
+scrollview.v-scroll > scrollbar {
     display: flex;
 }
 
@@ -884,22 +884,22 @@ scrollbar .thumb {
     transition: opacity 200ms 0s linear;
 }
 
-scrollview.horizontal > scrollbar.horizontal:hover > .thumb,
-scrollview.vertical > scrollbar.vertical:hover > .thumb {
+scrollview.h-scroll > scrollbar.h-scroll:hover > .thumb,
+scrollview.v-scroll > scrollbar.v-scroll:hover > .thumb {
     background-color: #b6b6b6;
     opacity: 1;
     transition: opacity 200ms 0s linear;
 }
 
-scrollview.horizontal:active > scrollbar.horizontal > .thumb,
-scrollview.vertical:active > scrollbar.vertical > .thumb {
+scrollview.h-scroll:active > scrollbar.h-scroll > .thumb,
+scrollview.v-scroll:active > scrollbar.v-scroll > .thumb {
     background-color: #b6b6b6;
     opacity: 1;
     transition: opacity 200ms 0s linear;
 }
 
-scrollview.horizontal > scrollbar.horizontal:active > .thumb,
-scrollview.vertical > scrollbar.vertical:active > .thumb {
+scrollview.h-scroll > scrollbar.h-scroll:active > .thumb,
+scrollview.v-scroll > scrollbar.v-scroll:active > .thumb {
     background-color: #b6b6b6;
     opacity: 1;
     transition: opacity 200ms 0s linear;

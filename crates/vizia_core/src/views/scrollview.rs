@@ -106,11 +106,11 @@ impl ScrollView {
             }
         })
         .toggle_class(
-            "horizontal",
+            "h-scroll",
             ScrollView::root.map(|data| data.container_width < data.inner_width),
         )
         .toggle_class(
-            "vertical",
+            "v-scroll",
             ScrollView::root.map(|data| data.container_height < data.inner_height),
         )
     }
