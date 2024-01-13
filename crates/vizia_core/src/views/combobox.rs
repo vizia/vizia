@@ -141,7 +141,6 @@ where
             })
             .top(Percentage(100.0))
             .translate((Pixels(0.0), Pixels(4.0)))
-            .width(Percentage(100.0))
             .height(Auto);
         })
         .bind(selected, move |handle, selected| {

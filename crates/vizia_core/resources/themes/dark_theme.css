@@ -654,22 +654,22 @@ scrollbar .thumb {
     transition: opacity 200ms 0s linear;
 }
 
-scrollview.h-scroll > scrollbar.h-scroll:hover > .thumb,
-scrollview.v-scroll > scrollbar.v-scroll:hover > .thumb {
+scrollview.h-scroll > scrollbar.horizontal:hover > .thumb,
+scrollview.v-scroll > scrollbar.vertical:hover > .thumb {
     background-color: #404040;
     opacity: 1;
     transition: opacity 200ms 0s linear;
 }
 
-scrollview.h-scroll:active > scrollbar.h-scroll > .thumb,
-scrollview.v-scroll:active > scrollbar.v-scroll > .thumb {
+scrollview.h-scroll:active > scrollbar.horizontal > .thumb,
+scrollview.v-scroll:active > scrollbar.vertical > .thumb {
     background-color: #404040;
     opacity: 1;
     transition: opacity 200ms 0s linear;
 }
 
-scrollview.h-scroll > scrollbar.h-scroll:active > .thumb,
-scrollview.v-scroll > scrollbar.v-scroll:active > .thumb {
+scrollview.h-scroll > scrollbar.horizontal:active > .thumb,
+scrollview.v-scroll > scrollbar.vertical:active > .thumb {
     background-color: #404040;
     opacity: 1;
     transition: opacity 200ms 0s linear;

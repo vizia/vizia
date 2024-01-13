@@ -26,7 +26,16 @@ fn main() {
     Application::new(|cx| {
         AppState {
             options: vec![
-                "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+                "One",
+                "Two",
+                "Three",
+                "Four",
+                "Five",
+                "Six something long",
+                "Seven",
+                "Eight",
+                "Nine",
+                "Ten",
             ],
 
             selected_option: 0,

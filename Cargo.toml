@@ -294,6 +294,11 @@ name = "menu"
 path = "examples/views/menu.rs"
 
 [[example]]
+name = "menubar"
+path = "examples/views/menubar.rs"
+
+
+[[example]]
 name = "tabview"
 path = "examples/views/tabview.rs"
 

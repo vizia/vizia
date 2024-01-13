@@ -26,7 +26,16 @@ pub fn combobox(cx: &mut Context) {
     VStack::new(cx, |cx| {
         ComboBoxState {
             options: vec![
-                "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+                "One",
+                "Two",
+                "Three",
+                "Four",
+                "Five",
+                "Six something long",
+                "Seven",
+                "Eight",
+                "Nine",
+                "Ten",
             ],
 
             selected_option: 0,
