@@ -29,7 +29,6 @@ impl MenuBar {
                     );
                 });
 
-                // MenuController { open_menu: None }.build(cx);
                 (content)(cx);
             })
             .layout_type(LayoutType::Row)
@@ -140,12 +139,14 @@ impl View for Submenu {
                     //     cx.focus();
                     // }
                     if self.open_on_hover {
+                        // Close any open submenus of the parent
                         let parent = cx.tree.get_parent(cx.current).unwrap();
                         cx.emit_custom(
                             Event::new(MenuEvent::Close)
                                 .target(parent)
                                 .propagate(Propagation::Subtree),
                         );
+                        // Open this submenu
                         cx.emit(MenuEvent::Open);
                     }
                 }
@@ -189,6 +190,14 @@ impl View for Submenu {
                 self.is_open ^= true;
                 if self.is_open {
                     cx.emit(MenuEvent::MenuIsOpen);
+                } else {
+                    // If the parent is a MenuBar then this will reset the is_open state
+                    let parent = cx.tree.get_parent(cx.current).unwrap();
+                    cx.emit_custom(
+                        Event::new(MenuEvent::CloseAll)
+                            .target(parent)
+                            .propagate(Propagation::Direct),
+                    );
                 }
                 meta.consume();
             }
