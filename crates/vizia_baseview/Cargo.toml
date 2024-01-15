@@ -12,7 +12,7 @@ vizia_core = { path = "../vizia_core" }
 vizia_input = { path = "../vizia_input" }
 vizia_id = { path = "../vizia_id" }
 
-baseview = { git = "https://github.com/RustAudio/baseview.git", rev = "f0639b787bbda506434d3f6b5c91e94ca59904c6", features = ["opengl"] }
+baseview = { git = "https://github.com/RustAudio/baseview.git", rev = "2c1b1a7b0fef1a29a5150a6a8f6fef6a0cbab8c4", features = ["opengl"] }
 raw-window-handle = "0.5.2"
 femtovg = "0.7.0"
 lazy_static = "1.4.0"

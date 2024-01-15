@@ -113,55 +113,6 @@ impl ViziaWindow {
         )
     }
 
-    /// Open a new window as if it had a parent window.
-    ///
-    /// * `app` - The Vizia application builder.
-    pub fn open_as_if_parented<F>(
-        win_desc: WindowDescription,
-        scale_policy: WindowScalePolicy,
-        app: F,
-        on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
-        ignore_default_theme: bool,
-        text_config: TextConfig,
-    ) -> WindowHandle
-    where
-        F: Fn(&mut Context),
-        F: 'static + Send,
-    {
-        let window_settings = WindowOpenOptions {
-            title: win_desc.title.clone(),
-            size: baseview::Size::new(
-                win_desc.inner_size.width as f64 * win_desc.user_scale_factor,
-                win_desc.inner_size.height as f64 * win_desc.user_scale_factor,
-            ),
-            scale: scale_policy,
-            gl_config: Some(GlConfig { vsync: false, ..GlConfig::default() }),
-        };
-
-        Window::open_as_if_parented(
-            window_settings,
-            move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-                let mut context = Context::new(win_desc.inner_size, win_desc.user_scale_factor);
-
-                context.ignore_default_theme = ignore_default_theme;
-                context.remove_user_themes();
-
-                let mut cx = BackendContext::new(&mut context);
-                cx.set_text_config(text_config);
-
-                cx.set_event_proxy(Box::new(BaseviewProxy()));
-                ViziaWindow::new(
-                    context,
-                    win_desc,
-                    scale_policy,
-                    window,
-                    Some(Box::new(app)),
-                    on_idle,
-                )
-            },
-        )
-    }
-
     /// Open a new window that blocks the current thread until the window is destroyed.
     ///
     /// * `app` - The Vizia application builder.

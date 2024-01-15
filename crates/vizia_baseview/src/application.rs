@@ -123,23 +123,6 @@ where
         )
     }
 
-    /// Open a new window as if it had a parent window.
-    ///
-    /// This function does **not** block the current thread. This is only to be
-    /// used in the context of audio plugins.
-    ///
-    /// * `app` - The Vizia application builder.
-    pub fn open_as_if_parented(self) -> WindowHandle {
-        ViziaWindow::open_as_if_parented(
-            self.window_description,
-            self.window_scale_policy,
-            self.app,
-            self.on_idle,
-            self.ignore_default_theme,
-            self.text_config,
-        )
-    }
-
     /// Takes a closure which will be called at the end of every loop of the application.
     ///
     /// The callback provides a place to run 'idle' processing and happens at the end of each loop but before drawing.
