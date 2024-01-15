@@ -149,9 +149,37 @@ where
         self.next_sibling.get(entity.index()).and_then(|&next_sibling| next_sibling)
     }
 
+    /// Returns the next layout sibling of an entity or `None` if t here isn't one.
+    pub fn get_next_layout_sibling(&self, entity: I) -> Option<I> {
+        let mut i = self.get_next_sibling(entity);
+        while let Some(next_sibling) = i {
+            if !self.is_ignored(next_sibling) {
+                return Some(next_sibling);
+            }
+
+            i = self.get_next_sibling(next_sibling);
+        }
+
+        None
+    }
+
     /// Returns the previous sibling of an entity or `None` if there isn't one.
     pub fn get_prev_sibling(&self, entity: I) -> Option<I> {
         self.prev_sibling.get(entity.index()).and_then(|&prev_sibling| prev_sibling)
+    }
+
+    /// Returns the previous layout sibling of an entity or `None` if there isn't one.
+    pub fn get_prev_layout_sibling(&self, entity: I) -> Option<I> {
+        let mut i = self.get_prev_sibling(entity);
+        while let Some(prev_sibling) = i {
+            if !self.is_ignored(prev_sibling) {
+                return Some(prev_sibling);
+            }
+
+            i = self.get_prev_sibling(prev_sibling);
+        }
+
+        None
     }
 
     /// Returns true if the entity is the first child of its parent.

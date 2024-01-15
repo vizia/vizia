@@ -61,7 +61,7 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
     }
 
     fn prev_sibling_element(&self) -> Option<Self> {
-        self.tree.get_prev_sibling(self.entity).map(|parent| Node {
+        self.tree.get_prev_layout_sibling(self.entity).map(|parent| Node {
             entity: parent,
             store: self.store,
             tree: self.tree,
@@ -70,7 +70,7 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
     }
 
     fn next_sibling_element(&self) -> Option<Self> {
-        self.tree.get_next_sibling(self.entity).map(|parent| Node {
+        self.tree.get_next_layout_sibling(self.entity).map(|parent| Node {
             entity: parent,
             store: self.store,
             tree: self.tree,
