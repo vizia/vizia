@@ -570,7 +570,7 @@ impl Context {
                         ThemeMode::DarkMode => self.add_theme(DARK_THEME),
                     }
                 }
-                AppTheme::Custom(ref theme) => self.add_theme(theme),
+                AppTheme::Custom(theme) => self.add_theme(&theme),
             }
         }
     }
