@@ -563,9 +563,14 @@ impl Context {
         self.add_theme(DEFAULT_LAYOUT);
         if !self.ignore_default_theme {
             let environment = self.data::<Environment>().expect("Failed to get environment");
-            match environment.theme.get_current_theme() {
-                ThemeMode::LightMode => self.add_theme(LIGHT_THEME),
-                ThemeMode::DarkMode => self.add_theme(DARK_THEME),
+            match environment.theme.app_theme.clone() {
+                AppTheme::System | AppTheme::BuiltIn(_) => {
+                    match environment.theme.get_current_theme().unwrap_or_default() {
+                        ThemeMode::LightMode => self.add_theme(LIGHT_THEME),
+                        ThemeMode::DarkMode => self.add_theme(DARK_THEME),
+                    }
+                }
+                AppTheme::Custom(ref theme) => self.add_theme(theme),
             }
         }
     }

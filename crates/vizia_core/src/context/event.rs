@@ -681,7 +681,9 @@ impl<'a> EventContext<'a> {
     }
 
     /// Sets the current [theme mode](ThemeMode).
-    pub fn set_theme_mode(&mut self, theme_mode: ThemeMode) {
+    ///
+    /// User should always change the theme by sending [`EnvironmentEvent::SetThemeMode`] event.
+    pub(crate) fn set_theme_mode(&mut self, theme_mode: ThemeMode) {
         if !self.ignore_default_theme {
             match theme_mode {
                 ThemeMode::LightMode => {
@@ -692,6 +694,15 @@ impl<'a> EventContext<'a> {
                     self.resource_manager.themes[1] = String::from(DARK_THEME);
                 }
             }
+        }
+    }
+
+    /// Set a custom theme as the current internal [theme mode](ThemeMode)
+    ///
+    /// User should always change the theme by sending [`EnvironmentEvent::SetThemeMode`] event.
+    pub(crate) fn set_custom_theme(&mut self, theme: String) {
+        if !self.ignore_default_theme {
+            self.resource_manager.themes[1] = theme;
         }
     }
 

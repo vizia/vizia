@@ -11,15 +11,23 @@ use instant::Duration;
 use unic_langid::LanguageIdentifier;
 use vizia_derive::Lens;
 
+use crate::{binding::Lens, context::EventContext, events::Event};
+
+/// Different internal theme modes.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum ThemeMode {
-    #[default]
     DarkMode,
+    #[default]
     LightMode,
 }
 
-use crate::{binding::Lens, context::EventContext, events::Event};
-
+/// The AppTheme enum defines different types of themes that can be used in the application.
+///
+/// This includes:
+///
+/// - `System`: Use the system theme set on the user's OS.
+/// - `BuiltIn`: Use one of the built-in Vizia theme modes.
+/// - `Custom`: Use a custom theme defined by the user.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AppTheme {
     /// System theme, if we choose this as our theme vizia
@@ -27,7 +35,8 @@ pub enum AppTheme {
     System,
     /// builtin vizia themes
     BuiltIn(ThemeMode),
-    // Custom(String),
+    /// A custom theme defined by the user to use as internal theme.
+    Custom(String),
 }
 
 #[derive(Lens)]
@@ -45,10 +54,17 @@ impl Default for Theme {
 }
 
 impl Theme {
-    pub fn get_current_theme(&self) -> ThemeMode {
+    /// Returns the current theme mode based on the configured app theme and system theme.
+    ///
+    /// If the app theme is set to [`AppTheme::System`], it will return the current system theme if available else `None`.\
+    /// If the app theme is [`AppTheme::BuiltIn`], it will return the configured built-in theme mode.\
+    /// If the app theme is [`AppTheme::Custom`], it will return `None`.
+    /// Get the current internal theme
+    pub fn get_current_theme(&self) -> Option<ThemeMode> {
         match self.app_theme {
-            AppTheme::System => self.sys_theme.unwrap_or_default(),
-            AppTheme::BuiltIn(theme) => theme,
+            AppTheme::System => Some(self.sys_theme?),
+            AppTheme::BuiltIn(theme) => Some(theme),
+            AppTheme::Custom(_) => None,
         }
     }
 }
@@ -68,7 +84,7 @@ impl Environment {
     pub fn new(cx: &mut Context) -> Self {
         let locale = sys_locale::get_locale().and_then(|l| l.parse().ok()).unwrap_or_default();
         let caret_timer = cx.add_timer(Duration::from_millis(530), None, |cx, action| {
-            if matches!(action, TimerAction::Tick(_)) {
+            if let TimerAction::Tick(_) = action {
                 cx.emit(TextEvent::ToggleCaret);
             }
         });
@@ -99,7 +115,11 @@ impl Model for Environment {
             EnvironmentEvent::SetThemeMode(theme) => {
                 self.theme.app_theme = theme.to_owned();
 
-                cx.set_theme_mode(self.theme.get_current_theme());
+                match self.theme.app_theme {
+                    AppTheme::System => cx.set_theme_mode(self.theme.sys_theme.unwrap_or_default()),
+                    AppTheme::BuiltIn(theme) => cx.set_theme_mode(theme),
+                    AppTheme::Custom(ref theme) => cx.set_custom_theme(theme.clone()),
+                }
                 cx.reload_styles().unwrap();
             }
 
@@ -109,7 +129,7 @@ impl Model for Environment {
             }
 
             EnvironmentEvent::ToggleThemeMode => {
-                let theme_mode = match self.theme.get_current_theme() {
+                let theme_mode = match self.theme.get_current_theme().unwrap_or_default() {
                     ThemeMode::DarkMode => ThemeMode::LightMode,
                     ThemeMode::LightMode => ThemeMode::DarkMode,
                 };
