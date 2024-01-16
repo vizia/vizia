@@ -460,7 +460,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 );
                 for rule in result.into_iter() {
                     for selectors in context.style.rules.iter() {
-                        if selectors.0 == rule.0 {
+                        if *selectors.0 == rule.0 {
                             debug!("{:?}", selectors.1);
                         }
                     }

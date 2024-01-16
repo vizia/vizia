@@ -61,10 +61,11 @@
 //! ```
 
 use fnv::FnvHashMap;
+use indexmap::IndexMap;
 use instant::{Duration, Instant};
 use log::warn;
 use morphorm::{LayoutType, PositionType, Units};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use vizia_id::GenerationalId;
 
@@ -160,7 +161,7 @@ pub struct Style {
     pub(crate) pending_animations: Vec<(Entity, Animation, Duration)>,
 
     // List of rules
-    pub(crate) rules: Vec<(Rule, SelectorList<Selectors>)>,
+    pub(crate) rules: IndexMap<Rule, SelectorList<Selectors>>,
 
     pub(crate) default_font: Vec<FamilyOwned>,
 
@@ -780,7 +781,7 @@ impl Style {
 
                         let selectors = style_rule.selectors;
 
-                        self.rules.push((rule_id, selectors));
+                        self.rules.insert(rule_id, selectors);
 
                         for property in style_rule.declarations.declarations {
                             match property {
