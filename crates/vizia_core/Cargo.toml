@@ -42,6 +42,7 @@ chrono = "0.4.22"
 cosmic-text = { git="https://github.com/pop-os/cosmic-text", rev="19b4d8336e34073bb51b83578d3d803c8c953787" }
 swash = "0.1.8"
 log = "0.4.19"
+indexmap = "2.1.0"
 # reqwest = { version = "0.11.9", features = ["blocking"] }
 
 [lib]

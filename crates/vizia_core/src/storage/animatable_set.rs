@@ -268,7 +268,7 @@ where
     ///
     /// Animations exist separately to inline (entity) data and shared (rule) data.
     /// Playing an aimation for a particular entity will clone the animation state to the
-    /// active animations and then link the entity to it.  
+    /// active animations and then link the entity to it.
     pub(crate) fn insert_animation(
         &mut self,
         animation: Animation,
@@ -661,6 +661,7 @@ where
                 //}
 
                 let data_index = self.inline_data.sparse[entity_index].data_index;
+
                 // Already linked
                 if !data_index.is_inline() && data_index.index() == shared_data_index.index() {
                     return false;
