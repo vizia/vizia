@@ -142,7 +142,6 @@ impl Checkbox {
             .checked(checked)
             .role(Role::CheckBox)
             .default_action_verb(DefaultActionVerb::Click)
-            .cursor(CursorIcon::Hand)
             .navigable(true)
     }
 
