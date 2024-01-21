@@ -140,6 +140,7 @@ checkbox {
     height: 20px;
     child-space: 1s;
     font-family: "tabler-icons", sans-serif;
+    cursor: hand;
 }
 
 /* CHIP */
