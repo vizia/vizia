@@ -34,7 +34,7 @@ pub fn avatar(cx: &mut Context) {
             });
         }, |cx| {Label::new(cx, r#"Avatar::new(cx, |cx|{
     Icon::new(cx, ICON_USER)
-})"#).class("code");
+});"#).class("code");
         });
 
         Label::new(cx, "Avatar content").class("header");
@@ -101,22 +101,26 @@ Avatar::new(cx, |cx|{
         DemoRegion::new(cx, |cx|{
             Avatar::new(cx, |cx|{
                 Icon::new(cx, ICON_USER);
-            }).badge(|cx| Badge::new(cx, |cx| {Icon::new(cx, ICON_CLOCK);}).class("warning"));
+            })
+            .badge(|cx| Badge::new(cx, |cx| Icon::new(cx, ICON_CLOCK)).class("warning"));
 
             Avatar::new(cx, |cx|{
                 Icon::new(cx, ICON_USER);
-            }).badge(|cx| Badge::empty(cx).class("error"));
+            })
+            .badge(|cx| Badge::empty(cx).class("error"));
 
             Avatar::new(cx, |cx|{
                 Icon::new(cx, ICON_USER);
-            }).badge(|cx| Badge::empty(cx).class("success"));
+            })
+            .badge(|cx| Badge::empty(cx).class("success"));
 
             Avatar::new(cx, |cx|{
                 Icon::new(cx, ICON_USER);
-            }).badge(|cx| Badge::new(cx, |cx| {Label::new(cx, "2");}));
+            })
+            .badge(|cx| Badge::new(cx, |cx| Label::new(cx, "2")));
         }, |cx| {Label::new(cx, r#"Avatar::new(cx, |cx|{
     Icon::new(cx, ICON_USER);
-}).badge(|cx| Badge::new(cx, |cx| {Icon::new(cx, ICON_CLOCK);}).class("warning"));
+}).badge(|cx| Badge::new(cx, |cx| Icon::new(cx, ICON_CLOCK)).class("warning"));
 
 Avatar::new(cx, |cx|{
     Icon::new(cx, ICON_USER);
@@ -128,7 +132,8 @@ Avatar::new(cx, |cx|{
 
 Avatar::new(cx, |cx|{
     Icon::new(cx, ICON_USER);
-}).badge(|cx| Badge::new(cx, |cx| {Label::new(cx, "2");}));"#).class("code");
+}).badge(|cx| Badge::new(cx, |cx| Label::new(cx, "2")));"#
+        ).class("code");
         });
 
     }).class("panel");

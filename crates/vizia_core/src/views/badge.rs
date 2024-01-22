@@ -18,11 +18,7 @@ pub struct Badge {
 }
 
 impl Badge {
-    pub fn empty(cx: &mut Context) -> Handle<Self> {
-        Self::new(cx, |_| {})
-    }
-
-    pub fn new<F>(cx: &mut Context, content: F) -> Handle<Self>
+    fn common<F>(cx: &mut Context, content: F) -> Handle<Self>
     where
         F: FnOnce(&mut Context),
     {
@@ -69,6 +65,20 @@ impl Badge {
                 handle.translate(translate);
             },
         )
+    }
+
+    pub fn empty(cx: &mut Context) -> Handle<Self> {
+        Self::common(cx, |_| {})
+    }
+
+    pub fn new<F, V>(cx: &mut Context, content: F) -> Handle<Self>
+    where
+        F: FnOnce(&mut Context) -> Handle<V>,
+        V: View,
+    {
+        Self::common(cx, |cx| {
+            (content)(cx);
+        })
     }
 }
 

@@ -1,6 +1,9 @@
 pub mod avatar;
 pub use avatar::*;
 
+pub mod badge;
+pub use badge::*;
+
 pub mod button;
 pub use button::*;
 
@@ -54,6 +57,9 @@ pub use slider::*;
 
 pub mod spinbox;
 pub use spinbox::*;
+
+pub mod stacks;
+pub use stacks::*;
 
 pub mod switch;
 pub use switch::*;

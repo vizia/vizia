@@ -117,21 +117,21 @@ FormControl::new(cx, |cx| {
             .class("paragraph");
 
         DemoRegion::new(cx, |cx|{
-            FormGroup::new(cx, "Gender", |cx|{
+            FormGroup::new(cx, "Options", |cx|{
                 FormControl::new(cx, |cx| {
                     Checkbox::new(cx, CheckboxData::check_a)
                         .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA))
-                }, "Male");
+                }, "Left");
 
                 FormControl::new(cx, |cx| {
                     Checkbox::new(cx, CheckboxData::check_b)
                         .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleB))
-                }, "Female");
+                }, "Middle");
 
                 FormControl::new(cx, |cx| {
                     Checkbox::new(cx, CheckboxData::check_c)
                         .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleC))
-                }, "Other");
+                }, "Right");
             });
         }, |cx|{
             Label::new(cx, r#"FormGroup::new(cx, "Gender", |cx|{
@@ -157,21 +157,22 @@ FormControl::new(cx, |cx| {
             .class("paragraph");
 
         DemoRegion::new(cx, |cx|{
-            FormGroup::new(cx, "Gender", |cx|{
+            FormGroup::new(cx, "Options", |cx|{
                 FormControl::new(cx, |cx| {
                     Checkbox::new(cx, CheckboxData::check_a)
                         .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA))
-                }, "Start").label_placement(FormPlacement::Start);
+                }, "Left")
+                .label_placement(FormPlacement::Start);
 
                 FormControl::new(cx, |cx| {
                     Checkbox::new(cx, CheckboxData::check_b)
                         .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleB))
-                }, "Female");
+                }, "Middle");
 
                 FormControl::new(cx, |cx| {
                     Checkbox::new(cx, CheckboxData::check_c)
                         .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleC))
-                }, "Other");
+                }, "Right");
             });
         }, |cx|{
             Label::new(cx, r#"FormGroup::new(cx, "Gender", |cx|{

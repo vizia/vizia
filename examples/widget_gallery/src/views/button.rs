@@ -39,9 +39,12 @@ pub fn button(cx: &mut Context) {
                 Label::new(
                     cx,
                     r#"Button::new(cx, |cx| Label::new(cx, "Normal"));
-Button::new(cx, |cx| Label::new(cx, "Accent")).variant(ButtonVariant::Accent);
-Button::new(cx, |cx| Label::new(cx, "Outline")).variant(ButtonVariant::Outline);
-Button::new(cx, |cx| Label::new(cx, "Text")).variant(ButtonVariant::Text);"#,
+Button::new(cx, |cx| Label::new(cx, "Accent"))
+    .variant(ButtonVariant::Accent);
+Button::new(cx, |cx| Label::new(cx, "Outline"))
+    .variant(ButtonVariant::Outline);
+Button::new(cx, |cx| Label::new(cx, "Text"))
+    .variant(ButtonVariant::Text);"#,
                 )
                 .class("code");
             },
@@ -73,26 +76,20 @@ Button::new(cx, |cx| Label::new(cx, "Text")).variant(ButtonVariant::Text);"#,
             |cx| {
                 Label::new(
                     cx,
-                    r#"Button::new(
-    cx,
-    |cx| {
-        HStack::new(cx, |cx| {
-            Icon::new(cx, ICON_TRASH);
-            Label::new(cx, "Delete");
-        })
-    },
-)
+                    r#"Button::new(cx, |cx| {
+    HStack::new(cx, |cx| {
+        Icon::new(cx, ICON_TRASH);
+        Label::new(cx, "Delete");
+    })
+})
 .class("outline");
 
-Button::new(
-    cx,
-    |cx| {
-        HStack::new(cx, |cx| {
-            Label::new(cx, "Edit");
-            Icon::new(cx, ICON_PENCIL);
-        })
-    },
-)
+Button::new(cx, |cx| {
+    HStack::new(cx, |cx| {
+        Label::new(cx, "Edit");
+        Icon::new(cx, ICON_PENCIL);
+    })
+})
 .class("accent");"#,
                 )
                 .class("code");

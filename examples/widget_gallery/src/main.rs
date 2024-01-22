@@ -137,6 +137,18 @@ fn main() {
                     },
                 ),
 
+                "Badge" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).class("tab-name").hoverable(false);
+                    },
+                    |cx| {
+                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                            badge(cx);
+                        })
+                        .class("widgets");
+                    },
+                ),
+
                 "Button" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).class("tab-name").hoverable(false);
@@ -221,13 +233,73 @@ fn main() {
                     },
                 ),
 
+                "Dialog" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).class("tab-name").hoverable(false);
+                    },
+                    |cx| {
+                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                            // dialog(cx);
+                        })
+                        .class("widgets");
+                    },
+                ),
+
+                "Divider" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).class("tab-name").hoverable(false);
+                    },
+                    |cx| {
+                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                            // divider(cx);
+                        })
+                        .class("widgets");
+                    },
+                ),
+
+                "Dropdown" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).class("tab-name").hoverable(false);
+                    },
+                    |cx| {
+                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                            // dropdown(cx);
+                        })
+                        .class("widgets");
+                    },
+                ),
+
+                "Element" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).class("tab-name").hoverable(false);
+                    },
+                    |cx| {
+                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                            // element(cx);
+                        })
+                        .class("widgets");
+                    },
+                ),
+
+                "Form" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).class("tab-name").hoverable(false);
+                    },
+                    |cx| {
+                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                            // form(cx);
+                        })
+                        .class("widgets");
+                    },
+                ),
+
                 "HStack" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // hstack(cx);
+                            hstack(cx);
                         })
                         .class("widgets");
                     },
@@ -240,6 +312,18 @@ fn main() {
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
                             icon(cx);
+                        })
+                        .class("widgets");
+                    },
+                ),
+
+                "Image" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).class("tab-name").hoverable(false);
+                    },
+                    |cx| {
+                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                            // image(cx);
                         })
                         .class("widgets");
                     },
@@ -336,6 +420,18 @@ fn main() {
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
                             // popup(cx);
+                        })
+                        .class("widgets");
+                    },
+                ),
+
+                "Progressbar" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).class("tab-name").hoverable(false);
+                    },
+                    |cx| {
+                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                            // progress(cx);
                         })
                         .class("widgets");
                     },
@@ -449,6 +545,18 @@ fn main() {
                     },
                 ),
 
+                "ToggleButton" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).class("tab-name").hoverable(false);
+                    },
+                    |cx| {
+                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                            // toggle_button(cx);
+                        })
+                        .class("widgets");
+                    },
+                ),
+
                 "Tooltip" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).class("tab-name").hoverable(false);
@@ -456,6 +564,18 @@ fn main() {
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
                             tooltip(cx);
+                        })
+                        .class("widgets");
+                    },
+                ),
+
+                "VirtualList" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).class("tab-name").hoverable(false);
+                    },
+                    |cx| {
+                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                            // virtual_list(cx);
                         })
                         .class("widgets");
                     },

@@ -21,7 +21,7 @@ pub fn label(cx: &mut Context) {
                 Label::new(cx, "Hello Vizia");
             },
             |cx| {
-                Label::new(cx, r#"Label::new(cx, "Hello Vizia");"#).class("code");
+                Label::new(cx, r#"Label::new(cx, "Hello Vizia");"#);
             },
         );
     })

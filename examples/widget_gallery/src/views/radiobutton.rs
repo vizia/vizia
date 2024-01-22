@@ -55,7 +55,6 @@ pub fn radiobutton(cx: &mut Context) {
                 RadioButton::new(cx, RadioData::option.map(|option| *option == Options::First)).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::First)));
                 RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Second)).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Second)));
                 RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Third)).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Third)));
-
             },
             |cx| {
                 Label::new(cx, r#"TODO"#).class("code");
@@ -65,8 +64,11 @@ pub fn radiobutton(cx: &mut Context) {
         Label::new(cx, "Radiobutton and label").class("header");
         Label::new(cx, "The describing modifier can be used to link a label to a particular radiobutton. Pressing on the label will then toggle the corresponding radiobutton. Alternatively, a FormControl can be used.")
         .class("paragraph");
-        HStack::new(cx, |cx|{
-            VStack::new(cx, |cx|{
+
+        DemoRegion::new(
+            cx,
+            |cx| {
+                VStack::new(cx, |cx|{
                 FormControl::new(cx, |cx| {
                     RadioButton::new(cx, RadioData::option.map(|option| *option == Options::First))
                         .on_select(|cx| cx.emit(RadioEvent::SetOption(Options::First)))
@@ -83,42 +85,37 @@ pub fn radiobutton(cx: &mut Context) {
                 }, "Third")
                 .disabled(true);
             }).class("group");
-        }).class("region");
-
-        Label::new(cx, r#"FormControl::new(cx, |cx| {
-    RadioButton::new(cx, AppData::option.map(|opt| *opt == Opt::First))
-        .on_select(|cx| cx.emit(RadioEvent::SetOption(Opt::First)))
-}, "First");
-
-FormControl::new(cx, |cx| {
-    RadioButton::new(cx, AppData::option.map(|opt| *opt == Opt::Second))
-        .on_select(|cx| cx.emit(RadioEvent::SetOption(Opt::Second)))
-}, "Second");
-
-FormControl::new(cx, |cx| {
-    RadioButton::new(cx, AppData::option.map(|opt| *opt == Opt::Third))
-        .on_select(|cx| cx.emit(RadioEvent::SetOption(Opt::Third)))
-}, "Third");"#).class("code");
+            },
+            |cx| {
+                Label::new(cx, r#"TODO"#).class("code");
+            },
+        );
 
         Label::new(cx, "Radiogroup").class("header");
-        HStack::new(cx, |cx|{
-            FormGroup::new(cx, "Options", |cx|{
-                FormControl::new(cx, |cx| {
-                    RadioButton::new(cx, RadioData::option.map(|option| *option == Options::First))
-                        .on_select(|cx: &mut EventContext<'_>| cx.emit(RadioEvent::SetOption(Options::First)))
-                }, "Male");
+        DemoRegion::new(
+            cx,
+            |cx| {
+                FormGroup::new(cx, "Gender", |cx|{
+                    FormControl::new(cx, |cx| {
+                        RadioButton::new(cx, RadioData::option.map(|option| *option == Options::First))
+                            .on_select(|cx: &mut EventContext<'_>| cx.emit(RadioEvent::SetOption(Options::First)))
+                    }, "Male");
 
-                FormControl::new(cx, |cx| {
-                    RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Second))
-                        .on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Second)))
-                }, "Female");
+                    FormControl::new(cx, |cx| {
+                        RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Second))
+                            .on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Second)))
+                    }, "Female");
 
-                FormControl::new(cx, |cx|{
-                    RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Third))
-                        .on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Third)))
-                }, "Other");
-            });
-        }).class("region");
+                    FormControl::new(cx, |cx|{
+                        RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Third))
+                            .on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Third)))
+                    }, "Other");
+                });
+            },
+            |cx| {
+                Label::new(cx, r#"TODO"#).class("code");
+            },
+        );
     })
     .class("panel");
 }

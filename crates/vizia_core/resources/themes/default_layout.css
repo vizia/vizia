@@ -95,6 +95,11 @@ button-group.vertical {
     layout-type: column;
 }
 
+button-group.vertical > button,
+button-group.vertical > toggle-button {
+    width: 1s;
+}
+
 /* TOGGLE BUTTON */
 toggle-button {
     width: auto;

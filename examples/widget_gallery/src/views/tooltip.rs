@@ -13,14 +13,16 @@ pub fn tooltip(cx: &mut Context) {
         DemoRegion::new(
             cx,
             |cx| {
-                IconButton::new(cx, ICON_TRASH).tooltip(|cx| Tooltip::new(cx, |cx|{
-                    Label::new(cx, "Delete");
-                }));
+                IconButton::new(cx, ICON_TRASH)
+                    .tooltip(|cx| Tooltip::new(cx, |cx|{
+                        Label::new(cx, "Delete");
+                    }));
             },
             |cx| {
-                Label::new(cx, r#"IconButton::new(cx, ICON_TRASH).tooltip(|cx| Tooltip::new(cx, |cx|{
-    Label::new(cx, "Delete");
-}));"#).class("code");
+                Label::new(cx, r#"IconButton::new(cx, ICON_TRASH)
+    .tooltip(|cx| Tooltip::new(cx, |cx|{
+        Label::new(cx, "Delete");
+    }));"#).class("code");
             },
         );
 

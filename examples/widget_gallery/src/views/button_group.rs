@@ -9,7 +9,7 @@ pub fn button_group(cx: &mut Context) {
         Label::new(cx, "Buttons can be grouped by wrapping them in a ButtonGroup view.")
             .class("paragraph");
 
-        Label::new(cx, "Button Group").class("header");
+        Label::new(cx, "Basic button group").class("header");
         DemoRegion::new(
             cx,
             |cx| {
@@ -32,7 +32,7 @@ pub fn button_group(cx: &mut Context) {
             },
         );
 
-        Label::new(cx, "Button Group Vertical").class("header");
+        Label::new(cx, "Vertical button group").class("header");
         DemoRegion::new(
             cx,
             |cx| {
@@ -41,6 +41,7 @@ pub fn button_group(cx: &mut Context) {
                     Button::new(cx, |cx| Label::new(cx, "Two"));
                     Button::new(cx, |cx| Label::new(cx, "Three"));
                 })
+                .width(Pixels(100.0))
                 .vertical(true);
             },
             |cx| {
@@ -50,7 +51,9 @@ pub fn button_group(cx: &mut Context) {
     Button::new(cx, |cx| Label::new(cx, "One"));
     Button::new(cx, |cx| Label::new(cx, "Two"));
     Button::new(cx, |cx| Label::new(cx, "Three"));
-}).orientation(Orientation::Vertical);"#,
+})
+.width(Pixels(100.0))
+.vertical(true);"#,
                 )
                 .class("code");
             },

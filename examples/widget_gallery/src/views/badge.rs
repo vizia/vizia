@@ -22,36 +22,10 @@ pub fn badge(cx: &mut Context) {
         DemoRegion::new(
             cx,
             |cx| {
-                Avatar::new(cx, |cx| {
-                    Icon::new(cx, ICON_USER);
-                })
-                .badge(|cx| {
-                    Badge::new(cx, |cx| {
-                        Icon::new(cx, ICON_CLOCK);
-                    })
-                    .class("warning")
-                });
+                Badge::new(cx, |cx| Label::new(cx, "5"));
             },
             |cx| {
-                Label::new(
-                    cx,
-                    r#"Avatar::new(cx, |cx|{
-    Icon::new(cx, ICON_USER);
-}).badge(|cx| Badge::new(cx, |cx| {Icon::new(cx, ICON_CLOCK);}).class("warning"));
-
-Avatar::new(cx, |cx|{
-    Icon::new(cx, ICON_USER);
-}).badge(|cx| Badge::empty(cx).class("error"));
-
-Avatar::new(cx, |cx|{
-    Icon::new(cx, ICON_USER);
-}).badge(|cx| Badge::empty(cx).class("success"));
-
-Avatar::new(cx, |cx|{
-    Icon::new(cx, ICON_USER);
-}).badge(|cx| Badge::new(cx, |cx| {Label::new(cx, "2");}));"#,
-                )
-                .class("code");
+                Label::new(cx, r#"Badge::new(cx, |cx| Label::new(cx, "5"));"#).class("code");
             },
         );
     })
