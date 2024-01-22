@@ -64,17 +64,15 @@ button {
 }
 
 button > .inner {
-    size: auto;
     child-space: 1s;
     col-between: 4px;
     min-left: 8px;
     min-right: 8px;
 }
 
-button icon.inner {
+button > icon.inner {
     min-left: 0px;
     min-right: 0px;
-    size: 32px;
 }
 
 button .inner > icon {
