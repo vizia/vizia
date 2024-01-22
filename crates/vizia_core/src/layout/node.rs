@@ -193,23 +193,31 @@ impl Node for Entity {
             }
 
             sublayout.text_context.sync_styles(*self, store);
+
             let (text_width, mut text_height) =
                 sublayout.text_context.with_buffer(*self, |fs, buffer| {
-                    buffer.set_size(fs, max_width as f32, f32::MAX);
+                    // buffer.set_size(fs, max_width as f32, f32::MAX);
+
                     let w = buffer
                         .layout_runs()
                         .filter_map(|r| (!r.line_w.is_nan()).then_some(r.line_w))
                         .max_by(|f1, f2| f1.partial_cmp(f2).unwrap())
                         .unwrap_or_default();
                     let lines = buffer.layout_runs().filter(|run| run.line_w != 0.0).count();
+
                     let h = lines as f32 * buffer.metrics().line_height;
                     (w, h)
                 });
 
+            println!("tw {} th {}", text_width, text_height);
+
             if height.is_none() {
                 text_height = sublayout.text_context.with_buffer(*self, |fs, buffer| {
                     buffer.set_size(fs, text_width, f32::MAX);
-                    let h = buffer.layout_runs().len() as f32 * buffer.metrics().line_height;
+
+                    let lines = buffer.layout_runs().filter(|run| run.line_w != 0.0).count();
+                    println!("lines: {}", lines);
+                    let h = lines as f32 * buffer.metrics().line_height;
                     h
                 });
             }
@@ -218,6 +226,7 @@ impl Node for Entity {
                 if let Some(height) = height { height } else { text_height + child_space_y };
             let width = if let Some(width) = width { width } else { text_width + child_space_x };
 
+            println!("Compute text bounds: {:?} {} {}", self, text_width, text_height);
             // Cache the text_width/ text_height in the text context so we can use it to compute transforms later
             sublayout.text_context.set_bounds(
                 *self,

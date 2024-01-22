@@ -6,7 +6,7 @@ use crate::prelude::*;
 use crate::text::{enforce_text_bounds, ensure_visible, Direction, Movement};
 use crate::views::scrollview::SCROLL_SENSITIVITY;
 use accesskit::{ActionData, ActionRequest, TextDirection, TextPosition, TextSelection};
-use cosmic_text::{Action, Cursor, Edit, Editor, FontSystem};
+use cosmic_text::{Action, Cursor, Edit, Editor, FontSystem, Selection};
 use unicode_segmentation::UnicodeSegmentation;
 use vizia_input::Code;
 use vizia_storage::TreeExt;
@@ -266,9 +266,11 @@ where
 
     fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
         let x = |_: &mut FontSystem, buf: &mut Editor| {
-            let no_selection = match (buf.cursor(), buf.select_opt()) {
-                (cursor, Some(selection)) => cursor == selection,
-                (_, None) => true,
+            let cursor = buf.cursor();
+            let selection = buf.selection();
+            let no_selection = match (buf.cursor(), buf.selection()) {
+                (cursor, Selection::Normal(selection)) => cursor == selection,
+                (_, _) => true,
             };
             buf.delete_selection();
             no_selection
@@ -296,11 +298,11 @@ where
     fn move_cursor(&mut self, cx: &mut EventContext, movement: Movement, selection: bool) {
         cx.text_context.with_editor(cx.current, |fs, buf| {
             if selection {
-                if buf.select_opt().is_none() {
-                    buf.set_select_opt(Some(buf.cursor()));
+                if buf.selection() == Selection::None {
+                    buf.set_selection(Selection::Normal(buf.cursor()));
                 }
             } else {
-                buf.set_select_opt(None);
+                buf.set_selection(Selection::None);
             }
 
             buf.action(
@@ -337,7 +339,7 @@ where
     fn select_all(&mut self, cx: &mut EventContext) {
         cx.text_context.with_editor(cx.current, |fs, buf| {
             buf.action(fs, Action::BufferStart);
-            buf.set_select_opt(Some(buf.cursor()));
+            buf.set_selection(Selection::Normal(buf.cursor()));
             buf.action(fs, Action::BufferEnd);
         });
         cx.needs_redraw();
@@ -346,7 +348,7 @@ where
     fn select_word(&mut self, cx: &mut EventContext) {
         cx.text_context.with_editor(cx.current, |fs, buf| {
             buf.action(fs, Action::PreviousWord);
-            buf.set_select_opt(Some(buf.cursor()));
+            buf.set_selection(Selection::Normal(buf.cursor()));
             buf.action(fs, Action::NextWord);
         });
         cx.needs_redraw();
@@ -355,7 +357,7 @@ where
     fn select_paragraph(&mut self, cx: &mut EventContext) {
         cx.text_context.with_editor(cx.current, |fs, buf| {
             buf.action(fs, Action::ParagraphStart);
-            buf.set_select_opt(Some(buf.cursor()));
+            buf.set_selection(Selection::Normal(buf.cursor()));
             buf.action(fs, Action::ParagraphEnd);
         });
         cx.needs_redraw();
@@ -363,7 +365,7 @@ where
 
     fn deselect(&mut self, cx: &mut EventContext) {
         cx.text_context.with_editor(cx.current, |_, buf| {
-            buf.set_select_opt(None);
+            buf.set_selection(Selection::None);
         });
         cx.needs_redraw();
     }
@@ -553,7 +555,7 @@ where
         let node_id = node.node_id();
         cx.text_context.with_editor(cx.current, |_, editor| {
             let cursor = editor.cursor();
-            let selection = editor.select_opt().unwrap_or(cursor);
+            let selection = editor.selection();
 
             let mut selection_active_line = node_id;
             let mut selection_anchor_line = node_id;
@@ -650,18 +652,18 @@ where
                 // Check if the current line contains the cursor or selection
                 // This is a mess because a line happens due to soft and hard breaks but
                 // the cursor and selected indices are relative to the lines caused by hard breaks only.
-                if line.line_i == selection.line {
-                    // A previous line index different to the current means that the current line follows a hard break
-                    if prev_line_index != line.line_i {
-                        if selection.index <= line_length {
-                            selection_anchor_line = line_node.node_id();
-                            selection_anchor_cursor = selection.index;
-                        }
-                    } else if selection.index > current_cursor {
-                        selection_anchor_line = line_node.node_id();
-                        selection_anchor_cursor = selection.index - current_cursor;
-                    }
-                }
+                // if line.line_i == selection.line {
+                //     // A previous line index different to the current means that the current line follows a hard break
+                //     if prev_line_index != line.line_i {
+                //         if selection.index <= line_length {
+                //             selection_anchor_line = line_node.node_id();
+                //             selection_anchor_cursor = selection.index;
+                //         }
+                //     } else if selection.index > current_cursor {
+                //         selection_anchor_line = line_node.node_id();
+                //         selection_anchor_cursor = selection.index - current_cursor;
+                //     }
+                // }
 
                 node.add_child(line_node);
 
@@ -756,14 +758,16 @@ where
                 cx.release();
             }
 
-            WindowEvent::MouseMove(_, _) => {
+            WindowEvent::MouseMove(x, y) => {
                 if cx.mouse.left.state == MouseButtonState::Pressed
                     && cx.mouse.left.pressed == cx.current
                 {
                     if self.edit {
                         self.reset_caret_timer(cx);
                     }
-                    cx.emit(TextEvent::Drag(cx.mouse.cursorx, cx.mouse.cursory));
+                    if cx.mouse.left.pos_down.0 != *x || cx.mouse.left.pos_down.1 != *y {
+                        cx.emit(TextEvent::Drag(cx.mouse.cursorx, cx.mouse.cursory));
+                    }
                 }
             }
 
@@ -813,6 +817,7 @@ where
 
                 Code::ArrowRight => {
                     self.reset_caret_timer(cx);
+
                     let movement = if cx.modifiers.contains(Modifiers::CTRL) {
                         Movement::Word(Direction::Right)
                     } else {
@@ -1004,13 +1009,17 @@ where
                     }
 
                     let selection_cursor = Cursor::new(selection_line_index, selection_index);
-                    editor.set_select_opt(Some(selection_cursor));
+                    editor.set_selection(Selection::Normal(selection_cursor));
 
                     // TODO: Either add a method to set the cursor by index to cosmic,
                     // or loop over an `Action` to move the cursor to the correct place.
                 });
 
                 // println!("Select some text: {:?}", selection);
+            }
+
+            WindowEvent::GeometryChanged(geo) => {
+                self.set_caret(cx);
             }
 
             _ => {}
@@ -1020,7 +1029,7 @@ where
         event.map(|text_event, _| match text_event {
             TextEvent::InsertText(text) => {
                 self.insert_text(cx, text);
-                self.set_caret(cx);
+                // self.set_caret(cx);
 
                 let text = self.clone_text(cx);
 
@@ -1053,7 +1062,7 @@ where
             TextEvent::DeleteText(movement) => {
                 if self.edit {
                     self.delete_text(cx, *movement);
-                    self.set_caret(cx);
+                    // self.set_caret(cx);
 
                     let text = self.clone_text(cx);
 
@@ -1078,7 +1087,7 @@ where
             TextEvent::MoveCursor(movement, selection) => {
                 if self.edit {
                     self.move_cursor(cx, *movement, *selection);
-                    self.set_caret(cx);
+                    // self.set_caret(cx);
                 }
             }
 
@@ -1100,7 +1109,7 @@ where
 
                     self.select_all(cx);
                     self.insert_text(cx, &text);
-                    self.set_caret(cx);
+                    // self.set_caret(cx);
 
                     if let Ok(value) = &text.parse::<L::Target>() {
                         if let Some(validate) = &self.validate {
@@ -1127,7 +1136,7 @@ where
 
                 self.select_all(cx);
                 self.insert_text(cx, &text);
-                self.set_caret(cx);
+                // self.set_caret(cx);
 
                 if let Ok(value) = &text.parse::<L::Target>() {
                     if let Some(validate) = &self.validate {
@@ -1163,27 +1172,27 @@ where
 
             TextEvent::SelectAll => {
                 self.select_all(cx);
-                self.set_caret(cx);
+                // self.set_caret(cx);
             }
 
             TextEvent::SelectWord => {
                 self.select_word(cx);
-                self.set_caret(cx);
+                // self.set_caret(cx);
             }
 
             TextEvent::SelectParagraph => {
                 self.select_paragraph(cx);
-                self.set_caret(cx);
+                // self.set_caret(cx);
             }
 
             TextEvent::Hit(posx, posy) => {
                 self.hit(cx, *posx, *posy);
-                self.set_caret(cx);
+                // self.set_caret(cx);
             }
 
             TextEvent::Drag(posx, posy) => {
                 self.drag(cx, *posx, *posy);
-                self.set_caret(cx);
+                // self.set_caret(cx);
             }
 
             TextEvent::Scroll(x, y) => {
@@ -1259,7 +1268,7 @@ where
         cx.draw_inset_box_shadows(canvas, &mut path);
         cx.draw_outline(canvas);
         canvas.save();
-        canvas.translate(self.transform.0, self.transform.1);
+        // canvas.translate(self.transform.0, self.transform.1);
         cx.draw_text_and_selection(canvas);
         canvas.restore();
     }
