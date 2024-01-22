@@ -227,10 +227,6 @@ impl TextContext {
             return Ok(vec![]);
         }
 
-        self.with_buffer(entity, |fs, buffer| {
-            buffer.set_size(fs, bounds.w, bounds.h);
-        });
-
         let buffer = self.buffers.get_mut(&entity).unwrap().buffer_mut();
 
         let mut alpha_cmd_map = FnvHashMap::default();

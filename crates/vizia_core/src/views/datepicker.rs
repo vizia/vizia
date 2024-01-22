@@ -137,19 +137,19 @@ impl Datepicker {
                 .width(Pixels(131.0))
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
                 .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementMonth));
-                // Spinbox::custom(
-                //     cx,
-                //     |cx| {
-                Textbox::new(cx, Datepicker::view_date.map(|date| date.year()))
-                    .on_edit(|ex, v| ex.emit(DatepickerEvent::SelectYear(v)))
-                    .width(Stretch(1.0));
-                //     },
-                //     SpinboxKind::Horizontal,
-                //     SpinboxIcons::PlusMinus,
-                // )
-                // .width(Stretch(1.0))
-                // .on_increment(|ex| ex.emit(DatepickerEvent::IncrementYear))
-                // .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementYear));
+                Spinbox::custom(
+                    cx,
+                    |cx| {
+                        Textbox::new(cx, Datepicker::view_date.map(|date| date.year()))
+                            .on_edit(|ex, v| ex.emit(DatepickerEvent::SelectYear(v)))
+                            .width(Stretch(1.0))
+                    },
+                    SpinboxKind::Horizontal,
+                    SpinboxIcons::PlusMinus,
+                )
+                .width(Stretch(1.0))
+                .on_increment(|ex| ex.emit(DatepickerEvent::IncrementYear))
+                .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementYear));
             })
             .class("datepicker-header");
 

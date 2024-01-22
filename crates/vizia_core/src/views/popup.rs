@@ -36,25 +36,6 @@ pub enum PopupEvent {
     Switch,
 }
 
-/// A Menu view.
-///
-/// # Example
-/// ```
-/// # use vizia_core::prelude::*;
-/// #
-/// # enum AppEvent {
-/// #     Action,
-/// # }
-/// #
-/// # let cx = &mut Context::default();
-/// #
-/// Button::new(cx, |cx| Label::new(cx, "Text"))
-///     .tooltip(|cx|{
-///         Tooltip::new(cx, |cx|{
-///             Label::new(cx, "Tooltip Text");
-///         })
-///     })
-/// ```
 #[derive(Lens)]
 pub struct Popup {
     default_placement: Placement,
@@ -64,31 +45,12 @@ pub struct Popup {
 }
 
 impl Popup {
-    /// Creates a new Menu view with the given content.
-    ///
-    /// # Example
-    /// ```
-    /// # use vizia_core::prelude::*;
-    /// #
-    /// # enum AppEvent {
-    /// #     Action,
-    /// # }
-    /// #
-    /// # let cx = &mut Context::default();
-    /// #
-    /// Button::new(cx, |cx| Label::new(cx, "Text"))
-    ///     .tooltip(|cx|{
-    ///         Tooltip::new(cx, |cx|{
-    ///             Label::new(cx, "Tooltip Text");
-    ///         })
-    ///     })
-    /// ```
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
         Self {
             placement: Placement::Bottom,
             default_placement: Placement::Bottom,
             show_arrow: true,
-            arrow_size: Length::Value(LengthValue::Px(8.0)),
+            arrow_size: Length::Value(LengthValue::Px(0.0)),
         }
         .build(cx, |cx| {
             Binding::new(cx, Popup::show_arrow, |cx, show_arrow| {
@@ -393,7 +355,6 @@ impl View for Popup {
         event.map(|window_event, _| match window_event {
             // Reposition popup if there isn't enough room for it.
             WindowEvent::GeometryChanged(_) => {
-                println!("popup geo changed");
                 let parent = cx.parent();
                 let parent_bounds = cx.cache.get_bounds(parent);
                 let bounds = cx.bounds();
@@ -411,7 +372,7 @@ impl View for Popup {
                     window_bounds.right() - (parent_bounds.right() + bounds.width() + arrow_size);
 
                 self.placement = self.default_placement;
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
+                // self.place(dist_top, dist_bottom, dist_left, dist_right);
             }
 
             _ => {}

@@ -318,7 +318,7 @@ impl<'a> DrawContext<'a> {
     );
 
     get_length_property!(
-        /// Returns the border radius for the bottom-left corner of the current view.    
+        /// Returns the border radius for the bottom-left corner of the current view.
         border_bottom_left_radius
     );
 
