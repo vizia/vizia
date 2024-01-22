@@ -5,7 +5,7 @@ use crate::style::Style;
 use cosmic_text::fontdb::Query;
 use cosmic_text::{
     fontdb::Database, Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Edit, Editor,
-    FontSystem, Metrics, SubpixelBin, Weight, Wrap,
+    FontSystem, Metrics, Weight, Wrap,
 };
 use cosmic_text::{Align, Cursor, FamilyOwned, Selection, Shaping};
 use femtovg::imgref::{Img, ImgRef};
@@ -240,7 +240,7 @@ impl TextContext {
                     (bounds.x, bounds.y + bounds.h * justify.1 - total_height * justify.1),
                     1.0,
                 );
-                let mut cache_key = physical_glyph.cache_key;
+                let cache_key = physical_glyph.cache_key;
 
                 // perform cache lookup for rendered glyph
                 let Some(rendered) = self.rendered_glyphs.entry(cache_key).or_insert_with(|| {
@@ -372,7 +372,7 @@ impl TextContext {
                 let mut q = Quad::default();
                 let it = 1.0 / TEXTURE_SIZE as f32;
                 q.x0 = (physical_glyph.x + rendered.offset_x - GLYPH_PADDING as i32) as f32;
-                q.y0 = (physical_glyph.y + run.line_y as i32
+                q.y0 = (physical_glyph.y + run.line_y.round() as i32
                     - rendered.offset_y
                     - GLYPH_PADDING as i32) as f32;
                 q.x1 = q.x0 + rendered.width as f32;
