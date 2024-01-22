@@ -207,7 +207,7 @@ impl TextContext {
             let font_size = style.font_size.get(entity).copied().map(|f| f.0).unwrap_or(16.0)
                 * style.dpi_factor as f32;
             // TODO configurable line spacing
-            buf.set_metrics(fs, Metrics::new(font_size, font_size * 1.25));
+            buf.set_metrics(fs, Metrics::new(font_size, font_size * 1.2));
             // buf.set_size(fs, 200.0, 200.0);
             // buf.shape_until_scroll(fs);
             buf.shape_until(fs, i32::MAX);
@@ -226,6 +226,10 @@ impl TextContext {
         if !self.has_buffer(entity) {
             return Ok(vec![]);
         }
+
+        self.with_buffer(entity, |fs, buffer| {
+            buffer.set_size(fs, bounds.w, bounds.h);
+        });
 
         let buffer = self.buffers.get_mut(&entity).unwrap().buffer_mut();
 
@@ -372,9 +376,8 @@ impl TextContext {
                 let mut q = Quad::default();
                 let it = 1.0 / TEXTURE_SIZE as f32;
                 q.x0 = (physical_glyph.x + rendered.offset_x - GLYPH_PADDING as i32) as f32;
-                q.y0 = (physical_glyph.y + run.line_y.round() as i32
-                    - rendered.offset_y
-                    - GLYPH_PADDING as i32) as f32;
+                q.y0 = (physical_glyph.y - rendered.offset_y - GLYPH_PADDING as i32
+                    + run.line_y.round() as i32) as f32;
                 q.x1 = q.x0 + rendered.width as f32;
                 q.y1 = q.y0 + rendered.height as f32;
 
@@ -456,12 +459,10 @@ impl TextContext {
 
             let position_y = bounds.y + bounds.h * justify.1 - total_height * justify.1;
 
-            let font_size = buffer.metrics().font_size;
             let line_height = buffer.metrics().line_height;
 
             for run in buffer.layout_runs() {
                 let line_i = run.line_i;
-                let line_y = run.line_y;
 
                 let position_x = bounds.x;
 

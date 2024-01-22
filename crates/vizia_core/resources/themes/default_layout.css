@@ -64,6 +64,7 @@ button {
 }
 
 button > .inner {
+    width: auto;
     child-space: 1s;
     col-between: 4px;
     min-left: 8px;

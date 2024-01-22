@@ -657,11 +657,6 @@ impl<'a> DrawContext<'a> {
             let mut bounds = self.bounds();
             let border_width = self.border_width();
 
-            // let mut box_x = bounds.x + border_width;
-            // let mut box_y = bounds.y + border_width;
-            // let mut box_w = bounds.w - border_width * 2.0;
-            // let mut box_h = bounds.h - border_width * 2.0;
-
             bounds = bounds.shrink(border_width);
 
             let child_left = self.child_left();
@@ -670,10 +665,10 @@ impl<'a> DrawContext<'a> {
             let child_bottom = self.child_bottom();
 
             // shrink the bounding box based on pixel values
-            let left = child_left.to_px(bounds.w, 0.0);
-            let right = child_right.to_px(bounds.w, 0.0);
-            let top = child_top.to_px(bounds.h, 0.0);
-            let bottom = child_bottom.to_px(bounds.h, 0.0);
+            let left = child_left.to_px(self.bounds().w, 0.0);
+            let right = child_right.to_px(self.bounds().w, 0.0);
+            let top = child_top.to_px(self.bounds().h, 0.0);
+            let bottom = child_bottom.to_px(self.bounds().h, 0.0);
 
             bounds = bounds.shrink_sides(left, top, right, bottom);
 
