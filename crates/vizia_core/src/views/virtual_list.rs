@@ -36,7 +36,7 @@ impl VirtualList {
             offset: 0,
             num_items,
             item_height: height,
-            visible_items: (0..10).collect::<Vec<_>>(),
+            visible_items: Vec::new(),
             scrolly: 0.0,
             scroll_to_cursor: true,
             on_change: None,
