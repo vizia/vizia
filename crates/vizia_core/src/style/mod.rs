@@ -65,7 +65,7 @@ use indexmap::IndexMap;
 use instant::{Duration, Instant};
 use log::warn;
 use morphorm::{LayoutType, PositionType, Units};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::fmt::Debug;
 use vizia_id::GenerationalId;
 
