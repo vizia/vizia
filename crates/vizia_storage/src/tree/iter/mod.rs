@@ -17,6 +17,6 @@ pub use self::{
     layout_tree_iter::{LayoutSiblingIterator, LayoutTreeIterator},
     parent_iter::{LayoutParentIterator, ParentIterator},
     tree_depth_iter::TreeDepthIterator,
-    tree_iter::TreeIterator,
+    tree_iter::{TreeBreadthIterator, TreeIterator},
     tree_tour_iter::TreeTourIterator,
 };

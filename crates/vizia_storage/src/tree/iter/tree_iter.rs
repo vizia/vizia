@@ -1,4 +1,6 @@
-use crate::{DoubleEndedTreeTour, TourDirection, TourStep, Tree};
+use std::collections::VecDeque;
+
+use crate::{DoubleEndedTreeTour, LayoutChildIterator, TourDirection, TourStep, Tree};
 use vizia_id::GenerationalId;
 
 /// Iterator for iterating through the tree in depth first preorder.
@@ -49,6 +51,48 @@ where
             TourDirection::Entering => (None, TourStep::EnterLastChild),
             TourDirection::Leaving => (Some(node), TourStep::EnterPrevSibling),
         })
+    }
+}
+
+pub struct TreeBreadthIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    tree: &'a Tree<I>,
+    queue: VecDeque<I>,
+}
+
+impl<'a, I> TreeBreadthIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    pub fn full(tree: &'a Tree<I>) -> Self {
+        Self::subtree(tree, I::root())
+    }
+
+    pub fn subtree(tree: &'a Tree<I>, root: I) -> Self {
+        let mut queue = VecDeque::new();
+        queue.push_back(root);
+        Self { tree, queue }
+    }
+}
+
+impl<'a, I> Iterator for TreeBreadthIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    type Item = I;
+    fn next(&mut self) -> Option<I> {
+        if let Some(item) = self.queue.pop_front() {
+            let mut child_iter = LayoutChildIterator::new(self.tree, item);
+            while let Some(child) = child_iter.next() {
+                self.queue.push_back(child);
+            }
+
+            return Some(item);
+        }
+
+        None
     }
 }
 
@@ -105,6 +149,26 @@ mod test {
         let backward = TreeIterator::subtree(&t, a).rev();
         assert!(forward.eq(correct.iter().cloned()));
         assert!(backward.eq(correct.iter().cloned().rev()));
+        Ok(())
+    }
+
+    #[test]
+    fn simple_forward_bfs() -> Result<(), TreeError> {
+        let mut t = Tree::new();
+        let r = Entity::root();
+        let [a, b, c, d, e] = [1, 2, 3, 4, 5].map(|i| Entity::new(i, 0));
+        t.add(a, r)?;
+        t.add(b, r)?;
+        t.add(c, a)?;
+        t.add(d, a)?;
+        t.add(e, b)?;
+        let correct = [r, a, b, c, d, e];
+        let forward = TreeBreadthIterator::full(&t);
+        // for item in forward {
+        //     println!("{}", item);
+        // }
+        assert!(forward.eq(correct.iter().cloned()));
+
         Ok(())
     }
 }

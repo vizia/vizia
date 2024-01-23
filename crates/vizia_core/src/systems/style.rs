@@ -5,7 +5,7 @@ use crate::{
 };
 use fnv::FnvHashMap;
 use vizia_id::GenerationalId;
-use vizia_storage::LayoutTreeIterator;
+use vizia_storage::TreeBreadthIterator;
 use vizia_style::{
     matches_selector_list,
     selectors::{
@@ -672,7 +672,7 @@ pub(crate) struct MatchedRulesCache {
 // Iterates the tree and determines the matching style rules for each entity, then links the entity to the corresponding style rule data.
 pub(crate) fn style_system(cx: &mut Context) {
     if cx.style.system_flags.contains(SystemFlags::RESTYLE) {
-        let iterator = LayoutTreeIterator::full(&cx.tree);
+        let iterator = TreeBreadthIterator::full(&cx.tree);
 
         let mut parent = None;
         let mut cache: Vec<MatchedRulesCache> = Vec::with_capacity(50);
@@ -680,15 +680,19 @@ pub(crate) fn style_system(cx: &mut Context) {
         // Restyle the entire application.
         // TODO: Make this incremental.
         for entity in iterator {
+            // println!("Style: {}", entity);
             let mut matched_rules = Vec::with_capacity(50);
 
             let current_parent = cx.tree.get_layout_parent(entity);
 
             let mut compute_match = true;
 
-            if current_parent == parent {
+            if current_parent == parent
+                && !cx.tree.is_first_child(entity)
+                && !cx.tree.is_last_child(entity)
+            {
                 // if has same selector look up rules
-                for entry in &cache {
+                'cache: for entry in &cache {
                     if has_same_selector(cx, entry.entity, entity) {
                         matched_rules = entry.rules.clone();
                         compute_match = false;
@@ -710,6 +714,7 @@ pub(crate) fn style_system(cx: &mut Context) {
                                             | Component::OnlyOfType => {
                                                 matched_rules.clear();
                                                 compute_match = true;
+                                                continue 'cache;
                                             }
 
                                             _ => {}
@@ -718,12 +723,18 @@ pub(crate) fn style_system(cx: &mut Context) {
                                 }
                             }
                         }
+
+                        break 'cache;
+                        // println!("Sharing: {}", entity);
                     }
                 }
             } else {
                 parent = current_parent;
                 cache.clear();
             }
+
+            // matched_rules.clear();
+            // compute_match = true;
 
             if compute_match {
                 compute_matched_rules(cx, entity, &mut matched_rules);
