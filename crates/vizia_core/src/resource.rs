@@ -5,9 +5,9 @@ use crate::entity::Entity;
 use crate::prelude::IntoCssStr;
 use crate::view::Canvas;
 use fluent_bundle::{FluentBundle, FluentResource};
+use hashbrown::{HashMap, HashSet};
 use image::GenericImageView;
 use std::borrow::Borrow;
-use std::collections::{HashMap, HashSet};
 use unic_langid::LanguageIdentifier;
 
 pub(crate) struct StoredImage {

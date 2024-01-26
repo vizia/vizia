@@ -1,11 +1,11 @@
 use std::any::{Any, TypeId};
-use std::collections::{BinaryHeap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, VecDeque};
 #[cfg(feature = "clipboard")]
 use std::error::Error;
 use std::rc::Rc;
 
 use femtovg::Transform2D;
-use hashbrown::HashMap;
+use hashbrown::{HashMap, HashSet};
 use instant::{Duration, Instant};
 use vizia_storage::{LayoutTreeIterator, TreeIterator};
 use vizia_style::{ClipPath, Filter, Scale, Translate};

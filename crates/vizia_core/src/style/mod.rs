@@ -60,12 +60,11 @@
 //! Element::new(cx).class("foo");
 //! ```
 
-use hashbrown::HashMap;
+use hashbrown::{HashMap, HashSet};
 use indexmap::IndexMap;
 use instant::{Duration, Instant};
 use log::warn;
 use morphorm::{LayoutType, PositionType, Units};
-use std::collections::HashSet;
 use std::fmt::Debug;
 use vizia_id::GenerationalId;
 
