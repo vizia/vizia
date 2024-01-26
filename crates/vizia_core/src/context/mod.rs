@@ -840,8 +840,8 @@ pub(crate) enum InternalEvent {
 pub struct LocalizationContext<'a> {
     pub(crate) current: Entity,
     pub(crate) resource_manager: &'a ResourceManager,
-    pub(crate) data: &'a FnvHashMap<Entity, ModelDataStore>,
-    pub(crate) views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    pub(crate) data: &'a HashMap<Entity, ModelDataStore>,
+    pub(crate) views: &'a HashMap<Entity, Box<dyn ViewHandler>>,
     pub(crate) tree: &'a Tree<Entity>,
 }
 
