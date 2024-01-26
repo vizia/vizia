@@ -120,7 +120,7 @@ bitflags! {
 
 impl Default for Abilities {
     fn default() -> Abilities {
-        Abilities::HOVERABLE
+        Abilities::empty()
     }
 }
 
@@ -1580,6 +1580,7 @@ impl Style {
         self.classes.insert(entity, HashSet::new());
         self.abilities.insert(entity, Abilities::default());
         self.system_flags = SystemFlags::RESTYLE | SystemFlags::RELAYOUT;
+        self.restyle.insert(entity, true);
     }
 
     // Remove style data for the given entity.
