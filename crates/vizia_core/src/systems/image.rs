@@ -2,7 +2,7 @@ use crate::context::{Context, ResourceContext};
 use crate::resource::{ImageRetentionPolicy, StoredImage};
 use crate::style::ImageOrGradient;
 use crate::{prelude::*, resource::ImageOrId};
-use std::collections::HashSet;
+use hashbrown::HashSet;
 use vizia_id::GenerationalId;
 
 // Iterate the tree and load any images used by entities which aren't already loaded. Remove any images no longer being used.
