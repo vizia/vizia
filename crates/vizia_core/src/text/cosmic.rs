@@ -14,10 +14,9 @@ use femtovg::{
     Atlas, Canvas, DrawCommand, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource,
     Quad, Renderer,
 };
-use fnv::FnvHashMap;
+use hashbrown::HashMap;
 use morphorm::Units;
 use std::cmp::Ordering;
-use std::collections::HashMap;
 use swash::scale::image::Content;
 use swash::scale::{Render, ScaleContext, Source, StrikeWith};
 use swash::zeno::{Format, Vector};
@@ -44,7 +43,7 @@ impl Default for TextConfig {
 pub struct TextContext {
     font_system: FontSystem,
     scale_context: ScaleContext,
-    rendered_glyphs: FnvHashMap<CacheKey, Option<RenderedGlyph>>,
+    rendered_glyphs: HashMap<CacheKey, Option<RenderedGlyph>>,
     glyph_textures: Vec<FontTexture>,
     buffers: HashMap<Entity, Editor>,
     bounds: SparseSet<BoundingBox>,
@@ -229,8 +228,8 @@ impl TextContext {
 
         let buffer = self.buffers.get_mut(&entity).unwrap().buffer_mut();
 
-        let mut alpha_cmd_map = FnvHashMap::default();
-        let mut color_cmd_map = FnvHashMap::default();
+        let mut alpha_cmd_map = HashMap::new();
+        let mut color_cmd_map = HashMap::new();
 
         let total_height = buffer.layout_runs().len() as f32 * buffer.metrics().line_height;
         for run in buffer.layout_runs() {
@@ -365,7 +364,7 @@ impl TextContext {
                 } else {
                     alpha_cmd_map
                         .entry(glyph.color_opt.unwrap_or(FontColor::rgb(0, 0, 0)))
-                        .or_insert_with(FnvHashMap::default)
+                        .or_insert_with(HashMap::default)
                 };
 
                 let cmd = cmd_map.entry(rendered.texture_index).or_insert_with(|| DrawCommand {
@@ -549,7 +548,7 @@ impl TextContext {
         Self {
             font_system: FontSystem::new_with_locale_and_db(locale, font_db),
             scale_context: Default::default(),
-            rendered_glyphs: FnvHashMap::default(),
+            rendered_glyphs: HashMap::default(),
             glyph_textures: vec![],
             buffers: HashMap::new(),
             bounds: SparseSet::new(),

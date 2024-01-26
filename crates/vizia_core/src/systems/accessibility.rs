@@ -6,7 +6,7 @@ use crate::{
     style::{Abilities, PseudoClassFlags},
 };
 use accesskit::{CheckedState, NodeBuilder, Rect, TreeUpdate};
-use fnv::FnvHashMap;
+use hashbrown::HashMap;
 use vizia_storage::LayoutTreeIterator;
 
 /// Updates node properties from view properties
@@ -67,7 +67,7 @@ pub(crate) fn accessibility_system(cx: &mut Context) {
 
 pub(crate) fn get_access_node(
     cx: &mut AccessContext,
-    views: &mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    views: &mut HashMap<Entity, Box<dyn ViewHandler>>,
     entity: Entity,
 ) -> Option<AccessNode> {
     let mut node_builder = NodeBuilder::default();

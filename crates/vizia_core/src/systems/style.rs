@@ -3,7 +3,7 @@ use crate::{
     prelude::*,
     style::{PseudoClassFlags, Rule, Style, SystemFlags},
 };
-use fnv::FnvHashMap;
+use hashbrown::HashMap;
 use vizia_id::GenerationalId;
 use vizia_storage::TreeBreadthIterator;
 use vizia_style::{
@@ -23,7 +23,7 @@ pub(crate) struct Node<'s, 't, 'v> {
     entity: Entity,
     store: &'s Style,
     tree: &'t Tree<Entity>,
-    views: &'v FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    views: &'v HashMap<Entity, Box<dyn ViewHandler>>,
 }
 
 impl<'s, 't, 'v> std::fmt::Debug for Node<'s, 't, 'v> {

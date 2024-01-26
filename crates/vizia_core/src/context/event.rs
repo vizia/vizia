@@ -1,13 +1,13 @@
 use std::any::{Any, TypeId};
-use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, HashSet, VecDeque};
 #[cfg(feature = "clipboard")]
 use std::error::Error;
 use std::rc::Rc;
 
 use femtovg::Transform2D;
-use fnv::FnvHashMap;
+use hashbrown::HashMap;
 use instant::{Duration, Instant};
-use vizia_storage::TreeIterator;
+use vizia_storage::{LayoutTreeIterator, TreeIterator};
 use vizia_style::{ClipPath, Filter, Scale, Translate};
 
 use crate::animation::{AnimId, Interpolator};
@@ -72,8 +72,8 @@ pub struct EventContext<'a> {
     pub(crate) entity_identifiers: &'a HashMap<String, Entity>,
     pub cache: &'a mut CachedData,
     pub(crate) tree: &'a Tree<Entity>,
-    pub(crate) data: &'a mut FnvHashMap<Entity, ModelDataStore>,
-    pub(crate) views: &'a mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    pub(crate) data: &'a mut HashMap<Entity, ModelDataStore>,
+    pub(crate) views: &'a mut HashMap<Entity, Box<dyn ViewHandler>>,
     pub(crate) listeners:
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub(crate) resource_manager: &'a mut ResourceManager,
@@ -707,6 +707,11 @@ impl<'a> EventContext<'a> {
     }
 
     pub fn needs_restyle(&mut self) {
+        self.style.restyle.insert(self.current, true);
+        let iter = LayoutTreeIterator::subtree(self.tree, self.current);
+        for descendant in iter {
+            self.style.restyle.insert(descendant, true);
+        }
         self.style.needs_restyle();
     }
 

@@ -72,7 +72,7 @@
 use crate::prelude::*;
 use fluent_bundle::FluentArgs;
 use fluent_bundle::FluentValue;
-use std::collections::HashMap;
+use hashbrown::HashMap;
 use std::rc::Rc;
 
 pub(crate) trait FluentStore {

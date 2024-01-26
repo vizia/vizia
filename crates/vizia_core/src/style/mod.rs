@@ -60,7 +60,7 @@
 //! Element::new(cx).class("foo");
 //! ```
 
-use fnv::FnvHashMap;
+use hashbrown::HashMap;
 use indexmap::IndexMap;
 use instant::{Duration, Instant};
 use log::warn;
@@ -156,7 +156,7 @@ pub struct Style {
 
     // Creates and destroys animation ids
     pub(crate) animation_manager: IdManager<Animation>,
-    pub(crate) animations: FnvHashMap<String, Animation>,
+    pub(crate) animations: HashMap<String, Animation>,
     // List of animations to be started on the next frame
     pub(crate) pending_animations: Vec<(Entity, Animation, Duration)>,
 
@@ -302,6 +302,9 @@ pub struct Style {
     pub(crate) max_bottom: AnimatableSet<Units>,
 
     pub(crate) system_flags: SystemFlags,
+
+    // TODO: Probably swap this out for a bloom filter
+    pub(crate) restyle: SparseSet<bool>,
 
     // TODO: When we can do incremental updates on a per entity basis, change this to a bitflag
     // for layout, text layout, rendering, etc. to replace the above `needs_` members.

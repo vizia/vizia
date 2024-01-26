@@ -2,7 +2,7 @@ use cosmic_text::FamilyOwned;
 use femtovg::{ImageId, Transform2D};
 use std::any::{Any, TypeId};
 
-use fnv::FnvHashMap;
+use hashbrown::HashMap;
 use morphorm::Units;
 
 use crate::animation::Interpolator;
@@ -55,8 +55,8 @@ pub struct DrawContext<'a> {
     pub(crate) style: &'a Style,
     pub(crate) cache: &'a mut CachedData,
     pub(crate) tree: &'a Tree<Entity>,
-    pub(crate) data: &'a FnvHashMap<Entity, ModelDataStore>,
-    pub(crate) views: &'a mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    pub(crate) data: &'a HashMap<Entity, ModelDataStore>,
+    pub(crate) views: &'a mut HashMap<Entity, Box<dyn ViewHandler>>,
     pub(crate) resource_manager: &'a ResourceManager,
     pub(crate) text_context: &'a mut TextContext,
     pub(crate) text_config: &'a TextConfig,

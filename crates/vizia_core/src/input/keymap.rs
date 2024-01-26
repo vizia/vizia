@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use std::collections::HashMap;
+use hashbrown::HashMap;
 
 /// A keymap that associates key chords with actions.
 ///

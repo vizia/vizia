@@ -1,5 +1,6 @@
+use hashbrown::HashMap;
 use std::any::TypeId;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use crate::binding::{get_storeid, BasicStore, Store, StoreId};
 use crate::context::{CURRENT, MAPS, MAP_MANAGER};
