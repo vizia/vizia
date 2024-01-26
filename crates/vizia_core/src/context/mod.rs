@@ -13,7 +13,7 @@ use log::debug;
 use std::any::{Any, TypeId};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
-use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, HashSet, VecDeque};
 use std::rc::Rc;
 use std::sync::Mutex;
 use vizia_id::IdManager;
@@ -23,7 +23,7 @@ use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
 use cosmic_text::{fontdb::Database, FamilyOwned};
-use fnv::FnvHashMap;
+use hashbrown::HashMap;
 
 use unic_langid::LanguageIdentifier;
 
@@ -47,16 +47,16 @@ use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredIm
 use crate::style::{PseudoClassFlags, Style};
 use crate::text::{TextConfig, TextContext};
 use vizia_input::{Modifiers, MouseState};
-use vizia_storage::ChildIterator;
 use vizia_storage::TreeExt;
+use vizia_storage::{ChildIterator, LayoutTreeIterator};
 
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
 static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css");
 
-type Views = FnvHashMap<Entity, Box<dyn ViewHandler>>;
-type Models = FnvHashMap<Entity, ModelDataStore>;
-type Bindings = FnvHashMap<Entity, Box<dyn BindingHandler>>;
+type Views = HashMap<Entity, Box<dyn ViewHandler>>;
+type Models = HashMap<Entity, ModelDataStore>;
+type Bindings = HashMap<Entity, Box<dyn BindingHandler>>;
 
 thread_local! {
     pub static MAP_MANAGER: RefCell<IdManager<MapId>> = RefCell::new(IdManager::new());
@@ -162,9 +162,9 @@ impl Context {
             entity_identifiers: HashMap::new(),
             tree: Tree::new(),
             current: Entity::root(),
-            views: FnvHashMap::default(),
-            data: FnvHashMap::default(),
-            bindings: FnvHashMap::default(),
+            views: HashMap::default(),
+            data: HashMap::default(),
+            bindings: HashMap::default(),
             style: Style::default(),
             cache,
             canvases: HashMap::new(),
@@ -292,6 +292,11 @@ impl Context {
 
     /// Mark the application as needing to recompute view styles
     pub fn needs_restyle(&mut self) {
+        self.style.restyle.insert(self.current, true);
+        let iter = LayoutTreeIterator::subtree(&self.tree, self.current);
+        for descendant in iter {
+            self.style.restyle.insert(descendant, true);
+        }
         self.style.needs_restyle();
     }
 
