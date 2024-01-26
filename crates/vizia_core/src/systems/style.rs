@@ -672,7 +672,7 @@ pub(crate) struct MatchedRulesCache {
 // Iterates the tree and determines the matching style rules for each entity, then links the entity to the corresponding style rule data.
 pub(crate) fn style_system(cx: &mut Context) {
     if cx.style.system_flags.contains(SystemFlags::RESTYLE) {
-        println!("RESTYLE");
+        // println!("RESTYLE");
         let iterator = TreeBreadthIterator::full(&cx.tree);
 
         let mut parent = None;
@@ -688,7 +688,7 @@ pub(crate) fn style_system(cx: &mut Context) {
 
             cx.style.restyle.insert(entity, false);
 
-            println!("Style: {}", entity);
+            // println!("Style: {}", entity);
             let mut matched_rules = Vec::with_capacity(50);
 
             let current_parent = cx.tree.get_layout_parent(entity);

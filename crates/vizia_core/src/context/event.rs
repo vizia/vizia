@@ -708,7 +708,12 @@ impl<'a> EventContext<'a> {
 
     pub fn needs_restyle(&mut self) {
         self.style.restyle.insert(self.current, true);
-        let iter = LayoutTreeIterator::subtree(self.tree, self.current);
+        let iter = if let Some(parent) = self.tree.get_layout_parent(self.current) {
+            LayoutTreeIterator::subtree(self.tree, parent)
+        } else {
+            LayoutTreeIterator::subtree(self.tree, self.current)
+        };
+
         for descendant in iter {
             self.style.restyle.insert(descendant, true);
         }

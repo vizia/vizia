@@ -537,10 +537,12 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
         self
     }
 
-    fn on_press<F>(self, action: F) -> Self
+    fn on_press<F>(mut self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
+        self = self.hoverable(true);
+
         if let Some(view) = self
             .cx
             .views

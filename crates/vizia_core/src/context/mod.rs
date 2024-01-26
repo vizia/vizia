@@ -291,9 +291,14 @@ impl Context {
     }
 
     /// Mark the application as needing to recompute view styles
-    pub fn needs_restyle(&mut self) {
-        self.style.restyle.insert(self.current, true);
-        let iter = LayoutTreeIterator::subtree(&self.tree, self.current);
+    pub fn needs_restyle(&mut self, entity: Entity) {
+        self.style.restyle.insert(entity, true);
+        let iter = if let Some(parent) = self.tree.get_layout_parent(entity) {
+            LayoutTreeIterator::subtree(&self.tree, parent)
+        } else {
+            LayoutTreeIterator::subtree(&self.tree, entity)
+        };
+
         for descendant in iter {
             self.style.restyle.insert(descendant, true);
         }
