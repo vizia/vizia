@@ -1,4 +1,4 @@
-use crate::modifiers::{ModalEvent, ModalModel};
+use crate::modifiers::ModalEvent;
 use crate::{icons::ICON_CHEVRON_RIGHT, prelude::*};
 
 #[derive(Lens)]

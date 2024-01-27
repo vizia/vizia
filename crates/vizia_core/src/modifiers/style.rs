@@ -106,8 +106,8 @@ pub trait StyleModifiers: internal::Modifiable {
                 if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
                     pseudo_classes.set(PseudoClassFlags::CHECKED, val);
                 }
+                cx.needs_restyle(cx.current);
             });
-            cx.needs_restyle(entity);
         });
 
         self
@@ -128,8 +128,9 @@ pub trait StyleModifiers: internal::Modifiable {
                 if val {
                     cx.focus();
                 }
+
+                cx.needs_restyle(cx.current);
             });
-            cx.needs_restyle(entity);
         });
 
         self
@@ -145,7 +146,7 @@ pub trait StyleModifiers: internal::Modifiable {
                     pseudo_classes.set(PseudoClassFlags::READ_ONLY, val);
                 }
 
-                cx.needs_restyle(entity);
+                cx.needs_restyle(cx.current);
             });
         });
 
@@ -162,7 +163,7 @@ pub trait StyleModifiers: internal::Modifiable {
                     pseudo_classes.set(PseudoClassFlags::READ_WRITE, val);
                 }
 
-                cx.needs_restyle(entity);
+                cx.needs_restyle(cx.current);
             });
         });
 
