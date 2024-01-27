@@ -266,8 +266,6 @@ where
 
     fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
         let x = |_: &mut FontSystem, buf: &mut Editor| {
-            let cursor = buf.cursor();
-            let selection = buf.selection();
             let no_selection = match (buf.cursor(), buf.selection()) {
                 (cursor, Selection::Normal(selection)) => cursor == selection,
                 (_, _) => true,
@@ -555,12 +553,11 @@ where
         let node_id = node.node_id();
         cx.text_context.with_editor(cx.current, |_, editor| {
             let cursor = editor.cursor();
-            let selection = editor.selection();
 
             let mut selection_active_line = node_id;
-            let mut selection_anchor_line = node_id;
+            let selection_anchor_line = node_id;
             let mut selection_active_cursor = 0;
-            let mut selection_anchor_cursor = 0;
+            let selection_anchor_cursor = 0;
 
             let mut current_cursor = 0;
             let mut prev_line_index = std::usize::MAX;
@@ -1018,7 +1015,7 @@ where
                 // println!("Select some text: {:?}", selection);
             }
 
-            WindowEvent::GeometryChanged(geo) => {
+            WindowEvent::GeometryChanged(_) => {
                 self.set_caret(cx);
             }
 

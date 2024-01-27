@@ -95,5 +95,3 @@ macro_rules! impl_generational_id {
         }
     };
 }
-
-pub use impl_generational_id;

@@ -1,6 +1,5 @@
 use crate::prelude::*;
 
-use crate::context::TreeProps;
 use crate::vg;
 
 #[derive(Debug, Default, Data, Lens, Clone)]
@@ -111,7 +110,7 @@ impl Popup {
                 handle.translate(translate);
             });
         })
-        .on_build(|ex| {
+        .on_build(|_ex| {
             // ex.add_listener(move |menu: &mut Menu, cx, event| {
             //     let flag = ModalModel::menu_visible.get(cx);
             //     event.map(|window_event, meta| match window_event {
@@ -351,27 +350,27 @@ impl View for Popup {
         Some("popup")
     }
 
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _| match window_event {
             // Reposition popup if there isn't enough room for it.
             WindowEvent::GeometryChanged(_) => {
-                let parent = cx.parent();
-                let parent_bounds = cx.cache.get_bounds(parent);
-                let bounds = cx.bounds();
-                let window_bounds = cx.cache.get_bounds(Entity::root());
+                // let parent = cx.parent();
+                // let parent_bounds = cx.cache.get_bounds(parent);
+                // let bounds = cx.bounds();
+                // let window_bounds = cx.cache.get_bounds(Entity::root());
 
-                let arrow_size = self.arrow_size.to_px().unwrap();
+                // let arrow_size = self.arrow_size.to_px().unwrap();
 
-                let dist_bottom = window_bounds.bottom()
-                    - (parent_bounds.bottom() + bounds.height() + arrow_size);
-                let dist_top =
-                    (parent_bounds.top() - bounds.height() - arrow_size) - window_bounds.top();
-                let dist_left =
-                    (parent_bounds.left() - bounds.width() - arrow_size) - window_bounds.left();
-                let dist_right =
-                    window_bounds.right() - (parent_bounds.right() + bounds.width() + arrow_size);
+                // let dist_bottom = window_bounds.bottom()
+                //     - (parent_bounds.bottom() + bounds.height() + arrow_size);
+                // let dist_top =
+                //     (parent_bounds.top() - bounds.height() - arrow_size) - window_bounds.top();
+                // let dist_left =
+                //     (parent_bounds.left() - bounds.width() - arrow_size) - window_bounds.left();
+                // let dist_right =
+                //     window_bounds.right() - (parent_bounds.right() + bounds.width() + arrow_size);
 
-                self.placement = self.default_placement;
+                // self.placement = self.default_placement;
                 // self.place(dist_top, dist_bottom, dist_left, dist_right);
             }
 
@@ -428,7 +427,7 @@ impl<'a> Handle<'a, Popup> {
     {
         let focus_event = Box::new(f);
         self.cx.with_current(self.entity, |cx| {
-            cx.add_listener(move |popup: &mut Popup, cx, event| {
+            cx.add_listener(move |_popup: &mut Popup, cx, event| {
                 // let flag: bool = popup.lens.get(cx).into();
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::PressDown { mouse: _ } => {

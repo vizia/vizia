@@ -27,7 +27,7 @@ impl Cache for CachedData {
             .geo_changed
             .get(*node)
             .copied()
-            .expect(&format!("Failed to get geo changed for: {}", node));
+            .unwrap_or_else(|| panic!("Failed to get geo changed for: {}", node));
         if let Some(bounds) = self.bounds.get_mut(*node) {
             if bounds.w != width {
                 geo_changed.set(GeoChanged::WIDTH_CHANGED, true);

@@ -231,8 +231,7 @@ impl Node for Entity {
                     buffer.set_size(fs, text_width, f32::MAX);
 
                     let lines = buffer.layout_runs().count();
-                    let h = lines as f32 * buffer.metrics().line_height;
-                    h
+                    lines as f32 * buffer.metrics().line_height
                 });
             }
 

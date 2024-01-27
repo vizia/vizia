@@ -84,8 +84,8 @@ where
     type Item = I;
     fn next(&mut self) -> Option<I> {
         if let Some(item) = self.queue.pop_front() {
-            let mut child_iter = LayoutChildIterator::new(self.tree, item);
-            while let Some(child) = child_iter.next() {
+            let child_iter = LayoutChildIterator::new(self.tree, item);
+            for child in child_iter {
                 self.queue.push_back(child);
             }
 

@@ -28,16 +28,10 @@ const GLYPH_PADDING: u32 = 1;
 const GLYPH_MARGIN: u32 = 1;
 const TEXTURE_SIZE: usize = 512;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct TextConfig {
     pub hint: bool,
     pub subpixel: bool,
-}
-
-impl Default for TextConfig {
-    fn default() -> Self {
-        Self { hint: false, subpixel: false }
-    }
 }
 
 pub struct TextContext {
