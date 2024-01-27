@@ -1,8 +1,6 @@
 use crate::{binding::StoreId, model::ModelOrView, prelude::*};
-use std::{
-    any::TypeId,
-    collections::{HashMap, HashSet},
-};
+use hashbrown::{HashMap, HashSet};
+use std::any::TypeId;
 
 pub(crate) fn binding_system(cx: &mut Context) {
     let mut observers: HashMap<Entity, (Entity, Option<TypeId>, StoreId)> = HashMap::new();
