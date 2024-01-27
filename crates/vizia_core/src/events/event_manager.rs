@@ -234,6 +234,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                     if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.triggered) {
                         if !disabled {
                             pseudo_classes.set(PseudoClassFlags::ACTIVE, true);
+                            cx.needs_restyle(cx.triggered);
                         }
                     }
                     let focusable = cx
