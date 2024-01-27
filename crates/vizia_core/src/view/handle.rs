@@ -154,7 +154,7 @@ impl<'a, V> Handle<'a, V> {
 
     /// Marks the view as needing a restyle.
     pub fn needs_restyle(&mut self) {
-        self.cx.needs_restyle();
+        self.cx.needs_restyle(self.entity);
     }
 
     /// Marks the view as needing a redraw.

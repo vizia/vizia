@@ -1,11 +1,11 @@
 use std::any::{Any, TypeId};
-use std::collections::{BinaryHeap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, VecDeque};
 #[cfg(feature = "clipboard")]
 use std::error::Error;
 use std::rc::Rc;
 
 use femtovg::Transform2D;
-use hashbrown::HashMap;
+use hashbrown::{HashMap, HashSet};
 use instant::{Duration, Instant};
 use vizia_storage::{LayoutTreeIterator, TreeIterator};
 use vizia_style::{ClipPath, Filter, Scale, Translate};
@@ -708,7 +708,12 @@ impl<'a> EventContext<'a> {
 
     pub fn needs_restyle(&mut self) {
         self.style.restyle.insert(self.current, true);
-        let iter = LayoutTreeIterator::subtree(self.tree, self.current);
+        let iter = if let Some(parent) = self.tree.get_layout_parent(self.current) {
+            LayoutTreeIterator::subtree(self.tree, parent)
+        } else {
+            LayoutTreeIterator::subtree(self.tree, self.current)
+        };
+
         for descendant in iter {
             self.style.restyle.insert(descendant, true);
         }

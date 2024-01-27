@@ -12,8 +12,7 @@ use instant::{Duration, Instant};
 use log::debug;
 use std::any::{Any, TypeId};
 use std::cell::RefCell;
-use std::collections::hash_map::Entry;
-use std::collections::{BinaryHeap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, VecDeque};
 use std::rc::Rc;
 use std::sync::Mutex;
 use vizia_id::IdManager;
@@ -23,7 +22,7 @@ use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
 use cosmic_text::{fontdb::Database, FamilyOwned};
-use hashbrown::HashMap;
+use hashbrown::{hash_map::Entry, HashMap, HashSet};
 
 use unic_langid::LanguageIdentifier;
 
@@ -291,9 +290,14 @@ impl Context {
     }
 
     /// Mark the application as needing to recompute view styles
-    pub fn needs_restyle(&mut self) {
-        self.style.restyle.insert(self.current, true);
-        let iter = LayoutTreeIterator::subtree(&self.tree, self.current);
+    pub fn needs_restyle(&mut self, entity: Entity) {
+        self.style.restyle.insert(entity, true);
+        let iter = if let Some(parent) = self.tree.get_layout_parent(entity) {
+            LayoutTreeIterator::subtree(&self.tree, parent)
+        } else {
+            LayoutTreeIterator::subtree(&self.tree, entity)
+        };
+
         for descendant in iter {
             self.style.restyle.insert(descendant, true);
         }

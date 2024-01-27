@@ -1,4 +1,4 @@
-use std::collections::{hash_map::Entry, HashSet};
+use hashbrown::{hash_map::Entry, HashSet};
 
 use vizia_storage::Tree;
 

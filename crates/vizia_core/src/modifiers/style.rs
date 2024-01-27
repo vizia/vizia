@@ -31,7 +31,7 @@ pub trait StyleModifiers: internal::Modifiable {
         let id = id.into();
         let entity = self.entity();
         self.context().style.ids.insert(entity, id.clone());
-        self.context().needs_restyle();
+        self.context().needs_restyle(entity);
 
         self.context().entity_identifiers.insert(id, entity);
 
@@ -60,7 +60,7 @@ pub trait StyleModifiers: internal::Modifiable {
             class_list.insert(name.to_string());
         }
 
-        self.context().needs_restyle();
+        self.context().needs_restyle(entity);
 
         self
     }
@@ -81,7 +81,7 @@ pub trait StyleModifiers: internal::Modifiable {
                     }
                 }
 
-                cx.needs_restyle();
+                cx.needs_restyle(entity);
             });
         });
 
@@ -106,8 +106,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
                     pseudo_classes.set(PseudoClassFlags::CHECKED, val);
                 }
-
-                cx.needs_restyle();
+                cx.needs_restyle(cx.current);
             });
         });
 
@@ -130,7 +129,7 @@ pub trait StyleModifiers: internal::Modifiable {
                     cx.focus();
                 }
 
-                cx.needs_restyle();
+                cx.needs_restyle(cx.current);
             });
         });
 
@@ -147,7 +146,7 @@ pub trait StyleModifiers: internal::Modifiable {
                     pseudo_classes.set(PseudoClassFlags::READ_ONLY, val);
                 }
 
-                cx.needs_restyle();
+                cx.needs_restyle(cx.current);
             });
         });
 
@@ -164,7 +163,7 @@ pub trait StyleModifiers: internal::Modifiable {
                     pseudo_classes.set(PseudoClassFlags::READ_WRITE, val);
                 }
 
-                cx.needs_restyle();
+                cx.needs_restyle(cx.current);
             });
         });
 

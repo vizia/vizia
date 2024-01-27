@@ -60,12 +60,11 @@
 //! Element::new(cx).class("foo");
 //! ```
 
-use hashbrown::HashMap;
+use hashbrown::{HashMap, HashSet};
 use indexmap::IndexMap;
 use instant::{Duration, Instant};
 use log::warn;
 use morphorm::{LayoutType, PositionType, Units};
-use std::collections::HashSet;
 use std::fmt::Debug;
 use vizia_id::GenerationalId;
 
@@ -1580,6 +1579,7 @@ impl Style {
         self.classes.insert(entity, HashSet::new());
         self.abilities.insert(entity, Abilities::default());
         self.system_flags = SystemFlags::RESTYLE | SystemFlags::RELAYOUT;
+        self.restyle.insert(entity, true);
     }
 
     // Remove style data for the given entity.

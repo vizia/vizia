@@ -1,6 +1,6 @@
+use hashbrown::{hash_map::DefaultHashBuilder, HashSet};
 use std::any::TypeId;
-use std::collections::{hash_map::DefaultHasher, HashSet};
-use std::hash::{Hash, Hasher};
+use std::hash::{BuildHasher, Hash, Hasher};
 
 use crate::{model::ModelOrView, prelude::*};
 
@@ -8,7 +8,7 @@ use crate::{model::ModelOrView, prelude::*};
 pub struct StoreId(pub u64);
 
 pub(crate) fn get_storeid<T: 'static + Hash>(t: &T) -> StoreId {
-    let mut s = DefaultHasher::new();
+    let mut s = DefaultHashBuilder::default().build_hasher();
     TypeId::of::<T>().hash(&mut s);
     t.hash(&mut s);
     StoreId(s.finish())

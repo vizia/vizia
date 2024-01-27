@@ -24,7 +24,7 @@ pub trait AbilityModifiers: internal::Modifiable {
                 let val = v.get(cx).into();
                 if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
                     abilities.set(Abilities::HOVERABLE, val);
-                    cx.needs_restyle();
+                    cx.needs_restyle(cx.current);
                 }
             });
         });
@@ -56,7 +56,7 @@ pub trait AbilityModifiers: internal::Modifiable {
                         abilities.set(Abilities::NAVIGABLE, false);
                     }
 
-                    cx.needs_restyle();
+                    cx.needs_restyle(cx.current);
                 }
             });
         });
@@ -83,7 +83,7 @@ pub trait AbilityModifiers: internal::Modifiable {
                 if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
                     abilities.set(Abilities::CHECKABLE, state);
 
-                    cx.needs_restyle();
+                    cx.needs_restyle(cx.current);
                 }
             });
         });
@@ -110,7 +110,7 @@ pub trait AbilityModifiers: internal::Modifiable {
                 let val = v.get(cx).into();
                 if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
                     abilities.set(Abilities::NAVIGABLE, val);
-                    cx.needs_restyle();
+                    cx.needs_restyle(cx.current);
                 }
             });
         });
