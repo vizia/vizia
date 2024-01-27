@@ -460,7 +460,7 @@ impl<'a> EventContext<'a> {
         }
         self.set_focus_pseudo_classes(new_focus, true, focus_visible);
 
-        self.style.needs_restyle();
+        self.needs_restyle();
     }
 
     /// Sets application focus to the current view using the previous focus visibility.
@@ -672,7 +672,7 @@ impl<'a> EventContext<'a> {
             self.style.classes.insert(current, class_list);
         }
 
-        self.style.needs_restyle();
+        self.needs_restyle();
     }
 
     /// Returns a reference to the [Environment] model.
@@ -843,7 +843,7 @@ impl<'a> EventContext<'a> {
             pseudo_classes.set(PseudoClassFlags::HOVER, flag);
         }
 
-        self.style.needs_restyle();
+        self.needs_restyle();
     }
 
     /// Set the active state for the current view.
@@ -859,7 +859,7 @@ impl<'a> EventContext<'a> {
             pseudo_classes.set(PseudoClassFlags::ACTIVE, active);
         }
 
-        self.style.needs_restyle();
+        self.needs_restyle();
     }
 
     pub fn set_read_only(&mut self, flag: bool) {
@@ -868,7 +868,7 @@ impl<'a> EventContext<'a> {
             pseudo_classes.set(PseudoClassFlags::READ_ONLY, flag);
         }
 
-        self.style.needs_restyle();
+        self.needs_restyle();
     }
 
     pub fn set_read_write(&mut self, flag: bool) {
@@ -877,7 +877,7 @@ impl<'a> EventContext<'a> {
             pseudo_classes.set(PseudoClassFlags::READ_WRITE, flag);
         }
 
-        self.style.needs_restyle();
+        self.needs_restyle();
     }
 
     /// Sets the checked state of the current view.
@@ -894,7 +894,7 @@ impl<'a> EventContext<'a> {
             pseudo_classes.set(PseudoClassFlags::CHECKED, flag);
         }
 
-        self.style.needs_restyle();
+        self.needs_restyle();
     }
 
     /// Sets the valid state of the current view.
@@ -912,7 +912,7 @@ impl<'a> EventContext<'a> {
             pseudo_classes.set(PseudoClassFlags::INVALID, !flag);
         }
 
-        self.style.needs_restyle();
+        self.needs_restyle();
     }
 
     pub fn set_placeholder_shown(&mut self, flag: bool) {
@@ -921,7 +921,7 @@ impl<'a> EventContext<'a> {
             pseudo_classes.set(PseudoClassFlags::PLACEHOLDER_SHOWN, flag);
         }
 
-        self.style.needs_restyle();
+        self.needs_restyle();
     }
 
     // TODO: Move me
