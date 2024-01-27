@@ -37,8 +37,7 @@ impl TabView {
                                     let selected_index = selected_index.get(handle.cx);
                                     handle.checked(selected_index == index);
                                 })
-                                .toggle_class("vertical", TabView::is_vertical)
-                                .cursor(CursorIcon::Hand);
+                                .toggle_class("vertical", TabView::is_vertical);
                         }
                     })
                     //})

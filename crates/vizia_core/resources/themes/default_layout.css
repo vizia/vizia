@@ -276,6 +276,7 @@ combobox .title {
     child-right: 4px;
     child-top: 1s;
     child-bottom: 1s;
+    cursor: hand;
 }
 
 dropdown popup,
@@ -650,6 +651,7 @@ radiobutton {
     width: 16px;
     height: 16px;
     child-space: 1s;
+    cursor: hand;
 }
 
 radiobutton .inner {
@@ -802,6 +804,7 @@ zstack > * {
 switch {
     width: 30px;
     height: 18px;
+    cursor: hand;
 }
 
 switch .switch-handle {

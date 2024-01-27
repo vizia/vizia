@@ -164,7 +164,6 @@ impl Checkbox {
                 });
             })
             .checked(checked)
-            .cursor(CursorIcon::Hand)
             .navigable(true)
     }
 }

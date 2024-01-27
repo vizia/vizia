@@ -146,7 +146,6 @@ impl Dropdown {
                     .class("title")
                     .role(Role::PopupButton)
                     .width(Stretch(1.0))
-                    .cursor(CursorIcon::Hand)
                     .checked(PopupData::is_open)
                     .navigable(true)
                     .on_press(|cx| cx.emit(PopupEvent::Switch));
@@ -159,7 +158,6 @@ impl Dropdown {
                     }
                 })
             })
-            .cursor(CursorIcon::Hand)
     }
 }
 
