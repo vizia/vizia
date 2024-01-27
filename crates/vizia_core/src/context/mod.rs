@@ -335,6 +335,7 @@ impl Context {
             pseudo_classes.set(PseudoClassFlags::FOCUS, enabled);
             if !enabled || focus_visible {
                 pseudo_classes.set(PseudoClassFlags::FOCUS_VISIBLE, enabled);
+                self.needs_restyle(focused);
             }
         }
 
@@ -343,6 +344,7 @@ impl Context {
             if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(entity) {
                 pseudo_classes.set(PseudoClassFlags::FOCUS_WITHIN, enabled);
             }
+            // self.needs_restyle(entity);
         }
     }
 
@@ -358,7 +360,8 @@ impl Context {
         }
         self.set_focus_pseudo_classes(new_focus, true, focus_visible);
 
-        self.style.needs_restyle();
+        self.needs_restyle(self.focused);
+        self.needs_restyle(self.current);
     }
 
     /// Sets application focus to the current entity using the previous focus visibility

@@ -530,8 +530,8 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                         if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.triggered)
                         {
                             pseudo_classes.set(PseudoClassFlags::ACTIVE, false);
+                            cx.needs_restyle(cx.triggered);
                         }
-                        cx.needs_restyle(cx.triggered);
                         cx.triggered = Entity::null();
                     }
                 } else {
@@ -564,8 +564,8 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                         if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.triggered)
                         {
                             pseudo_classes.set(PseudoClassFlags::ACTIVE, false);
+                            cx.needs_restyle(cx.triggered);
                         }
-                        cx.needs_restyle(cx.triggered);
                         cx.triggered = Entity::null();
                     }
                 }
