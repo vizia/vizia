@@ -552,12 +552,13 @@ where
 
         let node_id = node.node_id();
         cx.text_context.with_editor(cx.current, |_, editor| {
+            let mut selection = editor.selection();
             let cursor = editor.cursor();
 
             let mut selection_active_line = node_id;
-            let selection_anchor_line = node_id;
+            let mut selection_anchor_line = node_id;
             let mut selection_active_cursor = 0;
-            let selection_anchor_cursor = 0;
+            let mut selection_anchor_cursor = 0;
 
             let mut current_cursor = 0;
             let mut prev_line_index = std::usize::MAX;
@@ -649,18 +650,23 @@ where
                 // Check if the current line contains the cursor or selection
                 // This is a mess because a line happens due to soft and hard breaks but
                 // the cursor and selected indices are relative to the lines caused by hard breaks only.
-                // if line.line_i == selection.line {
-                //     // A previous line index different to the current means that the current line follows a hard break
-                //     if prev_line_index != line.line_i {
-                //         if selection.index <= line_length {
-                //             selection_anchor_line = line_node.node_id();
-                //             selection_anchor_cursor = selection.index;
-                //         }
-                //     } else if selection.index > current_cursor {
-                //         selection_anchor_line = line_node.node_id();
-                //         selection_anchor_cursor = selection.index - current_cursor;
-                //     }
-                // }
+                if selection == Selection::None {
+                    selection = Selection::Normal(cursor);
+                }
+                if let Selection::Normal(selection) = selection {
+                    if line.line_i == selection.line {
+                        // A previous line index different to the current means that the current line follows a hard break
+                        if prev_line_index != line.line_i {
+                            if selection.index <= line_length {
+                                selection_anchor_line = line_node.node_id();
+                                selection_anchor_cursor = selection.index;
+                            }
+                        } else if selection.index > current_cursor {
+                            selection_anchor_line = line_node.node_id();
+                            selection_anchor_cursor = selection.index - current_cursor;
+                        }
+                    }
+                }
 
                 node.add_child(line_node);
 

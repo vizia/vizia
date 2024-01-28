@@ -335,6 +335,7 @@ impl Context {
             pseudo_classes.set(PseudoClassFlags::FOCUS, enabled);
             if !enabled || focus_visible {
                 pseudo_classes.set(PseudoClassFlags::FOCUS_VISIBLE, enabled);
+                self.style.needs_access_update(focused);
                 self.needs_restyle(focused);
             }
         }
@@ -362,6 +363,8 @@ impl Context {
 
         self.needs_restyle(self.focused);
         self.needs_restyle(self.current);
+        self.style.needs_access_update(self.focused);
+        self.style.needs_access_update(self.current);
     }
 
     /// Sets application focus to the current entity using the previous focus visibility

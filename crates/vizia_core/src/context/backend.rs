@@ -119,6 +119,7 @@ impl<'a> BackendContext<'a> {
 
         self.0.style.pseudo_classes.insert(Entity::root(), PseudoClassFlags::OVER);
         self.0.style.restyle.insert(Entity::root(), true);
+        self.0.style.needs_access_update.insert(Entity::root(), true);
         self.0.canvases.insert(Entity::root(), canvas);
     }
 
@@ -235,7 +236,9 @@ impl<'a> BackendContext<'a> {
     pub fn process_tree_updates(&mut self, process: impl Fn(&Vec<accesskit::TreeUpdate>)) {
         accessibility_system(self.0);
 
-        (process)(&self.0.tree_updates);
+        if !self.0.tree_updates.is_empty() {
+            (process)(&self.0.tree_updates)
+        }
 
         self.0.tree_updates.clear();
     }

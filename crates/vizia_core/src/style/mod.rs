@@ -1580,6 +1580,7 @@ impl Style {
         self.abilities.insert(entity, Abilities::default());
         self.system_flags = SystemFlags::RESTYLE | SystemFlags::RELAYOUT;
         self.restyle.insert(entity, true);
+        self.needs_access_update.insert(entity, true);
     }
 
     // Remove style data for the given entity.
@@ -1711,6 +1712,7 @@ impl Style {
 
         self.needs_text_layout.remove(entity);
         self.needs_access_update.remove(entity);
+        self.restyle.remove(entity);
     }
 
     pub fn needs_restyle(&mut self) {

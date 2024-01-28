@@ -13,10 +13,18 @@ use vizia_storage::LayoutTreeIterator;
 /// Should be run after layout so that things like bounding box are correct.
 /// This system doesn't change the structure of the accessibility tree as this is done when views are built/removed.
 pub(crate) fn accessibility_system(cx: &mut Context) {
+    // println!("ACCESSIBILITY");
     let iterator = LayoutTreeIterator::full(&cx.tree);
 
     for entity in iterator {
-        // if cx.style.needs_access_update.get(entity).filter(|flag| **flag).is_some() {
+        if !cx.style.needs_access_update.get(entity).copied().unwrap_or_default() {
+            continue;
+        }
+
+        cx.style.needs_access_update.insert(entity, false);
+
+        // println!("ACCESS: {}", entity);
+
         let mut access_context = AccessContext {
             current: entity,
             tree: &cx.tree,
@@ -60,7 +68,6 @@ pub(crate) fn accessibility_system(cx: &mut Context) {
             });
         }
 
-        cx.style.needs_access_update.insert(entity, false);
         // }
     }
 }
