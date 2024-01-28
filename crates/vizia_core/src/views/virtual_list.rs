@@ -1,11 +1,11 @@
-use std::ops::Range;
+use std::ops::{Deref, Range};
 
 use crate::prelude::*;
 
 #[derive(Lens)]
 pub struct VirtualList {
-    offset: usize,
     num_items: usize,
+    item_offset: usize,
     item_height: f32,
     visible_items: Vec<usize>,
     scrolly: f32,
@@ -19,23 +19,19 @@ pub enum VirtualListEvent {
 }
 
 impl VirtualList {
-    pub fn new<V: View, L, T>(
+    pub fn new<V: View, L: Lens, T: 'static>(
         cx: &mut Context,
         list: L,
-        height: f32,
-        item: impl Fn(&mut Context, usize, Index<L, T>) -> Handle<V> + 'static,
+        item_height: f32,
+        item_content: impl Fn(&mut Context, usize, Index<L, T>) -> Handle<V> + Copy + 'static,
     ) -> Handle<Self>
     where
-        L: Lens,
-        <L as Lens>::Target: std::ops::Deref<Target = [T]>,
-        T: Data + 'static,
+        <L as Lens>::Target: Deref<Target = [T]>,
     {
-        let num_items = list.map(|l| l.len()).get(cx);
-
         Self {
-            offset: 0,
-            num_items,
-            item_height: height,
+            num_items: 0,
+            item_offset: 0,
+            item_height,
             visible_items: Vec::new(),
             scrolly: 0.0,
             scroll_to_cursor: true,
@@ -43,51 +39,100 @@ impl VirtualList {
         }
         .build(cx, |cx| {
             ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
+                // The ScrollView contains a VStack which is sized to the total height
+                // needed to fit all items. This ensures we have a correct scroll bar.
                 VStack::new(cx, |cx| {
-                    Binding::new(cx, VirtualList::visible_items, move |cx, visible_list| {
-                        for i in visible_list.get(cx) {
-                            let ptr = list.index(i);
-                            (item)(cx, i, ptr)
-                                .top(Pixels(i as f32 * height))
-                                .height(Pixels(height))
-                                .position_type(PositionType::SelfDirected);
+                    // Within the VStack we create a view for each visible item.
+                    // This binding ensures the amount of views stay up to date.
+                    let num_visible_items = Self::visible_items.map(Vec::len);
+                    Binding::new(cx, num_visible_items, move |cx, lens| {
+                        for i in 0..lens.get(cx) {
+                            // Each visible item is an index into the backing list.
+                            // As we scroll the index my change, representing an item going in/out of visibility.
+                            // Wrap `item_content`` in a binding to the index so it only rebuilds when necessary.
+                            let item_index = Self::visible_items.index(i);
+                            HStack::new(cx, move |cx| {
+                                Binding::new(cx, item_index, move |cx, lens| {
+                                    let index = lens.get(cx);
+                                    let item = list.index(index);
+                                    item_content(cx, index, item).height(Percentage(100.0));
+                                });
+                            })
+                            .height(Pixels(item_height))
+                            .position_type(PositionType::SelfDirected)
+                            .bind(item_index, move |handle, lens| {
+                                let item_index = lens.get(&handle);
+                                handle.top(Pixels(item_index as f32 * item_height));
+                            });
                         }
                     });
                 })
-                .height(list.map(move |l| Pixels(l.len() as f32 * height)));
+                .bind(list.map(|list| list.len()), move |handle, lens| {
+                    let num_items = lens.get(&handle);
+                    handle
+                        .height(Pixels(num_items as f32 * item_height))
+                        .context()
+                        .emit(VirtualListEvent::SetNumItems(num_items));
+                });
             })
-            .scroll_to_cursor(true)
             .on_scroll(|cx, _, y| {
                 cx.emit(VirtualListEvent::SetScrollY(y));
             });
         })
-        .bind(list.map(|list| list.len()), |mut handle, len| {
-            let len = len.get(&handle);
-            handle.context().emit(VirtualListEvent::SetNumItems(len));
-        })
+    }
+
+    fn visible_range(&self) -> Range<usize> {
+        let mut min = self.num_items;
+        let mut max = 0;
+        for item in &self.visible_items {
+            min = min.min(*item);
+            max = max.max(*item);
+        }
+        min..max
     }
 
     fn recalc(&mut self, cx: &mut EventContext) {
         let current = cx.current();
         let dpi = cx.scale_factor();
-        let container_height = cx.cache.get_height(current) / dpi;
-        let num_items = ((container_height + self.item_height) / self.item_height).ceil() as usize;
+        let visible_height = cx.cache.get_height(current) / dpi;
 
-        let total_height = self.num_items as f32 * self.item_height;
-        let offsety = ((total_height - container_height) * self.scrolly).round() * dpi;
-        self.offset = (offsety / self.item_height / dpi).ceil() as usize;
-        self.offset = self.offset.saturating_sub(1);
+        let item_height = self.item_height;
+        let total_height = item_height * self.num_items as f32;
 
-        let start = self.offset;
-        let end = (self.offset + num_items).clamp(0, self.num_items);
+        let mut num_visible_items = (visible_height / item_height).ceil() as usize;
+        num_visible_items += 1; // Plus one to support partially visible end-items.
 
-        self.visible_items.clear();
-        for i in start..end {
-            self.visible_items.push(i);
+        let offsety = ((total_height - visible_height) * self.scrolly).round() * dpi;
+        self.item_offset = (offsety / item_height / dpi).ceil() as usize;
+        self.item_offset = self.item_offset.saturating_sub(1);
+
+        let mut min = self.item_offset;
+        let mut max = (self.item_offset + num_visible_items).clamp(0, self.num_items);
+
+        if self.visible_items.len() != num_visible_items {
+            self.visible_items.clear();
+            self.visible_items.extend(min..max);
+            return;
+        }
+
+        for item in &mut self.visible_items {
+            match *item {
+                // If the front item has fallen off, swap in a new item from the back.
+                i if (i < min) && (i < max) => {
+                    max -= 1;
+                    *item = max;
+                }
+                // If the back item has fallen off, swap in a new item from the front.
+                i if (i >= min) && (i >= max) => {
+                    *item = min;
+                    min += 1;
+                }
+                _ => {}
+            }
         }
 
         if let Some(callback) = &self.on_change {
-            (callback)(cx, start..end)
+            (callback)(cx, self.visible_range())
         }
     }
 }
@@ -111,34 +156,14 @@ impl View for VirtualList {
                             .target(cx.current),
                     );
                 }
-                // self.visible_items.clear();
-                // for i in 0..*num_items {
-                //     self.visible_items.push(i);
-                // }
             }
 
             VirtualListEvent::SetScrollY(scrolly) => {
                 self.scrolly = *scrolly;
-                let current = cx.current();
-                let dpi = cx.scale_factor();
-                let container_height = cx.cache.get_height(current) / dpi;
-                let total_height = self.num_items as f32 * self.item_height;
-                let offsety = ((total_height - container_height) * *scrolly).round() * dpi;
-                self.offset = (offsety / self.item_height / dpi).ceil() as usize;
-                self.offset = self.offset.saturating_sub(1);
-
-                let num_items =
-                    ((container_height + self.item_height) / self.item_height).ceil() as usize;
-
-                let start = self.offset;
-                let end = (self.offset + num_items).clamp(0, self.num_items);
-                self.visible_items.clear();
-                for i in start..end {
-                    self.visible_items.push(i);
-                }
+                self.recalc(cx);
 
                 if let Some(callback) = &self.on_change {
-                    (callback)(cx, start..end)
+                    (callback)(cx, self.visible_range())
                 }
             }
         });
