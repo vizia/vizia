@@ -707,7 +707,7 @@ impl<'a> EventContext<'a> {
     }
 
     pub fn needs_restyle(&mut self) {
-        self.style.restyle.insert(self.current, true);
+        self.style.restyle.insert(self.current).unwrap();
         let iter = if let Some(parent) = self.tree.get_layout_parent(self.current) {
             LayoutTreeIterator::subtree(self.tree, parent)
         } else {
@@ -715,7 +715,7 @@ impl<'a> EventContext<'a> {
         };
 
         for descendant in iter {
-            self.style.restyle.insert(descendant, true);
+            self.style.restyle.insert(descendant).unwrap();
         }
         self.style.needs_restyle();
     }
@@ -745,7 +745,7 @@ impl<'a> EventContext<'a> {
         self.style.parse_theme(&overall_theme);
 
         for entity in self.tree.into_iter() {
-            self.style.restyle.insert(entity, true);
+            self.style.restyle.insert(entity).unwrap();
         }
 
         self.style.needs_restyle();
