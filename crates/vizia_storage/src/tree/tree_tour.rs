@@ -43,7 +43,7 @@ where
                     self.direction = TourDirection::Leaving;
                 }
                 TourStep::EnterFirstChild => {
-                    if let Some(child) = tree.first_child[current.index()] {
+                    if let Some(child) = tree.get_first_child(current) {
                         self.direction = TourDirection::Entering;
                         self.current = Some(child);
                     } else {
