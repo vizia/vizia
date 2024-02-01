@@ -112,7 +112,7 @@ impl VirtualList {
         let empty_height = (total_height - visible_items_height).max(0.0);
 
         // The pixel offsets within the container to the visible area.
-        let visible_start = empty_height * (self.scroll_y / scale_factor);
+        let visible_start = empty_height * self.scroll_y;
         let visible_end = visible_start + visible_items_height;
 
         // The indices of the first and last item of the visible area.
