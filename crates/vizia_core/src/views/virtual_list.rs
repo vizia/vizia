@@ -1,5 +1,6 @@
 use std::ops::{Deref, Range};
 
+use crate::binding::MapRef;
 use crate::prelude::*;
 
 #[derive(Lens)]
@@ -22,12 +23,30 @@ impl VirtualList {
         cx: &mut Context,
         list: L,
         item_height: f32,
-        item_content: impl Fn(&mut Context, usize, Index<L, T>) -> Handle<V> + Copy + 'static,
+        item_content: impl 'static + Copy + Fn(&mut Context, usize, MapRef<L, T>) -> Handle<V>,
     ) -> Handle<Self>
     where
-        <L as Lens>::Target: Deref<Target = [T]>,
+        L::Target: Deref<Target = [T]>,
     {
-        let num_items = list.map(|list| list.len());
+        Self::new_generic(
+            cx,
+            list,
+            |list| list.len(),
+            |list, index| &list[index],
+            item_height,
+            item_content,
+        )
+    }
+
+    pub fn new_generic<V: View, L: Lens, T: 'static>(
+        cx: &mut Context,
+        list: L,
+        list_len: impl 'static + Fn(&L::Target) -> usize,
+        list_index: impl 'static + Copy + Fn(&L::Target, usize) -> &T,
+        item_height: f32,
+        item_content: impl 'static + Copy + Fn(&mut Context, usize, MapRef<L, T>) -> Handle<V>,
+    ) -> Handle<Self> {
+        let num_items = list.map(list_len);
         Self {
             num_items: num_items.get(cx),
             item_height,
@@ -53,7 +72,7 @@ impl VirtualList {
                             HStack::new(cx, move |cx| {
                                 Binding::new(cx, item_index, move |cx, lens| {
                                     let index = lens.get(cx);
-                                    let item = list.index(index);
+                                    let item = list.map_ref(move |list| list_index(list, index));
                                     item_content(cx, index, item).height(Percentage(100.0));
                                 });
                             })
