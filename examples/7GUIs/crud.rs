@@ -136,6 +136,7 @@ fn main() {
                         .on_press(move |cx| {
                             cx.emit(AppEvent::SetSelected(index));
                         })
+                        .navigable(true)
                         .checked(AppData::selected.map(move |selected| *selected == Some(index)));
                     });
                 });

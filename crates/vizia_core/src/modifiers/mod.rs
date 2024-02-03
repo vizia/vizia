@@ -51,6 +51,7 @@ macro_rules! modifier {
                 cx.style.$name.insert(entity, v.get(cx).into());
 
                 cx.style.system_flags |= $flags;
+                cx.set_system_flags(entity, $flags);
             });
 
             self

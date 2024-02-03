@@ -884,8 +884,8 @@ scrollbar .thumb {
     transition: opacity 200ms 0s linear;
 }
 
-scrollview.h-scroll > scrollbar.horizontal:hover > .thumb,
-scrollview.v-scroll > scrollbar.vertical:hover > .thumb {
+scrollview.h-scroll:hover > scrollbar.horizontal > .thumb,
+scrollview.v-scroll:hover > scrollbar.vertical > .thumb {
     background-color: #b6b6b6;
     opacity: 1;
     transition: opacity 200ms 0s linear;

@@ -309,6 +309,12 @@ impl Context {
         self.style.needs_relayout();
     }
 
+    pub(crate) fn set_system_flags(&mut self, entity: Entity, system_flags: SystemFlags) {
+        if system_flags.contains(SystemFlags::RESTYLE) {
+            self.needs_restyle(entity);
+        }
+    }
+
     /// Enables or disables PseudoClasses for the focus of an entity
     pub(crate) fn set_focus_pseudo_classes(
         &mut self,

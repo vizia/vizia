@@ -127,6 +127,7 @@ pub trait StyleModifiers: internal::Modifiable {
 
                 if val {
                     cx.focus();
+                    // cx.focus_with_visibility(true);
                 }
 
                 cx.needs_restyle(cx.current);

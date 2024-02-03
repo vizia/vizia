@@ -199,17 +199,21 @@ pub(crate) struct TimedEvent {
     pub event: Event,
     pub time: Instant,
 }
+
 impl PartialEq<Self> for TimedEvent {
     fn eq(&self, other: &Self) -> bool {
         self.time.eq(&other.time)
     }
 }
+
 impl Eq for TimedEvent {}
+
 impl PartialOrd for TimedEvent {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
+
 impl Ord for TimedEvent {
     fn cmp(&self, other: &Self) -> Ordering {
         self.time.cmp(&other.time).reverse()

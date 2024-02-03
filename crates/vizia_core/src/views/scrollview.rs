@@ -210,15 +210,19 @@ impl View for ScrollView {
                 // What percentage of the negative space does this cross?
                 if x != 0.0 && self.inner_width > self.container_width {
                     let negative_space = self.inner_width - self.container_width;
-                    let logical_delta = x * SCROLL_SENSITIVITY / negative_space;
-                    cx.emit(ScrollEvent::ScrollX(logical_delta));
+                    if negative_space != 0.0 {
+                        let logical_delta = x * SCROLL_SENSITIVITY / negative_space;
+                        cx.emit(ScrollEvent::ScrollX(logical_delta));
+                    }
                     // Prevent event propagating to ancestor scrollviews.
                     meta.consume();
                 }
                 if y != 0.0 && self.inner_height > self.container_height {
                     let negative_space = self.inner_height - self.container_height;
-                    let logical_delta = y * SCROLL_SENSITIVITY / negative_space;
-                    cx.emit(ScrollEvent::ScrollY(logical_delta));
+                    if negative_space != 0.0 {
+                        let logical_delta = y * SCROLL_SENSITIVITY / negative_space;
+                        cx.emit(ScrollEvent::ScrollY(logical_delta));
+                    }
                     // Prevent event propagating to ancestor scrollviews.
                     meta.consume();
                 }

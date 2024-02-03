@@ -51,7 +51,7 @@ pub use element::Element;
 pub use form::{FormControl, FormGroup, FormPlacement};
 pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
 pub use label::{Icon, Label};
-pub use list::List;
+pub use list::*;
 pub use menu::*;
 pub use notification::Notification;
 pub use picklist::PickList;

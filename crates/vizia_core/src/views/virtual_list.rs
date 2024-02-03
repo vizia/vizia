@@ -57,41 +57,43 @@ impl VirtualList {
         }
         .build(cx, |cx| {
             ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
-                // The ScrollView contains a VStack which is sized to the total height
-                // needed to fit all items. This ensures we have a correct scroll bar.
-                VStack::new(cx, |cx| {
-                    // Within the VStack we create a view for each visible item.
-                    // This binding ensures the amount of views stay up to date.
-                    let num_visible_items = Self::visible_range.map(Range::len);
-                    Binding::new(cx, num_visible_items, move |cx, lens| {
-                        for i in 0..lens.get(cx) {
-                            // Each item of the range maps to an index into the backing list.
-                            // As we scroll the index may change, representing an item going in/out of visibility.
-                            // Wrap `item_content` in a binding to said index, so it rebuilds only when necessary.
-                            let item_index = Self::visible_item_index(i);
-                            HStack::new(cx, move |cx| {
+                Binding::new(cx, num_items, move |cx, lens| {
+                    let num_items = lens.get(cx);
+                    cx.emit(VirtualListEvent::SetNumItems(num_items));
+                    // The ScrollView contains a VStack which is sized to the total height
+                    // needed to fit all items. This ensures we have a correct scroll bar.
+                    VStack::new(cx, |cx| {
+                        // Within the VStack we create a view for each visible item.
+                        // This binding ensures the amount of views stay up to date.
+                        let num_visible_items = Self::visible_range.map(Range::len);
+                        Binding::new(cx, num_visible_items, move |cx, lens| {
+                            for i in 0..lens.get(cx).min(num_items) {
+                                // Each item of the range maps to an index into the backing list.
+                                // As we scroll the index may change, representing an item going in/out of visibility.
+                                // Wrap `item_content` in a binding to said index, so it rebuilds only when necessary.
+                                let item_index = Self::visible_item_index(i);
                                 Binding::new(cx, item_index, move |cx, lens| {
                                     let index = lens.get(cx);
-                                    let item = list.map_ref(move |list| list_index(list, index));
-                                    item_content(cx, index, item).height(Percentage(100.0));
+                                    ListItem::new(cx, index, move |cx| {
+                                        let item =
+                                            list.map_ref(move |list| list_index(list, index));
+                                        item_content(cx, index, item).height(Percentage(100.0));
+                                    })
+                                    .height(Pixels(item_height))
+                                    .position_type(PositionType::SelfDirected)
+                                    .bind(
+                                        item_index,
+                                        move |handle, lens| {
+                                            let index = lens.get(&handle);
+                                            handle.top(Pixels(index as f32 * item_height));
+                                        },
+                                    );
                                 });
-                            })
-                            .height(Pixels(item_height))
-                            .position_type(PositionType::SelfDirected)
-                            .bind(item_index, move |handle, lens| {
-                                let index = lens.get(&handle);
-                                handle.top(Pixels(index as f32 * item_height));
-                            });
-                        }
-                    });
+                            }
+                        });
+                    })
+                    .height(Pixels(num_items as f32 * item_height));
                 })
-                .bind(num_items, move |handle, lens| {
-                    let num_items = lens.get(&handle);
-                    handle
-                        .height(Pixels(num_items as f32 * item_height))
-                        .context()
-                        .emit(VirtualListEvent::SetNumItems(num_items));
-                });
             })
             .scroll_to_cursor(true)
             .on_scroll(|cx, _, y| {

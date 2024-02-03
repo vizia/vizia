@@ -435,6 +435,26 @@ list {
     height: auto;
 }
 
+list > scrollview {
+    width: auto;
+    height: auto;
+}
+
+list list-item {
+    height: auto;
+    width: auto;
+}
+
+list list-item:focus {
+    outline-color: rgb(232, 166, 166);
+    outline-width: 1px;
+    outline-offset: -1px;
+}
+
+list list-item:checked {
+    background-color: rgb(97, 97, 196);
+}
+
 /* MENU */
 
 menubar {
