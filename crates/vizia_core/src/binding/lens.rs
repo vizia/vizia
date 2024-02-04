@@ -219,10 +219,7 @@ impl<L: Lens, O: 'static> Clone for MapRef<L, O> {
     }
 }
 
-impl<L: Lens, O: 'static> Lens for MapRef<L, O>
-where
-    L::Target: Clone,
-{
+impl<L: Lens, O: 'static> Lens for MapRef<L, O> {
     type Source = L::Source;
     type Target = O;
 

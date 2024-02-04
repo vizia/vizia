@@ -66,11 +66,11 @@ impl List {
             Keymap::from(vec![
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowDown),
-                    KeymapEntry::new((), |cx| cx.emit(ListEvent::FocusNext(false))),
+                    KeymapEntry::new("Focus Next", |cx| cx.emit(ListEvent::FocusNext(false))),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowUp),
-                    KeymapEntry::new((), |cx| cx.emit(ListEvent::FocusPrev(false))),
+                    KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev(false))),
                 ),
                 // (
                 //     KeyChord::new(Modifiers::empty(), Code::Space),
@@ -78,21 +78,21 @@ impl List {
                 // ),
                 (
                     KeyChord::new(Modifiers::SHIFT, Code::ArrowDown),
-                    KeymapEntry::new((), |cx| {
+                    KeymapEntry::new("Select Next", |cx| {
                         cx.emit(ListEvent::FocusNext(true));
                         // cx.emit(ListEvent::SelectFocused);
                     }),
                 ),
                 (
                     KeyChord::new(Modifiers::SHIFT, Code::ArrowUp),
-                    KeymapEntry::new((), |cx| {
+                    KeymapEntry::new("Select Previous", |cx| {
                         cx.emit(ListEvent::FocusPrev(true));
                         // cx.emit(ListEvent::SelectFocused);
                     }),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::Escape),
-                    KeymapEntry::new((), |cx| cx.emit(ListEvent::ClearSelection)),
+                    KeymapEntry::new("Clear Selection", |cx| cx.emit(ListEvent::ClearSelection)),
                 ),
             ])
             //.label("List")
@@ -116,6 +116,7 @@ impl List {
                 });
             });
         })
+        .width(Stretch(1.0))
         .role(Role::List)
     }
 }
@@ -264,6 +265,8 @@ impl ListItem {
             .build(cx, |cx| {
                 (content)(cx);
             })
+            .layout_type(LayoutType::Row)
+            .width(Stretch(1.0))
             .navigable(true)
             // Set the selected item to this one if pressed
             .on_press(move |cx| {

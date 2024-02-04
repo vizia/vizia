@@ -143,10 +143,18 @@ impl ExamplePage {
             .col_between(Pixels(20.0));
 
             HStack::new(cx, |cx| {
-                (content)(cx);
-            })
-            .disabled(ControlsData::disabled)
-            .class("container");
+                let e = HStack::new(cx, |cx| {
+                    (content)(cx);
+                })
+                .disabled(ControlsData::disabled)
+                .class("container")
+                .entity();
+
+                // VStack::new(cx, |cx| {
+                //     KeyBindView::new(cx, e);
+                // })
+                // .background_color(Color::rgb(240, 240, 240));
+            });
         })
     }
 }

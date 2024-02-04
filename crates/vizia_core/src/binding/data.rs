@@ -72,6 +72,7 @@ impl_data_simple!(String);
 impl_data_simple!(Entity);
 impl_data_simple!(Localized);
 impl_data_simple!(Length);
+impl_data_simple!(KeyChord);
 
 impl Data for &'static str {
     fn same(&self, other: &Self) -> bool {

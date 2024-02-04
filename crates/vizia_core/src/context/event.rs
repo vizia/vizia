@@ -1249,6 +1249,16 @@ impl<'a> EventContext<'a> {
         *self.running_timers =
             running_timers.drain().filter(|timer_state| timer_state.id != timer).collect();
     }
+
+    pub(crate) fn get_model<T: 'static>(&self) -> Option<&T> {
+        if let Some(model_data_store) = self.data.get(&self.current) {
+            if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
+                return model.downcast_ref::<T>();
+            }
+        }
+
+        None
+    }
 }
 
 impl<'a> DataContext for EventContext<'a> {
