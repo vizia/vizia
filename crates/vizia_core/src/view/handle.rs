@@ -172,3 +172,9 @@ impl<'a, V> Handle<'a, V> {
         self.cx.scale_factor()
     }
 }
+
+impl<'a, V> AsMut<Context> for Handle<'a, V> {
+    fn as_mut(&mut self) -> &mut Context {
+        self.context()
+    }
+}
