@@ -13,5 +13,5 @@ vizia_input = { path = "../vizia_input" }
 vizia_style = { path = "../vizia_style" }
 # morphorm = {path = "../../../morphorm" }
 morphorm = "0.6.4"
-accesskit = "0.11.0"
+accesskit = { version = "0.11.0", default-features = false }
 #morphorm = { path = "../../../morphorm", features = ["rounding"] }
