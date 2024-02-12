@@ -22,7 +22,7 @@ mod handle;
 pub use handle::Handle;
 
 use crate::events::ViewHandler;
-use accesskit::{NodeBuilder, TreeUpdate};
+use accesskit::{NodeBuilder, NodeId, TreeUpdate};
 use femtovg::renderer::OpenGl;
 
 /// The canvas which all views draw to.
@@ -143,7 +143,7 @@ pub trait View: 'static + Sized {
             cx.tree_updates.push(TreeUpdate {
                 nodes: vec![(parent_node_id, parent_node), (node_id, node)],
                 tree: None,
-                focus: None,
+                focus: NodeId(0),
             });
         }
 

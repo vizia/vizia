@@ -2,6 +2,7 @@ use crate::{
     convert::{scan_code_to_code, virtual_key_code_to_code, virtual_key_code_to_key},
     window::Window,
 };
+use accesskit::NodeId;
 #[cfg(not(target_arch = "wasm32"))]
 use accesskit::{Action, NodeBuilder, TreeUpdate};
 #[cfg(not(target_arch = "wasm32"))]
@@ -214,7 +215,7 @@ impl Application {
                 TreeUpdate {
                     nodes: vec![(root_id, root_node)],
                     tree: Some(Tree::new(root_id)),
-                    focus: Some(Entity::root().accesskit_id()),
+                    focus: Entity::root().accesskit_id(),
                 }
             },
             event_loop_proxy,
@@ -298,7 +299,7 @@ impl Application {
                         let node_id = action_request_event.request.target;
 
                         if action_request_event.request.action != Action::ScrollIntoView {
-                            let entity = Entity::new(node_id.0.get() as u64 - 1, 0);
+                            let entity = Entity::new(node_id.0 as u64, 0);
 
                             // Handle focus action from screen reader
                             if action_request_event.request.action == Action::Focus {
@@ -411,7 +412,9 @@ impl Application {
                             accesskit.update_if_active(|| TreeUpdate {
                                 nodes: vec![],
                                 tree: None,
-                                focus: is_focused.then_some(cx.focused().accesskit_id()),
+                                focus: is_focused
+                                    .then_some(cx.focused().accesskit_id())
+                                    .unwrap_or(NodeId(0)),
                             });
                         }
 

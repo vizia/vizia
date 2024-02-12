@@ -138,26 +138,24 @@ impl Dropdown {
         F: 'static + Fn(&mut Context),
         V: 'static + View,
     {
-        Self {}
-            .build(cx, move |cx| {
-                PopupData::default().build(cx);
+        Self {}.build(cx, move |cx| {
+            PopupData::default().build(cx);
 
-                (trigger)(cx)
-                    .class("title")
-                    .role(Role::PopupButton)
-                    .width(Stretch(1.0))
-                    .checked(PopupData::is_open)
-                    .navigable(true)
-                    .on_press(|cx| cx.emit(PopupEvent::Switch));
-                Binding::new(cx, PopupData::is_open, move |cx, is_open| {
-                    if is_open.get(cx) {
-                        Popup::new(cx, |cx| {
-                            (content)(cx);
-                        })
-                        .on_blur(|cx| cx.emit(PopupEvent::Close));
-                    }
-                })
+            (trigger)(cx)
+                .class("title")
+                .width(Stretch(1.0))
+                .checked(PopupData::is_open)
+                .navigable(true)
+                .on_press(|cx| cx.emit(PopupEvent::Switch));
+            Binding::new(cx, PopupData::is_open, move |cx, is_open| {
+                if is_open.get(cx) {
+                    Popup::new(cx, |cx| {
+                        (content)(cx);
+                    })
+                    .on_blur(|cx| cx.emit(PopupEvent::Close));
+                }
             })
+        })
     }
 }
 

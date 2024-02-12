@@ -203,7 +203,7 @@ where
         .toggle_class("multiline", kind == TextboxKind::MultiLineWrapped)
         .text_wrap(kind == TextboxKind::MultiLineWrapped)
         .navigable(true)
-        .role(Role::TextField)
+        .role(Role::TextInput)
         .text_value(lens)
         .default_action_verb(DefaultActionVerb::Focus)
         .toggle_class("caret", Self::show_caret)
@@ -684,16 +684,6 @@ where
                     character_index: selection_active_cursor,
                 },
             });
-
-            match self.kind {
-                TextboxKind::MultiLineUnwrapped | TextboxKind::MultiLineWrapped => {
-                    node.node_builder.set_multiline();
-                }
-
-                _ => {
-                    node.node_builder.clear_multiline();
-                }
-            }
 
             node.node_builder.set_default_action_verb(DefaultActionVerb::Focus);
         });

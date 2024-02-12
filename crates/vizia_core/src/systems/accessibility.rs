@@ -5,7 +5,7 @@ use crate::{
     prelude::*,
     style::{Abilities, PseudoClassFlags},
 };
-use accesskit::{CheckedState, NodeBuilder, Rect, TreeUpdate};
+use accesskit::{Checked, NodeBuilder, NodeId, Rect, TreeUpdate};
 use hashbrown::HashMap;
 use vizia_storage::LayoutTreeIterator;
 
@@ -63,7 +63,10 @@ pub(crate) fn accessibility_system(cx: &mut Context) {
                 cx.tree_updates.push(TreeUpdate {
                     nodes,
                     tree: None,
-                    focus: cx.window_has_focus.then_some(cx.focused.accesskit_id()),
+                    focus: cx
+                        .window_has_focus
+                        .then_some(cx.focused.accesskit_id())
+                        .unwrap_or(NodeId(0u64)),
                 });
             }
 
@@ -162,9 +165,9 @@ pub(crate) fn get_access_node(
             .map(|pseudoclass| pseudoclass.contains(PseudoClassFlags::CHECKED))
         {
             if checked {
-                node_builder.set_checked_state(CheckedState::True);
+                node_builder.set_checked(Checked::True);
             } else {
-                node_builder.set_checked_state(CheckedState::False);
+                node_builder.set_checked(Checked::False);
             }
         }
     }
