@@ -31,7 +31,7 @@ morphorm = {git = "https://github.com/vizia/morphorm.git", branch = "auto-min-si
 bitflags = "2.1.0"
 fnv = "1.0.7"
 fluent-bundle = "0.15.2"
-fluent-langneg = "0.13"
+fluent-langneg = "0.14.0"
 unic-langid = {version = "0.9", features = ["macros"]}
 sys-locale = "0.3.0"
 unicode-segmentation = "1.8.0"
