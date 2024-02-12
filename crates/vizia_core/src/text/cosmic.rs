@@ -92,7 +92,9 @@ impl TextContext {
     }
 
     pub(crate) fn clear_bounds(&mut self, entity: Entity) {
-        self.bounds.remove(entity).unwrap();
+        if self.bounds.contains(entity) {
+            self.bounds.remove(entity).unwrap();
+        }
     }
 
     /// Sync the style data from vizia with the style attribites stored in cosmic-text buffers.

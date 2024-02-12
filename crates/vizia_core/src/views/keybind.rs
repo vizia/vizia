@@ -16,8 +16,8 @@ impl KeyBindView {
     pub fn new(cx: &mut Context, entity: Entity) -> Handle<Self> {
         Self { entity, bindings: Vec::new() }
             .build(cx, |cx| {
-                List::new(cx, KeyBindView::bindings, |cx, idx, bindings| {
-                    List::new(cx, bindings.map_ref(|b| &b.1), |cx, index, item| {
+                List::new(cx, KeyBindView::bindings, |cx, _, bindings| {
+                    List::new(cx, bindings.map_ref(|b| &b.1), |cx, _, item| {
                         let item = item.get(cx);
 
                         Label::new(cx, item.0).right(Stretch(1.0));

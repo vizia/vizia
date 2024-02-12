@@ -168,7 +168,7 @@ impl View for List {
                 self.focused = *index;
             }
 
-            ListEvent::FocusNext(select) => {
+            ListEvent::FocusNext(_) => {
                 if let Some(focused) = &mut self.focused {
                     if *focused == self.list_len - 1 {
                         *focused = self.list_len - 1;
@@ -188,10 +188,10 @@ impl View for List {
                                         self.selected.remove(&*focused);
                                     }
                                     *focused = next_focus;
-                                    if *focused > current_selected {
-                                        if !self.selected.remove(&*focused) {
-                                            self.selected.insert(*focused);
-                                        }
+                                    if *focused > current_selected
+                                        && !self.selected.remove(&*focused)
+                                    {
+                                        self.selected.insert(*focused);
                                     }
                                 }
                             }
@@ -203,7 +203,7 @@ impl View for List {
                 }
             }
 
-            ListEvent::FocusPrev(select) => {
+            ListEvent::FocusPrev(_) => {
                 if let Some(focused) = &mut self.focused {
                     if *focused != 0 {
                         // if *select {
@@ -221,10 +221,10 @@ impl View for List {
                                         self.selected.remove(&*focused);
                                     }
                                     *focused = prev_focus;
-                                    if *focused < current_selected {
-                                        if !self.selected.remove(&*focused) {
-                                            self.selected.insert(*focused);
-                                        }
+                                    if *focused < current_selected
+                                        && !self.selected.remove(&*focused)
+                                    {
+                                        self.selected.insert(*focused);
                                     }
                                 }
                             }
