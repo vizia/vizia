@@ -24,26 +24,25 @@ vizia_style = { path = "../vizia_style"}
 accesskit = "0.12.0"
 
 femtovg = "0.8.2"
-image = { version = "0.24.6", default-features = false, features = ["png"] } # inherited from femtovg
+image = { version = "0.24.8", default-features = false, features = ["png"] } # inherited from femtovg
 # morphorm = {path = "../../../morphorm" }
 morphorm = {git = "https://github.com/vizia/morphorm.git", branch = "auto-min-size2"}
 # morphorm = "0.6.4"
-bitflags = "2.1.0"
+bitflags = "2.4.2"
 fnv = "1.0.7"
 fluent-bundle = "0.15.2"
-fluent-langneg = "0.14.0"
-unic-langid = {version = "0.9", features = ["macros"]}
-sys-locale = "0.3.0"
-unicode-segmentation = "1.8.0"
+fluent-langneg = "0.13.0"
+unic-langid = {version = "0.9.4", features = ["macros"]}
+sys-locale = "0.3.1"
+unicode-segmentation = "1.11.0"
 copypasta = {version = "0.10.1", optional = true, default-features = false }
 instant = "0.1.12"
 chrono = "0.4.34"
 hashbrown = "0.14.3"
-# cosmic-text = "0.8.0"
 cosmic-text = { git="https://github.com/pop-os/cosmic-text", rev="19b4d8336e34073bb51b83578d3d803c8c953787" }
-swash = "0.1.8"
-log = "0.4.19"
-indexmap = "2.1.0"
+swash = "0.1.12"
+log = "0.4.20"
+indexmap = "2.2.3"
 qfilter = "0.1.6"
 # reqwest = { version = "0.11.9", features = ["blocking"] }
 
