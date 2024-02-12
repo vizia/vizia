@@ -1768,6 +1768,8 @@ impl Style {
         // Cursor
         self.cursor.remove(entity);
 
+        self.pointer_events.remove(entity);
+
         // Layout Type
         self.layout_type.remove(entity);
 
@@ -1807,8 +1809,6 @@ impl Style {
         self.max_top.remove(entity);
         self.min_bottom.remove(entity);
         self.max_bottom.remove(entity);
-
-        self.pointer_events.remove(entity);
 
         self.needs_text_layout.remove(entity);
     }

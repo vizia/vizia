@@ -91,6 +91,10 @@ impl TextContext {
         self.bounds.get(entity).copied()
     }
 
+    pub(crate) fn clear_bounds(&mut self, entity: Entity) {
+        self.bounds.remove(entity).unwrap();
+    }
+
     /// Sync the style data from vizia with the style attribites stored in cosmic-text buffers.
     pub(crate) fn sync_styles(&mut self, entity: Entity, style: &Style) {
         let (families, font_weight, font_style) = {

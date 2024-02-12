@@ -502,6 +502,7 @@ impl Context {
             self.data.remove(entity);
             self.views.remove(entity);
             self.text_context.clear_buffer(*entity);
+            self.text_context.clear_bounds(*entity);
             self.entity_manager.destroy(*entity);
         }
     }

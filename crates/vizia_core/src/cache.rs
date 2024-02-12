@@ -35,9 +35,9 @@ impl CachedData {
     pub(crate) fn remove(&mut self, entity: Entity) {
         self.bounds.remove(entity);
         self.relative_position.remove(entity);
+        self.shadow_images.remove(entity);
         self.filter_image.remove(entity);
         self.screenshot_image.remove(entity);
-        self.shadow_images.remove(entity);
         self.geo_changed.remove(entity);
     }
 
