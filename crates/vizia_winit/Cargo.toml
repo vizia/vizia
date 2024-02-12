@@ -21,14 +21,14 @@ vizia_window = { path = "../vizia_window" }
 
 accesskit = "0.12.0"
 winit = { version = "0.28.6", default-features = false }
-femtovg = "0.7.0"
+femtovg = "0.8.2"
 glutin = { version = "0.30.8", default-features = false, optional = true }
 copypasta = {version = "0.8.2", optional = true, default-features = false }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 accesskit_winit = "0.15.0"
 glutin = { version = "0.30.8", default-features = false }
-femtovg = "0.7.0"
+femtovg = "0.8.2"
 glutin-winit = { version = "0.3.0", default-features = false, features = ["egl", "glx", "wgl"] }
 raw-window-handle = "0.5.2"
 
