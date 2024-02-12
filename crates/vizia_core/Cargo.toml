@@ -35,7 +35,7 @@ fluent-langneg = "0.14.0"
 unic-langid = {version = "0.9", features = ["macros"]}
 sys-locale = "0.3.0"
 unicode-segmentation = "1.8.0"
-copypasta = {version = "0.8.1", optional = true, default-features = false }
+copypasta = {version = "0.10.1", optional = true, default-features = false }
 instant = "0.1.12"
 chrono = "0.4.34"
 hashbrown = "0.14.3"
