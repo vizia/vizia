@@ -96,7 +96,7 @@ where
         if let Some(actions) = self.entries.get_mut(chord) {
             if let Some(index) = actions.iter().position(|x| x == action) {
                 if actions.len() == 1 {
-                    self.entries.remove(chord);
+                    self.entries.swap_remove(chord);
                 } else {
                     actions.swap_remove(index);
                 }

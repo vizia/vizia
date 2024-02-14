@@ -62,8 +62,7 @@ pub mod backend {
 #[doc(hidden)]
 pub mod prelude {
     pub use super::binding::{
-        Binding, Data, Index, Lens, LensExt, LensValue, Res, Setter, StaticLens, Then, UnwrapLens,
-        Wrapper,
+        Binding, Data, Index, Lens, LensExt, LensValue, Res, StaticLens, Then, UnwrapLens, Wrapper,
     };
 
     pub use super::impl_res_simple;
@@ -92,7 +91,7 @@ pub mod prelude {
     pub use super::views::*;
     pub use super::window::{DropData, WindowEvent, WindowModifiers};
     pub use accesskit::{Action, DefaultActionVerb, Live, Role};
-    pub use vizia_derive::{Data, Lens, Model, Setter};
+    pub use vizia_derive::{Data, Lens};
     pub use vizia_id::GenerationalId;
     pub use vizia_input::{Code, Key, KeyChord, Modifiers, MouseButton, MouseButtonState};
     pub use vizia_storage::{Tree, TreeExt};
