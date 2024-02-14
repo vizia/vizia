@@ -2,7 +2,7 @@ use bitflags::bitflags;
 
 bitflags! {
     /// The state of the modifier keys.
-    #[derive(Default)]
+    #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
     pub struct Modifiers: u8 {
         const SHIFT = 1;
         const CTRL = 1<<1;
