@@ -2,13 +2,17 @@ use vizia::prelude::*;
 
 use crate::DemoRegion;
 
-pub fn label(cx: &mut Context) {
+pub fn treeview(cx: &mut Context) {
     VStack::new(cx, |cx| {
         Label::new(cx, "Label").class("title");
         Label::new(cx, "A label can be used to display a string of text.").class("paragraph");
 
         // Divider here
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Element::new(cx)
+            .height(Pixels(1.0))
+            .background_color(Color::rgb(210, 210, 210))
+            .top(Pixels(12.0))
+            .bottom(Pixels(12.0));
 
         Label::new(cx, "Label").class("header");
         DemoRegion::new(

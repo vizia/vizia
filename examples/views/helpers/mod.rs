@@ -143,7 +143,7 @@ impl ExamplePage {
             .col_between(Pixels(20.0));
 
             HStack::new(cx, |cx| {
-                let e = HStack::new(cx, |cx| {
+                let _e = HStack::new(cx, |cx| {
                     (content)(cx);
                 })
                 .disabled(ControlsData::disabled)

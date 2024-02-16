@@ -2,9 +2,9 @@ use vizia::prelude::*;
 
 use crate::DemoRegion;
 
-pub fn notification(cx: &mut Context) {
+pub fn divider(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "Notification").class("title");
+        Label::new(cx, "Divider").class("title");
         Label::new(cx, "...").class("paragraph");
 
         // Divider here

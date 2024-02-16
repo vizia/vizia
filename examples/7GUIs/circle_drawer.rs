@@ -287,19 +287,24 @@ impl CircleDrawer {
         CircleDrawerData::default().build(cx);
 
         Self.build(cx, |cx| {
-            Popup::new(cx, CircleDrawerData::menu_open, true, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "Adjust diameter.."));
-            })
-            .on_press(|cx| {
-                cx.emit(CircleDrawerEvent::ToggleDialog);
-                cx.emit(CircleDrawerEvent::ToggleRightMenu);
-            })
-            .size(Auto)
-            .left(CircleDrawerData::menu_posx)
-            .top(CircleDrawerData::menu_posy)
-            .on_blur(|cx| cx.emit(CircleDrawerEvent::ToggleRightMenu));
+            Binding::new(cx, CircleDrawerData::menu_open, |cx, is_open| {
+                if is_open.get(cx) {
+                    Popup::new(cx, |cx| {
+                        Button::new(cx, |cx| Label::new(cx, "Adjust diameter.."));
+                    })
+                    .on_press(|cx| {
+                        cx.emit(CircleDrawerEvent::ToggleDialog);
+                        cx.emit(CircleDrawerEvent::ToggleRightMenu);
+                    })
+                    .size(Auto)
+                    .left(CircleDrawerData::menu_posx)
+                    .top(CircleDrawerData::menu_posy)
+                    .on_blur(|cx| cx.emit(CircleDrawerEvent::ToggleRightMenu))
+                    .lock_focus_to_within();
+                }
+            });
 
-            Popup::new(cx, CircleDrawerData::dialog_open, true, |cx| {
+            Dialog::new(cx, CircleDrawerData::dialog_open, |cx| {
                 let selected =
                     CircleDrawerData::circles_data.then(CircleData::selected).get(cx).unwrap();
 
@@ -324,10 +329,11 @@ impl CircleDrawer {
                     )
                     .range(4.0..150.0)
                     .on_changing(|cx, value| cx.emit(CircleDrawerEvent::ChangeRadius(value)));
-                });
+                })
+                .size(Auto);
             })
-            .class("dialog-box")
-            .on_blur(|cx| cx.emit(CircleDrawerEvent::ToggleDialog));
+            .class("dialog-box");
+            // .on_blur(|cx| cx.emit(CircleDrawerEvent::ToggleDialog));
 
             HStack::new(cx, |cx| {
                 Button::new(cx, |cx| Label::new(cx, "Undo"))

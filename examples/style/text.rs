@@ -29,7 +29,7 @@ const STYLE: &str = r#"
 
 "#;
 
-#[derive(Lens, Setter, Model)]
+#[derive(Lens)]
 pub struct AppData {
     text: String,
 }

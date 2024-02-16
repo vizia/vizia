@@ -86,7 +86,7 @@ fn main() {
             .col_between(Pixels(20.0))
             .height(Auto);
 
-            Element::new(cx).class("divider");
+            Divider::new(cx);
 
             TabView::new(cx, AppData::tabs, |cx, item| match item.get(cx) {
                 "All" => TabPair::new(
@@ -179,7 +179,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // floating_action_button(cx);
+                            floating_action_button(cx);
                         })
                         .class("widgets");
                     },
@@ -239,7 +239,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // dialog(cx);
+                            dialog(cx);
                         })
                         .class("widgets");
                     },
@@ -251,7 +251,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // divider(cx);
+                            divider(cx);
                         })
                         .class("widgets");
                     },
@@ -263,7 +263,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // dropdown(cx);
+                            dropdown(cx);
                         })
                         .class("widgets");
                     },
@@ -323,7 +323,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // image(cx);
+                            image(cx);
                         })
                         .class("widgets");
                     },
@@ -419,7 +419,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // popup(cx);
+                            popup(cx);
                         })
                         .class("widgets");
                     },
@@ -431,7 +431,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // progress(cx);
+                            progressbar(cx);
                         })
                         .class("widgets");
                     },
@@ -515,7 +515,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // tabview(cx);
+                            tabview(cx);
                         })
                         .class("widgets");
                     },
@@ -539,7 +539,7 @@ fn main() {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // timepicker(cx);
+                            timepicker(cx);
                         })
                         .class("widgets");
                     },

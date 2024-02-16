@@ -8,6 +8,20 @@ pub struct AppData {
     choice: String,
 }
 
+pub enum AppEvent {
+    SetChoice(String),
+}
+
+impl Model for AppData {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            AppEvent::SetChoice(choice) => {
+                self.choice = choice.clone();
+            }
+        })
+    }
+}
+
 fn main() {
     Application::new(|cx| {
         AppData {

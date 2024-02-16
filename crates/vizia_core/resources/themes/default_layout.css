@@ -261,6 +261,23 @@ datepicker {
     left: 8px;
 }
 
+/* DIVIDER */
+
+divider {
+    width: 1s;
+    height: 1px;
+}
+
+vstack > divider {
+    width: 1s;
+    height: 1px;
+}
+
+hstack > divider {
+    width: 1px;
+    height: 1s;
+}
+
 /* DROPDOWN */
 
 dropdown,

@@ -356,6 +356,12 @@ datepicker {
     color: #181818;
 }
 
+/* DIVIDER */
+
+divider {
+    background-color: #c4c4c4;
+}
+
 /* DROPDOWN */
 
 dropdown {
@@ -884,11 +890,6 @@ tabview tabheader:checked .indicator {
 }
 
 tabview .tabview-divider {
-    background-color: #c4c4c4;
-}
-
-.divider {
-    height: 1px;
     background-color: #c4c4c4;
 }
 

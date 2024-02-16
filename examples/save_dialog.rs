@@ -95,7 +95,7 @@ fn main() {
         .col_between(Pixels(10.0))
         .space(Pixels(20.0));
 
-        Popup::new(cx, AppData::show_dialog, true, |cx| {
+        Dialog::new(cx, AppData::show_dialog, |cx| {
             VStack::new(cx, |cx| {
                 Label::new(cx, "Save before close?").width(Stretch(1.0)).child_space(Stretch(1.0));
                 HStack::new(cx, |cx| {
@@ -114,7 +114,7 @@ fn main() {
             .row_between(Pixels(20.0))
             .height(Auto);
         })
-        .on_blur(|cx| cx.emit(AppEvent::HideModal))
+        // .on_blur(|cx| cx.emit(AppEvent::HideModal))
         .width(Pixels(300.0))
         .height(Auto)
         .row_between(Pixels(20.0))

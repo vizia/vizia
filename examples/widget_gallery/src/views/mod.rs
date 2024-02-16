@@ -22,8 +22,23 @@ pub use combobox::*;
 pub mod datepicker;
 pub use datepicker::*;
 
+pub mod dialog;
+pub use dialog::*;
+
+pub mod divider;
+pub use divider::*;
+
+pub mod dropdown;
+pub use dropdown::*;
+
+pub mod floating_action_button;
+pub use floating_action_button::*;
+
 pub mod icon;
 pub use icon::*;
+
+pub mod image;
+pub use image::*;
 
 pub mod knob;
 pub use knob::*;
@@ -46,6 +61,12 @@ pub use notification::*;
 pub mod picklist;
 pub use picklist::*;
 
+pub mod popup;
+pub use popup::*;
+
+pub mod progressbar;
+pub use progressbar::*;
+
 pub mod radiobutton;
 pub use radiobutton::*;
 
@@ -64,8 +85,17 @@ pub use stacks::*;
 pub mod switch;
 pub use switch::*;
 
+pub mod tabview;
+pub use tabview::*;
+
 pub mod textbox;
 pub use textbox::*;
 
+pub mod timepicker;
+pub use timepicker::*;
+
 pub mod tooltip;
 pub use tooltip::*;
+
+pub mod treeview;
+pub use treeview::*;

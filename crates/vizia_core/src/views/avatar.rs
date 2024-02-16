@@ -74,7 +74,7 @@ impl<'a> Handle<'a, Avatar> {
         let entity = self.entity();
 
         self.context().with_current(entity, |cx| {
-            (content)(cx);
+            (content)(cx).placement(BadgePlacement::default());
         });
 
         self
