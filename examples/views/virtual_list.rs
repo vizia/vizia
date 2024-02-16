@@ -41,7 +41,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
@@ -70,5 +70,5 @@ fn main() {
         });
     })
     .title("Virtual List")
-    .run();
+    .run()
 }

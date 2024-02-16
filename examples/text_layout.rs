@@ -26,7 +26,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { text: String::from("This is some text"), text2: String::from("سلام") }.build(cx);
         VStack::new(cx, |cx| {
@@ -121,7 +121,7 @@ fn main() {
     })
     .title("Text")
     .inner_size((1200, 600))
-    .run();
+    .run()
 }
 
 fn wrapping(cx: &mut Context) {

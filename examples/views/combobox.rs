@@ -22,7 +22,7 @@ impl Model for AppState {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppState {
             options: vec![
@@ -51,5 +51,5 @@ fn main() {
     })
     .title("Combobox")
     .inner_size((400, 400))
-    .run();
+    .run()
 }

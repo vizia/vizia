@@ -6,7 +6,7 @@ pub struct AppData {}
 
 impl Model for AppData {}
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx: &mut Context| {
         // cx.add_stylesheet(STYLE);
 
@@ -266,6 +266,6 @@ fn main() {
         //     });
         // });
     })
-    .title("Menu")
-    .run();
+    .title("Menu Bar")
+    .run()
 }

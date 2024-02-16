@@ -2,7 +2,7 @@ use vizia::prelude::*;
 
 const COLORS: [Color; 3] = [Color::red(), Color::green(), Color::blue()];
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         VStack::new(cx, |cx| {
             for i in 0..3 {
@@ -12,5 +12,5 @@ fn main() {
         .child_space(Stretch(1.0));
     })
     .title("VStack")
-    .run();
+    .run()
 }

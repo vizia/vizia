@@ -33,7 +33,7 @@ enum AppEvent {
     Set3(usize),
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppState {
             spinbox_value_1: 99,
@@ -107,7 +107,7 @@ fn main() {
         });
     })
     .title("Spinbox")
-    .run();
+    .run()
 }
 
 impl Model for AppState {

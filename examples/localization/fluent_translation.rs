@@ -1,7 +1,7 @@
 // Example which demonstrates a basic text translation using fluent.
 use vizia::prelude::*;
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         // Add fluent file for the `fr` locale (french).
         cx.add_translation(langid!("fr"), include_str!("../resources/translations/fr/hello.ftl"));
@@ -13,5 +13,5 @@ fn main() {
         // The key is used to look up the corresponding translation from the fluent file.
         Label::new(cx, Localized::new("hello-world"));
     })
-    .run();
+    .run()
 }

@@ -1,6 +1,6 @@
 use vizia::prelude::*;
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         Element::new(cx)
             .display(Display::Flex)
@@ -48,5 +48,5 @@ fn main() {
             .z_index(5)
             .cursor(CursorIcon::Grab);
     })
-    .run();
+    .run()
 }

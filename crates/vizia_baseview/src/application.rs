@@ -7,6 +7,9 @@ use vizia_core::backend::*;
 use vizia_core::prelude::*;
 use vizia_id::GenerationalId;
 
+#[derive(Debug)]
+pub enum ApplicationError {}
+
 ///Creating a new application creates a root `Window` and a `Context`. Views declared within the closure passed to `Application::new()` are added to the context and rendered into the root window.
 ///
 /// # Example
@@ -93,7 +96,7 @@ where
     /// standalone application.
     ///
     /// * `app` - The Vizia application builder.
-    pub fn run(self) {
+    pub fn run(self) -> Result<(), ApplicationError> {
         ViziaWindow::open_blocking(
             self.window_description,
             self.window_scale_policy,
@@ -101,7 +104,9 @@ where
             self.on_idle,
             self.ignore_default_theme,
             self.text_config,
-        )
+        );
+
+        Ok(())
     }
 
     /// Open a new child window.

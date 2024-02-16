@@ -1,7 +1,7 @@
 use vizia::prelude::*;
 
-fn main() {
-    Application::new(app_main).title("Window resize demo").inner_size((600, 300)).run();
+fn main() -> Result<(), ApplicationError> {
+    Application::new(app_main).title("Window resize demo").inner_size((600, 300)).run()
 }
 
 #[derive(Lens)]

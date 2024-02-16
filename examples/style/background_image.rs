@@ -31,7 +31,7 @@ fn main() {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 

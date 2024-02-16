@@ -7,12 +7,12 @@ pub struct AppData {
 
 impl Model for AppData {}
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { value: 3.14 }.build(cx);
 
         Label::new(cx, AppData::value.map(|_val| String::from("Hello World")));
     })
     .title("Lens Map")
-    .run();
+    .run()
 }

@@ -29,7 +29,7 @@ impl Model for AppState {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         // Emit event every second
         let timer = cx.add_timer(Duration::from_millis(10), None, |cx, action| match action {
@@ -73,5 +73,5 @@ fn main() {
     })
     .title("Timer")
     .inner_size((300, 300))
-    .run();
+    .run()
 }

@@ -28,7 +28,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { option1: true, option2: false }.build(cx);
 
@@ -59,5 +59,5 @@ fn main() {
         });
     })
     .title("Switch")
-    .run();
+    .run()
 }

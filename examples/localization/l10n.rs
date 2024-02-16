@@ -29,7 +29,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_translation(
             "en-US".parse().unwrap(),

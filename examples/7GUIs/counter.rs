@@ -1,4 +1,4 @@
-use vizia::prelude::*;
+use vizia::{prelude::*, ApplicationError};
 
 #[derive(Lens)]
 pub struct AppData {
@@ -17,7 +17,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { count: 0 }.build(cx);
 
@@ -31,5 +31,5 @@ fn main() {
     })
     .title("Counter")
     .inner_size((400, 100))
-    .run();
+    .run()
 }

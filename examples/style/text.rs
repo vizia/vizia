@@ -34,7 +34,7 @@ pub struct AppData {
     text: String,
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
@@ -50,5 +50,5 @@ fn main() {
             .width(Pixels(200.0))
             .class("caret_color");
     })
-    .run();
+    .run()
 }

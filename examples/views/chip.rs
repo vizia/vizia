@@ -22,7 +22,7 @@ enum AppEvent {
     CloseChip(usize),
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData {
             chip: "Chip".to_string(),
@@ -43,5 +43,5 @@ fn main() {
     })
     .title("Chip")
     .inner_size((400, 200))
-    .run();
+    .run()
 }

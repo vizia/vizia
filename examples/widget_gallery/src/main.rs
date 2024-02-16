@@ -67,7 +67,7 @@ fn toggle_disabled_switch(cx: &mut Context) {
     .size(Auto);
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     setup_logging();
 
     Application::new(|cx: &mut Context| {
@@ -614,5 +614,5 @@ fn main() {
     .title("Widget Gallery")
     .inner_size((1400, 600))
     .min_inner_size(Some((900, 300)))
-    .run();
+    .run()
 }

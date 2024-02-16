@@ -1,5 +1,5 @@
-use vizia::prelude::*;
 use vizia::vg::{Paint, Path};
+use vizia::{prelude::*, ApplicationError};
 
 const STYLE: &str = r#"
     :root {
@@ -362,7 +362,7 @@ impl View for CircleDrawer {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx: &mut Context| {
         CircleDrawer::new(cx);
     })

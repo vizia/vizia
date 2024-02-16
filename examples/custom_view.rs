@@ -31,11 +31,11 @@ struct AppData {
 
 impl Model for AppData {}
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { color: Color::red() }.build(cx);
         CustomView::new(cx, Color::blue());
         CustomView::new(cx, AppData::color);
     })
-    .run();
+    .run()
 }

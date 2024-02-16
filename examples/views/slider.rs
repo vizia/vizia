@@ -21,7 +21,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { value: 0.0 }.build(cx);
 
@@ -75,5 +75,5 @@ fn main() {
         });
     })
     .title("Slider")
-    .run();
+    .run()
 }

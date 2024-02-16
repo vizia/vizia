@@ -55,7 +55,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx: &mut Context| {
         AppData { progress: 0.5, color: "#51afef".into() }.build(cx);
 
@@ -102,5 +102,5 @@ fn main() {
     })
     .title("ProgressBar")
     .inner_size((750, 550))
-    .run();
+    .run()
 }

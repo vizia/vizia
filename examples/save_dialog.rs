@@ -82,7 +82,7 @@ pub enum AppEvent {
     Cancel,
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
         AppData { is_saved: false, show_dialog: false }.build(cx);
@@ -120,5 +120,5 @@ fn main() {
         .row_between(Pixels(20.0))
         .class("modal");
     })
-    .run();
+    .run()
 }

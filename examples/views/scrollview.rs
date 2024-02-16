@@ -23,7 +23,7 @@ use vizia::prelude::*;
 //     }
 // }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         ExamplePage::new(cx, |cx| {
             HStack::new(cx, |cx| {
@@ -62,5 +62,5 @@ fn main() {
     })
     .title("Scrollview")
     .inner_size((1100, 400))
-    .run();
+    .run()
 }

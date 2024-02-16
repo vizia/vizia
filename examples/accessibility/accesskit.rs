@@ -40,7 +40,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData {
             flags: [false, false, false],
@@ -134,5 +134,5 @@ fn main() {
         .child_space(Pixels(10.0));
     })
     .title("AccessKit")
-    .run();
+    .run()
 }

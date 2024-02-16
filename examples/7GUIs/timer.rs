@@ -80,7 +80,7 @@ impl Model for TimerData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx: &mut Context| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 

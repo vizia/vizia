@@ -22,7 +22,7 @@ impl Model for AppState {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppState { time: Utc::now().naive_utc().time() }.build(cx);
 
@@ -38,5 +38,5 @@ fn main() {
         });
     })
     .title("Timepicker")
-    .run();
+    .run()
 }

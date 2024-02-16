@@ -63,7 +63,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
@@ -97,5 +97,5 @@ fn main() {
     })
     .title("Overlflow and Clipping")
     .inner_size((800, 400))
-    .run();
+    .run()
 }

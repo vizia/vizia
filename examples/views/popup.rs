@@ -2,7 +2,7 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         PopupData::default().build(cx);
 
@@ -16,5 +16,5 @@ fn main() {
         });
     })
     .title("Popup")
-    .run();
+    .run()
 }

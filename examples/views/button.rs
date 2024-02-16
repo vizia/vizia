@@ -4,13 +4,13 @@ use helpers::*;
 use vizia::icons::ICON_CHECK;
 use vizia::prelude::*;
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         ExamplePage::vertical(cx, |cx| {
             HStack::new(cx, |cx| {
                 // Basic Button
                 Button::new(cx, |cx| Label::new(cx, "Button"))
-                    .on_press(|cx| println!("Button Pressed!"));
+                    .on_press(|_cx| println!("Button Pressed!"));
                 // Accent Button
                 Button::new(cx, |cx| Label::new(cx, "Accent Button"))
                     .variant(ButtonVariant::Accent);
@@ -96,5 +96,5 @@ fn main() {
     })
     .title("Button")
     .inner_size((700, 200))
-    .run();
+    .run()
 }

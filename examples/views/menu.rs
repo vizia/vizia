@@ -6,7 +6,7 @@ use vizia_core::{
     modifiers::ModalEvent,
 };
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx: &mut Context| {
         // cx.add_stylesheet(STYLE);
 
@@ -260,5 +260,5 @@ fn main() {
         // });
     })
     .title("Menu")
-    .run();
+    .run()
 }

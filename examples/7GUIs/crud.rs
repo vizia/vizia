@@ -107,7 +107,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
@@ -177,5 +177,5 @@ fn main() {
     })
     .title("CRUD")
     .inner_size((450, 200))
-    .run();
+    .run()
 }

@@ -14,7 +14,7 @@
 
 use vizia::prelude::*;
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         // Build the keymap.
         Keymap::from(vec![
@@ -67,7 +67,7 @@ fn main() {
         .build(cx);
     })
     .title("Keymap")
-    .run();
+    .run()
 }
 
 // The actions that are associated with the key chords.

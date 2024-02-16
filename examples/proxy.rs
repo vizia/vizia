@@ -12,7 +12,7 @@ fn main() {
 }
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "baseview")))]
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     let app = Application::new(|_| {})
         .on_idle(|_| {
             println!("On Idle: {:?}", Instant::now());
@@ -26,5 +26,5 @@ fn main() {
         std::thread::sleep(std::time::Duration::from_secs(2));
     });
 
-    app.run();
+    app.run()
 }

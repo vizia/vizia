@@ -25,7 +25,7 @@ pub enum AppEvent {
     SetMultilineText(String),
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData {
             editable_text: "".to_string(),
@@ -67,5 +67,5 @@ fn main() {
         });
     })
     .title("Textbox")
-    .run();
+    .run()
 }

@@ -35,7 +35,7 @@ const STYLE: &str = r#"
     }
 "#;
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
         // Element::new(cx).class("linear-gradient");
@@ -48,5 +48,5 @@ fn main() {
         );
     })
     .title("Gradient")
-    .run();
+    .run()
 }

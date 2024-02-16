@@ -24,7 +24,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData {
             text: String::from("As well as model data which implements ToString:"),
@@ -67,5 +67,5 @@ fn main() {
         });
     })
     .title("Label")
-    .run();
+    .run()
 }

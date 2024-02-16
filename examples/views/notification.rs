@@ -2,7 +2,7 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         ExamplePage::new(cx, |cx| {
             Notification::new(
@@ -13,5 +13,5 @@ fn main() {
         });
     })
     .title("Notification")
-    .run();
+    .run()
 }

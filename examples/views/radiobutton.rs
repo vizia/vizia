@@ -25,7 +25,7 @@ pub struct AppData {
     pub option: Options,
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { option: Options::First }.build(cx);
 
@@ -72,7 +72,7 @@ fn main() {
         });
     })
     .title("Radiobutton")
-    .run();
+    .run()
 }
 
 fn index_to_option(index: usize) -> Options {

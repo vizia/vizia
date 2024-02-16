@@ -35,7 +35,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { bold: false, italic: false, underline: false }.build(cx);
 
@@ -68,5 +68,5 @@ fn main() {
     })
     .title("ToggleButton")
     .inner_size((700, 200))
-    .run();
+    .run()
 }

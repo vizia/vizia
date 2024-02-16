@@ -27,7 +27,7 @@ const STYLE: &str = r#"
     }
 "#;
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
@@ -61,5 +61,5 @@ fn main() {
         .child_space(Stretch(1.0))
         .row_between(Pixels(10.0));
     })
-    .run();
+    .run()
 }

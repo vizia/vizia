@@ -9,7 +9,7 @@ pub struct AppData {
 
 impl Model for AppData {}
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { tabs: vec!["Tab1", "Tab2"] }.build(cx);
 
@@ -42,5 +42,5 @@ fn main() {
         });
     })
     .title("Tabview")
-    .run();
+    .run()
 }

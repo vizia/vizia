@@ -39,7 +39,7 @@ fn fahrenheit_to_celcius(temp: f32) -> f32 {
     (temp - 32.) * (5. / 9.)
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { temperature: 5.0 }.build(cx);
 
@@ -54,5 +54,5 @@ fn main() {
     })
     .title("Temperature Converter")
     .inner_size((450, 100))
-    .run();
+    .run()
 }

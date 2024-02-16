@@ -4,7 +4,7 @@ use vizia::prelude::*;
 
 const COLORS: [Color; 3] = [Color::red(), Color::green(), Color::blue()];
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         ExamplePage::new(cx, |cx| {
             HStack::new(cx, |cx| {
@@ -16,5 +16,5 @@ fn main() {
         });
     })
     .title("HStack")
-    .run();
+    .run()
 }

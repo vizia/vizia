@@ -22,7 +22,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData {
             list: vec![
@@ -64,5 +64,5 @@ fn main() {
     })
     .title("Dropdown")
     .inner_size((350, 300))
-    .run();
+    .run()
 }

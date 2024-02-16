@@ -126,7 +126,7 @@ const STYLE: &str = r#"
     }
 "#;
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
@@ -161,5 +161,5 @@ fn main() {
     })
     .title("Box Shadow")
     .inner_size((1000, 600))
-    .run();
+    .run()
 }

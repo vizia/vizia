@@ -23,7 +23,7 @@ impl Model for AppData {
 }
 
 #[cfg(not(feature = "baseview"))]
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { title: "Window Modifiers".to_string() }.build(cx);
 
@@ -34,5 +34,5 @@ fn main() {
     })
     .title(AppData::title)
     .inner_size((400, 100))
-    .run();
+    .run()
 }

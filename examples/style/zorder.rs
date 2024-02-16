@@ -1,6 +1,6 @@
 use vizia::prelude::*;
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         HStack::new(cx, |cx| {
             Element::new(cx)

@@ -34,7 +34,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
         AppData { number: 5, invalid: false }.build(cx);
@@ -67,5 +67,5 @@ fn main() {
         .col_between(Pixels(10.0));
     })
     .title("Number Input")
-    .run();
+    .run()
 }

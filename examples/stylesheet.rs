@@ -7,7 +7,7 @@ fn main() {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(include_style!("examples/resources/themes/test.css"))
             .expect("Failed to add stylesheet");
@@ -17,5 +17,5 @@ fn main() {
         .size(Pixels(200.0))
         .class("bar");
     })
-    .run();
+    .run()
 }

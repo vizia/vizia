@@ -14,7 +14,7 @@ const STYLE: &str = r#"
     }
 "#;
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
@@ -31,5 +31,5 @@ fn main() {
         Button::new(cx, |cx| Label::new(cx, "Play 2"))
             .on_press(move |cx| cx.play_animation_for(anim_id, "elem", Duration::from_secs(2)));
     })
-    .run();
+    .run()
 }
