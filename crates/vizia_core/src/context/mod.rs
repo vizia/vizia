@@ -79,7 +79,7 @@ pub struct Context {
     pub(crate) next_event_id: usize,
     pub(crate) timers: Vec<TimerState>,
     pub(crate) running_timers: BinaryHeap<TimerState>,
-    pub(crate) tree_updates: Vec<accesskit::TreeUpdate>,
+    pub(crate) tree_updates: Vec<Option<accesskit::TreeUpdate>>,
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub(crate) global_listeners: Vec<Box<dyn Fn(&mut EventContext, &mut Event)>>,

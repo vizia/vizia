@@ -233,14 +233,18 @@ impl<'a> BackendContext<'a> {
     }
 
     /// Calls the accessibility system and updates the accesskit node tree.
-    pub fn process_tree_updates(&mut self, process: impl Fn(&Vec<accesskit::TreeUpdate>)) {
+    pub fn process_tree_updates(
+        &mut self,
+        process: impl Fn(&mut Vec<Option<accesskit::TreeUpdate>>),
+    ) {
         accessibility_system(self.0);
 
         if !self.0.tree_updates.is_empty() {
-            (process)(&self.0.tree_updates)
+            (process)(&mut self.0.tree_updates)
         }
 
-        self.0.tree_updates.clear();
+        self.0.tree_updates.retain(|update| update.is_some());
+        // self.0.tree_updates.clear();
     }
 
     /// Calls the style system to match entities with shared styles.

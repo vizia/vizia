@@ -269,8 +269,8 @@ impl Application {
 
         #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
         cx.process_tree_updates(|tree_updates| {
-            for update in tree_updates.iter() {
-                accesskit.update_if_active(|| update.clone());
+            for update in tree_updates.iter_mut() {
+                accesskit.update_if_active(|| update.take().unwrap());
             }
         });
 
@@ -356,8 +356,8 @@ impl Application {
 
                         #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
                         cx.process_tree_updates(|tree_updates| {
-                            for update in tree_updates.iter() {
-                                accesskit.update_if_active(|| update.clone());
+                            for update in tree_updates.iter_mut() {
+                                accesskit.update_if_active(|| update.take().unwrap());
                             }
                         });
 
@@ -387,6 +387,10 @@ impl Application {
                     }
 
                     winit::event::Event::WindowEvent { window_id: _, event } => {
+                        cx.mutate_window(|_, window: &Window| {
+                            accesskit.process_event(window.window(), &event);
+                        });
+
                         match event {
                             winit::event::WindowEvent::RedrawRequested => {
                                 if main_events {

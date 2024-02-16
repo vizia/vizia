@@ -379,7 +379,7 @@ name = "accesskit"
 path = "examples/accessibility/accesskit.rs"
 
 [features]
-default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts"]
+default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts", "accesskit"]
 clipboard = ["vizia_core/clipboard", "vizia_winit?/clipboard"]
 winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]
