@@ -249,6 +249,8 @@ impl Application {
         cx.add_main_window(&self.window_description, canvas, scale_factor);
         cx.add_window(window);
 
+        cx.0.remove_user_themes();
+
         let on_idle = self.on_idle.take();
 
         let event_loop_proxy = event_loop.create_proxy();
