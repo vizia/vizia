@@ -12,6 +12,7 @@ rust-version = "1.60"
 x11 = ["winit/x11", "glutin?/x11", "glutin-winit/x11"]
 wayland = ["winit/wayland", "winit/wayland-dlopen", "winit/wayland-csd-adwaita", "glutin-winit/wayland", "copypasta?/wayland"]
 clipboard = ["copypasta"]
+accesskit = ["accesskit_winit"]
 
 [dependencies]
 vizia_input = { path = "../vizia_input" }
@@ -26,7 +27,7 @@ glutin = { version = "0.31", default-features = false, optional = true }
 copypasta = {version = "0.10", optional = true, default-features = false }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-accesskit_winit = "0.18"
+accesskit_winit = { version = "0.18", optional = true }
 glutin = { version = "0.31", default-features = false }
 femtovg = "0.8.2"
 glutin-winit = { version = "0.4", default-features = false, features = ["egl", "glx", "wgl"] }

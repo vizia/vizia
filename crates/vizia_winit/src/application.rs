@@ -2,10 +2,10 @@ use crate::{
     convert::{winit_key_code_to_code, winit_key_to_key},
     window::Window,
 };
-use accesskit::NodeId;
-#[cfg(not(target_arch = "wasm32"))]
-use accesskit::{Action, NodeBuilder, TreeUpdate};
-#[cfg(not(target_arch = "wasm32"))]
+
+#[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+use accesskit::{Action, NodeBuilder, NodeId, TreeUpdate};
+#[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
 use accesskit_winit;
 use std::cell::RefCell;
 use vizia_core::backend::*;
@@ -41,11 +41,11 @@ use winit::event_loop::EventLoopProxy;
 #[derive(Debug)]
 pub enum UserEvent {
     Event(Event),
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
     AccessKitActionRequest(accesskit_winit::ActionRequestEvent),
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
 impl From<accesskit_winit::ActionRequestEvent> for UserEvent {
     fn from(action_request_event: accesskit_winit::ActionRequestEvent) -> Self {
         UserEvent::AccessKitActionRequest(action_request_event)
@@ -197,7 +197,7 @@ impl Application {
         #[cfg(target_os = "windows")]
         let mut is_initially_cloaked = window.set_cloak(true);
 
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
         let event_loop_proxy = event_loop.create_proxy();
 
         let mut cx = BackendContext::new(&mut context);
@@ -211,9 +211,9 @@ impl Application {
             cx.emit_origin(WindowEvent::ThemeChanged(theme));
         }
 
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
         let root_node = NodeBuilder::new(Role::Window).build(cx.accesskit_node_classes());
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
         let accesskit = accesskit_winit::Adapter::new(
             window.window(),
             move || {
@@ -267,7 +267,7 @@ impl Application {
         let default_should_poll = self.should_poll;
         let stored_control_flow = RefCell::new(ControlFlow::Poll);
 
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
         cx.process_tree_updates(|tree_updates| {
             for update in tree_updates.iter() {
                 accesskit.update_if_active(|| update.clone());
@@ -301,7 +301,7 @@ impl Application {
                             cx.send_event(event);
                         }
 
-                        #[cfg(not(target_arch = "wasm32"))]
+                        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
                         UserEvent::AccessKitActionRequest(action_request_event) => {
                             let node_id = action_request_event.request.target;
 
@@ -354,7 +354,7 @@ impl Application {
 
                         cx.process_visual_updates();
 
-                        #[cfg(not(target_arch = "wasm32"))]
+                        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
                         cx.process_tree_updates(|tree_updates| {
                             for update in tree_updates.iter() {
                                 accesskit.update_if_active(|| update.clone());
@@ -415,7 +415,7 @@ impl Application {
 
                             winit::event::WindowEvent::Focused(is_focused) => {
                                 cx.0.window_has_focus = is_focused;
-                                #[cfg(not(target_arch = "wasm32"))]
+                                #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
                                 accesskit.update_if_active(|| TreeUpdate {
                                     nodes: vec![],
                                     tree: None,
