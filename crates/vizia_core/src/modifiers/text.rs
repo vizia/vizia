@@ -11,11 +11,11 @@ pub trait TextModifiers: internal::Modifiable {
         let current = self.current();
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, move |cx, val| {
-                let cx: &mut EventContext<'_> = &mut EventContext::new_with_current(cx, cx.current);
+                let cx: &mut EventContext<'_> = &mut EventContext::new_with_current(cx, entity);
                 let text_data = val.get(cx).to_string_local(cx);
-                cx.text_context.set_text(cx.current, &text_data);
+                cx.text_context.set_text(entity, &text_data);
 
-                cx.style.needs_text_layout.insert(cx.current, true);
+                cx.style.needs_text_layout.insert(entity, true);
                 cx.needs_relayout();
                 cx.needs_redraw();
             });
@@ -58,9 +58,9 @@ pub trait TextModifiers: internal::Modifiable {
     fn color<U: Clone + Into<Color>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
-        self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, |cx, v| {
-                cx.style.font_color.insert(cx.current, v.get(cx).into());
+        self.context().with_current(current, move |cx| {
+            value.set_or_bind(cx, entity, move |cx, v| {
+                cx.style.font_color.insert(entity, v.get(cx).into());
                 cx.style.needs_redraw();
             });
         });
@@ -71,7 +71,7 @@ pub trait TextModifiers: internal::Modifiable {
     fn font_size<U: Into<FontSize>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
-        self.context().with_current(current, |cx| {
+        self.context().with_current(current, move |cx| {
             value.set_or_bind(cx, entity, move |cx, v| {
                 cx.style.font_size.insert(cx.current, v.get(cx).into());
                 cx.style.needs_text_layout.insert(cx.current, true);

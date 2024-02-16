@@ -10,11 +10,11 @@ use femtovg::Transform2D;
 use crate::style::ImageOrGradient;
 
 /// A trait which describes how a property is interpolated for animations.
-/// TODO: Make this crate private when `AnimatableSet` can be made crate private.
 pub(crate) trait Interpolator {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self;
 }
 
+// Implementations of `Interpolator` for various properties.
 impl Interpolator for f32 {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         start + (end - start) * t

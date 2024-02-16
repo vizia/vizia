@@ -10,7 +10,6 @@ use super::{Animation, TimingFunction};
 /// A keyframe in an animation state.
 #[derive(Debug, Clone)]
 pub(crate) struct Keyframe<T: Interpolator> {
-    #[allow(dead_code)] // FIXME
     pub time: f32,
     pub value: T,
     pub timing_function: TimingFunction,
@@ -33,8 +32,6 @@ pub(crate) struct AnimationState<T: Interpolator> {
     pub output: Option<T>,
     /// Whether the animation should persist after finishing.
     pub persistent: bool,
-
-    // pub t0: f32,
     /// How far through the animation between 0.0 and 1.0.
     pub t: f32,
 

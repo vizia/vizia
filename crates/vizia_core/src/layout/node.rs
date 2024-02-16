@@ -268,7 +268,6 @@ impl Node for Entity {
 
             let width = if let Some(width) = width { width } else { max_width };
             let height = if let Some(height) = height { height } else { max_height };
-
             Some((width, height))
         } else {
             None

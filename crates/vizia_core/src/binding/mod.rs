@@ -180,13 +180,15 @@
 //!
 //!         Label::new(cx, AppData::count);
 //!
-//!         Button::new(cx, |cx| cx.emit(AppEvent::Increment), |cx|{
+//!         Button::new(cx, |cx|{
 //!             Label::new(cx, "Increment")
-//!         });
+//!         })
+//!         .on_press(|cx| cx.emit(AppEvent::Increment));
 //!
-//!         Button::new(cx, |cx| cx.emit(AppEvent::Increment), |cx|{
+//!         Button::new(cx, |cx|{
 //!             Label::new(cx, "Decrement")
-//!         });
+//!         })
+//!         .on_press(|cx| cx.emit(AppEvent::Increment));
 //!     }).run();
 //! }
 //! ```

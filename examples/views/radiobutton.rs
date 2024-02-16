@@ -20,7 +20,7 @@ impl std::fmt::Display for Options {
     }
 }
 
-#[derive(Lens, Model, Setter)]
+#[derive(Lens)]
 pub struct AppData {
     pub option: Options,
 }

@@ -755,7 +755,7 @@ impl<'a> EventContext<'a> {
         Ok(())
     }
 
-    /// Spawns a thread and provides a [ContextProxy] for sending events back to the main thread.
+    /// Spawns a thread and provides a [ContextProxy] for sending events back to the main UI thread.
     pub fn spawn<F>(&self, target: F)
     where
         F: 'static + Send + FnOnce(&mut ContextProxy),
@@ -766,6 +766,14 @@ impl<'a> EventContext<'a> {
         };
 
         std::thread::spawn(move || target(&mut cxp));
+    }
+
+    /// Returns a [ContextProxy] which can be moved between threads and used to send events back to the main UI thread.
+    pub fn get_proxy(&self) -> ContextProxy {
+        ContextProxy {
+            current: self.current,
+            event_proxy: self.event_proxy.as_ref().map(|p| p.make_clone()),
+        }
     }
 
     pub fn modify<V: View>(&mut self, f: impl FnOnce(&mut V)) {

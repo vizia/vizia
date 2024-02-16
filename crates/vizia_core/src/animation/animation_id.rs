@@ -5,7 +5,7 @@ use vizia_id::{
 
 use crate::context::EventContext;
 
-/// An id used to reference style animations stored in style.
+/// An ID used to reference style animations stored in the style store.
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Animation(u64);
 

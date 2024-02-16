@@ -19,7 +19,7 @@ impl Model for AppData {
             AppEvent::SetName(s) => self.name = s.clone(),
             AppEvent::ReceiveEmail => self.emails += 1,
             AppEvent::ToggleLanguage => {
-                if cx.environment().locale == "en-US" {
+                if cx.environment().locale != "fr" {
                     cx.emit(EnvironmentEvent::SetLocale("fr".parse().unwrap()));
                 } else {
                     cx.emit(EnvironmentEvent::SetLocale("en-US".parse().unwrap()));

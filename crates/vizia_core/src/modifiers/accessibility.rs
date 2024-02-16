@@ -18,11 +18,10 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     fn name<U: ToStringLocalized>(mut self, name: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
-        self.context().with_current(current, |cx| {
-            name.set_or_bind(cx, entity, |cx, name| {
-                let cx = &mut EventContext::new_with_current(cx, cx.current);
-                cx.style.name.insert(cx.current, name.get(cx).to_string_local(cx));
-                cx.style.needs_access_update(cx.current);
+        self.context().with_current(current, move |cx| {
+            name.set_or_bind(cx, entity, move |cx, name| {
+                cx.style.name.insert(entity, name.get(cx).to_string_local(cx));
+                cx.style.needs_access_update(entity);
             });
         });
 

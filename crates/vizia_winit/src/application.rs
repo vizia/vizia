@@ -55,7 +55,6 @@ impl From<vizia_core::events::Event> for UserEvent {
     }
 }
 
-type AppBuilder = Option<Box<dyn FnOnce(&mut Context)>>;
 type IdleCallback = Option<Box<dyn Fn(&mut Context)>>;
 
 ///Creating a new application creates a root `Window` and a `Context`. Views declared within the closure passed to `Application::new()` are added to the context and rendered into the root window.
@@ -73,7 +72,6 @@ type IdleCallback = Option<Box<dyn Fn(&mut Context)>>;
 pub struct Application {
     context: Context,
     event_loop: EventLoop<UserEvent>,
-    builder: AppBuilder,
     on_idle: IdleCallback,
     window_description: WindowDescription,
     should_poll: bool,
@@ -105,7 +103,6 @@ impl Application {
         // TODO: User scale factors and window resizing has not been implement for winit
         // TODO: Changing the scale factor doesn't work for winit anyways since winit doesn't let
         //       you resize the window, so there's no mutator for that at he moment
-        #[allow(unused_mut)]
         let mut context = Context::new(WindowSize::new(1, 1), 1.0);
 
         let event_loop = EventLoopBuilder::with_user_event().build();
@@ -116,10 +113,14 @@ impl Application {
             cx.set_event_proxy(Box::new(WinitEventProxy(event_proxy_obj)));
         }
 
+        let mut cx = BackendContext::new(&mut context);
+        cx.renegotiate_language();
+        cx.0.remove_user_themes();
+        (content)(&mut cx.0);
+
         Self {
             context,
             event_loop,
-            builder: Some(Box::new(content)),
             on_idle: None,
             window_description: WindowDescription::new(),
             should_poll: false,
@@ -247,12 +248,6 @@ impl Application {
         let scale_factor = window.window().scale_factor() as f32;
         cx.add_main_window(&self.window_description, canvas, scale_factor);
         cx.add_window(window);
-
-        cx.0.remove_user_themes();
-        cx.renegotiate_language();
-        if let Some(builder) = self.builder.take() {
-            (builder)(cx.0);
-        }
 
         let on_idle = self.on_idle.take();
 
@@ -612,50 +607,78 @@ impl Application {
 }
 
 impl WindowModifiers for Application {
-    fn title<T: ToString>(mut self, title: T) -> Self {
-        self.window_description.title = title.to_string();
+    fn title<T: ToString>(mut self, title: impl Res<T>) -> Self {
+        title.set_or_bind(&mut self.context, Entity::root(), |cx, title| {
+            cx.emit(WindowEvent::SetTitle(title.get(cx).to_string()));
+        });
 
         self
     }
 
-    fn inner_size<S: Into<WindowSize>>(mut self, size: S) -> Self {
-        self.window_description.inner_size = size.into();
+    fn inner_size<S: Into<WindowSize>>(mut self, size: impl Res<S>) -> Self {
+        self.window_description.inner_size = size.get(&mut self.context).into();
+
+        size.set_or_bind(&mut self.context, Entity::root(), |cx, size| {
+            cx.emit(WindowEvent::SetSize(size.get(cx).into()));
+        });
 
         self
     }
 
-    fn min_inner_size<S: Into<WindowSize>>(mut self, size: Option<S>) -> Self {
-        self.window_description.min_inner_size = size.map(|size| size.into());
+    fn min_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
+        self.window_description.min_inner_size = size.get(&mut self.context).map(|s| s.into());
+
+        size.set_or_bind(&mut self.context, Entity::root(), |cx, size| {
+            cx.emit(WindowEvent::SetMinSize(size.get(cx).map(|s| s.into())));
+        });
 
         self
     }
 
-    fn max_inner_size<S: Into<WindowSize>>(mut self, size: Option<S>) -> Self {
-        self.window_description.max_inner_size = size.map(|size| size.into());
+    fn max_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
+        self.window_description.max_inner_size = size.get(&mut self.context).map(|s| s.into());
+
+        size.set_or_bind(&mut self.context, Entity::root(), |cx, size| {
+            cx.emit(WindowEvent::SetMaxSize(size.get(cx).map(|s| s.into())));
+        });
+        self
+    }
+
+    fn position<P: Into<Position>>(mut self, position: impl Res<P>) -> Self {
+        self.window_description.position = Some(position.get(&mut self.context).into());
+
+        position.set_or_bind(&mut self.context, Entity::root(), |cx, size| {
+            cx.emit(WindowEvent::SetPosition(size.get(cx).into()));
+        });
 
         self
     }
 
-    fn position<P: Into<Position>>(mut self, position: P) -> Self {
-        self.window_description.position = Some(position.into());
+    fn resizable(mut self, flag: impl Res<bool>) -> Self {
+        self.window_description.resizable = flag.get(&mut self.context);
+
+        flag.set_or_bind(&mut self.context, Entity::root(), |cx, flag| {
+            cx.emit(WindowEvent::SetResizable(flag.get(cx)));
+        });
 
         self
     }
 
-    fn resizable(mut self, flag: bool) -> Self {
-        self.window_description.resizable = flag;
+    fn minimized(mut self, flag: impl Res<bool>) -> Self {
+        self.window_description.minimized = flag.get(&mut self.context);
 
+        flag.set_or_bind(&mut self.context, Entity::root(), |cx, flag| {
+            cx.emit(WindowEvent::SetMinimized(flag.get(cx)));
+        });
         self
     }
 
-    fn minimized(mut self, flag: bool) -> Self {
-        self.window_description.minimized = flag;
+    fn maximized(mut self, flag: impl Res<bool>) -> Self {
+        self.window_description.maximized = flag.get(&mut self.context);
 
-        self
-    }
-
-    fn maximized(mut self, flag: bool) -> Self {
-        self.window_description.maximized = flag;
+        flag.set_or_bind(&mut self.context, Entity::root(), |cx, flag| {
+            cx.emit(WindowEvent::SetMaximized(flag.get(cx)));
+        });
 
         self
     }

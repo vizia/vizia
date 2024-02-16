@@ -1,5 +1,6 @@
 use crate::prelude::*;
 
+/// Enum which represents the placement of a badge on its parent.
 #[derive(Debug, Clone, Copy, Data, PartialEq)]
 pub enum BadgePlacement {
     TopLeft,
@@ -67,10 +68,12 @@ impl Badge {
         )
     }
 
+    /// Creates an empty badge.
     pub fn empty(cx: &mut Context) -> Handle<Self> {
         Self::common(cx, |_| {})
     }
 
+    /// Creates a new badge.
     pub fn new<F, V>(cx: &mut Context, content: F) -> Handle<Self>
     where
         F: FnOnce(&mut Context) -> Handle<V>,

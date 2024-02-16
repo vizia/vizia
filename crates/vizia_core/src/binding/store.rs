@@ -45,6 +45,7 @@ where
     fn contains_source(&self, model: ModelOrView) -> bool {
         model.downcast_ref::<L::Source>().is_some()
     }
+
     fn update(&mut self, model: ModelOrView) -> bool {
         let Some(data) = model.downcast_ref::<L::Source>() else { return false };
         let Some(new_data) = self.lens.view(data) else { return false };
