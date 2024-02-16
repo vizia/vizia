@@ -2,7 +2,7 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-#[derive(Lens, Model, Setter)]
+#[derive(Lens)]
 pub struct AppData {
     list: Vec<String>,
     choice: String,
