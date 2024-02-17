@@ -222,6 +222,8 @@ impl Application {
 
                 let root_id = Entity::root().accesskit_id();
 
+                // Build initial tree here
+
                 TreeUpdate {
                     nodes: vec![(root_id, root_node)],
                     tree: Some(Tree::new(root_id)),
@@ -267,12 +269,12 @@ impl Application {
         let default_should_poll = self.should_poll;
         let stored_control_flow = RefCell::new(ControlFlow::Poll);
 
-        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
-        cx.process_tree_updates(|tree_updates| {
-            for update in tree_updates.iter_mut() {
-                accesskit.update_if_active(|| update.take().unwrap());
-            }
-        });
+        // #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+        // cx.process_tree_updates(|tree_updates| {
+        //     for update in tree_updates.iter_mut() {
+        //         accesskit.update_if_active(|| update.take().unwrap());
+        //     }
+        // });
 
         let mut cursor_moved = false;
         let mut cursor = (0.0f32, 0.0f32);
@@ -387,6 +389,7 @@ impl Application {
                     }
 
                     winit::event::Event::WindowEvent { window_id: _, event } => {
+                        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
                         cx.mutate_window(|_, window: &Window| {
                             accesskit.process_event(window.window(), &event);
                         });

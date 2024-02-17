@@ -243,8 +243,9 @@ impl<'a> BackendContext<'a> {
             (process)(&mut self.0.tree_updates)
         }
 
-        self.0.tree_updates.retain(|update| update.is_some());
-        // self.0.tree_updates.clear();
+        // TODO: Fix this
+        // self.0.tree_updates.retain(|update| update.is_some());
+        self.0.tree_updates.clear();
     }
 
     /// Calls the style system to match entities with shared styles.
