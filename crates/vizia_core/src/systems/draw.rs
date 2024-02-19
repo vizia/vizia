@@ -1,17 +1,16 @@
 use crate::prelude::*;
+use skia_safe::{ClipOp, Rect};
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use vizia_storage::LayoutChildIterator;
 
 pub(crate) fn draw_system(cx: &mut Context) {
-    let canvas = cx.canvases.get_mut(&Entity::root()).unwrap();
+    let canvas = cx.canvases.get_mut(&Entity::root()).unwrap().canvas();
     cx.resource_manager.mark_images_unused();
-    let window_width = cx.cache.get_width(Entity::root());
-    let window_height = cx.cache.get_height(Entity::root());
+
     let clear_color =
-        cx.style.background_color.get(Entity::root()).cloned().unwrap_or(RGBA::TRANSPARENT.into());
-    canvas.set_size(window_width as u32, window_height as u32, 1.0);
-    canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
+        cx.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::transparent());
+    canvas.clear(clear_color);
 
     let mut queue = BinaryHeap::new();
     queue.push(ZEntity { index: 0, entity: Entity::root(), opacity: 1.0, visible: true });
@@ -41,12 +40,12 @@ pub(crate) fn draw_system(cx: &mut Context) {
         canvas.restore();
     }
 
-    canvas.flush();
+    // canvas.flush();
 }
 
 fn draw_entity(
     cx: &mut DrawContext,
-    canvas: &mut Canvas,
+    canvas: &Canvas,
     current_z: i32,
     queue: &mut BinaryHeap<ZEntity>,
     visible: bool,
@@ -67,12 +66,21 @@ fn draw_entity(
     }
 
     canvas.save();
+    let layer_count = if cx.opacity() != 1.0 {
+        println!("{} {} {}", cx.current, cx.opacity(), cx.bounds());
+        let rect: Rect = cx.bounds().into();
+        Some(canvas.save_layer_alpha_f(None, cx.opacity()))
+    } else {
+        None
+    };
+    // canvas.save();
+    // canvas.set_transform(&cx.transform());
+    canvas.concat(&cx.transform());
 
-    canvas.set_transform(&cx.transform());
-
-    let clip_region = cx.clip_region();
-
-    canvas.intersect_scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
+    if let Some(clip_path) = cx.clip_path() {
+        canvas.clip_path(&clip_path, ClipOp::Intersect, true);
+    }
+    // canvas.intersect_scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
 
     let is_visible = match (visible, cx.visibility()) {
         (v, None) => v,
@@ -90,16 +98,16 @@ fn draw_entity(
 
     let child_iter = LayoutChildIterator::new(cx.tree, cx.current);
 
-    let parent_opacity = cx.opacity();
     // Draw its children
     for child in child_iter {
         cx.current = child;
-        let opactiy = cx.style.opacity.get(child).copied().unwrap_or(Opacity(1.0)).0;
-        cx.opacity = parent_opacity * opactiy;
         // TODO: Skip views with zero-sized bounding boxes here? Or let user decide if they want to skip?
         draw_entity(cx, canvas, current_z, queue, is_visible);
     }
 
+    if let Some(count) = layer_count {
+        canvas.restore_to_count(count);
+    }
     canvas.restore();
     cx.current = current;
 }

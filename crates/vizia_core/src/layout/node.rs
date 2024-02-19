@@ -2,7 +2,7 @@ use morphorm::Node;
 use vizia_storage::MorphormChildIter;
 
 use crate::prelude::*;
-use crate::resource::{ImageOrId, ResourceManager};
+use crate::resource::ResourceManager;
 use crate::text::TextContext;
 
 pub struct SubLayout<'a> {
@@ -149,28 +149,29 @@ impl Node for Entity {
         width: Option<f32>,
         height: Option<f32>,
     ) -> Option<(f32, f32)> {
-        if sublayout.text_context.has_buffer(*self) {
-            // If the width is known use that, else use 0 for wrapping text or 999999 for non-wrapping text.
-            let max_width = if let Some(width) = width {
-                let child_left =
-                    store.child_left.get(*self).cloned().unwrap_or_default().to_px(width, 0.0)
-                        * store.scale_factor();
-                let child_right =
-                    store.child_right.get(*self).cloned().unwrap_or_default().to_px(width, 0.0)
-                        * store.scale_factor();
-                let border_width = store
-                    .border_width
-                    .get(*self)
-                    .cloned()
-                    .unwrap_or_default()
-                    .to_pixels(0.0, store.scale_factor());
+        if let Some(paragraph) = sublayout.text_context.text_paragraphs.get_mut(*self) {
+            // // If the width is known use that, else use 0 for wrapping text or 999999 for non-wrapping text.
+            // let max_width = if let Some(width) = width {
+            //     let child_left =
+            //         store.child_left.get(*self).cloned().unwrap_or_default().to_px(width, 0.0)
+            //             * store.scale_factor();
+            //     let child_right =
+            //         store.child_right.get(*self).cloned().unwrap_or_default().to_px(width, 0.0)
+            //             * store.scale_factor();
+            //     let border_width = store
+            //         .border_width
+            //         .get(*self)
+            //         .cloned()
+            //         .unwrap_or_default()
+            //         .to_pixels(0.0, store.scale_factor());
 
-                (width.ceil() - child_left - child_right - border_width - border_width) as i32
-            } else if store.text_wrap.get(*self).copied().unwrap_or(true) {
-                0
-            } else {
-                999999
-            };
+            //     width.ceil() - child_left - child_right - border_width - border_width
+            // } else {
+            //     f32::MAX
+            // };
+
+            paragraph.layout(f32::MAX);
+            // println!("{}", paragraph.min_intrinsic_width());
 
             let child_left = store.child_left.get(*self).copied().unwrap_or_default();
             let child_right = store.child_right.get(*self).copied().unwrap_or_default();
@@ -180,10 +181,14 @@ impl Node for Entity {
             let mut child_space_x = 0.0;
             let mut child_space_y = 0.0;
 
+            let mut padding_left = 0.0;
+            let mut padding_top = 0.0;
+
             // shrink the bounding box based on pixel values
             if let Pixels(val) = child_left {
                 let val = val * store.scale_factor();
                 child_space_x += val;
+                padding_left += val;
             }
             if let Pixels(val) = child_right {
                 let val = val * store.scale_factor();
@@ -192,6 +197,7 @@ impl Node for Entity {
             if let Pixels(val) = child_top {
                 let val = val * store.scale_factor();
                 child_space_y += val;
+                padding_top += val;
             }
             if let Pixels(val) = child_bottom {
                 let val = val * store.scale_factor();
@@ -208,57 +214,61 @@ impl Node for Entity {
             child_space_x += 2.0 * border_width;
             child_space_y += 2.0 * border_width;
 
-            sublayout.text_context.sync_styles(*self, store);
+            padding_left += border_width;
+            padding_top += border_width;
 
-            let (text_width, mut text_height) =
-                sublayout.text_context.with_buffer(*self, |fs, buffer| {
-                    buffer.set_size(fs, max_width as f32, f32::MAX);
+            let text_width = if store.text_wrap.get(*self).copied().unwrap_or(true) {
+                if let Some(width) = width {
+                    width - child_space_x
+                } else {
+                    paragraph.min_intrinsic_width().ceil()
+                }
+            } else if store.text_overflow.get(*self).is_some() {
+                if let Some(width) = width {
+                    width - child_space_x
+                } else {
+                    paragraph.max_intrinsic_width().ceil()
+                }
+            } else {
+                paragraph.max_intrinsic_width().ceil()
+            };
 
-                    let w = buffer
-                        .layout_runs()
-                        .filter_map(|r| (!r.line_w.is_nan()).then_some(r.line_w))
-                        .max_by(|f1, f2| f1.partial_cmp(f2).unwrap())
-                        .unwrap_or_default();
-                    let lines = buffer.layout_runs().count();
+            paragraph.layout(text_width);
 
-                    let h = lines as f32 * buffer.metrics().line_height;
-                    (w, h)
-                });
+            let text_height = if let Some(height) = height { height } else { paragraph.height() };
 
-            if height.is_none() {
-                text_height = sublayout.text_context.with_buffer(*self, |fs, buffer| {
-                    buffer.set_size(fs, text_width, f32::MAX);
+            let width =
+                if let Some(width) = width { width } else { text_width.round() + child_space_x };
 
-                    let lines = buffer.layout_runs().count();
-                    lines as f32 * buffer.metrics().line_height
-                });
-            }
+            let height = if let Some(height) = height {
+                height
+            } else {
+                text_height.round() + child_space_y
+            };
 
-            let height =
-                if let Some(height) = height { height } else { text_height + child_space_y };
-            let width = if let Some(width) = width { width } else { text_width + child_space_x };
+            println!("{} {} {}", self, text_width, width);
 
             // Cache the text_width/ text_height in the text context so we can use it to compute transforms later
-            sublayout.text_context.set_bounds(
+            sublayout.text_context.set_text_bounds(
                 *self,
-                BoundingBox { w: text_width, h: text_height, ..Default::default() },
+                BoundingBox { x: padding_left, y: padding_top, w: text_width, h: text_height },
             );
 
-            Some((width.ceil(), height.ceil()))
+            Some((width, height))
         } else if let Some(images) = store.background_image.get(*self) {
             let mut max_width = 0.0f32;
             let mut max_height = 0.0f32;
             for image in images.iter() {
                 match image {
                     ImageOrGradient::Image(image_name) => {
-                        if let Some(ImageOrId::Id(_, dim)) = sublayout
+                        if let Some(image) = sublayout
                             .resource_manager
                             .images
                             .get(image_name)
                             .map(|stored_img| &stored_img.image)
                         {
-                            max_width = max_width.max(dim.0 as f32);
-                            max_height = max_height.max(dim.1 as f32);
+                            max_width = max_width.max(image.width() as f32);
+                            max_height = max_height.max(image.height() as f32);
                         }
                     }
                     _ => {}

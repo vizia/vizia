@@ -2,7 +2,6 @@
 //! results. The main type here is CachedData, usually accessed via `cx.cache`.
 
 use crate::prelude::*;
-use femtovg::ImageId;
 use vizia_storage::SparseSet;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
@@ -19,9 +18,9 @@ pub(crate) struct Pos {
 pub struct CachedData {
     pub(crate) bounds: SparseSet<BoundingBox>,
     pub(crate) relative_position: SparseSet<Pos>,
-    pub(crate) shadow_images: SparseSet<Vec<Option<(ImageId, ImageId)>>>,
-    pub(crate) filter_image: SparseSet<Option<(ImageId, ImageId)>>,
-    pub(crate) screenshot_image: SparseSet<Option<ImageId>>,
+    // pub(crate) shadow_images: SparseSet<Vec<Option<(ImageId, ImageId)>>>,
+    // pub(crate) filter_image: SparseSet<Option<(ImageId, ImageId)>>,
+    // pub(crate) screenshot_image: SparseSet<Option<ImageId>>,
     pub(crate) geo_changed: SparseSet<GeoChanged>,
 }
 
@@ -35,9 +34,9 @@ impl CachedData {
     pub(crate) fn remove(&mut self, entity: Entity) {
         self.bounds.remove(entity);
         self.relative_position.remove(entity);
-        self.shadow_images.remove(entity);
-        self.filter_image.remove(entity);
-        self.screenshot_image.remove(entity);
+        // self.shadow_images.remove(entity);
+        // self.filter_image.remove(entity);
+        // self.screenshot_image.remove(entity);
         self.geo_changed.remove(entity);
     }
 

@@ -19,3 +19,16 @@ define_enum! {
         "justify": Justify,
     }
 }
+
+impl From<TextAlign> for skia_safe::textlayout::TextAlign {
+    fn from(value: TextAlign) -> Self {
+        match value {
+            TextAlign::Start => skia_safe::textlayout::TextAlign::Start,
+            TextAlign::End => skia_safe::textlayout::TextAlign::End,
+            TextAlign::Left => skia_safe::textlayout::TextAlign::Left,
+            TextAlign::Right => skia_safe::textlayout::TextAlign::Right,
+            TextAlign::Center => skia_safe::textlayout::TextAlign::Center,
+            TextAlign::Justify => skia_safe::textlayout::TextAlign::Justify,
+        }
+    }
+}

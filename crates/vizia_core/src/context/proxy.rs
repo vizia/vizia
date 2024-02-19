@@ -77,10 +77,14 @@ impl ContextProxy {
     pub fn load_image(
         &mut self,
         path: String,
-        image: image::DynamicImage,
+        data: &[u8],
         policy: ImageRetentionPolicy,
     ) -> Result<(), ProxyEmitError> {
-        self.emit(InternalEvent::LoadImage { path, image: Mutex::new(Some(image)), policy })
+        if let Some(image) = skia_safe::Image::from_encoded(skia_safe::Data::new_copy(data)) {
+            self.emit(InternalEvent::LoadImage { path, image: Mutex::new(Some(image)), policy })?
+        }
+
+        Ok(())
     }
 
     pub fn spawn<F>(&self, target: F)

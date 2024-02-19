@@ -1,10 +1,10 @@
 use crate::{
     define_property, Angle, BackgroundImage, BackgroundSize, Border, BorderCornerShape,
     BorderRadius, BorderWidth, BorderWidthValue, BoxShadow, ClipPath, Color, CursorIcon,
-    CustomParseError, CustomProperty, Display, Filter, FontFamily, FontSize, FontStretch,
-    FontStyle, FontWeight, LayoutType, LengthOrPercentage, Opacity, Outline, Overflow, Parse,
-    PointerEvents, Position, PositionType, Rect, Scale, TextAlign, Transform, Transition,
-    Translate, Units, UnparsedProperty, Visibility,
+    CustomParseError, CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant, FontWeight,
+    FontWidth, LayoutType, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow, Parse,
+    PointerEvents, Position, PositionType, Rect, Scale, TextAlign, TextOverflow, Transform,
+    Transition, Translate, Units, UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -140,17 +140,19 @@ define_property! {
         "background-image": BackgroundImage(Vec<BackgroundImage<'i>>),
         "background-size": BackgroundSize(Vec<BackgroundSize>),
 
-        // Font
+        // Text
         "font-size": FontSize(FontSize),
         "color": FontColor(Color),
         "font-family": FontFamily(Vec<FontFamily<'i>>),
         "font-weight": FontWeight(FontWeight),
-        "font-style": FontStyle(FontStyle),
-        "font-stretch": FontStretch(FontStretch),
+        "font-slant": FontSlant(FontSlant),
+        "font-width": FontWidth(FontWidth),
         "selection-color": SelectionColor(Color), // TODO: Remove this once we have the pseudoselector version.
         "caret-color": CaretColor(Color),
         "text-wrap": TextWrap(bool),
         "text-align": TextAlign(TextAlign),
+        "text-overflow": TextOverflow(TextOverflow),
+        "line-clamp": LineClamp(LineClamp),
 
         // Box Shadow
         "box-shadow": BoxShadow(Vec<BoxShadow>),
