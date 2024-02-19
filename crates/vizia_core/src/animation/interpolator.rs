@@ -5,7 +5,7 @@ use vizia_style::{
     LinearGradient, Opacity, PercentageOrNumber, Rect, Scale, Transform, Translate, RGBA,
 };
 
-use femtovg::Transform2D;
+// use femtovg::Transform2D;
 
 use crate::style::ImageOrGradient;
 
@@ -200,18 +200,18 @@ impl Interpolator for Transform {
 }
 
 // TODO: Split this into interpolated matrices for translation, rotation, scale, and skew
-impl Interpolator for Transform2D {
-    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        let mut transform = *start;
-        transform[0] = f32::interpolate(&start[0], &end[0], t);
-        transform[1] = f32::interpolate(&start[1], &end[1], t);
-        transform[2] = f32::interpolate(&start[2], &end[2], t);
-        transform[3] = f32::interpolate(&start[3], &end[3], t);
-        transform[4] = f32::interpolate(&start[4], &end[4], t);
-        transform[5] = f32::interpolate(&start[5], &end[5], t);
-        transform
-    }
-}
+// impl Interpolator for Transform2D {
+//     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+//         let mut transform = *start;
+//         transform[0] = f32::interpolate(&start[0], &end[0], t);
+//         transform[1] = f32::interpolate(&start[1], &end[1], t);
+//         transform[2] = f32::interpolate(&start[2], &end[2], t);
+//         transform[3] = f32::interpolate(&start[3], &end[3], t);
+//         transform[4] = f32::interpolate(&start[4], &end[4], t);
+//         transform[5] = f32::interpolate(&start[5], &end[5], t);
+//         transform
+//     }
+// }
 
 impl<T: Interpolator> Interpolator for Vec<T> {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {

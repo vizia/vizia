@@ -4,7 +4,6 @@ use std::collections::{BinaryHeap, VecDeque};
 use std::error::Error;
 use std::rc::Rc;
 
-use femtovg::Transform2D;
 use hashbrown::{HashMap, HashSet};
 use vizia_storage::{LayoutTreeIterator, TreeIterator};
 
@@ -294,67 +293,67 @@ impl<'a> EventContext<'a> {
     }
 
     /// Returns the transform of the current view.
-    pub fn transform(&self) -> Transform2D {
-        let mut transform = Transform2D::identity();
+    // pub fn transform(&self) -> Transform2D {
+    //     let mut transform = Transform2D::identity();
 
-        let bounds = self.bounds();
-        let scale_factor = self.scale_factor();
+    //     let bounds = self.bounds();
+    //     let scale_factor = self.scale_factor();
 
-        // Apply transform origin.
-        let mut origin = self
-            .style
-            .transform_origin
-            .get(self.current)
-            .map(|transform_origin| {
-                let mut origin = Transform2D::new_translation(bounds.left(), bounds.top());
-                let offset = transform_origin.as_transform(bounds, scale_factor);
-                origin.premultiply(&offset);
-                origin
-            })
-            .unwrap_or(Transform2D::new_translation(bounds.center().0, bounds.center().1));
-        transform.premultiply(&origin);
-        origin.inverse();
+    //     // Apply transform origin.
+    //     let mut origin = self
+    //         .style
+    //         .transform_origin
+    //         .get(self.current)
+    //         .map(|transform_origin| {
+    //             let mut origin = Transform2D::new_translation(bounds.left(), bounds.top());
+    //             let offset = transform_origin.as_transform(bounds, scale_factor);
+    //             origin.premultiply(&offset);
+    //             origin
+    //         })
+    //         .unwrap_or(Transform2D::new_translation(bounds.center().0, bounds.center().1));
+    //     transform.premultiply(&origin);
+    //     origin.inverse();
 
-        // Apply translation.
-        if let Some(translate) = self.style.translate.get(self.current) {
-            transform.premultiply(&translate.as_transform(bounds, scale_factor));
-        }
+    //     // Apply translation.
+    //     if let Some(translate) = self.style.translate.get(self.current) {
+    //         transform.premultiply(&translate.as_transform(bounds, scale_factor));
+    //     }
 
-        // Apply rotation.
-        if let Some(rotate) = self.style.rotate.get(self.current) {
-            transform.premultiply(&rotate.as_transform(bounds, scale_factor));
-        }
+    //     // Apply rotation.
+    //     if let Some(rotate) = self.style.rotate.get(self.current) {
+    //         transform.premultiply(&rotate.as_transform(bounds, scale_factor));
+    //     }
 
-        // Apply scaling.
-        if let Some(scale) = self.style.scale.get(self.current) {
-            transform.premultiply(&scale.as_transform(bounds, scale_factor));
-        }
+    //     // Apply scaling.
+    //     if let Some(scale) = self.style.scale.get(self.current) {
+    //         transform.premultiply(&scale.as_transform(bounds, scale_factor));
+    //     }
 
-        // Apply transform functions.
-        if let Some(transforms) = self.style.transform.get(self.current) {
-            // Check if the transform is currently animating
-            // Get the animation state
-            // Manually interpolate the value to get the overall transform for the current frame
-            if let Some(animation_state) = self.style.transform.get_active_animation(self.current) {
-                if let Some(start) = animation_state.keyframes.first() {
-                    if let Some(end) = animation_state.keyframes.last() {
-                        let start_transform = start.value.as_transform(bounds, scale_factor);
-                        let end_transform = end.value.as_transform(bounds, scale_factor);
-                        let t = animation_state.t;
-                        let animated_transform =
-                            Transform2D::interpolate(&start_transform, &end_transform, t);
-                        transform.premultiply(&animated_transform);
-                    }
-                }
-            } else {
-                transform.premultiply(&transforms.as_transform(bounds, scale_factor));
-            }
-        }
+    //     // Apply transform functions.
+    //     if let Some(transforms) = self.style.transform.get(self.current) {
+    //         // Check if the transform is currently animating
+    //         // Get the animation state
+    //         // Manually interpolate the value to get the overall transform for the current frame
+    //         if let Some(animation_state) = self.style.transform.get_active_animation(self.current) {
+    //             if let Some(start) = animation_state.keyframes.first() {
+    //                 if let Some(end) = animation_state.keyframes.last() {
+    //                     let start_transform = start.value.as_transform(bounds, scale_factor);
+    //                     let end_transform = end.value.as_transform(bounds, scale_factor);
+    //                     let t = animation_state.t;
+    //                     let animated_transform =
+    //                         Transform2D::interpolate(&start_transform, &end_transform, t);
+    //                     transform.premultiply(&animated_transform);
+    //                 }
+    //             }
+    //         } else {
+    //             transform.premultiply(&transforms.as_transform(bounds, scale_factor));
+    //         }
+    //     }
 
-        transform.premultiply(&origin);
+    //     transform.premultiply(&origin);
 
-        transform
-    }
+    //     transform
+    // }
 
     /// Trigger an animation with the given id to play on the current view.
     pub fn play_animation(&mut self, anim_id: impl AnimId, duration: Duration) {
@@ -1118,9 +1117,9 @@ impl<'a> EventContext<'a> {
 
     /// Sets the text of the current view.
     pub fn set_text(&mut self, text: &str) {
-        self.text_context.set_text(self.current, text);
+        // self.text_context.set_text(self.current, text);
 
-        self.style.needs_text_layout.insert(self.current, true);
+        self.style.needs_text_update(self.current);
         self.needs_relayout();
         self.needs_redraw();
     }

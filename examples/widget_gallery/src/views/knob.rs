@@ -32,8 +32,8 @@ pub fn knob(cx: &mut Context) {
         DemoRegion::new(
             cx,
             |cx| {
-                Knob::new(cx, 0.5, KnobState::value, false)
-                    .on_changing(|cx, val| cx.emit(KnobEvent::SetValue(val)));
+                // Knob::new(cx, 0.5, KnobState::value, false)
+                //     .on_changing(|cx, val| cx.emit(KnobEvent::SetValue(val)));
             },
             r#"Knob::new(cx, 0.5, KnobState::value, false)
     .on_changing(|cx, val| cx.emit(KnobEvent::SetValue(val)));"#,

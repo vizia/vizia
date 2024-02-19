@@ -1,11 +1,14 @@
 use crate::accessibility::IntoNode;
-use crate::prelude::*;
+use crate::{prelude::*, text};
 
-use crate::text::{enforce_text_bounds, ensure_visible, Direction, Movement};
+use crate::text::{
+    apply_movement, enforce_text_bounds, ensure_visible, offset_for_delete_backwards, Direction,
+    EditableText, Movement, Selection, VerticalMovement,
+};
 use crate::views::scrollview::SCROLL_SENSITIVITY;
 use accesskit::{ActionData, ActionRequest, TextDirection, TextPosition, TextSelection};
-use cosmic_text::{Action, Cursor, Edit, Editor, FontSystem, Selection};
-use unicode_segmentation::UnicodeSegmentation;
+use skia_safe::textlayout::{RectHeightStyle, RectWidthStyle};
+use skia_safe::{Paint, PaintStyle, Rect};
 
 /// Events for modifying a textbox.
 pub enum TextEvent {
@@ -71,6 +74,7 @@ pub struct Textbox<L: Lens> {
     placeholder_shown: bool,
     show_caret: bool,
     caret_timer: Timer,
+    selection: Selection,
 }
 
 // Determines whether the enter key submits the text or inserts a new line.
@@ -156,6 +160,7 @@ where
             placeholder_shown: true,
             show_caret: true,
             caret_timer,
+            selection: Selection::new(0, 0),
         }
         .build(cx, move |cx| {
             cx.add_listener(move |textbox: &mut Self, cx, event| {
@@ -171,16 +176,16 @@ where
                 });
             });
 
-            Binding::new(cx, lens, move |cx: &mut Context, text| {
-                Binding::new(cx, Self::edit, move |cx, edit| {
-                    if !edit.get(cx) {
-                        let text_str = text.get(cx).to_string();
-                        cx.emit(TextEvent::SelectAll);
-                        cx.emit(TextEvent::InsertText(text_str));
-                        cx.emit(TextEvent::Scroll(0.0, 0.0));
-                    }
-                })
-            });
+            // Binding::new(cx, lens, move |cx: &mut Context, text| {
+            //     Binding::new(cx, Self::edit, move |cx, edit| {
+            //         if !edit.get(cx) {
+            //             let text_str = text.get(cx).to_string();
+            //             cx.emit(TextEvent::SelectAll);
+            //             cx.emit(TextEvent::InsertText(text_str));
+            //             cx.emit(TextEvent::Scroll(0.0, 0.0));
+            //         }
+            //     })
+            // });
 
             Binding::new(cx, Self::placeholder, |cx, placeholder| {
                 let placeholder_string = placeholder.get(cx);
@@ -203,265 +208,89 @@ where
         .text_value(lens)
         .default_action_verb(DefaultActionVerb::Focus)
         .toggle_class("caret", Self::show_caret)
+        .text(lens)
     }
 
-    fn set_caret(&mut self, cx: &mut EventContext) {
-        // Calculate visible area for content and container
-        let mut text_bounds = cx.text_context.get_bounds(cx.current).unwrap_or_default();
-        let mut bounds = cx.bounds();
+    fn set_caret(&mut self, cx: &mut EventContext) {}
 
-        let child_left = cx.style.child_left.get(cx.current).copied().unwrap_or_default();
-        let child_top = cx.style.child_top.get(cx.current).copied().unwrap_or_default();
-        let child_right = cx.style.child_right.get(cx.current).copied().unwrap_or_default();
-        let child_bottom = cx.style.child_bottom.get(cx.current).copied().unwrap_or_default();
-
-        let logical_parent_width = cx.physical_to_logical(bounds.w);
-        let logical_parent_height = cx.physical_to_logical(bounds.h);
-
-        let child_left = child_left.to_px(logical_parent_width, 0.0) * cx.scale_factor();
-        let child_top = child_top.to_px(logical_parent_height, 0.0) * cx.scale_factor();
-        let child_right = child_right.to_px(logical_parent_width, 0.0) * cx.scale_factor();
-        let child_bottom = child_bottom.to_px(logical_parent_height, 0.0) * cx.scale_factor();
-
-        text_bounds.x = bounds.x;
-        text_bounds.y = bounds.y;
-
-        bounds.h -= child_top + child_bottom;
-        bounds.w -= child_left + child_right;
-
-        cx.text_context.sync_styles(cx.current, cx.style);
-
-        let (mut tx, mut ty) = self.transform;
-
-        (tx, ty) = enforce_text_bounds(&text_bounds, &bounds, (tx, ty));
-
-        text_bounds.x += child_left;
-        text_bounds.y += child_top;
-
-        // TODO justify????
-        if let Some((x, y, _, h)) =
-            cx.text_context.layout_caret(cx.current, text_bounds, (0., 0.), 1.0 * cx.scale_factor())
-        {
-            let caret_box = BoundingBox { x, y, w: 0.0, h };
-            bounds.x += child_left;
-            bounds.y += child_top;
-
-            (tx, ty) = ensure_visible(&caret_box, &bounds, (tx, ty));
+    fn insert_text(&mut self, cx: &mut EventContext, txt: &str) {
+        if let Some(text) = cx.style.text.get_mut(cx.current) {
+            text.edit(self.selection.range(), txt);
+            self.selection = Selection::caret(self.selection.active + txt.len());
         }
-
-        self.transform = (tx.round(), ty.round());
-    }
-
-    fn insert_text(&mut self, cx: &mut EventContext, text: &str) {
-        cx.text_context.with_editor(cx.current, |_: &mut FontSystem, buf| {
-            buf.insert_string(text, None);
-        });
-        cx.needs_relayout();
-        cx.needs_redraw();
     }
 
     fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
-        let x = |_: &mut FontSystem, buf: &mut Editor| {
-            let no_selection = match (buf.cursor(), buf.selection()) {
-                (cursor, Selection::Normal(selection)) => cursor == selection,
-                (_, _) => true,
+        if let Some(text) = cx.style.text.get_mut(cx.current) {
+            let del_range = if self.selection.is_caret() {
+                let del_offset = offset_for_delete_backwards(&self.selection, text);
+                del_offset..self.selection.active
+            } else {
+                self.selection.range()
             };
-            buf.delete_selection();
-            no_selection
-        };
 
-        if cx.text_context.with_editor(cx.current, x) {
-            self.move_cursor(cx, movement, true);
-            cx.text_context.with_editor(cx.current, |_, buf| {
-                buf.delete_selection();
-            });
+            self.selection = Selection::caret(del_range.start);
+
+            text.edit(del_range, "");
         }
-        cx.needs_relayout();
-        cx.needs_redraw();
     }
 
-    fn reset_text(&mut self, cx: &mut EventContext) {
-        self.select_all(cx);
-        cx.text_context.with_editor(cx.current, |_, buf| {
-            buf.delete_selection();
-        });
-        cx.needs_relayout();
-        cx.needs_redraw();
-    }
+    fn reset_text(&mut self, cx: &mut EventContext) {}
 
     fn move_cursor(&mut self, cx: &mut EventContext, movement: Movement, selection: bool) {
-        cx.text_context.with_editor(cx.current, |fs, buf| {
-            if selection {
-                if buf.selection() == Selection::None {
-                    buf.set_selection(Selection::Normal(buf.cursor()));
-                }
-            } else {
-                buf.set_selection(Selection::None);
+        if let Some(text) = cx.style.text.get_mut(cx.current) {
+            if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+                let new_selection =
+                    apply_movement(movement, self.selection, text, paragraph, selection);
+                println!("{:?} {:?}", self.selection, new_selection);
+                self.selection = new_selection;
+                cx.needs_redraw();
             }
-
-            buf.action(
-                fs,
-                match movement {
-                    Movement::Grapheme(Direction::Upstream) => Action::Previous,
-                    Movement::Grapheme(Direction::Downstream) => Action::Next,
-                    Movement::Grapheme(Direction::Left) => Action::Left,
-                    Movement::Grapheme(Direction::Right) => Action::Right,
-                    Movement::Word(Direction::Upstream) => Action::PreviousWord,
-                    Movement::Word(Direction::Downstream) => Action::NextWord,
-                    Movement::Word(Direction::Left) => Action::LeftWord,
-                    Movement::Word(Direction::Right) => Action::RightWord,
-                    Movement::Line(Direction::Upstream) => Action::Up,
-                    Movement::Line(Direction::Downstream) => Action::Down,
-                    Movement::LineStart => Action::Home,
-                    Movement::LineEnd => Action::End,
-                    Movement::Page(dir) => {
-                        let parent = cx.current.parent(cx.tree).unwrap();
-                        let parent_bounds = *cx.cache.bounds.get(parent).unwrap();
-                        let sign = if let Direction::Upstream = dir { -1 } else { 1 };
-                        Action::Vertical(sign * parent_bounds.h as i32)
-                    }
-                    Movement::Body(Direction::Upstream) => Action::BufferStart,
-                    Movement::Body(Direction::Downstream) => Action::BufferEnd,
-                    _ => return,
-                },
-            );
-        });
-        cx.needs_relayout();
-        cx.needs_redraw();
+        }
     }
 
     fn select_all(&mut self, cx: &mut EventContext) {
-        cx.text_context.with_editor(cx.current, |fs, buf| {
-            buf.action(fs, Action::BufferStart);
-            buf.set_selection(Selection::Normal(buf.cursor()));
-            buf.action(fs, Action::BufferEnd);
-        });
-        cx.needs_redraw();
+        if let Some(text) = cx.style.text.get(cx.current) {
+            self.selection.anchor = 0;
+            self.selection.active = text.len();
+        }
     }
 
-    fn select_word(&mut self, cx: &mut EventContext) {
-        cx.text_context.with_editor(cx.current, |fs, buf| {
-            buf.action(fs, Action::PreviousWord);
-            buf.set_selection(Selection::Normal(buf.cursor()));
-            buf.action(fs, Action::NextWord);
-        });
-        cx.needs_redraw();
-    }
+    fn select_word(&mut self, cx: &mut EventContext) {}
 
-    fn select_paragraph(&mut self, cx: &mut EventContext) {
-        cx.text_context.with_editor(cx.current, |fs, buf| {
-            buf.action(fs, Action::ParagraphStart);
-            buf.set_selection(Selection::Normal(buf.cursor()));
-            buf.action(fs, Action::ParagraphEnd);
-        });
-        cx.needs_redraw();
-    }
+    fn select_paragraph(&mut self, cx: &mut EventContext) {}
 
     fn deselect(&mut self, cx: &mut EventContext) {
-        cx.text_context.with_editor(cx.current, |_, buf| {
-            buf.set_selection(Selection::None);
-        });
-        cx.needs_redraw();
+        self.selection = Selection::caret(self.selection.active);
     }
 
     /// These input coordinates should be physical coordinates, i.e. what the mouse events provide.
     /// The output text coordinates will also be physical, but relative to the top of the text
     /// glyphs, appropriate for passage to cosmic.
     fn coordinates_global_to_text(&self, cx: &mut EventContext, x: f32, y: f32) -> (f32, f32) {
-        let bounds = cx.bounds();
-
-        let child_left = cx.style.child_left.get(cx.current).copied().unwrap_or_default();
-        let child_top = cx.style.child_top.get(cx.current).copied().unwrap_or_default();
-        let _child_right = cx.style.child_right.get(cx.current).copied().unwrap_or_default();
-        let child_bottom = cx.style.child_bottom.get(cx.current).copied().unwrap_or_default();
-
-        let justify_y = match (child_top, child_bottom) {
-            (Stretch(top), Stretch(bottom)) => {
-                if top + bottom == 0.0 {
-                    0.5
-                } else {
-                    top / (top + bottom)
-                }
-            }
-            (Stretch(_), _) => 1.0,
-            _ => 0.0,
-        };
-
-        let logical_parent_width = cx.physical_to_logical(bounds.w);
-        let logical_parent_height = cx.physical_to_logical(bounds.h);
-
-        let child_left = child_left.to_px(logical_parent_width, 0.0) * cx.scale_factor();
-        let child_top = child_top.to_px(logical_parent_height, 0.0) * cx.scale_factor();
-
-        let total_height = cx.text_context.with_buffer(cx.current, |_, buffer| {
-            buffer.layout_runs().len() as f32 * buffer.metrics().line_height
-        });
-
-        let x = x - bounds.x - self.transform.0 - child_left;
-        let y = y - self.transform.1 - bounds.y - (bounds.h - total_height) * justify_y - child_top;
-
-        (x, y)
+        todo!()
     }
 
     /// This function takes window-global physical coordinates.
-    fn hit(&mut self, cx: &mut EventContext, x: f32, y: f32) {
-        let (x, y) = self.coordinates_global_to_text(cx, x, y);
-        cx.text_context.with_editor(cx.current, |fs, buf| {
-            buf.action(fs, Action::Click { x: x as i32, y: y as i32 });
-        });
-        cx.needs_redraw();
-    }
+    fn hit(&mut self, cx: &mut EventContext, x: f32, y: f32) {}
 
     /// This function takes window-global physical coordinates.
-    fn drag(&mut self, cx: &mut EventContext, x: f32, y: f32) {
-        let (x, y) = self.coordinates_global_to_text(cx, x, y);
-        cx.text_context.with_editor(cx.current, |fs, buf| {
-            buf.action(fs, Action::Drag { x: x as i32, y: y as i32 });
-        });
-        cx.needs_redraw();
-    }
+    fn drag(&mut self, cx: &mut EventContext, x: f32, y: f32) {}
 
     /// This function takes window-global physical dimensions.
-    fn scroll(&mut self, cx: &mut EventContext, x: f32, y: f32) {
-        let entity = cx.current;
-        let mut bounds = cx.cache.get_bounds(entity);
-
-        let child_left = cx.style.child_left.get(cx.current).copied().unwrap_or_default();
-        let child_top = cx.style.child_top.get(cx.current).copied().unwrap_or_default();
-        let child_right = cx.style.child_right.get(cx.current).copied().unwrap_or_default();
-        let child_bottom = cx.style.child_bottom.get(cx.current).copied().unwrap_or_default();
-
-        let logical_parent_width = cx.physical_to_logical(bounds.w);
-        let logical_parent_height = cx.physical_to_logical(bounds.h);
-
-        let child_left = child_left.to_px(logical_parent_width, 0.0) * cx.scale_factor();
-        let child_top = child_top.to_px(logical_parent_height, 0.0) * cx.scale_factor();
-        let child_right = child_right.to_px(logical_parent_width, 0.0) * cx.scale_factor();
-        let child_bottom = child_bottom.to_px(logical_parent_height, 0.0) * cx.scale_factor();
-
-        if let Some(mut text_bounds) = cx.text_context.get_bounds(entity) {
-            text_bounds.x = bounds.x;
-            text_bounds.y = bounds.y;
-            bounds.h -= child_top + child_bottom;
-            bounds.w -= child_left + child_right;
-            let (mut tx, mut ty) = self.transform;
-            tx += x * SCROLL_SENSITIVITY;
-            ty += y * SCROLL_SENSITIVITY;
-            (tx, ty) = enforce_text_bounds(&text_bounds, &bounds, (tx, ty));
-            self.transform = (tx, ty);
-            cx.needs_redraw();
-        }
-    }
+    fn scroll(&mut self, cx: &mut EventContext, x: f32, y: f32) {}
 
     #[allow(dead_code)]
     fn clone_selected(&self, cx: &mut EventContext) -> Option<String> {
-        cx.text_context.with_editor(cx.current, |_, buf| buf.copy_selection())
+        todo!()
     }
 
     fn clone_text(&self, cx: &mut EventContext) -> String {
-        cx.text_context.with_buffer(cx.current, |_, buf| {
-            buf.lines.iter().map(|line| line.text()).collect::<Vec<_>>().join("\n")
-        })
+        if let Some(text) = cx.style.text.get(cx.current) {
+            text.clone()
+        } else {
+            String::new()
+        }
     }
 
     fn reset_caret_timer(&mut self, cx: &mut EventContext) {
@@ -469,6 +298,157 @@ where
         if !cx.is_read_only() {
             self.show_caret = true;
             cx.start_timer(self.caret_timer);
+        }
+    }
+
+    pub fn draw_selection(&self, cx: &mut DrawContext, canvas: &Canvas) {
+        if let Some(mut paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+            let cursor_rects = paragraph.get_rects_for_range(
+                self.selection.min()..self.selection.max(),
+                RectHeightStyle::Tight,
+                RectWidthStyle::Tight,
+            );
+
+            for cursor_rect in cursor_rects {
+                let bounds = cx.bounds();
+                let padding_left = cx.child_left().to_px(bounds.width(), 0.0);
+                let padding_right = cx.child_right().to_px(bounds.width(), 0.0);
+                let text_bounds = cx
+                    .text_context
+                    .text_bounds
+                    .get(cx.current)
+                    .copied()
+                    .unwrap_or(bounds.shrink_sides(padding_left, 0.0, padding_right, 0.0));
+                // paragraph.layout(text_bounds.width().min(bounds.width()));
+
+                let text_length = cx.style.text.get(cx.current).map(|txt| txt.len()).unwrap();
+
+                let lm = paragraph.get_actual_text_range(0, false);
+                // println!("{:?} {}", lm, self.selection.active);
+
+                // let rng = if self.selection.active == 0 {
+                //     (self.selection.active - 1)..self.selection.active
+                // } else {
+                //     self.selection.active..self.selection.active + 1
+                // };
+
+                let mut vertical_flex_sum = 0.0;
+
+                let mut padding_top = match cx.child_top() {
+                    Units::Pixels(val) => val,
+                    Units::Stretch(val) => {
+                        vertical_flex_sum += val;
+                        0.0
+                    }
+                    _ => 0.0,
+                };
+
+                let padding_bottom = match cx.child_bottom() {
+                    Units::Pixels(val) => val,
+                    Units::Stretch(val) => {
+                        vertical_flex_sum += val;
+                        0.0
+                    }
+                    _ => 0.0,
+                };
+
+                let vertical_free_space =
+                    bounds.height() - paragraph.height() as f32 - padding_top - padding_bottom;
+
+                if let Units::Stretch(val) = cx.child_top() {
+                    padding_top = (vertical_free_space * val / vertical_flex_sum).ceil()
+                }
+
+                let x = bounds.x + padding_left + cursor_rect.rect.left;
+                let y = bounds.y + padding_top + cursor_rect.rect.top;
+
+                let x2 = x + (cursor_rect.rect.right - cursor_rect.rect.left);
+                let y2 = y + (cursor_rect.rect.bottom - cursor_rect.rect.top);
+
+                let mut paint = Paint::default();
+                paint.set_anti_alias(true);
+                paint.set_style(PaintStyle::Fill);
+                paint.set_color(cx.selection_color());
+
+                canvas.draw_rect(Rect::new(x, y, x2, y2), &paint);
+            }
+        }
+    }
+
+    /// Draw text caret for the current view.
+    pub fn draw_text_caret(&self, cx: &mut DrawContext, canvas: &Canvas) {
+        if let Some(mut paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+            let bounds = cx.bounds();
+            let padding_left = cx.child_left().to_px(bounds.width(), 0.0);
+            let padding_right = cx.child_right().to_px(bounds.width(), 0.0);
+            let text_bounds = cx
+                .text_context
+                .text_bounds
+                .get(cx.current)
+                .copied()
+                .unwrap_or(bounds.shrink_sides(padding_left, 0.0, padding_right, 0.0));
+            // paragraph.layout(text_bounds.width().min(bounds.width()));
+
+            let text_length = cx.style.text.get(cx.current).map(|txt| txt.len()).unwrap();
+
+            let lm = paragraph.get_actual_text_range(0, false);
+            // println!("{:?} {}", lm, self.selection.active);
+
+            // let rng = if self.selection.active == 0 {
+            //     (self.selection.active - 1)..self.selection.active
+            // } else {
+            //     self.selection.active..self.selection.active + 1
+            // };
+
+            let rects = paragraph.get_rects_for_range(
+                self.selection.active..self.selection.active + 1,
+                RectHeightStyle::Tight,
+                RectWidthStyle::Tight,
+            );
+            // println!("{:?}", rects);
+
+            let cursor_rect = rects.first().unwrap();
+
+            let mut vertical_flex_sum = 0.0;
+
+            let mut padding_top = match cx.child_top() {
+                Units::Pixels(val) => val,
+                Units::Stretch(val) => {
+                    vertical_flex_sum += val;
+                    0.0
+                }
+                _ => 0.0,
+            };
+
+            let padding_bottom = match cx.child_bottom() {
+                Units::Pixels(val) => val,
+                Units::Stretch(val) => {
+                    vertical_flex_sum += val;
+                    0.0
+                }
+                _ => 0.0,
+            };
+
+            let vertical_free_space =
+                bounds.height() - paragraph.height() as f32 - padding_top - padding_bottom;
+
+            if let Units::Stretch(val) = cx.child_top() {
+                padding_top = (vertical_free_space * val / vertical_flex_sum).ceil()
+            }
+
+            let x = bounds.x + padding_left + cursor_rect.rect.left;
+            let y = bounds.y + padding_top + cursor_rect.rect.top;
+
+            let x2 = x + 2.0;
+            let y2 = y + (cursor_rect.rect.bottom - cursor_rect.rect.top);
+
+            // println!("x {} {} {} {}", x, y, x2, y2);
+            let mut paint = Paint::default();
+            paint.set_anti_alias(true);
+            paint.set_style(PaintStyle::Fill);
+            paint.set_color(cx.caret_color());
+
+            canvas.draw_rect(Rect::new(x, y, x2, y2), &paint);
         }
     }
 }
@@ -547,142 +527,142 @@ where
         let bounds = cx.bounds();
 
         let node_id = node.node_id();
-        cx.text_context.with_editor(cx.current, |_, editor| {
-            let mut selection = editor.selection();
-            let cursor = editor.cursor();
+        // cx.text_context.with_editor(cx.current, |_, editor| {
+        //     let mut selection = editor.selection();
+        //     let cursor = editor.cursor();
 
-            let mut selection_active_line = node_id;
-            let mut selection_anchor_line = node_id;
-            let mut selection_active_cursor = 0;
-            let mut selection_anchor_cursor = 0;
+        //     let mut selection_active_line = node_id;
+        //     let mut selection_anchor_line = node_id;
+        //     let mut selection_active_cursor = 0;
+        //     let mut selection_anchor_cursor = 0;
 
-            let mut current_cursor = 0;
-            let mut prev_line_index = std::usize::MAX;
+        //     let mut current_cursor = 0;
+        //     let mut prev_line_index = std::usize::MAX;
 
-            for (index, line) in editor.buffer().layout_runs().enumerate() {
-                let text = line.text;
+        //     for (index, line) in editor.buffer().layout_runs().enumerate() {
+        //         let text = line.text;
 
-                // We need a child node per line
-                let mut line_node = AccessNode::new_from_parent(node_id, index);
-                line_node.set_role(Role::InlineTextBox);
+        //         // We need a child node per line
+        //         let mut line_node = AccessNode::new_from_parent(node_id, index);
+        //         line_node.set_role(Role::InlineTextBox);
 
-                let line_height = editor.buffer().metrics().line_height;
-                line_node.set_bounds(BoundingBox {
-                    x: bounds.x,
-                    y: bounds.y + line.line_y - editor.buffer().metrics().font_size,
-                    w: line.line_w,
-                    h: line_height,
-                });
-                line_node.set_text_direction(if line.rtl {
-                    TextDirection::RightToLeft
-                } else {
-                    TextDirection::LeftToRight
-                });
+        //         let line_height = editor.buffer().metrics().line_height;
+        //         line_node.set_bounds(BoundingBox {
+        //             x: bounds.x,
+        //             y: bounds.y + line.line_y - editor.buffer().metrics().font_size,
+        //             w: line.line_w,
+        //             h: line_height,
+        //         });
+        //         line_node.set_text_direction(if line.rtl {
+        //             TextDirection::RightToLeft
+        //         } else {
+        //             TextDirection::LeftToRight
+        //         });
 
-                let mut character_lengths = Vec::with_capacity(line.glyphs.len());
-                let mut character_positions = Vec::with_capacity(line.glyphs.len());
-                let mut character_widths = Vec::with_capacity(line.glyphs.len());
+        //         let mut character_lengths = Vec::with_capacity(line.glyphs.len());
+        //         let mut character_positions = Vec::with_capacity(line.glyphs.len());
+        //         let mut character_widths = Vec::with_capacity(line.glyphs.len());
 
-                // Get the actual text in the line
-                let first_glyph_pos =
-                    line.glyphs.first().map(|glyph| glyph.start).unwrap_or_default();
-                let last_glyph_pos = line.glyphs.last().map(|glyph| glyph.end).unwrap_or_default();
+        //         // Get the actual text in the line
+        //         let first_glyph_pos =
+        //             line.glyphs.first().map(|glyph| glyph.start).unwrap_or_default();
+        //         let last_glyph_pos = line.glyphs.last().map(|glyph| glyph.end).unwrap_or_default();
 
-                let mut line_text = text[first_glyph_pos..last_glyph_pos].to_owned();
+        //         let mut line_text = text[first_glyph_pos..last_glyph_pos].to_owned();
 
-                let word_lengths =
-                    line_text.unicode_words().map(|word| word.len() as u8).collect::<Vec<_>>();
+        //         let word_lengths =
+        //             line_text.unicode_words().map(|word| word.len() as u8).collect::<Vec<_>>();
 
-                let mut line_length = 0;
+        //         let mut line_length = 0;
 
-                for glyph in line.glyphs.iter() {
-                    let length = (glyph.end - glyph.start) as u8;
+        //         for glyph in line.glyphs.iter() {
+        //             let length = (glyph.end - glyph.start) as u8;
 
-                    line_length += length as usize;
+        //             line_length += length as usize;
 
-                    let position = glyph.x;
-                    let width = glyph.w;
+        //             let position = glyph.x;
+        //             let width = glyph.w;
 
-                    character_lengths.push(length);
-                    character_positions.push(position);
-                    character_widths.push(width);
-                }
+        //             character_lengths.push(length);
+        //             character_positions.push(position);
+        //             character_widths.push(width);
+        //         }
 
-                // Cosmic strips the newlines but accesskit needs them so we append them back in if line originally ended with a newline
-                // If the last glyph position is equal to the end of the buffer line then this layout run is the last one and ends in a newline.
-                if last_glyph_pos == line.text.len() {
-                    line_text += "\n";
-                    character_lengths.push(1);
-                    character_positions.push(line.line_w);
-                    character_widths.push(0.0);
-                }
+        //         // Cosmic strips the newlines but accesskit needs them so we append them back in if line originally ended with a newline
+        //         // If the last glyph position is equal to the end of the buffer line then this layout run is the last one and ends in a newline.
+        //         if last_glyph_pos == line.text.len() {
+        //             line_text += "\n";
+        //             character_lengths.push(1);
+        //             character_positions.push(line.line_w);
+        //             character_widths.push(0.0);
+        //         }
 
-                // TODO: Might need to append any spaces that were stripped during layout. This can be done by
-                // figuring out if the start of the next line is greater than the end of the current line as long
-                // as the lines have the same `line_i`. This will require a peekable iterator loop.
+        //         // TODO: Might need to append any spaces that were stripped during layout. This can be done by
+        //         // figuring out if the start of the next line is greater than the end of the current line as long
+        //         // as the lines have the same `line_i`. This will require a peekable iterator loop.
 
-                line_node.set_value(line_text.into_boxed_str());
-                line_node.set_character_lengths(character_lengths.into_boxed_slice());
-                line_node.set_character_positions(character_positions.into_boxed_slice());
-                line_node.set_character_widths(character_widths.into_boxed_slice());
-                line_node.set_word_lengths(word_lengths.into_boxed_slice());
+        //         line_node.set_value(line_text.into_boxed_str());
+        //         line_node.set_character_lengths(character_lengths.into_boxed_slice());
+        //         line_node.set_character_positions(character_positions.into_boxed_slice());
+        //         line_node.set_character_widths(character_widths.into_boxed_slice());
+        //         line_node.set_word_lengths(word_lengths.into_boxed_slice());
 
-                if line.line_i != prev_line_index {
-                    current_cursor = 0;
-                }
+        //         if line.line_i != prev_line_index {
+        //             current_cursor = 0;
+        //         }
 
-                if line.line_i == cursor.line {
-                    if prev_line_index != line.line_i {
-                        if cursor.index <= line_length {
-                            selection_active_line = line_node.node_id();
-                            selection_active_cursor = cursor.index;
-                        }
-                    } else if cursor.index > current_cursor {
-                        selection_active_line = line_node.node_id();
-                        selection_active_cursor = cursor.index - current_cursor;
-                    }
-                }
+        //         if line.line_i == cursor.line {
+        //             if prev_line_index != line.line_i {
+        //                 if cursor.index <= line_length {
+        //                     selection_active_line = line_node.node_id();
+        //                     selection_active_cursor = cursor.index;
+        //                 }
+        //             } else if cursor.index > current_cursor {
+        //                 selection_active_line = line_node.node_id();
+        //                 selection_active_cursor = cursor.index - current_cursor;
+        //             }
+        //         }
 
-                // Check if the current line contains the cursor or selection
-                // This is a mess because a line happens due to soft and hard breaks but
-                // the cursor and selected indices are relative to the lines caused by hard breaks only.
-                if selection == Selection::None {
-                    selection = Selection::Normal(cursor);
-                }
-                if let Selection::Normal(selection) = selection {
-                    if line.line_i == selection.line {
-                        // A previous line index different to the current means that the current line follows a hard break
-                        if prev_line_index != line.line_i {
-                            if selection.index <= line_length {
-                                selection_anchor_line = line_node.node_id();
-                                selection_anchor_cursor = selection.index;
-                            }
-                        } else if selection.index > current_cursor {
-                            selection_anchor_line = line_node.node_id();
-                            selection_anchor_cursor = selection.index - current_cursor;
-                        }
-                    }
-                }
+        //         // Check if the current line contains the cursor or selection
+        //         // This is a mess because a line happens due to soft and hard breaks but
+        //         // the cursor and selected indices are relative to the lines caused by hard breaks only.
+        //         // if selection == Selection::None {
+        //         //     selection = Selection::Normal(cursor);
+        //         // }
+        //         // if let Selection::Normal(selection) = selection {
+        //         //     if line.line_i == selection.line {
+        //         //         // A previous line index different to the current means that the current line follows a hard break
+        //         //         if prev_line_index != line.line_i {
+        //         //             if selection.index <= line_length {
+        //         //                 selection_anchor_line = line_node.node_id();
+        //         //                 selection_anchor_cursor = selection.index;
+        //         //             }
+        //         //         } else if selection.index > current_cursor {
+        //         //             selection_anchor_line = line_node.node_id();
+        //         //             selection_anchor_cursor = selection.index - current_cursor;
+        //         //         }
+        //         //     }
+        //         // }
 
-                node.add_child(line_node);
+        //         node.add_child(line_node);
 
-                current_cursor += line_length;
-                prev_line_index = line.line_i;
-            }
+        //         current_cursor += line_length;
+        //         prev_line_index = line.line_i;
+        //     }
 
-            node.set_text_selection(TextSelection {
-                anchor: TextPosition {
-                    node: selection_anchor_line,
-                    character_index: selection_anchor_cursor,
-                },
-                focus: TextPosition {
-                    node: selection_active_line,
-                    character_index: selection_active_cursor,
-                },
-            });
+        //     node.set_text_selection(TextSelection {
+        //         anchor: TextPosition {
+        //             node: selection_anchor_line,
+        //             character_index: selection_anchor_cursor,
+        //         },
+        //         focus: TextPosition {
+        //             node: selection_active_line,
+        //             character_index: selection_active_cursor,
+        //         },
+        //     });
 
-            node.node_builder.set_default_action_verb(DefaultActionVerb::Focus);
-        });
+        //     node.node_builder.set_default_action_verb(DefaultActionVerb::Focus);
+        // });
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
@@ -821,7 +801,7 @@ where
                     self.reset_caret_timer(cx);
                     if self.kind != TextboxKind::SingleLine {
                         cx.emit(TextEvent::MoveCursor(
-                            Movement::Line(Direction::Upstream),
+                            Movement::Vertical(VerticalMovement::LineUp),
                             cx.modifiers.shift(),
                         ));
                     }
@@ -831,7 +811,7 @@ where
                     self.reset_caret_timer(cx);
                     if self.kind != TextboxKind::SingleLine {
                         cx.emit(TextEvent::MoveCursor(
-                            Movement::Line(Direction::Downstream),
+                            Movement::Vertical(VerticalMovement::LineDown),
                             cx.modifiers.shift(),
                         ));
                     }
@@ -950,51 +930,51 @@ where
             }) => {
                 // TODO: This needs testing once I figure out how to trigger it with a screen reader.
                 let node_id = cx.current.accesskit_id();
-                cx.text_context.with_editor(cx.current, |_, editor| {
-                    // let cursor_node = selection.focus.node;
-                    let selection_node = selection.anchor.node;
+                // cx.text_context.with_editor(cx.current, |_, editor| {
+                //     // let cursor_node = selection.focus.node;
+                //     let selection_node = selection.anchor.node;
 
-                    // let mut cursor_line_index = 0;
-                    // let mut cursor_index = 0;
-                    let mut selection_line_index = 0;
-                    let mut selection_index = 0;
+                //     // let mut cursor_line_index = 0;
+                //     // let mut cursor_index = 0;
+                //     let mut selection_line_index = 0;
+                //     let mut selection_index = 0;
 
-                    let mut current_cursor = 0;
-                    let mut prev_line_index = std::usize::MAX;
+                //     let mut current_cursor = 0;
+                //     let mut prev_line_index = std::usize::MAX;
 
-                    for (index, line) in editor.buffer().layout_runs().enumerate() {
-                        let line_node = AccessNode::new_from_parent(node_id, index);
-                        // if line_node.node_id() == cursor_node {
-                        //     cursor_line_index = line.line_i;
-                        //     cursor_index = selection.focus.character_index + current_cursor;
-                        // }
+                //     for (index, line) in editor.buffer().layout_runs().enumerate() {
+                //         let line_node = AccessNode::new_from_parent(node_id, index);
+                //         // if line_node.node_id() == cursor_node {
+                //         //     cursor_line_index = line.line_i;
+                //         //     cursor_index = selection.focus.character_index + current_cursor;
+                //         // }
 
-                        if line_node.node_id() == selection_node {
-                            selection_line_index = line.line_i;
-                            selection_index = selection.anchor.character_index + current_cursor;
-                        }
+                //         if line_node.node_id() == selection_node {
+                //             selection_line_index = line.line_i;
+                //             selection_index = selection.anchor.character_index + current_cursor;
+                //         }
 
-                        if line.line_i != prev_line_index {
-                            current_cursor = 0;
-                        }
+                //         if line.line_i != prev_line_index {
+                //             current_cursor = 0;
+                //         }
 
-                        let first_glyph_pos =
-                            line.glyphs.first().map(|glyph| glyph.start).unwrap_or_default();
-                        let last_glyph_pos =
-                            line.glyphs.last().map(|glyph| glyph.end).unwrap_or_default();
+                //         let first_glyph_pos =
+                //             line.glyphs.first().map(|glyph| glyph.start).unwrap_or_default();
+                //         let last_glyph_pos =
+                //             line.glyphs.last().map(|glyph| glyph.end).unwrap_or_default();
 
-                        let line_length = last_glyph_pos - first_glyph_pos;
+                //         let line_length = last_glyph_pos - first_glyph_pos;
 
-                        current_cursor += line_length;
-                        prev_line_index = line.line_i;
-                    }
+                //         current_cursor += line_length;
+                //         prev_line_index = line.line_i;
+                //     }
 
-                    let selection_cursor = Cursor::new(selection_line_index, selection_index);
-                    editor.set_selection(Selection::Normal(selection_cursor));
+                //     let selection_cursor = Cursor::new(selection_line_index, selection_index);
+                //     editor.set_selection(Selection::Normal(selection_cursor));
 
-                    // TODO: Either add a method to set the cursor by index to cosmic,
-                    // or loop over an `Action` to move the cursor to the correct place.
-                });
+                //     // TODO: Either add a method to set the cursor by index to cosmic,
+                //     // or loop over an `Action` to move the cursor to the correct place.
+                // });
 
                 // println!("Select some text: {:?}", selection);
             }
@@ -1087,7 +1067,7 @@ where
                     self.placeholder_shown = text.is_empty();
 
                     self.select_all(cx);
-                    self.insert_text(cx, &text);
+                    // self.insert_text(cx, &text);
                     // self.set_caret(cx);
 
                     if let Ok(value) = &text.parse::<L::Target>() {
@@ -1114,7 +1094,7 @@ where
                 self.placeholder_shown = text.is_empty();
 
                 self.select_all(cx);
-                self.insert_text(cx, &text);
+                // self.insert_text(cx, &text);
                 // self.set_caret(cx);
 
                 if let Ok(value) = &text.parse::<L::Target>() {
@@ -1238,17 +1218,22 @@ where
     }
 
     // Use custom drawing for the textbox so a transform can be applied to just the text.
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        let mut path = cx.build_path();
+    fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
+        let mut path = cx.build_path(cx.bounds());
         cx.draw_shadows(canvas, &mut path);
-        cx.draw_backdrop_filter(canvas, &mut path);
+        // cx.draw_backdrop_filter(canvas, &mut path);
         cx.draw_background(canvas, &mut path);
         cx.draw_border(canvas, &mut path);
-        cx.draw_inset_box_shadows(canvas, &mut path);
-        cx.draw_outline(canvas);
-        canvas.save();
+        // cx.draw_inset_box_shadows(canvas, &mut path);
+        // cx.draw_outline(canvas);
+        // canvas.save();
         // canvas.translate(self.transform.0, self.transform.1);
-        cx.draw_text_and_selection(canvas);
-        canvas.restore();
+        // cx.draw_text_and_selection(canvas);
+        cx.draw_text(canvas);
+        if self.edit {
+            self.draw_selection(cx, canvas);
+            self.draw_text_caret(cx, canvas);
+        }
+        // canvas.restore();
     }
 }

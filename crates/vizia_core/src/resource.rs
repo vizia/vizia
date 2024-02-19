@@ -3,7 +3,7 @@
 use crate::context::ResourceContext;
 use crate::entity::Entity;
 use crate::prelude::IntoCssStr;
-use crate::view::Canvas;
+// use crate::view::Canvas;
 use fluent_bundle::{FluentBundle, FluentResource};
 use hashbrown::{HashMap, HashSet};
 use image::GenericImageView;
@@ -11,33 +11,33 @@ use std::borrow::Borrow;
 use unic_langid::LanguageIdentifier;
 
 pub(crate) struct StoredImage {
-    pub image: ImageOrId,
+    // pub image: ImageOrId,
     pub retention_policy: ImageRetentionPolicy,
     pub used: bool,
     pub dirty: bool,
     pub observers: HashSet<Entity>,
 }
 
-pub(crate) enum ImageOrId {
-    Image(image::DynamicImage, femtovg::ImageFlags),
-    Id(femtovg::ImageId, (u32, u32)),
-}
+// pub(crate) enum ImageOrId {
+//     Image(image::DynamicImage, femtovg::ImageFlags),
+//     Id(femtovg::ImageId, (u32, u32)),
+// }
 
-impl ImageOrId {
-    pub fn id(&mut self, canvas: &mut Canvas) -> femtovg::ImageId {
-        match self {
-            ImageOrId::Image(image, flags) => {
-                let image_ref: &image::DynamicImage = image.borrow();
-                let res = canvas
-                    .create_image(femtovg::ImageSource::try_from(image_ref).unwrap(), *flags)
-                    .unwrap();
-                *self = ImageOrId::Id(res, image.dimensions());
-                res
-            }
-            ImageOrId::Id(i, _) => *i,
-        }
-    }
-}
+// impl ImageOrId {
+//     pub fn id(&mut self, canvas: &mut Canvas) -> femtovg::ImageId {
+//         match self {
+//             ImageOrId::Image(image, flags) => {
+//                 let image_ref: &image::DynamicImage = image.borrow();
+//                 let res = canvas
+//                     .create_image(femtovg::ImageSource::try_from(image_ref).unwrap(), *flags)
+//                     .unwrap();
+//                 *self = ImageOrId::Id(res, image.dimensions());
+//                 res
+//             }
+//             ImageOrId::Id(i, _) => *i,
+//         }
+//     }
+// }
 
 #[derive(Copy, Clone, PartialEq)]
 pub enum ImageRetentionPolicy {

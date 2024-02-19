@@ -24,8 +24,6 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
         | cx.style.background_size.tick(time)
         // Box Shadow
         | cx.style.box_shadow.tick(time)
-        // Font Color
-        | cx.style.font_color.tick(time)
         // Transform
         | cx.style.transform.tick(time)
         | cx.style.transform_origin.tick(time)
@@ -39,12 +37,16 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
         // Clip Path
         | cx.style.clip_path.tick(time);
 
+    let needs_reflow =
+        // Font Color
+        cx.style.font_color.tick(time)
+                // Font Size
+        | cx.style.font_size.tick(time);
+
     // Properties which affect layout
     let needs_relayout = cx.style.display.tick(time)
         // Border Width
         | cx.style.border_width.tick(time)
-        // Font Size
-        | cx.style.font_size.tick(time)
         // Space
         | cx.style.left.tick(time)
         | cx.style.right.tick(time)
@@ -84,5 +86,9 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
         cx.style.system_flags.set(SystemFlags::REDRAW, true);
     }
 
-    needs_redraw | needs_relayout
+    if needs_reflow {
+        //
+    }
+
+    needs_redraw | needs_relayout | needs_reflow
 }

@@ -1,7 +1,7 @@
 use std::{cmp::Ordering, collections::BinaryHeap};
 
 use crate::prelude::*;
-use femtovg::Transform2D;
+// use femtovg::Transform2D;
 use log::debug;
 use vizia_storage::{LayoutChildIterator, LayoutParentIterator};
 
@@ -18,7 +18,7 @@ pub(crate) fn hover_system(cx: &mut Context) {
         cx.style.pointer_events.get(Entity::root()).copied().unwrap_or_default().into();
     queue.push(ZEntity { index: 0, pointer_events, entity: Entity::root() });
     let mut hovered = Entity::root();
-    let transform = Transform2D::identity();
+    // let transform = Transform2D::identity();
     // let clip_bounds = cx.cache.get_bounds(Entity::root());
     let clip_bounds: BoundingBox =
         BoundingBox { x: -f32::MAX / 2.0, y: -f32::MAX / 2.0, w: f32::MAX, h: f32::MAX };
@@ -31,7 +31,7 @@ pub(crate) fn hover_system(cx: &mut Context) {
                 zentity.pointer_events,
                 &mut queue,
                 &mut hovered,
-                transform,
+                // transform,
                 &clip_bounds,
             );
         });
@@ -51,7 +51,7 @@ pub(crate) fn hover_system(cx: &mut Context) {
 
     if hovered != cx.hovered {
         // Useful for debugging
-        debug!(
+        println!(
             "Hover changed to {:?} parent: {:?}, view: {}, posx: {}, posy: {} width: {} height: {}",
             hovered,
             cx.tree.get_parent(hovered),
@@ -88,7 +88,7 @@ fn hover_entity(
     parent_pointer_events: bool,
     queue: &mut BinaryHeap<ZEntity>,
     hovered: &mut Entity,
-    parent_transform: Transform2D,
+    // parent_transform: Transform2D,
     clip_bounds: &BoundingBox,
 ) {
     // Skip if non-hoverable (will skip any descendants)
@@ -136,17 +136,18 @@ fn hover_entity(
         return;
     }
 
-    let mut transform = parent_transform;
+    // let mut transform = parent_transform;
 
-    transform.premultiply(&cx.transform());
+    // transform.premultiply(&cx.transform());
 
-    let mut t = transform;
-    t.inverse();
-    let (tx, ty) = t.transform_point(cursorx, cursory);
-
+    // let mut t = transform;
+    // t.inverse();
+    // let (tx, ty) = t.transform_point(cursorx, cursory);
+    let (tx, ty) = (cursorx, cursory);
     let clipping = clip_bounds.intersection(&cx.clip_region());
 
     let b = bounds.intersection(&clipping);
+    // let b = bounds;
 
     if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
         pseudo_classes.set(PseudoClassFlags::HOVER, false);
@@ -189,7 +190,7 @@ fn hover_entity(
     let child_iter = LayoutChildIterator::new(cx.tree, cx.current);
     for child in child_iter {
         cx.current = child;
-        hover_entity(cx, current_z, pointer_events, queue, hovered, transform, &clipping);
+        hover_entity(cx, current_z, pointer_events, queue, hovered, &clipping);
     }
 }
 

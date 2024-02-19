@@ -44,11 +44,11 @@ impl Cache for CachedData {
         }
 
         if let Some(relative_position) = self.relative_position.get_mut(*node) {
-            if relative_position.x != posx {
+            if relative_position.x != posx.round() {
                 geo_changed.set(GeoChanged::POSX_CHANGED, true);
             }
 
-            if relative_position.y != posy {
+            if relative_position.y != posy.round() {
                 geo_changed.set(GeoChanged::POSY_CHANGED, true);
             }
 
