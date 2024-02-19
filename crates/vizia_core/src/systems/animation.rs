@@ -7,82 +7,90 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
 
     let time = Instant::now();
 
+    let mut redraw_entities = Vec::new();
+    let mut reflow_entities = Vec::new();
+    let mut relayout_entities = Vec::new();
+
     // Properties which affect rendering
-    let needs_redraw =
-        // Opacity
-        cx.style.opacity.tick(time)
-        // Border Colour
-        | cx.style.border_color.tick(time)
-        // Border Radius
-        | cx.style.border_top_left_radius.tick(time)
-        | cx.style.border_top_right_radius.tick(time)
-        | cx.style.border_bottom_left_radius.tick(time)
-        | cx.style.border_bottom_right_radius.tick(time)
-        // Background
-        | cx.style.background_color.tick(time)
-        | cx.style.background_image.tick(time)
-        | cx.style.background_size.tick(time)
-        // Box Shadow
-        | cx.style.box_shadow.tick(time)
-        // Font Color
-        | cx.style.font_color.tick(time)
-        // Transform
-        | cx.style.transform.tick(time)
-        | cx.style.transform_origin.tick(time)
-        | cx.style.translate.tick(time)
-        | cx.style.rotate.tick(time)
-        | cx.style.scale.tick(time)
-        // Outline
-        | cx.style.outline_color.tick(time)
-        | cx.style.outline_offset.tick(time)
-        | cx.style.outline_width.tick(time)
-        // Clip Path
-        | cx.style.clip_path.tick(time);
+    // Opacity
+    redraw_entities.extend(cx.style.opacity.tick(time));
+    // Border Colour
+    redraw_entities.extend(cx.style.border_color.tick(time));
+    // Border Radius
+    redraw_entities.extend(cx.style.border_top_left_radius.tick(time));
+    redraw_entities.extend(cx.style.border_top_right_radius.tick(time));
+    redraw_entities.extend(cx.style.border_bottom_left_radius.tick(time));
+    redraw_entities.extend(cx.style.border_bottom_right_radius.tick(time));
+    // Background
+    redraw_entities.extend(cx.style.background_color.tick(time));
+    redraw_entities.extend(cx.style.background_image.tick(time));
+    redraw_entities.extend(cx.style.background_size.tick(time));
+    // Box Shadow
+    redraw_entities.extend(cx.style.box_shadow.tick(time));
+    // Transform
+    redraw_entities.extend(cx.style.transform.tick(time));
+    redraw_entities.extend(cx.style.transform_origin.tick(time));
+    redraw_entities.extend(cx.style.translate.tick(time));
+    redraw_entities.extend(cx.style.rotate.tick(time));
+    redraw_entities.extend(cx.style.scale.tick(time));
+    // Outline
+    redraw_entities.extend(cx.style.outline_color.tick(time));
+    redraw_entities.extend(cx.style.outline_offset.tick(time));
+    redraw_entities.extend(cx.style.outline_width.tick(time));
+    // Clip Path
+    redraw_entities.extend(cx.style.clip_path.tick(time));
+
+    // Font Color
+    reflow_entities.extend(cx.style.font_color.tick(time));
+    // Font Size
+    reflow_entities.extend(cx.style.font_size.tick(time));
 
     // Properties which affect layout
-    let needs_relayout = cx.style.display.tick(time)
-        // Border Width
-        | cx.style.border_width.tick(time)
-        // Font Size
-        | cx.style.font_size.tick(time)
-        // Space
-        | cx.style.left.tick(time)
-        | cx.style.right.tick(time)
-        | cx.style.top.tick(time)
-        | cx.style.bottom.tick(time)
-        // Size
-        | cx.style.width.tick(time)
-        | cx.style.height.tick(time)
-        // Min/Max Size
-        | cx.style.max_width.tick(time)
-        | cx.style.max_height.tick(time)
-        | cx.style.min_width.tick(time)
-        | cx.style.min_height.tick(time)
-        // Min/Max Space
-        | cx.style.min_left.tick(time)
-        | cx.style.max_left.tick(time)
-        | cx.style.min_right.tick(time)
-        | cx.style.max_right.tick(time)
-        | cx.style.min_top.tick(time)
-        | cx.style.max_top.tick(time)
-        | cx.style.min_bottom.tick(time)
-        | cx.style.max_bottom.tick(time)
-        // Row/Col Between
-        | cx.style.row_between.tick(time)
-        | cx.style.col_between.tick(time)
-        // Child Space
-        | cx.style.child_left.tick(time)
-        | cx.style.child_right.tick(time)
-        | cx.style.child_top.tick(time)
-        | cx.style.child_bottom.tick(time);
+    relayout_entities.extend(cx.style.display.tick(time));
+    // Border Width
+    relayout_entities.extend(cx.style.border_width.tick(time));
+    // Space
+    relayout_entities.extend(cx.style.left.tick(time));
+    relayout_entities.extend(cx.style.right.tick(time));
+    relayout_entities.extend(cx.style.top.tick(time));
+    relayout_entities.extend(cx.style.bottom.tick(time));
+    // Size
+    relayout_entities.extend(cx.style.width.tick(time));
+    relayout_entities.extend(cx.style.height.tick(time));
+    // Min/Max Size
+    relayout_entities.extend(cx.style.max_width.tick(time));
+    relayout_entities.extend(cx.style.max_height.tick(time));
+    relayout_entities.extend(cx.style.min_width.tick(time));
+    relayout_entities.extend(cx.style.min_height.tick(time));
+    // Min/Max Space
+    relayout_entities.extend(cx.style.min_left.tick(time));
+    relayout_entities.extend(cx.style.max_left.tick(time));
+    relayout_entities.extend(cx.style.min_right.tick(time));
+    relayout_entities.extend(cx.style.max_right.tick(time));
+    relayout_entities.extend(cx.style.min_top.tick(time));
+    relayout_entities.extend(cx.style.max_top.tick(time));
+    relayout_entities.extend(cx.style.min_bottom.tick(time));
+    relayout_entities.extend(cx.style.max_bottom.tick(time));
+    // Row/Col Between
+    relayout_entities.extend(cx.style.row_between.tick(time));
+    relayout_entities.extend(cx.style.col_between.tick(time));
+    // Child Space
+    relayout_entities.extend(cx.style.child_left.tick(time));
+    relayout_entities.extend(cx.style.child_right.tick(time));
+    relayout_entities.extend(cx.style.child_top.tick(time));
+    relayout_entities.extend(cx.style.child_bottom.tick(time));
 
-    if needs_relayout {
+    if !relayout_entities.is_empty() {
         cx.style.system_flags.set(SystemFlags::RELAYOUT, true);
     }
 
-    if needs_redraw {
+    if !redraw_entities.is_empty() {
         cx.style.system_flags.set(SystemFlags::REDRAW, true);
     }
 
-    needs_redraw | needs_relayout
+    for entity in reflow_entities.iter() {
+        cx.style.text_construction.insert(*entity).unwrap();
+    }
+
+    !redraw_entities.is_empty() | !relayout_entities.is_empty() | !reflow_entities.is_empty()
 }

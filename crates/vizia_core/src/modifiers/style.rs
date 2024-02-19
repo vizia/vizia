@@ -97,13 +97,13 @@ pub trait StyleModifiers: internal::Modifiable {
             abilities.set(Abilities::CHECKABLE, true);
         }
 
-        self.context().with_current(current, |cx| {
-            state.set_or_bind(cx, entity, |cx, val| {
+        self.context().with_current(current, move |cx| {
+            state.set_or_bind(cx, entity, move |cx, val| {
                 let val = val.get(cx).into();
-                if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
+                if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
                     pseudo_classes.set(PseudoClassFlags::CHECKED, val);
                 }
-                cx.needs_restyle(cx.current);
+                cx.needs_restyle(entity);
             });
         });
 

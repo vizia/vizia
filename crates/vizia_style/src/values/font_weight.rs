@@ -1,4 +1,5 @@
 use cssparser::*;
+use skia_safe::font_style::Weight;
 
 use crate::{macros::impl_parse, FontWeightKeyword, Parse};
 
@@ -57,6 +58,12 @@ impl From<u32> for FontWeight {
     }
 }
 
+impl From<i32> for FontWeight {
+    fn from(number: i32) -> Self {
+        FontWeight(number as u16)
+    }
+}
+
 impl From<&str> for FontWeight {
     fn from(s: &str) -> Self {
         let mut input = ParserInput::new(s);
@@ -68,5 +75,11 @@ impl From<&str> for FontWeight {
 impl From<FontWeight> for u16 {
     fn from(font_weight: FontWeight) -> Self {
         font_weight.0
+    }
+}
+
+impl From<FontWeight> for Weight {
+    fn from(value: FontWeight) -> Self {
+        Weight::from(value.0 as i32)
     }
 }

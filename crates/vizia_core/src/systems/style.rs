@@ -243,7 +243,7 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context) {
             cx.style.font_size.inherit_inline(entity, parent);
             cx.style.font_family.inherit_inline(entity, parent);
             cx.style.font_weight.inherit_inline(entity, parent);
-            cx.style.font_style.inherit_inline(entity, parent);
+            cx.style.font_slant.inherit_inline(entity, parent);
             cx.style.caret_color.inherit_inline(entity, parent);
             cx.style.selection_color.inherit_inline(entity, parent);
         }
@@ -258,7 +258,7 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context) {
             cx.style.font_size.inherit_shared(entity, parent);
             cx.style.font_family.inherit_shared(entity, parent);
             cx.style.font_weight.inherit_shared(entity, parent);
-            cx.style.font_style.inherit_shared(entity, parent);
+            cx.style.font_slant.inherit_shared(entity, parent);
             cx.style.caret_color.inherit_shared(entity, parent);
             cx.style.selection_color.inherit_shared(entity, parent);
         }
@@ -268,6 +268,7 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context) {
 fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
     let mut should_relayout = false;
     let mut should_redraw = false;
+    let mut should_reflow = false;
 
     // Display
     if style.display.link(entity, matched_rules) {
@@ -477,36 +478,54 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
     // Font
     if style.font_color.link(entity, matched_rules) {
         should_redraw = true;
+        should_reflow = true;
+        println!("{} {:?}", entity, matched_rules);
     }
 
     if style.font_size.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
+        should_reflow = true;
     }
 
     if style.font_family.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
+        should_reflow = true;
     }
 
     if style.font_weight.link(entity, matched_rules) {
         should_redraw = true;
         should_relayout = true;
+        should_reflow = true;
     }
 
-    if style.font_style.link(entity, matched_rules) {
+    if style.font_slant.link(entity, matched_rules) {
         should_redraw = true;
         should_relayout = true;
+        should_reflow = true;
     }
 
-    if style.font_stretch.link(entity, matched_rules) {
+    if style.font_width.link(entity, matched_rules) {
         should_redraw = true;
         should_relayout = true;
+        should_reflow = true;
     }
 
     if style.text_wrap.link(entity, matched_rules) {
         should_redraw = true;
         should_relayout = true;
+        should_reflow = true;
+    }
+
+    if style.text_overflow.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.line_clamp.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
     }
 
     if style.selection_color.link(entity, matched_rules) {
@@ -588,6 +607,10 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
 
     if should_redraw {
         style.system_flags.set(SystemFlags::REDRAW, true);
+    }
+
+    if should_reflow {
+        style.needs_text_update(entity);
     }
 }
 

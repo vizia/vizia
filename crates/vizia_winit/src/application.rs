@@ -338,7 +338,7 @@ impl Application {
                                 .send_event(UserEvent::Event(Event::new(WindowEvent::Redraw)))
                                 .expect("Failed to send redraw event");
 
-                            cx.mutate_window(|_, window: &Window| {
+                            cx.mutate_window(|_, window: &mut Window| {
                                 window.window().request_redraw();
                             });
                         }
@@ -352,7 +352,7 @@ impl Application {
                             }
                         });
 
-                        cx.mutate_window(|cx, window: &Window| {
+                        cx.mutate_window(|cx, window: &mut Window| {
                             cx.style().should_redraw(|| {
                                 window.window().request_redraw();
                             });
@@ -370,7 +370,7 @@ impl Application {
                                 .expect("Failed to send event");
                         }
 
-                        cx.mutate_window(|_, window: &Window| {
+                        cx.mutate_window(|_, window: &mut Window| {
                             if window.should_close {
                                 elwt.exit();
                             }
@@ -388,7 +388,7 @@ impl Application {
                                 if main_events {
                                     // Redraw
                                     cx.draw();
-                                    cx.mutate_window(|_, window: &Window| {
+                                    cx.mutate_window(|_, window: &mut Window| {
                                         // window.window().pre_present_notify();
                                         window.swap_buffers();
                                     });
@@ -398,7 +398,7 @@ impl Application {
                                     if is_initially_cloaked {
                                         is_initially_cloaked = false;
                                         cx.draw();
-                                        cx.mutate_window(|_, window: &Window| {
+                                        cx.mutate_window(|_, window: &mut Window| {
                                             window.swap_buffers();
                                             window.set_cloak(false);
                                         });
@@ -537,8 +537,10 @@ impl Application {
                             }
 
                             winit::event::WindowEvent::Resized(physical_size) => {
-                                cx.mutate_window(|_, window: &Window| {
-                                    window.resize(physical_size);
+                                cx.mutate_window(|cx, window: &mut Window| {
+                                    if let Some(surface) = cx.get_surface_mut(Entity::root()) {
+                                        window.resize(physical_size, surface);
+                                    }
                                 });
 
                                 cx.set_window_size(
@@ -563,7 +565,7 @@ impl Application {
                                             )))
                                             .expect("Failed to send redraw event");
 
-                                        cx.mutate_window(|_, window: &Window| {
+                                        cx.mutate_window(|_, window: &mut Window| {
                                             window.window().request_redraw();
                                         });
                                     }
@@ -577,7 +579,7 @@ impl Application {
                                         }
                                     });
 
-                                    cx.mutate_window(|_, window: &Window| {
+                                    cx.mutate_window(|_, window: &mut Window| {
                                         window.window().request_redraw();
                                     });
                                 }

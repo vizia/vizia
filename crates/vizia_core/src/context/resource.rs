@@ -1,10 +1,11 @@
 use hashbrown::{hash_map::Entry, HashSet};
 
+use skia_safe::Surface;
 use vizia_storage::Tree;
 
 use crate::{
     entity::Entity,
-    resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage},
+    resource::{ImageRetentionPolicy, ResourceManager, StoredImage},
     style::Style,
 };
 
@@ -16,7 +17,7 @@ pub struct ResourceContext<'a> {
     pub(crate) current: Entity,
     pub(crate) event_proxy: &'a Option<Box<dyn EventProxy>>,
     pub(crate) resource_manager: &'a mut ResourceManager,
-    pub(crate) canvases: &'a mut HashMap<Entity, crate::prelude::Canvas>,
+    // pub(crate) canvases: &'a mut HashMap<Entity, Surface>,
     pub(crate) style: &'a mut Style,
     pub(crate) tree: &'a Tree<Entity>,
 }
@@ -27,7 +28,7 @@ impl<'a> ResourceContext<'a> {
             current: cx.current,
             event_proxy: &cx.event_proxy,
             resource_manager: &mut cx.resource_manager,
-            canvases: &mut cx.canvases,
+            // canvases: &mut cx.canvases,
             style: &mut cx.style,
             tree: &cx.tree,
         }
@@ -48,24 +49,18 @@ impl<'a> ResourceContext<'a> {
     pub fn load_image(
         &mut self,
         path: String,
-        image: image::DynamicImage,
+        image: skia_safe::Image,
         policy: ImageRetentionPolicy,
     ) {
         match self.resource_manager.images.entry(path) {
             Entry::Occupied(mut occ) => {
-                occ.get_mut().image = ImageOrId::Image(
-                    image,
-                    femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
-                );
+                occ.get_mut().image = image;
                 occ.get_mut().dirty = true;
                 occ.get_mut().retention_policy = policy;
             }
             Entry::Vacant(vac) => {
                 vac.insert(StoredImage {
-                    image: ImageOrId::Image(
-                        image,
-                        femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
-                    ),
+                    image,
                     retention_policy: policy,
                     used: true,
                     dirty: false,
