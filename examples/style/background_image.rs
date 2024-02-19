@@ -2,6 +2,7 @@
 use vizia::image;
 #[allow(unused)]
 use vizia::prelude::*;
+use vizia::vg;
 
 #[allow(unused)]
 const STYLE: &str = r#"
@@ -42,11 +43,7 @@ fn main() -> Result<(), ApplicationError> {
                     let data = reqwest::blocking::get(&path).unwrap().bytes().unwrap();
                     cx.load_image(
                         path,
-                        image::load_from_memory_with_format(
-                            &data,
-                            image::guess_format(&data).unwrap(),
-                        )
-                        .unwrap(),
+                        &data,
                         ImageRetentionPolicy::DropWhenUnusedForOneFrame,
                     )
                     .unwrap();
@@ -56,13 +53,9 @@ fn main() -> Result<(), ApplicationError> {
 
         // Load an image into the binary
         cx.load_image(
-            "sample.png", 
-            image::load_from_memory_with_format(
+            "sample.png",
             include_bytes!("../resources/images/sample-hut-400x300.png"),
-            image::ImageFormat::Png,
-            )
-            .unwrap(),
-            ImageRetentionPolicy::DropWhenUnusedForOneFrame
+            ImageRetentionPolicy::Forever
         );
 
         Label::new(cx, "Any view can be styled with a background image. An Image view can be used to present a non-tiling background image.")
@@ -70,7 +63,7 @@ fn main() -> Result<(), ApplicationError> {
             .position_type(PositionType::SelfDirected)
             .space(Pixels(10.0));
 
-        Element::new(cx).class("auto-size");
+        Element::new(cx).class("auto-size").background_color(Color::red());
         Element::new(cx).class("fixed-size");
         Element::new(cx).class("web-image");
         Image::new(cx, "https://download.samplelib.com/png/sample-bumblebee-400x300.png");

@@ -22,10 +22,6 @@ pub use handle::Handle;
 
 use crate::events::ViewHandler;
 use accesskit::{NodeBuilder, TreeUpdate};
-use femtovg::renderer::OpenGl;
-
-/// The canvas which all views draw to.
-pub type Canvas = femtovg::Canvas<OpenGl>;
 
 /// A view is any object which can be displayed on the screen.
 ///
@@ -248,7 +244,7 @@ pub trait View: 'static + Sized {
     ///     }
     /// }
     /// ```
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
         let bounds = cx.bounds();
 
         //Skip widgets with no width or no height
@@ -256,21 +252,22 @@ pub trait View: 'static + Sized {
             return;
         }
 
-        let mut path = cx.build_path();
+        let mut path = cx.build_path(bounds);
 
-        cx.draw_shadows(canvas, &mut path);
-
-        cx.draw_backdrop_filter(canvas, &mut path);
+        // cx.draw_backdrop_filter(canvas, &mut path);
 
         cx.draw_background(canvas, &mut path);
+        cx.draw_shadows(canvas, &mut path);
 
         cx.draw_border(canvas, &mut path);
 
-        cx.draw_inset_box_shadows(canvas, &mut path);
+        // cx.draw_inset_box_shadows(canvas, &mut path);
 
-        cx.draw_outline(canvas);
+        // cx.draw_outline(canvas);
 
-        cx.draw_text_and_selection(canvas);
+        // cx.draw_text_and_selection(canvas);
+
+        cx.draw_text(canvas);
     }
 
     #[allow(unused_variables)]
@@ -289,7 +286,7 @@ where
         <T as View>::event(self, cx, event);
     }
 
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
         <T as View>::draw(self, cx, canvas);
     }
 
