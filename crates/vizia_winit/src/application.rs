@@ -579,9 +579,42 @@ impl Application {
 
                                 cx.needs_refresh();
 
-                                cx.mutate_window(|_, window: &Window| {
-                                    window.window().request_redraw();
-                                });
+                                #[cfg(target_os = "windows")]
+                                {
+                                    cx.process_events();
+
+                                    cx.process_style_updates();
+
+                                    if cx.process_animations() {
+                                        *stored_control_flow.borrow_mut() = ControlFlow::Poll;
+
+                                        event_loop_proxy
+                                            .send_event(UserEvent::Event(Event::new(
+                                                WindowEvent::Redraw,
+                                            )))
+                                            .expect("Failed to send redraw event");
+
+                                        cx.mutate_window(|_, window: &Window| {
+                                            window.window().request_redraw();
+                                        });
+                                    }
+
+                                    cx.process_visual_updates();
+
+                                    #[cfg(all(
+                                        not(target_arch = "wasm32"),
+                                        feature = "accesskit"
+                                    ))]
+                                    cx.process_tree_updates(|tree_updates| {
+                                        for update in tree_updates.iter_mut() {
+                                            accesskit.update_if_active(|| update.take().unwrap());
+                                        }
+                                    });
+
+                                    cx.mutate_window(|_, window: &Window| {
+                                        window.window().request_redraw();
+                                    });
+                                }
                             }
 
                             winit::event::WindowEvent::ThemeChanged(theme) => {
