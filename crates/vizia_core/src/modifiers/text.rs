@@ -11,9 +11,10 @@ pub trait TextModifiers: internal::Modifiable {
             value.set_or_bind(cx, entity, move |cx, val| {
                 let cx: &mut EventContext<'_> = &mut EventContext::new_with_current(cx, entity);
                 let text_data = val.get(cx).to_string_local(cx);
-                cx.text_context.set_text(entity, &text_data);
+                // cx.text_context.set_text(entity, &text_data);
+                cx.style.text.insert(entity, text_data);
 
-                cx.style.needs_text_layout.insert(entity, true);
+                cx.style.needs_text_update(entity);
                 cx.needs_relayout();
                 cx.needs_redraw();
             });
@@ -35,21 +36,21 @@ pub trait TextModifiers: internal::Modifiable {
         /// Sets the font weight that should be used by the view.
         font_weight,
         FontWeight,
-        SystemFlags::REDRAW
+        SystemFlags::REFLOW
     );
 
     modifier!(
         /// Sets the font style that should be used by the view.
-        font_style,
-        FontStyle,
-        SystemFlags::REDRAW
+        font_slant,
+        FontSlant,
+        SystemFlags::REFLOW
     );
 
     modifier!(
         /// Sets the font stretch that should be used by the view if the font supports it.
-        font_stretch,
-        FontStretch,
-        SystemFlags::REDRAW
+        font_width,
+        FontWidth,
+        SystemFlags::REFLOW
     );
 
     /// Sets the text color of the view.
@@ -59,6 +60,7 @@ pub trait TextModifiers: internal::Modifiable {
         self.context().with_current(current, move |cx| {
             value.set_or_bind(cx, entity, move |cx, v| {
                 cx.style.font_color.insert(entity, v.get(cx).into());
+                cx.style.needs_text_update(entity);
                 cx.style.needs_redraw();
             });
         });
@@ -72,7 +74,7 @@ pub trait TextModifiers: internal::Modifiable {
         self.context().with_current(current, move |cx| {
             value.set_or_bind(cx, entity, move |cx, v| {
                 cx.style.font_size.insert(cx.current, v.get(cx).into());
-                cx.style.needs_text_layout.insert(cx.current, true);
+                cx.style.needs_text_update(entity);
             });
         });
         self
@@ -103,7 +105,21 @@ pub trait TextModifiers: internal::Modifiable {
         /// Sets the horizontal alignment of text within the view.
         text_align,
         TextAlign,
-        SystemFlags::REDRAW
+        SystemFlags::REFLOW
+    );
+
+    modifier!(
+        /// Sets the text overflow.
+        text_overflow,
+        TextOverflow,
+        SystemFlags::REFLOW
+    );
+
+    modifier!(
+        /// Sets the max number of .
+        line_clamp,
+        LineClamp,
+        SystemFlags::REFLOW
     );
 }
 

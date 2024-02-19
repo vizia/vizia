@@ -298,6 +298,10 @@ pub const ICON_BOX_MARGIN: &str = "\u{ee0b}";
 pub const ICON_BOLD: &str = "\u{eb7b}";
 pub const ICON_ITALIC: &str = "\u{eb93}";
 pub const ICON_UNDERLINE: &str = "\u{eba2}";
+pub const ICON_ALIGN_LEFT: &str = "\u{ea09}";
+pub const ICON_ALIGN_CENTER: &str = "\u{ea07}";
+pub const ICON_ALIGN_RIGHT: &str = "\u{ea0a}";
+pub const ICON_ALIGN_JUSTIFIED: &str = "\u{ea08}";
 
 pub const ICON_CODE: &str = "\u{ea77}";
 pub const ICON_USER: &str = "\u{eb4d}";

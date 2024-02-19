@@ -1,4 +1,4 @@
-use femtovg::Transform2D;
+// use femtovg::Transform2D;
 
 /// Represents the axis-aligned bounding box of a view.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -97,25 +97,25 @@ impl BoundingBox {
     /// Bottom left point of bounds.
     #[inline(always)]
     pub fn bottom_left(&self) -> (f32, f32) {
-        (self.bottom(), self.left())
+        (self.left(), self.bottom())
     }
 
     /// Bottom right point of bounds.
     #[inline(always)]
     pub fn bottom_right(&self) -> (f32, f32) {
-        (self.bottom(), self.right())
+        (self.right(), self.bottom())
     }
 
     /// Top left point of bounds.
     #[inline(always)]
     pub fn top_left(&self) -> (f32, f32) {
-        (self.top(), self.left())
+        (self.left(), self.top())
     }
 
     /// Top right point of bounds.
     #[inline(always)]
     pub fn top_right(&self) -> (f32, f32) {
-        (self.top(), self.right())
+        (self.right(), self.top())
     }
 
     /// Shrinks by some `amount` in both directions and returns a new [`BoundingBox`].
@@ -228,10 +228,20 @@ impl BoundingBox {
         x_hit && y_hit
     }
 
-    pub fn transform(&self, transform: &Transform2D) -> Self {
-        let (tl, tt) = transform.transform_point(self.x, self.y);
-        let (tr, tb) = transform.transform_point(self.right(), self.bottom());
-        BoundingBox::from_min_max(tl, tt, tr, tb)
+    pub fn diagonal(&self) -> f32 {
+        (self.width() * self.width() + self.height() * self.height()).sqrt()
+    }
+
+    // pub fn transform(&self, transform: &Transform2D) -> Self {
+    //     let (tl, tt) = transform.transform_point(self.x, self.y);
+    //     let (tr, tb) = transform.transform_point(self.right(), self.bottom());
+    //     BoundingBox::from_min_max(tl, tt, tr, tb)
+    // }
+}
+
+impl From<BoundingBox> for skia_safe::Rect {
+    fn from(bb: BoundingBox) -> Self {
+        skia_safe::Rect { left: bb.left(), top: bb.top(), right: bb.right(), bottom: bb.bottom() }
     }
 }
 
