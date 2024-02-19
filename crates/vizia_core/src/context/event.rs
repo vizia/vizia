@@ -4,7 +4,6 @@ use std::collections::{BinaryHeap, VecDeque};
 use std::error::Error;
 use std::rc::Rc;
 
-use femtovg::Transform2D;
 use hashbrown::{HashMap, HashSet};
 use vizia_storage::{LayoutTreeIterator, TreeIterator};
 
@@ -16,6 +15,8 @@ use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use vizia_input::MouseState;
+
+use skia_safe::Matrix;
 
 use crate::text::TextContext;
 #[cfg(feature = "clipboard")]
@@ -293,10 +294,8 @@ impl<'a> EventContext<'a> {
         }
     }
 
-    /// Returns the transform of the current view.
-    pub fn transform(&self) -> Transform2D {
-        let mut transform = Transform2D::identity();
-
+    /// Returns the 2D transform of the current view.
+    pub fn transform(&self) -> Matrix {
         let bounds = self.bounds();
         let scale_factor = self.scale_factor();
 
@@ -306,28 +305,29 @@ impl<'a> EventContext<'a> {
             .transform_origin
             .get(self.current)
             .map(|transform_origin| {
-                let mut origin = Transform2D::new_translation(bounds.left(), bounds.top());
+                let mut origin = Matrix::translate(bounds.top_left());
                 let offset = transform_origin.as_transform(bounds, scale_factor);
-                origin.premultiply(&offset);
+                origin = offset * origin;
                 origin
             })
-            .unwrap_or(Transform2D::new_translation(bounds.center().0, bounds.center().1));
-        transform.premultiply(&origin);
-        origin.inverse();
+            .unwrap_or(Matrix::translate(bounds.center()));
+        // transform = origin * transform;
+        let mut transform = origin;
+        origin = origin.invert().unwrap();
 
         // Apply translation.
         if let Some(translate) = self.style.translate.get(self.current) {
-            transform.premultiply(&translate.as_transform(bounds, scale_factor));
+            transform = transform * translate.as_transform(bounds, scale_factor);
         }
 
         // Apply rotation.
         if let Some(rotate) = self.style.rotate.get(self.current) {
-            transform.premultiply(&rotate.as_transform(bounds, scale_factor));
+            transform = transform * rotate.as_transform(bounds, scale_factor);
         }
 
         // Apply scaling.
         if let Some(scale) = self.style.scale.get(self.current) {
-            transform.premultiply(&scale.as_transform(bounds, scale_factor));
+            transform = transform * scale.as_transform(bounds, scale_factor);
         }
 
         // Apply transform functions.
@@ -342,16 +342,16 @@ impl<'a> EventContext<'a> {
                         let end_transform = end.value.as_transform(bounds, scale_factor);
                         let t = animation_state.t;
                         let animated_transform =
-                            Transform2D::interpolate(&start_transform, &end_transform, t);
-                        transform.premultiply(&animated_transform);
+                            Matrix::interpolate(&start_transform, &end_transform, t);
+                        transform = transform * animated_transform;
                     }
                 }
             } else {
-                transform.premultiply(&transforms.as_transform(bounds, scale_factor));
+                transform = transform * transforms.as_transform(bounds, scale_factor);
             }
         }
 
-        transform.premultiply(&origin);
+        transform = transform * origin;
 
         transform
     }
@@ -1118,9 +1118,8 @@ impl<'a> EventContext<'a> {
 
     /// Sets the text of the current view.
     pub fn set_text(&mut self, text: &str) {
-        self.text_context.set_text(self.current, text);
-
-        self.style.needs_text_layout.insert(self.current, true);
+        self.style.text.insert(self.current, text.to_owned());
+        self.style.needs_text_update(self.current);
         self.needs_relayout();
         self.needs_redraw();
     }

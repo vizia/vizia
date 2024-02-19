@@ -197,6 +197,8 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 cx.mouse.cursorx = *x;
                 cx.mouse.cursory = *y;
 
+                hover_system(cx);
+
                 mutate_direct_or_up(meta, cx.captured, cx.hovered, false);
             }
 
@@ -205,7 +207,6 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             // {
             // }
 
-            hover_system(cx);
             // if let Some(dropped_file) = cx.dropped_file.take() {
             //     emit_direct_or_up(
             //         cx,
@@ -407,7 +408,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                             }
                         }
                         println!(
-                            "{}{} {}{} [x: {} y: {} w: {} h: {}]",
+                            "{}{} {}{} [x: {} y: {} w: {} h: {}] {:?}",
                             indents(entity),
                             entity,
                             element_name,
@@ -416,6 +417,19 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                             cache.get_bounds(entity).y,
                             if w == f32::MAX { "inf".to_string() } else { w.to_string() },
                             if h == f32::MAX { "inf".to_string() } else { h.to_string() },
+                            cx.text_context.text_paragraphs.get(entity).map(|p| {
+                                let mut r = p
+                                    .get_fonts()
+                                    .iter()
+                                    .map(|fi| {
+                                        (fi.text_range.clone(), fi.font.typeface().family_name())
+                                    })
+                                    .collect::<Vec<_>>();
+
+                                // r.pop();
+
+                                r
+                            })
                         );
                     } else if let Some(binding_name) =
                         cx.bindings.get(&entity).map(|binding| format!("{:?}", binding))
@@ -474,18 +488,18 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             if *code == Code::KeyT
                 && cx.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
             {
-                debug!("Loaded font face info:");
-                for face in cx.text_context.font_system().db().faces() {
-                    debug!(
-                        "family: {:?}\npost_script_name: {:?}\nstyle: {:?}\nweight: {:?}\nstretch: {:?}\nmonospaced: {:?}\n",
-                        face.families,
-                        face.post_script_name,
-                        face.style,
-                        face.weight,
-                        face.stretch,
-                        face.monospaced,
-                    );
-                }
+                // debug!("Loaded font face info:");
+                // for face in cx.text_context.font_system().db().faces() {
+                //     debug!(
+                //         "family: {:?}\npost_script_name: {:?}\nstyle: {:?}\nweight: {:?}\nstretch: {:?}\nmonospaced: {:?}\n",
+                //         face.families,
+                //         face.post_script_name,
+                //         face.style,
+                //         face.weight,
+                //         face.stretch,
+                //         face.monospaced,
+                //     );
+                // }
             }
 
             if *code == Code::F5 {

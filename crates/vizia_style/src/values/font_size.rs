@@ -35,6 +35,18 @@ impl Default for FontSize {
     }
 }
 
+impl From<u32> for FontSize {
+    fn from(number: u32) -> Self {
+        FontSize(number as f32)
+    }
+}
+
+impl From<i32> for FontSize {
+    fn from(number: i32) -> Self {
+        FontSize(number as f32)
+    }
+}
+
 impl From<f32> for FontSize {
     fn from(number: f32) -> Self {
         FontSize(number)
