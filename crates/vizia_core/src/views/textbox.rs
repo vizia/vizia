@@ -898,9 +898,9 @@ where
 
                 Code::KeyA => {
                     #[cfg(target_os = "macos")]
-                    let modifier = Modifiers::LSUPER;
+                    let modifier = Modifiers::SUPER;
                     #[cfg(not(target_os = "macos"))]
-                    let modifier = Modifiers::LCTRL;
+                    let modifier = Modifiers::CTRL;
 
                     if cx.modifiers == &modifier {
                         cx.emit(TextEvent::SelectAll);
@@ -909,9 +909,9 @@ where
 
                 Code::KeyC => {
                     #[cfg(target_os = "macos")]
-                    let modifier = Modifiers::LSUPER;
+                    let modifier = Modifiers::SUPER;
                     #[cfg(not(target_os = "macos"))]
-                    let modifier = Modifiers::LCTRL;
+                    let modifier = Modifiers::CTRL;
 
                     if cx.modifiers == &modifier {
                         cx.emit(TextEvent::Copy);
@@ -920,7 +920,7 @@ where
 
                 Code::KeyV => {
                     #[cfg(target_os = "macos")]
-                    let modifier = Modifiers::LSUPER;
+                    let modifier = Modifiers::SUPER;
                     #[cfg(not(target_os = "macos"))]
                     let modifier = Modifiers::LCTRL;
 
@@ -931,9 +931,9 @@ where
 
                 Code::KeyX => {
                     #[cfg(target_os = "macos")]
-                    let modifier = Modifiers::LSUPER;
+                    let modifier = Modifiers::SUPER;
                     #[cfg(not(target_os = "macos"))]
-                    let modifier = Modifiers::LCTRL;
+                    let modifier = Modifiers::CTRL;
 
                     if cx.modifiers == &modifier && !cx.is_read_only() {
                         cx.emit(TextEvent::Cut);

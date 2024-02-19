@@ -77,14 +77,14 @@ impl List {
                 //     KeymapEntry::new((), |cx| cx.emit(ListEvent::SelectFocused)),
                 // ),
                 (
-                    KeyChord::new(Modifiers::LSHIFT, Code::ArrowDown),
+                    KeyChord::new(Modifiers::SHIFT, Code::ArrowDown),
                     KeymapEntry::new("Select Next", |cx| {
                         cx.emit(ListEvent::FocusNext(true));
                         // cx.emit(ListEvent::SelectFocused);
                     }),
                 ),
                 (
-                    KeyChord::new(Modifiers::LSHIFT, Code::ArrowUp),
+                    KeyChord::new(Modifiers::SHIFT, Code::ArrowUp),
                     KeymapEntry::new("Select Previous", |cx| {
                         cx.emit(ListEvent::FocusPrev(true));
                         // cx.emit(ListEvent::SelectFocused);

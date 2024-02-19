@@ -15,6 +15,7 @@ use vizia_core::prelude::*;
 use vizia_id::GenerationalId;
 // use vizia_input::KeyState;
 use vizia_window::Position;
+use winit::event_loop::{ControlFlow, EventLoop};
 #[cfg(all(
     feature = "clipboard",
     feature = "wayland",
@@ -29,10 +30,6 @@ use vizia_window::Position;
 use winit::platform::wayland::WindowExtWayland;
 use winit::{
     error::EventLoopError, event::ElementState, event_loop::EventLoopBuilder, keyboard::PhysicalKey,
-};
-use winit::{
-    event_loop::{ControlFlow, EventLoop},
-    keyboard::ModifiersKeyState,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -400,7 +397,7 @@ impl Application {
                                     // Redraw
                                     cx.draw();
                                     cx.mutate_window(|_, window: &Window| {
-                                        window.window().pre_present_notify();
+                                        // window.window().pre_present_notify();
                                         window.swap_buffers();
                                     });
 
@@ -596,38 +593,17 @@ impl Application {
                             }
 
                             winit::event::WindowEvent::ModifiersChanged(modifiers_state) => {
-                                cx.modifiers().set(
-                                    Modifiers::LSHIFT,
-                                    modifiers_state.lshift_state() == ModifiersKeyState::Pressed,
-                                );
-                                cx.modifiers().set(
-                                    Modifiers::RSHIFT,
-                                    modifiers_state.rshift_state() == ModifiersKeyState::Pressed,
-                                );
-                                cx.modifiers().set(
-                                    Modifiers::LALT,
-                                    modifiers_state.lalt_state() == ModifiersKeyState::Pressed,
-                                );
-                                cx.modifiers().set(
-                                    Modifiers::RALT,
-                                    modifiers_state.ralt_state() == ModifiersKeyState::Pressed,
-                                );
-                                cx.modifiers().set(
-                                    Modifiers::LCTRL,
-                                    modifiers_state.lcontrol_state() == ModifiersKeyState::Pressed,
-                                );
-                                cx.modifiers().set(
-                                    Modifiers::RCTRL,
-                                    modifiers_state.rcontrol_state() == ModifiersKeyState::Pressed,
-                                );
-                                cx.modifiers().set(
-                                    Modifiers::LSUPER,
-                                    modifiers_state.lsuper_state() == ModifiersKeyState::Pressed,
-                                );
-                                cx.modifiers().set(
-                                    Modifiers::RSUPER,
-                                    modifiers_state.rsuper_state() == ModifiersKeyState::Pressed,
-                                );
+                                cx.modifiers()
+                                    .set(Modifiers::SHIFT, modifiers_state.state().shift_key());
+
+                                cx.modifiers()
+                                    .set(Modifiers::ALT, modifiers_state.state().alt_key());
+
+                                cx.modifiers()
+                                    .set(Modifiers::CTRL, modifiers_state.state().control_key());
+
+                                cx.modifiers()
+                                    .set(Modifiers::SUPER, modifiers_state.state().super_key());
                             }
 
                             winit::event::WindowEvent::CursorEntered { device_id: _ } => {

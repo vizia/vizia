@@ -446,7 +446,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
 
             #[cfg(debug_assertions)]
             if *code == Code::KeyS
-                && cx.modifiers == Modifiers::LCTRL | Modifiers::LSHIFT | Modifiers::LALT
+                && cx.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
             {
                 let mut result = vec![];
                 compute_matched_rules(cx, cx.hovered, &mut result);
@@ -475,7 +475,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
 
             #[cfg(debug_assertions)]
             if *code == Code::KeyT
-                && cx.modifiers == Modifiers::LCTRL | Modifiers::LSHIFT | Modifiers::LALT
+                && cx.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
             {
                 debug!("Loaded font face info:");
                 for face in cx.text_context.font_system().db().faces() {
