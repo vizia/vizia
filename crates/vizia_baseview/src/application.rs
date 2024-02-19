@@ -268,7 +268,7 @@ impl ApplicationRunner {
             cx.modifiers()
                 .set(Modifiers::CTRL, modifiers.contains(vizia_input::KeyboardModifiers::CONTROL));
             cx.modifiers()
-                .set(Modifiers::LOGO, modifiers.contains(vizia_input::KeyboardModifiers::META));
+                .set(Modifiers::SUPER, modifiers.contains(vizia_input::KeyboardModifiers::META));
             cx.modifiers()
                 .set(Modifiers::ALT, modifiers.contains(vizia_input::KeyboardModifiers::ALT));
         };
@@ -353,7 +353,7 @@ impl ApplicationRunner {
                     }
                     Code::AltLeft | Code::AltRight => cx.modifiers().set(Modifiers::ALT, pressed),
                     Code::MetaLeft | Code::MetaRight => {
-                        cx.modifiers().set(Modifiers::LOGO, pressed)
+                        cx.modifiers().set(Modifiers::SUPER, pressed)
                     }
                     _ => (),
                 }
