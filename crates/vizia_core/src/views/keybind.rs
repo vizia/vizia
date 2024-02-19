@@ -21,19 +21,19 @@ impl KeyBindView {
                         let item = item.get(cx);
 
                         Label::new(cx, item.0).right(Stretch(1.0));
-                        if item.1.modifiers.contains(Modifiers::LOGO) {
+                        if item.1.modifiers.logo() {
                             Label::new(cx, "Logo");
                             Label::new(cx, "+");
                         }
-                        if item.1.modifiers.contains(Modifiers::CTRL) {
+                        if item.1.modifiers.ctrl() {
                             Label::new(cx, "Ctrl");
                             Label::new(cx, "+");
                         }
-                        if item.1.modifiers.contains(Modifiers::SHIFT) {
+                        if item.1.modifiers.shift() {
                             Label::new(cx, "Shift");
                             Label::new(cx, "+");
                         }
-                        if item.1.modifiers.contains(Modifiers::ALT) {
+                        if item.1.modifiers.alt() {
                             Label::new(cx, "Alt");
                             Label::new(cx, "+");
                         }

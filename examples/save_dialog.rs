@@ -115,7 +115,7 @@ fn main() -> Result<(), ApplicationError> {
             .height(Auto);
         })
         // .on_blur(|cx| cx.emit(AppEvent::HideModal))
-        .width(Pixels(300.0))
+        .width(Auto)
         .height(Auto)
         .row_between(Pixels(20.0))
         .class("modal");

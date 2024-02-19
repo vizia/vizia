@@ -38,7 +38,7 @@ impl List {
     pub fn new<L: Lens, T: 'static>(
         cx: &mut Context,
         list: L,
-        item_content: impl 'static + Copy + Fn(&mut Context, usize, MapRef<L, T>),
+        item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
     ) -> Handle<Self>
     where
         L::Target: Deref<Target = [T]>,
@@ -52,7 +52,7 @@ impl List {
         list: L,
         list_len: impl 'static + Fn(&L::Target) -> usize,
         list_index: impl 'static + Copy + Fn(&L::Target, usize) -> &T,
-        item_content: impl 'static + Copy + Fn(&mut Context, usize, MapRef<L, T>),
+        item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
     ) -> Handle<Self> {
         let num_items = list.map(list_len);
         Self {
@@ -77,14 +77,14 @@ impl List {
                 //     KeymapEntry::new((), |cx| cx.emit(ListEvent::SelectFocused)),
                 // ),
                 (
-                    KeyChord::new(Modifiers::SHIFT, Code::ArrowDown),
+                    KeyChord::new(Modifiers::LSHIFT, Code::ArrowDown),
                     KeymapEntry::new("Select Next", |cx| {
                         cx.emit(ListEvent::FocusNext(true));
                         // cx.emit(ListEvent::SelectFocused);
                     }),
                 ),
                 (
-                    KeyChord::new(Modifiers::SHIFT, Code::ArrowUp),
+                    KeyChord::new(Modifiers::LSHIFT, Code::ArrowUp),
                     KeymapEntry::new("Select Previous", |cx| {
                         cx.emit(ListEvent::FocusPrev(true));
                         // cx.emit(ListEvent::SelectFocused);

@@ -354,7 +354,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             meta.target = cx.focused;
 
             #[cfg(debug_assertions)]
-            if *code == Code::KeyP && cx.modifiers.contains(Modifiers::CTRL) {
+            if *code == Code::KeyP && cx.modifiers.ctrl() {
                 for entity in TreeIterator::full(&cx.tree) {
                     if let Some(model_data_store) = cx.data.get(&entity) {
                         if !model_data_store.models.is_empty() {
@@ -379,7 +379,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             }
 
             #[cfg(debug_assertions)]
-            if *code == Code::KeyI && cx.modifiers.contains(Modifiers::CTRL) {
+            if *code == Code::KeyI && cx.modifiers.ctrl() {
                 println!("Entity tree");
                 let (tree, views, cache) = (&cx.tree, &cx.views, &cx.cache);
                 let has_next_sibling = |entity| tree.get_next_sibling(entity).is_some();
@@ -446,7 +446,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
 
             #[cfg(debug_assertions)]
             if *code == Code::KeyS
-                && cx.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
+                && cx.modifiers == Modifiers::LCTRL | Modifiers::LSHIFT | Modifiers::LALT
             {
                 let mut result = vec![];
                 compute_matched_rules(cx, cx.hovered, &mut result);
@@ -475,7 +475,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
 
             #[cfg(debug_assertions)]
             if *code == Code::KeyT
-                && cx.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
+                && cx.modifiers == Modifiers::LCTRL | Modifiers::LSHIFT | Modifiers::LALT
             {
                 debug!("Loaded font face info:");
                 for face in cx.text_context.font_system().db().faces() {
@@ -497,7 +497,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
 
             if *code == Code::Tab {
                 let lock_focus_to = cx.tree.lock_focus_within(cx.focused);
-                if cx.modifiers.contains(Modifiers::SHIFT) {
+                if cx.modifiers.shift() {
                     let prev_focused = if let Some(prev_focused) =
                         focus_backward(&cx.tree, &cx.style, cx.focused, lock_focus_to)
                     {

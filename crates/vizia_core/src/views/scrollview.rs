@@ -204,8 +204,7 @@ impl View for ScrollView {
 
             WindowEvent::MouseScroll(x, y) => {
                 cx.set_active(true);
-                let (x, y) =
-                    if cx.modifiers.contains(Modifiers::SHIFT) { (-*y, -*x) } else { (-*x, -*y) };
+                let (x, y) = if cx.modifiers.shift() { (-*y, -*x) } else { (-*x, -*y) };
 
                 // What percentage of the negative space does this cross?
                 if x != 0.0 && self.inner_width > self.container_width {

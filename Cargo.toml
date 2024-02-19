@@ -281,6 +281,11 @@ path = "examples/views/progressbar.rs"
 name = "textbox"
 path = "examples/views/textbox.rs"
 
+[[example]]
+name = "teeview"
+path = "examples/views/treeview.rs"
+
+
 
 
 

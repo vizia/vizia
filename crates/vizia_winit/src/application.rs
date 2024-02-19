@@ -400,6 +400,7 @@ impl Application {
                                     // Redraw
                                     cx.draw();
                                     cx.mutate_window(|_, window: &Window| {
+                                        window.window().pre_present_notify();
                                         window.swap_buffers();
                                     });
 
@@ -580,6 +581,10 @@ impl Application {
                                 );
 
                                 cx.needs_refresh();
+
+                                cx.mutate_window(|_, window: &Window| {
+                                    window.window().request_redraw();
+                                });
                             }
 
                             winit::event::WindowEvent::ThemeChanged(theme) => {
@@ -592,30 +597,36 @@ impl Application {
 
                             winit::event::WindowEvent::ModifiersChanged(modifiers_state) => {
                                 cx.modifiers().set(
-                                    Modifiers::SHIFT,
-                                    (modifiers_state.lshift_state() == ModifiersKeyState::Pressed)
-                                        | (modifiers_state.rshift_state()
-                                            == ModifiersKeyState::Pressed),
-                                );
-
-                                cx.modifiers().set(
-                                    Modifiers::ALT,
-                                    (modifiers_state.lalt_state() == ModifiersKeyState::Pressed)
-                                        | (modifiers_state.ralt_state()
-                                            == ModifiersKeyState::Pressed),
+                                    Modifiers::LSHIFT,
+                                    modifiers_state.lshift_state() == ModifiersKeyState::Pressed,
                                 );
                                 cx.modifiers().set(
-                                    Modifiers::CTRL,
-                                    (modifiers_state.lcontrol_state()
-                                        == ModifiersKeyState::Pressed)
-                                        | (modifiers_state.rcontrol_state()
-                                            == ModifiersKeyState::Pressed),
+                                    Modifiers::RSHIFT,
+                                    modifiers_state.rshift_state() == ModifiersKeyState::Pressed,
                                 );
                                 cx.modifiers().set(
-                                    Modifiers::LOGO,
-                                    (modifiers_state.lsuper_state() == ModifiersKeyState::Pressed)
-                                        | (modifiers_state.lsuper_state()
-                                            == ModifiersKeyState::Pressed),
+                                    Modifiers::LALT,
+                                    modifiers_state.lalt_state() == ModifiersKeyState::Pressed,
+                                );
+                                cx.modifiers().set(
+                                    Modifiers::RALT,
+                                    modifiers_state.ralt_state() == ModifiersKeyState::Pressed,
+                                );
+                                cx.modifiers().set(
+                                    Modifiers::LCTRL,
+                                    modifiers_state.lcontrol_state() == ModifiersKeyState::Pressed,
+                                );
+                                cx.modifiers().set(
+                                    Modifiers::RCTRL,
+                                    modifiers_state.rcontrol_state() == ModifiersKeyState::Pressed,
+                                );
+                                cx.modifiers().set(
+                                    Modifiers::LSUPER,
+                                    modifiers_state.lsuper_state() == ModifiersKeyState::Pressed,
+                                );
+                                cx.modifiers().set(
+                                    Modifiers::RSUPER,
+                                    modifiers_state.rsuper_state() == ModifiersKeyState::Pressed,
                                 );
                             }
 

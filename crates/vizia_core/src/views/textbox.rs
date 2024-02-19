@@ -774,8 +774,8 @@ where
                     *c != '\u{9}' && // Tab
                     *c != '\u{7f}' && // Delete
                     *c != '\u{0d}' && // Carriage return
-                    !cx.modifiers.contains(Modifiers::CTRL) &&
-                    !cx.modifiers.contains(Modifiers::LOGO) &&
+                    !cx.modifiers.ctrl() &&
+                    !cx.modifiers.logo() &&
                     self.edit &&
                     !cx.is_read_only()
                 {
@@ -796,31 +796,25 @@ where
 
                 Code::ArrowLeft => {
                     self.reset_caret_timer(cx);
-                    let movement = if cx.modifiers.contains(Modifiers::CTRL) {
+                    let movement = if cx.modifiers.ctrl() {
                         Movement::Word(Direction::Left)
                     } else {
                         Movement::Grapheme(Direction::Left)
                     };
 
-                    cx.emit(TextEvent::MoveCursor(
-                        movement,
-                        cx.modifiers.contains(Modifiers::SHIFT),
-                    ));
+                    cx.emit(TextEvent::MoveCursor(movement, cx.modifiers.shift()));
                 }
 
                 Code::ArrowRight => {
                     self.reset_caret_timer(cx);
 
-                    let movement = if cx.modifiers.contains(Modifiers::CTRL) {
+                    let movement = if cx.modifiers.ctrl() {
                         Movement::Word(Direction::Right)
                     } else {
                         Movement::Grapheme(Direction::Right)
                     };
 
-                    cx.emit(TextEvent::MoveCursor(
-                        movement,
-                        cx.modifiers.contains(Modifiers::SHIFT),
-                    ));
+                    cx.emit(TextEvent::MoveCursor(movement, cx.modifiers.shift()));
                 }
 
                 Code::ArrowUp => {
@@ -828,7 +822,7 @@ where
                     if self.kind != TextboxKind::SingleLine {
                         cx.emit(TextEvent::MoveCursor(
                             Movement::Line(Direction::Upstream),
-                            cx.modifiers.contains(Modifiers::SHIFT),
+                            cx.modifiers.shift(),
                         ));
                     }
                 }
@@ -838,7 +832,7 @@ where
                     if self.kind != TextboxKind::SingleLine {
                         cx.emit(TextEvent::MoveCursor(
                             Movement::Line(Direction::Downstream),
-                            cx.modifiers.contains(Modifiers::SHIFT),
+                            cx.modifiers.shift(),
                         ));
                     }
                 }
@@ -846,7 +840,7 @@ where
                 Code::Backspace => {
                     self.reset_caret_timer(cx);
                     if !cx.is_read_only() {
-                        if cx.modifiers.contains(Modifiers::CTRL) {
+                        if cx.modifiers.ctrl() {
                             cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Upstream)));
                         } else {
                             cx.emit(TextEvent::DeleteText(Movement::Grapheme(Direction::Upstream)));
@@ -857,7 +851,7 @@ where
                 Code::Delete => {
                     self.reset_caret_timer(cx);
                     if !cx.is_read_only() {
-                        if cx.modifiers.contains(Modifiers::CTRL) {
+                        if cx.modifiers.ctrl() {
                             cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Downstream)));
                         } else {
                             cx.emit(TextEvent::DeleteText(Movement::Grapheme(
@@ -877,18 +871,12 @@ where
 
                 Code::Home => {
                     self.reset_caret_timer(cx);
-                    cx.emit(TextEvent::MoveCursor(
-                        Movement::LineStart,
-                        cx.modifiers.contains(Modifiers::SHIFT),
-                    ));
+                    cx.emit(TextEvent::MoveCursor(Movement::LineStart, cx.modifiers.shift()));
                 }
 
                 Code::End => {
                     self.reset_caret_timer(cx);
-                    cx.emit(TextEvent::MoveCursor(
-                        Movement::LineEnd,
-                        cx.modifiers.contains(Modifiers::SHIFT),
-                    ));
+                    cx.emit(TextEvent::MoveCursor(Movement::LineEnd, cx.modifiers.shift()));
                 }
 
                 Code::PageUp | Code::PageDown => {
@@ -899,20 +887,20 @@ where
                         Direction::Downstream
                     };
                     cx.emit(TextEvent::MoveCursor(
-                        if cx.modifiers.contains(Modifiers::CTRL) {
+                        if cx.modifiers.ctrl() {
                             Movement::Body(direction)
                         } else {
                             Movement::Page(direction)
                         },
-                        cx.modifiers.contains(Modifiers::SHIFT),
+                        cx.modifiers.shift(),
                     ));
                 }
 
                 Code::KeyA => {
                     #[cfg(target_os = "macos")]
-                    let modifier = Modifiers::LOGO;
+                    let modifier = Modifiers::LSUPER;
                     #[cfg(not(target_os = "macos"))]
-                    let modifier = Modifiers::CTRL;
+                    let modifier = Modifiers::LCTRL;
 
                     if cx.modifiers == &modifier {
                         cx.emit(TextEvent::SelectAll);
@@ -921,9 +909,9 @@ where
 
                 Code::KeyC => {
                     #[cfg(target_os = "macos")]
-                    let modifier = Modifiers::LOGO;
+                    let modifier = Modifiers::LSUPER;
                     #[cfg(not(target_os = "macos"))]
-                    let modifier = Modifiers::CTRL;
+                    let modifier = Modifiers::LCTRL;
 
                     if cx.modifiers == &modifier {
                         cx.emit(TextEvent::Copy);
@@ -932,9 +920,9 @@ where
 
                 Code::KeyV => {
                     #[cfg(target_os = "macos")]
-                    let modifier = Modifiers::LOGO;
+                    let modifier = Modifiers::LSUPER;
                     #[cfg(not(target_os = "macos"))]
-                    let modifier = Modifiers::CTRL;
+                    let modifier = Modifiers::LCTRL;
 
                     if cx.modifiers == &modifier {
                         cx.emit(TextEvent::Paste);
@@ -943,9 +931,9 @@ where
 
                 Code::KeyX => {
                     #[cfg(target_os = "macos")]
-                    let modifier = Modifiers::LOGO;
+                    let modifier = Modifiers::LSUPER;
                     #[cfg(not(target_os = "macos"))]
-                    let modifier = Modifiers::CTRL;
+                    let modifier = Modifiers::LCTRL;
 
                     if cx.modifiers == &modifier && !cx.is_read_only() {
                         cx.emit(TextEvent::Cut);
