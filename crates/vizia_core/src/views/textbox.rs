@@ -922,7 +922,7 @@ where
                     #[cfg(target_os = "macos")]
                     let modifier = Modifiers::SUPER;
                     #[cfg(not(target_os = "macos"))]
-                    let modifier = Modifiers::LCTRL;
+                    let modifier = Modifiers::CTRL;
 
                     if cx.modifiers == &modifier {
                         cx.emit(TextEvent::Paste);
