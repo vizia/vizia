@@ -15,7 +15,6 @@ use vizia_core::prelude::*;
 use vizia_id::GenerationalId;
 // use vizia_input::KeyState;
 use vizia_window::Position;
-use winit::event_loop::{ControlFlow, EventLoop};
 #[cfg(all(
     feature = "clipboard",
     feature = "wayland",
@@ -30,6 +29,10 @@ use winit::event_loop::{ControlFlow, EventLoop};
 use winit::platform::wayland::WindowExtWayland;
 use winit::{
     error::EventLoopError, event::ElementState, event_loop::EventLoopBuilder, keyboard::PhysicalKey,
+};
+use winit::{
+    event_loop::{ControlFlow, EventLoop},
+    keyboard::NativeKeyCode,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -535,7 +538,10 @@ impl Application {
                             } => {
                                 let code = match event.physical_key {
                                     PhysicalKey::Code(code) => winit_key_code_to_code(code),
-                                    PhysicalKey::Unidentified(_native) => todo!(),
+                                    PhysicalKey::Unidentified(native) => match native {
+                                        NativeKeyCode::Windows(_scancode) => return,
+                                        _ => return,
+                                    },
                                 };
 
                                 let key = match event.logical_key {
