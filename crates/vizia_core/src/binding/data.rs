@@ -1,8 +1,6 @@
 use std::{ptr, rc::Rc, sync::Arc};
 
 use chrono::{NaiveDate, NaiveTime};
-use unic_langid::LanguageIdentifier;
-use vizia_style::Translate;
 
 use crate::prelude::*;
 

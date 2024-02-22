@@ -5,7 +5,6 @@ use raw_window_handle::HasRawWindowHandle;
 use crate::proxy::queue_get;
 use vizia_core::backend::*;
 use vizia_core::prelude::*;
-use vizia_id::GenerationalId;
 
 #[derive(Debug)]
 pub enum ApplicationError {}
@@ -166,7 +165,7 @@ pub(crate) struct ApplicationRunner {
     /// system or explicitly overridden by the creator of the window. In some cases window resize
     /// events may change this scaling policy. This value is only used when translating logical
     /// mouse coordinates to physical window coordinates. For any other use within VIZIA itself this
-    /// always needs to be multplied by `user_scale_factor`.
+    /// always needs to be multiplied by `user_scale_factor`.
     window_scale_factor: f64,
     /// The scale factor applied on top of the `window_scale` to convert the window's logical size
     /// to a physical size. If this is different from `*cx.user_scale_factor` after handling the

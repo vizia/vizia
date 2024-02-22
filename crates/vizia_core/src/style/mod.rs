@@ -62,11 +62,8 @@
 
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexMap;
-use instant::{Duration, Instant};
 use log::warn;
-use morphorm::{LayoutType, PositionType, Units};
 use std::fmt::Debug;
-use vizia_id::GenerationalId;
 
 use crate::prelude::*;
 
@@ -92,11 +89,10 @@ pub(crate) use pseudoclass::*;
 mod transform;
 pub(crate) use transform::*;
 
-use crate::animation::{Animation, AnimationState, Interpolator, Keyframe, TimingFunction};
+use crate::animation::{AnimationState, Interpolator, Keyframe, TimingFunction};
 use crate::storage::animatable_set::AnimatableSet;
 use crate::storage::style_set::StyleSet;
 use bitflags::bitflags;
-use cosmic_text::FamilyOwned;
 use vizia_id::IdManager;
 use vizia_storage::SparseSet;
 

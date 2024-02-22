@@ -1,6 +1,5 @@
 use std::ops::{Deref, Range};
 
-use crate::binding::MapRef;
 use crate::prelude::*;
 
 #[derive(Lens)]

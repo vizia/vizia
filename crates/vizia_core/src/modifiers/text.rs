@@ -1,7 +1,5 @@
 use super::internal;
-use crate::{prelude::*, style::SystemFlags};
-use cosmic_text::FamilyOwned;
-use vizia_style::{FontSize, FontStretch, FontStyle, FontWeight};
+use crate::prelude::*;
 
 /// Modifiers for changing the text properties of a view.
 pub trait TextModifiers: internal::Modifiable {

@@ -130,7 +130,7 @@ where
 mod test {
     use super::*;
     use vizia_id::{
-        impl_generational_id, GenerationalId, IdManager, GENERATIONAL_ID_GENERATION_MASK,
+        impl_generational_id, IdManager, GENERATIONAL_ID_GENERATION_MASK,
         GENERATIONAL_ID_INDEX_BITS, GENERATIONAL_ID_INDEX_MASK,
     };
 

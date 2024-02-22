@@ -1,5 +1,4 @@
 use vizia::prelude::*;
-use vizia_core::modifiers::LinearGradientBuilder;
 
 const STYLE: &str = r#"
 

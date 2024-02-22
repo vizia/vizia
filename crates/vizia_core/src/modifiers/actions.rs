@@ -1,6 +1,4 @@
-use crate::layout::cache::GeoChanged;
 use crate::prelude::*;
-use crate::style::Abilities;
 use std::any::TypeId;
 
 #[derive(Lens)]

@@ -4,17 +4,12 @@ use crate::{
 };
 use cssparser::*;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub enum Gradient {
+    #[default]
     None,
     Linear(LinearGradient),
     Radial(RadialGradient),
-}
-
-impl Default for Gradient {
-    fn default() -> Self {
-        Gradient::None
-    }
 }
 
 impl From<LinearGradient> for Gradient {

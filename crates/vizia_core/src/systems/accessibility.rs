@@ -1,10 +1,4 @@
-use crate::{
-    accessibility::IntoNode,
-    context::{AccessContext, AccessNode},
-    events::ViewHandler,
-    prelude::*,
-    style::{Abilities, PseudoClassFlags},
-};
+use crate::{accessibility::IntoNode, events::ViewHandler, prelude::*};
 use accesskit::{Checked, NodeBuilder, NodeId, Rect, TreeUpdate};
 use hashbrown::HashMap;
 use vizia_storage::LayoutTreeIterator;
@@ -60,10 +54,11 @@ pub(crate) fn accessibility_system(cx: &mut Context) {
                 cx.tree_updates.push(Some(TreeUpdate {
                     nodes,
                     tree: None,
-                    focus: cx
-                        .window_has_focus
-                        .then_some(cx.focused.accesskit_id())
-                        .unwrap_or(NodeId(0u64)),
+                    focus: if cx.window_has_focus {
+                        cx.focused.accesskit_id()
+                    } else {
+                        NodeId(0u64)
+                    },
                 }));
             }
 

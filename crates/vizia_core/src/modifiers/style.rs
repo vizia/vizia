@@ -1,10 +1,7 @@
-use vizia_style::{
-    BorderRadius, BoxShadow, ColorStop, Gradient, PointerEvents, Position, Rect, Scale, Translate,
-};
+use vizia_style::{BorderRadius, ColorStop, Rect};
 
 use super::internal;
 use crate::prelude::*;
-use crate::style::{Abilities, ImageOrGradient, PseudoClassFlags, SystemFlags};
 
 /// Modifiers for changing the style properties of a view.
 pub trait StyleModifiers: internal::Modifiable {

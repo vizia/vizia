@@ -1,6 +1,5 @@
 use super::internal;
 use crate::prelude::*;
-use crate::style::SystemFlags;
 
 /// Modifiers for changing the layout properties of a view.
 pub trait LayoutModifiers: internal::Modifiable {

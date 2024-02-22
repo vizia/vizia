@@ -1,4 +1,4 @@
-use crate::{prelude::*, style::SystemFlags};
+use crate::prelude::*;
 
 pub(crate) fn animation_system(cx: &mut Context) -> bool {
     cx.style.play_pending_animations();

@@ -1,14 +1,11 @@
 use std::any::Any;
 
 use femtovg::{renderer::OpenGl, Canvas};
-use instant::Instant;
 use vizia_window::WindowDescription;
 
 use super::EventProxy;
 use crate::events::EventManager;
-use crate::style::SystemFlags;
-use crate::{cache::CachedData, environment::Environment, prelude::*, style::Style, systems::*};
-use vizia_id::GenerationalId;
+use crate::{cache::CachedData, prelude::*, systems::*};
 
 pub use crate::text::cosmic::TextConfig;
 

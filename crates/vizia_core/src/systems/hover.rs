@@ -1,12 +1,8 @@
 use std::{cmp::Ordering, collections::BinaryHeap};
 
-use crate::{
-    prelude::*,
-    style::{Abilities, PseudoClassFlags},
-};
+use crate::prelude::*;
 use femtovg::Transform2D;
 use log::debug;
-use vizia_id::GenerationalId;
 use vizia_storage::{LayoutChildIterator, LayoutParentIterator};
 
 // Determines the hovered entity based on the mouse cursor position.

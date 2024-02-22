@@ -1,11 +1,9 @@
 use crate::animation::Interpolator;
 use hashbrown::HashSet;
-use instant::{Duration, Instant};
-use vizia_id::GenerationalId;
 
 use crate::prelude::*;
 
-use super::{Animation, TimingFunction};
+use super::TimingFunction;
 
 /// A keyframe in an animation state.
 #[derive(Debug, Clone)]

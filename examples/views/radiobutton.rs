@@ -25,6 +25,18 @@ pub struct AppData {
     pub option: Options,
 }
 
+pub enum AppEvent {
+    SetOption(Options),
+}
+
+impl Model for AppData {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            AppEvent::SetOption(option) => self.option = *option,
+        })
+    }
+}
+
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { option: Options::First }.build(cx);
@@ -40,7 +52,7 @@ fn main() -> Result<(), ApplicationError> {
                         cx,
                         AppData::option.map(move |option| *option == current_option),
                     )
-                    .on_select(move |cx| cx.emit(AppDataSetter::Option(current_option)));
+                    .on_select(move |cx| cx.emit(AppEvent::SetOption(current_option)));
                 }
             })
             .size(Auto)
@@ -56,7 +68,7 @@ fn main() -> Result<(), ApplicationError> {
                             cx,
                             AppData::option.map(move |option| *option == current_option),
                         )
-                        .on_select(move |cx| cx.emit(AppDataSetter::Option(current_option)))
+                        .on_select(move |cx| cx.emit(AppEvent::SetOption(current_option)))
                         .id(format!("button_{i}"));
                         Label::new(cx, &current_option.to_string())
                             .describing(format!("button_{i}"));

@@ -3,17 +3,13 @@ use cssparser::*;
 
 define_enum! {
     /// The shape the default view drawing algorithm should use for handling borders.
+    #[derive(Default)]
     pub enum BorderCornerShape {
         /// The round border corner shape.
+        #[default]
         "round": Round,
         /// The bevel border corner shape.
         "bevel": Bevel,
-    }
-}
-
-impl Default for BorderCornerShape {
-    fn default() -> Self {
-        BorderCornerShape::Round
     }
 }
 

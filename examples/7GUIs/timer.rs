@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use vizia::prelude::*;
 
 const STYLE: &str = r#"

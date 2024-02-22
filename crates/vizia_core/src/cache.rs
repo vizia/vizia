@@ -1,7 +1,7 @@
 //! The cache is a store for intermediate data produced while computing state, notably layout
 //! results. The main type here is CachedData, usually accessed via `cx.cache`.
 
-use crate::{layout::cache::GeoChanged, prelude::*};
+use crate::prelude::*;
 use femtovg::ImageId;
 use vizia_storage::SparseSet;
 

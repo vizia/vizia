@@ -2,8 +2,10 @@ use crate::{macros::define_enum, Parse};
 
 define_enum! {
     /// Determines whether an entity will receive pointer events.
+    #[derive(Default)]
     pub enum PointerEvents {
         /// The entity will receive pointer events unless its parent does not.
+        #[default]
         "auto": Auto,
         /// The entity will not receive pointer events.
         "none": None,
@@ -26,11 +28,5 @@ impl From<PointerEvents> for bool {
             PointerEvents::Auto => true,
             PointerEvents::None => false,
         }
-    }
-}
-
-impl Default for PointerEvents {
-    fn default() -> Self {
-        PointerEvents::Auto
     }
 }

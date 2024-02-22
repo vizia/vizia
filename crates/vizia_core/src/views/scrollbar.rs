@@ -1,6 +1,5 @@
 use crate::context::TreeProps;
 use crate::prelude::*;
-use crate::views::Orientation;
 
 pub struct Scrollbar<L1> {
     value: L1,

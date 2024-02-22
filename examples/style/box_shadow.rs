@@ -1,5 +1,4 @@
 use vizia::prelude::*;
-use vizia_core::{modifiers::BoxShadowBuilder, style::BoxShadow};
 
 const STYLE: &str = r#"
 

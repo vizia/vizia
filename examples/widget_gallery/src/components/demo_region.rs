@@ -55,7 +55,7 @@ impl View for DemoRegion {
         Some("demo-region")
     }
 
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|e, _| match e {
             DemoRegionEvent::Toggle => self.open ^= true,
         })

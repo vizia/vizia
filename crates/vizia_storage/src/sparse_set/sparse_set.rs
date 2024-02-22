@@ -113,10 +113,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sparse_set::SparseSetIndex;
     use vizia_id::{
-        impl_generational_id, GenerationalId, GENERATIONAL_ID_GENERATION_MASK,
-        GENERATIONAL_ID_INDEX_BITS, GENERATIONAL_ID_INDEX_MASK,
+        impl_generational_id, GENERATIONAL_ID_GENERATION_MASK, GENERATIONAL_ID_INDEX_BITS,
+        GENERATIONAL_ID_INDEX_MASK,
     };
 
     #[derive(Copy, Clone, PartialEq)]

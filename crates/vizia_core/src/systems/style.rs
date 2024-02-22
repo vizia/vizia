@@ -1,10 +1,5 @@
-use crate::{
-    events::ViewHandler,
-    prelude::*,
-    style::{PseudoClassFlags, Rule, Style, SystemFlags},
-};
+use crate::{events::ViewHandler, prelude::*};
 use hashbrown::HashMap;
-use vizia_id::GenerationalId;
 use vizia_storage::TreeBreadthIterator;
 use vizia_style::{
     matches_selector_list,

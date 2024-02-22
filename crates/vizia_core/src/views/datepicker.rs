@@ -2,8 +2,6 @@ use chrono::{Datelike, NaiveDate, Weekday};
 
 use crate::prelude::*;
 
-use super::spinbox::SpinboxIcons;
-
 /// A control used to select a date.
 #[derive(Lens)]
 pub struct Datepicker {

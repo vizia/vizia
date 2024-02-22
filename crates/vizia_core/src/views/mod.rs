@@ -82,14 +82,9 @@ pub use virtual_list::*;
 use crate::prelude::*;
 
 /// The orientation of a widget, such as a slider or scrollbar
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Data)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Data)]
 pub enum Orientation {
+    #[default]
     Horizontal,
     Vertical,
-}
-
-impl Default for Orientation {
-    fn default() -> Self {
-        Orientation::Horizontal
-    }
 }

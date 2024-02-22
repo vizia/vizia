@@ -8,7 +8,6 @@ mod event;
 mod proxy;
 mod resource;
 
-use instant::{Duration, Instant};
 use log::debug;
 use std::any::{Any, TypeId};
 use std::cell::RefCell;
@@ -21,10 +20,8 @@ use vizia_id::IdManager;
 use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
-use cosmic_text::{fontdb::Database, FamilyOwned};
+use cosmic_text::fontdb::Database;
 use hashbrown::{hash_map::Entry, HashMap, HashSet};
-
-use unic_langid::LanguageIdentifier;
 
 pub use access::*;
 pub use draw::*;
@@ -34,19 +31,16 @@ pub use resource::*;
 
 use crate::binding::{BindingHandler, MapId};
 use crate::cache::CachedData;
-use crate::environment::{Environment, ThemeMode};
-use crate::events::{TimedEvent, TimedEventHandle, Timer, TimerState, ViewHandler};
+use crate::events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler};
 #[cfg(feature = "embedded_fonts")]
 use crate::fonts;
 
 use crate::fonts::TABLER_ICONS;
 use crate::model::ModelDataStore;
 use crate::prelude::*;
-use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
-use crate::style::{PseudoClassFlags, Style};
+use crate::resource::{ImageOrId, ResourceManager, StoredImage};
 use crate::text::{TextConfig, TextContext};
-use vizia_input::{Modifiers, MouseState};
-use vizia_storage::TreeExt;
+use vizia_input::MouseState;
 use vizia_storage::{ChildIterator, LayoutTreeIterator};
 
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");

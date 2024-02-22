@@ -1,5 +1,3 @@
-use morphorm::LayoutType;
-
 use crate::prelude::*;
 
 /// A view which arranges its children into a vertical stack (column).

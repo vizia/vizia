@@ -3,8 +3,6 @@ use std::marker::PhantomData;
 use crate::prelude::*;
 use chrono::{NaiveTime, Timelike};
 
-use super::spinbox::SpinboxIcons;
-
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum AMOrPM {
     AM,

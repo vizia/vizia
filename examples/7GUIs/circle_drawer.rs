@@ -1,5 +1,5 @@
+use vizia::prelude::*;
 use vizia::vg::{Paint, Path};
-use vizia::{prelude::*, ApplicationError};
 
 const STYLE: &str = r#"
     :root {

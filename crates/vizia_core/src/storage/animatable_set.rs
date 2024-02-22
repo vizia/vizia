@@ -1,8 +1,5 @@
-use crate::animation::{Animation, AnimationState, Interpolator};
+use crate::animation::{AnimationState, Interpolator};
 use crate::prelude::*;
-use crate::style::Rule;
-use instant::{Duration, Instant};
-use vizia_id::GenerationalId;
 use vizia_storage::{SparseSet, SparseSetGeneric, SparseSetIndex};
 
 const INDEX_MASK: u32 = u32::MAX / 4;

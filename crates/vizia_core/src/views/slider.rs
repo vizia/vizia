@@ -2,9 +2,7 @@ use std::ops::Range;
 
 use accesskit::ActionData;
 
-use crate::layout::cache::GeoChanged;
 use crate::prelude::*;
-use crate::views::Orientation;
 
 #[derive(Debug)]
 enum SliderEventInternal {

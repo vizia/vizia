@@ -19,7 +19,7 @@
 
 use crate::parser::{Combinator, Component, SelectorImpl};
 use crate::sink::Push;
-use smallvec::{self, SmallVec};
+use smallvec::SmallVec;
 use std::cmp;
 use std::iter;
 use std::ptr;

@@ -1,6 +1,4 @@
 use crate::accessibility::IntoNode;
-use crate::context::AccessNode;
-use crate::layout::BoundingBox;
 use crate::prelude::*;
 
 use crate::text::{enforce_text_bounds, ensure_visible, Direction, Movement};
@@ -8,8 +6,6 @@ use crate::views::scrollview::SCROLL_SENSITIVITY;
 use accesskit::{ActionData, ActionRequest, TextDirection, TextPosition, TextSelection};
 use cosmic_text::{Action, Cursor, Edit, Editor, FontSystem, Selection};
 use unicode_segmentation::UnicodeSegmentation;
-use vizia_input::Code;
-use vizia_storage::TreeExt;
 
 /// Events for modifying a textbox.
 pub enum TextEvent {

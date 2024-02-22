@@ -1,9 +1,4 @@
-use vizia_style::{BoxShadow, FontStretch, FontStyle, FontWeight, FontWeightKeyword};
-
-use crate::{
-    modifiers::{BoxShadowBuilder, LinearGradientBuilder},
-    prelude::*,
-};
+use crate::prelude::*;
 
 #[macro_export]
 macro_rules! impl_res_simple {

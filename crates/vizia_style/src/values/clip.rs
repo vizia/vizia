@@ -1,16 +1,11 @@
 use crate::{AutoKeyword, Length, LengthOrPercentage, Parse, Rect};
 use cssparser::*;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub enum ClipPath {
+    #[default]
     Auto,
     Shape(Rect<LengthOrPercentage>),
-}
-
-impl Default for ClipPath {
-    fn default() -> Self {
-        ClipPath::Auto
-    }
 }
 
 impl From<Rect<LengthOrPercentage>> for ClipPath {

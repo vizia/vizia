@@ -43,7 +43,7 @@ fn main() -> Result<(), ApplicationError> {
                 KeymapEntry::new(Action::OnShiftA, |_| println!("Action OnShiftA")),
             ),
             (
-                KeyChord::new(Modifiers::LOGO, Code::KeyA),
+                KeyChord::new(Modifiers::SUPER, Code::KeyA),
                 KeymapEntry::new(Action::OnLogoA, |_| println!("Action OnLogoA")),
             ),
             (
@@ -56,7 +56,7 @@ fn main() -> Result<(), ApplicationError> {
             ),
             (
                 KeyChord::new(
-                    Modifiers::CTRL | Modifiers::ALT | Modifiers::SHIFT | Modifiers::LOGO,
+                    Modifiers::CTRL | Modifiers::ALT | Modifiers::SHIFT | Modifiers::SUPER,
                     Code::KeyZ,
                 ),
                 KeymapEntry::new(Action::OnCtrlAltShiftLogoZ, |_| {

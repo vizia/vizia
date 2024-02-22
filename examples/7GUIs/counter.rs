@@ -1,4 +1,4 @@
-use vizia::{prelude::*, ApplicationError};
+use vizia::prelude::*;
 
 #[derive(Lens)]
 pub struct AppData {

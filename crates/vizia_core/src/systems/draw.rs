@@ -1,7 +1,6 @@
 use crate::prelude::*;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use vizia_id::GenerationalId;
 use vizia_storage::LayoutChildIterator;
 
 pub(crate) fn draw_system(cx: &mut Context) {

@@ -1,5 +1,4 @@
 use crate::prelude::*;
-use crate::views::popup::PopupData;
 
 /// A dropdown is used to display some state with the ability to open a popup with options to change that state.
 ///

@@ -12,7 +12,6 @@ use vizia_core::backend::*;
 #[cfg(not(target_arch = "wasm32"))]
 use vizia_core::context::EventProxy;
 use vizia_core::prelude::*;
-use vizia_id::GenerationalId;
 // use vizia_input::KeyState;
 use vizia_window::Position;
 #[cfg(all(
@@ -125,7 +124,7 @@ impl Application {
         let mut cx = BackendContext::new(&mut context);
         cx.renegotiate_language();
         cx.0.remove_user_themes();
-        (content)(&mut cx.0);
+        (content)(cx.0);
 
         Self {
             context,
@@ -674,7 +673,7 @@ impl Application {
                     elwt.set_control_flow(*stored_control_flow.borrow());
                 }
             })
-            .map_err(|err| ApplicationError::EventLoopError(err))?;
+            .map_err(ApplicationError::EventLoopError)?;
 
         Ok(())
     }
@@ -690,7 +689,7 @@ impl WindowModifiers for Application {
     }
 
     fn inner_size<S: Into<WindowSize>>(mut self, size: impl Res<S>) -> Self {
-        self.window_description.inner_size = size.get(&mut self.context).into();
+        self.window_description.inner_size = size.get(&self.context).into();
 
         size.set_or_bind(&mut self.context, Entity::root(), |cx, size| {
             cx.emit(WindowEvent::SetSize(size.get(cx).into()));
@@ -700,7 +699,7 @@ impl WindowModifiers for Application {
     }
 
     fn min_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
-        self.window_description.min_inner_size = size.get(&mut self.context).map(|s| s.into());
+        self.window_description.min_inner_size = size.get(&self.context).map(|s| s.into());
 
         size.set_or_bind(&mut self.context, Entity::root(), |cx, size| {
             cx.emit(WindowEvent::SetMinSize(size.get(cx).map(|s| s.into())));
@@ -710,7 +709,7 @@ impl WindowModifiers for Application {
     }
 
     fn max_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
-        self.window_description.max_inner_size = size.get(&mut self.context).map(|s| s.into());
+        self.window_description.max_inner_size = size.get(&self.context).map(|s| s.into());
 
         size.set_or_bind(&mut self.context, Entity::root(), |cx, size| {
             cx.emit(WindowEvent::SetMaxSize(size.get(cx).map(|s| s.into())));
@@ -719,7 +718,7 @@ impl WindowModifiers for Application {
     }
 
     fn position<P: Into<Position>>(mut self, position: impl Res<P>) -> Self {
-        self.window_description.position = Some(position.get(&mut self.context).into());
+        self.window_description.position = Some(position.get(&self.context).into());
 
         position.set_or_bind(&mut self.context, Entity::root(), |cx, size| {
             cx.emit(WindowEvent::SetPosition(size.get(cx).into()));
@@ -729,7 +728,7 @@ impl WindowModifiers for Application {
     }
 
     fn resizable(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.resizable = flag.get(&mut self.context);
+        self.window_description.resizable = flag.get(&self.context);
 
         flag.set_or_bind(&mut self.context, Entity::root(), |cx, flag| {
             cx.emit(WindowEvent::SetResizable(flag.get(cx)));
@@ -739,7 +738,7 @@ impl WindowModifiers for Application {
     }
 
     fn minimized(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.minimized = flag.get(&mut self.context);
+        self.window_description.minimized = flag.get(&self.context);
 
         flag.set_or_bind(&mut self.context, Entity::root(), |cx, flag| {
             cx.emit(WindowEvent::SetMinimized(flag.get(cx)));
@@ -748,7 +747,7 @@ impl WindowModifiers for Application {
     }
 
     fn maximized(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.maximized = flag.get(&mut self.context);
+        self.window_description.maximized = flag.get(&self.context);
 
         flag.set_or_bind(&mut self.context, Entity::root(), |cx, flag| {
             cx.emit(WindowEvent::SetMaximized(flag.get(cx)));
