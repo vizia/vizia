@@ -17,12 +17,7 @@ fn main() -> Result<(), ApplicationError> {
         ExamplePage::new(cx, |cx| {
             List::new(cx, AppData::list, |cx, _, item| {
                 Label::new(cx, item).hoverable(false).width(Pixels(100.0)).height(Pixels(30.0));
-            })
-            .selectable(Selectable::Single);
-            List::new(cx, AppData::list, |cx, _, item| {
-                Label::new(cx, item).hoverable(false).width(Pixels(100.0)).height(Pixels(30.0));
-            })
-            .selectable(Selectable::Multi);
+            });
         });
     })
     .title("List")

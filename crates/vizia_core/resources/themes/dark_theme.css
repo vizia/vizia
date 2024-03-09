@@ -1026,7 +1026,6 @@ tooltip {
     background-color: #656565;
     border-radius: 4px;
     opacity: 0;
-    transition: opacity 100ms 500ms;
 }
 
 tooltip.vis {
@@ -1035,5 +1034,5 @@ tooltip.vis {
 }
 
 tooltip arrow {
-    background-color: #fafafa;
+    background-color: #656565;
 }

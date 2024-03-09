@@ -73,7 +73,7 @@ impl VirtualList {
                                 let item_index = Self::visible_item_index(i);
                                 Binding::new(cx, item_index, move |cx, lens| {
                                     let index = lens.get(cx);
-                                    ListItem::new(cx, index, move |cx| {
+                                    HStack::new(cx, move |cx| {
                                         let item =
                                             list.map_ref(move |list| list_index(list, index));
                                         item_content(cx, index, item).height(Percentage(100.0));

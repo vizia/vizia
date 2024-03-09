@@ -138,6 +138,27 @@ impl Dropdown {
         V: 'static + View,
     {
         Self {}.build(cx, move |cx| {
+            cx.add_listener(move |_dropdown: &mut Self, cx, event| {
+                event.map(|window_event, meta| match window_event {
+                    WindowEvent::PressDown { mouse: _ } => {
+                        if meta.origin != cx.current() {
+                            // Check if the mouse was pressed outside of any descendants
+                            if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
+                                cx.emit(PopupEvent::Close);
+                            }
+                        }
+                    }
+
+                    WindowEvent::KeyDown(code, _) => {
+                        if *code == Code::Escape {
+                            cx.emit(PopupEvent::Close);
+                        }
+                    }
+
+                    _ => {}
+                });
+            });
+
             PopupData::default().build(cx);
 
             (trigger)(cx)
@@ -151,7 +172,7 @@ impl Dropdown {
                     Popup::new(cx, |cx| {
                         (content)(cx);
                     })
-                    .on_blur(|cx| cx.emit(PopupEvent::Close));
+                    .arrow_size(Pixels(4.0));
                 }
             })
         })

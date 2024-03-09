@@ -13,7 +13,7 @@ mod dropdown;
 mod element;
 mod form;
 mod image;
-mod keybind;
+// mod keybind;
 mod knob;
 mod label;
 mod list;
@@ -52,7 +52,7 @@ pub use divider::*;
 pub use dropdown::Dropdown;
 pub use element::Element;
 pub use form::{FormControl, FormGroup, FormPlacement};
-pub use keybind::*;
+// pub use keybind::*;
 pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
 pub use label::{Icon, Label};
 pub use list::*;
@@ -76,7 +76,7 @@ pub use timepicker::{
     DigitalTimepicker, DigitalTimepickerEvent, Timepicker,
 };
 pub use toggle_button::{ToggleButton, ToggleButtonModifiers, Toolbar};
-pub use tooltip::{Placement, Tooltip};
+pub use tooltip::Tooltip;
 pub use virtual_list::*;
 
 use crate::prelude::*;

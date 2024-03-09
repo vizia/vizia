@@ -121,7 +121,7 @@ fn hover_entity(
         .unwrap_or(parent_pointer_events);
 
     // Push to queue if the z-index is higher than the current z-index.
-    let z_index = cx.tree.z_index(cx.current);
+    let z_index = cx.style.z_index.get(cx.current).copied().unwrap_or_default();
     if z_index > current_z {
         queue.push(ZEntity { index: z_index, entity: cx.current, pointer_events });
         return;

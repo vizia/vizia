@@ -22,10 +22,9 @@ use crate::{modifiers::ModalModel, prelude::*};
 ///             Label::new(cx, "Tooltip Text");
 ///         })
 ///     })
-/// ```
+
 #[derive(Lens)]
 pub struct Tooltip {
-    default_placement: Placement,
     placement: Placement,
     show_arrow: bool,
     arrow_size: Length,
@@ -56,7 +55,6 @@ impl Tooltip {
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
         Self {
             placement: Placement::Bottom,
-            default_placement: Placement::Bottom,
             show_arrow: true,
             arrow_size: Length::Value(LengthValue::Px(8.0)),
         }
@@ -69,62 +67,9 @@ impl Tooltip {
             (content)(cx);
         })
         .z_index(110)
-        .bind(Tooltip::placement, |mut handle, placement| {
-            let (t, b) = match placement.get(&handle) {
-                Placement::TopStart | Placement::Top | Placement::TopEnd => {
-                    (Auto, Percentage(100.0))
-                }
-                Placement::BottomStart | Placement::Bottom | Placement::BottomEnd => {
-                    (Percentage(100.0), Stretch(1.0))
-                }
-                Placement::LeftStart | Placement::RightStart => (Pixels(0.0), Stretch(1.0)),
-                Placement::LeftEnd | Placement::RightEnd => (Stretch(1.0), Pixels(0.0)),
-                Placement::Left | Placement::Right | Placement::Over => {
-                    (Stretch(1.0), Stretch(1.0))
-                }
-
-                _ => (Stretch(1.0), Stretch(1.0)),
-            };
-
-            let (l, r) = match placement.get(&handle) {
-                Placement::TopStart | Placement::BottomStart => (Pixels(0.0), Stretch(1.0)),
-                Placement::TopEnd | Placement::BottomEnd => (Stretch(1.0), Pixels(0.0)),
-                Placement::Left | Placement::LeftStart | Placement::LeftEnd => {
-                    (Stretch(1.0), Percentage(100.0))
-                }
-                Placement::Right | Placement::RightStart | Placement::RightEnd => {
-                    (Percentage(100.0), Stretch(1.0))
-                }
-                Placement::Top | Placement::Bottom | Placement::Over => {
-                    (Stretch(1.0), Stretch(1.0))
-                }
-
-                _ => (Stretch(1.0), Stretch(1.0)),
-            };
-
-            handle = handle.top(t).bottom(b).left(l).right(r);
-
-            handle.bind(Tooltip::arrow_size, move |handle, arrow_size| {
-                let arrow_size = arrow_size.get(&handle).to_px().unwrap_or(8.0);
-                let translate = match placement.get(&handle) {
-                    Placement::Top | Placement::TopStart | Placement::TopEnd => {
-                        (Pixels(0.0), Pixels(-arrow_size))
-                    }
-                    Placement::Bottom | Placement::BottomStart | Placement::BottomEnd => {
-                        (Pixels(0.0), Pixels(arrow_size))
-                    }
-                    Placement::Left | Placement::LeftStart | Placement::LeftEnd => {
-                        (Pixels(-arrow_size), Pixels(0.0))
-                    }
-                    Placement::Right | Placement::RightStart | Placement::RightEnd => {
-                        (Pixels(arrow_size), Pixels(0.0))
-                    }
-                    _ => (Pixels(0.0), Pixels(0.0)),
-                };
-                handle.translate(translate);
-            });
-        })
         .hoverable(false)
+        .position_type(PositionType::SelfDirected)
+        .space(Pixels(0.0))
         .on_build(|ex| {
             ex.add_listener(move |tooltip: &mut Tooltip, ex, event| {
                 let flag = ModalModel::tooltip_visible.get(ex);
@@ -154,182 +99,6 @@ impl Tooltip {
             });
         })
     }
-
-    fn place(&mut self, dist_top: f32, dist_bottom: f32, dist_left: f32, dist_right: f32) {
-        match self.placement {
-            Placement::Bottom | Placement::BottomStart | Placement::BottomEnd
-                if dist_bottom < 0.0 =>
-            {
-                if dist_top < 0.0 && dist_left < 0.0 && dist_right < 0.0 {
-                    self.placement = Placement::Over;
-                    return;
-                }
-
-                if dist_top < 0.0 {
-                    self.placement = Placement::Right;
-                } else {
-                    self.placement = Placement::Top;
-                }
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::Bottom if dist_left < 0.0 => {
-                if dist_left < 0.0 && dist_right < 0.0 {
-                    return;
-                }
-
-                self.placement = Placement::BottomStart;
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::Bottom if dist_right < 0.0 => {
-                if dist_left < 0.0 && dist_right < 0.0 {
-                    return;
-                }
-
-                self.placement = Placement::BottomEnd;
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::BottomEnd if dist_left < 0.0 => {
-                self.placement = Placement::Bottom;
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::BottomStart if dist_right < 0.0 => {
-                self.placement = Placement::Bottom;
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::Top | Placement::TopStart | Placement::TopEnd if dist_top < 0.0 => {
-                if dist_bottom < 0.0 && dist_left < 0.0 && dist_right < 0.0 {
-                    self.placement = Placement::Over;
-                    return;
-                }
-
-                if dist_bottom < 0.0 {
-                    self.placement = Placement::Right;
-                } else {
-                    self.placement = Placement::Bottom;
-                }
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::Top if dist_left < 0.0 => {
-                if dist_left < 0.0 && dist_right < 0.0 {
-                    return;
-                }
-
-                self.placement = Placement::TopStart;
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::Top if dist_right < 0.0 => {
-                if dist_left < 0.0 && dist_right < 0.0 {
-                    return;
-                }
-
-                self.placement = Placement::TopEnd;
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::TopEnd if dist_left < 0.0 => {
-                self.placement = Placement::Top;
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::TopStart if dist_right < 0.0 => {
-                self.placement = Placement::Top;
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::Left | Placement::LeftStart | Placement::LeftEnd if dist_left < 0.0 => {
-                if dist_top < 0.0 && dist_bottom < 0.0 && dist_right < 0.0 {
-                    self.placement = Placement::Over;
-                    return;
-                }
-
-                if dist_right < 0.0 {
-                    self.placement = Placement::Bottom;
-                } else {
-                    self.placement = Placement::Right;
-                }
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::Left if dist_top < 0.0 => {
-                if dist_top < 0.0 && dist_bottom < 0.0 {
-                    return;
-                }
-
-                self.placement = Placement::LeftStart;
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::Left if dist_bottom < 0.0 => {
-                if dist_top < 0.0 && dist_bottom < 0.0 {
-                    return;
-                }
-
-                self.placement = Placement::LeftEnd;
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::LeftEnd if dist_top < 0.0 => {
-                self.placement = Placement::Left;
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::LeftStart if dist_bottom < 0.0 => {
-                self.placement = Placement::Left;
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::Right | Placement::RightStart | Placement::RightEnd if dist_right < 0.0 => {
-                if dist_top < 0.0 && dist_left < 0.0 && dist_bottom < 0.0 {
-                    self.placement = Placement::Over;
-                    return;
-                }
-
-                if dist_left < 0.0 {
-                    self.placement = Placement::Bottom;
-                } else {
-                    self.placement = Placement::Left;
-                }
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::Right if dist_top < 0.0 => {
-                if dist_top < 0.0 && dist_bottom < 0.0 {
-                    return;
-                }
-
-                self.placement = Placement::RightStart;
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::Right if dist_bottom < 0.0 => {
-                if dist_top < 0.0 && dist_bottom < 0.0 {
-                    return;
-                }
-
-                self.placement = Placement::RightEnd;
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::RightEnd if dist_top < 0.0 => {
-                self.placement = Placement::Right;
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            Placement::RightStart if dist_bottom < 0.0 => {
-                self.placement = Placement::Right;
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
-            }
-
-            _ => {}
-        }
-    }
 }
 
 impl View for Tooltip {
@@ -339,50 +108,201 @@ impl View for Tooltip {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _| match window_event {
-            // Reposition tooltip if there isn't enough room for it.
+            // Reposition popup if there isn't enough room for it.
             WindowEvent::GeometryChanged(_) => {
                 let parent = cx.parent();
                 let parent_bounds = cx.cache.get_bounds(parent);
                 let bounds = cx.bounds();
                 let window_bounds = cx.cache.get_bounds(Entity::root());
 
+                let arrow_size = self.arrow_size.to_px().unwrap() * cx.scale_factor();
+
+                let mut available = AvailablePlacement::all();
+
+                let top_start_bounds = BoundingBox::from_min_max(
+                    parent_bounds.left(),
+                    parent_bounds.top() - bounds.height() - arrow_size,
+                    parent_bounds.left() + bounds.width(),
+                    parent_bounds.top(),
+                );
+
+                available
+                    .set(AvailablePlacement::TOP_START, window_bounds.contains(&top_start_bounds));
+
+                let top_bounds = BoundingBox::from_min_max(
+                    parent_bounds.center().0 - bounds.width() / 2.0,
+                    parent_bounds.top() - bounds.height() - arrow_size,
+                    parent_bounds.center().0 + bounds.width() / 2.0,
+                    parent_bounds.top(),
+                );
+
+                available.set(AvailablePlacement::TOP, window_bounds.contains(&top_bounds));
+
+                let top_end_bounds = BoundingBox::from_min_max(
+                    parent_bounds.right() - bounds.width(),
+                    parent_bounds.top() - bounds.height() - arrow_size,
+                    parent_bounds.right(),
+                    parent_bounds.top(),
+                );
+
+                available.set(AvailablePlacement::TOP_END, window_bounds.contains(&top_end_bounds));
+
+                let bottom_start_bounds = BoundingBox::from_min_max(
+                    parent_bounds.left(),
+                    parent_bounds.bottom(),
+                    parent_bounds.left() + bounds.width(),
+                    parent_bounds.bottom() + bounds.height() + arrow_size,
+                );
+
+                available.set(
+                    AvailablePlacement::BOTTOM_START,
+                    window_bounds.contains(&bottom_start_bounds),
+                );
+
+                let bottom_bounds = BoundingBox::from_min_max(
+                    parent_bounds.center().0 - bounds.width() / 2.0,
+                    parent_bounds.bottom(),
+                    parent_bounds.center().0 + bounds.width() / 2.0,
+                    parent_bounds.bottom() + bounds.height() + arrow_size,
+                );
+
+                available.set(AvailablePlacement::BOTTOM, window_bounds.contains(&bottom_bounds));
+
+                let bottom_end_bounds = BoundingBox::from_min_max(
+                    parent_bounds.right() - bounds.width(),
+                    parent_bounds.bottom(),
+                    parent_bounds.right(),
+                    parent_bounds.bottom() + bounds.height() + arrow_size,
+                );
+
+                available.set(
+                    AvailablePlacement::BOTTOM_END,
+                    window_bounds.contains(&bottom_end_bounds),
+                );
+
+                let left_start_bounds = BoundingBox::from_min_max(
+                    parent_bounds.left() - bounds.width() - arrow_size,
+                    parent_bounds.top(),
+                    parent_bounds.left(),
+                    parent_bounds.top() + bounds.height(),
+                );
+
+                available.set(
+                    AvailablePlacement::LEFT_START,
+                    window_bounds.contains(&left_start_bounds),
+                );
+
+                let left_bounds = BoundingBox::from_min_max(
+                    parent_bounds.left() - bounds.width() - arrow_size,
+                    parent_bounds.center().1 - bounds.height() / 2.0,
+                    parent_bounds.left(),
+                    parent_bounds.center().1 + bounds.height() / 2.0,
+                );
+
+                available.set(AvailablePlacement::LEFT, window_bounds.contains(&left_bounds));
+
+                let left_end_bounds = BoundingBox::from_min_max(
+                    parent_bounds.left() - bounds.width() - arrow_size,
+                    parent_bounds.bottom() - bounds.height(),
+                    parent_bounds.left(),
+                    parent_bounds.bottom(),
+                );
+
+                available
+                    .set(AvailablePlacement::LEFT_END, window_bounds.contains(&left_end_bounds));
+
+                let right_start_bounds = BoundingBox::from_min_max(
+                    parent_bounds.right(),
+                    parent_bounds.top(),
+                    parent_bounds.right() + bounds.width() + arrow_size,
+                    parent_bounds.top() + bounds.height(),
+                );
+
+                available.set(
+                    AvailablePlacement::RIGHT_START,
+                    window_bounds.contains(&right_start_bounds),
+                );
+
+                let right_bounds = BoundingBox::from_min_max(
+                    parent_bounds.right(),
+                    parent_bounds.center().1 - bounds.height() / 2.0,
+                    parent_bounds.right() + bounds.width() + arrow_size,
+                    parent_bounds.center().1 + bounds.height() / 2.0,
+                );
+
+                available.set(AvailablePlacement::RIGHT, window_bounds.contains(&right_bounds));
+
+                let right_end_bounds = BoundingBox::from_min_max(
+                    parent_bounds.right(),
+                    parent_bounds.bottom() - bounds.height(),
+                    parent_bounds.right() + bounds.width() + arrow_size,
+                    parent_bounds.bottom(),
+                );
+
+                available
+                    .set(AvailablePlacement::RIGHT_END, window_bounds.contains(&right_end_bounds));
+
+                let scale = cx.scale_factor();
+
+                let shift = self.placement.place(available);
+
                 let arrow_size = self.arrow_size.to_px().unwrap();
 
-                let dist_bottom = window_bounds.bottom()
-                    - (parent_bounds.bottom() + bounds.height() + arrow_size);
-                let dist_top =
-                    (parent_bounds.top() - bounds.height() - arrow_size) - window_bounds.top();
-                let dist_left =
-                    (parent_bounds.left() - bounds.width() - arrow_size) - window_bounds.left();
-                let dist_right =
-                    window_bounds.right() - (parent_bounds.right() + bounds.width() + arrow_size);
+                let translate = match shift {
+                    Placement::Top => (
+                        Pixels(-(bounds.width() - parent_bounds.width()) / (2.0 * scale)),
+                        Pixels(-bounds.height() / scale - arrow_size),
+                    ),
+                    Placement::TopStart => {
+                        (Pixels(0.0), Pixels(-bounds.height() / scale - arrow_size))
+                    }
+                    Placement::TopEnd => (
+                        Pixels(-(bounds.width() - parent_bounds.width()) / scale),
+                        Pixels(-bounds.height() / scale - arrow_size),
+                    ),
+                    Placement::Bottom => (
+                        Pixels(-(bounds.width() - parent_bounds.width()) / (2.0 * scale)),
+                        Pixels(parent_bounds.height() / scale + arrow_size),
+                    ),
+                    Placement::BottomStart => {
+                        (Pixels(0.0), Pixels(parent_bounds.height() / scale + arrow_size))
+                    }
+                    Placement::BottomEnd => (
+                        Pixels(-(bounds.width() - parent_bounds.width()) / scale),
+                        Pixels(parent_bounds.height() / scale + arrow_size),
+                    ),
+                    Placement::LeftStart => {
+                        (Pixels(-(bounds.width() / scale) - arrow_size), Pixels(0.0))
+                    }
+                    Placement::Left => (
+                        Pixels(-(bounds.width() / scale) - arrow_size),
+                        Pixels(-(bounds.height() - parent_bounds.height()) / (2.0 * scale)),
+                    ),
+                    Placement::LeftEnd => (
+                        Pixels(-(bounds.width() / scale) - arrow_size),
+                        Pixels(-(bounds.height() - parent_bounds.height()) / scale),
+                    ),
+                    Placement::RightStart => {
+                        (Pixels((parent_bounds.width() / scale) + arrow_size), Pixels(0.0))
+                    }
+                    Placement::Right => (
+                        Pixels((parent_bounds.width() / scale) + arrow_size),
+                        Pixels(-(bounds.height() - parent_bounds.height()) / (2.0 * scale)),
+                    ),
+                    Placement::RightEnd => (
+                        Pixels((parent_bounds.width() / scale) + arrow_size),
+                        Pixels(-(bounds.height() - parent_bounds.height()) / scale),
+                    ),
 
-                self.placement = self.default_placement;
-                self.place(dist_top, dist_bottom, dist_left, dist_right);
+                    _ => (Pixels(0.0), Pixels(0.0)),
+                };
+
+                cx.set_translate(translate);
             }
 
             _ => {}
         });
     }
-}
-
-/// Describes the placement of a tooltip relative to its parent element.
-#[derive(Debug, Clone, Copy, Data, PartialEq, Eq)]
-pub enum Placement {
-    TopStart,
-    Top,
-    TopEnd,
-    LeftStart,
-    Left,
-    LeftEnd,
-    BottomStart,
-    Bottom,
-    BottomEnd,
-    RightStart,
-    Right,
-    RightEnd,
-    Over,
-    Cursor,
 }
 
 impl<'a> Handle<'a, Tooltip> {
@@ -392,7 +312,6 @@ impl<'a> Handle<'a, Tooltip> {
     pub fn placement(self, placement: Placement) -> Self {
         self.modify(|tooltip| {
             tooltip.placement = placement;
-            tooltip.default_placement = placement;
         })
     }
 

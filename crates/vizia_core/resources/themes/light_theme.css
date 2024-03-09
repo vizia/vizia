@@ -378,14 +378,6 @@ combobox {
     background-color: #fdfdfd;
 }
 
-combobox .title {
-    border-radius: 4px;
-}
-
-combobox:over {
-    background-color: #f9f9f9;
-}
-
 combobox:active {
     border-color: #ebebeb;
     background-color: #fafafa;
@@ -395,6 +387,11 @@ combobox .title {
     border-width: 1px;
     border-color: #d2d2d2;
     border-radius: 4px;
+    color: #181818;
+}
+
+combobox > textbox > label.placeholder {
+    color: #181818;
 }
 
 combobox:active .title {
@@ -668,7 +665,7 @@ menubar submenu {
 }
 
 submenu submenu,
-menu submenu {
+dropown > popup > submenu {
     border-width: 0px;
 }
 
@@ -1146,7 +1143,6 @@ tooltip {
     border-radius: 4px;
     color: #fafafa;
     opacity: 0;
-    transition: opacity 100ms 500ms;
 }
 
 tooltip.vis {

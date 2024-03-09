@@ -60,7 +60,7 @@ fn draw_entity(
 
     // TODO: Looks like I'll need to keep track of the current transform manually instead of within femtovg
     // because elements with a higher z-index aren't getting the transform of their parent.
-    let z_index = cx.tree.z_index(current);
+    let z_index = cx.style.z_index.get(current).copied().unwrap_or_default();
     if z_index > current_z {
         queue.push(ZEntity { index: z_index, entity: current, opacity: cx.opacity, visible });
         return;

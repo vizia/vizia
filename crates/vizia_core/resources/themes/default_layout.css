@@ -495,7 +495,7 @@ submenu {
 }
 
 submenu submenu,
-menu submenu {
+dropdown > popup > submenu {
     width: 1s;
 }
 
@@ -533,7 +533,7 @@ submenu > label {
 }
 
 submenu submenu label,
-menu submenu label {
+dropdown > popup > submenu label {
     child-top: 1s;
     child-bottom: 1s;
     size: 1s;

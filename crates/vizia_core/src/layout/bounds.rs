@@ -217,8 +217,8 @@ impl BoundingBox {
     }
 
     pub fn contains(&self, other: &Self) -> bool {
-        let x_hit = other.x >= self.x && other.x < self.x + self.w;
-        let y_hit = other.y >= self.y && other.y < self.y + self.h;
+        let x_hit = other.x >= self.x && other.x + other.w < self.x + self.w;
+        let y_hit = other.y >= self.y && other.y + other.h < self.y + self.h;
         x_hit && y_hit
     }
 

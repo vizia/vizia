@@ -84,7 +84,8 @@ where
                 .width(Stretch(1.0))
                 .height(Pixels(32.0))
                 .space(Pixels(0.0))
-                .placeholder(Self::placeholder);
+                .placeholder(Self::placeholder)
+                .class("title");
 
             ComboPopup::new(cx, Self::is_open, false, move |cx: &mut Context| {
                 // Binding to the filter text.

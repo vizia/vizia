@@ -9,10 +9,7 @@ fn main() -> Result<(), ApplicationError> {
         ExamplePage::new(cx, |cx| {
             Button::new(cx, |cx| Label::new(cx, "Open")).on_press(|cx| cx.emit(PopupEvent::Switch));
 
-            Popup::new(cx, |_| {})
-                .on_blur(|cx| cx.emit(PopupEvent::Close))
-                .size(Pixels(200.0))
-                .background_color(Color::red());
+            Popup::new(cx, |_| {}).size(Pixels(200.0)).background_color(Color::red());
         });
     })
     .title("Popup")
