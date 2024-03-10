@@ -61,8 +61,7 @@ pub fn checkbox(cx: &mut Context) {
             Checkbox::new(cx, CheckboxData::check_d)
                 .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleD))
                 .disabled(true);
-        }, |cx|{
-            Label::new(cx, r#"Checkbox::new(cx, CheckboxData::check_a)
+        }, r#"Checkbox::new(cx, CheckboxData::check_a)
     .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA));
 Checkbox::new(cx, CheckboxData::check_b)
     .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleB));
@@ -71,8 +70,7 @@ Checkbox::new(cx, CheckboxData::check_c)
     .disabled(true);
 Checkbox::new(cx, CheckboxData::check_d)
     .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleD))
-    .disabled(true);"#).class("code");
-        });
+    .disabled(true);"#);
 
         Label::new(cx, "Label").class("header");
         Label::new(cx, "A `FormControl` can be used to add a label to a checkbox. Pressing on the label will also toggle the corresponding checkbox.")
@@ -94,8 +92,7 @@ Checkbox::new(cx, CheckboxData::check_d)
                     .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleC))
             }, "Disabled")
             .disabled(true);
-        }, |cx|{
-            Label::new(cx, r#"FormControl::new(cx, |cx| {
+        }, r#"FormControl::new(cx, |cx| {
     Checkbox::new(cx, CheckboxData::check_a)
         .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA))
 }, "Label");
@@ -109,8 +106,7 @@ FormControl::new(cx, |cx| {
     Checkbox::new(cx, CheckboxData::check_c)
         .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleC))
 }, "Disabled")
-.disabled(true);"#).class("code");
-        });
+.disabled(true);"#);
 
         Label::new(cx, "Form Group").class("header");
         Label::new(cx, "The describing modifier can be used to link a label to a particular checkbox. Pressing on the label will then toggle the corresponding checkbox.")
@@ -133,8 +129,7 @@ FormControl::new(cx, |cx| {
                         .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleC))
                 }, "Right");
             });
-        }, |cx|{
-            Label::new(cx, r#"FormGroup::new(cx, "Gender", |cx|{
+        }, r#"FormGroup::new(cx, "Gender", |cx|{
     FormControl::new(cx, |cx| {
         Checkbox::new(cx, CheckboxData::check_a)
             .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA))
@@ -149,8 +144,7 @@ FormControl::new(cx, |cx| {
         Checkbox::new(cx, CheckboxData::check_c)
             .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleC))
     }, "Other");
-});"#).class("code");
-        });
+});"#);
 
         Label::new(cx, "Label placement").class("header");
         Label::new(cx, "The describing modifier can be used to link a label to a particular checkbox. Pressing on the label will then toggle the corresponding checkbox.")
@@ -174,8 +168,7 @@ FormControl::new(cx, |cx| {
                         .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleC))
                 }, "Right");
             });
-        }, |cx|{
-            Label::new(cx, r#"FormGroup::new(cx, "Gender", |cx|{
+        },r#"FormGroup::new(cx, "Gender", |cx|{
     FormControl::new(cx, |cx| {
         Checkbox::new(cx, CheckboxData::check_a)
             .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA))
@@ -190,8 +183,7 @@ FormControl::new(cx, |cx| {
         Checkbox::new(cx, CheckboxData::check_c)
             .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleC))
     }, "Other");
-});"#).class("code");
-        });
+});"#);
     })
     .class("panel");
 }

@@ -87,15 +87,9 @@ pub fn menu(cx: &mut Context) {
                 //     MenuButton::new(cx, |_| println!("Quit"), |cx| Label::new(cx, "Quit"));
                 // });
             },
-            |cx| {
-                Label::new(
-                    cx,
-                    r#"Avatar::new(cx, |cx|{
+            r#"Avatar::new(cx, |cx|{
     Icon::new(cx, ICON_USER)
 })"#,
-                )
-                .class("code");
-            },
         );
     })
     .class("panel");

@@ -78,7 +78,7 @@ fn main() -> Result<(), ApplicationError> {
         VStack::new(cx, |cx| {
             // Header
             HStack::new(cx, |cx| {
-                toggle_disabled_switch(cx);
+                // toggle_disabled_switch(cx);
                 theme_selection_dropdown(cx);
             })
             .child_space(Pixels(8.0))
@@ -587,7 +587,7 @@ fn main() -> Result<(), ApplicationError> {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // vstack(cx);
+                            vstack(cx);
                         })
                         .class("widgets");
                     },
@@ -599,7 +599,7 @@ fn main() -> Result<(), ApplicationError> {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // zstack(cx);
+                            zstack(cx);
                         })
                         .class("widgets");
                     },

@@ -17,13 +17,10 @@ pub fn tooltip(cx: &mut Context) {
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Delete");
                     }));
-            },
-            |cx| {
-                Label::new(cx, r#"IconButton::new(cx, ICON_TRASH)
+            }, r#"IconButton::new(cx, ICON_TRASH)
     .tooltip(|cx| Tooltip::new(cx, |cx|{
         Label::new(cx, "Delete");
-    }));"#).class("code");
-            },
+    }));"#
         );
 
         Label::new(cx, "Tooltip placement").class("header");
@@ -36,6 +33,8 @@ pub fn tooltip(cx: &mut Context) {
                         Label::new(cx, "TOP-START")
                     })
                     .variant(ButtonVariant::Text)
+                    .width(Pixels(140.0))
+                    .height(Pixels(60.0))
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::TopStart));
@@ -44,6 +43,8 @@ pub fn tooltip(cx: &mut Context) {
                         Label::new(cx, "LEFT-START")
                     })
                     .variant(ButtonVariant::Text)
+                    .width(Pixels(140.0))
+                    .height(Pixels(60.0))
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::LeftStart));
@@ -52,6 +53,8 @@ pub fn tooltip(cx: &mut Context) {
                         Label::new(cx, "RIGHT-START")
                     })
                     .variant(ButtonVariant::Text)
+                    .width(Pixels(140.0))
+                    .height(Pixels(60.0))
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::RightStart));
@@ -60,6 +63,8 @@ pub fn tooltip(cx: &mut Context) {
                         Label::new(cx, "BOTTOM-START")
                     })
                     .variant(ButtonVariant::Text)
+                    .width(Pixels(140.0))
+                    .height(Pixels(60.0))
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::BottomStart));
@@ -70,6 +75,8 @@ pub fn tooltip(cx: &mut Context) {
                         Label::new(cx, "TOP")
                     })
                     .variant(ButtonVariant::Text)
+                    .width(Pixels(140.0))
+                    .height(Pixels(60.0))
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::Top));
@@ -78,6 +85,8 @@ pub fn tooltip(cx: &mut Context) {
                         Label::new(cx, "LEFT")
                     })
                     .variant(ButtonVariant::Text)
+                    .width(Pixels(140.0))
+                    .height(Pixels(60.0))
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::Left));
@@ -86,6 +95,8 @@ pub fn tooltip(cx: &mut Context) {
                         Label::new(cx, "RIGHT")
                     })
                     .variant(ButtonVariant::Text)
+                    .width(Pixels(140.0))
+                    .height(Pixels(60.0))
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::Right));
@@ -94,6 +105,8 @@ pub fn tooltip(cx: &mut Context) {
                         Label::new(cx, "BOTTOM")
                     })
                     .variant(ButtonVariant::Text)
+                    .width(Pixels(140.0))
+                    .height(Pixels(60.0))
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::Bottom));
@@ -104,6 +117,8 @@ pub fn tooltip(cx: &mut Context) {
                         Label::new(cx, "TOP-END")
                     })
                     .variant(ButtonVariant::Text)
+                    .width(Pixels(140.0))
+                    .height(Pixels(60.0))
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::TopEnd));
@@ -112,6 +127,8 @@ pub fn tooltip(cx: &mut Context) {
                         Label::new(cx, "LEFT-END")
                     })
                     .variant(ButtonVariant::Text)
+                    .width(Pixels(140.0))
+                    .height(Pixels(60.0))
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::LeftEnd));
@@ -120,6 +137,8 @@ pub fn tooltip(cx: &mut Context) {
                         Label::new(cx, "RIGHT-END")
                     })
                     .variant(ButtonVariant::Text)
+                    .width(Pixels(140.0))
+                    .height(Pixels(60.0))
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::RightEnd));
@@ -128,16 +147,15 @@ pub fn tooltip(cx: &mut Context) {
                         Label::new(cx, "BOTTOM-END")
                     })
                     .variant(ButtonVariant::Text)
+                    .width(Pixels(140.0))
+                    .height(Pixels(60.0))
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::BottomEnd));
                 }).row_between(Pixels(8.0)).size(Auto);
-            },
-            |cx| {
-                Label::new(cx, r#"IconButton::new(cx, ICON_TRASH).tooltip(|cx| Tooltip::new(cx, |cx|{
+            }, r#"IconButton::new(cx, ICON_TRASH).tooltip(|cx| Tooltip::new(cx, |cx|{
     Label::new(cx, "Delete");
-}));"#).class("code");
-            },
+}));"#
         );
 
     }).class("panel");

@@ -11,12 +11,7 @@ pub fn badge(cx: &mut Context) {
         Label::new(cx, "Badge").class("title");
         Label::new(cx, "").class("paragraph");
 
-        // Divider here
-        Element::new(cx)
-            .height(Pixels(1.0))
-            .background_color(Color::rgb(210, 210, 210))
-            .top(Pixels(12.0))
-            .bottom(Pixels(12.0));
+        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
 
         Label::new(cx, "Badge").class("header");
         DemoRegion::new(
@@ -24,9 +19,7 @@ pub fn badge(cx: &mut Context) {
             |cx| {
                 Badge::new(cx, |cx| Label::new(cx, "5"));
             },
-            |cx| {
-                Label::new(cx, r#"Badge::new(cx, |cx| Label::new(cx, "5"));"#).class("code");
-            },
+            r#"Badge::new(cx, |cx| Label::new(cx, "5"));"#,
         );
     })
     .class("panel");

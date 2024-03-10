@@ -197,12 +197,10 @@ pub fn menu_bar(cx: &mut Context) {
                             );
                         },
                     );
-                });
+                })
+                .background_color(Color::red());
             },
-            |cx| {
-                Label::new(
-                    cx,
-                    r#"MenuBar::new(cx, |cx| {
+            r#"MenuBar::new(cx, |cx| {
     Submenu::new(
         cx,
         |cx| Label::new(cx, "File"),
@@ -340,8 +338,6 @@ pub fn menu_bar(cx: &mut Context) {
         },
     );
 });"#,
-                );
-            },
         );
     })
     .class("panel");

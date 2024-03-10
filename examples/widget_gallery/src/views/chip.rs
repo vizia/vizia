@@ -16,9 +16,7 @@ pub fn chip(cx: &mut Context) {
             |cx| {
                 Chip::new(cx, "Chip");
             },
-            |cx| {
-                Label::new(cx, r#"Chip::new(cx, "Chip");"#).class("code");
-            },
+            r#"Chip::new(cx, "Chip");"#,
         );
 
         Label::new(cx, "Chip variants").class("header");
@@ -29,16 +27,10 @@ pub fn chip(cx: &mut Context) {
                 Chip::new(cx, "Filled (Default)").variant(ChipVariant::Filled);
                 Chip::new(cx, "Outline").variant(ChipVariant::Outline);
             },
-            |cx| {
-                Label::new(
-                    cx,
-                    r#"Chip::new(cx, "Filled (Default)")
+            r#"Chip::new(cx, "Filled (Default)")
     .variant(ChipVariant::Filled);
 Chip::new(cx, "Outline")
     .variant(ChipVariant::Outline);"#,
-                )
-                .class("code");
-            },
         );
 
         Label::new(cx, "Chip actions").class("header");
@@ -53,10 +45,7 @@ Chip::new(cx, "Outline")
                     .on_press(|cx| {})
                     .on_close(|cx| {});
             },
-            |cx| {
-                Label::new(
-                    cx,
-                    r#"Chip::new(cx, "Clickable")
+            r#"Chip::new(cx, "Clickable")
     .on_press(|cx| {});
 Chip::new(cx, "Closable")
     .on_close(|cx| {...});
@@ -64,9 +53,6 @@ Chip::new(cx, "Clickable & Closable")
     .variant(ChipVariant::Outline)
     .on_press(|cx| {...})
     .on_close(|cx| {...});"#,
-                )
-                .class("code");
-            },
         );
     })
     .class("panel");

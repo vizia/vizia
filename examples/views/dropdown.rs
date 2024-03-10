@@ -25,12 +25,7 @@ impl Model for AppData {
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData {
-            list: vec![
-                "Red".to_string(),
-                "Green".to_string(),
-                "Blue".to_string(),
-                "Really long thing".to_string(),
-            ],
+            list: vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()],
             choice: "Red".to_string(),
         }
         .build(cx);
@@ -42,9 +37,6 @@ fn main() -> Result<(), ApplicationError> {
                 move |cx| {
                     List::new(cx, AppData::list, |cx, _, item| {
                         Label::new(cx, item)
-                            // .width(Stretch(1.0))
-                            //.child_top(Stretch(1.0))
-                            //.child_bottom(Stretch(1.0))
                             .cursor(CursorIcon::Hand)
                             .bind(AppData::choice, move |handle, selected| {
                                 if item.get(&handle) == selected.get(&handle) {

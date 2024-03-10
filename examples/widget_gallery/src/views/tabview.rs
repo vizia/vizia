@@ -20,9 +20,7 @@ pub fn tabview(cx: &mut Context) {
             |cx| {
                 Label::new(cx, "Hello Vizia");
             },
-            |cx| {
-                Label::new(cx, r#"Label::new(cx, "Hello Vizia");"#);
-            },
+            r#"Label::new(cx, "Hello Vizia");"#,
         );
     })
     .class("panel");

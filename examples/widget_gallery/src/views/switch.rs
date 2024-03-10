@@ -41,13 +41,8 @@ pub fn switch(cx: &mut Context) {
             |cx| {
                 Switch::new(cx, SwitchData::flag).on_toggle(|cx| cx.emit(SwitchEvent::ToggleFlag));
             },
-            |cx| {
-                Label::new(
-                    cx,
-                    r#"Switch::new(cx, SwitchData::flag)
+            r#"Switch::new(cx, SwitchData::flag)
     .on_toggle(|cx| cx.emit(SwitchEvent::ToggleFlag));"#,
-                );
-            },
         );
     })
     .class("panel");

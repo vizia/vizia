@@ -18,15 +18,12 @@ pub fn icon(cx: &mut Context) {
             .top(Pixels(12.0))
             .bottom(Pixels(12.0));
 
-        Label::new(cx, "Icon").class("header");
         DemoRegion::new(
             cx,
             |cx| {
                 Icon::new(cx, ICON_USER);
             },
-            |cx| {
-                Label::new(cx, r#"Icon::new(cx, ICON_USER);"#).class("code");
-            },
+            r#"Icon::new(cx, ICON_USER);"#,
         );
     })
     .class("panel");

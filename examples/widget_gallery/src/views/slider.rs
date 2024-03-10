@@ -42,14 +42,8 @@ pub fn slider(cx: &mut Context) {
                 Slider::new(cx, SliderData::value)
                     .on_changing(|cx, value| cx.emit(SliderEvent::SetValue(value)));
             },
-            |cx| {
-                Label::new(
-                    cx,
-                    r#"Slider::new(cx, SliderData::value)
+            r#"Slider::new(cx, SliderData::value)
     .on_changing(|cx, value| cx.emit(SliderEvent::SetValue(value)));"#,
-                )
-                .class("code");
-            },
         );
     })
     .class("panel");

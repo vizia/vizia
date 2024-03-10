@@ -34,7 +34,7 @@ pub fn combobox(cx: &mut Context) {
         .build(cx);
 
         Label::new(cx, "Combobox").class("title");
-        Label::new(cx, "todo...").class("paragraph");
+        Label::new(cx, "").class("paragraph");
 
         Label::new(cx, "Basic combobox").class("header");
         DemoRegion::new(
@@ -44,9 +44,7 @@ pub fn combobox(cx: &mut Context) {
                     .on_select(|cx, index| cx.emit(ComboBoxEvent::SetOption(index)))
                     .width(Pixels(140.0));
             },
-            |cx| {
-                Label::new(cx, r#"Todo"#).class("code");
-            },
+            r#"Todo"#,
         );
     })
     .class("panel");

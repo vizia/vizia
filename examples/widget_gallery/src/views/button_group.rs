@@ -19,17 +19,11 @@ pub fn button_group(cx: &mut Context) {
                     Button::new(cx, |cx| Label::new(cx, "Three"));
                 });
             },
-            |cx| {
-                Label::new(
-                    cx,
-                    r#"ButtonGroup::new(cx, |cx|{
+            r#"ButtonGroup::new(cx, |cx|{
     Button::new(cx, |cx| Label::new(cx, "One"));
     Button::new(cx, |cx| Label::new(cx, "Two"));
     Button::new(cx, |cx| Label::new(cx, "Three"));
 });"#,
-                )
-                .class("code");
-            },
         );
 
         Label::new(cx, "Vertical button group").class("header");
@@ -44,19 +38,13 @@ pub fn button_group(cx: &mut Context) {
                 .width(Pixels(100.0))
                 .vertical(true);
             },
-            |cx| {
-                Label::new(
-                    cx,
-                    r#"ButtonGroup::new(cx, |cx|{
+            r#"ButtonGroup::new(cx, |cx|{
     Button::new(cx, |cx| Label::new(cx, "One"));
     Button::new(cx, |cx| Label::new(cx, "Two"));
     Button::new(cx, |cx| Label::new(cx, "Three"));
 })
 .width(Pixels(100.0))
 .vertical(true);"#,
-                )
-                .class("code");
-            },
         );
     })
     .class("panel");

@@ -15,9 +15,7 @@ pub fn notification(cx: &mut Context) {
             |cx| {
                 Divider::new(cx);
             },
-            |cx| {
-                Label::new(cx, r#"TODO"#);
-            },
+            r#"TODO"#,
         );
     })
     .class("panel");

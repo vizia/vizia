@@ -34,14 +34,8 @@ pub fn rating(cx: &mut Context) {
                 Rating::new(cx, 5, RatingData::rating)
                     .on_change(|ex, rating| ex.emit(RatingEvent::SetRating(rating)));
             },
-            |cx| {
-                Label::new(
-                    cx,
-                    r#"Rating::new(cx, 5, RatingData::rating)
+            r#"Rating::new(cx, 5, RatingData::rating)
     .on_change(|ex, rating| ex.emit(RatingEvent::SetRating(rating)));"#,
-                )
-                .class("code");
-            },
         );
     })
     .class("panel");

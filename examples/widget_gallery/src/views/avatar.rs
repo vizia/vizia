@@ -32,10 +32,9 @@ pub fn avatar(cx: &mut Context) {
             Avatar::new(cx, |cx|{
                 Icon::new(cx, ICON_USER);
             });
-        }, |cx| {Label::new(cx, r#"Avatar::new(cx, |cx|{
+        },r#"Avatar::new(cx, |cx|{
     Icon::new(cx, ICON_USER)
-});"#).class("code");
-        });
+});"#);
 
         Label::new(cx, "Avatar content").class("header");
         Label::new(cx, "An avatar can contain an icon, text, or an image.").class("paragraph");
@@ -52,7 +51,7 @@ pub fn avatar(cx: &mut Context) {
             Avatar::new(cx, |cx|{
                 Image::new(cx, "vizia.png");
             });
-        }, |cx| {Label::new(cx, r#"Avatar::new(cx, |cx|{
+        }, r#"Avatar::new(cx, |cx|{
     Icon::new(cx, ICON_USER);
 });
 
@@ -62,8 +61,7 @@ Avatar::new(cx, |cx|{
 
 Avatar::new(cx, |cx|{
     Image::new(cx, "vizia.png");
-});"#).class("code");
-        });
+});"#);
 
 
         Label::new(cx, "Avatar variants").class("header");
@@ -81,7 +79,7 @@ Avatar::new(cx, |cx|{
             Avatar::new(cx, |cx|{
                 Image::new(cx, "vizia.png");
             }).variant(AvatarVariant::Rounded);
-        }, |cx| {Label::new(cx, r#"Avatar::new(cx, |cx|{
+        }, r#"Avatar::new(cx, |cx|{
     Icon::new(cx, ICON_USER);
 });
 
@@ -91,8 +89,7 @@ Avatar::new(cx, |cx|{
 
 Avatar::new(cx, |cx|{
     Image::new(cx, "vizia.png");
-}).variant(AvatarVariant::Rounded);"#).class("code");
-        });
+}).variant(AvatarVariant::Rounded);"#);
 
         Label::new(cx, "Avatar with badge").class("header");
         Label::new(cx, "The badge modifier can be used to add a badge to an avatar.").class("paragraph");
@@ -118,7 +115,7 @@ Avatar::new(cx, |cx|{
                 Icon::new(cx, ICON_USER);
             })
             .badge(|cx| Badge::new(cx, |cx| Label::new(cx, "2")));
-        }, |cx| {Label::new(cx, r#"Avatar::new(cx, |cx|{
+        }, r#"Avatar::new(cx, |cx|{
     Icon::new(cx, ICON_USER);
 }).badge(|cx| Badge::new(cx, |cx| Icon::new(cx, ICON_CLOCK)).class("warning"));
 
@@ -133,8 +130,7 @@ Avatar::new(cx, |cx|{
 Avatar::new(cx, |cx|{
     Icon::new(cx, ICON_USER);
 }).badge(|cx| Badge::new(cx, |cx| Label::new(cx, "2")));"#
-        ).class("code");
-        });
+        );
 
     }).class("panel");
 }

@@ -20,10 +20,7 @@ pub fn button(cx: &mut Context) {
             cx,
             |cx| {
                 Button::new(cx, |cx| Label::new(cx, "Button"));
-            },
-            |cx| {
-                Label::new(cx, r#"Button::new(cx, |cx| Label::new(cx, "Button"));"#).class("code");
-            },
+            }, r#"Button::new(cx, |cx| Label::new(cx, "Button"));"#
         );
 
         Label::new(cx, "Button variants").class("header");
@@ -34,20 +31,13 @@ pub fn button(cx: &mut Context) {
                 Button::new(cx, |cx| Label::new(cx, "Accent")).variant(ButtonVariant::Accent);
                 Button::new(cx, |cx| Label::new(cx, "Outline")).variant(ButtonVariant::Outline);
                 Button::new(cx, |cx| Label::new(cx, "Text")).variant(ButtonVariant::Text);
-            },
-            |cx| {
-                Label::new(
-                    cx,
-                    r#"Button::new(cx, |cx| Label::new(cx, "Normal"));
+            }, r#"Button::new(cx, |cx| Label::new(cx, "Normal"));
 Button::new(cx, |cx| Label::new(cx, "Accent"))
     .variant(ButtonVariant::Accent);
 Button::new(cx, |cx| Label::new(cx, "Outline"))
     .variant(ButtonVariant::Outline);
 Button::new(cx, |cx| Label::new(cx, "Text"))
-    .variant(ButtonVariant::Text);"#,
-                )
-                .class("code");
-            },
+    .variant(ButtonVariant::Text);"#
         );
 
         Label::new(cx, "Button with icon and label").class("header");
@@ -72,11 +62,7 @@ Button::new(cx, |cx| Label::new(cx, "Text"))
                     })
                 })
                 .class("accent");
-            },
-            |cx| {
-                Label::new(
-                    cx,
-                    r#"Button::new(cx, |cx| {
+            }, r#"Button::new(cx, |cx| {
     HStack::new(cx, |cx| {
         Icon::new(cx, ICON_TRASH);
         Label::new(cx, "Delete");
@@ -90,10 +76,7 @@ Button::new(cx, |cx| {
         Icon::new(cx, ICON_PENCIL);
     })
 })
-.class("accent");"#,
-                )
-                .class("code");
-            },
+.class("accent");"#
         );
 
         Label::new(cx, "Handling clicks").class("header");

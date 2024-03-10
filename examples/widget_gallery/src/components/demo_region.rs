@@ -11,13 +11,14 @@ pub enum DemoRegionEvent {
 }
 
 impl DemoRegion {
-    pub fn new(
-        cx: &mut Context,
-        content: impl Fn(&mut Context),
-        code: impl Fn(&mut Context) + 'static,
-    ) -> Handle<Self> {
-        Self { open: true }
-            .build(cx, |cx| {
+    pub fn new<'a>(
+        cx: &'a mut Context,
+        content: impl Fn(&mut Context) + 'static,
+        code: &'static str,
+    ) -> Handle<'a, Self> {
+        let code = code.to_string();
+        Self { open: false }
+            .build(cx, move |cx| {
                 HStack::new(cx, |cx| {
                     (content)(cx);
                 })
@@ -36,9 +37,9 @@ impl DemoRegion {
                 })
                 .class("controls");
                 // Element::new(cx).class("divider");
-                HStack::new(cx, |cx| {
+                HStack::new(cx, move |cx| {
                     ScrollView::new(cx, 0.0, 0.0, true, true, move |cx| {
-                        (code)(cx);
+                        Label::new(cx, code).class("code");
                     })
                     .height(Auto);
                 })

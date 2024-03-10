@@ -790,6 +790,10 @@ where
                     }
                 }
 
+                Code::Space => {
+                    cx.emit(TextEvent::InsertText(String::from(" ")));
+                }
+
                 Code::ArrowLeft => {
                     self.reset_caret_timer(cx);
                     let movement = if cx.modifiers.ctrl() {

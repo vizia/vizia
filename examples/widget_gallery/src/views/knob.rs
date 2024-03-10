@@ -26,23 +26,16 @@ pub fn knob(cx: &mut Context) {
         KnobState { value: 0.2 }.build(cx);
 
         Label::new(cx, "Knob").class("title");
-        Label::new(cx, "todo...").class("paragraph");
+        Label::new(cx, "").class("paragraph");
 
-        Label::new(cx, "Basic knob").class("header");
         DemoRegion::new(
             cx,
             |cx| {
                 Knob::new(cx, 0.5, KnobState::value, false)
                     .on_changing(|cx, val| cx.emit(KnobEvent::SetValue(val)));
             },
-            |cx| {
-                Label::new(
-                    cx,
-                    r#"Knob::new(cx, 0.5, KnobState::value, false)
+            r#"Knob::new(cx, 0.5, KnobState::value, false)
     .on_changing(|cx, val| cx.emit(KnobEvent::SetValue(val)));"#,
-                )
-                .class("code");
-            },
         );
     })
     .class("panel");

@@ -26,7 +26,7 @@ pub fn datepicker(cx: &mut Context) {
         DatepickerState { date: Utc::now().date_naive() }.build(cx);
 
         Label::new(cx, "Datepicker").class("title");
-        Label::new(cx, "todo...").class("paragraph");
+        Label::new(cx, "").class("paragraph");
 
         Label::new(cx, "Basic datepicker").class("header");
         DemoRegion::new(
@@ -35,9 +35,7 @@ pub fn datepicker(cx: &mut Context) {
                 Datepicker::new(cx, DatepickerState::date)
                     .on_select(|cx, date| cx.emit(DatepickerEvent::SetDate(date)));
             },
-            |cx| {
-                Label::new(cx, r#"Todo"#).class("code");
-            },
+            r#"Todo"#,
         );
     })
     .class("panel");

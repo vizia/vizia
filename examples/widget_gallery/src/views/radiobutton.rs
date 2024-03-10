@@ -55,10 +55,7 @@ pub fn radiobutton(cx: &mut Context) {
                 RadioButton::new(cx, RadioData::option.map(|option| *option == Options::First)).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::First)));
                 RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Second)).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Second)));
                 RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Third)).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Third)));
-            },
-            |cx| {
-                Label::new(cx, r#"TODO"#).class("code");
-            },
+            }, r#"TODO"#
         );
 
         Label::new(cx, "Radiobutton and label").class("header");
@@ -85,10 +82,7 @@ pub fn radiobutton(cx: &mut Context) {
                 }, "Third")
                 .disabled(true);
             }).class("group");
-            },
-            |cx| {
-                Label::new(cx, r#"TODO"#).class("code");
-            },
+            }, r#"TODO"#
         );
 
         Label::new(cx, "Radiogroup").class("header");
@@ -111,10 +105,7 @@ pub fn radiobutton(cx: &mut Context) {
                             .on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Third)))
                     }, "Other");
                 });
-            },
-            |cx| {
-                Label::new(cx, r#"TODO"#).class("code");
-            },
+            }, r#"TODO"#
         );
     })
     .class("panel");
