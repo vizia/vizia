@@ -454,10 +454,6 @@ datepicker {
     background-color: transparent;
 }
 
-.datepicker-divisor {
-    background-color: #d2d2d2;
-}
-
 .datepicker-calendar-day {
     color: #525252;
     cursor: hand;
@@ -484,27 +480,6 @@ datepicker {
     color: #b0b0b0;
 }
 
-.datepicker-cancel {
-    border-width: 2px;
-    border-color: #ef5151;
-    border-radius: 4px;
-}
-
-.datepicker-cancel label {
-    color: #ef5151;
-}
-
-.datepicker-apply {
-    border-width: 2px;
-    border-color: #51afef;
-    background-color: #51afef;
-    border-radius: 4px;
-}
-
-.datepicker-apply label {
-    color: #ffffff;
-}
-
 /* DIVIDER */
 
 divider {
@@ -518,7 +493,7 @@ dropdown {
     background-color: #fdfdfd;
 }
 
-dropdown .title {
+dropdown .dropdown-title {
     border-radius: 4px;
 }
 
@@ -531,17 +506,17 @@ dropdown:active {
     background-color: #fafafa;
 }
 
-dropdown .title {
+dropdown .dropdown-title {
     border-width: 1px;
     border-color: #d2d2d2;
     border-radius: 4px;
 }
 
-dropdown:active .title {
+dropdown:active .dropdown-title {
     color: #626262;
 }
 
-dropdown .title:focus-visible {
+dropdown .dropdown-title:focus-visible {
     outline-width: 1px;
     outline-color: #51afef;
     outline-offset: 3px;
@@ -582,6 +557,11 @@ dropdown .list label.nav {
 
 dropdown .list label:checked {
     background-color: #5dc4ec;
+}
+
+/* ICON */
+icon:disabled {
+    color: #a0a0a0;
 }
 
 /* KNOB */
@@ -694,6 +674,12 @@ submenu > popup {
     box-shadow: 0px 2px 16px #4f4f4f38;
 }
 
+submenu divider {
+    top: 4px;
+    bottom: 4px;
+    background-color: #d2d2d2;
+}
+
 menu-divider {
     height: 9px;
     width: 1s;
@@ -756,6 +742,24 @@ picklist:focus-visible {
 
 popup {
     box-shadow: 0px 3px 12px #00000038;
+}
+
+/* PROGRESS BAR */
+
+progressbar {
+    background-color: #1d1d1d;
+}
+
+progressbar:disabled {
+    background-color: #404040;
+}
+
+progressbar .progressbar-bar {
+    background-color: #51afef;
+}
+
+progressbar:disabled .progressbar-bar {
+    background-color: #418abb;
 }
 
 /* RADIOBUTTON */
@@ -968,7 +972,7 @@ spinbox picklist.spinbox-value {
     border-width: 0px;
 }
 
-spinbox picklist.spinbox-value .title {
+spinbox picklist.spinbox-value .dropdown-title {
     background-color: transparent;
     border-width: 0px;
 }
@@ -1105,35 +1109,6 @@ textbox:invalid {
     border-color: #ef5151;
     transition: border-color 100ms;
     border-width: 2px;
-}
-
-/* TIMEPICKER */
-timepicker {
-    background-color: #fff;
-    border-radius: 4px;
-    child-space: 8px;
-}
-
-timepicker .timepicker-wrapper {
-    col-between: 8px;
-}
-
-timepicker .timepicker-button-wrapper {
-    row-between: 1s;
-}
-
-timepicker .timepicker-dots-wrapper {
-    width: auto;
-    height: 1s;
-    child-space: 1s;
-    row-between: 8px;
-}
-
-timepicker .timepicker-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 4px;
-    background-color: #b6b6b6;
 }
 
 /* TOOLTIP */

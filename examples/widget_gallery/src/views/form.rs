@@ -2,12 +2,12 @@ use vizia::prelude::*;
 
 use crate::DemoRegion;
 
-pub fn list(cx: &mut Context) {
+pub fn form(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "List").class("title");
+        Label::new(cx, "Image").class("title");
         Label::new(cx, "").class("paragraph");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
         DemoRegion::new(
             cx,

@@ -1,6 +1,6 @@
 use vizia::prelude::*;
 
-use crate::components::DemoRegion;
+use crate::DemoRegion;
 
 #[derive(Clone, Lens)]
 struct RatingData {
@@ -24,9 +24,7 @@ pub fn rating(cx: &mut Context) {
 
     VStack::new(cx, |cx| {
         Label::new(cx, "Rating").class("title");
-        Label::new(cx, "...").class("paragraph");
-
-        Label::new(cx, "Basic rating").class("header");
+        Label::new(cx, "").class("paragraph");
 
         DemoRegion::new(
             cx,

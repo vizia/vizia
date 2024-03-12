@@ -72,25 +72,3 @@ impl<'a> ToggleButtonModifiers for Handle<'a, ToggleButton> {
         self.modify(|toggle_button| toggle_button.on_toggle = Some(Box::new(callback)))
     }
 }
-
-pub struct Toolbar {}
-
-impl Toolbar {
-    pub fn new<F>(cx: &mut Context, content: F) -> Handle<Self>
-    where
-        F: FnOnce(&mut Context),
-    {
-        Self {}
-            .build(cx, |cx| {
-                (content)(cx);
-            })
-            .layout_type(LayoutType::Row)
-            .role(Role::GenericContainer)
-    }
-}
-
-impl View for Toolbar {
-    fn element(&self) -> Option<&'static str> {
-        Some("toolbar")
-    }
-}

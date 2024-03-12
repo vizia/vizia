@@ -1,5 +1,4 @@
 use crate::components::DemoRegion;
-use chrono::{NaiveDate, Utc};
 use vizia::prelude::*;
 
 #[derive(Clone, Lens)]
@@ -27,6 +26,8 @@ pub fn knob(cx: &mut Context) {
 
         Label::new(cx, "Knob").class("title");
         Label::new(cx, "").class("paragraph");
+
+        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
 
         DemoRegion::new(
             cx,

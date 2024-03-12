@@ -162,7 +162,7 @@ impl Dropdown {
             PopupData::default().build(cx);
 
             (trigger)(cx)
-                .class("title")
+                .class("dropdown-title")
                 .width(Stretch(1.0))
                 .checked(PopupData::is_open)
                 .navigable(true)

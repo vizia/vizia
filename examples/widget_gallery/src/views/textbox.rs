@@ -12,7 +12,7 @@ pub enum TextboxEvent {
 }
 
 impl Model for TextboxData {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|textbox_event, _| match textbox_event {
             TextboxEvent::SetText(text) => self.text = text.clone(),
         });

@@ -1074,6 +1074,20 @@ impl<'a> EventContext<'a> {
         self.needs_redraw();
     }
 
+    // SIZE
+
+    pub fn set_width(&mut self, width: Units) {
+        self.style.width.insert(self.current, width);
+        self.needs_relayout();
+        self.needs_redraw();
+    }
+
+    pub fn set_height(&mut self, height: Units) {
+        self.style.height.insert(self.current, height);
+        self.needs_relayout();
+        self.needs_redraw();
+    }
+
     // SPACE
 
     pub fn set_left(&mut self, left: Units) {
@@ -1249,16 +1263,6 @@ impl<'a> EventContext<'a> {
 
         *self.running_timers =
             running_timers.drain().filter(|timer_state| timer_state.id != timer).collect();
-    }
-
-    pub(crate) fn get_model<T: 'static>(&self) -> Option<&T> {
-        if let Some(model_data_store) = self.data.get(&self.current) {
-            if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
-                return model.downcast_ref::<T>();
-            }
-        }
-
-        None
     }
 }
 

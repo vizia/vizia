@@ -1,4 +1,3 @@
-use vizia::icons::{ICON_CHECK, ICON_PENCIL, ICON_TRASH};
 use vizia::prelude::*;
 
 use crate::components::DemoRegion;

@@ -1,5 +1,5 @@
 use vizia::{
-    icons::{ICON_CLOCK, ICON_COLUMN_INSERT_LEFT, ICON_USER},
+    icons::{ICON_CLOCK, ICON_USER},
     image,
     prelude::*,
 };
@@ -21,9 +21,7 @@ pub fn avatar(cx: &mut Context) {
         Label::new(cx, "Avatar").class("title");
         Label::new(cx, "An avatar is used to visually represent a person or entity and can contain text, an icon, or an image.").class("paragraph");
 
-        // Divider here
-        Element::new(cx).height(Pixels(1.0))
-            .background_color(Color::rgb(210, 210, 210))
+        Divider::new(cx)
             .top(Pixels(12.0))
             .bottom(Pixels(12.0));
 

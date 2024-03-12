@@ -53,17 +53,6 @@ fn main() -> Result<(), ApplicationError> {
                 ToggleButton::new(cx, AppData::underline, |cx| Icon::new(cx, ICON_UNDERLINE))
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleUnderline));
             });
-
-            Toolbar::new(cx, |cx| {
-                ToggleButton::new(cx, AppData::bold, |cx| Icon::new(cx, ICON_BOLD))
-                    .on_toggle(|cx| cx.emit(AppEvent::ToggleBold));
-
-                ToggleButton::new(cx, AppData::italic, |cx| Icon::new(cx, ICON_ITALIC))
-                    .on_toggle(|cx| cx.emit(AppEvent::ToggleItalic));
-
-                ToggleButton::new(cx, AppData::underline, |cx| Icon::new(cx, ICON_UNDERLINE))
-                    .on_toggle(|cx| cx.emit(AppEvent::ToggleUnderline));
-            });
         });
     })
     .title("ToggleButton")

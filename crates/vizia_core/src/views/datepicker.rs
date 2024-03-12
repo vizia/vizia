@@ -123,35 +123,26 @@ impl Datepicker {
         }
         .build(cx, move |cx| {
             HStack::new(cx, |cx| {
-                Spinbox::custom(
-                    cx,
-                    |cx| {
-                        PickList::new(cx, Datepicker::months, Datepicker::selected_month, false)
-                            .on_select(|ex, index| ex.emit(DatepickerEvent::SelectMonth(index)))
-                    },
-                    SpinboxKind::Horizontal,
-                    SpinboxIcons::Chevrons,
-                )
+                Spinbox::custom(cx, |cx| {
+                    PickList::new(cx, Datepicker::months, Datepicker::selected_month, false)
+                        .on_select(|ex, index| ex.emit(DatepickerEvent::SelectMonth(index)))
+                })
                 .width(Pixels(131.0))
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
                 .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementMonth));
-                Spinbox::custom(
-                    cx,
-                    |cx| {
-                        Textbox::new(cx, Datepicker::view_date.map(|date| date.year()))
-                            .on_edit(|ex, v| ex.emit(DatepickerEvent::SelectYear(v)))
-                            .width(Stretch(1.0))
-                    },
-                    SpinboxKind::Horizontal,
-                    SpinboxIcons::PlusMinus,
-                )
+                Spinbox::custom(cx, |cx| {
+                    Textbox::new(cx, Datepicker::view_date.map(|date| date.year()))
+                        .on_edit(|ex, v| ex.emit(DatepickerEvent::SelectYear(v)))
+                        .width(Stretch(1.0))
+                })
+                .icons(SpinboxIcons::PlusMinus)
                 .width(Stretch(1.0))
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementYear))
                 .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementYear));
             })
             .class("datepicker-header");
 
-            Element::new(cx).class("datepicker-divisor");
+            Divider::new(cx);
 
             VStack::new(cx, move |cx| {
                 // Days of the week

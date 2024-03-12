@@ -38,7 +38,7 @@ fn main() -> Result<(), ApplicationError> {
             HStack::new(cx, |cx| {
                 Switch::new(cx, AppData::option1)
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleOption1))
-                    .id("Switch_2");
+                    .id("Switch_1");
                 Label::new(cx, "Switch 1").describing("Switch_1");
             })
             .size(Auto)

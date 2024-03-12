@@ -96,7 +96,9 @@ impl VirtualList {
             })
             .scroll_to_cursor(true)
             .on_scroll(|cx, _, y| {
-                cx.emit(VirtualListEvent::SetScrollY(y));
+                if y.is_finite() {
+                    cx.emit(VirtualListEvent::SetScrollY(y));
+                }
             });
         })
     }
@@ -119,11 +121,14 @@ impl VirtualList {
         }
 
         let current = cx.current();
-        let scale_factor = cx.scale_factor();
-        let visible_height = cx.cache.get_height(current) / scale_factor;
+        let current_height = cx.cache.get_height(current);
+        if current_height == f32::MAX {
+            return;
+        }
 
         let item_height = self.item_height;
         let total_height = item_height * (self.num_items as f32);
+        let visible_height = current_height / cx.scale_factor();
 
         let mut num_visible_items = (visible_height / item_height).ceil();
         num_visible_items += 1.0; // To account for partially-visible items.

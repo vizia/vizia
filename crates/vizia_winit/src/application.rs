@@ -62,6 +62,7 @@ type IdleCallback = Option<Box<dyn Fn(&mut Context)>>;
 #[derive(Debug)]
 pub enum ApplicationError {
     EventLoopError(EventLoopError),
+    LogError,
 }
 
 ///Creating a new application creates a root `Window` and a `Context`. Views declared within the closure passed to `Application::new()` are added to the context and rendered into the root window.

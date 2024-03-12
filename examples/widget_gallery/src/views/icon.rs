@@ -1,8 +1,4 @@
-use vizia::{
-    icons::{ICON_CLOCK, ICON_COLUMN_INSERT_LEFT, ICON_USER},
-    image,
-    prelude::*,
-};
+use vizia::{icons::ICON_USER, prelude::*};
 
 use crate::components::DemoRegion;
 
@@ -11,12 +7,7 @@ pub fn icon(cx: &mut Context) {
         Label::new(cx, "Icon").class("title");
         Label::new(cx, "").class("paragraph");
 
-        // Divider here
-        Element::new(cx)
-            .height(Pixels(1.0))
-            .background_color(Color::rgb(210, 210, 210))
-            .top(Pixels(12.0))
-            .bottom(Pixels(12.0));
+        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
 
         DemoRegion::new(
             cx,

@@ -7,7 +7,6 @@ pub fn label(cx: &mut Context) {
         Label::new(cx, "Label").class("title");
         Label::new(cx, "A label can be used to display a string of text.").class("paragraph");
 
-        // Divider here
         Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
 
         Label::new(cx, "Label").class("header");

@@ -9,16 +9,12 @@ pub struct AppData {
 }
 
 pub enum AppEvent {
-    ToggleDisabled,
     SetThemeMode(usize),
 }
 
 impl Model for AppData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::ToggleDisabled => {
-                self.disabled ^= true;
-            }
             AppEvent::SetThemeMode(theme_mode) => {
                 self.selected_theme = *theme_mode;
                 cx.emit(EnvironmentEvent::SetThemeMode(match theme_mode {
@@ -39,7 +35,6 @@ impl AppData {
             selected_theme: 0,
             disabled: false,
             tabs: vec![
-                "All",
                 "Avatar",
                 "Badge",
                 "Button",
@@ -63,7 +58,6 @@ impl AppData {
                 "MenuBar",
                 "Notification",
                 "Picklist",
-                "Popup",
                 "Progressbar",
                 "Radiobutton",
                 "Rating",
@@ -73,7 +67,6 @@ impl AppData {
                 "Switch",
                 "Tabview",
                 "Textbox",
-                "Timepicker",
                 "ToggleButton",
                 "Tooltip",
                 "VirtualList",

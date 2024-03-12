@@ -2,33 +2,10 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-// #[derive(Lens)]
-// pub struct ScrollData {
-//     scrollx: f32,
-//     scrolly: f32,
-// }
-
-// pub enum ScrollEvent {
-//     SetScroll(f32, f32),
-// }
-
-// impl Model for ScrollData {
-//     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-//         event.map(|scroll_event, _| match scroll_event {
-//             ScrollEvent::SetScroll(x, y) => {
-//                 self.scrollx = *x;
-//                 self.scrolly = *y;
-//             }
-//         })
-//     }
-// }
-
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         ExamplePage::new(cx, |cx| {
             HStack::new(cx, |cx| {
-                // ScrollData { scrollx: 0.0, scrolly: 0.0 }.build(cx);
-
                 ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
                     Label::new(cx, "Vertical Scroll")
                         .height(Pixels(1000.0))

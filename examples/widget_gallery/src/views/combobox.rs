@@ -36,7 +36,6 @@ pub fn combobox(cx: &mut Context) {
         Label::new(cx, "Combobox").class("title");
         Label::new(cx, "").class("paragraph");
 
-        Label::new(cx, "Basic combobox").class("header");
         DemoRegion::new(
             cx,
             |cx| {

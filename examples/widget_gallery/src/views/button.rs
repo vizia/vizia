@@ -1,12 +1,9 @@
 use vizia::{
-    icons::{ICON_CHECK, ICON_PENCIL, ICON_TRASH},
+    icons::{ICON_PENCIL, ICON_TRASH},
     prelude::*,
 };
 
-use crate::{
-    app_data::AppData,
-    components::{DemoRegion, OneOf, OneOfModifiers, PageView},
-};
+use crate::components::DemoRegion;
 
 pub fn button(cx: &mut Context) {
     VStack::new(cx, |cx|{
@@ -88,34 +85,4 @@ Button::new(cx, |cx| {
         }).height(Auto).class("code");
 
     }).class("panel");
-}
-
-#[derive(Lens)]
-pub struct Collapse {
-    is_collapsed: bool,
-}
-
-impl Collapse {
-    pub fn new<H: 'static + Fn(&mut Context), F: 'static + Fn(&mut Context)>(
-        cx: &mut Context,
-        header: H,
-        content: F,
-    ) -> Handle<Self> {
-        Self { is_collapsed: false }
-            .build(cx, |cx| {
-                (header)(cx);
-                Binding::new(cx, Collapse::is_collapsed, move |cx, is_collapsed| {
-                    if !is_collapsed.get(cx) {
-                        (content)(cx);
-                    }
-                });
-            })
-            .height(Auto)
-    }
-}
-
-impl View for Collapse {
-    fn element(&self) -> Option<&'static str> {
-        Some("collapse")
-    }
 }

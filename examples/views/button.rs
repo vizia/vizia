@@ -6,7 +6,7 @@ use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        ExamplePage::vertical(cx, |cx| {
+        ExamplePage::new(cx, |cx| {
             HStack::new(cx, |cx| {
                 // Basic Button
                 Button::new(cx, |cx| Label::new(cx, "Button"))
@@ -29,69 +29,6 @@ fn main() -> Result<(), ApplicationError> {
             })
             .size(Auto)
             .col_between(Pixels(10.0));
-
-            HStack::new(cx, |cx| {
-                IconButton::new(cx, ICON_CHECK);
-                IconButton::new(cx, ICON_CHECK).variant(ButtonVariant::Accent);
-                IconButton::new(cx, ICON_CHECK).variant(ButtonVariant::Outline);
-                IconButton::new(cx, ICON_CHECK).variant(ButtonVariant::Text);
-            })
-            .size(Auto)
-            .col_between(Pixels(10.0));
-
-            ButtonGroup::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "ONE"));
-                Button::new(cx, |cx| Label::new(cx, "TWO"));
-                Button::new(cx, |cx| Label::new(cx, "THREE"));
-            });
-
-            ButtonGroup::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "ONE"));
-                Button::new(cx, |cx| Label::new(cx, "TWO"));
-                Button::new(cx, |cx| Label::new(cx, "THREE"));
-            })
-            .variant(ButtonVariant::Accent);
-
-            ButtonGroup::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "ONE"));
-                Button::new(cx, |cx| Label::new(cx, "TWO"));
-                Button::new(cx, |cx| Label::new(cx, "THREE"));
-            })
-            .variant(ButtonVariant::Outline);
-
-            ButtonGroup::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "ONE"));
-                Button::new(cx, |cx| Label::new(cx, "TWO"));
-                Button::new(cx, |cx| Label::new(cx, "THREE"));
-            })
-            .variant(ButtonVariant::Text);
-
-            ButtonGroup::new(cx, |cx| {
-                IconButton::new(cx, ICON_CHECK);
-                IconButton::new(cx, ICON_CHECK);
-                IconButton::new(cx, ICON_CHECK);
-            });
-
-            ButtonGroup::new(cx, |cx| {
-                IconButton::new(cx, ICON_CHECK);
-                IconButton::new(cx, ICON_CHECK);
-                IconButton::new(cx, ICON_CHECK);
-            })
-            .variant(ButtonVariant::Accent);
-
-            ButtonGroup::new(cx, |cx| {
-                IconButton::new(cx, ICON_CHECK);
-                IconButton::new(cx, ICON_CHECK);
-                IconButton::new(cx, ICON_CHECK);
-            })
-            .variant(ButtonVariant::Outline);
-
-            ButtonGroup::new(cx, |cx| {
-                IconButton::new(cx, ICON_CHECK);
-                IconButton::new(cx, ICON_CHECK);
-                IconButton::new(cx, ICON_CHECK);
-            })
-            .variant(ButtonVariant::Text);
         });
     })
     .title("Button")

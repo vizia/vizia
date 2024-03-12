@@ -1,4 +1,3 @@
-use vizia::icons::ICON_CODE;
 use vizia::prelude::*;
 
 use crate::components::DemoRegion;
@@ -38,12 +37,12 @@ Chip::new(cx, "Outline")
         DemoRegion::new(
             cx,
             |cx| {
-                Chip::new(cx, "Clickable").on_press(|cx| {});
-                Chip::new(cx, "Closable").on_close(|cx| {});
+                Chip::new(cx, "Clickable").on_press(|_| {});
+                Chip::new(cx, "Closable").on_close(|_| {});
                 Chip::new(cx, "Clickable & Closable")
                     .variant(ChipVariant::Outline)
-                    .on_press(|cx| {})
-                    .on_close(|cx| {});
+                    .on_press(|_| {})
+                    .on_close(|_| {});
             },
             r#"Chip::new(cx, "Clickable")
     .on_press(|cx| {});

@@ -70,6 +70,7 @@ fn main() -> Result<(), ApplicationError> {
                         )
                         .on_select(move |cx| cx.emit(AppEvent::SetOption(current_option)))
                         .id(format!("button_{i}"));
+
                         Label::new(cx, &current_option.to_string())
                             .describing(format!("button_{i}"));
                     })

@@ -394,14 +394,3 @@ impl<'a> ButtonModifiers for Handle<'a, ButtonGroup> {
         self
     }
 }
-
-/// Floating action button
-pub struct Fab {}
-
-impl Fab {}
-
-impl View for Fab {
-    fn element(&self) -> Option<&'static str> {
-        Some("fab")
-    }
-}

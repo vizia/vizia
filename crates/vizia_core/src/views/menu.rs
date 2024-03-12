@@ -121,6 +121,7 @@ impl Submenu {
                                 Placement::BottomStart
                             }
                         }))
+                        .arrow_size(Pixels(4.0))
                         .checked(Submenu::is_open);
                     }
                 });

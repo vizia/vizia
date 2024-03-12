@@ -44,7 +44,7 @@ pub fn radiobutton(cx: &mut Context) {
 
     VStack::new(cx, |cx| {
         Label::new(cx, "Radiobutton").class("title");
-        Label::new(cx, "A checkbox can be used to display a boolean value, or to select one or more items from a set of options.")
+        Label::new(cx, "A radio button can be used to select an option from a set of options.")
         .class("paragraph");
 
         Label::new(cx, "Basic radiobutton").class("header");

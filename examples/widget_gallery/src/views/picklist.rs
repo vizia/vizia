@@ -5,7 +5,7 @@ use crate::DemoRegion;
 pub fn picklist(cx: &mut Context) {
     VStack::new(cx, |cx| {
         Label::new(cx, "Picklist").class("title");
-        Label::new(cx, "...").class("paragraph");
+        Label::new(cx, "").class("paragraph");
 
         // Divider here
         Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
@@ -15,7 +15,7 @@ pub fn picklist(cx: &mut Context) {
             |cx| {
                 Divider::new(cx);
             },
-            r#"TODO"#,
+            r#""#,
         );
     })
     .class("panel");

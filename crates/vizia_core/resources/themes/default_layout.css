@@ -130,13 +130,6 @@ toggle-button.icon {
     child-space: 1s;
 }
 
-/* TOOLBAR */
-toolbar {
-    size: auto;
-    child-space: 2px;
-    col-between: 2px;
-}
-
 /* CHECKBOX */
 
 checkbox {
@@ -172,10 +165,10 @@ chip .close-icon {
 /* DATEPICKER */
 
 datepicker {
-    width: 252px;
-    height: 289px;
-    child-space: 8px;
-    row-between: 8px;
+    width: 280px;
+    height: 280px;
+    child-space: 4px;
+    row-between: 4px;
 }
 
 .datepicker-header {
@@ -187,12 +180,7 @@ datepicker {
 .datepicker-header picklist dropdown popup {
     left: 1s;
     right: 1s;
-    width: 131px;
-}
-
-.datepicker-divisor {
-    width: 1s;
-    height: 1px;
+    width: auto;
 }
 
 .datepicker-calendar {
@@ -231,36 +219,6 @@ datepicker {
     right: 1s;
 }
 
-.datepicker-actions-container {
-    left: 1s;
-    right: 1s;
-    col-between: 4px;
-}
-
-.datepicker-cancel {
-    width: auto;
-    height: auto;
-}
-
-.datepicker-cancel label {
-    top: 2px;
-    bottom: 2px;
-    right: 8px;
-    left: 8px;
-}
-
-.datepicker-apply {
-    width: auto;
-    height: auto;
-}
-
-.datepicker-apply label {
-    top: 2px;
-    bottom: 2px;
-    right: 8px;
-    left: 8px;
-}
-
 /* DIVIDER */
 
 divider {
@@ -285,7 +243,7 @@ combobox {
     height: 32px;
 }
 
-dropdown .title,
+dropdown .dropdown-title,
 combobox .title {
     width: 1s;
     height: 1s;
@@ -353,18 +311,6 @@ form-control {
 form-control.vertical {
     layout-type: column;
 }
-
-/* form-control > label:first-child {
-    display: none;
-}
-
-form-control > label:last-child {
-    display: flex;
-} */
-/* 
-form-control.pos-start > label:first-child {
-    display: none;
-} */
 
 form-control > label:first-child {
     display: flex;
@@ -477,7 +423,7 @@ list list-item:checked {
 
 menubar {
     child-space: 8px;
-    height: auto;
+    size: auto;
 }
 
 menubutton {
@@ -663,24 +609,15 @@ picklist {
 popup {
     width: auto;
     height: auto;
-    /* display: none; */
-    /* opacity: 0; */
     position-type: self-directed;
     z-index: 100;
 }
 
-/* popup:checked {
-    display: flex;
-    opacity: 1;
-}
+/* PROGRESS BAR */
 
-popup.vis {
-    display: flex;
-    opacity: 1;
-} */
-
-popup vstack {
-    height: auto;
+progressbar {
+    height: 20px;
+    width: 1s;
 }
 
 /* RADIOBUTTON */
@@ -815,12 +752,12 @@ spinbox picklist.spinbox-value dropdown {
     width: 100%;
 }
 
-spinbox picklist.spinbox-value .title {
+spinbox picklist.spinbox-value .dropdown-title {
     width: 1s;
     col-between: 4px;
 }
 
-spinbox picklist.spinbox-value .title label {
+spinbox picklist.spinbox-value .dropdown-title label {
     left: 1s;
     right: 1s;
 }
@@ -979,83 +916,6 @@ textbox:disabled {
     cursor: default;
 }
 
-/* Radial Time Picker */
-
-analogtimepicker {
-    child-space: 8px;
-    border-radius: 4px;
-}
-
-analogtimepicker .clock-face {
-    child-space: 1s;
-}
-
-analogtimepicker .clock-hand {
-    width: 1px;
-    height: 50%;
-    translate: 0px -50%;
-    transform-origin: bottom center;
-}
-
-analogtimepicker .center-dot {
-    width: 4px;
-    height: 4px;
-}
-
-analogtimepicker .marker {
-    width: 32px;
-    height: 32px;
-    /* background-color: blue; */
-    transform: translateY(-60px);
-    /* translate: 0px -50%; */
-    /* transform-origin: bottom center; */
-    child-space: 1s;
-    /* child-left: 1s; */
-    /* child-right: 1s; */
-}
-
-/*
-analogtimepicker .controls-wrapper {
-    top: 1s;
-    bottom: 1s;
-    right: 1s;
-    left: 1s;
-    width: auto;
-    height: 80px;
-    row-between: 1s;
-    child-left: 1s;
-    child-right: 1s;
-}
-
-analogtimepicker .time-selector-wrapper {
-    height: auto;
-    overflow: hidden;
-}
-
-analogtimepicker .time-selector-wrapper button {
-    width: 30px;
-    child-left: 0px;
-    child-right: 0px;
-    child-top: 0px;
-    child-bottom: 0px;
-}
-
-analogtimepicker .time-selector-wrapper button label {
-    left: 4px;
-    right: 4px;
-    top: 1s;
-    bottom: 1s;
-    width: 1s;
-    height: 1s;
-    child-space: 1s;
-} */
-
-analogtimepicker .time-selector-wrapper button .indicator {
-    top: 1s;
-    width: 100%;
-    height: 2px;
-}
-
 /* TOOLTIP */
 
 tooltip {
@@ -1066,10 +926,4 @@ tooltip {
 
 tooltip arrow {
     position-type: self-directed;
-}
-
-menu {
-    position-type: self-directed;
-    z-index: 100;
-    size: auto;
 }

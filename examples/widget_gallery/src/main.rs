@@ -1,8 +1,6 @@
-use vizia::icons::{ICON_MOON, ICON_SUN};
 use vizia::prelude::*;
 
 use log::LevelFilter;
-use std::error::Error;
 
 mod app_data;
 use app_data::*;
@@ -13,7 +11,7 @@ use views::*;
 mod components;
 use components::*;
 
-pub fn setup_logging() -> Result<(), Box<dyn Error>> {
+pub fn setup_logging() -> Result<(), ApplicationError> {
     #[cfg(debug_assertions)]
     const MAIN_LOG_LEVEL: LevelFilter = LevelFilter::Debug;
     #[cfg(not(debug_assertions))]
@@ -32,7 +30,8 @@ pub fn setup_logging() -> Result<(), Box<dyn Error>> {
         // Output to stdout
         .chain(std::io::stdout())
         // Apply globally
-        .apply()?;
+        .apply()
+        .map_err(|_| ApplicationError::LogError)?;
 
     Ok(())
 }
@@ -48,27 +47,8 @@ fn theme_selection_dropdown(cx: &mut Context) {
         });
 }
 
-fn toggle_disabled_switch(cx: &mut Context) {
-    HStack::new(cx, |cx| {
-        Switch::new(cx, AppData::disabled)
-            .on_toggle(|cx| cx.emit(AppEvent::ToggleDisabled))
-            .tooltip(|cx| {
-                Tooltip::new(cx, |cx| {
-                    Label::new(cx, "Toggle disabled");
-                })
-            });
-        Label::new(cx, "Toggle Disabled");
-    })
-    .child_top(Stretch(1.0))
-    .child_bottom(Stretch(1.0))
-    .col_between(Pixels(5.0))
-    .top(Stretch(1.0))
-    .bottom(Stretch(1.0))
-    .size(Auto);
-}
-
 fn main() -> Result<(), ApplicationError> {
-    setup_logging();
+    setup_logging()?;
 
     Application::new(|cx: &mut Context| {
         AppData::new().build(cx);
@@ -89,42 +69,6 @@ fn main() -> Result<(), ApplicationError> {
             Divider::new(cx);
 
             TabView::new(cx, AppData::tabs, |cx, item| match item.get(cx) {
-                "All" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            button(cx);
-                            // checkbox(cx);
-                            // chip(cx);
-                            // combobox(cx);
-                            // datepicker(cx);
-                            // hstack(cx);
-                            // knob(cx);
-                            // label(cx);
-                            // list(cx);
-                            // menu(cx);
-                            // notification(cx);
-                            // picklist(cx);
-                            // popup(cx);
-                            // radiobutton(cx);
-                            // rating(cx);
-                            // scrollview(cx);
-                            // slider(cx);
-                            // spinbox(cx);
-                            // switch(cx);
-                            // tabview(cx);
-                            // textbox(cx);
-                            // timepicker(cx);
-                            // tooltip(cx);
-                            // vstack(cx);
-                            // zstack(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
                 "Avatar" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).class("tab-name").hoverable(false);
@@ -168,18 +112,6 @@ fn main() -> Result<(), ApplicationError> {
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
                             button_group(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Floating Action Button" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            floating_action_button(cx);
                         })
                         .class("widgets");
                     },
@@ -275,7 +207,7 @@ fn main() -> Result<(), ApplicationError> {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // element(cx);
+                            element(cx);
                         })
                         .class("widgets");
                     },
@@ -287,7 +219,7 @@ fn main() -> Result<(), ApplicationError> {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // form(cx);
+                            form(cx);
                         })
                         .class("widgets");
                     },
@@ -413,18 +345,6 @@ fn main() -> Result<(), ApplicationError> {
                     },
                 ),
 
-                "Popup" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            popup(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
                 "Progressbar" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).class("tab-name").hoverable(false);
@@ -467,7 +387,7 @@ fn main() -> Result<(), ApplicationError> {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // scrollview(cx);
+                            scrollview(cx);
                         })
                         .class("widgets");
                     },
@@ -533,25 +453,13 @@ fn main() -> Result<(), ApplicationError> {
                     },
                 ),
 
-                "Timepicker" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            timepicker(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
                 "ToggleButton" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // toggle_button(cx);
+                            toggle_button(cx);
                         })
                         .class("widgets");
                     },
@@ -575,7 +483,7 @@ fn main() -> Result<(), ApplicationError> {
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            // virtual_list(cx);
+                            virtual_list(cx);
                         })
                         .class("widgets");
                     },

@@ -28,7 +28,6 @@ pub fn datepicker(cx: &mut Context) {
         Label::new(cx, "Datepicker").class("title");
         Label::new(cx, "").class("paragraph");
 
-        Label::new(cx, "Basic datepicker").class("header");
         DemoRegion::new(
             cx,
             |cx| {

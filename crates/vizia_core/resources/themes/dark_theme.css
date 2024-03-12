@@ -335,27 +335,6 @@ datepicker {
     color: #b0b0b0;
 }
 
-.datepicker-cancel {
-    border-width: 2px;
-    border-color: #ef5151;
-    border-radius: 4px;
-}
-
-.datepicker-cancel label {
-    color: #ef5151;
-}
-
-.datepicker-apply {
-    border-radius: 4px;
-    border-width: 2px;
-    border-color: #51afef;
-    background-color: #51afef;
-}
-
-.datepicker-apply label {
-    color: #181818;
-}
-
 /* DIVIDER */
 
 divider {
@@ -414,6 +393,11 @@ dropdown .list label:focus-visible {
     outline-width: 1px;
     outline-color: #51afef80;
     outline-offset: 3px;
+}
+
+/* ICON */
+icon:disabled {
+    color: #585858;
 }
 
 /* KNOB */
@@ -556,8 +540,7 @@ popup {
     box-shadow: 0px 0px 8px #00000026;
 }
 
-/* PROGRESSBAR */
-/* update and add things like disabled */
+/* PROGRESS BAR */
 
 progressbar {
     background-color: #1d1d1d;
