@@ -9,6 +9,7 @@ pub fn menu(cx: &mut Context) {
 
         Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
 
+        Label::new(cx, "Basic menu").class("header");
         DemoRegion::new(
             cx,
             |cx| {

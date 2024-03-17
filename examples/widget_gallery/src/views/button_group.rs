@@ -8,6 +8,8 @@ pub fn button_group(cx: &mut Context) {
         Label::new(cx, "Buttons can be grouped by wrapping them in a ButtonGroup view.")
             .class("paragraph");
 
+        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+
         Label::new(cx, "Basic button group").class("header");
         DemoRegion::new(
             cx,

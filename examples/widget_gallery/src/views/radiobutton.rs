@@ -47,7 +47,7 @@ pub fn radiobutton(cx: &mut Context) {
         Label::new(cx, "A radio button can be used to select an option from a set of options.")
         .class("paragraph");
 
-        Label::new(cx, "Basic radiobutton").class("header");
+        Label::new(cx, "Basic radio button").class("header");
 
         DemoRegion::new(
             cx,
@@ -58,7 +58,7 @@ pub fn radiobutton(cx: &mut Context) {
             }, r#"TODO"#
         );
 
-        Label::new(cx, "Radiobutton and label").class("header");
+        Label::new(cx, "Radio button and label").class("header");
         Label::new(cx, "The describing modifier can be used to link a label to a particular radiobutton. Pressing on the label will then toggle the corresponding radiobutton. Alternatively, a FormControl can be used.")
         .class("paragraph");
 
@@ -85,7 +85,7 @@ pub fn radiobutton(cx: &mut Context) {
             }, r#"TODO"#
         );
 
-        Label::new(cx, "Radiogroup").class("header");
+        Label::new(cx, "Radio group").class("header");
         DemoRegion::new(
             cx,
             |cx| {

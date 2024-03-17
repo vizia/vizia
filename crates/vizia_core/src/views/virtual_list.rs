@@ -154,7 +154,7 @@ impl VirtualList {
 
 impl View for VirtualList {
     fn element(&self) -> Option<&'static str> {
-        Some("virtual_list")
+        Some("virtual-list")
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {

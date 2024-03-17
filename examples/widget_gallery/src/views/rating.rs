@@ -26,6 +26,9 @@ pub fn rating(cx: &mut Context) {
         Label::new(cx, "Rating").class("title");
         Label::new(cx, "").class("paragraph");
 
+        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+
+        Label::new(cx, "Basic rating").class("header");
         DemoRegion::new(
             cx,
             |cx| {

@@ -242,7 +242,7 @@ impl MenuButton {
                 (action)(cx);
                 cx.emit(MenuEvent::CloseAll);
                 cx.emit(ModalEvent::HideMenu);
-                // cx.emit(MenuEvent::Close);
+                cx.emit(MenuEvent::Close);
             })
             .role(Role::MenuItem)
         // .navigable(true)

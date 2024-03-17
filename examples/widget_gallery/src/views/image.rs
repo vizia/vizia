@@ -12,9 +12,9 @@ pub fn image(cx: &mut Context) {
         DemoRegion::new(
             cx,
             |cx| {
-                Label::new(cx, "Hello Vizia");
+                Label::new(cx, "Coming soon...");
             },
-            r#"Label::new(cx, "Hello Vizia");"#,
+            r#""#,
         );
     })
     .class("panel");

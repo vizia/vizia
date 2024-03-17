@@ -25,7 +25,7 @@ pub fn avatar(cx: &mut Context) {
             .top(Pixels(12.0))
             .bottom(Pixels(12.0));
 
-        Label::new(cx, "Avatar").class("header");
+        Label::new(cx, "Basic avatar").class("header");
         DemoRegion::new(cx, |cx|{
             Avatar::new(cx, |cx|{
                 Icon::new(cx, ICON_USER);

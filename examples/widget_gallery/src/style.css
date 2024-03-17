@@ -56,7 +56,7 @@ demo-region {
     /* child-left: 1s;
     child-right: 1s; */
     height: auto;
-    border: 1px rgb(210, 210, 210);
+    border: 1px #d2d2d2;
 }
 
 demo-region label.code {
@@ -70,7 +70,7 @@ demo-region hstack.controls {
     height: auto;
     child-top: 4px;
     child-bottom: 4px;
-    background-color: rgb(244, 244, 244);
+    background-color: #f4f4f4;
     border-bottom-left-radius: 4px;
     border-bottom-right-radius: 4px;
 }
@@ -85,26 +85,12 @@ demo-region hstack.region {
     child-left: 1s;
     child-right: 1s;
     height: auto;
+    min-height: 100px;
     col-between: 12px;
 }
 
 demo-region > divider {
     background-color: rgb(210, 210, 210);
-}
-
-vstack.group {
-    size: auto;
-    row-between: 12px;
-}
-
-form-group {
-    size: auto;
-    row-between: 12px;
-}
-
-form-group > .legend {
-    bottom: 8px;
-    color: gray;
 }
 
 demo-region > hstack.code {

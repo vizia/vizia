@@ -8,6 +8,8 @@ pub fn chip(cx: &mut Context) {
         Label::new(cx, "A chip can be used to inform the user of the status of specific data.")
             .class("paragraph");
 
+        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+
         Label::new(cx, "Basic chip").class("header");
 
         DemoRegion::new(

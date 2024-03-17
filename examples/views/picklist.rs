@@ -36,7 +36,7 @@ fn main() -> Result<(), ApplicationError> {
         ExamplePage::new(cx, |cx| {
             PickList::new(cx, AppState::options, AppState::selected_option, true)
                 .on_select(|cx, index| cx.emit(AppEvent::SetOption(index)))
-                .width(Pixels(140.0));
+                .width(Pixels(100.0));
         });
     })
     .title("Picklist")

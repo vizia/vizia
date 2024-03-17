@@ -9,14 +9,9 @@ pub fn menu_bar(cx: &mut Context) {
         Label::new(cx, "MenuBar").class("title");
         Label::new(cx, "A label can be used to display a string of text.").class("paragraph");
 
-        // Divider here
-        Element::new(cx)
-            .height(Pixels(1.0))
-            .background_color(Color::rgb(210, 210, 210))
-            .top(Pixels(12.0))
-            .bottom(Pixels(12.0));
+        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
 
-        Label::new(cx, "MenuBar").class("header");
+        Label::new(cx, "Basic menu bar").class("header");
         DemoRegion::new(
             cx,
             |cx| {
@@ -197,8 +192,7 @@ pub fn menu_bar(cx: &mut Context) {
                             );
                         },
                     );
-                })
-                .background_color(Color::red());
+                });
             },
             r#"MenuBar::new(cx, |cx| {
     Submenu::new(

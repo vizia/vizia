@@ -328,6 +328,15 @@ form-control.pos-start > label:last-child {
     display: flex;
 }
 
+form-group {
+    size: auto;
+    row-between: 12px;
+}
+
+form-group > .legend {
+    bottom: 8px;
+}
+
 /* ICON */
 
 icon {
@@ -616,7 +625,7 @@ popup {
 /* PROGRESS BAR */
 
 progressbar {
-    height: 20px;
+    height: 10px;
     width: 1s;
 }
 
@@ -926,4 +935,12 @@ tooltip {
 
 tooltip arrow {
     position-type: self-directed;
+}
+
+/* VIRTUAL LIST */
+virtual-list label {
+    child-top: 1s;
+    child-bottom: 1s;
+    child-left: 5px;
+    width: 1s;
 }

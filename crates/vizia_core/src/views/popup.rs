@@ -47,7 +47,7 @@ pub struct Popup {
 impl Popup {
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
         Self {
-            placement: Placement::Top,
+            placement: Placement::Bottom,
             show_arrow: true,
             arrow_size: Length::Value(LengthValue::Px(0.0)),
         }
@@ -362,7 +362,7 @@ impl Placement {
             placement = placement.next(*self);
         }
 
-        return placement;
+        placement
     }
 
     fn next(&self, original: Self) -> Self {

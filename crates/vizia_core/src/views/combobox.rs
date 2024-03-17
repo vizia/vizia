@@ -404,7 +404,8 @@ impl View for ComboPopup {
                 let parent_bounds = cx.cache.get_bounds(parent);
                 let window_bounds = cx.cache.get_bounds(Entity::root());
 
-                let space_below = window_bounds.bottom() - bounds.bottom();
+                let space_below =
+                    window_bounds.bottom() - bounds.bottom() - 4.0 * cx.scale_factor();
                 let space_above = parent_bounds.top() - window_bounds.top();
 
                 let scale = cx.scale_factor();

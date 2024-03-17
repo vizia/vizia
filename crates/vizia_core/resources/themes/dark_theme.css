@@ -1,13 +1,14 @@
 /* GENERAL */
 
-/* * {
-    border-color: blue;
-    border-width: 1px;
-} */
-
 :root {
     background-color: #202020;
     color: #fafafa;
+}
+
+*:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef;
+    outline-offset: 3px;
 }
 
 /* BACKGROUNDS */
@@ -30,6 +31,26 @@ avatar {
     background-color: #343434;
 }
 
+/* BADGE */
+
+badge {
+    border-width: 2px;
+    border-color: white;
+    background-color: #0062ff;
+}
+
+badge.success {
+    background-color: #00ab14;
+}
+
+badge.warning {
+    background-color: #ffaa00;
+}
+
+badge.error {
+    background-color: #ff2d2d;
+}
+
 /* BUTTON  */
 
 button {
@@ -45,12 +66,6 @@ button:hover {
 
 button:active {
     background-color: #303030;
-}
-
-button:focus-visible {
-    outline-width: 2px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
 }
 
 button.accent,
@@ -131,22 +146,12 @@ button-group.text:disabled > button {
     color: #585858;
 }
 
-button:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
-}
-
 button:disabled {
     background-color: #404040;
     border-color: #404040;
     transition: background-color 100ms;
     transition: border-color 100ms;
     transition: color 100ms;
-}
-
-button:disabled label {
-    color: #888;
 }
 
 /* BUTTON GROUP */
@@ -212,22 +217,15 @@ checkbox {
     border-radius: 2px;
     border-width: 1px;
     border-color: #888;
-    background-color: transparent;
+    background-color: #1d1d1d;
     transition: background-color 100ms;
     transition: border-color 100ms;
 }
 
 checkbox:hover {
     border-color: #51afef;
-    background-color: transparent;
     transition: background-color 100ms;
     transition: border-color 100ms;
-}
-
-checkbox:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
 }
 
 checkbox:checked {
@@ -275,29 +273,58 @@ checkbox.intermediate {
 /* CHIP */
 
 chip {
-    border-radius: 4px;
-    background-color: #656565;
+    border-radius: 50%;
+    background-color: #888888;
 }
 
 chip.outline {
     border-width: 1px;
-    border-color: #656565;
+    border-color: #888888;
     background-color: transparent;
 }
 
 chip .close-icon {
-    background-color: #343434;
+    background-color: #70707000;
     transition: background-color 100ms;
     border-radius: 50%;
 }
 
 chip .close-icon:hover {
-    background-color: #404040;
+    background-color: #707070;
     transition: background-color 100ms;
 }
 
 chip:disabled .icon {
     background-color: transparent;
+}
+
+/* COMBOBOX */
+
+combobox {
+    border-radius: 4px;
+    background-color: #1d1d1d;
+}
+
+combobox .title {
+    border-width: 1px;
+    border-color: #888;
+    border-radius: 4px;
+}
+
+combobox > textbox > label.placeholder {
+    color: #fafafa;
+}
+
+combobox .list label {
+    cursor: hand;
+}
+
+combobox .list label.nav {
+    background-color: #51afef34;
+}
+
+combobox .list label:checked {
+    background-color: #51afef;
 }
 
 /* DATEPICKER */
@@ -338,7 +365,7 @@ datepicker {
 /* DIVIDER */
 
 divider {
-    background-color: #c4c4c4;
+    background-color: #565656;
 }
 
 /* DROPDOWN */
@@ -348,51 +375,16 @@ dropdown {
     border-radius: 4px;
 }
 
-dropdown:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef;
-    outline-offset: 3px;
-}
-
-dropdown popup {
-    background-color: #343434;
-    border-radius: 4px;
-}
-
 dropdown list label {
     cursor: hand;
 }
 
 dropdown list label:hover {
-    background-color: #51afef11;
+    background-color: #51afef34;
 }
 
 dropdown list label:checked {
-    background-color: #5dc4ec;
-}
-
-dropdown list label:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
-}
-
-dropdown .list label {
-    cursor: hand;
-}
-
-dropdown .list label.nav {
-    background-color: #51b0ef34;
-}
-
-dropdown .list label:checked {
-    background-color: #5dc4ec;
-}
-
-dropdown .list label:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
+    background-color: #51afef;
 }
 
 /* ICON */
@@ -404,12 +396,6 @@ icon:disabled {
 
 knob {
     background-color: #202020;
-}
-
-knob:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
 }
 
 knob .knob-track {
@@ -431,12 +417,12 @@ knob:disabled .knob-head {
 }
 
 knob .knob-tick {
-    background-color: #fff;
+    background-color: #888;
     border-radius: 1px;
 }
 
 knob:disabled .knob-tick {
-    background-color: #c4c4c4;
+    background-color: #404040;
 }
 
 /* LABEL */
@@ -445,19 +431,29 @@ label:disabled {
     color: #585858;
 }
 
+label.describing {
+    cursor: hand;
+}
+
+/* LIST */
+
+list label.dark {
+    background-color: #00000015;
+}
+
 /* MENU */
 
 menubutton {
-    background-color: transparent;
+    background-color: #343434;
     border-radius: 4px;
 }
 
 menubutton:focus {
-    background-color: #333333;
+    background-color: #404040;
 }
 
 menubutton:hover {
-    background-color: #333333;
+    background-color: #404040;
 }
 
 menubutton:disabled {
@@ -470,28 +466,24 @@ menubutton .shortcut {
 }
 
 submenu {
-    background-color: transparent;
+    background-color: #343434;
     border-radius: 4px;
 }
 
 menubar submenu {
-    border-width: 0px;
-}
-
-submenu submenu {
-    border-width: 0px;
+    background-color: transparent;
 }
 
 submenu:checked {
-    background-color: #333333;
+    background-color: #404040;
 }
 
 submenu:focus {
-    background-color: #333333;
+    background-color: #404040;
 }
 
 submenu:hover {
-    background-color: #333333;
+    background-color: #404040;
 }
 
 submenu:disabled {
@@ -499,10 +491,7 @@ submenu:disabled {
 }
 
 submenu > popup {
-    background-color: #242424;
     child-space: 8px;
-    border-radius: 4px;
-    box-shadow: 0px 2px 16px #00000038;
 }
 
 menu-divider {
@@ -528,16 +517,12 @@ notification {
 
 /* PICKLIST */
 
-picklist:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef;
-    outline-offset: 3px;
-}
-
 /* POPUP */
 
 popup {
-    box-shadow: 0px 0px 8px #00000026;
+    background-color: #343434;
+    border-radius: 4px;
+    box-shadow: 0px 2px 16px #00000038;
 }
 
 /* PROGRESS BAR */
@@ -624,6 +609,7 @@ radiobutton:disabled .inner {
 }
 
 /* RATING */
+
 rating .icon {
     color: #484848;
     font-size: x-large;
@@ -659,6 +645,7 @@ rating .icon:checked:disabled {
 }
 
 /* SCROLLVIEW */
+
 scrollview > scrollbar {
     display: none;
 }
@@ -673,29 +660,29 @@ scrollbar {
 }
 
 scrollbar .thumb {
-    background-color: #404040;
+    background-color: #565656;
     border-radius: 50%;
     opacity: 0;
     transition: opacity 200ms 0s linear;
 }
 
-scrollview.h-scroll > scrollbar.horizontal:hover > .thumb,
-scrollview.v-scroll > scrollbar.vertical:hover > .thumb {
-    background-color: #404040;
+scrollview.h-scroll:hover > scrollbar.horizontal > .thumb,
+scrollview.v-scroll:hover > scrollbar.vertical > .thumb {
+    background-color: #565656;
     opacity: 1;
     transition: opacity 200ms 0s linear;
 }
 
 scrollview.h-scroll:active > scrollbar.horizontal > .thumb,
 scrollview.v-scroll:active > scrollbar.vertical > .thumb {
-    background-color: #404040;
+    background-color: #626262;
     opacity: 1;
     transition: opacity 200ms 0s linear;
 }
 
 scrollview.h-scroll > scrollbar.horizontal:active > .thumb,
 scrollview.v-scroll > scrollbar.vertical:active > .thumb {
-    background-color: #404040;
+    background-color: #626262;
     opacity: 1;
     transition: opacity 200ms 0s linear;
 }
@@ -743,12 +730,11 @@ slider:disabled .thumb {
 /* SPINBOX */
 
 spinbox {
-    background-color: #282828;
+    background-color: #343434;
     border-radius: 4px;
 }
 
 spinbox .spinbox-button {
-    color: #888888;
     cursor: hand;
 }
 
@@ -840,40 +826,16 @@ switch:checked:hover:disabled * {
 
 /* TABVIEW */
 
-tabview tabheader label {
-    color: #888;
-}
-
-tabview tabheader:checked label {
-    color: #fff;
-}
-
-tabview.vertical tabheader label {
-    color: #888;
-}
-
-tabview.vertical tabheader:checked label {
-    color: #fff;
-}
-
-tabview tabheader .indicator {
+tabheader:disabled {
     background-color: transparent;
-    height: 2px;
-    width: 1s;
 }
 
-tabview.vertical tabheader .indicator {
-    background-color: transparent;
-    height: 1s;
-    width: 2px;
-}
-
-tabview tabheader:checked .indicator {
+tabheader:checked .indicator {
     background-color: #51afef;
 }
 
 tabview .tabview-divider {
-    background-color: #c4c4c4;
+    background-color: #565656;
 }
 
 /* TEXTBOX */
@@ -881,14 +843,15 @@ tabview .tabview-divider {
 textbox {
     border-width: 1px;
     border-radius: 4px;
-    border-color: #343434;
+    border-color: #888;
+    background-color: #1d1d1d;
     transition: border-color 100ms;
     transition: background-color 100ms;
 }
 
 textbox:checked {
     border-color: #51afef;
-    background-color: #323232;
+    background-color: #1d1d1d;
     transition: border-color 100ms;
 }
 
@@ -898,7 +861,7 @@ textbox:checked.caret {
 
 textbox > label.placeholder {
     caret-color: transparent;
-    color: gray;
+    color: #888;
 }
 
 textbox:read-only {
@@ -923,90 +886,42 @@ textbox:invalid {
     background-color: #3c2c2c;
 }
 
-/* TIMEPICKER */
+/* TOGGLE BUTTON */
 
-timepicker {
-    background-color: #343434;
+toggle-button {
     border-radius: 4px;
-}
-
-/* Radial Time Picker */
-
-analogtimepicker {
+    border-width: 1px;
+    border-color: #888;
     background-color: #343434;
-    border-radius: 4px;
-    width: 160px;
-    height: 160px;
-    child-space: 4px;
+    transition: background-color 100ms;
 }
 
-analogtimepicker .clock-face {
-    border-radius: 50%;
-    background-color: #484848;
-    width: 1s;
-    height: 1s;
+toggle-button:hover {
+    background-color: #404040;
+    transition: background-color 100ms;
 }
 
-analogtimepicker .clock-hand {
-    background-color: #51afef;
+toggle-button:active {
+    background-color: #303030;
 }
 
-analogtimepicker .center-dot {
-    border-radius: 50%;
-    background-color: #51afef;
+toggle-button:checked {
+    background-color: #1d1d1d;
+    transition: background-color 100ms;
 }
 
-analogtimepicker .marker {
-    border-radius: 50%;
-    cursor: hand;
-    background-color: transparent;
-}
-
-analogtimepicker .marker:checked {
-    background-color: #51afef;
-    color: #181818;
-}
-
-analogtimepicker .time-selector-wrapper {
-    background-color: #343434;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-analogtimepicker .time-selector-wrapper button {
-    border-radius: 0px;
-    background-color: transparent;
-}
-
-analogtimepicker .time-selector-wrapper button label {
-    color: #888;
-}
-
-analogtimepicker .time-selector-wrapper button label {
-    color: #888;
-}
-
-analogtimepicker .time-selector-wrapper button:hover label {
-    color: #fff;
-}
-
-analogtimepicker .time-selector-wrapper button:checked label {
-    color: #fff;
-}
-
-analogtimepicker .time-selector-wrapper button .indicator {
-    background-color: transparent;
-    top: 1s;
-}
-
-analogtimepicker .time-selector-wrapper button:checked .indicator {
-    background-color: #51afef;
+toggle-button:disabled {
+    border-color: #404040;
+    color: #626262;
+    background-color: #404040;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 /* TOOLTIP */
 tooltip {
     child-space: 4px;
-    background-color: #656565;
+    background-color: #888;
     border-radius: 4px;
     opacity: 0;
 }
@@ -1017,5 +932,11 @@ tooltip.vis {
 }
 
 tooltip arrow {
-    background-color: #656565;
+    background-color: #888;
+}
+
+/* VIRTUAL LIST */
+
+virtual-list label.dark {
+    background-color: #00000015;
 }

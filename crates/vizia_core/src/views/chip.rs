@@ -33,7 +33,7 @@ impl Chip {
                 Binding::new(cx, Chip::on_close.map(|on_close| on_close.is_some()), |cx, val| {
                     if val.get(cx) {
                         let on_close = Chip::on_close.get(cx).unwrap();
-                        Icon::new(cx, ICON_X)
+                        IconButton::new(cx, ICON_X)
                             .class("close-icon")
                             .height(Pixels(16.0))
                             .width(Pixels(16.0))

@@ -29,7 +29,7 @@ pub fn textbox(cx: &mut Context) {
 
         Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
 
-        Label::new(cx, "Label").class("header");
+        Label::new(cx, "Basic textbox").class("header");
         DemoRegion::new(
             cx,
             |cx| {

@@ -7,9 +7,9 @@ pub fn notification(cx: &mut Context) {
         Label::new(cx, "Notification").class("title");
         Label::new(cx, "").class("paragraph");
 
-        // Divider here
         Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
 
+        Label::new(cx, "Basic notification").class("header");
         DemoRegion::new(
             cx,
             |cx| {

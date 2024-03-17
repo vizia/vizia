@@ -33,8 +33,9 @@ pub fn dropdown(cx: &mut Context) {
         Label::new(cx, "Dropdown").class("title");
         Label::new(cx, "").class("paragraph");
 
-        // Divider here
         Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+
+        Label::new(cx, "Basic dropdown").class("header");
 
         DemoRegion::new(
             cx,

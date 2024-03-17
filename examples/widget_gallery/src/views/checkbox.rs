@@ -7,14 +7,12 @@ pub struct CheckboxData {
     check_a: bool,
     check_b: bool,
     check_c: bool,
-    check_d: bool,
 }
 
 pub enum CheckboxEvent {
     ToggleA,
     ToggleB,
     ToggleC,
-    ToggleD,
 }
 
 impl Model for CheckboxData {
@@ -31,45 +29,27 @@ impl Model for CheckboxData {
             CheckboxEvent::ToggleC => {
                 self.check_c ^= true;
             }
-
-            CheckboxEvent::ToggleD => {
-                self.check_d ^= true;
-            }
         });
     }
 }
 
 pub fn checkbox(cx: &mut Context) {
-    CheckboxData { check_a: true, check_b: false, check_c: false, check_d: true }.build(cx);
+    CheckboxData { check_a: true, check_b: false, check_c: false }.build(cx);
 
     VStack::new(cx, |cx| {
         Label::new(cx, "Checkbox").class("title");
         Label::new(cx, "A checkbox can be used to display a boolean value, or to select one or more items from a set of options.")
             .class("paragraph");
 
+        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+
         Label::new(cx, "Basic checkboxes").class("header");
 
         DemoRegion::new(cx, |cx|{
             Checkbox::new(cx, CheckboxData::check_a)
                 .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA));
-            Checkbox::new(cx, CheckboxData::check_b)
-                .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleB));
-            Checkbox::new(cx, CheckboxData::check_c)
-                .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleC))
-                .disabled(true);
-            Checkbox::new(cx, CheckboxData::check_d)
-                .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleD))
-                .disabled(true);
         }, r#"Checkbox::new(cx, CheckboxData::check_a)
-    .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA));
-Checkbox::new(cx, CheckboxData::check_b)
-    .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleB));
-Checkbox::new(cx, CheckboxData::check_c)
-    .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleC))
-    .disabled(true);
-Checkbox::new(cx, CheckboxData::check_d)
-    .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleD))
-    .disabled(true);"#);
+    .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA));"#);
 
         Label::new(cx, "Label").class("header");
         Label::new(cx, "A `FormControl` can be used to add a label to a checkbox. Pressing on the label will also toggle the corresponding checkbox.")

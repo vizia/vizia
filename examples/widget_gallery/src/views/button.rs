@@ -12,6 +12,8 @@ pub fn button(cx: &mut Context) {
         Label::new(cx, "A button can be used to send an event when pressed. Typically they are used to trigger an action.")
             .class("paragraph");
 
+        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+
         Label::new(cx, "Basic button").class("header");
         DemoRegion::new(
             cx,
@@ -75,14 +77,6 @@ Button::new(cx, |cx| {
 })
 .class("accent");"#
         );
-
-        Label::new(cx, "Handling clicks").class("header");
-        HStack::new(
-            cx,
-            |cx|{
-            Label::new(cx, r#"Button::new(cx, |cx| Label::new(cx, "Button"))
-    .on_press(|cx| {...});"#).class("code");    
-        }).height(Auto).class("code");
 
     }).class("panel");
 }

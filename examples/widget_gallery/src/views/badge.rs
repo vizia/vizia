@@ -9,6 +9,7 @@ pub fn badge(cx: &mut Context) {
 
         Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
 
+        Label::new(cx, "Basic badge").class("header");
         DemoRegion::new(
             cx,
             |cx| {

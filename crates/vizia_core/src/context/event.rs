@@ -1236,6 +1236,32 @@ impl<'a> EventContext<'a> {
         }
     }
 
+    pub fn query_timer<T>(
+        &mut self,
+        timer: Timer,
+        timer_function: impl Fn(&TimerState) -> T,
+    ) -> Option<T> {
+        while let Some(next_timer_state) = self.running_timers.peek() {
+            if next_timer_state.id == timer {
+                let timer_state = self.running_timers.pop().unwrap();
+
+                let t = (timer_function)(&timer_state);
+
+                self.running_timers.push(timer_state);
+
+                return Some(t);
+            }
+        }
+
+        for pending_timer in self.timers.iter() {
+            if pending_timer.id == timer {
+                return Some(timer_function(pending_timer));
+            }
+        }
+
+        None
+    }
+
     /// Returns true if the timer with the provided timer id is currently running.
     pub fn timer_is_running(&mut self, timer: Timer) -> bool {
         for timer_state in self.running_timers.iter() {

@@ -55,38 +55,36 @@ impl Model for SpinboxData {
 
             SpinboxEvent::Increment1 => {
                 self.spinbox_value_1 += 1;
-            }
+            } // SpinboxEvent::Decrement2 => {
+              //     if self.spinbox_value_2 != 0 {
+              //         self.spinbox_value_2 -= 1;
+              //     }
+              // }
 
-            // SpinboxEvent::Decrement2 => {
-            //     if self.spinbox_value_2 != 0 {
-            //         self.spinbox_value_2 -= 1;
-            //     }
-            // }
+              // SpinboxEvent::Increment2 => {
+              //     self.spinbox_value_2 += 1;
+              // }
 
-            // SpinboxEvent::Increment2 => {
-            //     self.spinbox_value_2 += 1;
-            // }
+              // SpinboxEvent::Set2(v) => {
+              //     self.spinbox_value_2 = match v.parse::<usize>() {
+              //         Ok(number) => number,
+              //         Err(_) => self.spinbox_value_2,
+              //     }
+              // }
 
-            // SpinboxEvent::Set2(v) => {
-            //     self.spinbox_value_2 = match v.parse::<usize>() {
-            //         Ok(number) => number,
-            //         Err(_) => self.spinbox_value_2,
-            //     }
-            // }
+              // SpinboxEvent::Increment3 => {
+              //     self.spinbox_value_3 = (self.spinbox_value_3 + 1) % 3;
+              // }
 
-            // SpinboxEvent::Increment3 => {
-            //     self.spinbox_value_3 = (self.spinbox_value_3 + 1) % 3;
-            // }
+              // SpinboxEvent::Decrement3 => {
+              //     let mut index = self.spinbox_value_3 as usize;
+              //     if index == 0 {
+              //         index = 3
+              //     }
+              //     self.spinbox_value_3 = index - 1;
+              // }
 
-            // SpinboxEvent::Decrement3 => {
-            //     let mut index = self.spinbox_value_3 as usize;
-            //     if index == 0 {
-            //         index = 3
-            //     }
-            //     self.spinbox_value_3 = index - 1;
-            // }
-
-            // SpinboxEvent::Set3(v) => self.spinbox_value_3 = *v,
+              // SpinboxEvent::Set3(v) => self.spinbox_value_3 = *v,
         })
     }
 }
@@ -104,6 +102,9 @@ pub fn spinbox(cx: &mut Context) {
         Label::new(cx, "Spinbox").class("title");
         Label::new(cx, "").class("paragraph");
 
+        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+
+        Label::new(cx, "Basic spinbox").class("header");
         DemoRegion::new(
             cx,
             |cx| {

@@ -9,6 +9,8 @@ pub fn divider(cx: &mut Context) {
 
         Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
 
+        Label::new(cx, "Basic divider").class("header");
+
         DemoRegion::new(
             cx,
             |cx| {
