@@ -1,7 +1,7 @@
 #[allow(unused_imports)]
 use vizia::prelude::*;
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.emit(EnvironmentEvent::SetLocale("en-US".parse().unwrap()));
 
@@ -49,5 +49,5 @@ fn main() {
         });
     })
     .ignore_default_theme()
-    .run();
+    .run()
 }

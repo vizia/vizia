@@ -1,11 +1,11 @@
-use crate::{prelude::*, style::SystemFlags};
+use crate::prelude::*;
 
 pub(crate) fn animation_system(cx: &mut Context) -> bool {
     cx.style.play_pending_animations();
 
     // Tick all animations
 
-    let time = instant::Instant::now();
+    let time = Instant::now();
 
     // Properties which affect rendering
     let needs_redraw =

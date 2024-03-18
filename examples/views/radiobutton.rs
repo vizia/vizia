@@ -20,12 +20,24 @@ impl std::fmt::Display for Options {
     }
 }
 
-#[derive(Lens, Model, Setter)]
+#[derive(Lens)]
 pub struct AppData {
     pub option: Options,
 }
 
-fn main() {
+pub enum AppEvent {
+    SetOption(Options),
+}
+
+impl Model for AppData {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            AppEvent::SetOption(option) => self.option = *option,
+        })
+    }
+}
+
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { option: Options::First }.build(cx);
 
@@ -40,7 +52,7 @@ fn main() {
                         cx,
                         AppData::option.map(move |option| *option == current_option),
                     )
-                    .on_select(move |cx| cx.emit(AppDataSetter::Option(current_option)));
+                    .on_select(move |cx| cx.emit(AppEvent::SetOption(current_option)));
                 }
             })
             .size(Auto)
@@ -56,8 +68,9 @@ fn main() {
                             cx,
                             AppData::option.map(move |option| *option == current_option),
                         )
-                        .on_select(move |cx| cx.emit(AppDataSetter::Option(current_option)))
+                        .on_select(move |cx| cx.emit(AppEvent::SetOption(current_option)))
                         .id(format!("button_{i}"));
+
                         Label::new(cx, &current_option.to_string())
                             .describing(format!("button_{i}"));
                     })
@@ -72,7 +85,7 @@ fn main() {
         });
     })
     .title("Radiobutton")
-    .run();
+    .run()
 }
 
 fn index_to_option(index: usize) -> Options {

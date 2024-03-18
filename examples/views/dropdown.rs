@@ -2,13 +2,27 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-#[derive(Lens, Model, Setter)]
+#[derive(Lens)]
 pub struct AppData {
     list: Vec<String>,
     choice: String,
 }
 
-fn main() {
+pub enum AppEvent {
+    SetChoice(String),
+}
+
+impl Model for AppData {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            AppEvent::SetChoice(choice) => {
+                self.choice = choice.clone();
+            }
+        })
+    }
+}
+
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData {
             list: vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()],
@@ -23,9 +37,6 @@ fn main() {
                 move |cx| {
                     List::new(cx, AppData::list, |cx, _, item| {
                         Label::new(cx, item)
-                            .width(Stretch(1.0))
-                            //.child_top(Stretch(1.0))
-                            //.child_bottom(Stretch(1.0))
                             .cursor(CursorIcon::Hand)
                             .bind(AppData::choice, move |handle, selected| {
                                 if item.get(&handle) == selected.get(&handle) {
@@ -33,11 +44,10 @@ fn main() {
                                 }
                             })
                             .on_press(move |cx| {
-                                cx.emit(AppDataSetter::Choice(item.get(cx)));
+                                cx.emit(AppEvent::SetChoice(item.get(cx)));
                                 cx.emit(PopupEvent::Close);
                             });
-                    })
-                    .width(Stretch(1.0));
+                    });
                 },
             )
             .top(Pixels(40.0))
@@ -46,5 +56,5 @@ fn main() {
     })
     .title("Dropdown")
     .inner_size((350, 300))
-    .run();
+    .run()
 }

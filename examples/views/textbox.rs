@@ -3,7 +3,7 @@ use helpers::*;
 use vizia::icons::ICON_SEARCH;
 use vizia::prelude::*;
 
-#[derive(Lens, Setter, Model)]
+#[derive(Lens)]
 pub struct AppData {
     editable_text: String,
     multiline_text: String,
@@ -11,7 +11,21 @@ pub struct AppData {
     non_editable_multiline_text: String,
 }
 
-fn main() {
+impl Model for AppData {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            AppEvent::SetEditableText(text) => self.editable_text = text.clone(),
+            AppEvent::SetMultilineText(text) => self.multiline_text = text.clone(),
+        });
+    }
+}
+
+pub enum AppEvent {
+    SetEditableText(String),
+    SetMultilineText(String),
+}
+
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData {
             editable_text: "".to_string(),
@@ -27,14 +41,14 @@ fn main() {
             Textbox::new(cx, AppData::editable_text)
                 .width(Pixels(300.0))
                 .placeholder("Type something...")
-                .on_edit(|cx, text| cx.emit(AppDataSetter::EditableText(text)));
+                .on_edit(|cx, text| cx.emit(AppEvent::SetEditableText(text)));
 
             HStack::new(cx, |cx| {
                 Textbox::new(cx, AppData::editable_text)
                     .class("icon-before")
                     .width(Stretch(1.0))
                     .placeholder("Search")
-                    .on_edit(|cx, text| cx.emit(AppDataSetter::EditableText(text)));
+                    .on_edit(|cx, text| cx.emit(AppEvent::SetEditableText(text)));
                 Icon::new(cx, ICON_SEARCH)
                     .color(Color::gray())
                     .position_type(PositionType::SelfDirected);
@@ -44,7 +58,7 @@ fn main() {
 
             Textbox::new_multiline(cx, AppData::multiline_text, true)
                 .width(Pixels(300.0))
-                .on_edit(|cx, text| cx.emit(AppDataSetter::MultilineText(text)));
+                .on_edit(|cx, text| cx.emit(AppEvent::SetMultilineText(text)));
 
             Textbox::new(cx, AppData::non_editable_text).width(Auto).read_only(true);
             Textbox::new_multiline(cx, AppData::non_editable_multiline_text, true)
@@ -53,5 +67,5 @@ fn main() {
         });
     })
     .title("Textbox")
-    .run();
+    .run()
 }

@@ -1,6 +1,6 @@
 use femtovg::Transform2D;
 
-/// Respresents the axis-aligned bounding box of a view.
+/// Represents the axis-aligned bounding box of a view.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct BoundingBox {
     pub x: f32,
@@ -217,8 +217,14 @@ impl BoundingBox {
     }
 
     pub fn contains(&self, other: &Self) -> bool {
-        let x_hit = other.x >= self.x && other.x < self.x + self.w;
-        let y_hit = other.y >= self.y && other.y < self.y + self.h;
+        let x_hit = other.x >= self.x && other.x + other.w < self.x + self.w;
+        let y_hit = other.y >= self.y && other.y + other.h < self.y + self.h;
+        x_hit && y_hit
+    }
+
+    pub fn contains_point(&self, x: f32, y: f32) -> bool {
+        let x_hit = x >= self.x && x < self.x + self.w;
+        let y_hit = y >= self.y && y < self.y + self.h;
         x_hit && y_hit
     }
 

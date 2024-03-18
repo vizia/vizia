@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, rc::Rc};
 
-use instant::{Duration, Instant};
+use web_time::{Duration, Instant};
 
 use crate::{context::EventContext, entity::Entity};
 
@@ -25,15 +25,19 @@ pub struct TimerState {
     pub(crate) id: Timer,
     pub(crate) time: Instant,
     pub(crate) interval: Duration,
-    pub(crate) duration: Option<instant::Duration>,
-    pub(crate) start_time: instant::Instant,
+    pub(crate) duration: Option<Duration>,
+    pub(crate) start_time: Instant,
     pub(crate) callback: Rc<dyn Fn(&mut EventContext, TimerAction)>,
     pub(crate) ticking: bool,
     pub(crate) stopping: bool,
 }
 
 impl TimerState {
-    pub(crate) fn end_time(&self) -> Option<instant::Instant> {
+    pub fn start_time(&self) -> Instant {
+        self.start_time
+    }
+
+    pub fn end_time(&self) -> Option<Instant> {
         self.duration.map(|duration| self.start_time + duration)
     }
 
@@ -49,6 +53,20 @@ impl TimerState {
         self.duration = duration;
 
         self
+    }
+
+    pub fn duration(&self) -> Option<Duration> {
+        self.duration
+    }
+
+    pub fn interval(&self) -> Duration {
+        self.interval
+    }
+
+    pub fn progress(&self) -> Option<f32> {
+        self.duration.map(|duration| {
+            ((self.time - self.start_time).as_secs_f32() / duration.as_secs_f32()).clamp(0.0, 1.0)
+        })
     }
 }
 

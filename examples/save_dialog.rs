@@ -13,6 +13,8 @@ const STYLE: &str = r#"
         border-color: #999999;
         outer-shadow: 0 3 10 #00000055;
         overflow: visible;
+        child-space: 10px;
+        height: auto;
     }
 
     .modal>vstack>label {
@@ -80,48 +82,43 @@ pub enum AppEvent {
     Cancel,
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
         AppData { is_saved: false, show_dialog: false }.build(cx);
 
         HStack::new(cx, |cx| {
-            Button::new(cx, |cx| cx.emit(WindowEvent::WindowClose), |cx| Label::new(cx, "Close"));
-            Button::new(cx, |cx| cx.emit(AppEvent::Save), |cx| Label::new(cx, "Save"));
+            Button::new(cx, |cx| Label::new(cx, "Close"))
+                .on_press(|cx| cx.emit(WindowEvent::WindowClose));
+            Button::new(cx, |cx| Label::new(cx, "Save")).on_press(|cx| cx.emit(AppEvent::Save));
         })
         .col_between(Pixels(10.0))
         .space(Pixels(20.0));
 
-        Popup::new(cx, AppData::show_dialog, true, |cx| {
+        Dialog::new(cx, AppData::show_dialog, |cx| {
             VStack::new(cx, |cx| {
                 Label::new(cx, "Save before close?").width(Stretch(1.0)).child_space(Stretch(1.0));
                 HStack::new(cx, |cx| {
-                    Button::new(
-                        cx,
-                        |cx| cx.emit(AppEvent::SaveAndClose),
-                        |cx| Label::new(cx, "Save & Close"),
-                    )
-                    .width(Pixels(120.0))
-                    .class("accent");
+                    Button::new(cx, |cx| Label::new(cx, "Save & Close"))
+                        .on_press(|cx| cx.emit(AppEvent::SaveAndClose))
+                        .width(Pixels(120.0))
+                        .class("accent");
 
-                    Button::new(
-                        cx,
-                        |cx| cx.emit(AppEvent::HideModal),
-                        |cx| Label::new(cx, "Cancel"),
-                    )
-                    .width(Pixels(120.0));
+                    Button::new(cx, |cx| Label::new(cx, "Cancel"))
+                        .on_press(|cx| cx.emit(AppEvent::HideModal))
+                        .width(Pixels(120.0));
                 })
-                .size(Auto);
+                .height(Auto);
             })
             .size(Auto)
             .row_between(Pixels(20.0))
             .height(Auto);
         })
-        .on_blur(|cx| cx.emit(AppEvent::HideModal))
-        .width(Pixels(300.0))
+        // .on_blur(|cx| cx.emit(AppEvent::HideModal))
+        .width(Auto)
         .height(Auto)
         .row_between(Pixels(20.0))
         .class("modal");
     })
-    .run();
+    .run()
 }

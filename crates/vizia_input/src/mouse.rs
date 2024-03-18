@@ -11,6 +11,10 @@ pub enum MouseButton {
     Middle,
     /// Another mouse button with the associated button number.
     Other(u16),
+
+    Back,
+
+    Forward,
 }
 
 /// The state of a mouse button.

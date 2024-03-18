@@ -8,7 +8,7 @@ pub struct AppData {
 
 impl Model for AppData {}
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { user: String::from("Jane") }.build(cx);
 
@@ -23,5 +23,5 @@ fn main() {
         Label::new(cx, Localized::new("intro").arg("name", AppData::user));
         Label::new(cx, Localized::new("emails").arg_const("unread_emails", 5));
     })
-    .run();
+    .run()
 }

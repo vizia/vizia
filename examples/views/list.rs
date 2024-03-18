@@ -9,20 +9,17 @@ pub struct AppData {
 
 impl Model for AppData {}
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        cx.add_stylesheet(include_str!("../resources/themes/list_style.css"))
-            .expect("Failed to add stylesheet");
-
         let list: Vec<u32> = (10..14u32).collect();
         AppData { list }.build(cx);
 
         ExamplePage::new(cx, |cx| {
             List::new(cx, AppData::list, |cx, _, item| {
-                Label::new(cx, item);
+                Label::new(cx, item).hoverable(false).width(Pixels(100.0)).height(Pixels(30.0));
             });
         });
     })
     .title("List")
-    .run();
+    .run()
 }

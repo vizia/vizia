@@ -1,9 +1,7 @@
-use crate::context::{Context, ResourceContext};
-use crate::resource::{ImageRetentionPolicy, StoredImage};
-use crate::style::ImageOrGradient;
+use crate::context::ResourceContext;
+use crate::resource::StoredImage;
 use crate::{prelude::*, resource::ImageOrId};
-use std::collections::HashSet;
-use vizia_id::GenerationalId;
+use hashbrown::HashSet;
 
 // Iterate the tree and load any images used by entities which aren't already loaded. Remove any images no longer being used.
 pub(crate) fn image_system(cx: &mut Context) {

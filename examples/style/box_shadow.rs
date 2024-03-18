@@ -1,5 +1,4 @@
 use vizia::prelude::*;
-use vizia_core::{modifiers::BoxShadowBuilder, style::BoxShadow};
 
 const STYLE: &str = r#"
 
@@ -126,7 +125,7 @@ const STYLE: &str = r#"
     }
 "#;
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
@@ -159,7 +158,7 @@ fn main() {
                 false,
             ));
     })
-    .title("Box Shadows")
+    .title("Box Shadow")
     .inner_size((1000, 600))
-    .run();
+    .run()
 }

@@ -22,7 +22,7 @@ enum AppEvent {
     SetRating2(u32),
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { rating1: 3, rating2: 7 }.build(cx);
 
@@ -35,5 +35,5 @@ fn main() {
     })
     .title("Rating")
     .inner_size((400, 200))
-    .run();
+    .run()
 }

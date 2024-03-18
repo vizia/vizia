@@ -1,7 +1,7 @@
 //! The cache is a store for intermediate data produced while computing state, notably layout
 //! results. The main type here is CachedData, usually accessed via `cx.cache`.
 
-use crate::{layout::cache::GeoChanged, prelude::*};
+use crate::prelude::*;
 use femtovg::ImageId;
 use vizia_storage::SparseSet;
 
@@ -35,9 +35,9 @@ impl CachedData {
     pub(crate) fn remove(&mut self, entity: Entity) {
         self.bounds.remove(entity);
         self.relative_position.remove(entity);
+        self.shadow_images.remove(entity);
         self.filter_image.remove(entity);
         self.screenshot_image.remove(entity);
-        self.shadow_images.remove(entity);
         self.geo_changed.remove(entity);
     }
 
@@ -48,22 +48,22 @@ impl CachedData {
 
     /// Returns the x position of the entity.
     pub fn get_posx(&self, entity: Entity) -> f32 {
-        self.bounds.get(entity).cloned().unwrap_or_default().x
+        self.bounds.get(entity).map_or(0.0, |b| b.x)
     }
 
     /// Returns the y position of the entity.
     pub fn get_posy(&self, entity: Entity) -> f32 {
-        self.bounds.get(entity).cloned().unwrap_or_default().y
+        self.bounds.get(entity).map_or(0.0, |b| b.y)
     }
 
     /// Returns the width of the entity.
     pub fn get_width(&self, entity: Entity) -> f32 {
-        self.bounds.get(entity).cloned().unwrap_or_default().w
+        self.bounds.get(entity).map_or(0.0, |b| b.w)
     }
 
     /// Returns the height of the entity.
     pub fn get_height(&self, entity: Entity) -> f32 {
-        self.bounds.get(entity).cloned().unwrap_or_default().h
+        self.bounds.get(entity).map_or(0.0, |b| b.h)
     }
 
     pub fn set_bounds(&mut self, entity: Entity, bounds: BoundingBox) {

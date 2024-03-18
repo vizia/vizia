@@ -66,7 +66,12 @@ impl ExamplePage {
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
                     Switch::new(cx, ControlsData::disabled)
-                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
+                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, "Toggle disabled");
+                            })
+                        });
                     Label::new(cx, "Toggle Disabled");
                 })
                 .child_top(Stretch(1.0))
@@ -109,7 +114,12 @@ impl ExamplePage {
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
                     Switch::new(cx, ControlsData::disabled)
-                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
+                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, "Toggle disabled");
+                            })
+                        });
                     Label::new(cx, "Toggle Disabled");
                 })
                 .child_top(Stretch(1.0))
@@ -133,10 +143,18 @@ impl ExamplePage {
             .col_between(Pixels(20.0));
 
             HStack::new(cx, |cx| {
-                (content)(cx);
-            })
-            .disabled(ControlsData::disabled)
-            .class("container");
+                let _e = HStack::new(cx, |cx| {
+                    (content)(cx);
+                })
+                .disabled(ControlsData::disabled)
+                .class("container")
+                .entity();
+
+                // VStack::new(cx, |cx| {
+                //     KeyBindView::new(cx, e);
+                // })
+                // .background_color(Color::rgb(240, 240, 240));
+            });
         })
     }
 }
@@ -148,7 +166,9 @@ fn theme_selection_dropdown(cx: &mut Context) {
         .on_select(|cx, index| cx.emit(ControlsEvent::SetThemeMode(index)))
         .width(Pixels(85.0))
         .tooltip(|cx| {
-            Label::new(cx, "Select Theme Mode");
+            Tooltip::new(cx, |cx| {
+                Label::new(cx, "Select Theme Mode");
+            })
         });
 }
 

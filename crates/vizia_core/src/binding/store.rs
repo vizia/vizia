@@ -1,13 +1,15 @@
-use std::collections::{hash_map::DefaultHasher, HashSet};
-use std::hash::{Hash, Hasher};
+use hashbrown::{hash_map::DefaultHashBuilder, HashSet};
+use std::any::TypeId;
+use std::hash::{BuildHasher, Hash, Hasher};
 
 use crate::{model::ModelOrView, prelude::*};
 
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct StoreId(pub u64);
 
-pub(crate) fn get_storeid<T: Hash>(t: &T) -> StoreId {
-    let mut s = DefaultHasher::new();
+pub(crate) fn get_storeid<T: 'static + Hash>(t: &T) -> StoreId {
+    let mut s = DefaultHashBuilder::default().build_hasher();
+    TypeId::of::<T>().hash(&mut s);
     t.hash(&mut s);
     StoreId(s.finish())
 }
@@ -23,6 +25,8 @@ pub(crate) trait Store {
     fn remove_observer(&mut self, observer: &Entity);
     /// Returns the number of obersers for the store.
     fn num_observers(&self) -> usize;
+    /// Returns true if the model or view is the source of the store.
+    fn contains_source(&self, model: ModelOrView) -> bool;
 
     fn name(&self) -> String;
 }
@@ -38,20 +42,21 @@ where
     L: Lens<Target = T>,
     <L as Lens>::Target: Data,
 {
+    fn contains_source(&self, model: ModelOrView) -> bool {
+        model.downcast_ref::<L::Source>().is_some()
+    }
+
     fn update(&mut self, model: ModelOrView) -> bool {
-        if let Some(data) = model.downcast_ref::<L::Source>() {
-            let result = self.lens.view(data, |t| match (&self.old, t) {
-                (Some(a), Some(b)) if a.same(b) => None,
-                (None, None) => None,
-                _ => Some(t.cloned()),
-            });
-            if let Some(new_data) = result {
-                self.old = new_data;
-                return true;
-            }
+        let Some(data) = model.downcast_ref::<L::Source>() else { return false };
+        let Some(new_data) = self.lens.view(data) else { return false };
+
+        if matches!(&self.old, Some(old) if old.same(&new_data)) {
+            return false;
         }
 
-        false
+        self.old = Some(new_data.into_owned());
+
+        true
     }
 
     fn observers(&self) -> &HashSet<Entity> {

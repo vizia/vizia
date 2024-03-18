@@ -23,7 +23,7 @@ impl Model for AppState {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppState { date: Utc::now().date_naive() }.build(cx);
 
@@ -33,5 +33,5 @@ fn main() {
         });
     })
     .title("Datepicker")
-    .run();
+    .run()
 }

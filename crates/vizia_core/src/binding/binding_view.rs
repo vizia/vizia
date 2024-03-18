@@ -1,5 +1,5 @@
+use hashbrown::{HashMap, HashSet};
 use std::any::TypeId;
-use std::collections::{HashMap, HashSet};
 
 use crate::binding::{get_storeid, BasicStore, Store, StoreId};
 use crate::context::{CURRENT, MAPS, MAP_MANAGER};
@@ -82,7 +82,7 @@ where
 
                 let model = model_data.downcast_ref::<L::Source>().unwrap();
 
-                let old = lens.view(model, |t| t.cloned());
+                let old = lens.view(model).map(|val| val.into_owned());
 
                 let store = Box::new(BasicStore { lens, old, observers });
 
@@ -134,7 +134,8 @@ where
             }
         });
 
-        let _: Handle<Self> = Handle { entity: id, p: Default::default(), cx }.ignore();
+        let _: Handle<Self> =
+            Handle { current: id, entity: id, p: Default::default(), cx }.ignore();
     }
 }
 

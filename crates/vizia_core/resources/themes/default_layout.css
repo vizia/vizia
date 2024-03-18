@@ -1,13 +1,58 @@
-/* ICON */
+/* AVATAR */
 
-icon {
-    font-family: "tabler-icons", sans-serif;
-    size: 32px;
+avatar {
+    size: 50px;
     child-space: 1s;
 }
 
-/* BUTTON */
+avatar.circle {
+    border-radius: 50%;
+}
 
+avatar.square {
+    border-radius: 0px;
+}
+
+avatar.rounded {
+    border-radius: 4px;
+}
+
+avatar > icon {
+    size: 100%;
+    font-size: 24;
+}
+
+avatar > image {
+    size: 100%;
+    background-size: cover;
+}
+
+avatar.circle > image {
+    border-radius: 50%;
+}
+
+avatar.rounded > image {
+    border-radius: 4px;
+}
+
+/* BADGE */
+badge {
+    position-type: self-directed;
+    size: 20px;
+    border-radius: 50%;
+    child-space: 1s;
+    font-size: 16;
+}
+
+badge > label {
+    font-size: 12;
+}
+
+badge > icon {
+    font-size: 24;
+}
+
+/* BUTTON */
 button {
     width: auto;
     height: 32px;
@@ -15,10 +60,11 @@ button {
     child-right: 1s;
     child-top: 1s;
     child-bottom: 1s;
+    cursor: hand;
 }
 
 button > .inner {
-    size: auto;
+    width: auto;
     child-space: 1s;
     col-between: 4px;
     min-left: 8px;
@@ -30,7 +76,56 @@ button > icon.inner {
     min-right: 0px;
 }
 
+button .inner > icon {
+    size: 16px;
+}
+
 button.icon {
+    size: 32px;
+    child-space: 1s;
+}
+
+/* BUTTON GROUP */
+button-group {
+    layout-type: row;
+    size: auto;
+}
+
+button-group.vertical {
+    layout-type: column;
+}
+
+button-group.vertical > button,
+button-group.vertical > toggle-button {
+    width: 1s;
+}
+
+/* TOGGLE BUTTON */
+toggle-button {
+    width: auto;
+    height: 32px;
+    child-left: 1s;
+    child-right: 1s;
+    child-top: 1s;
+    child-bottom: 1s;
+    cursor: hand;
+}
+
+toggle-button > .inner {
+    size: auto;
+    child-space: 1s;
+    col-between: 4px;
+    min-left: 8px;
+    min-right: 8px;
+}
+
+toggle-button > icon.inner {
+    min-left: 0px;
+    min-right: 0px;
+    width: 32px;
+}
+
+toggle-button.icon {
     size: 32px;
     child-space: 1s;
 }
@@ -49,11 +144,12 @@ checkbox {
 
 chip {
     width: auto;
-    height: 20px;
+    height: 24px;
     child-left: 8px;
     child-right: 8px;
     child-top: 1s;
     child-bottom: 1s;
+    col-between: 4px;
     font-size: small;
 }
 
@@ -62,13 +158,17 @@ chip label {
     width: auto;
 }
 
+chip .close-icon {
+    right: 4px;
+}
+
 /* DATEPICKER */
 
 datepicker {
-    width: 252px;
-    height: 289px;
-    child-space: 8px;
-    row-between: 8px;
+    width: 280px;
+    height: 280px;
+    child-space: 4px;
+    row-between: 4px;
 }
 
 .datepicker-header {
@@ -80,12 +180,7 @@ datepicker {
 .datepicker-header picklist dropdown popup {
     left: 1s;
     right: 1s;
-    width: 131px;
-}
-
-.datepicker-divisor {
-    width: 1s;
-    height: 1px;
+    width: auto;
 }
 
 .datepicker-calendar {
@@ -124,96 +219,130 @@ datepicker {
     right: 1s;
 }
 
-.datepicker-actions-container {
-    left: 1s;
-    right: 1s;
-    col-between: 4px;
+/* DIVIDER */
+
+divider {
+    width: 1s;
+    height: 1px;
 }
 
-.datepicker-cancel {
-    width: auto;
-    height: auto;
+vstack > divider {
+    width: 1s;
+    height: 1px;
 }
 
-.datepicker-cancel label {
-    top: 2px;
-    bottom: 2px;
-    right: 8px;
-    left: 8px;
-}
-
-.datepicker-apply {
-    width: auto;
-    height: auto;
-}
-
-.datepicker-apply label {
-    top: 2px;
-    bottom: 2px;
-    right: 8px;
-    left: 8px;
+hstack > divider {
+    width: 1px;
+    height: 1s;
 }
 
 /* DROPDOWN */
 
-dropdown {
+dropdown,
+combobox {
     height: 32px;
 }
 
-dropdown .title {
+dropdown .dropdown-title,
+combobox .title {
     width: 1s;
     height: 1s;
     child-left: 8px;
     child-right: 4px;
     child-top: 1s;
     child-bottom: 1s;
+    cursor: hand;
 }
 
-dropdown popup {
-    width: 100%;
+dropdown popup,
+combobox popup {
+    width: auto;
+    min-width: 100%;
     height: auto;
-    top: 100%;
-    translate: 0px 4px;
 }
 
-dropdown popup list {
-    width: 100%;
-    height: auto;
-    child-top: 4px;
-    child-bottom: 4px;
-}
-
-dropdown popup .list {
-    width: 100%;
+dropdown popup list,
+combobox popup .list {
+    width: 1s;
+    min-width: auto;
     height: auto;
     child-top: 4px;
     child-bottom: 4px;
 }
 
-dropdown popup scrollview scrollbar.vertical {
+dropdown popup scrollview scrollbar.vertical,
+combobox popup scrollview scrollbar.vertical {
     top: 4px;
     bottom: 4px;
     right: 2px;
 }
 
-dropdown list label {
-    width: 100%;
+combobox popup scrollview {
+    width: 1s;
+    min-width: auto;
+}
+
+dropdown list label,
+combobox .list label {
+    width: 1s;
+    min-width: auto;
     height: 32px;
     child-left: 6px;
+    child-right: 6px;
     child-top: 1s;
     child-bottom: 1s;
 }
 
-dropdown .list label {
-    width: 100%;
-    height: 32px;
-    child-left: 6px;
-    child-top: 1s;
-    child-bottom: 1s;
-}
-
-dropdown vstack {
+dropdown vstack,
+combobox vstack {
     child-space: auto;
+}
+
+/* FORM CONTROL */
+form-control {
+    layout-type: row;
+    size: auto;
+    child-top: 1s;
+    child-bottom: 1s;
+    col-between: 5px;
+    row-between: 5px;
+}
+
+form-control.vertical {
+    layout-type: column;
+}
+
+form-control > label:first-child {
+    display: flex;
+}
+
+form-control > label:last-child {
+    display: none;
+}
+
+form-control.pos-start > label:first-child {
+    display: none;
+}
+
+form-control.pos-start > label:last-child {
+    display: flex;
+}
+
+form-group {
+    size: auto;
+    row-between: 12px;
+}
+
+form-group > .legend {
+    bottom: 8px;
+}
+
+/* ICON */
+
+icon {
+    font-family: "tabler-icons", sans-serif;
+    size: 24px;
+    child-space: 1s;
 }
 
 /* IMAGE */
@@ -278,11 +407,32 @@ list {
     height: auto;
 }
 
+list > scrollview {
+    width: auto;
+    height: auto;
+    min-width: 100%;
+}
+
+list list-item {
+    height: auto;
+    width: auto;
+}
+
+list list-item:focus {
+    outline-color: rgb(232, 166, 166);
+    outline-width: 1px;
+    outline-offset: -1px;
+}
+
+list list-item:checked {
+    background-color: rgb(97, 97, 196);
+}
+
 /* MENU */
 
 menubar {
     child-space: 8px;
-    height: auto;
+    size: auto;
 }
 
 menubutton {
@@ -299,7 +449,8 @@ submenu {
     child-right: 8px;
 }
 
-submenu submenu {
+submenu submenu,
+dropdown > popup > submenu {
     width: 1s;
 }
 
@@ -307,6 +458,7 @@ menubutton label {
     child-top: 1s;
     child-bottom: 1s;
     width: 1s;
+    height: 1s;
 }
 
 menubutton .icon,
@@ -335,7 +487,8 @@ submenu > label {
     width: auto;
 }
 
-submenu submenu label {
+submenu submenu label,
+dropdown > popup > submenu label {
     child-top: 1s;
     child-bottom: 1s;
     size: 1s;
@@ -351,17 +504,20 @@ submenu > popup {
     right: 1s;
 }
 
-submenu submenu > popup {
+submenu submenu > popup,
+menubar submenu > popup {
     opacity: 0;
     display: none;
 }
 
-submenu submenu > popup:checked {
+submenu submenu > popup:checked,
+menubar submenu > popup:checked {
     opacity: 1;
     display: flex;
 }
 
-submenu submenu > popup {
+submenu submenu > popup,
+menubar submenu > popup {
     top: 0px;
     left: 100%;
 }
@@ -385,7 +541,8 @@ submenu > .arrow {
     display: none;
 }
 
-submenu submenu > .arrow {
+submenu submenu > .arrow,
+menu submenu > .arrow {
     display: flex;
 }
 
@@ -461,13 +618,15 @@ picklist {
 popup {
     width: auto;
     height: auto;
-    display: none;
-    opacity: 0;
+    position-type: self-directed;
+    z-index: 100;
 }
 
-popup:checked {
-    display: flex;
-    opacity: 1;
+/* PROGRESS BAR */
+
+progressbar {
+    height: 10px;
+    width: 1s;
 }
 
 /* RADIOBUTTON */
@@ -476,6 +635,7 @@ radiobutton {
     width: 16px;
     height: 16px;
     child-space: 1s;
+    cursor: hand;
 }
 
 radiobutton .inner {
@@ -601,12 +761,12 @@ spinbox picklist.spinbox-value dropdown {
     width: 100%;
 }
 
-spinbox picklist.spinbox-value .title {
+spinbox picklist.spinbox-value .dropdown-title {
     width: 1s;
     col-between: 4px;
 }
 
-spinbox picklist.spinbox-value .title label {
+spinbox picklist.spinbox-value .dropdown-title label {
     left: 1s;
     right: 1s;
 }
@@ -628,6 +788,7 @@ zstack > * {
 switch {
     width: 30px;
     height: 18px;
+    cursor: hand;
 }
 
 switch .switch-handle {
@@ -657,25 +818,26 @@ tabview {
     height: 1s;
 }
 
+tabview > scrollview {
+    width: 1s;
+    height: auto;
+}
+
 tabview.vertical {
     layout-type: row;
 }
 
-tabview.vertical tabheader {
+tabview.vertical > scrollview.vertical {
+    width: auto;
+    height: 1s;
+}
+
+tabview > scrollview > scroll_content {
     layout-type: row;
 }
 
-tabview .tabview-tabheader-wrapper {
-    layout-type: row;
-}
-
-tabview.vertical .tabview-tabheader-wrapper {
+tabview.vertical > scrollview.vertical > scroll_content {
     layout-type: column;
-}
-
-.tabview-tabheader-wrapper {
-    height: auto;
-    col-between: 1px;
 }
 
 tabheader {
@@ -685,7 +847,7 @@ tabheader {
 }
 
 tabheader label {
-    height: 30px;
+    height: 32px;
     child-left: 12px;
     child-right: 12px;
     child-top: 1s;
@@ -694,10 +856,22 @@ tabheader label {
 
 tabheader .indicator {
     height: 2px;
+    width: 1s;
 }
 
-tabview .tabview-divider {
+tabheader.vertical .indicator {
+    width: 2px;
+    height: 1s;
+}
+
+.tabview-divider {
     height: 1px;
+    width: 1s;
+}
+
+.tabview-divider.vertical {
+    width: 1px;
+    height: 1s;
 }
 
 /* TEXTBOX */
@@ -751,111 +925,22 @@ textbox:disabled {
     cursor: default;
 }
 
-/* Radial Time Picker */
-
-analogtimepicker {
-    child-space: 8px;
-    border-radius: 4px;
-}
-
-analogtimepicker .clock-face {
-    child-space: 1s;
-}
-
-analogtimepicker .clock-hand {
-    width: 1px;
-    height: 50%;
-    translate: 0px -50%;
-    transform-origin: bottom center;
-}
-
-analogtimepicker .center-dot {
-    width: 4px;
-    height: 4px;
-}
-
-analogtimepicker .marker {
-    width: 32px;
-    height: 32px;
-    /* background-color: blue; */
-    transform: translateY(-60px);
-    /* translate: 0px -50%; */
-    /* transform-origin: bottom center; */
-    child-space: 1s;
-    /* child-left: 1s; */
-    /* child-right: 1s; */
-}
-
-/*
-analogtimepicker .controls-wrapper {
-    top: 1s;
-    bottom: 1s;
-    right: 1s;
-    left: 1s;
-    width: auto;
-    height: 80px;
-    row-between: 1s;
-    child-left: 1s;
-    child-right: 1s;
-}
-
-analogtimepicker .time-selector-wrapper {
-    height: auto;
-    overflow: hidden;
-}
-
-analogtimepicker .time-selector-wrapper button {
-    width: 30px;
-    child-left: 0px;
-    child-right: 0px;
-    child-top: 0px;
-    child-bottom: 0px;
-}
-
-analogtimepicker .time-selector-wrapper button label {
-    left: 4px;
-    right: 4px;
-    top: 1s;
-    bottom: 1s;
-    width: 1s;
-    height: 1s;
-    child-space: 1s;
-} */
-
-analogtimepicker .time-selector-wrapper button .indicator {
-    top: 1s;
-    width: 100%;
-    height: 2px;
-}
-
 /* TOOLTIP */
 
 tooltip {
-    height: auto;
+    position-type: self-directed;
+    z-index: 110;
+    size: auto;
 }
 
-tooltip .tooltip-wrapper {
-    child-space: 8px;
+tooltip arrow {
+    position-type: self-directed;
 }
 
-tooltip .tooltip-button-wrapper {
-    top: 8px;
-    left: 1s;
-    width: auto;
-    height: auto;
-    col-between: 8px;
-}
-
-.tooltip-pointer-wrapper {
-    width: 16px;
-    height: 12px;
-    overflow: hidden;
-    left: 4px;
-}
-
-.tooltip-pointer {
-    width: 12px;
-    height: 12px;
-    background-color: #51afef;
-    border-radius: 2px;
+/* VIRTUAL LIST */
+virtual-list label {
+    child-top: 1s;
+    child-bottom: 1s;
+    child-left: 5px;
+    width: 1s;
 }

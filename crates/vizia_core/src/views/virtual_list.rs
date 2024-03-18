@@ -1,14 +1,13 @@
-use std::ops::Range;
+use std::ops::{Deref, Range};
 
 use crate::prelude::*;
 
 #[derive(Lens)]
 pub struct VirtualList {
-    offset: usize,
     num_items: usize,
     item_height: f32,
-    visible_items: Vec<usize>,
-    scrolly: f32,
+    visible_range: Range<usize>,
+    scroll_y: f32,
     scroll_to_cursor: bool,
     on_change: Option<Box<dyn Fn(&mut EventContext, Range<usize>)>>,
 }
@@ -19,82 +18,143 @@ pub enum VirtualListEvent {
 }
 
 impl VirtualList {
-    pub fn new<V: View, L, T>(
+    pub fn new<V: View, L: Lens, T: 'static>(
         cx: &mut Context,
         list: L,
-        height: f32,
-        item: impl Fn(&mut Context, usize, Index<L, T>) -> Handle<V> + 'static,
+        item_height: f32,
+        item_content: impl 'static + Copy + Fn(&mut Context, usize, MapRef<L, T>) -> Handle<V>,
     ) -> Handle<Self>
     where
-        L: Lens,
-        <L as Lens>::Target: std::ops::Deref<Target = [T]>,
-        T: Data + 'static,
+        L::Target: Deref<Target = [T]>,
     {
-        let num_items = list.map(|l| l.len()).get(cx);
+        Self::new_generic(
+            cx,
+            list,
+            |list| list.len(),
+            |list, index| &list[index],
+            item_height,
+            item_content,
+        )
+    }
 
+    pub fn new_generic<V: View, L: Lens, T: 'static>(
+        cx: &mut Context,
+        list: L,
+        list_len: impl 'static + Fn(&L::Target) -> usize,
+        list_index: impl 'static + Copy + Fn(&L::Target, usize) -> &T,
+        item_height: f32,
+        item_content: impl 'static + Copy + Fn(&mut Context, usize, MapRef<L, T>) -> Handle<V>,
+    ) -> Handle<Self> {
+        let num_items = list.map(list_len);
         Self {
-            offset: 0,
-            num_items,
-            item_height: height,
-            visible_items: (0..10).collect::<Vec<_>>(),
-            scrolly: 0.0,
+            num_items: num_items.get(cx),
+            item_height,
+            visible_range: 0..0,
+            scroll_y: 0.0,
             scroll_to_cursor: true,
             on_change: None,
         }
         .build(cx, |cx| {
             ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
-                VStack::new(cx, |cx| {
-                    Binding::new(cx, VirtualList::visible_items, move |cx, visible_list| {
-                        for i in visible_list.get(cx) {
-                            let ptr = list.index(i);
-                            (item)(cx, i, ptr)
-                                .top(Pixels(i as f32 * height))
-                                .height(Pixels(height))
-                                .position_type(PositionType::SelfDirected);
-                        }
-                    });
+                Binding::new(cx, num_items, move |cx, lens| {
+                    let num_items = lens.get(cx);
+                    cx.emit(VirtualListEvent::SetNumItems(num_items));
+                    // The ScrollView contains a VStack which is sized to the total height
+                    // needed to fit all items. This ensures we have a correct scroll bar.
+                    VStack::new(cx, |cx| {
+                        // Within the VStack we create a view for each visible item.
+                        // This binding ensures the amount of views stay up to date.
+                        let num_visible_items = Self::visible_range.map(Range::len);
+                        Binding::new(cx, num_visible_items, move |cx, lens| {
+                            for i in 0..lens.get(cx).min(num_items) {
+                                // Each item of the range maps to an index into the backing list.
+                                // As we scroll the index may change, representing an item going in/out of visibility.
+                                // Wrap `item_content` in a binding to said index, so it rebuilds only when necessary.
+                                let item_index = Self::visible_item_index(i);
+                                Binding::new(cx, item_index, move |cx, lens| {
+                                    let index = lens.get(cx);
+                                    HStack::new(cx, move |cx| {
+                                        let item =
+                                            list.map_ref(move |list| list_index(list, index));
+                                        item_content(cx, index, item).height(Percentage(100.0));
+                                    })
+                                    .height(Pixels(item_height))
+                                    .position_type(PositionType::SelfDirected)
+                                    .bind(
+                                        item_index,
+                                        move |handle, lens| {
+                                            let index = lens.get(&handle);
+                                            handle.top(Pixels(index as f32 * item_height));
+                                        },
+                                    );
+                                });
+                            }
+                        });
+                    })
+                    .height(Pixels(num_items as f32 * item_height));
                 })
-                .height(list.map(move |l| Pixels(l.len() as f32 * height)));
             })
             .scroll_to_cursor(true)
             .on_scroll(|cx, _, y| {
-                cx.emit(VirtualListEvent::SetScrollY(y));
+                if y.is_finite() {
+                    cx.emit(VirtualListEvent::SetScrollY(y));
+                }
             });
-        })
-        .bind(list.map(|list| list.len()), |mut handle, len| {
-            let len = len.get(&handle);
-            handle.context().emit(VirtualListEvent::SetNumItems(len));
         })
     }
 
+    fn evaluate_index(index: usize, start: usize, end: usize) -> usize {
+        match end - start {
+            0 => 0,
+            len => start + (len - (start % len) + index) % len,
+        }
+    }
+
+    fn visible_item_index(index: usize) -> impl Lens<Target = usize> {
+        Self::visible_range.map(move |range| Self::evaluate_index(index, range.start, range.end))
+    }
+
     fn recalc(&mut self, cx: &mut EventContext) {
-        let current = cx.current();
-        let dpi = cx.scale_factor();
-        let container_height = cx.cache.get_height(current) / dpi;
-        let num_items = ((container_height + self.item_height) / self.item_height).ceil() as usize;
-
-        let total_height = self.num_items as f32 * self.item_height;
-        let offsety = ((total_height - container_height) * self.scrolly).round() * dpi;
-        self.offset = (offsety / self.item_height / dpi).ceil() as usize;
-        self.offset = self.offset.saturating_sub(1);
-
-        let start = self.offset;
-        let end = (self.offset + num_items).clamp(0, self.num_items);
-
-        self.visible_items.clear();
-        for i in start..end {
-            self.visible_items.push(i);
+        if self.num_items == 0 {
+            self.visible_range = 0..0;
+            return;
         }
 
+        let current = cx.current();
+        let current_height = cx.cache.get_height(current);
+        if current_height == f32::MAX {
+            return;
+        }
+
+        let item_height = self.item_height;
+        let total_height = item_height * (self.num_items as f32);
+        let visible_height = current_height / cx.scale_factor();
+
+        let mut num_visible_items = (visible_height / item_height).ceil();
+        num_visible_items += 1.0; // To account for partially-visible items.
+
+        let visible_items_height = item_height * num_visible_items;
+        let empty_height = (total_height - visible_items_height).max(0.0);
+
+        // The pixel offsets within the container to the visible area.
+        let visible_start = empty_height * self.scroll_y;
+        let visible_end = visible_start + visible_items_height;
+
+        // The indices of the first and last item of the visible area.
+        let start_index = (visible_start / item_height).trunc() as usize;
+        let end_index = 1 + (visible_end / item_height).trunc() as usize;
+
+        self.visible_range = start_index..end_index.min(self.num_items);
+
         if let Some(callback) = &self.on_change {
-            (callback)(cx, start..end)
+            (callback)(cx, self.visible_range.clone())
         }
     }
 }
 
 impl View for VirtualList {
     fn element(&self) -> Option<&'static str> {
-        Some("virtual_list")
+        Some("virtual-list")
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
@@ -111,43 +171,21 @@ impl View for VirtualList {
                             .target(cx.current),
                     );
                 }
-                // self.visible_items.clear();
-                // for i in 0..*num_items {
-                //     self.visible_items.push(i);
-                // }
             }
 
-            VirtualListEvent::SetScrollY(scrolly) => {
-                self.scrolly = *scrolly;
-                let current = cx.current();
-                let dpi = cx.scale_factor();
-                let container_height = cx.cache.get_height(current) / dpi;
-                let total_height = self.num_items as f32 * self.item_height;
-                let offsety = ((total_height - container_height) * *scrolly).round() * dpi;
-                self.offset = (offsety / self.item_height / dpi).ceil() as usize;
-                self.offset = self.offset.saturating_sub(1);
-
-                let num_items =
-                    ((container_height + self.item_height) / self.item_height).ceil() as usize;
-
-                let start = self.offset;
-                let end = (self.offset + num_items).clamp(0, self.num_items);
-                self.visible_items.clear();
-                for i in start..end {
-                    self.visible_items.push(i);
-                }
+            VirtualListEvent::SetScrollY(scroll_y) => {
+                self.scroll_y = *scroll_y;
+                self.recalc(cx);
 
                 if let Some(callback) = &self.on_change {
-                    (callback)(cx, start..end)
+                    (callback)(cx, self.visible_range.clone())
                 }
             }
         });
 
         event.map(|window_event, _| match window_event {
             WindowEvent::GeometryChanged(geo) => {
-                if geo.contains(GeoChanged::WIDTH_CHANGED)
-                    || geo.contains(GeoChanged::HEIGHT_CHANGED)
-                {
+                if geo.intersects(GeoChanged::WIDTH_CHANGED | GeoChanged::HEIGHT_CHANGED) {
                     self.recalc(cx);
                 }
             }
@@ -166,5 +204,40 @@ impl<'a> Handle<'a, VirtualList> {
 
     pub fn on_change(self, callback: impl Fn(&mut EventContext, Range<usize>) + 'static) -> Self {
         self.modify(|virtual_list| virtual_list.on_change = Some(Box::new(callback)))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn evaluate_indices(range: Range<usize>) -> Vec<usize> {
+        (0..range.len())
+            .map(|index| VirtualList::evaluate_index(index, range.start, range.end))
+            .collect()
+    }
+
+    #[test]
+    fn test_evaluate_index() {
+        // Move forward by 0
+        assert_eq!(evaluate_indices(0..4), [0, 1, 2, 3]);
+        // Move forward by 1
+        assert_eq!(evaluate_indices(1..5), [4, 1, 2, 3]);
+        // Move forward by 2
+        assert_eq!(evaluate_indices(2..6), [4, 5, 2, 3]);
+        // Move forward by 3
+        assert_eq!(evaluate_indices(3..7), [4, 5, 6, 3]);
+        // Move forward by 4
+        assert_eq!(evaluate_indices(4..8), [4, 5, 6, 7]);
+        // Move forward by 5
+        assert_eq!(evaluate_indices(5..9), [8, 5, 6, 7]);
+        // Move forward by 6
+        assert_eq!(evaluate_indices(6..10), [8, 9, 6, 7]);
+        // Move forward by 7
+        assert_eq!(evaluate_indices(7..11), [8, 9, 10, 7]);
+        // Move forward by 8
+        assert_eq!(evaluate_indices(8..12), [8, 9, 10, 11]);
+        // Move forward by 9
+        assert_eq!(evaluate_indices(9..13), [12, 9, 10, 11]);
     }
 }

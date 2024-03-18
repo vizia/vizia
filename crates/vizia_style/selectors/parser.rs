@@ -1763,7 +1763,7 @@ where
 
     let start = input.state();
     // FIXME: remove clone() when lifetimes are non-lexical
-    match input.next_including_whitespace().map(|t| t.clone()) {
+    match input.next_including_whitespace().cloned() {
         Ok(Token::Ident(value)) => {
             let after_ident = input.state();
             match input.next_including_whitespace() {
@@ -1790,7 +1790,7 @@ where
         Ok(Token::Delim('*')) => {
             let after_star = input.state();
             // FIXME: remove clone() when lifetimes are non-lexical
-            match input.next_including_whitespace().map(|t| t.clone()) {
+            match input.next_including_whitespace().cloned() {
                 Ok(Token::Delim('|')) => {
                     explicit_namespace(input, QNamePrefix::ExplicitAnyNamespace)
                 }
@@ -2244,7 +2244,7 @@ where
     Impl: SelectorImpl,
 {
     let start = input.state();
-    let token = match input.next_including_whitespace().map(|t| t.clone()) {
+    let token = match input.next_including_whitespace().cloned() {
         Ok(t) => t,
         Err(..) => {
             input.reset(&start);
@@ -2403,11 +2403,9 @@ where
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use crate::builder::SelectorFlags;
     use crate::parser;
-    use cssparser::{serialize_identifier, Parser as CssParser, ParserInput, ToCss};
+    use cssparser::{serialize_identifier, Parser as CssParser, ParserInput};
     use std::collections::HashMap;
-    use std::fmt;
 
     #[derive(Clone, Debug, Eq, PartialEq)]
     pub enum PseudoClass {

@@ -1,9 +1,8 @@
-use morphorm::{Node, Units};
+use morphorm::Node;
 use vizia_storage::MorphormChildIter;
 
 use crate::prelude::*;
 use crate::resource::{ImageOrId, ResourceManager};
-use crate::style::{ImageOrGradient, Style};
 use crate::text::TextContext;
 
 pub struct SubLayout<'a> {
@@ -159,17 +158,24 @@ impl Node for Entity {
                 let child_right =
                     store.child_right.get(*self).cloned().unwrap_or_default().to_px(width, 0.0)
                         * store.scale_factor();
-                (width.ceil() - child_left - child_right) as i32
+                let border_width = store
+                    .border_width
+                    .get(*self)
+                    .cloned()
+                    .unwrap_or_default()
+                    .to_pixels(0.0, store.scale_factor());
+
+                (width.ceil() - child_left - child_right - border_width - border_width) as i32
             } else if store.text_wrap.get(*self).copied().unwrap_or(true) {
                 0
             } else {
                 999999
             };
 
-            let child_left = store.child_left.get(*self).cloned().unwrap_or_default();
-            let child_right = store.child_right.get(*self).cloned().unwrap_or_default();
-            let child_top = store.child_top.get(*self).cloned().unwrap_or_default();
-            let child_bottom = store.child_bottom.get(*self).cloned().unwrap_or_default();
+            let child_left = store.child_left.get(*self).copied().unwrap_or_default();
+            let child_right = store.child_right.get(*self).copied().unwrap_or_default();
+            let child_top = store.child_top.get(*self).copied().unwrap_or_default();
+            let child_bottom = store.child_bottom.get(*self).copied().unwrap_or_default();
 
             let mut child_space_x = 0.0;
             let mut child_space_y = 0.0;
@@ -192,16 +198,29 @@ impl Node for Entity {
                 child_space_y += val;
             }
 
+            let border_width = store
+                .border_width
+                .get(*self)
+                .cloned()
+                .unwrap_or_default()
+                .to_pixels(0.0, store.scale_factor());
+
+            child_space_x += 2.0 * border_width;
+            child_space_y += 2.0 * border_width;
+
             sublayout.text_context.sync_styles(*self, store);
+
             let (text_width, mut text_height) =
                 sublayout.text_context.with_buffer(*self, |fs, buffer| {
                     buffer.set_size(fs, max_width as f32, f32::MAX);
+
                     let w = buffer
                         .layout_runs()
                         .filter_map(|r| (!r.line_w.is_nan()).then_some(r.line_w))
                         .max_by(|f1, f2| f1.partial_cmp(f2).unwrap())
                         .unwrap_or_default();
-                    let lines = buffer.layout_runs().filter(|run| run.line_w != 0.0).count();
+                    let lines = buffer.layout_runs().count();
+
                     let h = lines as f32 * buffer.metrics().line_height;
                     (w, h)
                 });
@@ -209,8 +228,9 @@ impl Node for Entity {
             if height.is_none() {
                 text_height = sublayout.text_context.with_buffer(*self, |fs, buffer| {
                     buffer.set_size(fs, text_width, f32::MAX);
-                    let h = buffer.layout_runs().len() as f32 * buffer.metrics().line_height;
-                    h
+
+                    let lines = buffer.layout_runs().count();
+                    lines as f32 * buffer.metrics().line_height
                 });
             }
 
@@ -224,7 +244,7 @@ impl Node for Entity {
                 BoundingBox { w: text_width, h: text_height, ..Default::default() },
             );
 
-            Some((width, height))
+            Some((width.ceil(), height.ceil()))
         } else if let Some(images) = store.background_image.get(*self) {
             let mut max_width = 0.0f32;
             let mut max_height = 0.0f32;
@@ -247,7 +267,6 @@ impl Node for Entity {
 
             let width = if let Some(width) = width { width } else { max_width };
             let height = if let Some(height) = height { height } else { max_height };
-
             Some((width, height))
         } else {
             None

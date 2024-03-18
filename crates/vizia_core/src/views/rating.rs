@@ -36,7 +36,7 @@ impl Rating {
             .navigable(true)
             .role(Role::RadioGroup)
             .bind(lens, |handle, lens| {
-                let val = lens.get(handle.cx);
+                let val = lens.get(&handle);
                 handle.modify(|rating| rating.rating = val);
             })
     }
@@ -57,11 +57,12 @@ impl View for Rating {
             }
             RatingEvent::Increment => {
                 self.rating += 1;
-                self.rating %= 6;
+                self.rating %= self.max_rating + 1;
                 cx.emit(RatingEvent::EmitRating);
             }
             RatingEvent::Decrement => {
-                self.rating = if self.rating == 0 { 5 } else { self.rating.saturating_sub(1) };
+                self.rating =
+                    if self.rating == 0 { self.max_rating } else { self.rating.saturating_sub(1) };
                 cx.emit(RatingEvent::EmitRating);
             }
         });

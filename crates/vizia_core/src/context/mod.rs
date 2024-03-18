@@ -8,12 +8,10 @@ mod event;
 mod proxy;
 mod resource;
 
-use instant::{Duration, Instant};
 use log::debug;
 use std::any::{Any, TypeId};
 use std::cell::RefCell;
-use std::collections::hash_map::Entry;
-use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, VecDeque};
 use std::rc::Rc;
 use std::sync::Mutex;
 use vizia_id::IdManager;
@@ -22,10 +20,8 @@ use vizia_id::IdManager;
 use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
-use cosmic_text::{fontdb::Database, FamilyOwned};
-use fnv::FnvHashMap;
-
-use unic_langid::LanguageIdentifier;
+use cosmic_text::fontdb::Database;
+use hashbrown::{hash_map::Entry, HashMap, HashSet};
 
 pub use access::*;
 pub use draw::*;
@@ -35,28 +31,25 @@ pub use resource::*;
 
 use crate::binding::{BindingHandler, MapId};
 use crate::cache::CachedData;
-use crate::environment::{Environment, ThemeMode};
-use crate::events::{TimedEvent, TimedEventHandle, Timer, TimerState, ViewHandler};
+use crate::events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler};
 #[cfg(feature = "embedded_fonts")]
 use crate::fonts;
 
 use crate::fonts::TABLER_ICONS;
 use crate::model::ModelDataStore;
 use crate::prelude::*;
-use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
-use crate::style::{PseudoClassFlags, Style};
+use crate::resource::{ImageOrId, ResourceManager, StoredImage};
 use crate::text::{TextConfig, TextContext};
-use vizia_input::{Modifiers, MouseState};
-use vizia_storage::ChildIterator;
-use vizia_storage::TreeExt;
+use vizia_input::MouseState;
+use vizia_storage::{ChildIterator, LayoutTreeIterator};
 
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
 static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css");
 
-type Views = FnvHashMap<Entity, Box<dyn ViewHandler>>;
-type Models = FnvHashMap<Entity, ModelDataStore>;
-type Bindings = FnvHashMap<Entity, Box<dyn BindingHandler>>;
+type Views = HashMap<Entity, Box<dyn ViewHandler>>;
+type Models = HashMap<Entity, ModelDataStore>;
+type Bindings = HashMap<Entity, Box<dyn BindingHandler>>;
 
 thread_local! {
     pub static MAP_MANAGER: RefCell<IdManager<MapId>> = RefCell::new(IdManager::new());
@@ -80,7 +73,7 @@ pub struct Context {
     pub(crate) next_event_id: usize,
     pub(crate) timers: Vec<TimerState>,
     pub(crate) running_timers: BinaryHeap<TimerState>,
-    pub(crate) tree_updates: Vec<accesskit::TreeUpdate>,
+    pub(crate) tree_updates: Vec<Option<accesskit::TreeUpdate>>,
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub(crate) global_listeners: Vec<Box<dyn Fn(&mut EventContext, &mut Event)>>,
@@ -151,6 +144,7 @@ impl Context {
             db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
             db.load_font_data(Vec::from(fonts::ROBOTO_BOLD));
             db.load_font_data(Vec::from(fonts::ROBOTO_ITALIC));
+            db.load_font_data(Vec::from(fonts::FIRACODE_REGULAR))
         }
 
         // Add icon font
@@ -161,9 +155,9 @@ impl Context {
             entity_identifiers: HashMap::new(),
             tree: Tree::new(),
             current: Entity::root(),
-            views: FnvHashMap::default(),
-            data: FnvHashMap::default(),
-            bindings: FnvHashMap::default(),
+            views: HashMap::default(),
+            data: HashMap::default(),
+            bindings: HashMap::default(),
             style: Style::default(),
             cache,
             canvases: HashMap::new(),
@@ -239,12 +233,12 @@ impl Context {
         self.current
     }
 
-    /// Set the current entity. This is useful in user code when you're performing black magic and
-    /// want to trick other parts of the code into thinking you're processing some other part of the
-    /// tree.
-    pub(crate) fn set_current(&mut self, e: Entity) {
-        self.current = e;
-    }
+    // /// Set the current entity. This is useful in user code when you're performing black magic and
+    // /// want to trick other parts of the code into thinking you're processing some other part of the
+    // /// tree.
+    // pub(crate) fn set_current(&mut self, e: Entity) {
+    //     self.current = e;
+    // }
 
     /// Makes the above black magic more explicit
     pub fn with_current<T>(&mut self, e: Entity, f: impl FnOnce(&mut Context) -> T) -> T {
@@ -290,13 +284,29 @@ impl Context {
     }
 
     /// Mark the application as needing to recompute view styles
-    pub fn needs_restyle(&mut self) {
+    pub fn needs_restyle(&mut self, entity: Entity) {
+        self.style.restyle.insert(entity).unwrap();
+        let iter = if let Some(parent) = self.tree.get_layout_parent(entity) {
+            LayoutTreeIterator::subtree(&self.tree, parent)
+        } else {
+            LayoutTreeIterator::subtree(&self.tree, entity)
+        };
+
+        for descendant in iter {
+            self.style.restyle.insert(descendant).unwrap();
+        }
         self.style.needs_restyle();
     }
 
     /// Mark the application as needing to rerun layout computations
     pub fn needs_relayout(&mut self) {
         self.style.needs_relayout();
+    }
+
+    pub(crate) fn set_system_flags(&mut self, entity: Entity, system_flags: SystemFlags) {
+        if system_flags.contains(SystemFlags::RESTYLE) {
+            self.needs_restyle(entity);
+        }
     }
 
     /// Enables or disables PseudoClasses for the focus of an entity
@@ -325,6 +335,8 @@ impl Context {
             pseudo_classes.set(PseudoClassFlags::FOCUS, enabled);
             if !enabled || focus_visible {
                 pseudo_classes.set(PseudoClassFlags::FOCUS_VISIBLE, enabled);
+                self.style.needs_access_update(focused);
+                self.needs_restyle(focused);
             }
         }
 
@@ -333,6 +345,7 @@ impl Context {
             if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(entity) {
                 pseudo_classes.set(PseudoClassFlags::FOCUS_WITHIN, enabled);
             }
+            // self.needs_restyle(entity);
         }
     }
 
@@ -348,7 +361,10 @@ impl Context {
         }
         self.set_focus_pseudo_classes(new_focus, true, focus_visible);
 
-        self.style.needs_restyle();
+        self.needs_restyle(self.focused);
+        self.needs_restyle(self.current);
+        self.style.needs_access_update(self.focused);
+        self.style.needs_access_update(self.current);
     }
 
     /// Sets application focus to the current entity using the previous focus visibility
@@ -479,8 +495,9 @@ impl Context {
             self.style.remove(*entity);
             self.data.remove(entity);
             self.views.remove(entity);
-            self.entity_manager.destroy(*entity);
             self.text_context.clear_buffer(*entity);
+            self.text_context.clear_bounds(*entity);
+            self.entity_manager.destroy(*entity);
         }
     }
 
@@ -646,7 +663,7 @@ impl Context {
         }
 
         self.modify_timer(timer, |timer_state| {
-            let now = instant::Instant::now();
+            let now = Instant::now();
             timer_state.start_time = now;
             timer_state.time = now;
             timer_state.entity = current;
@@ -794,6 +811,32 @@ impl Context {
     pub fn resolve_entity_identifier(&self, identity: &str) -> Option<Entity> {
         self.entity_identifiers.get(identity).cloned()
     }
+
+    /// Toggles the addition/removal of a class name for the current view.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # let context = &mut Context::default();
+    /// # let mut cx = &mut EventContext::new(context);
+    /// cx.toggle_class("foo", true);
+    /// ```
+    pub fn toggle_class(&mut self, class_name: &str, applied: bool) {
+        let current = self.current();
+        if let Some(class_list) = self.style.classes.get_mut(current) {
+            if applied {
+                class_list.insert(class_name.to_string());
+            } else {
+                class_list.remove(class_name);
+            }
+        } else if applied {
+            let mut class_list = HashSet::new();
+            class_list.insert(class_name.to_string());
+            self.style.classes.insert(current, class_list);
+        }
+
+        self.style.needs_restyle();
+    }
 }
 
 pub(crate) enum InternalEvent {
@@ -805,12 +848,50 @@ pub(crate) enum InternalEvent {
     },
 }
 
+pub struct LocalizationContext<'a> {
+    pub(crate) current: Entity,
+    pub(crate) resource_manager: &'a ResourceManager,
+    pub(crate) data: &'a HashMap<Entity, ModelDataStore>,
+    pub(crate) views: &'a HashMap<Entity, Box<dyn ViewHandler>>,
+    pub(crate) tree: &'a Tree<Entity>,
+}
+
+impl<'a> LocalizationContext<'a> {
+    pub(crate) fn from_context(cx: &'a Context) -> Self {
+        Self {
+            current: cx.current,
+            resource_manager: &cx.resource_manager,
+            data: &cx.data,
+            views: &cx.views,
+            tree: &cx.tree,
+        }
+    }
+
+    pub(crate) fn from_event_context(cx: &'a EventContext) -> Self {
+        Self {
+            current: cx.current,
+            resource_manager: cx.resource_manager,
+            data: cx.data,
+            views: cx.views,
+            tree: cx.tree,
+        }
+    }
+
+    pub(crate) fn environment(&self) -> &Environment {
+        self.data::<Environment>().unwrap()
+    }
+}
+
 /// A trait for any Context-like object that lets you access stored model data.
 ///
 /// This lets e.g Lens::get be generic over any of these types.
 pub trait DataContext {
     /// Get model/view data from the context. Returns `None` if the data does not exist.
     fn data<T: 'static>(&self) -> Option<&T>;
+
+    fn as_context(&self) -> Option<LocalizationContext<'_>> {
+        None
+    }
 }
 
 pub trait EmitContext {
@@ -933,6 +1014,37 @@ impl DataContext for Context {
         }
 
         for entity in self.current.parent_iter(&self.tree) {
+            // Return any model data.
+            if let Some(model_data_store) = self.data.get(&entity) {
+                if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
+                    return model.downcast_ref::<T>();
+                }
+            }
+
+            // Return any view data.
+            if let Some(view_handler) = self.views.get(&entity) {
+                if let Some(data) = view_handler.downcast_ref::<T>() {
+                    return Some(data);
+                }
+            }
+        }
+
+        None
+    }
+
+    fn as_context(&self) -> Option<LocalizationContext<'_>> {
+        Some(LocalizationContext::from_context(self))
+    }
+}
+
+impl<'a> DataContext for LocalizationContext<'a> {
+    fn data<T: 'static>(&self) -> Option<&T> {
+        // return data for the static model.
+        if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
+            return Some(t);
+        }
+
+        for entity in self.current.parent_iter(self.tree) {
             // Return any model data.
             if let Some(model_data_store) = self.data.get(&entity) {
                 if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {

@@ -2,8 +2,6 @@ use chrono::{Datelike, NaiveDate, Weekday};
 
 use crate::prelude::*;
 
-use super::spinbox::SpinboxIcons;
-
 /// A control used to select a date.
 #[derive(Lens)]
 pub struct Datepicker {
@@ -125,35 +123,26 @@ impl Datepicker {
         }
         .build(cx, move |cx| {
             HStack::new(cx, |cx| {
-                Spinbox::custom(
-                    cx,
-                    |cx| {
-                        PickList::new(cx, Datepicker::months, Datepicker::selected_month, false)
-                            .on_select(|ex, index| ex.emit(DatepickerEvent::SelectMonth(index)))
-                    },
-                    SpinboxKind::Horizontal,
-                    SpinboxIcons::Chevrons,
-                )
+                Spinbox::custom(cx, |cx| {
+                    PickList::new(cx, Datepicker::months, Datepicker::selected_month, false)
+                        .on_select(|ex, index| ex.emit(DatepickerEvent::SelectMonth(index)))
+                })
                 .width(Pixels(131.0))
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
                 .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementMonth));
-                Spinbox::custom(
-                    cx,
-                    |cx| {
-                        Textbox::new(cx, Datepicker::view_date.map(|date| date.year()))
-                            .on_edit(|ex, v| ex.emit(DatepickerEvent::SelectYear(v)))
-                            .width(Stretch(1.0))
-                    },
-                    SpinboxKind::Horizontal,
-                    SpinboxIcons::PlusMinus,
-                )
+                Spinbox::custom(cx, |cx| {
+                    Textbox::new(cx, Datepicker::view_date.map(|date| date.year()))
+                        .on_edit(|ex, v| ex.emit(DatepickerEvent::SelectYear(v)))
+                        .width(Stretch(1.0))
+                })
+                .icons(SpinboxIcons::PlusMinus)
                 .width(Stretch(1.0))
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementYear))
                 .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementYear));
             })
             .class("datepicker-header");
 
-            Element::new(cx).class("datepicker-divisor");
+            Divider::new(cx);
 
             VStack::new(cx, move |cx| {
                 // Days of the week
@@ -173,17 +162,18 @@ impl Datepicker {
                                 Label::new(cx, "").bind(
                                     Datepicker::view_date,
                                     move |handle, view_date| {
-                                        let view_date = view_date.get(handle.cx);
+                                        let view_date = view_date.get(&handle);
 
                                         let (day_number, disabled) =
                                             Self::get_day_number(y, x, &view_date);
 
                                         handle.bind(lens, move |handle, selected_date| {
-                                            let selected_date = selected_date.get(handle.cx);
+                                            let selected_date = selected_date.get(&handle);
 
                                             handle
                                                 .text(&day_number.to_string())
                                                 .class("datepicker-calendar-day")
+                                                .navigable(!disabled)
                                                 .toggle_class(
                                                     "datepicker-calendar-day-disabled",
                                                     disabled,
@@ -220,7 +210,6 @@ impl Datepicker {
             })
             .class("datepicker-calendar");
         })
-        .navigable(true)
     }
 }
 
@@ -244,7 +233,7 @@ impl View for Datepicker {
                     )
                     .unwrap();
                 }
-                self.selected_month = self.view_date.month() as usize;
+                self.selected_month = self.view_date.month() as usize - 1;
             }
 
             DatepickerEvent::DecrementMonth => {
@@ -263,7 +252,7 @@ impl View for Datepicker {
                     )
                     .unwrap();
                 }
-                self.selected_month = self.view_date.month() as usize;
+                self.selected_month = self.view_date.month() as usize - 1;
             }
 
             DatepickerEvent::SelectMonth(month) => {
@@ -277,11 +266,21 @@ impl View for Datepicker {
             }
 
             DatepickerEvent::IncrementYear => {
-                self.view_date += chrono::Duration::days(365);
+                self.view_date = NaiveDate::from_ymd_opt(
+                    self.view_date.year() + 1,
+                    self.view_date.month(),
+                    self.view_date.day(),
+                )
+                .unwrap();
             }
 
             DatepickerEvent::DecrementYear => {
-                self.view_date -= chrono::Duration::days(365);
+                self.view_date = NaiveDate::from_ymd_opt(
+                    self.view_date.year() - 1,
+                    self.view_date.month(),
+                    self.view_date.day(),
+                )
+                .unwrap();
             }
 
             DatepickerEvent::SelectYear(year) => {

@@ -55,7 +55,7 @@ fn input_box<L: Lens<Target = NaiveDate>>(
         .class("input");
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
@@ -74,11 +74,11 @@ fn main() {
             input_box(cx, AppData::start_date, AppEvent::SetStartDate);
             input_box(cx, AppData::end_date, AppEvent::SetEndDate);
 
-            Button::new(cx, |_| {}, |cx| Label::new(cx, "Book"));
+            Button::new(cx, |cx| Label::new(cx, "Book"));
         })
         .class("container");
     })
     .title("Flight Booker")
     .inner_size((250, 250))
-    .run();
+    .run()
 }

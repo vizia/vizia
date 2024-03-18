@@ -1,12 +1,8 @@
 use std::{cmp::Ordering, collections::BinaryHeap};
 
-use crate::{
-    prelude::*,
-    style::{Abilities, PseudoClassFlags},
-};
+use crate::prelude::*;
 use femtovg::Transform2D;
 use log::debug;
-use vizia_id::GenerationalId;
 use vizia_storage::{LayoutChildIterator, LayoutParentIterator};
 
 // Determines the hovered entity based on the mouse cursor position.
@@ -125,7 +121,7 @@ fn hover_entity(
         .unwrap_or(parent_pointer_events);
 
     // Push to queue if the z-index is higher than the current z-index.
-    let z_index = cx.tree.z_index(cx.current);
+    let z_index = cx.style.z_index.get(cx.current).copied().unwrap_or_default();
     if z_index > current_z {
         queue.push(ZEntity { index: z_index, entity: cx.current, pointer_events });
         return;

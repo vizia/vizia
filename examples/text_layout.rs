@@ -26,14 +26,14 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { text: String::from("This is some text"), text2: String::from("سلام") }.build(cx);
         VStack::new(cx, |cx| {
             TabView::new(
                 cx,
                 StaticLens::<Vec<&'static str>>::new(STATIC_LIST.as_ref()),
-                |cx, item| match item.get(cx) {
+                |cx, item| match *item.get_ref(cx).unwrap() {
                     "Wrapping" => TabPair::new(
                         move |cx| {
                             Label::new(cx, item).hoverable(false);
@@ -121,7 +121,7 @@ fn main() {
     })
     .title("Text")
     .inner_size((1200, 600))
-    .run();
+    .run()
 }
 
 fn wrapping(cx: &mut Context) {
@@ -142,7 +142,7 @@ fn wrapping(cx: &mut Context) {
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .child_space(Pixels(50.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {

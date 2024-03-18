@@ -1,16 +1,13 @@
 use crate::animation::Interpolator;
-use instant::{Duration, Instant};
-use std::collections::HashSet;
-use vizia_id::GenerationalId;
+use hashbrown::HashSet;
 
 use crate::prelude::*;
 
-use super::{Animation, TimingFunction};
+use super::TimingFunction;
 
 /// A keyframe in an animation state.
 #[derive(Debug, Clone)]
 pub(crate) struct Keyframe<T: Interpolator> {
-    #[allow(dead_code)] // FIXME
     pub time: f32,
     pub value: T,
     pub timing_function: TimingFunction,
@@ -33,8 +30,6 @@ pub(crate) struct AnimationState<T: Interpolator> {
     pub output: Option<T>,
     /// Whether the animation should persist after finishing.
     pub persistent: bool,
-
-    // pub t0: f32,
     /// How far through the animation between 0.0 and 1.0.
     pub t: f32,
 
@@ -98,7 +93,7 @@ where
     pub(crate) fn play(&mut self, entity: Entity) {
         self.active = true;
         self.t = 0.0;
-        self.start_time = instant::Instant::now();
+        self.start_time = Instant::now();
         self.entities.insert(entity);
     }
 

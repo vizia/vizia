@@ -5,9 +5,9 @@ use crate::entity::Entity;
 use crate::prelude::IntoCssStr;
 use crate::view::Canvas;
 use fluent_bundle::{FluentBundle, FluentResource};
+use hashbrown::{HashMap, HashSet};
 use image::GenericImageView;
 use std::borrow::Borrow;
-use std::collections::{HashMap, HashSet};
 use unic_langid::LanguageIdentifier;
 
 pub(crate) struct StoredImage {
@@ -121,7 +121,7 @@ impl ResourceManager {
         let default_ref = &default; // ???
         let langs = fluent_langneg::negotiate::negotiate_languages(
             &[locale],
-            available.as_slice(),
+            &available,
             Some(&default_ref),
             fluent_langneg::NegotiationStrategy::Filtering,
         );

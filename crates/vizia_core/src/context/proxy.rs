@@ -5,7 +5,6 @@ use std::sync::Mutex;
 use super::InternalEvent;
 
 use crate::prelude::*;
-use crate::resource::ImageRetentionPolicy;
 
 /// A bundle of data representing a snapshot of the context when a thread was spawned.
 ///

@@ -5,7 +5,9 @@ use raw_window_handle::HasRawWindowHandle;
 use crate::proxy::queue_get;
 use vizia_core::backend::*;
 use vizia_core::prelude::*;
-use vizia_id::GenerationalId;
+
+#[derive(Debug)]
+pub enum ApplicationError {}
 
 ///Creating a new application creates a root `Window` and a `Context`. Views declared within the closure passed to `Application::new()` are added to the context and rendered into the root window.
 ///
@@ -93,7 +95,7 @@ where
     /// standalone application.
     ///
     /// * `app` - The Vizia application builder.
-    pub fn run(self) {
+    pub fn run(self) -> Result<(), ApplicationError> {
         ViziaWindow::open_blocking(
             self.window_description,
             self.window_scale_policy,
@@ -101,7 +103,9 @@ where
             self.on_idle,
             self.ignore_default_theme,
             self.text_config,
-        )
+        );
+
+        Ok(())
     }
 
     /// Open a new child window.
@@ -161,7 +165,7 @@ pub(crate) struct ApplicationRunner {
     /// system or explicitly overridden by the creator of the window. In some cases window resize
     /// events may change this scaling policy. This value is only used when translating logical
     /// mouse coordinates to physical window coordinates. For any other use within VIZIA itself this
-    /// always needs to be multplied by `user_scale_factor`.
+    /// always needs to be multiplied by `user_scale_factor`.
     window_scale_factor: f64,
     /// The scale factor applied on top of the `window_scale` to convert the window's logical size
     /// to a physical size. If this is different from `*cx.user_scale_factor` after handling the
@@ -229,10 +233,6 @@ impl ApplicationRunner {
             // self.event_manager.flush_events(cx.context());
         }
 
-        // Force restyle on every frame for baseview backend to avoid style inheritance issues
-        // cx.style().needs_restyle();
-        cx.process_data_updates();
-
         let context = window.gl_context().expect("Window was created without OpenGL support");
         unsafe { context.make_current() };
         cx.process_style_updates();
@@ -267,7 +267,7 @@ impl ApplicationRunner {
             cx.modifiers()
                 .set(Modifiers::CTRL, modifiers.contains(vizia_input::KeyboardModifiers::CONTROL));
             cx.modifiers()
-                .set(Modifiers::LOGO, modifiers.contains(vizia_input::KeyboardModifiers::META));
+                .set(Modifiers::SUPER, modifiers.contains(vizia_input::KeyboardModifiers::META));
             cx.modifiers()
                 .set(Modifiers::ALT, modifiers.contains(vizia_input::KeyboardModifiers::ALT));
         };
@@ -352,20 +352,20 @@ impl ApplicationRunner {
                     }
                     Code::AltLeft | Code::AltRight => cx.modifiers().set(Modifiers::ALT, pressed),
                     Code::MetaLeft | Code::MetaRight => {
-                        cx.modifiers().set(Modifiers::LOGO, pressed)
+                        cx.modifiers().set(Modifiers::SUPER, pressed)
                     }
                     _ => (),
                 }
 
                 match s {
                     MouseButtonState::Pressed => {
-                        cx.emit_origin(WindowEvent::KeyDown(event.code, Some(event.key.clone())));
-
                         if let vizia_input::Key::Character(written) = &event.key {
                             for chr in written.chars() {
                                 cx.emit_origin(WindowEvent::CharInput(chr));
                             }
                         }
+
+                        cx.emit_origin(WindowEvent::KeyDown(event.code, Some(event.key)));
                     }
 
                     MouseButtonState::Released => {

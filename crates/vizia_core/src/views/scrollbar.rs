@@ -1,6 +1,5 @@
 use crate::context::TreeProps;
 use crate::prelude::*;
-use crate::views::Orientation;
 
 pub struct Scrollbar<L1> {
     value: L1,
@@ -42,7 +41,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
                 .class("thumb")
                 .focusable(true)
                 .bind(value, move |handle, value| {
-                    let value = value.get(handle.cx);
+                    let value = value.get(&handle);
                     match orientation {
                         Orientation::Horizontal => {
                             handle.left(Units::Stretch(value)).right(Units::Stretch(1.0 - value))
@@ -53,7 +52,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
                     };
                 })
                 .bind(ratio, move |handle, ratio| {
-                    let ratio = ratio.get(handle.cx);
+                    let ratio = ratio.get(&handle);
                     match orientation {
                         Orientation::Horizontal => handle.width(Units::Percentage(ratio * 100.0)),
                         Orientation::Vertical => handle.height(Units::Percentage(ratio * 100.0)),
@@ -242,7 +241,8 @@ impl<'a, L1: 'static + Lens<Target = f32>> Handle<'a, Scrollbar<L1>> {
     pub fn scroll_to_cursor(mut self, scroll_to_cursor: impl Res<bool>) -> Self {
         let entity = self.entity();
         scroll_to_cursor.set_or_bind(self.context(), entity, |cx, val| {
-            cx.emit(ScrollBarEvent::SetScrollToCursor(val));
+            let v = val.get(cx);
+            cx.emit(ScrollBarEvent::SetScrollToCursor(v));
         });
 
         self

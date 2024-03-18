@@ -62,8 +62,11 @@ pub mod backend {
 #[doc(hidden)]
 pub mod prelude {
     pub use super::binding::{
-        Binding, Data, Index, Lens, LensExt, Res, Setter, StaticLens, Then, UnwrapLens, Wrapper,
+        Binding, Data, Index, Lens, LensExt, LensValue, Map, MapRef, Res, StaticLens, Then,
+        UnwrapLens, Wrapper,
     };
+
+    pub use super::impl_res_simple;
 
     pub use crate::model::Model;
 
@@ -89,7 +92,7 @@ pub mod prelude {
     pub use super::views::*;
     pub use super::window::{DropData, WindowEvent, WindowModifiers};
     pub use accesskit::{Action, DefaultActionVerb, Live, Role};
-    pub use vizia_derive::{Data, Lens, Model, Setter};
+    pub use vizia_derive::{Data, Lens};
     pub use vizia_id::GenerationalId;
     pub use vizia_input::{Code, Key, KeyChord, Modifiers, MouseButton, MouseButtonState};
     pub use vizia_storage::{Tree, TreeExt};
@@ -98,8 +101,8 @@ pub mod prelude {
     pub use super::style::*;
 
     pub use cosmic_text::FamilyOwned;
-    pub use instant::{Duration, Instant};
     pub use morphorm::Units::*;
     pub use morphorm::{LayoutType, PositionType, Units};
     pub use unic_langid::{langid, LanguageIdentifier};
+    pub use web_time::{Duration, Instant};
 }

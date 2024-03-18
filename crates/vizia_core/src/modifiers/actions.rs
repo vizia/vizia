@@ -1,27 +1,36 @@
-use crate::layout::cache::GeoChanged;
 use crate::prelude::*;
-use crate::style::Abilities;
 use std::any::TypeId;
 
 #[derive(Lens)]
-pub struct TooltipModel {
+pub struct ModalModel {
     pub tooltip_visible: bool,
+    pub menu_visible: bool,
 }
 
-pub enum TooltipEvent {
+pub enum ModalEvent {
     ShowTooltip,
     HideTooltip,
+    ShowMenu,
+    HideMenu,
 }
 
-impl Model for TooltipModel {
+impl Model for ModalModel {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
-        event.map(|tooltip_event, _| match tooltip_event {
-            TooltipEvent::ShowTooltip => {
+        event.map(|modal_event, _| match modal_event {
+            ModalEvent::ShowTooltip => {
                 self.tooltip_visible = true;
             }
 
-            TooltipEvent::HideTooltip => {
+            ModalEvent::HideTooltip => {
                 self.tooltip_visible = false;
+            }
+
+            ModalEvent::ShowMenu => {
+                self.menu_visible = true;
+            }
+
+            ModalEvent::HideMenu => {
+                self.menu_visible = false;
             }
         })
     }
@@ -69,71 +78,69 @@ impl ActionsModel {
 
 impl Model for ActionsModel {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        if let Some(actions_event) = event.take() {
-            match actions_event {
-                ActionsEvent::OnPress(on_press) => {
-                    self.on_press = Some(on_press);
-                }
-
-                ActionsEvent::OnPressDown(on_press_down) => {
-                    self.on_press_down = Some(on_press_down);
-                }
-
-                ActionsEvent::OnDoubleClick(on_double_click) => {
-                    self.on_double_click = Some(on_double_click);
-                }
-
-                ActionsEvent::OnHover(on_hover) => {
-                    self.on_hover = Some(on_hover);
-                }
-
-                ActionsEvent::OnHoverOut(on_hover_out) => {
-                    self.on_hover_out = Some(on_hover_out);
-                }
-
-                ActionsEvent::OnOver(on_over) => {
-                    self.on_over = Some(on_over);
-                }
-
-                ActionsEvent::OnOverOut(on_over_out) => {
-                    self.on_over_out = Some(on_over_out);
-                }
-
-                ActionsEvent::OnMouseMove(on_move) => {
-                    self.on_mouse_move = Some(on_move);
-                }
-
-                ActionsEvent::OnMouseDown(on_mouse_down) => {
-                    self.on_mouse_down = Some(on_mouse_down);
-                }
-
-                ActionsEvent::OnMouseUp(on_mouse_up) => {
-                    self.on_mouse_up = Some(on_mouse_up);
-                }
-
-                ActionsEvent::OnFocusIn(on_focus_in) => {
-                    self.on_focus_in = Some(on_focus_in);
-                }
-
-                ActionsEvent::OnFocusOut(on_focus_out) => {
-                    self.on_focus_out = Some(on_focus_out);
-                }
-
-                ActionsEvent::OnGeoChanged(on_geo_changed) => {
-                    self.on_geo_changed = Some(on_geo_changed);
-                    cx.cache.set_bounds(cx.current, BoundingBox::default());
-                    cx.needs_relayout();
-                }
-
-                ActionsEvent::OnDragStart(on_drag_start) => {
-                    self.on_drag_start = Some(on_drag_start);
-                }
-
-                ActionsEvent::OnDrop(on_drop) => {
-                    self.on_drop = Some(on_drop);
-                }
+        event.take(|actions_event, _| match actions_event {
+            ActionsEvent::OnPress(on_press) => {
+                self.on_press = Some(on_press);
             }
-        }
+
+            ActionsEvent::OnPressDown(on_press_down) => {
+                self.on_press_down = Some(on_press_down);
+            }
+
+            ActionsEvent::OnDoubleClick(on_double_click) => {
+                self.on_double_click = Some(on_double_click);
+            }
+
+            ActionsEvent::OnHover(on_hover) => {
+                self.on_hover = Some(on_hover);
+            }
+
+            ActionsEvent::OnHoverOut(on_hover_out) => {
+                self.on_hover_out = Some(on_hover_out);
+            }
+
+            ActionsEvent::OnOver(on_over) => {
+                self.on_over = Some(on_over);
+            }
+
+            ActionsEvent::OnOverOut(on_over_out) => {
+                self.on_over_out = Some(on_over_out);
+            }
+
+            ActionsEvent::OnMouseMove(on_move) => {
+                self.on_mouse_move = Some(on_move);
+            }
+
+            ActionsEvent::OnMouseDown(on_mouse_down) => {
+                self.on_mouse_down = Some(on_mouse_down);
+            }
+
+            ActionsEvent::OnMouseUp(on_mouse_up) => {
+                self.on_mouse_up = Some(on_mouse_up);
+            }
+
+            ActionsEvent::OnFocusIn(on_focus_in) => {
+                self.on_focus_in = Some(on_focus_in);
+            }
+
+            ActionsEvent::OnFocusOut(on_focus_out) => {
+                self.on_focus_out = Some(on_focus_out);
+            }
+
+            ActionsEvent::OnGeoChanged(on_geo_changed) => {
+                self.on_geo_changed = Some(on_geo_changed);
+                cx.cache.set_bounds(cx.current, BoundingBox::default());
+                cx.needs_relayout();
+            }
+
+            ActionsEvent::OnDragStart(on_drag_start) => {
+                self.on_drag_start = Some(on_drag_start);
+            }
+
+            ActionsEvent::OnDrop(on_drop) => {
+                self.on_drop = Some(on_drop);
+            }
+        });
 
         event.map(|window_event, meta| match window_event {
             WindowEvent::Press { mouse } => {
@@ -445,7 +452,9 @@ pub trait ActionModifiers<V> {
     where
         F: 'static + Fn(&mut EventContext, GeoChanged) + Send + Sync;
 
-    fn tooltip<C: FnOnce(&mut Context)>(self, content: C) -> Self;
+    fn tooltip<C: FnOnce(&mut Context) -> Handle<'_, Tooltip>>(self, content: C) -> Self;
+
+    fn menu<C: FnOnce(&mut Context) -> Handle<'_, T>, T: View>(self, content: C) -> Self;
 
     fn on_drag<F>(self, action: F) -> Self
     where
@@ -470,40 +479,88 @@ fn build_action_model(cx: &mut Context, entity: Entity) {
     }
 }
 
-fn build_tooltip_model(cx: &mut Context, entity: Entity) {
+fn build_modal_model(cx: &mut Context, entity: Entity) {
     if cx
         .data
         .get(&entity)
-        .and_then(|model_data_store| model_data_store.models.get(&TypeId::of::<TooltipModel>()))
+        .and_then(|model_data_store| model_data_store.models.get(&TypeId::of::<ModalModel>()))
         .is_none()
     {
         cx.with_current(entity, |cx| {
-            TooltipModel { tooltip_visible: false }.build(cx);
+            ModalModel { tooltip_visible: false, menu_visible: false }.build(cx);
         });
     }
 }
 
 impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
-    fn tooltip<C: FnOnce(&mut Context)>(self, content: C) -> Self {
+    fn tooltip<C: FnOnce(&mut Context) -> Handle<'_, Tooltip>>(self, content: C) -> Self {
         let entity = self.entity();
 
-        build_tooltip_model(self.cx, entity);
+        build_modal_model(self.cx, entity);
 
         let s = self
-            .on_hover(|cx| cx.emit(TooltipEvent::ShowTooltip))
-            .on_hover_out(|cx| cx.emit(TooltipEvent::HideTooltip));
+            .on_over(|cx| cx.emit(ModalEvent::ShowTooltip))
+            .on_over_out(|cx| cx.emit(ModalEvent::HideTooltip));
 
         s.cx.with_current(entity, |cx| {
-            Tooltip::new(cx, content).toggle_class("vis", TooltipModel::tooltip_visible);
+            (content)(cx).class("tooltip").bind(ModalModel::tooltip_visible, |mut handle, vis| {
+                let is_visible = vis.get(&handle);
+                handle = handle.toggle_class("vis", is_visible);
+
+                if is_visible {
+                    handle.context().emit(WindowEvent::GeometryChanged(GeoChanged::empty()));
+                }
+            });
         });
 
         s
     }
 
-    fn on_press<F>(self, action: F) -> Self
+    fn menu<C: FnOnce(&mut Context) -> Handle<'_, T>, T: View>(self, content: C) -> Self {
+        let entity = self.entity();
+
+        build_modal_model(self.cx, entity);
+
+        self.cx.with_current(entity, |cx| {
+            (content)(cx).bind(ModalModel::menu_visible, |mut handle, vis| {
+                let is_visible = vis.get(&handle);
+                handle = handle.toggle_class("vis", is_visible);
+
+                if is_visible {
+                    handle.context().emit(WindowEvent::GeometryChanged(GeoChanged::empty()));
+                }
+            });
+        });
+
+        self
+    }
+
+    fn on_press<F>(mut self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
+        self = self.hoverable(true);
+
+        if let Some(view) = self
+            .cx
+            .views
+            .get_mut(&self.entity)
+            .and_then(|view_handler| view_handler.downcast_mut::<Button>())
+        {
+            view.action = Some(Box::new(action));
+            return self;
+        }
+
+        if let Some(view) = self
+            .cx
+            .views
+            .get_mut(&self.entity)
+            .and_then(|view_handler| view_handler.downcast_mut::<IconButton>())
+        {
+            view.action = Some(Box::new(action));
+            return self;
+        }
+
         build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(

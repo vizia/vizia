@@ -60,13 +60,10 @@
 //! Element::new(cx).class("foo");
 //! ```
 
-use fnv::FnvHashMap;
-use instant::{Duration, Instant};
+use hashbrown::{HashMap, HashSet};
+use indexmap::IndexMap;
 use log::warn;
-use morphorm::{LayoutType, PositionType, Units};
-use std::collections::HashSet;
 use std::fmt::Debug;
-use vizia_id::GenerationalId;
 
 use crate::prelude::*;
 
@@ -92,11 +89,10 @@ pub(crate) use pseudoclass::*;
 mod transform;
 pub(crate) use transform::*;
 
-use crate::animation::{Animation, AnimationState, Interpolator, Keyframe, TimingFunction};
+use crate::animation::{AnimationState, Interpolator, Keyframe, TimingFunction};
 use crate::storage::animatable_set::AnimatableSet;
 use crate::storage::style_set::StyleSet;
 use bitflags::bitflags;
-use cosmic_text::FamilyOwned;
 use vizia_id::IdManager;
 use vizia_storage::SparseSet;
 
@@ -149,18 +145,17 @@ pub enum ImageOrGradient {
 }
 
 /// Stores the style properties of all entities in the application.
-#[derive(Default)]
 pub struct Style {
     pub(crate) rule_manager: IdManager<Rule>,
 
     // Creates and destroys animation ids
     pub(crate) animation_manager: IdManager<Animation>,
-    pub(crate) animations: FnvHashMap<String, Animation>,
+    pub(crate) animations: HashMap<String, Animation>,
     // List of animations to be started on the next frame
     pub(crate) pending_animations: Vec<(Entity, Animation, Duration)>,
 
     // List of rules
-    pub(crate) rules: Vec<(Rule, SelectorList<Selectors>)>,
+    pub(crate) rules: IndexMap<Rule, SelectorList<Selectors>>,
 
     pub(crate) default_font: Vec<FamilyOwned>,
 
@@ -302,14 +297,118 @@ pub struct Style {
 
     pub(crate) system_flags: SystemFlags,
 
+    // TODO: Probably swap this out for a bloom filter
+    // pub(crate) restyle: SparseSet<bool>,
+    pub(crate) restyle: qfilter::Filter,
+
     // TODO: When we can do incremental updates on a per entity basis, change this to a bitflag
     // for layout, text layout, rendering, etc. to replace the above `needs_` members.
     pub needs_text_layout: SparseSet<bool>,
 
-    pub needs_access_update: SparseSet<bool>,
+    pub reaccess: qfilter::Filter,
 
     /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
     pub(crate) dpi_factor: f64,
+}
+
+impl Default for Style {
+    fn default() -> Self {
+        Style {
+            rule_manager: Default::default(),
+            animation_manager: Default::default(),
+            animations: Default::default(),
+            pending_animations: Default::default(),
+            rules: Default::default(),
+            default_font: Default::default(),
+            ids: Default::default(),
+            classes: Default::default(),
+            pseudo_classes: Default::default(),
+            disabled: Default::default(),
+            abilities: Default::default(),
+            accesskit_node_classes: Default::default(),
+            name: Default::default(),
+            role: Default::default(),
+            default_action_verb: Default::default(),
+            live: Default::default(),
+            labelled_by: Default::default(),
+            hidden: Default::default(),
+            text_value: Default::default(),
+            numeric_value: Default::default(),
+            display: Default::default(),
+            visibility: Default::default(),
+            opacity: Default::default(),
+            z_index: Default::default(),
+            clip_path: Default::default(),
+            overflowx: Default::default(),
+            overflowy: Default::default(),
+            backdrop_filter: Default::default(),
+            transform: Default::default(),
+            transform_origin: Default::default(),
+            translate: Default::default(),
+            rotate: Default::default(),
+            scale: Default::default(),
+            border_width: Default::default(),
+            border_color: Default::default(),
+            border_top_left_shape: Default::default(),
+            border_top_right_shape: Default::default(),
+            border_bottom_left_shape: Default::default(),
+            border_bottom_right_shape: Default::default(),
+            border_top_left_radius: Default::default(),
+            border_top_right_radius: Default::default(),
+            border_bottom_left_radius: Default::default(),
+            border_bottom_right_radius: Default::default(),
+            outline_width: Default::default(),
+            outline_color: Default::default(),
+            outline_offset: Default::default(),
+            background_color: Default::default(),
+            background_image: Default::default(),
+            background_size: Default::default(),
+            box_shadow: Default::default(),
+            text_wrap: Default::default(),
+            text_align: Default::default(),
+            font_family: Default::default(),
+            font_color: Default::default(),
+            font_size: Default::default(),
+            font_weight: Default::default(),
+            font_style: Default::default(),
+            font_stretch: Default::default(),
+            caret_color: Default::default(),
+            selection_color: Default::default(),
+            cursor: Default::default(),
+            pointer_events: Default::default(),
+            layout_type: Default::default(),
+            position_type: Default::default(),
+            left: Default::default(),
+            right: Default::default(),
+            top: Default::default(),
+            bottom: Default::default(),
+            child_left: Default::default(),
+            child_right: Default::default(),
+            child_top: Default::default(),
+            child_bottom: Default::default(),
+            row_between: Default::default(),
+            col_between: Default::default(),
+            width: Default::default(),
+            height: Default::default(),
+            min_width: Default::default(),
+            max_width: Default::default(),
+            min_height: Default::default(),
+            max_height: Default::default(),
+            min_left: Default::default(),
+            max_left: Default::default(),
+            min_right: Default::default(),
+            max_right: Default::default(),
+            min_top: Default::default(),
+            max_top: Default::default(),
+            min_bottom: Default::default(),
+            max_bottom: Default::default(),
+            system_flags: Default::default(),
+            restyle: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
+            needs_text_layout: Default::default(),
+            reaccess: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
+            dpi_factor: Default::default(),
+        }
+    }
 }
 
 impl Style {
@@ -637,7 +736,7 @@ impl Style {
     }
 
     pub(crate) fn play_pending_animations(&mut self) {
-        let start_time = instant::Instant::now();
+        let start_time = Instant::now();
 
         let pending_animations = self.pending_animations.drain(..).collect::<Vec<_>>();
 
@@ -780,7 +879,7 @@ impl Style {
 
                         let selectors = style_rule.selectors;
 
-                        self.rules.push((rule_id, selectors));
+                        self.rules.insert(rule_id, selectors);
 
                         for property in style_rule.declarations.declarations {
                             match property {
@@ -1576,6 +1675,8 @@ impl Style {
         self.classes.insert(entity, HashSet::new());
         self.abilities.insert(entity, Abilities::default());
         self.system_flags = SystemFlags::RESTYLE | SystemFlags::RELAYOUT;
+        self.restyle.insert(entity).unwrap();
+        self.reaccess.insert(entity).unwrap();
     }
 
     // Remove style data for the given entity.
@@ -1706,7 +1807,6 @@ impl Style {
         self.max_bottom.remove(entity);
 
         self.needs_text_layout.remove(entity);
-        self.needs_access_update.remove(entity);
     }
 
     pub fn needs_restyle(&mut self) {
@@ -1722,7 +1822,7 @@ impl Style {
     }
 
     pub fn needs_access_update(&mut self, entity: Entity) {
-        self.needs_access_update.insert(entity, true);
+        self.reaccess.insert(entity).unwrap();
     }
 
     pub fn should_redraw<F: FnOnce()>(&mut self, f: F) {

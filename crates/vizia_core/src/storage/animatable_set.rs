@@ -1,8 +1,5 @@
-use crate::animation::{Animation, AnimationState, Interpolator};
+use crate::animation::{AnimationState, Interpolator};
 use crate::prelude::*;
-use crate::style::Rule;
-use instant::{Duration, Instant};
-use vizia_id::GenerationalId;
 use vizia_storage::{SparseSet, SparseSetGeneric, SparseSetIndex};
 
 const INDEX_MASK: u32 = u32::MAX / 4;
@@ -268,7 +265,7 @@ where
     ///
     /// Animations exist separately to inline (entity) data and shared (rule) data.
     /// Playing an aimation for a particular entity will clone the animation state to the
-    /// active animations and then link the entity to it.  
+    /// active animations and then link the entity to it.
     pub(crate) fn insert_animation(
         &mut self,
         animation: Animation,
@@ -370,7 +367,7 @@ where
         }
     }
 
-    pub fn tick(&mut self, time: instant::Instant) -> bool {
+    pub fn tick(&mut self, time: Instant) -> bool {
         if self.has_animations() {
             for state in self.active_animations.iter_mut() {
                 // If the animation is already finished then skip
@@ -608,7 +605,7 @@ where
                                         .clone();
 
                                 current_anim_state.delay = current_anim_state.t - 1.0;
-                                current_anim_state.start_time = instant::Instant::now();
+                                current_anim_state.start_time = Instant::now();
                             } else {
                                 // Transitioning to new rule
                                 current_anim_state.to_rule = rule_data_index;
@@ -619,7 +616,7 @@ where
                                         .value
                                         .clone();
                                 current_anim_state.t = 0.0;
-                                current_anim_state.start_time = instant::Instant::now();
+                                current_anim_state.start_time = Instant::now();
                             }
                         }
                     }
@@ -649,18 +646,14 @@ where
                     if transition_state.from_rule != DataIndex::null().index()
                         && transition_state.from_rule != transition_state.to_rule
                     {
-                        self.play_animation(
-                            entity,
-                            rule_animation,
-                            instant::Instant::now(),
-                            duration,
-                        );
+                        self.play_animation(entity, rule_animation, Instant::now(), duration);
                     }
                     //}
                 }
                 //}
 
                 let data_index = self.inline_data.sparse[entity_index].data_index;
+
                 // Already linked
                 if !data_index.is_inline() && data_index.index() == shared_data_index.index() {
                     return false;

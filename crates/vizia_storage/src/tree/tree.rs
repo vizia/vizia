@@ -14,7 +14,6 @@ where
     pub ignored: Vec<bool>,
     pub lock_focus_within: Vec<bool>,
     pub changed: bool,
-    pub z_index: Vec<i32>,
 }
 
 impl<I> Tree<I>
@@ -31,7 +30,6 @@ where
             ignored: vec![false],
             lock_focus_within: vec![true],
             changed: true,
-            z_index: vec![0],
         }
     }
 
@@ -105,10 +103,6 @@ where
         self.ignored.get(entity.index()).map_or_else(|| false, |ignored| *ignored)
     }
 
-    pub fn z_index(&self, entity: I) -> i32 {
-        self.z_index.get(entity.index()).copied().unwrap_or_default()
-    }
-
     /// Returns the first ancestor to have the lock_focus_within flag set
     pub fn lock_focus_within(&self, entity: I) -> I {
         entity
@@ -146,7 +140,16 @@ where
 
     /// Returns the next sibling of an entity or `None` if t here isn't one.
     pub fn get_next_sibling(&self, entity: I) -> Option<I> {
-        self.next_sibling.get(entity.index()).and_then(|&next_sibling| next_sibling)
+        let mut next = self.next_sibling.get(entity.index()).and_then(|&next_sibling| next_sibling);
+        while let Some(next_sibling) = next {
+            if !self.is_ignored(next_sibling) {
+                return next;
+            }
+
+            next =
+                self.next_sibling.get(next_sibling.index()).and_then(|&next_sibling| next_sibling);
+        }
+        None
     }
 
     /// Returns the next layout sibling of an entity or `None` if t here isn't one.
@@ -165,7 +168,16 @@ where
 
     /// Returns the previous sibling of an entity or `None` if there isn't one.
     pub fn get_prev_sibling(&self, entity: I) -> Option<I> {
-        self.prev_sibling.get(entity.index()).and_then(|&prev_sibling| prev_sibling)
+        let mut prev = self.prev_sibling.get(entity.index()).and_then(|&prev_sibling| prev_sibling);
+        while let Some(prev_sibling) = prev {
+            if !self.is_ignored(prev_sibling) {
+                return prev;
+            }
+
+            prev =
+                self.prev_sibling.get(prev_sibling.index()).and_then(|&prev_sibling| prev_sibling);
+        }
+        None
     }
 
     /// Returns the previous layout sibling of an entity or `None` if there isn't one.
@@ -483,12 +495,6 @@ where
         }
     }
 
-    pub fn set_z_index(&mut self, entity: I, index: i32) {
-        if let Some(z_index) = self.z_index.get_mut(entity.index()) {
-            *z_index = index;
-        }
-    }
-
     pub fn set_lock_focus_within(&mut self, entity: I, flag: bool) {
         if let Some(result) = self.lock_focus_within.get_mut(entity.index()) {
             *result = flag;
@@ -516,7 +522,6 @@ where
             self.prev_sibling.resize(entity_index + 1, None);
             self.ignored.resize(entity_index + 1, false);
             self.lock_focus_within.resize(entity_index + 1, false);
-            self.z_index.resize(entity_index + 1, 0);
         }
 
         self.parent[entity_index] = Some(parent);
@@ -525,7 +530,6 @@ where
         self.prev_sibling[entity_index] = None;
         self.ignored[entity_index] = false;
         self.lock_focus_within[entity_index] = false;
-        self.z_index[entity_index] = 0;
 
         // If the parent has no first child then this entity is the first child
         if self.first_child[parent_index].is_none() {

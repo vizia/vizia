@@ -22,7 +22,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { value: 0.2 }.build(cx);
 
@@ -33,6 +33,6 @@ fn main() {
         });
     })
     .title("Knob")
-    .inner_size((250, 250))
-    .run();
+    .inner_size((300, 300))
+    .run()
 }

@@ -19,7 +19,7 @@ impl Model for AppData {
             AppEvent::SetName(s) => self.name = s.clone(),
             AppEvent::ReceiveEmail => self.emails += 1,
             AppEvent::ToggleLanguage => {
-                if cx.environment().locale == "en-US" {
+                if cx.environment().locale != "fr" {
                     cx.emit(EnvironmentEvent::SetLocale("fr".parse().unwrap()));
                 } else {
                     cx.emit(EnvironmentEvent::SetLocale("en-US".parse().unwrap()));
@@ -29,7 +29,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_translation(
             "en-US".parse().unwrap(),
@@ -44,7 +44,7 @@ fn main() {
 
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
-                Checkbox::new(cx, Environment::locale.map(|locale| *locale == "en-US"))
+                Checkbox::new(cx, Environment::locale.map(|locale| *locale != "fr"))
                     .id("toggle-language")
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleLanguage));
                 Label::new(cx, "Toggle Language").describing("toggle-language").hidden(true);
@@ -67,11 +67,8 @@ fn main() {
             .col_between(Pixels(5.0));
             Label::new(cx, Localized::new("intro").arg("name", AppData::name));
             Label::new(cx, Localized::new("emails").arg("unread_emails", AppData::emails));
-            Button::new(
-                cx,
-                |cx| cx.emit(AppEvent::ReceiveEmail),
-                |cx| Label::new(cx, Localized::new("refresh")),
-            );
+            Button::new(cx, |cx| Label::new(cx, Localized::new("refresh")))
+                .on_press(|cx| cx.emit(AppEvent::ReceiveEmail));
         })
         .row_between(Pixels(10.0))
         .space(Pixels(10.0));

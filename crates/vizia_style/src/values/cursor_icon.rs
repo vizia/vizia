@@ -2,8 +2,10 @@ use crate::{macros::define_enum, Parse};
 
 define_enum! {
     /// An icon of a cursor.
+    #[derive(Default)]
     pub enum CursorIcon {
         /// The platform-dependent default cursor. Typically an arrow.
+        #[default]
         "default": Default,
         /// An arrow which is usually also the default cursor icon.
         "arrow": Arrow,
@@ -84,12 +86,6 @@ define_enum! {
         "col-resize": ColResize,
         /// Indicates a row can be resized vertically.
         "row-resize": RowResize,
-    }
-}
-
-impl Default for CursorIcon {
-    fn default() -> Self {
-        CursorIcon::Default
     }
 }
 

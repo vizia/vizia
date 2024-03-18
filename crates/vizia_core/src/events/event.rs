@@ -1,7 +1,7 @@
 use crate::entity::Entity;
-use instant::Instant;
 use std::{any::Any, cmp::Ordering, fmt::Debug};
 use vizia_id::GenerationalId;
+use web_time::Instant;
 
 /// Determines how an event propagates through the tree.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -129,21 +129,22 @@ impl Event {
     /// # }
     /// # impl Model for AppData {
     /// #     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-    /// if let Some(app_event) = event.take() {
-    ///     match app_event {
-    ///         AppEvent::Increment => {
-    ///             self.count += 1;
-    ///         }
-    ///
-    ///         AppEvent::Decrement => {
-    ///             self.count -= 1;
-    ///         }
+    /// event.take(|app_event, meta| match app_event {
+    ///     AppEvent::Increment => {
+    ///         self.count += 1;
     ///     }
-    /// }
+    ///
+    ///     AppEvent::Decrement => {
+    ///         self.count -= 1;
+    ///     }
+    /// });
     /// #     }
     /// # }
     /// ```
-    pub fn take<M: Any + Send>(&mut self) -> Option<M> {
+    pub fn take<M: Any + Send, F>(&mut self, f: F)
+    where
+        F: FnOnce(M, &mut EventMeta),
+    {
         if let Some(message) = &self.message {
             if message.as_ref().is::<M>() {
                 // Safe to unwrap because we already checked it exists
@@ -151,14 +152,14 @@ impl Event {
                 // Safe to unwrap because we already checked it can be cast to M
                 let v = m.downcast().unwrap();
                 self.meta.consume();
-                return Some(*v);
+                (f)(*v, &mut self.meta);
             }
         }
-        None
     }
 }
 
 /// The metadata of an [`Event`].
+#[derive(Debug, Clone, Copy)]
 pub struct EventMeta {
     /// The entity that produced the event. Entity::null() for OS events or unspecified.
     pub origin: Entity,
@@ -198,17 +199,21 @@ pub(crate) struct TimedEvent {
     pub event: Event,
     pub time: Instant,
 }
+
 impl PartialEq<Self> for TimedEvent {
     fn eq(&self, other: &Self) -> bool {
         self.time.eq(&other.time)
     }
 }
+
 impl Eq for TimedEvent {}
+
 impl PartialOrd for TimedEvent {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
+
 impl Ord for TimedEvent {
     fn cmp(&self, other: &Self) -> Ordering {
         self.time.cmp(&other.time).reverse()

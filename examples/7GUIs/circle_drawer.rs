@@ -166,63 +166,61 @@ enum CircleDrawerEvent {
 
 impl Model for CircleDrawerData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        if let Some(event) = event.take() {
-            match event {
-                CircleDrawerEvent::AddCircle(x, y) => {
-                    let circle = Circle { x, y, r: 26.0 };
-                    self.circles_data.add_circle(circle);
-                    self.undo_redo.add_action(UndoRedoAction::Circle(circle));
-                }
-                CircleDrawerEvent::TrySelectCircle(x, y) => {
-                    if !(self.dialog_open || self.menu_open) {
-                        self.circles_data.update_selected(x, y)
-                    }
-                }
-                CircleDrawerEvent::ChangeRadius(r) => self.circles_data.change_radius(r),
-                CircleDrawerEvent::Undo => self.undo_redo.undo(&mut self.circles_data.circles),
-                CircleDrawerEvent::Redo => self.undo_redo.redo(&mut self.circles_data.circles),
-                CircleDrawerEvent::ToggleRightMenu => {
-                    if !self.menu_open && self.circles_data.selected.is_some() {
-                        let (x, y) = cx.mouse().right.pos_down;
-
-                        self.menu_open = true;
-                        self.menu_posx = Pixels(x);
-                        self.menu_posy = Pixels(y);
-                    } else {
-                        self.menu_open = false;
-                    }
-
-                    if !self.dialog_open {
-                        let x = cx.mouse().cursorx;
-                        let y = cx.mouse().cursory;
-
-                        self.circles_data.update_selected(x, y);
-                    }
-                }
-                CircleDrawerEvent::ToggleDialog => {
-                    self.dialog_open ^= true;
-
-                    let radius = self.circles_data.get_selected_radius().unwrap();
-
-                    if self.dialog_open {
-                        // if dialog just opened save the current radius as before radius
-                        self.radius_before = radius;
-                    } else {
-                        if self.radius_before != radius {
-                            self.undo_redo.add_action(UndoRedoAction::RadiusChange(
-                                self.circles_data.selected.unwrap(),
-                                self.radius_before,
-                            ));
-                        }
-
-                        let x = cx.mouse().cursorx;
-                        let y = cx.mouse().cursory;
-
-                        self.circles_data.update_selected(x, y);
-                    }
+        event.take(|event, _| match event {
+            CircleDrawerEvent::AddCircle(x, y) => {
+                let circle = Circle { x, y, r: 26.0 };
+                self.circles_data.add_circle(circle);
+                self.undo_redo.add_action(UndoRedoAction::Circle(circle));
+            }
+            CircleDrawerEvent::TrySelectCircle(x, y) => {
+                if !(self.dialog_open || self.menu_open) {
+                    self.circles_data.update_selected(x, y)
                 }
             }
-        }
+            CircleDrawerEvent::ChangeRadius(r) => self.circles_data.change_radius(r),
+            CircleDrawerEvent::Undo => self.undo_redo.undo(&mut self.circles_data.circles),
+            CircleDrawerEvent::Redo => self.undo_redo.redo(&mut self.circles_data.circles),
+            CircleDrawerEvent::ToggleRightMenu => {
+                if !self.menu_open && self.circles_data.selected.is_some() {
+                    let (x, y) = cx.mouse().right.pos_down;
+
+                    self.menu_open = true;
+                    self.menu_posx = Pixels(x);
+                    self.menu_posy = Pixels(y);
+                } else {
+                    self.menu_open = false;
+                }
+
+                if !self.dialog_open {
+                    let x = cx.mouse().cursorx;
+                    let y = cx.mouse().cursory;
+
+                    self.circles_data.update_selected(x, y);
+                }
+            }
+            CircleDrawerEvent::ToggleDialog => {
+                self.dialog_open ^= true;
+
+                let radius = self.circles_data.get_selected_radius().unwrap();
+
+                if self.dialog_open {
+                    // if dialog just opened save the current radius as before radius
+                    self.radius_before = radius;
+                } else {
+                    if self.radius_before != radius {
+                        self.undo_redo.add_action(UndoRedoAction::RadiusChange(
+                            self.circles_data.selected.unwrap(),
+                            self.radius_before,
+                        ));
+                    }
+
+                    let x = cx.mouse().cursorx;
+                    let y = cx.mouse().cursory;
+
+                    self.circles_data.update_selected(x, y);
+                }
+            }
+        });
     }
 }
 
@@ -265,13 +263,12 @@ impl View for CircleDrawerCanvas {
 
         let paint = Paint::color(Color::black().into()).with_line_width(2.0);
 
-        for (idx, Circle { x, y, r }) in
-            CircleDrawerData::circles_data.get(cx).circles.into_iter().enumerate()
-        {
+        let circle_data = CircleDrawerData::circles_data.get(cx);
+        for (idx, Circle { x, y, r }) in circle_data.circles.iter().copied().enumerate() {
             let mut path = Path::new();
             path.circle(x, y, r);
 
-            if CircleDrawerData::circles_data.get(cx).selected.is_some_and(|i| i == idx) {
+            if circle_data.selected.is_some_and(|i| i == idx) {
                 let paint = Paint::color(Color::gray().into());
                 canvas.fill_path(&path, &paint);
             }
@@ -290,22 +287,24 @@ impl CircleDrawer {
         CircleDrawerData::default().build(cx);
 
         Self.build(cx, |cx| {
-            Popup::new(cx, CircleDrawerData::menu_open, true, |cx| {
-                Button::new(
-                    cx,
-                    |cx| {
+            Binding::new(cx, CircleDrawerData::menu_open, |cx, is_open| {
+                if is_open.get(cx) {
+                    Popup::new(cx, |cx| {
+                        Button::new(cx, |cx| Label::new(cx, "Adjust diameter.."));
+                    })
+                    .on_press(|cx| {
                         cx.emit(CircleDrawerEvent::ToggleDialog);
                         cx.emit(CircleDrawerEvent::ToggleRightMenu);
-                    },
-                    |cx| Label::new(cx, "Adjust diameter.."),
-                );
-            })
-            .size(Auto)
-            .left(CircleDrawerData::menu_posx)
-            .top(CircleDrawerData::menu_posy)
-            .on_blur(|cx| cx.emit(CircleDrawerEvent::ToggleRightMenu));
+                    })
+                    .size(Auto)
+                    .left(CircleDrawerData::menu_posx)
+                    .top(CircleDrawerData::menu_posy)
+                    .on_blur(|cx| cx.emit(CircleDrawerEvent::ToggleRightMenu))
+                    .lock_focus_to_within();
+                }
+            });
 
-            Popup::new(cx, CircleDrawerData::dialog_open, true, |cx| {
+            Dialog::new(cx, CircleDrawerData::dialog_open, |cx| {
                 let selected =
                     CircleDrawerData::circles_data.then(CircleData::selected).get(cx).unwrap();
 
@@ -316,10 +315,8 @@ impl CircleDrawer {
                             "Adjust diameter of circle at {:?}.",
                             CircleDrawerData::circles_data
                                 .then(CircleData::circles)
-                                .get(cx)
-                                .get(selected)
+                                .index(selected)
                                 .map(|c| (c.x, c.y))
-                                .unwrap()
                         ),
                     );
 
@@ -332,19 +329,20 @@ impl CircleDrawer {
                     )
                     .range(4.0..150.0)
                     .on_changing(|cx, value| cx.emit(CircleDrawerEvent::ChangeRadius(value)));
-                });
+                })
+                .size(Auto);
             })
-            .class("dialog-box")
-            .on_blur(|cx| cx.emit(CircleDrawerEvent::ToggleDialog));
+            .class("dialog-box");
+            // .on_blur(|cx| cx.emit(CircleDrawerEvent::ToggleDialog));
 
             HStack::new(cx, |cx| {
-                Button::new(cx, |_| {}, |cx| Label::new(cx, "Undo"))
+                Button::new(cx, |cx| Label::new(cx, "Undo"))
                     .disabled(
                         CircleDrawerData::undo_redo.then(UndoRedo::undo_list).map(|v| v.is_empty()),
                     )
                     .on_press(|cx| cx.emit(CircleDrawerEvent::Undo));
 
-                Button::new(cx, |_| {}, |cx| Label::new(cx, "Redo"))
+                Button::new(cx, |cx| Label::new(cx, "Redo"))
                     .disabled(
                         CircleDrawerData::undo_redo.then(UndoRedo::redo_list).map(|v| v.is_empty()),
                     )
@@ -364,7 +362,7 @@ impl View for CircleDrawer {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx: &mut Context| {
         CircleDrawer::new(cx);
     })

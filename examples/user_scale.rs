@@ -1,7 +1,7 @@
 use vizia::prelude::*;
 
-fn main() {
-    Application::new(app_main).title("Window resize demo").inner_size((600, 300)).run();
+fn main() -> Result<(), ApplicationError> {
+    Application::new(app_main).title("Window resize demo").inner_size((600, 300)).run()
 }
 
 #[derive(Lens)]
@@ -57,10 +57,11 @@ fn app_main(cx: &mut Context) {
                 }
             });
         })
+        .height(Auto)
         .width(Pixels(100.0));
     })
     .space(Stretch(1.0))
-    .width(Auto)
+    .size(Auto)
     .child_space(Pixels(10.0))
     .background_color(Color::from("#fafafa"))
     .border_color(Color::from("#dadada"))

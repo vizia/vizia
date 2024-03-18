@@ -11,7 +11,7 @@ static DEFAULT_WHEEL_SCALAR: f32 = 0.005;
 static DEFAULT_ARROW_SCALAR: f32 = 0.1;
 static DEFAULT_MODIFIER_SCALAR: f32 = 0.04;
 
-use std::f32::consts::PI;
+use std::{default, f32::consts::PI};
 
 pub struct Knob<L> {
     lens: L,
@@ -38,7 +38,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
     ) -> Handle<Self> {
         Self {
             lens,
-            default_normal: normalized_default.get_val(cx),
+            default_normal: normalized_default.get(cx),
 
             is_dragging: false,
             prev_drag_y: 0.0,
@@ -161,7 +161,7 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
 
                     self.prev_drag_y = *y;
 
-                    if cx.modifiers.contains(Modifiers::SHIFT) {
+                    if cx.modifiers.shift() {
                         delta_normal *= self.modifier_scalar;
                     }
 
@@ -330,15 +330,11 @@ impl Handle<'_, ArcTrack> {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub enum KnobMode {
     Discrete(usize),
+    #[default]
     Continuous,
-}
-impl Default for KnobMode {
-    fn default() -> Self {
-        KnobMode::Continuous
-    }
 }
 
 /// Adds tickmarks to a knob to show the steps that a knob can be set to.

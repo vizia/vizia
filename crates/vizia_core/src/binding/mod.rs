@@ -180,13 +180,15 @@
 //!
 //!         Label::new(cx, AppData::count);
 //!
-//!         Button::new(cx, |cx| cx.emit(AppEvent::Increment), |cx|{
+//!         Button::new(cx, |cx|{
 //!             Label::new(cx, "Increment")
-//!         });
+//!         })
+//!         .on_press(|cx| cx.emit(AppEvent::Increment));
 //!
-//!         Button::new(cx, |cx| cx.emit(AppEvent::Increment), |cx|{
+//!         Button::new(cx, |cx|{
 //!             Label::new(cx, "Decrement")
-//!         });
+//!         })
+//!         .on_press(|cx| cx.emit(AppEvent::Increment));
 //!     }).run();
 //! }
 //! ```
@@ -207,9 +209,6 @@ pub use data::*;
 
 mod res;
 pub use res::*;
-
-mod ray;
-pub use ray::*;
 
 mod map;
 pub(crate) use map::MapId;

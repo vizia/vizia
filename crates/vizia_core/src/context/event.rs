@@ -1,34 +1,27 @@
 use std::any::{Any, TypeId};
-use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, VecDeque};
 #[cfg(feature = "clipboard")]
 use std::error::Error;
 use std::rc::Rc;
 
 use femtovg::Transform2D;
-use fnv::FnvHashMap;
-use instant::{Duration, Instant};
-use vizia_storage::TreeIterator;
-use vizia_style::{ClipPath, Filter, Scale, Translate};
+use hashbrown::{HashMap, HashSet};
+use vizia_storage::{LayoutTreeIterator, TreeIterator};
 
 use crate::animation::{AnimId, Interpolator};
 use crate::cache::CachedData;
-use crate::environment::ThemeMode;
-use crate::events::{TimedEvent, TimedEventHandle, Timer, TimerState, ViewHandler};
+use crate::events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler};
 use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
-use crate::style::{Abilities, IntoTransform, PseudoClassFlags, Style, SystemFlags};
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
-use crate::window::DropData;
-use vizia_id::GenerationalId;
-use vizia_input::{Modifiers, MouseState};
+use vizia_input::MouseState;
 
-use crate::context::EmitContext;
 use crate::text::TextContext;
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
-use super::{DARK_THEME, LIGHT_THEME};
+use super::{LocalizationContext, DARK_THEME, LIGHT_THEME};
 
 /// A context used when handling events.
 ///
@@ -72,8 +65,8 @@ pub struct EventContext<'a> {
     pub(crate) entity_identifiers: &'a HashMap<String, Entity>,
     pub cache: &'a mut CachedData,
     pub(crate) tree: &'a Tree<Entity>,
-    pub(crate) data: &'a mut FnvHashMap<Entity, ModelDataStore>,
-    pub(crate) views: &'a mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    pub(crate) data: &'a mut HashMap<Entity, ModelDataStore>,
+    pub(crate) views: &'a mut HashMap<Entity, Box<dyn ViewHandler>>,
     pub(crate) listeners:
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub(crate) resource_manager: &'a mut ResourceManager,
@@ -460,7 +453,7 @@ impl<'a> EventContext<'a> {
         }
         self.set_focus_pseudo_classes(new_focus, true, focus_visible);
 
-        self.style.needs_restyle();
+        self.needs_restyle();
     }
 
     /// Sets application focus to the current view using the previous focus visibility.
@@ -672,7 +665,7 @@ impl<'a> EventContext<'a> {
             self.style.classes.insert(current, class_list);
         }
 
-        self.style.needs_restyle();
+        self.needs_restyle();
     }
 
     /// Returns a reference to the [Environment] model.
@@ -707,6 +700,16 @@ impl<'a> EventContext<'a> {
     }
 
     pub fn needs_restyle(&mut self) {
+        self.style.restyle.insert(self.current).unwrap();
+        let iter = if let Some(parent) = self.tree.get_layout_parent(self.current) {
+            LayoutTreeIterator::subtree(self.tree, parent)
+        } else {
+            LayoutTreeIterator::subtree(self.tree, self.current)
+        };
+
+        for descendant in iter {
+            self.style.restyle.insert(descendant).unwrap();
+        }
         self.style.needs_restyle();
     }
 
@@ -734,6 +737,10 @@ impl<'a> EventContext<'a> {
 
         self.style.parse_theme(&overall_theme);
 
+        for entity in self.tree.into_iter() {
+            self.style.restyle.insert(entity).unwrap();
+        }
+
         self.style.needs_restyle();
         self.style.needs_relayout();
         self.style.needs_redraw();
@@ -741,7 +748,7 @@ impl<'a> EventContext<'a> {
         Ok(())
     }
 
-    /// Spawns a thread and provides a [ContextProxy] for sending events back to the main thread.
+    /// Spawns a thread and provides a [ContextProxy] for sending events back to the main UI thread.
     pub fn spawn<F>(&self, target: F)
     where
         F: 'static + Send + FnOnce(&mut ContextProxy),
@@ -752,6 +759,14 @@ impl<'a> EventContext<'a> {
         };
 
         std::thread::spawn(move || target(&mut cxp));
+    }
+
+    /// Returns a [ContextProxy] which can be moved between threads and used to send events back to the main UI thread.
+    pub fn get_proxy(&self) -> ContextProxy {
+        ContextProxy {
+            current: self.current,
+            event_proxy: self.event_proxy.as_ref().map(|p| p.make_clone()),
+        }
     }
 
     pub fn modify<V: View>(&mut self, f: impl FnOnce(&mut V)) {
@@ -829,7 +844,7 @@ impl<'a> EventContext<'a> {
             pseudo_classes.set(PseudoClassFlags::HOVER, flag);
         }
 
-        self.style.needs_restyle();
+        self.needs_restyle();
     }
 
     /// Set the active state for the current view.
@@ -845,7 +860,7 @@ impl<'a> EventContext<'a> {
             pseudo_classes.set(PseudoClassFlags::ACTIVE, active);
         }
 
-        self.style.needs_restyle();
+        self.needs_restyle();
     }
 
     pub fn set_read_only(&mut self, flag: bool) {
@@ -854,7 +869,7 @@ impl<'a> EventContext<'a> {
             pseudo_classes.set(PseudoClassFlags::READ_ONLY, flag);
         }
 
-        self.style.needs_restyle();
+        self.needs_restyle();
     }
 
     pub fn set_read_write(&mut self, flag: bool) {
@@ -863,7 +878,7 @@ impl<'a> EventContext<'a> {
             pseudo_classes.set(PseudoClassFlags::READ_WRITE, flag);
         }
 
-        self.style.needs_restyle();
+        self.needs_restyle();
     }
 
     /// Sets the checked state of the current view.
@@ -880,7 +895,7 @@ impl<'a> EventContext<'a> {
             pseudo_classes.set(PseudoClassFlags::CHECKED, flag);
         }
 
-        self.style.needs_restyle();
+        self.needs_restyle();
     }
 
     /// Sets the valid state of the current view.
@@ -898,7 +913,7 @@ impl<'a> EventContext<'a> {
             pseudo_classes.set(PseudoClassFlags::INVALID, !flag);
         }
 
-        self.style.needs_restyle();
+        self.needs_restyle();
     }
 
     pub fn set_placeholder_shown(&mut self, flag: bool) {
@@ -907,7 +922,7 @@ impl<'a> EventContext<'a> {
             pseudo_classes.set(PseudoClassFlags::PLACEHOLDER_SHOWN, flag);
         }
 
-        self.style.needs_restyle();
+        self.needs_restyle();
     }
 
     // TODO: Move me
@@ -1059,6 +1074,20 @@ impl<'a> EventContext<'a> {
         self.needs_redraw();
     }
 
+    // SIZE
+
+    pub fn set_width(&mut self, width: Units) {
+        self.style.width.insert(self.current, width);
+        self.needs_relayout();
+        self.needs_redraw();
+    }
+
+    pub fn set_height(&mut self, height: Units) {
+        self.style.height.insert(self.current, height);
+        self.needs_relayout();
+        self.needs_redraw();
+    }
+
     // SPACE
 
     pub fn set_left(&mut self, left: Units) {
@@ -1177,7 +1206,7 @@ impl<'a> EventContext<'a> {
         }
 
         self.modify_timer(timer, |timer_state| {
-            let now = instant::Instant::now();
+            let now = Instant::now();
             timer_state.start_time = now;
             timer_state.time = now;
             timer_state.entity = current;
@@ -1205,6 +1234,32 @@ impl<'a> EventContext<'a> {
                 (timer_function)(pending_timer);
             }
         }
+    }
+
+    pub fn query_timer<T>(
+        &mut self,
+        timer: Timer,
+        timer_function: impl Fn(&TimerState) -> T,
+    ) -> Option<T> {
+        while let Some(next_timer_state) = self.running_timers.peek() {
+            if next_timer_state.id == timer {
+                let timer_state = self.running_timers.pop().unwrap();
+
+                let t = (timer_function)(&timer_state);
+
+                self.running_timers.push(timer_state);
+
+                return Some(t);
+            }
+        }
+
+        for pending_timer in self.timers.iter() {
+            if pending_timer.id == timer {
+                return Some(timer_function(pending_timer));
+            }
+        }
+
+        None
     }
 
     /// Returns true if the timer with the provided timer id is currently running.
@@ -1261,6 +1316,10 @@ impl<'a> DataContext for EventContext<'a> {
         }
 
         None
+    }
+
+    fn as_context(&self) -> Option<LocalizationContext<'_>> {
+        Some(LocalizationContext::from_event_context(self))
     }
 }
 

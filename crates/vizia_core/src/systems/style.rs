@@ -1,15 +1,11 @@
-use crate::{
-    events::ViewHandler,
-    prelude::*,
-    style::{PseudoClassFlags, Rule, Style, SystemFlags},
-};
-use fnv::FnvHashMap;
-use vizia_id::GenerationalId;
-use vizia_storage::LayoutTreeIterator;
+use crate::{events::ViewHandler, prelude::*};
+use hashbrown::HashMap;
+use vizia_storage::TreeBreadthIterator;
 use vizia_style::{
     matches_selector_list,
     selectors::{
         attr::{AttrSelectorOperation, CaseSensitivity, NamespaceConstraint},
+        parser::Component,
         SelectorImpl,
     },
     selectors::{matching::ElementSelectorFlags, OpaqueElement},
@@ -22,7 +18,7 @@ pub(crate) struct Node<'s, 't, 'v> {
     entity: Entity,
     store: &'s Style,
     tree: &'t Tree<Entity>,
-    views: &'v FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    views: &'v HashMap<Entity, Box<dyn ViewHandler>>,
 }
 
 impl<'s, 't, 'v> std::fmt::Debug for Node<'s, 't, 'v> {
@@ -620,16 +616,131 @@ pub(crate) fn compute_matched_rules(
     matched_rules.reverse();
 }
 
+fn has_same_selector(cx: &Context, entity1: Entity, entity2: Entity) -> bool {
+    let element1 = if let Some(element1) = cx.views.get(&entity1).and_then(|view| view.element()) {
+        element1
+    } else {
+        ""
+    };
+
+    let element2 = if let Some(element2) = cx.views.get(&entity2).and_then(|view| view.element()) {
+        element2
+    } else {
+        ""
+    };
+
+    if element1 != element2 {
+        return false;
+    };
+
+    let id1 = if let Some(id) = cx.style.ids.get(entity1) { id } else { "" };
+    let id2 = if let Some(id) = cx.style.ids.get(entity2) { id } else { "" };
+
+    if id1 != id2 {
+        return false;
+    }
+
+    if let Some(classes1) = cx.style.classes.get(entity1) {
+        if let Some(classes2) = cx.style.classes.get(entity2) {
+            if !classes2.is_subset(classes1) || !classes1.is_subset(classes2) {
+                return false;
+            }
+        }
+    }
+
+    if let Some(psudeo_class_flag1) = cx.style.pseudo_classes.get(entity1) {
+        if let Some(psudeo_class_flag2) = cx.style.pseudo_classes.get(entity2) {
+            if psudeo_class_flag2.bits() != psudeo_class_flag1.bits() {
+                return false;
+            }
+        }
+    }
+
+    true
+}
+
+pub(crate) struct MatchedRulesCache {
+    pub entity: Entity,
+    pub rules: Vec<(Rule, u32)>,
+}
+
 // Iterates the tree and determines the matching style rules for each entity, then links the entity to the corresponding style rule data.
 pub(crate) fn style_system(cx: &mut Context) {
-    if cx.style.system_flags.contains(SystemFlags::RESTYLE) {
-        let iterator = LayoutTreeIterator::full(&cx.tree);
+    if !cx.style.restyle.is_empty() {
+        // println!("RESTYLE");
+        let iterator = TreeBreadthIterator::full(&cx.tree);
+
+        let mut parent = None;
+        let mut cache: Vec<MatchedRulesCache> = Vec::with_capacity(50);
 
         // Restyle the entire application.
         // TODO: Make this incremental.
         for entity in iterator {
-            let mut matched_rules = Vec::with_capacity(5);
-            compute_matched_rules(cx, entity, &mut matched_rules);
+            if !cx.style.restyle.contains(entity) {
+                // println!("SKIP {}", entity);
+                continue;
+            }
+
+            // println!("Style: {}", entity);
+            let mut matched_rules = Vec::with_capacity(50);
+
+            let current_parent = cx.tree.get_layout_parent(entity);
+
+            let mut compute_match = true;
+
+            if current_parent == parent
+                && !cx.tree.is_first_child(entity)
+                && !cx.tree.is_last_child(entity)
+            {
+                // if has same selector look up rules
+                'cache: for entry in &cache {
+                    if has_same_selector(cx, entry.entity, entity) {
+                        matched_rules.clone_from(&entry.rules);
+                        compute_match = false;
+
+                        for rule in entry.rules.iter() {
+                            if let Some(selectors) = cx.style.rules.get(&rule.0) {
+                                for selector in selectors.0.iter() {
+                                    for component in selector.iter() {
+                                        match *component {
+                                            Component::FirstChild
+                                            | Component::LastChild
+                                            | Component::NthChild(_, _)
+                                            | Component::FirstOfType
+                                            | Component::LastOfType
+                                            | Component::NthLastChild(_, _)
+                                            | Component::NthOfType(_, _)
+                                            | Component::NthLastOfType(_, _)
+                                            | Component::OnlyChild
+                                            | Component::OnlyOfType => {
+                                                matched_rules.clear();
+                                                compute_match = true;
+                                                continue 'cache;
+                                            }
+
+                                            _ => {}
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        break 'cache;
+                        // println!("Sharing: {}", entity);
+                    }
+                }
+            } else {
+                parent = current_parent;
+                cache.clear();
+            }
+
+            // matched_rules.clear();
+            // compute_match = true;
+
+            if compute_match {
+                compute_matched_rules(cx, entity, &mut matched_rules);
+                cache.push(MatchedRulesCache { entity, rules: matched_rules.clone() });
+            }
 
             if !matched_rules.is_empty() {
                 link_style_data(
@@ -639,7 +750,6 @@ pub(crate) fn style_system(cx: &mut Context) {
                 );
             }
         }
-
-        cx.style.system_flags.set(SystemFlags::RESTYLE, false);
+        cx.style.restyle.clear();
     }
 }

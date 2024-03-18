@@ -39,13 +39,13 @@ fn fahrenheit_to_celcius(temp: f32) -> f32 {
     (temp - 32.) * (5. / 9.)
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { temperature: 5.0 }.build(cx);
 
         HStack::new(cx, |cx| {
             input_box(cx, AppData::temperature, |val| val);
-            Label::new(cx, "Celcius");
+            Label::new(cx, "Celsius");
             input_box(cx, AppData::temperature.map(celcius_to_fahrenheit), fahrenheit_to_celcius);
             Label::new(cx, "Fahrenheit");
         })
@@ -54,5 +54,5 @@ fn main() {
     })
     .title("Temperature Converter")
     .inner_size((450, 100))
-    .run();
+    .run()
 }

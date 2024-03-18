@@ -19,7 +19,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx: &mut Context| {
         AppData { current_theme: "Light mode".to_owned() }.build(cx);
 
@@ -35,5 +35,5 @@ fn main() {
     })
     .title("Follow system theme")
     .inner_size((470, 320))
-    .run();
+    .run()
 }

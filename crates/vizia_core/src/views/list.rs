@@ -1,135 +1,113 @@
-use crate::binding::Index;
+use std::ops::Deref;
+
 use crate::prelude::*;
-use std::marker::PhantomData;
-use vizia_input::Code;
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub enum Selectable {
+    #[default]
+    None,
+    Single,
+    Multi,
+}
+
+impl_res_simple!(Selectable);
+
+pub enum ListEvent {
+    Select(usize),
+    SelectFocused,
+    SetFocus(Option<usize>),
+    FocusNext(bool),
+    FocusPrev(bool),
+    ClearSelection,
+}
 
 /// A view for creating a list of items from a binding to a `Vec<T>`
-pub struct List<L, T: 'static>
-where
-    L: Lens,
-    <L as Lens>::Target: std::ops::Deref<Target = [T]>,
-{
-    p: PhantomData<L>,
-    increment_callback: Option<Box<dyn Fn(&mut EventContext)>>,
-    decrement_callback: Option<Box<dyn Fn(&mut EventContext)>>,
-    clear_callback: Option<Box<dyn Fn(&mut EventContext)>>,
+#[derive(Lens)]
+pub struct List {
+    list_len: usize,
 }
 
-impl<L: Lens, T: Clone> List<L, T>
-where
-    <L as Lens>::Target: std::ops::Deref<Target = [T]>,
-{
-    /// Creates a new List view with a binding to the given lens and a template for constructing the list items
-    pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
+impl List {
+    pub fn new<L: Lens, T: 'static>(
+        cx: &mut Context,
+        list: L,
+        item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
+    ) -> Handle<Self>
     where
-        F: 'static + Fn(&mut Context, usize, Index<L, T>),
+        L::Target: Deref<Target = [T]>,
     {
-        //let item_template = Rc::new(item);
-        List {
-            p: PhantomData,
-            increment_callback: None,
-            decrement_callback: None,
-            clear_callback: None,
-        }
-        .build(cx, move |cx| {
-            // Bind to the list data
-            Binding::new(cx, lens.map(|lst| lst.len()), move |cx, list_len| {
-                // If the number of list items is different to the number of children of the ListView
-                // then remove and rebuild all the children
-                let list_len = list_len.get_fallible(cx).map_or(0, |d| d);
+        Self::new_generic(cx, list, |list| list.len(), |list, index| &list[index], item_content)
+    }
 
-                for index in 0..list_len {
-                    let ptr = lens.index(index);
-                    (item)(cx, index, ptr);
-                }
-            });
-        })
+    /// Creates a new List view with a binding to the given lens and a template for constructing the list items
+    pub fn new_generic<L: Lens, T: 'static>(
+        cx: &mut Context,
+        list: L,
+        list_len: impl 'static + Fn(&L::Target) -> usize,
+        list_index: impl 'static + Copy + Fn(&L::Target, usize) -> &T,
+        item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
+    ) -> Handle<Self> {
+        let num_items = list.map(list_len);
+        Self { list_len: num_items.get(cx) }
+            .build(cx, move |cx| {
+                Keymap::from(vec![
+                    (
+                        KeyChord::new(Modifiers::empty(), Code::ArrowDown),
+                        KeymapEntry::new("Focus Next", |cx| cx.emit(ListEvent::FocusNext(false))),
+                    ),
+                    (
+                        KeyChord::new(Modifiers::empty(), Code::ArrowUp),
+                        KeymapEntry::new("Focus Previous", |cx| {
+                            cx.emit(ListEvent::FocusPrev(false))
+                        }),
+                    ),
+                    // (
+                    //     KeyChord::new(Modifiers::empty(), Code::Space),
+                    //     KeymapEntry::new((), |cx| cx.emit(ListEvent::SelectFocused)),
+                    // ),
+                    (
+                        KeyChord::new(Modifiers::SHIFT, Code::ArrowDown),
+                        KeymapEntry::new("Select Next", |cx| {
+                            cx.emit(ListEvent::FocusNext(true));
+                            // cx.emit(ListEvent::SelectFocused);
+                        }),
+                    ),
+                    (
+                        KeyChord::new(Modifiers::SHIFT, Code::ArrowUp),
+                        KeymapEntry::new("Select Previous", |cx| {
+                            cx.emit(ListEvent::FocusPrev(true));
+                            // cx.emit(ListEvent::SelectFocused);
+                        }),
+                    ),
+                    (
+                        KeyChord::new(Modifiers::empty(), Code::Escape),
+                        KeymapEntry::new("Clear Selection", |cx| {
+                            cx.emit(ListEvent::ClearSelection)
+                        }),
+                    ),
+                ])
+                .build(cx);
+
+                // ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
+                // Bind to the list data
+                Binding::new(cx, num_items, move |cx, num_items| {
+                    // If the number of list items is different to the number of children of the ListView
+                    // then remove and rebuild all the children
+
+                    for index in 0..num_items.get(cx) {
+                        let item = list.map_ref(move |list| list_index(list, index));
+                        item_content(cx, index, item);
+                    }
+                });
+                // });
+            })
+            .width(Stretch(1.0))
+            .role(Role::List)
     }
 }
 
-impl<L: Lens, T> View for List<L, T>
-where
-    <L as Lens>::Target: std::ops::Deref<Target = [T]>,
-{
+impl View for List {
     fn element(&self) -> Option<&'static str> {
         Some("list")
-    }
-
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|window_event, _| match window_event {
-            WindowEvent::KeyDown(code, _) => match code {
-                Code::ArrowDown => {
-                    if let Some(callback) = &self.increment_callback {
-                        (callback)(cx);
-                    }
-                }
-
-                Code::ArrowUp => {
-                    if let Some(callback) = &self.decrement_callback {
-                        (callback)(cx);
-                    }
-                }
-
-                Code::Escape => {
-                    if let Some(callback) = &self.clear_callback {
-                        (callback)(cx);
-                    }
-                }
-
-                _ => {}
-            },
-
-            _ => {}
-        });
-
-        // event.map(|window_event, _| match window_event {
-        //     WindowEvent::MouseDown(MouseButton::Left) => {
-        //         if !cx.focused.is_child_of(&cx.tree, cx.current) {
-        //             cx.focused = cx.current;
-        //         }
-        //     }
-        //     _ => {}
-        // });
-    }
-}
-
-impl<L: Lens<Target = Vec<T>>, T: Data> Handle<'_, List<L, T>> {
-    pub fn on_increment<F>(self, callback: F) -> Self
-    where
-        F: 'static + Fn(&mut EventContext),
-    {
-        if let Some(list) =
-            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L, T>>())
-        {
-            list.increment_callback = Some(Box::new(callback));
-        }
-
-        self
-    }
-
-    pub fn on_decrement<F>(self, callback: F) -> Self
-    where
-        F: 'static + Fn(&mut EventContext),
-    {
-        if let Some(list) =
-            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L, T>>())
-        {
-            list.decrement_callback = Some(Box::new(callback));
-        }
-
-        self
-    }
-
-    pub fn on_clear<F>(self, callback: F) -> Self
-    where
-        F: 'static + Fn(&mut EventContext),
-    {
-        if let Some(list) =
-            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L, T>>())
-        {
-            list.clear_callback = Some(Box::new(callback));
-        }
-
-        self
     }
 }

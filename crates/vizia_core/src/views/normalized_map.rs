@@ -6,9 +6,10 @@ pub trait NormalizedMap: 'static + Clone {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub enum DisplayDecimals {
     Zero,
+    #[default]
     One,
     Two,
     Three,
@@ -26,12 +27,6 @@ impl DisplayDecimals {
             DisplayDecimals::Four => format!("{:.4}", value),
             DisplayDecimals::Five => format!("{:.5}", value),
         }
-    }
-}
-
-impl Default for DisplayDecimals {
-    fn default() -> Self {
-        DisplayDecimals::One
     }
 }
 

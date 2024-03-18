@@ -1,4 +1,4 @@
-use crate::{context::TreeProps, prelude::*};
+use crate::prelude::*;
 
 /// A simple ProgressBar that can be used to show progress of something.
 ///
@@ -130,13 +130,11 @@ impl<'a> Handle<'a, ProgressBar> {
     /// you also pass a lens to this method if you want to be able to change the color
     /// dynamically.
     pub fn bar_color(self, color: impl Res<Color>) -> Self {
-        color.set_or_bind(self.cx, self.entity, move |cx, val| {
-            let first_child = cx.first_child();
-            cx.with_current(first_child, |cx| {
-                cx.set_background_color(val);
-            })
-        });
-
-        self
+        self.bind(color, |mut h, c| {
+            let first_child = h.entity.first_child(&h.cx.tree).unwrap();
+            h.entity = first_child;
+            let val = c.get(&h);
+            h.background_color(val);
+        })
     }
 }

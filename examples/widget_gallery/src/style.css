@@ -1,0 +1,106 @@
+.container {
+    child-space: 0px;
+}
+
+scrollview.widgets > scroll_content {
+    child-space: 20px;
+    child-left: 1s;
+    child-right: 1s;
+    row-between: 15px;
+}
+
+tabview.widgets > scrollview > scroll_content {
+    child-space: 8px;
+}
+
+tabview.widgets tabheader label.tab-name {
+    width: 220px;
+}
+
+tabview.widgets tabheader:checked label.tab-name {
+    border-radius: 4px;
+    background-color: #51afef;
+}
+
+vstack.panel {
+    height: auto;
+    row-between: 12px;
+    bottom: 20px;
+    width: 3s;
+    min-width: 500px;
+    max-width: 700px;
+}
+
+label.title {
+    font-size: 30;
+    font-weight: bold;
+    bottom: 20px;
+}
+
+label.header {
+    font-size: 20;
+    font-weight: bold;
+    bottom: 6px;
+    top: 24px;
+}
+
+label.paragraph {
+    width: 1s;
+    text-wrap: true;
+    bottom: 12px;
+}
+
+demo-region {
+    border-radius: 4px;
+    /* child-space: 40px; */
+    /* child-left: 1s;
+    child-right: 1s; */
+    height: auto;
+    border: 1px #d2d2d2;
+}
+
+demo-region label.code {
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+    height: auto;
+    width: auto;
+}
+
+demo-region hstack.controls {
+    height: auto;
+    child-top: 4px;
+    child-bottom: 4px;
+    background-color: #f4f4f4;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+demo-region.open hstack.controls {
+    border-radius: 0px;
+}
+
+demo-region hstack.region {
+    border-radius: 4px;
+    child-space: 40px;
+    child-left: 1s;
+    child-right: 1s;
+    height: auto;
+    min-height: 100px;
+    col-between: 12px;
+}
+
+demo-region > divider {
+    background-color: rgb(210, 210, 210);
+}
+
+demo-region > hstack.code {
+    background-color: #2d343f;
+    color: white;
+    font-family: "Fira Code";
+    width: 1s;
+    child-space: 10px;
+    border-radius: 4px;
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+    font-size: 14;
+}

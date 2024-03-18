@@ -1,13 +1,12 @@
 use crate::prelude::*;
-use crate::views::popup::PopupData;
 
 /// A dropdown is used to display some state with the ability to open a popup with options to change that state.
 ///
-/// Usually a dropdown is used in the context of a "combo box" or "list picker" to allow the user to select
+/// Usually a dropdown is used in the context of a "combobox" or "picklist" to allow the user to select
 /// from one of several discrete options. The dropdown takes two closures, one which shows the current state
 /// regardless of whether the dropdown is open or closed, and one which shows the contents while it is open.
 ///
-/// ## Basic dropdown
+/// ## Basic Dropdown
 ///
 /// A basic dropdown displaying five options that the user can choose from.
 ///
@@ -58,12 +57,6 @@ use crate::views::popup::PopupData;
 /// ```
 /// # use vizia_core::prelude::*;
 /// # let cx = &mut Context::default();
-/// #
-/// # cx.add_stylesheet(r#"
-/// #     dropdown popup {
-/// #         background-color: white;
-/// #     }
-/// # "#);
 ///
 /// #[derive(Lens, Clone, PartialEq, Eq)]
 /// struct AppData {
@@ -129,7 +122,7 @@ pub struct Dropdown;
 impl Dropdown {
     /// Creates a new dropdown.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```
     /// # use vizia_core::prelude::*;
@@ -138,31 +131,51 @@ impl Dropdown {
     /// #
     /// Dropdown::new(cx, |cx| Label::new(cx, "Text"), |_| {});
     /// ```
-    pub fn new<F, L, V>(cx: &mut Context, label: L, content: F) -> Handle<Self>
+    pub fn new<F, L, V>(cx: &mut Context, trigger: L, content: F) -> Handle<Self>
     where
         L: 'static + Fn(&mut Context) -> Handle<V>,
         F: 'static + Fn(&mut Context),
         V: 'static + View,
     {
-        Self {}
-            .build(cx, move |cx| {
-                PopupData::default().build(cx);
+        Self {}.build(cx, move |cx| {
+            cx.add_listener(move |_dropdown: &mut Self, cx, event| {
+                event.map(|window_event, meta| match window_event {
+                    WindowEvent::PressDown { mouse: _ } => {
+                        if meta.origin != cx.current() {
+                            // Check if the mouse was pressed outside of any descendants
+                            if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
+                                cx.emit(PopupEvent::Close);
+                            }
+                        }
+                    }
 
-                (label)(cx)
-                    .class("title")
-                    .role(Role::PopupButton)
-                    .width(Stretch(1.0))
-                    .cursor(CursorIcon::Hand)
-                    .checked(PopupData::is_open)
-                    .navigable(true)
-                    .on_press(|cx| cx.emit(PopupEvent::Switch));
+                    WindowEvent::KeyDown(code, _) => {
+                        if *code == Code::Escape {
+                            cx.emit(PopupEvent::Close);
+                        }
+                    }
 
-                Popup::new(cx, PopupData::is_open, false, move |cx| {
-                    (content)(cx);
-                })
-                .on_blur(|cx| cx.emit(PopupEvent::Close));
+                    _ => {}
+                });
+            });
+
+            PopupData::default().build(cx);
+
+            (trigger)(cx)
+                .class("dropdown-title")
+                .width(Stretch(1.0))
+                .checked(PopupData::is_open)
+                .navigable(true)
+                .on_press(|cx| cx.emit(PopupEvent::Switch));
+            Binding::new(cx, PopupData::is_open, move |cx, is_open| {
+                if is_open.get(cx) {
+                    Popup::new(cx, |cx| {
+                        (content)(cx);
+                    })
+                    .arrow_size(Pixels(4.0));
+                }
             })
-            .cursor(CursorIcon::Hand)
+        })
     }
 }
 

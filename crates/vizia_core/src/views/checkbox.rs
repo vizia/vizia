@@ -3,7 +3,7 @@ use crate::prelude::*;
 
 /// A checkbox used to display and toggle a boolean state.
 ///
-/// Clicking on the checkbox with the left mouse button triggers the `on_toggle` callback.
+/// Pressing on the checkbox with the primary mouse button triggers the [`on_toggle`](Checkbox::on_toggle) callback.
 ///
 /// # Examples
 ///
@@ -154,9 +154,9 @@ impl Checkbox {
             .build(cx, |_| {})
             .bind(checked, move |handle, c| {
                 handle.bind(intermediate, move |handle, i| {
-                    if c.get(handle.cx) {
+                    if c.get(&handle) {
                         handle.text(ICON_CHECK).toggle_class("intermediate", false);
-                    } else if i.get(handle.cx) {
+                    } else if i.get(&handle) {
                         handle.text("-").toggle_class("intermediate", true);
                     } else {
                         handle.text("").toggle_class("intermediate", false);
@@ -164,7 +164,6 @@ impl Checkbox {
                 });
             })
             .checked(checked)
-            .cursor(CursorIcon::Hand)
             .navigable(true)
     }
 }
@@ -209,9 +208,14 @@ impl View for Checkbox {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
-            WindowEvent::Press { mouse } => {
-                let over = if *mouse { cx.mouse.left.pressed } else { cx.focused() };
-                if over == cx.current() && meta.target == cx.current() && !cx.is_disabled() {
+            WindowEvent::PressDown { mouse: _ } => {
+                if meta.target == cx.current {
+                    cx.focus();
+                }
+            }
+
+            WindowEvent::Press { mouse: _ } => {
+                if meta.target == cx.current {
                     if let Some(callback) = &self.on_toggle {
                         (callback)(cx);
                     }

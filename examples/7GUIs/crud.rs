@@ -35,7 +35,7 @@ const STYLE: &str = r#"
     }
 
     list {
-        border-color: white;
+        border-color: #d2d2d2;
         border-width: 1px;
         width: 1s;
         height: 1s;
@@ -107,7 +107,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
@@ -136,6 +136,7 @@ fn main() {
                         .on_press(move |cx| {
                             cx.emit(AppEvent::SetSelected(index));
                         })
+                        .navigable(true)
                         .checked(AppData::selected.map(move |selected| *selected == Some(index)));
                     });
                 });
@@ -163,9 +164,12 @@ fn main() {
             .child_bottom(Pixels(0.0));
 
             HStack::new(cx, |cx| {
-                Button::new(cx, |cx| cx.emit(AppEvent::Create), |cx| Label::new(cx, "Create"));
-                Button::new(cx, |cx| cx.emit(AppEvent::Update), |cx| Label::new(cx, "Update"));
-                Button::new(cx, |cx| cx.emit(AppEvent::Delete), |cx| Label::new(cx, "Delete"));
+                Button::new(cx, |cx| Label::new(cx, "Create"))
+                    .on_press(|cx| cx.emit(AppEvent::Create));
+                Button::new(cx, |cx| Label::new(cx, "Update"))
+                    .on_press(|cx| cx.emit(AppEvent::Update));
+                Button::new(cx, |cx| Label::new(cx, "Delete"))
+                    .on_press(|cx| cx.emit(AppEvent::Delete));
             })
             .col_between(Pixels(10.0));
         })
@@ -173,5 +177,5 @@ fn main() {
     })
     .title("CRUD")
     .inner_size((450, 200))
-    .run();
+    .run()
 }

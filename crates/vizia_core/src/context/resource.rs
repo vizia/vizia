@@ -1,4 +1,4 @@
-use std::collections::{hash_map::Entry, HashMap, HashSet};
+use hashbrown::{hash_map::Entry, HashSet};
 
 use vizia_storage::Tree;
 
@@ -9,6 +9,7 @@ use crate::{
 };
 
 use super::{Context, ContextProxy, EventProxy};
+use hashbrown::HashMap;
 
 /// A context used when loading images.
 pub struct ResourceContext<'a> {

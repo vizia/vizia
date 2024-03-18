@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use std::collections::HashMap;
+use indexmap::IndexMap;
 
 /// A keymap that associates key chords with actions.
 ///
@@ -47,7 +47,7 @@ pub struct Keymap<T>
 where
     T: 'static + Clone + PartialEq + Send + Sync,
 {
-    entries: HashMap<KeyChord, Vec<KeymapEntry<T>>>,
+    entries: IndexMap<KeyChord, Vec<KeymapEntry<T>>>,
 }
 
 impl<T> Keymap<T>
@@ -71,7 +71,7 @@ where
     /// let keymap = Keymap::<Action>::new();
     /// ```
     pub fn new() -> Self {
-        Self { entries: HashMap::new() }
+        Self { entries: IndexMap::new() }
     }
 
     /// Inserts an entry into the keymap.
@@ -96,7 +96,7 @@ where
         if let Some(actions) = self.entries.get_mut(chord) {
             if let Some(index) = actions.iter().position(|x| x == action) {
                 if actions.len() == 1 {
-                    self.entries.remove(chord);
+                    self.entries.swap_remove(chord);
                 } else {
                     actions.swap_remove(index);
                 }

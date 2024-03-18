@@ -22,7 +22,7 @@ enum AppEvent {
     CloseChip(usize),
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData {
             chip: "Chip".to_string(),
@@ -31,16 +31,15 @@ fn main() {
         .build(cx);
 
         ExamplePage::new(cx, |cx| {
-            Chip::new(cx, AppData::chip).background_color(Color::from("#ff004444"));
+            Chip::new(cx, AppData::chip);
             List::new(cx, AppData::chips, |cx, index, item| {
-                Chip::new(cx, item)
-                    .on_close(move |cx| cx.emit(AppEvent::CloseChip(index)))
-                    .background_color(Color::from("#ff000044"));
+                Chip::new(cx, item).on_close(move |cx| cx.emit(AppEvent::CloseChip(index)));
             })
-            .layout_type(LayoutType::Row);
+            .layout_type(LayoutType::Row)
+            .col_between(Pixels(4.0));
         });
     })
     .title("Chip")
     .inner_size((400, 200))
-    .run();
+    .run()
 }

@@ -12,11 +12,10 @@
 //! .run();
 //! ```
 
-use crate::context::AccessNode;
+use crate::accessibility::IntoNode;
 use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::systems::get_access_node;
-use crate::{accessibility::IntoNode, context::AccessContext};
 use std::any::Any;
 mod handle;
 pub use handle::Handle;
@@ -140,16 +139,17 @@ pub trait View: 'static + Sized {
         if let Some(parent_node) = get_access_node(&mut access_context, &mut cx.views, parent_id) {
             let parent_node = parent_node.node_builder.build(&mut cx.style.accesskit_node_classes);
             let node = NodeBuilder::default().build(&mut cx.style.accesskit_node_classes);
-            cx.tree_updates.push(TreeUpdate {
+
+            cx.tree_updates.push(Some(TreeUpdate {
                 nodes: vec![(parent_node_id, parent_node), (node_id, node)],
                 tree: None,
-                focus: None,
-            });
+                focus: cx.focused.accesskit_id(),
+            }));
         }
 
         cx.data.insert(id, ModelDataStore::default());
 
-        let handle = Handle { entity: id, p: Default::default(), cx };
+        let handle = Handle { current: id, entity: id, p: Default::default(), cx };
 
         handle.cx.with_current(handle.entity, content);
 

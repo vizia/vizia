@@ -93,7 +93,6 @@ impl RadioButton {
                     .position_type(PositionType::SelfDirected);
             })
             .checked(checked)
-            .cursor(CursorIcon::Hand)
             .navigable(true)
             .checkable(true)
             .role(Role::RadioButton)

@@ -2,7 +2,7 @@ use vizia::prelude::*;
 mod helpers;
 use helpers::*;
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         ExamplePage::vertical(cx, |cx| {
             HStack::new(cx, |cx| {
@@ -47,5 +47,5 @@ fn main() {
                 });
         });
     })
-    .run();
+    .run()
 }

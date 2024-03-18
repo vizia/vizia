@@ -5,19 +5,18 @@ use crate::style::Style;
 use cosmic_text::fontdb::Query;
 use cosmic_text::{
     fontdb::Database, Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Edit, Editor,
-    FontSystem, Metrics, SubpixelBin, Weight, Wrap,
+    FontSystem, Metrics, Weight, Wrap,
 };
-use cosmic_text::{Align, Cursor, FamilyOwned, Shaping};
+use cosmic_text::{Align, Cursor, FamilyOwned, Selection, Shaping};
 use femtovg::imgref::{Img, ImgRef};
 use femtovg::rgb::RGBA8;
 use femtovg::{
     Atlas, Canvas, DrawCommand, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource,
     Quad, Renderer,
 };
-use fnv::FnvHashMap;
+use hashbrown::HashMap;
 use morphorm::Units;
 use std::cmp::Ordering;
-use std::collections::HashMap;
 use swash::scale::image::Content;
 use swash::scale::{Render, ScaleContext, Source, StrikeWith};
 use swash::zeno::{Format, Vector};
@@ -29,22 +28,16 @@ const GLYPH_PADDING: u32 = 1;
 const GLYPH_MARGIN: u32 = 1;
 const TEXTURE_SIZE: usize = 512;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct TextConfig {
     pub hint: bool,
     pub subpixel: bool,
 }
 
-impl Default for TextConfig {
-    fn default() -> Self {
-        Self { hint: true, subpixel: false }
-    }
-}
-
 pub struct TextContext {
     font_system: FontSystem,
     scale_context: ScaleContext,
-    rendered_glyphs: FnvHashMap<CacheKey, Option<RenderedGlyph>>,
+    rendered_glyphs: HashMap<CacheKey, Option<RenderedGlyph>>,
     glyph_textures: Vec<FontTexture>,
     buffers: HashMap<Entity, Editor>,
     bounds: SparseSet<BoundingBox>,
@@ -96,6 +89,12 @@ impl TextContext {
 
     pub(crate) fn get_bounds(&self, entity: Entity) -> Option<BoundingBox> {
         self.bounds.get(entity).copied()
+    }
+
+    pub(crate) fn clear_bounds(&mut self, entity: Entity) {
+        if self.bounds.contains(entity) {
+            self.bounds.remove(entity).unwrap();
+        }
     }
 
     /// Sync the style data from vizia with the style attribites stored in cosmic-text buffers.
@@ -207,7 +206,7 @@ impl TextContext {
             let font_size = style.font_size.get(entity).copied().map(|f| f.0).unwrap_or(16.0)
                 * style.dpi_factor as f32;
             // TODO configurable line spacing
-            buf.set_metrics(fs, Metrics::new(font_size, font_size * 1.25));
+            buf.set_metrics(fs, Metrics::new(font_size, font_size * 1.2));
             // buf.set_size(fs, 200.0, 200.0);
             // buf.shape_until_scroll(fs);
             buf.shape_until(fs, i32::MAX);
@@ -229,22 +228,19 @@ impl TextContext {
 
         let buffer = self.buffers.get_mut(&entity).unwrap().buffer_mut();
 
-        let mut alpha_cmd_map = FnvHashMap::default();
-        let mut color_cmd_map = FnvHashMap::default();
+        let mut alpha_cmd_map = HashMap::new();
+        let mut color_cmd_map = HashMap::new();
 
-        let total_height = buffer.layout_runs().len() as f32 * buffer.metrics().line_height;
+        let lines = buffer.layout_runs().filter(|run| run.line_w != 0.0).count();
+        let total_height = lines as f32 * buffer.metrics().line_height;
         for run in buffer.layout_runs() {
-            for glyph in run.glyphs.iter() {
-                let mut cache_key = glyph.cache_key;
-                let position_x = bounds.x + cache_key.x_bin.as_float();
-                let position_y = bounds.y + cache_key.y_bin.as_float();
+            for glyph in run.glyphs {
+                let physical_glyph = glyph.physical(
+                    (bounds.x, bounds.y + bounds.h * justify.1 - total_height * justify.1),
+                    1.0,
+                );
+                let cache_key = physical_glyph.cache_key;
 
-                let position_y = position_y + bounds.h * justify.1 - total_height * justify.1;
-
-                let (position_x, subpixel_x) = SubpixelBin::new(position_x);
-                let (position_y, subpixel_y) = SubpixelBin::new(position_y);
-                cache_key.x_bin = subpixel_x;
-                cache_key.y_bin = subpixel_y;
                 // perform cache lookup for rendered glyph
                 let Some(rendered) = self.rendered_glyphs.entry(cache_key).or_insert_with(|| {
                     // ...or insert it
@@ -262,7 +258,7 @@ impl TextContext {
                         .build();
                     let offset =
                         Vector::new(cache_key.x_bin.as_float(), cache_key.y_bin.as_float());
-                    let rendered = Render::new(&[
+                    let image = Render::new(&[
                         Source::ColorOutline(0),
                         Source::ColorBitmap(StrikeWith::BestFit),
                         Source::Outline,
@@ -272,15 +268,14 @@ impl TextContext {
                     .render(&mut scaler, cache_key.glyph_id);
 
                     // upload it to the GPU
-                    rendered.map(|rendered| {
+                    image.map(|image| {
                         // pick an atlas texture for our glyph
-                        let content_w = rendered.placement.width as usize;
-                        let content_h = rendered.placement.height as usize;
-                        let alloc_w = rendered.placement.width + (GLYPH_MARGIN + GLYPH_PADDING) * 2;
-                        let alloc_h =
-                            rendered.placement.height + (GLYPH_MARGIN + GLYPH_PADDING) * 2;
-                        let used_w = rendered.placement.width + GLYPH_PADDING * 2;
-                        let used_h = rendered.placement.height + GLYPH_PADDING * 2;
+                        let content_w = image.placement.width as usize;
+                        let content_h = image.placement.height as usize;
+                        let alloc_w = image.placement.width + (GLYPH_MARGIN + GLYPH_PADDING) * 2;
+                        let alloc_h = image.placement.height + (GLYPH_MARGIN + GLYPH_PADDING) * 2;
+                        let used_w = image.placement.width + GLYPH_PADDING * 2;
+                        let used_h = image.placement.height + GLYPH_PADDING * 2;
                         let mut found = None;
                         for (texture_index, glyph_atlas) in
                             self.glyph_textures.iter_mut().enumerate()
@@ -324,14 +319,14 @@ impl TextContext {
                         let atlas_content_y = atlas_alloc_y as u32 + GLYPH_MARGIN + GLYPH_PADDING;
 
                         let mut src_buf = Vec::with_capacity(content_w * content_h);
-                        match rendered.content {
+                        match image.content {
                             Content::Mask => {
-                                for chunk in rendered.data.chunks_exact(1) {
+                                for chunk in image.data.chunks_exact(1) {
                                     src_buf.push(RGBA8::new(chunk[0], 0, 0, 0));
                                 }
                             }
                             Content::Color | Content::SubpixelMask => {
-                                for chunk in rendered.data.chunks_exact(4) {
+                                for chunk in image.data.chunks_exact(4) {
                                     src_buf
                                         .push(RGBA8::new(chunk[0], chunk[1], chunk[2], chunk[3]));
                                 }
@@ -349,11 +344,11 @@ impl TextContext {
                             texture_index,
                             width: used_w,
                             height: used_h,
-                            offset_x: rendered.placement.left,
-                            offset_y: rendered.placement.top,
+                            offset_x: image.placement.left,
+                            offset_y: image.placement.top,
                             atlas_x: atlas_used_x,
                             atlas_y: atlas_used_y,
-                            color_glyph: matches!(rendered.content, Content::Color),
+                            color_glyph: matches!(image.content, Content::Color),
                         }
                     })
                 }) else {
@@ -365,7 +360,7 @@ impl TextContext {
                 } else {
                     alpha_cmd_map
                         .entry(glyph.color_opt.unwrap_or(FontColor::rgb(0, 0, 0)))
-                        .or_insert_with(FnvHashMap::default)
+                        .or_insert_with(HashMap::default)
                 };
 
                 let cmd = cmd_map.entry(rendered.texture_index).or_insert_with(|| DrawCommand {
@@ -375,10 +370,9 @@ impl TextContext {
 
                 let mut q = Quad::default();
                 let it = 1.0 / TEXTURE_SIZE as f32;
-                q.x0 = (position_x + glyph.x_int + rendered.offset_x - GLYPH_PADDING as i32) as f32;
-                q.y0 = (position_y + run.line_y as i32 + glyph.y_int
-                    - rendered.offset_y
-                    - GLYPH_PADDING as i32) as f32;
+                q.x0 = (physical_glyph.x + rendered.offset_x - GLYPH_PADDING as i32) as f32;
+                q.y0 = (physical_glyph.y - rendered.offset_y - GLYPH_PADDING as i32
+                    + run.line_y.round() as i32) as f32;
                 q.x1 = q.x0 + rendered.width as f32;
                 q.y1 = q.y0 + rendered.height as f32;
 
@@ -423,7 +417,7 @@ impl TextContext {
     ) -> Vec<(f32, f32, f32, f32)> {
         self.with_editor(entity, |_, buf| {
             let mut result = vec![];
-            if let Some(cursor_end) = buf.select_opt() {
+            if let Selection::Normal(cursor_end) = buf.selection() {
                 let (cursor_start, cursor_end) = match buf.cursor().cmp(&cursor_end) {
                     Ordering::Less => (buf.cursor(), cursor_end),
                     Ordering::Greater => (cursor_end, buf.cursor()),
@@ -460,12 +454,10 @@ impl TextContext {
 
             let position_y = bounds.y + bounds.h * justify.1 - total_height * justify.1;
 
-            let font_size = buffer.metrics().font_size;
             let line_height = buffer.metrics().line_height;
 
             for run in buffer.layout_runs() {
                 let line_i = run.line_i;
-                let line_y = run.line_y;
 
                 let position_x = bounds.x;
 
@@ -510,33 +502,28 @@ impl TextContext {
                         Some(glyph) => {
                             // Start of detected glyph
                             if glyph.level.is_rtl() {
-                                (glyph.x + glyph.w - cursor_glyph_offset) as i32
+                                glyph.x + glyph.w - cursor_glyph_offset
                             } else {
-                                (glyph.x + cursor_glyph_offset) as i32
+                                glyph.x + cursor_glyph_offset
                             }
                         }
                         None => match run.glyphs.last() {
                             Some(glyph) => {
                                 // End of last glyph
                                 if glyph.level.is_rtl() {
-                                    glyph.x as i32
+                                    glyph.x
                                 } else {
-                                    (glyph.x + glyph.w) as i32
+                                    glyph.x + glyph.w
                                 }
                             }
                             None => {
                                 // Start of empty line
-                                0
+                                0.0
                             }
                         },
                     };
 
-                    return Some((
-                        x as f32 + position_x,
-                        (line_y - font_size) + position_y,
-                        width,
-                        line_height,
-                    ));
+                    return Some((position_x + x, position_y + run.line_top, width, line_height));
                 }
             }
             None
@@ -549,7 +536,7 @@ impl TextContext {
         Self {
             font_system: FontSystem::new_with_locale_and_db(locale, font_db),
             scale_context: Default::default(),
-            rendered_glyphs: FnvHashMap::default(),
+            rendered_glyphs: HashMap::default(),
             glyph_textures: vec![],
             buffers: HashMap::new(),
             bounds: SparseSet::new(),

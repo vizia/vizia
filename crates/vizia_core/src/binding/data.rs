@@ -1,8 +1,6 @@
 use std::{ptr, rc::Rc, sync::Arc};
 
 use chrono::{NaiveDate, NaiveTime};
-use unic_langid::LanguageIdentifier;
-use vizia_style::Translate;
 
 use crate::prelude::*;
 
@@ -49,8 +47,8 @@ impl_data_simple!(std::num::NonZeroU64);
 impl_data_simple!(std::num::NonZeroU128);
 impl_data_simple!(std::num::NonZeroUsize);
 impl_data_simple!(std::time::SystemTime);
-impl_data_simple!(instant::Instant);
-impl_data_simple!(instant::Duration);
+impl_data_simple!(Instant);
+impl_data_simple!(Duration);
 impl_data_simple!(std::io::ErrorKind);
 impl_data_simple!(std::net::Ipv4Addr);
 impl_data_simple!(std::net::Ipv6Addr);
@@ -71,6 +69,8 @@ impl_data_simple!(Angle);
 impl_data_simple!(String);
 impl_data_simple!(Entity);
 impl_data_simple!(Localized);
+impl_data_simple!(Length);
+impl_data_simple!(KeyChord);
 
 impl Data for &'static str {
     fn same(&self, other: &Self) -> bool {

@@ -1,15 +1,11 @@
 use crate::accessibility::IntoNode;
-use crate::context::AccessNode;
-use crate::layout::BoundingBox;
 use crate::prelude::*;
 
 use crate::text::{enforce_text_bounds, ensure_visible, Direction, Movement};
 use crate::views::scrollview::SCROLL_SENSITIVITY;
 use accesskit::{ActionData, ActionRequest, TextDirection, TextPosition, TextSelection};
-use cosmic_text::{Action, Cursor, Edit, Editor, FontSystem};
+use cosmic_text::{Action, Cursor, Edit, Editor, FontSystem, Selection};
 use unicode_segmentation::UnicodeSegmentation;
-use vizia_input::Code;
-use vizia_storage::TreeExt;
 
 /// Events for modifying a textbox.
 pub enum TextEvent {
@@ -187,7 +183,7 @@ where
             });
 
             Binding::new(cx, Self::placeholder, |cx, placeholder| {
-                let placeholder_string = placeholder.get(cx).to_string();
+                let placeholder_string = placeholder.get(cx);
                 if !placeholder_string.is_empty() {
                     Label::new(cx, &placeholder_string)
                         .size(Stretch(1.0))
@@ -203,7 +199,7 @@ where
         .toggle_class("multiline", kind == TextboxKind::MultiLineWrapped)
         .text_wrap(kind == TextboxKind::MultiLineWrapped)
         .navigable(true)
-        .role(Role::TextField)
+        .role(Role::TextInput)
         .text_value(lens)
         .default_action_verb(DefaultActionVerb::Focus)
         .toggle_class("caret", Self::show_caret)
@@ -266,9 +262,9 @@ where
 
     fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
         let x = |_: &mut FontSystem, buf: &mut Editor| {
-            let no_selection = match (buf.cursor(), buf.select_opt()) {
-                (cursor, Some(selection)) => cursor == selection,
-                (_, None) => true,
+            let no_selection = match (buf.cursor(), buf.selection()) {
+                (cursor, Selection::Normal(selection)) => cursor == selection,
+                (_, _) => true,
             };
             buf.delete_selection();
             no_selection
@@ -296,11 +292,11 @@ where
     fn move_cursor(&mut self, cx: &mut EventContext, movement: Movement, selection: bool) {
         cx.text_context.with_editor(cx.current, |fs, buf| {
             if selection {
-                if buf.select_opt().is_none() {
-                    buf.set_select_opt(Some(buf.cursor()));
+                if buf.selection() == Selection::None {
+                    buf.set_selection(Selection::Normal(buf.cursor()));
                 }
             } else {
-                buf.set_select_opt(None);
+                buf.set_selection(Selection::None);
             }
 
             buf.action(
@@ -337,7 +333,7 @@ where
     fn select_all(&mut self, cx: &mut EventContext) {
         cx.text_context.with_editor(cx.current, |fs, buf| {
             buf.action(fs, Action::BufferStart);
-            buf.set_select_opt(Some(buf.cursor()));
+            buf.set_selection(Selection::Normal(buf.cursor()));
             buf.action(fs, Action::BufferEnd);
         });
         cx.needs_redraw();
@@ -346,7 +342,7 @@ where
     fn select_word(&mut self, cx: &mut EventContext) {
         cx.text_context.with_editor(cx.current, |fs, buf| {
             buf.action(fs, Action::PreviousWord);
-            buf.set_select_opt(Some(buf.cursor()));
+            buf.set_selection(Selection::Normal(buf.cursor()));
             buf.action(fs, Action::NextWord);
         });
         cx.needs_redraw();
@@ -355,7 +351,7 @@ where
     fn select_paragraph(&mut self, cx: &mut EventContext) {
         cx.text_context.with_editor(cx.current, |fs, buf| {
             buf.action(fs, Action::ParagraphStart);
-            buf.set_select_opt(Some(buf.cursor()));
+            buf.set_selection(Selection::Normal(buf.cursor()));
             buf.action(fs, Action::ParagraphEnd);
         });
         cx.needs_redraw();
@@ -363,7 +359,7 @@ where
 
     fn deselect(&mut self, cx: &mut EventContext) {
         cx.text_context.with_editor(cx.current, |_, buf| {
-            buf.set_select_opt(None);
+            buf.set_selection(Selection::None);
         });
         cx.needs_redraw();
     }
@@ -526,9 +522,11 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
     }
 
     /// Sets the placeholder text that appears when the textbox has no value.
-    pub fn placeholder<P: ToString>(self, text: impl Res<P>) -> Self {
+    pub fn placeholder<P: ToStringLocalized>(self, text: impl Res<P>) -> Self {
         text.set_or_bind(self.cx, self.entity, |cx, val| {
-            cx.emit(TextEvent::SetPlaceholder(val.to_string()));
+            let txt = val.get(cx).to_string_local(cx);
+            cx.emit(TextEvent::SetPlaceholder(txt.clone()));
+            cx.style.name.insert(cx.current, txt);
             cx.needs_relayout();
             cx.needs_redraw();
         });
@@ -550,8 +548,8 @@ where
 
         let node_id = node.node_id();
         cx.text_context.with_editor(cx.current, |_, editor| {
+            let mut selection = editor.selection();
             let cursor = editor.cursor();
-            let selection = editor.select_opt().unwrap_or(cursor);
 
             let mut selection_active_line = node_id;
             let mut selection_anchor_line = node_id;
@@ -648,16 +646,21 @@ where
                 // Check if the current line contains the cursor or selection
                 // This is a mess because a line happens due to soft and hard breaks but
                 // the cursor and selected indices are relative to the lines caused by hard breaks only.
-                if line.line_i == selection.line {
-                    // A previous line index different to the current means that the current line follows a hard break
-                    if prev_line_index != line.line_i {
-                        if selection.index <= line_length {
+                if selection == Selection::None {
+                    selection = Selection::Normal(cursor);
+                }
+                if let Selection::Normal(selection) = selection {
+                    if line.line_i == selection.line {
+                        // A previous line index different to the current means that the current line follows a hard break
+                        if prev_line_index != line.line_i {
+                            if selection.index <= line_length {
+                                selection_anchor_line = line_node.node_id();
+                                selection_anchor_cursor = selection.index;
+                            }
+                        } else if selection.index > current_cursor {
                             selection_anchor_line = line_node.node_id();
-                            selection_anchor_cursor = selection.index;
+                            selection_anchor_cursor = selection.index - current_cursor;
                         }
-                    } else if selection.index > current_cursor {
-                        selection_anchor_line = line_node.node_id();
-                        selection_anchor_cursor = selection.index - current_cursor;
                     }
                 }
 
@@ -677,16 +680,6 @@ where
                     character_index: selection_active_cursor,
                 },
             });
-
-            match self.kind {
-                TextboxKind::MultiLineUnwrapped | TextboxKind::MultiLineWrapped => {
-                    node.node_builder.set_multiline();
-                }
-
-                _ => {
-                    node.node_builder.clear_multiline();
-                }
-            }
 
             node.node_builder.set_default_action_verb(DefaultActionVerb::Focus);
         });
@@ -754,14 +747,16 @@ where
                 cx.release();
             }
 
-            WindowEvent::MouseMove(_, _) => {
+            WindowEvent::MouseMove(x, y) => {
                 if cx.mouse.left.state == MouseButtonState::Pressed
                     && cx.mouse.left.pressed == cx.current
                 {
                     if self.edit {
                         self.reset_caret_timer(cx);
                     }
-                    cx.emit(TextEvent::Drag(cx.mouse.cursorx, cx.mouse.cursory));
+                    if cx.mouse.left.pos_down.0 != *x || cx.mouse.left.pos_down.1 != *y {
+                        cx.emit(TextEvent::Drag(cx.mouse.cursorx, cx.mouse.cursory));
+                    }
                 }
             }
 
@@ -775,8 +770,8 @@ where
                     *c != '\u{9}' && // Tab
                     *c != '\u{7f}' && // Delete
                     *c != '\u{0d}' && // Carriage return
-                    !cx.modifiers.contains(Modifiers::CTRL) &&
-                    !cx.modifiers.contains(Modifiers::LOGO) &&
+                    !cx.modifiers.ctrl() &&
+                    !cx.modifiers.logo() &&
                     self.edit &&
                     !cx.is_read_only()
                 {
@@ -795,32 +790,31 @@ where
                     }
                 }
 
+                Code::Space => {
+                    cx.emit(TextEvent::InsertText(String::from(" ")));
+                }
+
                 Code::ArrowLeft => {
                     self.reset_caret_timer(cx);
-                    let movement = if cx.modifiers.contains(Modifiers::CTRL) {
+                    let movement = if cx.modifiers.ctrl() {
                         Movement::Word(Direction::Left)
                     } else {
                         Movement::Grapheme(Direction::Left)
                     };
 
-                    cx.emit(TextEvent::MoveCursor(
-                        movement,
-                        cx.modifiers.contains(Modifiers::SHIFT),
-                    ));
+                    cx.emit(TextEvent::MoveCursor(movement, cx.modifiers.shift()));
                 }
 
                 Code::ArrowRight => {
                     self.reset_caret_timer(cx);
-                    let movement = if cx.modifiers.contains(Modifiers::CTRL) {
+
+                    let movement = if cx.modifiers.ctrl() {
                         Movement::Word(Direction::Right)
                     } else {
                         Movement::Grapheme(Direction::Right)
                     };
 
-                    cx.emit(TextEvent::MoveCursor(
-                        movement,
-                        cx.modifiers.contains(Modifiers::SHIFT),
-                    ));
+                    cx.emit(TextEvent::MoveCursor(movement, cx.modifiers.shift()));
                 }
 
                 Code::ArrowUp => {
@@ -828,7 +822,7 @@ where
                     if self.kind != TextboxKind::SingleLine {
                         cx.emit(TextEvent::MoveCursor(
                             Movement::Line(Direction::Upstream),
-                            cx.modifiers.contains(Modifiers::SHIFT),
+                            cx.modifiers.shift(),
                         ));
                     }
                 }
@@ -838,7 +832,7 @@ where
                     if self.kind != TextboxKind::SingleLine {
                         cx.emit(TextEvent::MoveCursor(
                             Movement::Line(Direction::Downstream),
-                            cx.modifiers.contains(Modifiers::SHIFT),
+                            cx.modifiers.shift(),
                         ));
                     }
                 }
@@ -846,7 +840,7 @@ where
                 Code::Backspace => {
                     self.reset_caret_timer(cx);
                     if !cx.is_read_only() {
-                        if cx.modifiers.contains(Modifiers::CTRL) {
+                        if cx.modifiers.ctrl() {
                             cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Upstream)));
                         } else {
                             cx.emit(TextEvent::DeleteText(Movement::Grapheme(Direction::Upstream)));
@@ -857,7 +851,7 @@ where
                 Code::Delete => {
                     self.reset_caret_timer(cx);
                     if !cx.is_read_only() {
-                        if cx.modifiers.contains(Modifiers::CTRL) {
+                        if cx.modifiers.ctrl() {
                             cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Downstream)));
                         } else {
                             cx.emit(TextEvent::DeleteText(Movement::Grapheme(
@@ -868,27 +862,21 @@ where
                 }
 
                 Code::Escape => {
-                    cx.emit(TextEvent::EndEdit);
-                    cx.set_checked(false);
                     if let Some(callback) = &self.on_cancel {
                         (callback)(cx);
+                    } else {
+                        cx.emit(TextEvent::EndEdit);
                     }
                 }
 
                 Code::Home => {
                     self.reset_caret_timer(cx);
-                    cx.emit(TextEvent::MoveCursor(
-                        Movement::LineStart,
-                        cx.modifiers.contains(Modifiers::SHIFT),
-                    ));
+                    cx.emit(TextEvent::MoveCursor(Movement::LineStart, cx.modifiers.shift()));
                 }
 
                 Code::End => {
                     self.reset_caret_timer(cx);
-                    cx.emit(TextEvent::MoveCursor(
-                        Movement::LineEnd,
-                        cx.modifiers.contains(Modifiers::SHIFT),
-                    ));
+                    cx.emit(TextEvent::MoveCursor(Movement::LineEnd, cx.modifiers.shift()));
                 }
 
                 Code::PageUp | Code::PageDown => {
@@ -899,18 +887,18 @@ where
                         Direction::Downstream
                     };
                     cx.emit(TextEvent::MoveCursor(
-                        if cx.modifiers.contains(Modifiers::CTRL) {
+                        if cx.modifiers.ctrl() {
                             Movement::Body(direction)
                         } else {
                             Movement::Page(direction)
                         },
-                        cx.modifiers.contains(Modifiers::SHIFT),
+                        cx.modifiers.shift(),
                     ));
                 }
 
                 Code::KeyA => {
                     #[cfg(target_os = "macos")]
-                    let modifier = Modifiers::LOGO;
+                    let modifier = Modifiers::SUPER;
                     #[cfg(not(target_os = "macos"))]
                     let modifier = Modifiers::CTRL;
 
@@ -921,7 +909,7 @@ where
 
                 Code::KeyC => {
                     #[cfg(target_os = "macos")]
-                    let modifier = Modifiers::LOGO;
+                    let modifier = Modifiers::SUPER;
                     #[cfg(not(target_os = "macos"))]
                     let modifier = Modifiers::CTRL;
 
@@ -932,7 +920,7 @@ where
 
                 Code::KeyV => {
                     #[cfg(target_os = "macos")]
-                    let modifier = Modifiers::LOGO;
+                    let modifier = Modifiers::SUPER;
                     #[cfg(not(target_os = "macos"))]
                     let modifier = Modifiers::CTRL;
 
@@ -943,7 +931,7 @@ where
 
                 Code::KeyX => {
                     #[cfg(target_os = "macos")]
-                    let modifier = Modifiers::LOGO;
+                    let modifier = Modifiers::SUPER;
                     #[cfg(not(target_os = "macos"))]
                     let modifier = Modifiers::CTRL;
 
@@ -1002,13 +990,17 @@ where
                     }
 
                     let selection_cursor = Cursor::new(selection_line_index, selection_index);
-                    editor.set_select_opt(Some(selection_cursor));
+                    editor.set_selection(Selection::Normal(selection_cursor));
 
                     // TODO: Either add a method to set the cursor by index to cosmic,
                     // or loop over an `Action` to move the cursor to the correct place.
                 });
 
                 // println!("Select some text: {:?}", selection);
+            }
+
+            WindowEvent::GeometryChanged(_) => {
+                self.set_caret(cx);
             }
 
             _ => {}
@@ -1018,7 +1010,7 @@ where
         event.map(|text_event, _| match text_event {
             TextEvent::InsertText(text) => {
                 self.insert_text(cx, text);
-                self.set_caret(cx);
+                // self.set_caret(cx);
 
                 let text = self.clone_text(cx);
 
@@ -1051,7 +1043,7 @@ where
             TextEvent::DeleteText(movement) => {
                 if self.edit {
                     self.delete_text(cx, *movement);
-                    self.set_caret(cx);
+                    // self.set_caret(cx);
 
                     let text = self.clone_text(cx);
 
@@ -1076,13 +1068,11 @@ where
             TextEvent::MoveCursor(movement, selection) => {
                 if self.edit {
                     self.move_cursor(cx, *movement, *selection);
-                    self.set_caret(cx);
+                    // self.set_caret(cx);
                 }
             }
 
-            TextEvent::SetPlaceholder(text) => {
-                self.placeholder = text.clone();
-            }
+            TextEvent::SetPlaceholder(text) => self.placeholder.clone_from(text),
 
             TextEvent::StartEdit => {
                 if !cx.is_disabled() && !self.edit {
@@ -1092,55 +1082,13 @@ where
                     cx.set_checked(true);
                     self.reset_caret_timer(cx);
 
-                    if let Some(source) = cx.data::<L::Source>() {
-                        let text = self.lens.view(source, |t| {
-                            if let Some(t) = t {
-                                t.to_string()
-                            } else {
-                                String::from("")
-                            }
-                        });
-
-                        self.placeholder_shown = text.is_empty();
-
-                        self.select_all(cx);
-                        self.insert_text(cx, &text);
-                        self.set_caret(cx);
-
-                        if let Ok(value) = &text.parse::<L::Target>() {
-                            if let Some(validate) = &self.validate {
-                                cx.set_valid(validate(value));
-                            } else {
-                                cx.set_valid(true);
-                            }
-                        } else {
-                            cx.set_valid(false);
-                        }
-                    };
-                }
-            }
-
-            TextEvent::EndEdit => {
-                self.deselect(cx);
-                self.edit = false;
-                cx.set_checked(false);
-                cx.release();
-                cx.stop_timer(self.caret_timer);
-
-                if let Some(source) = cx.data::<L::Source>() {
-                    let text = self.lens.view(source, |t| {
-                        if let Some(t) = t {
-                            t.to_string()
-                        } else {
-                            "".to_owned()
-                        }
-                    });
-
+                    let text = self.lens.get(cx);
+                    let text = text.to_string_local(cx);
                     self.placeholder_shown = text.is_empty();
 
                     self.select_all(cx);
                     self.insert_text(cx, &text);
-                    self.set_caret(cx);
+                    // self.set_caret(cx);
 
                     if let Ok(value) = &text.parse::<L::Target>() {
                         if let Some(validate) = &self.validate {
@@ -1151,7 +1099,33 @@ where
                     } else {
                         cx.set_valid(false);
                     }
-                };
+                }
+            }
+
+            TextEvent::EndEdit => {
+                self.deselect(cx);
+                self.edit = false;
+                cx.set_checked(false);
+                cx.release();
+                cx.stop_timer(self.caret_timer);
+
+                let text = self.lens.get(cx);
+                let text = text.to_string_local(cx);
+                self.placeholder_shown = text.is_empty();
+
+                self.select_all(cx);
+                self.insert_text(cx, &text);
+                // self.set_caret(cx);
+
+                if let Ok(value) = &text.parse::<L::Target>() {
+                    if let Some(validate) = &self.validate {
+                        cx.set_valid(validate(value));
+                    } else {
+                        cx.set_valid(true);
+                    }
+                } else {
+                    cx.set_valid(false);
+                }
             }
 
             TextEvent::Blur => {
@@ -1177,27 +1151,27 @@ where
 
             TextEvent::SelectAll => {
                 self.select_all(cx);
-                self.set_caret(cx);
+                // self.set_caret(cx);
             }
 
             TextEvent::SelectWord => {
                 self.select_word(cx);
-                self.set_caret(cx);
+                // self.set_caret(cx);
             }
 
             TextEvent::SelectParagraph => {
                 self.select_paragraph(cx);
-                self.set_caret(cx);
+                // self.set_caret(cx);
             }
 
             TextEvent::Hit(posx, posy) => {
                 self.hit(cx, *posx, *posy);
-                self.set_caret(cx);
+                // self.set_caret(cx);
             }
 
             TextEvent::Drag(posx, posy) => {
                 self.drag(cx, *posx, *posy);
-                self.set_caret(cx);
+                // self.set_caret(cx);
             }
 
             TextEvent::Scroll(x, y) => {
@@ -1273,7 +1247,7 @@ where
         cx.draw_inset_box_shadows(canvas, &mut path);
         cx.draw_outline(canvas);
         canvas.save();
-        canvas.translate(self.transform.0, self.transform.1);
+        // canvas.translate(self.transform.0, self.transform.1);
         cx.draw_text_and_selection(canvas);
         canvas.restore();
     }

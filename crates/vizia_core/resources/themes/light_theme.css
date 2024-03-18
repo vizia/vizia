@@ -1,82 +1,104 @@
 /* GENERAL */
 
-/* * {
-    border-color: blue;
-    border-width: 1px;
-} */
-
 :root {
-    background-color: #fafafa;
+    background-color: #ffffff;
     color: #181818;
 }
 
-/* LABEL */
-
-label:disabled {
-    color: #a0a0a0;
+*:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef;
+    outline-offset: 3px;
 }
 
-label.describing {
-    cursor: hand;
+/* BACKGROUNDS */
+
+.bg-default {
+    background-color: #f4f4f4;
+}
+
+.bg-lighter {
+    background-color: #fafafa;
+}
+
+.bg-darker {
+    background-color: #f1f1f1;
+}
+
+/* AVATAR */
+
+avatar {
+    background-color: #d2d2d2;
+    color: white;
+}
+
+/* BADGE */
+
+badge {
+    border-width: 2px;
+    border-color: white;
+    background-color: #0062ff;
+    color: #fafafa;
+}
+
+badge.success {
+    background-color: #00ab14;
+}
+
+badge.warning {
+    background-color: #ffaa00;
+}
+
+badge.error {
+    background-color: #ff2d2d;
 }
 
 /* BUTTON  */
 
 button {
     border-radius: 4px;
-    border-width: 1px;
-    border-color: #d2d2d2;
+    border: 1px #d2d2d2;
     background-color: #fdfdfd;
     transition: background-color 100ms;
-    color: #181818;
 }
 
-button:over {
+button:hover {
     background-color: #f9f9f9;
     transition: background-color 100ms;
 }
 
 button:active {
-    background-color: #fafafa;
-    border-color: #ebebeb;
-    color: #626262;
+    background-color: #eaeaea;
 }
 
-button:focus-visible {
-    outline-width: 2px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
-}
-
-button.accent {
+button.accent,
+button-group.accent > button {
     border-width: 0px;
     background-color: #51afef;
     transition: background-color 100ms;
-    color: #181818;
 }
 
-button.accent:over {
+button.accent:hover,
+button-group.accent > button:hover {
     background-color: #73bff2;
     transition: background-color 100ms;
-    transition: border-color 100ms;
 }
 
-button.accent:active {
-    /* background-color: #59a4d9; */
-    color: #363636;
+button.accent:active,
+button-group.accent > button:active {
+    background-color: #59a4d9;
     transition: background-color 100ms;
-    transition: border-color 100ms;
 }
 
-button.accent:disabled {
+button.accent:disabled,
+button-group.accent:disabled > button {
     background-color: #c4c4c4;
-    color: white;
     transition: background-color 100ms;
-    transition: border-color 100ms;
 }
 
-button.outline {
-    background-color: transparent;
+button.outline,
+button-group.outline > button {
+    background-color: #80caff00;
     border-width: 1px;
     border-color: #51afef;
     color: #51afef;
@@ -84,50 +106,117 @@ button.outline {
     transition: border-color 100ms;
 }
 
-button.outline:over {
-    background-color: #80caff10;
+button.outline:hover,
+button-group.outline > button:hover {
+    background-color: #80caff40;
     transition: background-color 100ms;
 }
 
-button.outline:active {
+button.outline:active,
+button-group.outline > button:active {
     background-color: #3995d610;
 }
 
-button.outline:disabled {
+button.outline:disabled,
+button-group.outline:disabled > button {
     border-color: #ebebeb;
+    background-color: #80caff00;
     color: #626262;
     transition: background-color 100ms;
     transition: border-color 100ms;
 }
 
-button.ghost {
+button.text,
+button-group.text > button {
     border-width: 0px;
     background-color: #80caff00;
     transition: background-color 100ms;
     color: #51afef;
 }
 
-button.ghost:over {
+button.text:hover,
+button-group.text > button:hover {
     background-color: #80caff40;
     transition: background-color 100ms;
 }
 
-button.ghost:active {
+button.text:active,
+button-group.text > button:active {
     background-color: #3995d610;
     transition: background-color 100ms;
 }
 
-button.ghost:disabled {
+button.text:disabled,
+button-group.text:disabled > button {
     color: #626262;
+    background-color: #80caff00;
     transition: background-color 100ms;
     transition: border-color 100ms;
 }
 
 button:disabled {
-    border-color: #ebebeb;
-    color: #626262;
+    border-color: #c4c4c4;
+    color: #a0a0a0;
+    background-color: #fdfdfd;
     transition: background-color 100ms;
     transition: border-color 100ms;
+}
+
+/* BUTTON GROUP */
+
+button-group > button,
+button-group > toggle-button {
+    border-radius: 0px;
+    right: -1px;
+}
+
+button-group.vertical > button,
+button-group.vertical > toggle-button {
+    border-radius: 0px;
+    right: auto;
+    bottom: -1px;
+}
+
+button-group > :first-child {
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+    right: -1px;
+    left: auto;
+}
+
+button-group > :last-child {
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    left: -1px;
+    right: auto;
+}
+
+button-group.vertical > :first-child {
+    border-radius: 0px;
+    border-top-right-radius: 4px;
+    border-top-left-radius: 4px;
+    right: auto;
+    bottom: -1px;
+}
+
+button-group.vertical > :last-child {
+    border-radius: 0px;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+    left: auto;
+    top: -1px;
+}
+
+button-group.accent {
+    col-between: 1px;
+}
+
+button-group.accent > :first-child {
+    right: auto;
+}
+
+button-group.accent > :last-child {
+    left: auto;
 }
 
 /* CHECKBOX */
@@ -135,45 +224,39 @@ button:disabled {
 checkbox {
     border-radius: 2px;
     border-width: 1px;
-    border-color: #626262;
-    background-color: #f4f4f4;
+    border-color: #d2d2d2;
+    background-color: #fdfdfd;
     child-space: 1s;
     transition: background-color 100ms;
     transition: border-color 100ms;
 }
 
 checkbox:hover {
-    border-color: #626262;
-    background-color: #ebebeb;
+    border-color: #d2d2d2;
+    background-color: #f9f9f9;
     transition: background-color 100ms;
     transition: border-color 100ms;
 }
 
 checkbox:active {
-    border-color: #c4c4c4;
-    background-color: #e2e2e2;
+    border-color: #d2d2d2;
+    background-color: #eaeaea;
     transition: background-color 100ms;
     transition: border-color 100ms;
 }
 
 checkbox:disabled {
     border-color: #c4c4c4;
-    background-color: #f4f4f400;
+    background-color: #fdfdfd00;
     transition: background-color 100ms;
     transition: border-color 100ms;
-}
-
-checkbox:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef;
-    outline-offset: 3px;
 }
 
 checkbox:checked {
     background-color: #51afef;
     border-color: #51afef;
     color: #fff;
-    transition: background-color 200ms;
+    transition: background-color 100ms;
     transition: border-color 100ms;
 }
 
@@ -187,7 +270,6 @@ checkbox:checked:hover {
 checkbox:checked:active {
     background-color: #59a4d9;
     border-color: #59a4d9;
-    color: #e0e0e0;
     transition: background-color 100ms;
     transition: border-color 100ms;
 }
@@ -199,36 +281,123 @@ checkbox:checked:disabled {
     transition: border-color 100ms;
 }
 
-/* Chip */
+/* CHIP */
 
 chip {
-    border-radius: 4px;
+    border-radius: 50%;
+    background-color: #d2d2d2;
 }
 
-chip .icon {
-    scale: 1;
-    transition: scale 100ms;
+chip.outline {
+    border-width: 1px;
+    border-color: #d2d2d2;
+    background-color: transparent;
+}
+
+chip .close-icon {
+    background-color: #e0e0e000;
     transition: background-color 100ms;
     border-radius: 50%;
 }
 
-chip .icon:hover {
-    background-color: #00000022;
-    scale: 1.2;
-    transition: scale 100ms;
+chip .close-icon:hover {
+    background-color: #c1c1c1;
     transition: background-color 100ms;
 }
 
 chip:disabled .icon {
     background-color: transparent;
-    scale: 1;
 }
 
-/* Dropdown */
+/* COMBOBOX */
+
+combobox {
+    border-radius: 4px;
+    background-color: #fdfdfd;
+}
+
+combobox .title {
+    border-width: 1px;
+    border-color: #d2d2d2;
+    border-radius: 4px;
+}
+
+combobox > textbox > label.placeholder {
+    color: #181818;
+}
+
+combobox popup {
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #d2d2d2;
+    background-color: #fdfdfd;
+}
+
+combobox .list label {
+    cursor: hand;
+}
+
+combobox .list label.nav {
+    background-color: #51afef34;
+}
+
+combobox .list label:checked {
+    background-color: #51afef;
+}
+
+/* DATEPICKER */
+
+datepicker {
+    background-color: #fff;
+    border-radius: 4px;
+    border-color: #d2d2d2;
+    border-width: 1px;
+}
+
+.datepicker-header textbox {
+    background-color: transparent;
+}
+
+.datepicker-calendar-day {
+    color: #525252;
+    cursor: hand;
+    border-radius: 4px;
+}
+
+.datepicker-calendar-day:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef;
+}
+
+.datepicker-calendar-day:checked {
+    color: #fff;
+    background-color: #51afef;
+    border-radius: 4px;
+}
+
+.datepicker-calendar-day-disabled {
+    color: #a0a0a0;
+    cursor: arrow;
+}
+
+.datepicker-selected-date {
+    color: #b0b0b0;
+}
+
+/* DIVIDER */
+
+divider {
+    background-color: #d2d2d2;
+}
+
+/* DROPDOWN */
 
 dropdown {
     border-radius: 4px;
-    background-color: #fdfdfd;
+}
+
+dropdown .dropdown-title {
+    border-radius: 4px;
 }
 
 dropdown:over {
@@ -236,31 +405,20 @@ dropdown:over {
 }
 
 dropdown:active {
-    border-color: #ebebeb;
-    background-color: #fafafa;
+    background-color: #eaeaea;
 }
 
-dropdown .title {
+dropdown .dropdown-title {
     border-width: 1px;
     border-color: #d2d2d2;
     border-radius: 4px;
-}
-
-dropdown:active .title {
-    color: #626262;
-}
-
-dropdown .title:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
 }
 
 dropdown popup {
     border-radius: 4px;
     border-width: 1px;
     border-color: #d2d2d2;
-    background-color: #fafafa;
+    background-color: #fdfdfd;
 }
 
 dropdown list label {
@@ -268,39 +426,65 @@ dropdown list label {
 }
 
 dropdown list label:hover {
-    background-color: #51afef11;
+    background-color: #51afef34;
 }
 
 dropdown list label:checked {
-    background-color: #5dc4ec;
+    background-color: #51afef;
 }
 
-dropdown list label:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
+/* ICON */
+icon:disabled {
+    color: #a0a0a0;
 }
 
-dropdown .list label {
+/* KNOB */
+
+knob {
+    border-width: 2px;
+}
+
+knob .knob-track {
+    color: #51afef;
+}
+
+knob:disabled .knob-track {
+    color: #ebebeb;
+}
+
+knob .knob-head {
+    background-color: #fdfdfd;
+    border-width: 2px;
+    border-color: #d2d2d2;
+}
+
+knob:disabled .knob-head {
+    border-color: #c4c4c4;
+}
+
+knob .knob-tick {
+    background-color: #d2d2d2;
+    border-radius: 1px;
+}
+
+knob:disabled .knob-tick {
+    background-color: #c4c4c4;
+}
+
+/* LABEL */
+
+label:disabled {
+    color: #a0a0a0;
+}
+
+label.describing {
     cursor: hand;
 }
 
-/* dropdown .list label:hover {
-    background-color: #51afef11;
-} */
+/* LIST */
 
-dropdown .list label.nav {
-    background-color: #51b0ef34;
-}
-
-dropdown .list label:checked {
-    background-color: #5dc4ec;
-}
-
-dropdown .list label:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
+list label.dark {
+    background-color: #00000015;
 }
 
 /* MENU */
@@ -316,6 +500,10 @@ menubutton:focus {
 
 menubutton:hover {
     background-color: #f0f0f0;
+}
+
+menubutton:disabled {
+    background-color: transparent;
 }
 
 menubutton .shortcut {
@@ -334,7 +522,8 @@ menubar submenu {
     border-width: 0px;
 }
 
-submenu submenu {
+submenu submenu,
+dropown > popup > submenu {
     border-width: 0px;
 }
 
@@ -350,6 +539,10 @@ submenu:hover {
     background-color: #f0f0f0;
 }
 
+submenu:disabled {
+    background-color: transparent;
+}
+
 submenu > popup {
     border-width: 1px;
     border-color: #d2d2d2;
@@ -357,6 +550,12 @@ submenu > popup {
     child-space: 8px;
     border-radius: 4px;
     box-shadow: 0px 2px 16px #4f4f4f38;
+}
+
+submenu divider {
+    top: 4px;
+    bottom: 4px;
+    background-color: #d2d2d2;
 }
 
 menu-divider {
@@ -371,79 +570,48 @@ menu-divider .line {
     background-color: #d2d2d2;
 }
 
-/* Popup */
+/* NOTIFICATION */
 
-popup {
-    box-shadow: 0px 3px 12px #00000038;
-    /* opacity: 0%;
-    transition: opacity 100ms; */
+notification {
+    background-color: #f4f4f4;
 }
-
-/* 
-popup:checked {
-    opacity: 100%;
-    transition: opacity 100ms;
-} */
 
 /* PROGRESSBAR */
 
 progressbar {
-    background-color: #51afef20;
+    border-radius: 50%;
+    background-color: #f4f4f4;
 }
 
 progressbar:disabled {
-    background-color: #d2d2d2;
+    background-color: #a0a0a0;
 }
 
 progressbar .progressbar-bar {
+    border-radius: 50%;
     background-color: #51afef;
 }
 
 progressbar:disabled .progressbar-bar {
-    background-color: #418abb;
+    background-color: transparent;
 }
 
-/* KNOB */
+/* PICKLIST */
 
-knob {
-    border-width: 2px;
+picklist {
+    border-radius: 4px;
 }
-
-knob:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
-}
-
-knob .knob-track {
-    color: #51afef;
-}
-
-knob:disabled .knob-track {
-    color: #ebebeb;
-}
-
-knob .knob-head {
-    background-color: #fdfdfd;
-    border-width: 2px;
-    border-color: #d2d2d2;
-}
-
-knob:disabled .knob-head {
-    border-color: #ebebeb;
-}
-
-knob .knob-tick {
-    background-color: #d2d2d2;
-    border-radius: 1px;
-}
-
-/* PiCKLIST */
 
 picklist:focus-visible {
     outline-width: 1px;
     outline-color: #51afef;
     outline-offset: 3px;
+}
+
+/* POPUP */
+
+popup {
+    box-shadow: 0px 3px 12px #00000038;
 }
 
 /* RADIOBUTTON */
@@ -453,8 +621,7 @@ radiobutton {
     height: 16px;
     border-width: 2px;
     border-radius: 50%;
-    border-color: #888;
-    background-color: transparent;
+    border-color: #d2d2d2;
     child-space: 1s;
 }
 
@@ -462,52 +629,39 @@ radiobutton:hover {
     border-color: #51afef;
 }
 
-radiobutton:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
-}
-
 radiobutton:checked {
     border-color: #51afef;
 }
 
-radiobutton:checked:hover {
-    border-color: #80caff;
-}
-
 radiobutton:disabled {
-    border-color: #b6b6b6;
+    border-color: #c4c4c4;
 }
 
 radiobutton .inner {
     width: 0px;
     height: 0px;
     border-radius: 50%;
-    background-color: #888;
+    background-color: #d2d2d2;
 }
 
 radiobutton:checked .inner {
     width: 8px;
     height: 8px;
     background-color: #51afef;
-}
-
-radiobutton:hover .inner {
-    background-color: #80caff;
+    transition: width 100ms, height 100ms;
 }
 
 radiobutton:disabled .inner {
     width: 8px;
     height: 8px;
-    background-color: #b6b6b6;
+    background-color: #c4c4c4;
 }
 
 /* RATING */
 
 rating:focus-visible {
     outline-width: 1px;
-    outline-color: #51afef80;
+    outline-color: #51afef;
     outline-offset: 3px;
     border-radius: 4px;
 }
@@ -522,7 +676,7 @@ rating .icon {
 
 rating .icon:focus-visible {
     outline-width: 1px;
-    outline-color: #51afef80;
+    outline-color: #51afef;
     outline-offset: 3px;
     border-radius: 4px;
 }
@@ -559,7 +713,8 @@ scrollview > scrollbar {
     display: none;
 }
 
-scrollview:checked > scrollbar {
+scrollview.h-scroll > scrollbar,
+scrollview.v-scroll > scrollbar {
     display: flex;
 }
 
@@ -567,49 +722,35 @@ scrollbar {
     background-color: transparent;
 }
 
-scrollbar.horizontal {
-    height: 8px;
-}
-
-scrollbar.vertical {
-    width: 8px;
-}
-
 scrollbar .thumb {
-    background-color: #b6b6b6;
+    background-color: #d2d2d2;
     border-radius: 50%;
     opacity: 0;
     transition: opacity 200ms 0s linear;
 }
 
-scrollbar.horizontal .thumb {
-    height: 1s;
-}
-
-scrollbar.vertical .thumb {
-    width: 1s;
-}
-
-scrollview:checked > scrollbar:over .thumb {
-    background-color: #b6b6b6;
+scrollview.h-scroll:hover > scrollbar.horizontal > .thumb,
+scrollview.v-scroll:hover > scrollbar.vertical > .thumb {
+    background-color: #d2d2d2;
     opacity: 1;
     transition: opacity 200ms 0s linear;
 }
 
-scrollview:checked:active scrollbar .thumb {
-    background-color: #b6b6b6;
+scrollview.h-scroll:active > scrollbar.horizontal > .thumb,
+scrollview.v-scroll:active > scrollbar.vertical > .thumb {
+    background-color: #d2d2d2;
     opacity: 1;
     transition: opacity 200ms 0s linear;
 }
 
-scrollview:checked > scrollbar:active .thumb {
-    background-color: #b6b6b6;
+scrollview.h-scroll > scrollbar.horizontal:active > .thumb,
+scrollview.v-scroll > scrollbar.vertical:active > .thumb {
+    background-color: #e0e0e0;
     opacity: 1;
     transition: opacity 200ms 0s linear;
 }
 
 /* SLIDER */
-
 slider * {
     background-color: #51afef20;
     border-radius: 2px;
@@ -617,7 +758,7 @@ slider * {
 
 slider:focus-visible {
     outline-width: 1px;
-    outline-color: #51afef80;
+    outline-color: #51afef;
     outline-offset: 3px;
     border-radius: 4px;
 }
@@ -636,16 +777,21 @@ slider .thumb {
 }
 
 /* SPINBOX */
-
 spinbox {
-    background-color: #fff;
+    background-color: #fdfdfd;
     border-radius: 4px;
     border-width: 1px;
-    border-color: #e4e4e4;
+    border-color: #d2d2d2;
 }
 
 spinbox .spinbox-button {
     cursor: hand;
+    border-radius: 4px;
+}
+
+spinbox .spinbox-button:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef;
 }
 
 spinbox textbox.spinbox-value {
@@ -664,22 +810,25 @@ spinbox picklist.spinbox-value {
     border-width: 0px;
 }
 
-spinbox picklist.spinbox-value .title {
+spinbox picklist.spinbox-value .dropdown-title {
     background-color: transparent;
     border-width: 0px;
 }
 
 /* SWITCH */
+switch {
+    border-radius: 4px;
+}
 
 switch .switch-handle-bg {
     border-radius: 6px;
-    background-color: #888;
+    background-color: #c4c4c4;
     transition: background-color 100ms;
 }
 
 switch .switch-handle {
     border-width: 1px;
-    border-color: #d9d9d9;
+    border-color: #d2d2d2;
     background-color: #ececec;
     border-radius: 50%;
     transition: background-color 100ms;
@@ -732,8 +881,20 @@ switch:checked:hover:disabled * {
     transition: background-color 100ms;
 }
 
-/* TEXTBOX */
+/* TABVIEW */
+tabheader:disabled {
+    background-color: transparent;
+}
 
+tabheader:checked .indicator {
+    background-color: #51afef;
+}
+
+tabview .tabview-divider {
+    background-color: #c4c4c4;
+}
+
+/* TEXTBOX */
 textbox {
     border-width: 1px;
     border-radius: 4px;
@@ -778,124 +939,58 @@ textbox:invalid {
     border-width: 2px;
 }
 
-/* TIMEPICKER */
+/* TOGGLE BUTTON */
 
-timepicker {
-    background-color: #fff;
+toggle-button {
     border-radius: 4px;
-    child-space: 8px;
-}
-
-timepicker .timepicker-wrapper {
-    col-between: 8px;
-}
-
-timepicker .timepicker-button-wrapper {
-    row-between: 1s;
-}
-
-timepicker .timepicker-dots-wrapper {
-    width: auto;
-    height: 1s;
-    child-space: 1s;
-    row-between: 8px;
-}
-
-timepicker .timepicker-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 4px;
-    background-color: #b6b6b6;
-}
-
-/* DATEPICKER */
-
-datepicker {
-    background-color: #fff;
-    border-radius: 4px;
-    border-color: #d2d2d2;
     border-width: 1px;
+    border-color: #d2d2d2;
+    background-color: #fdfdfd;
+    transition: background-color 100ms;
 }
 
-.datepicker-header textbox {
-    background-color: transparent;
+toggle-button:hover {
+    background-color: #f9f9f9;
+    transition: background-color 100ms;
 }
 
-.datepicker-divisor {
-    background-color: #d2d2d2;
+toggle-button:active {
+    background-color: #fafafa;
 }
 
-.datepicker-calendar-day {
-    color: #525252;
-    cursor: hand;
+toggle-button:checked {
+    background-color: #e0e0e0;
+    transition: background-color 100ms;
 }
 
-.datepicker-calendar-day:checked {
-    color: #fff;
-    background-color: #51afef;
-    border-radius: 4px;
-}
-
-.datepicker-calendar-day-disabled {
-    color: #a0a0a0;
-    cursor: arrow;
-}
-
-.datepicker-selected-date {
-    color: #b0b0b0;
-}
-
-.datepicker-cancel {
-    border-width: 2px;
-    border-color: #ef5151;
-    border-radius: 4px;
-}
-
-.datepicker-cancel label {
-    color: #ef5151;
-}
-
-.datepicker-apply {
-    border-width: 2px;
-    border-color: #51afef;
-    background-color: #51afef;
-    border-radius: 4px;
-}
-
-.datepicker-apply label {
-    color: #ffffff;
-}
-
-/* TABVIEW */
-
-tabheader:disabled {
-    background-color: transparent;
-}
-
-tabheader:disabled label {
-    color: #888;
-}
-
-tabheader:checked .indicator {
-    background-color: #51afef;
-}
-
-tabview .tabview-divider {
-    background-color: #c4c4c4;
+toggle-button:disabled {
+    border-color: #ebebeb;
+    color: #626262;
+    background-color: #fdfdfd;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 /* TOOLTIP */
-
 tooltip {
-    child-space: 4px;
+    child-space: 8px;
     background-color: #181818;
     border-radius: 4px;
     color: #fafafa;
     opacity: 0;
-    transition: opacity 100ms 500ms;
 }
 
 tooltip.vis {
     opacity: 1;
     transition: opacity 100ms 500ms;
+}
+
+tooltip arrow {
+    background-color: #181818;
+}
+
+/* VIRTUAL LIST */
+
+virtual-list label.dark {
+    background-color: #00000015;
 }

@@ -1,14 +1,11 @@
 use std::any::Any;
 
 use femtovg::{renderer::OpenGl, Canvas};
-use instant::Instant;
 use vizia_window::WindowDescription;
 
 use super::EventProxy;
 use crate::events::EventManager;
-use crate::style::SystemFlags;
-use crate::{cache::CachedData, environment::Environment, prelude::*, style::Style, systems::*};
-use vizia_id::GenerationalId;
+use crate::{cache::CachedData, prelude::*, systems::*};
 
 pub use crate::text::cosmic::TextConfig;
 
@@ -118,7 +115,8 @@ impl<'a> BackendContext<'a> {
         self.0.style.disabled.insert(Entity::root(), false);
 
         self.0.style.pseudo_classes.insert(Entity::root(), PseudoClassFlags::OVER);
-
+        self.0.style.restyle.insert(Entity::root()).unwrap();
+        self.0.style.reaccess.insert(Entity::root()).unwrap();
         self.0.canvases.insert(Entity::root(), canvas);
     }
 
@@ -232,11 +230,18 @@ impl<'a> BackendContext<'a> {
     }
 
     /// Calls the accessibility system and updates the accesskit node tree.
-    pub fn process_tree_updates(&mut self, process: impl Fn(&Vec<accesskit::TreeUpdate>)) {
+    pub fn process_tree_updates(
+        &mut self,
+        process: impl Fn(&mut Vec<Option<accesskit::TreeUpdate>>),
+    ) {
         accessibility_system(self.0);
 
-        (process)(&self.0.tree_updates);
+        if !self.0.tree_updates.is_empty() {
+            (process)(&mut self.0.tree_updates)
+        }
 
+        // TODO: Fix this
+        // self.0.tree_updates.retain(|update| update.is_some());
         self.0.tree_updates.clear();
     }
 
@@ -281,7 +286,7 @@ impl<'a> BackendContext<'a> {
         self.0.tick_timers();
     }
 
-    pub fn get_next_timer_time(&self) -> Option<instant::Instant> {
+    pub fn get_next_timer_time(&self) -> Option<Instant> {
         let timer_time = self.0.running_timers.peek().map(|timer_state| timer_state.time);
         let scheduled_event_time = self.0.event_schedule.peek().map(|timed_event| timed_event.time);
 

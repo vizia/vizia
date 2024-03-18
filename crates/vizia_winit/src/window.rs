@@ -275,7 +275,7 @@ impl View for Window {
             }
 
             WindowEvent::SetSize(size) => {
-                self.window().set_inner_size(LogicalSize::new(size.width, size.height));
+                let _ = self.window().request_inner_size(LogicalSize::new(size.width, size.height));
             }
 
             WindowEvent::SetMinSize(size) => {

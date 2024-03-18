@@ -1,3 +1,4 @@
+use crate::modifiers::ModalEvent;
 use crate::{icons::ICON_CHEVRON_RIGHT, prelude::*};
 
 #[derive(Lens)]
@@ -71,6 +72,7 @@ pub enum MenuEvent {
 pub struct Submenu {
     is_open: bool,
     open_on_hover: bool,
+    is_submenu: bool,
 }
 
 impl Submenu {
@@ -79,7 +81,9 @@ impl Submenu {
         content: impl Fn(&mut Context) -> Handle<V> + 'static,
         menu: impl Fn(&mut Context) + 'static,
     ) -> Handle<Self> {
-        let handle = Self { is_open: false, open_on_hover: false }
+        let is_submenu = cx.data::<Submenu>().is_some();
+
+        let handle = Self { is_open: false, open_on_hover: is_submenu, is_submenu }
             .build(cx, |cx| {
                 cx.add_listener(move |menu_button: &mut Self, cx, event| {
                     let flag: bool = menu_button.is_open;
@@ -105,12 +109,26 @@ impl Submenu {
                 (content)(cx).hoverable(false);
                 Label::new(cx, ICON_CHEVRON_RIGHT).class("icon").class("arrow").hoverable(false);
                 // });
-                MenuPopup::new(cx, Submenu::is_open, false, move |cx| {
-                    (menu)(cx);
+                Binding::new(cx, Submenu::is_open, move |cx, is_open| {
+                    if is_open.get(cx) {
+                        Popup::new(cx, |cx| {
+                            (menu)(cx);
+                        })
+                        .placement(Submenu::is_submenu.map(|is_submenu| {
+                            if *is_submenu {
+                                Placement::RightStart
+                            } else {
+                                Placement::BottomStart
+                            }
+                        }))
+                        .arrow_size(Pixels(4.0))
+                        .checked(Submenu::is_open);
+                    }
                 });
                 // .on_press_down(|cx| cx.emit(MenuEvent::CloseAll));
                 // .on_blur(|cx| cx.emit(MenuEvent::CloseAll));
             })
+            // .navigable(true)
             .checked(Submenu::is_open)
             .layout_type(LayoutType::Row)
             .on_press(|cx| cx.emit(MenuEvent::ToggleOpen));
@@ -223,8 +241,11 @@ impl MenuButton {
             .on_press(move |cx| {
                 (action)(cx);
                 cx.emit(MenuEvent::CloseAll);
-                // cx.emit(MenuEvent::Close);
+                cx.emit(ModalEvent::HideMenu);
+                cx.emit(MenuEvent::Close);
             })
+            .role(Role::MenuItem)
+        // .navigable(true)
     }
 }
 
@@ -267,7 +288,8 @@ where
 
                 (content)(cx);
 
-                Binding::new(cx, lens, move |cx, _| {
+                Binding::new(cx, lens, move |cx, l| {
+                    println!("{}", l.get(cx));
                     if let Some(geo) = cx.cache.geo_changed.get_mut(parent) {
                         geo.set(GeoChanged::WIDTH_CHANGED, true);
                     }
@@ -283,7 +305,7 @@ where
 impl<'a, L> Handle<'a, MenuPopup<L>>
 where
     L: Lens,
-    L::Target: Clone + Into<bool>,
+    L::Target: Clone + Data + Into<bool>,
 {
     /// Registers a callback for when the user clicks off of the popup, usually with the intent of
     /// closing it.

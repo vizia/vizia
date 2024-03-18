@@ -21,7 +21,7 @@ impl Model for AppData {
     }
 }
 
-fn main() {
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { value: 0.0 }.build(cx);
 
@@ -49,17 +49,6 @@ fn main() {
             .height(Auto)
             .col_between(Pixels(8.0));
 
-            // TODO: Needs restyling
-            // HStack::new(cx, |cx| {
-            //     NamedSlider::new(cx, AppData::value, "Slider Name")
-            //         .range(-50.0..50.0)
-            //         .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)));
-            // })
-            // .child_top(Stretch(1.0))
-            // .child_bottom(Stretch(1.0))
-            // .height(Auto)
-            // .col_between(Pixels(8.0));
-
             VStack::new(cx, |cx| {
                 Slider::new(cx, AppData::value)
                     .range(-50.0..50.0)
@@ -75,5 +64,5 @@ fn main() {
         });
     })
     .title("Slider")
-    .run();
+    .run()
 }

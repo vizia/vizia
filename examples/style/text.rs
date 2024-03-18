@@ -29,12 +29,18 @@ const STYLE: &str = r#"
 
 "#;
 
-#[derive(Lens, Setter, Model)]
+#[derive(Lens)]
 pub struct AppData {
     text: String,
 }
 
-fn main() {
+pub enum AppEvent {
+    SetText(String),
+}
+
+impl Model for AppData {}
+
+fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
@@ -46,9 +52,9 @@ fn main() {
         Label::new(cx, "Font Style").class("font_style");
         Label::new(cx, "Font Stretch").class("font_stretch");
         Textbox::new(cx, AppData::text)
-            .on_edit(|cx, text| cx.emit(AppDataSetter::Text(text)))
+            .on_edit(|cx, text| cx.emit(AppEvent::SetText(text)))
             .width(Pixels(200.0))
             .class("caret_color");
     })
-    .run();
+    .run()
 }

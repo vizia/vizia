@@ -27,7 +27,6 @@ pub struct ComboBox<
 }
 
 pub enum ComboBoxEvent {
-    ///
     SetOption(usize),
     SetFilterText(String),
     SetHovered(usize),
@@ -80,10 +79,13 @@ where
                 .on_edit(|cx, txt| cx.emit(ComboBoxEvent::SetFilterText(txt)))
                 // Prevent the textbox from losing focus on blur. We control that with the listener instead.
                 .on_blur(|_| {})
+                // Prevent the textbox from losing focus on cancel (escape key press).
+                .on_cancel(|_| {})
                 .width(Stretch(1.0))
                 .height(Pixels(32.0))
                 .space(Pixels(0.0))
-                .placeholder(Self::placeholder);
+                .placeholder(Self::placeholder)
+                .class("title");
 
             ComboPopup::new(cx, Self::is_open, false, move |cx: &mut Context| {
                 // Binding to the filter text.
@@ -96,8 +98,11 @@ where
                             let f = Self::filter_text.get(cx);
                             // List view doesn't have an option for filtering (yet) so we do it manually instead.
                             VStack::new(cx, |cx| {
-                                for (index, item) in
-                                    list.get(cx).iter().enumerate().filter(|(_, item)| {
+                                let ll = list
+                                    .get(cx)
+                                    .iter()
+                                    .enumerate()
+                                    .filter(|(_, item)| {
                                         if f.is_empty() {
                                             true
                                         } else {
@@ -106,8 +111,12 @@ where
                                                 .contains(&f.to_ascii_lowercase())
                                         }
                                     })
-                                {
-                                    Label::new(cx, &item.to_string())
+                                    .map(|(idx, _)| idx)
+                                    .collect::<Vec<_>>();
+
+                                for index in ll.into_iter() {
+                                    let item = list.index(index);
+                                    Label::new(cx, item)
                                         .child_top(Stretch(1.0))
                                         .child_bottom(Stretch(1.0))
                                         .checked(selected.map(move |selected| *selected == index))
@@ -133,7 +142,6 @@ where
             })
             .top(Percentage(100.0))
             .translate((Pixels(0.0), Pixels(4.0)))
-            .width(Percentage(100.0))
             .height(Auto);
         })
         .bind(selected, move |handle, selected| {
@@ -150,7 +158,7 @@ where
     L2: Lens<Target = usize>,
 {
     fn element(&self) -> Option<&'static str> {
-        Some("dropdown")
+        Some("combobox")
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
@@ -168,17 +176,19 @@ where
                 // Close the popup.
                 self.is_open = false;
 
+                // Set the hovered index to the selected index.
+                self.hovered = *index;
+
                 // Reset the filter text.
                 self.filter_text = String::new();
 
                 // Set the textbox to non-edit state.
+                // TODO: Add a modifier to textbox and bind to some state in combobox.
                 cx.emit_custom(
                     Event::new(TextEvent::EndEdit)
                         .target(cx.current)
                         .propagate(Propagation::Subtree),
                 );
-
-                // cx.needs_redraw();
             }
 
             ComboBoxEvent::SetHovered(index) => {
@@ -186,7 +196,7 @@ where
             }
 
             ComboBoxEvent::SetFilterText(text) => {
-                self.filter_text = text.clone();
+                self.placeholder.clone_from(text);
 
                 // Reopen the popup in case it was closed with the ESC key.
                 self.is_open = true;
@@ -202,7 +212,6 @@ where
                 };
 
                 let list = self.list_lens.get(cx);
-
                 if let Some((next_index, _)) =
                     list.iter().enumerate().skip_while(|(idx, _)| *idx != self.hovered).find(filter)
                 {
@@ -224,7 +233,7 @@ where
         });
 
         event.map(|textbox_event, _| match textbox_event {
-            // User pressed on the textbox or focused it
+            // User pressed on the textbox or focused it.
             TextEvent::StartEdit => {
                 self.is_open = true;
                 self.hovered = self.selected.get(cx);
@@ -233,10 +242,10 @@ where
             TextEvent::Submit(enter) => {
                 let selected = self.selected.get(cx);
                 if *enter && self.hovered < self.list_lens.get(cx).len() {
-                    // User pressed the enter key
+                    // User pressed the enter key.
                     cx.emit(ComboBoxEvent::SetOption(self.hovered));
                 } else {
-                    // User clicked outside the combobox
+                    // User clicked outside the textbox.
                     cx.emit(ComboBoxEvent::SetOption(selected));
                 }
             }
@@ -245,9 +254,18 @@ where
         });
 
         event.map(|window_event, _| match window_event {
+            WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
+                if !self.is_open {
+                    self.is_open = true;
+                    self.hovered = self.selected.get(cx);
+                }
+            }
+
             WindowEvent::KeyDown(code, _) => match code {
                 Code::ArrowDown => {
-                    if self.is_open {
+                    if !self.is_open {
+                        self.is_open = true;
+                    } else {
                         let filter = |(_, txt): &(usize, &T)| {
                             if self.filter_text.is_empty() {
                                 true
@@ -259,7 +277,6 @@ where
                         };
 
                         let list = self.list_lens.get(cx);
-
                         if let Some((next_index, _)) = list
                             .iter()
                             .enumerate()
@@ -275,7 +292,9 @@ where
                 }
 
                 Code::ArrowUp => {
-                    if self.is_open {
+                    if !self.is_open {
+                        self.is_open = true;
+                    } else {
                         let filter = |(_, txt): &(usize, &T)| {
                             if self.filter_text.is_empty() {
                                 true
@@ -287,7 +306,6 @@ where
                         };
 
                         let list = self.list_lens.get(cx);
-
                         if let Some((next_index, _)) = list
                             .iter()
                             .enumerate()
@@ -305,15 +323,8 @@ where
 
                 Code::Escape => {
                     if self.is_open {
-                        // The textbox will receive the key event first and defocus so send an event to refocus the textbox
-                        cx.emit_custom(
-                            Event::new(TextEvent::StartEdit)
-                                .target(cx.current)
-                                .propagate(Propagation::Subtree),
-                        );
-
-                        // Emit an event instead of setting is_open because the StartEdit will cause the popup to reopen
-                        cx.emit(ComboBoxEvent::Close);
+                        self.is_open = false;
+                        self.hovered = self.selected.get(cx);
                     } else {
                         cx.emit(TextEvent::Submit(false));
                     }
@@ -393,7 +404,8 @@ impl View for ComboPopup {
                 let parent_bounds = cx.cache.get_bounds(parent);
                 let window_bounds = cx.cache.get_bounds(Entity::root());
 
-                let space_below = window_bounds.bottom() - bounds.bottom();
+                let space_below =
+                    window_bounds.bottom() - bounds.bottom() - 4.0 * cx.scale_factor();
                 let space_above = parent_bounds.top() - window_bounds.top();
 
                 let scale = cx.scale_factor();

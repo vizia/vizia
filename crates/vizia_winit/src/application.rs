@@ -1,19 +1,18 @@
 use crate::{
-    convert::{scan_code_to_code, virtual_key_code_to_code, virtual_key_code_to_key},
+    convert::{winit_key_code_to_code, winit_key_to_key},
     window::Window,
 };
-#[cfg(not(target_arch = "wasm32"))]
-use accesskit::{Action, NodeBuilder, TreeUpdate};
-#[cfg(not(target_arch = "wasm32"))]
+
+#[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+use accesskit::{Action, NodeBuilder, NodeId, TreeUpdate};
+#[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
 use accesskit_winit;
 use std::cell::RefCell;
 use vizia_core::backend::*;
 #[cfg(not(target_arch = "wasm32"))]
 use vizia_core::context::EventProxy;
 use vizia_core::prelude::*;
-use vizia_id::GenerationalId;
-use vizia_window::Position;
-use winit::event_loop::EventLoopBuilder;
+// use vizia_input::KeyState;
 #[cfg(all(
     feature = "clipboard",
     feature = "wayland",
@@ -25,10 +24,15 @@ use winit::event_loop::EventLoopBuilder;
         target_os = "openbsd"
     )
 ))]
-use winit::platform::wayland::WindowExtWayland;
+use raw_window_handle::{HasRawDisplayHandle, RawDisplayHandle};
+use vizia_window::Position;
+
 use winit::{
-    event::VirtualKeyCode,
+    error::EventLoopError, event::ElementState, event_loop::EventLoopBuilder, keyboard::PhysicalKey,
+};
+use winit::{
     event_loop::{ControlFlow, EventLoop},
+    keyboard::NativeKeyCode,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -37,11 +41,11 @@ use winit::event_loop::EventLoopProxy;
 #[derive(Debug)]
 pub enum UserEvent {
     Event(Event),
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
     AccessKitActionRequest(accesskit_winit::ActionRequestEvent),
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
 impl From<accesskit_winit::ActionRequestEvent> for UserEvent {
     fn from(action_request_event: accesskit_winit::ActionRequestEvent) -> Self {
         UserEvent::AccessKitActionRequest(action_request_event)
@@ -54,8 +58,13 @@ impl From<vizia_core::events::Event> for UserEvent {
     }
 }
 
-type AppBuilder = Option<Box<dyn FnOnce(&mut Context)>>;
 type IdleCallback = Option<Box<dyn Fn(&mut Context)>>;
+
+#[derive(Debug)]
+pub enum ApplicationError {
+    EventLoopError(EventLoopError),
+    LogError,
+}
 
 ///Creating a new application creates a root `Window` and a `Context`. Views declared within the closure passed to `Application::new()` are added to the context and rendered into the root window.
 ///
@@ -72,7 +81,6 @@ type IdleCallback = Option<Box<dyn Fn(&mut Context)>>;
 pub struct Application {
     context: Context,
     event_loop: EventLoop<UserEvent>,
-    builder: AppBuilder,
     on_idle: IdleCallback,
     window_description: WindowDescription,
     should_poll: bool,
@@ -104,10 +112,10 @@ impl Application {
         // TODO: User scale factors and window resizing has not been implement for winit
         // TODO: Changing the scale factor doesn't work for winit anyways since winit doesn't let
         //       you resize the window, so there's no mutator for that at he moment
-        #[allow(unused_mut)]
         let mut context = Context::new(WindowSize::new(1, 1), 1.0);
 
-        let event_loop = EventLoopBuilder::with_user_event().build();
+        let event_loop =
+            EventLoopBuilder::with_user_event().build().expect("Failed to create event loop");
         #[cfg(not(target_arch = "wasm32"))]
         {
             let mut cx = BackendContext::new(&mut context);
@@ -115,10 +123,14 @@ impl Application {
             cx.set_event_proxy(Box::new(WinitEventProxy(event_proxy_obj)));
         }
 
+        let mut cx = BackendContext::new(&mut context);
+        cx.renegotiate_language();
+        cx.0.remove_user_themes();
+        (content)(cx.0);
+
         Self {
             context,
             event_loop,
-            builder: Some(Box::new(content)),
             on_idle: None,
             window_description: WindowDescription::new(),
             should_poll: false,
@@ -174,7 +186,7 @@ impl Application {
     }
 
     /// Starts the application and enters the main event loop.
-    pub fn run(mut self) {
+    pub fn run(mut self) -> Result<(), ApplicationError> {
         let mut context = self.context;
 
         let event_loop = self.event_loop;
@@ -186,7 +198,7 @@ impl Application {
         #[cfg(target_os = "windows")]
         let mut is_initially_cloaked = window.set_cloak(true);
 
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
         let event_loop_proxy = event_loop.create_proxy();
 
         let mut cx = BackendContext::new(&mut context);
@@ -200,9 +212,9 @@ impl Application {
             cx.emit_origin(WindowEvent::ThemeChanged(theme));
         }
 
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
         let root_node = NodeBuilder::new(Role::Window).build(cx.accesskit_node_classes());
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
         let accesskit = accesskit_winit::Adapter::new(
             window.window(),
             move || {
@@ -211,10 +223,12 @@ impl Application {
 
                 let root_id = Entity::root().accesskit_id();
 
+                // Build initial tree here
+
                 TreeUpdate {
                     nodes: vec![(root_id, root_node)],
                     tree: Some(Tree::new(root_id)),
-                    focus: Some(Entity::root().accesskit_id()),
+                    focus: Entity::root().accesskit_id(),
                 }
             },
             event_loop_proxy,
@@ -236,9 +250,11 @@ impl Application {
             )
         ))]
         unsafe {
-            if let Some(display) = window.window().wayland_display() {
-                let (_, clipboard) =
-                    copypasta::wayland_clipboard::create_clipboards_from_external(display);
+            let display = window.window().raw_display_handle();
+            if let RawDisplayHandle::Wayland(display_handle) = display {
+                let (_, clipboard) = copypasta::wayland_clipboard::create_clipboards_from_external(
+                    display_handle.display,
+                );
                 cx.set_clipboard_provider(Box::new(clipboard));
             }
         }
@@ -248,10 +264,6 @@ impl Application {
         cx.add_window(window);
 
         cx.0.remove_user_themes();
-        cx.renegotiate_language();
-        if let Some(builder) = self.builder.take() {
-            (builder)(cx.0);
-        }
 
         let on_idle = self.on_idle.take();
 
@@ -260,12 +272,12 @@ impl Application {
         let default_should_poll = self.should_poll;
         let stored_control_flow = RefCell::new(ControlFlow::Poll);
 
-        #[cfg(not(target_arch = "wasm32"))]
-        cx.process_tree_updates(|tree_updates| {
-            for update in tree_updates.iter() {
-                accesskit.update(update.clone());
-            }
-        });
+        // #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+        // cx.process_tree_updates(|tree_updates| {
+        //     for update in tree_updates.iter_mut() {
+        //         accesskit.update_if_active(|| update.take().unwrap());
+        //     }
+        // });
 
         let mut cursor_moved = false;
         let mut cursor = (0.0f32, 0.0f32);
@@ -279,382 +291,471 @@ impl Application {
         cx.process_visual_updates();
 
         let mut main_events = false;
-        event_loop.run(move |event, _, control_flow| {
-            let mut cx = BackendContext::new_with_event_manager(&mut context);
+        event_loop
+            .run(move |event, elwt| {
+                let mut cx = BackendContext::new_with_event_manager(&mut context);
 
-            match event {
-                winit::event::Event::NewEvents(_) => {
-                    cx.process_timers();
-                    cx.emit_scheduled_events();
-                }
-
-                winit::event::Event::UserEvent(user_event) => match user_event {
-                    UserEvent::Event(event) => {
-                        cx.send_event(event);
+                match event {
+                    winit::event::Event::NewEvents(_) => {
+                        cx.process_timers();
+                        cx.emit_scheduled_events();
                     }
 
-                    #[cfg(not(target_arch = "wasm32"))]
-                    UserEvent::AccessKitActionRequest(action_request_event) => {
-                        let node_id = action_request_event.request.target;
+                    winit::event::Event::UserEvent(user_event) => match user_event {
+                        UserEvent::Event(event) => {
+                            cx.send_event(event);
+                        }
 
-                        if action_request_event.request.action != Action::ScrollIntoView {
-                            let entity = Entity::new(node_id.0.get() as u64 - 1, 0);
+                        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+                        UserEvent::AccessKitActionRequest(action_request_event) => {
+                            let node_id = action_request_event.request.target;
 
-                            // Handle focus action from screen reader
-                            if action_request_event.request.action == Action::Focus {
-                                cx.0.with_current(entity, |cx| {
-                                    cx.focus();
+                            if action_request_event.request.action != Action::ScrollIntoView {
+                                let entity = Entity::new(node_id.0 as u64, 0);
+
+                                // Handle focus action from screen reader
+                                if action_request_event.request.action == Action::Focus {
+                                    cx.0.with_current(entity, |cx| {
+                                        cx.focus();
+                                    });
+                                }
+
+                                cx.send_event(
+                                    Event::new(WindowEvent::ActionRequest(
+                                        action_request_event.request,
+                                    ))
+                                    .direct(entity),
+                                );
+                            }
+                        }
+                    },
+
+                    winit::event::Event::AboutToWait => {
+                        main_events = true;
+
+                        *stored_control_flow.borrow_mut() =
+                            if default_should_poll { ControlFlow::Poll } else { ControlFlow::Wait };
+
+                        if cursor_moved {
+                            cx.emit_origin(WindowEvent::MouseMove(cursor.0, cursor.1));
+                            cursor_moved = false;
+                        }
+
+                        cx.process_events();
+
+                        cx.process_style_updates();
+
+                        if cx.process_animations() {
+                            *stored_control_flow.borrow_mut() = ControlFlow::Poll;
+
+                            event_loop_proxy
+                                .send_event(UserEvent::Event(Event::new(WindowEvent::Redraw)))
+                                .expect("Failed to send redraw event");
+
+                            cx.mutate_window(|_, window: &Window| {
+                                window.window().request_redraw();
+                            });
+                        }
+
+                        cx.process_visual_updates();
+
+                        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+                        cx.process_tree_updates(|tree_updates| {
+                            for update in tree_updates.iter_mut() {
+                                accesskit.update_if_active(|| update.take().unwrap());
+                            }
+                        });
+
+                        cx.mutate_window(|cx, window: &Window| {
+                            cx.style().should_redraw(|| {
+                                window.window().request_redraw();
+                            });
+                        });
+
+                        if let Some(idle_callback) = &on_idle {
+                            cx.set_current(Entity::root());
+                            (idle_callback)(cx.context());
+                        }
+
+                        if cx.has_queued_events() {
+                            *stored_control_flow.borrow_mut() = ControlFlow::Poll;
+                            event_loop_proxy
+                                .send_event(UserEvent::Event(Event::new(())))
+                                .expect("Failed to send event");
+                        }
+
+                        cx.mutate_window(|_, window: &Window| {
+                            if window.should_close {
+                                elwt.exit();
+                            }
+                        });
+                    }
+
+                    winit::event::Event::WindowEvent { window_id: _, event } => {
+                        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+                        cx.mutate_window(|_, window: &Window| {
+                            accesskit.process_event(window.window(), &event);
+                        });
+
+                        match event {
+                            winit::event::WindowEvent::RedrawRequested => {
+                                if main_events {
+                                    // Redraw
+                                    cx.draw();
+                                    cx.mutate_window(|_, window: &Window| {
+                                        // window.window().pre_present_notify();
+                                        window.swap_buffers();
+                                    });
+
+                                    // Un-cloak
+                                    #[cfg(target_os = "windows")]
+                                    if is_initially_cloaked {
+                                        is_initially_cloaked = false;
+                                        cx.draw();
+                                        cx.mutate_window(|_, window: &Window| {
+                                            window.swap_buffers();
+                                            window.set_cloak(false);
+                                        });
+                                    }
+                                }
+                            }
+
+                            winit::event::WindowEvent::CloseRequested => {
+                                cx.emit_origin(WindowEvent::WindowClose);
+                            }
+
+                            winit::event::WindowEvent::Focused(is_focused) => {
+                                cx.0.window_has_focus = is_focused;
+                                #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+                                accesskit.update_if_active(|| TreeUpdate {
+                                    nodes: vec![],
+                                    tree: None,
+                                    focus: is_focused
+                                        .then_some(cx.focused().accesskit_id())
+                                        .unwrap_or(NodeId(0)),
                                 });
                             }
 
-                            cx.send_event(
-                                Event::new(WindowEvent::ActionRequest(
-                                    action_request_event.request,
-                                ))
-                                .direct(entity),
-                            );
-                        }
-                    }
-                },
-
-                winit::event::Event::MainEventsCleared => {
-                    main_events = true;
-
-                    *stored_control_flow.borrow_mut() =
-                        if default_should_poll { ControlFlow::Poll } else { ControlFlow::Wait };
-
-                    if cursor_moved {
-                        cx.emit_origin(WindowEvent::MouseMove(cursor.0, cursor.1));
-                        cursor_moved = false;
-                    }
-
-                    cx.process_events();
-
-                    cx.process_data_updates();
-
-                    cx.process_style_updates();
-
-                    if cx.process_animations() {
-                        *stored_control_flow.borrow_mut() = ControlFlow::Poll;
-
-                        event_loop_proxy
-                            .send_event(UserEvent::Event(Event::new(WindowEvent::Redraw)))
-                            .expect("Failed to send redraw event");
-
-                        cx.mutate_window(|_, window: &Window| {
-                            window.window().request_redraw();
-                        });
-                    }
-
-                    cx.process_visual_updates();
-
-                    #[cfg(not(target_arch = "wasm32"))]
-                    cx.process_tree_updates(|tree_updates| {
-                        for update in tree_updates.iter() {
-                            accesskit.update(update.clone());
-                        }
-                    });
-
-                    cx.mutate_window(|cx, window: &Window| {
-                        cx.style().should_redraw(|| {
-                            window.window().request_redraw();
-                        });
-                    });
-
-                    if let Some(idle_callback) = &on_idle {
-                        cx.set_current(Entity::root());
-                        (idle_callback)(cx.context());
-                    }
-
-                    if cx.has_queued_events() {
-                        *stored_control_flow.borrow_mut() = ControlFlow::Poll;
-                        event_loop_proxy
-                            .send_event(UserEvent::Event(Event::new(())))
-                            .expect("Failed to send event");
-                    }
-
-                    cx.mutate_window(|_, window: &Window| {
-                        if window.should_close {
-                            *stored_control_flow.borrow_mut() = ControlFlow::Exit;
-                        }
-                    });
-                }
-
-                winit::event::Event::RedrawRequested(_) => {
-                    if main_events {
-                        // Redraw
-                        cx.draw();
-                        cx.mutate_window(|_, window: &Window| {
-                            window.swap_buffers();
-                        });
-
-                        // Un-cloak
-                        #[cfg(target_os = "windows")]
-                        if is_initially_cloaked {
-                            is_initially_cloaked = false;
-                            cx.draw();
-                            cx.mutate_window(|_, window: &Window| {
-                                window.swap_buffers();
-                                window.set_cloak(false);
-                            });
-                        }
-                    }
-                }
-
-                winit::event::Event::WindowEvent { window_id: _, event } => {
-                    match event {
-                        winit::event::WindowEvent::CloseRequested => {
-                            cx.emit_origin(WindowEvent::WindowClose);
-                        }
-
-                        winit::event::WindowEvent::Focused(is_focused) => {
-                            cx.0.window_has_focus = is_focused;
-                            #[cfg(not(target_arch = "wasm32"))]
-                            accesskit.update_if_active(|| TreeUpdate {
-                                nodes: vec![],
-                                tree: None,
-                                focus: is_focused.then_some(cx.focused().accesskit_id()),
-                            });
-                        }
-
-                        winit::event::WindowEvent::ScaleFactorChanged {
-                            scale_factor,
-                            new_inner_size,
-                        } => {
-                            cx.set_scale_factor(scale_factor);
-                            cx.set_window_size(
-                                new_inner_size.width as f32,
-                                new_inner_size.height as f32,
-                            );
-                            cx.needs_refresh();
-                        }
-
-                        winit::event::WindowEvent::DroppedFile(path) => {
-                            cx.emit_origin(WindowEvent::Drop(DropData::File(path)));
-                        }
-
-                        #[allow(deprecated)]
-                        winit::event::WindowEvent::CursorMoved {
-                            device_id: _,
-                            position,
-                            modifiers: _,
-                        } => {
-                            // To avoid calling the hover system multiple times in one frame when multiple cursor moved
-                            // events are received, instead we set a flag here and emit the MouseMove event during MainEventsCleared.
-                            if !cursor_moved {
-                                cursor_moved = true;
-                                cursor.0 = position.x as f32;
-                                cursor.1 = position.y as f32;
+                            winit::event::WindowEvent::ScaleFactorChanged {
+                                scale_factor,
+                                inner_size_writer: _,
+                            } => {
+                                cx.set_scale_factor(scale_factor);
+                                // cx.set_window_size(
+                                //     new_inner_size.width as f32,
+                                //     new_inner_size.height as f32,
+                                // );
+                                cx.needs_refresh();
                             }
 
-                            // Temporary fix for windows platform until winit merge #3154
-                            #[cfg(target_os = "windows")]
-                            {
-                                let (width, height) = {
-                                    let scale_factor = cx.scale_factor();
-                                    let size = cx.window_size();
-                                    (
-                                        (size.width as f32 * scale_factor).round() as u32,
-                                        (size.height as f32 * scale_factor).round() as u32,
-                                    )
+                            winit::event::WindowEvent::DroppedFile(path) => {
+                                cx.emit_origin(WindowEvent::Drop(DropData::File(path)));
+                            }
+
+                            #[allow(deprecated)]
+                            winit::event::WindowEvent::CursorMoved { device_id: _, position } => {
+                                // To avoid calling the hover system multiple times in one frame when multiple cursor moved
+                                // events are received, instead we set a flag here and emit the MouseMove event during MainEventsCleared.
+                                if !cursor_moved {
+                                    cursor_moved = true;
+                                    cursor.0 = position.x as f32;
+                                    cursor.1 = position.y as f32;
+                                }
+
+                                // Temporary fix for windows platform until winit merge #3154
+                                #[cfg(target_os = "windows")]
+                                {
+                                    let (width, height) = {
+                                        let scale_factor = cx.scale_factor();
+                                        let size = cx.window_size();
+                                        (
+                                            (size.width as f32 * scale_factor).round() as u32,
+                                            (size.height as f32 * scale_factor).round() as u32,
+                                        )
+                                    };
+
+                                    let x = position.x.is_positive()
+                                        && (0..width).contains(&(position.x as u32));
+                                    let y = position.y.is_positive()
+                                        && (0..height).contains(&(position.y as u32));
+
+                                    if !inside_window && x && y {
+                                        inside_window = true;
+                                        cx.emit_origin(WindowEvent::MouseEnter);
+                                    } else if inside_window && !(x && y) {
+                                        inside_window = false;
+                                        cx.emit_origin(WindowEvent::MouseLeave);
+                                    }
+                                }
+                            }
+
+                            #[allow(deprecated)]
+                            winit::event::WindowEvent::MouseInput {
+                                device_id: _,
+                                button,
+                                state,
+                            } => {
+                                let button = match button {
+                                    winit::event::MouseButton::Left => MouseButton::Left,
+                                    winit::event::MouseButton::Right => MouseButton::Right,
+                                    winit::event::MouseButton::Middle => MouseButton::Middle,
+                                    winit::event::MouseButton::Other(val) => {
+                                        MouseButton::Other(val)
+                                    }
+                                    winit::event::MouseButton::Back => MouseButton::Back,
+                                    winit::event::MouseButton::Forward => MouseButton::Forward,
                                 };
 
-                                let x = position.x.is_positive()
-                                    && (0..width).contains(&(position.x as u32));
-                                let y = position.y.is_positive()
-                                    && (0..height).contains(&(position.y as u32));
+                                let event = match state {
+                                    winit::event::ElementState::Pressed => {
+                                        WindowEvent::MouseDown(button)
+                                    }
+                                    winit::event::ElementState::Released => {
+                                        WindowEvent::MouseUp(button)
+                                    }
+                                };
 
-                                if !inside_window && x && y {
+                                cx.emit_origin(event);
+                            }
+
+                            winit::event::WindowEvent::MouseWheel { delta, phase: _, .. } => {
+                                let out_event = match delta {
+                                    winit::event::MouseScrollDelta::LineDelta(x, y) => {
+                                        WindowEvent::MouseScroll(x, y)
+                                    }
+                                    winit::event::MouseScrollDelta::PixelDelta(pos) => {
+                                        WindowEvent::MouseScroll(
+                                            pos.x as f32 / 20.0,
+                                            pos.y as f32 / 20.0, // this number calibrated for wayland
+                                        )
+                                    }
+                                };
+
+                                cx.emit_origin(out_event);
+                            }
+
+                            winit::event::WindowEvent::KeyboardInput {
+                                device_id: _,
+                                event,
+                                is_synthetic: _,
+                            } => {
+                                let code = match event.physical_key {
+                                    PhysicalKey::Code(code) => winit_key_code_to_code(code),
+                                    PhysicalKey::Unidentified(native) => match native {
+                                        NativeKeyCode::Windows(_scancode) => return,
+                                        _ => return,
+                                    },
+                                };
+
+                                let key = match event.logical_key {
+                                    winit::keyboard::Key::Named(named_key) => {
+                                        winit_key_to_key(named_key)
+                                    }
+                                    _ => None,
+                                };
+
+                                if let winit::keyboard::Key::Character(character) =
+                                    event.logical_key
+                                {
+                                    if event.state == ElementState::Pressed {
+                                        cx.emit_origin(WindowEvent::CharInput(
+                                            character.as_str().chars().next().unwrap(),
+                                        ));
+                                    }
+                                }
+
+                                let event = match event.state {
+                                    winit::event::ElementState::Pressed => {
+                                        WindowEvent::KeyDown(code, key)
+                                    }
+                                    winit::event::ElementState::Released => {
+                                        WindowEvent::KeyUp(code, key)
+                                    }
+                                };
+
+                                cx.emit_origin(event);
+                            }
+
+                            winit::event::WindowEvent::Resized(physical_size) => {
+                                cx.mutate_window(|_, window: &Window| {
+                                    window.resize(physical_size);
+                                });
+
+                                cx.set_window_size(
+                                    physical_size.width as f32,
+                                    physical_size.height as f32,
+                                );
+
+                                cx.needs_refresh();
+
+                                #[cfg(target_os = "windows")]
+                                {
+                                    cx.process_events();
+
+                                    cx.process_style_updates();
+
+                                    if cx.process_animations() {
+                                        *stored_control_flow.borrow_mut() = ControlFlow::Poll;
+
+                                        event_loop_proxy
+                                            .send_event(UserEvent::Event(Event::new(
+                                                WindowEvent::Redraw,
+                                            )))
+                                            .expect("Failed to send redraw event");
+
+                                        cx.mutate_window(|_, window: &Window| {
+                                            window.window().request_redraw();
+                                        });
+                                    }
+
+                                    cx.process_visual_updates();
+
+                                    #[cfg(all(
+                                        not(target_arch = "wasm32"),
+                                        feature = "accesskit"
+                                    ))]
+                                    cx.process_tree_updates(|tree_updates| {
+                                        for update in tree_updates.iter_mut() {
+                                            accesskit.update_if_active(|| update.take().unwrap());
+                                        }
+                                    });
+
+                                    cx.mutate_window(|_, window: &Window| {
+                                        window.window().request_redraw();
+                                    });
+                                }
+                            }
+
+                            winit::event::WindowEvent::ThemeChanged(theme) => {
+                                let theme = match theme {
+                                    winit::window::Theme::Light => ThemeMode::LightMode,
+                                    winit::window::Theme::Dark => ThemeMode::DarkMode,
+                                };
+                                cx.emit_origin(WindowEvent::ThemeChanged(theme));
+                            }
+
+                            winit::event::WindowEvent::ModifiersChanged(modifiers_state) => {
+                                cx.modifiers()
+                                    .set(Modifiers::SHIFT, modifiers_state.state().shift_key());
+
+                                cx.modifiers()
+                                    .set(Modifiers::ALT, modifiers_state.state().alt_key());
+
+                                cx.modifiers()
+                                    .set(Modifiers::CTRL, modifiers_state.state().control_key());
+
+                                cx.modifiers()
+                                    .set(Modifiers::SUPER, modifiers_state.state().super_key());
+                            }
+
+                            winit::event::WindowEvent::CursorEntered { device_id: _ } => {
+                                #[cfg(target_os = "windows")]
+                                {
                                     inside_window = true;
-                                    cx.emit_origin(WindowEvent::MouseEnter);
-                                } else if inside_window && !(x && y) {
+                                }
+                                cx.emit_origin(WindowEvent::MouseEnter);
+                            }
+
+                            winit::event::WindowEvent::CursorLeft { device_id: _ } => {
+                                #[cfg(target_os = "windows")]
+                                {
                                     inside_window = false;
-                                    cx.emit_origin(WindowEvent::MouseLeave);
                                 }
+                                cx.emit_origin(WindowEvent::MouseLeave);
                             }
+
+                            _ => {}
                         }
-
-                        #[allow(deprecated)]
-                        winit::event::WindowEvent::MouseInput {
-                            device_id: _,
-                            button,
-                            state,
-                            modifiers: _,
-                        } => {
-                            let button = match button {
-                                winit::event::MouseButton::Left => MouseButton::Left,
-                                winit::event::MouseButton::Right => MouseButton::Right,
-                                winit::event::MouseButton::Middle => MouseButton::Middle,
-                                winit::event::MouseButton::Other(val) => MouseButton::Other(val),
-                            };
-
-                            let event = match state {
-                                winit::event::ElementState::Pressed => {
-                                    WindowEvent::MouseDown(button)
-                                }
-                                winit::event::ElementState::Released => {
-                                    WindowEvent::MouseUp(button)
-                                }
-                            };
-
-                            cx.emit_origin(event);
-                        }
-
-                        winit::event::WindowEvent::MouseWheel { delta, phase: _, .. } => {
-                            let out_event = match delta {
-                                winit::event::MouseScrollDelta::LineDelta(x, y) => {
-                                    WindowEvent::MouseScroll(x, y)
-                                }
-                                winit::event::MouseScrollDelta::PixelDelta(pos) => {
-                                    WindowEvent::MouseScroll(
-                                        pos.x as f32 / 20.0,
-                                        pos.y as f32 / 20.0, // this number calibrated for wayland
-                                    )
-                                }
-                            };
-
-                            cx.emit_origin(out_event);
-                        }
-
-                        winit::event::WindowEvent::KeyboardInput {
-                            device_id: _,
-                            input,
-                            is_synthetic: _,
-                        } => {
-                            // Prefer virtual keycodes to scancodes, as scancodes aren't uniform between platforms
-                            let code = if let Some(vkey) = input.virtual_keycode {
-                                virtual_key_code_to_code(vkey)
-                            } else {
-                                scan_code_to_code(input.scancode)
-                            };
-
-                            let key = virtual_key_code_to_key(
-                                input.virtual_keycode.unwrap_or(VirtualKeyCode::NoConvert),
-                            );
-
-                            let event = match input.state {
-                                winit::event::ElementState::Pressed => {
-                                    WindowEvent::KeyDown(code, key)
-                                }
-                                winit::event::ElementState::Released => {
-                                    WindowEvent::KeyUp(code, key)
-                                }
-                            };
-
-                            cx.emit_origin(event);
-                        }
-
-                        winit::event::WindowEvent::ReceivedCharacter(character) => {
-                            cx.emit_origin(WindowEvent::CharInput(character));
-                        }
-
-                        winit::event::WindowEvent::Resized(physical_size) => {
-                            cx.mutate_window(|_, window: &Window| {
-                                window.resize(physical_size);
-                            });
-
-                            cx.set_window_size(
-                                physical_size.width as f32,
-                                physical_size.height as f32,
-                            );
-
-                            cx.needs_refresh();
-                        }
-
-                        winit::event::WindowEvent::ThemeChanged(theme) => {
-                            let theme = match theme {
-                                winit::window::Theme::Light => ThemeMode::LightMode,
-                                winit::window::Theme::Dark => ThemeMode::DarkMode,
-                            };
-                            cx.emit_origin(WindowEvent::ThemeChanged(theme));
-                        }
-
-                        winit::event::WindowEvent::ModifiersChanged(modifiers_state) => {
-                            cx.modifiers().set(Modifiers::SHIFT, modifiers_state.shift());
-                            cx.modifiers().set(Modifiers::ALT, modifiers_state.alt());
-                            cx.modifiers().set(Modifiers::CTRL, modifiers_state.ctrl());
-                            cx.modifiers().set(Modifiers::LOGO, modifiers_state.logo());
-                        }
-
-                        winit::event::WindowEvent::CursorEntered { device_id: _ } => {
-                            #[cfg(target_os = "windows")]
-                            {
-                                inside_window = true;
-                            }
-                            cx.emit_origin(WindowEvent::MouseEnter);
-                        }
-
-                        winit::event::WindowEvent::CursorLeft { device_id: _ } => {
-                            #[cfg(target_os = "windows")]
-                            {
-                                inside_window = false;
-                            }
-                            cx.emit_origin(WindowEvent::MouseLeave);
-                        }
-
-                        _ => {}
                     }
+
+                    _ => {}
                 }
 
-                _ => {}
-            }
+                if let Some(timer_time) = cx.get_next_timer_time() {
+                    elwt.set_control_flow(ControlFlow::WaitUntil(timer_time));
+                } else {
+                    elwt.set_control_flow(*stored_control_flow.borrow());
+                }
+            })
+            .map_err(ApplicationError::EventLoopError)?;
 
-            if *stored_control_flow.borrow() == ControlFlow::Exit {
-                *control_flow = ControlFlow::Exit;
-            } else if let Some(timer_time) = cx.get_next_timer_time() {
-                *control_flow = ControlFlow::WaitUntil(timer_time);
-            } else {
-                *control_flow = *stored_control_flow.borrow();
-            }
-        });
+        Ok(())
     }
 }
 
 impl WindowModifiers for Application {
-    fn title<T: ToString>(mut self, title: T) -> Self {
-        self.window_description.title = title.to_string();
+    fn title<T: ToString>(mut self, title: impl Res<T>) -> Self {
+        title.set_or_bind(&mut self.context, Entity::root(), |cx, title| {
+            cx.emit(WindowEvent::SetTitle(title.get(cx).to_string()));
+        });
 
         self
     }
 
-    fn inner_size<S: Into<WindowSize>>(mut self, size: S) -> Self {
-        self.window_description.inner_size = size.into();
+    fn inner_size<S: Into<WindowSize>>(mut self, size: impl Res<S>) -> Self {
+        self.window_description.inner_size = size.get(&self.context).into();
+
+        size.set_or_bind(&mut self.context, Entity::root(), |cx, size| {
+            cx.emit(WindowEvent::SetSize(size.get(cx).into()));
+        });
 
         self
     }
 
-    fn min_inner_size<S: Into<WindowSize>>(mut self, size: Option<S>) -> Self {
-        self.window_description.min_inner_size = size.map(|size| size.into());
+    fn min_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
+        self.window_description.min_inner_size = size.get(&self.context).map(|s| s.into());
+
+        size.set_or_bind(&mut self.context, Entity::root(), |cx, size| {
+            cx.emit(WindowEvent::SetMinSize(size.get(cx).map(|s| s.into())));
+        });
 
         self
     }
 
-    fn max_inner_size<S: Into<WindowSize>>(mut self, size: Option<S>) -> Self {
-        self.window_description.max_inner_size = size.map(|size| size.into());
+    fn max_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
+        self.window_description.max_inner_size = size.get(&self.context).map(|s| s.into());
+
+        size.set_or_bind(&mut self.context, Entity::root(), |cx, size| {
+            cx.emit(WindowEvent::SetMaxSize(size.get(cx).map(|s| s.into())));
+        });
+        self
+    }
+
+    fn position<P: Into<Position>>(mut self, position: impl Res<P>) -> Self {
+        self.window_description.position = Some(position.get(&self.context).into());
+
+        position.set_or_bind(&mut self.context, Entity::root(), |cx, size| {
+            cx.emit(WindowEvent::SetPosition(size.get(cx).into()));
+        });
 
         self
     }
 
-    fn position<P: Into<Position>>(mut self, position: P) -> Self {
-        self.window_description.position = Some(position.into());
+    fn resizable(mut self, flag: impl Res<bool>) -> Self {
+        self.window_description.resizable = flag.get(&self.context);
+
+        flag.set_or_bind(&mut self.context, Entity::root(), |cx, flag| {
+            cx.emit(WindowEvent::SetResizable(flag.get(cx)));
+        });
 
         self
     }
 
-    fn resizable(mut self, flag: bool) -> Self {
-        self.window_description.resizable = flag;
+    fn minimized(mut self, flag: impl Res<bool>) -> Self {
+        self.window_description.minimized = flag.get(&self.context);
 
+        flag.set_or_bind(&mut self.context, Entity::root(), |cx, flag| {
+            cx.emit(WindowEvent::SetMinimized(flag.get(cx)));
+        });
         self
     }
 
-    fn minimized(mut self, flag: bool) -> Self {
-        self.window_description.minimized = flag;
+    fn maximized(mut self, flag: impl Res<bool>) -> Self {
+        self.window_description.maximized = flag.get(&self.context);
 
-        self
-    }
-
-    fn maximized(mut self, flag: bool) -> Self {
-        self.window_description.maximized = flag;
+        flag.set_or_bind(&mut self.context, Entity::root(), |cx, flag| {
+            cx.emit(WindowEvent::SetMaximized(flag.get(cx)));
+        });
 
         self
     }
