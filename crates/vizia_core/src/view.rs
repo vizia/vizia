@@ -22,10 +22,7 @@ pub use handle::Handle;
 
 use crate::events::ViewHandler;
 use accesskit::{NodeBuilder, TreeUpdate};
-// use femtovg::renderer::OpenGl;
 
-/// The canvas which all views draw to.
-// pub type Canvas = femtovg::Canvas<OpenGl>;
 
 /// A view is any object which can be displayed on the screen.
 ///

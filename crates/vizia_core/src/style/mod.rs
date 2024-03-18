@@ -86,8 +86,8 @@ pub(crate) use rule::Rule;
 mod pseudoclass;
 pub(crate) use pseudoclass::*;
 
-// mod transform;
-// pub(crate) use transform::*;
+mod transform;
+pub(crate) use transform::*;
 
 use crate::animation::{AnimationState, Interpolator, Keyframe, TimingFunction};
 use crate::storage::animatable_set::AnimatableSet;

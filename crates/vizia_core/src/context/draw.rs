@@ -1,13 +1,14 @@
 use skia_safe::gradient_shader::GradientShaderColors;
 use skia_safe::{
-    BlurStyle, ClipOp, MaskFilter, Paint, PaintStyle, Path, PathDirection, Point, RRect, Rect,
-    Shader, TileMode,
+    BlurStyle, ClipOp, MaskFilter, Matrix, Paint, PaintStyle, Path, PathDirection, Point, RRect,
+    Rect, Shader, TileMode,
 };
 // use femtovg::{ImageId, Transform2D};
 use std::any::{Any, TypeId};
 
 use hashbrown::HashMap;
 
+use crate::animation::Interpolator;
 use crate::cache::CachedData;
 use crate::events::ViewHandler;
 use crate::model::ModelDataStore;
@@ -184,67 +185,67 @@ impl<'a> DrawContext<'a> {
     }
 
     /// Returns the 2D transform of the current view.
-    // pub fn transform(&self) -> Transform2D {
-    //     let mut transform = Transform2D::identity();
+    pub fn transform(&self) -> Matrix {
+        let mut transform = Matrix::new_identity();
 
-    //     let bounds = self.bounds();
-    //     let scale_factor = self.scale_factor();
+        let bounds = self.bounds();
+        let scale_factor = self.scale_factor();
 
-    //     // Apply transform origin.
-    //     let mut origin = self
-    //         .style
-    //         .transform_origin
-    //         .get(self.current)
-    //         .map(|transform_origin| {
-    //             let mut origin = Transform2D::new_translation(bounds.left(), bounds.top());
-    //             let offset = transform_origin.as_transform(bounds, scale_factor);
-    //             origin.premultiply(&offset);
-    //             origin
-    //         })
-    //         .unwrap_or(Transform2D::new_translation(bounds.center().0, bounds.center().1));
-    //     transform.premultiply(&origin);
-    //     origin.inverse();
+        // Apply transform origin.
+        let mut origin = self
+            .style
+            .transform_origin
+            .get(self.current)
+            .map(|transform_origin| {
+                let mut origin = Matrix::translate(bounds.top_left());
+                let offset = transform_origin.as_transform(bounds, scale_factor);
+                origin = offset * origin;
+                origin
+            })
+            .unwrap_or(Matrix::translate(bounds.center()));
+        transform = origin * transform;
+        origin = origin.invert().unwrap();
 
-    //     // Apply translation.
-    //     if let Some(translate) = self.style.translate.get(self.current) {
-    //         transform.premultiply(&translate.as_transform(bounds, scale_factor));
-    //     }
+        // Apply translation.
+        if let Some(translate) = self.style.translate.get(self.current) {
+            transform = translate.as_transform(bounds, scale_factor) * transform;
+        }
 
-    //     // Apply rotation.
-    //     if let Some(rotate) = self.style.rotate.get(self.current) {
-    //         transform.premultiply(&rotate.as_transform(bounds, scale_factor));
-    //     }
+        // Apply rotation.
+        if let Some(rotate) = self.style.rotate.get(self.current) {
+            transform = rotate.as_transform(bounds, scale_factor) * transform;
+        }
 
-    //     // Apply scaling.
-    //     if let Some(scale) = self.style.scale.get(self.current) {
-    //         transform.premultiply(&scale.as_transform(bounds, scale_factor));
-    //     }
+        // Apply scaling.
+        if let Some(scale) = self.style.scale.get(self.current) {
+            transform = scale.as_transform(bounds, scale_factor) * transform;
+        }
 
-    //     // Apply transform functions.
-    //     if let Some(transforms) = self.style.transform.get(self.current) {
-    //         // Check if the transform is currently animating
-    //         // Get the animation state
-    //         // Manually interpolate the value to get the overall transform for the current frame
-    //         if let Some(animation_state) = self.style.transform.get_active_animation(self.current) {
-    //             if let Some(start) = animation_state.keyframes.first() {
-    //                 if let Some(end) = animation_state.keyframes.last() {
-    //                     let start_transform = start.value.as_transform(bounds, scale_factor);
-    //                     let end_transform = end.value.as_transform(bounds, scale_factor);
-    //                     let t = animation_state.t;
-    //                     let animated_transform =
-    //                         Transform2D::interpolate(&start_transform, &end_transform, t);
-    //                     transform.premultiply(&animated_transform);
-    //                 }
-    //             }
-    //         } else {
-    //             transform.premultiply(&transforms.as_transform(bounds, scale_factor));
-    //         }
-    //     }
+        // Apply transform functions.
+        if let Some(transforms) = self.style.transform.get(self.current) {
+            // Check if the transform is currently animating
+            // Get the animation state
+            // Manually interpolate the value to get the overall transform for the current frame
+            if let Some(animation_state) = self.style.transform.get_active_animation(self.current) {
+                if let Some(start) = animation_state.keyframes.first() {
+                    if let Some(end) = animation_state.keyframes.last() {
+                        let start_transform = start.value.as_transform(bounds, scale_factor);
+                        let end_transform = end.value.as_transform(bounds, scale_factor);
+                        let t = animation_state.t;
+                        let animated_transform =
+                            Matrix::interpolate(&start_transform, &end_transform, t);
+                        transform = animated_transform * transform;
+                    }
+                }
+            } else {
+                transform = transforms.as_transform(bounds, scale_factor) * transform;
+            }
+        }
 
-    //     transform.premultiply(&origin);
+        transform = origin * transform;
 
-    //     transform
-    // }
+        transform
+    }
 
     /// Returns the visibility of the current view.
     pub fn visibility(&self) -> Option<Visibility> {
