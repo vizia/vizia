@@ -509,7 +509,7 @@ menu-divider .line {
 /* NOTIFICATION */
 
 notification {
-    background-color: #242424;
+    background-color: #262626;
     child-space: 8px;
     border-radius: 4px;
     box-shadow: 0px 2px 16px #00000038;
@@ -528,7 +528,8 @@ popup {
 /* PROGRESS BAR */
 
 progressbar {
-    background-color: #1d1d1d;
+    border-radius: 50%;
+    background-color: #262626;
 }
 
 progressbar:disabled {
@@ -890,8 +891,6 @@ textbox:invalid {
 
 toggle-button {
     border-radius: 4px;
-    border-width: 1px;
-    border-color: #888;
     background-color: #343434;
     transition: background-color 100ms;
 }
@@ -911,11 +910,9 @@ toggle-button:checked {
 }
 
 toggle-button:disabled {
-    border-color: #404040;
     color: #626262;
     background-color: #404040;
     transition: background-color 100ms;
-    transition: border-color 100ms;
 }
 
 /* TOOLTIP */

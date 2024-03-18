@@ -71,40 +71,34 @@ pub fn form(cx: &mut Context) {
         DemoRegion::new(
             cx,
             |cx| {
-                FormControl::new(
-                    cx,
-                    |cx| {
-                        FormGroup::new(cx, "Gender", |cx| {
-                            FormControl::new(
-                                cx,
-                                |cx| {
-                                    Checkbox::new(cx, FormData::check_a)
-                                        .on_toggle(|cx| cx.emit(FormEvent::ToggleA))
-                                },
-                                "Male",
-                            );
+                FormGroup::new(cx, "Gender", |cx| {
+                    FormControl::new(
+                        cx,
+                        |cx| {
+                            Checkbox::new(cx, FormData::check_a)
+                                .on_toggle(|cx| cx.emit(FormEvent::ToggleA))
+                        },
+                        "Male",
+                    );
 
-                            FormControl::new(
-                                cx,
-                                |cx| {
-                                    Checkbox::new(cx, FormData::check_b)
-                                        .on_toggle(|cx| cx.emit(FormEvent::ToggleB))
-                                },
-                                "Female",
-                            );
+                    FormControl::new(
+                        cx,
+                        |cx| {
+                            Checkbox::new(cx, FormData::check_b)
+                                .on_toggle(|cx| cx.emit(FormEvent::ToggleB))
+                        },
+                        "Female",
+                    );
 
-                            FormControl::new(
-                                cx,
-                                |cx| {
-                                    Checkbox::new(cx, FormData::check_c)
-                                        .on_toggle(|cx| cx.emit(FormEvent::ToggleC))
-                                },
-                                "Other",
-                            );
-                        })
-                    },
-                    "Label",
-                );
+                    FormControl::new(
+                        cx,
+                        |cx| {
+                            Checkbox::new(cx, FormData::check_c)
+                                .on_toggle(|cx| cx.emit(FormEvent::ToggleC))
+                        },
+                        "Other",
+                    );
+                });
             },
             r#"FormGroup::new(cx, "Gender", |cx|{
     FormControl::new(cx, |cx| {

@@ -38,6 +38,7 @@ badge {
     border-width: 2px;
     border-color: white;
     background-color: #0062ff;
+    color: #fafafa;
 }
 
 badge.success {
@@ -216,44 +217,6 @@ button-group.accent > :first-child {
 
 button-group.accent > :last-child {
     left: auto;
-}
-
-/* TOGGLE BUTTON */
-
-toggle-button {
-    border-radius: 4px;
-    border-width: 1px;
-    border-color: #d2d2d2;
-    background-color: #fdfdfd;
-    transition: background-color 100ms;
-}
-
-toggle-button:hover {
-    background-color: #f9f9f9;
-    transition: background-color 100ms;
-}
-
-toggle-button:active {
-    background-color: #fafafa;
-}
-
-toggle-button:focus-visible {
-    outline-width: 2px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
-}
-
-toggle-button:checked {
-    background-color: #e0e0e0;
-    transition: background-color 100ms;
-}
-
-toggle-button:disabled {
-    border-color: #ebebeb;
-    color: #626262;
-    background-color: #fdfdfd;
-    transition: background-color 100ms;
-    transition: border-color 100ms;
 }
 
 /* CHECKBOX */
@@ -974,6 +937,38 @@ textbox:invalid {
     border-color: #ef5151;
     transition: border-color 100ms;
     border-width: 2px;
+}
+
+/* TOGGLE BUTTON */
+
+toggle-button {
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #d2d2d2;
+    background-color: #fdfdfd;
+    transition: background-color 100ms;
+}
+
+toggle-button:hover {
+    background-color: #f9f9f9;
+    transition: background-color 100ms;
+}
+
+toggle-button:active {
+    background-color: #fafafa;
+}
+
+toggle-button:checked {
+    background-color: #e0e0e0;
+    transition: background-color 100ms;
+}
+
+toggle-button:disabled {
+    border-color: #ebebeb;
+    color: #626262;
+    background-color: #fdfdfd;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 /* TOOLTIP */

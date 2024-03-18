@@ -13,9 +13,21 @@ pub fn notification(cx: &mut Context) {
         DemoRegion::new(
             cx,
             |cx| {
-                Divider::new(cx);
+                Notification::new(
+                    cx,
+                    "Notification Title".to_string(),
+                    Some(
+                        "This is some information about the notification you just got!".to_string(),
+                    ),
+                );
             },
-            r#""#,
+            r#"Notification::new(
+    cx,
+    "Notification Title".to_string(),
+    Some(
+        "This is some information about the notification you just got!".to_string(),
+    ),
+);"#,
         );
     })
     .class("panel");
