@@ -17,6 +17,11 @@
       alt="CI status" />
   </a>
   <!-- docs (TODO) -->
+  <!-- Dependency status -->
+  <a href="https://deps.rs/repo/github/vizia/vizia">
+    <img src="https://deps.rs/repo/github/vizia/vizia/status.svg"
+      alt="Dependency status" />
+  </a>
   <!-- Audit -->
   <a href="https://github.com/vizia/vizia/actions/workflows/audit.yml">
     <img src="https://github.com/vizia/vizia/actions/workflows/audit.yml/badge.svg"

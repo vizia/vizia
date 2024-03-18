@@ -19,7 +19,7 @@ fn main() -> Result<(), ApplicationError> {
         cx.emit(EnvironmentEvent::SetLocale(langid!("fr")));
 
         // Use the `arg` method on the `Localized` type to supply a lens argument.
-        // When localization is resolved the arguement will be used with the fluent file to select an appropriate translation.
+        // When localization is resolved the argument will be used with the fluent file to select an appropriate translation.
         Label::new(cx, Localized::new("intro").arg("name", AppData::user));
         Label::new(cx, Localized::new("emails").arg_const("unread_emails", 5));
     })

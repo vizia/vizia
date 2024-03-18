@@ -8,6 +8,7 @@ on:
       # Run when pushing version tags, since otherwise it's impossible to
       # restart a successful build after pushing a tag
       - '*.*.*'
+  workflow_dispatch:
 
 defaults:
   run:
