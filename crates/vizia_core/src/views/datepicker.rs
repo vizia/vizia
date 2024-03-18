@@ -266,11 +266,21 @@ impl View for Datepicker {
             }
 
             DatepickerEvent::IncrementYear => {
-                self.view_date += chrono::Duration::days(365);
+                self.view_date = NaiveDate::from_ymd_opt(
+                    self.view_date.year() + 1,
+                    self.view_date.month(),
+                    self.view_date.day(),
+                )
+                .unwrap();
             }
 
             DatepickerEvent::DecrementYear => {
-                self.view_date -= chrono::Duration::days(365);
+                self.view_date = NaiveDate::from_ymd_opt(
+                    self.view_date.year() - 1,
+                    self.view_date.month(),
+                    self.view_date.day(),
+                )
+                .unwrap();
             }
 
             DatepickerEvent::SelectYear(year) => {

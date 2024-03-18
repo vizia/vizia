@@ -736,7 +736,7 @@ impl Style {
     }
 
     pub(crate) fn play_pending_animations(&mut self) {
-        let start_time = instant::Instant::now();
+        let start_time = Instant::now();
 
         let pending_animations = self.pending_animations.drain(..).collect::<Vec<_>>();
 

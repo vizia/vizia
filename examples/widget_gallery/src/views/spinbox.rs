@@ -5,33 +5,33 @@ use crate::DemoRegion;
 #[derive(Clone, Lens)]
 struct SpinboxData {
     spinbox_value_1: i64,
-    spinbox_value_2: usize,
-    spinbox_value_3_choices: Vec<SpinboxValues>,
-    spinbox_value_3: usize,
+    // spinbox_value_2: usize,
+    // spinbox_value_3_choices: Vec<SpinboxValues>,
+    // spinbox_value_3: usize,
 }
 
-#[derive(Clone, PartialEq, Copy, Eq, Data)]
-enum SpinboxValues {
-    One,
-    Two,
-    Three,
-}
+// #[derive(Clone, PartialEq, Copy, Eq, Data)]
+// enum SpinboxValues {
+//     One,
+//     Two,
+//     Three,
+// }
 
-impl SpinboxValues {
-    pub fn values() -> Vec<Self> {
-        vec![SpinboxValues::One, SpinboxValues::Two, SpinboxValues::Three]
-    }
-}
+// impl SpinboxValues {
+//     pub fn values() -> Vec<Self> {
+//         vec![SpinboxValues::One, SpinboxValues::Two, SpinboxValues::Three]
+//     }
+// }
 
-impl std::fmt::Display for SpinboxValues {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(match self {
-            SpinboxValues::One => "one",
-            SpinboxValues::Two => "two",
-            SpinboxValues::Three => "three",
-        })
-    }
-}
+// impl std::fmt::Display for SpinboxValues {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         f.write_str(match self {
+//             SpinboxValues::One => "one",
+//             SpinboxValues::Two => "two",
+//             SpinboxValues::Three => "three",
+//         })
+//     }
+// }
 
 #[derive(Clone)]
 enum SpinboxEvent {
@@ -92,9 +92,9 @@ impl Model for SpinboxData {
 pub fn spinbox(cx: &mut Context) {
     SpinboxData {
         spinbox_value_1: 99,
-        spinbox_value_2: 0,
-        spinbox_value_3: 0,
-        spinbox_value_3_choices: SpinboxValues::values(),
+        // spinbox_value_2: 0,
+        // spinbox_value_3: 0,
+        // spinbox_value_3_choices: SpinboxValues::values(),
     }
     .build(cx);
 

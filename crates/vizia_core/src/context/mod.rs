@@ -663,7 +663,7 @@ impl Context {
         }
 
         self.modify_timer(timer, |timer_state| {
-            let now = instant::Instant::now();
+            let now = Instant::now();
             timer_state.start_time = now;
             timer_state.time = now;
             timer_state.entity = current;

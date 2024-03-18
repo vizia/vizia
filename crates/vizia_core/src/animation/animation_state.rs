@@ -93,7 +93,7 @@ where
     pub(crate) fn play(&mut self, entity: Entity) {
         self.active = true;
         self.t = 0.0;
-        self.start_time = instant::Instant::now();
+        self.start_time = Instant::now();
         self.entities.insert(entity);
     }
 

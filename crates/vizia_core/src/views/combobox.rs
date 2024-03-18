@@ -196,7 +196,7 @@ where
             }
 
             ComboBoxEvent::SetFilterText(text) => {
-                self.filter_text = text.clone();
+                self.placeholder.clone_from(text);
 
                 // Reopen the popup in case it was closed with the ESC key.
                 self.is_open = true;

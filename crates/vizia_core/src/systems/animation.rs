@@ -5,7 +5,7 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
 
     // Tick all animations
 
-    let time = instant::Instant::now();
+    let time = Instant::now();
 
     // Properties which affect rendering
     let needs_redraw =

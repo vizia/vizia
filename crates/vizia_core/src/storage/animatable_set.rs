@@ -367,7 +367,7 @@ where
         }
     }
 
-    pub fn tick(&mut self, time: instant::Instant) -> bool {
+    pub fn tick(&mut self, time: Instant) -> bool {
         if self.has_animations() {
             for state in self.active_animations.iter_mut() {
                 // If the animation is already finished then skip
@@ -605,7 +605,7 @@ where
                                         .clone();
 
                                 current_anim_state.delay = current_anim_state.t - 1.0;
-                                current_anim_state.start_time = instant::Instant::now();
+                                current_anim_state.start_time = Instant::now();
                             } else {
                                 // Transitioning to new rule
                                 current_anim_state.to_rule = rule_data_index;
@@ -616,7 +616,7 @@ where
                                         .value
                                         .clone();
                                 current_anim_state.t = 0.0;
-                                current_anim_state.start_time = instant::Instant::now();
+                                current_anim_state.start_time = Instant::now();
                             }
                         }
                     }
@@ -646,12 +646,7 @@ where
                     if transition_state.from_rule != DataIndex::null().index()
                         && transition_state.from_rule != transition_state.to_rule
                     {
-                        self.play_animation(
-                            entity,
-                            rule_animation,
-                            instant::Instant::now(),
-                            duration,
-                        );
+                        self.play_animation(entity, rule_animation, Instant::now(), duration);
                     }
                     //}
                 }

@@ -9,9 +9,9 @@ use crate::{
     window::WindowEvent,
 };
 
-use instant::Duration;
 use unic_langid::LanguageIdentifier;
 use vizia_derive::Lens;
+use web_time::Duration;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum ThemeMode {
@@ -99,7 +99,7 @@ impl Model for Environment {
             }
 
             EnvironmentEvent::SetThemeMode(theme) => {
-                self.theme.app_theme = theme.to_owned();
+                theme.clone_into(&mut self.theme.app_theme);
 
                 cx.set_theme_mode(self.theme.get_current_theme());
                 cx.reload_styles().unwrap();

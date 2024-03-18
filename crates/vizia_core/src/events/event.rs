@@ -1,7 +1,7 @@
 use crate::entity::Entity;
-use instant::Instant;
 use std::{any::Any, cmp::Ordering, fmt::Debug};
 use vizia_id::GenerationalId;
+use web_time::Instant;
 
 /// Determines how an event propagates through the tree.
 #[derive(Debug, Clone, Copy, PartialEq)]

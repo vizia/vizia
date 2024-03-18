@@ -101,8 +101,8 @@ pub mod prelude {
     pub use super::style::*;
 
     pub use cosmic_text::FamilyOwned;
-    pub use instant::{Duration, Instant};
     pub use morphorm::Units::*;
     pub use morphorm::{LayoutType, PositionType, Units};
     pub use unic_langid::{langid, LanguageIdentifier};
+    pub use web_time::{Duration, Instant};
 }

@@ -286,7 +286,7 @@ impl<'a> BackendContext<'a> {
         self.0.tick_timers();
     }
 
-    pub fn get_next_timer_time(&self) -> Option<instant::Instant> {
+    pub fn get_next_timer_time(&self) -> Option<Instant> {
         let timer_time = self.0.running_timers.peek().map(|timer_state| timer_state.time);
         let scheduled_event_time = self.0.event_schedule.peek().map(|timed_event| timed_event.time);
 

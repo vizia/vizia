@@ -695,7 +695,7 @@ pub(crate) fn style_system(cx: &mut Context) {
                 // if has same selector look up rules
                 'cache: for entry in &cache {
                     if has_same_selector(cx, entry.entity, entity) {
-                        matched_rules = entry.rules.clone();
+                        matched_rules.clone_from(&entry.rules);
                         compute_match = false;
 
                         for rule in entry.rules.iter() {

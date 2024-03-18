@@ -1072,9 +1072,7 @@ where
                 }
             }
 
-            TextEvent::SetPlaceholder(text) => {
-                self.placeholder = text.clone();
-            }
+            TextEvent::SetPlaceholder(text) => self.placeholder.clone_from(text),
 
             TextEvent::StartEdit => {
                 if !cx.is_disabled() && !self.edit {

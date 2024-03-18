@@ -400,7 +400,6 @@ impl Placement {
 }
 
 impl<'a> Handle<'a, Popup> {
-    // TODO: Change this to use Res when lens value PR is merged
     /// Sets the position where the tooltip should appear relative to its parent element.
     /// Defaults to `Placement::Bottom`.
     pub fn placement(self, placement: impl Res<Placement>) -> Self {
@@ -412,14 +411,48 @@ impl<'a> Handle<'a, Popup> {
         })
     }
 
-    // TODO: Change this to use Res when lens value PR is merged
     /// Sets whether the tooltip should include an arrow. Defaults to true.
     pub fn arrow(self, show_arrow: bool) -> Self {
         self.modify(|tooltip| tooltip.show_arrow = show_arrow)
     }
 
+    /// Sets the size of the tooltip arrow, or gap if the arrow is hidden.
     pub fn arrow_size(self, size: impl Into<Length>) -> Self {
         self.modify(|tooltip| tooltip.arrow_size = size.into())
+    }
+
+    /// Registers a callback for when the user clicks off of the popup, usually with the intent of
+    /// closing it.
+    pub fn on_blur<F>(self, f: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext),
+    {
+        let focus_event = Box::new(f);
+        self.cx.with_current(self.entity, |cx| {
+            cx.add_listener(move |_: &mut Popup, cx, event| {
+                event.map(|window_event, meta| match window_event {
+                    WindowEvent::MouseDown(_) => {
+                        if meta.origin != cx.current() {
+                            // Check if the mouse was pressed outside of any descendants
+                            if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
+                                (focus_event)(cx);
+                                meta.consume();
+                            }
+                        }
+                    }
+
+                    WindowEvent::KeyDown(code, _) => {
+                        if *code == Code::Escape {
+                            (focus_event)(cx);
+                        }
+                    }
+
+                    _ => {}
+                });
+            });
+        });
+
+        self
     }
 }
 

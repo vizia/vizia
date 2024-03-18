@@ -4,7 +4,7 @@
 pub use vizia_winit::application::{Application, ApplicationError};
 
 #[cfg(all(not(feature = "winit"), feature = "baseview"))]
-pub use vizia_baseview::{Application, ParentWindow, WindowScalePolicy};
+pub use vizia_baseview::{Application, ApplicationError, ParentWindow, WindowScalePolicy};
 
 pub use vizia_core::*;
 
@@ -16,5 +16,5 @@ pub mod prelude {
     pub use vizia_winit::application::{Application, ApplicationError};
 
     #[cfg(all(not(feature = "winit"), feature = "baseview"))]
-    pub use vizia_baseview::Application;
+    pub use vizia_baseview::{Application, ApplicationError};
 }

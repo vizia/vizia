@@ -27,26 +27,6 @@ name = "temperature_converter"
 path = "examples/7GUIs/temperature_converter.rs"
 
 [[example]]
-name = "editable_list"
-path = "examples/lists/editable_list.rs"
-
-[[example]]
-name = "multiselectable_list"
-path = "examples/lists/multiselectable_list.rs"
-
-[[example]]
-name = "selectable_list"
-path = "examples/lists/selectable_list.rs"
-
-[[example]]
-name = "sortable_list"
-path = "examples/lists/sortable_list.rs"
-
-[[example]]
-name = "static_list"
-path = "examples/lists/static_list.rs"
-
-[[example]]
 name = "virtual_list"
 path = "examples/views/virtual_list.rs"
 
@@ -171,16 +151,6 @@ path = "examples/views/picklist.rs"
 name = "combobox"
 path = "examples/views/combobox.rs"
 
-
-
-
-
-[[example]]
-name = "modal"
-path = "examples/modal.rs"
-
-
-
 [[example]]
 name = "scrollview"
 path = "examples/views/scrollview.rs"
@@ -204,10 +174,6 @@ path = "examples/views/chip.rs"
 [[example]]
 name = "rating"
 path = "examples/views/rating.rs"
-
-[[example]]
-name = "textbox_list"
-path = "examples/textbox_list.rs"
 
 [[example]]
 name = "button"
@@ -238,10 +204,6 @@ name = "tooltip"
 path = "examples/views/tooltip.rs"
 
 [[example]]
-name = "timepicker"
-path = "examples/views/timepicker.rs"
-
-[[example]]
 name = "toggle_button"
 path = "examples/views/toggle_button.rs"
 
@@ -270,25 +232,12 @@ name = "vstack"
 path = "examples/views/vstack.rs"
 
 [[example]]
-name = "popup"
-path = "examples/views/popup.rs"
-
-[[example]]
 name = "progressbar"
 path = "examples/views/progressbar.rs"
 
 [[example]]
 name = "textbox"
 path = "examples/views/textbox.rs"
-
-[[example]]
-name = "teeview"
-path = "examples/views/treeview.rs"
-
-
-
-
-
 
 [[example]]
 name = "list"
@@ -302,20 +251,9 @@ path = "examples/views/menu.rs"
 name = "menubar"
 path = "examples/views/menubar.rs"
 
-
 [[example]]
 name = "tabview"
 path = "examples/views/tabview.rs"
-
-
-
-
-
-[[example]]
-name = "properties"
-path = "examples/style/properties.rs"
-
-
 
 [[example]]
 name = "circle_drawer"
@@ -326,46 +264,16 @@ name = "timer"
 path = "examples/7GUIs/timer.rs"
 
 [[example]]
-name = "keymap_basic"
-path = "examples/keymap_basic.rs"
-
-
-
-[[example]]
 name = "user_scale"
 path = "examples/user_scale.rs"
-
-[[example]]
-name = "long_list"
-path = "examples/lists/long_list.rs"
 
 [[example]]
 name = "save_dialog"
 path = "examples/save_dialog.rs"
 
 [[example]]
-name = "combinators"
-path = "examples/style/combinators.rs"
-
-[[example]]
-name = "selectors"
-path = "examples/style/selectors.rs"
-
-[[example]]
-name = "pseudo_classes"
-path = "examples/style/pseudo_classes.rs"
-
-[[example]]
-name = "custom_modifiers"
-path = "examples/custom_modifiers.rs"
-
-[[example]]
 name = "custom_view"
 path = "examples/custom_view.rs"
-
-[[example]]
-name = "keyframes"
-path = "examples/keyframes.rs"
 
 [[example]]
 name = "lens_map"

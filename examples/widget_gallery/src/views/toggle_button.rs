@@ -2,6 +2,8 @@ use vizia::prelude::*;
 
 use crate::DemoRegion;
 
+use vizia::icons::{ICON_BOLD, ICON_ITALIC, ICON_UNDERLINE};
+
 #[derive(Lens)]
 pub struct ToggleData {
     bold: bool,
@@ -51,6 +53,37 @@ pub fn toggle_button(cx: &mut Context) {
             },
             r#"ToggleButton::new(cx, ToggleData::bold, |cx| Label::new(cx, "Bold"))
     .on_toggle(|cx| cx.emit(ToggleEvent::ToggleBold));"#,
+        );
+
+        Label::new(cx, "Toggle button group").class("header");
+        DemoRegion::new(
+            cx,
+            |cx| {
+                ButtonGroup::new(cx, |cx| {
+                    ToggleButton::new(cx, ToggleData::bold, |cx| Icon::new(cx, ICON_BOLD))
+                        .on_toggle(|cx| cx.emit(ToggleEvent::ToggleBold));
+
+                    ToggleButton::new(cx, ToggleData::italic, |cx| Icon::new(cx, ICON_ITALIC))
+                        .on_toggle(|cx| cx.emit(ToggleEvent::ToggleItalic));
+
+                    ToggleButton::new(cx, ToggleData::underline, |cx| {
+                        Icon::new(cx, ICON_UNDERLINE)
+                    })
+                    .on_toggle(|cx| cx.emit(ToggleEvent::ToggleUnderline));
+                });
+            },
+            r#"ButtonGroup::new(cx, |cx| {
+    ToggleButton::new(cx, ToggleData::bold, |cx| Icon::new(cx, ICON_BOLD))
+        .on_toggle(|cx| cx.emit(ToggleEvent::ToggleBold));
+
+    ToggleButton::new(cx, ToggleData::italic, |cx| Icon::new(cx, ICON_ITALIC))
+        .on_toggle(|cx| cx.emit(ToggleEvent::ToggleItalic));
+
+    ToggleButton::new(cx, ToggleData::underline, |cx| {
+        Icon::new(cx, ICON_UNDERLINE)
+    })
+    .on_toggle(|cx| cx.emit(ToggleEvent::ToggleUnderline));
+});"#,
         );
     })
     .class("panel");

@@ -13,7 +13,6 @@ use vizia_core::backend::*;
 use vizia_core::context::EventProxy;
 use vizia_core::prelude::*;
 // use vizia_input::KeyState;
-use vizia_window::Position;
 #[cfg(all(
     feature = "clipboard",
     feature = "wayland",
@@ -25,7 +24,9 @@ use vizia_window::Position;
         target_os = "openbsd"
     )
 ))]
-use winit::platform::wayland::WindowExtWayland;
+use raw_window_handle::{HasRawDisplayHandle, RawDisplayHandle};
+use vizia_window::Position;
+
 use winit::{
     error::EventLoopError, event::ElementState, event_loop::EventLoopBuilder, keyboard::PhysicalKey,
 };
@@ -249,9 +250,11 @@ impl Application {
             )
         ))]
         unsafe {
-            if let Some(display) = window.window().wayland_display() {
-                let (_, clipboard) =
-                    copypasta::wayland_clipboard::create_clipboards_from_external(display);
+            let display = window.window().raw_display_handle();
+            if let RawDisplayHandle::Wayland(display_handle) = display {
+                let (_, clipboard) = copypasta::wayland_clipboard::create_clipboards_from_external(
+                    display_handle.display,
+                );
                 cx.set_clipboard_provider(Box::new(clipboard));
             }
         }
