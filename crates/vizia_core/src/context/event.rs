@@ -296,8 +296,6 @@ impl<'a> EventContext<'a> {
 
     /// Returns the 2D transform of the current view.
     pub fn transform(&self) -> Matrix {
-        let mut transform = Matrix::new_identity();
-
         let bounds = self.bounds();
         let scale_factor = self.scale_factor();
 
@@ -313,22 +311,23 @@ impl<'a> EventContext<'a> {
                 origin
             })
             .unwrap_or(Matrix::translate(bounds.center()));
-        transform = origin * transform;
+        // transform = origin * transform;
+        let mut transform = origin;
         origin = origin.invert().unwrap();
 
         // Apply translation.
         if let Some(translate) = self.style.translate.get(self.current) {
-            transform = translate.as_transform(bounds, scale_factor) * transform;
+            transform = transform * translate.as_transform(bounds, scale_factor);
         }
 
         // Apply rotation.
         if let Some(rotate) = self.style.rotate.get(self.current) {
-            transform = rotate.as_transform(bounds, scale_factor) * transform;
+            transform = transform * rotate.as_transform(bounds, scale_factor);
         }
 
         // Apply scaling.
         if let Some(scale) = self.style.scale.get(self.current) {
-            transform = scale.as_transform(bounds, scale_factor) * transform;
+            transform = transform * scale.as_transform(bounds, scale_factor);
         }
 
         // Apply transform functions.
@@ -344,15 +343,15 @@ impl<'a> EventContext<'a> {
                         let t = animation_state.t;
                         let animated_transform =
                             Matrix::interpolate(&start_transform, &end_transform, t);
-                        transform = animated_transform * transform;
+                        transform = transform * animated_transform;
                     }
                 }
             } else {
-                transform = transforms.as_transform(bounds, scale_factor) * transform;
+                transform = transform * transforms.as_transform(bounds, scale_factor);
             }
         }
 
-        transform = origin * transform;
+        transform = transform * origin;
 
         transform
     }

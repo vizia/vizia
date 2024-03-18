@@ -68,6 +68,7 @@ fn draw_entity(
     canvas.save();
 
     // canvas.set_transform(&cx.transform());
+    canvas.concat(&cx.transform());
 
     if let Some(clip_path) = cx.clip_region() {
         canvas.clip_path(&clip_path, ClipOp::Intersect, true);

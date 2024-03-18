@@ -105,7 +105,7 @@ impl IntoTransform for Vec<Transform> {
                 }
             };
 
-            result = t * result;
+            result = result * t;
         }
 
         result
