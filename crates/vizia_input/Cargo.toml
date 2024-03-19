@@ -13,3 +13,6 @@ vizia_id = { path = "../vizia_id" }
 
 keyboard-types = { version = "0.6", default-features = false }
 bitflags = "2.4"
+
+[lints]
+workspace = true
