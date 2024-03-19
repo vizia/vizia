@@ -14,3 +14,6 @@ vizia_id = { path = "../vizia_id" }
 # morphorm = {path = "../../../morphorm" }
 morphorm = {git = "https://github.com/vizia/morphorm.git", branch = "auto-min-size2"}
 # morphorm = "0.6.4"
+
+[lints]
+workspace = true

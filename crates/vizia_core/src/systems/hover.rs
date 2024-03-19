@@ -52,7 +52,7 @@ pub(crate) fn hover_system(cx: &mut Context) {
 
     if hovered != cx.hovered {
         // Useful for debugging
-        println!(
+        debug!(
             "Hover changed to {:?} parent: {:?}, view: {}, posx: {}, posy: {} width: {} height: {}",
             hovered,
             cx.tree.get_parent(hovered),
