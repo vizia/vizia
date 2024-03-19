@@ -175,10 +175,10 @@ impl WindowHandler for ViziaWindow {
         unsafe { context.make_not_current() };
     }
 
-    fn on_event(&mut self, _window: &mut Window<'_>, event: Event) -> EventStatus {
+    fn on_event(&mut self, window: &mut Window<'_>, event: Event) -> EventStatus {
         let mut should_quit = false;
-        self.application.handle_event(event, &mut should_quit);
 
+        self.application.handle_event(event, &mut should_quit, window);
         self.application.handle_idle(&self.on_idle);
 
         if should_quit {
