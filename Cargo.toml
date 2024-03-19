@@ -316,3 +316,18 @@ chrono = "0.4.34"
 reqwest = { version = "0.11.18", features = ["blocking"] }
 log = "0.4.19"
 fern = { version = "0.6" }
+
+[workspace.lints.rust]
+# future_incompatible = "allow"
+# let_underscore = "allow"
+# nonstandard_style = "allow"
+# rust_2018_compatibility = "allow"
+# rust_2018_idioms = "allow"
+# rust_2021_compatibility = "allow"
+# unused = "allow"
+
+[workspace.lints.clippy]
+# cargo = "allow"
+# pedantic = "allow"
+# nursery = "allow"
+# separated_literal_suffix = "allow"

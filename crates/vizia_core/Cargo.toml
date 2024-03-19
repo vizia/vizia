@@ -46,3 +46,6 @@ web-time = "0.2.4"
 
 [lib]
 doctest = false
+
+[lints]
+workspace = true
