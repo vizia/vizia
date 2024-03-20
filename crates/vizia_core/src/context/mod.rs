@@ -10,8 +10,11 @@ mod resource;
 
 use log::debug;
 use skia_safe::{
+    font_arguments::{variation_position::Coordinate, VariationPosition},
     textlayout::{FontCollection, TypefaceFontProvider},
-    FontMgr, Surface,
+    typeface::SerializeBehavior,
+    utils::OrderedFontMgr,
+    FontArguments, FontMgr, FontStyle, FontStyleSet, Surface, Typeface,
 };
 use std::any::{Any, TypeId};
 use std::cell::RefCell;
@@ -140,18 +143,6 @@ impl Context {
         let mut cache = CachedData::default();
         cache.add(Entity::root());
 
-        // // Add default fonts if the feature is enabled.
-        // #[cfg(feature = "embedded_fonts")]
-        // {
-        //     db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
-        //     db.load_font_data(Vec::from(fonts::ROBOTO_BOLD));
-        //     db.load_font_data(Vec::from(fonts::ROBOTO_ITALIC));
-        //     db.load_font_data(Vec::from(fonts::FIRACODE_REGULAR))
-        // }
-
-        // // Add icon font
-        // db.load_font_data(Vec::from(TABLER_ICONS));
-
         let mut result = Self {
             entity_manager: IdManager::new(),
             entity_identifiers: HashMap::new(),
@@ -170,7 +161,7 @@ impl Context {
             running_timers: BinaryHeap::new(),
             tree_updates: Vec::new(),
             listeners: HashMap::default(),
-            global_listeners: vec![],
+            global_listeners: Vec::new(),
             mouse: MouseState::default(),
             modifiers: Modifiers::empty(),
             captured: Entity::null(),
@@ -181,47 +172,42 @@ impl Context {
             cursor_icon_locked: false,
             resource_manager: ResourceManager::new(),
             text_context: {
+                let mut font_collection = FontCollection::new();
+
                 let default_font_manager = FontMgr::default();
+                let mut default_family_name = None;
+
+                #[cfg(feature = "embedded_fonts")]
+                {
+                    font_collection.set_asset_font_manager(Some({
+                        let mut asset_provider = TypefaceFontProvider::new();
+
+                        asset_provider.register_typeface(
+                            default_font_manager.new_from_data(fonts::TABLER_ICONS, None).unwrap(),
+                            Some("tabler-icons"),
+                        );
+                        asset_provider.register_typeface(
+                            default_font_manager.new_from_data(fonts::FIRACODE, None).unwrap(),
+                            Some("Fira Code"),
+                        );
+                        asset_provider.register_typeface(
+                            default_font_manager.new_from_data(fonts::ROBOTO, None).unwrap(),
+                            Some("Roboto Flex"),
+                        );
+
+                        asset_provider.into()
+                    }));
+
+                    default_family_name = Some("Roboto Flex");
+                }
+
+                font_collection
+                    .set_default_font_manager(default_font_manager.clone(), default_family_name);
 
                 TextContext {
-                    font_collection: {
-                        let mut font_collection = FontCollection::new();
-
-                        #[cfg(feature = "embedded_fonts")]
-                        {
-                            let mut asset_provider = TypefaceFontProvider::new();
-
-                            let ft_type = default_font_manager
-                                .new_from_data(fonts::TABLER_ICONS, None)
-                                .unwrap();
-                            asset_provider.register_typeface(ft_type, Some("tabler-icons"));
-
-                            let ft_type =
-                                default_font_manager.new_from_data(fonts::FIRACODE, 0).unwrap();
-
-                            asset_provider.register_typeface(ft_type, Some("Fira Code"));
-
-                            let ft_type =
-                                default_font_manager.new_from_data(fonts::ROBOTO, 0).unwrap();
-
-                            asset_provider.register_typeface(ft_type, Some("Roboto Flex"));
-
-                            let asset_font_manager: FontMgr = asset_provider.into();
-
-                            font_collection.set_asset_font_manager(asset_font_manager.clone());
-                        }
-
-                        // for font in default_font_manager.family_names() {
-                        //     println!("{}", font);
-                        // }
-
-                        font_collection
-                            .set_default_font_manager(default_font_manager.clone(), "Roboto Flex");
-
-                        font_collection
-                    },
-                    text_bounds: Default::default(),
+                    font_collection,
                     default_font_manager,
+                    text_bounds: Default::default(),
                     text_paragraphs: Default::default(),
                 }
             },
@@ -263,7 +249,7 @@ impl Context {
         Environment::new(&mut result).build(&mut result);
 
         result.entity_manager.create();
-        result.set_default_font(&["Roboto"]);
+        result.set_default_font(&["Roboto Flex"]);
 
         result.style.role.insert(Entity::root(), Role::Window);
 
@@ -652,7 +638,7 @@ impl Context {
     /// `duration` - An optional duration for the timer. Pass `None` for a continuos timer.
     /// `callback` - A callback which is called on when the timer is started, ticks, and stops. Disambiguated by the `TimerAction` parameter of the callback.
     ///
-    /// Returns a `Timer` id which can be used to start and stop the timer.  
+    /// Returns a `Timer` id which can be used to start and stop the timer.
     ///
     /// # Example
     /// Creates a timer which calls the provided callback every second for 5 seconds:
@@ -665,7 +651,7 @@ impl Context {
     ///         TimerAction::Start => {
     ///             println!("Start timer");
     ///         }
-    ///     
+    ///
     ///         TimerAction::Tick(delta) => {
     ///             println!("Tick timer: {:?}", delta);
     ///         }
@@ -1018,7 +1004,7 @@ pub trait EmitContext {
     /// # use instant::{Instant, Duration};
     /// # let cx = &mut Context::default();
     /// # enum AppEvent {Increment}
-    /// cx.schedule_emit_custom(    
+    /// cx.schedule_emit_custom(
     ///     Event::new(AppEvent::Increment)
     ///         .target(Entity::root())
     ///         .origin(cx.current())
