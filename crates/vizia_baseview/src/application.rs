@@ -291,14 +291,12 @@ impl ApplicationRunner {
                 }
                 baseview::MouseEvent::ButtonPressed { button, modifiers } => {
                     update_modifiers(modifiers);
-
                     // give input focus to the view on alt-click
-                    if modifiers == vizia_input::KeyboardModifiers::ALT {
+                    if modifiers.contains(vizia_input::KeyboardModifiers::ALT) {
                         if !window.has_input_focus() {
                             window.set_input_focus();
                         };
                     };
-
                     let b = translate_mouse_button(button);
                     cx.emit_origin(WindowEvent::MouseDown(b));
                 }
