@@ -69,11 +69,12 @@ use crate::prelude::*;
 
 pub use vizia_style::{
     Angle, BackgroundImage, BackgroundSize, BorderCornerShape, BoxShadow, ClipPath, Color, CssRule,
-    CursorIcon, Display, Filter, FontFamily, FontSize, FontSlant, FontWeight, FontWeightKeyword,
-    FontWidth, GenericFontFamily, Gradient, HorizontalPosition, HorizontalPositionKeyword, Length,
-    LengthOrPercentage, LengthValue, LineClamp, LineDirection, LinearGradient, Matrix, Opacity,
-    Overflow, PointerEvents, Position, Scale, TextAlign, TextOverflow, Transform, Transition,
-    Translate, VerticalPosition, VerticalPositionKeyword, Visibility, RGBA,
+    CursorIcon, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
+    FontWeightKeyword, FontWidth, GenericFontFamily, Gradient, HorizontalPosition,
+    HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue, LineClamp, LineDirection,
+    LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position, Scale, TextAlign,
+    TextOverflow, Transform, Transition, Translate, VerticalPosition, VerticalPositionKeyword,
+    Visibility, RGBA,
 };
 
 use vizia_style::{
@@ -268,6 +269,7 @@ pub struct Style {
     pub(crate) font_weight: StyleSet<FontWeight>,
     pub(crate) font_slant: StyleSet<FontSlant>,
     pub(crate) font_width: StyleSet<FontWidth>,
+    pub(crate) font_variation_settings: StyleSet<Vec<FontVariation>>,
     pub(crate) caret_color: AnimatableSet<Color>,
     pub(crate) selection_color: AnimatableSet<Color>,
 
@@ -399,6 +401,7 @@ impl Default for Style {
             font_weight: Default::default(),
             font_slant: Default::default(),
             font_width: Default::default(),
+            font_variation_settings: Default::default(),
             caret_color: Default::default(),
             selection_color: Default::default(),
             cursor: Default::default(),
@@ -1533,6 +1536,11 @@ impl Style {
                 self.font_width.insert_rule(rule_id, font_width);
             }
 
+            // Font Variation Settings
+            Property::FontVariationSettings(font_variation_settings) => {
+                self.font_variation_settings.insert_rule(rule_id, font_variation_settings);
+            }
+
             // Caret Color
             Property::CaretColor(caret_color) => {
                 self.caret_color.insert_rule(rule_id, caret_color);
@@ -1788,6 +1796,7 @@ impl Style {
         self.font_weight.remove(entity);
         self.font_slant.remove(entity);
         self.font_width.remove(entity);
+        self.font_variation_settings.remove(entity);
         self.caret_color.remove(entity);
         self.selection_color.remove(entity);
 
@@ -1973,6 +1982,7 @@ impl Style {
         self.font_slant.clear_rules();
         self.font_color.clear_rules();
         self.font_size.clear_rules();
+        self.font_variation_settings.clear_rules();
         self.selection_color.clear_rules();
         self.caret_color.clear_rules();
 

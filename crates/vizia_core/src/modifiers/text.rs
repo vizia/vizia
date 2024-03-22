@@ -53,6 +53,13 @@ pub trait TextModifiers: internal::Modifiable {
         SystemFlags::REFLOW
     );
 
+    modifier!(
+        /// Sets the font variation settings that should be used by the view.
+        font_variation_settings,
+        Vec<FontVariation>,
+        SystemFlags::REFLOW
+    );
+
     /// Sets the text color of the view.
     fn color<U: Clone + Into<Color>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
