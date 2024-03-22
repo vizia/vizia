@@ -285,6 +285,10 @@ impl<'a> DrawContext<'a> {
         self.style.font_slant.get(self.current).copied().unwrap_or_default()
     }
 
+    pub fn font_variation_settings(&self) -> &[FontVariation] {
+        self.style.font_variation_settings.get(self.current).map(Vec::as_slice).unwrap_or_default()
+    }
+
     /// Function to convert logical points to physical pixels.
     pub fn logical_to_physical(&self, logical: f32) -> f32 {
         self.style.logical_to_physical(logical)

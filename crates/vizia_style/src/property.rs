@@ -1,10 +1,10 @@
 use crate::{
     define_property, Angle, BackgroundImage, BackgroundSize, Border, BorderCornerShape,
     BorderRadius, BorderWidth, BorderWidthValue, BoxShadow, ClipPath, Color, CursorIcon,
-    CustomParseError, CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant, FontWeight,
-    FontWidth, LayoutType, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow, Parse,
-    PointerEvents, Position, PositionType, Rect, Scale, TextAlign, TextOverflow, Transform,
-    Transition, Translate, Units, UnparsedProperty, Visibility,
+    CustomParseError, CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant,
+    FontVariation, FontWeight, FontWidth, LayoutType, LengthOrPercentage, LineClamp, Opacity,
+    Outline, Overflow, Parse, PointerEvents, Position, PositionType, Rect, Scale, TextAlign,
+    TextOverflow, Transform, Transition, Translate, Units, UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -144,6 +144,7 @@ define_property! {
         "font-size": FontSize(FontSize),
         "color": FontColor(Color),
         "font-family": FontFamily(Vec<FontFamily<'i>>),
+        "font-variation-settings": FontVariationSettings(Vec<FontVariation>),
         "font-weight": FontWeight(FontWeight),
         "font-slant": FontSlant(FontSlant),
         "font-width": FontWidth(FontWidth),

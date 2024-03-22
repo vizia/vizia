@@ -244,6 +244,7 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context) {
             cx.style.font_family.inherit_inline(entity, parent);
             cx.style.font_weight.inherit_inline(entity, parent);
             cx.style.font_slant.inherit_inline(entity, parent);
+            cx.style.font_variation_settings.inherit_inline(entity, parent);
             cx.style.caret_color.inherit_inline(entity, parent);
             cx.style.selection_color.inherit_inline(entity, parent);
         }
@@ -259,6 +260,7 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context) {
             cx.style.font_family.inherit_shared(entity, parent);
             cx.style.font_weight.inherit_shared(entity, parent);
             cx.style.font_slant.inherit_shared(entity, parent);
+            cx.style.font_variation_settings.inherit_shared(entity, parent);
             cx.style.caret_color.inherit_shared(entity, parent);
             cx.style.selection_color.inherit_shared(entity, parent);
         }
@@ -507,6 +509,12 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
     }
 
     if style.font_width.link(entity, matched_rules) {
+        should_redraw = true;
+        should_relayout = true;
+        should_reflow = true;
+    }
+
+    if style.font_variation_settings.link(entity, matched_rules) {
         should_redraw = true;
         should_relayout = true;
         should_reflow = true;
