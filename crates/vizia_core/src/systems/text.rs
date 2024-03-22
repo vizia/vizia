@@ -1,4 +1,5 @@
 use skia_safe::{
+    font_arguments::VariationPosition,
     textlayout::{FontCollection, Paragraph, ParagraphBuilder, ParagraphStyle, TextStyle},
     FontArguments, FontStyle, Paint,
 };
@@ -141,6 +142,14 @@ pub fn build_paragraph(
                     slant.copied().unwrap_or_default().into(),
                 ));
             }
+        }
+
+        // Font Variations
+        if let Some(coordinates) = style.font_variation_settings.get(entity) {
+            text_style.set_font_arguments(
+                &FontArguments::new()
+                    .set_variation_design_position(VariationPosition { coordinates }),
+            );
         }
 
         text_style
