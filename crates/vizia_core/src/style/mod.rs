@@ -150,6 +150,20 @@ pub enum FamilyOwned {
     Named(String),
 }
 
+#[cfg(feature = "embedded_fonts")]
+const DEFAULT_FAMILY_NAME: &str = "Roboto Flex";
+#[cfg(not(feature = "embedded_fonts"))]
+const DEFAULT_FAMILY_NAME: &str = "";
+
+impl AsRef<str> for FamilyOwned {
+    fn as_ref(&self) -> &str {
+        match self {
+            FamilyOwned::Generic(_) => DEFAULT_FAMILY_NAME,
+            FamilyOwned::Named(family) => family.as_str(),
+        }
+    }
+}
+
 /// Stores the style properties of all entities in the application.
 pub struct Style {
     pub(crate) rule_manager: IdManager<Rule>,
