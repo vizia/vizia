@@ -1,5 +1,7 @@
 use skia_safe::gradient_shader::GradientShaderColors;
 use skia_safe::image_filters::CropRect;
+use skia_safe::path::ArcSize;
+use skia_safe::rrect::Corner;
 use skia_safe::{
     BlurStyle, ClipOp, FilterMode, IRect, ImageFilter, MaskFilter, Matrix, Paint, PaintStyle, Path,
     PathDirection, Point, RRect, Rect, SamplingOptions, Shader, TileMode,
@@ -7,6 +9,7 @@ use skia_safe::{
 use vizia_style::LengthPercentageOrAuto;
 // use femtovg::{ImageId, Transform2D};
 use std::any::{Any, TypeId};
+use std::f32::consts::SQRT_2;
 
 use hashbrown::HashMap;
 
@@ -181,7 +184,7 @@ impl<'a> DrawContext<'a> {
             (Overflow::Hidden, Overflow::Hidden) => clip_bounds,
         };
 
-        Some(self.build_path(clip_bounds))
+        Some(self.build_path(clip_bounds, (0.0, 0.0)))
     }
 
     /// Returns the 2D transform of the current view.
@@ -420,12 +423,7 @@ impl<'a> DrawContext<'a> {
     }
 
     /// Get the vector path of the current view.
-    pub fn build_path(&self, bounds: BoundingBox) -> Path {
-        // Length proportional to radius of a cubic bezier handle for 90deg arcs.
-        const KAPPA90: f32 = 0.552_284_8;
-
-        let border_width = self.border_width();
-
+    pub fn build_path(&self, bounds: BoundingBox, outset: (f32, f32)) -> Path {
         let border_top_left_radius = self.border_top_left_radius();
         let border_top_right_radius = self.border_top_right_radius();
         let border_bottom_right_radius = self.border_bottom_right_radius();
@@ -436,104 +434,166 @@ impl<'a> DrawContext<'a> {
         let border_bottom_right_shape = self.border_bottom_right_shape();
         let border_bottom_left_shape = self.border_bottom_left_shape();
 
+        let rect: Rect = bounds.into();
+
+        let mut rr = RRect::new_rect_radii(
+            &rect,
+            &[
+                Point::new(border_top_left_radius, border_top_left_radius),
+                Point::new(border_top_right_radius, border_top_right_radius),
+                Point::new(border_bottom_right_radius, border_bottom_right_radius),
+                Point::new(border_bottom_left_radius, border_bottom_left_radius),
+            ],
+        );
+
+        rr = rr.with_outset(outset);
+
+        let x = rr.bounds().x();
+        let y = rr.bounds().y();
+        let width = rr.width();
+        let height = rr.height();
+
         //TODO: Cache the path and regenerate if the bounds change
         let mut path = Path::new();
 
-        if bounds.w == bounds.h
-            && border_bottom_left_radius == bounds.w / 2.0
-            && border_bottom_right_radius == bounds.w / 2.0
-            && border_top_left_radius == bounds.h / 2.0
-            && border_top_right_radius == bounds.h / 2.0
+        if width == height
+            && border_bottom_left_radius == width / 2.0
+            && border_bottom_right_radius == width / 2.0
+            && border_top_left_radius == height / 2.0
+            && border_top_right_radius == height / 2.0
         {
-            path.add_circle(
-                bounds.center(),
-                bounds.w / 2.0 - border_width / 2.0,
-                PathDirection::CW,
-            );
+            path.add_circle((width / 2.0, bounds.h / 2.0), width / 2.0, PathDirection::CW);
         } else {
-            let x = bounds.x + border_width / 2.0;
-            let y = bounds.y + border_width / 2.0;
-            let w = bounds.w - border_width;
-            let h = bounds.h - border_width;
-            let halfw = w.abs() * 0.5;
-            let halfh = h.abs() * 0.5;
+            let top_right = rr.radii(Corner::UpperRight).x;
 
-            let rx_bl = border_bottom_left_radius.min(halfw) * w.signum();
-            let ry_bl = border_bottom_left_radius.min(halfh) * h.signum();
+            if top_right > 0.0 {
+                let (a, b, c, d, l, p, radius) =
+                    compute_smooth_corner(top_right, 0.0, bounds.width(), bounds.height());
 
-            let rx_br = border_bottom_right_radius.min(halfw) * w.signum();
-            let ry_br = border_bottom_right_radius.min(halfh) * h.signum();
-
-            let rx_tr = border_top_right_radius.min(halfw) * w.signum();
-            let ry_tr = border_top_right_radius.min(halfh) * h.signum();
-
-            let rx_tl = border_top_left_radius.min(halfw) * w.signum();
-            let ry_tl = border_top_left_radius.min(halfh) * h.signum();
-
-            path.move_to((x, y + ry_tl));
-            path.line_to((x, y + h - ry_bl));
-            if border_bottom_left_radius != 0.0 {
-                if border_bottom_left_shape == BorderCornerShape::Round {
-                    path.cubic_to(
-                        (x, y + h - ry_bl * (1.0 - KAPPA90)),
-                        (x + rx_bl * (1.0 - KAPPA90), y + h),
-                        (x + rx_bl, y + h),
-                    );
-                } else {
-                    path.line_to((x + rx_bl, y + h));
-                }
-            }
-
-            path.line_to((x + w - rx_br, y + h));
-
-            if border_bottom_right_radius != 0.0 {
-                if border_bottom_right_shape == BorderCornerShape::Round {
-                    path.cubic_to(
-                        (x + w - rx_br * (1.0 - KAPPA90), y + h),
-                        (x + w, y + h - ry_br * (1.0 - KAPPA90)),
-                        (x + w, y + h - ry_br),
-                    );
-                } else {
-                    path.line_to((x + w, y + h - ry_br));
-                }
-            }
-
-            path.line_to((x + w, y + ry_tr));
-
-            if border_top_right_radius != 0.0 {
+                path.move_to((f32::max(width / 2.0, width - p), 0.0));
                 if border_top_right_shape == BorderCornerShape::Round {
                     path.cubic_to(
-                        (x + w, y + ry_tr * (1.0 - KAPPA90)),
-                        (x + w - rx_tr * (1.0 - KAPPA90), y),
-                        (x + w - rx_tr, y),
+                        (width - (p - a), 0.0),
+                        (width - (p - a - b), 0.0),
+                        (width - (p - a - b - c), d),
+                    )
+                    .r_arc_to_rotated(
+                        (radius, radius),
+                        0.0,
+                        ArcSize::Small,
+                        PathDirection::CW,
+                        (l, l),
+                    )
+                    .cubic_to(
+                        (width, p - a - b),
+                        (width, p - a),
+                        (width, f32::min(height / 2.0, p)),
                     );
                 } else {
-                    path.line_to((x + w - rx_tr, y));
+                    path.line_to((width, f32::min(height / 2.0, p)));
                 }
+            } else {
+                path.move_to((width / 2.0, 0.0))
+                    .line_to((width, 0.0))
+                    .line_to((width, height / 2.0));
             }
 
-            path.line_to((x + rx_tl, y));
+            let bottom_right = rr.radii(Corner::LowerRight).x;
+            if bottom_right > 0.0 {
+                let (a, b, c, d, l, p, radius) =
+                    compute_smooth_corner(bottom_right, 0.0, width, height);
 
-            if border_top_left_radius != 0.0 {
-                if border_top_left_shape == BorderCornerShape::Round {
+                path.line_to((width, f32::max(height / 2.0, height - p)));
+                if border_bottom_right_shape == BorderCornerShape::Round {
                     path.cubic_to(
-                        (x + rx_tl * (1.0 - KAPPA90), y),
-                        (x, y + ry_tl * (1.0 - KAPPA90)),
-                        (x, y + ry_tl),
+                        (width, height - (p - a)),
+                        (width, height - (p - a - b)),
+                        (width - d, height - (p - a - b - c)),
+                    )
+                    .r_arc_to_rotated(
+                        (radius, radius),
+                        0.0,
+                        ArcSize::Small,
+                        PathDirection::CW,
+                        (-l, l),
+                    )
+                    .cubic_to(
+                        (width - (p - a - b), height),
+                        (width - (p - a), height),
+                        (f32::max(width / 2.0, width - p), height),
                     );
                 } else {
-                    path.line_to((x, y + ry_tl));
+                    path.line_to((f32::max(width / 2.0, width - p), height));
                 }
+            } else {
+                path.line_to((width, height)).line_to((width / 2.0, height));
+            }
+
+            let bottom_left = rr.radii(Corner::LowerLeft).x;
+            if bottom_left > 0.0 {
+                let (a, b, c, d, l, p, radius) =
+                    compute_smooth_corner(bottom_left, 0.0, width, height);
+
+                path.line_to((f32::min(width / 2.0, p), height));
+                if border_bottom_left_shape == BorderCornerShape::Round {
+                    path.cubic_to(
+                        (p - a, height),
+                        (p - a - b, height),
+                        (p - a - b - c, height - d),
+                    )
+                    .r_arc_to_rotated(
+                        (radius, radius),
+                        0.0,
+                        ArcSize::Small,
+                        PathDirection::CW,
+                        (-l, -l),
+                    )
+                    .cubic_to(
+                        (0.0, height - (p - a - b)),
+                        (0.0, height - (p - a)),
+                        (0.0, f32::max(height / 2.0, height - p)),
+                    );
+                } else {
+                    path.line_to((0.0, f32::max(height / 2.0, height - p)));
+                }
+            } else {
+                path.line_to((0.0, height)).line_to((0.0, height / 2.0));
+            }
+
+            let top_left = rr.radii(Corner::UpperLeft).x;
+            if top_left > 0.0 {
+                let (a, b, c, d, l, p, radius) =
+                    compute_smooth_corner(top_left, 0.0, width, height);
+
+                path.line_to((0.0, f32::min(height / 2.0, p)));
+                if border_top_left_shape == BorderCornerShape::Round {
+                    path.cubic_to((0.0, p - a), (0.0, p - a - b), (d, p - a - b - c))
+                        .r_arc_to_rotated(
+                            (radius, radius),
+                            0.0,
+                            ArcSize::Small,
+                            PathDirection::CW,
+                            (l, -l),
+                        )
+                        .cubic_to((p - a - b, 0.0), (p - a, 0.0), (f32::min(width / 2.0, p), 0.0));
+                } else {
+                    path.line_to((f32::min(width / 2.0, p), 0.0));
+                }
+            } else {
+                path.line_to((0.0, 0.0));
             }
 
             path.close();
         }
 
+        path.offset((x, y));
+
         path
     }
 
     /// Draw background color or background image (including gradients) for the current view.
-    pub fn draw_background(&mut self, canvas: &Canvas, path: &Path) {
+    pub fn draw_background(&mut self, canvas: &Canvas) {
+        let path = self.build_path(self.bounds(), (0.0, 0.0));
         let background_color = self.background_color();
         if background_color.a() != 0 {
             let mut paint = Paint::default();
@@ -544,10 +604,10 @@ impl<'a> DrawContext<'a> {
                 background_color.b(),
             ));
             paint.set_anti_alias(true);
-            canvas.draw_path(path, &paint);
+            canvas.draw_path(&path, &paint);
         }
 
-        self.draw_background_images(canvas, path);
+        self.draw_background_images(canvas, &path);
     }
 
     // /// Draw backdrop filters for the current view.
@@ -743,17 +803,24 @@ impl<'a> DrawContext<'a> {
     // }
 
     /// Draw the border of the current view.
-    pub fn draw_border(&mut self, canvas: &Canvas, path: &Path) {
+    pub fn draw_border(&mut self, canvas: &Canvas) {
         let border_color = self.border_color();
         let border_width = self.border_width();
 
         if border_width > 0.0 && border_color.a() > 0 {
+            let bounds = self.bounds();
+            let path = self.build_path(bounds, (-border_width / 2.0, -border_width / 2.0));
             let mut paint = Paint::default();
             paint.set_style(PaintStyle::Stroke);
             paint.set_color(border_color);
             paint.set_stroke_width(border_width);
             paint.set_anti_alias(true);
-            canvas.draw_path(path, &paint);
+            // let mut clip = self.build_path(bounds, (-20.0, 0.0));
+            // canvas.clip_path(&clip, ClipOp::Intersect, true);
+            canvas.draw_path(&path, &paint);
+            // let mut clip_paint = Paint::default();
+            // clip_paint.set_color(Color::blue());
+            // canvas.draw_path(&clip, &clip_paint);
         }
     }
 
@@ -767,31 +834,10 @@ impl<'a> DrawContext<'a> {
 
             let bounds = self.bounds();
 
-            let border_top_left_radius = self.border_top_left_radius();
-            let border_top_right_radius = self.border_top_right_radius();
-            let border_bottom_right_radius = self.border_bottom_right_radius();
-            let border_bottom_left_radius = self.border_bottom_left_radius();
-
             let half_outline_width = outline_width / 2.0;
-            let outline_path = RRect::new_rect_radii(
-                Rect::new(
-                    bounds.x - half_outline_width - outline_offset,
-                    bounds.y - half_outline_width - outline_offset,
-                    bounds.x - half_outline_width - outline_offset
-                        + bounds.w
-                        + outline_width
-                        + 2.0 * outline_offset,
-                    bounds.y - half_outline_width - outline_offset
-                        + bounds.h
-                        + outline_width
-                        + 2.0 * outline_offset,
-                ),
-                &[
-                    Point::new(border_top_left_radius * 1.5, border_top_left_radius * 1.5),
-                    Point::new(border_top_right_radius * 1.5, border_top_left_radius * 1.5),
-                    Point::new(border_bottom_right_radius * 1.5, border_bottom_right_radius * 1.5),
-                    Point::new(border_bottom_left_radius * 1.5, border_bottom_left_radius * 1.5),
-                ],
+            let outline_path = self.build_path(
+                bounds,
+                (half_outline_width + outline_offset, half_outline_width + outline_offset),
             );
 
             let mut outline_paint = Paint::default();
@@ -799,168 +845,20 @@ impl<'a> DrawContext<'a> {
             outline_paint.set_stroke_width(outline_width);
             outline_paint.set_style(PaintStyle::Stroke);
             outline_paint.set_anti_alias(true);
-            canvas.draw_rrect(&outline_path, &outline_paint);
+            canvas.draw_path(&outline_path, &outline_paint);
         }
     }
 
-    // /// Draw inset box shadows for the current view.
-    // pub fn draw_inset_box_shadows(&mut self, canvas: &mut Canvas, path: &mut Path) {
-    //     if let Some(box_shadows) = self.box_shadows() {
-    //         if box_shadows.is_empty() {
-    //             return;
-    //         }
-
-    //         let mut shadow_images =
-    //             self.cache.shadow_images.get(self.current).cloned().unwrap_or_default();
-
-    //         if shadow_images.len() < box_shadows.len() {
-    //             shadow_images.resize(box_shadows.len(), None);
-    //         } else {
-    //             let excess = shadow_images.split_off(box_shadows.len());
-    //             for (s, t) in excess.into_iter().flatten() {
-    //                 canvas.delete_image(s);
-    //                 canvas.delete_image(t);
-    //             }
-    //         }
-
-    //         for (index, box_shadow) in
-    //             box_shadows.iter().enumerate().rev().filter(|(_, shadow)| shadow.inset)
-    //         {
-    //             let color = box_shadow.color.unwrap_or_default();
-    //             let x_offset = box_shadow.x_offset.to_px().unwrap_or(0.0) * self.scale_factor();
-    //             let y_offset = box_shadow.y_offset.to_px().unwrap_or(0.0) * self.scale_factor();
-    //             let spread_radius =
-    //                 box_shadow.spread_radius.as_ref().and_then(|l| l.to_px()).unwrap_or(0.0)
-    //                     * self.scale_factor();
-
-    //             let blur_radius =
-    //                 box_shadow.blur_radius.as_ref().and_then(|br| br.to_px()).unwrap_or(0.0);
-    //             let sigma = blur_radius / 2.0;
-    //             let d = (sigma * 5.0).ceil() + 2.0 * spread_radius + 20.0;
-
-    //             let bounds = self.bounds();
-
-    //             let (source, target) =
-    //                 shadow_images[index].map(|(s, t)| (Some(s), Some(t))).unwrap_or((None, None));
-
-    //             fn create_images(canvas: &mut Canvas, w: usize, h: usize) -> (ImageId, ImageId) {
-    //                 (
-    //                     canvas
-    //                         .create_image_empty(
-    //                             w,
-    //                             h,
-    //                             femtovg::PixelFormat::Rgba8,
-    //                             femtovg::ImageFlags::FLIP_Y | femtovg::ImageFlags::PREMULTIPLIED,
-    //                         )
-    //                         .unwrap(),
-    //                     canvas
-    //                         .create_image_empty(
-    //                             w,
-    //                             h,
-    //                             femtovg::PixelFormat::Rgba8,
-    //                             femtovg::ImageFlags::FLIP_Y | femtovg::ImageFlags::PREMULTIPLIED,
-    //                         )
-    //                         .unwrap(),
-    //                 )
-    //             }
-
-    //             let (source, target) = match (source, target) {
-    //                 (Some(s), Some(t)) => {
-    //                     if canvas.image_size(s).unwrap().0 != (bounds.w + d) as usize {
-    //                         canvas.delete_image(s);
-    //                         canvas.delete_image(t);
-
-    //                         create_images(canvas, (bounds.w + d) as usize, (bounds.h + d) as usize)
-    //                     } else {
-    //                         (s, t)
-    //                     }
-    //                 }
-
-    //                 (None, None) => {
-    //                     create_images(canvas, (bounds.w + d) as usize, (bounds.h + d) as usize)
-    //                 }
-
-    //                 _ => unreachable!(),
-    //             };
-
-    //             shadow_images[index] = Some((source, target));
-
-    //             canvas.save();
-    //             canvas.set_render_target(femtovg::RenderTarget::Image(source));
-    //             canvas.reset_scissor();
-    //             canvas.reset_transform();
-    //             canvas.clear_rect(
-    //                 0,
-    //                 0,
-    //                 (bounds.w + d) as u32,
-    //                 (bounds.h + d) as u32,
-    //                 femtovg::Color::rgba(0, 0, 0, 0),
-    //             );
-
-    //             let scalex = 1.0 - (2.0 * spread_radius / bounds.w);
-    //             let scaley = 1.0 - (2.0 * spread_radius / bounds.h);
-    //             canvas.translate(
-    //                 (-bounds.x - bounds.w / 2.0) * scalex,
-    //                 (-bounds.y - bounds.h / 2.0) * scaley,
-    //             );
-    //             canvas.scale(scalex, scaley);
-    //             canvas.translate(
-    //                 (bounds.w / 2.0 + d / 2.0) / scalex,
-    //                 (bounds.h / 2.0 + d / 2.0) / scaley,
-    //             );
-    //             let paint = Paint::color(color.into());
-    //             let mut shadow_path = path.clone();
-    //             shadow_path.rect(
-    //                 bounds.x - d / 2.0,
-    //                 bounds.y - d / 2.0,
-    //                 bounds.w + d,
-    //                 bounds.h + d,
-    //             );
-
-    //             shadow_path.solidity(femtovg::Solidity::Hole);
-    //             canvas.fill_path(&shadow_path, &paint);
-    //             canvas.restore();
-
-    //             let target_image = if blur_radius > 0.0 {
-    //                 canvas.filter_image(
-    //                     target,
-    //                     femtovg::ImageFilter::GaussianBlur { sigma },
-    //                     source,
-    //                 );
-    //                 target
-    //             } else {
-    //                 source
-    //             };
-
-    //             canvas.set_render_target(femtovg::RenderTarget::Screen);
-    //             canvas.save();
-
-    //             let paint = Paint::image(
-    //                 target_image,
-    //                 bounds.x - d / 2.0 + x_offset - 1.5,
-    //                 bounds.y - d / 2.0 + y_offset - 1.5,
-    //                 bounds.w + d + 3.0,
-    //                 bounds.h + d + 3.0,
-    //                 0f32,
-    //                 1f32,
-    //             );
-
-    //             canvas.fill_path(path, &paint);
-
-    //             canvas.restore();
-    //         }
-    //         self.cache.shadow_images.insert(self.current, shadow_images);
-    //     }
-    // }
-
-    /// Draw non-inset box shadows for the current view.
-    pub fn draw_shadows(&mut self, canvas: &Canvas, path: &Path) {
+    /// Draw box-shadows for the current view.
+    pub fn draw_shadows(&mut self, canvas: &Canvas) {
         if let Some(box_shadows) = self.box_shadows() {
             if box_shadows.is_empty() {
                 return;
             }
 
             let bounds = self.bounds();
+
+            let path = self.build_path(bounds, (0.0, 0.0));
 
             for box_shadow in box_shadows.iter().rev() {
                 let shadow_color = box_shadow.color.unwrap_or_default();
@@ -991,7 +889,7 @@ impl<'a> DrawContext<'a> {
 
                 shadow_paint.set_style(PaintStyle::Fill);
 
-                let mut shadow_path = self.build_path(bounds.expand(outset));
+                let mut shadow_path = self.build_path(bounds, (outset, outset));
 
                 shadow_paint.set_color(shadow_color);
 
@@ -1433,4 +1331,40 @@ impl<'a> DataContext for DrawContext<'a> {
 
         None
     }
+}
+
+fn compute_smooth_corner(
+    corner_radius: f32,
+    smoothing: f32,
+    width: f32,
+    height: f32,
+) -> (f32, f32, f32, f32, f32, f32, f32) {
+    let max_p = f32::min(width, height) / 2.0;
+    let corner_radius = f32::min(corner_radius, max_p);
+
+    let p = f32::min((1.0 + smoothing) * corner_radius, max_p);
+
+    let angle_alpha: f32;
+    let angle_beta: f32;
+
+    if corner_radius <= max_p / 2.0 {
+        angle_alpha = 45.0 * smoothing;
+        angle_beta = 90.0 * (1.0 - smoothing);
+    } else {
+        let diff_ratio = (corner_radius - max_p / 2.0) / (max_p / 2.0);
+
+        angle_alpha = 45.0 * smoothing * (1.0 - diff_ratio);
+        angle_beta = 90.0 * (1.0 - smoothing * (1.0 - diff_ratio));
+    }
+
+    let angle_theta = (90.0 - angle_beta) / 2.0;
+    let dist_p3_p4 = corner_radius * (angle_theta / 2.0).to_radians().tan();
+
+    let l = (angle_beta / 2.0).to_radians().sin() * corner_radius * SQRT_2;
+    let c = dist_p3_p4 * angle_alpha.to_radians().cos();
+    let d = c * angle_alpha.to_radians().tan();
+    let b = (p - l - c - d) / 3.0;
+    let a = 2.0 * b;
+
+    (a, b, c, d, l, p, corner_radius)
 }
