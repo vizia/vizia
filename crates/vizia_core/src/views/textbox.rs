@@ -1219,11 +1219,10 @@ where
 
     // Use custom drawing for the textbox so a transform can be applied to just the text.
     fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
-        let mut path = cx.build_path(cx.bounds());
-        cx.draw_shadows(canvas, &mut path);
+        cx.draw_shadows(canvas);
         // cx.draw_backdrop_filter(canvas, &mut path);
-        cx.draw_background(canvas, &mut path);
-        cx.draw_border(canvas, &mut path);
+        cx.draw_background(canvas);
+        cx.draw_border(canvas);
         // cx.draw_inset_box_shadows(canvas, &mut path);
         // cx.draw_outline(canvas);
         // canvas.save();
