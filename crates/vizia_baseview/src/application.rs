@@ -293,8 +293,8 @@ impl ApplicationRunner {
                     update_modifiers(modifiers);
                     // give input focus to the view on alt-click
                     if modifiers.contains(vizia_input::KeyboardModifiers::ALT) {
-                        if !window.has_input_focus() {
-                            window.set_input_focus();
+                        if !window.has_focus() {
+                            window.focus();
                         };
                     };
                     let b = translate_mouse_button(button);
