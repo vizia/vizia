@@ -292,6 +292,7 @@ impl ApplicationRunner {
                 baseview::MouseEvent::ButtonPressed { button, modifiers } => {
                     update_modifiers(modifiers);
                     // give input focus to the view on alt-click
+                    #[cfg(not(target_os = "linux"))] // not implemented for linux yet
                     if modifiers.contains(vizia_input::KeyboardModifiers::ALT) {
                         if !window.has_focus() {
                             window.focus();
