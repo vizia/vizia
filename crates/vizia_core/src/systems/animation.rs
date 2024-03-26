@@ -84,8 +84,8 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
         cx.style.system_flags.set(SystemFlags::RELAYOUT, true);
     }
 
-    if !redraw_entities.is_empty() {
-        cx.style.system_flags.set(SystemFlags::REDRAW, true);
+    for entity in redraw_entities.iter() {
+        cx.style.redraw_list.insert(*entity);
     }
 
     for entity in reflow_entities.iter() {

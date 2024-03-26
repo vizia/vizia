@@ -18,13 +18,21 @@ const STYLE: &str = r#"
         top: 50px;
         background-color: red;
     }
+
+    element.test {
+        background-color: green;
+    }
+
+    element.test:hover {
+        background-color: blue;
+    }
     
     .overflow {
         overflow: hidden;
     }
 
     .overflow:over {
-        overflow: visible;
+        overflow: hidden;
     }
 
     .overflowx {
@@ -79,28 +87,28 @@ fn main() -> Result<(), ApplicationError> {
 
         HStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
-                Element::new(cx);
+                Element::new(cx).class("test");
             })
             .class("container")
             .class("overflow");
 
-            HStack::new(cx, |cx| {
-                Element::new(cx);
-            })
-            .class("container")
-            .class("overflowx");
+            // HStack::new(cx, |cx| {
+            //     Element::new(cx);
+            // })
+            // .class("container")
+            // .class("overflowx");
 
-            HStack::new(cx, |cx| {
-                Element::new(cx);
-            })
-            .class("container")
-            .class("overflowy");
+            // HStack::new(cx, |cx| {
+            //     Element::new(cx);
+            // })
+            // .class("container")
+            // .class("overflowy");
 
-            HStack::new(cx, |cx| {
-                Element::new(cx);
-            })
-            .class("container")
-            .class("clipping");
+            // HStack::new(cx, |cx| {
+            //     Element::new(cx);
+            // })
+            // .class("container")
+            // .class("clipping");
         })
         .class("row");
     })

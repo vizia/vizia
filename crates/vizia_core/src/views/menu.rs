@@ -289,7 +289,6 @@ where
                 (content)(cx);
 
                 Binding::new(cx, lens, move |cx, l| {
-                    println!("{}", l.get(cx));
                     if let Some(geo) = cx.cache.geo_changed.get_mut(parent) {
                         geo.set(GeoChanged::WIDTH_CHANGED, true);
                     }
