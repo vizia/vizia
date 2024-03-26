@@ -630,7 +630,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             for ancestor in parent_iter {
                 if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(ancestor) {
                     pseudo_classes.set(PseudoClassFlags::HOVER, false);
-                    cx.style.needs_restyle();
+                    cx.style.needs_restyle(ancestor);
                 }
             }
 

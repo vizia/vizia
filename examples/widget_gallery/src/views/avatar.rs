@@ -9,11 +9,7 @@ use crate::components::DemoRegion;
 pub fn avatar(cx: &mut Context) {
     cx.load_image(
         "vizia.png",
-        image::load_from_memory_with_format(
-            include_bytes!("../../assets/vizia-logo-01.png"),
-            image::ImageFormat::Png,
-        )
-        .unwrap(),
+        include_bytes!("../../assets/vizia-logo-01.png"),
         ImageRetentionPolicy::DropWhenUnusedForOneFrame,
     );
 

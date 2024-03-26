@@ -68,7 +68,7 @@ pub trait TextModifiers: internal::Modifiable {
             value.set_or_bind(cx, entity, move |cx, v| {
                 cx.style.font_color.insert(entity, v.get(cx).into());
                 cx.style.needs_text_update(entity);
-                cx.style.needs_redraw();
+                cx.style.needs_redraw(entity);
             });
         });
         self

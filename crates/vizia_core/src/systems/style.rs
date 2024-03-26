@@ -614,7 +614,7 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
     }
 
     if should_redraw {
-        style.system_flags.set(SystemFlags::REDRAW, true);
+        style.needs_redraw(entity);
     }
 
     if should_reflow {

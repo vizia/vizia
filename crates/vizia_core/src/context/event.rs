@@ -690,13 +690,13 @@ impl<'a> EventContext<'a> {
 
     /// Marks the current view as needing to be redrawn.
     pub fn needs_redraw(&mut self) {
-        self.style.needs_redraw();
+        self.style.needs_redraw(self.current);
     }
 
     /// Marks the current view as needing a layout computation.
     pub fn needs_relayout(&mut self) {
         self.style.needs_relayout();
-        self.style.needs_redraw();
+        self.style.needs_redraw(self.current);
     }
 
     pub fn needs_restyle(&mut self) {
@@ -710,7 +710,7 @@ impl<'a> EventContext<'a> {
         for descendant in iter {
             self.style.restyle.insert(descendant).unwrap();
         }
-        self.style.needs_restyle();
+        self.style.needs_restyle(self.current);
     }
 
     /// Reloads the stylesheets linked to the application.
@@ -741,9 +741,9 @@ impl<'a> EventContext<'a> {
             self.style.restyle.insert(entity).unwrap();
         }
 
-        self.style.needs_restyle();
+        self.style.needs_restyle(self.current);
         self.style.needs_relayout();
-        self.style.needs_redraw();
+        self.style.needs_redraw(self.current);
 
         Ok(())
     }

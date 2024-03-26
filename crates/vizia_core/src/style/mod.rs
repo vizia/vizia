@@ -122,14 +122,11 @@ impl Default for Abilities {
 
 bitflags! {
     pub struct SystemFlags: u8 {
-        /// Style system flag.
-        const RESTYLE = 1;
         /// Layout system flag.
-        const RELAYOUT = 1 << 1;
-        /// Draw system flag.
-        const REDRAW = 1 << 2;
-        /// Text constraints system flag.
-        const REFLOW = 1 << 5;
+        const RELAYOUT = 1;
+        const RESTYLE = 1 << 1;
+        const REFLOW = 1 << 2;
+        const REDRAW = 1 << 3;
     }
 }
 
@@ -322,16 +319,12 @@ pub struct Style {
 
     pub(crate) system_flags: SystemFlags,
 
-    // TODO: Probably swap this out for a bloom filter
-    // pub(crate) restyle: SparseSet<bool>,
     pub(crate) restyle: qfilter::Filter,
-
-    // TODO: When we can do incremental updates on a per entity basis, change this to a bitflag
-    // for layout, text layout, rendering, etc. to replace the above `needs_` members.
-    pub text_construction: qfilter::Filter,
-    pub text_layout: qfilter::Filter,
-
-    pub reaccess: qfilter::Filter,
+    pub(crate) redraw_list: HashSet<Entity>,
+    pub(crate) redraw: qfilter::Filter,
+    pub(crate) text_construction: qfilter::Filter,
+    pub(crate) text_layout: qfilter::Filter,
+    pub(crate) reaccess: qfilter::Filter,
 
     /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
     pub(crate) dpi_factor: f64,
@@ -434,6 +427,8 @@ impl Default for Style {
             max_bottom: Default::default(),
             system_flags: Default::default(),
             restyle: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
+            redraw: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
+            redraw_list: HashSet::new(),
             text_construction: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
             text_layout: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
             reaccess: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
@@ -1709,7 +1704,7 @@ impl Style {
         self.pseudo_classes.insert(entity, PseudoClassFlags::VALID);
         self.classes.insert(entity, HashSet::new());
         self.abilities.insert(entity, Abilities::default());
-        self.system_flags = SystemFlags::RESTYLE | SystemFlags::RELAYOUT;
+        self.system_flags = SystemFlags::RELAYOUT;
         self.restyle.insert(entity).unwrap();
         self.reaccess.insert(entity).unwrap();
     }
@@ -1846,17 +1841,16 @@ impl Style {
         self.max_bottom.remove(entity);
     }
 
-    pub fn needs_restyle(&mut self) {
-        self.system_flags.set(SystemFlags::RESTYLE, true);
-        self.system_flags.set(SystemFlags::REDRAW, true);
+    pub fn needs_restyle(&mut self, entity: Entity) {
+        self.restyle.insert(entity).unwrap();
     }
 
     pub fn needs_relayout(&mut self) {
         self.system_flags.set(SystemFlags::RELAYOUT, true);
     }
 
-    pub fn needs_redraw(&mut self) {
-        self.system_flags.set(SystemFlags::REDRAW, true);
+    pub fn needs_redraw(&mut self, entity: Entity) {
+        self.redraw_list.insert(entity);
     }
 
     pub fn needs_access_update(&mut self, entity: Entity) {
@@ -1873,9 +1867,8 @@ impl Style {
     }
 
     pub fn should_redraw<F: FnOnce()>(&mut self, f: F) {
-        if self.system_flags.contains(SystemFlags::REDRAW) {
+        if !self.redraw_list.is_empty() {
             f();
-            self.system_flags.set(SystemFlags::REDRAW, false);
         }
     }
 

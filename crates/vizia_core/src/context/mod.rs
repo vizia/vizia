@@ -241,9 +241,9 @@ impl Context {
             drop_data: None,
         };
 
-        result.style.needs_restyle();
+        result.style.needs_restyle(Entity::root());
         result.style.needs_relayout();
-        result.style.needs_redraw();
+        result.style.needs_redraw(Entity::root());
 
         // Build the environment model at the root.
         Environment::new(&mut result).build(&mut result);
@@ -309,7 +309,7 @@ impl Context {
 
     /// Mark the application as needing to rerun the draw method
     pub fn needs_redraw(&mut self) {
-        self.style.needs_redraw();
+        self.style.needs_redraw(self.current);
     }
 
     /// Mark the application as needing to recompute view styles
@@ -324,7 +324,7 @@ impl Context {
         for descendant in iter {
             self.style.restyle.insert(descendant).unwrap();
         }
-        self.style.needs_restyle();
+        // self.style.needs_restyle();
     }
 
     /// Mark the application as needing to rerun layout computations
@@ -335,6 +335,10 @@ impl Context {
     pub(crate) fn set_system_flags(&mut self, entity: Entity, system_flags: SystemFlags) {
         if system_flags.contains(SystemFlags::RESTYLE) {
             self.needs_restyle(entity);
+        }
+
+        if system_flags.contains(SystemFlags::REDRAW) {
+            self.style.needs_redraw(entity);
         }
 
         if system_flags.contains(SystemFlags::REFLOW) {
@@ -426,9 +430,9 @@ impl Context {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
         if !delete_list.is_empty() {
-            self.style.needs_restyle();
+            self.style.needs_restyle(self.current);
             self.style.needs_relayout();
-            self.style.needs_redraw();
+            self.style.needs_redraw(self.current);
         }
 
         for entity in delete_list.iter().rev() {
@@ -861,7 +865,7 @@ impl Context {
             self.style.classes.insert(current, class_list);
         }
 
-        self.style.needs_restyle();
+        self.style.needs_restyle(self.current);
     }
 }
 

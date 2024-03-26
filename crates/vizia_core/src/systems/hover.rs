@@ -77,9 +77,10 @@ pub(crate) fn hover_system(cx: &mut Context) {
         cx.event_queue.push_back(Event::new(WindowEvent::MouseOver).target(hovered));
         cx.event_queue.push_back(Event::new(WindowEvent::MouseOut).target(cx.hovered));
 
-        cx.hovered = hovered;
+        cx.style.needs_restyle(cx.hovered);
+        cx.style.needs_restyle(hovered);
 
-        cx.style.needs_restyle();
+        cx.hovered = hovered;
     }
 }
 
