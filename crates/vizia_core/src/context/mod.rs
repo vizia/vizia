@@ -14,7 +14,7 @@ use skia_safe::{
     textlayout::{FontCollection, TypefaceFontProvider},
     typeface::SerializeBehavior,
     utils::OrderedFontMgr,
-    FontArguments, FontMgr, FontStyle, FontStyleSet, Surface, Typeface,
+    FontArguments, FontMgr, FontStyle, FontStyleSet, Rect, Surface, Typeface,
 };
 use std::any::{Any, TypeId};
 use std::cell::RefCell;
@@ -73,7 +73,7 @@ pub struct Context {
     pub(crate) entity_identifiers: HashMap<String, Entity>,
     pub(crate) tree: Tree<Entity>,
     pub(crate) current: Entity,
-    pub(crate) canvases: HashMap<Entity, Surface>,
+    pub(crate) canvases: HashMap<Entity, (Surface, Surface)>,
     pub(crate) views: Views,
     pub(crate) data: Models,
     pub(crate) bindings: Bindings,
@@ -241,9 +241,9 @@ impl Context {
             drop_data: None,
         };
 
-        result.style.needs_restyle();
+        result.style.needs_restyle(Entity::root());
         result.style.needs_relayout();
-        result.style.needs_redraw();
+        result.style.needs_redraw(Entity::root());
 
         // Build the environment model at the root.
         Environment::new(&mut result).build(&mut result);
@@ -309,7 +309,7 @@ impl Context {
 
     /// Mark the application as needing to rerun the draw method
     pub fn needs_redraw(&mut self) {
-        self.style.needs_redraw();
+        self.style.needs_redraw(self.current);
     }
 
     /// Mark the application as needing to recompute view styles
@@ -324,7 +324,7 @@ impl Context {
         for descendant in iter {
             self.style.restyle.insert(descendant).unwrap();
         }
-        self.style.needs_restyle();
+        // self.style.needs_restyle();
     }
 
     /// Mark the application as needing to rerun layout computations
@@ -335,6 +335,10 @@ impl Context {
     pub(crate) fn set_system_flags(&mut self, entity: Entity, system_flags: SystemFlags) {
         if system_flags.contains(SystemFlags::RESTYLE) {
             self.needs_restyle(entity);
+        }
+
+        if system_flags.contains(SystemFlags::REDRAW) {
+            self.style.needs_redraw(entity);
         }
 
         if system_flags.contains(SystemFlags::REFLOW) {
@@ -426,9 +430,9 @@ impl Context {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
         if !delete_list.is_empty() {
-            self.style.needs_restyle();
+            self.style.needs_restyle(self.current);
             self.style.needs_relayout();
-            self.style.needs_redraw();
+            self.style.needs_redraw(self.current);
         }
 
         for entity in delete_list.iter().rev() {
@@ -462,31 +466,6 @@ impl Context {
             if self.captured == *entity {
                 self.captured = Entity::null();
             }
-
-            // // Remove any cached filter images associated with the entity.
-            // if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
-            //     if let Some((s, t)) = self.cache.filter_image.get(*entity).cloned().flatten() {
-            //         canvas.delete_image(s);
-            //         canvas.delete_image(t);
-            //     }
-            // }
-
-            // // Remove any cached screenshot images associated with the entity.
-            // if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
-            //     if let Some(s) = self.cache.screenshot_image.get(*entity).cloned().flatten() {
-            //         canvas.delete_image(s);
-            //     }
-            // }
-
-            // // Remove any cached shadow images associated with the entity.
-            // if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
-            //     if let Some(shadows) = self.cache.shadow_images.get(*entity).cloned() {
-            //         for (s, t) in shadows.into_iter().flatten() {
-            //             canvas.delete_image(s);
-            //             canvas.delete_image(t);
-            //         }
-            //     }
-            // }
 
             // Remove any map lenses associated with the entity.
             let ids = MAPS.with(|f| {
@@ -531,6 +510,65 @@ impl Context {
             self.text_context.text_bounds.remove(*entity);
             self.text_context.text_paragraphs.remove(*entity);
             self.entity_manager.destroy(*entity);
+            self.style.redraw_list.remove(entity);
+        }
+    }
+
+    // Must be called after transform and clipping systems to be valid
+    pub(crate) fn draw_bounds(&self, entity: Entity) -> BoundingBox {
+        let mut layout_bounds = self.cache.bounds.get(entity).copied().unwrap();
+
+        if let Some(shadows) = self.style.box_shadow.get(entity) {
+            for shadow in shadows.iter().filter(|shadow| !shadow.inset) {
+                let mut shadow_bounds = layout_bounds;
+
+                let x = shadow.x_offset.to_px().unwrap() * self.scale_factor();
+                let y = shadow.y_offset.to_px().unwrap() * self.scale_factor();
+
+                shadow_bounds = shadow_bounds.offset(x, y);
+
+                if let Some(blur_radius) =
+                    shadow.blur_radius.as_ref().map(|br| br.clone().to_px().unwrap() / 2.0)
+                {
+                    shadow_bounds = shadow_bounds.expand(blur_radius * self.scale_factor());
+                }
+
+                if let Some(spread_radius) =
+                    shadow.spread_radius.as_ref().map(|sr| sr.clone().to_px().unwrap())
+                {
+                    shadow_bounds = shadow_bounds.expand(spread_radius * self.scale_factor());
+                }
+
+                layout_bounds = layout_bounds.union(&shadow_bounds);
+            }
+        }
+
+        let mut outline_bounds = layout_bounds;
+
+        if let Some(outline_width) = self.style.outline_width.get(entity) {
+            outline_bounds = outline_bounds
+                .expand(outline_width.to_pixels(layout_bounds.diagonal(), self.scale_factor()));
+        }
+
+        if let Some(outline_offset) = self.style.outline_offset.get(entity) {
+            outline_bounds = outline_bounds
+                .expand(outline_offset.to_pixels(layout_bounds.diagonal(), self.scale_factor()));
+        }
+
+        layout_bounds = layout_bounds.union(&outline_bounds);
+
+        let matrix = self.cache.transform.get(entity).copied().unwrap();
+        // let transformed_bounds = bounds.transform(&matrix);
+        let rect: Rect = layout_bounds.into();
+        let tr = matrix.map_rect(rect).0;
+
+        let dirty_bounds: BoundingBox = tr.into();
+
+        let parent = self.tree.get_layout_parent(entity).unwrap_or(Entity::root());
+        if let Some(clip_bounds) = self.cache.clip_path.get(parent) {
+            dirty_bounds.intersection(clip_bounds)
+        } else {
+            dirty_bounds
         }
     }
 
@@ -861,7 +899,7 @@ impl Context {
             self.style.classes.insert(current, class_list);
         }
 
-        self.style.needs_restyle();
+        self.style.needs_restyle(self.current);
     }
 }
 

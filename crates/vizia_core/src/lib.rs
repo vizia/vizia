@@ -33,7 +33,7 @@ pub mod window;
 
 mod storage;
 
-/// Contains types and functions used for custom drawing within views. This is a re-export of [femtovg](https://docs.rs/femtovg/latest/femtovg/).
+/// Contains types and functions used for custom drawing within views. This is a re-export of [skia-safe]().
 pub mod vg {
     pub use skia_safe::*;
 }
@@ -99,7 +99,7 @@ pub mod prelude {
     pub use vizia_window::WindowSize;
 
     pub use super::style::*;
-    
+
     pub use morphorm::Units::*;
     pub use morphorm::{LayoutType, PositionType, Units};
     pub use unic_langid::{langid, LanguageIdentifier};

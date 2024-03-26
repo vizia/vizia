@@ -28,14 +28,14 @@ impl Cache for CachedData {
             .get(*node)
             .copied()
             .unwrap_or_else(|| panic!("Failed to get geo changed for: {}", node));
-        if let Some(bounds) = self.bounds.get_mut(*node) {
-            if bounds.w != width {
-                geo_changed.set(GeoChanged::WIDTH_CHANGED, true);
-            }
+        if let Some(bounds) = self.relative_bounds.get_mut(*node) {
+            // if bounds.w != width {
+            //     geo_changed.set(GeoChanged::WIDTH_CHANGED, true);
+            // }
 
-            if bounds.h != height {
-                geo_changed.set(GeoChanged::HEIGHT_CHANGED, true);
-            }
+            // if bounds.h != height {
+            //     geo_changed.set(GeoChanged::HEIGHT_CHANGED, true);
+            // }
 
             bounds.x = posx.round();
             bounds.y = posy.round();
@@ -43,22 +43,22 @@ impl Cache for CachedData {
             bounds.h = height;
         }
 
-        if let Some(relative_position) = self.relative_position.get_mut(*node) {
-            if relative_position.x != posx.round() {
-                geo_changed.set(GeoChanged::POSX_CHANGED, true);
-            }
+        // if let Some(relative_position) = self.relative_position.get_mut(*node) {
+        //     if relative_position.x != posx.round() {
+        //         geo_changed.set(GeoChanged::POSX_CHANGED, true);
+        //     }
 
-            if relative_position.y != posy.round() {
-                geo_changed.set(GeoChanged::POSY_CHANGED, true);
-            }
+        //     if relative_position.y != posy.round() {
+        //         geo_changed.set(GeoChanged::POSY_CHANGED, true);
+        //     }
 
-            relative_position.x = posx.round();
-            relative_position.y = posy.round();
-        }
+        //     relative_position.x = posx.round();
+        //     relative_position.y = posy.round();
+        // }
 
-        if let Some(geo) = self.geo_changed.get_mut(*node) {
-            *geo = geo_changed;
-        }
+        // if let Some(geo) = self.geo_changed.get_mut(*node) {
+        //     *geo = geo_changed;
+        // }
     }
 
     fn posx(&self, node: &Self::Node) -> f32 {

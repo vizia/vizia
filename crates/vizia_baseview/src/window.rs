@@ -247,18 +247,3 @@ pub fn create_surface(
     )
     .expect("Could not create skia surface")
 }
-
-// fn load_renderer(window: &Window) -> Renderer {
-//     let context = window.gl_context().expect("Window was created without OpenGL support");
-
-//     unsafe { context.make_current() };
-
-//     let renderer = unsafe {
-//         femtovg::renderer::OpenGl::new_from_function(|s| context.get_proc_address(s) as *const _)
-//             .expect("Cannot create renderer")
-//     };
-
-//     unsafe { context.make_not_current() };
-
-//     renderer
-// }

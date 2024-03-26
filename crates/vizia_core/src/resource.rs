@@ -18,27 +18,6 @@ pub(crate) struct StoredImage {
     pub observers: HashSet<Entity>,
 }
 
-// pub(crate) enum ImageOrId {
-//     Image(image::DynamicImage, femtovg::ImageFlags),
-//     Id(femtovg::ImageId, (u32, u32)),
-// }
-
-// impl ImageOrId {
-//     pub fn id(&mut self, canvas: &mut Canvas) -> femtovg::ImageId {
-//         match self {
-//             ImageOrId::Image(image, flags) => {
-//                 let image_ref: &image::DynamicImage = image.borrow();
-//                 let res = canvas
-//                     .create_image(femtovg::ImageSource::try_from(image_ref).unwrap(), *flags)
-//                     .unwrap();
-//                 *self = ImageOrId::Id(res, image.dimensions());
-//                 res
-//             }
-//             ImageOrId::Id(i, _) => *i,
-//         }
-//     }
-// }
-
 #[derive(Copy, Clone, PartialEq)]
 pub enum ImageRetentionPolicy {
     Forever,
