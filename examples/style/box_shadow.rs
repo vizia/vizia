@@ -60,6 +60,15 @@ const STYLE: &str = r#"
         box-shadow: 5px 5px 15px red;
         transition: box-shadow 100ms;
     }
+
+    .shadow-spread {
+        box-shadow: 0px 0px 0px 5px red;
+    }
+
+    .shadow-spread:hover {
+        box-shadow: 0px 0px 0px 10px red;
+        transition: box-shadow 100ms;
+    }
     
     .shadow {
         box-shadow: 5px 5px blue, 10px 10px red, 15px 15px green;
@@ -71,11 +80,11 @@ const STYLE: &str = r#"
     }
 
     .shadow-inset-offsetx {
-        box-shadow: 5px 0px red inset;
+        box-shadow: 5px 0px 0px red inset;
     }
 
     .shadow-inset-offsetx:hover {
-        box-shadow: 15px 0px red inset;
+        box-shadow: 15px 0px 0px red inset;
         transition: box-shadow 100ms;
     }
 
@@ -135,6 +144,7 @@ fn main() -> Result<(), ApplicationError> {
             Element::new(cx).class("shadow-offset");
             Element::new(cx).class("shadow-color");
             Element::new(cx).class("shadow-blur");
+            Element::new(cx).class("shadow-spread");
             Element::new(cx).class("shadow");
         });
 
@@ -155,7 +165,7 @@ fn main() -> Result<(), ApplicationError> {
                 None,
                 None,
                 Some(Color::red()),
-                false,
+                true,
             ));
     })
     .title("Box Shadow")

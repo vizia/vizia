@@ -1,8 +1,9 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(unused_variables)]
-use femtovg::{LineCap, Paint, Path, Solidity};
+// use femtovg::{LineCap, Paint, Path, Solidity};
 use morphorm::Units;
+use skia_safe::{Paint, PaintCap, Path};
 
 use crate::prelude::*;
 
@@ -246,12 +247,12 @@ impl View for ArcTrack {
         Some("arctrack")
     }
 
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
         let opacity = cx.opacity();
 
-        let foreground_color = cx.font_color().into();
+        let foreground_color = cx.font_color();
 
-        let background_color = cx.background_color().into();
+        let background_color = cx.background_color();
 
         let bounds = cx.bounds();
 
@@ -275,9 +276,10 @@ impl View for ArcTrack {
         // Draw the track arc
         let mut path = Path::new();
         path.arc(centerx, centery, radius - span / 2.0, end, start, Solidity::Solid);
-        let mut paint = Paint::color(background_color);
-        paint.set_line_width(span);
-        paint.set_line_cap(LineCap::Round);
+        let mut paint = Paint::default();
+        paint.set_color(background_color);
+        paint.set_stroke_width(span);
+        paint.set_stroke_cap(PaintCap::Round);
         canvas.stroke_path(&path, &paint);
 
         // Draw the active arc
@@ -377,7 +379,7 @@ impl View for Ticks {
     fn element(&self) -> Option<&'static str> {
         Some("ticks")
     }
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
         let opacity = cx.opacity();
         //let mut background_color: femtovg::Color = cx.current.get_background_color(cx).into();
         // background_color.set_alphaf(background_color.a * opacity);

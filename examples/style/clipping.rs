@@ -3,6 +3,7 @@ use vizia::prelude::*;
 const STYLE: &str = r#"
     .container {
         size: 100px;
+        border-radius: 10px;
         background-color: rgb(200, 200, 200);
     }
 
@@ -43,14 +44,12 @@ const STYLE: &str = r#"
     }
     
     .clipping {
-        size: 100%;
-        space: 0px;
         clip-path: inset(30px);
         overflow: hidden;
     }
 
-    .container:over .clipping {
-        clip-path: inset(10px);
+    .clipping:over {
+        clip-path: inset(0px);
         transition: clip-path 100ms;
     }
 "#;
@@ -98,9 +97,10 @@ fn main() -> Result<(), ApplicationError> {
             .class("overflowy");
 
             HStack::new(cx, |cx| {
-                Element::new(cx).class("clipping");
+                Element::new(cx);
             })
-            .class("container");
+            .class("container")
+            .class("clipping");
         })
         .class("row");
     })

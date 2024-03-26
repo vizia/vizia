@@ -1,13 +1,11 @@
 mod helpers;
 use helpers::*;
 use vizia::prelude::*;
-
 #[derive(Clone, Lens)]
 struct AppData {
     chip: String,
     chips: Vec<String>,
 }
-
 impl Model for AppData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
@@ -17,11 +15,9 @@ impl Model for AppData {
         })
     }
 }
-
 enum AppEvent {
     CloseChip(usize),
 }
-
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData {

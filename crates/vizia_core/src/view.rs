@@ -22,10 +22,6 @@ pub use handle::Handle;
 
 use crate::events::ViewHandler;
 use accesskit::{NodeBuilder, TreeUpdate};
-use femtovg::renderer::OpenGl;
-
-/// The canvas which all views draw to.
-pub type Canvas = femtovg::Canvas<OpenGl>;
 
 /// A view is any object which can be displayed on the screen.
 ///
@@ -123,6 +119,7 @@ pub trait View: 'static + Sized {
         cx.tree.add(id, current).expect("Failed to add to tree");
         cx.cache.add(id);
         cx.style.add(id);
+        cx.style.needs_redraw(id);
         cx.views.insert(id, Box::new(self));
         let parent_id = cx.tree.get_layout_parent(id).unwrap();
         let parent_node_id = parent_id.accesskit_id();
@@ -248,29 +245,27 @@ pub trait View: 'static + Sized {
     ///     }
     /// }
     /// ```
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
         let bounds = cx.bounds();
 
         //Skip widgets with no width or no height
         if bounds.w == 0.0 || bounds.h == 0.0 {
             return;
         }
+        // cx.draw_backdrop_filter(canvas, &mut path);
 
-        let mut path = cx.build_path();
+        cx.draw_background(canvas);
+        cx.draw_shadows(canvas);
 
-        cx.draw_shadows(canvas, &mut path);
+        cx.draw_border(canvas);
 
-        cx.draw_backdrop_filter(canvas, &mut path);
-
-        cx.draw_background(canvas, &mut path);
-
-        cx.draw_border(canvas, &mut path);
-
-        cx.draw_inset_box_shadows(canvas, &mut path);
+        // cx.draw_inset_box_shadows(canvas, &mut path);
 
         cx.draw_outline(canvas);
 
-        cx.draw_text_and_selection(canvas);
+        // cx.draw_text_and_selection(canvas);
+
+        cx.draw_text(canvas);
     }
 
     #[allow(unused_variables)]
@@ -289,7 +284,7 @@ where
         <T as View>::event(self, cx, event);
     }
 
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
         <T as View>::draw(self, cx, canvas);
     }
 

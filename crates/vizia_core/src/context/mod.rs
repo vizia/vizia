@@ -9,6 +9,13 @@ mod proxy;
 mod resource;
 
 use log::debug;
+use skia_safe::{
+    font_arguments::{variation_position::Coordinate, VariationPosition},
+    textlayout::{FontCollection, TypefaceFontProvider},
+    typeface::SerializeBehavior,
+    utils::OrderedFontMgr,
+    FontArguments, FontMgr, FontStyle, FontStyleSet, Surface, Typeface,
+};
 use std::any::{Any, TypeId};
 use std::cell::RefCell;
 use std::collections::{BinaryHeap, VecDeque};
@@ -20,7 +27,6 @@ use vizia_id::IdManager;
 use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
-use cosmic_text::fontdb::Database;
 use hashbrown::{hash_map::Entry, HashMap, HashSet};
 
 pub use access::*;
@@ -29,16 +35,18 @@ pub use event::*;
 pub use proxy::*;
 pub use resource::*;
 
-use crate::binding::{BindingHandler, MapId};
 use crate::cache::CachedData;
 use crate::events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler};
 #[cfg(feature = "embedded_fonts")]
 use crate::fonts;
+use crate::{
+    binding::{BindingHandler, MapId},
+    resource::StoredImage,
+};
 
-use crate::fonts::TABLER_ICONS;
 use crate::model::ModelDataStore;
 use crate::prelude::*;
-use crate::resource::{ImageOrId, ResourceManager, StoredImage};
+use crate::resource::ResourceManager;
 use crate::text::{TextConfig, TextContext};
 use vizia_input::MouseState;
 use vizia_storage::{ChildIterator, LayoutTreeIterator};
@@ -65,6 +73,7 @@ pub struct Context {
     pub(crate) entity_identifiers: HashMap<String, Entity>,
     pub(crate) tree: Tree<Entity>,
     pub(crate) current: Entity,
+    pub(crate) canvases: HashMap<Entity, Surface>,
     pub(crate) views: Views,
     pub(crate) data: Models,
     pub(crate) bindings: Bindings,
@@ -80,7 +89,6 @@ pub struct Context {
     pub(crate) style: Style,
     pub(crate) cache: CachedData,
 
-    pub(crate) canvases: HashMap<Entity, crate::prelude::Canvas>,
     pub(crate) mouse: MouseState<Entity>,
     pub(crate) modifiers: Modifiers,
 
@@ -93,7 +101,7 @@ pub struct Context {
 
     pub(crate) resource_manager: ResourceManager,
 
-    pub(crate) text_context: TextContext,
+    pub text_context: TextContext,
     pub(crate) text_config: TextConfig,
 
     pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
@@ -135,21 +143,6 @@ impl Context {
         let mut cache = CachedData::default();
         cache.add(Entity::root());
 
-        let mut db = Database::new();
-        db.load_system_fonts();
-
-        // Add default fonts if the feature is enabled.
-        #[cfg(feature = "embedded_fonts")]
-        {
-            db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
-            db.load_font_data(Vec::from(fonts::ROBOTO_BOLD));
-            db.load_font_data(Vec::from(fonts::ROBOTO_ITALIC));
-            db.load_font_data(Vec::from(fonts::FIRACODE_REGULAR))
-        }
-
-        // Add icon font
-        db.load_font_data(Vec::from(TABLER_ICONS));
-
         let mut result = Self {
             entity_manager: IdManager::new(),
             entity_identifiers: HashMap::new(),
@@ -168,7 +161,7 @@ impl Context {
             running_timers: BinaryHeap::new(),
             tree_updates: Vec::new(),
             listeners: HashMap::default(),
-            global_listeners: vec![],
+            global_listeners: Vec::new(),
             mouse: MouseState::default(),
             modifiers: Modifiers::empty(),
             captured: Entity::null(),
@@ -178,10 +171,46 @@ impl Context {
             focus_stack: Vec::new(),
             cursor_icon_locked: false,
             resource_manager: ResourceManager::new(),
-            text_context: TextContext::new_from_locale_and_db(
-                sys_locale::get_locale().unwrap_or_else(|| "en-US".to_owned()),
-                db,
-            ),
+            text_context: {
+                let mut font_collection = FontCollection::new();
+
+                let default_font_manager = FontMgr::default();
+                let mut default_family_name = None;
+
+                #[cfg(feature = "embedded_fonts")]
+                {
+                    font_collection.set_asset_font_manager(Some({
+                        let mut asset_provider = TypefaceFontProvider::new();
+
+                        asset_provider.register_typeface(
+                            default_font_manager.new_from_data(fonts::TABLER_ICONS, None).unwrap(),
+                            Some("tabler-icons"),
+                        );
+                        asset_provider.register_typeface(
+                            default_font_manager.new_from_data(fonts::FIRACODE, None).unwrap(),
+                            Some("Fira Code"),
+                        );
+                        asset_provider.register_typeface(
+                            default_font_manager.new_from_data(fonts::ROBOTO, None).unwrap(),
+                            Some("Roboto Flex"),
+                        );
+
+                        asset_provider.into()
+                    }));
+
+                    default_family_name = Some("Roboto Flex");
+                }
+
+                font_collection
+                    .set_default_font_manager(default_font_manager.clone(), default_family_name);
+
+                TextContext {
+                    font_collection,
+                    default_font_manager,
+                    text_bounds: Default::default(),
+                    text_paragraphs: Default::default(),
+                }
+            },
 
             text_config: TextConfig::default(),
 
@@ -212,15 +241,15 @@ impl Context {
             drop_data: None,
         };
 
-        result.style.needs_restyle();
+        result.style.needs_restyle(Entity::root());
         result.style.needs_relayout();
-        result.style.needs_redraw();
+        result.style.needs_redraw(Entity::root());
 
         // Build the environment model at the root.
         Environment::new(&mut result).build(&mut result);
 
         result.entity_manager.create();
-        result.set_default_font(&["Roboto"]);
+        result.set_default_font(&["Roboto Flex"]);
 
         result.style.role.insert(Entity::root(), Role::Window);
 
@@ -280,7 +309,7 @@ impl Context {
 
     /// Mark the application as needing to rerun the draw method
     pub fn needs_redraw(&mut self) {
-        self.style.needs_redraw();
+        self.style.needs_redraw(self.current);
     }
 
     /// Mark the application as needing to recompute view styles
@@ -295,7 +324,7 @@ impl Context {
         for descendant in iter {
             self.style.restyle.insert(descendant).unwrap();
         }
-        self.style.needs_restyle();
+        // self.style.needs_restyle();
     }
 
     /// Mark the application as needing to rerun layout computations
@@ -306,6 +335,14 @@ impl Context {
     pub(crate) fn set_system_flags(&mut self, entity: Entity, system_flags: SystemFlags) {
         if system_flags.contains(SystemFlags::RESTYLE) {
             self.needs_restyle(entity);
+        }
+
+        if system_flags.contains(SystemFlags::REDRAW) {
+            self.style.needs_redraw(entity);
+        }
+
+        if system_flags.contains(SystemFlags::REFLOW) {
+            self.style.needs_text_update(entity);
         }
     }
 
@@ -393,9 +430,9 @@ impl Context {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
         if !delete_list.is_empty() {
-            self.style.needs_restyle();
+            self.style.needs_restyle(self.current);
             self.style.needs_relayout();
-            self.style.needs_redraw();
+            self.style.needs_redraw(self.current);
         }
 
         for entity in delete_list.iter().rev() {
@@ -430,30 +467,30 @@ impl Context {
                 self.captured = Entity::null();
             }
 
-            // Remove any cached filter images associated with the entity.
-            if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
-                if let Some((s, t)) = self.cache.filter_image.get(*entity).cloned().flatten() {
-                    canvas.delete_image(s);
-                    canvas.delete_image(t);
-                }
-            }
+            // // Remove any cached filter images associated with the entity.
+            // if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
+            //     if let Some((s, t)) = self.cache.filter_image.get(*entity).cloned().flatten() {
+            //         canvas.delete_image(s);
+            //         canvas.delete_image(t);
+            //     }
+            // }
 
-            // Remove any cached screenshot images associated with the entity.
-            if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
-                if let Some(s) = self.cache.screenshot_image.get(*entity).cloned().flatten() {
-                    canvas.delete_image(s);
-                }
-            }
+            // // Remove any cached screenshot images associated with the entity.
+            // if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
+            //     if let Some(s) = self.cache.screenshot_image.get(*entity).cloned().flatten() {
+            //         canvas.delete_image(s);
+            //     }
+            // }
 
-            // Remove any cached shadow images associated with the entity.
-            if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
-                if let Some(shadows) = self.cache.shadow_images.get(*entity).cloned() {
-                    for (s, t) in shadows.into_iter().flatten() {
-                        canvas.delete_image(s);
-                        canvas.delete_image(t);
-                    }
-                }
-            }
+            // // Remove any cached shadow images associated with the entity.
+            // if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
+            //     if let Some(shadows) = self.cache.shadow_images.get(*entity).cloned() {
+            //         for (s, t) in shadows.into_iter().flatten() {
+            //             canvas.delete_image(s);
+            //             canvas.delete_image(t);
+            //         }
+            //     }
+            // }
 
             // Remove any map lenses associated with the entity.
             let ids = MAPS.with(|f| {
@@ -495,8 +532,8 @@ impl Context {
             self.style.remove(*entity);
             self.data.remove(entity);
             self.views.remove(entity);
-            self.text_context.clear_buffer(*entity);
-            self.text_context.clear_bounds(*entity);
+            self.text_context.text_bounds.remove(*entity);
+            self.text_context.text_paragraphs.remove(*entity);
             self.entity_manager.destroy(*entity);
         }
     }
@@ -546,15 +583,15 @@ impl Context {
     }
 
     pub fn add_font_mem(&mut self, data: impl AsRef<[u8]>) {
-        self.text_context.font_system().db_mut().load_font_data(data.as_ref().to_vec());
+        // self.text_context.font_system().db_mut().load_font_data(data.as_ref().to_vec());
     }
 
     /// Sets the global default font for the application.
     pub fn set_default_font(&mut self, names: &[&str]) {
         self.style.default_font = names
             .iter()
-            .map(|x| FamilyOwned::Name(x.to_string()))
-            .chain(std::iter::once(FamilyOwned::SansSerif))
+            .map(|x| FamilyOwned::Named(x.to_string()))
+            .chain(std::iter::once(FamilyOwned::Generic(GenericFontFamily::SansSerif)))
             .collect();
     }
 
@@ -757,35 +794,28 @@ impl Context {
         }
     }
 
-    pub fn load_image(
-        &mut self,
-        path: &str,
-        image: image::DynamicImage,
-        policy: ImageRetentionPolicy,
-    ) {
-        match self.resource_manager.images.entry(path.to_string()) {
-            Entry::Occupied(mut occ) => {
-                occ.get_mut().image = ImageOrId::Image(
-                    image,
-                    femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
-                );
-                occ.get_mut().dirty = true;
-                occ.get_mut().retention_policy = policy;
-            }
-            Entry::Vacant(vac) => {
-                vac.insert(StoredImage {
-                    image: ImageOrId::Image(
+    pub fn load_image(&mut self, path: &str, data: &[u8], policy: ImageRetentionPolicy) {
+        if let Some(image) =
+            skia_safe::Image::from_encoded(unsafe { skia_safe::Data::new_bytes(data) })
+        {
+            match self.resource_manager.images.entry(path.to_string()) {
+                Entry::Occupied(mut occ) => {
+                    occ.get_mut().image = image;
+                    occ.get_mut().dirty = true;
+                    occ.get_mut().retention_policy = policy;
+                }
+                Entry::Vacant(vac) => {
+                    vac.insert(StoredImage {
                         image,
-                        femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
-                    ),
-                    retention_policy: policy,
-                    used: true,
-                    dirty: false,
-                    observers: HashSet::new(),
-                });
+                        retention_policy: policy,
+                        used: true,
+                        dirty: false,
+                        observers: HashSet::new(),
+                    });
+                }
             }
+            self.style.needs_relayout();
         }
-        self.style.needs_relayout();
     }
 
     pub fn spawn<F>(&self, target: F)
@@ -835,17 +865,13 @@ impl Context {
             self.style.classes.insert(current, class_list);
         }
 
-        self.style.needs_restyle();
+        self.style.needs_restyle(self.current);
     }
 }
 
 pub(crate) enum InternalEvent {
     Redraw,
-    LoadImage {
-        path: String,
-        image: Mutex<Option<image::DynamicImage>>,
-        policy: ImageRetentionPolicy,
-    },
+    LoadImage { path: String, image: Mutex<Option<skia_safe::Image>>, policy: ImageRetentionPolicy },
 }
 
 pub struct LocalizationContext<'a> {

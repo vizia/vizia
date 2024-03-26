@@ -1,13 +1,13 @@
 use std::any::Any;
 
-use femtovg::{renderer::OpenGl, Canvas};
+use skia_safe::Surface;
 use vizia_window::WindowDescription;
 
 use super::EventProxy;
 use crate::events::EventManager;
 use crate::{cache::CachedData, prelude::*, systems::*};
 
-pub use crate::text::cosmic::TextConfig;
+pub use crate::text::text_context::TextConfig;
 
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
@@ -27,9 +27,9 @@ impl<'a> BackendContext<'a> {
     }
 
     /// Helper function for mutating the state of the root window.
-    pub fn mutate_window<W: Any, F: Fn(&mut BackendContext, &W)>(&mut self, f: F) {
-        if let Some(window_event_handler) = self.0.views.remove(&Entity::root()) {
-            if let Some(window) = window_event_handler.downcast_ref::<W>() {
+    pub fn mutate_window<W: Any, F: Fn(&mut BackendContext, &mut W)>(&mut self, f: F) {
+        if let Some(mut window_event_handler) = self.0.views.remove(&Entity::root()) {
+            if let Some(window) = window_event_handler.downcast_mut::<W>() {
                 f(self, window);
             }
 
@@ -62,6 +62,10 @@ impl<'a> BackendContext<'a> {
         self.0.focused
     }
 
+    pub fn get_surface_mut(&mut self, entity: Entity) -> Option<&mut Surface> {
+        self.0.canvases.get_mut(&entity)
+    }
+
     /// The window's size in logical pixels, before
     /// [`user_scale_factor()`][Self::user_scale_factor()] gets applied to it. If this value changed
     /// during a frame then the window will be resized and a [`WindowEvent::GeometryChanged`] will be
@@ -82,21 +86,11 @@ impl<'a> BackendContext<'a> {
     pub fn add_main_window(
         &mut self,
         window_description: &WindowDescription,
-        mut canvas: Canvas<OpenGl>,
+        surface: Surface,
         dpi_factor: f32,
     ) {
         let physical_width = window_description.inner_size.width as f32 * dpi_factor;
         let physical_height = window_description.inner_size.height as f32 * dpi_factor;
-
-        // Scale factor is set to 1.0 here because scaling is applied prior to rendering
-        canvas.set_size(physical_width as u32, physical_height as u32, 1.0);
-        canvas.clear_rect(
-            0,
-            0,
-            physical_width as u32,
-            physical_height as u32,
-            femtovg::Color::rgba(0, 0, 0, 0),
-        );
 
         self.0.style.dpi_factor = dpi_factor as f64;
 
@@ -117,7 +111,7 @@ impl<'a> BackendContext<'a> {
         self.0.style.pseudo_classes.insert(Entity::root(), PseudoClassFlags::OVER);
         self.0.style.restyle.insert(Entity::root()).unwrap();
         self.0.style.reaccess.insert(Entity::root()).unwrap();
-        self.0.canvases.insert(Entity::root(), canvas);
+        self.0.canvases.insert(Entity::root(), surface);
     }
 
     /// Returns a reference to the [`Environment`] model.

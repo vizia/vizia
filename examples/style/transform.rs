@@ -146,60 +146,60 @@ fn main() -> Result<(), ApplicationError> {
         .child_space(Stretch(1.0))
         .row_between(Pixels(10.0));
 
-        // VStack::new(cx, |cx| {
-        //     HStack::new(cx, |cx| {
-        //         Element::new(cx)
-        //             .text("translate")
-        //             .transform(Transform::Translate((Pixels(10.0).into(), Pixels(10.0).into())));
-        //         Element::new(cx)
-        //             .text("translateX")
-        //             .transform(Transform::TranslateX(Pixels(10.0).into()));
-        //         Element::new(cx)
-        //             .text("translateY")
-        //             .transform(Transform::TranslateY(Pixels(10.0).into()));
-        //     })
-        //     .size(Auto)
-        //     .col_between(Pixels(10.0));
-        //     Element::new(cx).text("rotate").transform(Transform::Rotate(Angle::Deg(40.0)));
-        //     HStack::new(cx, |cx| {
-        //         Element::new(cx)
-        //             .text("scale")
-        //             .transform(Transform::Scale((1.5.into(), 0.5.into())));
-        //         Element::new(cx).text("scaleX").transform(Transform::ScaleX(1.5.into()));
-        //         Element::new(cx).text("scaleY").transform(Transform::ScaleY(0.5.into()));
-        //     })
-        //     .size(Auto)
-        //     .col_between(Pixels(10.0));
+        VStack::new(cx, |cx| {
+            HStack::new(cx, |cx| {
+                Element::new(cx)
+                    .text("translate")
+                    .transform(Transform::Translate((Pixels(10.0).into(), Pixels(10.0).into())));
+                Element::new(cx)
+                    .text("translateX")
+                    .transform(Transform::TranslateX(Pixels(10.0).into()));
+                Element::new(cx)
+                    .text("translateY")
+                    .transform(Transform::TranslateY(Pixels(10.0).into()));
+            })
+            .size(Auto)
+            .col_between(Pixels(10.0));
+            Element::new(cx).text("rotate").transform(Transform::Rotate(Angle::Deg(40.0)));
+            HStack::new(cx, |cx| {
+                Element::new(cx)
+                    .text("scale")
+                    .transform(Transform::Scale((1.5.into(), 0.5.into())));
+                Element::new(cx).text("scaleX").transform(Transform::ScaleX(1.5.into()));
+                Element::new(cx).text("scaleY").transform(Transform::ScaleY(0.5.into()));
+            })
+            .size(Auto)
+            .col_between(Pixels(10.0));
 
-        //     HStack::new(cx, |cx| {
-        //         Element::new(cx)
-        //             .text("skew")
-        //             .transform(Transform::Skew(Angle::Deg(30.0), Angle::Deg(20.0)));
-        //         Element::new(cx).text("skewX").transform(Transform::SkewX(Angle::Deg(30.0)));
-        //         Element::new(cx).text("skewY").transform(Transform::SkewY(Angle::Deg(20.0)));
-        //     })
-        //     .size(Auto)
-        //     .col_between(Pixels(10.0));
-        //     Element::new(cx).text("multi").transform([
-        //         Transform::Translate((Pixels(10.0).into(), Pixels(10.0).into())),
-        //         Transform::Rotate(Angle::Deg(40.0)),
-        //         Transform::Scale((1.5.into(), 0.5.into())),
-        //         Transform::Skew(Angle::Deg(30.0), Angle::Deg(20.0)),
-        //     ]);
-        //     Element::new(cx)
-        //         .text("matrix")
-        //         .transform(Transform::Matrix((1.0, 2.0, 3.0, 4.0, 5.0, 6.0).into()));
-        // })
-        // .child_space(Stretch(1.0))
-        // .row_between(Pixels(10.0));
+            HStack::new(cx, |cx| {
+                Element::new(cx)
+                    .text("skew")
+                    .transform(Transform::Skew(Angle::Deg(30.0), Angle::Deg(20.0)));
+                Element::new(cx).text("skewX").transform(Transform::SkewX(Angle::Deg(30.0)));
+                Element::new(cx).text("skewY").transform(Transform::SkewY(Angle::Deg(20.0)));
+            })
+            .size(Auto)
+            .col_between(Pixels(10.0));
+            Element::new(cx).text("multi").transform([
+                Transform::Translate((Pixels(10.0).into(), Pixels(10.0).into())),
+                Transform::Rotate(Angle::Deg(40.0)),
+                Transform::Scale((1.5.into(), 0.5.into())),
+                Transform::Skew(Angle::Deg(30.0), Angle::Deg(20.0)),
+            ]);
+            Element::new(cx)
+                .text("matrix")
+                .transform(Transform::Matrix((1.0, 2.0, 3.0, 4.0, 5.0, 6.0).into()));
+        })
+        .child_space(Stretch(1.0))
+        .row_between(Pixels(10.0));
 
-        // Element::new(cx).class("translate2");
-        // Element::new(cx).class("rotate2");
-        // Element::new(cx).class("scale2");
+        Element::new(cx).class("translate2");
+        Element::new(cx).class("rotate2");
+        Element::new(cx).class("scale2");
 
-        // Element::new(cx).translate((Percentage(10.0), Pixels(10.0)));
-        // Element::new(cx).rotate(Angle::Deg(40.0));
-        // Element::new(cx).scale((0.5, 0.5));
+        Element::new(cx).translate((Percentage(10.0), Pixels(10.0)));
+        Element::new(cx).rotate(Angle::Deg(40.0));
+        Element::new(cx).scale((0.5, 0.5));
     })
     .run()
 }

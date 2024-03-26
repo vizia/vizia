@@ -71,6 +71,11 @@ impl_data_simple!(Entity);
 impl_data_simple!(Localized);
 impl_data_simple!(Length);
 impl_data_simple!(KeyChord);
+impl_data_simple!(FamilyOwned);
+impl_data_simple!(FontWeight);
+impl_data_simple!(TextAlign);
+impl_data_simple!(LengthOrPercentage);
+impl_data_simple!(BorderCornerShape);
 
 impl Data for &'static str {
     fn same(&self, other: &Self) -> bool {

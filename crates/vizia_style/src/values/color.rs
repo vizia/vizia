@@ -796,15 +796,26 @@ fn hue(mut h: f32, m1: f32, m2: f32) -> f32 {
     m1
 }
 
-impl From<Color> for femtovg::Color {
-    fn from(src: Color) -> femtovg::Color {
-        femtovg::Color::rgba(src.r(), src.g(), src.b(), src.a())
+impl From<Color> for skia_safe::Color {
+    fn from(src: Color) -> skia_safe::Color {
+        skia_safe::Color::from_argb(src.a(), src.r(), src.g(), src.b())
     }
 }
 
-impl From<RGBA> for femtovg::Color {
-    fn from(src: RGBA) -> femtovg::Color {
-        femtovg::Color::rgba(src.r(), src.g(), src.b(), src.a())
+impl From<Color> for skia_safe::Color4f {
+    fn from(src: Color) -> Self {
+        skia_safe::Color4f {
+            r: src.r() as f32 / 255.0,
+            g: src.g() as f32 / 255.0,
+            b: src.b() as f32 / 255.0,
+            a: src.a() as f32 / 255.0,
+        }
+    }
+}
+
+impl From<RGBA> for skia_safe::Color {
+    fn from(src: RGBA) -> skia_safe::Color {
+        skia_safe::Color::from_argb(src.a(), src.r(), src.g(), src.b())
     }
 }
 

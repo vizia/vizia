@@ -59,11 +59,7 @@ fn main() -> Result<(), ApplicationError> {
         // Load an image into the binary
         cx.load_image(
             "sample.png",
-            image::load_from_memory_with_format(
-                include_bytes!("../resources/images/sample-hut-400x300.png"),
-                image::ImageFormat::Png,
-            )
-            .unwrap(),
+            include_bytes!("../resources/images/sample-hut-400x300.png"),
             ImageRetentionPolicy::DropWhenUnusedForOneFrame,
         );
 

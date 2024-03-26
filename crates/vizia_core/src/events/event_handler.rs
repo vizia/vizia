@@ -10,7 +10,7 @@ pub(crate) trait ViewHandler: Any {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event);
 
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas);
+    fn draw(&self, cx: &mut DrawContext, canvas: &Canvas);
 
     fn accessibility(&self, cx: &mut AccessContext, node: &mut AccessNode);
 

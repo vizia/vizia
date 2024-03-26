@@ -66,12 +66,12 @@ impl ExamplePage {
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
                     Switch::new(cx, ControlsData::disabled)
-                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled))
-                        .tooltip(|cx| {
-                            Tooltip::new(cx, |cx| {
-                                Label::new(cx, "Toggle disabled");
-                            })
-                        });
+                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
+                    // .tooltip(|cx| {
+                    //     Tooltip::new(cx, |cx| {
+                    //         Label::new(cx, "Toggle disabled");
+                    //     })
+                    // });
                     Label::new(cx, "Toggle Disabled");
                 })
                 .child_top(Stretch(1.0))
@@ -114,12 +114,12 @@ impl ExamplePage {
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
                     Switch::new(cx, ControlsData::disabled)
-                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled))
-                        .tooltip(|cx| {
-                            Tooltip::new(cx, |cx| {
-                                Label::new(cx, "Toggle disabled");
-                            })
-                        });
+                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
+                    // .tooltip(|cx| {
+                    //     Tooltip::new(cx, |cx| {
+                    //         Label::new(cx, "Toggle disabled");
+                    //     })
+                    // });
                     Label::new(cx, "Toggle Disabled");
                 })
                 .child_top(Stretch(1.0))
@@ -149,11 +149,6 @@ impl ExamplePage {
                 .disabled(ControlsData::disabled)
                 .class("container")
                 .entity();
-
-                // VStack::new(cx, |cx| {
-                //     KeyBindView::new(cx, e);
-                // })
-                // .background_color(Color::rgb(240, 240, 240));
             });
         })
     }
@@ -164,12 +159,12 @@ impl View for ExamplePage {}
 fn theme_selection_dropdown(cx: &mut Context) {
     PickList::new(cx, ControlsData::theme_options, ControlsData::selected_theme, true)
         .on_select(|cx, index| cx.emit(ControlsEvent::SetThemeMode(index)))
-        .width(Pixels(85.0))
-        .tooltip(|cx| {
-            Tooltip::new(cx, |cx| {
-                Label::new(cx, "Select Theme Mode");
-            })
-        });
+        .width(Pixels(85.0));
+    // .tooltip(|cx| {
+    //     Tooltip::new(cx, |cx| {
+    //         Label::new(cx, "Select Theme Mode");
+    //     })
+    // });
 }
 
 pub fn setup_logging() -> Result<(), Box<dyn Error>> {

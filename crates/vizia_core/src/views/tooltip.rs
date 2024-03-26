@@ -385,36 +385,36 @@ impl View for Arrow {
     fn element(&self) -> Option<&'static str> {
         Some("arrow")
     }
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
         let bounds = cx.bounds();
         let mut path = vg::Path::new();
         match Tooltip::placement.get(cx) {
             Placement::Bottom | Placement::BottomStart | Placement::BottomEnd => {
-                path.move_to(bounds.bottom_left().1, bounds.bottom_left().0);
-                path.line_to(bounds.center_top().0, bounds.center_top().1);
-                path.line_to(bounds.bottom_right().1, bounds.bottom_right().0);
-                path.line_to(bounds.bottom_left().1, bounds.bottom_left().0);
+                path.move_to(bounds.bottom_left());
+                path.line_to(bounds.center_top());
+                path.line_to(bounds.bottom_right());
+                path.line_to(bounds.bottom_left());
             }
 
             Placement::Top | Placement::TopStart | Placement::TopEnd => {
-                path.move_to(bounds.top_left().1, bounds.top_left().0);
-                path.line_to(bounds.center_bottom().0, bounds.center_bottom().1);
-                path.line_to(bounds.top_right().1, bounds.top_right().0);
-                path.line_to(bounds.top_left().1, bounds.top_left().0);
+                path.move_to(bounds.top_left());
+                path.line_to(bounds.center_bottom());
+                path.line_to(bounds.top_right());
+                path.line_to(bounds.top_left());
             }
 
             Placement::Left | Placement::LeftStart | Placement::LeftEnd => {
-                path.move_to(bounds.top_left().1, bounds.top_left().0);
-                path.line_to(bounds.center_right().0, bounds.center_right().1);
-                path.line_to(bounds.bottom_left().1, bounds.bottom_left().0);
-                path.line_to(bounds.top_left().1, bounds.top_left().0);
+                path.move_to(bounds.top_left());
+                path.line_to(bounds.center_right());
+                path.line_to(bounds.bottom_left());
+                path.line_to(bounds.top_left());
             }
 
             Placement::Right | Placement::RightStart | Placement::RightEnd => {
-                path.move_to(bounds.top_right().1, bounds.top_right().0);
-                path.line_to(bounds.center_left().0, bounds.center_left().1);
-                path.line_to(bounds.bottom_right().1, bounds.bottom_right().0);
-                path.line_to(bounds.top_right().1, bounds.top_right().0);
+                path.move_to(bounds.top_right());
+                path.line_to(bounds.center_left());
+                path.line_to(bounds.bottom_right());
+                path.line_to(bounds.top_right());
             }
 
             _ => {}
@@ -423,6 +423,8 @@ impl View for Arrow {
 
         let bg = cx.background_color();
 
-        canvas.fill_path(&path, &vg::Paint::color(bg.into()));
+        let mut paint = vg::Paint::default();
+        paint.set_color(bg);
+        canvas.draw_path(&path, &paint);
     }
 }

@@ -367,7 +367,7 @@ where
         }
     }
 
-    pub fn tick(&mut self, time: Instant) -> bool {
+    pub fn tick(&mut self, time: Instant) -> Vec<Entity> {
         if self.has_animations() {
             for state in self.active_animations.iter_mut() {
                 // If the animation is already finished then skip
@@ -377,7 +377,7 @@ where
 
                 if state.keyframes.len() == 1 {
                     state.output = Some(state.keyframes[0].value.clone());
-                    return true;
+                    continue;
                 }
 
                 let elapsed_time = time.duration_since(state.start_time);
@@ -405,10 +405,13 @@ where
 
             self.remove_innactive_animations();
 
-            return true;
+            self.active_animations
+                .iter()
+                .flat_map(|state| state.entities.clone())
+                .collect::<Vec<Entity>>()
+        } else {
+            Vec::new()
         }
-
-        false
     }
 
     /// Returns true if the given entity is linked to an active animation

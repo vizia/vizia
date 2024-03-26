@@ -1,17 +1,111 @@
-use crate::prelude::*;
+use crate::{animation::Interpolator, prelude::*};
+use skia_safe::{ClipOp, Paint, Rect};
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use vizia_storage::LayoutChildIterator;
+use vizia_storage::{LayoutChildIterator, LayoutTreeIterator};
+use vizia_style::display;
+
+pub(crate) fn transform_system(cx: &mut Context) {
+    let iter = LayoutTreeIterator::full(&cx.tree);
+
+    for entity in iter {
+        if let Some(parent) = cx.tree.get_layout_parent(entity) {
+            let parent_transform = cx.cache.transform.get(parent).copied().unwrap();
+            if let Some(tx) = cx.cache.transform.get_mut(entity) {
+                let bounds = cx.cache.bounds.get(entity).copied().unwrap();
+                let scale_factor = cx.style.scale_factor();
+
+                // Apply transform origin.
+                let mut origin = cx
+                    .style
+                    .transform_origin
+                    .get(entity)
+                    .map(|transform_origin| {
+                        let mut origin = skia_safe::Matrix::translate(bounds.top_left());
+                        let offset = transform_origin.as_transform(bounds, scale_factor);
+                        origin = offset * origin;
+                        origin
+                    })
+                    .unwrap_or(skia_safe::Matrix::translate(bounds.center()));
+                // transform = origin * transform;
+                let mut transform = origin;
+                origin = origin.invert().unwrap();
+
+                // Apply translation.
+                if let Some(translate) = cx.style.translate.get(entity) {
+                    transform = transform * translate.as_transform(bounds, scale_factor);
+                }
+
+                // Apply rotation.
+                if let Some(rotate) = cx.style.rotate.get(entity) {
+                    transform = transform * rotate.as_transform(bounds, scale_factor);
+                }
+
+                // Apply scaling.
+                if let Some(scale) = cx.style.scale.get(entity) {
+                    transform = transform * scale.as_transform(bounds, scale_factor);
+                }
+
+                // Apply transform functions.
+                if let Some(transforms) = cx.style.transform.get(entity) {
+                    // Check if the transform is currently animating
+                    // Get the animation state
+                    // Manually interpolate the value to get the overall transform for the current frame
+                    if let Some(animation_state) = cx.style.transform.get_active_animation(entity) {
+                        if let Some(start) = animation_state.keyframes.first() {
+                            if let Some(end) = animation_state.keyframes.last() {
+                                let start_transform =
+                                    start.value.as_transform(bounds, scale_factor);
+                                let end_transform = end.value.as_transform(bounds, scale_factor);
+                                let t = animation_state.t;
+                                let animated_transform = skia_safe::Matrix::interpolate(
+                                    &start_transform,
+                                    &end_transform,
+                                    t,
+                                );
+                                transform = transform * animated_transform;
+                            }
+                        }
+                    } else {
+                        transform = transform * transforms.as_transform(bounds, scale_factor);
+                    }
+                }
+
+                transform = transform * origin;
+
+                *tx = parent_transform * transform;
+            }
+        }
+    }
+}
 
 pub(crate) fn draw_system(cx: &mut Context) {
-    let canvas = cx.canvases.get_mut(&Entity::root()).unwrap();
+    transform_system(cx);
+
+    for entity in cx.style.redraw_list.iter() {
+        if let Some(bounds) = cx.cache.bounds.get(*entity) {
+            if bounds.w != 0.0 && bounds.h != 0.0 {
+                let matrix = cx.cache.transform.get(*entity).copied().unwrap();
+                // let transformed_bounds = bounds.transform(&matrix);
+                let rect: Rect = (*bounds).into();
+                let tr = matrix.map_rect(rect).0;
+                println!("{} {:?}", entity, tr);
+
+                if let Some(dr) = &mut cx.cache.dirty_rect {
+                    *dr = dr.union(&tr.into());
+                } else {
+                    cx.cache.dirty_rect = Some(tr.into());
+                }
+            }
+        }
+    }
+
+    let canvas = cx.canvases.get_mut(&Entity::root()).unwrap().canvas();
     cx.resource_manager.mark_images_unused();
-    let window_width = cx.cache.get_width(Entity::root());
-    let window_height = cx.cache.get_height(Entity::root());
+
     let clear_color =
-        cx.style.background_color.get(Entity::root()).cloned().unwrap_or(RGBA::TRANSPARENT.into());
-    canvas.set_size(window_width as u32, window_height as u32, 1.0);
-    canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
+        cx.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::transparent());
+    canvas.clear(clear_color);
 
     let mut queue = BinaryHeap::new();
     queue.push(ZEntity { index: 0, entity: Entity::root(), opacity: 1.0, visible: true });
@@ -41,12 +135,26 @@ pub(crate) fn draw_system(cx: &mut Context) {
         canvas.restore();
     }
 
-    canvas.flush();
+    // Debug draw dirty rect
+    if let Some(dirty_rect) = cx.cache.dirty_rect {
+        let path: Rect = dirty_rect.into();
+        let mut paint = Paint::default();
+        paint.set_style(skia_safe::PaintStyle::Stroke);
+        paint.set_color(Color::red());
+        paint.set_stroke_width(1.0);
+        canvas.draw_rect(&path, &paint);
+        println!("{}", dirty_rect);
+    }
+
+    cx.style.redraw_list.clear();
+    cx.cache.dirty_rect = None;
+
+    // canvas.flush();
 }
 
 fn draw_entity(
     cx: &mut DrawContext,
-    canvas: &mut Canvas,
+    canvas: &Canvas,
     current_z: i32,
     queue: &mut BinaryHeap<ZEntity>,
     visible: bool,
@@ -67,12 +175,20 @@ fn draw_entity(
     }
 
     canvas.save();
+    let layer_count = if cx.opacity() != 1.0 {
+        let rect: Rect = cx.bounds().into();
+        Some(canvas.save_layer_alpha_f(None, cx.opacity()))
+    } else {
+        None
+    };
+    // canvas.save();
+    // canvas.set_transform(&cx.transform());
+    canvas.concat(&cx.transform());
 
-    canvas.set_transform(&cx.transform());
-
-    let clip_region = cx.clip_region();
-
-    canvas.intersect_scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
+    if let Some(clip_path) = cx.clip_path() {
+        canvas.clip_path(&clip_path, ClipOp::Intersect, true);
+    }
+    // canvas.intersect_scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
 
     let is_visible = match (visible, cx.visibility()) {
         (v, None) => v,
@@ -90,18 +206,30 @@ fn draw_entity(
 
     let child_iter = LayoutChildIterator::new(cx.tree, cx.current);
 
-    let parent_opacity = cx.opacity();
     // Draw its children
     for child in child_iter {
         cx.current = child;
-        let opactiy = cx.style.opacity.get(child).copied().unwrap_or(Opacity(1.0)).0;
-        cx.opacity = parent_opacity * opactiy;
         // TODO: Skip views with zero-sized bounding boxes here? Or let user decide if they want to skip?
         draw_entity(cx, canvas, current_z, queue, is_visible);
     }
 
+    if let Some(count) = layer_count {
+        canvas.restore_to_count(count);
+    }
     canvas.restore();
     cx.current = current;
+
+    if let Some(dirty_rect) = cx.cache.dirty_rect {
+        let bounds = cx.bounds();
+        if bounds.intersects(&dirty_rect) {
+            let path: Rect = bounds.into();
+            let mut paint = Paint::default();
+            paint.set_style(skia_safe::PaintStyle::Stroke);
+            paint.set_color(Color::green());
+            paint.set_stroke_width(1.0);
+            canvas.draw_rect(&path, &paint);
+        }
+    }
 }
 
 struct ZEntity {

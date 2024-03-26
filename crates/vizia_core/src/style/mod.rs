@@ -69,11 +69,12 @@ use crate::prelude::*;
 
 pub use vizia_style::{
     Angle, BackgroundImage, BackgroundSize, BorderCornerShape, BoxShadow, ClipPath, Color, CssRule,
-    CursorIcon, Display, Filter, FontFamily, FontSize, FontStretch, FontStyle, FontWeight,
-    FontWeightKeyword, GenericFontFamily, Gradient, HorizontalPosition, HorizontalPositionKeyword,
-    Length, LengthOrPercentage, LengthValue, LineDirection, LinearGradient, Matrix, Opacity,
-    Overflow, PointerEvents, Position, Scale, TextAlign, Transform, Transition, Translate,
-    VerticalPosition, VerticalPositionKeyword, Visibility, RGBA,
+    CursorIcon, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
+    FontWeightKeyword, FontWidth, GenericFontFamily, Gradient, HorizontalPosition,
+    HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue, LineClamp, LineDirection,
+    LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position, Scale, TextAlign,
+    TextOverflow, Transform, Transition, Translate, VerticalPosition, VerticalPositionKeyword,
+    Visibility, RGBA,
 };
 
 use vizia_style::{
@@ -121,14 +122,11 @@ impl Default for Abilities {
 
 bitflags! {
     pub struct SystemFlags: u8 {
-        /// Style system flag.
-        const RESTYLE = 1;
         /// Layout system flag.
-        const RELAYOUT = 1 << 1;
-        /// Draw system flag.
-        const REDRAW = 1 << 2;
-        /// Text constraints system flag.
-        const REFLOW = 1 << 5;
+        const RELAYOUT = 1;
+        const RESTYLE = 1 << 1;
+        const REFLOW = 1 << 2;
+        const REDRAW = 1 << 3;
     }
 }
 
@@ -142,6 +140,26 @@ impl Default for SystemFlags {
 pub enum ImageOrGradient {
     Image(String),
     Gradient(Gradient),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum FamilyOwned {
+    Generic(GenericFontFamily),
+    Named(String),
+}
+
+#[cfg(feature = "embedded_fonts")]
+const DEFAULT_FAMILY_NAME: &str = "Roboto Flex";
+#[cfg(not(feature = "embedded_fonts"))]
+const DEFAULT_FAMILY_NAME: &str = "";
+
+impl AsRef<str> for FamilyOwned {
+    fn as_ref(&self) -> &str {
+        match self {
+            FamilyOwned::Generic(_) => DEFAULT_FAMILY_NAME,
+            FamilyOwned::Named(family) => family.as_str(),
+        }
+    }
 }
 
 /// Stores the style properties of all entities in the application.
@@ -237,14 +255,18 @@ pub struct Style {
     pub(crate) box_shadow: AnimatableSet<Vec<BoxShadow>>,
 
     // Text & Font
+    pub text: SparseSet<String>,
     pub(crate) text_wrap: StyleSet<bool>,
+    pub(crate) text_overflow: StyleSet<TextOverflow>,
+    pub(crate) line_clamp: StyleSet<LineClamp>,
     pub(crate) text_align: StyleSet<TextAlign>,
     pub(crate) font_family: StyleSet<Vec<FamilyOwned>>,
     pub(crate) font_color: AnimatableSet<Color>,
     pub(crate) font_size: AnimatableSet<FontSize>,
     pub(crate) font_weight: StyleSet<FontWeight>,
-    pub(crate) font_style: StyleSet<FontStyle>,
-    pub(crate) font_stretch: StyleSet<FontStretch>,
+    pub(crate) font_slant: StyleSet<FontSlant>,
+    pub(crate) font_width: StyleSet<FontWidth>,
+    pub(crate) font_variation_settings: StyleSet<Vec<FontVariation>>,
     pub(crate) caret_color: AnimatableSet<Color>,
     pub(crate) selection_color: AnimatableSet<Color>,
 
@@ -297,15 +319,12 @@ pub struct Style {
 
     pub(crate) system_flags: SystemFlags,
 
-    // TODO: Probably swap this out for a bloom filter
-    // pub(crate) restyle: SparseSet<bool>,
     pub(crate) restyle: qfilter::Filter,
-
-    // TODO: When we can do incremental updates on a per entity basis, change this to a bitflag
-    // for layout, text layout, rendering, etc. to replace the above `needs_` members.
-    pub needs_text_layout: SparseSet<bool>,
-
-    pub reaccess: qfilter::Filter,
+    pub(crate) redraw_list: HashSet<Entity>,
+    pub(crate) redraw: qfilter::Filter,
+    pub(crate) text_construction: qfilter::Filter,
+    pub(crate) text_layout: qfilter::Filter,
+    pub(crate) reaccess: qfilter::Filter,
 
     /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
     pub(crate) dpi_factor: f64,
@@ -334,6 +353,7 @@ impl Default for Style {
             hidden: Default::default(),
             text_value: Default::default(),
             numeric_value: Default::default(),
+            text: Default::default(),
             display: Default::default(),
             visibility: Default::default(),
             opacity: Default::default(),
@@ -365,13 +385,16 @@ impl Default for Style {
             background_size: Default::default(),
             box_shadow: Default::default(),
             text_wrap: Default::default(),
+            text_overflow: Default::default(),
+            line_clamp: Default::default(),
             text_align: Default::default(),
             font_family: Default::default(),
             font_color: Default::default(),
             font_size: Default::default(),
             font_weight: Default::default(),
-            font_style: Default::default(),
-            font_stretch: Default::default(),
+            font_slant: Default::default(),
+            font_width: Default::default(),
+            font_variation_settings: Default::default(),
             caret_color: Default::default(),
             selection_color: Default::default(),
             cursor: Default::default(),
@@ -404,7 +427,10 @@ impl Default for Style {
             max_bottom: Default::default(),
             system_flags: Default::default(),
             restyle: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
-            needs_text_layout: Default::default(),
+            redraw: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
+            redraw_list: HashSet::new(),
+            text_construction: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
+            text_layout: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
             reaccess: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
             dpi_factor: Default::default(),
         }
@@ -1473,14 +1499,8 @@ impl Style {
                     font_family
                         .iter()
                         .map(|family| match family {
-                            FontFamily::Named(name) => FamilyOwned::Name(name.to_string()),
-                            FontFamily::Generic(generic) => match generic {
-                                GenericFontFamily::Serif => FamilyOwned::Serif,
-                                GenericFontFamily::SansSerif => FamilyOwned::SansSerif,
-                                GenericFontFamily::Cursive => FamilyOwned::Cursive,
-                                GenericFontFamily::Fantasy => FamilyOwned::Fantasy,
-                                GenericFontFamily::Monospace => FamilyOwned::Monospace,
-                            },
+                            FontFamily::Named(name) => FamilyOwned::Named(name.to_string()),
+                            FontFamily::Generic(generic) => FamilyOwned::Generic(*generic),
                         })
                         .collect::<Vec<_>>(),
                 );
@@ -1501,14 +1521,19 @@ impl Style {
                 self.font_weight.insert_rule(rule_id, font_weight);
             }
 
-            // Font Style
-            Property::FontStyle(font_style) => {
-                self.font_style.insert_rule(rule_id, font_style);
+            // Font Slant
+            Property::FontSlant(font_slant) => {
+                self.font_slant.insert_rule(rule_id, font_slant);
             }
 
-            // Font Stretch
-            Property::FontStretch(font_stretch) => {
-                self.font_stretch.insert_rule(rule_id, font_stretch);
+            // Font Width
+            Property::FontWidth(font_width) => {
+                self.font_width.insert_rule(rule_id, font_width);
+            }
+
+            // Font Variation Settings
+            Property::FontVariationSettings(font_variation_settings) => {
+                self.font_variation_settings.insert_rule(rule_id, font_variation_settings);
             }
 
             // Caret Color
@@ -1640,7 +1665,12 @@ impl Style {
             Property::Custom(custom) => {
                 warn!("Custom Property: {}", custom.name);
             }
-
+            Property::TextOverflow(text_overflow) => {
+                self.text_overflow.insert_rule(rule_id, text_overflow);
+            }
+            Property::LineClamp(line_clamp) => {
+                self.line_clamp.insert_rule(rule_id, line_clamp);
+            }
             _ => {}
         }
     }
@@ -1674,7 +1704,7 @@ impl Style {
         self.pseudo_classes.insert(entity, PseudoClassFlags::VALID);
         self.classes.insert(entity, HashSet::new());
         self.abilities.insert(entity, Abilities::default());
-        self.system_flags = SystemFlags::RESTYLE | SystemFlags::RELAYOUT;
+        self.system_flags = SystemFlags::RELAYOUT;
         self.restyle.insert(entity).unwrap();
         self.reaccess.insert(entity).unwrap();
     }
@@ -1750,14 +1780,18 @@ impl Style {
         self.box_shadow.remove(entity);
 
         // Text and Font
+        self.text.remove(entity);
         self.text_wrap.remove(entity);
+        self.text_overflow.remove(entity);
+        self.line_clamp.remove(entity);
         self.text_align.remove(entity);
         self.font_family.remove(entity);
         self.font_color.remove(entity);
         self.font_size.remove(entity);
         self.font_weight.remove(entity);
-        self.font_style.remove(entity);
-        self.font_stretch.remove(entity);
+        self.font_slant.remove(entity);
+        self.font_width.remove(entity);
+        self.font_variation_settings.remove(entity);
         self.caret_color.remove(entity);
         self.selection_color.remove(entity);
 
@@ -1783,8 +1817,8 @@ impl Style {
         self.child_right.remove(entity);
         self.child_top.remove(entity);
         self.child_bottom.remove(entity);
-        self.col_between.remove(entity);
         self.row_between.remove(entity);
+        self.col_between.remove(entity);
 
         // Size
         self.width.remove(entity);
@@ -1805,30 +1839,36 @@ impl Style {
         self.max_top.remove(entity);
         self.min_bottom.remove(entity);
         self.max_bottom.remove(entity);
-
-        self.needs_text_layout.remove(entity);
     }
 
-    pub fn needs_restyle(&mut self) {
-        self.system_flags.set(SystemFlags::RESTYLE, true);
+    pub fn needs_restyle(&mut self, entity: Entity) {
+        self.restyle.insert(entity).unwrap();
     }
 
     pub fn needs_relayout(&mut self) {
         self.system_flags.set(SystemFlags::RELAYOUT, true);
     }
 
-    pub fn needs_redraw(&mut self) {
-        self.system_flags.set(SystemFlags::REDRAW, true);
+    pub fn needs_redraw(&mut self, entity: Entity) {
+        self.redraw_list.insert(entity);
     }
 
     pub fn needs_access_update(&mut self, entity: Entity) {
         self.reaccess.insert(entity).unwrap();
     }
 
+    pub fn needs_text_update(&mut self, entity: Entity) {
+        self.text_construction.insert(entity).unwrap();
+        self.text_layout.insert(entity).unwrap();
+    }
+
+    pub fn needs_text_layout(&mut self, entity: Entity) {
+        self.text_layout.insert(entity).unwrap();
+    }
+
     pub fn should_redraw<F: FnOnce()>(&mut self, f: F) {
-        if self.system_flags.contains(SystemFlags::REDRAW) {
+        if !self.redraw_list.is_empty() {
             f();
-            self.system_flags.set(SystemFlags::REDRAW, false);
         }
     }
 
@@ -1927,12 +1967,15 @@ impl Style {
 
         // Text and Font
         self.text_wrap.clear_rules();
+        self.text_overflow.clear_rules();
+        self.line_clamp.clear_rules();
         self.text_align.clear_rules();
         self.font_family.clear_rules();
         self.font_weight.clear_rules();
-        self.font_style.clear_rules();
+        self.font_slant.clear_rules();
         self.font_color.clear_rules();
         self.font_size.clear_rules();
+        self.font_variation_settings.clear_rules();
         self.selection_color.clear_rules();
         self.caret_color.clear_rules();
 

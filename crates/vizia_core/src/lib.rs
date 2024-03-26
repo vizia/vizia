@@ -35,7 +35,7 @@ mod storage;
 
 /// Contains types and functions used for custom drawing within views. This is a re-export of [femtovg](https://docs.rs/femtovg/latest/femtovg/).
 pub mod vg {
-    pub use femtovg::*;
+    pub use skia_safe::*;
 }
 
 /// Contains types and functions used for loading and manipulating images. This is a re-export of [image](https://docs.rs/image/latest/image/).
@@ -54,7 +54,7 @@ pub mod backend {
     #[cfg(not(target_arch = "wasm32"))]
     pub use super::accessibility::IntoNode;
     pub use super::context::backend::BackendContext;
-    pub use super::text::cosmic::TextConfig;
+    pub use super::text::text_context::TextConfig;
     pub use vizia_window::WindowDescription;
 }
 
@@ -88,10 +88,11 @@ pub mod prelude {
     };
     pub use super::resource::ImageRetentionPolicy;
     pub use super::util::{IntoCssStr, CSS};
-    pub use super::view::{Canvas, Handle, View};
+    pub use super::view::{Handle, View};
     pub use super::views::*;
     pub use super::window::{DropData, WindowEvent, WindowModifiers};
     pub use accesskit::{Action, DefaultActionVerb, Live, Role};
+    pub use skia_safe::Canvas;
     pub use vizia_derive::{Data, Lens};
     pub use vizia_id::GenerationalId;
     pub use vizia_input::{Code, Key, KeyChord, Modifiers, MouseButton, MouseButtonState};
@@ -99,8 +100,7 @@ pub mod prelude {
     pub use vizia_window::WindowSize;
 
     pub use super::style::*;
-
-    pub use cosmic_text::FamilyOwned;
+    
     pub use morphorm::Units::*;
     pub use morphorm::{LayoutType, PositionType, Units};
     pub use unic_langid::{langid, LanguageIdentifier};
