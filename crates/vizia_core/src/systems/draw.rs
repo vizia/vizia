@@ -1,43 +1,244 @@
-use crate::prelude::*;
-use skia_safe::{ClipOp, Rect};
+use crate::{animation::Interpolator, prelude::*};
+use morphorm::Node;
+use skia_safe::{ClipOp, Matrix, Paint, Rect, SamplingOptions};
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use vizia_storage::LayoutChildIterator;
+use vizia_storage::{LayoutChildIterator, LayoutTreeIterator};
+
+pub(crate) fn transform_system(cx: &mut Context) {
+    let iter = LayoutTreeIterator::full(&cx.tree);
+
+    for entity in iter {
+        let bounds = cx.cache.bounds.get(entity).copied().unwrap();
+        if let Some(parent) = cx.tree.get_layout_parent(entity) {
+            let parent_transform = cx.cache.transform.get(parent).copied().unwrap();
+            if let Some(tx) = cx.cache.transform.get_mut(entity) {
+                let scale_factor = cx.style.scale_factor();
+
+                // Apply transform origin.
+                let mut origin = cx
+                    .style
+                    .transform_origin
+                    .get(entity)
+                    .map(|transform_origin| {
+                        let mut origin = skia_safe::Matrix::translate(bounds.top_left());
+                        let offset = transform_origin.as_transform(bounds, scale_factor);
+                        origin = offset * origin;
+                        origin
+                    })
+                    .unwrap_or(skia_safe::Matrix::translate(bounds.center()));
+                // transform = origin * transform;
+                let mut transform = origin;
+                origin = origin.invert().unwrap();
+
+                // Apply translation.
+                if let Some(translate) = cx.style.translate.get(entity) {
+                    transform = transform * translate.as_transform(bounds, scale_factor);
+                }
+
+                // Apply rotation.
+                if let Some(rotate) = cx.style.rotate.get(entity) {
+                    transform = transform * rotate.as_transform(bounds, scale_factor);
+                }
+
+                // Apply scaling.
+                if let Some(scale) = cx.style.scale.get(entity) {
+                    transform = transform * scale.as_transform(bounds, scale_factor);
+                }
+
+                // Apply transform functions.
+                if let Some(transforms) = cx.style.transform.get(entity) {
+                    // Check if the transform is currently animating
+                    // Get the animation state
+                    // Manually interpolate the value to get the overall transform for the current frame
+                    if let Some(animation_state) = cx.style.transform.get_active_animation(entity) {
+                        if let Some(start) = animation_state.keyframes.first() {
+                            if let Some(end) = animation_state.keyframes.last() {
+                                let start_transform =
+                                    start.value.as_transform(bounds, scale_factor);
+                                let end_transform = end.value.as_transform(bounds, scale_factor);
+                                let t = animation_state.t;
+                                let animated_transform = skia_safe::Matrix::interpolate(
+                                    &start_transform,
+                                    &end_transform,
+                                    t,
+                                );
+                                transform = transform * animated_transform;
+                            }
+                        }
+                    } else {
+                        transform = transform * transforms.as_transform(bounds, scale_factor);
+                    }
+                }
+
+                transform = transform * origin;
+
+                *tx = parent_transform * transform;
+            }
+
+            let overflowx = cx.style.overflowx.get(entity).copied().unwrap_or_default();
+            let overflowy = cx.style.overflowy.get(entity).copied().unwrap_or_default();
+
+            let scale = cx.style.scale_factor();
+
+            let clip_bounds = cx
+                .style
+                .clip_path
+                .get(entity)
+                .map(|clip| match clip {
+                    ClipPath::Auto => bounds,
+                    ClipPath::Shape(rect) => bounds.shrink_sides(
+                        rect.3.to_pixels(bounds.w, scale),
+                        rect.0.to_pixels(bounds.h, scale),
+                        rect.1.to_pixels(bounds.w, scale),
+                        rect.2.to_pixels(bounds.h, scale),
+                    ),
+                })
+                .unwrap_or(bounds);
+
+            let root_bounds = cx.cache.get_bounds(Entity::root());
+
+            let clip_bounds = match (overflowx, overflowy) {
+                (Overflow::Visible, Overflow::Visible) => root_bounds,
+                (Overflow::Hidden, Overflow::Visible) => {
+                    let left = clip_bounds.left();
+                    let right = clip_bounds.right();
+                    let top = root_bounds.top();
+                    let bottom = root_bounds.bottom();
+                    BoundingBox::from_min_max(left, top, right, bottom)
+                }
+                (Overflow::Visible, Overflow::Hidden) => {
+                    let left = root_bounds.left();
+                    let right = root_bounds.right();
+                    let top = clip_bounds.top();
+                    let bottom = clip_bounds.bottom();
+                    BoundingBox::from_min_max(left, top, right, bottom)
+                }
+                (Overflow::Hidden, Overflow::Hidden) => clip_bounds,
+            };
+
+            let transform =
+                cx.cache.transform.get(entity).copied().unwrap_or(Matrix::new_identity());
+
+            let rect: skia_safe::Rect = clip_bounds.into();
+            let clip_bounds: BoundingBox = transform.map_rect(&rect).0.into();
+
+            let parent_clip_bounds = cx.cache.clip_path.get(parent).copied().unwrap_or(root_bounds);
+
+            if let Some(clip_path) = cx.cache.clip_path.get_mut(entity) {
+                *clip_path = clip_bounds.intersection(&parent_clip_bounds);
+            } else {
+                cx.cache.clip_path.insert(entity, clip_bounds.intersection(&parent_clip_bounds));
+            }
+        }
+    }
+}
 
 pub(crate) fn draw_system(cx: &mut Context) {
-    let canvas = cx.canvases.get_mut(&Entity::root()).unwrap().canvas();
-    cx.resource_manager.mark_images_unused();
+    transform_system(cx);
 
-    let clear_color =
-        cx.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::transparent());
-    canvas.clear(clear_color);
+    let children = cx
+        .style
+        .redraw_list
+        .iter()
+        .flat_map(|entity| LayoutTreeIterator::subtree(&cx.tree, *entity))
+        .collect::<Vec<_>>();
 
-    let mut queue = BinaryHeap::new();
-    queue.push(ZEntity { index: 0, entity: Entity::root(), opacity: 1.0, visible: true });
-    while !queue.is_empty() {
-        let zentity = queue.pop().unwrap();
+    cx.style.redraw_list.extend(children.iter());
+
+    for entity in cx.style.redraw_list.iter() {
+        // Skip binding views
+        if cx.tree.is_ignored(*entity) {
+            continue;
+        }
+
+        if entity.visible(&cx.style) {
+            let mut draw_bounds = cx.draw_bounds(*entity);
+
+            if let Some(previous_draw_bounds) = cx.cache.draw_bounds.get(*entity) {
+                draw_bounds = draw_bounds.union(previous_draw_bounds);
+            }
+
+            if draw_bounds.w != 0.0 && draw_bounds.h != 0.0 {
+                if let Some(dr) = &mut cx.cache.dirty_rect {
+                    *dr = dr.union(&draw_bounds);
+                } else {
+                    cx.cache.dirty_rect = Some(draw_bounds);
+                }
+            }
+        }
+    }
+
+    if let Some(canvas) = cx.canvases.get_mut(&Entity::root()).map(|(s1, s2)| s2.canvas()) {
         canvas.save();
-        draw_entity(
-            &mut DrawContext {
-                current: zentity.entity,
-                style: &cx.style,
-                cache: &mut cx.cache,
-                tree: &cx.tree,
-                data: &cx.data,
-                views: &mut cx.views,
-                resource_manager: &cx.resource_manager,
-                text_context: &mut cx.text_context,
-                text_config: &cx.text_config,
-                modifiers: &cx.modifiers,
-                mouse: &cx.mouse,
-                opacity: zentity.opacity,
-            },
-            canvas,
-            zentity.index,
-            &mut queue,
-            zentity.visible,
-        );
+        if let Some(dirty_rect) = cx.cache.dirty_rect {
+            let rect: Rect = dirty_rect.into();
+            canvas.clip_rect(&rect, ClipOp::Intersect, false);
+        }
+
+        cx.resource_manager.mark_images_unused();
+
+        let clear_color =
+            cx.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::transparent());
+        // canvas.clear(clear_color);
+
+        let mut queue = BinaryHeap::new();
+        queue.push(ZEntity { index: 0, entity: Entity::root(), visible: true });
+        while !queue.is_empty() {
+            let zentity = queue.pop().unwrap();
+            canvas.save();
+            draw_entity(
+                &mut DrawContext {
+                    current: zentity.entity,
+                    style: &cx.style,
+                    cache: &mut cx.cache,
+                    tree: &cx.tree,
+                    data: &cx.data,
+                    views: &mut cx.views,
+                    resource_manager: &cx.resource_manager,
+                    text_context: &mut cx.text_context,
+                    text_config: &cx.text_config,
+                    modifiers: &cx.modifiers,
+                    mouse: &cx.mouse,
+                },
+                canvas,
+                zentity.index,
+                &mut queue,
+                zentity.visible,
+            );
+            canvas.restore();
+        }
         canvas.restore();
+    };
+
+    if let Some((canvas, surface)) =
+        cx.canvases.get_mut(&Entity::root()).map(|(s1, s2)| (s1.canvas(), s2))
+    {
+        surface.draw(canvas, (0, 0), SamplingOptions::default(), None);
+        // Debug draw dirty rect
+        if let Some(dirty_rect) = cx.cache.dirty_rect {
+            let path: Rect = dirty_rect.into();
+            let mut paint = Paint::default();
+            paint.set_style(skia_safe::PaintStyle::Stroke);
+            paint.set_color(Color::red());
+            paint.set_stroke_width(1.0);
+            canvas.draw_rect(&path, &paint);
+        }
+    }
+
+    cx.style.redraw_list.clear();
+    cx.cache.dirty_rect = None;
+
+    let iter = LayoutTreeIterator::full(&cx.tree);
+    for entity in iter {
+        if entity.visible(&cx.style) {
+            let draw_bounds = cx.draw_bounds(entity);
+            if let Some(dr) = cx.cache.draw_bounds.get_mut(entity) {
+                *dr = draw_bounds;
+            } else {
+                cx.cache.draw_bounds.insert(entity, draw_bounds);
+            }
+        }
     }
 
     // canvas.flush();
@@ -57,29 +258,27 @@ fn draw_entity(
         return;
     }
 
-    // TODO: Looks like I'll need to keep track of the current transform manually instead of within femtovg
-    // because elements with a higher z-index aren't getting the transform of their parent.
-    let z_index = cx.style.z_index.get(current).copied().unwrap_or_default();
+    let z_index = cx.z_index();
+
     if z_index > current_z {
-        queue.push(ZEntity { index: z_index, entity: current, opacity: cx.opacity, visible });
+        queue.push(ZEntity { index: z_index, entity: current, visible });
         return;
     }
 
     canvas.save();
     let layer_count = if cx.opacity() != 1.0 {
-        let rect: Rect = cx.bounds().into();
         Some(canvas.save_layer_alpha_f(None, cx.opacity()))
     } else {
         None
     };
-    // canvas.save();
-    // canvas.set_transform(&cx.transform());
-    canvas.concat(&cx.transform());
+
+    if let Some(transform) = cx.cache.transform.get(current) {
+        canvas.set_matrix(&(transform.into()));
+    }
 
     if let Some(clip_path) = cx.clip_path() {
         canvas.clip_path(&clip_path, ClipOp::Intersect, true);
     }
-    // canvas.intersect_scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
 
     let is_visible = match (visible, cx.visibility()) {
         (v, None) => v,
@@ -89,9 +288,14 @@ fn draw_entity(
 
     // Draw the view
     if is_visible {
-        if let Some(view) = cx.views.remove(&current) {
-            view.draw(cx, canvas);
-            cx.views.insert(current, view);
+        if let Some(dirty_rect) = cx.cache.dirty_rect {
+            let bounds = cx.draw_bounds(current);
+            if bounds.intersects(&dirty_rect) {
+                if let Some(view) = cx.views.remove(&current) {
+                    view.draw(cx, canvas);
+                    cx.views.insert(current, view);
+                }
+            }
         }
     }
 
@@ -109,12 +313,23 @@ fn draw_entity(
     }
     canvas.restore();
     cx.current = current;
+
+    // if let Some(dirty_rect) = cx.cache.dirty_rect {
+    //     let bounds = cx.bounds();
+    //     if bounds.intersects(&dirty_rect) {
+    //         let path: Rect = bounds.into();
+    //         let mut paint = Paint::default();
+    //         paint.set_style(skia_safe::PaintStyle::Stroke);
+    //         paint.set_color(Color::green());
+    //         paint.set_stroke_width(1.0);
+    //         canvas.draw_rect(&path, &paint);
+    //     }
+    // }
 }
 
 struct ZEntity {
     pub index: i32,
     pub entity: Entity,
-    pub opacity: f32,
     pub visible: bool,
 }
 

@@ -2,6 +2,7 @@
 //! results. The main type here is CachedData, usually accessed via `cx.cache`.
 
 use crate::prelude::*;
+use skia_safe::Matrix;
 use vizia_storage::SparseSet;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
@@ -17,27 +18,39 @@ pub(crate) struct Pos {
 #[derive(Default)]
 pub struct CachedData {
     pub(crate) bounds: SparseSet<BoundingBox>,
-    pub(crate) relative_position: SparseSet<Pos>,
+    pub(crate) draw_bounds: SparseSet<BoundingBox>,
+    pub(crate) relative_bounds: SparseSet<BoundingBox>,
     // pub(crate) shadow_images: SparseSet<Vec<Option<(ImageId, ImageId)>>>,
     // pub(crate) filter_image: SparseSet<Option<(ImageId, ImageId)>>,
     // pub(crate) screenshot_image: SparseSet<Option<ImageId>>,
     pub(crate) geo_changed: SparseSet<GeoChanged>,
+    pub(crate) dirty_rect: Option<BoundingBox>,
+    pub(crate) transform: SparseSet<Matrix>,
+    pub(crate) clip_path: SparseSet<BoundingBox>,
 }
 
 impl CachedData {
     pub(crate) fn add(&mut self, entity: Entity) {
         self.bounds.insert(entity, Default::default());
-        self.relative_position.insert(entity, Default::default());
+        self.relative_bounds.insert(entity, Default::default());
         self.geo_changed.insert(entity, GeoChanged::empty());
+        self.transform.insert(entity, Matrix::new_identity());
     }
 
     pub(crate) fn remove(&mut self, entity: Entity) {
+        if let Some(draw_bounds) = self.draw_bounds.get(entity) {
+            if let Some(dirty_rect) = &mut self.dirty_rect {
+                *dirty_rect = dirty_rect.union(draw_bounds);
+            } else {
+                self.dirty_rect = Some(*draw_bounds);
+            }
+        }
         self.bounds.remove(entity);
-        self.relative_position.remove(entity);
-        // self.shadow_images.remove(entity);
-        // self.filter_image.remove(entity);
-        // self.screenshot_image.remove(entity);
+        self.relative_bounds.remove(entity);
+        self.draw_bounds.remove(entity);
         self.geo_changed.remove(entity);
+        self.transform.remove(entity);
+        self.clip_path.remove(entity);
     }
 
     /// Returns the bounding box of the entity, determined by the layout system.

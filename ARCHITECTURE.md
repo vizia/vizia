@@ -16,7 +16,7 @@ Vizia is split into a number of internal sub-crates for specific purposes:
 - `vizia_winit` - Windowing backend utilising [Winit], which is the default windowing backend.
 
 * External Crates*
-- `femtovg` - Vector graphics renderer utilising OpenGL.
+- `skia` - 2D drawing crate.
 - `cosmic-text` - Text engine for font selection as well as shaping, layout, and rasterizing of text.
 - `morphorm` - Provides daptive layout for a tree of nodes.
 - `fluent` - Provides localization including text translation substitution.
@@ -39,7 +39,7 @@ Application::new(|cx|{
     Label::new(cx, "Hello Vizia");
 }).run();
 ```
-When the `run()` method is called, a Winit window is created with an opengl context and a femtovg `Canvas`, and then added to the `Context`. The event loop is then started. 
+When the `run()` method is called, a Winit window is created with an opengl context and a skia `Canvas`, and then added to the `Context`. The event loop is then started. 
 
 ### Context
 The `Context` is where all the retained application state lives. This includes model data, views, style properties, mouse state, the event queue etc.

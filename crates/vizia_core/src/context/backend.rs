@@ -62,7 +62,7 @@ impl<'a> BackendContext<'a> {
         self.0.focused
     }
 
-    pub fn get_surface_mut(&mut self, entity: Entity) -> Option<&mut Surface> {
+    pub fn get_surface_mut(&mut self, entity: Entity) -> Option<&mut (Surface, Surface)> {
         self.0.canvases.get_mut(&entity)
     }
 
@@ -86,7 +86,7 @@ impl<'a> BackendContext<'a> {
     pub fn add_main_window(
         &mut self,
         window_description: &WindowDescription,
-        surface: Surface,
+        mut surface: Surface,
         dpi_factor: f32,
     ) {
         let physical_width = window_description.inner_size.width as f32 * dpi_factor;
@@ -111,7 +111,12 @@ impl<'a> BackendContext<'a> {
         self.0.style.pseudo_classes.insert(Entity::root(), PseudoClassFlags::OVER);
         self.0.style.restyle.insert(Entity::root()).unwrap();
         self.0.style.reaccess.insert(Entity::root()).unwrap();
-        self.0.canvases.insert(Entity::root(), surface);
+
+        let s = surface
+            .new_surface_with_dimensions((physical_width as i32, physical_height as i32))
+            .unwrap();
+
+        self.0.canvases.insert(Entity::root(), (surface, s));
     }
 
     /// Returns a reference to the [`Environment`] model.
