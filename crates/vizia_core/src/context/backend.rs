@@ -217,9 +217,9 @@ impl<'a> BackendContext<'a> {
     }
 
     /// Calls the event manager to process any queued events.
-    pub fn process_events(&mut self) {
+    pub fn process_events(&mut self, window_event_callback: impl FnMut(&WindowEvent)) {
         if let Some(event_manager) = &mut self.1 {
-            while event_manager.flush_events(self.0) {}
+            event_manager.flush_events(self.0, window_event_callback);
         }
     }
 

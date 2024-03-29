@@ -14,6 +14,8 @@ pub(crate) struct ViziaWindow {
     application: ApplicationRunner,
     #[allow(clippy::type_complexity)]
     on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
+
+    pub(crate) should_close: bool,
 }
 
 impl ViziaWindow {
@@ -55,7 +57,7 @@ impl ViziaWindow {
         let application = ApplicationRunner::new(cx, use_system_scaling, window_scale_factor);
         unsafe { context.make_not_current() };
 
-        ViziaWindow { application, on_idle }
+        ViziaWindow { application, on_idle, should_close: false }
     }
 
     /// Open a new child window.
@@ -164,7 +166,7 @@ impl ViziaWindow {
 
 impl WindowHandler for ViziaWindow {
     fn on_frame(&mut self, window: &mut Window) {
-        self.application.on_frame_update(window);
+        self.application.on_frame_update(window, &mut self.should_close);
 
         let context = window.gl_context().expect("Window was created without OpenGL support");
         unsafe { context.make_current() };
@@ -175,14 +177,13 @@ impl WindowHandler for ViziaWindow {
         unsafe { context.make_not_current() };
     }
 
-    fn on_event(&mut self, _window: &mut Window<'_>, event: Event) -> EventStatus {
-        let mut should_quit = false;
-        self.application.handle_event(event, &mut should_quit);
+    fn on_event(&mut self, window: &mut Window<'_>, event: Event) -> EventStatus {
+        self.application.handle_event(event, &mut self.should_close);
 
         self.application.handle_idle(&self.on_idle);
 
-        if should_quit {
-            // TODO: Request close.
+        if self.should_close {
+            window.close();
         }
 
         EventStatus::Ignored
