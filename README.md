@@ -121,7 +121,8 @@ fn main() {
         HStack::new(cx, |cx| {
           
             // Declare a button which emits an event
-            Button::new(cx, |cx| cx.emit(AppEvent::Increment), |cx| Label::new(cx, "Increment"));
+            Button::new(cx, |cx| Label::new(cx, "Increment"))
+              .on_press(|cx| cx.emit(AppEvent::Increment));
 
             // Declare a label which is bound to part of the model, updating when it changes
             Label::new(cx, AppData::count).width(Pixels(50.0));
@@ -129,7 +130,7 @@ fn main() {
         .child_space(Stretch(1.0))  // Apply style and layout modifiers
         .col_between(Pixels(50.0));
     })
-    .title("Counter") // Configure window peoperties
+    .title("Counter") // Configure window properties
     .inner_size((400, 100))
     .run();
 }
