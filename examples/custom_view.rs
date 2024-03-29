@@ -1,26 +1,28 @@
 use vizia::prelude::*;
 use vizia::vg;
 
-pub struct CustomView<C: 'static + Res<Color>> {
-    // View local state (could be value or lens)
-    color: C,
+pub struct CustomView<L: Lens<Target = Color>> {
+    color: L,
 }
 
-impl<C: 'static + Res<Color>> CustomView<C> {
-    pub fn new(cx: &mut Context, color: C) -> Handle<Self> {
-        Self { color }.build(cx, |cx| {
-            Label::new(cx, "This is a custom view!");
-        })
+impl<L: Lens<Target = Color>> CustomView<L> {
+    pub fn new(cx: &mut Context, color: L) -> Handle<Self> {
+        Self { color }
+            .build(cx, |cx| {
+                Label::new(cx, "This is a custom view!");
+            })
+            // Redraw when lensed data changes
+            .bind(color, |mut handle, _| handle.needs_redraw())
     }
 }
 
-impl<C: 'static + Res<Color>> View for CustomView<C> {
+impl<L: Lens<Target = Color>> View for CustomView<L> {
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        let col = self.color.get_ref(cx).unwrap();
+        let col = self.color.get(cx);
         let bounds = cx.bounds();
         let mut path = vg::Path::new();
         path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
-        canvas.fill_path(&path, &vg::Paint::color((*col).into()));
+        canvas.fill_path(&path, &vg::Paint::color(col.into()));
     }
 }
 
@@ -29,13 +31,28 @@ struct AppData {
     color: Color,
 }
 
-impl Model for AppData {}
+impl Model for AppData {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            AppEvent::SetColor(col) => self.color = *col,
+        })
+    }
+}
+
+pub enum AppEvent {
+    SetColor(Color),
+}
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { color: Color::red() }.build(cx);
-        CustomView::new(cx, Color::blue());
-        CustomView::new(cx, AppData::color);
+        CustomView::new(cx, AppData::color).size(Pixels(200.0));
+        Slider::new(cx, AppData::color.map(|c| c.r() as f32 / 255.0))
+            .on_changing(|cx, val| {
+                cx.emit(AppEvent::SetColor(Color::rgb((val * 255.0) as u8, 0, 0)))
+            })
+            .width(Pixels(200.0))
+            .space(Pixels(20.0));
     })
     .run()
 }
