@@ -1,9 +1,16 @@
-use crate::{application::ApplicationRunner, Renderer};
+use crate::application::ApplicationRunner;
 use baseview::gl::GlConfig;
 use baseview::{
     Event, EventStatus, Window, WindowHandle, WindowHandler, WindowOpenOptions, WindowScalePolicy,
 };
+use gl::types::GLint;
+use gl_rs as gl;
 use raw_window_handle::HasRawWindowHandle;
+use skia_safe::gpu::gl::FramebufferInfo;
+use skia_safe::gpu::{
+    self, backend_render_targets, context_options, ContextOptions, SurfaceOrigin,
+};
+use skia_safe::{ColorType, Surface};
 
 use crate::proxy::BaseviewProxy;
 use vizia_core::backend::*;
@@ -14,6 +21,8 @@ pub(crate) struct ViziaWindow {
     application: ApplicationRunner,
     #[allow(clippy::type_complexity)]
     on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
+
+    pub gr_context: skia_safe::gpu::DirectContext,
 }
 
 impl ViziaWindow {
@@ -26,11 +35,42 @@ impl ViziaWindow {
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
     ) -> ViziaWindow {
         let context = window.gl_context().expect("Window was created without OpenGL support");
-        let renderer = load_renderer(window);
 
         unsafe { context.make_current() };
 
-        let canvas = Canvas::new(renderer).expect("Cannot create canvas");
+        // Build skia renderer
+        gl::load_with(|s| context.get_proc_address(s));
+        let interface = skia_safe::gpu::gl::Interface::new_load_with(|name| {
+            if name == "eglGetCurrentDisplay" {
+                return std::ptr::null();
+            }
+            context.get_proc_address(name)
+        })
+        .expect("Could not create interface");
+
+        // https://github.com/rust-skia/rust-skia/issues/476
+        let mut context_options = ContextOptions::new();
+        context_options.skip_gl_error_checks = context_options::Enable::Yes;
+
+        let mut gr_context = skia_safe::gpu::DirectContext::new_gl(interface, &context_options)
+            .expect("Could not create direct context");
+
+        let fb_info = {
+            let mut fboid: GLint = 0;
+            unsafe { gl::GetIntegerv(gl::FRAMEBUFFER_BINDING, &mut fboid) };
+
+            FramebufferInfo {
+                fboid: fboid.try_into().unwrap(),
+                format: skia_safe::gpu::gl::Format::RGBA8.into(),
+                ..Default::default()
+            }
+        };
+
+        let surface = create_surface(
+            (win_desc.inner_size.width as i32, win_desc.inner_size.height as i32),
+            fb_info,
+            &mut gr_context,
+        );
 
         // Assume scale for now until there is an event with a new one.
         // Assume scale for now until there is an event with a new one.
@@ -45,7 +85,7 @@ impl ViziaWindow {
         };
         let dpi_factor = window_scale_factor * win_desc.user_scale_factor;
 
-        BackendContext::new(&mut cx).add_main_window(&win_desc, canvas, dpi_factor as f32);
+        BackendContext::new(&mut cx).add_main_window(&win_desc, surface, dpi_factor as f32);
 
         cx.remove_user_themes();
         if let Some(builder) = builder {
@@ -55,7 +95,7 @@ impl ViziaWindow {
         let application = ApplicationRunner::new(cx, use_system_scaling, window_scale_factor);
         unsafe { context.make_not_current() };
 
-        ViziaWindow { application, on_idle }
+        ViziaWindow { application, on_idle, gr_context }
     }
 
     /// Open a new child window.
@@ -170,6 +210,7 @@ impl WindowHandler for ViziaWindow {
         unsafe { context.make_current() };
 
         self.application.render();
+        self.gr_context.flush_and_submit();
         context.swap_buffers();
 
         unsafe { context.make_not_current() };
@@ -187,6 +228,24 @@ impl WindowHandler for ViziaWindow {
 
         EventStatus::Ignored
     }
+}
+
+pub fn create_surface(
+    size: (i32, i32),
+    fb_info: FramebufferInfo,
+    gr_context: &mut skia_safe::gpu::DirectContext,
+) -> Surface {
+    let backend_render_target = backend_render_targets::make_gl(size, None, 8, fb_info);
+
+    gpu::surfaces::wrap_backend_render_target(
+        gr_context,
+        &backend_render_target,
+        SurfaceOrigin::BottomLeft,
+        ColorType::RGBA8888,
+        None,
+        None,
+    )
+    .expect("Could not create skia surface")
 }
 
 // fn load_renderer(window: &Window) -> Renderer {
