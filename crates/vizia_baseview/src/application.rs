@@ -253,7 +253,7 @@ impl ApplicationRunner {
         self.should_redraw = false;
     }
 
-    pub fn handle_event(&mut self, event: baseview::Event, should_quit: &mut bool) {
+    pub fn handle_event(&mut self, event: baseview::Event, should_quit: &mut bool, window: &mut Window<'_>) {
         let mut cx = BackendContext::new(&mut self.context);
 
         if requests_exit(&event) {
