@@ -3,7 +3,7 @@ use vizia::prelude::*;
 const STYLE: &str = r#"
     .container {
         size: 100px;
-        border-radius: 10px;
+        corner-radius: 10px;
         background-color: rgb(200, 200, 200);
     }
 

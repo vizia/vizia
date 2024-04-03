@@ -1,4 +1,4 @@
-use vizia_style::{BorderRadius, ColorStop, Rect};
+use vizia_style::{ColorStop, CornerRadius, Rect};
 
 use super::internal;
 use crate::prelude::*;
@@ -382,35 +382,35 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     modifier!(
-        /// Sets the border radius for the top-left corner of the view.
-        border_top_left_radius,
+        /// Sets the corner radius for the top-left corner of the view.
+        corner_top_left_radius,
         LengthOrPercentage,
         SystemFlags::REDRAW
     );
 
     modifier!(
-        /// Sets the border radius for the top-right corner of the view.
-        border_top_right_radius,
+        /// Sets the corner radius for the top-right corner of the view.
+        corner_top_right_radius,
         LengthOrPercentage,
         SystemFlags::REDRAW
     );
 
     modifier!(
-        /// Sets the border radius for the bottom-left corner of the view.
-        border_bottom_left_radius,
+        /// Sets the corner radius for the bottom-left corner of the view.
+        corner_bottom_left_radius,
         LengthOrPercentage,
         SystemFlags::REDRAW
     );
 
     modifier!(
-        /// Sets the border radius for the bottom-right corner of the view.
-        border_bottom_right_radius,
+        /// Sets the corner radius for the bottom-right corner of the view.
+        corner_bottom_right_radius,
         LengthOrPercentage,
         SystemFlags::REDRAW
     );
 
-    /// Sets the border radius for all four corners of the view.
-    fn border_radius<U: std::fmt::Debug + Into<BorderRadius>>(
+    /// Sets the corner radius for all four corners of the view.
+    fn corner_radius<U: std::fmt::Debug + Into<CornerRadius>>(
         mut self,
         value: impl Res<U>,
     ) -> Self {
@@ -419,10 +419,10 @@ pub trait StyleModifiers: internal::Modifiable {
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, move |cx, v| {
                 let value = v.get(cx).into();
-                cx.style.border_top_left_radius.insert(cx.current, value.top_left);
-                cx.style.border_top_right_radius.insert(cx.current, value.top_right);
-                cx.style.border_bottom_left_radius.insert(cx.current, value.bottom_left);
-                cx.style.border_bottom_right_radius.insert(cx.current, value.bottom_right);
+                cx.style.corner_top_left_radius.insert(cx.current, value.top_left);
+                cx.style.corner_top_right_radius.insert(cx.current, value.top_right);
+                cx.style.corner_bottom_left_radius.insert(cx.current, value.bottom_left);
+                cx.style.corner_bottom_right_radius.insert(cx.current, value.bottom_right);
 
                 cx.needs_redraw();
             });
@@ -432,35 +432,35 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     modifier!(
-        /// Sets the border corner shape for the top-left corner of the view.
-        border_top_left_shape,
-        BorderCornerShape,
+        /// Sets the corner corner shape for the top-left corner of the view.
+        corner_top_left_shape,
+        CornerShape,
         SystemFlags::REDRAW
     );
 
     modifier!(
-        /// Sets the border corner shape for the top-right corner of the view.
-        border_top_right_shape,
-        BorderCornerShape,
+        /// Sets the corner corner shape for the top-right corner of the view.
+        corner_top_right_shape,
+        CornerShape,
         SystemFlags::REDRAW
     );
 
     modifier!(
-        /// Sets the border corner shape for the bottom-left corner of the view.
-        border_bottom_left_shape,
-        BorderCornerShape,
+        /// Sets the corner corner shape for the bottom-left corner of the view.
+        corner_bottom_left_shape,
+        CornerShape,
         SystemFlags::REDRAW
     );
 
     modifier!(
-        /// Sets the border corner shape for the bottom-right corner of the view.
-        border_bottom_right_shape,
-        BorderCornerShape,
+        /// Sets the corner corner shape for the bottom-right corner of the view.
+        corner_bottom_right_shape,
+        CornerShape,
         SystemFlags::REDRAW
     );
 
-    /// Sets the border corner shape for all four corners of the view.
-    fn border_corner_shape<U: std::fmt::Debug + Into<Rect<BorderCornerShape>>>(
+    /// Sets the corner shape for all four corners of the view.
+    fn corner_shape<U: std::fmt::Debug + Into<Rect<CornerShape>>>(
         mut self,
         value: impl Res<U>,
     ) -> Self {
@@ -469,10 +469,10 @@ pub trait StyleModifiers: internal::Modifiable {
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, move |cx, v| {
                 let value = v.get(cx).into();
-                cx.style.border_top_left_shape.insert(cx.current, value.0);
-                cx.style.border_top_right_shape.insert(cx.current, value.1);
-                cx.style.border_bottom_right_shape.insert(cx.current, value.2);
-                cx.style.border_bottom_left_shape.insert(cx.current, value.3);
+                cx.style.corner_top_left_shape.insert(cx.current, value.0);
+                cx.style.corner_top_right_shape.insert(cx.current, value.1);
+                cx.style.corner_bottom_right_shape.insert(cx.current, value.2);
+                cx.style.corner_bottom_left_shape.insert(cx.current, value.3);
 
                 cx.needs_redraw();
             });

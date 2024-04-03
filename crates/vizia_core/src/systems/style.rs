@@ -410,35 +410,35 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
         should_redraw = true;
     }
 
-    if style.border_top_left_shape.link(entity, matched_rules) {
+    if style.corner_top_left_shape.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_top_right_shape.link(entity, matched_rules) {
+    if style.corner_top_right_shape.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_bottom_left_shape.link(entity, matched_rules) {
+    if style.corner_bottom_left_shape.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_bottom_right_shape.link(entity, matched_rules) {
+    if style.corner_bottom_right_shape.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_top_left_radius.link(entity, matched_rules) {
+    if style.corner_top_left_radius.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_top_right_radius.link(entity, matched_rules) {
+    if style.corner_top_right_radius.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_bottom_left_radius.link(entity, matched_rules) {
+    if style.corner_bottom_left_radius.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_bottom_right_radius.link(entity, matched_rules) {
+    if style.corner_bottom_right_radius.link(entity, matched_rules) {
         should_redraw = true;
     }
 

@@ -1,10 +1,10 @@
 use crate::{
-    define_property, Angle, BackgroundImage, BackgroundSize, Border, BorderCornerShape,
-    BorderRadius, BorderWidth, BorderWidthValue, BoxShadow, ClipPath, Color, CursorIcon,
-    CustomParseError, CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant,
-    FontVariation, FontWeight, FontWidth, LayoutType, LengthOrPercentage, LineClamp, Opacity,
-    Outline, Overflow, Parse, PointerEvents, Position, PositionType, Rect, Scale, TextAlign,
-    TextOverflow, Transform, Transition, Translate, Units, UnparsedProperty, Visibility,
+    define_property, Angle, BackgroundImage, BackgroundSize, Border, BorderWidth, BorderWidthValue,
+    BoxShadow, ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError,
+    CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
+    FontWidth, LayoutType, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow, Parse,
+    PointerEvents, Position, PositionType, Rect, Scale, TextAlign, TextOverflow, Transform,
+    Transition, Translate, Units, UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -71,38 +71,38 @@ define_property! {
         // Border Color
         "border-color": BorderColor(Color),
         // TODO: Support coloring individual borders.
-        // "border-top-color": BorderTopColor(Color),
+        // "corner-top-color": BorderTopColor(Color),
         // "border-right-color": BorderRightColor(Color),
-        // "border-bottom-color": BorderBottomColor(Color),
+        // "corner-bottom-color": BorderBottomColor(Color),
         // "border-left-color": BorderLeftColor(Color),
 
-        // Border Corner Shape
-        "border-corner-shape": BorderCornerShape(Rect<BorderCornerShape>),
-        "border-top-left-shape": BorderTopLeftShape(BorderCornerShape),
-        "border-top-right-shape": BorderTopRightShape(BorderCornerShape),
-        "border-bottom-left-shape": BorderBottomLeftShape(BorderCornerShape),
-        "border-bottom-right-shape": BorderBottomRightShape(BorderCornerShape),
+        // Corner Shape
+        "corner-shape": CornerShape(Rect<CornerShape>),
+        "corner-top-left-shape": CornerTopLeftShape(CornerShape),
+        "corner-top-right-shape": CornerTopRightShape(CornerShape),
+        "corner-bottom-left-shape": CornerBottomLeftShape(CornerShape),
+        "corner-bottom-right-shape": CornerBottomRightShape(CornerShape),
 
-        // Border Radius
-        "border-radius": BorderRadius(BorderRadius),
-        "border-top-left-radius": BorderTopLeftRadius(LengthOrPercentage),
-        "border-top-right-radius": BorderTopRightRadius(LengthOrPercentage),
-        "border-bottom-left-radius": BorderBottomLeftRadius(LengthOrPercentage),
-        "border-bottom-right-radius": BorderBottomRightRadius(LengthOrPercentage),
+        // Corner Radius
+        "corner-radius": CornerRadius(CornerRadius),
+        "corner-top-left-radius": CornerTopLeftRadius(LengthOrPercentage),
+        "corner-top-right-radius": CornerTopRightRadius(LengthOrPercentage),
+        "corner-bottom-left-radius": CornerBottomLeftRadius(LengthOrPercentage),
+        "corner-bottom-right-radius": CornerBottomRightRadius(LengthOrPercentage),
 
         // Border Style
         // TODO: Support styling borders.
         // "border-style": BorderStyle(BorderStyle),
-        // "border-top-style": BorderTopStyle(BorderStyleKeyword),
+        // "corner-top-style": BorderTopStyle(BorderStyleKeyword),
         // "border-right-style": BorderRightStyle(BorderStyleKeyword),
-        // "border-bottom-style": BorderBottomStyle(BorderStyleKeyword),
+        // "corner-bottom-style": BorderBottomStyle(BorderStyleKeyword),
         // "border-left-style": BorderLeftStyle(BorderStyleKeyword),
 
         // Border Width
         "border-width": BorderWidth(BorderWidth),
-        "border-top-width": BorderTopWidth(BorderWidthValue),
+        "corner-top-width": BorderTopWidth(BorderWidthValue),
         "border-right-width": BorderRightWidth(BorderWidthValue),
-        "border-bottom-width": BorderBottomWidth(BorderWidthValue),
+        "corner-bottom-width": BorderBottomWidth(BorderWidthValue),
         "border-left-width": BorderLeftWidth(BorderWidthValue),
 
 

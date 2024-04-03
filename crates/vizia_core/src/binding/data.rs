@@ -75,7 +75,7 @@ impl_data_simple!(FamilyOwned);
 impl_data_simple!(FontWeight);
 impl_data_simple!(TextAlign);
 impl_data_simple!(LengthOrPercentage);
-impl_data_simple!(BorderCornerShape);
+impl_data_simple!(CornerShape);
 
 impl Data for &'static str {
     fn same(&self, other: &Self) -> bool {

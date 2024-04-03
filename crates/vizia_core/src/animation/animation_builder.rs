@@ -112,25 +112,25 @@ impl<'a> KeyframeBuilder<'a> {
     }
 
     pub fn border_top_left_radius(mut self, val: impl Into<LengthOrPercentage>) -> Self {
-        self.properties.push(Property::BorderTopLeftRadius(val.into()));
+        self.properties.push(Property::CornerTopLeftRadius(val.into()));
 
         self
     }
 
     pub fn border_top_right_radius(mut self, val: impl Into<LengthOrPercentage>) -> Self {
-        self.properties.push(Property::BorderTopRightRadius(val.into()));
+        self.properties.push(Property::CornerTopRightRadius(val.into()));
 
         self
     }
 
     pub fn border_bottom_left_radius(mut self, val: impl Into<LengthOrPercentage>) -> Self {
-        self.properties.push(Property::BorderBottomLeftRadius(val.into()));
+        self.properties.push(Property::CornerBottomLeftRadius(val.into()));
 
         self
     }
 
     pub fn border_bottom_right_radius(mut self, val: impl Into<LengthOrPercentage>) -> Self {
-        self.properties.push(Property::BorderBottomRightRadius(val.into()));
+        self.properties.push(Property::CornerBottomRightRadius(val.into()));
 
         self
     }

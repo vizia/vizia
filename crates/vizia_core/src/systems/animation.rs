@@ -17,10 +17,10 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     // Border Colour
     redraw_entities.extend(cx.style.border_color.tick(time));
     // Border Radius
-    redraw_entities.extend(cx.style.border_top_left_radius.tick(time));
-    redraw_entities.extend(cx.style.border_top_right_radius.tick(time));
-    redraw_entities.extend(cx.style.border_bottom_left_radius.tick(time));
-    redraw_entities.extend(cx.style.border_bottom_right_radius.tick(time));
+    redraw_entities.extend(cx.style.corner_top_left_radius.tick(time));
+    redraw_entities.extend(cx.style.corner_top_right_radius.tick(time));
+    redraw_entities.extend(cx.style.corner_bottom_left_radius.tick(time));
+    redraw_entities.extend(cx.style.corner_bottom_right_radius.tick(time));
     // Background
     redraw_entities.extend(cx.style.background_color.tick(time));
     redraw_entities.extend(cx.style.background_image.tick(time));
