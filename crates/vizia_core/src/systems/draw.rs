@@ -1,4 +1,4 @@
-use crate::{animation::Interpolator, prelude::*};
+use crate::{animation::Interpolator, cache::CachedData, prelude::*};
 use morphorm::Node;
 use skia_safe::{ClipOp, Matrix, Paint, Rect, SamplingOptions};
 use std::cmp::Ordering;
@@ -153,7 +153,7 @@ pub(crate) fn draw_system(cx: &mut Context) {
         }
 
         if entity.visible(&cx.style) {
-            let mut draw_bounds = cx.draw_bounds(*entity);
+            let mut draw_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, *entity);
 
             if let Some(previous_draw_bounds) = cx.cache.draw_bounds.get(*entity) {
                 draw_bounds = draw_bounds.union(previous_draw_bounds);
@@ -232,7 +232,7 @@ pub(crate) fn draw_system(cx: &mut Context) {
     let iter = LayoutTreeIterator::full(&cx.tree);
     for entity in iter {
         if entity.visible(&cx.style) {
-            let draw_bounds = cx.draw_bounds(entity);
+            let draw_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
             if let Some(dr) = cx.cache.draw_bounds.get_mut(entity) {
                 *dr = draw_bounds;
             } else {
@@ -289,7 +289,7 @@ fn draw_entity(
     // Draw the view
     if is_visible {
         if let Some(dirty_rect) = cx.cache.dirty_rect {
-            let bounds = cx.draw_bounds(current);
+            let bounds = draw_bounds(cx.style, cx.cache, cx.tree, current);
             if bounds.intersects(&dirty_rect) {
                 if let Some(view) = cx.views.remove(&current) {
                     view.draw(cx, canvas);
@@ -325,6 +325,69 @@ fn draw_entity(
     //         canvas.draw_rect(&path, &paint);
     //     }
     // }
+}
+
+// Must be called after transform and clipping systems to be valid
+pub(crate) fn draw_bounds(
+    style: &Style,
+    cache: &CachedData,
+    tree: &Tree<Entity>,
+    entity: Entity,
+) -> BoundingBox {
+    let mut layout_bounds = cache.bounds.get(entity).copied().unwrap();
+
+    if let Some(shadows) = style.box_shadow.get(entity) {
+        for shadow in shadows.iter().filter(|shadow| !shadow.inset) {
+            let mut shadow_bounds = layout_bounds;
+
+            let x = shadow.x_offset.to_px().unwrap() * style.scale_factor();
+            let y = shadow.y_offset.to_px().unwrap() * style.scale_factor();
+
+            shadow_bounds = shadow_bounds.offset(x, y);
+
+            if let Some(blur_radius) =
+                shadow.blur_radius.as_ref().map(|br| br.clone().to_px().unwrap() / 2.0)
+            {
+                shadow_bounds = shadow_bounds.expand(blur_radius * style.scale_factor());
+            }
+
+            if let Some(spread_radius) =
+                shadow.spread_radius.as_ref().map(|sr| sr.clone().to_px().unwrap())
+            {
+                shadow_bounds = shadow_bounds.expand(spread_radius * style.scale_factor());
+            }
+
+            layout_bounds = layout_bounds.union(&shadow_bounds);
+        }
+    }
+
+    let mut outline_bounds = layout_bounds;
+
+    if let Some(outline_width) = style.outline_width.get(entity) {
+        outline_bounds = outline_bounds
+            .expand(outline_width.to_pixels(layout_bounds.diagonal(), style.scale_factor()));
+    }
+
+    if let Some(outline_offset) = style.outline_offset.get(entity) {
+        outline_bounds = outline_bounds
+            .expand(outline_offset.to_pixels(layout_bounds.diagonal(), style.scale_factor()));
+    }
+
+    layout_bounds = layout_bounds.union(&outline_bounds);
+
+    let matrix = cache.transform.get(entity).copied().unwrap();
+    // let transformed_bounds = bounds.transform(&matrix);
+    let rect: Rect = layout_bounds.into();
+    let tr = matrix.map_rect(rect).0;
+
+    let dirty_bounds: BoundingBox = tr.into();
+
+    let parent = tree.get_layout_parent(entity).unwrap_or(Entity::root());
+    if let Some(clip_bounds) = cache.clip_path.get(parent) {
+        dirty_bounds.intersection(clip_bounds)
+    } else {
+        dirty_bounds
+    }
 }
 
 struct ZEntity {

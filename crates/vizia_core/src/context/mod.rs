@@ -514,64 +514,6 @@ impl Context {
         }
     }
 
-    // Must be called after transform and clipping systems to be valid
-    pub(crate) fn draw_bounds(&self, entity: Entity) -> BoundingBox {
-        let mut layout_bounds = self.cache.bounds.get(entity).copied().unwrap();
-
-        if let Some(shadows) = self.style.box_shadow.get(entity) {
-            for shadow in shadows.iter().filter(|shadow| !shadow.inset) {
-                let mut shadow_bounds = layout_bounds;
-
-                let x = shadow.x_offset.to_px().unwrap() * self.scale_factor();
-                let y = shadow.y_offset.to_px().unwrap() * self.scale_factor();
-
-                shadow_bounds = shadow_bounds.offset(x, y);
-
-                if let Some(blur_radius) =
-                    shadow.blur_radius.as_ref().map(|br| br.clone().to_px().unwrap() / 2.0)
-                {
-                    shadow_bounds = shadow_bounds.expand(blur_radius * self.scale_factor());
-                }
-
-                if let Some(spread_radius) =
-                    shadow.spread_radius.as_ref().map(|sr| sr.clone().to_px().unwrap())
-                {
-                    shadow_bounds = shadow_bounds.expand(spread_radius * self.scale_factor());
-                }
-
-                layout_bounds = layout_bounds.union(&shadow_bounds);
-            }
-        }
-
-        let mut outline_bounds = layout_bounds;
-
-        if let Some(outline_width) = self.style.outline_width.get(entity) {
-            outline_bounds = outline_bounds
-                .expand(outline_width.to_pixels(layout_bounds.diagonal(), self.scale_factor()));
-        }
-
-        if let Some(outline_offset) = self.style.outline_offset.get(entity) {
-            outline_bounds = outline_bounds
-                .expand(outline_offset.to_pixels(layout_bounds.diagonal(), self.scale_factor()));
-        }
-
-        layout_bounds = layout_bounds.union(&outline_bounds);
-
-        let matrix = self.cache.transform.get(entity).copied().unwrap();
-        // let transformed_bounds = bounds.transform(&matrix);
-        let rect: Rect = layout_bounds.into();
-        let tr = matrix.map_rect(rect).0;
-
-        let dirty_bounds: BoundingBox = tr.into();
-
-        let parent = self.tree.get_layout_parent(entity).unwrap_or(Entity::root());
-        if let Some(clip_bounds) = self.cache.clip_path.get(parent) {
-            dirty_bounds.intersection(clip_bounds)
-        } else {
-            dirty_bounds
-        }
-    }
-
     /// Add a listener to an entity.
     ///
     /// A listener can be used to handle events which would not normally propagate to the entity.
