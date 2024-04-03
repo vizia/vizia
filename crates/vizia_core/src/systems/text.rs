@@ -61,6 +61,8 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                 // paragraph.layout(text_bounds.width());
                 paragraph.layout(bounds.width() - padding_left - padding_right);
             }
+
+            cx.style.needs_redraw(entity);
         }
     }
 
