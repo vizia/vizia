@@ -14,9 +14,9 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     // Properties which affect rendering
     // Opacity
     redraw_entities.extend(cx.style.opacity.tick(time));
-    // Border Colour
+    // Corner Colour
     redraw_entities.extend(cx.style.border_color.tick(time));
-    // Border Radius
+    // Corner Radius
     redraw_entities.extend(cx.style.corner_top_left_radius.tick(time));
     redraw_entities.extend(cx.style.corner_top_right_radius.tick(time));
     redraw_entities.extend(cx.style.corner_bottom_left_radius.tick(time));
