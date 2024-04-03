@@ -6,15 +6,15 @@ avatar {
 }
 
 avatar.circle {
-    border-radius: 50%;
+    corner-radius: 50%;
 }
 
 avatar.square {
-    border-radius: 0px;
+    corner-radius: 0px;
 }
 
 avatar.rounded {
-    border-radius: 4px;
+    corner-radius: 4px;
 }
 
 avatar > icon {
@@ -28,18 +28,18 @@ avatar > image {
 }
 
 avatar.circle > image {
-    border-radius: 50%;
+    corner-radius: 50%;
 }
 
 avatar.rounded > image {
-    border-radius: 4px;
+    corner-radius: 4px;
 }
 
 /* BADGE */
 badge {
     position-type: self-directed;
     size: 20px;
-    border-radius: 50%;
+    corner-radius: 50%;
     child-space: 1s;
     font-size: 16;
 }
@@ -357,7 +357,7 @@ image {
 knob {
     width: 32px;
     height: 32px;
-    border-radius: 50%;
+    corner-radius: 50%;
 }
 
 .knob-track {
@@ -372,7 +372,7 @@ knob {
     left: 2px;
     right: 2px;
     bottom: 2px;
-    border-radius: 50%;
+    corner-radius: 50%;
 }
 
 .knob-tick {
@@ -710,7 +710,7 @@ scrollbar.vertical .thumb {
 slider {
     height: 5px;
     width: 1s;
-    border-radius: 50%;
+    corner-radius: 50%;
 }
 
 slider.vertical {

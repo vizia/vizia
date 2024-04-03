@@ -9,7 +9,7 @@ const STYLE: &str = r#"
 
     element {
         size: 100px;
-        border-radius: 20px;
+        cop: 20px;
         background-color: rgb(200, 200, 200);
     }
 
@@ -22,37 +22,37 @@ const STYLE: &str = r#"
         transition: border 0.1s;
     }
 
-    .border_radius {
-        border-radius: 5px 10px 15px 20px;
+    .corner-radius {
+        corner-radius: 5px 10px 15px 20px;
     }
 
-    .border_radius:hover {
-        border-radius: 10px 20px 30px 40px;
-        transition: border-radius 0.1s;
+    .corner_radius:hover {
+        corner-radius: 10px 20px 30px 40px;
+        transition: corner-radius 0.1s;
     }
 
-    .border_shape {
-        border-radius: 30px;
+    .corner_shape {
+        corner-radius: 30px;
         border-corner-shape: round bevel round bevel;
     }
 
-    .border_shape:hover {
-        border-radius: 30px;
+    .corner_shape:hover {
+        corner-radius: 30px;
         border-corner-shape: bevel round bevel round;
     }
 "#;
 
 #[derive(Lens)]
 pub struct AppData {
-    border_top_right_radius: LengthOrPercentage,
-    border_bottom_right_radius: LengthOrPercentage,
-    border_bottom_left_radius: LengthOrPercentage,
-    border_top_left_radius: LengthOrPercentage,
+    corner_top_right_radius: LengthOrPercentage,
+    corner_bottom_right_radius: LengthOrPercentage,
+    corner_bottom_left_radius: LengthOrPercentage,
+    corner_top_left_radius: LengthOrPercentage,
 
-    border_top_right_shape: BorderCornerShape,
-    border_bottom_right_shape: BorderCornerShape,
-    border_bottom_left_shape: BorderCornerShape,
-    border_top_left_shape: BorderCornerShape,
+    corner_top_right_shape: CornerShape,
+    corner_bottom_right_shape: CornerShape,
+    corner_bottom_left_shape: CornerShape,
+    corner_top_left_shape: CornerShape,
 
     borer_corner_shapes: Vec<&'static str>,
 
@@ -62,8 +62,8 @@ pub struct AppData {
 impl Model for AppData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::SetBorderTopRightRadius(val) => {
-                self.border_top_right_radius = match self.border_top_left_radius {
+            AppEvent::SetCornerTopRightRadius(val) => {
+                self.corner_top_right_radius = match self.corner_top_left_radius {
                     LengthOrPercentage::Length(_) => LengthOrPercentage::Length(Length::px(*val)),
                     LengthOrPercentage::Percentage(_) => {
                         LengthOrPercentage::Percentage(*val / 100.0)
@@ -71,8 +71,8 @@ impl Model for AppData {
                 }
             }
 
-            AppEvent::SetBorderBottomRightRadius(val) => {
-                self.border_bottom_right_radius = match self.border_top_left_radius {
+            AppEvent::SetCornerBottomRightRadius(val) => {
+                self.corner_bottom_right_radius = match self.corner_top_left_radius {
                     LengthOrPercentage::Length(_) => LengthOrPercentage::Length(Length::px(*val)),
                     LengthOrPercentage::Percentage(_) => {
                         LengthOrPercentage::Percentage(*val / 100.0)
@@ -80,8 +80,8 @@ impl Model for AppData {
                 }
             }
 
-            AppEvent::SetBorderBottomLeftRadius(val) => {
-                self.border_bottom_left_radius = match self.border_top_left_radius {
+            AppEvent::SetCornerBottomLeftRadius(val) => {
+                self.corner_bottom_left_radius = match self.corner_top_left_radius {
                     LengthOrPercentage::Length(_) => LengthOrPercentage::Length(Length::px(*val)),
                     LengthOrPercentage::Percentage(_) => {
                         LengthOrPercentage::Percentage(*val / 100.0)
@@ -89,18 +89,18 @@ impl Model for AppData {
                 }
             }
 
-            AppEvent::SetBorderTopLeftRadius(val) => {
-                self.border_top_left_radius = match self.border_top_left_radius {
+            AppEvent::SetCornerTopLeftRadius(val) => {
+                self.corner_top_left_radius = match self.corner_top_left_radius {
                     LengthOrPercentage::Length(_) => LengthOrPercentage::Length(Length::px(*val)),
                     LengthOrPercentage::Percentage(_) => {
                         LengthOrPercentage::Percentage(*val / 100.0)
                     }
                 }
             }
-            AppEvent::SetBorderTopRightShape(shape) => self.border_top_right_shape = *shape,
-            AppEvent::SetBorderBottomRightShape(shape) => self.border_bottom_right_shape = *shape,
-            AppEvent::SetBorderBottomLeftShape(shape) => self.border_bottom_left_shape = *shape,
-            AppEvent::SetBorderTopLeftShape(shape) => self.border_top_left_shape = *shape,
+            AppEvent::SetCornerTopRightShape(shape) => self.corner_top_right_shape = *shape,
+            AppEvent::SetCornerBottomRightShape(shape) => self.corner_bottom_right_shape = *shape,
+            AppEvent::SetCornerBottomLeftShape(shape) => self.corner_bottom_left_shape = *shape,
+            AppEvent::SetCornerTopLeftShape(shape) => self.corner_top_left_shape = *shape,
             AppEvent::SetBorderWidth(val) => {
                 self.border_width = match self.border_width {
                     LengthOrPercentage::Length(_) => LengthOrPercentage::Length(Length::px(*val)),
@@ -114,15 +114,15 @@ impl Model for AppData {
 }
 
 pub enum AppEvent {
-    SetBorderTopRightRadius(f32),
-    SetBorderBottomRightRadius(f32),
-    SetBorderBottomLeftRadius(f32),
-    SetBorderTopLeftRadius(f32),
+    SetCornerTopRightRadius(f32),
+    SetCornerBottomRightRadius(f32),
+    SetCornerBottomLeftRadius(f32),
+    SetCornerTopLeftRadius(f32),
 
-    SetBorderTopRightShape(BorderCornerShape),
-    SetBorderBottomRightShape(BorderCornerShape),
-    SetBorderBottomLeftShape(BorderCornerShape),
-    SetBorderTopLeftShape(BorderCornerShape),
+    SetCornerTopRightShape(CornerShape),
+    SetCornerBottomRightShape(CornerShape),
+    SetCornerBottomLeftShape(CornerShape),
+    SetCornerTopLeftShape(CornerShape),
 
     SetBorderWidth(f32),
 }
@@ -201,15 +201,15 @@ impl<'a> UnitEditorModifiers for Handle<'a, UnitEditor> {
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData {
-            border_top_right_radius: LengthOrPercentage::default(),
-            border_bottom_right_radius: LengthOrPercentage::default(),
-            border_bottom_left_radius: LengthOrPercentage::default(),
-            border_top_left_radius: LengthOrPercentage::default(),
+            corner_top_right_radius: LengthOrPercentage::default(),
+            corner_bottom_right_radius: LengthOrPercentage::default(),
+            corner_bottom_left_radius: LengthOrPercentage::default(),
+            corner_top_left_radius: LengthOrPercentage::default(),
 
-            border_top_right_shape: BorderCornerShape::default(),
-            border_bottom_right_shape: BorderCornerShape::default(),
-            border_bottom_left_shape: BorderCornerShape::default(),
-            border_top_left_shape: BorderCornerShape::default(),
+            corner_top_right_shape: CornerShape::default(),
+            corner_bottom_right_shape: CornerShape::default(),
+            corner_bottom_left_shape: CornerShape::default(),
+            corner_top_left_shape: CornerShape::default(),
 
             borer_corner_shapes: vec!["Round", "Bevel"],
 
@@ -222,14 +222,14 @@ fn main() -> Result<(), ApplicationError> {
                 Element::new(cx)
                     .size(Pixels(200.0))
                     .background_color(Color::gray())
-                    .border_top_right_radius(AppData::border_top_right_radius)
-                    .border_bottom_right_radius(AppData::border_bottom_right_radius)
-                    .border_bottom_left_radius(AppData::border_bottom_left_radius)
-                    .border_top_left_radius(AppData::border_top_left_radius)
-                    .border_top_right_shape(AppData::border_top_right_shape)
-                    .border_bottom_right_shape(AppData::border_bottom_right_shape)
-                    .border_bottom_left_shape(AppData::border_bottom_left_shape)
-                    .border_top_left_shape(AppData::border_top_left_shape)
+                    .corner_top_right_radius(AppData::corner_top_right_radius)
+                    .corner_bottom_right_radius(AppData::corner_bottom_right_radius)
+                    .corner_bottom_left_radius(AppData::corner_bottom_left_radius)
+                    .corner_top_left_radius(AppData::corner_top_left_radius)
+                    .corner_top_right_shape(AppData::corner_top_right_shape)
+                    .corner_bottom_right_shape(AppData::corner_bottom_right_shape)
+                    .corner_bottom_left_shape(AppData::corner_bottom_left_shape)
+                    .corner_top_left_shape(AppData::corner_top_left_shape)
                     .border_width(AppData::border_width)
                     .border_color(Color::black());
             })
@@ -239,24 +239,24 @@ fn main() -> Result<(), ApplicationError> {
                     HStack::new(cx, |cx| {
                         UnitEditor::new(
                             cx,
-                            "Border Top Right Radius",
-                            AppData::border_top_right_radius,
+                            "Corner Top Right Radius",
+                            AppData::corner_top_right_radius,
                         )
-                        .on_change(|cx, val| cx.emit(AppEvent::SetBorderTopRightRadius(val)));
+                        .on_change(|cx, val| cx.emit(AppEvent::SetCornerTopRightRadius(val)));
 
                         PickList::new(
                             cx,
                             AppData::borer_corner_shapes,
-                            AppData::border_top_right_shape.map(|s| *s as usize),
+                            AppData::corner_top_right_shape.map(|s| *s as usize),
                             true,
                         )
                         .width(Pixels(75.0))
                         .top(Stretch(1.0))
                         .on_select(|cx, val| {
-                            cx.emit(AppEvent::SetBorderTopRightShape(if val == 0 {
-                                BorderCornerShape::Round
+                            cx.emit(AppEvent::SetCornerTopRightShape(if val == 0 {
+                                CornerShape::Round
                             } else {
-                                BorderCornerShape::Bevel
+                                CornerShape::Bevel
                             }))
                         });
                     })
@@ -265,24 +265,24 @@ fn main() -> Result<(), ApplicationError> {
                     HStack::new(cx, |cx| {
                         UnitEditor::new(
                             cx,
-                            "Border Bottom Right Radius",
-                            AppData::border_bottom_right_radius,
+                            "Corner Bottom Right Radius",
+                            AppData::corner_bottom_right_radius,
                         )
-                        .on_change(|cx, val| cx.emit(AppEvent::SetBorderBottomRightRadius(val)));
+                        .on_change(|cx, val| cx.emit(AppEvent::SetCornerBottomRightRadius(val)));
 
                         PickList::new(
                             cx,
                             AppData::borer_corner_shapes,
-                            AppData::border_bottom_right_shape.map(|s| *s as usize),
+                            AppData::corner_bottom_right_shape.map(|s| *s as usize),
                             true,
                         )
                         .width(Pixels(75.0))
                         .top(Stretch(1.0))
                         .on_select(|cx, val| {
-                            cx.emit(AppEvent::SetBorderBottomRightShape(if val == 0 {
-                                BorderCornerShape::Round
+                            cx.emit(AppEvent::SetCornerBottomRightShape(if val == 0 {
+                                CornerShape::Round
                             } else {
-                                BorderCornerShape::Bevel
+                                CornerShape::Bevel
                             }))
                         });
                     })
@@ -291,24 +291,24 @@ fn main() -> Result<(), ApplicationError> {
                     HStack::new(cx, |cx| {
                         UnitEditor::new(
                             cx,
-                            "Border Bottom Left Radius",
-                            AppData::border_bottom_left_radius,
+                            "Corner Bottom Left Radius",
+                            AppData::corner_bottom_left_radius,
                         )
-                        .on_change(|cx, val| cx.emit(AppEvent::SetBorderBottomLeftRadius(val)));
+                        .on_change(|cx, val| cx.emit(AppEvent::SetCornerBottomLeftRadius(val)));
 
                         PickList::new(
                             cx,
                             AppData::borer_corner_shapes,
-                            AppData::border_bottom_left_shape.map(|s| *s as usize),
+                            AppData::corner_bottom_left_shape.map(|s| *s as usize),
                             true,
                         )
                         .width(Pixels(75.0))
                         .top(Stretch(1.0))
                         .on_select(|cx, val| {
-                            cx.emit(AppEvent::SetBorderBottomLeftShape(if val == 0 {
-                                BorderCornerShape::Round
+                            cx.emit(AppEvent::SetCornerBottomLeftShape(if val == 0 {
+                                CornerShape::Round
                             } else {
-                                BorderCornerShape::Bevel
+                                CornerShape::Bevel
                             }))
                         });
                     })
@@ -317,24 +317,24 @@ fn main() -> Result<(), ApplicationError> {
                     HStack::new(cx, |cx| {
                         UnitEditor::new(
                             cx,
-                            "Border Top Left Radius",
-                            AppData::border_top_left_radius,
+                            "Corner Top Left Radius",
+                            AppData::corner_top_left_radius,
                         )
-                        .on_change(|cx, val| cx.emit(AppEvent::SetBorderTopLeftRadius(val)));
+                        .on_change(|cx, val| cx.emit(AppEvent::SetCornerTopLeftRadius(val)));
 
                         PickList::new(
                             cx,
                             AppData::borer_corner_shapes,
-                            AppData::border_top_left_shape.map(|s| *s as usize),
+                            AppData::corner_top_left_shape.map(|s| *s as usize),
                             true,
                         )
                         .width(Pixels(75.0))
                         .top(Stretch(1.0))
                         .on_select(|cx, val| {
-                            cx.emit(AppEvent::SetBorderTopLeftShape(if val == 0 {
-                                BorderCornerShape::Round
+                            cx.emit(AppEvent::SetCornerTopLeftShape(if val == 0 {
+                                CornerShape::Round
                             } else {
-                                BorderCornerShape::Bevel
+                                CornerShape::Bevel
                             }))
                         });
                     })
@@ -372,10 +372,10 @@ fn main() -> Result<(), ApplicationError> {
         //     ));
 
         //     Element::new(cx).border_radius(Pixels(30.0)).border_corner_shape((
-        //         BorderCornerShape::Bevel,
-        //         BorderCornerShape::Round,
-        //         BorderCornerShape::Bevel,
-        //         BorderCornerShape::Round,
+        //         CornerShape::Bevel,
+        //         CornerShape::Round,
+        //         CornerShape::Bevel,
+        //         CornerShape::Round,
         //     ));
         // })
         // .class("row");

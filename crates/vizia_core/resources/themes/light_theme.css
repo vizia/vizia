@@ -56,7 +56,7 @@ badge.error {
 /* BUTTON  */
 
 button {
-    border-radius: 4px;
+    corner-radius: 4px;
     border: 1px #d2d2d2;
     background-color: #fdfdfd;
     transition: background-color 100ms;
@@ -166,43 +166,43 @@ button:disabled {
 
 button-group > button,
 button-group > toggle-button {
-    border-radius: 0px;
+    corner-radius: 0px;
     right: -1px;
 }
 
 button-group.vertical > button,
 button-group.vertical > toggle-button {
-    border-radius: 0px;
+    corner-radius: 0px;
     right: auto;
     bottom: -1px;
 }
 
 button-group > :first-child {
-    border-top-left-radius: 4px;
-    border-bottom-left-radius: 4px;
+    corner-top-left-radius: 4px;
+    corner-bottom-left-radius: 4px;
     right: -1px;
     left: auto;
 }
 
 button-group > :last-child {
-    border-top-right-radius: 4px;
-    border-bottom-right-radius: 4px;
+    corner-top-right-radius: 4px;
+    corner-bottom-right-radius: 4px;
     left: -1px;
     right: auto;
 }
 
 button-group.vertical > :first-child {
-    border-radius: 0px;
-    border-top-right-radius: 4px;
-    border-top-left-radius: 4px;
+    corner-radius: 0px;
+    corner-top-right-radius: 4px;
+    corner-top-left-radius: 4px;
     right: auto;
     bottom: -1px;
 }
 
 button-group.vertical > :last-child {
-    border-radius: 0px;
-    border-bottom-right-radius: 4px;
-    border-bottom-left-radius: 4px;
+    corner-radius: 0px;
+    corner-bottom-right-radius: 4px;
+    corner-bottom-left-radius: 4px;
     left: auto;
     top: -1px;
 }
@@ -222,7 +222,7 @@ button-group.accent > :last-child {
 /* CHECKBOX */
 
 checkbox {
-    border-radius: 2px;
+    corner-radius: 2px;
     border-width: 1px;
     border-color: #d2d2d2;
     background-color: #fdfdfd;
@@ -284,7 +284,7 @@ checkbox:checked:disabled {
 /* CHIP */
 
 chip {
-    border-radius: 50%;
+    corner-radius: 50%;
     background-color: #d2d2d2;
 }
 
@@ -297,7 +297,7 @@ chip.outline {
 chip .close-icon {
     background-color: #e0e0e000;
     transition: background-color 100ms;
-    border-radius: 50%;
+    corner-radius: 50%;
 }
 
 chip .close-icon:hover {
@@ -312,14 +312,14 @@ chip:disabled .icon {
 /* COMBOBOX */
 
 combobox {
-    border-radius: 4px;
+    corner-radius: 4px;
     background-color: #fdfdfd;
 }
 
 combobox .title {
     border-width: 1px;
     border-color: #d2d2d2;
-    border-radius: 4px;
+    corner-radius: 4px;
 }
 
 combobox > textbox > label.placeholder {
@@ -327,7 +327,7 @@ combobox > textbox > label.placeholder {
 }
 
 combobox popup {
-    border-radius: 4px;
+    corner-radius: 4px;
     border-width: 1px;
     border-color: #d2d2d2;
     background-color: #fdfdfd;
@@ -349,7 +349,7 @@ combobox .list label:checked {
 
 datepicker {
     background-color: #fff;
-    border-radius: 4px;
+    corner-radius: 4px;
     border-color: #d2d2d2;
     border-width: 1px;
 }
@@ -361,7 +361,7 @@ datepicker {
 .datepicker-calendar-day {
     color: #525252;
     cursor: hand;
-    border-radius: 4px;
+    corner-radius: 4px;
 }
 
 .datepicker-calendar-day:focus-visible {
@@ -372,7 +372,7 @@ datepicker {
 .datepicker-calendar-day:checked {
     color: #fff;
     background-color: #51afef;
-    border-radius: 4px;
+    corner-radius: 4px;
 }
 
 .datepicker-calendar-day-disabled {
@@ -393,11 +393,11 @@ divider {
 /* DROPDOWN */
 
 dropdown {
-    border-radius: 4px;
+    corner-radius: 4px;
 }
 
 dropdown .dropdown-title {
-    border-radius: 4px;
+    corner-radius: 4px;
 }
 
 dropdown:over {
@@ -411,11 +411,11 @@ dropdown:active {
 dropdown .dropdown-title {
     border-width: 1px;
     border-color: #d2d2d2;
-    border-radius: 4px;
+    corner-radius: 4px;
 }
 
 dropdown popup {
-    border-radius: 4px;
+    corner-radius: 4px;
     border-width: 1px;
     border-color: #d2d2d2;
     background-color: #fdfdfd;
@@ -464,7 +464,7 @@ knob:disabled .knob-head {
 
 knob .knob-tick {
     background-color: #d2d2d2;
-    border-radius: 1px;
+    corner-radius: 1px;
 }
 
 knob:disabled .knob-tick {
@@ -491,7 +491,7 @@ list label.dark {
 
 menubutton {
     background-color: transparent;
-    border-radius: 4px;
+    corner-radius: 4px;
 }
 
 menubutton:focus {
@@ -513,7 +513,7 @@ menubutton .shortcut {
 
 submenu {
     background-color: transparent;
-    border-radius: 4px;
+    corner-radius: 4px;
     border-width: 1px;
     border-color: #d2d2d2;
 }
@@ -548,7 +548,7 @@ submenu > popup {
     border-color: #d2d2d2;
     background-color: #fdfdfd;
     child-space: 8px;
-    border-radius: 4px;
+    corner-radius: 4px;
     box-shadow: 0px 2px 16px #4f4f4f38;
 }
 
@@ -579,7 +579,7 @@ notification {
 /* PROGRESSBAR */
 
 progressbar {
-    border-radius: 50%;
+    corner-radius: 50%;
     background-color: #f4f4f4;
 }
 
@@ -588,7 +588,7 @@ progressbar:disabled {
 }
 
 progressbar .progressbar-bar {
-    border-radius: 50%;
+    corner-radius: 50%;
     background-color: #51afef;
 }
 
@@ -599,7 +599,7 @@ progressbar:disabled .progressbar-bar {
 /* PICKLIST */
 
 picklist {
-    border-radius: 4px;
+    corner-radius: 4px;
 }
 
 picklist:focus-visible {
@@ -620,7 +620,7 @@ radiobutton {
     width: 16px;
     height: 16px;
     border-width: 2px;
-    border-radius: 50%;
+    corner-radius: 50%;
     border-color: #d2d2d2;
     child-space: 1s;
 }
@@ -640,7 +640,7 @@ radiobutton:disabled {
 radiobutton .inner {
     width: 0px;
     height: 0px;
-    border-radius: 50%;
+    corner-radius: 50%;
     background-color: #d2d2d2;
 }
 
@@ -663,7 +663,7 @@ rating:focus-visible {
     outline-width: 1px;
     outline-color: #51afef;
     outline-offset: 3px;
-    border-radius: 4px;
+    corner-radius: 4px;
 }
 
 rating .icon {
@@ -678,7 +678,7 @@ rating .icon:focus-visible {
     outline-width: 1px;
     outline-color: #51afef;
     outline-offset: 3px;
-    border-radius: 4px;
+    corner-radius: 4px;
 }
 
 rating .icon:checked {
@@ -724,7 +724,7 @@ scrollbar {
 
 scrollbar .thumb {
     background-color: #d2d2d2;
-    border-radius: 50%;
+    corner-radius: 50%;
     opacity: 0;
     transition: opacity 200ms 0s linear;
 }
@@ -753,24 +753,24 @@ scrollview.v-scroll > scrollbar.vertical:active > .thumb {
 /* SLIDER */
 slider * {
     background-color: #51afef20;
-    border-radius: 2px;
+    corner-radius: 2px;
 }
 
 slider:focus-visible {
     outline-width: 1px;
     outline-color: #51afef;
     outline-offset: 3px;
-    border-radius: 4px;
+    corner-radius: 4px;
 }
 
 slider .active {
     background-color: #51afef80;
-    border-radius: 2px;
+    corner-radius: 2px;
 }
 
 slider .thumb {
     background-color: #51afef;
-    border-radius: 6px;
+    corner-radius: 6px;
     width: 12px;
     height: 12px;
     child-space: 1s;
@@ -779,14 +779,14 @@ slider .thumb {
 /* SPINBOX */
 spinbox {
     background-color: #fdfdfd;
-    border-radius: 4px;
+    corner-radius: 4px;
     border-width: 1px;
     border-color: #d2d2d2;
 }
 
 spinbox .spinbox-button {
     cursor: hand;
-    border-radius: 4px;
+    corner-radius: 4px;
 }
 
 spinbox .spinbox-button:focus-visible {
@@ -797,7 +797,7 @@ spinbox .spinbox-button:focus-visible {
 spinbox textbox.spinbox-value {
     background-color: transparent;
     border-width: 0px;
-    border-radius: 0px;
+    corner-radius: 0px;
 }
 
 spinbox picklist.spinbox-value dropdown {
@@ -817,11 +817,11 @@ spinbox picklist.spinbox-value .dropdown-title {
 
 /* SWITCH */
 switch {
-    border-radius: 4px;
+    corner-radius: 4px;
 }
 
 switch .switch-handle-bg {
-    border-radius: 6px;
+    corner-radius: 6px;
     background-color: #c4c4c4;
     transition: background-color 100ms;
 }
@@ -830,7 +830,7 @@ switch .switch-handle {
     border-width: 1px;
     border-color: #d2d2d2;
     background-color: #ececec;
-    border-radius: 50%;
+    corner-radius: 50%;
     transition: background-color 100ms;
     transition: left 100ms;
 }
@@ -897,7 +897,7 @@ tabview .tabview-divider {
 /* TEXTBOX */
 textbox {
     border-width: 1px;
-    border-radius: 4px;
+    corner-radius: 4px;
     border-color: #e4e4e4;
     background-color: #fff;
     transition: border-color 100ms;
@@ -942,7 +942,7 @@ textbox:invalid {
 /* TOGGLE BUTTON */
 
 toggle-button {
-    border-radius: 4px;
+    corner-radius: 4px;
     border-width: 1px;
     border-color: #d2d2d2;
     background-color: #fdfdfd;
@@ -975,7 +975,7 @@ toggle-button:disabled {
 tooltip {
     child-space: 8px;
     background-color: #181818;
-    border-radius: 4px;
+    corner-radius: 4px;
     color: #fafafa;
     opacity: 0;
 }

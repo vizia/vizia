@@ -115,7 +115,7 @@ impl_res_simple!(LengthValue);
 impl_res_simple!(FontWeight);
 impl_res_simple!(FontWeightKeyword);
 impl_res_simple!(FontSlant);
-impl_res_simple!(BorderCornerShape);
+impl_res_simple!(CornerShape);
 impl_res_simple!(Angle);
 impl_res_simple!(TextAlign);
 impl_res_simple!(TextOverflow);
