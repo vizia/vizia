@@ -8,7 +8,7 @@ const STYLE: &str = r#"
         child-left: 1s;
         child-right: 1s;
         background-color: white;
-        border-radius: 3px;
+        corner-radius: 3px;
         border-width: 1px;
         border-color: #999999;
         outer-shadow: 0 3 10 #00000055;
@@ -25,7 +25,7 @@ const STYLE: &str = r#"
     }
 
     .modal button {
-        border-radius: 3px;
+        corner-radius: 3px;
         child-space: 1s;
     }
 

@@ -12,7 +12,7 @@ const STYLE: &str = r#"
     }
 
     .outline {
-        border-radius: 5px 10px 15px 20px;
+        corner-radius: 5px 10px 15px 20px;
         outline: 5px black;
         outline-offset: 5px;
     }

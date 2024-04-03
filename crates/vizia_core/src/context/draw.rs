@@ -362,43 +362,43 @@ impl<'a> DrawContext<'a> {
     );
 
     get_length_property!(
-        /// Returns the border radius for the top-left corner of the current view.
-        border_top_left_radius
+        /// Returns the corner radius for the top-left corner of the current view.
+        corner_top_left_radius
     );
 
     get_length_property!(
-        /// Returns the border radius for the top-right corner of the current view.
-        border_top_right_radius
+        /// Returns the corner radius for the top-right corner of the current view.
+        corner_top_right_radius
     );
 
     get_length_property!(
-        /// Returns the border radius for the bottom-left corner of the current view.
-        border_bottom_left_radius
+        /// Returns the corner radius for the bottom-left corner of the current view.
+        corner_bottom_left_radius
     );
 
     get_length_property!(
-        /// Returns the border radius for the bottom-right corner of the current view.
-        border_bottom_right_radius
+        /// Returns the corner radius for the bottom-right corner of the current view.
+        corner_bottom_right_radius
     );
 
-    /// Returns the border corner shape for the top-left corner of the current view.
-    pub fn border_top_left_shape(&self) -> BorderCornerShape {
-        self.style.border_top_left_shape.get(self.current).copied().unwrap_or_default()
+    /// Returns the corner shape for the top-left corner of the current view.
+    pub fn corner_top_left_shape(&self) -> CornerShape {
+        self.style.corner_top_left_shape.get(self.current).copied().unwrap_or_default()
     }
 
-    /// Returns the border corner shape for the top-left corner of the current view.
-    pub fn border_top_right_shape(&self) -> BorderCornerShape {
-        self.style.border_top_right_shape.get(self.current).copied().unwrap_or_default()
+    /// Returns the corner shape for the top-left corner of the current view.
+    pub fn corner_top_right_shape(&self) -> CornerShape {
+        self.style.corner_top_right_shape.get(self.current).copied().unwrap_or_default()
     }
 
-    /// Returns the border corner shape for the top-left corner of the current view.
-    pub fn border_bottom_left_shape(&self) -> BorderCornerShape {
-        self.style.border_bottom_left_shape.get(self.current).copied().unwrap_or_default()
+    /// Returns the corner shape for the top-left corner of the current view.
+    pub fn corner_bottom_left_shape(&self) -> CornerShape {
+        self.style.corner_bottom_left_shape.get(self.current).copied().unwrap_or_default()
     }
 
-    /// Returns the border corner shape for the top-left corner of the current view.
-    pub fn border_bottom_right_shape(&self) -> BorderCornerShape {
-        self.style.border_bottom_right_shape.get(self.current).copied().unwrap_or_default()
+    /// Returns the corner shape for the top-left corner of the current view.
+    pub fn corner_bottom_right_shape(&self) -> CornerShape {
+        self.style.corner_bottom_right_shape.get(self.current).copied().unwrap_or_default()
     }
 
     get_units_property!(
@@ -463,25 +463,25 @@ impl<'a> DrawContext<'a> {
 
     /// Get the vector path of the current view.
     pub fn build_path(&self, bounds: BoundingBox, outset: (f32, f32)) -> Path {
-        let border_top_left_radius = self.border_top_left_radius();
-        let border_top_right_radius = self.border_top_right_radius();
-        let border_bottom_right_radius = self.border_bottom_right_radius();
-        let border_bottom_left_radius = self.border_bottom_left_radius();
+        let corner_top_left_radius = self.corner_top_left_radius();
+        let corner_top_right_radius = self.corner_top_right_radius();
+        let corner_bottom_right_radius = self.corner_bottom_right_radius();
+        let corner_bottom_left_radius = self.corner_bottom_left_radius();
 
-        let border_top_left_shape = self.border_top_left_shape();
-        let border_top_right_shape = self.border_top_right_shape();
-        let border_bottom_right_shape = self.border_bottom_right_shape();
-        let border_bottom_left_shape = self.border_bottom_left_shape();
+        let corner_top_left_shape = self.corner_top_left_shape();
+        let corner_top_right_shape = self.corner_top_right_shape();
+        let corner_bottom_right_shape = self.corner_bottom_right_shape();
+        let corner_bottom_left_shape = self.corner_bottom_left_shape();
 
         let rect: Rect = bounds.into();
 
         let mut rr = RRect::new_rect_radii(
             &rect,
             &[
-                Point::new(border_top_left_radius, border_top_left_radius),
-                Point::new(border_top_right_radius, border_top_right_radius),
-                Point::new(border_bottom_right_radius, border_bottom_right_radius),
-                Point::new(border_bottom_left_radius, border_bottom_left_radius),
+                Point::new(corner_top_left_radius, corner_top_left_radius),
+                Point::new(corner_top_right_radius, corner_top_right_radius),
+                Point::new(corner_bottom_right_radius, corner_bottom_right_radius),
+                Point::new(corner_bottom_left_radius, corner_bottom_left_radius),
             ],
         );
 
@@ -496,10 +496,10 @@ impl<'a> DrawContext<'a> {
         let mut path = Path::new();
 
         if width == height
-            && border_bottom_left_radius == width / 2.0
-            && border_bottom_right_radius == width / 2.0
-            && border_top_left_radius == height / 2.0
-            && border_top_right_radius == height / 2.0
+            && corner_bottom_left_radius == width / 2.0
+            && corner_bottom_right_radius == width / 2.0
+            && corner_top_left_radius == height / 2.0
+            && corner_top_right_radius == height / 2.0
         {
             path.add_circle((width / 2.0, bounds.h / 2.0), width / 2.0, PathDirection::CW);
         } else {
@@ -510,7 +510,7 @@ impl<'a> DrawContext<'a> {
                     compute_smooth_corner(top_right, 0.0, bounds.width(), bounds.height());
 
                 path.move_to((f32::max(width / 2.0, width - p), 0.0));
-                if border_top_right_shape == BorderCornerShape::Round {
+                if corner_top_right_shape == CornerShape::Round {
                     path.cubic_to(
                         (width - (p - a), 0.0),
                         (width - (p - a - b), 0.0),
@@ -543,7 +543,7 @@ impl<'a> DrawContext<'a> {
                     compute_smooth_corner(bottom_right, 0.0, width, height);
 
                 path.line_to((width, f32::max(height / 2.0, height - p)));
-                if border_bottom_right_shape == BorderCornerShape::Round {
+                if corner_bottom_right_shape == CornerShape::Round {
                     path.cubic_to(
                         (width, height - (p - a)),
                         (width, height - (p - a - b)),
@@ -574,7 +574,7 @@ impl<'a> DrawContext<'a> {
                     compute_smooth_corner(bottom_left, 0.0, width, height);
 
                 path.line_to((f32::min(width / 2.0, p), height));
-                if border_bottom_left_shape == BorderCornerShape::Round {
+                if corner_bottom_left_shape == CornerShape::Round {
                     path.cubic_to(
                         (p - a, height),
                         (p - a - b, height),
@@ -605,7 +605,7 @@ impl<'a> DrawContext<'a> {
                     compute_smooth_corner(top_left, 0.0, width, height);
 
                 path.line_to((0.0, f32::min(height / 2.0, p)));
-                if border_top_left_shape == BorderCornerShape::Round {
+                if corner_top_left_shape == CornerShape::Round {
                     path.cubic_to((0.0, p - a), (0.0, p - a - b), (d, p - a - b - c))
                         .r_arc_to_rotated(
                             (radius, radius),
