@@ -177,8 +177,8 @@ impl<'a> KeyframeBuilder<'a> {
 
     // BOX SHADOW
 
-    pub fn box_shadow(mut self, val: impl Into<Vec<BoxShadow>>) -> Self {
-        self.properties.push(Property::BoxShadow(val.into()));
+    pub fn shadow(mut self, val: impl Into<Vec<Shadow>>) -> Self {
+        self.properties.push(Property::Shadow(val.into()));
 
         self
     }

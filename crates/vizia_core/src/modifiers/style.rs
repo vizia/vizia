@@ -286,17 +286,17 @@ pub trait StyleModifiers: internal::Modifiable {
         self
     }
 
-    /// Add a box-shadow to the view.
-    fn box_shadow<U: Into<BoxShadow>>(mut self, value: impl Res<U>) -> Self {
+    /// Add a shadow to the view.
+    fn shadow<U: Into<Shadow>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, move |cx, v| {
                 let value = v.get(cx).into();
-                if let Some(box_shadows) = cx.style.box_shadow.get_inline_mut(cx.current) {
-                    box_shadows.push(value);
+                if let Some(shadows) = cx.style.shadow.get_inline_mut(cx.current) {
+                    shadows.push(value);
                 } else {
-                    cx.style.box_shadow.insert(cx.current, vec![value]);
+                    cx.style.shadow.insert(cx.current, vec![value]);
                 }
 
                 cx.needs_redraw();
@@ -629,64 +629,64 @@ impl From<LinearGradientBuilder> for Gradient {
 }
 
 #[derive(Debug, Clone)]
-pub struct BoxShadowBuilder {
-    box_shadow: BoxShadow,
+pub struct ShadowBuilder {
+    shadow: Shadow,
 }
 
-impl Default for BoxShadowBuilder {
+impl Default for ShadowBuilder {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl BoxShadowBuilder {
+impl ShadowBuilder {
     pub fn new() -> Self {
-        Self { box_shadow: BoxShadow::default() }
+        Self { shadow: Shadow::default() }
     }
 
-    fn build(self) -> BoxShadow {
-        self.box_shadow
+    fn build(self) -> Shadow {
+        self.shadow
     }
 
     pub fn x_offset(mut self, offset: impl Into<Length>) -> Self {
-        self.box_shadow.x_offset = offset.into();
+        self.shadow.x_offset = offset.into();
 
         self
     }
 
     pub fn y_offset(mut self, offset: impl Into<Length>) -> Self {
-        self.box_shadow.y_offset = offset.into();
+        self.shadow.y_offset = offset.into();
 
         self
     }
 
     pub fn blur(mut self, radius: Length) -> Self {
-        self.box_shadow.blur_radius = Some(radius);
+        self.shadow.blur_radius = Some(radius);
 
         self
     }
 
     pub fn spread(mut self, radius: Length) -> Self {
-        self.box_shadow.spread_radius = Some(radius);
+        self.shadow.spread_radius = Some(radius);
 
         self
     }
 
     pub fn color(mut self, color: Color) -> Self {
-        self.box_shadow.color = Some(color);
+        self.shadow.color = Some(color);
 
         self
     }
 
     pub fn inset(mut self) -> Self {
-        self.box_shadow.inset = true;
+        self.shadow.inset = true;
 
         self
     }
 }
 
-impl From<BoxShadowBuilder> for BoxShadow {
-    fn from(value: BoxShadowBuilder) -> Self {
+impl From<ShadowBuilder> for Shadow {
+    fn from(value: ShadowBuilder) -> Self {
         value.build()
     }
 }

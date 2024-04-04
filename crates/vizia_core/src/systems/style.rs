@@ -545,7 +545,7 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
     }
 
     // Outer Shadow
-    if style.box_shadow.link(entity, matched_rules) {
+    if style.shadow.link(entity, matched_rules) {
         should_redraw = true;
     }
 

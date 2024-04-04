@@ -512,7 +512,7 @@ notification {
     background-color: #262626;
     child-space: 8px;
     corner-radius: 4px;
-    box-shadow: 0px 2px 16px #00000038;
+    shadow: 0px 2px 16px #00000038;
 }
 
 /* PICKLIST */
@@ -522,7 +522,7 @@ notification {
 popup {
     background-color: #343434;
     corner-radius: 4px;
-    box-shadow: 0px 2px 16px #00000038;
+    shadow: 0px 2px 16px #00000038;
 }
 
 /* PROGRESS BAR */

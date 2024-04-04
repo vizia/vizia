@@ -17,120 +17,120 @@ const STYLE: &str = r#"
     }
 
     .shadow-offsetx {
-        box-shadow: 5px 0px red;
+        shadow: 5px 0px red;
     }
 
     .shadow-offsetx:hover {
-        box-shadow: 15px 0px red;
-        transition: box-shadow 100ms;
+        shadow: 15px 0px red;
+        transition: shadow 100ms;
     }
 
     .shadow-offsety {
-        box-shadow: 0px 5px red;
+        shadow: 0px 5px red;
     }
 
     .shadow-offsety:hover {
-        box-shadow: 0px 15px red;
-        transition: box-shadow 100ms;
+        shadow: 0px 15px red;
+        transition: shadow 100ms;
     }
 
     .shadow-offset {
-        box-shadow: 5px 5px red;
+        shadow: 5px 5px red;
     }
 
     .shadow-offset:hover {
-        box-shadow: 15px 15px red;
-        transition: box-shadow 100ms;
+        shadow: 15px 15px red;
+        transition: shadow 100ms;
     }
 
     .shadow-color {
-        box-shadow: 5px 5px red;
+        shadow: 5px 5px red;
     }
 
     .shadow-color:hover {
-        box-shadow: 5px 5px blue;
-        transition: box-shadow 200ms;
+        shadow: 5px 5px blue;
+        transition: shadow 200ms;
     }
 
     .shadow-blur {
-        box-shadow: 5px 5px 5px red;
+        shadow: 5px 5px 5px red;
     }
 
     .shadow-blur:hover {
-        box-shadow: 5px 5px 15px red;
-        transition: box-shadow 100ms;
+        shadow: 5px 5px 15px red;
+        transition: shadow 100ms;
     }
 
     .shadow-spread {
-        box-shadow: 0px 0px 0px 5px red;
+        shadow: 0px 0px 0px 5px red;
     }
 
     .shadow-spread:hover {
-        box-shadow: 0px 0px 0px 10px red;
-        transition: box-shadow 100ms;
+        shadow: 0px 0px 0px 10px red;
+        transition: shadow 100ms;
     }
     
     .shadow {
-        box-shadow: 5px 5px blue, 10px 10px red, 15px 15px green;
+        shadow: 5px 5px blue, 10px 10px red, 15px 15px green;
     }
 
     .shadow:hover {
-        box-shadow: 10px 10px 16px 8px blue, 20px 20px 16px 8px red, 30px 30px 16px 8px green;
-        transition: box-shadow 200ms;
+        shadow: 10px 10px 16px 8px blue, 20px 20px 16px 8px red, 30px 30px 16px 8px green;
+        transition: shadow 200ms;
     }
 
     .shadow-inset-offsetx {
-        box-shadow: 5px 0px 0px red inset;
+        shadow: 5px 0px 0px red inset;
     }
 
     .shadow-inset-offsetx:hover {
-        box-shadow: 15px 0px 0px red inset;
-        transition: box-shadow 100ms;
+        shadow: 15px 0px 0px red inset;
+        transition: shadow 100ms;
     }
 
     .shadow-inset-offsety {
-        box-shadow: 0px 5px red inset;
+        shadow: 0px 5px red inset;
     }
 
     .shadow-inset-offsety:hover {
-        box-shadow: 0px 15px red inset;
-        transition: box-shadow 100ms;
+        shadow: 0px 15px red inset;
+        transition: shadow 100ms;
     }
 
     .shadow-inset-offset {
-        box-shadow: 5px 5px red inset;
+        shadow: 5px 5px red inset;
     }
 
     .shadow-inset-offset:hover {
-        box-shadow: 15px 15px red inset;
-        transition: box-shadow 100ms;
+        shadow: 15px 15px red inset;
+        transition: shadow 100ms;
     }
 
     .shadow-inset-color {
-        box-shadow: 5px 5px red inset;
+        shadow: 5px 5px red inset;
     }
 
     .shadow-inset-color:hover {
-        box-shadow: 5px 5px blue inset;
-        transition: box-shadow 200ms;
+        shadow: 5px 5px blue inset;
+        transition: shadow 200ms;
     }
 
     .shadow-inset-blur {
-        box-shadow: 5px 5px 5px red inset;
+        shadow: 5px 5px 5px red inset;
     }
 
     .shadow-inset-blur:hover {
-        box-shadow: 5px 5px 15px red inset;
-        transition: box-shadow 100ms;
+        shadow: 5px 5px 15px red inset;
+        transition: shadow 100ms;
     }
 
     .shadow-inset {
-        box-shadow: 5px 5px blue inset, 10px 10px red inset, 15px 15px green inset;
+        shadow: 5px 5px blue inset, 10px 10px red inset, 15px 15px green inset;
     }
 
     .shadow-inset:hover {
-        box-shadow: 10px 10px 16px blue inset, 20px 20px 16px red inset, 30px 30px 16px green inset;
-        transition: box-shadow 200ms;
+        shadow: 10px 10px 16px blue inset, 20px 20px 16px red inset, 30px 30px 16px green inset;
+        transition: shadow 200ms;
     }
 "#;
 
@@ -158,8 +158,8 @@ fn main() -> Result<(), ApplicationError> {
         });
 
         Element::new(cx)
-            .box_shadow(BoxShadowBuilder::new().x_offset(5.0).y_offset(5.0).color(Color::black()))
-            .box_shadow(BoxShadow::new(
+            .shadow(ShadowBuilder::new().x_offset(5.0).y_offset(5.0).color(Color::black()))
+            .shadow(Shadow::new(
                 Length::px(10.0),
                 Length::px(10.0),
                 None,

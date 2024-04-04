@@ -68,13 +68,12 @@ use std::fmt::Debug;
 use crate::prelude::*;
 
 pub use vizia_style::{
-    Angle, BackgroundImage, BackgroundSize, BoxShadow, ClipPath, Color, CornerShape, CssRule,
-    CursorIcon, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
-    FontWeightKeyword, FontWidth, GenericFontFamily, Gradient, HorizontalPosition,
-    HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue, LineClamp, LineDirection,
-    LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position, Scale, TextAlign,
-    TextOverflow, Transform, Transition, Translate, VerticalPosition, VerticalPositionKeyword,
-    Visibility, RGBA,
+    Angle, BackgroundImage, BackgroundSize, ClipPath, Color, CornerShape, CssRule, CursorIcon,
+    Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight, FontWeightKeyword,
+    FontWidth, GenericFontFamily, Gradient, HorizontalPosition, HorizontalPositionKeyword, Length,
+    LengthOrPercentage, LengthValue, LineClamp, LineDirection, LinearGradient, Matrix, Opacity,
+    Overflow, PointerEvents, Position, Scale, Shadow, TextAlign, TextOverflow, Transform,
+    Transition, Translate, VerticalPosition, VerticalPositionKeyword, Visibility, RGBA,
 };
 
 use vizia_style::{
@@ -251,8 +250,8 @@ pub struct Style {
     pub(crate) background_image: AnimatableSet<Vec<ImageOrGradient>>,
     pub(crate) background_size: AnimatableSet<Vec<BackgroundSize>>,
 
-    // Box Shadow
-    pub(crate) box_shadow: AnimatableSet<Vec<BoxShadow>>,
+    // Shadow
+    pub(crate) shadow: AnimatableSet<Vec<Shadow>>,
 
     // Text & Font
     pub text: SparseSet<String>,
@@ -383,7 +382,7 @@ impl Default for Style {
             background_color: Default::default(),
             background_image: Default::default(),
             background_size: Default::default(),
-            box_shadow: Default::default(),
+            shadow: Default::default(),
             text_wrap: Default::default(),
             text_overflow: Default::default(),
             line_clamp: Default::default(),
@@ -616,8 +615,8 @@ impl Style {
                 }
 
                 // BOX SHADOW
-                Property::BoxShadow(value) => {
-                    insert_keyframe(&mut self.box_shadow, animation_id, time, value.clone());
+                Property::Shadow(value) => {
+                    insert_keyframe(&mut self.shadow, animation_id, time, value.clone());
                 }
 
                 // TEXT
@@ -804,7 +803,7 @@ impl Style {
         self.background_image.play_animation(entity, animation, start_time, duration);
         self.background_size.play_animation(entity, animation, start_time, duration);
 
-        self.box_shadow.play_animation(entity, animation, start_time, duration);
+        self.shadow.play_animation(entity, animation, start_time, duration);
 
         self.font_color.play_animation(entity, animation, start_time, duration);
         self.font_size.play_animation(entity, animation, start_time, duration);
@@ -862,7 +861,7 @@ impl Style {
             | self.background_color.has_active_animation(entity, animation)
             | self.background_image.has_active_animation(entity, animation)
             | self.background_size.has_active_animation(entity, animation)
-            | self.box_shadow.has_active_animation(entity, animation)
+            | self.shadow.has_active_animation(entity, animation)
             | self.font_color.has_active_animation(entity, animation)
             | self.font_size.has_active_animation(entity, animation)
             | self.caret_color.has_active_animation(entity, animation)
@@ -1090,9 +1089,9 @@ impl Style {
                 self.background_size.insert_transition(rule_id, animation);
             }
 
-            "box-shadow" => {
-                self.box_shadow.insert_animation(animation, self.add_transition(transition));
-                self.box_shadow.insert_transition(rule_id, animation);
+            "shadow" => {
+                self.shadow.insert_animation(animation, self.add_transition(transition));
+                self.shadow.insert_transition(rule_id, animation);
             }
 
             "color" => {
@@ -1643,8 +1642,8 @@ impl Style {
             }
 
             // Box Shadows
-            Property::BoxShadow(box_shadows) => {
-                self.box_shadow.insert_rule(rule_id, box_shadows);
+            Property::Shadow(shadows) => {
+                self.shadow.insert_rule(rule_id, shadows);
             }
 
             // Cursor Icon
@@ -1777,7 +1776,7 @@ impl Style {
         self.background_size.remove(entity);
 
         // Box Shadow
-        self.box_shadow.remove(entity);
+        self.shadow.remove(entity);
 
         // Text and Font
         self.text.remove(entity);
@@ -1926,7 +1925,7 @@ impl Style {
         self.background_image.clear_rules();
         self.background_size.clear_rules();
 
-        self.box_shadow.clear_rules();
+        self.shadow.clear_rules();
 
         self.layout_type.clear_rules();
         self.position_type.clear_rules();

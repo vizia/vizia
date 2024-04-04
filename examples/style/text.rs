@@ -172,7 +172,7 @@ fn main() -> Result<(), ApplicationError> {
                     .on_toggle(|cx| cx.emit(AppEvent::SetSelectedAlign(TextAlign::Justify)));
 
                 });
-            }).width(Pixels(200.0)).box_shadow("-2px 0px 10px #22222255").child_space(Pixels(10.0)).row_between(Pixels(10.0));
+            }).width(Pixels(200.0)).shadow("-2px 0px 10px #22222255").child_space(Pixels(10.0)).row_between(Pixels(10.0));
         });
 
         // VStack::new(cx, |cx| {
