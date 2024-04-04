@@ -73,8 +73,8 @@ name = "gradient"
 path = "examples/style/gradient.rs"
 
 [[example]]
-name = "box_shadow"
-path = "examples/style/box_shadow.rs"
+name = "shadow"
+path = "examples/style/shadow.rs"
 
 [[example]]
 name = "border"

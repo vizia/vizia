@@ -408,8 +408,8 @@ impl<'a> DrawContext<'a> {
         self.style.line_clamp.get(self.current).copied().map(|lc| lc.0 as usize)
     }
 
-    pub fn box_shadows(&self) -> Option<&Vec<BoxShadow>> {
-        self.style.box_shadow.get(self.current)
+    pub fn shadows(&self) -> Option<&Vec<Shadow>> {
+        self.style.shadow.get(self.current)
     }
 
     pub fn backdrop_filter(&self) -> Option<&Filter> {
@@ -851,10 +851,10 @@ impl<'a> DrawContext<'a> {
         }
     }
 
-    /// Draw box-shadows for the current view.
+    /// Draw shadows for the current view.
     pub fn draw_shadows(&mut self, canvas: &Canvas) {
-        if let Some(box_shadows) = self.box_shadows() {
-            if box_shadows.is_empty() {
+        if let Some(shadows) = self.shadows() {
+            if shadows.is_empty() {
                 return;
             }
 
@@ -862,19 +862,17 @@ impl<'a> DrawContext<'a> {
 
             let path = self.build_path(bounds, (0.0, 0.0));
 
-            for box_shadow in box_shadows.iter().rev() {
-                let shadow_color = box_shadow.color.unwrap_or_default();
+            for shadow in shadows.iter().rev() {
+                let shadow_color = shadow.color.unwrap_or_default();
 
-                let shadow_x_offset =
-                    box_shadow.x_offset.to_px().unwrap_or(0.0) * self.scale_factor();
-                let shadow_y_offset =
-                    box_shadow.y_offset.to_px().unwrap_or(0.0) * self.scale_factor();
+                let shadow_x_offset = shadow.x_offset.to_px().unwrap_or(0.0) * self.scale_factor();
+                let shadow_y_offset = shadow.y_offset.to_px().unwrap_or(0.0) * self.scale_factor();
                 let spread_radius =
-                    box_shadow.spread_radius.as_ref().and_then(|l| l.to_px()).unwrap_or(0.0)
+                    shadow.spread_radius.as_ref().and_then(|l| l.to_px()).unwrap_or(0.0)
                         * self.scale_factor();
 
                 let blur_radius =
-                    box_shadow.blur_radius.as_ref().and_then(|br| br.to_px()).unwrap_or(0.0);
+                    shadow.blur_radius.as_ref().and_then(|br| br.to_px()).unwrap_or(0.0);
 
                 if shadow_color.a() == 0
                     || (shadow_x_offset == 0.0
@@ -887,7 +885,7 @@ impl<'a> DrawContext<'a> {
 
                 let mut shadow_paint = Paint::default();
 
-                let outset = if box_shadow.inset { -spread_radius } else { spread_radius };
+                let outset = if shadow.inset { -spread_radius } else { spread_radius };
 
                 shadow_paint.set_style(PaintStyle::Fill);
 
@@ -905,14 +903,14 @@ impl<'a> DrawContext<'a> {
 
                 shadow_path.offset((shadow_x_offset, shadow_y_offset));
 
-                if box_shadow.inset {
+                if shadow.inset {
                     shadow_path = path.op(&shadow_path, skia_safe::PathOp::Difference).unwrap();
                 }
 
                 canvas.save();
                 canvas.clip_path(
                     &path,
-                    if box_shadow.inset { ClipOp::Intersect } else { ClipOp::Difference },
+                    if shadow.inset { ClipOp::Intersect } else { ClipOp::Difference },
                     true,
                 );
                 canvas.draw_path(&shadow_path, &shadow_paint);

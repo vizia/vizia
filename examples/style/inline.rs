@@ -35,7 +35,7 @@ fn main() -> Result<(), ApplicationError> {
             .selection_color(Color::royalblue())
             .caret_color(Color::azure())
             .text_wrap(true)
-            .box_shadow(
+            .shadow(
                 BoxShadowBuilder::new()
                     .x_offset(Pixels(10.0))
                     .y_offset(Pixels(10.0))
