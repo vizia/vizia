@@ -1,10 +1,10 @@
 use crate::{
     define_property, Angle, BackgroundImage, BackgroundSize, Border, BorderWidth, BorderWidthValue,
-    BoxShadow, ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError,
-    CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
-    FontWidth, LayoutType, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow, Parse,
-    PointerEvents, Position, PositionType, Rect, Scale, TextAlign, TextOverflow, Transform,
-    Transition, Translate, Units, UnparsedProperty, Visibility,
+    ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError, CustomProperty,
+    Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight, FontWidth,
+    LayoutType, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow, Parse, PointerEvents,
+    Position, PositionType, Rect, Scale, Shadow, TextAlign, TextOverflow, Transform, Transition,
+    Translate, Units, UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -100,9 +100,9 @@ define_property! {
 
         // Border Width
         "border-width": BorderWidth(BorderWidth),
-        "corner-top-width": BorderTopWidth(BorderWidthValue),
+        "border-top-width": BorderTopWidth(BorderWidthValue),
         "border-right-width": BorderRightWidth(BorderWidthValue),
-        "corner-bottom-width": BorderBottomWidth(BorderWidthValue),
+        "border-bottom-width": BorderBottomWidth(BorderWidthValue),
         "border-left-width": BorderLeftWidth(BorderWidthValue),
 
 
@@ -155,8 +155,8 @@ define_property! {
         "text-overflow": TextOverflow(TextOverflow),
         "line-clamp": LineClamp(LineClamp),
 
-        // Box Shadow
-        "box-shadow": BoxShadow(Vec<BoxShadow>),
+        // Shadow
+        "shadow": Shadow(Vec<Shadow>),
 
         // Backdrop Filter
         "backdrop-filter": BackdropFilter(Filter),

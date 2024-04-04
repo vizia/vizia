@@ -1,8 +1,8 @@
 use morphorm::Units;
 use vizia_style::{
-    Angle, BackgroundSize, BoxShadow, ClipPath, Color, ColorStop, Display, Filter, FontSize,
-    Gradient, Length, LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LineDirection,
-    LinearGradient, Opacity, PercentageOrNumber, Rect, Scale, Transform, Translate, RGBA,
+    Angle, BackgroundSize, ClipPath, Color, ColorStop, Display, Filter, FontSize, Gradient, Length,
+    LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LineDirection, LinearGradient,
+    Opacity, PercentageOrNumber, Rect, Scale, Shadow, Transform, Translate, RGBA,
 };
 
 use skia_safe::Matrix;
@@ -313,9 +313,9 @@ impl Interpolator for LinearGradient {
     }
 }
 
-impl Interpolator for BoxShadow {
+impl Interpolator for Shadow {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        BoxShadow {
+        Shadow {
             x_offset: Length::interpolate(&start.x_offset, &end.x_offset, t),
             y_offset: Length::interpolate(&start.y_offset, &end.y_offset, t),
             blur_radius: Option::interpolate(&start.blur_radius, &end.blur_radius, t),

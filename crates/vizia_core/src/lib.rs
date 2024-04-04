@@ -82,8 +82,8 @@ pub mod prelude {
     pub use super::layout::{BoundingBox, GeoChanged};
     pub use super::localization::{Localized, ToStringLocalized};
     pub use super::modifiers::{
-        AbilityModifiers, AccessibilityModifiers, ActionModifiers, BoxShadowBuilder,
-        LayoutModifiers, LinearGradientBuilder, StyleModifiers, TextModifiers,
+        AbilityModifiers, AccessibilityModifiers, ActionModifiers, LayoutModifiers,
+        LinearGradientBuilder, ShadowBuilder, StyleModifiers, TextModifiers,
     };
     pub use super::resource::ImageRetentionPolicy;
     pub use super::util::{IntoCssStr, CSS};
