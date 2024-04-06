@@ -657,7 +657,7 @@ scrollview {
     overflow: hidden;
 }
 
-scrollview > scroll_content {
+scrollview > scroll-content {
     width: auto;
     height: auto;
     min-width: 100%;
@@ -832,11 +832,11 @@ tabview.vertical > scrollview.vertical {
     height: 1s;
 }
 
-tabview > scrollview > scroll_content {
+tabview > scrollview > scroll-content {
     layout-type: row;
 }
 
-tabview.vertical > scrollview.vertical > scroll_content {
+tabview.vertical > scrollview.vertical > scroll-content {
     layout-type: column;
 }
 

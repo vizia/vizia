@@ -2,14 +2,14 @@
     child-space: 0px;
 }
 
-scrollview.widgets > scroll_content {
+scrollview.widgets > scroll-content {
     child-space: 20px;
     child-left: 1s;
     child-right: 1s;
     row-between: 15px;
 }
 
-tabview.widgets > scrollview > scroll_content {
+tabview.widgets > scrollview > scroll-content {
     child-space: 8px;
 }
 

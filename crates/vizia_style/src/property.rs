@@ -1,10 +1,10 @@
 use crate::{
-    define_property, Angle, BackgroundImage, BackgroundSize, Border, BorderWidth, BorderWidthValue,
-    ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError, CustomProperty,
-    Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight, FontWidth,
-    LayoutType, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow, Parse, PointerEvents,
-    Position, PositionType, Rect, Scale, Shadow, TextAlign, TextOverflow, Transform, Transition,
-    Translate, Units, UnparsedProperty, Visibility,
+    define_property, Angle, BackgroundImage, BackgroundSize, BlendMode, Border, BorderWidth,
+    BorderWidthValue, ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError,
+    CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
+    FontWidth, LayoutType, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow, Parse,
+    PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign, TextOverflow, Transform,
+    Transition, Translate, Units, UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -19,6 +19,7 @@ define_property! {
         "clip-path": ClipPath(ClipPath),
         "opacity": Opacity(Opacity),
         "z-index": ZIndex(i32),
+        "blend-mode": BlendMode(BlendMode),
 
         // Positioning
         "layout-type": LayoutType(LayoutType),
