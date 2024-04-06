@@ -77,7 +77,8 @@ pub use vizia_style::{
 };
 
 use vizia_style::{
-    EasingFunction, KeyframeSelector, ParserOptions, Property, SelectorList, Selectors, StyleSheet,
+    blend_mode, BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, SelectorList,
+    Selectors, StyleSheet,
 };
 
 mod rule;
@@ -195,9 +196,6 @@ pub struct Style {
     pub text_value: SparseSet<String>,
     pub numeric_value: SparseSet<f64>,
 
-    // Display
-    pub(crate) display: AnimatableSet<Display>,
-
     // Visibility
     pub(crate) visibility: StyleSet<Visibility>,
 
@@ -217,6 +215,8 @@ pub struct Style {
     // Filters
     pub(crate) backdrop_filter: AnimatableSet<Filter>,
 
+    pub(crate) blend_mode: StyleSet<BlendMode>,
+
     // Transform
     pub(crate) transform: AnimatableSet<Vec<Transform>>,
     pub(crate) transform_origin: AnimatableSet<Translate>,
@@ -228,13 +228,13 @@ pub struct Style {
     pub(crate) border_width: AnimatableSet<LengthOrPercentage>,
     pub(crate) border_color: AnimatableSet<Color>,
 
-    // Border Shape
+    // Corner Shape
     pub(crate) corner_top_left_shape: StyleSet<CornerShape>,
     pub(crate) corner_top_right_shape: StyleSet<CornerShape>,
     pub(crate) corner_bottom_left_shape: StyleSet<CornerShape>,
     pub(crate) corner_bottom_right_shape: StyleSet<CornerShape>,
 
-    // Border Radius
+    // Corner Radius
     pub(crate) corner_top_left_radius: AnimatableSet<LengthOrPercentage>,
     pub(crate) corner_top_right_radius: AnimatableSet<LengthOrPercentage>,
     pub(crate) corner_bottom_left_radius: AnimatableSet<LengthOrPercentage>,
@@ -253,7 +253,7 @@ pub struct Style {
     // Shadow
     pub(crate) shadow: AnimatableSet<Vec<Shadow>>,
 
-    // Text & Font
+    // Text
     pub text: SparseSet<String>,
     pub(crate) text_wrap: StyleSet<bool>,
     pub(crate) text_overflow: StyleSet<TextOverflow>,
@@ -275,6 +275,9 @@ pub struct Style {
     pub(crate) pointer_events: StyleSet<PointerEvents>,
 
     // LAYOUT
+
+    // Display
+    pub(crate) display: AnimatableSet<Display>,
 
     // Layout Type
     pub(crate) layout_type: StyleSet<LayoutType>,
@@ -357,6 +360,7 @@ impl Default for Style {
             visibility: Default::default(),
             opacity: Default::default(),
             z_index: Default::default(),
+            blend_mode: Default::default(),
             clip_path: Default::default(),
             overflowx: Default::default(),
             overflowy: Default::default(),
@@ -1265,6 +1269,11 @@ impl Style {
                 self.backdrop_filter.insert_rule(rule_id, filter);
             }
 
+            // Blend Mode
+            Property::BlendMode(blend_mode) => {
+                self.blend_mode.insert_rule(rule_id, blend_mode);
+            }
+
             // Layout Type
             Property::LayoutType(layout_type) => {
                 self.layout_type.insert_rule(rule_id, layout_type);
@@ -1742,6 +1751,9 @@ impl Style {
         // Backdrop Filter
         self.backdrop_filter.remove(entity);
 
+        // Blend Mode
+        self.blend_mode.remove(entity);
+
         // Transform
         self.transform.remove(entity);
         self.transform_origin.remove(entity);
@@ -1888,6 +1900,9 @@ impl Style {
 
         // Backdrop Filer
         self.backdrop_filter.clear_rules();
+
+        // Blend Mode
+        self.blend_mode.clear_rules();
 
         // Transform
         self.transform.clear_rules();
