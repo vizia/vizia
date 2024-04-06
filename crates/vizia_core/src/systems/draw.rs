@@ -1,9 +1,10 @@
 use crate::{animation::Interpolator, cache::CachedData, prelude::*};
 use morphorm::Node;
-use skia_safe::{ClipOp, Matrix, Paint, Rect, SamplingOptions};
+use skia_safe::{canvas::SaveLayerRec, ClipOp, ImageFilter, Matrix, Paint, Rect, SamplingOptions};
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use vizia_storage::{LayoutChildIterator, LayoutTreeIterator};
+use vizia_style::{backdrop_filter, blend_mode, BlendMode};
 
 pub(crate) fn transform_system(cx: &mut Context) {
     let iter = LayoutTreeIterator::full(&cx.tree);
@@ -215,15 +216,16 @@ pub(crate) fn draw_system(cx: &mut Context) {
         cx.canvases.get_mut(&Entity::root()).map(|(s1, s2)| (s1.canvas(), s2))
     {
         surface.draw(canvas, (0, 0), SamplingOptions::default(), None);
-        // Debug draw dirty rect
-        if let Some(dirty_rect) = cx.cache.dirty_rect {
-            let path: Rect = dirty_rect.into();
-            let mut paint = Paint::default();
-            paint.set_style(skia_safe::PaintStyle::Stroke);
-            paint.set_color(Color::red());
-            paint.set_stroke_width(1.0);
-            canvas.draw_rect(&path, &paint);
-        }
+
+        // // Debug draw dirty rect
+        // if let Some(dirty_rect) = cx.cache.dirty_rect {
+        //     let path: Rect = dirty_rect.into();
+        //     let mut paint = Paint::default();
+        //     paint.set_style(skia_safe::PaintStyle::Stroke);
+        //     paint.set_color(Color::red());
+        //     paint.set_stroke_width(1.0);
+        //     canvas.draw_rect(&path, &paint);
+        // }
     }
 
     cx.style.redraw_list.clear();
@@ -265,12 +267,35 @@ fn draw_entity(
         return;
     }
 
+    let backdrop_filter = cx.backdrop_filter();
+    let blend_mode = cx.style.blend_mode.get(current).copied().unwrap_or_default();
+
     canvas.save();
-    let layer_count = if cx.opacity() != 1.0 {
-        Some(canvas.save_layer_alpha_f(None, cx.opacity()))
-    } else {
-        None
-    };
+    let layer_count =
+        if cx.opacity() != 1.0 || backdrop_filter.is_some() || blend_mode != BlendMode::Normal {
+            let mut paint = Paint::default();
+            paint.set_alpha_f(cx.opacity());
+            paint.set_blend_mode(blend_mode.into());
+
+            let rect: Rect = cx.bounds().into();
+            let mut filter = ImageFilter::crop(&rect, None, None).unwrap();
+
+            let slr = if let Some(backdrop_filter) = backdrop_filter {
+                match backdrop_filter {
+                    Filter::Blur(radius) => {
+                        let sigma = radius.to_px().unwrap() * cx.scale_factor() / 2.0;
+                        filter = filter.blur(None, (sigma, sigma), None).unwrap();
+                        SaveLayerRec::default().paint(&paint).backdrop(&filter)
+                    }
+                }
+            } else {
+                SaveLayerRec::default().paint(&paint)
+            };
+
+            Some(canvas.save_layer(&slr))
+        } else {
+            None
+        };
 
     if let Some(transform) = cx.cache.transform.get(current) {
         canvas.set_matrix(&(transform.into()));

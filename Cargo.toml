@@ -58,7 +58,9 @@ path = "examples/style/outline.rs"
 
 
 
-
+[[example]]
+name = "blend_mode"
+path = "examples/style/blend_mode.rs"
 
 [[example]]
 name = "transform"
