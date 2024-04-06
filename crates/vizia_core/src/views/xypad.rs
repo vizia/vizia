@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use crate::style::{Length, LengthValue};
 
 pub struct XYPad {
     is_dragging: bool,
@@ -10,20 +11,20 @@ impl XYPad {
     pub fn new<L: Lens<Target = (f32, f32)>>(cx: &mut Context, lens: L) -> Handle<Self> {
         Self { is_dragging: false, on_change: None }
             .build(cx, |cx| {
+                // Thumb
                 Element::new(cx)
                     .position_type(PositionType::SelfDirected)
                     .left(lens.clone().map(|(x, _)| Percentage(*x * 100.0)))
                     .top(lens.clone().map(|(_, y)| Percentage((1.0 - *y) * 100.0)))
-                    .translate((-5.0, -5.0))
+                    .translate(Translate::new(Length::Value(LengthValue::Px(5.0)), Length::Value(LengthValue::Px(-5.0))))
                     .size(Pixels(10.0))
                     .border_radius(Percentage(50.0))
                     .border_width(Pixels(2.0))
-                    .border_color(Color::white())
+                    .border_color(Color::black())
                     .hoverable(false);
             })
             .overflow(Overflow::Hidden)
             .size(Pixels(200.0))
-            .background_color(Color::rgb(40, 40, 40))
     }
 }
 
@@ -32,14 +33,15 @@ impl View for XYPad {
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                 let current = cx.current();
+                cx.capture();
+                let mouse = cx.mouse();
                 if meta.target == current {
-                    cx.capture();
                     // let width = cx.cache.get_width(current);
                     // let height = cx.cache.get_height(current);
 
-                    let mut dx = (cx.mouse.left.pos_down.0 - cx.cache.get_posx(current))
+                    let mut dx = (mouse.left.pos_down.0 - cx.cache.get_posx(current))
                         / cx.cache.get_width(current);
-                    let mut dy = (cx.mouse.left.pos_down.1 - cx.cache.get_posy(current))
+                    let mut dy = (mouse.left.pos_down.1 - cx.cache.get_posy(current))
                         / cx.cache.get_height(current);
 
                     dx = dx.clamp(0.0, 1.0);
@@ -82,11 +84,12 @@ impl View for XYPad {
     }
 }
 
-impl Handle<'_, XYPad> {
-    pub fn on_change<F>(self, callback: F) -> Self
-    where
-        F: 'static + Fn(&mut EventContext, f32, f32),
-    {
-        self.modify(|xypad: &mut XYPad| xypad.on_change = Some(Box::new(callback)))
+pub trait XYPadModifiers {
+    fn on_change<F: Fn(&mut EventContext, f32, f32) + 'static>(self, callback: F) -> Self;
+}
+
+impl<'a> XYPadModifiers for Handle<'a, XYPad> {
+    fn on_change<F: Fn(&mut EventContext, f32, f32) + 'static>(self, callback: F) -> Self {
+        self.modify(|xypad| xypad.on_change = Some(Box::new(callback)))
     }
 }
