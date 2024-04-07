@@ -22,15 +22,12 @@ impl XYPad {
                     .size(Pixels(10.0))
                     .border_radius(Percentage(50.0))
                     .border_width(Pixels(2.0))
-                    .border_color(Color::black())
                     .hoverable(false)
                     .class("thumb");
             })
             .overflow(Overflow::Hidden)
             .border_width(Pixels(1.0))
-            .border_color(Color::black())
             .size(Pixels(200.0))
-            .class("xypad")
     }
 }
 
