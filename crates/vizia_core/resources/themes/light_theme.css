@@ -994,3 +994,13 @@ tooltip arrow {
 virtual-list label.dark {
     background-color: #00000015;
 }
+
+/* XY PAD */
+
+xypad {
+    border-color: #000000ff;
+}
+
+xypad .thumb {
+    border-color: #000000ff;
+}

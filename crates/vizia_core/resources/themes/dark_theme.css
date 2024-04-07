@@ -937,3 +937,13 @@ tooltip arrow {
 virtual-list label.dark {
     background-color: #00000015;
 }
+
+/* XY PAD */
+
+xypad {
+    background-color: #5c5c5c;
+}
+
+xypad:disabled {
+    background-color: #323232;
+}

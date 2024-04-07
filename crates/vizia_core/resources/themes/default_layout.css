@@ -944,3 +944,16 @@ virtual-list label {
     child-left: 5px;
     width: 1s;
 }
+
+/* XY PAD */
+
+xypad {
+    height: 50px;
+    width: 50px;
+}
+
+xypad .thumb {
+    width: 10px;
+    height: 10px;
+    child-space: 1s;
+}

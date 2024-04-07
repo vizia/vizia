@@ -256,6 +256,10 @@ name = "tabview"
 path = "examples/views/tabview.rs"
 
 [[example]]
+name = "xypad"
+path = "examples/views/xypad.rs"
+
+[[example]]
 name = "circle_drawer"
 path = "examples/7GUIs/circle_drawer.rs"
 
