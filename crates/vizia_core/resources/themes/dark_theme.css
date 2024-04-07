@@ -941,7 +941,11 @@ virtual-list label.dark {
 /* XY PAD */
 
 xypad {
-    background-color: #5c5c5c;
+    border-color: #ffffff;
+}
+
+xypad .thumb {
+    border-color: #ffffff;
 }
 
 xypad:disabled {
