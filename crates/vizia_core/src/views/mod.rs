@@ -35,6 +35,7 @@ mod textbox;
 mod toggle_button;
 mod tooltip;
 mod virtual_list;
+mod xypad;
 
 pub use self::image::Image;
 pub use crate::binding::Binding;
@@ -72,6 +73,7 @@ pub use textbox::{TextEvent, Textbox};
 pub use toggle_button::{ToggleButton, ToggleButtonModifiers};
 pub use tooltip::Tooltip;
 pub use virtual_list::*;
+pub use xypad::XYPad;
 
 use crate::prelude::Data;
 
