@@ -93,13 +93,11 @@ impl FilterElement {
 
 impl View for FilterElement {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|window_event, _| match window_event {
-            WindowEvent::MouseMove(x, y) => {
+        event.map(|window_event, _| {
+            if let WindowEvent::MouseMove(x, y) = window_event {
                 self.left = Pixels(*x / cx.scale_factor());
                 self.top = Pixels(*y / cx.scale_factor());
             }
-
-            _ => {}
         })
     }
 }

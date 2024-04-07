@@ -28,7 +28,7 @@ fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData {
             text: String::from("As well as model data which implements ToString:"),
-            value: 3.141592,
+            value: std::f32::consts::PI,
             checked: false,
         }
         .build(cx);

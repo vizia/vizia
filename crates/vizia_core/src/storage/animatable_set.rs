@@ -738,9 +738,9 @@ mod tests {
     #[test]
     fn is_inline() {
         let data_index1 = DataIndex::inline(5);
-        assert_eq!(data_index1.is_inline(), true);
+        assert!(data_index1.is_inline());
         let data_index2 = DataIndex::shared(5);
-        assert_eq!(data_index2.is_inline(), false);
+        assert!(!data_index2.is_inline());
     }
 
     /// Test that a null data index is the correct value #7FFFFFFF (i.e. all bits = 1 except the first bit).
@@ -756,10 +756,10 @@ mod tests {
     #[test]
     fn new() {
         let animatable_storage = AnimatableSet::<f32>::default();
-        assert_eq!(animatable_storage.inline_data.is_empty(), true);
-        assert_eq!(animatable_storage.shared_data.is_empty(), true);
-        assert_eq!(animatable_storage.animations.is_empty(), true);
-        assert_eq!(animatable_storage.active_animations.is_empty(), true);
+        assert!(animatable_storage.inline_data.is_empty());
+        assert!(animatable_storage.shared_data.is_empty());
+        assert!(animatable_storage.animations.is_empty());
+        assert!(animatable_storage.active_animations.is_empty());
     }
 
     /// Test inserting inline data into the storage.

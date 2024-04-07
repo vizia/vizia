@@ -9,7 +9,7 @@ impl Model for AppData {}
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { value: 3.14 }.build(cx);
+        AppData { value: std::f32::consts::PI }.build(cx);
 
         Label::new(cx, AppData::value.map(|_val| String::from("Hello World")));
     })

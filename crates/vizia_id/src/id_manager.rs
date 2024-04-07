@@ -101,8 +101,8 @@ mod tests {
     #[test]
     fn new() {
         let id_manager = IdManager::<Entity>::new();
-        assert_eq!(id_manager.generation.is_empty(), true);
-        assert_eq!(id_manager.free_list.is_empty(), true);
+        assert!(id_manager.generation.is_empty());
+        assert!(id_manager.free_list.is_empty());
     }
 
     /// Test for creating a new id.
@@ -133,7 +133,7 @@ mod tests {
         let mut id_manager = IdManager::<Entity>::new();
         let id = id_manager.create();
         let success = id_manager.destroy(id);
-        assert_eq!(success, true);
+        assert!(success);
         assert_eq!(id_manager.generation[id.index()], 1);
         assert_eq!(*id_manager.free_list.front().unwrap(), id.index() as u64);
     }
@@ -154,7 +154,7 @@ mod tests {
         id_manager.destroy(id);
 
         let success = id_manager.destroy(id);
-        assert_eq!(success, false);
+        assert!(!success);
     }
 
     /// Test for reusing an id.
@@ -180,9 +180,9 @@ mod tests {
         let mut id_manager = IdManager::<Entity>::new();
         let id = id_manager.create();
         let alive1 = id_manager.is_alive(id);
-        assert_eq!(alive1, true);
+        assert!(alive1);
         id_manager.destroy(id);
         let alive2 = id_manager.is_alive(id);
-        assert_eq!(alive2, false);
+        assert!(!alive2);
     }
 }

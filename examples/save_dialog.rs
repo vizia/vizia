@@ -43,15 +43,14 @@ pub struct AppData {
 
 impl Model for AppData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|window_event, meta| match window_event {
+        event.map(|window_event, meta| {
             // Intercept WindowClose event to show a dialog if not 'saved'.
-            WindowEvent::WindowClose => {
+            if let WindowEvent::WindowClose = window_event {
                 if !self.is_saved {
                     self.show_dialog = true;
                     meta.consume();
                 }
             }
-            _ => {}
         });
 
         event.map(|app_event, _| match app_event {
