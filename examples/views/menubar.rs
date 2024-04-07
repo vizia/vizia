@@ -17,7 +17,7 @@ fn main() -> Result<(), ApplicationError> {
                             |cx| {
                                 HStack::new(cx, |cx| {
                                     Label::new(cx, "New");
-                                    Label::new(cx, &"Ctrl + N".to_string()).class("shortcut");
+                                    Label::new(cx, "Ctrl + N").class("shortcut");
                                 })
                             },
                         );
@@ -27,7 +27,7 @@ fn main() -> Result<(), ApplicationError> {
                             |cx| {
                                 HStack::new(cx, |cx| {
                                     Label::new(cx, "Open");
-                                    Label::new(cx, &"Ctrl + O".to_string()).class("shortcut");
+                                    Label::new(cx, "Ctrl + O").class("shortcut");
                                 })
                             },
                         );
