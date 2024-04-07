@@ -2620,15 +2620,13 @@ pub mod tests {
         }
     }
 
-    fn parse<'i>(
-        input: &'i str,
-    ) -> Result<SelectorList<DummySelectorImpl>, SelectorParseError<'i>> {
+    fn parse(input: &str) -> Result<SelectorList<DummySelectorImpl>, SelectorParseError<'_>> {
         parse_ns(input, &DummyParser::default())
     }
 
-    fn parse_expected<'i, 'a>(
+    fn parse_expected<'i>(
         input: &'i str,
-        expected: Option<&'a str>,
+        expected: Option<&str>,
     ) -> Result<SelectorList<DummySelectorImpl>, SelectorParseError<'i>> {
         parse_ns_expected(input, &DummyParser::default(), expected)
     }
@@ -2640,10 +2638,10 @@ pub mod tests {
         parse_ns_expected(input, parser, None)
     }
 
-    fn parse_ns_expected<'i, 'a>(
+    fn parse_ns_expected<'i>(
         input: &'i str,
         parser: &DummyParser,
-        expected: Option<&'a str>,
+        expected: Option<&str>,
     ) -> Result<SelectorList<DummySelectorImpl>, SelectorParseError<'i>> {
         let mut parser_input = ParserInput::new(input);
         let result = SelectorList::parse(parser, &mut CssParser::new(&mut parser_input));
@@ -3065,7 +3063,7 @@ pub mod tests {
                     Component::Combinator(Combinator::Child),
                     Component::Class(DummyAtom::from("ok")),
                 ],
-                (1 << 20) + (1 << 10) + (0 << 0),
+                specificity(1, 1, 0),
                 Default::default(),
             )]))
         );

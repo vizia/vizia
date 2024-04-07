@@ -12,23 +12,23 @@ pub struct ToggleData {
 }
 
 pub enum ToggleEvent {
-    ToggleBold,
-    ToggleItalic,
-    ToggleUnderline,
+    Bold,
+    Italic,
+    Underline,
 }
 
 impl Model for ToggleData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            ToggleEvent::ToggleBold => {
+            ToggleEvent::Bold => {
                 self.bold ^= true;
             }
 
-            ToggleEvent::ToggleItalic => {
+            ToggleEvent::Italic => {
                 self.italic ^= true;
             }
 
-            ToggleEvent::ToggleUnderline => {
+            ToggleEvent::Underline => {
                 self.underline ^= true;
             }
         })
@@ -49,7 +49,7 @@ pub fn toggle_button(cx: &mut Context) {
             cx,
             |cx| {
                 ToggleButton::new(cx, ToggleData::bold, |cx| Label::new(cx, "Bold"))
-                    .on_toggle(|cx| cx.emit(ToggleEvent::ToggleBold));
+                    .on_toggle(|cx| cx.emit(ToggleEvent::Bold));
             },
             r#"ToggleButton::new(cx, ToggleData::bold, |cx| Label::new(cx, "Bold"))
     .on_toggle(|cx| cx.emit(ToggleEvent::ToggleBold));"#,
@@ -61,15 +61,15 @@ pub fn toggle_button(cx: &mut Context) {
             |cx| {
                 ButtonGroup::new(cx, |cx| {
                     ToggleButton::new(cx, ToggleData::bold, |cx| Icon::new(cx, ICON_BOLD))
-                        .on_toggle(|cx| cx.emit(ToggleEvent::ToggleBold));
+                        .on_toggle(|cx| cx.emit(ToggleEvent::Bold));
 
                     ToggleButton::new(cx, ToggleData::italic, |cx| Icon::new(cx, ICON_ITALIC))
-                        .on_toggle(|cx| cx.emit(ToggleEvent::ToggleItalic));
+                        .on_toggle(|cx| cx.emit(ToggleEvent::Italic));
 
                     ToggleButton::new(cx, ToggleData::underline, |cx| {
                         Icon::new(cx, ICON_UNDERLINE)
                     })
-                    .on_toggle(|cx| cx.emit(ToggleEvent::ToggleUnderline));
+                    .on_toggle(|cx| cx.emit(ToggleEvent::Underline));
                 });
             },
             r#"ButtonGroup::new(cx, |cx| {

@@ -124,7 +124,7 @@ impl Model for AppState {
             }
 
             AppEvent::Decrement3 => {
-                let mut index = self.spinbox_value_3 as usize;
+                let mut index = self.spinbox_value_3;
                 if index == 0 {
                     index = 3
                 }

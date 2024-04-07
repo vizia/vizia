@@ -23,9 +23,7 @@ mod test {
 
     use crate::{CustomParseError, SelectorIdent, SelectorParser, Selectors};
 
-    fn parse<'i>(
-        input: &'i str,
-    ) -> Result<SelectorList<Selectors>, ParseError<'i, CustomParseError<'i>>> {
+    fn parse(input: &str) -> Result<SelectorList<Selectors>, ParseError<'_, CustomParseError<'_>>> {
         let mut parser_input = ParserInput::new(input);
         let mut parser = Parser::new(&mut parser_input);
         SelectorList::parse(
@@ -284,12 +282,12 @@ mod test {
             let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
 
             println!("Result: {}", result);
-            assert_eq!(result, true);
+            assert!(result);
 
             let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
 
             println!("Result: {}", result);
-            assert_eq!(result, false);
+            assert!(!result);
         }
     }
 
@@ -326,10 +324,10 @@ mod test {
                 MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
 
             let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
-            assert_eq!(result, true);
+            assert!(result);
 
             let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
-            assert_eq!(result, false);
+            assert!(!result);
         }
 
         if let Ok(selector_list) = parse(".bar") {
@@ -337,10 +335,10 @@ mod test {
                 MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
 
             let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
-            assert_eq!(result, true);
+            assert!(result);
 
             let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
-            assert_eq!(result, true);
+            assert!(result);
         }
 
         if let Ok(selector_list) = parse(".foo.bar") {
@@ -348,10 +346,10 @@ mod test {
                 MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
 
             let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
-            assert_eq!(result, true);
+            assert!(result);
 
             let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
-            assert_eq!(result, false);
+            assert!(!result);
         }
 
         if let Ok(selector_list) = parse(".foo, .bar") {
@@ -359,10 +357,10 @@ mod test {
                 MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
 
             let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
-            assert_eq!(result, true);
+            assert!(result);
 
             let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
-            assert_eq!(result, true);
+            assert!(result);
         }
     }
 
@@ -395,10 +393,10 @@ mod test {
                 MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
 
             let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
-            assert_eq!(result, true);
+            assert!(result);
 
             let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
-            assert_eq!(result, false);
+            assert!(!result);
         }
     }
 }

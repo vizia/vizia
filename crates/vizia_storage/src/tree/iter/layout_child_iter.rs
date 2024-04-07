@@ -102,12 +102,12 @@ mod test {
         tree.set_ignored(b, true);
         tree.set_ignored(ba, true);
 
-        let iter = LayoutChildIterator::new(&mut tree, Entity::root());
+        let iter = LayoutChildIterator::new(&tree, Entity::root());
         let mut ground = vec![a, baa, bb, c];
         let vec: Vec<Entity> = iter.collect();
         assert_eq!(vec, ground);
 
-        let iter = LayoutChildIterator::new(&mut tree, Entity::root()).rev();
+        let iter = LayoutChildIterator::new(&tree, Entity::root()).rev();
         ground.reverse();
         let vec: Vec<Entity> = iter.collect();
         assert_eq!(vec, ground);

@@ -26,7 +26,7 @@ pub fn menu_bar(cx: &mut Context) {
                                 |cx| {
                                     HStack::new(cx, |cx| {
                                         Label::new(cx, "New");
-                                        Label::new(cx, &format!("Ctrl + N")).class("shortcut");
+                                        Label::new(cx, "Ctrl + N").class("shortcut");
                                     })
                                 },
                             );
@@ -36,7 +36,7 @@ pub fn menu_bar(cx: &mut Context) {
                                 |cx| {
                                     HStack::new(cx, |cx| {
                                         Label::new(cx, "Open");
-                                        Label::new(cx, &format!("Ctrl + O")).class("shortcut");
+                                        Label::new(cx, "Ctrl + O").class("shortcut");
                                     })
                                 },
                             );

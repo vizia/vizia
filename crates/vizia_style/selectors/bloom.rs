@@ -274,7 +274,7 @@ fn hash2(hash: u32) -> u32 {
 fn create_and_insert_some_stuff() {
     use fxhash::FxHasher;
     use std::hash::{Hash, Hasher};
-    use std::mem::transmute;
+    use std::mem::size_of;
 
     fn hash_as_str(i: usize) -> u32 {
         let mut hasher = FxHasher::default();
@@ -286,11 +286,9 @@ fn create_and_insert_some_stuff() {
 
     let mut bf = BloomFilter::new();
 
-    // Statically assert that ARRAY_SIZE is a multiple of 8, which
+    // Assert that ARRAY_SIZE is a multiple of 8, which
     // BloomStorageBool relies on.
-    unsafe {
-        transmute::<[u8; ARRAY_SIZE % 8], [u8; 0]>([]);
-    }
+    assert_eq!(size_of::<[u8; ARRAY_SIZE % 8]>(), size_of::<[u8; 0]>());
 
     for i in 0_usize..1000 {
         bf.insert_hash(hash_as_str(i));
