@@ -281,8 +281,6 @@ impl Application {
 
         let mut cursor_moved = false;
         let mut cursor = (0.0f32, 0.0f32);
-        #[cfg(target_os = "windows")]
-        let mut inside_window = false;
 
         // cx.process_events();
 
@@ -461,32 +459,6 @@ impl Application {
                                     cursor.0 = position.x as f32;
                                     cursor.1 = position.y as f32;
                                 }
-
-                                // Temporary fix for windows platform until winit merge #3154
-                                #[cfg(target_os = "windows")]
-                                {
-                                    let (width, height) = {
-                                        let scale_factor = cx.scale_factor();
-                                        let size = cx.window_size();
-                                        (
-                                            (size.width as f32 * scale_factor).round() as u32,
-                                            (size.height as f32 * scale_factor).round() as u32,
-                                        )
-                                    };
-
-                                    let x = position.x.is_positive()
-                                        && (0..width).contains(&(position.x as u32));
-                                    let y = position.y.is_positive()
-                                        && (0..height).contains(&(position.y as u32));
-
-                                    if !inside_window && x && y {
-                                        inside_window = true;
-                                        cx.emit_origin(WindowEvent::MouseEnter);
-                                    } else if inside_window && !(x && y) {
-                                        inside_window = false;
-                                        cx.emit_origin(WindowEvent::MouseLeave);
-                                    }
-                                }
                             }
 
                             #[allow(deprecated)]
@@ -649,18 +621,10 @@ impl Application {
                             }
 
                             winit::event::WindowEvent::CursorEntered { device_id: _ } => {
-                                #[cfg(target_os = "windows")]
-                                {
-                                    inside_window = true;
-                                }
                                 cx.emit_origin(WindowEvent::MouseEnter);
                             }
 
                             winit::event::WindowEvent::CursorLeft { device_id: _ } => {
-                                #[cfg(target_os = "windows")]
-                                {
-                                    inside_window = false;
-                                }
                                 cx.emit_origin(WindowEvent::MouseLeave);
                             }
 
