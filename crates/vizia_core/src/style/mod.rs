@@ -240,6 +240,12 @@ pub struct Style {
     pub(crate) corner_bottom_left_radius: AnimatableSet<LengthOrPercentage>,
     pub(crate) corner_bottom_right_radius: AnimatableSet<LengthOrPercentage>,
 
+    // Corner Smoothing
+    pub(crate) corner_top_left_smoothing: AnimatableSet<f32>,
+    pub(crate) corner_top_right_smoothing: AnimatableSet<f32>,
+    pub(crate) corner_bottom_left_smoothing: AnimatableSet<f32>,
+    pub(crate) corner_bottom_right_smoothing: AnimatableSet<f32>,
+
     // Outline
     pub(crate) outline_width: AnimatableSet<LengthOrPercentage>,
     pub(crate) outline_color: AnimatableSet<Color>,
@@ -380,6 +386,10 @@ impl Default for Style {
             corner_top_right_radius: Default::default(),
             corner_bottom_left_radius: Default::default(),
             corner_bottom_right_radius: Default::default(),
+            corner_top_left_smoothing: Default::default(),
+            corner_top_right_smoothing: Default::default(),
+            corner_bottom_left_smoothing: Default::default(),
+            corner_bottom_right_smoothing: Default::default(),
             outline_width: Default::default(),
             outline_color: Default::default(),
             outline_offset: Default::default(),
@@ -1765,17 +1775,23 @@ impl Style {
         self.border_width.remove(entity);
         self.border_color.remove(entity);
 
-        // Border Shape
+        // Corner Shape
         self.corner_bottom_left_shape.remove(entity);
         self.corner_bottom_right_shape.remove(entity);
         self.corner_top_left_shape.remove(entity);
         self.corner_top_right_shape.remove(entity);
 
-        // Border Radius
+        // Corner Radius
         self.corner_bottom_left_radius.remove(entity);
         self.corner_bottom_right_radius.remove(entity);
         self.corner_top_left_radius.remove(entity);
         self.corner_top_right_radius.remove(entity);
+
+        // Corner Smoothing
+        self.corner_bottom_left_smoothing.remove(entity);
+        self.corner_bottom_right_smoothing.remove(entity);
+        self.corner_top_left_smoothing.remove(entity);
+        self.corner_top_right_smoothing.remove(entity);
 
         // Outline
         self.outline_width.remove(entity);
@@ -1918,17 +1934,23 @@ impl Style {
         self.border_width.clear_rules();
         self.border_color.clear_rules();
 
-        // Border Shape
+        // Corner Shape
         self.corner_bottom_left_shape.clear_rules();
         self.corner_bottom_right_shape.clear_rules();
         self.corner_top_left_shape.clear_rules();
         self.corner_top_right_shape.clear_rules();
 
-        // Border Radius
+        // Corner Radius
         self.corner_bottom_left_radius.clear_rules();
         self.corner_bottom_right_radius.clear_rules();
         self.corner_top_left_radius.clear_rules();
         self.corner_top_right_radius.clear_rules();
+
+        // Corner Smoothing
+        self.corner_bottom_left_smoothing.clear_rules();
+        self.corner_bottom_right_smoothing.clear_rules();
+        self.corner_top_left_smoothing.clear_rules();
+        self.corner_top_right_smoothing.clear_rules();
 
         // Outline
         self.outline_width.clear_rules();

@@ -306,6 +306,22 @@ pub trait StyleModifiers: internal::Modifiable {
         self
     }
 
+    fn shadows<U: Into<Vec<Shadow>>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            value.set_or_bind(cx, entity, move |cx, v| {
+                let value = v.get(cx).into();
+
+                cx.style.shadow.insert(cx.current, value);
+
+                cx.needs_redraw();
+            });
+        });
+
+        self
+    }
+
     fn background_gradient<U: Into<Gradient>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
@@ -473,6 +489,56 @@ pub trait StyleModifiers: internal::Modifiable {
                 cx.style.corner_top_right_shape.insert(cx.current, value.1);
                 cx.style.corner_bottom_right_shape.insert(cx.current, value.2);
                 cx.style.corner_bottom_left_shape.insert(cx.current, value.3);
+
+                cx.needs_redraw();
+            });
+        });
+
+        self
+    }
+
+    modifier!(
+        /// Sets the corner smoothing for the top-left corner of the view.
+        corner_top_left_smoothing,
+        f32,
+        SystemFlags::REDRAW
+    );
+
+    modifier!(
+        /// Sets the corner smoothing for the top-right corner of the view.
+        corner_top_right_smoothing,
+        f32,
+        SystemFlags::REDRAW
+    );
+
+    modifier!(
+        /// Sets the corner smoothing for the bottom-left corner of the view.
+        corner_bottom_left_smoothing,
+        f32,
+        SystemFlags::REDRAW
+    );
+
+    modifier!(
+        /// Sets the corner smoothing for the bottom-right corner of the view.
+        corner_bottom_right_smoothing,
+        f32,
+        SystemFlags::REDRAW
+    );
+
+    /// Sets the corner smoothing for all four corners of the view.
+    fn corner_smoothing<U: std::fmt::Debug + Into<Rect<f32>>>(
+        mut self,
+        value: impl Res<U>,
+    ) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            value.set_or_bind(cx, entity, move |cx, v| {
+                let value = v.get(cx).into();
+                cx.style.corner_top_left_smoothing.insert(cx.current, value.0);
+                cx.style.corner_top_right_smoothing.insert(cx.current, value.1);
+                cx.style.corner_bottom_left_smoothing.insert(cx.current, value.2);
+                cx.style.corner_bottom_right_smoothing.insert(cx.current, value.3);
 
                 cx.needs_redraw();
             });
