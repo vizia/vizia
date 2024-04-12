@@ -364,6 +364,26 @@ impl<'a> DrawContext<'a> {
         self.style.corner_bottom_right_shape.get(self.current).copied().unwrap_or_default()
     }
 
+    /// Returns the corner smoothing for the top-left corner of the current view.
+    pub fn corner_top_left_smoothing(&self) -> f32 {
+        self.style.corner_top_left_smoothing.get(self.current).copied().unwrap_or_default()
+    }
+
+    /// Returns the corner shape for the top-left corner of the current view.
+    pub fn corner_top_right_smoothing(&self) -> f32 {
+        self.style.corner_top_right_smoothing.get(self.current).copied().unwrap_or_default()
+    }
+
+    /// Returns the corner shape for the top-left corner of the current view.
+    pub fn corner_bottom_left_smoothing(&self) -> f32 {
+        self.style.corner_bottom_left_smoothing.get(self.current).copied().unwrap_or_default()
+    }
+
+    /// Returns the corner shape for the top-left corner of the current view.
+    pub fn corner_bottom_right_smoothing(&self) -> f32 {
+        self.style.corner_bottom_right_smoothing.get(self.current).copied().unwrap_or_default()
+    }
+
     get_units_property!(
         /// Returns the child-left space of the current view.
         child_left
@@ -436,6 +456,11 @@ impl<'a> DrawContext<'a> {
         let corner_bottom_right_shape = self.corner_bottom_right_shape();
         let corner_bottom_left_shape = self.corner_bottom_left_shape();
 
+        let corner_top_left_smoothing = self.corner_top_left_smoothing();
+        let corner_top_right_smoothing = self.corner_top_right_smoothing();
+        let corner_bottom_right_smoothing = self.corner_bottom_right_smoothing();
+        let corner_bottom_left_smoothing = self.corner_bottom_left_smoothing();
+
         let rect: Rect = bounds.into();
 
         let mut rr = RRect::new_rect_radii(
@@ -469,8 +494,12 @@ impl<'a> DrawContext<'a> {
             let top_right = rr.radii(Corner::UpperRight).x;
 
             if top_right > 0.0 {
-                let (a, b, c, d, l, p, radius) =
-                    compute_smooth_corner(top_right, 0.0, bounds.width(), bounds.height());
+                let (a, b, c, d, l, p, radius) = compute_smooth_corner(
+                    top_right,
+                    corner_top_right_smoothing,
+                    bounds.width(),
+                    bounds.height(),
+                );
 
                 path.move_to((f32::max(width / 2.0, width - p), 0.0));
                 if corner_top_right_shape == CornerShape::Round {
@@ -502,8 +531,12 @@ impl<'a> DrawContext<'a> {
 
             let bottom_right = rr.radii(Corner::LowerRight).x;
             if bottom_right > 0.0 {
-                let (a, b, c, d, l, p, radius) =
-                    compute_smooth_corner(bottom_right, 0.0, width, height);
+                let (a, b, c, d, l, p, radius) = compute_smooth_corner(
+                    bottom_right,
+                    corner_bottom_right_smoothing,
+                    width,
+                    height,
+                );
 
                 path.line_to((width, f32::max(height / 2.0, height - p)));
                 if corner_bottom_right_shape == CornerShape::Round {
@@ -534,7 +567,7 @@ impl<'a> DrawContext<'a> {
             let bottom_left = rr.radii(Corner::LowerLeft).x;
             if bottom_left > 0.0 {
                 let (a, b, c, d, l, p, radius) =
-                    compute_smooth_corner(bottom_left, 0.0, width, height);
+                    compute_smooth_corner(bottom_left, corner_bottom_left_smoothing, width, height);
 
                 path.line_to((f32::min(width / 2.0, p), height));
                 if corner_bottom_left_shape == CornerShape::Round {
@@ -565,7 +598,7 @@ impl<'a> DrawContext<'a> {
             let top_left = rr.radii(Corner::UpperLeft).x;
             if top_left > 0.0 {
                 let (a, b, c, d, l, p, radius) =
-                    compute_smooth_corner(top_left, 0.0, width, height);
+                    compute_smooth_corner(top_left, corner_top_left_smoothing, width, height);
 
                 path.line_to((0.0, f32::min(height / 2.0, p)));
                 if corner_top_left_shape == CornerShape::Round {

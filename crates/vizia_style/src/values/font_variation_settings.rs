@@ -3,8 +3,8 @@ use skia_safe::{font_arguments::variation_position::Coordinate, FourByteTag};
 
 use crate::{CustomParseError, Parse};
 
-// Aliased type name so that it is less ambiguous.
-pub type FontVariation = Coordinate;
+#[derive(Copy, Clone, PartialEq, Default, Debug)]
+pub struct FontVariation(pub Coordinate);
 
 impl<'i> Parse<'i> for FontVariation {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
@@ -14,7 +14,7 @@ impl<'i> Parse<'i> for FontVariation {
         let value = f32::parse(input)?;
 
         if input.is_exhausted() {
-            Ok(Self { axis, value })
+            Ok(Self(Coordinate { axis, value }))
         } else {
             Err(ParseError {
                 kind: ParseErrorKind::Custom(CustomParseError::InvalidDeclaration),
@@ -50,6 +50,14 @@ impl<'i> Parse<'i> for FourByteTag {
     }
 }
 
+impl From<&str> for FontVariation {
+    fn from(s: &str) -> Self {
+        let mut input = ParserInput::new(s);
+        let mut parser = Parser::new(&mut input);
+        FontVariation::parse(&mut parser).unwrap_or_default()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -60,9 +68,9 @@ mod tests {
 
         custom {
             success {
-                "\"slnt\" -5.0" => FontVariation { axis: ('s', 'l', 'n', 't').into(), value: -5.0 },
-                "\"wdth\" 125.0" => FontVariation { axis: ('w', 'd', 't', 'h').into(), value: 125.0 },
-                "\"wght\" 400" => FontVariation { axis: ('w', 'g', 'h', 't').into(), value: 400.0 },
+                "\"slnt\" -5.0" => FontVariation ( Coordinate {axis: ('s', 'l', 'n', 't').into(), value: -5.0 }),
+                "\"wdth\" 125.0" => FontVariation (Coordinate { axis: ('w', 'd', 't', 'h').into(), value: 125.0 }),
+                "\"wght\" 400" => FontVariation (Coordinate { axis: ('w', 'g', 'h', 't').into(), value: 400.0 }),
             }
             failure {
                 "1234 0",
@@ -81,9 +89,9 @@ mod tests {
                 r#"
                     "slnt" -5.0, "wdth" 125.0, "wght" 400
                 "# => vec![
-                    FontVariation { axis: ('s', 'l', 'n', 't').into(), value: -5.0 },
-                    FontVariation { axis: ('w', 'd', 't', 'h').into(), value: 125.0 },
-                    FontVariation { axis: ('w', 'g', 'h', 't').into(), value: 400.0 },
+                    FontVariation (Coordinate { axis: ('s', 'l', 'n', 't').into(), value: -5.0 }),
+                    FontVariation (Coordinate { axis: ('w', 'd', 't', 'h').into(), value: 125.0 }),
+                    FontVariation (Coordinate { axis: ('w', 'g', 'h', 't').into(), value: 400.0 }),
                 ],
             }
 

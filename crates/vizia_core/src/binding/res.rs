@@ -123,6 +123,7 @@ impl_res_simple!(LineClamp);
 impl_res_clone!(Shadow);
 impl_res_clone!(LinearGradientBuilder);
 impl_res_clone!(ShadowBuilder);
+impl_res_simple!(FontVariation);
 impl_res_clone!(Filter);
 impl_res_simple!(Opacity);
 impl_res_simple!(FontWidth);
