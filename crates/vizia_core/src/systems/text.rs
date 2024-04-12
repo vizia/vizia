@@ -148,10 +148,11 @@ pub fn build_paragraph(
 
         // Font Variations
         if let Some(coordinates) = style.font_variation_settings.get(entity) {
-            text_style.set_font_arguments(
-                &FontArguments::new()
-                    .set_variation_design_position(VariationPosition { coordinates }),
-            );
+            let coordinates = coordinates.iter().map(|c| c.0).collect::<Vec<_>>();
+            text_style
+                .set_font_arguments(&FontArguments::new().set_variation_design_position(
+                    VariationPosition { coordinates: &coordinates },
+                ));
         }
 
         text_style
@@ -160,5 +161,6 @@ pub fn build_paragraph(
     let mut paragraph_builder = ParagraphBuilder::new(&paragraph_style, font_collection);
     paragraph_builder.add_text(text.as_str());
     paragraph_builder.add_text("\u{200B}");
+    // paragraph_builder.add_text(" px");
     paragraph_builder.build().into()
 }

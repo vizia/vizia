@@ -49,12 +49,20 @@ pub struct AppData {
     corner_bottom_left_radius: LengthOrPercentage,
     corner_top_left_radius: LengthOrPercentage,
 
+    corner_top_right_smoothing: f32,
+    corner_bottom_right_smoothing: f32,
+    corner_bottom_left_smoothing: f32,
+    corner_top_left_smoothing: f32,
+
     corner_top_right_shape: CornerShape,
     corner_bottom_right_shape: CornerShape,
     corner_bottom_left_shape: CornerShape,
     corner_top_left_shape: CornerShape,
 
     borer_corner_shapes: Vec<&'static str>,
+    shadow_types: Vec<&'static str>,
+
+    shadows: Vec<Shadow>,
 
     border_width: LengthOrPercentage,
 }
@@ -109,6 +117,28 @@ impl Model for AppData {
                     }
                 }
             }
+            AppEvent::SetShadowColor(idx, col) => todo!(),
+            AppEvent::SetShadowX(idx, val) => {
+                self.shadows[*idx].x_offset = Length::px(*val).into();
+            }
+            AppEvent::SetShadowY(idx, val) => {
+                self.shadows[*idx].y_offset = Length::px(*val).into();
+            }
+            AppEvent::SetShadowBlur(idx, val) => {
+                self.shadows[*idx].blur_radius = Some(Length::px(*val).into());
+            }
+            AppEvent::SetShadowSpread(idx, val) => {
+                self.shadows[*idx].spread_radius = Some(Length::px(*val).into());
+            }
+            AppEvent::SetShadowType(idx, val) => {
+                self.shadows[*idx].inset = *val;
+            }
+            AppEvent::SetCornerTopRightSmoothing(val) => self.corner_top_right_smoothing = *val,
+            AppEvent::SetCornerBottomRightSmoothing(val) => {
+                self.corner_bottom_right_smoothing = *val
+            }
+            AppEvent::SetCornerBottomLeftSmoothing(val) => self.corner_bottom_left_smoothing = *val,
+            AppEvent::SetCornerTopLeftSmoothing(val) => self.corner_top_left_smoothing = *val,
         })
     }
 }
@@ -124,7 +154,19 @@ pub enum AppEvent {
     SetCornerBottomLeftShape(CornerShape),
     SetCornerTopLeftShape(CornerShape),
 
+    SetCornerTopRightSmoothing(f32),
+    SetCornerBottomRightSmoothing(f32),
+    SetCornerBottomLeftSmoothing(f32),
+    SetCornerTopLeftSmoothing(f32),
+
     SetBorderWidth(f32),
+
+    SetShadowColor(usize, Color),
+    SetShadowX(usize, f32),
+    SetShadowY(usize, f32),
+    SetShadowBlur(usize, f32),
+    SetShadowSpread(usize, f32),
+    SetShadowType(usize, bool),
 }
 
 pub struct UnitEditor {
@@ -155,6 +197,7 @@ impl UnitEditor {
                     //     LengthOrPercentage::Length(_) => 0.0f32..100.0f32,
                     //     LengthOrPercentage::Percentage(_) => 0.0f32..100.0f32,
                     // }));
+
                     Textbox::new(
                         cx,
                         lens.map(|l| match l {
@@ -212,8 +255,22 @@ fn main() -> Result<(), ApplicationError> {
             corner_top_left_shape: CornerShape::default(),
 
             borer_corner_shapes: vec!["Round", "Bevel"],
+            shadow_types: vec!["Outset", "Inset"],
 
             border_width: LengthOrPercentage::default(),
+
+            shadows: vec![Shadow {
+                x_offset: Pixels(5.0).into(),
+                y_offset: Pixels(5.0).into(),
+                blur_radius: Some(Pixels(5.0).into()),
+                spread_radius: Some(Pixels(5.0).into()),
+                color: Some(Color::black()),
+                inset: false,
+            }],
+            corner_top_right_smoothing: 0.0,
+            corner_bottom_right_smoothing: 0.0,
+            corner_bottom_left_smoothing: 0.0,
+            corner_top_left_smoothing: 0.0,
         }
         .build(cx);
 
@@ -230,19 +287,32 @@ fn main() -> Result<(), ApplicationError> {
                     .corner_bottom_right_shape(AppData::corner_bottom_right_shape)
                     .corner_bottom_left_shape(AppData::corner_bottom_left_shape)
                     .corner_top_left_shape(AppData::corner_top_left_shape)
+                    .corner_top_right_smoothing(AppData::corner_top_right_smoothing)
+                    .corner_bottom_right_smoothing(AppData::corner_bottom_right_smoothing)
+                    .corner_bottom_left_smoothing(AppData::corner_bottom_left_smoothing)
+                    .corner_top_left_smoothing(AppData::corner_top_left_smoothing)
                     .border_width(AppData::border_width)
-                    .border_color(Color::black());
+                    .border_color(Color::black())
+                    .shadows(AppData::shadows);
             })
             .child_space(Stretch(1.0));
             VStack::new(cx, |cx| {
+                Label::new(cx, "Corners").font_variation_settings(vec!["\"wght\" 800.0".into()]);
                 VStack::new(cx, |cx| {
                     HStack::new(cx, |cx| {
-                        UnitEditor::new(
+                        Slider::new(cx, AppData::corner_top_right_smoothing).on_changing(
+                            |cx, val| cx.emit(AppEvent::SetCornerTopRightSmoothing(val)),
+                        );
+
+                        Textbox::new(
                             cx,
-                            "Corner Top Right Radius",
-                            AppData::corner_top_right_radius,
+                            AppData::corner_top_right_radius.map(|l| match l {
+                                LengthOrPercentage::Length(length) => length.to_px().unwrap(),
+                                LengthOrPercentage::Percentage(percent) => *percent * 100.0,
+                            }),
                         )
-                        .on_change(|cx, val| cx.emit(AppEvent::SetCornerTopRightRadius(val)));
+                        .width(Pixels(70.0))
+                        .on_submit(|cx, val, _| cx.emit(AppEvent::SetCornerTopRightRadius(val)));
 
                         PickList::new(
                             cx,
@@ -342,14 +412,96 @@ fn main() -> Result<(), ApplicationError> {
                     .height(Auto);
                 })
                 .height(Auto);
+                Divider::new(cx);
+                Label::new(cx, "Border").font_variation_settings(vec!["\"wght\" 800.0".into()]);
                 VStack::new(cx, |cx| {
                     UnitEditor::new(cx, "Border Width", AppData::border_width)
                         .on_change(|cx, val| cx.emit(AppEvent::SetBorderWidth(val)));
                 })
                 .height(Auto);
+                Divider::new(cx);
+                Label::new(cx, "Shadows").font_variation_settings(vec!["\"wght\" 800.0".into()]);
+                VStack::new(cx, |cx| {
+                    List::new(cx, AppData::shadows, |cx, idx, item| {
+                        HStack::new(cx, |cx| {
+                            Element::new(cx)
+                                .height(Stretch(1.0))
+                                .width(Pixels(50.0))
+                                .background_color(
+                                    item.map(|shadow| shadow.color.unwrap_or_default()),
+                                );
+
+                            Textbox::new(
+                                cx,
+                                item.map(|shadow| shadow.x_offset.to_px().unwrap_or_default()),
+                            )
+                            .width(Pixels(60.0))
+                            .on_submit(move |cx, val, _| cx.emit(AppEvent::SetShadowX(idx, val)));
+
+                            Textbox::new(
+                                cx,
+                                item.map(|shadow| shadow.y_offset.to_px().unwrap_or_default()),
+                            )
+                            .width(Pixels(60.0))
+                            .on_submit(move |cx, val, _| cx.emit(AppEvent::SetShadowY(idx, val)));
+
+                            Textbox::new(
+                                cx,
+                                item.map(|shadow| {
+                                    shadow
+                                        .blur_radius
+                                        .clone()
+                                        .unwrap_or_default()
+                                        .to_px()
+                                        .unwrap_or_default()
+                                }),
+                            )
+                            .width(Pixels(60.0))
+                            .on_submit(move |cx, val, _| {
+                                cx.emit(AppEvent::SetShadowBlur(idx, val))
+                            });
+
+                            Textbox::new(
+                                cx,
+                                item.map(|shadow| {
+                                    shadow
+                                        .spread_radius
+                                        .clone()
+                                        .unwrap_or_default()
+                                        .to_px()
+                                        .unwrap_or_default()
+                                }),
+                            )
+                            .width(Pixels(60.0))
+                            .on_submit(move |cx, val, _| {
+                                cx.emit(AppEvent::SetShadowSpread(idx, val))
+                            });
+
+                            PickList::new(
+                                cx,
+                                AppData::shadow_types,
+                                item.map(|s| if s.inset { 1 } else { 0 }),
+                                true,
+                            )
+                            .width(Pixels(75.0))
+                            .top(Stretch(1.0))
+                            .on_select(move |cx, val| {
+                                cx.emit(AppEvent::SetShadowType(idx, val == 1))
+                            });
+                        })
+                        .col_between(Pixels(8.0))
+                        .width(Auto)
+                        .height(Auto);
+                    })
+                    .width(Auto);
+                })
+                .width(Auto)
+                .height(Auto);
             })
             .row_between(Pixels(8.0))
-            .child_space(Pixels(20.0));
+            .child_space(Pixels(20.0))
+            .width(Auto);
+            // .min_width(Pixels(400.0));
         });
 
         // cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");

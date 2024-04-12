@@ -8,18 +8,17 @@ fn main() {
 
 #[cfg(not(feature = "baseview"))]
 fn main() -> Result<(), ApplicationError> {
-    let app = Application::new(|_| {})
-        .on_idle(|_| {
-            println!("On Idle: {:?}", Instant::now());
+    Application::new(|cx| {
+        HStack::new(cx, |cx| {
+            VStack::new(cx, |cx| {
+                Element::new(cx).height(Pixels(200.0));
+            })
+            .height(Auto)
+            .background_color(Color::yellow());
+            VStack::new(cx, |cx| {}).background_color(Color::blue());
         })
-        .title("Proxy");
-
-    let mut proxy = app.get_proxy();
-
-    std::thread::spawn(move || loop {
-        proxy.emit(()).expect("Failed to send proxy event");
-        std::thread::sleep(std::time::Duration::from_secs(2));
-    });
-
-    app.run()
+        .height(Auto)
+        .background_color(Color::red());
+    })
+    .run()
 }

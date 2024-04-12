@@ -215,8 +215,11 @@ where
 
     fn insert_text(&mut self, cx: &mut EventContext, txt: &str) {
         if let Some(text) = cx.style.text.get_mut(cx.current) {
+            println!("do this: {:?} {}", self.selection.range(), txt);
             text.edit(self.selection.range(), txt);
-            self.selection = Selection::caret(self.selection.active + txt.len());
+            self.selection = Selection::caret(self.selection.min() + txt.len());
+            println!("{}", self.selection.active);
+            cx.style.needs_text_update(cx.current);
         }
     }
 
@@ -232,6 +235,8 @@ where
             self.selection = Selection::caret(del_range.start);
 
             text.edit(del_range, "");
+
+            cx.style.needs_text_update(cx.current);
         }
     }
 
@@ -392,7 +397,7 @@ where
             let text_length = cx.style.text.get(cx.current).map(|txt| txt.len()).unwrap();
 
             let lm = paragraph.get_actual_text_range(0, false);
-            // println!("{:?} {}", lm, self.selection.active);
+            println!("{:?} {} {}", lm, self.selection.active, text_length);
 
             // let rng = if self.selection.active == 0 {
             //     (self.selection.active - 1)..self.selection.active
@@ -405,7 +410,7 @@ where
                 RectHeightStyle::Tight,
                 RectWidthStyle::Tight,
             );
-            // println!("{:?}", rects);
+            println!("{:?}", rects);
 
             let cursor_rect = rects.first().unwrap();
 

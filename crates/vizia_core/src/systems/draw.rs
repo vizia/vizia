@@ -217,7 +217,7 @@ pub(crate) fn draw_system(cx: &mut Context) {
     {
         surface.draw(canvas, (0, 0), SamplingOptions::default(), None);
 
-        // // Debug draw dirty rect
+        // Debug draw dirty rect
         // if let Some(dirty_rect) = cx.cache.dirty_rect {
         //     let path: Rect = dirty_rect.into();
         //     let mut paint = Paint::default();
@@ -370,14 +370,18 @@ pub(crate) fn draw_bounds(
 
             shadow_bounds = shadow_bounds.offset(x, y);
 
-            if let Some(blur_radius) =
-                shadow.blur_radius.as_ref().map(|br| br.clone().to_px().unwrap() / 2.0)
+            let scale_factor = style.scale_factor();
+
+            if let Some(blur_radius) = shadow
+                .blur_radius
+                .as_ref()
+                .map(|br| br.clone().to_px().unwrap() * scale_factor / 2.0)
             {
                 shadow_bounds = shadow_bounds.expand(blur_radius * style.scale_factor());
             }
 
             if let Some(spread_radius) =
-                shadow.spread_radius.as_ref().map(|sr| sr.clone().to_px().unwrap())
+                shadow.spread_radius.as_ref().map(|sr| sr.clone().to_px().unwrap() * scale_factor)
             {
                 shadow_bounds = shadow_bounds.expand(spread_radius * style.scale_factor());
             }
