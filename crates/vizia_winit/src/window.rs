@@ -18,12 +18,11 @@ use glutin::{
 
 use vizia_core::backend::*;
 use vizia_core::prelude::*;
+use winit::dpi::*;
 use winit::event_loop::EventLoop;
 use winit::window::{CursorGrabMode, WindowBuilder, WindowLevel};
-use winit::{dpi::*, window::WindowId};
 
 pub struct Window {
-    pub id: WindowId,
     context: glutin::context::PossiblyCurrentContext,
     surface: glutin::surface::Surface<glutin::surface::WindowSurface>,
     window: winit::window::Window,
@@ -150,8 +149,7 @@ impl Window {
         canvas.clear_rect(0, 0, size.width, size.height, Color::rgb(255, 80, 80));
 
         // Build our window
-        let win =
-            Window { id: window.id(), context: gl_context, surface, window, should_close: false };
+        let win = Window { context: gl_context, surface, window, should_close: false };
 
         (win, canvas)
     }

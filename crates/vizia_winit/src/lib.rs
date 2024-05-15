@@ -30,7 +30,6 @@ impl<'a> GetRawWindowHandle for EventContext<'a> {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 impl GetRawWindowHandle for Context {
     fn raw_window_handle(&mut self) -> rwh::RawWindowHandle {
         let mut cx = EventContext::new(self);

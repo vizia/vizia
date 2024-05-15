@@ -240,7 +240,7 @@ impl Localized {
     }
 }
 
-impl Res<String> for Localized {
+impl ResGet<String> for Localized {
     fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, String>> {
         Some(LensValue::Owned(self.get(cx)))
     }
@@ -271,7 +271,9 @@ impl Res<String> for Localized {
             format!("{} {{ERROR: {:?}}}", res, err)
         }
     }
+}
 
+impl Res<String> for Localized {
     fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
     where
         F: 'static + Clone + Fn(&mut Context, Localized),
