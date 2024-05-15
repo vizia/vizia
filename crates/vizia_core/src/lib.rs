@@ -61,7 +61,7 @@ pub mod backend {
 #[doc(hidden)]
 pub mod prelude {
     pub use super::binding::{
-        Binding, Data, Index, Lens, LensExt, LensValue, Map, MapRef, Res, StaticLens, Then,
+        Binding, Data, Index, Lens, LensExt, LensValue, Map, MapRef, Res, ResGet, StaticLens, Then,
         UnwrapLens, Wrapper,
     };
 

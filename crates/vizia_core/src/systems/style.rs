@@ -617,17 +617,9 @@ pub(crate) fn compute_matched_rules(
 }
 
 fn has_same_selector(cx: &Context, entity1: Entity, entity2: Entity) -> bool {
-    let element1 = if let Some(element1) = cx.views.get(&entity1).and_then(|view| view.element()) {
-        element1
-    } else {
-        ""
-    };
+    let element1 = cx.views.get(&entity1).and_then(|view| view.element()).unwrap_or_default();
 
-    let element2 = if let Some(element2) = cx.views.get(&entity2).and_then(|view| view.element()) {
-        element2
-    } else {
-        ""
-    };
+    let element2 = cx.views.get(&entity2).and_then(|view| view.element()).unwrap_or_default();
 
     if element1 != element2 {
         return false;

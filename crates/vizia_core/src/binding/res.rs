@@ -3,7 +3,7 @@ use crate::prelude::*;
 #[macro_export]
 macro_rules! impl_res_simple {
     ($t:ty) => {
-        impl Res<$t> for $t {
+        impl ResGet<$t> for $t {
             fn get_ref<'a>(&self, _: &impl DataContext) -> Option<LensValue<$t>> {
                 Some(LensValue::Borrowed(self))
             }
@@ -11,22 +11,15 @@ macro_rules! impl_res_simple {
             fn get(&self, _: &impl DataContext) -> $t {
                 *self
             }
-
-            fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-            where
-                F: 'static + Fn(&mut Context, Self),
-            {
-                cx.with_current(entity, |cx| {
-                    (closure)(cx, self);
-                });
-            }
         }
+
+        impl Res<$t> for $t {}
     };
 }
 
 macro_rules! impl_res_clone {
     ($t:ty) => {
-        impl Res<$t> for $t {
+        impl ResGet<$t> for $t {
             fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, $t>> {
                 Some(LensValue::Borrowed(self))
             }
@@ -34,17 +27,16 @@ macro_rules! impl_res_clone {
             fn get(&self, _: &impl DataContext) -> $t {
                 self.clone()
             }
-
-            fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-            where
-                F: 'static + Fn(&mut Context, Self),
-            {
-                cx.with_current(entity, |cx| {
-                    (closure)(cx, self);
-                });
-            }
         }
+
+        impl Res<$t> for $t {}
     };
+}
+
+pub trait ResGet<T> {
+    fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, T>>;
+
+    fn get(&self, _: &impl DataContext) -> T;
 }
 
 /// A trait which allows passing a value or a lens to a view or modifier.
@@ -52,15 +44,53 @@ macro_rules! impl_res_clone {
 /// For example, the `Label` view constructor takes a type which implements `Res<T>` where
 /// `T` implements `ToString`. This allows the user to pass a type which implements `ToString`,
 /// such as `String` or `&str`, or a lens to a type which implements `ToString`.
-pub trait Res<T> {
-    #[allow(unused_variables)]
-    fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, T>>;
-
-    fn get(&self, _: &impl DataContext) -> T;
-
+pub trait Res<T>: ResGet<T> {
     fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Self);
+        Self: Sized,
+        F: 'static + Clone + Fn(&mut Context, Self),
+    {
+        cx.with_current(entity, |cx| {
+            (closure)(cx, self);
+        });
+    }
+}
+
+impl<L: ?Sized> ResGet<L::Target> for L
+where
+    L: Lens,
+    L::Target: Data,
+{
+    fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, L::Target>> {
+        self.view(
+            cx.data()
+                .unwrap_or_else(|| panic!("Failed to get data from context for lens: {:?}", self)),
+        )
+    }
+
+    fn get(&self, cx: &impl DataContext) -> L::Target {
+        self.get_ref(cx).unwrap().into_owned()
+    }
+}
+
+impl<L> Res<L::Target> for L
+where
+    L: Lens,
+    L::Target: Data,
+{
+    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Fn(&mut Context, Self),
+    {
+        // cx.with_current(entity, |cx| {
+        Binding::new(cx, self, move |cx, val| {
+            cx.with_current(entity, |cx| {
+                (closure)(cx, val);
+            });
+        });
+        // });
+        // });
+    }
 }
 
 impl_res_simple!(i8);
@@ -100,39 +130,9 @@ impl_res_clone!(Position);
 impl_res_simple!(PointerEvents);
 impl_res_simple!(ButtonVariant);
 impl_res_simple!(AvatarVariant);
+impl_res_clone!(FamilyOwned);
 
-impl<L> Res<L::Target> for L
-where
-    L: Lens,
-    L::Target: Data,
-{
-    fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, L::Target>> {
-        self.view(
-            cx.data()
-                .unwrap_or_else(|| panic!("Failed to get data from context for lens: {:?}", self)),
-        )
-    }
-
-    fn get(&self, cx: &impl DataContext) -> L::Target {
-        self.get_ref(cx).unwrap().into_owned()
-    }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Self),
-    {
-        // cx.with_current(entity, |cx| {
-        Binding::new(cx, self, move |cx, val| {
-            cx.with_current(entity, |cx| {
-                (closure)(cx, val);
-            });
-        });
-        // });
-        // });
-    }
-}
-
-impl<'i> Res<FontFamily<'i>> for FontFamily<'i> {
+impl<'i> ResGet<FontFamily<'i>> for FontFamily<'i> {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -140,18 +140,11 @@ impl<'i> Res<FontFamily<'i>> for FontFamily<'i> {
     fn get(&self, _: &impl DataContext) -> Self {
         self.clone()
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Self),
-    {
-        cx.with_current(entity, |cx| {
-            (closure)(cx, self);
-        });
-    }
 }
 
-impl<'i> Res<BackgroundImage<'i>> for BackgroundImage<'i> {
+impl<'i> Res<FontFamily<'i>> for FontFamily<'i> {}
+
+impl<'i> ResGet<BackgroundImage<'i>> for BackgroundImage<'i> {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -159,18 +152,11 @@ impl<'i> Res<BackgroundImage<'i>> for BackgroundImage<'i> {
     fn get(&self, _: &impl DataContext) -> Self {
         self.clone()
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Self),
-    {
-        cx.with_current(entity, |cx| {
-            (closure)(cx, self);
-        });
-    }
 }
 
-impl<'s> Res<&'s str> for &'s str {
+impl<'i> Res<BackgroundImage<'i>> for BackgroundImage<'i> {}
+
+impl<'s> ResGet<&'s str> for &'s str {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -178,18 +164,11 @@ impl<'s> Res<&'s str> for &'s str {
     fn get(&self, _: &impl DataContext) -> &'s str {
         self
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Self),
-    {
-        cx.with_current(entity, |cx| {
-            (closure)(cx, self);
-        });
-    }
 }
 
-impl<'s> Res<&'s String> for &'s String {
+impl<'s> Res<&'s str> for &'s str {}
+
+impl<'s> ResGet<&'s String> for &'s String {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -197,18 +176,11 @@ impl<'s> Res<&'s String> for &'s String {
     fn get(&self, _: &impl DataContext) -> Self {
         self
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Self),
-    {
-        cx.with_current(entity, |cx| {
-            (closure)(cx, self);
-        });
-    }
 }
 
-impl Res<String> for String {
+impl<'s> Res<&'s String> for &'s String {}
+
+impl ResGet<String> for String {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -216,18 +188,11 @@ impl Res<String> for String {
     fn get(&self, _: &impl DataContext) -> Self {
         self.clone()
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Self),
-    {
-        cx.with_current(entity, |cx| {
-            (closure)(cx, self);
-        });
-    }
 }
 
-impl Res<Transform> for Transform {
+impl Res<String> for String {}
+
+impl ResGet<Transform> for Transform {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -235,18 +200,11 @@ impl Res<Transform> for Transform {
     fn get(&self, _: &impl DataContext) -> Transform {
         self.clone()
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Self),
-    {
-        cx.with_current(entity, |cx| {
-            (closure)(cx, self);
-        });
-    }
 }
 
-impl Res<Color> for Color {
+impl Res<Transform> for Transform {}
+
+impl ResGet<Color> for Color {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -254,18 +212,11 @@ impl Res<Color> for Color {
     fn get(&self, _: &impl DataContext) -> Color {
         *self
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Self),
-    {
-        cx.with_current(entity, |cx| {
-            (closure)(cx, self);
-        });
-    }
 }
 
-impl Res<LinearGradient> for LinearGradient {
+impl Res<Color> for Color {}
+
+impl ResGet<LinearGradient> for LinearGradient {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -273,18 +224,11 @@ impl Res<LinearGradient> for LinearGradient {
     fn get(&self, _: &impl DataContext) -> LinearGradient {
         self.clone()
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Self),
-    {
-        cx.with_current(entity, |cx| {
-            (closure)(cx, self);
-        });
-    }
 }
 
-impl Res<Units> for Units {
+impl Res<LinearGradient> for LinearGradient {}
+
+impl ResGet<Units> for Units {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -292,18 +236,11 @@ impl Res<Units> for Units {
     fn get(&self, _: &impl DataContext) -> Units {
         *self
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Self),
-    {
-        cx.with_current(entity, |cx| {
-            (closure)(cx, self);
-        });
-    }
 }
 
-impl Res<Visibility> for Visibility {
+impl Res<Units> for Units {}
+
+impl ResGet<Visibility> for Visibility {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -311,18 +248,11 @@ impl Res<Visibility> for Visibility {
     fn get(&self, _: &impl DataContext) -> Visibility {
         *self
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Self),
-    {
-        cx.with_current(entity, |cx| {
-            (closure)(cx, self);
-        });
-    }
 }
 
-impl Res<Display> for Display {
+impl Res<Visibility> for Visibility {}
+
+impl ResGet<Display> for Display {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -330,18 +260,11 @@ impl Res<Display> for Display {
     fn get(&self, _: &impl DataContext) -> Display {
         *self
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Self),
-    {
-        cx.with_current(entity, |cx| {
-            (closure)(cx, self);
-        });
-    }
 }
 
-impl Res<LayoutType> for LayoutType {
+impl Res<Display> for Display {}
+
+impl ResGet<LayoutType> for LayoutType {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -349,18 +272,10 @@ impl Res<LayoutType> for LayoutType {
     fn get(&self, _: &impl DataContext) -> LayoutType {
         *self
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Self),
-    {
-        cx.with_current(entity, |cx| {
-            (closure)(cx, self);
-        });
-    }
 }
+impl Res<LayoutType> for LayoutType {}
 
-impl Res<PositionType> for PositionType {
+impl ResGet<PositionType> for PositionType {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -368,18 +283,11 @@ impl Res<PositionType> for PositionType {
     fn get(&self, _: &impl DataContext) -> PositionType {
         *self
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Self),
-    {
-        cx.with_current(entity, |cx| {
-            (closure)(cx, self);
-        });
-    }
 }
 
-impl<T: Clone + Res<T>> Res<Option<T>> for Option<T> {
+impl Res<PositionType> for PositionType {}
+
+impl<T: Clone + ResGet<T>> ResGet<Option<T>> for Option<T> {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -387,16 +295,11 @@ impl<T: Clone + Res<T>> Res<Option<T>> for Option<T> {
     fn get(&self, _: &impl DataContext) -> Option<T> {
         self.clone()
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Clone + Fn(&mut Context, Option<T>),
-    {
-        cx.with_current(entity, |cx| (closure)(cx, self));
-    }
 }
 
-impl Res<Length> for Length {
+impl<T: Clone + ResGet<T>> Res<Option<T>> for Option<T> {}
+
+impl ResGet<Length> for Length {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -404,16 +307,11 @@ impl Res<Length> for Length {
     fn get(&self, _: &impl DataContext) -> Self {
         self.clone()
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Clone + Fn(&mut Context, Self),
-    {
-        cx.with_current(entity, |cx| (closure)(cx, self));
-    }
 }
 
-impl Res<LengthOrPercentage> for LengthOrPercentage {
+impl Res<Length> for Length {}
+
+impl ResGet<LengthOrPercentage> for LengthOrPercentage {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -421,16 +319,11 @@ impl Res<LengthOrPercentage> for LengthOrPercentage {
     fn get(&self, _: &impl DataContext) -> Self {
         self.clone()
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Clone + Fn(&mut Context, Self),
-    {
-        cx.with_current(entity, |cx| (closure)(cx, self));
-    }
 }
 
-impl Res<RGBA> for RGBA {
+impl Res<LengthOrPercentage> for LengthOrPercentage {}
+
+impl ResGet<RGBA> for RGBA {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -438,16 +331,11 @@ impl Res<RGBA> for RGBA {
     fn get(&self, _: &impl DataContext) -> Self {
         *self
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Clone + Fn(&mut Context, Self),
-    {
-        cx.with_current(entity, |cx| (closure)(cx, self));
-    }
 }
 
-impl<T: Clone + Res<T>> Res<Vec<T>> for Vec<T> {
+impl Res<RGBA> for RGBA {}
+
+impl<T: Clone + ResGet<T>> ResGet<Vec<T>> for Vec<T> {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -455,16 +343,11 @@ impl<T: Clone + Res<T>> Res<Vec<T>> for Vec<T> {
     fn get(&self, _: &impl DataContext) -> Vec<T> {
         self.clone()
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Clone + Fn(&mut Context, Vec<T>),
-    {
-        cx.with_current(entity, |cx| (closure)(cx, self));
-    }
 }
 
-impl<T: Clone + Res<T>, const N: usize> Res<[T; N]> for [T; N] {
+impl<T: Clone + ResGet<T>> Res<Vec<T>> for Vec<T> {}
+
+impl<T: Clone + ResGet<T>, const N: usize> ResGet<[T; N]> for [T; N] {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -472,33 +355,11 @@ impl<T: Clone + Res<T>, const N: usize> Res<[T; N]> for [T; N] {
     fn get(&self, _: &impl DataContext) -> Self {
         self.clone()
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Clone + Fn(&mut Context, Self),
-    {
-        cx.with_current(entity, |cx| (closure)(cx, self));
-    }
 }
 
-impl Res<FamilyOwned> for FamilyOwned {
-    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
-        Some(LensValue::Borrowed(self))
-    }
+impl<T: Clone + ResGet<T>, const N: usize> Res<[T; N]> for [T; N] {}
 
-    fn get(&self, _: &impl DataContext) -> FamilyOwned {
-        self.clone()
-    }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Clone + Fn(&mut Context, FamilyOwned),
-    {
-        cx.with_current(entity, |cx| (closure)(cx, self));
-    }
-}
-
-impl<T1: Clone, T2: Clone> Res<(T1, T2)> for (T1, T2) {
+impl<T1: Clone, T2: Clone> ResGet<(T1, T2)> for (T1, T2) {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -506,18 +367,11 @@ impl<T1: Clone, T2: Clone> Res<(T1, T2)> for (T1, T2) {
     fn get(&self, _cx: &impl DataContext) -> (T1, T2) {
         self.clone()
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Clone + Fn(&mut Context, (T1, T2)),
-    {
-        cx.with_current(entity, |cx| {
-            (closure)(cx, self);
-        });
-    }
 }
 
-impl<T1: Clone, T2: Clone, T3: Clone> Res<(T1, T2, T3)> for (T1, T2, T3) {
+impl<T1: Clone, T2: Clone> Res<(T1, T2)> for (T1, T2) {}
+
+impl<T1: Clone, T2: Clone, T3: Clone> ResGet<(T1, T2, T3)> for (T1, T2, T3) {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -525,18 +379,11 @@ impl<T1: Clone, T2: Clone, T3: Clone> Res<(T1, T2, T3)> for (T1, T2, T3) {
     fn get(&self, _cx: &impl DataContext) -> (T1, T2, T3) {
         self.clone()
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Clone + Fn(&mut Context, (T1, T2, T3)),
-    {
-        cx.with_current(entity, |cx| {
-            (closure)(cx, self);
-        });
-    }
 }
 
-impl<T1: Clone, T2: Clone, T3: Clone, T4: Clone> Res<(T1, T2, T3, T4)> for (T1, T2, T3, T4) {
+impl<T1: Clone, T2: Clone, T3: Clone> Res<(T1, T2, T3)> for (T1, T2, T3) {}
+
+impl<T1: Clone, T2: Clone, T3: Clone, T4: Clone> ResGet<(T1, T2, T3, T4)> for (T1, T2, T3, T4) {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -544,13 +391,6 @@ impl<T1: Clone, T2: Clone, T3: Clone, T4: Clone> Res<(T1, T2, T3, T4)> for (T1, 
     fn get(&self, _cx: &impl DataContext) -> (T1, T2, T3, T4) {
         self.clone()
     }
-
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Clone + Fn(&mut Context, (T1, T2, T3, T4)),
-    {
-        cx.with_current(entity, |cx| {
-            (closure)(cx, self);
-        });
-    }
 }
+
+impl<T1: Clone, T2: Clone, T3: Clone, T4: Clone> Res<(T1, T2, T3, T4)> for (T1, T2, T3, T4) {}

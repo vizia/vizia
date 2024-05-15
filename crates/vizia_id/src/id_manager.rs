@@ -2,7 +2,7 @@ use crate::GenerationalId;
 use std::{collections::VecDeque, marker::PhantomData};
 
 const MINIMUM_FREE_INDICES: usize = 4096;
-const IDX_MAX: u64 = std::u64::MAX >> 16;
+const IDX_MAX: u64 = u64::MAX >> 16;
 
 /// The IdManager is responsible for allocating and destroying generational IDs.
 ///

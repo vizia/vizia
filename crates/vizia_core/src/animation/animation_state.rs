@@ -118,8 +118,8 @@ where
             t: 0.0,
             active: false,
             entities: HashSet::new(),
-            from_rule: std::usize::MAX,
-            to_rule: std::usize::MAX,
+            from_rule: usize::MAX,
+            to_rule: usize::MAX,
         }
     }
 }

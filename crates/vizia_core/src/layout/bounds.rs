@@ -17,7 +17,7 @@ impl std::fmt::Display for BoundingBox {
 
 impl Default for BoundingBox {
     fn default() -> Self {
-        Self { x: 0.0, y: 0.0, w: std::f32::MAX, h: std::f32::MAX }
+        Self { x: 0.0, y: 0.0, w: f32::MAX, h: f32::MAX }
     }
 }
 

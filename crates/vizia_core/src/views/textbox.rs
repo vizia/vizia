@@ -557,7 +557,7 @@ where
             let mut selection_anchor_cursor = 0;
 
             let mut current_cursor = 0;
-            let mut prev_line_index = std::usize::MAX;
+            let mut prev_line_index = usize::MAX;
 
             for (index, line) in editor.buffer().layout_runs().enumerate() {
                 let text = line.text;
@@ -960,7 +960,7 @@ where
                     let mut selection_index = 0;
 
                     let mut current_cursor = 0;
-                    let mut prev_line_index = std::usize::MAX;
+                    let mut prev_line_index = usize::MAX;
 
                     for (index, line) in editor.buffer().layout_runs().enumerate() {
                         let line_node = AccessNode::new_from_parent(node_id, index);
