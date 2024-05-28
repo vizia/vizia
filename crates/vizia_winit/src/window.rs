@@ -226,13 +226,13 @@ impl Window {
         surface.1 =
             surface.0.new_surface_with_dimensions((size.width as i32, size.height as i32)).unwrap();
 
-        if size.width != 0 && size.height != 0 {
-            self.gl_surface.resize(
-                &self.gl_context,
-                size.width.try_into().unwrap(),
-                size.height.try_into().unwrap(),
-            );
-        }
+        let (width, height): (u32, u32) = size.into();
+
+        self.gl_surface.resize(
+            &self.gl_context,
+            NonZeroU32::new(width.max(1)).unwrap(),
+            NonZeroU32::new(height.max(1)).unwrap(),
+        );
     }
 
     pub fn swap_buffers(&mut self) {
