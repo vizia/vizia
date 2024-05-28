@@ -22,8 +22,9 @@ vizia_input = { path = "../vizia_input" }
 vizia_window = { path = "../vizia_window" }
 vizia_style = { path = "../vizia_style"}
 accesskit = "0.12.0"
-skia-safe = { version = "0.72", features = ["textlayout"] }
-image = { version = "0.25.0", default-features = false, features = ["png"] } # inherited from femtovg
+
+skia-safe = { version = "0.73", features = ["textlayout"] }
+image = { version = "0.25.1", default-features = false, features = ["png"] }
 # morphorm = {path = "../../../morphorm" }
 morphorm = {git = "https://github.com/vizia/morphorm.git", branch = "auto-min-size2"}
 # morphorm = "0.6.4"
@@ -41,7 +42,7 @@ log = "0.4.20"
 indexmap = "2.2.3"
 qfilter = "0.1.6"
 # reqwest = { version = "0.11.9", features = ["blocking"] }
-web-time = "0.2.4"
+web-time = "1.1.0"
 
 [lib]
 doctest = false
