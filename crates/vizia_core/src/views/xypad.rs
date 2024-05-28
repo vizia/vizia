@@ -20,7 +20,7 @@ impl XYPad {
                         Length::Value(LengthValue::Px(-6.0)),
                     ))
                     .size(Pixels(10.0))
-                    .border_radius(Percentage(50.0))
+                    .corner_radius(Percentage(50.0))
                     .border_width(Pixels(2.0))
                     .hoverable(false)
                     .class("thumb");
