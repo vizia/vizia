@@ -279,6 +279,7 @@ impl<'a> BackendContext<'a> {
 
     pub fn needs_refresh(&mut self) {
         self.0.style.system_flags = SystemFlags::all();
+        self.0.style.needs_redraw(Entity::root());
     }
 
     pub fn process_timers(&mut self) {

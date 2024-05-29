@@ -199,11 +199,18 @@ impl Window {
         (win, surface)
     }
 
+    // Returns a reference to the winit window
     pub fn window(&self) -> &winit::window::Window {
         &self.window
     }
 
     pub fn resize(&mut self, size: PhysicalSize<u32>, surface: &mut (Surface, Surface)) {
+        let (width, height): (u32, u32) = size.into();
+
+        if width == 0 || height == 0 {
+            return;
+        }
+
         let fb_info = {
             let mut fboid: GLint = 0;
             unsafe { gl::GetIntegerv(gl::FRAMEBUFFER_BINDING, &mut fboid) };
@@ -223,10 +230,10 @@ impl Window {
             self.gl_config.stencil_size() as usize,
         );
 
-        surface.1 =
-            surface.0.new_surface_with_dimensions((size.width as i32, size.height as i32)).unwrap();
-
-        let (width, height): (u32, u32) = size.into();
+        surface.1 = surface
+            .0
+            .new_surface_with_dimensions((width.max(1) as i32, height.max(1) as i32))
+            .unwrap();
 
         self.gl_surface.resize(
             &self.gl_context,
