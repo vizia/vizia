@@ -62,7 +62,6 @@ impl Model for AppData {
         event.map(|app_event, _| match app_event {
             AppEvent::SetSelectedFont(font) => {
                 self.selected_font = font.clone();
-                println!("{}", font);
             }
 
             AppEvent::SetSelectedWeight(weight_keyword) => {

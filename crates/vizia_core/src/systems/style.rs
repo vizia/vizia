@@ -485,7 +485,6 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
     if style.font_color.link(entity, matched_rules) {
         should_redraw = true;
         should_reflow = true;
-        println!("{} {:?}", entity, matched_rules);
     }
 
     if style.font_size.link(entity, matched_rules) {
