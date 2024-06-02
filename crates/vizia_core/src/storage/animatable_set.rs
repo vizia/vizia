@@ -368,9 +368,9 @@ where
     }
 
     pub fn tick(&mut self, time: Instant) -> Vec<Entity> {
-        if self.has_animations() {
-            self.remove_innactive_animations();
+        self.remove_innactive_animations();
 
+        if self.has_animations() {
             for state in self.active_animations.iter_mut() {
                 // If the animation is already finished then skip
                 if state.t == 1.0 {
