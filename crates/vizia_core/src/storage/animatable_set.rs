@@ -369,6 +369,8 @@ where
 
     pub fn tick(&mut self, time: Instant) -> Vec<Entity> {
         if self.has_animations() {
+            self.remove_innactive_animations();
+
             for state in self.active_animations.iter_mut() {
                 // If the animation is already finished then skip
                 if state.t == 1.0 {
@@ -402,8 +404,6 @@ where
                 let timing_t = start.timing_function.value(normalised_elapsed_time);
                 state.output = Some(T::interpolate(&start.value, &end.value, timing_t));
             }
-
-            self.remove_innactive_animations();
 
             self.active_animations
                 .iter()
