@@ -51,7 +51,6 @@ pub use fonts::*;
 
 #[doc(hidden)]
 pub mod backend {
-    #[cfg(not(target_arch = "wasm32"))]
     pub use super::accessibility::IntoNode;
     pub use super::context::backend::BackendContext;
     pub use super::text::cosmic::TextConfig;

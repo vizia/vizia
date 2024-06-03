@@ -1,17 +1,12 @@
 #[allow(unused)]
 use vizia::prelude::*;
 
-#[cfg(target_arch = "wasm32")]
-fn main() {
-    panic!("This example is not supported on wasm - threads are experimental");
-}
-
 #[cfg(feature = "baseview")]
 fn main() {
     panic!("This example is not supported on baseview - proxies are winit only");
 }
 
-#[cfg(all(not(target_arch = "wasm32"), not(feature = "baseview")))]
+#[cfg(not(feature = "baseview"))]
 fn main() -> Result<(), ApplicationError> {
     let app = Application::new(|_| {})
         .on_idle(|_| {

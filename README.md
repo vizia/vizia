@@ -160,22 +160,6 @@ To run an example with the [baseview](https://github.com/RustAudio/baseview) win
 cargo run --release --example name_of_example --no-default-features --features baseview
 ```
 
-### Web
-To run an example as a web application, first ensure that the `wasm32-unknown-unknown` toolchain is installed:
-
-```bash
-rustup target add wasm32-unknown-unknown
-```
-
-Then run an example with the following:
-
-```bash
-cargo run-wasm --release --example name_of_example
-```
-
-> **Note**
-> Some examples are not compatible with the web target and will intentionally panic if run on web.
-
 # Contributing and Community
 For help with vizia, or to get involved with contributing to the project, come join us on [our discord](https://discord.gg/aNkTPsRm2w).
 

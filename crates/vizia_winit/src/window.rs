@@ -1,18 +1,13 @@
 use crate::application::UserEvent;
-#[cfg(not(target_arch = "wasm32"))]
 use std::num::NonZeroU32;
 
 use crate::convert::cursor_icon_to_cursor_icon;
 use femtovg::{renderer::OpenGl, Canvas, Color};
 
-#[cfg(not(target_arch = "wasm32"))]
 use glutin::surface::SwapInterval;
-#[cfg(not(target_arch = "wasm32"))]
 use glutin_winit::DisplayBuilder;
-#[cfg(not(target_arch = "wasm32"))]
 use raw_window_handle::HasRawWindowHandle;
 
-#[cfg(not(target_arch = "wasm32"))]
 use glutin::{
     config::ConfigTemplateBuilder,
     context::{ContextApi, ContextAttributesBuilder},
@@ -29,9 +24,7 @@ use winit::{dpi::*, window::WindowId};
 
 pub struct Window {
     pub id: WindowId,
-    #[cfg(not(target_arch = "wasm32"))]
     context: glutin::context::PossiblyCurrentContext,
-    #[cfg(not(target_arch = "wasm32"))]
     surface: glutin::surface::Surface<glutin::surface::WindowSurface>,
     window: winit::window::Window,
     pub should_close: bool,
@@ -67,69 +60,6 @@ impl Window {
     }
 }
 
-#[cfg(target_arch = "wasm32")]
-impl Window {
-    pub fn new(
-        events_loop: &EventLoop<UserEvent>,
-        window_description: &WindowDescription,
-    ) -> (Self, Canvas<OpenGl>) {
-        let window_builder = WindowBuilder::new();
-
-        let canvas_element = {
-            use wasm_bindgen::JsCast;
-            let document = web_sys::window().unwrap().document().unwrap();
-            if let Some(canvas_id) = &window_description.target_canvas {
-                document.get_element_by_id(canvas_id).unwrap()
-            } else {
-                let element = document.create_element("canvas").unwrap();
-                document.body().unwrap().insert_adjacent_element("afterbegin", &element).unwrap();
-                element
-            }
-            .dyn_into::<web_sys::HtmlCanvasElement>()
-            .unwrap()
-        };
-
-        let renderer =
-            OpenGl::new_from_html_canvas(&canvas_element).expect("Cannot create renderer");
-
-        let mut canvas = Canvas::new(renderer).expect("Failed to create canvas");
-
-        // tell winit about the above canvas
-        let window_builder = {
-            use winit::platform::web::WindowBuilderExtWebSys;
-            window_builder.with_canvas(Some(canvas_element))
-        };
-
-        // Apply generic WindowBuilder properties
-        let window_builder = apply_window_description(window_builder, &window_description);
-
-        // Get the window handle. this is a winit::window::Window
-        let handle = window_builder.build(&events_loop).unwrap();
-
-        // Build our window
-        let window = Window { id: handle.id(), window: handle, should_close: false };
-
-        let size = window.window().inner_size();
-        canvas.set_size(size.width as u32, size.height as u32, 1.0);
-        canvas.clear_rect(0, 0, size.width as u32, size.height as u32, Color::rgb(255, 80, 80));
-
-        (window, canvas)
-    }
-
-    pub fn window(&self) -> &winit::window::Window {
-        &self.window
-    }
-
-    pub fn resize(&self, _size: PhysicalSize<u32>) {
-        // TODO?
-    }
-
-    pub fn swap_buffers(&self) {
-        // Intentional no-op
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
 impl Window {
     pub fn new(
         events_loop: &EventLoop<UserEvent>,
