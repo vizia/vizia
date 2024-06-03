@@ -64,9 +64,6 @@ pub struct WindowDescription {
     pub icon: Option<Vec<u8>>,
     pub icon_width: u32,
     pub icon_height: u32,
-
-    #[cfg(target_arch = "wasm32")]
-    pub target_canvas: Option<String>,
 }
 
 impl Default for WindowDescription {
@@ -90,9 +87,6 @@ impl Default for WindowDescription {
             icon: None,
             icon_width: 0,
             icon_height: 0,
-
-            #[cfg(target_arch = "wasm32")]
-            target_canvas: None,
         }
     }
 }
@@ -156,12 +150,6 @@ impl WindowDescription {
         self.icon = Some(icon);
         self.icon_width = width;
         self.icon_height = height;
-        self
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    pub fn with_canvas(mut self, canvas: &str) -> Self {
-        self.target_canvas = Some(canvas.to_owned());
         self
     }
 }

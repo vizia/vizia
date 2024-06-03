@@ -3,13 +3,12 @@ use crate::{
     window::Window,
 };
 
-#[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+#[cfg(feature = "accesskit")]
 use accesskit::{Action, NodeBuilder, NodeId, TreeUpdate};
-#[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+#[cfg(feature = "accesskit")]
 use accesskit_winit;
 use std::cell::RefCell;
 use vizia_core::backend::*;
-#[cfg(not(target_arch = "wasm32"))]
 use vizia_core::context::EventProxy;
 use vizia_core::prelude::*;
 // use vizia_input::KeyState;
@@ -35,17 +34,16 @@ use winit::{
     keyboard::NativeKeyCode,
 };
 
-#[cfg(not(target_arch = "wasm32"))]
 use winit::event_loop::EventLoopProxy;
 
 #[derive(Debug)]
 pub enum UserEvent {
     Event(Event),
-    #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+    #[cfg(feature = "accesskit")]
     AccessKitActionRequest(accesskit_winit::ActionRequestEvent),
 }
 
-#[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+#[cfg(feature = "accesskit")]
 impl From<accesskit_winit::ActionRequestEvent> for UserEvent {
     fn from(action_request_event: accesskit_winit::ActionRequestEvent) -> Self {
         UserEvent::AccessKitActionRequest(action_request_event)
@@ -85,11 +83,8 @@ pub struct Application {
     window_description: WindowDescription,
     should_poll: bool,
 }
-
-#[cfg(not(target_arch = "wasm32"))]
 pub struct WinitEventProxy(EventLoopProxy<UserEvent>);
 
-#[cfg(not(target_arch = "wasm32"))]
 impl EventProxy for WinitEventProxy {
     fn send(&self, event: Event) -> Result<(), ()> {
         self.0.send_event(UserEvent::Event(event)).map_err(|_| ())
@@ -105,10 +100,6 @@ impl Application {
     where
         F: 'static + FnOnce(&mut Context),
     {
-        // wasm + debug: send panics to console
-        #[cfg(all(debug_assertions, target_arch = "wasm32"))]
-        console_error_panic_hook::set_once();
-
         // TODO: User scale factors and window resizing has not been implement for winit
         // TODO: Changing the scale factor doesn't work for winit anyways since winit doesn't let
         //       you resize the window, so there's no mutator for that at he moment
@@ -116,14 +107,11 @@ impl Application {
 
         let event_loop =
             EventLoopBuilder::with_user_event().build().expect("Failed to create event loop");
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let mut cx = BackendContext::new(&mut context);
-            let event_proxy_obj = event_loop.create_proxy();
-            cx.set_event_proxy(Box::new(WinitEventProxy(event_proxy_obj)));
-        }
 
         let mut cx = BackendContext::new(&mut context);
+        let event_proxy_obj = event_loop.create_proxy();
+        cx.set_event_proxy(Box::new(WinitEventProxy(event_proxy_obj)));
+
         cx.renegotiate_language();
         cx.0.remove_user_themes();
         (content)(cx.0);
@@ -198,7 +186,7 @@ impl Application {
         #[cfg(target_os = "windows")]
         let mut is_initially_cloaked = window.set_cloak(true);
 
-        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+        #[cfg(feature = "accesskit")]
         let event_loop_proxy = event_loop.create_proxy();
 
         let mut cx = BackendContext::new(&mut context);
@@ -212,9 +200,9 @@ impl Application {
             cx.emit_origin(WindowEvent::ThemeChanged(theme));
         }
 
-        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+        #[cfg(feature = "accesskit")]
         let root_node = NodeBuilder::new(Role::Window).build(cx.accesskit_node_classes());
-        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+        #[cfg(feature = "accesskit")]
         let accesskit = accesskit_winit::Adapter::new(
             window.window(),
             move || {
@@ -272,7 +260,7 @@ impl Application {
         let default_should_poll = self.should_poll;
         let stored_control_flow = RefCell::new(ControlFlow::Poll);
 
-        // #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+        // #[cfg(feature = "accesskit")]
         // cx.process_tree_updates(|tree_updates| {
         //     for update in tree_updates.iter_mut() {
         //         accesskit.update_if_active(|| update.take().unwrap());
@@ -304,7 +292,7 @@ impl Application {
                             cx.send_event(event);
                         }
 
-                        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+                        #[cfg(feature = "accesskit")]
                         UserEvent::AccessKitActionRequest(action_request_event) => {
                             let node_id = action_request_event.request.target;
 
@@ -357,7 +345,7 @@ impl Application {
 
                         cx.process_visual_updates();
 
-                        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+                        #[cfg(feature = "accesskit")]
                         cx.process_tree_updates(|tree_updates| {
                             for update in tree_updates.iter_mut() {
                                 accesskit.update_if_active(|| update.take().unwrap());
@@ -390,7 +378,7 @@ impl Application {
                     }
 
                     winit::event::Event::WindowEvent { window_id: _, event } => {
-                        #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+                        #[cfg(feature = "accesskit")]
                         cx.mutate_window(|_, window: &Window| {
                             accesskit.process_event(window.window(), &event);
                         });
@@ -424,7 +412,7 @@ impl Application {
 
                             winit::event::WindowEvent::Focused(is_focused) => {
                                 cx.0.window_has_focus = is_focused;
-                                #[cfg(all(not(target_arch = "wasm32"), feature = "accesskit"))]
+                                #[cfg(feature = "accesskit")]
                                 accesskit.update_if_active(|| TreeUpdate {
                                     nodes: vec![],
                                     tree: None,
@@ -582,10 +570,7 @@ impl Application {
 
                                     cx.process_visual_updates();
 
-                                    #[cfg(all(
-                                        not(target_arch = "wasm32"),
-                                        feature = "accesskit"
-                                    ))]
+                                    #[cfg(feature = "accesskit")]
                                     cx.process_tree_updates(|tree_updates| {
                                         for update in tree_updates.iter_mut() {
                                             accesskit.update_if_active(|| update.take().unwrap());
@@ -757,13 +742,6 @@ impl WindowModifiers for Application {
         self.window_description.icon = Some(image);
         self.window_description.icon_width = width;
         self.window_description.icon_height = height;
-
-        self
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    fn canvas(mut self, canvas: &str) -> Self {
-        self.window_description.target_canvas = Some(canvas.to_owned());
 
         self
     }

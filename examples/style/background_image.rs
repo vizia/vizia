@@ -1,4 +1,3 @@
-#[cfg(not(target_arch = "wasm32"))]
 use vizia::image;
 #[allow(unused)]
 use vizia::prelude::*;
@@ -25,12 +24,6 @@ const STYLE: &str = r#"
 
 "#;
 
-#[cfg(target_arch = "wasm32")]
-fn main() {
-    panic!("This example is not supported on wasm - threads are experimental");
-}
-
-#[cfg(not(target_arch = "wasm32"))]
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");

@@ -17,11 +17,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         backend: [winit, baseview]
-        wasm: [""]
         include:
           - os: ubuntu-latest
             backend: winit
-            wasm: "--target wasm32-unknown-unknown"
     env:
       RUSTFLAGS: '-D warnings'
     steps:
@@ -37,11 +35,5 @@ jobs:
       with:
         toolchain: stable
         override: true
-    - name: Install wasm toolchain
-      if: "matrix.wasm != ''"
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        target: wasm32-unknown-unknown
     - name: Build
-      run: cargo check --all-targets ${{ matrix.wasm }} --no-default-features --features x11,wayland,clipboard,${{ matrix.backend }}
+      run: cargo check --all-targets --no-default-features --features x11,wayland,clipboard,${{ matrix.backend }}
