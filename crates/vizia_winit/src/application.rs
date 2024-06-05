@@ -327,7 +327,7 @@ impl Application {
                             cursor_moved = false;
                         }
 
-                        cx.process_events();
+                        cx.process_events(|_| {});
 
                         cx.process_style_updates();
 
@@ -550,7 +550,7 @@ impl Application {
 
                                 #[cfg(target_os = "windows")]
                                 {
-                                    cx.process_events();
+                                    cx.process_events(|_| {});
 
                                     cx.process_style_updates();
 

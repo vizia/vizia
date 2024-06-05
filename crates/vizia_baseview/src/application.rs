@@ -194,7 +194,7 @@ impl ApplicationRunner {
 
     /// Handle all reactivity within a frame. The window instance is used to resize the window when
     /// needed.
-    pub fn on_frame_update(&mut self, window: &mut Window) {
+    pub fn on_frame_update(&mut self, window: &mut Window, _should_close: &mut bool) {
         let mut cx = BackendContext::new_with_event_manager(&mut self.context);
 
         while let Some(event) = queue_get() {
@@ -202,7 +202,11 @@ impl ApplicationRunner {
         }
 
         // Events
-        cx.process_events();
+        cx.process_events(|window_event| match window_event {
+            // For some reason calling window.close() crashes baseview on macos
+            // WindowEvent::WindowClose => *should_close = true,
+            _ => {}
+        });
 
         if *cx.window_size() != self.current_window_size
             || cx.user_scale_factor() != self.current_user_scale_factor
