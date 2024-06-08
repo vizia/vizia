@@ -1191,8 +1191,6 @@ impl<'a> DrawContext<'a> {
             //     &paint,
             // );
 
-            // println!("bounds.y {} padding_top: {}  {}", bounds.y, padding_top, paragraph.height());
-
             paragraph.paint(canvas, (bounds.x + padding_left, bounds.y + padding_top));
         }
     }

@@ -11,7 +11,7 @@ fn main() -> Result<(), ApplicationError> {
                 |cx| {
                     MenuButton::new(
                         cx,
-                        |_| println!("New"),
+                        |_| debug!("New"),
                         |cx| {
                             HStack::new(cx, |cx| {
                                 Label::new(cx, "New");
@@ -21,7 +21,7 @@ fn main() -> Result<(), ApplicationError> {
                     );
                     MenuButton::new(
                         cx,
-                        |_| println!("Open"),
+                        |_| debug!("Open"),
                         |cx| {
                             HStack::new(cx, |cx| {
                                 Label::new(cx, "Open");
@@ -33,44 +33,36 @@ fn main() -> Result<(), ApplicationError> {
                         cx,
                         |cx| Label::new(cx, "Open Recent"),
                         |cx| {
-                            MenuButton::new(
-                                cx,
-                                |_| println!("Doc 1"),
-                                |cx| Label::new(cx, "Doc 1"),
-                            );
+                            MenuButton::new(cx, |_| debug!("Doc 1"), |cx| Label::new(cx, "Doc 1"));
                             Submenu::new(
                                 cx,
                                 |cx| Label::new(cx, "Doc 2"),
                                 |cx| {
                                     MenuButton::new(
                                         cx,
-                                        |_| println!("Version 1"),
+                                        |_| debug!("Version 1"),
                                         |cx| Label::new(cx, "Version 1"),
                                     );
                                     MenuButton::new(
                                         cx,
-                                        |_| println!("Version 2"),
+                                        |_| debug!("Version 2"),
                                         |cx| Label::new(cx, "Version 2"),
                                     );
                                     MenuButton::new(
                                         cx,
-                                        |_| println!("Version 3"),
+                                        |_| debug!("Version 3"),
                                         |cx| Label::new(cx, "Version 3"),
                                     );
                                 },
                             );
-                            MenuButton::new(
-                                cx,
-                                |_| println!("Doc 3"),
-                                |cx| Label::new(cx, "Doc 3"),
-                            );
+                            MenuButton::new(cx, |_| debug!("Doc 3"), |cx| Label::new(cx, "Doc 3"));
                         },
                     );
                     MenuDivider::new(cx);
-                    MenuButton::new(cx, |_| println!("Save"), |cx| Label::new(cx, "Save"));
-                    MenuButton::new(cx, |_| println!("Save As"), |cx| Label::new(cx, "Save As"));
+                    MenuButton::new(cx, |_| debug!("Save"), |cx| Label::new(cx, "Save"));
+                    MenuButton::new(cx, |_| debug!("Save As"), |cx| Label::new(cx, "Save As"));
                     MenuDivider::new(cx);
-                    MenuButton::new(cx, |_| println!("Quit"), |cx| Label::new(cx, "Quit"));
+                    MenuButton::new(cx, |_| debug!("Quit"), |cx| Label::new(cx, "Quit"));
                 },
             )
             .width(Pixels(100.0));
