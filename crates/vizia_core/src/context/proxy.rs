@@ -1,6 +1,8 @@
 use std::any::Any;
 use std::fmt::Formatter;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
+
+use hashbrown::HashMap;
 
 use super::InternalEvent;
 
