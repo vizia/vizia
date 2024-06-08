@@ -107,7 +107,6 @@ impl<'i> Parse<'i> for Transform {
                     Ok(Transform::Matrix(matrix))
                 },
                 _ => {
-                    println!("Error in transform");
                     Err(location.new_unexpected_token_error(Token::Ident(function)))
                 }
             }

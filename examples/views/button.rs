@@ -10,7 +10,7 @@ fn main() -> Result<(), ApplicationError> {
             HStack::new(cx, |cx| {
                 // Basic Button
                 Button::new(cx, |cx| Label::new(cx, "Button"))
-                    .on_press(|_cx| println!("Button Pressed!"));
+                    .on_press(|_cx| debug!("Button Pressed!"));
                 // Accent Button
                 Button::new(cx, |cx| Label::new(cx, "Accent Button"))
                     .variant(ButtonVariant::Accent);

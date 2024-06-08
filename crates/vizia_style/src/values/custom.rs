@@ -249,7 +249,6 @@ mod tests {
         let mut parser_input = cssparser::ParserInput::new(success_string);
         let mut parser = cssparser::Parser::new(&mut parser_input);
         let result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
-        println!("{:?}", result);
         // assert_eq!(result, Ok($value));
     }
 
@@ -259,7 +258,6 @@ mod tests {
         let mut parser_input = cssparser::ParserInput::new(success_string);
         let mut parser = cssparser::Parser::new(&mut parser_input);
         let result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
-        println!("{:?}", result);
         // assert_eq!(result, Ok($value));
     }
 
@@ -269,7 +267,6 @@ mod tests {
         let mut parser_input = cssparser::ParserInput::new(success_string);
         let mut parser = cssparser::Parser::new(&mut parser_input);
         let result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
-        println!("{:?}", result);
         // assert_eq!(result, Ok($value));
     }
 
@@ -279,7 +276,6 @@ mod tests {
         let mut parser_input = cssparser::ParserInput::new(success_string);
         let mut parser = cssparser::Parser::new(&mut parser_input);
         let result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
-        println!("{:?}", result);
         // assert_eq!(result, Ok($value));
     }
 }

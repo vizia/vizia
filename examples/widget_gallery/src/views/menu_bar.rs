@@ -1,3 +1,4 @@
+use log::debug;
 use vizia::prelude::*;
 
 use vizia::icons::{ICON_CLIPBOARD, ICON_COPY, ICON_CUT};
@@ -22,7 +23,7 @@ pub fn menu_bar(cx: &mut Context) {
                         |cx| {
                             MenuButton::new(
                                 cx,
-                                |_| println!("New"),
+                                |_| debug!("New"),
                                 |cx| {
                                     HStack::new(cx, |cx| {
                                         Label::new(cx, "New");
@@ -32,7 +33,7 @@ pub fn menu_bar(cx: &mut Context) {
                             );
                             MenuButton::new(
                                 cx,
-                                |_| println!("Open"),
+                                |_| debug!("Open"),
                                 |cx| {
                                     HStack::new(cx, |cx| {
                                         Label::new(cx, "Open");
@@ -46,7 +47,7 @@ pub fn menu_bar(cx: &mut Context) {
                                 |cx| {
                                     MenuButton::new(
                                         cx,
-                                        |_| println!("Doc 1"),
+                                        |_| debug!("Doc 1"),
                                         |cx| Label::new(cx, "Doc 1"),
                                     );
                                     Submenu::new(
@@ -55,37 +56,37 @@ pub fn menu_bar(cx: &mut Context) {
                                         |cx| {
                                             MenuButton::new(
                                                 cx,
-                                                |_| println!("Version 1"),
+                                                |_| debug!("Version 1"),
                                                 |cx| Label::new(cx, "Version 1"),
                                             );
                                             MenuButton::new(
                                                 cx,
-                                                |_| println!("Version 2"),
+                                                |_| debug!("Version 2"),
                                                 |cx| Label::new(cx, "Version 2"),
                                             );
                                             MenuButton::new(
                                                 cx,
-                                                |_| println!("Version 3"),
+                                                |_| debug!("Version 3"),
                                                 |cx| Label::new(cx, "Version 3"),
                                             );
                                         },
                                     );
                                     MenuButton::new(
                                         cx,
-                                        |_| println!("Doc 3"),
+                                        |_| debug!("Doc 3"),
                                         |cx| Label::new(cx, "Doc 3"),
                                     );
                                 },
                             );
                             MenuDivider::new(cx);
-                            MenuButton::new(cx, |_| println!("Save"), |cx| Label::new(cx, "Save"));
+                            MenuButton::new(cx, |_| debug!("Save"), |cx| Label::new(cx, "Save"));
                             MenuButton::new(
                                 cx,
-                                |_| println!("Save As"),
+                                |_| debug!("Save As"),
                                 |cx| Label::new(cx, "Save As"),
                             );
                             MenuDivider::new(cx);
-                            MenuButton::new(cx, |_| println!("Quit"), |cx| Label::new(cx, "Quit"));
+                            MenuButton::new(cx, |_| debug!("Quit"), |cx| Label::new(cx, "Quit"));
                         },
                     );
                     Submenu::new(
@@ -94,7 +95,7 @@ pub fn menu_bar(cx: &mut Context) {
                         |cx| {
                             MenuButton::new(
                                 cx,
-                                |_| println!("Cut"),
+                                |_| debug!("Cut"),
                                 |cx| {
                                     HStack::new(cx, |cx| {
                                         Label::new(cx, ICON_CUT).class("icon");
@@ -104,7 +105,7 @@ pub fn menu_bar(cx: &mut Context) {
                             );
                             MenuButton::new(
                                 cx,
-                                |_| println!("Copy"),
+                                |_| debug!("Copy"),
                                 |cx| {
                                     HStack::new(cx, |cx| {
                                         Label::new(cx, ICON_COPY).class("icon");
@@ -114,7 +115,7 @@ pub fn menu_bar(cx: &mut Context) {
                             );
                             MenuButton::new(
                                 cx,
-                                |_| println!("Paste"),
+                                |_| debug!("Paste"),
                                 |cx| {
                                     HStack::new(cx, |cx| {
                                         Label::new(cx, ICON_CLIPBOARD).class("icon");
@@ -130,12 +131,12 @@ pub fn menu_bar(cx: &mut Context) {
                         |cx| {
                             MenuButton::new(
                                 cx,
-                                |_| println!("Zoom In"),
+                                |_| debug!("Zoom In"),
                                 |cx| Label::new(cx, "Zoom In"),
                             );
                             MenuButton::new(
                                 cx,
-                                |_| println!("Zoom Out"),
+                                |_| debug!("Zoom Out"),
                                 |cx| Label::new(cx, "Zoom Out"),
                             );
                             Submenu::new(
@@ -144,32 +145,32 @@ pub fn menu_bar(cx: &mut Context) {
                                 |cx| {
                                     MenuButton::new(
                                         cx,
-                                        |_| println!("10%"),
+                                        |_| debug!("10%"),
                                         |cx| Label::new(cx, "10%"),
                                     );
                                     MenuButton::new(
                                         cx,
-                                        |_| println!("20%"),
+                                        |_| debug!("20%"),
                                         |cx| Label::new(cx, "20%"),
                                     );
                                     MenuButton::new(
                                         cx,
-                                        |_| println!("50%"),
+                                        |_| debug!("50%"),
                                         |cx| Label::new(cx, "50%"),
                                     );
                                     MenuButton::new(
                                         cx,
-                                        |_| println!("100%"),
+                                        |_| debug!("100%"),
                                         |cx| Label::new(cx, "100%"),
                                     );
                                     MenuButton::new(
                                         cx,
-                                        |_| println!("150%"),
+                                        |_| debug!("150%"),
                                         |cx| Label::new(cx, "150%"),
                                     );
                                     MenuButton::new(
                                         cx,
-                                        |_| println!("200%"),
+                                        |_| debug!("200%"),
                                         |cx| Label::new(cx, "200%"),
                                     );
                                 },
@@ -182,14 +183,10 @@ pub fn menu_bar(cx: &mut Context) {
                         |cx| {
                             MenuButton::new(
                                 cx,
-                                |_| println!("Show License"),
+                                |_| debug!("Show License"),
                                 |cx| Label::new(cx, "Show License"),
                             );
-                            MenuButton::new(
-                                cx,
-                                |_| println!("About"),
-                                |cx| Label::new(cx, "About"),
-                            );
+                            MenuButton::new(cx, |_| debug!("About"), |cx| Label::new(cx, "About"));
                         },
                     );
                 });
@@ -201,7 +198,7 @@ pub fn menu_bar(cx: &mut Context) {
         |cx| {
             MenuButton::new(
                 cx,
-                |_| println!("New"),
+                |_| debug!("New"),
                 |cx| {
                     HStack::new(cx, |cx| {
                         Label::new(cx, "New");
@@ -211,7 +208,7 @@ pub fn menu_bar(cx: &mut Context) {
             );
             MenuButton::new(
                 cx,
-                |_| println!("Open"),
+                |_| debug!("Open"),
                 |cx| {
                     HStack::new(cx, |cx| {
                         Label::new(cx, "Open");
@@ -225,7 +222,7 @@ pub fn menu_bar(cx: &mut Context) {
                 |cx| {
                     MenuButton::new(
                         cx,
-                        |_| println!("Doc 1"),
+                        |_| debug!("Doc 1"),
                         |cx| Label::new(cx, "Doc 1"),
                     );
                     Submenu::new(
@@ -234,33 +231,33 @@ pub fn menu_bar(cx: &mut Context) {
                         |cx| {
                             MenuButton::new(
                                 cx,
-                                |_| println!("Version 1"),
+                                |_| debug!("Version 1"),
                                 |cx| Label::new(cx, "Version 1"),
                             );
                             MenuButton::new(
                                 cx,
-                                |_| println!("Version 2"),
+                                |_| debug!("Version 2"),
                                 |cx| Label::new(cx, "Version 2"),
                             );
                             MenuButton::new(
                                 cx,
-                                |_| println!("Version 3"),
+                                |_| debug!("Version 3"),
                                 |cx| Label::new(cx, "Version 3"),
                             );
                         },
                     );
                     MenuButton::new(
                         cx,
-                        |_| println!("Doc 3"),
+                        |_| debug!("Doc 3"),
                         |cx| Label::new(cx, "Doc 3"),
                     );
                 },
             );
             MenuDivider::new(cx);
-            MenuButton::new(cx, |_| println!("Save"), |cx| Label::new(cx, "Save"));
-            MenuButton::new(cx, |_| println!("Save As"), |cx| Label::new(cx, "Save As"));
+            MenuButton::new(cx, |_| debug!("Save"), |cx| Label::new(cx, "Save"));
+            MenuButton::new(cx, |_| debug!("Save As"), |cx| Label::new(cx, "Save As"));
             MenuDivider::new(cx);
-            MenuButton::new(cx, |_| println!("Quit"), |cx| Label::new(cx, "Quit"));
+            MenuButton::new(cx, |_| debug!("Quit"), |cx| Label::new(cx, "Quit"));
         },
     );
     Submenu::new(
@@ -269,7 +266,7 @@ pub fn menu_bar(cx: &mut Context) {
         |cx| {
             MenuButton::new(
                 cx,
-                |_| println!("Cut"),
+                |_| debug!("Cut"),
                 |cx| {
                     HStack::new(cx, |cx| {
                         Label::new(cx, ICON_CUT).class("icon");
@@ -279,7 +276,7 @@ pub fn menu_bar(cx: &mut Context) {
             );
             MenuButton::new(
                 cx,
-                |_| println!("Copy"),
+                |_| debug!("Copy"),
                 |cx| {
                     HStack::new(cx, |cx| {
                         Label::new(cx, ICON_COPY).class("icon");
@@ -289,7 +286,7 @@ pub fn menu_bar(cx: &mut Context) {
             );
             MenuButton::new(
                 cx,
-                |_| println!("Paste"),
+                |_| debug!("Paste"),
                 |cx| {
                     HStack::new(cx, |cx| {
                         Label::new(cx, ICON_CLIPBOARD).class("icon");
@@ -303,18 +300,18 @@ pub fn menu_bar(cx: &mut Context) {
         cx,
         |cx| Label::new(cx, "View"),
         |cx| {
-            MenuButton::new(cx, |_| println!("Zoom In"), |cx| Label::new(cx, "Zoom In"));
-            MenuButton::new(cx, |_| println!("Zoom Out"), |cx| Label::new(cx, "Zoom Out"));
+            MenuButton::new(cx, |_| debug!("Zoom In"), |cx| Label::new(cx, "Zoom In"));
+            MenuButton::new(cx, |_| debug!("Zoom Out"), |cx| Label::new(cx, "Zoom Out"));
             Submenu::new(
                 cx,
                 |cx| Label::new(cx, "Zoom Level"),
                 |cx| {
-                    MenuButton::new(cx, |_| println!("10%"), |cx| Label::new(cx, "10%"));
-                    MenuButton::new(cx, |_| println!("20%"), |cx| Label::new(cx, "20%"));
-                    MenuButton::new(cx, |_| println!("50%"), |cx| Label::new(cx, "50%"));
-                    MenuButton::new(cx, |_| println!("100%"), |cx| Label::new(cx, "100%"));
-                    MenuButton::new(cx, |_| println!("150%"), |cx| Label::new(cx, "150%"));
-                    MenuButton::new(cx, |_| println!("200%"), |cx| Label::new(cx, "200%"));
+                    MenuButton::new(cx, |_| debug!("10%"), |cx| Label::new(cx, "10%"));
+                    MenuButton::new(cx, |_| debug!("20%"), |cx| Label::new(cx, "20%"));
+                    MenuButton::new(cx, |_| debug!("50%"), |cx| Label::new(cx, "50%"));
+                    MenuButton::new(cx, |_| debug!("100%"), |cx| Label::new(cx, "100%"));
+                    MenuButton::new(cx, |_| debug!("150%"), |cx| Label::new(cx, "150%"));
+                    MenuButton::new(cx, |_| debug!("200%"), |cx| Label::new(cx, "200%"));
                 },
             );
         },
@@ -325,10 +322,10 @@ pub fn menu_bar(cx: &mut Context) {
         |cx| {
             MenuButton::new(
                 cx,
-                |_| println!("Show License"),
+                |_| debug!("Show License"),
                 |cx| Label::new(cx, "Show License"),
             );
-            MenuButton::new(cx, |_| println!("About"), |cx| Label::new(cx, "About"));
+            MenuButton::new(cx, |_| debug!("About"), |cx| Label::new(cx, "About"));
         },
     );
 });"#,

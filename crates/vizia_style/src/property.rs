@@ -190,7 +190,5 @@ mod tests {
         let mut parser = Parser::new(&mut parser_input);
         let parsed_property =
             Property::parse_value(CowRcStr::from("background-color"), &mut parser);
-
-        println!("{:?}", parsed_property);
     }
 }
