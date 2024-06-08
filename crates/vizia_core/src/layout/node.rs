@@ -259,14 +259,17 @@ impl Node for Entity {
             for image in images.iter() {
                 match image {
                     ImageOrGradient::Image(image_name) => {
-                        if let Some(image) = sublayout
-                            .resource_manager
-                            .images
-                            .get(image_name)
-                            .map(|stored_img| &stored_img.image)
+                        if let Some(image_id) = sublayout.resource_manager.image_ids.get(image_name)
                         {
-                            max_width = max_width.max(image.width() as f32);
-                            max_height = max_height.max(image.height() as f32);
+                            if let Some(image) = sublayout
+                                .resource_manager
+                                .images
+                                .get(image_id)
+                                .map(|stored_img| &stored_img.image)
+                            {
+                                max_width = max_width.max(image.width() as f32);
+                                max_height = max_height.max(image.height() as f32);
+                            }
                         }
                     }
                     _ => {}

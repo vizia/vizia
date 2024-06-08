@@ -8,6 +8,7 @@ mod event;
 mod proxy;
 mod resource;
 
+use combo_box_derived_lenses::p;
 use log::debug;
 use skia_safe::{
     font_arguments::{variation_position::Coordinate, VariationPosition},
@@ -175,38 +176,29 @@ impl Context {
                 let mut font_collection = FontCollection::new();
 
                 let default_font_manager = FontMgr::default();
-                let mut default_family_name = None;
+                // let mut default_family_name = None;
 
-                #[cfg(feature = "embedded_fonts")]
-                {
-                    font_collection.set_asset_font_manager(Some({
-                        let mut asset_provider = TypefaceFontProvider::new();
+                // let mut asset_provider = TypefaceFontProvider::new();
 
-                        asset_provider.register_typeface(
-                            default_font_manager.new_from_data(fonts::TABLER_ICONS, None).unwrap(),
-                            Some("tabler-icons"),
-                        );
-                        asset_provider.register_typeface(
-                            default_font_manager.new_from_data(fonts::FIRACODE, None).unwrap(),
-                            Some("Fira Code"),
-                        );
-                        asset_provider.register_typeface(
-                            default_font_manager.new_from_data(fonts::ROBOTO, None).unwrap(),
-                            Some("Roboto Flex"),
-                        );
+                // let ft_type =
+                //     default_font_manager.new_from_data(fonts::TABLER_ICONS, None).unwrap();
+                // asset_provider.register_typeface(ft_type, Some("tabler-icons"));
+                // asset_provider.register_typeface(
+                //     default_font_manager.new_from_data(fonts::FIRACODE, None).unwrap(),
+                //     None,
+                // );
+                // asset_provider.register_typeface(
+                //     default_font_manager.new_from_data(fonts::ROBOTO, None).unwrap(),
+                //     None,
+                // );
 
-                        asset_provider.into()
-                    }));
-
-                    default_family_name = Some("Roboto Flex");
-                }
-
-                font_collection
-                    .set_default_font_manager(default_font_manager.clone(), default_family_name);
+                font_collection.set_default_font_manager(default_font_manager, "Fira Sans");
+                // let asset_font_manager: FontMgr = asset_provider.into();
+                // font_collection.set_asset_font_manager(asset_font_manager);
 
                 TextContext {
                     font_collection,
-                    default_font_manager,
+                    //default_font_manager,
                     text_bounds: Default::default(),
                     text_paragraphs: Default::default(),
                 }
@@ -629,15 +621,15 @@ impl Context {
     /// let timer = cx.add_timer(Duration::from_secs(1), Some(Duration::from_secs(5)), |cx, reason|{
     ///     match reason {
     ///         TimerAction::Start => {
-    ///             debug!("Start timer");
+    ///             println!("Start timer");
     ///         }
     ///     
     ///         TimerAction::Tick(delta) => {
-    ///             debug!("Tick timer: {:?}", delta);
+    ///             println!("Tick timer: {:?}", delta);
     ///         }
     ///
     ///         TimerAction::Stop => {
-    ///             debug!("Stop timer");
+    ///             println!("Stop timer");
     ///         }
     ///     }
     /// });
@@ -770,11 +762,19 @@ impl Context {
         }
     }
 
-    pub fn load_image(&mut self, path: &str, data: &[u8], policy: ImageRetentionPolicy) {
+    pub fn load_image(&mut self, path: &str, data: &'static [u8], policy: ImageRetentionPolicy) {
+        let id = if let Some(image_id) = self.resource_manager.image_ids.get(path) {
+            *image_id
+        } else {
+            let id = self.resource_manager.image_id_manager.create();
+            self.resource_manager.image_ids.insert(path.to_owned(), id);
+            id
+        };
+
         if let Some(image) =
             skia_safe::Image::from_encoded(unsafe { skia_safe::Data::new_bytes(data) })
         {
-            match self.resource_manager.images.entry(path.to_string()) {
+            match self.resource_manager.images.entry(id) {
                 Entry::Occupied(mut occ) => {
                     occ.get_mut().image = image;
                     occ.get_mut().dirty = true;
