@@ -8,7 +8,7 @@ pub mod rwh {
 
 pub trait GetRawWindowHandle {
     fn raw_window_handle(&mut self) -> rwh::RawWindowHandle;
-    fn mutate_window(&mut self, f: impl FnOnce(&winit::window::Window));
+    fn mutate_window<T>(&mut self, f: impl FnOnce(&winit::window::Window) -> T) -> Option<T>;
 }
 
 use raw_window_handle::HasRawWindowHandle;
@@ -23,13 +23,14 @@ impl<'a> GetRawWindowHandle for EventContext<'a> {
         .unwrap()
     }
 
-    fn mutate_window(&mut self, f: impl FnOnce(&winit::window::Window)) {
+    fn mutate_window<T>(&mut self, f: impl FnOnce(&winit::window::Window) -> T) -> Option<T> {
         self.with_current(Entity::root(), move |cx| {
             cx.get_view::<Window>().map(move |window| (f)(window.window()))
-        });
+        })
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl GetRawWindowHandle for Context {
     fn raw_window_handle(&mut self) -> rwh::RawWindowHandle {
         let mut cx = EventContext::new(self);
@@ -39,11 +40,11 @@ impl GetRawWindowHandle for Context {
         .unwrap()
     }
 
-    fn mutate_window(&mut self, f: impl FnOnce(&winit::window::Window)) {
+    fn mutate_window<T>(&mut self, f: impl FnOnce(&winit::window::Window) -> T) -> Option<T> {
         let mut cx = EventContext::new(self);
 
         cx.with_current(Entity::root(), move |cx| {
             cx.get_view::<Window>().map(move |window| (f)(window.window()))
-        });
+        })
     }
 }
