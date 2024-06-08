@@ -1022,86 +1022,94 @@ impl<'a> DrawContext<'a> {
                     },
 
                     ImageOrGradient::Image(image_name) => {
-                        if let Some(image) = self.resource_manager.images.get(image_name) {
-                            let image_width = image.image.width();
-                            let image_height = image.image.height();
-                            let (width, height) = if let Some(background_size) =
-                                image_sizes.get(index)
-                            {
-                                match background_size {
-                                    BackgroundSize::Explicit { width, height } => {
-                                        let w = match width {
-                                            LengthPercentageOrAuto::LengthPercentage(length) => {
-                                                length.to_pixels(bounds.w, self.scale_factor())
-                                            }
-                                            LengthPercentageOrAuto::Auto => image_width as f32,
-                                        };
+                        if let Some(image_id) = self.resource_manager.image_ids.get(image_name) {
+                            if let Some(image) = self.resource_manager.images.get(image_id) {
+                                let image_width = image.image.width();
+                                let image_height = image.image.height();
+                                let (width, height) = if let Some(background_size) =
+                                    image_sizes.get(index)
+                                {
+                                    match background_size {
+                                        BackgroundSize::Explicit { width, height } => {
+                                            let w = match width {
+                                                LengthPercentageOrAuto::LengthPercentage(
+                                                    length,
+                                                ) => {
+                                                    length.to_pixels(bounds.w, self.scale_factor())
+                                                }
+                                                LengthPercentageOrAuto::Auto => image_width as f32,
+                                            };
 
-                                        let h = match height {
-                                            LengthPercentageOrAuto::LengthPercentage(length) => {
-                                                length.to_pixels(bounds.h, self.scale_factor())
-                                            }
-                                            LengthPercentageOrAuto::Auto => image_height as f32,
-                                        };
+                                            let h = match height {
+                                                LengthPercentageOrAuto::LengthPercentage(
+                                                    length,
+                                                ) => {
+                                                    length.to_pixels(bounds.h, self.scale_factor())
+                                                }
+                                                LengthPercentageOrAuto::Auto => image_height as f32,
+                                            };
 
-                                        (w, h)
+                                            (w, h)
+                                        }
+
+                                        BackgroundSize::Contain => {
+                                            let image_ratio =
+                                                image_width as f32 / image_height as f32;
+                                            let container_ratio = bounds.w / bounds.h;
+
+                                            let (w, h) = if image_ratio > container_ratio {
+                                                (bounds.w, bounds.w / image_ratio)
+                                            } else {
+                                                (bounds.h * image_ratio, bounds.h)
+                                            };
+
+                                            (w, h)
+                                        }
+
+                                        BackgroundSize::Cover => {
+                                            let image_ratio =
+                                                image_width as f32 / image_height as f32;
+                                            let container_ratio = bounds.w / bounds.h;
+
+                                            let (w, h) = if image_ratio < container_ratio {
+                                                (bounds.w, bounds.w / image_ratio)
+                                            } else {
+                                                (bounds.h * image_ratio, bounds.h)
+                                            };
+
+                                            (w, h)
+                                        }
                                     }
+                                } else {
+                                    (image_width as f32, image_height as f32)
+                                };
 
-                                    BackgroundSize::Contain => {
-                                        let image_ratio = image_width as f32 / image_height as f32;
-                                        let container_ratio = bounds.w / bounds.h;
+                                let matrix = Matrix::rect_to_rect(
+                                    Rect::new(
+                                        0.0,
+                                        0.0,
+                                        image.image.width() as f32,
+                                        image.image.height() as f32,
+                                    ),
+                                    Rect::new(
+                                        bounds.left(),
+                                        bounds.top(),
+                                        bounds.left() + width,
+                                        bounds.top() + height,
+                                    ),
+                                    None,
+                                );
 
-                                        let (w, h) = if image_ratio > container_ratio {
-                                            (bounds.w, bounds.w / image_ratio)
-                                        } else {
-                                            (bounds.h * image_ratio, bounds.h)
-                                        };
+                                let mut paint = Paint::default();
+                                paint.set_anti_alias(true);
+                                paint.set_shader(image.image.to_shader(
+                                    (TileMode::Repeat, TileMode::Repeat),
+                                    SamplingOptions::default(),
+                                    &matrix,
+                                ));
 
-                                        (w, h)
-                                    }
-
-                                    BackgroundSize::Cover => {
-                                        let image_ratio = image_width as f32 / image_height as f32;
-                                        let container_ratio = bounds.w / bounds.h;
-
-                                        let (w, h) = if image_ratio < container_ratio {
-                                            (bounds.w, bounds.w / image_ratio)
-                                        } else {
-                                            (bounds.h * image_ratio, bounds.h)
-                                        };
-
-                                        (w, h)
-                                    }
-                                }
-                            } else {
-                                (image_width as f32, image_height as f32)
-                            };
-
-                            let matrix = Matrix::rect_to_rect(
-                                Rect::new(
-                                    0.0,
-                                    0.0,
-                                    image.image.width() as f32,
-                                    image.image.height() as f32,
-                                ),
-                                Rect::new(
-                                    bounds.left(),
-                                    bounds.top(),
-                                    bounds.left() + width,
-                                    bounds.top() + height,
-                                ),
-                                None,
-                            );
-
-                            let mut paint = Paint::default();
-                            paint.set_anti_alias(true);
-                            paint.set_shader(image.image.to_shader(
-                                (TileMode::Repeat, TileMode::Repeat),
-                                SamplingOptions::default(),
-                                &matrix,
-                            ));
-
-                            canvas.draw_path(path, &paint);
+                                canvas.draw_path(path, &paint);
+                            }
                         }
                     }
                     _ => {}
@@ -1191,7 +1199,12 @@ impl<'a> DrawContext<'a> {
             //     &paint,
             // );
 
-            paragraph.paint(canvas, (bounds.x + padding_left, bounds.y + padding_top));
+            // println!("bounds.y {} padding_top: {}  {}", bounds.y, padding_top, paragraph.height());
+
+            paragraph.paint(
+                canvas,
+                ((bounds.x + padding_left).round(), (bounds.y + padding_top).round()),
+            );
         }
     }
 

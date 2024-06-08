@@ -1,5 +1,3 @@
-use vizia::image;
-#[allow(unused)]
 use vizia::prelude::*;
 use vizia::vg;
 
@@ -25,24 +23,34 @@ const STYLE: &str = r#"
 
 "#;
 
+pub struct AppData {
+    image: ImageId,
+}
+
+#[cfg(target_arch = "wasm32")]
+fn main() {
+    panic!("This example is not supported on wasm - threads are experimental");
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        cx.set_image_loader(|cx, path|{
-            if path.starts_with("https://") {
-                let path = path.to_string();
-                cx.spawn(move |cx| {
-                    let data = reqwest::blocking::get(&path).unwrap().bytes().unwrap();
-                    cx.load_image(
-                        path,
-                        &data,
-                        ImageRetentionPolicy::DropWhenUnusedForOneFrame,
-                    )
-                    .unwrap();
-                });
-            }
-        });
+        // cx.set_image_loader(|cx, path|{
+        //     if path.starts_with("https://") {
+        //         let path = path.to_string();
+        //         cx.spawn(move |cx| {
+        //             let data = reqwest::blocking::get(&path).unwrap().bytes().unwrap();
+        //             cx.load_image(
+        //                 path,
+        //                 &data,
+        //                 ImageRetentionPolicy::DropWhenUnusedForOneFrame,
+        //             )
+        //             .unwrap();
+        //         });
+        //     }
+        // });
 
         // Load an image into the binary
         cx.load_image(
@@ -58,9 +66,9 @@ fn main() -> Result<(), ApplicationError> {
 
         Element::new(cx).class("auto-size").background_color(Color::red());
         Element::new(cx).class("fixed-size");
-        Element::new(cx).class("web-image");
-        Image::new(cx, "https://download.samplelib.com/png/sample-bumblebee-400x300.png");
-        Label::new(cx, "Wait for the image to load :)");
+        // Element::new(cx).class("web-image");
+        // Image::new(cx, "https://download.samplelib.com/png/sample-bumblebee-400x300.png");
+        // Label::new(cx, "Wait for the image to load :)");
     })
     .title("Background Image")
     .run()

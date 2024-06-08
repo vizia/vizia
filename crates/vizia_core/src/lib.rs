@@ -85,7 +85,7 @@ pub mod prelude {
         AbilityModifiers, AccessibilityModifiers, ActionModifiers, LayoutModifiers,
         LinearGradientBuilder, ShadowBuilder, StyleModifiers, TextModifiers,
     };
-    pub use super::resource::ImageRetentionPolicy;
+    pub use super::resource::{ImageId, ImageRetentionPolicy};
     pub use super::util::{IntoCssStr, CSS};
     pub use super::view::{Handle, View};
     pub use super::views::*;

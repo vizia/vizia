@@ -52,7 +52,13 @@ impl<'a> ResourceContext<'a> {
         image: skia_safe::Image,
         policy: ImageRetentionPolicy,
     ) {
-        match self.resource_manager.images.entry(path) {
+        let id = if let Some(image_id) = self.resource_manager.image_ids.get(&path) {
+            *image_id
+        } else {
+            self.resource_manager.image_id_manager.create()
+        };
+
+        match self.resource_manager.images.entry(id) {
             Entry::Occupied(mut occ) => {
                 occ.get_mut().image = image;
                 occ.get_mut().dirty = true;
