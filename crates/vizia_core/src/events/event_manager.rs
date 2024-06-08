@@ -356,20 +356,16 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 for entity in TreeIterator::full(&cx.tree) {
                     if let Some(model_data_store) = cx.data.get(&entity) {
                         if !model_data_store.models.is_empty() {
-                            println!("Models for {}", entity);
+                            debug!("Models for {}", entity);
                             for (_, model) in model_data_store.models.iter() {
-                                println!("M: {:?}", model.name())
+                                debug!("M: {:?}", model.name())
                             }
                         }
 
                         if !model_data_store.stores.is_empty() {
-                            println!("Stores for {}", entity);
+                            debug!("Stores for {}", entity);
                             for (_, store) in model_data_store.stores.iter() {
-                                println!(
-                                    "S: [{}] - Observers {:?}",
-                                    store.name(),
-                                    store.observers()
-                                )
+                                debug!("S: [{}] - Observers {:?}", store.name(), store.observers())
                             }
                         }
                     }
@@ -378,7 +374,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
 
             #[cfg(debug_assertions)]
             if *code == Code::KeyI && cx.modifiers.ctrl() {
-                println!("Entity tree");
+                debug!("Entity tree");
                 let (tree, views, cache) = (&cx.tree, &cx.views, &cx.cache);
                 let has_next_sibling = |entity| tree.get_next_sibling(entity).is_some();
                 let root_indents = |entity: Entity| {
@@ -407,7 +403,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                                 class_names += &format!(".{}", class);
                             }
                         }
-                        println!(
+                        debug!(
                             "{}{} {}{} [x: {} y: {} w: {} h: {}] {:?}",
                             indents(entity),
                             entity,
@@ -434,14 +430,9 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                     } else if let Some(binding_name) =
                         cx.bindings.get(&entity).map(|binding| format!("{:?}", binding))
                     {
-                        println!(
-                            "{}{} binding observing {}",
-                            indents(entity),
-                            entity,
-                            binding_name,
-                        );
+                        debug!("{}{} binding observing {}", indents(entity), entity, binding_name,);
                     } else {
-                        println!(
+                        debug!(
                             "{}{} {}",
                             indents(entity),
                             entity,

@@ -16,7 +16,7 @@ impl Model for AppState {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::SetDate(date) => {
-                println!("Date changed to: {}", date);
+                debug!("Date changed to: {}", date);
                 self.date = *date;
             }
         });

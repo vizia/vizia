@@ -81,8 +81,6 @@ pub fn apply_movement<T: EditableText>(
     //     WritingDirection::LeftToRight
     // };
 
-    println!("{}", modify);
-
     let writing_direction = WritingDirection::LeftToRight;
 
     let (offset, h_pos) = match m {
