@@ -178,27 +178,29 @@ impl Context {
                 let default_font_manager = FontMgr::default();
                 // let mut default_family_name = None;
 
-                // let mut asset_provider = TypefaceFontProvider::new();
+                let mut asset_provider = TypefaceFontProvider::new();
 
-                // let ft_type =
-                //     default_font_manager.new_from_data(fonts::TABLER_ICONS, None).unwrap();
-                // asset_provider.register_typeface(ft_type, Some("tabler-icons"));
-                // asset_provider.register_typeface(
-                //     default_font_manager.new_from_data(fonts::FIRACODE, None).unwrap(),
-                //     None,
-                // );
-                // asset_provider.register_typeface(
-                //     default_font_manager.new_from_data(fonts::ROBOTO, None).unwrap(),
-                //     None,
-                // );
+                asset_provider.register_typeface(
+                    default_font_manager.new_from_data(fonts::TABLER_ICONS, None).unwrap(),
+                    Some("tabler-icons"),
+                );
+                asset_provider.register_typeface(
+                    default_font_manager.new_from_data(fonts::FIRACODE, None).unwrap(),
+                    Some("Fira Code"),
+                );
+                asset_provider.register_typeface(
+                    default_font_manager.new_from_data(fonts::ROBOTO, None).unwrap(),
+                    Some("Roboto Flex"),
+                );
 
-                font_collection.set_default_font_manager(default_font_manager, "Fira Sans");
-                // let asset_font_manager: FontMgr = asset_provider.into();
-                // font_collection.set_asset_font_manager(asset_font_manager);
+                font_collection
+                    .set_default_font_manager(default_font_manager.clone(), "Roboto Flex");
+                let asset_font_manager: FontMgr = asset_provider.into();
+                font_collection.set_asset_font_manager(asset_font_manager);
 
                 TextContext {
                     font_collection,
-                    //default_font_manager,
+                    default_font_manager,
                     text_bounds: Default::default(),
                     text_paragraphs: Default::default(),
                 }
@@ -241,7 +243,7 @@ impl Context {
         Environment::new(&mut result).build(&mut result);
 
         result.entity_manager.create();
-        result.set_default_font(&["Roboto Flex"]);
+        result.set_default_font(&["Fira Sans"]);
 
         result.style.role.insert(Entity::root(), Role::Window);
 

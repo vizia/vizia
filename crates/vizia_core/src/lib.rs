@@ -38,11 +38,6 @@ pub mod vg {
     pub use skia_safe::*;
 }
 
-/// Contains types and functions used for loading and manipulating images. This is a re-export of [image](https://docs.rs/image/latest/image/).
-pub mod image {
-    pub use image::*;
-}
-
 /// A collection of codepoints for built-in icons.
 pub mod icons;
 

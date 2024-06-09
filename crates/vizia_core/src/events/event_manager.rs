@@ -403,7 +403,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                                 class_names += &format!(".{}", class);
                             }
                         }
-                        debug!(
+                        println!(
                             "{}{} {}{} [x: {} y: {} w: {} h: {}] {:?}",
                             indents(entity),
                             entity,

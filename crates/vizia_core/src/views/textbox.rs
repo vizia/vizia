@@ -33,7 +33,7 @@ pub enum TextEvent {
     /// Trigger the `on_submit` callback with the current text.
     Submit(bool),
     /// Specify the 'hit' position of the mouse cursor.
-    Hit(f32, f32),
+    Hit(f32, f32, bool),
     /// Specify the 'drag' position of the mouse cursor.
     Drag(f32, f32),
     /// Specify the scroll offset of the textbox.
@@ -222,19 +222,40 @@ where
     }
 
     fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
-        if let Some(text) = cx.style.text.get_mut(cx.current) {
-            let del_range = if self.selection.is_caret() {
-                let del_offset = offset_for_delete_backwards(&self.selection, text);
-                del_offset..self.selection.active
+        if self.selection.is_caret() {
+            if movement == Movement::Grapheme(Direction::Upstream) {
+                if let Some(text) = cx.style.text.get_mut(cx.current) {
+                    let del_offset = offset_for_delete_backwards(&self.selection, text);
+                    let del_range = del_offset..self.selection.active;
+
+                    self.selection = Selection::caret(del_range.start);
+
+                    text.edit(del_range, "");
+
+                    cx.style.needs_text_update(cx.current);
+                }
             } else {
-                self.selection.range()
-            };
+                if let Some(text) = cx.style.text.get_mut(cx.current) {
+                    if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+                        let to_delete =
+                            apply_movement(movement, self.selection, text, paragraph, true);
+                        self.selection = to_delete;
+                        let new_cursor_pos = self.selection.min();
+                        text.edit(to_delete.range(), "");
+                        self.selection = Selection::caret(new_cursor_pos);
+                        cx.style.needs_text_update(cx.current);
+                    }
+                }
+            }
+        } else {
+            if let Some(text) = cx.style.text.get_mut(cx.current) {
+                let del_range = self.selection.range();
+                self.selection = Selection::caret(del_range.start);
 
-            self.selection = Selection::caret(del_range.start);
+                text.edit(del_range, "");
 
-            text.edit(del_range, "");
-
-            cx.style.needs_text_update(cx.current);
+                cx.style.needs_text_update(cx.current);
+            }
         }
     }
 
@@ -255,12 +276,19 @@ where
         if let Some(text) = cx.style.text.get(cx.current) {
             self.selection.anchor = 0;
             self.selection.active = text.len();
+            cx.needs_redraw();
         }
     }
 
-    fn select_word(&mut self, cx: &mut EventContext) {}
+    fn select_word(&mut self, cx: &mut EventContext) {
+        self.move_cursor(cx, Movement::Word(Direction::Upstream), false);
+        self.move_cursor(cx, Movement::Word(Direction::Downstream), true);
+    }
 
-    fn select_paragraph(&mut self, cx: &mut EventContext) {}
+    fn select_paragraph(&mut self, cx: &mut EventContext) {
+        self.move_cursor(cx, Movement::ParagraphStart, false);
+        self.move_cursor(cx, Movement::ParagraphEnd, true);
+    }
 
     fn deselect(&mut self, cx: &mut EventContext) {
         self.selection = Selection::caret(self.selection.active);
@@ -269,15 +297,77 @@ where
     /// These input coordinates should be physical coordinates, i.e. what the mouse events provide.
     /// The output text coordinates will also be physical, but relative to the top of the text
     /// glyphs, appropriate for passage to cosmic.
-    fn coordinates_global_to_text(&self, cx: &mut EventContext, x: f32, y: f32) -> (f32, f32) {
-        todo!()
+    fn coordinates_global_to_text(&self, cx: &EventContext, x: f32, y: f32) -> (f32, f32) {
+        let bounds = cx.bounds();
+
+        let child_left = cx.style.child_left.get(cx.current).copied().unwrap_or_default();
+        let child_top = cx.style.child_top.get(cx.current).copied().unwrap_or_default();
+        let _child_right = cx.style.child_right.get(cx.current).copied().unwrap_or_default();
+        let child_bottom = cx.style.child_bottom.get(cx.current).copied().unwrap_or_default();
+
+        let justify_y = match (child_top, child_bottom) {
+            (Stretch(top), Stretch(bottom)) => {
+                if top + bottom == 0.0 {
+                    0.5
+                } else {
+                    top / (top + bottom)
+                }
+            }
+            (Stretch(_), _) => 1.0,
+            _ => 0.0,
+        };
+
+        let logical_parent_width = cx.physical_to_logical(bounds.w);
+        let logical_parent_height = cx.physical_to_logical(bounds.h);
+
+        let child_left = child_left.to_px(logical_parent_width, 0.0) * cx.scale_factor();
+        let child_top = child_top.to_px(logical_parent_height, 0.0) * cx.scale_factor();
+
+        // let total_height = cx.text_context.with_buffer(cx.current, |_, buffer| {
+        //     buffer.layout_runs().len() as f32 * buffer.metrics().line_height
+        // });
+
+        // let x = x - bounds.x - self.transform.0 - child_left;
+        // let y = y - self.transform.1 - bounds.y - (bounds.h - total_height) * justify_y - child_top;
+
+        let x = x - bounds.x - child_left;
+        let y = y - bounds.y - child_top;
+
+        (x, y)
     }
 
     /// This function takes window-global physical coordinates.
-    fn hit(&mut self, cx: &mut EventContext, x: f32, y: f32) {}
+    fn hit(&mut self, cx: &mut EventContext, x: f32, y: f32, selection: bool) {
+        if let Some(text) = cx.style.text.get(cx.current) {
+            if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+                let gp = paragraph
+                    .get_glyph_position_at_coordinate(self.coordinates_global_to_text(cx, x, y));
+                let pos = (gp.position as usize).min(text.len());
+                if selection {
+                    self.selection.active = pos;
+                } else {
+                    self.selection = Selection::caret(pos);
+                }
+
+                cx.needs_redraw();
+            }
+        }
+    }
 
     /// This function takes window-global physical coordinates.
-    fn drag(&mut self, cx: &mut EventContext, x: f32, y: f32) {}
+    fn drag(&mut self, cx: &mut EventContext, x: f32, y: f32) {
+        if let Some(text) = cx.style.text.get(cx.current) {
+            if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+                let gp = paragraph
+                    .get_glyph_position_at_coordinate(self.coordinates_global_to_text(cx, x, y));
+                let pos = (gp.position as usize).min(text.len());
+
+                self.selection.active = pos;
+
+                cx.needs_redraw();
+            }
+        }
+    }
 
     /// This function takes window-global physical dimensions.
     fn scroll(&mut self, cx: &mut EventContext, x: f32, y: f32) {}
@@ -436,8 +526,8 @@ where
                 padding_top = (vertical_free_space * val / vertical_flex_sum).ceil()
             }
 
-            let x = bounds.x + padding_left + cursor_rect.rect.left;
-            let y = bounds.y + padding_top + cursor_rect.rect.top;
+            let x = (bounds.x + padding_left + cursor_rect.rect.left).round();
+            let y = (bounds.y + padding_top + cursor_rect.rect.top).round();
 
             let x2 = x + 2.0;
             let y2 = y + (cursor_rect.rect.bottom - cursor_rect.rect.top);
@@ -684,7 +774,11 @@ where
                             cx.emit(TextEvent::StartEdit);
                         }
                         self.reset_caret_timer(cx);
-                        cx.emit(TextEvent::Hit(cx.mouse.cursorx, cx.mouse.cursory));
+                        cx.emit(TextEvent::Hit(
+                            cx.mouse.cursorx,
+                            cx.mouse.cursory,
+                            cx.modifiers.shift(),
+                        ));
                     }
                 } else {
                     cx.emit(TextEvent::Submit(false));
@@ -1144,8 +1238,8 @@ where
                 // self.set_caret(cx);
             }
 
-            TextEvent::Hit(posx, posy) => {
-                self.hit(cx, *posx, *posy);
+            TextEvent::Hit(posx, posy, selection) => {
+                self.hit(cx, *posx, *posy, *selection);
                 // self.set_caret(cx);
             }
 
