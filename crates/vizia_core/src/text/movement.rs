@@ -3,7 +3,7 @@ use skia_safe::textlayout::Paragraph;
 
 use super::{EditableText, Selection};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Direction {
     Left,
     Right,
@@ -30,7 +30,7 @@ impl Direction {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Movement {
     Grapheme(Direction),
     Word(Direction),
@@ -44,7 +44,7 @@ pub enum Movement {
     ParagraphEnd,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum VerticalMovement {
     LineUp,
     LineDown,
@@ -148,7 +148,7 @@ pub fn apply_movement<T: EditableText>(
                 } else {
                     down_pos.text_range.end
                 };
-                (s, Some(h_pos))
+                (s.min(text.len()), Some(h_pos))
             }
         }
         Movement::Vertical(VerticalMovement::DocumentStart) => (0, None),
@@ -189,6 +189,19 @@ pub fn apply_movement<T: EditableText>(
         // of the viewport.
         Movement::Vertical(VerticalMovement::PageDown)
         | Movement::Vertical(VerticalMovement::PageUp) => (s.active, s.h_pos),
+
+        Movement::LineStart => {
+            let line = paragraph.get_line_number_at(s.active).unwrap();
+            let lm = paragraph.get_line_metrics_at(line).unwrap();
+            (lm.start_index, None)
+        }
+
+        Movement::LineEnd => {
+            let line = paragraph.get_line_number_at(s.active).unwrap();
+            let lm = paragraph.get_line_metrics_at(line).unwrap();
+            (lm.end_index - 1, None)
+        }
+
         other => {
             warn!("unhandled movement {:?}", other);
             (s.anchor, s.h_pos)

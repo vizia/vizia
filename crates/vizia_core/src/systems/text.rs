@@ -1,7 +1,7 @@
 use skia_safe::{
     font_arguments::VariationPosition,
     textlayout::{FontCollection, Paragraph, ParagraphBuilder, ParagraphStyle, TextStyle},
-    FontArguments, FontStyle, Paint,
+    BlendMode, FontArguments, FontStyle, Paint,
 };
 use vizia_storage::LayoutTreeIterator;
 
@@ -58,8 +58,8 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                 .unwrap_or(bounds.shrink_sides(padding_left, 0.0, padding_right, 0.0));
 
             if !cx.style.width.get(entity).copied().unwrap_or_default().is_auto() {
-                // paragraph.layout(text_bounds.width());
-                paragraph.layout(bounds.width() - padding_left - padding_right);
+                paragraph.layout(text_bounds.width());
+                // paragraph.layout(bounds.width() - padding_left - padding_right);
             }
 
             cx.style.needs_redraw(entity);
@@ -106,59 +106,59 @@ pub fn build_paragraph(
     );
 
     // Text Style
-    paragraph_style.set_text_style(&{
-        let mut text_style = TextStyle::new();
 
-        // Font Families
-        text_style.set_font_families(
-            style
-                .font_family
-                .get(entity)
-                .map(Vec::as_slice)
-                .unwrap_or(&[FamilyOwned::Generic(GenericFontFamily::SansSerif)]),
+    let mut text_style = TextStyle::new();
+
+    // Font Families
+    text_style.set_font_families(
+        style
+            .font_family
+            .get(entity)
+            .map(Vec::as_slice)
+            .unwrap_or(&[FamilyOwned::Generic(GenericFontFamily::SansSerif)]),
+    );
+
+    // Font Color
+    if let Some(font_color) = style.font_color.get(entity) {
+        let mut paint = Paint::default();
+        paint.set_color(*font_color);
+        paint.set_anti_alias(false);
+        paint.set_blend_mode(BlendMode::SrcOver);
+        text_style.set_foreground_paint(&paint);
+    }
+
+    // Font Size
+    let font_size = style.font_size.get(entity).map_or(16.0, |f| f.0);
+    text_style.set_font_size(font_size * style.scale_factor());
+
+    // Font Style
+    match (
+        style.font_weight.get(entity),
+        style.font_width.get(entity),
+        style.font_slant.get(entity),
+    ) {
+        (None, None, None) => {}
+        (weight, width, slant) => {
+            text_style.set_font_style(FontStyle::new(
+                weight.copied().unwrap_or_default().into(),
+                width.copied().unwrap_or_default().into(),
+                slant.copied().unwrap_or_default().into(),
+            ));
+        }
+    }
+
+    // Font Variations
+    if let Some(coordinates) = style.font_variation_settings.get(entity) {
+        let coordinates = coordinates.iter().map(|c| c.0).collect::<Vec<_>>();
+        println!("{:?}", coordinates);
+        text_style.set_font_arguments(
+            &FontArguments::new()
+                .set_variation_design_position(VariationPosition { coordinates: &coordinates }),
         );
-
-        // Font Color
-        if let Some(font_color) = style.font_color.get(entity) {
-            let mut paint = Paint::default();
-            paint.set_color(*font_color);
-            paint.set_anti_alias(true);
-            text_style.set_foreground_paint(&paint);
-        }
-
-        // Font Size
-        let font_size = style.font_size.get(entity).map_or(16.0, |f| f.0);
-        text_style.set_font_size(font_size.round() * style.scale_factor());
-
-        // Font Style
-        match (
-            style.font_weight.get(entity),
-            style.font_width.get(entity),
-            style.font_slant.get(entity),
-        ) {
-            (None, None, None) => {}
-            (weight, width, slant) => {
-                text_style.set_font_style(FontStyle::new(
-                    weight.copied().unwrap_or_default().into(),
-                    width.copied().unwrap_or_default().into(),
-                    slant.copied().unwrap_or_default().into(),
-                ));
-            }
-        }
-
-        // Font Variations
-        if let Some(coordinates) = style.font_variation_settings.get(entity) {
-            let coordinates = coordinates.iter().map(|c| c.0).collect::<Vec<_>>();
-            text_style
-                .set_font_arguments(&FontArguments::new().set_variation_design_position(
-                    VariationPosition { coordinates: &coordinates },
-                ));
-        }
-
-        text_style
-    });
+    }
 
     let mut paragraph_builder = ParagraphBuilder::new(&paragraph_style, font_collection);
+    paragraph_builder.push_style(&text_style);
     paragraph_builder.add_text(text.as_str());
     paragraph_builder.add_text("\u{200B}");
     // paragraph_builder.add_text(" px");

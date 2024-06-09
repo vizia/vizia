@@ -1,10 +1,12 @@
+use skia_safe::font_style::{Slant, Weight, Width};
 use skia_safe::gradient_shader::GradientShaderColors;
 use skia_safe::image_filters::CropRect;
 use skia_safe::path::ArcSize;
 use skia_safe::rrect::Corner;
 use skia_safe::{
-    BlurStyle, ClipOp, FilterMode, IRect, ImageFilter, MaskFilter, Matrix, Paint, PaintStyle, Path,
-    PathDirection, Point, RRect, Rect, SamplingOptions, Shader, TileMode,
+    BlendMode, BlurStyle, ClipOp, FilterMode, Font, FontStyle, IRect, ImageFilter, MaskFilter,
+    Matrix, Paint, PaintStyle, Path, PathDirection, Point, RRect, Rect, SamplingOptions, Shader,
+    Shaper, TextBlobBuilder, TileMode,
 };
 use std::any::{Any, TypeId};
 use std::f32::consts::SQRT_2;

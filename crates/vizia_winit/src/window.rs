@@ -25,7 +25,7 @@ use skia_safe::{
         self, backend_render_targets, context_options, gl::FramebufferInfo, ContextOptions,
         SurfaceOrigin,
     },
-    ColorType, Surface,
+    ColorSpace, ColorType, PixelGeometry, Surface, SurfaceProps, SurfacePropsFlags,
 };
 use vizia_core::backend::*;
 use vizia_core::prelude::*;
@@ -260,16 +260,25 @@ pub fn create_surface(
         size.width.try_into().expect("Could not convert width"),
         size.height.try_into().expect("Could not convert height"),
     );
+
     let backend_render_target =
         backend_render_targets::make_gl(size, num_samples, stencil_size, fb_info);
+
+    let surface_props = SurfaceProps::new_with_text_properties(
+        SurfacePropsFlags::default(),
+        PixelGeometry::default(),
+        0.5,
+        0.0,
+    );
 
     gpu::surfaces::wrap_backend_render_target(
         gr_context,
         &backend_render_target,
         SurfaceOrigin::BottomLeft,
         ColorType::RGBA8888,
-        None,
-        None,
+        ColorSpace::new_srgb(),
+        Some(surface_props).as_ref(),
+        // None,
     )
     .expect("Could not create skia surface")
 }
