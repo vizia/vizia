@@ -12,7 +12,7 @@ pub struct TextConfig {
 
 pub struct TextContext {
     pub font_collection: FontCollection,
-    //pub default_font_manager: FontMgr,
+    pub default_font_manager: FontMgr,
     pub text_bounds: SparseSet<BoundingBox>,
     pub text_paragraphs: SparseSet<Paragraph>,
 }
