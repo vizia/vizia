@@ -3,8 +3,6 @@ use vizia_id::{
     GENERATIONAL_ID_INDEX_BITS, GENERATIONAL_ID_INDEX_MASK,
 };
 
-use crate::context::EventContext;
-
 /// An ID used to reference images in the resource manager.
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ImageId(u64);
