@@ -1,5 +1,5 @@
 use crate::accessibility::IntoNode;
-use crate::{prelude::*, text};
+use crate::prelude::*;
 
 use crate::text::{
     apply_movement, enforce_text_bounds, ensure_visible, offset_for_delete_backwards, Direction,
@@ -87,7 +87,7 @@ enum TextboxKind {
 
 impl<L: Lens> Textbox<L>
 where
-    <L as Lens>::Target: Data + Clone + ToString + std::str::FromStr,
+    <L as Lens>::Target: Data + Clone + ToStringLocalized + std::str::FromStr,
 {
     /// Creates a new single-line textbox.
     ///
@@ -209,6 +209,11 @@ where
         .default_action_verb(DefaultActionVerb::Focus)
         .toggle_class("caret", Self::show_caret)
         .text(lens)
+        .bind(lens, |handle, lens| {
+            let flag = lens.get(&handle).to_string_local(handle.cx).is_empty();
+            println!("{:?}", lens.get(&handle).to_string_local(handle.cx));
+            handle.modify(|textbox| textbox.placeholder_shown = flag);
+        })
     }
 
     fn set_caret(&mut self, cx: &mut EventContext) {}
@@ -372,9 +377,13 @@ where
     /// This function takes window-global physical dimensions.
     fn scroll(&mut self, cx: &mut EventContext, x: f32, y: f32) {}
 
-    #[allow(dead_code)]
     fn clone_selected(&self, cx: &mut EventContext) -> Option<String> {
-        todo!()
+        if let Some(text) = cx.style.text.get(cx.current) {
+            let substring = &text[self.selection.range()];
+            return Some(substring.to_string());
+        }
+
+        None
     }
 
     fn clone_text(&self, cx: &mut EventContext) -> String {
@@ -607,7 +616,7 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
 
 impl<L: Lens> View for Textbox<L>
 where
-    <L as Lens>::Target: Data + ToString + std::str::FromStr,
+    <L as Lens>::Target: Data + ToStringLocalized + std::str::FromStr,
 {
     fn element(&self) -> Option<&'static str> {
         Some("textbox")
@@ -1314,11 +1323,9 @@ where
     // Use custom drawing for the textbox so a transform can be applied to just the text.
     fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
         cx.draw_shadows(canvas);
-        // cx.draw_backdrop_filter(canvas, &mut path);
         cx.draw_background(canvas);
         cx.draw_border(canvas);
-        // cx.draw_inset_shadows(canvas, &mut path);
-        // cx.draw_outline(canvas);
+        cx.draw_outline(canvas);
         // canvas.save();
         // canvas.translate(self.transform.0, self.transform.1);
         // cx.draw_text_and_selection(canvas);

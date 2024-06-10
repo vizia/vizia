@@ -80,8 +80,18 @@ pub fn build_paragraph(
     // paragraph_style.turn_hinting_off();
 
     // Overflow
-    if style.text_overflow.get(entity) == Some(&TextOverflow::Ellipsis) {
-        paragraph_style.set_ellipsis("...");
+    match style.text_overflow.get(entity) {
+        Some(&TextOverflow::Ellipsis) => {
+            paragraph_style.set_ellipsis("...");
+        }
+
+        Some(&TextOverflow::Clip) => {
+            paragraph_style.set_ellipsis("");
+        }
+
+        _ => {
+            paragraph_style.set_ellipsis("");
+        }
     }
 
     // Line Clamp

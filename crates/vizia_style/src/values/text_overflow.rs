@@ -4,17 +4,13 @@ use crate::{define_enum, impl_parse, Parse};
 
 define_enum! {
     /// Determines how overflowed content that is not displayed should be signaled to the user.
+    #[derive(Default)]
     pub enum TextOverflow {
         /// The text is clipped and not accessible.
+        #[default]
         "clip": Clip,
         /// Renders an ellipsis ("...") to represent the clipped text.
         "ellipsis": Ellipsis,
-    }
-}
-
-impl Default for TextOverflow {
-    fn default() -> Self {
-        TextOverflow::Clip
     }
 }
 
