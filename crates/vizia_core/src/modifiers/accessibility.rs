@@ -79,12 +79,12 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     }
 
     /// Sets the accessibility text value for the view.
-    fn text_value<U: ToString>(mut self, value: impl Res<U>) -> Self {
+    fn text_value<U: ToStringLocalized>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, |cx, val| {
-                cx.style.text_value.insert(cx.current, val.get(cx).to_string());
+                cx.style.text_value.insert(cx.current, val.get(cx).to_string_local(cx));
                 cx.style.needs_access_update(cx.current);
             });
         });

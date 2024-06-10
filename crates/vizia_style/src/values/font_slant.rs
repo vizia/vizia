@@ -3,17 +3,12 @@ use skia_safe::font_style::Slant;
 use crate::{macros::define_enum, Parse};
 
 define_enum! {
-    /// A font style.
+    #[derive(Default)]
     pub enum FontSlant {
+        #[default]
         "normal": Normal,
         "italic": Italic,
         "oblique": Oblique,
-    }
-}
-
-impl Default for FontSlant {
-    fn default() -> Self {
-        FontSlant::Normal
     }
 }
 

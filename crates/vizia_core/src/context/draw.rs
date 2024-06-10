@@ -1,6 +1,4 @@
-use skia_safe::font_style::{Slant, Weight, Width};
 use skia_safe::gradient_shader::GradientShaderColors;
-use skia_safe::image_filters::CropRect;
 use skia_safe::path::ArcSize;
 use skia_safe::rrect::Corner;
 use skia_safe::{

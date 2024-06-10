@@ -623,15 +623,15 @@ impl Context {
     /// let timer = cx.add_timer(Duration::from_secs(1), Some(Duration::from_secs(5)), |cx, reason|{
     ///     match reason {
     ///         TimerAction::Start => {
-    ///             println!("Start timer");
+    ///             debug!("Start timer");
     ///         }
     ///     
     ///         TimerAction::Tick(delta) => {
-    ///             println!("Tick timer: {:?}", delta);
+    ///             debug!("Tick timer: {:?}", delta);
     ///         }
     ///
     ///         TimerAction::Stop => {
-    ///             println!("Stop timer");
+    ///             debug!("Stop timer");
     ///         }
     ///     }
     /// });

@@ -1,9 +1,10 @@
 use crate::{define_enum, Parse};
 
 define_enum! {
+    #[derive(Default)]
     pub enum BlendMode {
-
         "plus": Plus,
+        #[default]
         "normal": Normal,
         "multiply": Multiply,
         "screen": Screen,
@@ -21,12 +22,6 @@ define_enum! {
         "color": Color,
         "luminosity": Luminosity,
 
-    }
-}
-
-impl Default for BlendMode {
-    fn default() -> Self {
-        BlendMode::Normal
     }
 }
 

@@ -1,5 +1,3 @@
-use vizia::image;
-#[allow(unused)]
 use vizia::prelude::*;
 
 #[allow(unused)]
