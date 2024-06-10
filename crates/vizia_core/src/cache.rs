@@ -24,7 +24,6 @@ pub struct CachedData {
     // pub(crate) filter_image: SparseSet<Option<(ImageId, ImageId)>>,
     // pub(crate) screenshot_image: SparseSet<Option<ImageId>>,
     pub(crate) geo_changed: SparseSet<GeoChanged>,
-    pub(crate) dirty_rect: Option<BoundingBox>,
     pub(crate) transform: SparseSet<Matrix>,
     pub(crate) clip_path: SparseSet<BoundingBox>,
 }
@@ -38,13 +37,6 @@ impl CachedData {
     }
 
     pub(crate) fn remove(&mut self, entity: Entity) {
-        if let Some(draw_bounds) = self.draw_bounds.get(entity) {
-            if let Some(dirty_rect) = &mut self.dirty_rect {
-                *dirty_rect = dirty_rect.union(draw_bounds);
-            } else {
-                self.dirty_rect = Some(*draw_bounds);
-            }
-        }
         self.bounds.remove(entity);
         self.relative_bounds.remove(entity);
         self.draw_bounds.remove(entity);

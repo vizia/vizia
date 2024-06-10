@@ -80,8 +80,6 @@ pub struct EventContext<'a> {
     pub(crate) timers: &'a mut Vec<TimerState>,
     pub(crate) running_timers: &'a mut BinaryHeap<TimerState>,
     cursor_icon_locked: &'a mut bool,
-    window_size: &'a mut WindowSize,
-    user_scale_factor: &'a mut f64,
     #[cfg(feature = "clipboard")]
     clipboard: &'a mut Box<dyn ClipboardProvider>,
     pub(crate) event_proxy: &'a mut Option<Box<dyn crate::context::EventProxy>>,
@@ -133,8 +131,6 @@ impl<'a> EventContext<'a> {
             timers: &mut cx.timers,
             running_timers: &mut cx.running_timers,
             cursor_icon_locked: &mut cx.cursor_icon_locked,
-            window_size: &mut cx.window_size,
-            user_scale_factor: &mut cx.user_scale_factor,
             #[cfg(feature = "clipboard")]
             clipboard: &mut cx.clipboard,
             event_proxy: &mut cx.event_proxy,
@@ -167,8 +163,6 @@ impl<'a> EventContext<'a> {
             timers: &mut cx.timers,
             running_timers: &mut cx.running_timers,
             cursor_icon_locked: &mut cx.cursor_icon_locked,
-            window_size: &mut cx.window_size,
-            user_scale_factor: &mut cx.user_scale_factor,
             #[cfg(feature = "clipboard")]
             clipboard: &mut cx.clipboard,
             event_proxy: &mut cx.event_proxy,
@@ -777,37 +771,6 @@ impl<'a> EventContext<'a> {
         {
             (f)(view);
         }
-    }
-
-    /// Returns the window's size in logical pixels, before
-    /// [`user_scale_factor()`][Self::user_scale_factor()] gets applied to it. If this value changed
-    /// during a frame then the window will be resized and a [`WindowEvent::GeometryChanged`] will
-    /// be emitted.
-    pub fn window_size(&self) -> WindowSize {
-        *self.window_size
-    }
-
-    /// Change the window size. A [`WindowEvent::GeometryChanged`] will be emitted when the window
-    /// has actually changed in size.
-    pub fn set_window_size(&mut self, new_size: WindowSize) {
-        *self.window_size = new_size;
-    }
-
-    /// A scale factor used for uniformly scaling the window independently of any HiDPI scaling.
-    /// `window_size` gets multplied with this factor to get the actual logical window size. If this
-    /// changes during a frame, then the window will be resized at the end of the frame and a
-    /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
-    /// [`WindowDescription::user_scale_factor`](vizia_window::WindowDescription::user_scale_factor).
-    pub fn user_scale_factor(&self) -> f64 {
-        *self.user_scale_factor
-    }
-
-    /// Change the user scale factor size. A [`WindowEvent::GeometryChanged`] will be emitted when the
-    /// window has actually changed in size.
-    pub fn set_user_scale_factor(&mut self, new_factor: f64) {
-        *self.user_scale_factor = new_factor;
-        self.style.system_flags.set(SystemFlags::RELAYOUT, true);
-        self.style.system_flags.set(SystemFlags::REFLOW, true);
     }
 
     // TODO: Abstract this to shared trait for all contexts

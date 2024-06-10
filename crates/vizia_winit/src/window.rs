@@ -1,16 +1,18 @@
-use crate::application::UserEvent;
-use std::ffi::CString;
+use crate::window_modifiers::WindowModifiers;
+use glutin::context::GlProfile;
+
+use std::error::Error;
 use std::num::NonZeroU32;
+use std::{ffi::CString, sync::Arc};
+use winit::raw_window_handle::HasRawWindowHandle;
 
 use crate::convert::cursor_icon_to_cursor_icon;
 
+use gl::types::*;
 use gl_rs as gl;
 use glutin::config::Config;
 use glutin::surface::SwapInterval;
 use glutin_winit::DisplayBuilder;
-use raw_window_handle::HasRawWindowHandle;
-
-use gl::types::*;
 
 use glutin::{
     config::ConfigTemplateBuilder,
@@ -27,42 +29,51 @@ use skia_safe::{
     },
     ColorSpace, ColorType, PixelGeometry, Surface, SurfaceProps, SurfacePropsFlags,
 };
-use vizia_core::backend::*;
+
 use vizia_core::prelude::*;
-use winit::event_loop::EventLoop;
-use winit::window::{CursorGrabMode, WindowBuilder, WindowLevel};
+use winit::event_loop::ActiveEventLoop;
+use winit::window::CursorGrabMode;
 use winit::{dpi::*, window::WindowId};
 
-pub struct Window {
+pub struct WinState {
+    pub entity: Entity,
     gl_config: Config,
+    gl_context: glutin::context::PossiblyCurrentContext,
     pub gl_surface: glutin::surface::Surface<glutin::surface::WindowSurface>,
     pub id: WindowId,
-    pub gl_context: glutin::context::PossiblyCurrentContext,
     pub gr_context: skia_safe::gpu::DirectContext,
-    window: winit::window::Window,
-    pub should_close: bool,
+    pub window: Arc<winit::window::Window>,
+    pub surface: skia_safe::Surface,
+    pub dirty_surface: skia_safe::Surface,
+    pub is_initially_cloaked: bool,
+}
+
+impl Drop for WinState {
+    fn drop(&mut self) {
+        self.gl_context.make_current(&self.gl_surface).unwrap();
+    }
 }
 
 #[cfg(target_os = "windows")]
-impl Window {
+impl WinState {
     /// Cloaks the window such that it is not visible to the user, but will still be composited.
     /// We use this to work around the "blank window flash" startup bug on windows.
     ///
     /// <https://learn.microsoft.com/en-us/windows/win32/api/dwmapi/ne-dwmapi-dwmwindowattribute>
     ///
     pub(crate) fn set_cloak(&self, state: bool) -> bool {
-        use raw_window_handle::RawWindowHandle::Win32;
         use winapi::shared::minwindef::{BOOL, FALSE, TRUE};
         use winapi::um::dwmapi::{DwmSetWindowAttribute, DWMWA_CLOAK};
+        use winit::raw_window_handle::RawWindowHandle::Win32;
 
-        let Win32(handle) = self.window.raw_window_handle() else {
+        let Win32(handle) = self.window.raw_window_handle().unwrap() else {
             unreachable!();
         };
 
         let value = if state { TRUE } else { FALSE };
         let result = unsafe {
             DwmSetWindowAttribute(
-                handle.hwnd as _,
+                handle.hwnd.get() as _,
                 DWMWA_CLOAK,
                 &value as *const BOOL as *const _,
                 std::mem::size_of::<BOOL>() as u32,
@@ -73,29 +84,21 @@ impl Window {
     }
 }
 
-impl Window {
+impl WinState {
     pub fn new(
-        events_loop: &EventLoop<UserEvent>,
-        window_description: &WindowDescription,
-    ) -> (Self, Surface) {
-        let window_builder = WindowBuilder::new();
-
-        //Windows COM doesn't play nicely with winit's drag and drop right now
-        #[cfg(target_os = "windows")]
-        let window_builder = {
-            use winit::platform::windows::WindowBuilderExtWindows;
-            window_builder.with_drag_and_drop(false)
-        };
-
-        // Apply generic WindowBuilder properties
-        let window_builder = apply_window_description(window_builder, window_description);
+        event_loop: &ActiveEventLoop,
+        window: Arc<winit::window::Window>,
+        entity: Entity,
+    ) -> Result<Self, Box<dyn Error>> {
+        window.set_ime_allowed(true);
+        window.set_visible(true);
 
         let template =
             ConfigTemplateBuilder::new().with_alpha_size(8).with_transparency(cfg!(cgl_backend));
-        let display_builder = DisplayBuilder::new().with_window_builder(Some(window_builder));
+        let display_builder = DisplayBuilder::new();
 
-        let (window, gl_config) = display_builder
-            .build(events_loop, template, |configs| {
+        let (_, gl_config) = display_builder
+            .build(event_loop, template, |configs| {
                 // Find the config with the maximum number of samples, so our triangle will
                 // be smooth.
                 configs
@@ -113,26 +116,29 @@ impl Window {
             })
             .unwrap();
 
-        let window = window.unwrap();
-
-        let raw_window_handle = Some(window.raw_window_handle());
+        let raw_window_handle = window.raw_window_handle().unwrap();
 
         let gl_display = gl_config.display();
 
-        let context_attributes = ContextAttributesBuilder::new().build(raw_window_handle);
+        let context_attributes = ContextAttributesBuilder::new()
+            .with_profile(GlProfile::Core)
+            .build(Some(raw_window_handle));
+
         let fallback_context_attributes = ContextAttributesBuilder::new()
+            .with_profile(GlProfile::Core)
             .with_context_api(ContextApi::Gles(None))
-            .build(raw_window_handle);
-        let mut not_current_gl_context = Some(unsafe {
+            .build(Some(raw_window_handle));
+
+        let not_current_gl_context = unsafe {
             gl_display.create_context(&gl_config, &context_attributes).unwrap_or_else(|_| {
                 gl_display
                     .create_context(&gl_config, &fallback_context_attributes)
                     .expect("failed to create context")
             })
-        });
+        };
 
         let (width, height): (u32, u32) = window.inner_size().into();
-        let raw_window_handle = window.raw_window_handle();
+
         let attrs = SurfaceAttributesBuilder::<WindowSurface>::new().build(
             raw_window_handle,
             NonZeroU32::new(width.max(1)).unwrap(),
@@ -142,18 +148,19 @@ impl Window {
         let gl_surface =
             unsafe { gl_config.display().create_window_surface(&gl_config, &attrs).unwrap() };
 
-        let gl_context = not_current_gl_context.take().unwrap().make_current(&gl_surface).unwrap();
+        let gl_context = not_current_gl_context.make_current(&gl_surface).unwrap();
 
-        if window_description.vsync {
-            gl_surface
-                .set_swap_interval(&gl_context, SwapInterval::Wait(NonZeroU32::new(1).unwrap()))
-                .expect("Failed to set vsync");
-        }
+        // if window_description.vsync {
+        //     gl_surface
+        //         .set_swap_interval(&gl_context, SwapInterval::Wait(NonZeroU32::new(1).unwrap()))
+        //         .expect("Failed to set vsync");
+        // }
 
         // Build skia renderer
         gl::load_with(|s| {
             gl_config.display().get_proc_address(CString::new(s).unwrap().as_c_str())
         });
+
         let interface = skia_safe::gpu::gl::Interface::new_load_with(|name| {
             if name == "eglGetCurrentDisplay" {
                 return std::ptr::null();
@@ -166,7 +173,7 @@ impl Window {
         let mut context_options = ContextOptions::new();
         context_options.skip_gl_error_checks = context_options::Enable::Yes;
 
-        let mut gr_context = skia_safe::gpu::DirectContext::new_gl(interface, &context_options)
+        let mut gr_context = skia_safe::gpu::direct_contexts::make_gl(interface, &context_options)
             .expect("Could not create direct context");
 
         let fb_info = {
@@ -183,20 +190,28 @@ impl Window {
         let num_samples = gl_config.num_samples() as usize;
         let stencil_size = gl_config.stencil_size() as usize;
 
-        let surface = create_surface(&window, fb_info, &mut gr_context, num_samples, stencil_size);
+        let mut surface =
+            create_surface(&window, fb_info, &mut gr_context, num_samples, stencil_size);
+
+        let inner_size = window.inner_size();
+
+        let dirty_surface = surface
+            .new_surface_with_dimensions((inner_size.width as i32, inner_size.height as i32))
+            .unwrap();
 
         // Build our window
-        let win = Window {
+        Ok(WinState {
+            entity,
             gl_config,
-            id: window.id(),
             gl_context,
+            id: window.id(),
             gr_context,
             gl_surface,
             window,
-            should_close: false,
-        };
-
-        (win, surface)
+            surface,
+            dirty_surface,
+            is_initially_cloaked: true,
+        })
     }
 
     // Returns a reference to the winit window
@@ -204,7 +219,7 @@ impl Window {
         &self.window
     }
 
-    pub fn resize(&mut self, size: PhysicalSize<u32>, surface: &mut (Surface, Surface)) {
+    pub fn resize(&mut self, size: PhysicalSize<u32>) {
         let (width, height): (u32, u32) = size.into();
 
         if width == 0 || height == 0 {
@@ -222,7 +237,7 @@ impl Window {
             }
         };
 
-        surface.0 = create_surface(
+        self.surface = create_surface(
             &self.window,
             fb_info,
             &mut self.gr_context,
@@ -230,8 +245,8 @@ impl Window {
             self.gl_config.stencil_size() as usize,
         );
 
-        surface.1 = surface
-            .0
+        self.dirty_surface = self
+            .surface
             .new_surface_with_dimensions((width.max(1) as i32, height.max(1) as i32))
             .unwrap();
 
@@ -243,6 +258,7 @@ impl Window {
     }
 
     pub fn swap_buffers(&mut self) {
+        self.gl_context.make_current(&self.gl_surface).unwrap();
         self.gr_context.flush_and_submit();
         self.gl_surface.swap_buffers(&self.gl_context).expect("Failed to swap buffers");
     }
@@ -283,6 +299,25 @@ pub fn create_surface(
     .expect("Could not create skia surface")
 }
 
+pub struct Window {
+    pub window: Option<Arc<winit::window::Window>>,
+}
+
+impl Window {
+    fn window(&self) -> &winit::window::Window {
+        self.window.as_ref().unwrap()
+    }
+
+    pub fn new(cx: &mut Context, content: impl Fn(&mut Context)) -> Handle<Self> {
+        Self { window: None }
+            .build(cx, |cx| {
+                cx.windows.insert(cx.current(), WindowState::default());
+                (content)(cx);
+            })
+            .background_color(Color::blue())
+    }
+}
+
 impl View for Window {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _| match window_event {
@@ -302,7 +337,7 @@ impl View for Window {
             WindowEvent::SetCursor(cursor) => {
                 if let Some(icon) = cursor_icon_to_cursor_icon(*cursor) {
                     self.window().set_cursor_visible(true);
-                    self.window().set_cursor_icon(icon);
+                    self.window().set_cursor(icon);
                 } else {
                     self.window().set_cursor_visible(false);
                 }
@@ -355,7 +390,7 @@ impl View for Window {
             }
 
             WindowEvent::WindowClose => {
-                self.should_close = true;
+                // self.should_close = true;
             }
 
             WindowEvent::FocusNext => {
@@ -366,52 +401,149 @@ impl View for Window {
                 cx.focus_prev();
             }
 
+            WindowEvent::Redraw => {
+                self.window().request_redraw();
+            }
+
             _ => {}
         })
     }
 }
 
-fn apply_window_description(
-    mut builder: WindowBuilder,
-    description: &WindowDescription,
-) -> WindowBuilder {
-    builder = builder.with_title(&description.title).with_inner_size(LogicalSize::new(
-        description.inner_size.width,
-        description.inner_size.height,
-    ));
+impl<'a> WindowModifiers for Handle<'a, Window> {
+    fn title<T: ToString>(mut self, title: impl Res<T>) -> Self {
+        let entity = self.entity();
+        let title = title.get(&self).to_string();
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.title = title;
+        }
 
-    if let Some(min_inner_size) = description.min_inner_size {
-        builder = builder
-            .with_min_inner_size(LogicalSize::new(min_inner_size.width, min_inner_size.height))
+        self
     }
 
-    if let Some(max_inner_size) = description.max_inner_size {
-        builder = builder
-            .with_max_inner_size(LogicalSize::new(max_inner_size.width, max_inner_size.height));
+    fn inner_size<S: Into<WindowSize>>(mut self, size: impl Res<S>) -> Self {
+        let entity = self.entity();
+        let size = size.get(&self).into();
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.inner_size = size;
+        }
+
+        self
     }
 
-    if let Some(position) = description.position {
-        builder = builder.with_position(LogicalPosition::new(position.x, position.y));
+    fn min_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
+        let entity = self.entity();
+        let size = size.get(&self).map(|size| size.into());
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.min_inner_size = size;
+        }
+
+        self
     }
 
-    builder
-        .with_resizable(description.resizable)
-        .with_maximized(description.maximized)
-        // Accesskit requires that the window start invisible until accesskit is initialized.
-        .with_visible(false)
-        .with_window_level(if description.always_on_top {
-            WindowLevel::AlwaysOnTop
-        } else {
-            WindowLevel::Normal
-        })
-        .with_transparent(description.transparent)
-        .with_decorations(description.decorations)
-        .with_window_icon(description.icon.as_ref().map(|icon| {
-            winit::window::Icon::from_rgba(
-                icon.clone(),
-                description.icon_width,
-                description.icon_height,
-            )
-            .unwrap()
-        }))
+    fn max_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
+        let entity = self.entity();
+        let size = size.get(&self).map(|size| size.into());
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.max_inner_size = size;
+        }
+
+        self
+    }
+
+    fn position<P: Into<vizia_window::Position>>(mut self, position: impl Res<P>) -> Self {
+        let entity = self.entity();
+        let pos = Some(position.get(&self).into());
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.position = pos;
+        }
+
+        self
+    }
+
+    fn resizable(mut self, flag: impl Res<bool>) -> Self {
+        let entity = self.entity();
+        let flag = flag.get(&self);
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.resizable = flag;
+        }
+
+        self
+    }
+
+    fn minimized(mut self, flag: impl Res<bool>) -> Self {
+        let entity = self.entity();
+        let flag = flag.get(&self);
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.minimized = flag;
+        }
+
+        self
+    }
+
+    fn maximized(mut self, flag: impl Res<bool>) -> Self {
+        let entity = self.entity();
+        let flag = flag.get(&self);
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.maximized = flag;
+        }
+
+        self
+    }
+
+    fn visible(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.visible = flag
+        }
+
+        self
+    }
+
+    fn transparent(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.transparent = flag
+        }
+
+        self
+    }
+
+    fn decorations(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.decorations = flag
+        }
+
+        self
+    }
+
+    fn always_on_top(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.always_on_top = flag
+        }
+
+        self
+    }
+
+    fn vsync(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.vsync = flag
+        }
+
+        self
+    }
+
+    fn icon(mut self, width: u32, height: u32, image: Vec<u8>) -> Self {
+        let entity = self.entity();
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.icon = Some(image);
+            win_state.window_description.icon_width = width;
+            win_state.window_description.icon_height = height;
+        }
+
+        self
+    }
 }

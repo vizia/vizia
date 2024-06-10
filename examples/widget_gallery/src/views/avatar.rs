@@ -1,6 +1,5 @@
 use vizia::{
     icons::{ICON_CLOCK, ICON_USER},
-    image,
     prelude::*,
 };
 
