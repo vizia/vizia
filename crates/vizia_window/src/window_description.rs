@@ -43,6 +43,7 @@ impl From<(u32, u32)> for Position {
 }
 
 /// Passed to the window to set initial window properties.
+#[derive(Clone, Debug)]
 pub struct WindowDescription {
     pub title: String,
     pub inner_size: WindowSize,

@@ -1,5 +1,5 @@
-use crate::prelude::*;
-use vizia_window::Position;
+use vizia_core::binding::Res;
+use vizia_window::{Position, WindowSize};
 
 /// Modifiers for setting the properties of a window.
 pub trait WindowModifiers {
