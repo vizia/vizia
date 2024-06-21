@@ -538,7 +538,7 @@ where
             let x = (bounds.x + padding_left + cursor_rect.rect.left).round();
             let y = (bounds.y + padding_top + cursor_rect.rect.top).round();
 
-            let x2 = x + 2.0;
+            let x2 = x + 1.0;
             let y2 = y + (cursor_rect.rect.bottom - cursor_rect.rect.top);
 
             // println!("x {} {} {} {}", x, y, x2, y2);
