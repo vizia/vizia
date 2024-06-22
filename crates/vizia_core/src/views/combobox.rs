@@ -115,7 +115,7 @@ where
                                     .collect::<Vec<_>>();
 
                                 for index in ll.into_iter() {
-                                    let item = list.index(index);
+                                    let item = list.idx(index);
                                     Label::new(cx, item)
                                         .child_top(Stretch(1.0))
                                         .child_bottom(Stretch(1.0))
@@ -145,7 +145,7 @@ where
             .height(Auto);
         })
         .bind(selected, move |handle, selected| {
-            let selected_item = list_lens.index(selected.get(&handle)).get(&handle);
+            let selected_item = list_lens.idx(selected.get(&handle)).get(&handle);
             handle.modify(|combobox| combobox.placeholder = selected_item.to_string());
         })
     }
@@ -165,7 +165,7 @@ where
         event.map(|combobox_event, _| match combobox_event {
             ComboBoxEvent::SetOption(index) => {
                 // Set the placeholder text to the selected item.
-                let selected_item = self.list_lens.index(*index).get(cx);
+                let selected_item = self.list_lens.idx(*index).get(cx);
                 self.placeholder = selected_item.to_string();
 
                 // Call the on_select callback.
