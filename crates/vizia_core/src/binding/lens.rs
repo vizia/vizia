@@ -104,7 +104,7 @@ pub trait LensExt: Lens {
         Then::new(self, other)
     }
 
-    fn index<T>(self, index: usize) -> Index<Self, T>
+    fn idx<T>(self, index: usize) -> Index<Self, T>
     where
         T: 'static,
         Self::Target: Deref<Target = [T]>,
@@ -693,5 +693,17 @@ where
     type Output = AndLens<Self, L2>;
     fn bitand(self, rhs: L2) -> Self::Output {
         AndLens::new(self, rhs)
+    }
+}
+
+impl<T> Lens for &'static T
+where
+    T: 'static + Copy + Debug + Hash,
+{
+    type Source = ();
+    type Target = T;
+
+    fn view<'a>(&self, _source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        Some(LensValue::Borrowed(*self))
     }
 }
