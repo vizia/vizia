@@ -277,6 +277,22 @@ impl<T: Data> Data for Vec<T> {
     }
 }
 
+impl<T: Data> Data for &'static [T] {
+    fn same(&self, other: &Self) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+
+        for (a, b) in self.iter().zip(other.iter()) {
+            if !a.same(b) {
+                return false;
+            }
+        }
+
+        true
+    }
+}
+
 impl<T: std::hash::Hash + Eq + Data> Data for std::collections::HashSet<T> {
     fn same(&self, other: &Self) -> bool {
         if self.len() != other.len() {
