@@ -243,7 +243,10 @@ combobox {
     height: 32px;
 }
 
-dropdown .dropdown-title,
+dropdown {
+    width: auto;
+}
+
 combobox .title {
     width: 1s;
     height: 1s;
@@ -431,7 +434,6 @@ list list-item:checked {
 /* MENU */
 
 menubar {
-    child-space: 8px;
     size: auto;
 }
 
@@ -524,8 +526,8 @@ menubar submenu > popup {
 
 menubar > submenu {
     width: auto;
-    child-left: 16px;
-    child-right: 16px;
+    child-left: 12px;
+    child-right: 12px;
 }
 
 menubar > submenu > label {
@@ -551,6 +553,13 @@ submenu > .arrow {
     height: 1s;
     child-space: 1s;
     /* child-right: 0px; */
+}
+
+submenu divider {
+    height: 1px;
+    width: 1s;
+    top: 4px;
+    bottom: 4px;
 }
 
 /* NOTIFICATION */

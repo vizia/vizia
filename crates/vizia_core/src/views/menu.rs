@@ -121,8 +121,15 @@ impl Submenu {
                                 Placement::BottomStart
                             }
                         }))
-                        .arrow_size(Pixels(4.0))
-                        .checked(Submenu::is_open);
+                        .arrow_size(Pixels(0.0))
+                        .checked(Submenu::is_open)
+                        .on_hover(|cx| {
+                            cx.emit_custom(
+                                Event::new(MenuEvent::Close)
+                                    .target(cx.current)
+                                    .propagate(Propagation::Subtree),
+                            )
+                        });
                     }
                 });
                 // .on_press_down(|cx| cx.emit(MenuEvent::CloseAll));
@@ -252,119 +259,6 @@ impl MenuButton {
 impl View for MenuButton {
     fn element(&self) -> Option<&'static str> {
         Some("menubutton")
-    }
-
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|window_event, meta| match window_event {
-            WindowEvent::MouseEnter => {
-                if meta.target == cx.current {
-                    let parent = cx.tree.get_parent(cx.current).unwrap();
-                    cx.emit_custom(
-                        Event::new(MenuEvent::Close).target(parent).propagate(Propagation::Subtree),
-                    );
-                }
-            }
-
-            _ => {}
-        });
-    }
-}
-
-pub struct MenuPopup<L> {
-    lens: L,
-}
-
-impl<L> MenuPopup<L>
-where
-    L: Lens<Target = bool>,
-{
-    pub fn new<F>(cx: &mut Context, lens: L, _capture_focus: bool, content: F) -> Handle<Self>
-    where
-        F: 'static + Fn(&mut Context),
-    {
-        Self { lens }
-            .build(cx, |cx| {
-                let parent = cx.current;
-
-                (content)(cx);
-
-                Binding::new(cx, lens, move |cx, l| {
-                    if let Some(geo) = cx.cache.geo_changed.get_mut(parent) {
-                        geo.set(GeoChanged::WIDTH_CHANGED, true);
-                    }
-                });
-            })
-            .role(Role::Dialog)
-            .checked(lens)
-            .position_type(PositionType::SelfDirected)
-            .z_index(100)
-    }
-}
-
-impl<'a, L> Handle<'a, MenuPopup<L>>
-where
-    L: Lens,
-    L::Target: Clone + Data + Into<bool>,
-{
-    /// Registers a callback for when the user clicks off of the popup, usually with the intent of
-    /// closing it.
-    pub fn on_blur<F>(self, f: F) -> Self
-    where
-        F: 'static + Fn(&mut EventContext),
-    {
-        let focus_event = Box::new(f);
-        self.cx.with_current(self.entity, |cx| {
-            cx.add_listener(move |popup: &mut MenuPopup<L>, cx, event| {
-                let flag: bool = popup.lens.get(cx).into();
-                event.map(|window_event, meta| match window_event {
-                    WindowEvent::MouseDown(_) => {
-                        if flag && meta.origin != cx.current() {
-                            // Check if the mouse was pressed outside of any descendants
-                            if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
-                                (focus_event)(cx);
-                                meta.consume();
-                            }
-                        }
-                    }
-
-                    WindowEvent::KeyDown(code, _) => {
-                        if flag && *code == Code::Escape {
-                            (focus_event)(cx);
-                        }
-                    }
-
-                    _ => {}
-                });
-            });
-        });
-
-        self
-    }
-}
-
-impl<L> View for MenuPopup<L>
-where
-    L: Lens,
-    L::Target: Into<bool>,
-{
-    fn element(&self) -> Option<&'static str> {
-        Some("popup")
-    }
-}
-
-pub struct MenuDivider {}
-
-impl MenuDivider {
-    pub fn new(cx: &mut Context) -> Handle<Self> {
-        Self {}.build(cx, |cx| {
-            Element::new(cx).class("line");
-        })
-    }
-}
-
-impl View for MenuDivider {
-    fn element(&self) -> Option<&'static str> {
-        Some("menu-divider")
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {

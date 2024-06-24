@@ -8,7 +8,7 @@ autoexamples = false
 rust-version = "1.65"
 
 [workspace]
-members = [ "crates/*", "examples/widget_gallery"]
+members = [ "crates/*", "examples/widget_gallery", "examples/designer"]
 
 [[example]]
 name = "counter"
