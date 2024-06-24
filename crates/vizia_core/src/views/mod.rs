@@ -56,7 +56,7 @@ pub use label::{Icon, Label};
 pub use list::*;
 pub use menu::*;
 pub use notification::Notification;
-pub use picklist::PickList;
+pub use picklist::{PickList, ScrollList};
 pub use popup::*;
 pub use progressbar::ProgressBar;
 pub use radio::RadioButton;

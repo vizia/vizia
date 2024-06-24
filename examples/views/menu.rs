@@ -1,5 +1,6 @@
 mod helpers;
 use helpers::*;
+use log::debug;
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
@@ -58,10 +59,10 @@ fn main() -> Result<(), ApplicationError> {
                             MenuButton::new(cx, |_| debug!("Doc 3"), |cx| Label::new(cx, "Doc 3"));
                         },
                     );
-                    MenuDivider::new(cx);
+                    Divider::new(cx);
                     MenuButton::new(cx, |_| debug!("Save"), |cx| Label::new(cx, "Save"));
                     MenuButton::new(cx, |_| debug!("Save As"), |cx| Label::new(cx, "Save As"));
-                    MenuDivider::new(cx);
+                    Divider::new(cx);
                     MenuButton::new(cx, |_| debug!("Quit"), |cx| Label::new(cx, "Quit"));
                 },
             )
