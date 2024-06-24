@@ -372,12 +372,10 @@ pub(crate) fn draw_bounds(
 
             let scale_factor = style.scale_factor();
 
-            if let Some(blur_radius) = shadow
-                .blur_radius
-                .as_ref()
-                .map(|br| br.clone().to_px().unwrap() * scale_factor / 2.0)
+            if let Some(blur_radius) =
+                shadow.blur_radius.as_ref().map(|br| br.clone().to_px().unwrap() * scale_factor)
             {
-                shadow_bounds = shadow_bounds.expand(blur_radius * style.scale_factor());
+                shadow_bounds = shadow_bounds.expand(blur_radius);
             }
 
             if let Some(spread_radius) =

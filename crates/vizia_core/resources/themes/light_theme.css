@@ -165,13 +165,15 @@ button:disabled {
 /* BUTTON GROUP */
 
 button-group > button,
-button-group > toggle-button {
+button-group > toggle-button,
+button-group > textbox {
     corner-radius: 0px;
     right: -1px;
 }
 
 button-group.vertical > button,
-button-group.vertical > toggle-button {
+button-group.vertical > toggle-button,
+button-group > textbox {
     corner-radius: 0px;
     right: auto;
     bottom: -1px;
@@ -558,13 +560,6 @@ submenu divider {
     background-color: #d2d2d2;
 }
 
-menu-divider {
-    height: 9px;
-    width: 1s;
-    child-top: 1s;
-    child-bottom: 1s;
-}
-
 menu-divider .line {
     height: 1px;
     background-color: #d2d2d2;
@@ -896,9 +891,8 @@ tabview .tabview-divider {
 
 /* TEXTBOX */
 textbox {
-    border-width: 1px;
     corner-radius: 4px;
-    border-color: #e4e4e4;
+    border: 1px #d2d2d2;
     background-color: #fff;
     transition: border-color 100ms;
     transition: background-color 100ms;

@@ -1,5 +1,6 @@
 mod helpers;
 use helpers::*;
+use log::debug;
 use vizia::prelude::*;
 use vizia_core::icons::{ICON_CLIPBOARD, ICON_COPY, ICON_CUT};
 
@@ -68,10 +69,10 @@ fn main() -> Result<(), ApplicationError> {
                                 );
                             },
                         );
-                        MenuDivider::new(cx);
+                        Divider::new(cx);
                         MenuButton::new(cx, |_| debug!("Save"), |cx| Label::new(cx, "Save"));
                         MenuButton::new(cx, |_| debug!("Save As"), |cx| Label::new(cx, "Save As"));
-                        MenuDivider::new(cx);
+                        Divider::new(cx);
                         MenuButton::new(cx, |_| debug!("Quit"), |cx| Label::new(cx, "Quit"));
                     },
                 );
@@ -126,18 +127,12 @@ fn main() -> Result<(), ApplicationError> {
                             |cx| Label::new(cx, "Zoom Level"),
                             |cx| {
                                 MenuButton::new(cx, |_| debug!("10%"), |cx| Label::new(cx, "10%"));
-                                MenuButton::new(
-                                    cx,
-                                    |_| debug!("20%"),
-                                    |cx| Label::new(cx, "20%"),
-                                );
-                                MenuButton::new(cx, debug | _ | debug!("50%"), |cx| {
-                                    Label::new(cx, "50%")
-                                });
+                                MenuButton::new(cx, |_| debug!("20%"), |cx| Label::new(cx, "20%"));
+                                MenuButton::new(cx, |_| debug!("50%"), |cx| Label::new(cx, "50%"));
                                 MenuButton::new(
                                     cx,
                                     |_| debug!("100%"),
-                                    |cx|debug:new(cx, "100%"),
+                                    |cx| Label::new(cx, "100%"),
                                 );
                                 MenuButton::new(
                                     cx,
