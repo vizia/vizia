@@ -8,14 +8,10 @@ mod event;
 mod proxy;
 mod resource;
 
-use combo_box_derived_lenses::p;
 use log::debug;
 use skia_safe::{
-    font_arguments::{variation_position::Coordinate, VariationPosition},
     textlayout::{FontCollection, TypefaceFontProvider},
-    typeface::SerializeBehavior,
-    utils::OrderedFontMgr,
-    FontArguments, FontMgr, FontStyle, FontStyleSet, Rect, Surface, Typeface,
+    FontMgr, Surface,
 };
 use std::any::{Any, TypeId};
 use std::cell::RefCell;
