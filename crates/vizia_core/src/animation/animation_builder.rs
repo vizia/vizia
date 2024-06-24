@@ -2,11 +2,6 @@ use crate::prelude::*;
 
 use vizia_style::{BorderWidth, Property};
 
-// pub struct AnimationDescription {
-//     duration: Duration,
-//     delay: Duration,
-// }
-
 pub struct AnimationBuilder<'a> {
     pub(crate) keyframes: Vec<KeyframeBuilder<'a>>,
 }

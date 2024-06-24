@@ -2,9 +2,8 @@ use skia_safe::gradient_shader::GradientShaderColors;
 use skia_safe::path::ArcSize;
 use skia_safe::rrect::Corner;
 use skia_safe::{
-    BlendMode, BlurStyle, ClipOp, FilterMode, Font, FontStyle, IRect, ImageFilter, MaskFilter,
-    Matrix, Paint, PaintStyle, Path, PathDirection, Point, RRect, Rect, SamplingOptions, Shader,
-    Shaper, TextBlobBuilder, TileMode,
+    BlurStyle, ClipOp, MaskFilter, Matrix, Paint, PaintStyle, Path, PathDirection, Point, RRect,
+    Rect, SamplingOptions, Shader, TileMode,
 };
 use std::any::{Any, TypeId};
 use std::f32::consts::SQRT_2;
@@ -645,77 +644,6 @@ impl<'a> DrawContext<'a> {
         self.draw_background_images(canvas, &path);
     }
 
-    // pub fn draw_text_and_selection(&mut self, canvas: &mut Canvas) {
-    //     if self.text_context.has_buffer(self.current) {
-    //         let mut bounds = self.bounds();
-    //         let border_width = self.border_width();
-
-    //         bounds = bounds.shrink(border_width);
-
-    //         let child_left = self.child_left();
-    //         let child_right = self.child_right();
-    //         let child_top = self.child_top();
-    //         let child_bottom = self.child_bottom();
-
-    //         // shrink the bounding box based on pixel values
-    //         let left = child_left.to_px(self.bounds().w, 0.0);
-    //         let right = child_right.to_px(self.bounds().w, 0.0);
-    //         let top = child_top.to_px(self.bounds().h, 0.0);
-    //         let bottom = child_bottom.to_px(self.bounds().h, 0.0);
-
-    //         bounds = bounds.shrink_sides(left, top, right, bottom);
-
-    //         // Draw text
-
-    //         let mut justify_x = match (child_left, child_right) {
-    //             (Stretch(left), Stretch(right)) => {
-    //                 if left + right == 0.0 {
-    //                     0.5
-    //                 } else {
-    //                     left / (left + right)
-    //                 }
-    //             }
-    //             (Stretch(_), _) => 1.0,
-    //             _ => 0.0,
-    //         };
-
-    //         if let Some(text_align) = self.text_align() {
-    //             justify_x = match text_align {
-    //                 TextAlign::Left => 0.0,
-    //                 TextAlign::Right => 1.0,
-    //                 TextAlign::Center => 0.5,
-    //                 _ => 0.0,
-    //             };
-    //         }
-
-    //         let justify_y = match (child_top, child_bottom) {
-    //             (Stretch(top), Stretch(bottom)) => {
-    //                 if top + bottom == 0.0 {
-    //                     0.5
-    //                 } else {
-    //                     top / (top + bottom)
-    //                 }
-    //             }
-    //             (Stretch(_), _) => 1.0,
-    //             _ => 0.0,
-    //         };
-
-    //         // let origin_x = box_x + box_w * justify_x;
-    //         // let origin_y = box_y + (box_h * justify_y).round();
-
-    //         // let justify_x = 0.0;
-    //         // let justify_y = 0.0;
-    //         // let origin_x = box_x;
-    //         // let origin_y = box_y;
-
-    //         self.text_context.sync_styles(self.current, self.style);
-
-    //         self.draw_text_selection(canvas, bounds, (justify_x, justify_y));
-    //         self.draw_text_caret(canvas, bounds, (justify_x, justify_y), 1.0);
-    //         self.draw_text(canvas, bounds, (justify_x, justify_y));
-    //     }
-    // }
-
     /// Draw the border of the current view.
     pub fn draw_border(&mut self, canvas: &Canvas) {
         let border_color = self.border_color();
@@ -729,12 +657,7 @@ impl<'a> DrawContext<'a> {
             paint.set_color(border_color);
             paint.set_stroke_width(border_width);
             paint.set_anti_alias(true);
-            // let mut clip = self.build_path(bounds, (-20.0, 0.0));
-            // canvas.clip_path(&clip, ClipOp::Intersect, true);
             canvas.draw_path(&path, &paint);
-            // let mut clip_paint = Paint::default();
-            // clip_paint.set_color(Color::blue());
-            // canvas.draw_path(&clip, &clip_paint);
         }
     }
 
@@ -1112,7 +1035,6 @@ impl<'a> DrawContext<'a> {
                             }
                         }
                     }
-                    _ => {}
                 }
             }
         }
@@ -1122,7 +1044,6 @@ impl<'a> DrawContext<'a> {
     pub fn draw_text(&mut self, canvas: &Canvas) {
         if let Some(paragraph) = self.text_context.text_paragraphs.get(self.current) {
             let bounds = self.bounds();
-            // let padding_left = self.child_left().to_px(bounds.width(), 0.0);
 
             let mut vertical_flex_sum = 0.0;
             let mut horizontal_flex_sum = 0.0;
@@ -1177,54 +1098,12 @@ impl<'a> DrawContext<'a> {
                 padding_left = (horizontal_free_space * val / horizontal_flex_sum).round()
             }
 
-            // let tb = paragraph
-            //     .get_rects_for_range(
-            //         paragraph.get_actual_text_range(0, true),
-            //         RectHeightStyle::Tight,
-            //         RectWidthStyle::Tight,
-            //     )
-            //     .first()
-            //     .unwrap()
-            //     .rect;
-
-            // let mut paint = Paint::default();
-            // paint.set_color(Color::green());
-            // canvas.draw_rect(
-            //     Rect::new(
-            //         bounds.x + padding_left,
-            //         bounds.y + padding_top,
-            //         bounds.x + padding_left + tb.width(),
-            //         bounds.y + padding_top + tb.height(),
-            //     ),
-            //     &paint,
-            // );
-
-            // println!("bounds.y {} padding_top: {}  {}", bounds.y, padding_top, paragraph.height());
-
             paragraph.paint(
                 canvas,
                 ((bounds.x + padding_left).round(), (bounds.y + padding_top).round()),
             );
         }
     }
-
-    // /// Draw the selection box for the text of the current view.
-    // pub fn draw_text_selection(
-    //     &mut self,
-    //     canvas: &mut Canvas,
-    //     bounds: BoundingBox,
-    //     justify: (f32, f32),
-    // ) {
-    //     let selections = self.text_context.layout_selection(self.current, bounds, justify);
-    //     if !selections.is_empty() {
-    //         let mut path = Path::new();
-    //         for (x, y, w, h) in selections {
-    //             path.rect(x, y, w, h);
-    //         }
-    //         let selection_color = self.selection_color();
-    //         canvas.fill_path(&path, &Paint::color(selection_color.into()));
-    //     }
-    // }
 }
 
 impl<'a> DataContext for DrawContext<'a> {

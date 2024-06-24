@@ -1,6 +1,5 @@
 use hashbrown::{hash_map::Entry, HashSet};
 
-use skia_safe::Surface;
 use vizia_storage::Tree;
 
 use crate::{
@@ -10,7 +9,6 @@ use crate::{
 };
 
 use super::{Context, ContextProxy, EventProxy};
-use hashbrown::HashMap;
 
 /// A context used when loading images.
 pub struct ResourceContext<'a> {
