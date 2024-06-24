@@ -4,7 +4,7 @@ use skia_safe::{canvas::SaveLayerRec, ClipOp, ImageFilter, Matrix, Paint, Rect, 
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use vizia_storage::{LayoutChildIterator, LayoutTreeIterator};
-use vizia_style::{backdrop_filter, blend_mode, BlendMode};
+use vizia_style::BlendMode;
 
 pub(crate) fn transform_system(cx: &mut Context) {
     let iter = LayoutTreeIterator::full(&cx.tree);
