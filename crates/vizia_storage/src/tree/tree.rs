@@ -12,6 +12,7 @@ where
     pub next_sibling: Vec<Option<I>>,
     pub prev_sibling: Vec<Option<I>>,
     pub ignored: Vec<bool>,
+    pub window: Vec<bool>,
     pub lock_focus_within: Vec<bool>,
     pub changed: bool,
 }
@@ -28,6 +29,7 @@ where
             next_sibling: vec![None],
             prev_sibling: vec![None],
             ignored: vec![false],
+            window: vec![false],
             lock_focus_within: vec![true],
             changed: true,
         }
@@ -103,6 +105,11 @@ where
         self.ignored.get(entity.index()).map_or_else(|| false, |ignored| *ignored)
     }
 
+    /// Returns true if the node should be skipped by layout
+    pub fn is_window(&self, entity: I) -> bool {
+        self.window.get(entity.index()).map_or_else(|| false, |window| *window)
+    }
+
     /// Returns the first ancestor to have the lock_focus_within flag set
     pub fn lock_focus_within(&self, entity: I) -> I {
         entity
@@ -127,6 +134,24 @@ where
     /// Returns the parent of an entity.
     pub fn get_parent(&self, entity: I) -> Option<I> {
         self.parent.get(entity.index()).and_then(|&parent| parent)
+    }
+
+    pub fn get_parent_window(&self, entity: I) -> Option<I> {
+        if self.is_window(entity) {
+            return Some(entity);
+        }
+
+        let mut next = Some(entity);
+
+        while let Some(parent) = next {
+            if self.is_window(parent) {
+                return Some(parent);
+            }
+
+            next = self.get_parent(parent);
+        }
+
+        None
     }
 
     /// Returns the first child of an entity or `None` if there isn't one.
@@ -282,6 +307,7 @@ where
         self.prev_sibling[entity_index] = None;
         self.parent[entity_index] = None;
         self.ignored[entity_index] = false;
+        self.window[entity_index] = false;
         self.lock_focus_within[entity_index] = false;
 
         // Set the changed flag
@@ -495,6 +521,10 @@ where
         }
     }
 
+    pub fn set_window(&mut self, entity: I, flag: bool) {
+        self.window.get_mut(entity.index()).and_then(|window| Some(*window = flag));
+    }
+
     pub fn set_lock_focus_within(&mut self, entity: I, flag: bool) {
         if let Some(result) = self.lock_focus_within.get_mut(entity.index()) {
             *result = flag;
@@ -521,6 +551,7 @@ where
             self.next_sibling.resize(entity_index + 1, None);
             self.prev_sibling.resize(entity_index + 1, None);
             self.ignored.resize(entity_index + 1, false);
+            self.window.resize(entity_index + 1, false);
             self.lock_focus_within.resize(entity_index + 1, false);
         }
 
@@ -529,6 +560,7 @@ where
         self.next_sibling[entity_index] = None;
         self.prev_sibling[entity_index] = None;
         self.ignored[entity_index] = false;
+        self.window[entity_index] = false;
         self.lock_focus_within[entity_index] = false;
 
         // If the parent has no first child then this entity is the first child

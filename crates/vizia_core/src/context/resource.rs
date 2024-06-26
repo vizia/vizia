@@ -15,7 +15,6 @@ pub struct ResourceContext<'a> {
     pub(crate) current: Entity,
     pub(crate) event_proxy: &'a Option<Box<dyn EventProxy>>,
     pub(crate) resource_manager: &'a mut ResourceManager,
-    // pub(crate) canvases: &'a mut HashMap<Entity, Surface>,
     pub(crate) style: &'a mut Style,
     pub(crate) tree: &'a Tree<Entity>,
 }
@@ -26,7 +25,6 @@ impl<'a> ResourceContext<'a> {
             current: cx.current,
             event_proxy: &cx.event_proxy,
             resource_manager: &mut cx.resource_manager,
-            // canvases: &mut cx.canvases,
             style: &mut cx.style,
             tree: &cx.tree,
         }

@@ -21,12 +21,12 @@ vizia_id = { path = "../vizia_id" }
 vizia_window = { path = "../vizia_window" }
 
 accesskit = "0.12"
-winit = { version = "0.29", default-features = false }
+winit = { version = "0.30" }
 skia-safe = {version = "0.75", features = ["gl"]}
-glutin = { version = "0.31", default-features = false }
+glutin = { version = "0.32" }
 copypasta = {version = "0.10", optional = true, default-features = false }
 accesskit_winit = { version = "0.18", optional = true }
-glutin-winit = { version = "0.4", default-features = false, features = ["egl", "glx", "wgl"] }
+glutin-winit = { version = "0.5" }
 raw-window-handle = "0.5"
 gl-rs = { package = "gl", version = "0.14.0" }
 
