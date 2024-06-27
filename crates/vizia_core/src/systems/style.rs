@@ -547,6 +547,41 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
         should_redraw = true;
     }
 
+    if style.text_decoration_line.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.underline_style.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.underline_color.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.overline_style.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.overline_color.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.strikethrough_style.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.strikethrough_color.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
     // Outer Shadow
     if style.shadow.link(entity, matched_rules) {
         should_redraw = true;

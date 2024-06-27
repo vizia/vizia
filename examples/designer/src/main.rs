@@ -1,6 +1,9 @@
 use strum::VariantNames;
 use vizia::{
-    icons::{ICON_ALIGN_CENTER, ICON_ALIGN_LEFT, ICON_ALIGN_RIGHT, ICON_CHEVRON_DOWN},
+    icons::{
+        ICON_ALIGN_CENTER, ICON_ALIGN_LEFT, ICON_ALIGN_RIGHT, ICON_CHEVRON_DOWN, ICON_OVERLINE,
+        ICON_STRIKETHROUGH, ICON_UNDERLINE,
+    },
     prelude::*,
 };
 
@@ -106,6 +109,7 @@ fn main() -> Result<(), ApplicationError> {
             font_size: 16.0,
             font_sizes: vec!["12"],
             selected_font_size: 0,
+            text_decoration_line: TextDecorationLine::empty(),
         }
         .build(cx);
 
@@ -134,7 +138,8 @@ fn main() -> Result<(), ApplicationError> {
                     .text("value")
                     .font_family(AppData::font.map(|fam| vec![FamilyOwned::Named(fam.clone())]))
                     .font_size(AppData::font_size)
-                    .text_align(AppData::text_align);
+                    .text_align(AppData::text_align)
+                    .text_decoration_line(AppData::text_decoration_line);
             })
             .child_space(Stretch(1.0));
             Divider::new(cx);
@@ -220,6 +225,39 @@ fn main() -> Result<(), ApplicationError> {
                         .width(Stretch(1.0));
                     },
                 );
+
+                HStack::new(cx, |cx| {
+                    ToggleButton::new(
+                        cx,
+                        AppData::text_decoration_line
+                            .map(|td| td.contains(TextDecorationLine::Overline)),
+                        |cx| Icon::new(cx, ICON_OVERLINE),
+                    )
+                    .on_toggle(|cx| cx.emit(AppEvent::ToggleOverline));
+                })
+                .height(Auto);
+
+                HStack::new(cx, |cx| {
+                    ToggleButton::new(
+                        cx,
+                        AppData::text_decoration_line
+                            .map(|td| td.contains(TextDecorationLine::Strikethrough)),
+                        |cx| Icon::new(cx, ICON_STRIKETHROUGH),
+                    )
+                    .on_toggle(|cx| cx.emit(AppEvent::ToggleStrikethrough));
+                })
+                .height(Auto);
+
+                HStack::new(cx, |cx| {
+                    ToggleButton::new(
+                        cx,
+                        AppData::text_decoration_line
+                            .map(|td| td.contains(TextDecorationLine::Underline)),
+                        |cx| Icon::new(cx, ICON_UNDERLINE),
+                    )
+                    .on_toggle(|cx| cx.emit(AppEvent::ToggleUnderline));
+                })
+                .height(Auto);
 
                 // Label::new(cx, "Corners").font_variation_settings(vec!["\"wght\" 800.0".into()]);
                 // VStack::new(cx, |cx| {

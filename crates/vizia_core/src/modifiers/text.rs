@@ -128,6 +128,13 @@ pub trait TextModifiers: internal::Modifiable {
         LineClamp,
         SystemFlags::REFLOW
     );
+
+    modifier!(
+        /// Sets the max number of .
+        text_decoration_line,
+        TextDecorationLine,
+        SystemFlags::REFLOW
+    );
 }
 
 impl<'a, V> TextModifiers for Handle<'a, V> {}
