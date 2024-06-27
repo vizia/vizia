@@ -3,8 +3,9 @@ use crate::{
     BorderWidthValue, ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError,
     CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
     FontWidth, LayoutType, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow, Parse,
-    PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign, TextOverflow, Transform,
-    Transition, Translate, Units, UnparsedProperty, Visibility,
+    PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign, TextDecoration,
+    TextDecorationLine, TextDecorationStyle, TextOverflow, Transform, Transition, Translate, Units,
+    UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -155,6 +156,17 @@ define_property! {
         "text-align": TextAlign(TextAlign),
         "text-overflow": TextOverflow(TextOverflow),
         "line-clamp": LineClamp(LineClamp),
+        "text-decoration": TextDecoration(TextDecoration),
+        "text-decoration-line": TextDecorationLine(TextDecorationLine),
+        "underline-style": UnderlineStyle(TextDecorationStyle),
+        "underline-thickness": UnderlineThickness(LengthOrPercentage),
+        "underline-color": UnderlineColor(Color),
+        "overline-style": OverlineStyle(TextDecorationStyle),
+        "overline-thickness": OverlineThickness(LengthOrPercentage),
+        "overline-color": OverlineColor(Color),
+        "strikethrough-style": StrikethroughStyle(TextDecorationStyle),
+        "strikethrough-thickness": StrikethroughThickness(LengthOrPercentage),
+        "strikethrough-color": StrikethroughColor(Color),
 
         // Shadow
         "shadow": Shadow(Vec<Shadow>),

@@ -119,6 +119,11 @@ pub fn build_paragraph(
 
     let mut text_style = TextStyle::new();
 
+    if let Some(text_decoration_line) = style.text_decoration_line.get(entity).copied() {
+        text_style.set_decoration_type(text_decoration_line.into());
+        text_style.set_decoration_color(Color::red());
+    }
+
     // Font Families
     text_style.set_font_families(
         style

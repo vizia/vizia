@@ -38,6 +38,8 @@ pub struct AppData {
     pub border_width: LengthOrPercentage,
 
     pub font_size: f32,
+
+    pub text_decoration_line: TextDecorationLine,
 }
 
 #[derive(Clone, Debug, VariantNames)]
@@ -87,6 +89,9 @@ pub enum AppEvent {
 
     SetFontSize(f32),
     SetSelectedFontSize(usize),
+    ToggleUnderline,
+    ToggleOverline,
+    ToggleStrikethrough,
 }
 
 impl Model for AppData {
@@ -174,6 +179,15 @@ impl Model for AppData {
             AppEvent::SetSelectedFontSize(val) => {
                 self.font_size = FONT_SIZES[*val];
                 self.selected_font_size = *val;
+            }
+            AppEvent::ToggleUnderline => {
+                self.text_decoration_line.toggle(TextDecorationLine::Underline)
+            }
+            AppEvent::ToggleOverline => {
+                self.text_decoration_line.toggle(TextDecorationLine::Overline)
+            }
+            AppEvent::ToggleStrikethrough => {
+                self.text_decoration_line.toggle(TextDecorationLine::Strikethrough)
             }
         })
     }
