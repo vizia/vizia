@@ -36,6 +36,10 @@ const STYLE: &str = r#"
         selection-color: #c8646488;
     }
 
+    .text-decoration {
+        text-decoration-line: underline;
+    }
+
 "#;
 
 #[derive(Lens)]
@@ -120,70 +124,75 @@ fn main() -> Result<(), ApplicationError> {
         }
         .build(cx);
 
-        HStack::new(cx, |cx|{
-            VStack::new(cx, |cx|{
-                Label::new(cx, "This is some tester text which is sufficiently long as to wrap multiple lines if wrapping is enabled.")
-                .width(Pixels(200.0))
-                .height(Auto)
-                .border_color(Color::gray())
-                .border_width(Pixels(1.0))
-                .font_family(AppData::selected_font.map(|font| vec![FamilyOwned::Named(font.clone())]))
-                .font_weight(AppData::selected_weight)
-                .font_size(AppData::selected_size)
-                .text_align(AppData::selected_align);
-            }).child_space(Stretch(1.0));
+        // HStack::new(cx, |cx|{
+        //     VStack::new(cx, |cx|{
+        //         Label::new(cx, "This is some tester text which is sufficiently long as to wrap multiple lines if wrapping is enabled.")
+        //         .width(Pixels(200.0))
+        //         .height(Auto)
+        //         .border_color(Color::gray())
+        //         .border_width(Pixels(1.0))
+        //         .font_family(AppData::selected_font.map(|font| vec![FamilyOwned::Named(font.clone())]))
+        //         .font_weight(AppData::selected_weight)
+        //         .font_size(AppData::selected_size)
+        //         .text_align(AppData::selected_align);
+        //     }).child_space(Stretch(1.0));
 
-            VStack::new(cx, |cx|{
-                PickList::new(cx, AppData::fonts, true, move |index, label| {
-                    label.font_family(
-                        AppData::fonts.map(move |font| vec![FamilyOwned::Named(font[index].clone())]),
-                    )
-                })
+        //     VStack::new(cx, |cx|{
+        //         PickList::new(cx, AppData::fonts, true, move |index, label| {
+        //             label.font_family(
+        //                 AppData::fonts.map(move |font| vec![FamilyOwned::Named(font[index].clone())]),
+        //             )
+        //         })
+        //         .width(Stretch(1.0))
+        //         .on_item_select(|cx, item| cx.emit(AppEvent::SetSelectedFont(item.clone())));
+        //         HStack::new(cx, |cx|{
+        //             PickList::new(cx, AppData::weights, true, |i, l| l)
+        //                 .width(Stretch(1.0))
+        //                 .on_item_select(|cx, item| cx.emit(AppEvent::SetSelectedWeight(item.to_owned())));
+
+        //             PickList::new(cx, AppData::sizes, true, |i, l| l)
+        //                 .width(Stretch(1.0))
+        //                 .on_item_select(|cx, item| cx.emit(AppEvent::SetSelectedSize(item)));
+
+        //         }).col_between(Pixels(4.0)).height(Auto);
+
+        //         ButtonGroup::new(cx, |cx|{
+        //             ToggleButton::new(cx, AppData::selected_align.map(|align| *align == TextAlign::Left), |cx|{
+        //                 Icon::new(cx, ICON_ALIGN_LEFT)
+        //             })
+        //             .on_toggle(|cx| cx.emit(AppEvent::SetSelectedAlign(TextAlign::Left)));
+        //             ToggleButton::new(cx, AppData::selected_align.map(|align| *align == TextAlign::Center), |cx|{
+        //                 Icon::new(cx, ICON_ALIGN_CENTER)
+        //             })
+        //             .on_toggle(|cx| cx.emit(AppEvent::SetSelectedAlign(TextAlign::Center)));
+        //             ToggleButton::new(cx, AppData::selected_align.map(|align| *align == TextAlign::Right), |cx|{
+        //                 Icon::new(cx, ICON_ALIGN_RIGHT)
+        //             })
+        //             .on_toggle(|cx| cx.emit(AppEvent::SetSelectedAlign(TextAlign::Right)));
+        //             ToggleButton::new(cx, AppData::selected_align.map(|align| *align == TextAlign::Justify), |cx|{
+        //                 Icon::new(cx, ICON_ALIGN_JUSTIFIED)
+        //             })
+        //             .on_toggle(|cx| cx.emit(AppEvent::SetSelectedAlign(TextAlign::Justify)));
+
+        //         });
+        //     }).width(Pixels(200.0)).shadow("-2px 0px 10px #22222255").child_space(Pixels(10.0)).row_between(Pixels(10.0));
+        // });
+
+        VStack::new(cx, |cx| {
+            Label::new(cx, "Font Size").class("font_size");
+            Label::new(cx, "Font Color").class("font_color");
+            Label::new(cx, "Font Weight").class("font_weight");
+            Label::new(cx, "Font Slant").class("font_slant");
+            Label::new(cx, "Font Width").class("font_width");
+            Label::new(cx, "Text Decoration").class("text-decoration");
+            Label::new(cx, "Text Overflow")
                 .width(Stretch(1.0))
-                .on_item_select(|cx, item| cx.emit(AppEvent::SetSelectedFont(item.clone())));
-                HStack::new(cx, |cx|{
-                    PickList::new(cx, AppData::weights, true, |i, l| l)
-                        .width(Stretch(1.0))
-                        .on_item_select(|cx, item| cx.emit(AppEvent::SetSelectedWeight(item.to_owned())));
-
-                    PickList::new(cx, AppData::sizes, true, |i, l| l)
-                        .width(Stretch(1.0))
-                        .on_item_select(|cx, item| cx.emit(AppEvent::SetSelectedSize(item)));
-
-                }).col_between(Pixels(4.0)).height(Auto);
-
-                ButtonGroup::new(cx, |cx|{
-                    ToggleButton::new(cx, AppData::selected_align.map(|align| *align == TextAlign::Left), |cx|{
-                        Icon::new(cx, ICON_ALIGN_LEFT)
-                    })
-                    .on_toggle(|cx| cx.emit(AppEvent::SetSelectedAlign(TextAlign::Left)));
-                    ToggleButton::new(cx, AppData::selected_align.map(|align| *align == TextAlign::Center), |cx|{
-                        Icon::new(cx, ICON_ALIGN_CENTER)
-                    })
-                    .on_toggle(|cx| cx.emit(AppEvent::SetSelectedAlign(TextAlign::Center)));
-                    ToggleButton::new(cx, AppData::selected_align.map(|align| *align == TextAlign::Right), |cx|{
-                        Icon::new(cx, ICON_ALIGN_RIGHT)
-                    })
-                    .on_toggle(|cx| cx.emit(AppEvent::SetSelectedAlign(TextAlign::Right)));
-                    ToggleButton::new(cx, AppData::selected_align.map(|align| *align == TextAlign::Justify), |cx|{
-                        Icon::new(cx, ICON_ALIGN_JUSTIFIED)
-                    })
-                    .on_toggle(|cx| cx.emit(AppEvent::SetSelectedAlign(TextAlign::Justify)));
-
-                });
-            }).width(Pixels(200.0)).shadow("-2px 0px 10px #22222255").child_space(Pixels(10.0)).row_between(Pixels(10.0));
-        });
-
-        // VStack::new(cx, |cx| {
-        //     Label::new(cx, "Font Size").class("font_size");
-        //     Label::new(cx, "Font Color").class("font_color");
-        //     Label::new(cx, "Font Weight").class("font_weight");
-        //     Label::new(cx, "Font Slant").class("font_slant");
-        //     Label::new(cx, "Font Width").class("font_width");
-        //     Label::new(cx, "Text Overflow").width(Stretch(1.0)).text_overflow(TextOverflow::Ellipsis).line_clamp(1).text_align(TextAlign::Center);
-        // })
-        // .row_between(Pixels(10.0))
-        // .child_space(Pixels(10.0));
+                .text_overflow(TextOverflow::Ellipsis)
+                .line_clamp(1)
+                .text_align(TextAlign::Center);
+        })
+        .row_between(Pixels(10.0))
+        .child_space(Pixels(10.0));
 
         // Textbox::new(cx, AppData::text)
         //     .on_edit(|cx, text| cx.emit(AppDataSetter::Text(text)))

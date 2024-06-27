@@ -64,6 +64,7 @@ use hashbrown::{HashMap, HashSet};
 use indexmap::IndexMap;
 use log::warn;
 use std::fmt::Debug;
+use std::ops::{Deref, DerefMut};
 
 use crate::prelude::*;
 
@@ -72,13 +73,14 @@ pub use vizia_style::{
     Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight, FontWeightKeyword,
     FontWidth, GenericFontFamily, Gradient, HorizontalPosition, HorizontalPositionKeyword, Length,
     LengthOrPercentage, LengthValue, LineClamp, LineDirection, LinearGradient, Matrix, Opacity,
-    Overflow, PointerEvents, Position, Scale, Shadow, TextAlign, TextOverflow, Transform,
-    Transition, Translate, VerticalPosition, VerticalPositionKeyword, Visibility, RGBA,
+    Overflow, PointerEvents, Position, Scale, Shadow, TextAlign, TextDecorationLine,
+    TextDecorationStyle, TextOverflow, Transform, Transition, Translate, VerticalPosition,
+    VerticalPositionKeyword, Visibility, RGBA,
 };
 
 use vizia_style::{
-    BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, SelectorList, Selectors,
-    StyleSheet,
+    value, BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, SelectorList,
+    Selectors, StyleSheet,
 };
 
 mod rule;
@@ -162,7 +164,30 @@ impl AsRef<str> for FamilyOwned {
     }
 }
 
+pub(crate) struct Bloom(pub(crate) qfilter::Filter);
+
+impl Default for Bloom {
+    fn default() -> Self {
+        Self(qfilter::Filter::new_resizeable(10000, 10000000, 0.01))
+    }
+}
+
+impl Deref for Bloom {
+    type Target = qfilter::Filter;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Bloom {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 /// Stores the style properties of all entities in the application.
+#[derive(Default)]
 pub struct Style {
     pub(crate) rule_manager: IdManager<Rule>,
 
@@ -265,6 +290,13 @@ pub struct Style {
     pub(crate) text_overflow: StyleSet<TextOverflow>,
     pub(crate) line_clamp: StyleSet<LineClamp>,
     pub(crate) text_align: StyleSet<TextAlign>,
+    pub(crate) text_decoration_line: StyleSet<TextDecorationLine>,
+    pub(crate) underline_style: StyleSet<TextDecorationLine>,
+    pub(crate) overline_style: StyleSet<TextDecorationStyle>,
+    pub(crate) strikethrough_style: StyleSet<TextDecorationStyle>,
+    pub(crate) underline_color: AnimatableSet<Color>,
+    pub(crate) overline_color: AnimatableSet<Color>,
+    pub(crate) strikethrough_color: AnimatableSet<Color>,
     pub(crate) font_family: StyleSet<Vec<FamilyOwned>>,
     pub(crate) font_color: AnimatableSet<Color>,
     pub(crate) font_size: AnimatableSet<FontSize>,
@@ -327,127 +359,15 @@ pub struct Style {
 
     pub(crate) system_flags: SystemFlags,
 
-    pub(crate) restyle: qfilter::Filter,
+    pub(crate) restyle: Bloom,
     pub(crate) redraw_list: HashSet<Entity>,
-    pub(crate) redraw: qfilter::Filter,
-    pub(crate) text_construction: qfilter::Filter,
-    pub(crate) text_layout: qfilter::Filter,
-    pub(crate) reaccess: qfilter::Filter,
+    pub(crate) redraw: Bloom,
+    pub(crate) text_construction: Bloom,
+    pub(crate) text_layout: Bloom,
+    pub(crate) reaccess: Bloom,
 
     /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
     pub(crate) dpi_factor: f64,
-}
-
-impl Default for Style {
-    fn default() -> Self {
-        Style {
-            rule_manager: Default::default(),
-            animation_manager: Default::default(),
-            animations: Default::default(),
-            pending_animations: Default::default(),
-            rules: Default::default(),
-            default_font: Default::default(),
-            ids: Default::default(),
-            classes: Default::default(),
-            pseudo_classes: Default::default(),
-            disabled: Default::default(),
-            abilities: Default::default(),
-            accesskit_node_classes: Default::default(),
-            name: Default::default(),
-            role: Default::default(),
-            default_action_verb: Default::default(),
-            live: Default::default(),
-            labelled_by: Default::default(),
-            hidden: Default::default(),
-            text_value: Default::default(),
-            numeric_value: Default::default(),
-            text: Default::default(),
-            display: Default::default(),
-            visibility: Default::default(),
-            opacity: Default::default(),
-            z_index: Default::default(),
-            blend_mode: Default::default(),
-            clip_path: Default::default(),
-            overflowx: Default::default(),
-            overflowy: Default::default(),
-            backdrop_filter: Default::default(),
-            transform: Default::default(),
-            transform_origin: Default::default(),
-            translate: Default::default(),
-            rotate: Default::default(),
-            scale: Default::default(),
-            border_width: Default::default(),
-            border_color: Default::default(),
-            corner_top_left_shape: Default::default(),
-            corner_top_right_shape: Default::default(),
-            corner_bottom_left_shape: Default::default(),
-            corner_bottom_right_shape: Default::default(),
-            corner_top_left_radius: Default::default(),
-            corner_top_right_radius: Default::default(),
-            corner_bottom_left_radius: Default::default(),
-            corner_bottom_right_radius: Default::default(),
-            corner_top_left_smoothing: Default::default(),
-            corner_top_right_smoothing: Default::default(),
-            corner_bottom_left_smoothing: Default::default(),
-            corner_bottom_right_smoothing: Default::default(),
-            outline_width: Default::default(),
-            outline_color: Default::default(),
-            outline_offset: Default::default(),
-            background_color: Default::default(),
-            background_image: Default::default(),
-            background_size: Default::default(),
-            shadow: Default::default(),
-            text_wrap: Default::default(),
-            text_overflow: Default::default(),
-            line_clamp: Default::default(),
-            text_align: Default::default(),
-            font_family: Default::default(),
-            font_color: Default::default(),
-            font_size: Default::default(),
-            font_weight: Default::default(),
-            font_slant: Default::default(),
-            font_width: Default::default(),
-            font_variation_settings: Default::default(),
-            caret_color: Default::default(),
-            selection_color: Default::default(),
-            cursor: Default::default(),
-            pointer_events: Default::default(),
-            layout_type: Default::default(),
-            position_type: Default::default(),
-            left: Default::default(),
-            right: Default::default(),
-            top: Default::default(),
-            bottom: Default::default(),
-            child_left: Default::default(),
-            child_right: Default::default(),
-            child_top: Default::default(),
-            child_bottom: Default::default(),
-            row_between: Default::default(),
-            col_between: Default::default(),
-            width: Default::default(),
-            height: Default::default(),
-            min_width: Default::default(),
-            max_width: Default::default(),
-            min_height: Default::default(),
-            max_height: Default::default(),
-            min_left: Default::default(),
-            max_left: Default::default(),
-            min_right: Default::default(),
-            max_right: Default::default(),
-            min_top: Default::default(),
-            max_top: Default::default(),
-            min_bottom: Default::default(),
-            max_bottom: Default::default(),
-            system_flags: Default::default(),
-            restyle: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
-            redraw: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
-            redraw_list: HashSet::new(),
-            text_construction: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
-            text_layout: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
-            reaccess: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
-            dpi_factor: Default::default(),
-        }
-    }
 }
 
 impl Style {
@@ -751,6 +671,10 @@ impl Style {
                     insert_keyframe(&mut self.max_bottom, animation_id, time, *value);
                 }
 
+                Property::UnderlineColor(value) => {
+                    insert_keyframe(&mut self.underline_color, animation_id, time, *value);
+                }
+
                 _ => {}
             }
         }
@@ -852,6 +776,8 @@ impl Style {
         self.max_top.play_animation(entity, animation, start_time, duration);
         self.min_bottom.play_animation(entity, animation, start_time, duration);
         self.max_bottom.play_animation(entity, animation, start_time, duration);
+
+        self.underline_color.play_animation(entity, animation, start_time, duration);
     }
 
     pub(crate) fn is_animating(&self, entity: Entity, animation: Animation) -> bool {
@@ -904,6 +830,7 @@ impl Style {
             | self.max_top.has_active_animation(entity, animation)
             | self.min_bottom.has_active_animation(entity, animation)
             | self.max_bottom.has_active_animation(entity, animation)
+            | self.underline_color.has_active_animation(entity, animation)
     }
 
     pub(crate) fn parse_theme(&mut self, stylesheet: &str) {
@@ -1246,6 +1173,11 @@ impl Style {
             "max-bottom" => {
                 self.max_bottom.insert_animation(animation, self.add_transition(transition));
                 self.max_bottom.insert_transition(rule_id, animation);
+            }
+
+            "underline-color" => {
+                self.underline_color.insert_animation(animation, self.add_transition(transition));
+                self.underline_color.insert_transition(rule_id, animation);
             }
 
             _ => {}
@@ -1689,6 +1621,9 @@ impl Style {
             Property::LineClamp(line_clamp) => {
                 self.line_clamp.insert_rule(rule_id, line_clamp);
             }
+            Property::TextDecorationLine(line) => {
+                self.text_decoration_line.insert_rule(rule_id, line);
+            }
             _ => {}
         }
     }
@@ -1723,8 +1658,8 @@ impl Style {
         self.classes.insert(entity, HashSet::new());
         self.abilities.insert(entity, Abilities::default());
         self.system_flags = SystemFlags::RELAYOUT;
-        self.restyle.insert(entity).unwrap();
-        self.reaccess.insert(entity).unwrap();
+        self.restyle.0.insert(entity).unwrap();
+        self.reaccess.0.insert(entity).unwrap();
     }
 
     // Remove style data for the given entity.
@@ -1821,6 +1756,7 @@ impl Style {
         self.font_variation_settings.remove(entity);
         self.caret_color.remove(entity);
         self.selection_color.remove(entity);
+        self.text_decoration_line.remove(entity);
 
         // Cursor
         self.cursor.remove(entity);
@@ -1869,7 +1805,7 @@ impl Style {
     }
 
     pub fn needs_restyle(&mut self, entity: Entity) {
-        self.restyle.insert(entity).unwrap();
+        self.restyle.0.insert(entity).unwrap();
     }
 
     pub fn needs_relayout(&mut self) {
@@ -1881,16 +1817,16 @@ impl Style {
     }
 
     pub fn needs_access_update(&mut self, entity: Entity) {
-        self.reaccess.insert(entity).unwrap();
+        self.reaccess.0.insert(entity).unwrap();
     }
 
     pub fn needs_text_update(&mut self, entity: Entity) {
-        self.text_construction.insert(entity).unwrap();
-        self.text_layout.insert(entity).unwrap();
+        self.text_construction.0.insert(entity).unwrap();
+        self.text_layout.0.insert(entity).unwrap();
     }
 
     pub fn needs_text_layout(&mut self, entity: Entity) {
-        self.text_layout.insert(entity).unwrap();
+        self.text_layout.0.insert(entity).unwrap();
     }
 
     pub fn should_redraw<F: FnOnce()>(&mut self, f: F) {
@@ -2014,6 +1950,7 @@ impl Style {
         self.font_variation_settings.clear_rules();
         self.selection_color.clear_rules();
         self.caret_color.clear_rules();
+        self.text_decoration_line.clear_rules();
 
         self.cursor.clear_rules();
 
