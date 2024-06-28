@@ -47,8 +47,8 @@ impl<'a, I> LayoutParentIterator<'a, I>
 where
     I: GenerationalId,
 {
-    pub fn new(tree: &'a Tree<I>, current: Option<I>) -> Self {
-        Self { tree, current }
+    pub fn new(tree: &'a Tree<I>, current: I) -> Self {
+        Self { tree, current: Some(current) }
     }
 }
 

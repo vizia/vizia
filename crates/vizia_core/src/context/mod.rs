@@ -51,6 +51,7 @@ use vizia_storage::{ChildIterator, LayoutTreeIterator};
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
 static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css");
+static MARKDOWN: &str = include_str!("../../resources/themes/markdown.css");
 
 type Views = HashMap<Entity, Box<dyn ViewHandler>>;
 type Models = HashMap<Entity, ModelDataStore>;
@@ -581,6 +582,7 @@ impl Context {
         self.resource_manager.themes.clear();
 
         self.add_theme(DEFAULT_LAYOUT);
+        self.add_theme(MARKDOWN);
         if !self.ignore_default_theme {
             let environment = self.data::<Environment>().expect("Failed to get environment");
             match environment.theme.get_current_theme() {
