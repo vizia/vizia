@@ -64,7 +64,7 @@ use hashbrown::{HashMap, HashSet};
 use indexmap::IndexMap;
 use log::warn;
 use std::fmt::Debug;
-use std::ops::{Deref, DerefMut};
+use std::ops::{Deref, DerefMut, Range};
 
 use crate::prelude::*;
 
@@ -158,7 +158,13 @@ const DEFAULT_FAMILY_NAME: &str = "";
 impl AsRef<str> for FamilyOwned {
     fn as_ref(&self) -> &str {
         match self {
-            FamilyOwned::Generic(_) => DEFAULT_FAMILY_NAME,
+            FamilyOwned::Generic(generic) => match generic {
+                GenericFontFamily::Serif => "serif",
+                GenericFontFamily::SansSerif => "sans-serif",
+                GenericFontFamily::Cursive => todo!(),
+                GenericFontFamily::Fantasy => todo!(),
+                GenericFontFamily::Monospace => "Cascadia Mono",
+            },
             FamilyOwned::Named(family) => family.as_str(),
         }
     }
@@ -365,6 +371,8 @@ pub struct Style {
     pub(crate) text_construction: Bloom,
     pub(crate) text_layout: Bloom,
     pub(crate) reaccess: Bloom,
+
+    pub(crate) text_range: SparseSet<Range<usize>>,
 
     /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
     pub(crate) dpi_factor: f64,

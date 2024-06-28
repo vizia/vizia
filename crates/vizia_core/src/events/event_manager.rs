@@ -404,7 +404,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                             }
                         }
                         println!(
-                            "{}{} {}{} [x: {} y: {} w: {} h: {}] {:?}",
+                            "{}{} {}{} [x: {} y: {} w: {} h: {}]",
                             indents(entity),
                             entity,
                             element_name,
@@ -413,19 +413,6 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                             cache.get_bounds(entity).y,
                             if w == f32::MAX { "inf".to_string() } else { w.to_string() },
                             if h == f32::MAX { "inf".to_string() } else { h.to_string() },
-                            cx.text_context.text_paragraphs.get(entity).map(|p| {
-                                let mut r = p
-                                    .get_fonts()
-                                    .iter()
-                                    .map(|fi| {
-                                        (fi.text_range.clone(), fi.font.typeface().family_name())
-                                    })
-                                    .collect::<Vec<_>>();
-
-                                // r.pop();
-
-                                r
-                            })
                         );
                     } else if let Some(binding_name) =
                         cx.bindings.get(&entity).map(|binding| format!("{:?}", binding))
@@ -622,7 +609,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 pseudo_class.set(PseudoClassFlags::OVER, false);
             }
 
-            let parent_iter = LayoutParentIterator::new(&cx.tree, Some(cx.hovered));
+            let parent_iter = LayoutParentIterator::new(&cx.tree, cx.hovered);
             for ancestor in parent_iter {
                 if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(ancestor) {
                     pseudo_classes.set(PseudoClassFlags::HOVER, false);
