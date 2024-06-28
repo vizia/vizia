@@ -1,6 +1,6 @@
 use crate::{events::ViewHandler, prelude::*};
 use hashbrown::HashMap;
-use vizia_storage::TreeBreadthIterator;
+use vizia_storage::{LayoutParentIterator, TreeBreadthIterator};
 use vizia_style::{
     matches_selector_list,
     selectors::{
@@ -244,6 +244,7 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context) {
             cx.style.font_family.inherit_inline(entity, parent);
             cx.style.font_weight.inherit_inline(entity, parent);
             cx.style.font_slant.inherit_inline(entity, parent);
+            cx.style.text_decoration_line.inherit_inline(entity, parent);
             cx.style.font_variation_settings.inherit_inline(entity, parent);
             cx.style.caret_color.inherit_inline(entity, parent);
             cx.style.selection_color.inherit_inline(entity, parent);
@@ -260,6 +261,7 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context) {
             cx.style.font_family.inherit_shared(entity, parent);
             cx.style.font_weight.inherit_shared(entity, parent);
             cx.style.font_slant.inherit_shared(entity, parent);
+            cx.style.text_decoration_line.inherit_shared(entity, parent);
             cx.style.font_variation_settings.inherit_shared(entity, parent);
             cx.style.caret_color.inherit_shared(entity, parent);
             cx.style.selection_color.inherit_shared(entity, parent);
@@ -267,7 +269,7 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context) {
     }
 }
 
-fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
+fn link_style_data(style: &mut Style, tree: &Tree<Entity>, entity: Entity, matched_rules: &[Rule]) {
     let mut should_relayout = false;
     let mut should_redraw = false;
     let mut should_reflow = false;
@@ -656,7 +658,13 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
     }
 
     if should_reflow {
-        style.needs_text_update(entity);
+        let iter = LayoutParentIterator::new(tree, entity);
+        for parent in iter {
+            if style.display.get(parent).copied().unwrap_or_default() != Display::None {
+                style.needs_text_update(parent);
+                break;
+            }
+        }
     }
 }
 
@@ -814,6 +822,7 @@ pub(crate) fn style_system(cx: &mut Context) {
             if !matched_rules.is_empty() {
                 link_style_data(
                     &mut cx.style,
+                    &cx.tree,
                     entity,
                     &matched_rules.iter().map(|(rule, _)| *rule).collect::<Vec<_>>(),
                 );

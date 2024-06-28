@@ -31,6 +31,9 @@ pub(crate) fn layout_system(cx: &mut Context) {
         let iter = LayoutTreeIterator::full(&cx.tree);
 
         for entity in iter {
+            if cx.style.display.get(entity).copied().unwrap_or_default() == Display::None {
+                continue;
+            }
             // Morphorm produces relative positions so convert to absolute.
             if let Some(parent) = cx.tree.get_layout_parent(entity) {
                 let parent_bounds = cx.cache.get_bounds(parent);

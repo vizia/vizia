@@ -38,7 +38,7 @@ pub(crate) fn hover_system(cx: &mut Context) {
     }
 
     // Set hover state for hovered view and ancestors
-    let parent_iter = LayoutParentIterator::new(&cx.tree, Some(hovered));
+    let parent_iter = LayoutParentIterator::new(&cx.tree, hovered);
     for ancestor in parent_iter {
         if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(ancestor) {
             if pseudo_classes.contains(PseudoClassFlags::OVER)
@@ -106,9 +106,9 @@ fn hover_entity(
 
     // Skip if not displayed.
     // TODO: Should this skip descendants? Probably not...?
-    if cx.style.display.get(cx.current).copied().unwrap_or_default() == Display::None {
-        return;
-    }
+    // if cx.style.display.get(cx.current).copied().unwrap_or_default() == Display::None {
+    //     return;
+    // }
 
     let pointer_events = cx
         .style
