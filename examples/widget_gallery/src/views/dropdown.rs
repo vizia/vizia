@@ -42,7 +42,10 @@ pub fn dropdown(cx: &mut Context) {
             |cx| {
                 Dropdown::new(
                     cx,
-                    move |cx| Label::new(cx, DropdownData::choice),
+                    move |cx| {
+                        Button::new(cx, |cx| Label::new(cx, DropdownData::choice))
+                            .on_press(|cx| cx.emit(PopupEvent::Switch));
+                    },
                     move |cx| {
                         List::new(cx, DropdownData::list, |cx, _, item| {
                             Label::new(cx, item)

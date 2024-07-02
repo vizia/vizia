@@ -24,7 +24,6 @@ tabview.widgets tabheader:checked label.tab-name {
 
 vstack.panel {
     height: auto;
-    row-between: 12px;
     bottom: 20px;
     width: 3s;
     min-width: 500px;
@@ -103,4 +102,8 @@ demo-region > hstack.code {
     corner-top-left-radius: 0px;
     corner-top-right-radius: 0px;
     font-size: 14;
+}
+
+markdown {
+    child-space: 0px;
 }
