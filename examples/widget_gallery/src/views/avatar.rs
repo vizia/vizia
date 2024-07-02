@@ -1,6 +1,5 @@
 use vizia::{
     icons::{ICON_CLOCK, ICON_USER},
-    image,
     prelude::*,
 };
 
@@ -14,14 +13,15 @@ pub fn avatar(cx: &mut Context) {
     );
 
     VStack::new(cx, |cx|{
-        Label::new(cx, "Avatar").class("title");
-        Label::new(cx, "An avatar is used to visually represent a person or entity and can contain text, an icon, or an image.").class("paragraph");
+        Markdown::new(cx, "# Avatar
+An avatar is used to visually represent a person or entity and can contain text, an icon, or an image.
+        ");
 
         Divider::new(cx)
             .top(Pixels(12.0))
             .bottom(Pixels(12.0));
 
-        Label::new(cx, "Basic avatar").class("header");
+        Markdown::new(cx, "### Basic avatar");
         DemoRegion::new(cx, |cx|{
             Avatar::new(cx, |cx|{
                 Icon::new(cx, ICON_USER);
@@ -30,8 +30,8 @@ pub fn avatar(cx: &mut Context) {
     Icon::new(cx, ICON_USER)
 });"#);
 
-        Label::new(cx, "Avatar content").class("header");
-        Label::new(cx, "An avatar can contain an icon, text, or an image.").class("paragraph");
+        Markdown::new(cx, "### Avatar content
+An avatar can contain an icon, text, or an image.");
 
         DemoRegion::new(cx, |cx|{
             Avatar::new(cx, |cx|{
@@ -58,8 +58,9 @@ Avatar::new(cx, |cx|{
 });"#);
 
 
-        Label::new(cx, "Avatar variants").class("header");
-        Label::new(cx, "The variant modifier can be used to select between a circle (default), square, and rounded avatar shape.").class("paragraph");
+        Markdown::new(cx, "### Avatar variants
+The variant modifier can be used to select between a circle (default), square, and rounded avatar shape.
+        ");
 
         DemoRegion::new(cx, |cx|{
             Avatar::new(cx, |cx|{
@@ -85,9 +86,9 @@ Avatar::new(cx, |cx|{
     Image::new(cx, "vizia.png");
 }).variant(AvatarVariant::Rounded);"#);
 
-        Label::new(cx, "Avatar with badge").class("header");
-        Label::new(cx, "The badge modifier can be used to add a badge to an avatar.").class("paragraph");
-
+        Markdown::new(cx, "### Avatar with badge
+The badge modifier can be used to add a badge to an avatar.
+        ");
 
         DemoRegion::new(cx, |cx|{
             Avatar::new(cx, |cx|{

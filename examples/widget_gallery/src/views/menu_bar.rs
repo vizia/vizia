@@ -78,14 +78,14 @@ pub fn menu_bar(cx: &mut Context) {
                                     );
                                 },
                             );
-                            MenuDivider::new(cx);
+                            Divider::new(cx);
                             MenuButton::new(cx, |_| debug!("Save"), |cx| Label::new(cx, "Save"));
                             MenuButton::new(
                                 cx,
                                 |_| debug!("Save As"),
                                 |cx| Label::new(cx, "Save As"),
                             );
-                            MenuDivider::new(cx);
+                            Divider::new(cx);
                             MenuButton::new(cx, |_| debug!("Quit"), |cx| Label::new(cx, "Quit"));
                         },
                     );
