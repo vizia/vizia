@@ -121,7 +121,8 @@ fn main() {
         HStack::new(cx, |cx| {
           
             // Declare a button which emits an event
-            Button::new(cx, |cx| cx.emit(AppEvent::Increment), |cx| Label::new(cx, "Increment"));
+            Button::new(cx, |cx| Label::new(cx, "Increment"))
+              .on_press(|cx| cx.emit(AppEvent::Increment));
 
             // Declare a label which is bound to part of the model, updating when it changes
             Label::new(cx, AppData::count).width(Pixels(50.0));
@@ -129,7 +130,7 @@ fn main() {
         .child_space(Stretch(1.0))  // Apply style and layout modifiers
         .col_between(Pixels(50.0));
     })
-    .title("Counter") // Configure window peoperties
+    .title("Counter") // Configure window properties
     .inner_size((400, 100))
     .run();
 }
@@ -158,22 +159,6 @@ To run an example with the [baseview](https://github.com/RustAudio/baseview) win
 ```bash
 cargo run --release --example name_of_example --no-default-features --features baseview
 ```
-
-### Web
-To run an example as a web application, first ensure that the `wasm32-unknown-unknown` toolchain is installed:
-
-```bash
-rustup target add wasm32-unknown-unknown
-```
-
-Then run an example with the following:
-
-```bash
-cargo run-wasm --release --example name_of_example
-```
-
-> **Note**
-> Some examples are not compatible with the web target and will intentionally panic if run on web.
 
 # Contributing and Community
 For help with vizia, or to get involved with contributing to the project, come join us on [our discord](https://discord.gg/aNkTPsRm2w).

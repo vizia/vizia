@@ -109,6 +109,23 @@ impl Label {
             .role(Role::StaticText)
             .name(text)
     }
+
+    pub fn rich<T>(
+        cx: &mut Context,
+        text: impl Res<T> + Clone,
+        children: impl Fn(&mut Context),
+    ) -> Handle<Self>
+    where
+        T: ToStringLocalized,
+    {
+        Self { describing: None }
+            .build(cx, |cx| {
+                children(cx);
+            })
+            .text(text.clone())
+            .role(Role::StaticText)
+            .name(text)
+    }
 }
 
 impl Handle<'_, Label> {

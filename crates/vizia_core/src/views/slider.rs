@@ -46,7 +46,7 @@ pub struct SliderDataInternal {
 /// # AppData::default().build(cx);
 /// Slider::new(cx, AppData::value)
 ///     .on_changing(|cx, value| {
-///         println!("Slider on_changing: {}", value);
+///         debug!("Slider on_changing: {}", value);
 ///     });
 /// ```
 ///
@@ -64,7 +64,7 @@ pub struct SliderDataInternal {
 /// HStack::new(cx, |cx|{
 ///     Slider::new(cx, AppData::value)
 ///         .on_changing(|cx, value| {
-///             println!("Slider on_changing: {}", value);
+///             debug!("Slider on_changing: {}", value);
 ///         });
 ///     Label::new(cx, AppData::value.map(|val| format!("{:.2}", val)));
 /// });
@@ -96,7 +96,7 @@ where
     /// # AppData::default().build(cx);
     /// Slider::new(cx, AppData::value)
     ///     .on_changing(|cx, value| {
-    ///         println!("Slider on_changing: {}", value);
+    ///         debug!("Slider on_changing: {}", value);
     ///     });
     /// ```
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
@@ -444,7 +444,7 @@ impl<L: Lens> Handle<'_, Slider<L>> {
     /// # AppData::default().build(cx);
     /// Slider::new(cx, AppData::value)
     ///     .on_changing(|cx, value| {
-    ///         println!("Slider on_changing: {}", value);
+    ///         debug!("Slider on_changing: {}", value);
     ///     });
     /// ```
     pub fn on_changing<F>(self, callback: F) -> Self
@@ -472,7 +472,7 @@ impl<L: Lens> Handle<'_, Slider<L>> {
     /// Slider::new(cx, AppData::value)
     ///     .range(-20.0..50.0)
     ///     .on_changing(|cx, value| {
-    ///         println!("Slider on_changing: {}", value);
+    ///         debug!("Slider on_changing: {}", value);
     ///     });
     /// ```
     pub fn range(self, range: Range<f32>) -> Self {
@@ -501,7 +501,7 @@ impl<L: Lens> Handle<'_, Slider<L>> {
     /// Slider::new(cx, AppData::value)
     ///     .keyboard_fraction(0.05)
     ///     .on_changing(|cx, value| {
-    ///         println!("Slider on_changing: {}", value);
+    ///         debug!("Slider on_changing: {}", value);
     ///     });
     /// ```
     pub fn keyboard_fraction(self, keyboard_fraction: f32) -> Self {

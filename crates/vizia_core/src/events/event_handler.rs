@@ -10,7 +10,7 @@ pub(crate) trait ViewHandler: Any {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event);
 
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas);
+    fn draw(&self, cx: &mut DrawContext, canvas: &Canvas);
 
     fn accessibility(&self, cx: &mut AccessContext, node: &mut AccessNode);
 
@@ -28,5 +28,9 @@ impl dyn ViewHandler {
     /// Attempt to cast a view handler to a mutable reference to the specified type.
     pub fn downcast_mut<T: Any>(&mut self) -> Option<&mut T> {
         self.as_any_mut().downcast_mut()
+    }
+
+    pub fn is<T: Any>(&self) -> bool {
+        self.as_any_ref().is::<T>()
     }
 }

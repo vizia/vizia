@@ -29,7 +29,7 @@ const STYLE: &str = r#"
         bottom: 40px;
         background-color: rgba(255, 255, 255, 0.7);
         border: 1px black;
-        border-radius: 10%;
+        corner-radius: 10%;
     }
 
     .dialog-box vstack {

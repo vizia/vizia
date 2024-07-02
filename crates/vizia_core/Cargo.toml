@@ -22,8 +22,8 @@ vizia_input = { path = "../vizia_input" }
 vizia_window = { path = "../vizia_window" }
 vizia_style = { path = "../vizia_style"}
 accesskit = "0.12.0"
-femtovg = "0.9"
-image = { version = "0.24.8", default-features = false, features = ["png"] } # inherited from femtovg
+
+skia-safe = { version = "0.75", features = ["textlayout"] }
 # morphorm = {path = "../../../morphorm" }
 morphorm = {git = "https://github.com/vizia/morphorm.git", branch = "auto-min-size2"}
 # morphorm = "0.6.4"
@@ -37,16 +37,16 @@ unicode-segmentation = "1.11.0"
 copypasta = {version = "0.10.1", optional = true, default-features = false }
 chrono = "0.4.34"
 hashbrown = "0.14.3"
-cosmic-text = { git="https://github.com/pop-os/cosmic-text", rev="19b4d8336e34073bb51b83578d3d803c8c953787" }
-swash = "0.1.12"
 log = "0.4.20"
 indexmap = "2.2.3"
 qfilter = "0.1.6"
 # reqwest = { version = "0.11.9", features = ["blocking"] }
-web-time = "0.2.4"
+web-time = "1.1.0"
+comrak = "0.24"
+open = "5.2"
 
 [lib]
 doctest = false
 
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-web_sys = { version = "0.3", package = "web-sys", features = ["console"] }
+[lints]
+workspace = true

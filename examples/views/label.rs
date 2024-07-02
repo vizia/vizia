@@ -1,19 +1,16 @@
 mod helpers;
 use helpers::*;
 use vizia::prelude::*;
-
 #[derive(Lens)]
 pub struct AppData {
     text: String,
     value: f32,
     checked: bool,
 }
-
 #[derive(Debug)]
 pub enum AppEvent {
     Toggle,
 }
-
 impl Model for AppData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
@@ -23,12 +20,11 @@ impl Model for AppData {
         });
     }
 }
-
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData {
             text: String::from("As well as model data which implements ToString:"),
-            value: 3.141592,
+            value: std::f32::consts::PI,
             checked: false,
         }
         .build(cx);
@@ -47,7 +43,7 @@ fn main() -> Result<(), ApplicationError> {
             Label::new(cx, "Unless text wrapping is disabled.")
                 .width(Pixels(200.0))
                 .text_wrap(false)
-                .font_style(FontStyle::Italic);
+                .font_slant(FontSlant::Italic);
 
             HStack::new(cx, |cx| {
                 Checkbox::new(cx, AppData::checked)

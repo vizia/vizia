@@ -367,7 +367,9 @@ where
         }
     }
 
-    pub fn tick(&mut self, time: Instant) -> bool {
+    pub fn tick(&mut self, time: Instant) -> Vec<Entity> {
+        self.remove_innactive_animations();
+
         if self.has_animations() {
             for state in self.active_animations.iter_mut() {
                 // If the animation is already finished then skip
@@ -377,7 +379,7 @@ where
 
                 if state.keyframes.len() == 1 {
                     state.output = Some(state.keyframes[0].value.clone());
-                    return true;
+                    continue;
                 }
 
                 let elapsed_time = time.duration_since(state.start_time);
@@ -403,12 +405,13 @@ where
                 state.output = Some(T::interpolate(&start.value, &end.value, timing_t));
             }
 
-            self.remove_innactive_animations();
-
-            return true;
+            self.active_animations
+                .iter()
+                .flat_map(|state| state.entities.clone())
+                .collect::<Vec<Entity>>()
+        } else {
+            Vec::new()
         }
-
-        false
     }
 
     /// Returns true if the given entity is linked to an active animation
@@ -738,9 +741,9 @@ mod tests {
     #[test]
     fn is_inline() {
         let data_index1 = DataIndex::inline(5);
-        assert_eq!(data_index1.is_inline(), true);
+        assert!(data_index1.is_inline());
         let data_index2 = DataIndex::shared(5);
-        assert_eq!(data_index2.is_inline(), false);
+        assert!(!data_index2.is_inline());
     }
 
     /// Test that a null data index is the correct value #7FFFFFFF (i.e. all bits = 1 except the first bit).
@@ -756,10 +759,10 @@ mod tests {
     #[test]
     fn new() {
         let animatable_storage = AnimatableSet::<f32>::default();
-        assert_eq!(animatable_storage.inline_data.is_empty(), true);
-        assert_eq!(animatable_storage.shared_data.is_empty(), true);
-        assert_eq!(animatable_storage.animations.is_empty(), true);
-        assert_eq!(animatable_storage.active_animations.is_empty(), true);
+        assert!(animatable_storage.inline_data.is_empty());
+        assert!(animatable_storage.shared_data.is_empty());
+        assert!(animatable_storage.animations.is_empty());
+        assert!(animatable_storage.active_animations.is_empty());
     }
 
     /// Test inserting inline data into the storage.

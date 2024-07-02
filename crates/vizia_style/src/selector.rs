@@ -166,9 +166,7 @@ mod tests {
 
     use super::*;
 
-    fn parse<'i>(
-        input: &'i str,
-    ) -> Result<SelectorList<Selectors>, ParseError<'i, CustomParseError<'i>>> {
+    fn parse(input: &str) -> Result<SelectorList<Selectors>, ParseError<'_, CustomParseError<'_>>> {
         let mut parser_input = ParserInput::new(input);
         let mut parser = Parser::new(&mut parser_input);
         SelectorList::parse(

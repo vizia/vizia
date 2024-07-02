@@ -4,7 +4,7 @@ use cssparser::*;
 define_enum! {
     /// The shape the default view drawing algorithm should use for handling borders.
     #[derive(Default)]
-    pub enum BorderCornerShape {
+    pub enum CornerShape {
         /// The round border corner shape.
         #[default]
         "round": Round,
@@ -13,16 +13,16 @@ define_enum! {
     }
 }
 
-impl From<&str> for BorderCornerShape {
+impl From<&str> for CornerShape {
     fn from(s: &str) -> Self {
         let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
-        BorderCornerShape::parse(&mut parser).unwrap_or_default()
+        CornerShape::parse(&mut parser).unwrap_or_default()
     }
 }
 
-impl From<BorderCornerShape> for Rect<BorderCornerShape> {
-    fn from(value: BorderCornerShape) -> Self {
+impl From<CornerShape> for Rect<CornerShape> {
+    fn from(value: CornerShape) -> Self {
         Rect(value, value, value, value)
     }
 }

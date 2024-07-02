@@ -84,22 +84,26 @@ impl_res_simple!(Overflow);
 impl_res_simple!(LengthValue);
 impl_res_simple!(FontWeight);
 impl_res_simple!(FontWeightKeyword);
-impl_res_simple!(FontStyle);
-impl_res_simple!(BorderCornerShape);
+impl_res_simple!(FontSlant);
+impl_res_simple!(CornerShape);
 impl_res_simple!(Angle);
 impl_res_simple!(TextAlign);
-impl_res_clone!(BoxShadow);
+impl_res_simple!(TextOverflow);
+impl_res_simple!(LineClamp);
+impl_res_clone!(Shadow);
 impl_res_clone!(LinearGradientBuilder);
-impl_res_clone!(BoxShadowBuilder);
+impl_res_clone!(ShadowBuilder);
+impl_res_simple!(FontVariation);
 impl_res_clone!(Filter);
 impl_res_simple!(Opacity);
-impl_res_simple!(FontStretch);
+impl_res_simple!(FontWidth);
 impl_res_clone!(Translate);
 impl_res_clone!(Scale);
 impl_res_clone!(Position);
 impl_res_simple!(PointerEvents);
 impl_res_simple!(ButtonVariant);
 impl_res_simple!(AvatarVariant);
+impl_res_simple!(TextDecorationLine);
 
 impl<L> Res<L::Target> for L
 where

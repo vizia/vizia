@@ -3,7 +3,7 @@ use cssparser::{ParseError, Parser, ParserInput};
 
 /// A box shadow adding a shadow effect around an element's frame.
 #[derive(Debug, Default, Clone, PartialEq)]
-pub struct BoxShadow {
+pub struct Shadow {
     /// The horizontal offset of the box shadow.
     pub x_offset: Length,
     /// The vertical offset of the box shadow.
@@ -18,8 +18,8 @@ pub struct BoxShadow {
     pub inset: bool,
 }
 
-impl BoxShadow {
-    /// Creates a new box shadow.
+impl Shadow {
+    /// Creates a new shadow.
     pub fn new(
         x_offset: impl Into<Length>,
         y_offset: impl Into<Length>,
@@ -39,7 +39,7 @@ impl BoxShadow {
     }
 }
 
-impl<'i> Parse<'i> for BoxShadow {
+impl<'i> Parse<'i> for Shadow {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         let x_offset = Length::parse(input)?;
         let y_offset = Length::parse(input)?;
@@ -48,21 +48,21 @@ impl<'i> Parse<'i> for BoxShadow {
         let color = input.try_parse(Color::parse).ok();
         let inset = input.try_parse(InsetKeyword::parse).map(|_| true).unwrap_or(false);
 
-        Ok(BoxShadow::new(x_offset, y_offset, blur_radius, spread_radius, color, inset))
+        Ok(Shadow::new(x_offset, y_offset, blur_radius, spread_radius, color, inset))
     }
 }
 
-impl<'i> Parse<'i> for Vec<BoxShadow> {
+impl<'i> Parse<'i> for Vec<Shadow> {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
-        input.parse_comma_separated(BoxShadow::parse)
+        input.parse_comma_separated(Shadow::parse)
     }
 }
 
-impl From<&str> for BoxShadow {
+impl From<&str> for Shadow {
     fn from(s: &str) -> Self {
         let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
-        BoxShadow::parse(&mut parser).unwrap_or_default()
+        Shadow::parse(&mut parser).unwrap_or_default()
     }
 }
 
@@ -72,11 +72,11 @@ mod tests {
     use crate::tests::assert_parse;
 
     assert_parse! {
-        BoxShadow, parse_box_shadow,
+        Shadow, parse_shadow,
 
         custom {
             success {
-                "10px 20px" => BoxShadow::new(
+                "10px 20px" => Shadow::new(
                     Length::px(10.0),
                     Length::px(20.0),
                     None,
@@ -84,7 +84,7 @@ mod tests {
                     None,
                     false,
                 ),
-                "10px 20px 30px 40px red inset" => BoxShadow::new(
+                "10px 20px 30px 40px red inset" => Shadow::new(
                     Length::px(10.0),
                     Length::px(20.0),
                     Some(Length::px(30.0)),
@@ -102,12 +102,12 @@ mod tests {
     }
 
     assert_parse! {
-        Vec<BoxShadow>, parse_vec_box_shadow,
+        Vec<Shadow>, parse_vec_shadow,
 
         custom {
             success {
                 "10px 20px, 10px 20px 30px 40px red inset" => vec![
-                    BoxShadow::new(
+                    Shadow::new(
                         Length::px(10.0),
                         Length::px(20.0),
                         None,
@@ -115,7 +115,7 @@ mod tests {
                         None,
                         false,
                     ),
-                    BoxShadow::new(
+                    Shadow::new(
                         Length::px(10.0),
                         Length::px(20.0),
                         Some(Length::px(30.0)),

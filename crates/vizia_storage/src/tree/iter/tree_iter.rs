@@ -164,9 +164,7 @@ mod test {
         t.add(e, b)?;
         let correct = [r, a, b, c, d, e];
         let forward = TreeBreadthIterator::full(&t);
-        // for item in forward {
-        //     println!("{}", item);
-        // }
+
         assert!(forward.eq(correct.iter().cloned()));
 
         Ok(())

@@ -29,13 +29,13 @@ fn main() -> Result<(), ApplicationError> {
             //.font_size(Pixels(20.0))
             .color(Color::moccasin())
             .font_weight(FontWeightKeyword::Bold)
-            .font_style(FontStyle::Italic)
-            .font_stretch(FontStretch::Condensed)
+            .font_slant(FontSlant::Italic)
+            .font_width(FontWidth::Condensed)
             // .font_family(FontFamily::Generic(GenericFontFamily::Serif))
             .selection_color(Color::royalblue())
             .caret_color(Color::azure())
             .text_wrap(true)
-            .box_shadow(
+            .shadow(
                 BoxShadowBuilder::new()
                     .x_offset(Pixels(10.0))
                     .y_offset(Pixels(10.0))

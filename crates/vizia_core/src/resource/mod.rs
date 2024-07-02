@@ -1,42 +1,24 @@
 //! Resource management for fonts, themes, images, and translations.
 
+mod image_id;
+
+pub use image_id::ImageId;
+use vizia_id::{GenerationalId, IdManager};
+
 use crate::context::ResourceContext;
 use crate::entity::Entity;
 use crate::prelude::IntoCssStr;
-use crate::view::Canvas;
+// use crate::view::Canvas;
 use fluent_bundle::{FluentBundle, FluentResource};
 use hashbrown::{HashMap, HashSet};
-use image::GenericImageView;
-use std::borrow::Borrow;
 use unic_langid::LanguageIdentifier;
 
 pub(crate) struct StoredImage {
-    pub image: ImageOrId,
+    pub image: skia_safe::Image,
     pub retention_policy: ImageRetentionPolicy,
     pub used: bool,
     pub dirty: bool,
     pub observers: HashSet<Entity>,
-}
-
-pub(crate) enum ImageOrId {
-    Image(image::DynamicImage, femtovg::ImageFlags),
-    Id(femtovg::ImageId, (u32, u32)),
-}
-
-impl ImageOrId {
-    pub fn id(&mut self, canvas: &mut Canvas) -> femtovg::ImageId {
-        match self {
-            ImageOrId::Image(image, flags) => {
-                let image_ref: &image::DynamicImage = image.borrow();
-                let res = canvas
-                    .create_image(femtovg::ImageSource::try_from(image_ref).unwrap(), *flags)
-                    .unwrap();
-                *self = ImageOrId::Id(res, image.dimensions());
-                res
-            }
-            ImageOrId::Id(i, _) => *i,
-        }
-    }
 }
 
 #[derive(Copy, Clone, PartialEq)]
@@ -51,7 +33,11 @@ pub enum ImageRetentionPolicy {
 pub struct ResourceManager {
     pub themes: Vec<String>, // Themes are the string content stylesheets
     pub styles: Vec<Box<dyn IntoCssStr>>,
-    pub(crate) images: HashMap<String, StoredImage>,
+
+    pub(crate) image_id_manager: IdManager<ImageId>,
+    pub(crate) images: HashMap<ImageId, StoredImage>,
+    pub(crate) image_ids: HashMap<String, ImageId>,
+
     pub translations: HashMap<LanguageIdentifier, FluentBundle<FluentResource>>,
 
     pub language: LanguageIdentifier,
@@ -61,13 +47,12 @@ pub struct ResourceManager {
 
 impl ResourceManager {
     pub fn new() -> Self {
+        // Get the system locale
         let locale = sys_locale::get_locale().and_then(|l| l.parse().ok()).unwrap_or_default();
 
-        #[cfg(not(target_arch = "wasm32"))]
         let default_image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>> = None;
 
         // Disable this for now because reqwest pulls in too many dependencies.
-        // #[cfg(not(target_arch = "wasm32"))]
         // let default_image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>> =
         //     Some(Box::new(|cx: &mut ResourceContext, path: &str| {
         //         if path.starts_with("https://") {
@@ -90,12 +75,36 @@ impl ResourceManager {
         //         }
         //     }));
 
-        #[cfg(target_arch = "wasm32")]
-        let default_image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>> = None;
+        let mut image_id_manager = IdManager::new();
+
+        // Create root id for broken image
+        image_id_manager.create();
+
+        let mut images = HashMap::new();
+
+        images.insert(
+            ImageId::root(),
+            StoredImage {
+                image: skia_safe::Image::from_encoded(unsafe {
+                    skia_safe::Data::new_bytes(include_bytes!(
+                        "../../resources/images/broken_image.png"
+                    ))
+                })
+                .unwrap(),
+
+                retention_policy: ImageRetentionPolicy::Forever,
+                used: true,
+                dirty: false,
+                observers: HashSet::new(),
+            },
+        );
 
         ResourceManager {
             themes: Vec::new(),
-            images: HashMap::new(),
+
+            image_id_manager,
+            images,
+            image_ids: HashMap::new(),
             styles: Vec::new(),
 
             translations: HashMap::from([(

@@ -3,6 +3,7 @@ use vizia::prelude::*;
 const STYLE: &str = r#"
     .container {
         size: 100px;
+        corner-radius: 10px;
         background-color: rgb(200, 200, 200);
     }
 
@@ -17,13 +18,21 @@ const STYLE: &str = r#"
         top: 50px;
         background-color: red;
     }
+
+    element.test {
+        background-color: green;
+    }
+
+    element.test:hover {
+        background-color: blue;
+    }
     
     .overflow {
         overflow: hidden;
     }
 
     .overflow:over {
-        overflow: visible;
+        overflow: hidden;
     }
 
     .overflowx {
@@ -43,14 +52,12 @@ const STYLE: &str = r#"
     }
     
     .clipping {
-        size: 100%;
-        space: 0px;
         clip-path: inset(30px);
         overflow: hidden;
     }
 
-    .container:over .clipping {
-        clip-path: inset(10px);
+    .clipping:over {
+        clip-path: inset(0px);
         transition: clip-path 100ms;
     }
 "#;
@@ -80,27 +87,28 @@ fn main() -> Result<(), ApplicationError> {
 
         HStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
-                Element::new(cx);
+                Element::new(cx).class("test");
             })
             .class("container")
             .class("overflow");
 
-            HStack::new(cx, |cx| {
-                Element::new(cx);
-            })
-            .class("container")
-            .class("overflowx");
+            // HStack::new(cx, |cx| {
+            //     Element::new(cx);
+            // })
+            // .class("container")
+            // .class("overflowx");
 
-            HStack::new(cx, |cx| {
-                Element::new(cx);
-            })
-            .class("container")
-            .class("overflowy");
+            // HStack::new(cx, |cx| {
+            //     Element::new(cx);
+            // })
+            // .class("container")
+            // .class("overflowy");
 
-            HStack::new(cx, |cx| {
-                Element::new(cx).class("clipping");
-            })
-            .class("container");
+            // HStack::new(cx, |cx| {
+            //     Element::new(cx);
+            // })
+            // .class("container")
+            // .class("clipping");
         })
         .class("row");
     })

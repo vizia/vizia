@@ -71,6 +71,13 @@ impl_data_simple!(Entity);
 impl_data_simple!(Localized);
 impl_data_simple!(Length);
 impl_data_simple!(KeyChord);
+impl_data_simple!(FamilyOwned);
+impl_data_simple!(FontWeight);
+impl_data_simple!(TextAlign);
+impl_data_simple!(LengthOrPercentage);
+impl_data_simple!(CornerShape);
+impl_data_simple!(Shadow);
+impl_data_simple!(TextDecorationLine);
 
 impl Data for &'static str {
     fn same(&self, other: &Self) -> bool {
@@ -256,6 +263,22 @@ impl<T: Data> Data for std::ops::Bound<T> {
 }
 
 impl<T: Data> Data for Vec<T> {
+    fn same(&self, other: &Self) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+
+        for (a, b) in self.iter().zip(other.iter()) {
+            if !a.same(b) {
+                return false;
+            }
+        }
+
+        true
+    }
+}
+
+impl<T: Data> Data for &'static [T] {
     fn same(&self, other: &Self) -> bool {
         if self.len() != other.len() {
             return false;

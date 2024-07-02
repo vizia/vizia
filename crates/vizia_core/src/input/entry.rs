@@ -29,7 +29,7 @@ where
     /// #     One,
     /// # }
     /// #
-    /// KeymapEntry::new(Action::One, |_| println!("Action One"));
+    /// KeymapEntry::new(Action::One, |_| debug!("Action One"));
     /// ```
     pub fn new(action: T, on_action: fn(&mut EventContext)) -> Self {
         Self { action, on_action }

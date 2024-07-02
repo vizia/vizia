@@ -30,7 +30,7 @@ impl TabView {
                     Binding::new(cx, lens.map(|list| list.len()), move |cx, list_length| {
                         let list_length = list_length.get(cx);
                         for index in 0..list_length {
-                            let l = lens.index(index);
+                            let l = lens.idx(index);
                             let builder = (content2)(cx, l).header;
                             TabHeader::new(cx, index, builder)
                                 .bind(TabView::selected_index, move |handle, selected_index| {
@@ -56,7 +56,7 @@ impl TabView {
                 VStack::new(cx, |cx| {
                     Binding::new(cx, TabView::selected_index, move |cx, selected| {
                         let selected = selected.get(cx);
-                        let l = lens.index(selected);
+                        let l = lens.idx(selected);
                         ((content)(cx, l).content)(cx);
                     });
                 })

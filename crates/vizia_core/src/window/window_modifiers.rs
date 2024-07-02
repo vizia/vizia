@@ -195,6 +195,4 @@ pub trait WindowModifiers {
     /// .run();
     /// ```
     fn icon(self, width: u32, height: u32, image: Vec<u8>) -> Self;
-    #[cfg(target_arch = "wasm32")]
-    fn canvas(self, canvas: &str) -> Self;
 }

@@ -13,7 +13,7 @@ const STYLE: &str = r#"
         top: 300px;
         backdrop-filter: blur(16px);
         position-type: self-directed;
-        border-radius: 32px;
+        corner-radius: 32px;
         background-color: rgba(255, 255, 255, 0.4);
         border-width: 2px;
         border-color: rgba(255, 255, 255, 0.8);
@@ -53,11 +53,7 @@ fn main() -> Result<(), ApplicationError> {
         // Load an image into the binary
         cx.load_image(
             "sample.png",
-            image::load_from_memory_with_format(
-                include_bytes!("../resources/images/sample-hut-400x300.png"),
-                image::ImageFormat::Png,
-            )
-            .unwrap(),
+            include_bytes!("../resources/images/sample-hut-400x300.png"),
             ImageRetentionPolicy::DropWhenUnusedForOneFrame,
         );
 
@@ -93,13 +89,11 @@ impl FilterElement {
 
 impl View for FilterElement {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|window_event, _| match window_event {
-            WindowEvent::MouseMove(x, y) => {
+        event.map(|window_event, _| {
+            if let WindowEvent::MouseMove(x, y) = window_event {
                 self.left = Pixels(*x / cx.scale_factor());
                 self.top = Pixels(*y / cx.scale_factor());
             }
-
-            _ => {}
         })
     }
 }

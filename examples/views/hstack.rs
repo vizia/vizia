@@ -8,8 +8,8 @@ fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         ExamplePage::new(cx, |cx| {
             HStack::new(cx, |cx| {
-                for i in 0..3 {
-                    Element::new(cx).size(Pixels(100.0)).background_color(COLORS[i]);
+                for color in COLORS {
+                    Element::new(cx).size(Pixels(100.0)).background_color(color);
                 }
             })
             .child_space(Stretch(1.0));

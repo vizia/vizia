@@ -1,18 +1,17 @@
 use crate::application::UserEvent;
-#[cfg(not(target_arch = "wasm32"))]
+use std::ffi::CString;
 use std::num::NonZeroU32;
 
 use crate::convert::cursor_icon_to_cursor_icon;
-use femtovg::{renderer::OpenGl, Canvas, Color};
 
-#[cfg(not(target_arch = "wasm32"))]
+use gl_rs as gl;
+use glutin::config::Config;
 use glutin::surface::SwapInterval;
-#[cfg(not(target_arch = "wasm32"))]
 use glutin_winit::DisplayBuilder;
-#[cfg(not(target_arch = "wasm32"))]
 use raw_window_handle::HasRawWindowHandle;
 
-#[cfg(not(target_arch = "wasm32"))]
+use gl::types::*;
+
 use glutin::{
     config::ConfigTemplateBuilder,
     context::{ContextApi, ContextAttributesBuilder},
@@ -21,6 +20,13 @@ use glutin::{
     surface::{SurfaceAttributesBuilder, WindowSurface},
 };
 
+use skia_safe::{
+    gpu::{
+        self, backend_render_targets, context_options, gl::FramebufferInfo, ContextOptions,
+        SurfaceOrigin,
+    },
+    ColorSpace, ColorType, PixelGeometry, Surface, SurfaceProps, SurfacePropsFlags,
+};
 use vizia_core::backend::*;
 use vizia_core::prelude::*;
 use winit::event_loop::EventLoop;
@@ -28,11 +34,11 @@ use winit::window::{CursorGrabMode, WindowBuilder, WindowLevel};
 use winit::{dpi::*, window::WindowId};
 
 pub struct Window {
+    gl_config: Config,
+    pub gl_surface: glutin::surface::Surface<glutin::surface::WindowSurface>,
     pub id: WindowId,
-    #[cfg(not(target_arch = "wasm32"))]
-    context: glutin::context::PossiblyCurrentContext,
-    #[cfg(not(target_arch = "wasm32"))]
-    surface: glutin::surface::Surface<glutin::surface::WindowSurface>,
+    pub gl_context: glutin::context::PossiblyCurrentContext,
+    pub gr_context: skia_safe::gpu::DirectContext,
     window: winit::window::Window,
     pub should_close: bool,
 }
@@ -67,74 +73,11 @@ impl Window {
     }
 }
 
-#[cfg(target_arch = "wasm32")]
 impl Window {
     pub fn new(
         events_loop: &EventLoop<UserEvent>,
         window_description: &WindowDescription,
-    ) -> (Self, Canvas<OpenGl>) {
-        let window_builder = WindowBuilder::new();
-
-        let canvas_element = {
-            use wasm_bindgen::JsCast;
-            let document = web_sys::window().unwrap().document().unwrap();
-            if let Some(canvas_id) = &window_description.target_canvas {
-                document.get_element_by_id(canvas_id).unwrap()
-            } else {
-                let element = document.create_element("canvas").unwrap();
-                document.body().unwrap().insert_adjacent_element("afterbegin", &element).unwrap();
-                element
-            }
-            .dyn_into::<web_sys::HtmlCanvasElement>()
-            .unwrap()
-        };
-
-        let renderer =
-            OpenGl::new_from_html_canvas(&canvas_element).expect("Cannot create renderer");
-
-        let mut canvas = Canvas::new(renderer).expect("Failed to create canvas");
-
-        // tell winit about the above canvas
-        let window_builder = {
-            use winit::platform::web::WindowBuilderExtWebSys;
-            window_builder.with_canvas(Some(canvas_element))
-        };
-
-        // Apply generic WindowBuilder properties
-        let window_builder = apply_window_description(window_builder, &window_description);
-
-        // Get the window handle. this is a winit::window::Window
-        let handle = window_builder.build(&events_loop).unwrap();
-
-        // Build our window
-        let window = Window { id: handle.id(), window: handle, should_close: false };
-
-        let size = window.window().inner_size();
-        canvas.set_size(size.width as u32, size.height as u32, 1.0);
-        canvas.clear_rect(0, 0, size.width as u32, size.height as u32, Color::rgb(255, 80, 80));
-
-        (window, canvas)
-    }
-
-    pub fn window(&self) -> &winit::window::Window {
-        &self.window
-    }
-
-    pub fn resize(&self, _size: PhysicalSize<u32>) {
-        // TODO?
-    }
-
-    pub fn swap_buffers(&self) {
-        // Intentional no-op
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-impl Window {
-    pub fn new(
-        events_loop: &EventLoop<UserEvent>,
-        window_description: &WindowDescription,
-    ) -> (Self, Canvas<OpenGl>) {
+    ) -> (Self, Surface) {
         let window_builder = WindowBuilder::new();
 
         //Windows COM doesn't play nicely with winit's drag and drop right now
@@ -196,53 +139,148 @@ impl Window {
             NonZeroU32::new(height.max(1)).unwrap(),
         );
 
-        let surface =
+        let gl_surface =
             unsafe { gl_config.display().create_window_surface(&gl_config, &attrs).unwrap() };
 
-        let gl_context = not_current_gl_context.take().unwrap().make_current(&surface).unwrap();
-
-        // Build the femtovg renderer
-        let renderer = unsafe {
-            OpenGl::new_from_function_cstr(|s| gl_display.get_proc_address(s) as *const _)
-        }
-        .expect("Cannot create renderer");
+        let gl_context = not_current_gl_context.take().unwrap().make_current(&gl_surface).unwrap();
 
         if window_description.vsync {
-            surface
+            gl_surface
                 .set_swap_interval(&gl_context, SwapInterval::Wait(NonZeroU32::new(1).unwrap()))
                 .expect("Failed to set vsync");
         }
 
-        let mut canvas = Canvas::new(renderer).expect("Failed to create canvas");
+        // Build skia renderer
+        gl::load_with(|s| {
+            gl_config.display().get_proc_address(CString::new(s).unwrap().as_c_str())
+        });
+        let interface = skia_safe::gpu::gl::Interface::new_load_with(|name| {
+            if name == "eglGetCurrentDisplay" {
+                return std::ptr::null();
+            }
+            gl_config.display().get_proc_address(CString::new(name).unwrap().as_c_str())
+        })
+        .expect("Could not create interface");
 
-        let size = window.inner_size();
-        canvas.set_size(size.width, size.height, 1.0);
-        canvas.clear_rect(0, 0, size.width, size.height, Color::rgb(255, 80, 80));
+        // https://github.com/rust-skia/rust-skia/issues/476
+        let mut context_options = ContextOptions::new();
+        context_options.skip_gl_error_checks = context_options::Enable::Yes;
+
+        let mut gr_context = skia_safe::gpu::DirectContext::new_gl(interface, &context_options)
+            .expect("Could not create direct context");
+
+        let fb_info = {
+            let mut fboid: GLint = 0;
+            unsafe { gl::GetIntegerv(gl::FRAMEBUFFER_BINDING, &mut fboid) };
+
+            FramebufferInfo {
+                fboid: fboid.try_into().unwrap(),
+                format: skia_safe::gpu::gl::Format::RGBA8.into(),
+                ..Default::default()
+            }
+        };
+
+        let num_samples = gl_config.num_samples() as usize;
+        let stencil_size = gl_config.stencil_size() as usize;
+
+        let surface = create_surface(&window, fb_info, &mut gr_context, num_samples, stencil_size);
 
         // Build our window
-        let win =
-            Window { id: window.id(), context: gl_context, surface, window, should_close: false };
+        let win = Window {
+            gl_config,
+            id: window.id(),
+            gl_context,
+            gr_context,
+            gl_surface,
+            window,
+            should_close: false,
+        };
 
-        (win, canvas)
+        (win, surface)
     }
 
+    // Returns a reference to the winit window
     pub fn window(&self) -> &winit::window::Window {
         &self.window
     }
 
-    pub fn resize(&self, size: PhysicalSize<u32>) {
-        if size.width != 0 && size.height != 0 {
-            self.surface.resize(
-                &self.context,
-                size.width.try_into().unwrap(),
-                size.height.try_into().unwrap(),
-            );
+    pub fn resize(&mut self, size: PhysicalSize<u32>, surface: &mut (Surface, Surface)) {
+        let (width, height): (u32, u32) = size.into();
+
+        if width == 0 || height == 0 {
+            return;
         }
+
+        let fb_info = {
+            let mut fboid: GLint = 0;
+            unsafe { gl::GetIntegerv(gl::FRAMEBUFFER_BINDING, &mut fboid) };
+
+            FramebufferInfo {
+                fboid: fboid.try_into().unwrap(),
+                format: skia_safe::gpu::gl::Format::RGBA8.into(),
+                ..Default::default()
+            }
+        };
+
+        surface.0 = create_surface(
+            &self.window,
+            fb_info,
+            &mut self.gr_context,
+            self.gl_config.num_samples() as usize,
+            self.gl_config.stencil_size() as usize,
+        );
+
+        surface.1 = surface
+            .0
+            .new_surface_with_dimensions((width.max(1) as i32, height.max(1) as i32))
+            .unwrap();
+
+        self.gl_surface.resize(
+            &self.gl_context,
+            NonZeroU32::new(width.max(1)).unwrap(),
+            NonZeroU32::new(height.max(1)).unwrap(),
+        );
     }
 
-    pub fn swap_buffers(&self) {
-        self.surface.swap_buffers(&self.context).expect("Failed to swap buffers");
+    pub fn swap_buffers(&mut self) {
+        self.gr_context.flush_and_submit();
+        self.gl_surface.swap_buffers(&self.gl_context).expect("Failed to swap buffers");
     }
+}
+
+pub fn create_surface(
+    window: &winit::window::Window,
+    fb_info: FramebufferInfo,
+    gr_context: &mut skia_safe::gpu::DirectContext,
+    num_samples: usize,
+    stencil_size: usize,
+) -> Surface {
+    let size = window.inner_size();
+    let size = (
+        size.width.try_into().expect("Could not convert width"),
+        size.height.try_into().expect("Could not convert height"),
+    );
+
+    let backend_render_target =
+        backend_render_targets::make_gl(size, num_samples, stencil_size, fb_info);
+
+    let surface_props = SurfaceProps::new_with_text_properties(
+        SurfacePropsFlags::default(),
+        PixelGeometry::default(),
+        0.5,
+        0.0,
+    );
+
+    gpu::surfaces::wrap_backend_render_target(
+        gr_context,
+        &backend_render_target,
+        SurfaceOrigin::BottomLeft,
+        ColorType::RGBA8888,
+        ColorSpace::new_srgb(),
+        Some(surface_props).as_ref(),
+        // None,
+    )
+    .expect("Could not create skia surface")
 }
 
 impl View for Window {

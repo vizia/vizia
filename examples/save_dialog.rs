@@ -8,7 +8,7 @@ const STYLE: &str = r#"
         child-left: 1s;
         child-right: 1s;
         background-color: white;
-        border-radius: 3px;
+        corner-radius: 3px;
         border-width: 1px;
         border-color: #999999;
         outer-shadow: 0 3 10 #00000055;
@@ -25,7 +25,7 @@ const STYLE: &str = r#"
     }
 
     .modal button {
-        border-radius: 3px;
+        corner-radius: 3px;
         child-space: 1s;
     }
 
@@ -43,15 +43,14 @@ pub struct AppData {
 
 impl Model for AppData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|window_event, meta| match window_event {
+        event.map(|window_event, meta| {
             // Intercept WindowClose event to show a dialog if not 'saved'.
-            WindowEvent::WindowClose => {
+            if let WindowEvent::WindowClose = window_event {
                 if !self.is_saved {
                     self.show_dialog = true;
                     meta.consume();
                 }
             }
-            _ => {}
         });
 
         event.map(|app_event, _| match app_event {

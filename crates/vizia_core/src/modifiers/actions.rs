@@ -294,7 +294,7 @@ pub trait ActionModifiers<V> {
     /// ```rust
     /// # use vizia_core::prelude::*;
     /// # let mut cx = &mut Context::default();
-    /// Element::new(cx).on_press(|_| println!("View was pressed!"));
+    /// Element::new(cx).on_press(|_| debug!("View was pressed!"));
     /// ```
     fn on_press<F>(self, action: F) -> Self
     where
@@ -308,7 +308,7 @@ pub trait ActionModifiers<V> {
     /// ```rust
     /// # use vizia_core::prelude::*;
     /// # let mut cx = &mut Context::default();
-    /// Element::new(cx).on_press_down(|_| println!("View was pressed down!"));
+    /// Element::new(cx).on_press_down(|_| debug!("View was pressed down!"));
     /// ```
     fn on_press_down<F>(self, action: F) -> Self
     where
@@ -320,7 +320,7 @@ pub trait ActionModifiers<V> {
     /// ```rust
     /// # use vizia_core::prelude::*;
     /// # let mut cx = &mut Context::default();
-    /// Element::new(cx).on_double_click(|_, _button| println!("View was double clicked on!"));
+    /// Element::new(cx).on_double_click(|_, _button| debug!("View was double clicked on!"));
     /// ```
     fn on_double_click<F>(self, action: F) -> Self
     where
@@ -333,7 +333,7 @@ pub trait ActionModifiers<V> {
     /// ```rust
     /// # use vizia_core::prelude::*;
     /// # let mut cx = &mut Context::default();
-    /// Element::new(cx).on_hover(|_| println!("Mouse cursor entered the view!"));
+    /// Element::new(cx).on_hover(|_| debug!("Mouse cursor entered the view!"));
     /// ```
     fn on_hover<F>(self, action: F) -> Self
     where
@@ -346,7 +346,7 @@ pub trait ActionModifiers<V> {
     /// ```rust
     /// # use vizia_core::prelude::*;
     /// # let mut cx = &mut Context::default();
-    /// Element::new(cx).on_hover_out(|_| println!("Mouse cursor left the view!"));
+    /// Element::new(cx).on_hover_out(|_| debug!("Mouse cursor left the view!"));
     /// ```
     fn on_hover_out<F>(self, action: F) -> Self
     where
@@ -359,7 +359,7 @@ pub trait ActionModifiers<V> {
     /// ```rust
     /// # use vizia_core::prelude::*;
     /// # let mut cx = &mut Context::default();
-    /// Element::new(cx).on_over(|_| println!("Mouse cursor entered the view bounds!"));
+    /// Element::new(cx).on_over(|_| debug!("Mouse cursor entered the view bounds!"));
     /// ```
     fn on_over<F>(self, action: F) -> Self
     where
@@ -372,7 +372,7 @@ pub trait ActionModifiers<V> {
     /// ```rust
     /// # use vizia_core::prelude::*;
     /// # let mut cx = &mut Context::default();
-    /// Element::new(cx).on_over_out(|_| println!("Mouse cursor left the view bounds!"));
+    /// Element::new(cx).on_over_out(|_| debug!("Mouse cursor left the view bounds!"));
     /// ```
     fn on_over_out<F>(self, action: F) -> Self
     where
@@ -384,7 +384,7 @@ pub trait ActionModifiers<V> {
     /// ```rust
     /// # use vizia_core::prelude::*;
     /// # let mut cx = &mut Context::default();
-    /// Element::new(cx).on_mouse_move(|_, x, y| println!("Cursor moving: {} {}", x, y));
+    /// Element::new(cx).on_mouse_move(|_, x, y| debug!("Cursor moving: {} {}", x, y));
     /// ```
     fn on_mouse_move<F>(self, action: F) -> Self
     where
@@ -397,7 +397,7 @@ pub trait ActionModifiers<V> {
     /// ```rust
     /// # use vizia_core::prelude::*;
     /// # let mut cx = &mut Context::default();
-    /// Element::new(cx).on_mouse_down(|_, button| println!("Mouse button, {:?}, was pressed!", button));
+    /// Element::new(cx).on_mouse_down(|_, button| debug!("Mouse button, {:?}, was pressed!", button));
     /// ```
     fn on_mouse_down<F>(self, action: F) -> Self
     where
@@ -410,7 +410,7 @@ pub trait ActionModifiers<V> {
     /// ```rust
     /// # use vizia_core::prelude::*;
     /// # let mut cx = &mut Context::default();
-    /// Element::new(cx).on_mouse_up(|_, button| println!("Mouse button, {:?}, was released!", button));
+    /// Element::new(cx).on_mouse_up(|_, button| debug!("Mouse button, {:?}, was released!", button));
     /// ```
     fn on_mouse_up<F>(self, action: F) -> Self
     where
@@ -422,7 +422,7 @@ pub trait ActionModifiers<V> {
     /// ```rust
     /// # use vizia_core::prelude::*;
     /// # let mut cx = &mut Context::default();
-    /// Element::new(cx).on_focus_in(|_| println!("View gained keyboard focus!"));
+    /// Element::new(cx).on_focus_in(|_| debug!("View gained keyboard focus!"));
     /// ```
     fn on_focus_in<F>(self, action: F) -> Self
     where
@@ -434,7 +434,7 @@ pub trait ActionModifiers<V> {
     /// ```rust
     /// # use vizia_core::prelude::*;
     /// # let mut cx = &mut Context::default();
-    /// Element::new(cx).on_focus_out(|_| println!("View lost keyboard focus!"));
+    /// Element::new(cx).on_focus_out(|_| debug!("View lost keyboard focus!"));
     /// ```
     fn on_focus_out<F>(self, action: F) -> Self
     where
@@ -446,7 +446,7 @@ pub trait ActionModifiers<V> {
     /// ```rust
     /// # use vizia_core::prelude::*;
     /// # let mut cx = &mut Context::default();
-    /// Element::new(cx).on_geo_changed(|_, _| println!("View geometry changed!"));
+    /// Element::new(cx).on_geo_changed(|_, _| debug!("View geometry changed!"));
     /// ```
     fn on_geo_changed<F>(self, action: F) -> Self
     where

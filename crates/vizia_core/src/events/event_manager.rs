@@ -197,6 +197,8 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 cx.mouse.cursorx = *x;
                 cx.mouse.cursory = *y;
 
+                hover_system(cx);
+
                 mutate_direct_or_up(meta, cx.captured, cx.hovered, false);
             }
 
@@ -205,7 +207,6 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             // {
             // }
 
-            hover_system(cx);
             // if let Some(dropped_file) = cx.dropped_file.take() {
             //     emit_direct_or_up(
             //         cx,
@@ -355,20 +356,16 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 for entity in TreeIterator::full(&cx.tree) {
                     if let Some(model_data_store) = cx.data.get(&entity) {
                         if !model_data_store.models.is_empty() {
-                            println!("Models for {}", entity);
+                            debug!("Models for {}", entity);
                             for (_, model) in model_data_store.models.iter() {
-                                println!("M: {:?}", model.name())
+                                debug!("M: {:?}", model.name())
                             }
                         }
 
                         if !model_data_store.stores.is_empty() {
-                            println!("Stores for {}", entity);
+                            debug!("Stores for {}", entity);
                             for (_, store) in model_data_store.stores.iter() {
-                                println!(
-                                    "S: [{}] - Observers {:?}",
-                                    store.name(),
-                                    store.observers()
-                                )
+                                debug!("S: [{}] - Observers {:?}", store.name(), store.observers())
                             }
                         }
                     }
@@ -377,7 +374,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
 
             #[cfg(debug_assertions)]
             if *code == Code::KeyI && cx.modifiers.ctrl() {
-                println!("Entity tree");
+                debug!("Entity tree");
                 let (tree, views, cache) = (&cx.tree, &cx.views, &cx.cache);
                 let has_next_sibling = |entity| tree.get_next_sibling(entity).is_some();
                 let root_indents = |entity: Entity| {
@@ -474,18 +471,18 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             if *code == Code::KeyT
                 && cx.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
             {
-                debug!("Loaded font face info:");
-                for face in cx.text_context.font_system().db().faces() {
-                    debug!(
-                        "family: {:?}\npost_script_name: {:?}\nstyle: {:?}\nweight: {:?}\nstretch: {:?}\nmonospaced: {:?}\n",
-                        face.families,
-                        face.post_script_name,
-                        face.style,
-                        face.weight,
-                        face.stretch,
-                        face.monospaced,
-                    );
-                }
+                // debug!("Loaded font face info:");
+                // for face in cx.text_context.font_system().db().faces() {
+                //     debug!(
+                //         "family: {:?}\npost_script_name: {:?}\nstyle: {:?}\nweight: {:?}\nstretch: {:?}\nmonospaced: {:?}\n",
+                //         face.families,
+                //         face.post_script_name,
+                //         face.style,
+                //         face.weight,
+                //         face.stretch,
+                //         face.monospaced,
+                //     );
+                // }
             }
 
             if *code == Code::F5 {
@@ -612,11 +609,11 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 pseudo_class.set(PseudoClassFlags::OVER, false);
             }
 
-            let parent_iter = LayoutParentIterator::new(&cx.tree, Some(cx.hovered));
+            let parent_iter = LayoutParentIterator::new(&cx.tree, cx.hovered);
             for ancestor in parent_iter {
                 if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(ancestor) {
                     pseudo_classes.set(PseudoClassFlags::HOVER, false);
-                    cx.style.needs_restyle();
+                    cx.style.needs_restyle(ancestor);
                 }
             }
 

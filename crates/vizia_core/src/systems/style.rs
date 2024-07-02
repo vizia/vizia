@@ -1,6 +1,6 @@
 use crate::{events::ViewHandler, prelude::*};
 use hashbrown::HashMap;
-use vizia_storage::TreeBreadthIterator;
+use vizia_storage::{LayoutParentIterator, TreeBreadthIterator};
 use vizia_style::{
     matches_selector_list,
     selectors::{
@@ -243,7 +243,9 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context) {
             cx.style.font_size.inherit_inline(entity, parent);
             cx.style.font_family.inherit_inline(entity, parent);
             cx.style.font_weight.inherit_inline(entity, parent);
-            cx.style.font_style.inherit_inline(entity, parent);
+            cx.style.font_slant.inherit_inline(entity, parent);
+            cx.style.text_decoration_line.inherit_inline(entity, parent);
+            cx.style.font_variation_settings.inherit_inline(entity, parent);
             cx.style.caret_color.inherit_inline(entity, parent);
             cx.style.selection_color.inherit_inline(entity, parent);
         }
@@ -258,16 +260,19 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context) {
             cx.style.font_size.inherit_shared(entity, parent);
             cx.style.font_family.inherit_shared(entity, parent);
             cx.style.font_weight.inherit_shared(entity, parent);
-            cx.style.font_style.inherit_shared(entity, parent);
+            cx.style.font_slant.inherit_shared(entity, parent);
+            cx.style.text_decoration_line.inherit_shared(entity, parent);
+            cx.style.font_variation_settings.inherit_shared(entity, parent);
             cx.style.caret_color.inherit_shared(entity, parent);
             cx.style.selection_color.inherit_shared(entity, parent);
         }
     }
 }
 
-fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
+fn link_style_data(style: &mut Style, tree: &Tree<Entity>, entity: Entity, matched_rules: &[Rule]) {
     let mut should_relayout = false;
     let mut should_redraw = false;
+    let mut should_reflow = false;
 
     // Display
     if style.display.link(entity, matched_rules) {
@@ -297,6 +302,10 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
     }
 
     if style.backdrop_filter.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.blend_mode.link(entity, matched_rules) {
         should_redraw = true;
     }
 
@@ -407,35 +416,35 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
         should_redraw = true;
     }
 
-    if style.border_top_left_shape.link(entity, matched_rules) {
+    if style.corner_top_left_shape.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_top_right_shape.link(entity, matched_rules) {
+    if style.corner_top_right_shape.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_bottom_left_shape.link(entity, matched_rules) {
+    if style.corner_bottom_left_shape.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_bottom_right_shape.link(entity, matched_rules) {
+    if style.corner_bottom_right_shape.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_top_left_radius.link(entity, matched_rules) {
+    if style.corner_top_left_radius.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_top_right_radius.link(entity, matched_rules) {
+    if style.corner_top_right_radius.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_bottom_left_radius.link(entity, matched_rules) {
+    if style.corner_bottom_left_radius.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_bottom_right_radius.link(entity, matched_rules) {
+    if style.corner_bottom_right_radius.link(entity, matched_rules) {
         should_redraw = true;
     }
 
@@ -477,36 +486,59 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
     // Font
     if style.font_color.link(entity, matched_rules) {
         should_redraw = true;
+        should_reflow = true;
     }
 
     if style.font_size.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
+        should_reflow = true;
     }
 
     if style.font_family.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
+        should_reflow = true;
     }
 
     if style.font_weight.link(entity, matched_rules) {
         should_redraw = true;
         should_relayout = true;
+        should_reflow = true;
     }
 
-    if style.font_style.link(entity, matched_rules) {
+    if style.font_slant.link(entity, matched_rules) {
         should_redraw = true;
         should_relayout = true;
+        should_reflow = true;
     }
 
-    if style.font_stretch.link(entity, matched_rules) {
+    if style.font_width.link(entity, matched_rules) {
         should_redraw = true;
         should_relayout = true;
+        should_reflow = true;
+    }
+
+    if style.font_variation_settings.link(entity, matched_rules) {
+        should_redraw = true;
+        should_relayout = true;
+        should_reflow = true;
     }
 
     if style.text_wrap.link(entity, matched_rules) {
         should_redraw = true;
         should_relayout = true;
+        should_reflow = true;
+    }
+
+    if style.text_overflow.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.line_clamp.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
     }
 
     if style.selection_color.link(entity, matched_rules) {
@@ -517,8 +549,43 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
         should_redraw = true;
     }
 
+    if style.text_decoration_line.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.underline_style.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.underline_color.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.overline_style.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.overline_color.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.strikethrough_style.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.strikethrough_color.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
     // Outer Shadow
-    if style.box_shadow.link(entity, matched_rules) {
+    if style.shadow.link(entity, matched_rules) {
         should_redraw = true;
     }
 
@@ -587,7 +654,17 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
     }
 
     if should_redraw {
-        style.system_flags.set(SystemFlags::REDRAW, true);
+        style.needs_redraw(entity);
+    }
+
+    if should_reflow {
+        let iter = LayoutParentIterator::new(tree, entity);
+        for parent in iter {
+            if style.display.get(parent).copied().unwrap_or_default() != Display::None {
+                style.needs_text_update(parent);
+                break;
+            }
+        }
     }
 }
 
@@ -745,6 +822,7 @@ pub(crate) fn style_system(cx: &mut Context) {
             if !matched_rules.is_empty() {
                 link_style_data(
                     &mut cx.style,
+                    &cx.tree,
                     entity,
                     &matched_rules.iter().map(|(rule, _)| *rule).collect::<Vec<_>>(),
                 );

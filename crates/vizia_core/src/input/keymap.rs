@@ -37,9 +37,9 @@ use indexmap::IndexMap;
 /// # }
 /// #
 /// let keymap = Keymap::from(vec![
-///     (KeyChord::new(Modifiers::empty(), Code::KeyA), KeymapEntry::new(Action::One, |_| println!("Action One"))),
-///     (KeyChord::new(Modifiers::CTRL, Code::KeyB), KeymapEntry::new(Action::Two, |_| println!("Action Two"))),
-///     (KeyChord::new(Modifiers::CTRL | Modifiers::SHIFT, Code::KeyC), KeymapEntry::new(Action::Three, |_| println!("Action Three"))),
+///     (KeyChord::new(Modifiers::empty(), Code::KeyA), KeymapEntry::new(Action::One, |_| debug!("Action One"))),
+///     (KeyChord::new(Modifiers::CTRL, Code::KeyB), KeymapEntry::new(Action::Two, |_| debug!("Action Two"))),
+///     (KeyChord::new(Modifiers::CTRL | Modifiers::SHIFT, Code::KeyC), KeymapEntry::new(Action::Three, |_| debug!("Action Three"))),
 /// ]);
 /// ```
 #[derive(Default)]
@@ -120,7 +120,7 @@ where
     /// # let keymap = Keymap::<Action>::new();
     /// #
     /// for entry in keymap.pressed_actions(cx, Code::KeyA) {
-    ///     println!("The action {:?} is being pressed!", entry.action());
+    ///     debug!("The action {:?} is being pressed!", entry.action());
     /// };
     pub fn pressed_actions(
         &self,
@@ -154,7 +154,7 @@ where
     /// let actions_chords = keymap.export();
     ///
     /// for (chord, entry) in actions_chords {
-    ///     println!("The key chord {:?} triggers the action {:?}!", chord, entry.action());
+    ///     debug!("The key chord {:?} triggers the action {:?}!", chord, entry.action());
     /// }
     /// ```
     pub fn export(&self) -> Vec<(&KeyChord, &KeymapEntry<T>)> {
@@ -224,7 +224,7 @@ where
     /// #
     /// cx.emit(KeymapEvent::InsertAction(
     ///     KeyChord::new(Modifiers::empty(), Code::KeyA),
-    ///     KeymapEntry::new(Action::One, |_| println!("Action One")),
+    ///     KeymapEntry::new(Action::One, |_| debug!("Action One")),
     /// ));
     /// ```
     InsertAction(KeyChord, KeymapEntry<T>),

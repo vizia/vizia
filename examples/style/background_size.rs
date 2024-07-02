@@ -1,6 +1,3 @@
-#[cfg(not(target_arch = "wasm32"))]
-use vizia::image;
-#[allow(unused)]
 use vizia::prelude::*;
 
 #[allow(unused)]
@@ -46,12 +43,6 @@ element {
 
 "#;
 
-#[cfg(target_arch = "wasm32")]
-fn main() {
-    panic!("This example is not supported on wasm - threads are experimental");
-}
-
-#[cfg(not(target_arch = "wasm32"))]
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
@@ -59,11 +50,7 @@ fn main() -> Result<(), ApplicationError> {
         // Load an image into the binary
         cx.load_image(
             "sample.png",
-            image::load_from_memory_with_format(
-                include_bytes!("../resources/images/sample-hut-400x300.png"),
-                image::ImageFormat::Png,
-            )
-            .unwrap(),
+            include_bytes!("../resources/images/sample-hut-400x300.png"),
             ImageRetentionPolicy::DropWhenUnusedForOneFrame,
         );
 

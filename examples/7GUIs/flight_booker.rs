@@ -34,8 +34,8 @@ impl Model for AppData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::SetChoice(choice) => self.selected_option = *choice,
-            AppEvent::SetStartDate(date) => self.start_date = date.clone(),
-            AppEvent::SetEndDate(date) => self.end_date = date.clone(),
+            AppEvent::SetStartDate(date) => self.start_date = *date,
+            AppEvent::SetEndDate(date) => self.end_date = *date,
         });
     }
 }
@@ -46,7 +46,7 @@ fn input_box<L: Lens<Target = NaiveDate>>(
     message: impl Fn(NaiveDate) -> AppEvent + Send + Sync + 'static,
 ) {
     Textbox::new(cx, date_lens.map(|date| format!("{}", date.format("%Y:%m:%d"))))
-        .validate(|text| NaiveDate::parse_from_str(&text, "%Y:%m:%d").is_ok())
+        .validate(|text| NaiveDate::parse_from_str(text, "%Y:%m:%d").is_ok())
         .on_submit(move |ex, text, _| {
             if let Ok(val) = NaiveDate::parse_from_str(&text, "%Y:%m:%d") {
                 ex.emit(message(val));
@@ -62,8 +62,8 @@ fn main() -> Result<(), ApplicationError> {
         AppData {
             options: vec!["one-way flight", "return flight"],
             selected_option: 0,
-            start_date: NaiveDate::from_ymd_opt(2022, 02, 12).unwrap(),
-            end_date: NaiveDate::from_ymd_opt(2022, 02, 26).unwrap(),
+            start_date: NaiveDate::from_ymd_opt(2022, 2, 12).unwrap(),
+            end_date: NaiveDate::from_ymd_opt(2022, 2, 26).unwrap(),
         }
         .build(cx);
 

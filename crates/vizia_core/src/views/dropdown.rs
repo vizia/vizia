@@ -131,11 +131,10 @@ impl Dropdown {
     /// #
     /// Dropdown::new(cx, |cx| Label::new(cx, "Text"), |_| {});
     /// ```
-    pub fn new<F, L, V>(cx: &mut Context, trigger: L, content: F) -> Handle<Self>
+    pub fn new<F, L>(cx: &mut Context, trigger: L, content: F) -> Handle<Self>
     where
-        L: 'static + Fn(&mut Context) -> Handle<V>,
+        L: 'static + Fn(&mut Context),
         F: 'static + Fn(&mut Context),
-        V: 'static + View,
     {
         Self {}.build(cx, move |cx| {
             cx.add_listener(move |_dropdown: &mut Self, cx, event| {
@@ -161,12 +160,12 @@ impl Dropdown {
 
             PopupData::default().build(cx);
 
-            (trigger)(cx)
-                .class("dropdown-title")
-                .width(Stretch(1.0))
-                .checked(PopupData::is_open)
-                .navigable(true)
-                .on_press(|cx| cx.emit(PopupEvent::Switch));
+            (trigger)(cx);
+            // .class("dropdown-title")
+            // .width(Stretch(1.0))
+            // .checked(PopupData::is_open)
+            // .navigable(true)
+            // .on_press(|cx| cx.emit(PopupEvent::Switch));
             Binding::new(cx, PopupData::is_open, move |cx, is_open| {
                 if is_open.get(cx) {
                     Popup::new(cx, |cx| {

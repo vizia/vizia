@@ -271,7 +271,7 @@ impl ScrollContent {
 
 impl View for ScrollContent {
     fn element(&self) -> Option<&'static str> {
-        Some("scroll_content")
+        Some("scroll-content")
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {

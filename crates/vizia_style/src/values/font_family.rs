@@ -1,7 +1,7 @@
 use crate::{macros::impl_parse, CustomParseError, Parse};
 use cssparser::*;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GenericFontFamily {
     Serif,
     SansSerif,
