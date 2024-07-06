@@ -34,7 +34,6 @@ pub use resource::*;
 
 use crate::cache::CachedData;
 use crate::events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler};
-#[cfg(feature = "embedded_fonts")]
 use crate::fonts;
 use crate::{
     binding::{BindingHandler, MapId},

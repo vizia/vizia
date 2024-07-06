@@ -150,10 +150,7 @@ pub enum FamilyOwned {
     Named(String),
 }
 
-#[cfg(feature = "embedded_fonts")]
 const DEFAULT_FAMILY_NAME: &str = "Roboto Flex";
-#[cfg(not(feature = "embedded_fonts"))]
-const DEFAULT_FAMILY_NAME: &str = "";
 
 impl AsRef<str> for FamilyOwned {
     fn as_ref(&self) -> &str {
