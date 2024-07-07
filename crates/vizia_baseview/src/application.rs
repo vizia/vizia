@@ -1,6 +1,13 @@
 use crate::window::ViziaWindow;
 use baseview::{Window, WindowHandle, WindowScalePolicy};
+use gl_rs as gl;
+use gl_rs::types::GLint;
 use raw_window_handle::HasRawWindowHandle;
+use skia_safe::gpu;
+use skia_safe::gpu::backend_render_targets;
+use skia_safe::gpu::gl::FramebufferInfo;
+use skia_safe::gpu::SurfaceOrigin;
+use skia_safe::ColorType;
 
 use crate::proxy::queue_get;
 use vizia_core::backend::*;
@@ -154,6 +161,7 @@ where
 
 pub(crate) struct ApplicationRunner {
     context: Context,
+    pub gr_context: skia_safe::gpu::DirectContext,
     should_redraw: bool,
 
     /// If this is set to `true`, then `window_scale_factor` will be updated during
@@ -177,12 +185,17 @@ pub(crate) struct ApplicationRunner {
 }
 
 impl ApplicationRunner {
-    pub fn new(mut context: Context, use_system_scaling: bool, window_scale_factor: f64) -> Self {
+    pub fn new(
+        mut context: Context,
+        gr_context: skia_safe::gpu::DirectContext,
+        use_system_scaling: bool,
+        window_scale_factor: f64,
+    ) -> Self {
         let mut cx = BackendContext::new(&mut context);
 
         ApplicationRunner {
             should_redraw: true,
-
+            gr_context,
             use_system_scaling,
             window_scale_factor,
             current_user_scale_factor: cx.user_scale_factor(),
@@ -227,6 +240,46 @@ impl ApplicationRunner {
 
             cx.set_window_size(new_physical_width, new_physical_height);
 
+            if let Some(surface) = cx.get_surface_mut(Entity::root()) {
+                if new_physical_width != 0.0 || new_physical_height != 0.0 {
+                    let fb_info = {
+                        let mut fboid: GLint = 0;
+                        unsafe { gl::GetIntegerv(gl::FRAMEBUFFER_BINDING, &mut fboid) };
+
+                        FramebufferInfo {
+                            fboid: fboid.try_into().unwrap(),
+                            format: skia_safe::gpu::gl::Format::RGBA8.into(),
+                            ..Default::default()
+                        }
+                    };
+
+                    let backend_render_target = backend_render_targets::make_gl(
+                        (new_physical_width as i32, new_physical_height as i32),
+                        None,
+                        8,
+                        fb_info,
+                    );
+
+                    surface.0 = gpu::surfaces::wrap_backend_render_target(
+                        &mut self.gr_context,
+                        &backend_render_target,
+                        SurfaceOrigin::BottomLeft,
+                        ColorType::RGBA8888,
+                        None,
+                        None,
+                    )
+                    .expect("Could not create skia surface");
+
+                    surface.1 = surface
+                        .0
+                        .new_surface_with_dimensions((
+                            new_physical_width.max(1.0) as i32,
+                            new_physical_height.max(1.0) as i32,
+                        ))
+                        .unwrap();
+                }
+            }
+
             cx.needs_refresh();
 
             // hmmm why are we flushing events again?
@@ -250,6 +303,7 @@ impl ApplicationRunner {
     pub fn render(&mut self) {
         let mut cx = BackendContext::new(&mut self.context);
         cx.draw();
+        self.gr_context.flush_and_submit();
         self.should_redraw = false;
     }
 
@@ -403,6 +457,48 @@ impl ApplicationRunner {
                     // let mut bounding_box = BoundingBox::default();
                     // bounding_box.w = physical_size.0 as f32;
                     // bounding_box.h = physical_size.1 as f32;
+
+                    if let Some(surface) = cx.get_surface_mut(Entity::root()) {
+                        if window_info.physical_size().width != 0
+                            || window_info.physical_size().height != 0
+                        {
+                            let fb_info = {
+                                let mut fboid: GLint = 0;
+                                unsafe { gl::GetIntegerv(gl::FRAMEBUFFER_BINDING, &mut fboid) };
+
+                                FramebufferInfo {
+                                    fboid: fboid.try_into().unwrap(),
+                                    format: skia_safe::gpu::gl::Format::RGBA8.into(),
+                                    ..Default::default()
+                                }
+                            };
+
+                            let backend_render_target = backend_render_targets::make_gl(
+                                (physical_size.0 as i32, physical_size.1 as i32),
+                                None,
+                                8,
+                                fb_info,
+                            );
+
+                            surface.0 = gpu::surfaces::wrap_backend_render_target(
+                                &mut self.gr_context,
+                                &backend_render_target,
+                                SurfaceOrigin::BottomLeft,
+                                ColorType::RGBA8888,
+                                None,
+                                None,
+                            )
+                            .expect("Could not create skia surface");
+
+                            surface.1 = surface
+                                .0
+                                .new_surface_with_dimensions((
+                                    window_info.physical_size().width.max(1) as i32,
+                                    window_info.physical_size().height.max(1) as i32,
+                                ))
+                                .unwrap();
+                        }
+                    }
 
                     cx.needs_refresh();
                 }

@@ -179,10 +179,6 @@ pub(crate) fn draw_system(cx: &mut Context) {
 
         cx.resource_manager.mark_images_unused();
 
-        let clear_color =
-            cx.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::transparent());
-        // canvas.clear(clear_color);
-
         let mut queue = BinaryHeap::new();
         queue.push(ZEntity { index: 0, entity: Entity::root(), visible: true });
         while !queue.is_empty() {
@@ -215,6 +211,9 @@ pub(crate) fn draw_system(cx: &mut Context) {
     if let Some((canvas, surface)) =
         cx.canvases.get_mut(&Entity::root()).map(|(s1, s2)| (s1.canvas(), s2))
     {
+        // let clear_color =
+        //     cx.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::transparent());
+        // surface.canvas().clear(clear_color);
         surface.draw(canvas, (0, 0), SamplingOptions::default(), None);
 
         // Debug draw dirty rect
