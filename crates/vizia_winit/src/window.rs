@@ -29,9 +29,9 @@ use skia_safe::{
 };
 use vizia_core::backend::*;
 use vizia_core::prelude::*;
-use winit::dpi::*;
 use winit::event_loop::EventLoop;
 use winit::window::{CursorGrabMode, WindowBuilder, WindowLevel};
+use winit::{dpi::*, window::WindowId};
 
 pub struct Window {
     gl_config: Config,
