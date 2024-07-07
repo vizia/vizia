@@ -531,6 +531,11 @@ fn link_style_data(style: &mut Style, tree: &Tree<Entity>, entity: Entity, match
         should_reflow = true;
     }
 
+    if style.text_align.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
     if style.text_overflow.link(entity, matched_rules) {
         should_redraw = true;
         should_reflow = true;

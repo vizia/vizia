@@ -370,6 +370,7 @@ pub struct Style {
     pub(crate) reaccess: Bloom,
 
     pub(crate) text_range: SparseSet<Range<usize>>,
+    pub(crate) text_span: SparseSet<bool>,
 
     /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
     pub(crate) dpi_factor: f64,
@@ -1807,6 +1808,9 @@ impl Style {
         self.max_top.remove(entity);
         self.min_bottom.remove(entity);
         self.max_bottom.remove(entity);
+
+        self.text_range.remove(entity);
+        self.text_span.remove(entity);
     }
 
     pub fn needs_restyle(&mut self, entity: Entity) {

@@ -215,8 +215,6 @@ where
         })
     }
 
-    fn set_caret(&mut self, cx: &mut EventContext) {}
-
     fn insert_text(&mut self, cx: &mut EventContext, txt: &str) {
         if let Some(text) = cx.style.text.get_mut(cx.current) {
             text.edit(self.selection.range(), txt);
@@ -411,28 +409,9 @@ where
 
             for cursor_rect in cursor_rects {
                 let bounds = cx.bounds();
-                let padding_left = cx.child_left().to_px(bounds.width(), 0.0);
-                let padding_right = cx.child_right().to_px(bounds.width(), 0.0);
-                let text_bounds = cx
-                    .text_context
-                    .text_bounds
-                    .get(cx.current)
-                    .copied()
-                    .unwrap_or(bounds.shrink_sides(padding_left, 0.0, padding_right, 0.0));
-                // paragraph.layout(text_bounds.width().min(bounds.width()));
-
-                let text_length = cx.style.text.get(cx.current).map(|txt| txt.len()).unwrap();
-
-                let lm = paragraph.get_actual_text_range(0, false);
-                // println!("{:?} {}", lm, self.selection.active);
-
-                // let rng = if self.selection.active == 0 {
-                //     (self.selection.active - 1)..self.selection.active
-                // } else {
-                //     self.selection.active..self.selection.active + 1
-                // };
 
                 let mut vertical_flex_sum = 0.0;
+                let mut horizontal_flex_sum = 0.0;
 
                 let mut padding_top = match cx.child_top() {
                     Units::Pixels(val) => val,
@@ -456,7 +435,32 @@ where
                     bounds.height() - paragraph.height() as f32 - padding_top - padding_bottom;
 
                 if let Units::Stretch(val) = cx.child_top() {
-                    padding_top = (vertical_free_space * val / vertical_flex_sum).ceil()
+                    padding_top = (vertical_free_space * val / vertical_flex_sum).round()
+                }
+
+                let mut padding_left = match cx.child_left() {
+                    Units::Pixels(val) => val,
+                    Units::Stretch(val) => {
+                        horizontal_flex_sum += val;
+                        0.0
+                    }
+                    _ => 0.0,
+                };
+
+                let padding_right = match cx.child_right() {
+                    Units::Pixels(val) => val,
+                    Units::Stretch(val) => {
+                        horizontal_flex_sum += val;
+                        0.0
+                    }
+                    _ => 0.0,
+                };
+
+                let horizontal_free_space =
+                    bounds.width() - paragraph.max_width() as f32 - padding_left - padding_right;
+
+                if let Units::Stretch(val) = cx.child_left() {
+                    padding_left = (horizontal_free_space * val / horizontal_flex_sum).round()
                 }
 
                 let x = bounds.x + padding_left + cursor_rect.rect.left;
@@ -479,25 +483,6 @@ where
     pub fn draw_text_caret(&self, cx: &mut DrawContext, canvas: &Canvas) {
         if let Some(mut paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
             let bounds = cx.bounds();
-            let padding_left = cx.child_left().to_px(bounds.width(), 0.0);
-            let padding_right = cx.child_right().to_px(bounds.width(), 0.0);
-            let text_bounds = cx
-                .text_context
-                .text_bounds
-                .get(cx.current)
-                .copied()
-                .unwrap_or(bounds.shrink_sides(padding_left, 0.0, padding_right, 0.0));
-            // paragraph.layout(text_bounds.width().min(bounds.width()));
-
-            let text_length = cx.style.text.get(cx.current).map(|txt| txt.len()).unwrap();
-
-            let lm = paragraph.get_actual_text_range(0, false);
-
-            // let rng = if self.selection.active == 0 {
-            //     (self.selection.active - 1)..self.selection.active
-            // } else {
-            //     self.selection.active..self.selection.active + 1
-            // };
 
             let rects = paragraph.get_rects_for_range(
                 self.selection.active..self.selection.active + 1,
@@ -508,6 +493,7 @@ where
             let cursor_rect = rects.first().unwrap();
 
             let mut vertical_flex_sum = 0.0;
+            let mut horizontal_flex_sum = 0.0;
 
             let mut padding_top = match cx.child_top() {
                 Units::Pixels(val) => val,
@@ -531,7 +517,32 @@ where
                 bounds.height() - paragraph.height() as f32 - padding_top - padding_bottom;
 
             if let Units::Stretch(val) = cx.child_top() {
-                padding_top = (vertical_free_space * val / vertical_flex_sum).ceil()
+                padding_top = (vertical_free_space * val / vertical_flex_sum).round()
+            }
+
+            let mut padding_left = match cx.child_left() {
+                Units::Pixels(val) => val,
+                Units::Stretch(val) => {
+                    horizontal_flex_sum += val;
+                    0.0
+                }
+                _ => 0.0,
+            };
+
+            let padding_right = match cx.child_right() {
+                Units::Pixels(val) => val,
+                Units::Stretch(val) => {
+                    horizontal_flex_sum += val;
+                    0.0
+                }
+                _ => 0.0,
+            };
+
+            let horizontal_free_space =
+                bounds.width() - paragraph.max_width() as f32 - padding_left - padding_right;
+
+            if let Units::Stretch(val) = cx.child_left() {
+                padding_left = (horizontal_free_space * val / horizontal_flex_sum).round()
             }
 
             let x = (bounds.x + padding_left + cursor_rect.rect.left).round();
@@ -1081,10 +1092,6 @@ where
                 // println!("Select some text: {:?}", selection);
             }
 
-            WindowEvent::GeometryChanged(_) => {
-                self.set_caret(cx);
-            }
-
             _ => {}
         });
 
@@ -1092,7 +1099,6 @@ where
         event.map(|text_event, _| match text_event {
             TextEvent::InsertText(text) => {
                 self.insert_text(cx, text);
-                // self.set_caret(cx);
 
                 let text = self.clone_text(cx);
 
@@ -1125,7 +1131,6 @@ where
             TextEvent::DeleteText(movement) => {
                 if self.edit {
                     self.delete_text(cx, *movement);
-                    // self.set_caret(cx);
 
                     let text = self.clone_text(cx);
 
@@ -1150,7 +1155,6 @@ where
             TextEvent::MoveCursor(movement, selection) => {
                 if self.edit {
                     self.move_cursor(cx, *movement, *selection);
-                    // self.set_caret(cx);
                 }
             }
 
@@ -1169,8 +1173,6 @@ where
                     self.placeholder_shown = text.is_empty();
 
                     self.select_all(cx);
-                    // self.insert_text(cx, &text);
-                    // self.set_caret(cx);
 
                     if let Ok(value) = &text.parse::<L::Target>() {
                         if let Some(validate) = &self.validate {
@@ -1196,8 +1198,6 @@ where
                 self.placeholder_shown = text.is_empty();
 
                 self.select_all(cx);
-                // self.insert_text(cx, &text);
-                // self.set_caret(cx);
 
                 if let Ok(value) = &text.parse::<L::Target>() {
                     if let Some(validate) = &self.validate {
@@ -1233,27 +1233,22 @@ where
 
             TextEvent::SelectAll => {
                 self.select_all(cx);
-                // self.set_caret(cx);
             }
 
             TextEvent::SelectWord => {
                 self.select_word(cx);
-                // self.set_caret(cx);
             }
 
             TextEvent::SelectParagraph => {
                 self.select_paragraph(cx);
-                // self.set_caret(cx);
             }
 
             TextEvent::Hit(posx, posy, selection) => {
                 self.hit(cx, *posx, *posy, *selection);
-                // self.set_caret(cx);
             }
 
             TextEvent::Drag(posx, posy) => {
                 self.drag(cx, *posx, *posy);
-                // self.set_caret(cx);
             }
 
             TextEvent::Scroll(x, y) => {

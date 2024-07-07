@@ -97,7 +97,7 @@ pub(crate) fn transform_system(cx: &mut Context) {
                 })
                 .unwrap_or(bounds);
 
-            let root_bounds = cx.cache.get_bounds(Entity::root());
+            let root_bounds = BoundingBox::from_min_max(-f32::MAX, -f32::MAX, f32::MAX, f32::MAX);
 
             let clip_bounds = match (overflowx, overflowy) {
                 (Overflow::Visible, Overflow::Visible) => root_bounds,
@@ -170,7 +170,7 @@ pub(crate) fn draw_system(cx: &mut Context) {
         }
     }
 
-    if let Some(canvas) = cx.canvases.get_mut(&Entity::root()).map(|(s1, s2)| s2.canvas()) {
+    if let Some(canvas) = cx.canvases.get_mut(&Entity::root()).map(|(_, s2)| s2.canvas()) {
         canvas.save();
         if let Some(dirty_rect) = cx.cache.dirty_rect {
             let rect: Rect = dirty_rect.into();

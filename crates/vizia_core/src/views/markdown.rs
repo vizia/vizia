@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 
 use comrak::nodes::{Ast, NodeValue};
-use comrak::{format_html, parse_document, Arena, ExtensionOptions, Options};
+use comrak::{parse_document, Arena, Options};
 
 use crate::prelude::*;
 
@@ -46,60 +46,15 @@ fn parse_node<'a>(
 ) {
     match &node.data.borrow().value {
         NodeValue::Paragraph => {
-            println!("p");
-            let parent = node.parent().unwrap();
-
-            // if matches!(parent.data.borrow().value, NodeValue::Item(_)) {
-            //     Label::rich(cx, "", |cx| {
-            //         TextSpan::new(
-            //             cx,
-            //             // match list_level {
-            //             //     1 => "\u{2022} ",
-            //             //     2 => "\u{25E6} ",
-            //             //     _ => "\u{25AA} ",
-            //             // },
-            //             match list_level {
-            //                 1 => " ",
-            //                 2 => "  ",
-            //                 _ => "    ",
-            //             },
-            //             |_| {},
-            //         );
-            //         for child in node.children() {
-            //             println!("Child  {:?}", child.data.borrow().value);
-            //             parse_node(cx, child, list_level);
-            //         }
-            //     })
-            //     .class("p");
-            // } else {
             Label::rich(cx, "", |cx| {
                 for child in node.children() {
                     parse_node(cx, child, list_level);
                 }
             })
             .class("p");
-            // }
         }
 
         NodeValue::Heading(heading) => {
-            let parent = node.parent().unwrap();
-
-            // if matches!(parent.data.borrow().value, NodeValue::Item(_)) {
-            //     TextSpan::new(cx, "", |cx| {
-            //         for child in node.children() {
-            //             parse_node(cx, child, list_level);
-            //         }
-            //     })
-            //     .class(match heading.level {
-            //         1 => "h1",
-            //         2 => "h2",
-            //         3 => "h3",
-            //         4 => "h4",
-            //         5 => "h5",
-            //         6 => "h6",
-            //         _ => "h6",
-            //     });
-            // } else {
             Label::rich(cx, "", |cx| {
                 for child in node.children() {
                     parse_node(cx, child, list_level);
@@ -114,7 +69,6 @@ fn parse_node<'a>(
                 6 => "h6",
                 _ => "h6",
             });
-            // }
         }
 
         NodeValue::Text(text) => {
@@ -150,13 +104,7 @@ fn parse_node<'a>(
             .class("strikethrough");
         }
 
-        NodeValue::List(list) => {
-            println!("List  {:?}", list);
-            // Label::rich(cx, "", |cx| {
-            //     TextSpan::new(cx, "\u{2022} ", |_| {});
-            //     // TextSpan::new(cx, "\u{2022} ", |_|{});
-
-            // });
+        NodeValue::List(_list) => {
             VStack::new(cx, |cx| {
                 for child in node.children() {
                     parse_node(cx, child, list_level);
@@ -166,14 +114,12 @@ fn parse_node<'a>(
             .left(Pixels(20.0));
         }
 
-        NodeValue::Item(list) => {
-            println!("Item  {:?}", list);
+        NodeValue::Item(_list) => {
             HStack::new(cx, |cx| {
                 Label::new(cx, "\u{2022} ").width(Auto);
                 VStack::new(cx, |cx| {
                     for child in node.children() {
                         parse_node(cx, child, list_level + 1);
-                        // println!("Child  {:?}", child.data.borrow().value);
                     }
                 })
                 .height(Auto);
@@ -190,10 +136,6 @@ fn parse_node<'a>(
             })
             .height(Auto)
             .width(Stretch(1.0));
-
-            // for child in node.children() {
-            //     println!("Child  {:?}", child.data.borrow().value);
-            // }
         }
 
         NodeValue::Link(link) => {
@@ -206,7 +148,7 @@ fn parse_node<'a>(
             .cursor(CursorIcon::Hand)
             .pointer_events(PointerEvents::Auto)
             .on_press(move |_| {
-                open::that(url.as_str());
+                open::that(url.as_str()).unwrap();
             })
             .class("link");
         }
@@ -233,6 +175,7 @@ impl TextSpan {
     ) -> Handle<'a, Self> {
         Self {}
             .build(cx, |cx| {
+                cx.style.text_span.insert(cx.current(), true);
                 children(cx);
             })
             .text(text)
