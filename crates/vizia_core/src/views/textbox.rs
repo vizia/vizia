@@ -211,7 +211,6 @@ where
         .text(lens)
         .bind(lens, |handle, lens| {
             let flag = lens.get(&handle).to_string_local(handle.cx).is_empty();
-            println!("{:?}", lens.get(&handle).to_string_local(handle.cx));
             handle.modify(|textbox| textbox.placeholder_shown = flag);
         })
     }

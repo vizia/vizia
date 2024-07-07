@@ -8,4 +8,4 @@ pub use parent_window::ParentWindow;
 
 pub use application::{Application, ApplicationError};
 
-pub use baseview::WindowScalePolicy;
+pub use baseview::{WindowHandle, WindowScalePolicy};
