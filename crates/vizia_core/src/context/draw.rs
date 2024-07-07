@@ -627,7 +627,8 @@ impl<'a> DrawContext<'a> {
 
     /// Draw background color or background image (including gradients) for the current view.
     pub fn draw_background(&mut self, canvas: &Canvas) {
-        let path = self.build_path(self.bounds(), (0.0, 0.0));
+        let border_width = self.border_width();
+        let path = self.build_path(self.bounds(), (-border_width, -border_width));
         let background_color = self.background_color();
         if background_color.a() != 0 {
             let mut paint = Paint::default();

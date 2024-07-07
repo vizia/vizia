@@ -767,7 +767,13 @@ spinbox .spinbox-value {
 }
 
 spinbox picklist.spinbox-value dropdown {
-    width: 100%;
+    width: 1s;
+    left: 0px;
+    right: 0px;
+}
+
+spinbox picklist.spinbox-value dropdown button {
+    width: 1s;
 }
 
 spinbox picklist.spinbox-value .dropdown-title {
