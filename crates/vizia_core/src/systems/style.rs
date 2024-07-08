@@ -416,6 +416,12 @@ fn link_style_data(style: &mut Style, tree: &Tree<Entity>, entity: Entity, match
         should_redraw = true;
     }
 
+    if style.border_style.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    // Corner
+
     if style.corner_top_left_shape.link(entity, matched_rules) {
         should_redraw = true;
     }

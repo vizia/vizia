@@ -398,6 +398,13 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     modifier!(
+        /// Sets the border color of the view.
+        border_style,
+        BorderStyleKeyword,
+        SystemFlags::REDRAW
+    );
+
+    modifier!(
         /// Sets the corner radius for the top-left corner of the view.
         corner_top_left_radius,
         LengthOrPercentage,
