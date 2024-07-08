@@ -71,7 +71,6 @@ pub struct Textbox<L: Lens> {
     on_cancel: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
     validate: Option<Box<dyn Fn(&L::Target) -> bool>>,
     placeholder: String,
-    placeholder_shown: bool,
     show_caret: bool,
     caret_timer: Timer,
     selection: Selection,
@@ -157,7 +156,6 @@ where
             on_cancel: None,
             validate: None,
             placeholder: String::from(""),
-            placeholder_shown: true,
             show_caret: true,
             caret_timer,
             selection: Selection::new(0, 0),
@@ -176,28 +174,20 @@ where
                 });
             });
 
-            // Binding::new(cx, lens, move |cx: &mut Context, text| {
-            //     Binding::new(cx, Self::edit, move |cx, edit| {
-            //         if !edit.get(cx) {
-            //             let text_str = text.get(cx).to_string();
-            //             cx.emit(TextEvent::SelectAll);
-            //             cx.emit(TextEvent::InsertText(text_str));
-            //             cx.emit(TextEvent::Scroll(0.0, 0.0));
-            //         }
-            //     })
-            // });
-
-            Binding::new(cx, Self::placeholder, |cx, placeholder| {
+            Binding::new(cx, Self::placeholder, move |cx, placeholder| {
                 let placeholder_string = placeholder.get(cx);
                 if !placeholder_string.is_empty() {
                     Label::new(cx, &placeholder_string)
                         .size(Stretch(1.0))
                         .space(Pixels(0.0))
-                        .display(Self::placeholder_shown)
                         .hoverable(false)
                         .position_type(PositionType::SelfDirected)
                         .hidden(true)
-                        .class("placeholder");
+                        .class("placeholder")
+                        .bind(lens, |handle, lens| {
+                            let flag = lens.get(&handle).to_string_local(handle.cx).is_empty();
+                            handle.display(flag);
+                        });
                 }
             });
         })
@@ -209,10 +199,6 @@ where
         .default_action_verb(DefaultActionVerb::Focus)
         .toggle_class("caret", Self::show_caret)
         .text(lens)
-        .bind(lens, |handle, lens| {
-            let flag = lens.get(&handle).to_string_local(handle.cx).is_empty();
-            handle.modify(|textbox| textbox.placeholder_shown = flag);
-        })
     }
 
     fn insert_text(&mut self, cx: &mut EventContext, txt: &str) {
@@ -1112,8 +1098,6 @@ where
                     cx.set_valid(false);
                 }
 
-                self.placeholder_shown = text.is_empty();
-
                 if self.edit {
                     if let Some(callback) = &self.on_edit {
                         (callback)(cx, text);
@@ -1144,8 +1128,6 @@ where
                         cx.set_valid(false);
                     }
 
-                    self.placeholder_shown = text.is_empty();
-
                     if let Some(callback) = &self.on_edit {
                         (callback)(cx, text);
                     }
@@ -1170,7 +1152,6 @@ where
 
                     let text = self.lens.get(cx);
                     let text = text.to_string_local(cx);
-                    self.placeholder_shown = text.is_empty();
 
                     self.select_all(cx);
 
@@ -1195,7 +1176,6 @@ where
 
                 let text = self.lens.get(cx);
                 let text = text.to_string_local(cx);
-                self.placeholder_shown = text.is_empty();
 
                 self.select_all(cx);
 

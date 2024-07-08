@@ -247,6 +247,10 @@ dropdown {
     width: auto;
 }
 
+dropdown > * {
+    width: 1s;
+}
+
 combobox .title {
     width: 1s;
     height: 1s;

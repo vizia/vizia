@@ -1,11 +1,11 @@
 use crate::{
-    define_property, Angle, BackgroundImage, BackgroundSize, BlendMode, Border, BorderWidth,
-    BorderWidthValue, ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError,
-    CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
-    FontWidth, LayoutType, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow, Parse,
-    PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign, TextDecoration,
-    TextDecorationLine, TextDecorationStyle, TextOverflow, Transform, Transition, Translate, Units,
-    UnparsedProperty, Visibility,
+    define_property, Angle, BackgroundImage, BackgroundSize, BlendMode, Border, BorderStyle,
+    BorderWidth, BorderWidthValue, ClipPath, Color, CornerRadius, CornerShape, CursorIcon,
+    CustomParseError, CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant,
+    FontVariation, FontWeight, FontWidth, LayoutType, LengthOrPercentage, LineClamp, Opacity,
+    Outline, Overflow, Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow,
+    TextAlign, TextDecoration, TextDecorationLine, TextDecorationStyle, TextOverflow, Transform,
+    Transition, Translate, Units, UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -73,9 +73,9 @@ define_property! {
         // Border Color
         "border-color": BorderColor(Color),
         // TODO: Support coloring individual borders.
-        // "corner-top-color": BorderTopColor(Color),
+        // "border-top-color": BorderTopColor(Color),
         // "border-right-color": BorderRightColor(Color),
-        // "corner-bottom-color": BorderBottomColor(Color),
+        // "border-bottom-color": BorderBottomColor(Color),
         // "border-left-color": BorderLeftColor(Color),
 
         // Corner Shape
@@ -94,18 +94,18 @@ define_property! {
 
         // Border Style
         // TODO: Support styling borders.
-        // "border-style": BorderStyle(BorderStyle),
-        // "corner-top-style": BorderTopStyle(BorderStyleKeyword),
+        "border-style": BorderStyle(BorderStyle),
+        // "border-top-style": BorderTopStyle(BorderStyleKeyword),
         // "border-right-style": BorderRightStyle(BorderStyleKeyword),
-        // "corner-bottom-style": BorderBottomStyle(BorderStyleKeyword),
+        // "border-bottom-style": BorderBottomStyle(BorderStyleKeyword),
         // "border-left-style": BorderLeftStyle(BorderStyleKeyword),
 
         // Border Width
         "border-width": BorderWidth(BorderWidth),
-        "border-top-width": BorderTopWidth(BorderWidthValue),
-        "border-right-width": BorderRightWidth(BorderWidthValue),
-        "border-bottom-width": BorderBottomWidth(BorderWidthValue),
-        "border-left-width": BorderLeftWidth(BorderWidthValue),
+        // "border-top-width": BorderTopWidth(BorderWidthValue),
+        // "border-right-width": BorderRightWidth(BorderWidthValue),
+        // "border-bottom-width": BorderBottomWidth(BorderWidthValue),
+        // "border-left-width": BorderLeftWidth(BorderWidthValue),
 
 
         // ----- Outline -----

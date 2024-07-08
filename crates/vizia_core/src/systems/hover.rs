@@ -107,7 +107,7 @@ fn hover_entity(
     // Skip if not displayed.
     // TODO: Should this skip descendants? Probably not...?
     if cx.style.display.get(cx.current).copied().unwrap_or_default() == Display::None
-        && !cx.style.text_range.contains(cx.current)
+        && !cx.style.text_span.get(cx.current).copied().unwrap_or_default()
     {
         return;
     }
