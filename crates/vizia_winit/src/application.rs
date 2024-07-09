@@ -255,12 +255,12 @@ impl Application {
         let default_should_poll = self.should_poll;
         let stored_control_flow = RefCell::new(ControlFlow::Poll);
 
-        // #[cfg(feature = "accesskit")]
-        // cx.process_tree_updates(|tree_updates| {
-        //     for update in tree_updates.iter_mut() {
-        //         accesskit.update_if_active(|| update.take().unwrap());
-        //     }
-        // });
+        #[cfg(feature = "accesskit")]
+        cx.process_tree_updates(|tree_updates| {
+            for update in tree_updates.iter_mut() {
+                accesskit.update_if_active(|| update.take().unwrap());
+            }
+        });
 
         let mut cursor_moved = false;
         let mut cursor = (0.0f32, 0.0f32);
@@ -374,7 +374,7 @@ impl Application {
 
                     winit::event::Event::WindowEvent { window_id: _, event } => {
                         #[cfg(feature = "accesskit")]
-                        cx.mutate_window(|_, window: &Window| {
+                        cx.mutate_window(|_, window: &mut Window| {
                             accesskit.process_event(window.window(), &event);
                         });
 
