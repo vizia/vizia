@@ -29,14 +29,13 @@ use skia_safe::{
 };
 use vizia_core::backend::*;
 use vizia_core::prelude::*;
+use winit::dpi::*;
 use winit::event_loop::EventLoop;
 use winit::window::{CursorGrabMode, WindowBuilder, WindowLevel};
-use winit::{dpi::*, window::WindowId};
 
 pub struct Window {
     gl_config: Config,
     pub gl_surface: glutin::surface::Surface<glutin::surface::WindowSurface>,
-    pub id: WindowId,
     pub gl_context: glutin::context::PossiblyCurrentContext,
     pub gr_context: skia_safe::gpu::DirectContext,
     window: winit::window::Window,
@@ -166,7 +165,7 @@ impl Window {
         let mut context_options = ContextOptions::new();
         context_options.skip_gl_error_checks = context_options::Enable::Yes;
 
-        let mut gr_context = skia_safe::gpu::DirectContext::new_gl(interface, &context_options)
+        let mut gr_context = skia_safe::gpu::direct_contexts::make_gl(interface, &context_options)
             .expect("Could not create direct context");
 
         let fb_info = {
@@ -186,15 +185,8 @@ impl Window {
         let surface = create_surface(&window, fb_info, &mut gr_context, num_samples, stencil_size);
 
         // Build our window
-        let win = Window {
-            gl_config,
-            id: window.id(),
-            gl_context,
-            gr_context,
-            gl_surface,
-            window,
-            should_close: false,
-        };
+        let win =
+            Window { gl_config, gl_context, gr_context, gl_surface, window, should_close: false };
 
         (win, surface)
     }

@@ -43,7 +43,7 @@ use crate::{
 use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
-use crate::text::{TextConfig, TextContext};
+use crate::text::TextContext;
 use vizia_input::MouseState;
 use vizia_storage::{ChildIterator, LayoutTreeIterator};
 
@@ -99,7 +99,6 @@ pub struct Context {
     pub(crate) resource_manager: ResourceManager,
 
     pub text_context: TextContext,
-    pub(crate) text_config: TextConfig,
 
     pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
 
@@ -201,8 +200,6 @@ impl Context {
                     text_paragraphs: Default::default(),
                 }
             },
-
-            text_config: TextConfig::default(),
 
             event_proxy: None,
 
