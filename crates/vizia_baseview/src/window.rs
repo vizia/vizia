@@ -50,7 +50,7 @@ impl ViziaWindow {
         let mut context_options = ContextOptions::new();
         context_options.skip_gl_error_checks = context_options::Enable::Yes;
 
-        let mut gr_context = skia_safe::gpu::DirectContext::new_gl(interface, &context_options)
+        let mut gr_context = skia_safe::gpu::direct_contexts::make_gl(interface, &context_options)
             .expect("Could not create direct context");
 
         let fb_info = {

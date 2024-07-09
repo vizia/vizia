@@ -48,7 +48,6 @@ pub use fonts::*;
 pub mod backend {
     pub use super::accessibility::IntoNode;
     pub use super::context::backend::BackendContext;
-    pub use super::text::text_context::TextConfig;
     pub use vizia_window::WindowDescription;
 }
 

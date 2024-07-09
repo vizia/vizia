@@ -17,7 +17,7 @@ use crate::events::ViewHandler;
 use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
-use crate::text::{TextConfig, TextContext};
+use crate::text::TextContext;
 use vizia_input::MouseState;
 
 /// A context used when drawing a view.
@@ -59,7 +59,6 @@ pub struct DrawContext<'a> {
     pub(crate) views: &'a mut HashMap<Entity, Box<dyn ViewHandler>>,
     pub(crate) resource_manager: &'a ResourceManager,
     pub(crate) text_context: &'a mut TextContext,
-    pub(crate) text_config: &'a TextConfig,
     pub(crate) modifiers: &'a Modifiers,
     pub(crate) mouse: &'a MouseState<Entity>,
 }

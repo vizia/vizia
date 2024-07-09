@@ -157,15 +157,7 @@ pub fn apply_movement<T: EditableText>(
         Movement::ParagraphStart => (text.preceding_line_break(s.active), None),
         Movement::ParagraphEnd => (text.next_line_break(s.active), None),
 
-        Movement::Line(d) => {
-            // let hit = layout.hit_test_text_position(s.active);
-            // let lm = layout.line_metric(hit.line).unwrap();
-            // let offset = if d.is_upstream_for_direction(writing_direction) {
-            //     lm.start_offset
-            // } else {
-            //     lm.end_offset - lm.trailing_whitespace
-            // };
-            // (offset, None)
+        Movement::Line(_) => {
             todo!()
         }
         Movement::Word(d) if d.is_upstream_for_direction(writing_direction) => {

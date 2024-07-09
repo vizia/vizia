@@ -1,11 +1,11 @@
 use crate::{
     define_property, Angle, BackgroundImage, BackgroundSize, BlendMode, Border, BorderStyle,
-    BorderWidth, BorderWidthValue, ClipPath, Color, CornerRadius, CornerShape, CursorIcon,
-    CustomParseError, CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant,
-    FontVariation, FontWeight, FontWidth, LayoutType, LengthOrPercentage, LineClamp, Opacity,
-    Outline, Overflow, Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow,
-    TextAlign, TextDecoration, TextDecorationLine, TextDecorationStyle, TextOverflow, Transform,
-    Transition, Translate, Units, UnparsedProperty, Visibility,
+    BorderWidth, ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError,
+    CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
+    FontWidth, LayoutType, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow, Parse,
+    PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign, TextDecoration,
+    TextDecorationLine, TextDecorationStyle, TextOverflow, Transform, Transition, Translate, Units,
+    UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -200,7 +200,7 @@ mod tests {
     fn parse_property() {
         let mut parser_input = ParserInput::new("red");
         let mut parser = Parser::new(&mut parser_input);
-        let parsed_property =
+        let _parsed_property =
             Property::parse_value(CowRcStr::from("background-color"), &mut parser);
     }
 }

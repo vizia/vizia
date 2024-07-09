@@ -79,8 +79,8 @@ pub use vizia_style::{
 };
 
 use vizia_style::{
-    style, BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, SelectorList,
-    Selectors, StyleSheet,
+    BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, SelectorList, Selectors,
+    StyleSheet,
 };
 
 mod rule;
