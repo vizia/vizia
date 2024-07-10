@@ -18,7 +18,7 @@ impl BackendContext {
         Self(cx)
     }
 
-    /// Helper function for mutating the state of the root window.
+    /// Helper function for mutating the state of a window.
     pub fn mutate_window<W: Any, F: Fn(&mut BackendContext, &mut W)>(
         &mut self,
         window_entity: Entity,
@@ -189,12 +189,6 @@ impl BackendContext {
     /// Returns a mutable reference to the accesskit node classes.
     pub fn accesskit_node_classes(&mut self) -> &mut accesskit::NodeClassSet {
         &mut self.style().accesskit_node_classes
-    }
-
-    /// For each binding or data observer, check if its data has changed, and if so, rerun its
-    /// builder/body.
-    pub fn process_data_updates(&mut self) {
-        binding_system(&mut self.0);
     }
 
     /// Calls the accessibility system and updates the accesskit node tree.

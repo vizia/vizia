@@ -73,9 +73,9 @@ define_property! {
         // Border Color
         "border-color": BorderColor(Color),
         // TODO: Support coloring individual borders.
-        // "corner-top-color": BorderTopColor(Color),
+        // "border-top-color": BorderTopColor(Color),
         // "border-right-color": BorderRightColor(Color),
-        // "corner-bottom-color": BorderBottomColor(Color),
+        // "border-bottom-color": BorderBottomColor(Color),
         // "border-left-color": BorderLeftColor(Color),
 
         // Corner Shape
@@ -97,7 +97,7 @@ define_property! {
         "border-style": BorderStyle(BorderStyle),
         // "border-top-style": BorderTopStyle(BorderStyleKeyword),
         // "border-right-style": BorderRightStyle(BorderStyleKeyword),
-        // "corner-bottom-style": BorderBottomStyle(BorderStyleKeyword),
+        // "border-bottom-style": BorderBottomStyle(BorderStyleKeyword),
         // "border-left-style": BorderLeftStyle(BorderStyleKeyword),
 
         // Border Width

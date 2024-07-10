@@ -281,7 +281,7 @@ impl ApplicationHandler<UserEvent> for Application {
                 )
                 .expect("Failed to create window");
             self.cx.add_main_window(window_entity, &window_state.window_description, 1.0);
-            self.cx.mutate_window(window_entity, |cx, win: &mut Window| {
+            self.cx.mutate_window(window_entity, |_, win: &mut Window| {
                 win.window = Some(window.clone())
             });
         }
@@ -289,7 +289,7 @@ impl ApplicationHandler<UserEvent> for Application {
 
     fn window_event(
         &mut self,
-        event_loop: &ActiveEventLoop,
+        _event_loop: &ActiveEventLoop,
         window_id: WindowId,
         event: winit::event::WindowEvent,
     ) {
@@ -333,9 +333,8 @@ impl ApplicationHandler<UserEvent> for Application {
                 //     // window.window().request_redraw();
                 // }
             }
-            winit::event::WindowEvent::Moved(pos) => {}
+
             winit::event::WindowEvent::CloseRequested | winit::event::WindowEvent::Destroyed => {
-                println!("closed");
                 self.cx.context().remove(window.entity);
                 self.cx.context().windows.remove(&window.entity);
                 window.swap_buffers();
@@ -344,7 +343,6 @@ impl ApplicationHandler<UserEvent> for Application {
                 self.windows.retain(|_, win| self.cx.0.windows.contains_key(&win.entity));
                 self.window_ids.retain(|e, _| self.cx.0.windows.contains_key(e));
             }
-
             winit::event::WindowEvent::DroppedFile(path) => {
                 self.cx.emit_origin(WindowEvent::Drop(DropData::File(path)));
             }
@@ -359,7 +357,7 @@ impl ApplicationHandler<UserEvent> for Application {
                 //     focus: is_focused.then_some(self.cx.focused().accesskit_id()).unwrap_or(NodeId(0)),
                 // });
             }
-            winit::event::WindowEvent::KeyboardInput { device_id, event, is_synthetic } => {
+            winit::event::WindowEvent::KeyboardInput { device_id: _, event, is_synthetic: _ } => {
                 let code = match event.physical_key {
                     PhysicalKey::Code(code) => winit_key_code_to_code(code),
                     PhysicalKey::Unidentified(native) => match native {
@@ -402,7 +400,7 @@ impl ApplicationHandler<UserEvent> for Application {
                 window.window().request_redraw();
             }
             winit::event::WindowEvent::Ime(_) => {}
-            winit::event::WindowEvent::CursorMoved { device_id, position } => {
+            winit::event::WindowEvent::CursorMoved { device_id: _, position } => {
                 self.cx.context().mouse.cursorx = position.x as f32;
                 self.cx.context().mouse.cursory = position.y as f32;
                 // hover_system(self.cx.context(), window.entity);
@@ -413,15 +411,15 @@ impl ApplicationHandler<UserEvent> for Application {
                 );
                 window.window().request_redraw();
             }
-            winit::event::WindowEvent::CursorEntered { device_id } => {
+            winit::event::WindowEvent::CursorEntered { device_id: _ } => {
                 self.cx.emit_window_event(window.entity, WindowEvent::MouseEnter);
                 window.window().request_redraw();
             }
-            winit::event::WindowEvent::CursorLeft { device_id } => {
+            winit::event::WindowEvent::CursorLeft { device_id: _ } => {
                 self.cx.emit_window_event(window.entity, WindowEvent::MouseLeave);
                 window.window().request_redraw();
             }
-            winit::event::WindowEvent::MouseWheel { device_id, delta, phase } => {
+            winit::event::WindowEvent::MouseWheel { device_id: _, delta, phase: _ } => {
                 let out_event = match delta {
                     winit::event::MouseScrollDelta::LineDelta(x, y) => {
                         WindowEvent::MouseScroll(x, y)
@@ -437,7 +435,7 @@ impl ApplicationHandler<UserEvent> for Application {
                 self.cx.emit_window_event(window.entity, out_event);
                 window.window().request_redraw();
             }
-            winit::event::WindowEvent::MouseInput { device_id, state, button } => {
+            winit::event::WindowEvent::MouseInput { device_id: _, state, button } => {
                 let button = match button {
                     winit::event::MouseButton::Left => MouseButton::Left,
                     winit::event::MouseButton::Right => MouseButton::Right,
@@ -472,7 +470,6 @@ impl ApplicationHandler<UserEvent> for Application {
             }
             winit::event::WindowEvent::Occluded(_) => {}
             winit::event::WindowEvent::RedrawRequested => {
-                println!("redraw: {}", window.entity);
                 self.cx.needs_refresh();
                 self.cx.draw(window.entity, &mut window.surface, &mut window.dirty_surface);
                 window.swap_buffers();
@@ -518,10 +515,10 @@ impl ApplicationHandler<UserEvent> for Application {
             }
         });
 
-        // if let Some(idle_callback) = &self.on_idle {
-        //     self.cx.set_current(Entity::root());
-        //     (idle_callback)(self.cx.context());
-        // }
+        if let Some(idle_callback) = &self.on_idle {
+            self.cx.set_current(Entity::root());
+            (idle_callback)(self.cx.context());
+        }
 
         if self.cx.has_queued_events() {
             self.event_loop_proxy
@@ -535,10 +532,12 @@ impl ApplicationHandler<UserEvent> for Application {
             }
         });
 
-        if let Some(timer_time) = self.cx.get_next_timer_time() {
-            event_loop.set_control_flow(ControlFlow::WaitUntil(timer_time));
-        } else {
-            event_loop.set_control_flow(self.control_flow);
+        if self.control_flow != ControlFlow::Poll {
+            if let Some(timer_time) = self.cx.get_next_timer_time() {
+                event_loop.set_control_flow(ControlFlow::WaitUntil(timer_time));
+            } else {
+                event_loop.set_control_flow(ControlFlow::Wait);
+            }
         }
 
         // Sync window state with context
@@ -558,7 +557,7 @@ impl ApplicationHandler<UserEvent> for Application {
                         )
                         .expect("Failed to create window");
 
-                    self.cx.mutate_window(*window_entity, |cx, win: &mut Window| {
+                    self.cx.mutate_window(*window_entity, |_, win: &mut Window| {
                         win.window = Some(window.clone())
                     });
                 }
@@ -571,12 +570,12 @@ impl ApplicationHandler<UserEvent> for Application {
         }
     }
 
-    fn new_events(&mut self, event_loop: &ActiveEventLoop, cause: winit::event::StartCause) {
+    fn new_events(&mut self, _event_loop: &ActiveEventLoop, _cause: winit::event::StartCause) {
         self.cx.process_timers();
         self.cx.emit_scheduled_events();
     }
 
-    fn exiting(&mut self, event_loop: &ActiveEventLoop) {
+    fn exiting(&mut self, _event_loop: &ActiveEventLoop) {
         println!("Exiting");
     }
 }
