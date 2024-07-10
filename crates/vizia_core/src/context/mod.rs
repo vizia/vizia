@@ -11,7 +11,7 @@ mod resource;
 use log::debug;
 use skia_safe::{
     textlayout::{FontCollection, TypefaceFontProvider},
-    FontMgr, Surface,
+    FontMgr,
 };
 use std::any::{Any, TypeId};
 use std::cell::RefCell;
@@ -19,6 +19,7 @@ use std::collections::{BinaryHeap, VecDeque};
 use std::rc::Rc;
 use std::sync::Mutex;
 use vizia_id::IdManager;
+use vizia_window::WindowDescription;
 
 #[cfg(all(feature = "clipboard", feature = "x11"))]
 use copypasta::ClipboardContext;
@@ -64,13 +65,21 @@ thread_local! {
     pub static CURRENT: RefCell<Entity> = RefCell::new(Entity::root());
 }
 
+#[derive(Default, Clone, Debug)]
+pub struct WindowState {
+    pub window_description: WindowDescription,
+    pub scale_factor: f32,
+    pub needs_relayout: bool,
+    pub needs_redraw: bool,
+    pub dirty_rect: Option<BoundingBox>,
+}
+
 /// The main storage and control object for a Vizia application.
 pub struct Context {
     pub(crate) entity_manager: IdManager<Entity>,
     pub(crate) entity_identifiers: HashMap<String, Entity>,
     pub(crate) tree: Tree<Entity>,
     pub(crate) current: Entity,
-    pub(crate) canvases: HashMap<Entity, (Surface, Surface)>,
     pub(crate) views: Views,
     pub(crate) data: Models,
     pub(crate) bindings: Bindings,
@@ -85,8 +94,9 @@ pub struct Context {
     pub(crate) global_listeners: Vec<Box<dyn Fn(&mut EventContext, &mut Event)>>,
     pub(crate) style: Style,
     pub(crate) cache: CachedData,
+    pub windows: HashMap<Entity, WindowState>,
 
-    pub(crate) mouse: MouseState<Entity>,
+    pub mouse: MouseState<Entity>,
     pub(crate) modifiers: Modifiers,
 
     pub(crate) captured: Entity,
@@ -101,17 +111,6 @@ pub struct Context {
     pub text_context: TextContext,
 
     pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
-
-    /// The window's size in logical pixels, before `user_scale_factor` gets applied to it. If this
-    /// value changed during a frame then the window will be resized and a
-    /// [`WindowEvent::GeometryChanged`] will be emitted.
-    pub(crate) window_size: WindowSize,
-    /// A scale factor used for uniformly scaling the window independently of any HiDPI scaling.
-    /// `window_size` gets multplied with this factor to get the actual logical window size. If this
-    /// changes during a frame, then the window will be resized at the end of the frame and a
-    /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
-    /// [`WindowDescription::user_scale_factor`](vizia_window::WindowDescription::user_scale_factor).
-    pub(crate) user_scale_factor: f64,
 
     #[cfg(feature = "clipboard")]
     pub(crate) clipboard: Box<dyn ClipboardProvider>,
@@ -129,13 +128,13 @@ pub struct Context {
 
 impl Default for Context {
     fn default() -> Self {
-        Context::new(WindowSize::new(800, 600), 1.0)
+        Context::new()
     }
 }
 
 impl Context {
     /// Creates a new context.
-    pub fn new(window_size: WindowSize, user_scale_factor: f64) -> Self {
+    pub fn new() -> Self {
         let mut cache = CachedData::default();
         cache.add(Entity::root());
 
@@ -149,7 +148,7 @@ impl Context {
             bindings: HashMap::default(),
             style: Style::default(),
             cache,
-            canvases: HashMap::new(),
+            windows: HashMap::new(),
             event_queue: VecDeque::new(),
             event_schedule: BinaryHeap::new(),
             next_event_id: 0,
@@ -202,9 +201,6 @@ impl Context {
             },
 
             event_proxy: None,
-
-            window_size,
-            user_scale_factor,
 
             #[cfg(feature = "clipboard")]
             clipboard: {
@@ -270,23 +266,6 @@ impl Context {
     /// Returns a reference to the [Environment] model.
     pub fn environment(&self) -> &Environment {
         self.data::<Environment>().unwrap()
-    }
-
-    /// The window's size in logical pixels, before
-    /// [`user_scale_factor()`][Self::user_scale_factor()] gets applied to it. If this value changed
-    /// during a frame then the window will be resized and a [`WindowEvent::GeometryChanged`] will be
-    /// emitted.
-    pub fn window_size(&self) -> WindowSize {
-        self.window_size
-    }
-
-    /// A scale factor used for uniformly scaling the window independently of any HiDPI scaling.
-    /// `window_size` gets multplied with this factor to get the actual logical window size. If this
-    /// changes during a frame, then the window will be resized at the end of the frame and a
-    /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
-    /// [`WindowDescription::user_scale_factor`](vizia_window::WindowDescription::user_scale_factor).
-    pub fn user_scale_factor(&self) -> f64 {
-        self.user_scale_factor
     }
 
     /// Returns the scale factor of the display.
@@ -413,7 +392,7 @@ impl Context {
     }
 
     /// Removes the provided entity from the application.
-    pub(crate) fn remove(&mut self, entity: Entity) {
+    pub fn remove(&mut self, entity: Entity) {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
         if !delete_list.is_empty() {
@@ -487,6 +466,22 @@ impl Context {
 
             for timer in stopped_timers {
                 self.stop_timer(timer);
+            }
+
+            let window_entity = self.tree.get_parent_window(*entity).unwrap();
+
+            if let Some(draw_bounds) = self.cache.draw_bounds.get(*entity) {
+                if let Some(dirty_rect) =
+                    &mut self.windows.get_mut(&window_entity).unwrap().dirty_rect
+                {
+                    *dirty_rect = dirty_rect.union(draw_bounds);
+                } else {
+                    self.windows.get_mut(&window_entity).unwrap().dirty_rect = Some(*draw_bounds);
+                }
+            }
+
+            if self.windows.contains_key(entity) {
+                self.windows.remove(entity);
             }
 
             self.tree.remove(*entity).expect("");

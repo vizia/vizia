@@ -22,7 +22,7 @@ pub mod model;
 pub mod modifiers;
 pub mod resource;
 pub mod style;
-mod systems;
+pub mod systems;
 pub(crate) mod text;
 #[doc(hidden)]
 pub mod tree;
@@ -66,7 +66,7 @@ pub mod prelude {
     pub use super::animation::{Animation, AnimationBuilder, KeyframeBuilder};
     pub use super::context::{
         AccessContext, AccessNode, Context, ContextProxy, DataContext, DrawContext, EmitContext,
-        EventContext, ProxyEmitError,
+        EventContext, ProxyEmitError, WindowState,
     };
     pub use super::entity::Entity;
     pub use super::environment::{AppTheme, Environment, EnvironmentEvent, ThemeMode};
@@ -83,7 +83,7 @@ pub mod prelude {
     pub use super::util::{IntoCssStr, CSS};
     pub use super::view::{Handle, View};
     pub use super::views::*;
-    pub use super::window::{DropData, WindowEvent, WindowModifiers};
+    pub use super::window::{DropData, WindowEvent};
     pub use accesskit::{Action, DefaultActionVerb, Live, Role};
     pub use skia_safe::Canvas;
     pub use vizia_derive::{Data, Lens};

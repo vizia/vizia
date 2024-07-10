@@ -18,7 +18,7 @@ const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 /// The [EventManager] is responsible for taking the events in the event queue in cx
 /// and dispatching them to views and models based on the target and propagation metadata of the event.
 #[doc(hidden)]
-pub(crate) struct EventManager {
+pub struct EventManager {
     // Queue of events to be processed.
     event_queue: Vec<Event>,
 }
@@ -30,7 +30,7 @@ impl EventManager {
 
     /// Flush the event queue, dispatching events to their targets.
     /// Returns whether there are still more events to process, i.e. the event handlers sent events.
-    pub(crate) fn flush_events(&mut self, cx: &mut Context) -> bool {
+    pub fn flush_events(&mut self, cx: &mut Context) -> bool {
         // Clear the event queue in the event manager.
         self.event_queue.clear();
 
@@ -80,7 +80,7 @@ impl EventManager {
 
             // Handle state updates for window events.
             event.map(|window_event, meta| {
-                if meta.origin == Entity::root() {
+                if cx.windows.contains_key(&meta.origin) {
                     internal_state_updates(cx, window_event, meta);
                 }
             });
@@ -197,7 +197,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 cx.mouse.cursorx = *x;
                 cx.mouse.cursory = *y;
 
-                hover_system(cx);
+                hover_system(cx, meta.origin);
 
                 mutate_direct_or_up(meta, cx.captured, cx.hovered, false);
             }
@@ -600,12 +600,12 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             cx.set_focus_pseudo_classes(cx.focused, true, true);
         }
         WindowEvent::MouseEnter => {
-            if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(Entity::root()) {
+            if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(meta.origin) {
                 pseudo_class.set(PseudoClassFlags::OVER, true);
             }
         }
         WindowEvent::MouseLeave => {
-            if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(Entity::root()) {
+            if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(meta.origin) {
                 pseudo_class.set(PseudoClassFlags::OVER, false);
             }
 
