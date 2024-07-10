@@ -732,12 +732,11 @@ impl<'a> EventContext<'a> {
         self.style.parse_theme(&overall_theme);
 
         for entity in self.tree.into_iter() {
-            self.style.restyle.insert(entity).unwrap();
+            self.style.needs_restyle(entity);
+            self.style.needs_relayout();
+            self.style.needs_redraw(entity);
+            self.style.needs_text_update(entity);
         }
-
-        self.style.needs_restyle(self.current);
-        self.style.needs_relayout();
-        self.style.needs_redraw(self.current);
 
         Ok(())
     }

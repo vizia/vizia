@@ -15,8 +15,8 @@ use web_time::Duration;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum ThemeMode {
-    #[default]
     DarkMode,
+    #[default]
     LightMode,
 }
 
