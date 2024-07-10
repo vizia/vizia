@@ -20,11 +20,6 @@ impl Markdown {
                 // Parse the document into a root `AstNode`
                 let root = parse_document(&arena, document, &options);
 
-                // Iterate over all the descendants of root.
-                for node in root.descendants() {
-                    println!("{:?}", node.data.borrow().value);
-                }
-
                 for node in root.children() {
                     parse_node(cx, node, 0);
                 }
@@ -72,8 +67,6 @@ fn parse_node<'a>(
         }
 
         NodeValue::Text(text) => {
-            println!("{:?}", text);
-
             TextSpan::new(cx, text, |_| {}).class("span");
         }
 
@@ -161,7 +154,7 @@ fn parse_node<'a>(
             });
         }
 
-        t => println!("{:?}", t),
+        _ => {}
     }
 }
 

@@ -40,13 +40,15 @@ use vizia_input::MouseState;
 /// }
 ///
 /// impl View for CustomView {
-///     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
+///     fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
 ///         // Get the computed bounds after layout of the current view
 ///         let bounds = cx.bounds();
 ///         // Draw to the canvas using the bounds of the current view
-///         let mut path = vg::Path::new();
+///         let path = vg::Path::new();
 ///         path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
-///         canvas.fill_path(&mut path, &vg::Paint::color(vg::Color::rgb(200, 100, 100)));
+///         let mut paint = vg::Paint::default();
+///         paint.set_color(Color::rgb(200, 100, 100));
+///         canvas.draw_path(&path, &paint);
 ///     }
 /// }
 /// ```
@@ -121,6 +123,7 @@ impl<'a> DrawContext<'a> {
         self.cache.get_bounds(self.current)
     }
 
+    /// Returns the z-index of the current view.
     pub fn z_index(&self) -> i32 {
         self.style.z_index.get(self.current).copied().unwrap_or_default()
     }
@@ -204,7 +207,7 @@ impl<'a> DrawContext<'a> {
                 origin
             })
             .unwrap_or(Matrix::translate(bounds.center()));
-        // transform = origin * transform;
+
         let mut transform = origin;
         origin = origin.invert().unwrap();
 
@@ -276,18 +279,22 @@ impl<'a> DrawContext<'a> {
         )
     }
 
+    /// Returns the font-weight of the current view.
     pub fn font_weight(&self) -> FontWeight {
         self.style.font_weight.get(self.current).copied().unwrap_or_default()
     }
 
+    /// Returns the font-width of the current view.
     pub fn font_width(&self) -> FontWidth {
         self.style.font_width.get(self.current).copied().unwrap_or_default()
     }
 
+    /// Returns the font-slant of the current view.
     pub fn font_slant(&self) -> FontSlant {
         self.style.font_slant.get(self.current).copied().unwrap_or_default()
     }
 
+    /// Returns the font variation settings of the current view.
     pub fn font_variation_settings(&self) -> &[FontVariation] {
         self.style.font_variation_settings.get(self.current).map(Vec::as_slice).unwrap_or_default()
     }
@@ -405,6 +412,7 @@ impl<'a> DrawContext<'a> {
     get_color_property!(background_color);
     get_color_property!(border_color);
 
+    /// Returns the border style of the current view.
     pub fn border_style(&self) -> BorderStyleKeyword {
         self.style.border_style.get(self.current).copied().unwrap_or_default()
     }
@@ -418,18 +426,22 @@ impl<'a> DrawContext<'a> {
         self.style.text_wrap.get(self.current).copied().unwrap_or(true)
     }
 
+    /// Returns the text alignment of the current view.
     pub fn text_align(&self) -> TextAlign {
         self.style.text_align.get(self.current).copied().unwrap_or_default()
     }
 
+    /// Returns the text overflow preference of the current view.
     pub fn text_overflow(&self) -> TextOverflow {
         self.style.text_overflow.get(self.current).copied().unwrap_or_default()
     }
 
+    /// Returns the line clamp Of the current view.
     pub fn line_clamp(&self) -> Option<usize> {
         self.style.line_clamp.get(self.current).copied().map(|lc| lc.0 as usize)
     }
 
+    /// Returns a reference to the shadows of the current view.
     pub fn shadows(&self) -> Option<&Vec<Shadow>> {
         self.style.shadow.get(self.current)
     }
@@ -1153,6 +1165,7 @@ impl<'a> DataContext for DrawContext<'a> {
     }
 }
 
+// Helper function for computing a rounded corner with variable smoothing
 fn compute_smooth_corner(
     corner_radius: f32,
     smoothing: f32,
