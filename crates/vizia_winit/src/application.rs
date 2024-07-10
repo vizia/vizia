@@ -158,7 +158,7 @@ impl Application {
 
         let window = Arc::new(window);
 
-        let mut window_state = WinState::new(event_loop, window.clone(), window_entity)?;
+        let window_state = WinState::new(event_loop, window.clone(), window_entity)?;
 
         // // On windows cloak (hide) the window initially, we later reveal it after the first draw.
         // // This is a workaround to hide the "white flash" that occurs during application startup.
@@ -305,33 +305,27 @@ impl ApplicationHandler<UserEvent> for Application {
                 self.cx.needs_refresh();
                 window.window().request_redraw();
 
-                // #[cfg(target_os = "windows")]
-                // {
-                //     while self.event_manager.flush_events(self.cx.context()) {}
+                #[cfg(target_os = "windows")]
+                {
+                    while self.event_manager.flush_events(self.cx.context()) {}
 
-                //     self.cx.process_style_updates();
+                    self.cx.process_style_updates();
 
-                //     if self.cx.process_animations() {
-                //         // self.control_flow = ControlFlow::Poll;
+                    if self.cx.process_animations() {
+                        window.window().request_redraw();
+                    }
 
-                //         // self.event_loop_proxy
-                //         //     .send_event(UserEvent::Event(Event::new(WindowEvent::Redraw)))
-                //         //     .expect("Failed to send redraw event");
+                    self.cx.process_visual_updates();
 
-                //         // window.window().request_redraw();
-                //     }
+                    #[cfg(feature = "accesskit")]
+                    self.cx.process_tree_updates(|tree_updates| {
+                        for update in tree_updates.iter_mut() {
+                            accesskit.update_if_active(|| update.take().unwrap());
+                        }
+                    });
 
-                //     self.cx.process_visual_updates();
-
-                //     #[cfg(feature = "accesskit")]
-                //     self.cx.process_tree_updates(|tree_updates| {
-                //         for update in tree_updates.iter_mut() {
-                //             accesskit.update_if_active(|| update.take().unwrap());
-                //         }
-                //     });
-
-                //     // window.window().request_redraw();
-                // }
+                    window.window().request_redraw();
+                }
             }
 
             winit::event::WindowEvent::CloseRequested | winit::event::WindowEvent::Destroyed => {

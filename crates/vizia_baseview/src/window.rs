@@ -21,13 +21,11 @@ pub(crate) struct ViziaWindow {
     application: ApplicationRunner,
     #[allow(clippy::type_complexity)]
     on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
-
-    pub gr_context: skia_safe::gpu::DirectContext,
 }
 
 impl ViziaWindow {
     fn new(
-        mut cx: Context,
+        mut cx: BackendContext,
         win_desc: WindowDescription,
         window_scale_policy: WindowScalePolicy,
         window: &mut baseview::Window,
@@ -66,11 +64,18 @@ impl ViziaWindow {
             }
         };
 
-        let surface = create_surface(
+        let mut surface = create_surface(
             (win_desc.inner_size.width as i32, win_desc.inner_size.height as i32),
             fb_info,
             &mut gr_context,
         );
+
+        let dirty_surface = surface
+            .new_surface_with_dimensions((
+                win_desc.inner_size.width as i32,
+                win_desc.inner_size.height as i32,
+            ))
+            .unwrap();
 
         // Assume scale for now until there is an event with a new one.
         // Assume scale for now until there is an event with a new one.
@@ -85,19 +90,25 @@ impl ViziaWindow {
         };
         let dpi_factor = window_scale_factor * win_desc.user_scale_factor;
 
-        BackendContext::new(&mut cx).add_main_window(&win_desc, surface, dpi_factor as f32);
-        BackendContext::new(&mut cx).add_window(WindowView {});
+        cx.add_main_window(Entity::root(), &win_desc, dpi_factor as f32);
+        cx.add_window(WindowView {});
 
-        cx.remove_user_themes();
+        cx.context().remove_user_themes();
         if let Some(builder) = builder {
-            (builder)(&mut cx);
+            (builder)(cx.context());
         }
 
-        let application =
-            ApplicationRunner::new(cx, gr_context, use_system_scaling, window_scale_factor);
+        let application = ApplicationRunner::new(
+            cx,
+            gr_context,
+            use_system_scaling,
+            window_scale_factor,
+            surface,
+            dirty_surface,
+        );
         unsafe { context.make_not_current() };
 
-        ViziaWindow { application, on_idle, gr_context }
+        ViziaWindow { application, on_idle }
     }
 
     /// Open a new child window.
@@ -111,7 +122,6 @@ impl ViziaWindow {
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
         ignore_default_theme: bool,
-        text_config: TextConfig,
     ) -> WindowHandle
     where
         P: HasRawWindowHandle,
@@ -134,23 +144,15 @@ impl ViziaWindow {
             parent,
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-                let mut context = Context::new(win_desc.inner_size, win_desc.user_scale_factor);
+                let mut cx = Context::new();
 
-                context.ignore_default_theme = ignore_default_theme;
-                context.remove_user_themes();
+                cx.ignore_default_theme = ignore_default_theme;
+                cx.remove_user_themes();
 
-                let mut cx = BackendContext::new(&mut context);
-                cx.set_text_config(text_config);
+                let mut cx = BackendContext::new(cx);
 
                 cx.set_event_proxy(Box::new(BaseviewProxy()));
-                ViziaWindow::new(
-                    context,
-                    win_desc,
-                    scale_policy,
-                    window,
-                    Some(Box::new(app)),
-                    on_idle,
-                )
+                ViziaWindow::new(cx, win_desc, scale_policy, window, Some(Box::new(app)), on_idle)
             },
         )
     }
@@ -164,7 +166,6 @@ impl ViziaWindow {
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
         ignore_default_theme: bool,
-        text_config: TextConfig,
     ) where
         F: Fn(&mut Context),
         F: 'static + Send,
@@ -182,23 +183,15 @@ impl ViziaWindow {
         Window::open_blocking(
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-                let mut context = Context::new(win_desc.inner_size, win_desc.user_scale_factor);
+                let mut cx = Context::new();
 
-                context.ignore_default_theme = ignore_default_theme;
-                context.remove_user_themes();
+                cx.ignore_default_theme = ignore_default_theme;
+                cx.remove_user_themes();
 
-                let mut cx = BackendContext::new(&mut context);
-                cx.set_text_config(text_config);
+                let mut cx = BackendContext::new(cx);
 
                 cx.set_event_proxy(Box::new(BaseviewProxy()));
-                ViziaWindow::new(
-                    context,
-                    win_desc,
-                    scale_policy,
-                    window,
-                    Some(Box::new(app)),
-                    on_idle,
-                )
+                ViziaWindow::new(cx, win_desc, scale_policy, window, Some(Box::new(app)), on_idle)
             },
         )
     }

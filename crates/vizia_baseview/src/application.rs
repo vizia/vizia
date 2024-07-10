@@ -1,13 +1,11 @@
+use crate::window::create_surface;
 use crate::window::ViziaWindow;
 use baseview::{Window, WindowHandle, WindowScalePolicy};
 use gl_rs as gl;
 use gl_rs::types::GLint;
 use raw_window_handle::HasRawWindowHandle;
-use skia_safe::gpu;
-use skia_safe::gpu::backend_render_targets;
 use skia_safe::gpu::gl::FramebufferInfo;
-use skia_safe::gpu::SurfaceOrigin;
-use skia_safe::ColorType;
+use vizia_core::events::EventManager;
 
 use crate::proxy::queue_get;
 use vizia_core::backend::*;
@@ -38,7 +36,6 @@ where
     window_scale_policy: WindowScalePolicy,
     on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
     ignore_default_theme: bool,
-    text_config: TextConfig,
 }
 
 impl<F> Application<F>
@@ -53,7 +50,6 @@ where
             window_scale_policy: WindowScalePolicy::SystemScaleFactor,
             on_idle: None,
             ignore_default_theme: false,
-            text_config: TextConfig::default(),
         }
     }
 
@@ -68,12 +64,6 @@ where
     /// [`WindowDescription::scale_factor`] to set a separate arbitrary scale factor.
     pub fn with_scale_policy(mut self, scale_policy: WindowScalePolicy) -> Self {
         self.window_scale_policy = scale_policy;
-        self
-    }
-
-    pub fn with_text_config(mut self, text_config: TextConfig) -> Self {
-        self.text_config = text_config;
-
         self
     }
 
@@ -109,7 +99,6 @@ where
             self.app,
             self.on_idle,
             self.ignore_default_theme,
-            self.text_config,
         );
 
         Ok(())
@@ -130,7 +119,6 @@ where
             self.app,
             self.on_idle,
             self.ignore_default_theme,
-            self.text_config,
         )
     }
 
@@ -160,7 +148,8 @@ where
 }
 
 pub(crate) struct ApplicationRunner {
-    context: Context,
+    cx: BackendContext,
+    event_manager: EventManager,
     pub gr_context: skia_safe::gpu::DirectContext,
     should_redraw: bool,
 
@@ -175,154 +164,157 @@ pub(crate) struct ApplicationRunner {
     /// mouse coordinates to physical window coordinates. For any other use within VIZIA itself this
     /// always needs to be multiplied by `user_scale_factor`.
     window_scale_factor: f64,
-    /// The scale factor applied on top of the `window_scale` to convert the window's logical size
-    /// to a physical size. If this is different from `*cx.user_scale_factor` after handling the
-    /// events then the window will be resized.
-    current_user_scale_factor: f64,
-    /// The window's current logical size, before `user_scale_factor` has been applied. Needed to
-    /// resize the window when changing the scale factor.
-    current_window_size: WindowSize,
+    // /// The scale factor applied on top of the `window_scale` to convert the window's logical size
+    // /// to a physical size. If this is different from `*cx.user_scale_factor` after handling the
+    // /// events then the window will be resized.
+    // current_user_scale_factor: f64,
+    // /// The window's current logical size, before `user_scale_factor` has been applied. Needed to
+    // /// resize the window when changing the scale factor.
+    // current_window_size: WindowSize,
+    pub surface: skia_safe::Surface,
+    pub dirty_surface: skia_safe::Surface,
 }
 
 impl ApplicationRunner {
     pub fn new(
-        mut context: Context,
+        cx: BackendContext,
         gr_context: skia_safe::gpu::DirectContext,
         use_system_scaling: bool,
         window_scale_factor: f64,
+        surface: skia_safe::Surface,
+        dirty_surface: skia_safe::Surface,
     ) -> Self {
-        let mut cx = BackendContext::new(&mut context);
-
         ApplicationRunner {
             should_redraw: true,
             gr_context,
+            event_manager: EventManager::new(),
             use_system_scaling,
             window_scale_factor,
-            current_user_scale_factor: cx.user_scale_factor(),
-            current_window_size: *cx.window_size(),
-
-            context,
+            //current_user_scale_factor: cx.user_scale_factor(),
+            //current_window_size: *cx.window_size(),
+            cx,
+            surface,
+            dirty_surface,
         }
     }
 
     /// Handle all reactivity within a frame. The window instance is used to resize the window when
     /// needed.
     pub fn on_frame_update(&mut self, window: &mut Window) {
-        let mut cx = BackendContext::new_with_event_manager(&mut self.context);
-
         while let Some(event) = queue_get() {
-            cx.send_event(event);
+            self.cx.send_event(event);
         }
 
         // Events
-        cx.process_events();
+        while self.event_manager.flush_events(self.cx.context()) {}
 
-        if *cx.window_size() != self.current_window_size
-            || cx.user_scale_factor() != self.current_user_scale_factor
-        {
-            self.current_window_size = *cx.window_size();
-            self.current_user_scale_factor = cx.user_scale_factor();
+        // if *cx.window_size() != self.current_window_size
+        //     || cx.user_scale_factor() != self.current_user_scale_factor
+        // {
+        //     self.current_window_size = *cx.window_size();
+        //     self.current_user_scale_factor = cx.user_scale_factor();
 
-            // The user scale factor is not part of the HiDPI scaling, so baseview should treat it
-            // as part of our logical size
-            window.resize(baseview::Size {
-                width: self.current_window_size.width as f64 * self.current_user_scale_factor,
-                height: self.current_window_size.height as f64 * self.current_user_scale_factor,
-            });
+        //     // The user scale factor is not part of the HiDPI scaling, so baseview should treat it
+        //     // as part of our logical size
+        //     window.resize(baseview::Size {
+        //         width: self.current_window_size.width as f64 * self.current_user_scale_factor,
+        //         height: self.current_window_size.height as f64 * self.current_user_scale_factor,
+        //     });
 
-            // TODO: These calculations are now repeated in three places, should probably be moved
-            //       to a function
-            cx.set_scale_factor(self.window_scale_factor * self.current_user_scale_factor);
-            let new_physical_width =
-                self.current_window_size.width as f32 * cx.style().scale_factor();
-            let new_physical_height =
-                self.current_window_size.height as f32 * cx.style().scale_factor();
+        //     // TODO: These calculations are now repeated in three places, should probably be moved
+        //     //       to a function
+        //     cx.set_scale_factor(self.window_scale_factor * self.current_user_scale_factor);
+        //     let new_physical_width =
+        //         self.current_window_size.width as f32 * cx.style().scale_factor();
+        //     let new_physical_height =
+        //         self.current_window_size.height as f32 * cx.style().scale_factor();
 
-            cx.set_window_size(new_physical_width, new_physical_height);
+        //     cx.set_window_size(new_physical_width, new_physical_height);
 
-            if let Some(surface) = cx.get_surface_mut(Entity::root()) {
-                if new_physical_width != 0.0 || new_physical_height != 0.0 {
-                    let fb_info = {
-                        let mut fboid: GLint = 0;
-                        unsafe { gl::GetIntegerv(gl::FRAMEBUFFER_BINDING, &mut fboid) };
+        //     if let Some(surface) = cx.get_surface_mut(Entity::root()) {
+        //         if new_physical_width != 0.0 || new_physical_height != 0.0 {
+        //             let fb_info = {
+        //                 let mut fboid: GLint = 0;
+        //                 unsafe { gl::GetIntegerv(gl::FRAMEBUFFER_BINDING, &mut fboid) };
 
-                        FramebufferInfo {
-                            fboid: fboid.try_into().unwrap(),
-                            format: skia_safe::gpu::gl::Format::RGBA8.into(),
-                            ..Default::default()
-                        }
-                    };
+        //                 FramebufferInfo {
+        //                     fboid: fboid.try_into().unwrap(),
+        //                     format: skia_safe::gpu::gl::Format::RGBA8.into(),
+        //                     ..Default::default()
+        //                 }
+        //             };
 
-                    let backend_render_target = backend_render_targets::make_gl(
-                        (new_physical_width as i32, new_physical_height as i32),
-                        None,
-                        8,
-                        fb_info,
-                    );
+        //             let backend_render_target = backend_render_targets::make_gl(
+        //                 (new_physical_width as i32, new_physical_height as i32),
+        //                 None,
+        //                 8,
+        //                 fb_info,
+        //             );
 
-                    surface.0 = gpu::surfaces::wrap_backend_render_target(
-                        &mut self.gr_context,
-                        &backend_render_target,
-                        SurfaceOrigin::BottomLeft,
-                        ColorType::RGBA8888,
-                        None,
-                        None,
-                    )
-                    .expect("Could not create skia surface");
+        //             surface.0 = gpu::surfaces::wrap_backend_render_target(
+        //                 &mut self.gr_context,
+        //                 &backend_render_target,
+        //                 SurfaceOrigin::BottomLeft,
+        //                 ColorType::RGBA8888,
+        //                 None,
+        //                 None,
+        //             )
+        //             .expect("Could not create skia surface");
 
-                    surface.1 = surface
-                        .0
-                        .new_surface_with_dimensions((
-                            new_physical_width.max(1.0) as i32,
-                            new_physical_height.max(1.0) as i32,
-                        ))
-                        .unwrap();
-                }
-            }
+        //             surface.1 = surface
+        //                 .0
+        //                 .new_surface_with_dimensions((
+        //                     new_physical_width.max(1.0) as i32,
+        //                     new_physical_height.max(1.0) as i32,
+        //                 ))
+        //                 .unwrap();
+        //         }
+        //     }
 
-            cx.needs_refresh();
+        //     cx.needs_refresh();
 
-            // hmmm why are we flushing events again?
-            // self.event_manager.flush_events(cx.context());
-        }
+        //     // hmmm why are we flushing events again?
+        //     // self.event_manager.flush_events(cx.context());
+        // }
 
         let context = window.gl_context().expect("Window was created without OpenGL support");
         unsafe { context.make_current() };
-        cx.process_style_updates();
+        self.cx.process_style_updates();
         unsafe { context.make_not_current() };
 
-        cx.process_animations();
+        self.cx.process_animations();
 
-        cx.process_visual_updates();
+        self.cx.process_visual_updates();
 
-        cx.style().should_redraw(|| {
+        self.cx.style().should_redraw(|| {
             self.should_redraw = true;
         });
     }
 
     pub fn render(&mut self) {
-        let mut cx = BackendContext::new(&mut self.context);
-        cx.draw();
+        self.cx.draw(Entity::root(), &mut self.surface, &mut self.dirty_surface);
         self.gr_context.flush_and_submit();
         self.should_redraw = false;
     }
 
     pub fn handle_event(&mut self, event: baseview::Event, should_quit: &mut bool) {
-        let mut cx = BackendContext::new(&mut self.context);
-
         if requests_exit(&event) {
-            cx.send_event(Event::new(WindowEvent::WindowClose));
+            self.cx.send_event(Event::new(WindowEvent::WindowClose));
             *should_quit = true;
         }
 
         let mut update_modifiers = |modifiers: vizia_input::KeyboardModifiers| {
-            cx.modifiers()
+            self.cx
+                .modifiers()
                 .set(Modifiers::SHIFT, modifiers.contains(vizia_input::KeyboardModifiers::SHIFT));
-            cx.modifiers()
+            self.cx
+                .modifiers()
                 .set(Modifiers::CTRL, modifiers.contains(vizia_input::KeyboardModifiers::CONTROL));
-            cx.modifiers()
+            self.cx
+                .modifiers()
                 .set(Modifiers::SUPER, modifiers.contains(vizia_input::KeyboardModifiers::META));
-            cx.modifiers()
+            self.cx
+                .modifiers()
                 .set(Modifiers::ALT, modifiers.contains(vizia_input::KeyboardModifiers::ALT));
         };
 
@@ -341,19 +333,19 @@ impl ApplicationRunner {
                     let physical_posy = position.y * self.window_scale_factor;
                     let cursorx = (physical_posx) as f32;
                     let cursory = (physical_posy) as f32;
-                    cx.emit_origin(WindowEvent::MouseMove(cursorx, cursory));
+                    self.cx.emit_origin(WindowEvent::MouseMove(cursorx, cursory));
                 }
                 baseview::MouseEvent::ButtonPressed { button, modifiers } => {
                     update_modifiers(modifiers);
 
                     let b = translate_mouse_button(button);
-                    cx.emit_origin(WindowEvent::MouseDown(b));
+                    self.cx.emit_origin(WindowEvent::MouseDown(b));
                 }
                 baseview::MouseEvent::ButtonReleased { button, modifiers } => {
                     update_modifiers(modifiers);
 
                     let b = translate_mouse_button(button);
-                    cx.emit_origin(WindowEvent::MouseUp(b));
+                    self.cx.emit_origin(WindowEvent::MouseUp(b));
                 }
                 baseview::MouseEvent::WheelScrolled { delta, modifiers } => {
                     update_modifiers(modifiers);
@@ -378,15 +370,15 @@ impl ApplicationRunner {
                         ),
                     };
 
-                    cx.emit_origin(WindowEvent::MouseScroll(lines_x, lines_y));
+                    self.cx.emit_origin(WindowEvent::MouseScroll(lines_x, lines_y));
                 }
 
                 baseview::MouseEvent::CursorEntered => {
-                    cx.emit_origin(WindowEvent::MouseEnter);
+                    self.cx.emit_origin(WindowEvent::MouseEnter);
                 }
 
                 baseview::MouseEvent::CursorLeft => {
-                    cx.emit_origin(WindowEvent::MouseLeave);
+                    self.cx.emit_origin(WindowEvent::MouseLeave);
                 }
 
                 _ => {}
@@ -399,14 +391,16 @@ impl ApplicationRunner {
 
                 match event.code {
                     Code::ShiftLeft | Code::ShiftRight => {
-                        cx.modifiers().set(Modifiers::SHIFT, pressed)
+                        self.cx.modifiers().set(Modifiers::SHIFT, pressed)
                     }
                     Code::ControlLeft | Code::ControlRight => {
-                        cx.modifiers().set(Modifiers::CTRL, pressed)
+                        self.cx.modifiers().set(Modifiers::CTRL, pressed)
                     }
-                    Code::AltLeft | Code::AltRight => cx.modifiers().set(Modifiers::ALT, pressed),
+                    Code::AltLeft | Code::AltRight => {
+                        self.cx.modifiers().set(Modifiers::ALT, pressed)
+                    }
                     Code::MetaLeft | Code::MetaRight => {
-                        cx.modifiers().set(Modifiers::SUPER, pressed)
+                        self.cx.modifiers().set(Modifiers::SUPER, pressed)
                     }
                     _ => (),
                 }
@@ -415,29 +409,59 @@ impl ApplicationRunner {
                     MouseButtonState::Pressed => {
                         if let vizia_input::Key::Character(written) = &event.key {
                             for chr in written.chars() {
-                                cx.emit_origin(WindowEvent::CharInput(chr));
+                                self.cx.emit_origin(WindowEvent::CharInput(chr));
                             }
                         }
 
-                        cx.emit_origin(WindowEvent::KeyDown(event.code, Some(event.key)));
+                        self.cx.emit_origin(WindowEvent::KeyDown(event.code, Some(event.key)));
                     }
 
                     MouseButtonState::Released => {
-                        cx.emit_origin(WindowEvent::KeyUp(event.code, Some(event.key)));
+                        self.cx.emit_origin(WindowEvent::KeyUp(event.code, Some(event.key)));
                     }
                 }
             }
             baseview::Event::Window(event) => match event {
-                baseview::WindowEvent::Focused => cx.needs_refresh(),
+                baseview::WindowEvent::Focused => self.cx.needs_refresh(),
                 baseview::WindowEvent::Resized(window_info) => {
-                    // We keep track of the current size before applying the user scale factor while
-                    // baseview's logical size includes that factor so we need to compensate for it
-                    self.current_window_size = *cx.window_size();
-                    self.current_window_size.width =
-                        (window_info.logical_size().width / cx.user_scale_factor()).round() as u32;
-                    self.current_window_size.height =
-                        (window_info.logical_size().height / cx.user_scale_factor()).round() as u32;
-                    *cx.window_size() = self.current_window_size;
+                    let fb_info = {
+                        let mut fboid: GLint = 0;
+                        unsafe { gl::GetIntegerv(gl::FRAMEBUFFER_BINDING, &mut fboid) };
+
+                        FramebufferInfo {
+                            fboid: fboid.try_into().unwrap(),
+                            format: skia_safe::gpu::gl::Format::RGBA8.into(),
+                            ..Default::default()
+                        }
+                    };
+
+                    self.surface = create_surface(
+                        (
+                            window_info.physical_size().width as i32,
+                            window_info.physical_size().height as i32,
+                        ),
+                        fb_info,
+                        &mut self.gr_context,
+                    );
+
+                    self.dirty_surface = self
+                        .surface
+                        .new_surface_with_dimensions((
+                            window_info.physical_size().width as i32,
+                            window_info.physical_size().height as i32,
+                        ))
+                        .unwrap();
+
+                    // // We keep track of the current size before applying the user scale factor while
+                    // // baseview's logical size includes that factor so we need to compensate for it
+                    // self.current_window_size = *self.cx.window_size();
+                    // self.current_window_size.width = (window_info.logical_size().width
+                    //     / self.cx.user_scale_factor())
+                    // .round() as u32;
+                    // self.current_window_size.height = (window_info.logical_size().height
+                    //     / self.cx.user_scale_factor())
+                    // .round() as u32;
+                    // *self.cx.window_size() = self.current_window_size;
 
                     // Only use new DPI settings when `WindowScalePolicy::SystemScaleFactor` was
                     // used
@@ -445,65 +469,23 @@ impl ApplicationRunner {
                         self.window_scale_factor = window_info.scale();
                     }
 
-                    let user_scale_factor = cx.user_scale_factor();
+                    //let user_scale_factor = self.cx.user_scale_factor();
 
-                    cx.set_scale_factor(self.window_scale_factor * user_scale_factor);
+                    //self.cx.set_scale_factor(self.window_scale_factor * user_scale_factor);
 
                     let physical_size =
                         (window_info.physical_size().width, window_info.physical_size().height);
 
-                    cx.set_window_size(physical_size.0 as f32, physical_size.1 as f32);
+                    self.cx.set_window_size(
+                        Entity::root(),
+                        physical_size.0 as f32,
+                        physical_size.1 as f32,
+                    );
 
-                    // let mut bounding_box = BoundingBox::default();
-                    // bounding_box.w = physical_size.0 as f32;
-                    // bounding_box.h = physical_size.1 as f32;
-
-                    if let Some(surface) = cx.get_surface_mut(Entity::root()) {
-                        if window_info.physical_size().width != 0
-                            || window_info.physical_size().height != 0
-                        {
-                            let fb_info = {
-                                let mut fboid: GLint = 0;
-                                unsafe { gl::GetIntegerv(gl::FRAMEBUFFER_BINDING, &mut fboid) };
-
-                                FramebufferInfo {
-                                    fboid: fboid.try_into().unwrap(),
-                                    format: skia_safe::gpu::gl::Format::RGBA8.into(),
-                                    ..Default::default()
-                                }
-                            };
-
-                            let backend_render_target = backend_render_targets::make_gl(
-                                (physical_size.0 as i32, physical_size.1 as i32),
-                                None,
-                                8,
-                                fb_info,
-                            );
-
-                            surface.0 = gpu::surfaces::wrap_backend_render_target(
-                                &mut self.gr_context,
-                                &backend_render_target,
-                                SurfaceOrigin::BottomLeft,
-                                ColorType::RGBA8888,
-                                None,
-                                None,
-                            )
-                            .expect("Could not create skia surface");
-
-                            surface.1 = surface
-                                .0
-                                .new_surface_with_dimensions((
-                                    window_info.physical_size().width.max(1) as i32,
-                                    window_info.physical_size().height.max(1) as i32,
-                                ))
-                                .unwrap();
-                        }
-                    }
-
-                    cx.needs_refresh();
+                    self.cx.needs_refresh();
                 }
                 baseview::WindowEvent::WillClose => {
-                    cx.send_event(Event::new(WindowEvent::WindowClose));
+                    self.cx.send_event(Event::new(WindowEvent::WindowClose));
                 }
                 _ => {}
             },
@@ -511,10 +493,9 @@ impl ApplicationRunner {
     }
 
     pub fn handle_idle(&mut self, on_idle: &Option<Box<dyn Fn(&mut Context) + Send>>) {
-        let mut cx = BackendContext::new(&mut self.context);
         if let Some(idle_callback) = on_idle {
-            cx.set_current(Entity::root());
-            (idle_callback)(&mut self.context);
+            self.cx.set_current(Entity::root());
+            (idle_callback)(self.cx.context());
         }
     }
 }
