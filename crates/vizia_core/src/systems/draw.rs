@@ -209,7 +209,6 @@ pub(crate) fn draw_system(
                 views: &mut cx.views,
                 resource_manager: &cx.resource_manager,
                 text_context: &mut cx.text_context,
-                text_config: &cx.text_config,
                 modifiers: &cx.modifiers,
                 mouse: &cx.mouse,
             },

@@ -11,7 +11,7 @@ mod resource;
 use log::debug;
 use skia_safe::{
     textlayout::{FontCollection, TypefaceFontProvider},
-    FontMgr, Surface,
+    FontMgr,
 };
 use std::any::{Any, TypeId};
 use std::cell::RefCell;
@@ -80,7 +80,6 @@ pub struct Context {
     pub(crate) entity_identifiers: HashMap<String, Entity>,
     pub(crate) tree: Tree<Entity>,
     pub(crate) current: Entity,
-    pub(crate) canvases: HashMap<Entity, (Surface, Surface)>,
     pub(crate) views: Views,
     pub(crate) data: Models,
     pub(crate) bindings: Bindings,

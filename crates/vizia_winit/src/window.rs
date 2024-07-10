@@ -4,14 +4,12 @@ use glutin::context::GlProfile;
 use std::error::Error;
 use std::num::NonZeroU32;
 use std::{ffi::CString, sync::Arc};
-use winit::raw_window_handle::HasRawWindowHandle;
+use winit::raw_window_handle::HasWindowHandle;
 
 use crate::convert::cursor_icon_to_cursor_icon;
 
-use gl::types::*;
 use gl_rs as gl;
 use glutin::config::Config;
-use glutin::surface::SwapInterval;
 use glutin_winit::DisplayBuilder;
 
 use gl::types::*;
@@ -63,12 +61,12 @@ impl WinState {
     ///
     /// <https://learn.microsoft.com/en-us/windows/win32/api/dwmapi/ne-dwmapi-dwmwindowattribute>
     ///
-    pub(crate) fn set_cloak(&self, state: bool) -> bool {
+    pub(crate) fn _set_cloak(&self, state: bool) -> bool {
         use winapi::shared::minwindef::{BOOL, FALSE, TRUE};
         use winapi::um::dwmapi::{DwmSetWindowAttribute, DWMWA_CLOAK};
         use winit::raw_window_handle::RawWindowHandle::Win32;
 
-        let Win32(handle) = self.window.raw_window_handle().unwrap() else {
+        let Win32(handle) = self.window.window_handle().unwrap().as_raw() else {
             unreachable!();
         };
 
@@ -118,7 +116,7 @@ impl WinState {
             })
             .unwrap();
 
-        let raw_window_handle = window.raw_window_handle().unwrap();
+        let raw_window_handle = window.window_handle().unwrap().as_raw();
 
         let gl_display = gl_config.display();
 
@@ -318,41 +316,6 @@ impl Window {
             })
             .background_color(Color::blue())
     }
-}
-
-pub fn create_surface(
-    window: &winit::window::Window,
-    fb_info: FramebufferInfo,
-    gr_context: &mut skia_safe::gpu::DirectContext,
-    num_samples: usize,
-    stencil_size: usize,
-) -> Surface {
-    let size = window.inner_size();
-    let size = (
-        size.width.try_into().expect("Could not convert width"),
-        size.height.try_into().expect("Could not convert height"),
-    );
-
-    let backend_render_target =
-        backend_render_targets::make_gl(size, num_samples, stencil_size, fb_info);
-
-    let surface_props = SurfaceProps::new_with_text_properties(
-        SurfacePropsFlags::default(),
-        PixelGeometry::default(),
-        0.5,
-        0.0,
-    );
-
-    gpu::surfaces::wrap_backend_render_target(
-        gr_context,
-        &backend_render_target,
-        SurfaceOrigin::BottomLeft,
-        ColorType::RGBA8888,
-        ColorSpace::new_srgb(),
-        Some(surface_props).as_ref(),
-        // None,
-    )
-    .expect("Could not create skia surface")
 }
 
 impl View for Window {

@@ -116,12 +116,15 @@ pub fn layout_span(
     }
 
     if style.text_span.get(entity).copied().unwrap_or_default() {
+        cache.bounds.insert(
+            entity,
             BoundingBox::from_min_max(
+                paragraph_bounds.x + bounds.x,
                 paragraph_bounds.y + bounds.y,
                 paragraph_bounds.x + bounds.right(),
                 paragraph_bounds.y + bounds.bottom(),
             ),
-
+        );
     }
 
     bounds

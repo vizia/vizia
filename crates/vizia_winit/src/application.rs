@@ -160,12 +160,12 @@ impl Application {
 
         let mut window_state = WinState::new(event_loop, window.clone(), window_entity)?;
 
-        // On windows cloak (hide) the window initially, we later reveal it after the first draw.
-        // This is a workaround to hide the "white flash" that occurs during application startup.
-        #[cfg(target_os = "windows")]
-        {
-            window_state.is_initially_cloaked = window_state.set_cloak(true);
-        }
+        // // On windows cloak (hide) the window initially, we later reveal it after the first draw.
+        // // This is a workaround to hide the "white flash" that occurs during application startup.
+        // #[cfg(target_os = "windows")]
+        // {
+        //     window_state.is_initially_cloaked = window_state.set_cloak(true);
+        // }
 
         let window_id = window_state.window.id();
         self.windows.insert(window_id, window_state);
@@ -340,6 +340,9 @@ impl ApplicationHandler<UserEvent> for Application {
                 self.cx.context().windows.remove(&window.entity);
                 window.swap_buffers();
                 self.windows.remove(&window_id);
+
+                self.windows.retain(|_, win| self.cx.0.windows.contains_key(&win.entity));
+                self.window_ids.retain(|e, _| self.cx.0.windows.contains_key(e));
             }
 
             winit::event::WindowEvent::DroppedFile(path) => {
@@ -469,19 +472,19 @@ impl ApplicationHandler<UserEvent> for Application {
             }
             winit::event::WindowEvent::Occluded(_) => {}
             winit::event::WindowEvent::RedrawRequested => {
-                // println!("redraw: {}", window.entity);
+                println!("redraw: {}", window.entity);
                 self.cx.needs_refresh();
                 self.cx.draw(window.entity, &mut window.surface, &mut window.dirty_surface);
                 window.swap_buffers();
 
-                // Un-cloak
-                #[cfg(target_os = "windows")]
-                if window.is_initially_cloaked {
-                    window.is_initially_cloaked = false;
-                    self.cx.draw(window.entity, &mut window.surface, &mut window.dirty_surface);
-                    window.swap_buffers();
-                    window.set_cloak(false);
-                }
+                // // Un-cloak
+                // #[cfg(target_os = "windows")]
+                // if window.is_initially_cloaked {
+                //     window.is_initially_cloaked = false;
+                //     self.cx.draw(window.entity, &mut window.surface, &mut window.dirty_surface);
+                //     window.swap_buffers();
+                //     window.set_cloak(false);
+                // }
             }
 
             _ => {}
@@ -489,30 +492,6 @@ impl ApplicationHandler<UserEvent> for Application {
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
-        // Sync window state with context
-        self.windows.retain(|_, win| self.cx.0.windows.contains_key(&win.entity));
-        self.window_ids.retain(|e, _| self.cx.0.windows.contains_key(e));
-
-        if self.windows.len() != self.cx.0.windows.len() {
-            for (window_entity, window_state) in self.cx.0.windows.clone().iter() {
-                if !self.window_ids.contains_key(window_entity) {
-                    self.cx.add_main_window(*window_entity, &window_state.window_description, 1.0);
-                    let window = self
-                        .create_window(
-                            event_loop,
-                            *window_entity,
-                            &window_state.window_description,
-                            None,
-                        )
-                        .expect("Failed to create window");
-
-                    self.cx.mutate_window(*window_entity, |cx, win: &mut Window| {
-                        win.window = Some(window.clone())
-                    });
-                }
-            }
-        }
-
         if self.windows.is_empty() {
             event_loop.exit();
             return;
@@ -556,17 +535,40 @@ impl ApplicationHandler<UserEvent> for Application {
             }
         });
 
-        // if let Some(timer_time) = self.cx.get_next_timer_time() {
-        //     event_loop.set_control_flow(ControlFlow::WaitUntil(timer_time));
-        // } else {
-        //     event_loop.set_control_flow(self.control_flow);
-        // }
-        // self.windows.retain(|_, win| self.cx.0.windows.contains_key(&win.entity));
-        // println!(
-        //     "{:?} {:?}",
-        //     self.windows.iter().map(|(_, w)| w.entity).collect::<Vec<_>>(),
-        //     self.cx.0.windows.iter().map(|(e, w)| e).collect::<Vec<_>>()
-        // );
+        if let Some(timer_time) = self.cx.get_next_timer_time() {
+            event_loop.set_control_flow(ControlFlow::WaitUntil(timer_time));
+        } else {
+            event_loop.set_control_flow(self.control_flow);
+        }
+
+        // Sync window state with context
+        self.windows.retain(|_, win| self.cx.0.windows.contains_key(&win.entity));
+        self.window_ids.retain(|e, _| self.cx.0.windows.contains_key(e));
+
+        if self.windows.len() != self.cx.0.windows.len() {
+            for (window_entity, window_state) in self.cx.0.windows.clone().iter() {
+                if !self.window_ids.contains_key(window_entity) {
+                    self.cx.add_main_window(*window_entity, &window_state.window_description, 1.0);
+                    let window = self
+                        .create_window(
+                            event_loop,
+                            *window_entity,
+                            &window_state.window_description,
+                            None,
+                        )
+                        .expect("Failed to create window");
+
+                    self.cx.mutate_window(*window_entity, |cx, win: &mut Window| {
+                        win.window = Some(window.clone())
+                    });
+                }
+            }
+        }
+
+        if self.windows.is_empty() {
+            event_loop.exit();
+            return;
+        }
     }
 
     fn new_events(&mut self, event_loop: &ActiveEventLoop, cause: winit::event::StartCause) {
