@@ -146,10 +146,11 @@ pub(crate) fn draw_system(
     if cx.windows.is_empty() {
         return;
     }
+
     if !cx.entity_manager.is_alive(window_entity) {
         return;
     }
-    // println!("Draw system: {}", window_entity);
+
     transform_system(cx);
 
     let children = cx
@@ -261,8 +262,6 @@ fn draw_entity(
     visible: bool,
 ) {
     let current = cx.current;
-
-    // println!("draw {}", current);
 
     // Skip views with display: none.
     if cx.display() == Display::None {

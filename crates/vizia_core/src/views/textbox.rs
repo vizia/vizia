@@ -347,8 +347,6 @@ where
                     self.selection = Selection::caret(cursor);
                 }
 
-                println!("{:?}", self.selection);
-
                 cx.needs_redraw();
             }
         }
@@ -573,7 +571,6 @@ where
                 let x2 = x + 1.0;
                 let y2 = y + (cursor_rect.rect.bottom - cursor_rect.rect.top);
 
-                // println!("x {} {} {} {}", x, y, x2, y2);
                 let mut paint = Paint::default();
                 paint.set_anti_alias(true);
                 paint.set_style(PaintStyle::Fill);
@@ -733,8 +730,6 @@ where
                     //     character_positions.push(line.width as f32);
                     //     character_widths.push(0.0);
                     // }
-
-                    println!("{:?} {:?}", text, character_lengths);
 
                     // TODO: Might need to append any spaces that were stripped during layout. This can be done by
                     // figuring out if the start of the next line is greater than the end of the current line as long
@@ -1119,8 +1114,6 @@ where
                 //     // TODO: Either add a method to set the cursor by index to cosmic,
                 //     // or loop over an `Action` to move the cursor to the correct place.
                 // });
-
-                // println!("Select some text: {:?}", selection);
             }
 
             _ => {}

@@ -29,8 +29,4 @@ impl dyn ViewHandler {
     pub fn downcast_mut<T: Any>(&mut self) -> Option<&mut T> {
         self.as_any_mut().downcast_mut()
     }
-
-    pub fn is<T: Any>(&self) -> bool {
-        self.as_any_ref().is::<T>()
-    }
 }

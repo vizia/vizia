@@ -48,14 +48,6 @@ pub(crate) fn binding_system(cx: &mut Context) {
             .filter_map(|ent| observers.get(&ent).map(|e| (ent, *e)))
             .collect::<Vec<_>>();
 
-        // println!(
-        //     "{:?}",
-        //     ordered_observers
-        //         .iter()
-        //         .map(|(ob, (src, _, _))| (ob.index(), src.index()))
-        //         .collect::<Vec<_>>()
-        // );
-
         let mut updated_stores: HashSet<StoreId> = HashSet::new();
 
         // Update observers in tree order.

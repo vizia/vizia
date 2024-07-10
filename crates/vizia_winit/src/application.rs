@@ -569,9 +569,7 @@ impl ApplicationHandler<UserEvent> for Application {
         self.cx.emit_scheduled_events();
     }
 
-    fn exiting(&mut self, _event_loop: &ActiveEventLoop) {
-        println!("Exiting");
-    }
+    fn exiting(&mut self, _event_loop: &ActiveEventLoop) {}
 }
 
 impl WindowModifiers for Application {

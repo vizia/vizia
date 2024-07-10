@@ -363,7 +363,6 @@ pub struct Style {
 
     pub(crate) restyle: Bloom,
     pub(crate) redraw_list: HashSet<Entity>,
-    pub(crate) redraw: Bloom,
     pub(crate) text_construction: Bloom,
     pub(crate) text_layout: Bloom,
     pub(crate) reaccess: Bloom,

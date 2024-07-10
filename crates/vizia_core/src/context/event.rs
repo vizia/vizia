@@ -171,9 +171,9 @@ impl<'a> EventContext<'a> {
         }
     }
 
-    pub fn get_view<V: View>(&self) -> Option<&V> {
-        self.views.get(&self.current).and_then(|view| view.downcast_ref::<V>())
-    }
+    // pub fn get_view<V: View>(&self) -> Option<&V> {
+    //     self.views.get(&self.current).and_then(|view| view.downcast_ref::<V>())
+    // }
 
     /// Returns the [Entity] id associated with the given identifier.
     pub fn resolve_entity_identifier(&self, id: &str) -> Option<Entity> {
@@ -693,6 +693,7 @@ impl<'a> EventContext<'a> {
         self.style.needs_redraw(self.current);
     }
 
+    /// Marks the current view as needing to be restyled.
     pub fn needs_restyle(&mut self) {
         self.style.restyle.insert(self.current).unwrap();
         let iter = if let Some(parent) = self.tree.get_layout_parent(self.current) {

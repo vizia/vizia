@@ -1,8 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::{
-    ChildIterator, DoubleEndedTreeTour, LayoutChildIterator, TourDirection, TourStep, Tree,
-};
+use crate::{DoubleEndedTreeTour, LayoutChildIterator, TourDirection, TourStep, Tree};
 use vizia_id::GenerationalId;
 
 /// Iterator for iterating through the tree in depth first preorder.

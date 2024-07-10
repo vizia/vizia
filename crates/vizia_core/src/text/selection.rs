@@ -51,7 +51,3 @@ impl Selection {
         self.min() == self.max()
     }
 }
-
-pub trait TextSelection: Sized {}
-
-impl TextSelection for Selection {}

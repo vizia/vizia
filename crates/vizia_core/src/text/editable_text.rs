@@ -4,7 +4,7 @@ use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use crate::views::TextEvent;
 
-use super::{offset_for_delete_backwards, Movement, Selection, TextSelection};
+use super::{offset_for_delete_backwards, Movement, Selection};
 
 pub trait TextData {
     fn process_event(&mut self, event: TextEvent);
