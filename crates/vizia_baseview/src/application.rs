@@ -38,7 +38,6 @@ where
     window_scale_policy: WindowScalePolicy,
     on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
     ignore_default_theme: bool,
-    text_config: TextConfig,
 }
 
 impl<F> Application<F>
@@ -53,7 +52,6 @@ where
             window_scale_policy: WindowScalePolicy::SystemScaleFactor,
             on_idle: None,
             ignore_default_theme: false,
-            text_config: TextConfig::default(),
         }
     }
 
@@ -68,12 +66,6 @@ where
     /// [`WindowDescription::scale_factor`] to set a separate arbitrary scale factor.
     pub fn with_scale_policy(mut self, scale_policy: WindowScalePolicy) -> Self {
         self.window_scale_policy = scale_policy;
-        self
-    }
-
-    pub fn with_text_config(mut self, text_config: TextConfig) -> Self {
-        self.text_config = text_config;
-
         self
     }
 
@@ -109,7 +101,6 @@ where
             self.app,
             self.on_idle,
             self.ignore_default_theme,
-            self.text_config,
         );
 
         Ok(())
@@ -130,7 +121,6 @@ where
             self.app,
             self.on_idle,
             self.ignore_default_theme,
-            self.text_config,
         )
     }
 
