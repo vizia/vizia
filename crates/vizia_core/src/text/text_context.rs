@@ -4,12 +4,6 @@ use vizia_storage::SparseSet;
 
 use crate::{entity::Entity, layout::BoundingBox};
 
-#[derive(Default, Debug, Clone, Copy)]
-pub struct TextConfig {
-    pub hint: bool,
-    pub subpixel: bool,
-}
-
 pub struct TextContext {
     pub font_collection: FontCollection,
     pub default_font_manager: FontMgr,

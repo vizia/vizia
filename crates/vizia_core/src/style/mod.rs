@@ -69,18 +69,18 @@ use std::ops::{Deref, DerefMut, Range};
 use crate::prelude::*;
 
 pub use vizia_style::{
-    Angle, BackgroundImage, BackgroundSize, ClipPath, Color, CornerShape, CssRule, CursorIcon,
-    Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight, FontWeightKeyword,
-    FontWidth, GenericFontFamily, Gradient, HorizontalPosition, HorizontalPositionKeyword, Length,
-    LengthOrPercentage, LengthValue, LineClamp, LineDirection, LinearGradient, Matrix, Opacity,
-    Overflow, PointerEvents, Position, Scale, Shadow, TextAlign, TextDecorationLine,
-    TextDecorationStyle, TextOverflow, Transform, Transition, Translate, VerticalPosition,
-    VerticalPositionKeyword, Visibility, RGBA,
+    Angle, BackgroundImage, BackgroundSize, BorderStyleKeyword, ClipPath, Color, CornerShape,
+    CssRule, CursorIcon, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation,
+    FontWeight, FontWeightKeyword, FontWidth, GenericFontFamily, Gradient, HorizontalPosition,
+    HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue, LineClamp, LineDirection,
+    LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position, Scale, Shadow, TextAlign,
+    TextDecorationLine, TextDecorationStyle, TextOverflow, Transform, Transition, Translate,
+    VerticalPosition, VerticalPositionKeyword, Visibility, RGBA,
 };
 
 use vizia_style::{
-    value, BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, SelectorList,
-    Selectors, StyleSheet,
+    BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, SelectorList, Selectors,
+    StyleSheet,
 };
 
 mod rule;
@@ -149,11 +149,6 @@ pub enum FamilyOwned {
     Generic(GenericFontFamily),
     Named(String),
 }
-
-#[cfg(feature = "embedded_fonts")]
-const DEFAULT_FAMILY_NAME: &str = "Roboto Flex";
-#[cfg(not(feature = "embedded_fonts"))]
-const DEFAULT_FAMILY_NAME: &str = "";
 
 impl AsRef<str> for FamilyOwned {
     fn as_ref(&self) -> &str {
@@ -258,6 +253,7 @@ pub struct Style {
     // Border
     pub(crate) border_width: AnimatableSet<LengthOrPercentage>,
     pub(crate) border_color: AnimatableSet<Color>,
+    pub(crate) border_style: StyleSet<BorderStyleKeyword>,
 
     // Corner Shape
     pub(crate) corner_top_left_shape: StyleSet<CornerShape>,
@@ -373,6 +369,7 @@ pub struct Style {
     pub(crate) reaccess: Bloom,
 
     pub(crate) text_range: SparseSet<Range<usize>>,
+    pub(crate) text_span: SparseSet<bool>,
 
     /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
     pub(crate) dpi_factor: f64,
@@ -1392,14 +1389,23 @@ impl Style {
                 if let Some(border_width) = border.width {
                     self.border_width.insert_rule(rule_id, border_width.into());
                 }
+
+                if let Some(border_style) = border.style {
+                    self.border_style.insert_rule(rule_id, border_style.top);
+                }
             }
 
             // Border
             Property::BorderWidth(border_width) => {
                 self.border_width.insert_rule(rule_id, border_width.top.0);
             }
+
             Property::BorderColor(color) => {
                 self.border_color.insert_rule(rule_id, color);
+            }
+
+            Property::BorderStyle(style) => {
+                self.border_style.insert_rule(rule_id, style.top);
             }
 
             // Border Radius
@@ -1717,6 +1723,7 @@ impl Style {
         // Border
         self.border_width.remove(entity);
         self.border_color.remove(entity);
+        self.border_style.remove(entity);
 
         // Corner Shape
         self.corner_bottom_left_shape.remove(entity);
@@ -1810,6 +1817,8 @@ impl Style {
         self.max_top.remove(entity);
         self.min_bottom.remove(entity);
         self.max_bottom.remove(entity);
+        self.text_range.remove(entity);
+        self.text_span.remove(entity);
     }
 
     pub fn needs_restyle(&mut self, entity: Entity) {
@@ -1877,6 +1886,7 @@ impl Style {
         // Border
         self.border_width.clear_rules();
         self.border_color.clear_rules();
+        self.border_style.clear_rules();
 
         // Corner Shape
         self.corner_bottom_left_shape.clear_rules();

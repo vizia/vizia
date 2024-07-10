@@ -49,16 +49,16 @@ mod tests {
 
         custom {
             success {
-                "none" => BorderStyle::new(None, None, None, None),
-                "none solid" => BorderStyle::new(None, Solid, None, Solid),
-                "none solid dashed" => BorderStyle::new(None, Solid, Dashed, Solid),
-                "none solid dashed groove" => BorderStyle::new(None, Solid, Dashed, Groove),
+                "solid" => BorderStyle::new(Solid, Solid, Solid, Solid),
+                "solid solid" => BorderStyle::new(Solid, Solid, Solid, Solid),
+                "solid solid dashed" => BorderStyle::new(Solid, Solid, Dashed, Solid),
+                "solid solid dashed solid" => BorderStyle::new(Solid, Solid, Dashed, Solid),
             }
 
             failure {
                 "test",
                 "123",
-                "none solid dashed groove dotted",
+                "solid solid dashed groove dotted",
             }
         }
     }

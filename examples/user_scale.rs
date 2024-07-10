@@ -66,7 +66,7 @@ fn app_main(cx: &mut Context) {
     .background_color(Color::from("#fafafa"))
     .border_color(Color::from("#dadada"))
     .border_width(Pixels(1.0))
-    .border_radius(Pixels(5.0));
+    .corner_radius(Pixels(5.0));
 
     // TODO: Resize handle
 }

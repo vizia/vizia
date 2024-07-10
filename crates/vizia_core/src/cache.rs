@@ -37,6 +37,13 @@ impl CachedData {
     }
 
     pub(crate) fn remove(&mut self, entity: Entity) {
+        if let Some(draw_bounds) = self.draw_bounds.get(entity) {
+            if let Some(dirty_rect) = &mut self.dirty_rect {
+                *dirty_rect = dirty_rect.union(draw_bounds);
+            } else {
+                self.dirty_rect = Some(*draw_bounds);
+            }
+        }
         self.bounds.remove(entity);
         self.relative_bounds.remove(entity);
         self.draw_bounds.remove(entity);

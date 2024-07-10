@@ -52,7 +52,7 @@ impl ViziaWindow {
         let mut context_options = ContextOptions::new();
         context_options.skip_gl_error_checks = context_options::Enable::Yes;
 
-        let mut gr_context = skia_safe::gpu::DirectContext::new_gl(interface, &context_options)
+        let mut gr_context = skia_safe::gpu::direct_contexts::make_gl(interface, &context_options)
             .expect("Could not create direct context");
 
         let fb_info = {
@@ -86,13 +86,15 @@ impl ViziaWindow {
         let dpi_factor = window_scale_factor * win_desc.user_scale_factor;
 
         BackendContext::new(&mut cx).add_main_window(&win_desc, surface, dpi_factor as f32);
+        BackendContext::new(&mut cx).add_window(WindowView {});
 
         cx.remove_user_themes();
         if let Some(builder) = builder {
             (builder)(&mut cx);
         }
 
-        let application = ApplicationRunner::new(cx, use_system_scaling, window_scale_factor);
+        let application =
+            ApplicationRunner::new(cx, gr_context, use_system_scaling, window_scale_factor);
         unsafe { context.make_not_current() };
 
         ViziaWindow { application, on_idle, gr_context }
@@ -210,7 +212,6 @@ impl WindowHandler for ViziaWindow {
         unsafe { context.make_current() };
 
         self.application.render();
-        self.gr_context.flush_and_submit();
         context.swap_buffers();
 
         unsafe { context.make_not_current() };
@@ -218,6 +219,7 @@ impl WindowHandler for ViziaWindow {
 
     fn on_event(&mut self, _window: &mut Window<'_>, event: Event) -> EventStatus {
         let mut should_quit = false;
+
         self.application.handle_event(event, &mut should_quit);
 
         self.application.handle_idle(&self.on_idle);
@@ -229,6 +231,10 @@ impl WindowHandler for ViziaWindow {
         EventStatus::Ignored
     }
 }
+
+pub struct WindowView {}
+
+impl View for WindowView {}
 
 pub fn create_surface(
     size: (i32, i32),

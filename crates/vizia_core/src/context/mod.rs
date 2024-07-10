@@ -35,7 +35,6 @@ pub use resource::*;
 
 use crate::cache::CachedData;
 use crate::events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler};
-#[cfg(feature = "embedded_fonts")]
 use crate::fonts;
 use crate::{
     binding::{BindingHandler, MapId},
@@ -45,7 +44,7 @@ use crate::{
 use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
-use crate::text::{TextConfig, TextContext};
+use crate::text::TextContext;
 use vizia_input::MouseState;
 use vizia_storage::{ChildIterator, LayoutTreeIterator};
 
@@ -81,6 +80,7 @@ pub struct Context {
     pub(crate) entity_identifiers: HashMap<String, Entity>,
     pub(crate) tree: Tree<Entity>,
     pub(crate) current: Entity,
+    pub(crate) canvases: HashMap<Entity, (Surface, Surface)>,
     pub(crate) views: Views,
     pub(crate) data: Models,
     pub(crate) bindings: Bindings,
@@ -110,7 +110,6 @@ pub struct Context {
     pub(crate) resource_manager: ResourceManager,
 
     pub text_context: TextContext,
-    pub(crate) text_config: TextConfig,
 
     pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
 
@@ -201,8 +200,6 @@ impl Context {
                     text_paragraphs: Default::default(),
                 }
             },
-
-            text_config: TextConfig::default(),
 
             event_proxy: None,
 

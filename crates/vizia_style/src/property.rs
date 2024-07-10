@@ -1,6 +1,6 @@
 use crate::{
-    define_property, Angle, BackgroundImage, BackgroundSize, BlendMode, Border, BorderWidth,
-    BorderWidthValue, ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError,
+    define_property, Angle, BackgroundImage, BackgroundSize, BlendMode, Border, BorderStyle,
+    BorderWidth, ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError,
     CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
     FontWidth, LayoutType, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow, Parse,
     PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign, TextDecoration,
@@ -94,18 +94,18 @@ define_property! {
 
         // Border Style
         // TODO: Support styling borders.
-        // "border-style": BorderStyle(BorderStyle),
-        // "corner-top-style": BorderTopStyle(BorderStyleKeyword),
+        "border-style": BorderStyle(BorderStyle),
+        // "border-top-style": BorderTopStyle(BorderStyleKeyword),
         // "border-right-style": BorderRightStyle(BorderStyleKeyword),
         // "corner-bottom-style": BorderBottomStyle(BorderStyleKeyword),
         // "border-left-style": BorderLeftStyle(BorderStyleKeyword),
 
         // Border Width
         "border-width": BorderWidth(BorderWidth),
-        "border-top-width": BorderTopWidth(BorderWidthValue),
-        "border-right-width": BorderRightWidth(BorderWidthValue),
-        "border-bottom-width": BorderBottomWidth(BorderWidthValue),
-        "border-left-width": BorderLeftWidth(BorderWidthValue),
+        // "border-top-width": BorderTopWidth(BorderWidthValue),
+        // "border-right-width": BorderRightWidth(BorderWidthValue),
+        // "border-bottom-width": BorderBottomWidth(BorderWidthValue),
+        // "border-left-width": BorderLeftWidth(BorderWidthValue),
 
 
         // ----- Outline -----
@@ -200,7 +200,7 @@ mod tests {
     fn parse_property() {
         let mut parser_input = ParserInput::new("red");
         let mut parser = Parser::new(&mut parser_input);
-        let parsed_property =
+        let _parsed_property =
             Property::parse_value(CowRcStr::from("background-color"), &mut parser);
     }
 }

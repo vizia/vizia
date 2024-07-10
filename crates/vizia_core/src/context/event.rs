@@ -672,11 +672,11 @@ impl<'a> EventContext<'a> {
         if !self.ignore_default_theme {
             match theme_mode {
                 ThemeMode::LightMode => {
-                    self.resource_manager.themes[1] = String::from(LIGHT_THEME);
+                    self.resource_manager.themes[2] = String::from(LIGHT_THEME);
                 }
 
                 ThemeMode::DarkMode => {
-                    self.resource_manager.themes[1] = String::from(DARK_THEME);
+                    self.resource_manager.themes[2] = String::from(DARK_THEME);
                 }
             }
         }

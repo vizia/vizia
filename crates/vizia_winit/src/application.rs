@@ -179,11 +179,6 @@ impl Application {
         self
     }
 
-    pub fn set_text_config(mut self, text_config: TextConfig) -> Self {
-        self.cx.set_text_config(text_config);
-        self
-    }
-
     pub fn should_poll(mut self) -> Self {
         self.control_flow = ControlFlow::Poll;
 
@@ -537,12 +532,12 @@ impl ApplicationHandler<UserEvent> for Application {
 
         self.cx.process_visual_updates();
 
-        // #[cfg(feature = "accesskit")]
-        // self.cx.process_tree_updates(|tree_updates| {
-        //     for update in tree_updates.iter_mut() {
-        //         accesskit.update_if_active(|| update.take().unwrap());
-        //     }
-        // });
+        #[cfg(feature = "accesskit")]
+        cx.process_tree_updates(|tree_updates| {
+            for update in tree_updates.iter_mut() {
+                accesskit.update_if_active(|| update.take().unwrap());
+            }
+        });
 
         // if let Some(idle_callback) = &self.on_idle {
         //     self.cx.set_current(Entity::root());

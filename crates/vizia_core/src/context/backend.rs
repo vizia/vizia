@@ -6,8 +6,6 @@ use vizia_window::WindowDescription;
 use super::EventProxy;
 use crate::{cache::CachedData, prelude::*, systems::*};
 
-pub use crate::text::text_context::TextConfig;
-
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
@@ -119,11 +117,6 @@ impl BackendContext {
     /// tree.
     pub fn set_current(&mut self, e: Entity) {
         self.0.current = e;
-    }
-
-    /// Sets the default text configuration to use for text rendering.
-    pub fn set_text_config(&mut self, text_config: TextConfig) {
-        self.0.text_config = text_config;
     }
 
     /// Sets the scale factor used by the application.

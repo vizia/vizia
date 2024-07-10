@@ -1,5 +1,3 @@
-mod helpers;
-use helpers::*;
 use vizia::prelude::*;
 
 #[derive(Lens)]
@@ -9,7 +7,6 @@ impl Model for AppData {}
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let list: Vec<u32> = (10..14u32).collect();
         AppData {}.build(cx);
 
         //         Markdown::new(

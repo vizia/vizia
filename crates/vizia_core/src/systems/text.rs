@@ -88,7 +88,7 @@ pub fn layout_span(
     paragraph_bounds: BoundingBox,
 ) -> BoundingBox {
     let mut bounds = BoundingBox::default();
-    if style.display.get(entity).copied().unwrap_or_default() == Display::None {
+    if style.text_span.get(entity).copied().unwrap_or_default() {
         if let Some(range) = style.text_range.get(entity) {
             let rects = paragraph.get_rects_for_range(
                 range.clone(),
@@ -115,16 +115,13 @@ pub fn layout_span(
         }
     }
 
-    if style.display.get(entity).copied().unwrap_or_default() == Display::None {
-        cache.bounds.insert(
-            entity,
+    if style.text_span.get(entity).copied().unwrap_or_default() {
             BoundingBox::from_min_max(
-                paragraph_bounds.x + bounds.x,
                 paragraph_bounds.y + bounds.y,
                 paragraph_bounds.x + bounds.right(),
                 paragraph_bounds.y + bounds.bottom(),
             ),
-        );
+
     }
 
     bounds
@@ -261,6 +258,8 @@ fn add_block(
 
     let iter = LayoutChildIterator::new(tree, entity);
     for child in iter {
-        add_block(style, tree, child, paragraph_builder, current);
+        if style.text_span.get(child).copied().unwrap_or_default() {
+            add_block(style, tree, child, paragraph_builder, current);
+        }
     }
 }

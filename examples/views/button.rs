@@ -1,6 +1,7 @@
 mod helpers;
 use helpers::*;
 
+use log::debug;
 use vizia::icons::ICON_CHECK;
 use vizia::prelude::*;
 

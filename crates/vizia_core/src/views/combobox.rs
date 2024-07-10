@@ -1,5 +1,4 @@
 use std::marker::PhantomData;
-use std::usize;
 
 use crate::prelude::*;
 
@@ -419,7 +418,7 @@ impl View for ComboPopup {
                         ));
                     } else if let Some(first_child) = cx.tree.get_layout_first_child(cx.current) {
                         let mut child_bounds = cx.cache.get_bounds(first_child);
-                        child_bounds.h = window_bounds.bottom() - bounds.top() - 4.0 * scale;
+                        child_bounds.h = window_bounds.bottom() - bounds.top() - 8.0 * scale;
 
                         cx.style.max_height.insert(first_child, Pixels(child_bounds.h / scale));
                     }

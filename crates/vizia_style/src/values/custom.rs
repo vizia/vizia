@@ -248,7 +248,7 @@ mod tests {
         let success_string = "left";
         let mut parser_input = cssparser::ParserInput::new(success_string);
         let mut parser = cssparser::Parser::new(&mut parser_input);
-        let result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
+        let _result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
         // assert_eq!(result, Ok($value));
     }
 
@@ -257,7 +257,7 @@ mod tests {
         let success_string = "#456789";
         let mut parser_input = cssparser::ParserInput::new(success_string);
         let mut parser = cssparser::Parser::new(&mut parser_input);
-        let result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
+        let _result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
         // assert_eq!(result, Ok($value));
     }
 
@@ -266,7 +266,7 @@ mod tests {
         let success_string = "3px";
         let mut parser_input = cssparser::ParserInput::new(success_string);
         let mut parser = cssparser::Parser::new(&mut parser_input);
-        let result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
+        let _result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
         // assert_eq!(result, Ok($value));
     }
 
@@ -275,7 +275,7 @@ mod tests {
         let success_string = "left 3px rgb(100, 200, 50)";
         let mut parser_input = cssparser::ParserInput::new(success_string);
         let mut parser = cssparser::Parser::new(&mut parser_input);
-        let result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
+        let _result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
         // assert_eq!(result, Ok($value));
     }
 }

@@ -394,28 +394,6 @@ divider {
 
 /* DROPDOWN */
 
-dropdown {
-    corner-radius: 4px;
-}
-
-dropdown .dropdown-title {
-    corner-radius: 4px;
-}
-
-dropdown:over {
-    background-color: #f9f9f9;
-}
-
-dropdown:active {
-    background-color: #eaeaea;
-}
-
-dropdown .dropdown-title {
-    border-width: 1px;
-    border-color: #d2d2d2;
-    corner-radius: 4px;
-}
-
 dropdown popup {
     corner-radius: 4px;
     border-width: 1px;
@@ -795,7 +773,17 @@ spinbox textbox.spinbox-value {
     corner-radius: 0px;
 }
 
-spinbox picklist.spinbox-value dropdown {
+spinbox picklist.spinbox-value > dropdown > button {
+    background-color: transparent;
+    border-width: 0px;
+}
+
+spinbox picklist.spinbox-value > dropdown > button:hover {
+    background-color: transparent;
+    border-width: 0px;
+}
+
+spinbox picklist.spinbox-value dropdown button:active {
     background-color: transparent;
     border-width: 0px;
 }

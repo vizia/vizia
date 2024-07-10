@@ -2,8 +2,8 @@ use skia_safe::gradient_shader::GradientShaderColors;
 use skia_safe::path::ArcSize;
 use skia_safe::rrect::Corner;
 use skia_safe::{
-    BlurStyle, ClipOp, MaskFilter, Matrix, Paint, PaintStyle, Path, PathDirection, Point, RRect,
-    Rect, SamplingOptions, Shader, TileMode,
+    BlurStyle, ClipOp, MaskFilter, Matrix, Paint, PaintStyle, Path, PathDirection, PathEffect,
+    Point, RRect, Rect, SamplingOptions, Shader, TileMode,
 };
 use std::any::{Any, TypeId};
 use std::f32::consts::SQRT_2;
@@ -17,7 +17,7 @@ use crate::events::ViewHandler;
 use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
-use crate::text::{TextConfig, TextContext};
+use crate::text::TextContext;
 use vizia_input::MouseState;
 
 /// A context used when drawing a view.
@@ -59,7 +59,6 @@ pub struct DrawContext<'a> {
     pub(crate) views: &'a mut HashMap<Entity, Box<dyn ViewHandler>>,
     pub(crate) resource_manager: &'a ResourceManager,
     pub(crate) text_context: &'a mut TextContext,
-    pub(crate) text_config: &'a TextConfig,
     pub(crate) modifiers: &'a Modifiers,
     pub(crate) mouse: &'a MouseState<Entity>,
 }
@@ -406,6 +405,10 @@ impl<'a> DrawContext<'a> {
     get_color_property!(background_color);
     get_color_property!(border_color);
 
+    pub fn border_style(&self) -> BorderStyleKeyword {
+        self.style.border_style.get(self.current).copied().unwrap_or_default()
+    }
+
     get_color_property!(selection_color);
     get_color_property!(caret_color);
     get_color_property!(font_color);
@@ -648,14 +651,31 @@ impl<'a> DrawContext<'a> {
     pub fn draw_border(&mut self, canvas: &Canvas) {
         let border_color = self.border_color();
         let border_width = self.border_width();
+        let border_style = self.border_style();
 
-        if border_width > 0.0 && border_color.a() > 0 {
+        if border_width > 0.0 && border_color.a() > 0 && border_style != BorderStyleKeyword::None {
             let bounds = self.bounds();
             let path = self.build_path(bounds, (-border_width / 2.0, -border_width / 2.0));
             let mut paint = Paint::default();
             paint.set_style(PaintStyle::Stroke);
             paint.set_color(border_color);
             paint.set_stroke_width(border_width);
+            match border_style {
+                BorderStyleKeyword::Dashed => {
+                    paint.set_path_effect(PathEffect::dash(
+                        &[border_width * 2.0, border_width],
+                        0.0,
+                    ));
+                }
+
+                BorderStyleKeyword::Dotted => {
+                    paint.set_path_effect(PathEffect::dash(&[0.0, border_width * 2.0], 0.0));
+                    paint.set_stroke_cap(skia_safe::PaintCap::Round);
+                }
+
+                _ => {}
+            }
+
             paint.set_anti_alias(true);
             canvas.draw_path(&path, &paint);
         }

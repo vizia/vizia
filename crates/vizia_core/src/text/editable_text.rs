@@ -63,6 +63,8 @@ pub trait EditableText: Sized {
     /// Get the next grapheme offset from the given offset, if it exists.
     fn next_grapheme_offset(&self, offset: usize) -> Option<usize>;
 
+    fn current_grapheme_offset(&self, offset: usize) -> usize;
+
     /// Get the previous codepoint offset from the given offset, if it exists.
     fn prev_codepoint_offset(&self, offset: usize) -> Option<usize>;
 
@@ -105,6 +107,29 @@ impl EditableText for String {
     fn next_grapheme_offset(&self, from: usize) -> Option<usize> {
         let mut c = GraphemeCursor::new(from, self.len(), true);
         c.next_boundary(self, 0).unwrap()
+    }
+
+    fn current_grapheme_offset(&self, from: usize) -> usize {
+        if from == self.len() {
+            self.graphemes(true).count()
+        } else {
+            let mut current = self.graphemes(true).count();
+
+            let mut iter = self.grapheme_indices(true).peekable();
+            let mut count = 0;
+            while let Some((i, _)) = iter.next() {
+                let ni = if let Some(next) = iter.peek() { next.0 } else { self.len() };
+
+                if from >= i && from < ni {
+                    current = count;
+                    break;
+                }
+
+                count += 1;
+            }
+
+            current
+        }
     }
 
     fn prev_codepoint_offset(&self, current_pos: usize) -> Option<usize> {

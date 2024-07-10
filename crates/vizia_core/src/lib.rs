@@ -48,7 +48,6 @@ pub use fonts::*;
 pub mod backend {
     pub use super::accessibility::IntoNode;
     pub use super::context::backend::BackendContext;
-    pub use super::text::text_context::TextConfig;
     pub use vizia_window::WindowDescription;
 }
 
@@ -56,7 +55,7 @@ pub mod backend {
 #[doc(hidden)]
 pub mod prelude {
     pub use super::binding::{
-        Binding, Data, Index, Lens, LensExt, LensValue, Map, MapRef, Res, StaticLens, Then,
+        Binding, Data, Index, Lens, LensExt, LensValue, Map, MapRef, Res, ResGet, StaticLens, Then,
         UnwrapLens, Wrapper,
     };
 

@@ -14,6 +14,8 @@ use glutin::config::Config;
 use glutin::surface::SwapInterval;
 use glutin_winit::DisplayBuilder;
 
+use gl::types::*;
+
 use glutin::{
     config::ConfigTemplateBuilder,
     context::{ContextApi, ContextAttributesBuilder},
@@ -316,6 +318,41 @@ impl Window {
             })
             .background_color(Color::blue())
     }
+}
+
+pub fn create_surface(
+    window: &winit::window::Window,
+    fb_info: FramebufferInfo,
+    gr_context: &mut skia_safe::gpu::DirectContext,
+    num_samples: usize,
+    stencil_size: usize,
+) -> Surface {
+    let size = window.inner_size();
+    let size = (
+        size.width.try_into().expect("Could not convert width"),
+        size.height.try_into().expect("Could not convert height"),
+    );
+
+    let backend_render_target =
+        backend_render_targets::make_gl(size, num_samples, stencil_size, fb_info);
+
+    let surface_props = SurfaceProps::new_with_text_properties(
+        SurfacePropsFlags::default(),
+        PixelGeometry::default(),
+        0.5,
+        0.0,
+    );
+
+    gpu::surfaces::wrap_backend_render_target(
+        gr_context,
+        &backend_render_target,
+        SurfaceOrigin::BottomLeft,
+        ColorType::RGBA8888,
+        ColorSpace::new_srgb(),
+        Some(surface_props).as_ref(),
+        // None,
+    )
+    .expect("Could not create skia surface")
 }
 
 impl View for Window {

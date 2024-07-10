@@ -745,15 +745,15 @@ impl RGBA {
             h += 1.0;
         }
 
-        let s = s.max(0.0).min(1.0);
-        let l = l.max(0.0).min(1.0);
+        let s = s.clamp(0.0, 1.0);
+        let l = l.clamp(0.0, 1.0);
 
         let m2 = if l <= 0.5 { l * (1.0 + s) } else { l + s - l * s };
         let m1 = 2.0 * l - m2;
 
-        let r = (hue(h + 1.0 / 3.0, m1, m2).max(0.0).min(1.0) * 255.255) as u8;
-        let g = (hue(h, m1, m2).max(0.0).min(1.0) * 255.0) as u8;
-        let b = (hue(h - 1.0 / 3.0, m1, m2).max(0.0).min(1.0) * 255.0) as u8;
+        let r = (hue(h + 1.0 / 3.0, m1, m2).clamp(0.0, 1.0) * 255.255) as u8;
+        let g = (hue(h, m1, m2).clamp(0.0, 1.0) * 255.0) as u8;
+        let b = (hue(h - 1.0 / 3.0, m1, m2).clamp(0.0, 1.0) * 255.0) as u8;
 
         Self::rgba(r, g, b, a)
     }

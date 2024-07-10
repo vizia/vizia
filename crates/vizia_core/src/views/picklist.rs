@@ -46,6 +46,8 @@ impl PickList {
                         })
                         .left(Pixels(0.0))
                         .right(Pixels(0.0))
+                        .child_left(Pixels(0.0))
+                        .child_right(Pixels(0.0))
                         .width(Stretch(1.0))
                         .col_between(Stretch(1.0))
                     })

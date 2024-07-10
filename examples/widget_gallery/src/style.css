@@ -95,7 +95,7 @@ demo-region > divider {
 demo-region > hstack.code {
     background-color: #2d343f;
     color: white;
-    font-family: "Fira Code";
+    font-family: monospace;
     width: 1s;
     child-space: 10px;
     corner-radius: 4px;
