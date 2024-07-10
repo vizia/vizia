@@ -84,8 +84,8 @@
 //! }
 //! ```
 
-mod event_manager;
-pub(crate) use event_manager::EventManager;
+pub mod event_manager;
+pub use event_manager::EventManager;
 
 mod event;
 pub(crate) use event::TimedEvent;

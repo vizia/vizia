@@ -3,11 +3,13 @@ use std::{cmp::Ordering, collections::BinaryHeap};
 use crate::prelude::*;
 use log::debug;
 use skia_safe::Matrix;
-use vizia_storage::{LayoutChildIterator, LayoutParentIterator};
+use vizia_storage::{DrawChildIterator, LayoutParentIterator};
 
 // Determines the hovered entity based on the mouse cursor position.
-pub(crate) fn hover_system(cx: &mut Context) {
-    if let Some(pseudo_classes) = cx.style.pseudo_classes.get(Entity::root()) {
+pub fn hover_system(cx: &mut Context, window_entity: Entity) {
+    cx.current = window_entity;
+
+    if let Some(pseudo_classes) = cx.style.pseudo_classes.get(window_entity) {
         if !pseudo_classes.contains(PseudoClassFlags::OVER) {
             return;
         }
@@ -15,11 +17,11 @@ pub(crate) fn hover_system(cx: &mut Context) {
 
     let mut queue = BinaryHeap::new();
     let pointer_events: bool =
-        cx.style.pointer_events.get(Entity::root()).copied().unwrap_or_default().into();
-    queue.push(ZEntity { index: 0, pointer_events, entity: Entity::root() });
-    let mut hovered = Entity::root();
+        cx.style.pointer_events.get(window_entity).copied().unwrap_or_default().into();
+    queue.push(ZEntity { index: 0, pointer_events, entity: window_entity });
+    let mut hovered = window_entity;
     let transform = Matrix::new_identity();
-    // let clip_bounds = cx.cache.get_bounds(Entity::root());
+    // let clip_bounds = cx.cache.get_bounds(window_entity);
     let clip_bounds: BoundingBox =
         BoundingBox { x: -f32::MAX / 2.0, y: -f32::MAX / 2.0, w: f32::MAX, h: f32::MAX };
     while !queue.is_empty() {
@@ -190,7 +192,7 @@ fn hover_entity(
         }
     }
 
-    let child_iter = LayoutChildIterator::new(cx.tree, cx.current);
+    let child_iter = DrawChildIterator::new(cx.tree, cx.current);
     for child in child_iter {
         cx.current = child;
         hover_entity(cx, current_z, pointer_events, queue, hovered, transform, &clipping);

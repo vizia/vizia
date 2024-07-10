@@ -1817,7 +1817,6 @@ impl Style {
         self.max_top.remove(entity);
         self.min_bottom.remove(entity);
         self.max_bottom.remove(entity);
-
         self.text_range.remove(entity);
         self.text_span.remove(entity);
     }
