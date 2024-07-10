@@ -93,6 +93,11 @@ impl ViziaWindow {
         cx.add_main_window(Entity::root(), &win_desc, dpi_factor as f32);
         cx.add_window(WindowView {});
 
+        cx.0.windows.insert(
+            Entity::root(),
+            WindowState { window_description: win_desc.clone(), ..Default::default() },
+        );
+
         cx.context().remove_user_themes();
         if let Some(builder) = builder {
             (builder)(cx.context());
