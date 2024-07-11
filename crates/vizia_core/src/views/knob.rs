@@ -273,7 +273,7 @@ impl View for ArcTrack {
         let span = self.span.to_px(radius, 0.0);
 
         // Draw the track arc
-        let mut path = vg::Path::new();
+        let path = vg::Path::new();
         // path.arc(centerx, centery, radius - span / 2.0, end, start, Solidity::Solid);
         let oval = vg::Rect::new(bounds.left(), bounds.top(), bounds.right(), bounds.bottom());
 

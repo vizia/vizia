@@ -23,6 +23,12 @@ pub struct EventManager {
     event_queue: Vec<Event>,
 }
 
+impl Default for EventManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EventManager {
     pub fn new() -> Self {
         EventManager { event_queue: Vec::with_capacity(10) }

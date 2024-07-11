@@ -28,7 +28,7 @@ pub(crate) fn layout_system(cx: &mut Context) {
 
         let cx = &mut EventContext::new(cx);
 
-        let iter = LayoutTreeIterator::full(&cx.tree);
+        let iter = LayoutTreeIterator::full(cx.tree);
 
         for entity in iter {
             if cx.style.display.get(entity).copied().unwrap_or_default() == Display::None {

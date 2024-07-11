@@ -187,14 +187,14 @@ pub fn offset_for_delete_backwards(region: &Selection, text: &impl EditableText)
 }
 
 pub fn is_variation_selector(c: char) -> bool {
-    (c >= '\u{FE00}' && c <= '\u{FE0F}') || (c >= '\u{E0100}' && c <= '\u{E01EF}')
+    ('\u{FE00}'..='\u{FE0F}').contains(&c) || ('\u{E0100}'..='\u{E01EF}').contains(&c)
 }
 
 fn is_regional_indicator_symbol(c: char) -> bool {
-    c >= '\u{1F1E6}' && c <= '\u{1F1FF}'
+    ('\u{1F1E6}'..='\u{1F1FF}').contains(&c)
 }
 fn is_emoji_modifier(c: char) -> bool {
-    c >= '\u{1F3FB}' && c <= '\u{1F3FF}'
+    ('\u{1F3FB}'..='\u{1F3FF}').contains(&c)
 }
 fn is_emoji_combining_enclosing_keycap(c: char) -> bool {
     c == '\u{20E3}'
@@ -206,7 +206,7 @@ fn is_emoji_modifier_base(c: char) -> bool {
     is_in_asc_list(c, &EMOJI_MODIFIER_BASE_TABLE, 0, EMOJI_MODIFIER_BASE_TABLE.len() - 1)
 }
 fn is_tag_spec_char(c: char) -> bool {
-    '\u{E0020}' <= c && c <= '\u{E007E}'
+    ('\u{E0020}'..='\u{E007E}').contains(&c)
 }
 fn is_emoji_cancel_tag(c: char) -> bool {
     c == '\u{E007F}'
@@ -216,7 +216,7 @@ fn is_zwj(c: char) -> bool {
 }
 
 pub fn is_keycap_base(c: char) -> bool {
-    ('0'..='9').contains(&c) || c == '#' || c == '*'
+    c.is_ascii_digit() || c == '#' || c == '*'
 }
 
 fn is_in_asc_list<T: core::cmp::PartialOrd>(c: T, list: &[T], start: usize, end: usize) -> bool {
@@ -230,9 +230,9 @@ fn is_in_asc_list<T: core::cmp::PartialOrd>(c: T, list: &[T], start: usize, end:
     let mid = (start + end) / 2;
 
     if c >= list[mid] {
-        is_in_asc_list(c, &list, mid, end)
+        is_in_asc_list(c, list, mid, end)
     } else {
-        is_in_asc_list(c, &list, start, mid)
+        is_in_asc_list(c, list, start, mid)
     }
 }
 

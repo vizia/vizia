@@ -171,7 +171,7 @@ impl Node for Entity {
             // };
 
             paragraph.layout(f32::MAX);
-            
+
             let child_left = store.child_left.get(*self).copied().unwrap_or_default();
             let child_right = store.child_right.get(*self).copied().unwrap_or_default();
             let child_top = store.child_top.get(*self).copied().unwrap_or_default();

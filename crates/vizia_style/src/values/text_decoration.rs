@@ -134,8 +134,10 @@ impl From<TextDecorationLine> for skia_safe::textlayout::TextDecoration {
 }
 
 define_enum! {
+    #[derive(Default)]
     pub enum TextDecorationStyle {
         /// A single line segment.
+        #[default]
         "solid": Solid,
         /// Two parallel solid lines with some space between them.
         "double": Double,
@@ -145,12 +147,6 @@ define_enum! {
         "dashed": Dashed,
         /// A wavy line.
         "wavy": Wavy,
-    }
-}
-
-impl Default for TextDecorationStyle {
-    fn default() -> TextDecorationStyle {
-        TextDecorationStyle::Solid
     }
 }
 

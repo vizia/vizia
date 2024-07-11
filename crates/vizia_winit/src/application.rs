@@ -276,15 +276,11 @@ impl ApplicationHandler<UserEvent> for Application {
             if window_entity == Entity::root() {
                 continue;
             }
-            let owner = window_state
-                .owner
-                .map(|entity| {
-                    self.window_ids
-                        .get(&entity)
-                        .map(|id| self.windows.get(id).map(|ws| ws.window.clone()))
-                        .flatten()
-                })
-                .flatten();
+            let owner = window_state.owner.and_then(|entity| {
+                self.window_ids
+                    .get(&entity)
+                    .and_then(|id| self.windows.get(id).map(|ws| ws.window.clone()))
+            });
 
             let window = self
                 .create_window(event_loop, window_entity, &window_state.window_description, owner)
@@ -560,15 +556,11 @@ impl ApplicationHandler<UserEvent> for Application {
                 if !self.window_ids.contains_key(window_entity) {
                     self.cx.add_main_window(*window_entity, &window_state.window_description, 1.0);
 
-                    let owner = window_state
-                        .owner
-                        .map(|entity| {
-                            self.window_ids
-                                .get(&entity)
-                                .map(|id| self.windows.get(id).map(|ws| ws.window.clone()))
-                                .flatten()
-                        })
-                        .flatten();
+                    let owner = window_state.owner.and_then(|entity| {
+                        self.window_ids
+                            .get(&entity)
+                            .and_then(|id| self.windows.get(id).map(|ws| ws.window.clone()))
+                    });
 
                     let window = self
                         .create_window(
@@ -588,7 +580,6 @@ impl ApplicationHandler<UserEvent> for Application {
 
         if self.windows.is_empty() {
             event_loop.exit();
-            return;
         }
     }
 

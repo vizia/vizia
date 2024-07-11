@@ -1,44 +1,8 @@
+#![allow(dead_code)]
+
 use std::{borrow::Cow, ops::Range};
 
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
-
-use crate::views::TextEvent;
-
-use super::{offset_for_delete_backwards, Movement, Selection};
-
-pub trait TextData {
-    fn process_event(&mut self, event: TextEvent);
-}
-
-pub struct TextboxData {
-    text: String,
-    selection: Selection,
-}
-
-impl TextData for TextboxData {
-    fn process_event(&mut self, event: TextEvent) {
-        match event {
-            TextEvent::InsertText(text) => {
-                self.text.replace_range(self.selection.range(), text.as_str());
-            }
-
-            TextEvent::DeleteText(movement) => {
-                let del_range = if self.selection.is_caret() {
-                    let del_offset = offset_for_delete_backwards(&self.selection, &self.text);
-                    del_offset..self.selection.active
-                } else {
-                    self.selection.range()
-                };
-
-                self.text.edit(del_range, "");
-            }
-
-            TextEvent::MoveCursor(movement, is_selection) => {}
-
-            _ => {}
-        }
-    }
-}
 
 pub trait EditableText: Sized {
     /// Replace range with new text.

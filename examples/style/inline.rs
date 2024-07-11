@@ -20,8 +20,8 @@ fn main() -> Result<(), ApplicationError> {
             .height(Pixels(50.0))
             .border_color(Color::black())
             .border_width(Pixels(4.0))
-            .border_corner_shape(BorderCornerShape::Bevel)
-            .border_radius(Pixels(20.0))
+            .corner_shape(CornerShape::Bevel)
+            .corner_radius(Pixels(20.0))
             .outline_color(Color::blue())
             .outline_offset(Pixels(20.0))
             .outline_width(Pixels(2.0))
@@ -36,7 +36,7 @@ fn main() -> Result<(), ApplicationError> {
             .caret_color(Color::azure())
             .text_wrap(true)
             .shadow(
-                BoxShadowBuilder::new()
+                ShadowBuilder::new()
                     .x_offset(Pixels(10.0))
                     .y_offset(Pixels(10.0))
                     .color(Color::limegreen()),
