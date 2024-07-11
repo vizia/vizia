@@ -522,7 +522,9 @@ where
     }
 
     pub fn set_window(&mut self, entity: I, flag: bool) {
-        self.window.get_mut(entity.index()).and_then(|window| Some(*window = flag));
+        if let Some(window) = self.window.get_mut(entity.index()) {
+            *window = flag;
+        };
     }
 
     pub fn set_lock_focus_within(&mut self, entity: I, flag: bool) {

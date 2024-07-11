@@ -124,7 +124,7 @@ pub(crate) fn transform_system(cx: &mut Context) {
                 cx.cache.transform.get(entity).copied().unwrap_or(Matrix::new_identity());
 
             let rect: skia_safe::Rect = clip_bounds.into();
-            let clip_bounds: BoundingBox = transform.map_rect(&rect).0.into();
+            let clip_bounds: BoundingBox = transform.map_rect(rect).0.into();
 
             let parent_clip_bounds = cx.cache.clip_path.get(parent).copied().unwrap_or(root_bounds);
 
@@ -190,7 +190,7 @@ pub(crate) fn draw_system(
     canvas.save();
     if let Some(dirty_rect) = cx.windows.get_mut(&window_entity).unwrap().dirty_rect {
         let rect: Rect = dirty_rect.into();
-        canvas.clip_rect(&rect, ClipOp::Intersect, false);
+        canvas.clip_rect(rect, ClipOp::Intersect, false);
     }
 
     cx.resource_manager.mark_images_unused();
@@ -286,7 +286,7 @@ fn draw_entity(
             paint.set_blend_mode(blend_mode.into());
 
             let rect: Rect = cx.bounds().into();
-            let mut filter = ImageFilter::crop(&rect, None, None).unwrap();
+            let mut filter = ImageFilter::crop(rect, None, None).unwrap();
 
             let slr = if let Some(backdrop_filter) = backdrop_filter {
                 match backdrop_filter {
@@ -323,7 +323,7 @@ fn draw_entity(
     if is_visible {
         if let Some(dirty_rect) = dirty_rect {
             let bounds = draw_bounds(cx.style, cx.cache, cx.tree, current);
-            if bounds.intersects(&dirty_rect) {
+            if bounds.intersects(dirty_rect) {
                 if let Some(view) = cx.views.remove(&current) {
                     view.draw(cx, canvas);
                     cx.views.insert(current, view);

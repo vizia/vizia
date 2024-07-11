@@ -478,7 +478,7 @@ impl<'a> DrawContext<'a> {
         let rect: Rect = bounds.into();
 
         let mut rr = RRect::new_rect_radii(
-            &rect,
+            rect,
             &[
                 Point::new(corner_top_left_radius, corner_top_left_radius),
                 Point::new(corner_top_right_radius, corner_top_right_radius),
@@ -1099,7 +1099,7 @@ impl<'a> DrawContext<'a> {
             };
 
             let vertical_free_space =
-                bounds.height() - paragraph.height() as f32 - padding_top - padding_bottom;
+                bounds.height() - paragraph.height() - padding_top - padding_bottom;
 
             if let Units::Stretch(val) = self.child_top() {
                 padding_top = (vertical_free_space * val / vertical_flex_sum).round()
@@ -1124,7 +1124,7 @@ impl<'a> DrawContext<'a> {
             };
 
             let horizontal_free_space =
-                bounds.width() - paragraph.max_width() as f32 - padding_left - padding_right;
+                bounds.width() - paragraph.max_width() - padding_left - padding_right;
 
             if let Units::Stretch(val) = self.child_left() {
                 padding_left = (horizontal_free_space * val / horizontal_flex_sum).round()

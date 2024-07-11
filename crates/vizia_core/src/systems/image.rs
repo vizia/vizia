@@ -1,8 +1,8 @@
 use crate::context::{Context, ResourceContext};
 use crate::prelude::*;
-use crate::resource::{ImageId, ImageRetentionPolicy, StoredImage};
+// use crate::resource::{ImageId, ImageRetentionPolicy, StoredImage};
 use crate::style::ImageOrGradient;
-use hashbrown::HashSet;
+// use hashbrown::HashSet;
 
 // Iterate the tree and load any images used by entities which aren't already loaded. Remove any images no longer being used.
 pub(crate) fn image_system(cx: &mut Context) {
@@ -28,8 +28,8 @@ pub(crate) fn image_system(cx: &mut Context) {
     cx.resource_manager.evict_unused_images();
 }
 
-fn load_image(cx: &mut ResourceContext, entity: Entity, image_name: &String) {
-    if let Some(image_id) = cx.resource_manager.image_ids.get(image_name) {}
+fn load_image(cx: &mut ResourceContext, entity: Entity, image_name: &str) {
+    // if let Some(image_id) = cx.resource_manager.image_ids.get(image_name) {}
 
     if !try_load_image(cx, entity, image_name) {
         // Image doesn't exists yet so call the image loader
@@ -44,8 +44,8 @@ fn load_image(cx: &mut ResourceContext, entity: Entity, image_name: &String) {
     }
 }
 
-fn try_load_image(cx: &mut ResourceContext, entity: Entity, image_name: &String) -> bool {
-    if let Some(image_id) = cx.resource_manager.image_ids.get(&image_name.clone()) {
+fn try_load_image(cx: &mut ResourceContext, entity: Entity, image_name: &str) -> bool {
+    if let Some(image_id) = cx.resource_manager.image_ids.get(&image_name.to_owned()) {
         // Check if the image is already loaded
         if let Some(image_store) = cx.resource_manager.images.get_mut(image_id) {
             // match &image_store.image {

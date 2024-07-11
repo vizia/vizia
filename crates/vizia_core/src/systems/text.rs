@@ -255,7 +255,7 @@ fn add_block(
             paragraph_builder.push_style(&text_style);
             style.text_range.insert(entity, *current..*current + text.len());
             paragraph_builder.add_text(text.as_str());
-            *current = *current + text.len();
+            *current += text.len();
         }
     }
 
