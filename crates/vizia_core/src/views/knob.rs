@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(unused_variables)]
+use crate::vg;
 use morphorm::Units;
-use skia_safe::{Paint, PaintCap, Path};
 
 use crate::prelude::*;
 
@@ -58,8 +58,8 @@ impl<L: Lens<Target = f32>> Knob<L> {
                     centered,
                     Percentage(100.0),
                     Percentage(15.0),
-                    -150.,
-                    150.,
+                    -240.,
+                    60.,
                     KnobMode::Continuous,
                 )
                 .value(lens)
@@ -260,8 +260,8 @@ impl View for ArcTrack {
         let centery = bounds.y + 0.5 * bounds.h;
 
         // Convert start and end angles to radians and rotate origin direction to be upwards instead of to the right
-        let start = self.angle_start.to_radians() - PI / 2.0;
-        let end = self.angle_end.to_radians() - PI / 2.0;
+        let start = self.angle_start;
+        let end = self.angle_end;
 
         let parent = cx.tree.get_parent(cx.current).unwrap();
 
@@ -273,16 +273,20 @@ impl View for ArcTrack {
         let span = self.span.to_px(radius, 0.0);
 
         // Draw the track arc
-        let mut path = Path::new();
-        path.arc(centerx, centery, radius - span / 2.0, end, start, Solidity::Solid);
-        let mut paint = Paint::default();
+        let mut path = vg::Path::new();
+        // path.arc(centerx, centery, radius - span / 2.0, end, start, Solidity::Solid);
+        let oval = vg::Rect::new(bounds.left(), bounds.top(), bounds.right(), bounds.bottom());
+
+        let mut paint = vg::Paint::default();
         paint.set_color(background_color);
         paint.set_stroke_width(span);
-        paint.set_stroke_cap(PaintCap::Round);
-        canvas.stroke_path(&path, &paint);
+        paint.set_stroke_cap(vg::PaintCap::Round);
+        paint.set_style(vg::PaintStyle::Stroke);
+        // canvas.draw_path(&path, &paint);
+        canvas.draw_arc(oval, start, end - start, true, &paint);
 
         // Draw the active arc
-        let mut path = Path::new();
+        let mut path = vg::Path::new();
 
         let value = match self.mode {
             KnobMode::Continuous => self.normalized_value,
@@ -293,24 +297,27 @@ impl View for ArcTrack {
         };
 
         if self.center {
-            let center = -PI / 2.0;
+            let center = -90.0;
 
             if value <= 0.5 {
                 let current = value * 2.0 * (center - start) + start;
-                path.arc(centerx, centery, radius - span / 2.0, center, current, Solidity::Solid);
+                path.arc_to(oval.with_inset((span / 2.0, span / 2.0)), start, current, false);
             } else {
-                let current = (value * 2.0 - 1.0) * (end - center) + center;
-                path.arc(centerx, centery, radius - span / 2.0, current, center, Solidity::Solid);
+                let current = (value * 2.0 - 1.0) * (end - center);
+                path.arc_to(oval.with_inset((span / 2.0, span / 2.0)), center, current, false);
             }
         } else {
             let current = value * (end - start) + start;
-            path.arc(centerx, centery, radius - span / 2.0, current, start, Solidity::Solid);
+            path.arc_to(oval.with_inset((span / 2.0, span / 2.0)), start, current - start, false);
         }
 
-        let mut paint = Paint::color(foreground_color);
-        paint.set_line_width(span);
-        paint.set_line_cap(LineCap::Round);
-        canvas.stroke_path(&path, &paint);
+        let mut paint = vg::Paint::default();
+        paint.set_color(foreground_color);
+        paint.set_stroke_width(span);
+        paint.set_stroke_cap(vg::PaintCap::Round);
+        paint.set_style(vg::PaintStyle::Stroke);
+        paint.set_anti_alias(true);
+        canvas.draw_path(&path, &paint);
     }
 }
 
@@ -322,7 +329,7 @@ impl Handle<'_, ArcTrack> {
             if let Some(view) = cx.views.get_mut(&entity) {
                 if let Some(knob) = view.downcast_mut::<ArcTrack>() {
                     knob.normalized_value = value;
-                    cx.style.needs_redraw();
+                    cx.needs_redraw();
                 }
             }
         });
@@ -400,7 +407,7 @@ impl View for Ticks {
         let tick_len = self.tick_len.to_px(radius, 0.0);
         let line_width = self.tick_width.to_px(radius, 0.0);
         // Draw ticks
-        let mut path = Path::new();
+        let mut path = vg::Path::new();
         match self.mode {
             // can't really make ticks for a continuous knob
             KnobMode::Continuous => return,
@@ -408,21 +415,23 @@ impl View for Ticks {
                 for n in 0..steps {
                     let a = n as f32 / (steps - 1) as f32;
                     let angle = start + (end - start) * a;
-                    path.move_to(
+                    path.move_to((
                         centerx + angle.cos() * (radius - tick_len),
                         centery + angle.sin() * (radius - tick_len),
-                    );
-                    path.line_to(
+                    ));
+                    path.line_to((
                         centerx + angle.cos() * (radius - line_width / 2.0),
                         centery + angle.sin() * (radius - line_width / 2.0),
-                    );
+                    ));
                 }
             }
         }
-        let mut paint = Paint::color(foreground_color.into());
-        paint.set_line_width(line_width);
-        paint.set_line_cap(LineCap::Round);
-        canvas.stroke_path(&path, &paint);
+        let mut paint = vg::Paint::default();
+        paint.set_color(foreground_color);
+        paint.set_stroke_width(line_width);
+        paint.set_stroke_cap(vg::PaintCap::Round);
+        paint.set_style(vg::PaintStyle::Stroke);
+        canvas.draw_path(&path, &paint);
     }
 }
 
@@ -465,7 +474,7 @@ impl View for TickKnob {
     fn element(&self) -> Option<&'static str> {
         Some("tickknob")
     }
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
         let opacity = cx.opacity();
         //let mut background_color: femtovg::Color = cx.current.get_background_color(cx).into();
         // background_color.set_alphaf(background_color.a * opacity);
@@ -486,15 +495,17 @@ impl View for TickKnob {
         let tick_width = self.tick_width.to_px(radius, 0.0);
         let tick_len = self.tick_len.to_px(radius, 0.0);
         // Draw the circle
-        let mut path = Path::new();
-        path.circle(centerx, centery, radius);
+        let mut path = vg::Path::new();
+        path.add_circle((centerx, centery), radius, None);
         // path.arc(centerx, centery, radius - span / 2.0, end, start, Solidity::Solid);
-        let mut paint = Paint::color(background_color.into());
-        paint.set_line_width(tick_width);
-        paint.set_line_cap(LineCap::Round);
-        canvas.fill_path(&path, &paint);
+        let mut paint = vg::Paint::default();
+        paint.set_color(background_color);
+        paint.set_stroke_width(tick_width);
+        paint.set_stroke_cap(vg::PaintCap::Round);
+        paint.set_style(vg::PaintStyle::Stroke);
+        canvas.draw_path(&path, &paint);
         // Draw the tick
-        let mut path = Path::new();
+        let mut path = vg::Path::new();
         let angle = match self.mode {
             KnobMode::Continuous => start + (end - start) * self.normalized_value,
             // snapping
@@ -506,17 +517,21 @@ impl View for TickKnob {
         };
         path.move_to(
             // centerx + angle.cos() * (radius * 0.70),
-            centerx + angle.cos() * (radius - tick_len),
-            centery + angle.sin() * (radius - tick_len),
+            (
+                centerx + angle.cos() * (radius - tick_len),
+                centery + angle.sin() * (radius - tick_len),
+            ),
         );
-        path.line_to(
+        path.line_to((
             centerx + angle.cos() * (radius - tick_width / 2.0),
             centery + angle.sin() * (radius - tick_width / 2.0),
-        );
-        let mut paint = Paint::color(foreground_color.into());
-        paint.set_line_width(tick_width);
-        paint.set_line_cap(LineCap::Round);
-        canvas.stroke_path(&path, &paint);
+        ));
+        let mut paint = vg::Paint::default();
+        paint.set_color(foreground_color);
+        paint.set_stroke_width(tick_width);
+        paint.set_stroke_cap(vg::PaintCap::Round);
+        paint.set_style(vg::PaintStyle::Stroke);
+        canvas.draw_path(&path, &paint);
     }
 }
 
@@ -528,7 +543,7 @@ impl Handle<'_, TickKnob> {
             if let Some(view) = cx.views.get_mut(&entity) {
                 if let Some(knob) = view.downcast_mut::<TickKnob>() {
                     knob.normalized_value = value;
-                    cx.style.needs_redraw();
+                    cx.needs_redraw();
                 }
             }
         });

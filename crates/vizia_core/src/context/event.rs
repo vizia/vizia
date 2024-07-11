@@ -85,6 +85,7 @@ pub struct EventContext<'a> {
     pub(crate) event_proxy: &'a mut Option<Box<dyn crate::context::EventProxy>>,
     pub(crate) ignore_default_theme: &'a bool,
     pub(crate) drop_data: &'a mut Option<DropData>,
+    pub windows: &'a mut HashMap<Entity, WindowState>,
 }
 
 macro_rules! get_length_property {
@@ -136,6 +137,7 @@ impl<'a> EventContext<'a> {
             event_proxy: &mut cx.event_proxy,
             ignore_default_theme: &cx.ignore_default_theme,
             drop_data: &mut cx.drop_data,
+            windows: &mut cx.windows,
         }
     }
 
@@ -168,12 +170,19 @@ impl<'a> EventContext<'a> {
             event_proxy: &mut cx.event_proxy,
             ignore_default_theme: &cx.ignore_default_theme,
             drop_data: &mut cx.drop_data,
+            windows: &mut cx.windows,
         }
     }
 
     // pub fn get_view<V: View>(&self) -> Option<&V> {
     //     self.views.get(&self.current).and_then(|view| view.downcast_ref::<V>())
     // }
+
+    pub fn close_window(&mut self) {
+        if let Some(state) = self.windows.get_mut(&self.current) {
+            state.should_close = true;
+        }
+    }
 
     /// Returns the [Entity] id associated with the given identifier.
     pub fn resolve_entity_identifier(&self, id: &str) -> Option<Entity> {
@@ -1343,6 +1352,8 @@ pub trait TreeProps {
     fn parent(&self) -> Entity;
     /// Returns the id of the first_child of the current view.
     fn first_child(&self) -> Entity;
+
+    fn parent_window(&self) -> Entity;
 }
 
 impl<'a> TreeProps for EventContext<'a> {
@@ -1352,5 +1363,9 @@ impl<'a> TreeProps for EventContext<'a> {
 
     fn first_child(&self) -> Entity {
         self.tree.get_layout_first_child(self.current).unwrap()
+    }
+
+    fn parent_window(&self) -> Entity {
+        self.tree.get_parent_window(self.current).unwrap_or(Entity::root())
     }
 }

@@ -1,5 +1,8 @@
 use crate::window_modifiers::WindowModifiers;
 use glutin::context::GlProfile;
+use vizia_core::context::TreeProps;
+#[cfg(target_os = "windows")]
+use winit::platform::windows::WindowExtWindows;
 
 use std::error::Error;
 use std::num::NonZeroU32;
@@ -46,6 +49,7 @@ pub struct WinState {
     pub surface: skia_safe::Surface,
     pub dirty_surface: skia_safe::Surface,
     pub is_initially_cloaked: bool,
+    pub should_close: bool,
 }
 
 impl Drop for WinState {
@@ -211,6 +215,7 @@ impl WinState {
             surface,
             dirty_surface,
             is_initially_cloaked: true,
+            should_close: false,
         })
     }
 
@@ -301,6 +306,8 @@ pub fn create_surface(
 
 pub struct Window {
     pub window: Option<Arc<winit::window::Window>>,
+    pub on_close: Option<Box<dyn Fn(&mut EventContext)>>,
+    pub should_close: bool,
 }
 
 impl Window {
@@ -309,18 +316,45 @@ impl Window {
     }
 
     pub fn new(cx: &mut Context, content: impl Fn(&mut Context)) -> Handle<Self> {
-        Self { window: None }
+        Self { window: None, on_close: None, should_close: false }
             .build(cx, |cx| {
                 cx.windows.insert(cx.current(), WindowState::default());
                 (content)(cx);
             })
-            .background_color(Color::blue())
+            .background_color(Color::white())
+    }
+
+    pub fn popup(cx: &mut Context, is_modal: bool, content: impl Fn(&mut Context)) -> Handle<Self> {
+        Self { window: None, on_close: None, should_close: false }
+            .build(cx, |cx| {
+                let parent_window = cx.parent_window();
+                if is_modal {
+                    cx.emit_to(parent_window, WindowEvent::SetEnabled(false));
+                }
+
+                cx.windows.insert(
+                    cx.current(),
+                    WindowState {
+                        owner: Some(parent_window),
+                        is_modal: true,
+                        ..Default::default()
+                    },
+                );
+                (content)(cx);
+            })
+            .lock_focus_to_within()
+            .background_color(Color::white())
     }
 }
 
 impl View for Window {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|window_event, _| match window_event {
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::Destroyed => {
+                let parent_window = cx.parent_window();
+                cx.emit_to(parent_window, WindowEvent::SetEnabled(true));
+            }
+
             WindowEvent::GrabCursor(flag) => {
                 let grab_mode = if *flag { CursorGrabMode::Locked } else { CursorGrabMode::None };
                 self.window().set_cursor_grab(grab_mode).expect("Failed to set cursor grab");
@@ -390,7 +424,15 @@ impl View for Window {
             }
 
             WindowEvent::WindowClose => {
-                // self.should_close = true;
+                self.should_close = true;
+
+                cx.close_window();
+
+                if let Some(callback) = &self.on_close {
+                    callback(cx);
+                }
+
+                meta.consume();
             }
 
             WindowEvent::FocusNext => {
@@ -405,12 +447,23 @@ impl View for Window {
                 self.window().request_redraw();
             }
 
+            WindowEvent::SetEnabled(flag) => {
+                #[cfg(target_os = "windows")]
+                self.window().set_enable(*flag);
+
+                self.window().focus_window();
+            }
+
             _ => {}
         })
     }
 }
 
 impl<'a> WindowModifiers for Handle<'a, Window> {
+    fn on_close(self, callback: impl Fn(&mut EventContext) + 'static) -> Self {
+        self.modify(|window| window.on_close = Some(Box::new(callback)))
+    }
+
     fn title<T: ToString>(mut self, title: impl Res<T>) -> Self {
         let entity = self.entity();
         let title = title.get(&self).to_string();

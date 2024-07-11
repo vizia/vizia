@@ -1,96 +1,71 @@
 pub use vizia::prelude::*;
 
-const STYLE: &str = r#"
-    element.one {
-        background-color: red;
-    }
-    element.one:hover {
-        background-color: green;
-        transition: background-color 0s;
-    }
-    element.two {
-        background-color: red;
-    }
-    element.two:hover {
-        background-color: yellow;
-        transition: background-color 0s;
-    }
-"#;
-
 #[derive(Lens)]
 struct AppData {
-    text: String,
-    show_subwindow: bool,
+    color: Color,
+    show_popup: bool,
 }
 
 impl Model for AppData {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, meta| match app_event {
-            AppEvent::ToggleShowSubwindow => self.show_subwindow ^= true,
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            AppEvent::ShowPopup => self.show_popup = true,
+            AppEvent::PopupClosed => self.show_popup = false,
+            AppEvent::SetRed(val) => {
+                self.color = Color::rgb((*val * 255.0) as u8, self.color.g(), self.color.b())
+            }
+            AppEvent::SetGreen(val) => {
+                self.color = Color::rgb(self.color.r(), (*val * 255.0) as u8, self.color.b())
+            }
+            AppEvent::SetBlue(val) => {
+                self.color = Color::rgb(self.color.r(), self.color.g(), (*val * 255.0) as u8)
+            }
         })
     }
 }
 
 pub enum AppEvent {
-    ToggleShowSubwindow,
+    ShowPopup,
+    PopupClosed,
+    SetRed(f32),
+    SetGreen(f32),
+    SetBlue(f32),
 }
-
-#[derive(Lens)]
-struct AppData2 {
-    text: String,
-}
-
-impl Model for AppData2 {}
-
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { text: String::from("Some text"), show_subwindow: true }.build(cx);
+        AppData { color: Color::white(), show_popup: false }.build(cx);
 
-        cx.add_stylesheet(STYLE);
-        Element::new(cx).size(Pixels(100.0)).class("one");
-        //Button::new(cx, |cx| cx.emit(WindowEvent::WindowClose), |cx| Label::new(cx, "Close"));
-
-        // Window::new(cx, |cx| {
-        //     AppData2 { text: String::from("more text") }.build(cx);
-        //     Element::new(cx).size(Pixels(50.0)).class("two");
-        //     Button::new(cx, |cx| cx.emit(WindowEvent::WindowClose), |cx| Label::new(cx, "Close"));
-        //     Label::new(cx, "Subwindow");
-        //     Label::new(cx, AppData::text);
-        //     Label::new(cx, AppData2::text);
-        // })
-        // .title("Secondary")
-        // .inner_size((400, 400));
-
-        // Window::new(cx, |cx| {
-        //     Element::new(cx).size(Pixels(50.0)).class("two");
-        //     Button::new(cx, |cx| cx.emit(WindowEvent::WindowClose), |cx| Label::new(cx, "Close"));
-        //     Label::new(cx, "Another");
-        //     Label::new(cx, AppData::text);
-        // })
-        // .title("Secondary")
-        // .inner_size((400, 400));
-
-        Binding::new(cx, AppData::show_subwindow, |cx, show_subwindow| {
+        Binding::new(cx, AppData::show_popup, |cx, show_subwindow| {
             if show_subwindow.get(cx) {
-                Window::new(cx, |cx| {
-                    Element::new(cx).size(Pixels(50.0)).class("two");
-                    Button::new(cx, |cx| Label::new(cx, "Close"))
-                        .on_press(|cx| cx.emit(WindowEvent::WindowClose));
-                    Label::new(cx, "Subwindow");
-                    //Label::new(cx, AppData::text);
+                Window::popup(cx, false, |cx| {
+                    VStack::new(cx, |cx: &mut Context| {
+                        Slider::new(cx, AppData::color.map(|c| c.r() as f32 / 255.0))
+                            .on_changing(|cx, val| cx.emit(AppEvent::SetRed(val)));
+                        Slider::new(cx, AppData::color.map(|c| c.g() as f32 / 255.0))
+                            .on_changing(|cx, val| cx.emit(AppEvent::SetGreen(val)));
+                        Slider::new(cx, AppData::color.map(|c| c.b() as f32 / 255.0))
+                            .on_changing(|cx, val| cx.emit(AppEvent::SetBlue(val)));
+                    })
+                    .child_space(Pixels(20.0))
+                    .child_top(Stretch(1.0))
+                    .child_bottom(Stretch(1.0))
+                    .row_between(Pixels(12.0));
                 })
-                .title("Secondary")
-                .inner_size((400, 400))
+                .on_close(|cx| {
+                    cx.emit(AppEvent::PopupClosed);
+                })
+                .title("Set color...")
+                .inner_size((400, 200))
                 .position((500, 100));
             }
         });
 
-        Label::new(cx, "Main window");
-        Label::new(cx, AppData::text);
-        Checkbox::new(cx, AppData::show_subwindow)
-            .on_toggle(|cx| cx.emit(AppEvent::ToggleShowSubwindow));
-        Button::new(cx, |cx| Label::new(cx, "Close"))
-            .on_press(|cx| cx.emit(WindowEvent::WindowClose));
+        HStack::new(cx, |cx| {
+            Button::new(cx, |cx| Label::new(cx, "Show Popup"))
+                .on_press(|cx| cx.emit(AppEvent::ShowPopup));
+        })
+        .child_space(Pixels(20.0))
+        .background_color(AppData::color);
     })
     .title("Main")
     .run()

@@ -121,4 +121,9 @@ pub enum WindowEvent {
     ActionRequest(accesskit::ActionRequest),
     /// Reloads all application stylesheets.
     ReloadStyles,
+
+    SetEnabled(bool),
+
+    // ToDo: Move this
+    Destroyed,
 }

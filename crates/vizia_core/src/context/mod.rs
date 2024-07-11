@@ -72,6 +72,9 @@ pub struct WindowState {
     pub needs_relayout: bool,
     pub needs_redraw: bool,
     pub dirty_rect: Option<BoundingBox>,
+    pub owner: Option<Entity>,
+    pub is_modal: bool,
+    pub should_close: bool,
 }
 
 /// The main storage and control object for a Vizia application.
@@ -268,6 +271,10 @@ impl Context {
         self.data::<Environment>().unwrap()
     }
 
+    pub fn parent_window(&self) -> Entity {
+        self.tree.get_parent_window(self.current).unwrap_or(Entity::root())
+    }
+
     /// Returns the scale factor of the display.
     pub fn scale_factor(&self) -> f32 {
         self.style.dpi_factor as f32
@@ -402,6 +409,15 @@ impl Context {
         }
 
         for entity in delete_list.iter().rev() {
+            if let Some(mut view) = self.views.remove(entity) {
+                view.event(
+                    &mut EventContext::new_with_current(self, *entity),
+                    &mut Event::new(WindowEvent::Destroyed).direct(*entity),
+                );
+
+                self.views.insert(*entity, view);
+            }
+
             if let Some(binding) = self.bindings.remove(entity) {
                 binding.remove(self);
 
@@ -468,7 +484,7 @@ impl Context {
                 self.stop_timer(timer);
             }
 
-            let window_entity = self.tree.get_parent_window(*entity).unwrap();
+            let window_entity = self.tree.get_parent_window(*entity).unwrap_or(Entity::root());
 
             if let Some(draw_bounds) = self.cache.draw_bounds.get(*entity) {
                 if let Some(dirty_rect) =

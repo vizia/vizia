@@ -145,13 +145,13 @@ impl Application {
     ) -> Result<Arc<winit::window::Window>, Box<dyn Error>> {
         let mut window_attributes = apply_window_description(window_description);
 
+        #[cfg(target_os = "windows")]
         if let Some(owner) = owner {
             use winit::raw_window_handle::RawWindowHandle::Win32;
             let Win32(handle) = owner.window_handle().unwrap().as_raw() else {
                 unreachable!();
             };
-            window_attributes =
-                window_attributes.with_owner_window(handle.hwnd.get()).with_decorations(false);
+            window_attributes = window_attributes.with_owner_window(handle.hwnd.get());
         }
 
         let window = event_loop.create_window(window_attributes)?;
@@ -256,7 +256,11 @@ impl ApplicationHandler<UserEvent> for Application {
             .create_window(event_loop, Entity::root(), &self.window_description.clone(), None)
             .expect("failed to create initial window");
         self.cx.add_main_window(Entity::root(), &self.window_description, 1.0);
-        self.cx.add_window(Window { window: Some(main_window.clone()) });
+        self.cx.add_window(Window {
+            window: Some(main_window.clone()),
+            on_close: None,
+            should_close: false,
+        });
 
         self.cx.0.windows.insert(
             Entity::root(),
@@ -272,13 +276,18 @@ impl ApplicationHandler<UserEvent> for Application {
             if window_entity == Entity::root() {
                 continue;
             }
+            let owner = window_state
+                .owner
+                .map(|entity| {
+                    self.window_ids
+                        .get(&entity)
+                        .map(|id| self.windows.get(id).map(|ws| ws.window.clone()))
+                        .flatten()
+                })
+                .flatten();
+
             let window = self
-                .create_window(
-                    event_loop,
-                    window_entity,
-                    &window_state.window_description,
-                    Some(main_window.clone()),
-                )
+                .create_window(event_loop, window_entity, &window_state.window_description, owner)
                 .expect("Failed to create window");
             self.cx.add_main_window(window_entity, &window_state.window_description, 1.0);
             self.cx.mutate_window(window_entity, |_, win: &mut Window| {
@@ -329,13 +338,8 @@ impl ApplicationHandler<UserEvent> for Application {
             }
 
             winit::event::WindowEvent::CloseRequested | winit::event::WindowEvent::Destroyed => {
-                self.cx.context().remove(window.entity);
-                self.cx.context().windows.remove(&window.entity);
-                window.swap_buffers();
-                self.windows.remove(&window_id);
-
-                self.windows.retain(|_, win| self.cx.0.windows.contains_key(&win.entity));
-                self.window_ids.retain(|e, _| self.cx.0.windows.contains_key(e));
+                let window_entity = window.entity;
+                self.cx.emit_window_event(window_entity, WindowEvent::WindowClose);
             }
             winit::event::WindowEvent::DroppedFile(path) => {
                 self.cx.emit_origin(WindowEvent::Drop(DropData::File(path)));
@@ -397,7 +401,6 @@ impl ApplicationHandler<UserEvent> for Application {
             winit::event::WindowEvent::CursorMoved { device_id: _, position } => {
                 self.cx.context().mouse.cursorx = position.x as f32;
                 self.cx.context().mouse.cursory = position.y as f32;
-                // hover_system(self.cx.context(), window.entity);
 
                 self.cx.emit_window_event(
                     window.entity,
@@ -464,9 +467,11 @@ impl ApplicationHandler<UserEvent> for Application {
             }
             winit::event::WindowEvent::Occluded(_) => {}
             winit::event::WindowEvent::RedrawRequested => {
-                self.cx.needs_refresh();
-                self.cx.draw(window.entity, &mut window.surface, &mut window.dirty_surface);
-                window.swap_buffers();
+                for window in self.windows.values_mut() {
+                    self.cx.needs_refresh();
+                    self.cx.draw(window.entity, &mut window.surface, &mut window.dirty_surface);
+                    window.swap_buffers();
+                }
 
                 // // Un-cloak
                 // #[cfg(target_os = "windows")]
@@ -534,6 +539,18 @@ impl ApplicationHandler<UserEvent> for Application {
             }
         }
 
+        let window_entities = self
+            .cx
+            .0
+            .windows
+            .iter()
+            .filter_map(|(entity, state)| state.should_close.then_some(*entity))
+            .collect::<Vec<_>>();
+
+        for window_entity in window_entities {
+            self.cx.0.remove(window_entity);
+        }
+
         // Sync window state with context
         self.windows.retain(|_, win| self.cx.0.windows.contains_key(&win.entity));
         self.window_ids.retain(|e, _| self.cx.0.windows.contains_key(e));
@@ -542,12 +559,23 @@ impl ApplicationHandler<UserEvent> for Application {
             for (window_entity, window_state) in self.cx.0.windows.clone().iter() {
                 if !self.window_ids.contains_key(window_entity) {
                     self.cx.add_main_window(*window_entity, &window_state.window_description, 1.0);
+
+                    let owner = window_state
+                        .owner
+                        .map(|entity| {
+                            self.window_ids
+                                .get(&entity)
+                                .map(|id| self.windows.get(id).map(|ws| ws.window.clone()))
+                                .flatten()
+                        })
+                        .flatten();
+
                     let window = self
                         .create_window(
                             event_loop,
                             *window_entity,
                             &window_state.window_description,
-                            None,
+                            owner,
                         )
                         .expect("Failed to create window");
 
@@ -685,6 +713,10 @@ impl WindowModifiers for Application {
         self.window_description.icon_width = width;
         self.window_description.icon_height = height;
 
+        self
+    }
+
+    fn on_close(self, _callback: impl Fn(&mut EventContext)) -> Self {
         self
     }
 }

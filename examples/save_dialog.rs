@@ -54,7 +54,7 @@ impl Model for AppData {
         });
 
         event.map(|app_event, _| match app_event {
-            AppEvent::HideModal => {
+            AppEvent::CloseModal => {
                 self.show_dialog = false;
             }
 
@@ -64,21 +64,17 @@ impl Model for AppData {
 
             AppEvent::SaveAndClose => {
                 self.is_saved = true;
+                self.show_dialog = false;
                 cx.emit(WindowEvent::WindowClose);
-            }
-
-            AppEvent::Cancel => {
-                self.is_saved = false;
             }
         });
     }
 }
 
 pub enum AppEvent {
-    HideModal,
+    CloseModal,
     Save,
     SaveAndClose,
-    Cancel,
 }
 
 fn main() -> Result<(), ApplicationError> {
@@ -94,30 +90,41 @@ fn main() -> Result<(), ApplicationError> {
         .col_between(Pixels(10.0))
         .space(Pixels(20.0));
 
-        Dialog::new(cx, AppData::show_dialog, |cx| {
-            VStack::new(cx, |cx| {
-                Label::new(cx, "Save before close?").width(Stretch(1.0)).child_space(Stretch(1.0));
-                HStack::new(cx, |cx| {
-                    Button::new(cx, |cx| Label::new(cx, "Save & Close"))
-                        .on_press(|cx| cx.emit(AppEvent::SaveAndClose))
-                        .width(Pixels(120.0))
-                        .class("accent");
+        Binding::new(cx, AppData::show_dialog, |cx, show_dialog| {
+            if show_dialog.get(cx) {
+                Window::popup(cx, true, |cx| {
+                    VStack::new(cx, |cx| {
+                        Label::new(cx, "Save before close?")
+                            .width(Stretch(1.0))
+                            .child_space(Stretch(1.0));
+                        HStack::new(cx, |cx| {
+                            Button::new(cx, |cx| Label::new(cx, "Save & Close"))
+                                .on_press(|cx| cx.emit(AppEvent::SaveAndClose))
+                                .width(Pixels(120.0))
+                                .class("accent");
 
-                    Button::new(cx, |cx| Label::new(cx, "Cancel"))
-                        .on_press(|cx| cx.emit(AppEvent::HideModal))
-                        .width(Pixels(120.0));
+                            Button::new(cx, |cx| Label::new(cx, "Cancel"))
+                                .on_press(|cx| cx.emit(AppEvent::CloseModal))
+                                .width(Pixels(120.0));
+                        })
+                        .col_between(Pixels(10.0))
+                        .size(Auto);
+                    })
+                    .child_space(Stretch(1.0))
+                    .row_between(Pixels(20.0));
                 })
-                .height(Auto);
-            })
-            .size(Auto)
-            .row_between(Pixels(20.0))
-            .height(Auto);
-        })
-        // .on_blur(|cx| cx.emit(AppEvent::HideModal))
-        .width(Auto)
-        .height(Auto)
-        .row_between(Pixels(20.0))
-        .class("modal");
+                .on_close(|cx| cx.emit(AppEvent::CloseModal))
+                .title("Save work?")
+                .inner_size((400, 200))
+                .position((200, 200));
+            }
+        });
+
+        Element::new(cx)
+            .size(Stretch(1.0))
+            .position_type(PositionType::SelfDirected)
+            .backdrop_filter(Filter::Blur(Pixels(2.0).into()))
+            .display(AppData::show_dialog);
     })
     .run()
 }
