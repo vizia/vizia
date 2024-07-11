@@ -1,8 +1,10 @@
-use vizia_core::binding::Res;
+use vizia_core::{binding::Res, context::EventContext};
 use vizia_window::{Position, WindowSize};
 
 /// Modifiers for setting the properties of a window.
 pub trait WindowModifiers {
+    fn on_close(self, callback: impl Fn(&mut EventContext) + 'static) -> Self;
+
     /// Sets the title of the window to the given value. Accepts a type, or lens to a type, which implements `ToString`.
     ///
     /// # Example

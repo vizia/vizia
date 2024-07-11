@@ -137,11 +137,11 @@ where
     }
 
     pub fn get_parent_window(&self, entity: I) -> Option<I> {
-        if self.is_window(entity) {
-            return Some(entity);
-        }
+        // if self.is_window(entity) {
+        //     return Some(entity);
+        // }
 
-        let mut next = Some(entity);
+        let mut next = self.get_parent(entity);
 
         while let Some(parent) = next {
             if self.is_window(parent) {

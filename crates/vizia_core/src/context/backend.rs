@@ -243,7 +243,7 @@ impl BackendContext {
     pub fn emit_window_event<M: Send + Any>(&mut self, window_entity: Entity, message: M) {
         self.0.event_queue.push_back(
             Event::new(message)
-                .target(self.0.current)
+                .target(window_entity)
                 .origin(window_entity)
                 .propagate(Propagation::Up),
         );
