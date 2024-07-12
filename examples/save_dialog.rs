@@ -1,5 +1,10 @@
 use vizia::prelude::*;
 
+#[cfg(feature = "baseview")]
+fn main() {
+    panic!("This example is not supported on baseview");
+}
+
 const STYLE: &str = r#"
 
     .modal {
@@ -77,6 +82,7 @@ pub enum AppEvent {
     SaveAndClose,
 }
 
+#[cfg(not(feature = "baseview"))]
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
