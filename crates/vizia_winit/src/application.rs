@@ -21,10 +21,11 @@ use winit::{
     event::ElementState,
     event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy},
     keyboard::{NativeKeyCode, PhysicalKey},
-    platform::windows::WindowAttributesExtWindows,
-    raw_window_handle::HasWindowHandle,
     window::{WindowAttributes, WindowId, WindowLevel},
 };
+
+#[cfg(target_os = "windows")]
+use winit::{platform::windows::WindowAttributesExtWindows, raw_window_handle::HasWindowHandle};
 // #[cfg(all(
 //     feature = "clipboard",
 //     feature = "wayland",
@@ -141,8 +142,9 @@ impl Application {
         event_loop: &ActiveEventLoop,
         window_entity: Entity,
         window_description: &WindowDescription,
-        owner: Option<Arc<winit::window::Window>>,
+        #[cfg(target_os = "windows")] owner: Option<Arc<winit::window::Window>>,
     ) -> Result<Arc<winit::window::Window>, Box<dyn Error>> {
+        #[allow(unused_mut)]
         let mut window_attributes = apply_window_description(window_description);
 
         #[cfg(target_os = "windows")]

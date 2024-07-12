@@ -447,6 +447,7 @@ impl View for Window {
                 self.window().request_redraw();
             }
 
+            #[allow(unused_variables)]
             WindowEvent::SetEnabled(flag) => {
                 #[cfg(target_os = "windows")]
                 self.window().set_enable(*flag);
