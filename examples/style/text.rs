@@ -1,7 +1,4 @@
-use vizia::{
-    icons::{ICON_ALIGN_CENTER, ICON_ALIGN_JUSTIFIED, ICON_ALIGN_LEFT, ICON_ALIGN_RIGHT},
-    prelude::*,
-};
+use vizia::prelude::*;
 
 const STYLE: &str = r#"
     .font_size {
@@ -62,7 +59,7 @@ pub enum AppEvent {
 }
 
 impl Model for AppData {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::SetSelectedFont(font) => {
                 self.selected_font = font.clone();
@@ -101,7 +98,7 @@ fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        let mut fonts: Vec<String> = cx.text_context.default_font_manager.family_names().collect();
+        let fonts: Vec<String> = cx.text_context.default_font_manager.family_names().collect();
         AppData {
             text: "This text is editable!".to_string(),
             fonts,

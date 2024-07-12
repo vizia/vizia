@@ -70,7 +70,7 @@ fn main() -> Result<(), ApplicationError> {
                             Element::new(cx).class("indicator");
                         },
                         |cx| {
-                            // alignment3(cx);
+                            alignment3(cx);
                         },
                     ),
 
@@ -80,7 +80,7 @@ fn main() -> Result<(), ApplicationError> {
                             Element::new(cx).class("indicator");
                         },
                         |cx: &mut Context| {
-                            // alignment4(cx);
+                            alignment4(cx);
                         },
                     ),
 
@@ -434,265 +434,265 @@ fn alignment2(cx: &mut Context) {
     .child_space(Pixels(20.0));
 }
 
-// fn alignment3(cx: &mut Context) {
-//     HStack::new(cx, |cx| {
-//         HStack::new(cx, |cx| {
-//             Textbox::new(cx, AppData::text)
-//                 .text_wrap(false)
-//                 .size(Pixels(150.0))
-//                 .child_space(Pixels(0.0))
-//                 .child_right(Stretch(1.0))
-//                 .background_color(Color::rgb(200, 100, 100));
-//         })
-//         .size(Auto)
-//         .child_space(Pixels(10.0))
-//         .background_color(Color::rgb(100, 200, 100));
+fn alignment3(cx: &mut Context) {
+    HStack::new(cx, |cx| {
+        HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text)
+                .text_wrap(false)
+                .size(Pixels(150.0))
+                .child_space(Pixels(0.0))
+                .child_right(Stretch(1.0))
+                .background_color(Color::rgb(200, 100, 100));
+        })
+        .size(Auto)
+        .child_space(Pixels(10.0))
+        .background_color(Color::rgb(100, 200, 100));
 
-//         HStack::new(cx, |cx| {
-//             Textbox::new(cx, AppData::text)
-//                 .text_wrap(false)
-//                 .size(Pixels(150.0))
-//                 .child_top(Pixels(0.0))
-//                 .child_left(Stretch(1.0))
-//                 .child_right(Stretch(1.0))
-//                 .background_color(Color::rgb(200, 100, 100));
-//         })
-//         .size(Auto)
-//         .child_space(Pixels(10.0))
-//         .background_color(Color::rgb(100, 200, 100));
+        HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text)
+                .text_wrap(false)
+                .size(Pixels(150.0))
+                .child_top(Pixels(0.0))
+                .child_left(Stretch(1.0))
+                .child_right(Stretch(1.0))
+                .background_color(Color::rgb(200, 100, 100));
+        })
+        .size(Auto)
+        .child_space(Pixels(10.0))
+        .background_color(Color::rgb(100, 200, 100));
 
-//         HStack::new(cx, |cx| {
-//             Textbox::new(cx, AppData::text)
-//                 .size(Pixels(150.0))
-//                 .child_top(Pixels(0.0))
-//                 .child_left(Stretch(1.0))
-//                 .child_right(Pixels(0.0))
-//                 .background_color(Color::rgb(200, 100, 100));
-//         })
-//         .size(Auto)
-//         .child_space(Pixels(10.0))
-//         .background_color(Color::rgb(100, 200, 100));
-//     })
-//     .size(Auto)
-//     .col_between(Pixels(20.0))
-//     .child_space(Pixels(20.0));
+        HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text)
+                .size(Pixels(150.0))
+                .child_top(Pixels(0.0))
+                .child_left(Stretch(1.0))
+                .child_right(Pixels(0.0))
+                .background_color(Color::rgb(200, 100, 100));
+        })
+        .size(Auto)
+        .child_space(Pixels(10.0))
+        .background_color(Color::rgb(100, 200, 100));
+    })
+    .size(Auto)
+    .col_between(Pixels(20.0))
+    .child_space(Pixels(20.0));
 
-//     HStack::new(cx, |cx| {
-//         HStack::new(cx, |cx| {
-//             Textbox::new(cx, AppData::text)
-//                 .text_wrap(false)
-//                 .size(Pixels(150.0))
-//                 .child_left(Pixels(0.0))
-//                 .child_top(Stretch(1.0))
-//                 .child_bottom(Stretch(1.0))
-//                 .child_right(Stretch(1.0))
-//                 .background_color(Color::rgb(200, 100, 100));
-//         })
-//         .size(Auto)
-//         .child_space(Pixels(10.0))
-//         .background_color(Color::rgb(100, 200, 100));
+    HStack::new(cx, |cx| {
+        HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text)
+                .text_wrap(false)
+                .size(Pixels(150.0))
+                .child_left(Pixels(0.0))
+                .child_top(Stretch(1.0))
+                .child_bottom(Stretch(1.0))
+                .child_right(Stretch(1.0))
+                .background_color(Color::rgb(200, 100, 100));
+        })
+        .size(Auto)
+        .child_space(Pixels(10.0))
+        .background_color(Color::rgb(100, 200, 100));
 
-//         HStack::new(cx, |cx| {
-//             Textbox::new(cx, AppData::text)
-//                 .text_wrap(false)
-//                 .size(Pixels(150.0))
-//                 .child_space(Stretch(1.0))
-//                 .background_color(Color::rgb(200, 100, 100));
-//         })
-//         .size(Auto)
-//         .child_space(Pixels(10.0))
-//         .background_color(Color::rgb(100, 200, 100));
+        HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text)
+                .text_wrap(false)
+                .size(Pixels(150.0))
+                .child_space(Stretch(1.0))
+                .background_color(Color::rgb(200, 100, 100));
+        })
+        .size(Auto)
+        .child_space(Pixels(10.0))
+        .background_color(Color::rgb(100, 200, 100));
 
-//         HStack::new(cx, |cx| {
-//             Textbox::new(cx, AppData::text)
-//                 .size(Pixels(150.0))
-//                 .child_top(Stretch(1.0))
-//                 .child_bottom(Stretch(1.0))
-//                 .child_left(Stretch(1.0))
-//                 .child_right(Pixels(0.0))
-//                 .background_color(Color::rgb(200, 100, 100));
-//         })
-//         .size(Auto)
-//         .child_space(Pixels(10.0))
-//         .background_color(Color::rgb(100, 200, 100));
-//     })
-//     .size(Auto)
-//     .col_between(Pixels(20.0))
-//     .child_space(Pixels(20.0));
+        HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text)
+                .size(Pixels(150.0))
+                .child_top(Stretch(1.0))
+                .child_bottom(Stretch(1.0))
+                .child_left(Stretch(1.0))
+                .child_right(Pixels(0.0))
+                .background_color(Color::rgb(200, 100, 100));
+        })
+        .size(Auto)
+        .child_space(Pixels(10.0))
+        .background_color(Color::rgb(100, 200, 100));
+    })
+    .size(Auto)
+    .col_between(Pixels(20.0))
+    .child_space(Pixels(20.0));
 
-//     HStack::new(cx, |cx| {
-//         HStack::new(cx, |cx| {
-//             Textbox::new(cx, AppData::text)
-//                 .text_wrap(false)
-//                 .size(Pixels(150.0))
-//                 .child_space(Pixels(0.0))
-//                 .child_top(Stretch(1.0))
-//                 .child_right(Stretch(1.0))
-//                 .background_color(Color::rgb(200, 100, 100));
-//         })
-//         .size(Auto)
-//         .child_space(Pixels(10.0))
-//         .background_color(Color::rgb(100, 200, 100));
+    HStack::new(cx, |cx| {
+        HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text)
+                .text_wrap(false)
+                .size(Pixels(150.0))
+                .child_space(Pixels(0.0))
+                .child_top(Stretch(1.0))
+                .child_right(Stretch(1.0))
+                .background_color(Color::rgb(200, 100, 100));
+        })
+        .size(Auto)
+        .child_space(Pixels(10.0))
+        .background_color(Color::rgb(100, 200, 100));
 
-//         HStack::new(cx, |cx| {
-//             Textbox::new(cx, AppData::text)
-//                 .text_wrap(false)
-//                 .size(Pixels(150.0))
-//                 .child_space(Stretch(1.0))
-//                 .child_bottom(Pixels(0.0))
-//                 .background_color(Color::rgb(200, 100, 100));
-//         })
-//         .size(Auto)
-//         .child_space(Pixels(10.0))
-//         .background_color(Color::rgb(100, 200, 100));
+        HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text)
+                .text_wrap(false)
+                .size(Pixels(150.0))
+                .child_space(Stretch(1.0))
+                .child_bottom(Pixels(0.0))
+                .background_color(Color::rgb(200, 100, 100));
+        })
+        .size(Auto)
+        .child_space(Pixels(10.0))
+        .background_color(Color::rgb(100, 200, 100));
 
-//         HStack::new(cx, |cx| {
-//             Textbox::new(cx, AppData::text)
-//                 .size(Pixels(150.0))
-//                 .child_top(Stretch(1.0))
-//                 .child_bottom(Pixels(0.0))
-//                 .child_left(Stretch(1.0))
-//                 .child_right(Pixels(0.0))
-//                 .background_color(Color::rgb(200, 100, 100));
-//         })
-//         .size(Auto)
-//         .child_space(Pixels(10.0))
-//         .background_color(Color::rgb(100, 200, 100));
-//     })
-//     .size(Auto)
-//     .col_between(Pixels(20.0))
-//     .child_space(Pixels(20.0));
-// }
+        HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text)
+                .size(Pixels(150.0))
+                .child_top(Stretch(1.0))
+                .child_bottom(Pixels(0.0))
+                .child_left(Stretch(1.0))
+                .child_right(Pixels(0.0))
+                .background_color(Color::rgb(200, 100, 100));
+        })
+        .size(Auto)
+        .child_space(Pixels(10.0))
+        .background_color(Color::rgb(100, 200, 100));
+    })
+    .size(Auto)
+    .col_between(Pixels(20.0))
+    .child_space(Pixels(20.0));
+}
 
-// fn alignment4(cx: &mut Context) {
-//     HStack::new(cx, |cx| {
-//         HStack::new(cx, |cx| {
-//             Textbox::new(cx, AppData::text2)
-//                 .text_wrap(false)
-//                 .size(Pixels(150.0))
-//                 .child_space(Pixels(0.0))
-//                 .child_right(Stretch(1.0))
-//                 .background_color(Color::rgb(200, 100, 100));
-//         })
-//         .size(Auto)
-//         .child_space(Pixels(10.0))
-//         .background_color(Color::rgb(100, 200, 100));
+fn alignment4(cx: &mut Context) {
+    HStack::new(cx, |cx| {
+        HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text2)
+                .text_wrap(false)
+                .size(Pixels(150.0))
+                .child_space(Pixels(0.0))
+                .child_right(Stretch(1.0))
+                .background_color(Color::rgb(200, 100, 100));
+        })
+        .size(Auto)
+        .child_space(Pixels(10.0))
+        .background_color(Color::rgb(100, 200, 100));
 
-//         HStack::new(cx, |cx| {
-//             Textbox::new(cx, AppData::text2)
-//                 .text_wrap(false)
-//                 .size(Pixels(150.0))
-//                 .child_top(Pixels(0.0))
-//                 .child_left(Stretch(1.0))
-//                 .child_right(Stretch(1.0))
-//                 .background_color(Color::rgb(200, 100, 100));
-//         })
-//         .size(Auto)
-//         .child_space(Pixels(10.0))
-//         .background_color(Color::rgb(100, 200, 100));
+        HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text2)
+                .text_wrap(false)
+                .size(Pixels(150.0))
+                .child_top(Pixels(0.0))
+                .child_left(Stretch(1.0))
+                .child_right(Stretch(1.0))
+                .background_color(Color::rgb(200, 100, 100));
+        })
+        .size(Auto)
+        .child_space(Pixels(10.0))
+        .background_color(Color::rgb(100, 200, 100));
 
-//         HStack::new(cx, |cx| {
-//             Textbox::new(cx, AppData::text2)
-//                 .size(Pixels(150.0))
-//                 .child_top(Pixels(0.0))
-//                 .child_left(Stretch(1.0))
-//                 .child_right(Pixels(0.0))
-//                 .background_color(Color::rgb(200, 100, 100));
-//         })
-//         .size(Auto)
-//         .child_space(Pixels(10.0))
-//         .background_color(Color::rgb(100, 200, 100));
-//     })
-//     .size(Auto)
-//     .col_between(Pixels(20.0))
-//     .child_space(Pixels(20.0));
+        HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text2)
+                .size(Pixels(150.0))
+                .child_top(Pixels(0.0))
+                .child_left(Stretch(1.0))
+                .child_right(Pixels(0.0))
+                .background_color(Color::rgb(200, 100, 100));
+        })
+        .size(Auto)
+        .child_space(Pixels(10.0))
+        .background_color(Color::rgb(100, 200, 100));
+    })
+    .size(Auto)
+    .col_between(Pixels(20.0))
+    .child_space(Pixels(20.0));
 
-//     HStack::new(cx, |cx| {
-//         HStack::new(cx, |cx| {
-//             Textbox::new(cx, AppData::text2)
-//                 .text_wrap(false)
-//                 .size(Pixels(150.0))
-//                 .child_left(Pixels(0.0))
-//                 .child_top(Stretch(1.0))
-//                 .child_bottom(Stretch(1.0))
-//                 .child_right(Stretch(1.0))
-//                 .background_color(Color::rgb(200, 100, 100));
-//         })
-//         .size(Auto)
-//         .child_space(Pixels(10.0))
-//         .background_color(Color::rgb(100, 200, 100));
+    HStack::new(cx, |cx| {
+        HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text2)
+                .text_wrap(false)
+                .size(Pixels(150.0))
+                .child_left(Pixels(0.0))
+                .child_top(Stretch(1.0))
+                .child_bottom(Stretch(1.0))
+                .child_right(Stretch(1.0))
+                .background_color(Color::rgb(200, 100, 100));
+        })
+        .size(Auto)
+        .child_space(Pixels(10.0))
+        .background_color(Color::rgb(100, 200, 100));
 
-//         HStack::new(cx, |cx| {
-//             Textbox::new(cx, AppData::text2)
-//                 .text_wrap(false)
-//                 .size(Pixels(150.0))
-//                 .child_space(Stretch(1.0))
-//                 .background_color(Color::rgb(200, 100, 100));
-//         })
-//         .size(Auto)
-//         .child_space(Pixels(10.0))
-//         .background_color(Color::rgb(100, 200, 100));
+        HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text2)
+                .text_wrap(false)
+                .size(Pixels(150.0))
+                .child_space(Stretch(1.0))
+                .background_color(Color::rgb(200, 100, 100));
+        })
+        .size(Auto)
+        .child_space(Pixels(10.0))
+        .background_color(Color::rgb(100, 200, 100));
 
-//         HStack::new(cx, |cx| {
-//             Textbox::new(cx, AppData::text2)
-//                 .size(Pixels(150.0))
-//                 .child_top(Stretch(1.0))
-//                 .child_bottom(Stretch(1.0))
-//                 .child_left(Stretch(1.0))
-//                 .child_right(Pixels(0.0))
-//                 .background_color(Color::rgb(200, 100, 100));
-//         })
-//         .size(Auto)
-//         .child_space(Pixels(10.0))
-//         .background_color(Color::rgb(100, 200, 100));
-//     })
-//     .size(Auto)
-//     .col_between(Pixels(20.0))
-//     .child_space(Pixels(20.0));
+        HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text2)
+                .size(Pixels(150.0))
+                .child_top(Stretch(1.0))
+                .child_bottom(Stretch(1.0))
+                .child_left(Stretch(1.0))
+                .child_right(Pixels(0.0))
+                .background_color(Color::rgb(200, 100, 100));
+        })
+        .size(Auto)
+        .child_space(Pixels(10.0))
+        .background_color(Color::rgb(100, 200, 100));
+    })
+    .size(Auto)
+    .col_between(Pixels(20.0))
+    .child_space(Pixels(20.0));
 
-//     HStack::new(cx, |cx| {
-//         HStack::new(cx, |cx| {
-//             Textbox::new(cx, AppData::text2)
-//                 .text_wrap(false)
-//                 .size(Pixels(150.0))
-//                 .child_space(Pixels(0.0))
-//                 .child_top(Stretch(1.0))
-//                 .child_right(Stretch(1.0))
-//                 .background_color(Color::rgb(200, 100, 100));
-//         })
-//         .size(Auto)
-//         .child_space(Pixels(10.0))
-//         .background_color(Color::rgb(100, 200, 100));
+    HStack::new(cx, |cx| {
+        HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text2)
+                .text_wrap(false)
+                .size(Pixels(150.0))
+                .child_space(Pixels(0.0))
+                .child_top(Stretch(1.0))
+                .child_right(Stretch(1.0))
+                .background_color(Color::rgb(200, 100, 100));
+        })
+        .size(Auto)
+        .child_space(Pixels(10.0))
+        .background_color(Color::rgb(100, 200, 100));
 
-//         HStack::new(cx, |cx| {
-//             Textbox::new(cx, AppData::text2)
-//                 .text_wrap(false)
-//                 .size(Pixels(150.0))
-//                 .child_space(Stretch(1.0))
-//                 .child_bottom(Pixels(0.0))
-//                 .background_color(Color::rgb(200, 100, 100));
-//         })
-//         .size(Auto)
-//         .child_space(Pixels(10.0))
-//         .background_color(Color::rgb(100, 200, 100));
+        HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text2)
+                .text_wrap(false)
+                .size(Pixels(150.0))
+                .child_space(Stretch(1.0))
+                .child_bottom(Pixels(0.0))
+                .background_color(Color::rgb(200, 100, 100));
+        })
+        .size(Auto)
+        .child_space(Pixels(10.0))
+        .background_color(Color::rgb(100, 200, 100));
 
-//         HStack::new(cx, |cx| {
-//             Textbox::new(cx, AppData::text2)
-//                 .size(Pixels(150.0))
-//                 .child_top(Stretch(1.0))
-//                 .child_bottom(Pixels(0.0))
-//                 .child_left(Stretch(1.0))
-//                 .child_right(Pixels(0.0))
-//                 .background_color(Color::rgb(200, 100, 100));
-//         })
-//         .size(Auto)
-//         .child_space(Pixels(10.0))
-//         .background_color(Color::rgb(100, 200, 100));
-//     })
-//     .size(Auto)
-//     .col_between(Pixels(20.0))
-//     .child_space(Pixels(20.0));
-// }
+        HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text2)
+                .size(Pixels(150.0))
+                .child_top(Stretch(1.0))
+                .child_bottom(Pixels(0.0))
+                .child_left(Stretch(1.0))
+                .child_right(Pixels(0.0))
+                .background_color(Color::rgb(200, 100, 100));
+        })
+        .size(Auto)
+        .child_space(Pixels(10.0))
+        .background_color(Color::rgb(100, 200, 100));
+    })
+    .size(Auto)
+    .col_between(Pixels(20.0))
+    .child_space(Pixels(20.0));
+}
 
 fn alignment5(cx: &mut Context) {
     HStack::new(cx, |cx| {

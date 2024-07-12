@@ -17,12 +17,15 @@ impl<L: Lens<Target = Color>> CustomView<L> {
 }
 
 impl<L: Lens<Target = Color>> View for CustomView<L> {
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
         let col = self.color.get(cx);
         let bounds = cx.bounds();
+        let rect: vg::Rect = bounds.into();
         let mut path = vg::Path::new();
-        path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
-        canvas.fill_path(&path, &vg::Paint::color(col.into()));
+        path.add_rect(rect, None);
+        let mut paint = vg::Paint::default();
+        paint.set_color(col);
+        canvas.draw_path(&path, &paint);
     }
 }
 
