@@ -5,6 +5,7 @@ fn main() {
     panic!("This example is not supported on baseview");
 }
 
+#[cfg(not(feature = "baseview"))]
 const STYLE: &str = r#"
 
     .modal {
