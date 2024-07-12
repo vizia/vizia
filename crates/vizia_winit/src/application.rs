@@ -142,7 +142,7 @@ impl Application {
         event_loop: &ActiveEventLoop,
         window_entity: Entity,
         window_description: &WindowDescription,
-        #[cfg(target_os = "windows")] owner: Option<Arc<winit::window::Window>>,
+        #[allow(unused_variables)] owner: Option<Arc<winit::window::Window>>,
     ) -> Result<Arc<winit::window::Window>, Box<dyn Error>> {
         #[allow(unused_mut)]
         let mut window_attributes = apply_window_description(window_description);
