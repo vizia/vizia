@@ -253,7 +253,7 @@ impl ApplicationRunner {
         self.should_redraw = false;
     }
 
-    pub fn handle_event(&mut self, event: baseview::Event, should_quit: &mut bool) {
+    pub fn handle_event(&mut self, event: baseview::Event, should_quit: &mut bool, window: &mut Window<'_>) {
         let mut cx = BackendContext::new(&mut self.context);
 
         if requests_exit(&event) {
@@ -291,7 +291,13 @@ impl ApplicationRunner {
                 }
                 baseview::MouseEvent::ButtonPressed { button, modifiers } => {
                     update_modifiers(modifiers);
-
+                    // give input focus to the view on alt-click
+                    #[cfg(not(target_os = "linux"))] // not implemented for linux yet
+                    if modifiers.contains(vizia_input::KeyboardModifiers::ALT) {
+                        if !window.has_focus() {
+                            window.focus();
+                        };
+                    };
                     let b = translate_mouse_button(button);
                     cx.emit_origin(WindowEvent::MouseDown(b));
                 }
