@@ -1,5 +1,10 @@
 pub use vizia::prelude::*;
 
+#[cfg(feature = "baseview")]
+fn main() {
+    panic!("This example is not supported on baseview");
+}
+
 #[derive(Lens)]
 struct AppData {
     color: Color,
@@ -31,6 +36,8 @@ pub enum AppEvent {
     SetGreen(f32),
     SetBlue(f32),
 }
+
+#[cfg(not(feature = "baseview"))]
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { color: Color::white(), show_popup: false }.build(cx);

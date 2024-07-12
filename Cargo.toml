@@ -79,10 +79,6 @@ name = "shadow"
 path = "examples/style/shadow.rs"
 
 [[example]]
-name = "border"
-path = "examples/style/border.rs"
-
-[[example]]
 name = "text"
 path = "examples/style/text.rs"
 
@@ -268,10 +264,6 @@ path = "examples/7GUIs/circle_drawer.rs"
 [[example]]
 name = "timer"
 path = "examples/7GUIs/timer.rs"
-
-[[example]]
-name = "user_scale"
-path = "examples/user_scale.rs"
 
 [[example]]
 name = "save_dialog"
