@@ -1,5 +1,4 @@
 use vizia::prelude::*;
-use vizia::vg;
 
 #[allow(unused)]
 const STYLE: &str = r#"
@@ -24,7 +23,7 @@ const STYLE: &str = r#"
 "#;
 
 pub struct AppData {
-    image: ImageId,
+    // image: ImageId,
 }
 
 #[cfg(target_arch = "wasm32")]

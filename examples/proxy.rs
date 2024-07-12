@@ -15,7 +15,7 @@ fn main() -> Result<(), ApplicationError> {
             })
             .height(Auto)
             .background_color(Color::yellow());
-            VStack::new(cx, |cx| {}).background_color(Color::blue());
+            VStack::new(cx, |_| {}).background_color(Color::blue());
         })
         .height(Auto)
         .background_color(Color::red());

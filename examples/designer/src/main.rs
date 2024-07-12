@@ -1,4 +1,5 @@
-use strum::VariantNames;
+#![allow(dead_code)]
+// use strum::VariantNames;
 use vizia::{
     icons::{
         ICON_ALIGN_CENTER, ICON_ALIGN_LEFT, ICON_ALIGN_RIGHT, ICON_CHEVRON_DOWN, ICON_OVERLINE,
@@ -149,15 +150,15 @@ fn main() -> Result<(), ApplicationError> {
                         Button::new(cx, |cx| Label::new(cx, "col"));
                     });
 
-                    labelled_control(cx, "Position", |cx| {
-                        PickList::new(
-                            cx,
-                            &BorderPosition::VARIANTS,
-                            AppData::selected_border_position,
-                            true,
-                        )
-                        .width(Pixels(100.0));
-                    });
+                    // labelled_control(cx, "Position", |cx| {
+                    //     PickList::new(
+                    //         cx,
+                    //         &BorderPosition::VARIANTS,
+                    //         AppData::selected_border_position,
+                    //         true,
+                    //     )
+                    //     .width(Pixels(100.0));
+                    // });
 
                     labelled_control(cx, "Width", |cx| {
                         Textbox::new(

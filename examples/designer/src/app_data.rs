@@ -1,5 +1,5 @@
-use strum::VariantNames;
-use strum_macros::VariantNames;
+// use strum::VariantNames;
+// use strum_macros::VariantNames;
 use vizia::prelude::*;
 
 #[derive(Lens)]
@@ -42,19 +42,19 @@ pub struct AppData {
     pub text_decoration_line: TextDecorationLine,
 }
 
-#[derive(Clone, Debug, VariantNames)]
-#[strum(serialize_all = "title_case")]
-pub enum BorderPosition {
-    Inside,
-    Center,
-    Outside,
-}
+// #[derive(Clone, Debug, VariantNames)]
+// #[strum(serialize_all = "title_case")]
+// pub enum BorderPosition {
+//     Inside,
+//     Center,
+//     Outside,
+// }
 
-impl BorderPosition {
-    pub fn variants() -> impl Lens<Target = &'static [&'static str]> {
-        StaticLens::new(&Self::VARIANTS)
-    }
-}
+// impl BorderPosition {
+//     pub fn variants() -> impl Lens<Target = &'static [&'static str]> {
+//         StaticLens::new(&Self::VARIANTS)
+//     }
+// }
 
 pub const FONT_SIZES: &'static [f32] = &[12.0, 14.0];
 
@@ -78,7 +78,7 @@ pub enum AppEvent {
 
     SetFont(usize),
 
-    SetShadowColor(usize, Color),
+    // SetShadowColor(usize, Color),
     SetShadowX(usize, f32),
     SetShadowY(usize, f32),
     SetShadowBlur(usize, f32),
@@ -95,7 +95,7 @@ pub enum AppEvent {
 }
 
 impl Model for AppData {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::SetCornerTopRightRadius(val) => {
                 self.corner_top_right_radius = match self.corner_top_left_radius {
@@ -144,7 +144,7 @@ impl Model for AppData {
                     }
                 }
             }
-            AppEvent::SetShadowColor(idx, col) => todo!(),
+            // AppEvent::SetShadowColor(idx, col) => todo!(),
             AppEvent::SetShadowX(idx, val) => {
                 self.shadows[*idx].x_offset = Length::px(*val).into();
             }
