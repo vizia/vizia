@@ -8,14 +8,14 @@ fn main() {
 #[derive(Lens)]
 struct AppData {
     color: Color,
-    show_window: bool,
+    show_popup: bool,
 }
 
 impl Model for AppData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::ShowWindow => self.show_window = true,
-            AppEvent::WindowClosed => self.show_window = false,
+            AppEvent::ShowPopup => self.show_popup = true,
+            AppEvent::PopupClosed => self.show_popup = false,
             AppEvent::SetRed(val) => {
                 self.color = Color::rgb((*val * 255.0) as u8, self.color.g(), self.color.b())
             }
@@ -30,8 +30,8 @@ impl Model for AppData {
 }
 
 pub enum AppEvent {
-    ShowWindow,
-    WindowClosed,
+    ShowPopup,
+    PopupClosed,
     SetRed(f32),
     SetGreen(f32),
     SetBlue(f32),
@@ -40,11 +40,11 @@ pub enum AppEvent {
 #[cfg(not(feature = "baseview"))]
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { color: Color::white(), show_window: false }.build(cx);
+        AppData { color: Color::white(), show_popup: false }.build(cx);
 
-        Binding::new(cx, AppData::show_window, |cx, show_subwindow| {
+        Binding::new(cx, AppData::show_popup, |cx, show_subwindow| {
             if show_subwindow.get(cx) {
-                Window::new(cx, |cx| {
+                Window::popup(cx, false, |cx| {
                     VStack::new(cx, |cx: &mut Context| {
                         Slider::new(cx, AppData::color.map(|c| c.r() as f32 / 255.0))
                             .on_changing(|cx, val| cx.emit(AppEvent::SetRed(val)));
@@ -59,7 +59,7 @@ fn main() -> Result<(), ApplicationError> {
                     .row_between(Pixels(12.0));
                 })
                 .on_close(|cx| {
-                    cx.emit(AppEvent::WindowClosed);
+                    cx.emit(AppEvent::PopupClosed);
                 })
                 .title("Set color...")
                 .inner_size((400, 200))
@@ -68,8 +68,8 @@ fn main() -> Result<(), ApplicationError> {
         });
 
         HStack::new(cx, |cx| {
-            Button::new(cx, |cx| Label::new(cx, "Show Window"))
-                .on_press(|cx| cx.emit(AppEvent::ShowWindow));
+            Button::new(cx, |cx| Label::new(cx, "Show Popup"))
+                .on_press(|cx| cx.emit(AppEvent::ShowPopup));
         })
         .child_space(Pixels(20.0))
         .background_color(AppData::color);
