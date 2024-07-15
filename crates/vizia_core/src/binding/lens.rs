@@ -349,7 +349,7 @@ impl<L: Lens, T> Hash for Index<L, T> {
     }
 }
 
-impl<L: Lens, T: 'static> Lens for Index<L, T>
+impl<L: Lens, T: 'static + Clone> Lens for Index<L, T>
 where
     <L as Lens>::Target: std::ops::Deref<Target = [T]>,
 {
@@ -359,7 +359,7 @@ where
     fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
         self.lens.view(source).and_then(|v| match v {
             LensValue::Borrowed(v) => v.get(self.index).map(LensValue::Borrowed),
-            LensValue::Owned(_) => unreachable!(),
+            LensValue::Owned(v) => v.get(self.index).cloned().map(LensValue::Owned),
         })
     }
 }
