@@ -1,4 +1,3 @@
-use log::debug;
 use vizia::prelude::*;
 mod helpers;
 use helpers::*;
@@ -36,7 +35,7 @@ fn main() -> Result<(), ApplicationError> {
                         ex.emit(WindowEvent::SetCursor(CursorIcon::Default));
                     }
                     if let DropData::File(file) = data {
-                        debug!("Dropped File: {:?}", file);
+                        println!("Dropped File: {:?}", file);
                     }
                 })
                 .on_hover(|ex| {

@@ -340,7 +340,7 @@ impl ApplicationHandler<UserEvent> for Application {
                 self.cx.emit_window_event(window_entity, WindowEvent::WindowClose);
             }
             winit::event::WindowEvent::DroppedFile(path) => {
-                self.cx.emit_origin(WindowEvent::Drop(DropData::File(path)));
+                self.cx.emit_window_event(window.entity, WindowEvent::Drop(DropData::File(path)));
             }
             winit::event::WindowEvent::HoveredFile(_) => {}
             winit::event::WindowEvent::HoveredFileCancelled => {}
