@@ -23,7 +23,7 @@ vizia_window = { path = "../vizia_window" }
 vizia_style = { path = "../vizia_style"}
 accesskit = "0.12.0"
 
-skia-safe = { version = "0.75", features = ["textlayout"] }
+skia-safe = { version = "0.75", features = ["textlayout", "svg"] }
 # morphorm = {path = "../../../morphorm" }
 morphorm = {git = "https://github.com/vizia/morphorm.git", branch = "auto-min-size2"}
 # morphorm = "0.6.4"

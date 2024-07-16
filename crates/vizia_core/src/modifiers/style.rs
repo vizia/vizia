@@ -353,28 +353,30 @@ pub trait StyleModifiers: internal::Modifiable {
         SystemFlags::REDRAW
     );
 
-    fn background_image<'i, U: Into<Vec<BackgroundImage<'i>>>>(
-        mut self,
-        value: impl Res<U>,
-    ) -> Self {
+    fn background_image<'i, U: Into<BackgroundImage<'i>>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, move |cx, val| {
-                let images = val.get(cx).into();
-                let images = images
-                    .into_iter()
-                    .filter_map(|img| match img {
-                        BackgroundImage::Gradient(gradient) => {
-                            Some(ImageOrGradient::Gradient(*gradient))
-                        }
-                        BackgroundImage::Url(url) => {
-                            Some(ImageOrGradient::Image(url.url.to_string()))
-                        }
-                        _ => None,
-                    })
-                    .collect::<Vec<_>>();
-                cx.style.background_image.insert(cx.current, images);
+                let image = val.get(cx).into();
+                let image = match image {
+                    BackgroundImage::Gradient(gradient) => {
+                        Some(ImageOrGradient::Gradient(*gradient))
+                    }
+                    BackgroundImage::Url(url) => Some(ImageOrGradient::Image(url.url.to_string())),
+                    _ => None,
+                };
+
+                if let Some(image) = image {
+                    if let Some(background_images) =
+                        cx.style.background_image.get_inline_mut(cx.current)
+                    {
+                        background_images.push(image);
+                    } else {
+                        cx.style.background_image.insert(cx.current, vec![image]);
+                    }
+                }
+
                 cx.needs_redraw();
             });
         });

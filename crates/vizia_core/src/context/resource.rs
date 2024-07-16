@@ -4,7 +4,7 @@ use vizia_storage::Tree;
 
 use crate::{
     entity::Entity,
-    resource::{ImageRetentionPolicy, ResourceManager, StoredImage},
+    resource::{ImageOrSvg, ImageRetentionPolicy, ResourceManager, StoredImage},
     style::Style,
 };
 
@@ -56,13 +56,13 @@ impl<'a> ResourceContext<'a> {
 
         match self.resource_manager.images.entry(id) {
             Entry::Occupied(mut occ) => {
-                occ.get_mut().image = image;
+                occ.get_mut().image = ImageOrSvg::Image(image);
                 occ.get_mut().dirty = true;
                 occ.get_mut().retention_policy = policy;
             }
             Entry::Vacant(vac) => {
                 vac.insert(StoredImage {
-                    image,
+                    image: ImageOrSvg::Image(image),
                     retention_policy: policy,
                     used: true,
                     dirty: false,

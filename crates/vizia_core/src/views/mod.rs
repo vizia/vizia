@@ -38,7 +38,6 @@ mod tooltip;
 mod virtual_list;
 mod xypad;
 
-pub use self::image::Image;
 pub use crate::binding::Binding;
 pub use avatar::*;
 pub use badge::*;
@@ -52,6 +51,7 @@ pub use divider::*;
 pub use dropdown::Dropdown;
 pub use element::Element;
 pub use form::{FormControl, FormGroup, FormPlacement};
+pub use image::*;
 pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
 pub use label::{Icon, Label};
 pub use list::*;

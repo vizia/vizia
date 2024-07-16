@@ -2,7 +2,7 @@ use morphorm::Node;
 use vizia_storage::MorphormChildIter;
 
 use crate::prelude::*;
-use crate::resource::ResourceManager;
+use crate::resource::{ImageOrSvg, ResourceManager};
 use crate::text::TextContext;
 
 pub struct SubLayout<'a> {
@@ -266,8 +266,10 @@ impl Node for Entity {
                                 .get(image_id)
                                 .map(|stored_img| &stored_img.image)
                             {
-                                max_width = max_width.max(image.width() as f32);
-                                max_height = max_height.max(image.height() as f32);
+                                if let ImageOrSvg::Image(image) = image {
+                                    max_width = max_width.max(image.width() as f32);
+                                    max_height = max_height.max(image.height() as f32);
+                                }
                             }
                         }
                     }

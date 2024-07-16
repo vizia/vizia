@@ -305,6 +305,10 @@ path = "examples/multiwindow.rs"
 name = "popup_window"
 path = "examples/popup_window.rs"
 
+[[example]]
+name = "svg"
+path = "examples/views/svg.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts"]
 clipboard = ["vizia_core/clipboard", "vizia_winit?/clipboard"]
