@@ -10,6 +10,7 @@ mod resource;
 
 use log::debug;
 use skia_safe::{
+    svg,
     textlayout::{FontCollection, TypefaceFontProvider},
     FontMgr,
 };
@@ -33,13 +34,13 @@ pub use event::*;
 pub use proxy::*;
 pub use resource::*;
 
-use crate::cache::CachedData;
 use crate::events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler};
 use crate::fonts;
 use crate::{
     binding::{BindingHandler, MapId},
     resource::StoredImage,
 };
+use crate::{cache::CachedData, resource::ImageOrSvg};
 
 use crate::model::ModelDataStore;
 use crate::prelude::*;
@@ -783,13 +784,43 @@ impl Context {
         {
             match self.resource_manager.images.entry(id) {
                 Entry::Occupied(mut occ) => {
-                    occ.get_mut().image = image;
+                    occ.get_mut().image = ImageOrSvg::Image(image);
                     occ.get_mut().dirty = true;
                     occ.get_mut().retention_policy = policy;
                 }
                 Entry::Vacant(vac) => {
                     vac.insert(StoredImage {
-                        image,
+                        image: ImageOrSvg::Image(image),
+                        retention_policy: policy,
+                        used: true,
+                        dirty: false,
+                        observers: HashSet::new(),
+                    });
+                }
+            }
+            self.style.needs_relayout();
+        }
+    }
+
+    pub fn load_svg(&mut self, path: &str, data: &[u8], policy: ImageRetentionPolicy) {
+        let id = if let Some(image_id) = self.resource_manager.image_ids.get(path) {
+            *image_id
+        } else {
+            let id = self.resource_manager.image_id_manager.create();
+            self.resource_manager.image_ids.insert(path.to_owned(), id);
+            id
+        };
+
+        if let Ok(svg) = svg::Dom::from_bytes(data, &self.text_context.default_font_manager) {
+            match self.resource_manager.images.entry(id) {
+                Entry::Occupied(mut occ) => {
+                    occ.get_mut().image = ImageOrSvg::Svg(svg);
+                    occ.get_mut().dirty = true;
+                    occ.get_mut().retention_policy = policy;
+                }
+                Entry::Vacant(vac) => {
+                    vac.insert(StoredImage {
+                        image: ImageOrSvg::Svg(svg),
                         retention_policy: policy,
                         used: true,
                         dirty: false,
