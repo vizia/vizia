@@ -1,5 +1,5 @@
 /// The logical size of an application window.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct WindowSize {
     /// The width of the window.
     pub width: u32,
@@ -21,24 +21,24 @@ impl From<(u32, u32)> for WindowSize {
 }
 
 /// The logical position of a window in screen coordinates.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Position {
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct WindowPosition {
     /// The x coordinate of the position.
     pub x: u32,
     /// The y coordinate of the position.
     pub y: u32,
 }
 
-impl Position {
+impl WindowPosition {
     /// Creates a new window position.
     pub fn new(x: u32, y: u32) -> Self {
-        Position { x, y }
+        WindowPosition { x, y }
     }
 }
 
-impl From<(u32, u32)> for Position {
+impl From<(u32, u32)> for WindowPosition {
     fn from(s: (u32, u32)) -> Self {
-        Position::new(s.0, s.1)
+        WindowPosition::new(s.0, s.1)
     }
 }
 
@@ -51,7 +51,7 @@ pub struct WindowDescription {
     pub max_inner_size: Option<WindowSize>,
     /// A scale factor applied on top of any DPI scaling, defaults to 1.0.
     pub user_scale_factor: f64,
-    pub position: Option<Position>,
+    pub position: Option<WindowPosition>,
     pub resizable: bool,
     pub minimized: bool,
     pub maximized: bool,

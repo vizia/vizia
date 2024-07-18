@@ -6,6 +6,7 @@ use std::rc::Rc;
 
 use hashbrown::{HashMap, HashSet};
 use vizia_storage::{LayoutTreeIterator, TreeIterator};
+use vizia_window::WindowPosition;
 
 use crate::animation::{AnimId, Interpolator};
 use crate::cache::CachedData;
@@ -182,6 +183,16 @@ impl<'a> EventContext<'a> {
         if let Some(state) = self.windows.get_mut(&self.current) {
             state.should_close = true;
         }
+    }
+
+    pub fn window_position(&self) -> WindowPosition {
+        if let Some(parent_window) = self.parent_window() {
+            if let Some(state) = self.windows.get(&parent_window) {
+                return state.position;
+            }
+        }
+
+        WindowPosition::new(0, 0)
     }
 
     /// Returns the [Entity] id associated with the given identifier.
@@ -1353,7 +1364,7 @@ pub trait TreeProps {
     /// Returns the id of the first_child of the current view.
     fn first_child(&self) -> Entity;
 
-    fn parent_window(&self) -> Entity;
+    fn parent_window(&self) -> Option<Entity>;
 }
 
 impl<'a> TreeProps for EventContext<'a> {
@@ -1365,7 +1376,7 @@ impl<'a> TreeProps for EventContext<'a> {
         self.tree.get_layout_first_child(self.current).unwrap()
     }
 
-    fn parent_window(&self) -> Entity {
-        self.tree.get_parent_window(self.current).unwrap_or(Entity::root())
+    fn parent_window(&self) -> Option<Entity> {
+        self.tree.get_parent_window(self.current)
     }
 }

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use crate::{entity::Entity, environment::ThemeMode, layout::cache::GeoChanged};
 use vizia_input::{Code, Key, MouseButton};
 use vizia_style::CursorIcon;
-use vizia_window::{Position, WindowSize};
+use vizia_window::{WindowPosition, WindowSize};
 
 #[derive(Debug, Clone)]
 pub enum DropData {
@@ -82,7 +82,7 @@ pub enum WindowEvent {
     /// Sets the size of the window.
     SetSize(WindowSize),
     /// Sets the position of the window.
-    SetPosition(Position),
+    SetPosition(WindowPosition),
     /// Sets the maximum size of the window.
     SetMaxSize(Option<WindowSize>),
     /// Sets the minimum size of the window.
@@ -123,6 +123,8 @@ pub enum WindowEvent {
     ReloadStyles,
 
     SetEnabled(bool),
+
+    DragWindow,
 
     // ToDo: Move this
     Destroyed,
