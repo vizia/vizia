@@ -69,10 +69,10 @@ where
     pub cursor_x: f32,
     /// The vertical mouse cursor position of the frame.
     pub cursor_y: f32,
-    /// The horizontal mouse cursor position change from the previous frame.
-    pub delta_x: f32,
-    /// The vertical mouse cursor position change from the previous frame.
-    pub delta_y: f32,
+    /// The horizontal mouse cursor position of the previous frame.
+    pub previous_cursor_x: f32,
+    /// The vertical mouse cursor position of the previous frame.
+    pub previous_cursor_y: f32,
     /// The state of the left mouse button.
     pub left: MouseButtonData<I>,
     /// The state of the right mouse button.
@@ -89,8 +89,8 @@ where
         MouseState {
             cursor_x: -1.0,
             cursor_y: -1.0,
-            delta_x: -1.0,
-            delta_y: -1.0,
+            previous_cursor_x: -1.0,
+            previous_cursor_y: -1.0,
             left: MouseButtonData::default(),
             right: MouseButtonData::default(),
             middle: MouseButtonData::default(),
@@ -104,7 +104,7 @@ where
 {
     /// Returns the delta of the mouse cursor position of the current and previous frame.
     pub fn delta(&self) -> (f32, f32) {
-        (self.delta_x, self.delta_y)
+        (self.cursor_x - self.previous_cursor_x, self.cursor_y - self.previous_cursor_y)
     }
 
     /// Returns the delta of the mouse cursor position of the current frame and the frame the `button` got pressed.

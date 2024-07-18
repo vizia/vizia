@@ -18,7 +18,7 @@ use winit::{
     application::ApplicationHandler,
     dpi::{LogicalPosition, LogicalSize},
     error::EventLoopError,
-    event::{DeviceEvent, ElementState},
+    event::ElementState,
     event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy},
     keyboard::{NativeKeyCode, PhysicalKey},
     window::{WindowAttributes, WindowId, WindowLevel},
@@ -600,22 +600,6 @@ impl ApplicationHandler<UserEvent> for Application {
     fn new_events(&mut self, _event_loop: &ActiveEventLoop, _cause: winit::event::StartCause) {
         self.cx.process_timers();
         self.cx.emit_scheduled_events();
-    }
-
-    fn device_event(
-        &mut self,
-        _event_loop: &ActiveEventLoop,
-        _device_id: winit::event::DeviceId,
-        event: winit::event::DeviceEvent,
-    ) {
-        match event {
-            DeviceEvent::MouseMotion { delta } => {
-                self.cx.0.mouse.delta_x = delta.0 as f32;
-                self.cx.0.mouse.delta_y = delta.1 as f32;
-            }
-
-            _ => {}
-        }
     }
 
     fn exiting(&mut self, _event_loop: &ActiveEventLoop) {}
