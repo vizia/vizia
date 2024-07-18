@@ -198,6 +198,8 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
 
         WindowEvent::MouseMove(x, y) => {
             if !x.is_nan() && !y.is_nan() {
+                cx.mouse.previous_cursor_x = cx.mouse.cursor_x;
+                cx.mouse.previous_cursor_y = cx.mouse.cursor_y;
                 cx.mouse.cursor_x = *x;
                 cx.mouse.cursor_y = *y;
 
