@@ -1,4 +1,4 @@
-#[allow(unused)]
+#![allow(unused)]
 use vizia::{icons::ICON_X, prelude::*};
 mod helpers;
 use helpers::*;
