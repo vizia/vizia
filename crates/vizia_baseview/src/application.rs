@@ -331,9 +331,9 @@ impl ApplicationRunner {
                     //       factor.
                     let physical_posx = position.x * self.window_scale_factor;
                     let physical_posy = position.y * self.window_scale_factor;
-                    let cursorx = (physical_posx) as f32;
-                    let cursory = (physical_posy) as f32;
-                    self.cx.emit_origin(WindowEvent::MouseMove(cursorx, cursory));
+                    let cursor_x = (physical_posx) as f32;
+                    let cursor_y = (physical_posy) as f32;
+                    self.cx.emit_origin(WindowEvent::MouseMove(cursor_x, cursor_y));
                 }
                 baseview::MouseEvent::ButtonPressed { button, modifiers } => {
                     update_modifiers(modifiers);

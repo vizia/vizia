@@ -115,8 +115,8 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
 
         event.map(|window_event, meta| {
             let pos = match &self.orientation {
-                Orientation::Horizontal => cx.mouse.cursorx,
-                Orientation::Vertical => cx.mouse.cursory,
+                Orientation::Horizontal => cx.mouse.cursor_x,
+                Orientation::Vertical => cx.mouse.cursor_y,
             };
             match window_event {
                 WindowEvent::MouseDown(MouseButton::Left) => {
@@ -141,7 +141,7 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                         let sy = bounds.h - thumb_bounds.h;
                         match self.orientation {
                             Orientation::Horizontal => {
-                                let px = cx.mouse.cursorx - cx.bounds().x - thumb_bounds.w / 2.0;
+                                let px = cx.mouse.cursor_x - cx.bounds().x - thumb_bounds.w / 2.0;
                                 let x = (px / sx).clamp(0.0, 1.0);
                                 if let Some(callback) = &self.on_changing {
                                     (callback)(cx, x);
@@ -149,7 +149,7 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                             }
 
                             Orientation::Vertical => {
-                                let py = cx.mouse.cursory - cx.bounds().y - thumb_bounds.h / 2.0;
+                                let py = cx.mouse.cursor_y - cx.bounds().y - thumb_bounds.h / 2.0;
                                 let y = (py / sy).clamp(0.0, 1.0);
                                 if let Some(callback) = &self.on_changing {
                                     (callback)(cx, y);
@@ -162,18 +162,18 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                         let t = self.thumb_bounds(cx);
                         let physical_delta = match &self.orientation {
                             Orientation::Horizontal => {
-                                if cx.mouse.cursorx < t.x {
+                                if cx.mouse.cursor_x < t.x {
                                     -jump
-                                } else if cx.mouse.cursorx >= t.x + t.w {
+                                } else if cx.mouse.cursor_x >= t.x + t.w {
                                     jump
                                 } else {
                                     return;
                                 }
                             }
                             Orientation::Vertical => {
-                                if cx.mouse.cursory < t.y {
+                                if cx.mouse.cursor_y < t.y {
                                     -jump
-                                } else if cx.mouse.cursory >= t.y + t.h {
+                                } else if cx.mouse.cursor_y >= t.y + t.h {
                                     jump
                                 } else {
                                     return;
@@ -211,7 +211,7 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                             match self.orientation {
                                 Orientation::Horizontal => {
                                     let px =
-                                        cx.mouse.cursorx - cx.bounds().x - thumb_bounds.w / 2.0;
+                                        cx.mouse.cursor_x - cx.bounds().x - thumb_bounds.w / 2.0;
                                     let x = (px / sx).clamp(0.0, 1.0);
                                     if let Some(callback) = &self.on_changing {
                                         (callback)(cx, x);
@@ -220,7 +220,7 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
 
                                 Orientation::Vertical => {
                                     let py =
-                                        cx.mouse.cursory - cx.bounds().y - thumb_bounds.h / 2.0;
+                                        cx.mouse.cursor_y - cx.bounds().y - thumb_bounds.h / 2.0;
                                     let y = (py / sy).clamp(0.0, 1.0);
                                     if let Some(callback) = &self.on_changing {
                                         (callback)(cx, y);

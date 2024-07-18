@@ -58,7 +58,7 @@ mod tests {
             failure {
                 "test",
                 "123",
-                "solid solid dashed groove dotted",
+                "solid solid dashed dashed dotted",
             }
         }
     }

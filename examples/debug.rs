@@ -1,3 +1,4 @@
+#[allow(unused)]
 use vizia::{icons::ICON_X, prelude::*};
 mod helpers;
 use helpers::*;
@@ -87,8 +88,8 @@ fn main() -> Result<(), ApplicationError> {
         .bind(AppData::show_window, |mut handle, show| {
             if show.get(&handle) {
                 handle.context().emit(WindowEvent::SetVisible(true));
-                let x = handle.context().mouse.cursorx as u32;
-                let y = handle.context().mouse.cursory as u32;
+                let x = handle.context().mouse.cursor_x as u32;
+                let y = handle.context().mouse.cursor_y as u32;
                 handle.context().emit(WindowEvent::SetPosition((x, y).into()));
                 handle.context().emit(WindowEvent::DragWindow);
             } else {

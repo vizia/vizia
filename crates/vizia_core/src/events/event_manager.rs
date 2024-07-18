@@ -198,18 +198,16 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
 
         WindowEvent::MouseMove(x, y) => {
             if !x.is_nan() && !y.is_nan() {
-                cx.mouse.previous_cursorx = cx.mouse.cursorx;
-                cx.mouse.previous_cursory = cx.mouse.cursory;
-                cx.mouse.cursorx = *x;
-                cx.mouse.cursory = *y;
+                cx.mouse.cursor_x = *x;
+                cx.mouse.cursor_y = *y;
 
                 hover_system(cx, meta.origin);
 
                 mutate_direct_or_up(meta, cx.captured, cx.hovered, false);
             }
 
-            // if cx.mouse.cursorx != cx.mouse.previous_cursorx
-            //     || cx.mouse.cursory != cx.mouse.previous_cursory
+            // if cx.mouse.cursor_x != cx.mouse.previous_cursor_x
+            //     || cx.mouse.cursor_y != cx.mouse.previous_cursor_y
             // {
             // }
 
@@ -229,7 +227,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 MouseButton::Left => {
                     cx.mouse.left.state = MouseButtonState::Pressed;
 
-                    cx.mouse.left.pos_down = (cx.mouse.cursorx, cx.mouse.cursory);
+                    cx.mouse.left.pos_down = (cx.mouse.cursor_x, cx.mouse.cursor_y);
                     cx.mouse.left.pressed = cx.hovered;
                     cx.triggered = cx.hovered;
 
@@ -257,12 +255,12 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 }
                 MouseButton::Right => {
                     cx.mouse.right.state = MouseButtonState::Pressed;
-                    cx.mouse.right.pos_down = (cx.mouse.cursorx, cx.mouse.cursory);
+                    cx.mouse.right.pos_down = (cx.mouse.cursor_x, cx.mouse.cursor_y);
                     cx.mouse.right.pressed = cx.hovered;
                 }
                 MouseButton::Middle => {
                     cx.mouse.middle.state = MouseButtonState::Pressed;
-                    cx.mouse.middle.pos_down = (cx.mouse.cursorx, cx.mouse.cursory);
+                    cx.mouse.middle.pos_down = (cx.mouse.cursor_x, cx.mouse.cursor_y);
                     cx.mouse.middle.pressed = cx.hovered;
                 }
                 _ => {}
@@ -282,7 +280,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             // track double/triple -click
             let new_click_time = Instant::now();
             let click_duration = new_click_time - cx.click_time;
-            let new_click_pos = (cx.mouse.cursorx, cx.mouse.cursory);
+            let new_click_pos = (cx.mouse.cursor_x, cx.mouse.cursor_y);
             if click_duration <= DOUBLE_CLICK_INTERVAL
                 && new_click_pos == cx.click_pos
                 && *button == cx.click_button
@@ -308,17 +306,17 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
         WindowEvent::MouseUp(button) => {
             match button {
                 MouseButton::Left => {
-                    cx.mouse.left.pos_up = (cx.mouse.cursorx, cx.mouse.cursory);
+                    cx.mouse.left.pos_up = (cx.mouse.cursor_x, cx.mouse.cursor_y);
                     cx.mouse.left.released = cx.hovered;
                     cx.mouse.left.state = MouseButtonState::Released;
                 }
                 MouseButton::Right => {
-                    cx.mouse.right.pos_up = (cx.mouse.cursorx, cx.mouse.cursory);
+                    cx.mouse.right.pos_up = (cx.mouse.cursor_x, cx.mouse.cursor_y);
                     cx.mouse.right.released = cx.hovered;
                     cx.mouse.right.state = MouseButtonState::Released;
                 }
                 MouseButton::Middle => {
-                    cx.mouse.middle.pos_up = (cx.mouse.cursorx, cx.mouse.cursory);
+                    cx.mouse.middle.pos_up = (cx.mouse.cursor_x, cx.mouse.cursor_y);
                     cx.mouse.middle.released = cx.hovered;
                     cx.mouse.middle.state = MouseButtonState::Released;
                 }
