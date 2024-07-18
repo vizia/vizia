@@ -229,8 +229,6 @@ impl BackendContext {
 
         style_system(&mut self.0);
 
-        shared_inheritance_system(&mut self.0);
-
         // Load any unloaded images and remove unused images.
         image_system(&mut self.0);
     }

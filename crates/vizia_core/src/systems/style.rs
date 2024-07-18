@@ -237,17 +237,23 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
 pub(crate) fn inline_inheritance_system(cx: &mut Context) {
     for entity in cx.tree.into_iter() {
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
-            cx.style.disabled.inherit_inline(entity, parent);
+            if cx.style.disabled.inherit_inline(entity, parent)
+                | cx.style.caret_color.inherit_inline(entity, parent)
+                | cx.style.selection_color.inherit_inline(entity, parent)
+            {
+                cx.style.needs_redraw(entity);
+            }
 
-            cx.style.font_color.inherit_inline(entity, parent);
-            cx.style.font_size.inherit_inline(entity, parent);
-            cx.style.font_family.inherit_inline(entity, parent);
-            cx.style.font_weight.inherit_inline(entity, parent);
-            cx.style.font_slant.inherit_inline(entity, parent);
-            cx.style.text_decoration_line.inherit_inline(entity, parent);
-            cx.style.font_variation_settings.inherit_inline(entity, parent);
-            cx.style.caret_color.inherit_inline(entity, parent);
-            cx.style.selection_color.inherit_inline(entity, parent);
+            if cx.style.font_color.inherit_inline(entity, parent)
+                | cx.style.font_size.inherit_inline(entity, parent)
+                | cx.style.font_family.inherit_inline(entity, parent)
+                | cx.style.font_weight.inherit_inline(entity, parent)
+                | cx.style.font_slant.inherit_inline(entity, parent)
+                | cx.style.text_decoration_line.inherit_inline(entity, parent)
+                | cx.style.font_variation_settings.inherit_inline(entity, parent)
+            {
+                cx.style.needs_text_update(entity);
+            }
         }
     }
 }
@@ -256,15 +262,22 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context) {
 pub(crate) fn shared_inheritance_system(cx: &mut Context) {
     for entity in cx.tree.into_iter() {
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
-            cx.style.font_color.inherit_shared(entity, parent);
-            cx.style.font_size.inherit_shared(entity, parent);
-            cx.style.font_family.inherit_shared(entity, parent);
-            cx.style.font_weight.inherit_shared(entity, parent);
-            cx.style.font_slant.inherit_shared(entity, parent);
-            cx.style.text_decoration_line.inherit_shared(entity, parent);
-            cx.style.font_variation_settings.inherit_shared(entity, parent);
-            cx.style.caret_color.inherit_shared(entity, parent);
-            cx.style.selection_color.inherit_shared(entity, parent);
+            if cx.style.font_color.inherit_shared(entity, parent)
+                | cx.style.font_size.inherit_shared(entity, parent)
+                | cx.style.font_family.inherit_shared(entity, parent)
+                | cx.style.font_weight.inherit_shared(entity, parent)
+                | cx.style.font_slant.inherit_shared(entity, parent)
+                | cx.style.text_decoration_line.inherit_shared(entity, parent)
+                | cx.style.font_variation_settings.inherit_shared(entity, parent)
+            {
+                cx.style.needs_text_update(entity);
+            }
+
+            if cx.style.caret_color.inherit_shared(entity, parent)
+                | cx.style.selection_color.inherit_shared(entity, parent)
+            {
+                cx.style.needs_redraw(entity);
+            }
         }
     }
 }
@@ -824,5 +837,7 @@ pub(crate) fn style_system(cx: &mut Context) {
             }
         }
         cx.style.restyle.clear();
+
+        shared_inheritance_system(cx);
     }
 }
