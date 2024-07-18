@@ -796,8 +796,8 @@ where
                         }
                         self.reset_caret_timer(cx);
                         cx.emit(TextEvent::Hit(
-                            cx.mouse.cursorx,
-                            cx.mouse.cursory,
+                            cx.mouse.cursor_x,
+                            cx.mouse.cursor_y,
                             cx.modifiers.shift(),
                         ));
                     }
@@ -850,7 +850,7 @@ where
                         self.reset_caret_timer(cx);
                     }
                     if cx.mouse.left.pos_down.0 != *x || cx.mouse.left.pos_down.1 != *y {
-                        cx.emit(TextEvent::Drag(cx.mouse.cursorx, cx.mouse.cursory));
+                        cx.emit(TextEvent::Drag(cx.mouse.cursor_x, cx.mouse.cursor_y));
                     }
                 }
             }

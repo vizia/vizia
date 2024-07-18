@@ -192,8 +192,8 @@ use vizia::prelude::*;
 //                 }
 
 //                 if !self.dialog_open {
-//                     let x = cx.mouse().cursorx;
-//                     let y = cx.mouse().cursory;
+//                     let x = cx.mouse().cursor_x;
+//                     let y = cx.mouse().cursor_y;
 
 //                     self.circles_data.update_selected(x, y);
 //                 }
@@ -214,8 +214,8 @@ use vizia::prelude::*;
 //                         ));
 //                     }
 
-//                     let x = cx.mouse().cursorx;
-//                     let y = cx.mouse().cursory;
+//                     let x = cx.mouse().cursor_x;
+//                     let y = cx.mouse().cursor_y;
 
 //                     self.circles_data.update_selected(x, y);
 //                 }
@@ -245,7 +245,7 @@ use vizia::prelude::*;
 //             WindowEvent::MouseDown(button) => match button {
 //                 MouseButton::Left => {
 //                     let x = cx.mouse().cursorx;
-//                     let y = cx.mouse().cursory;
+//                     let y = cx.mouse().cursor_y;
 
 //                     cx.emit(CircleDrawerEvent::AddCircle(x, y))
 //                 }

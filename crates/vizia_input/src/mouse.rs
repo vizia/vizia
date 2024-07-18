@@ -66,13 +66,13 @@ where
     I: GenerationalId,
 {
     /// The horizontal mouse cursor position of the frame.
-    pub cursorx: f32,
+    pub cursor_x: f32,
     /// The vertical mouse cursor position of the frame.
-    pub cursory: f32,
-    /// The horizontal mouse cursor position of the previous frame.
-    pub previous_cursorx: f32,
-    /// The vertical mouse cursor position of the previous frame.
-    pub previous_cursory: f32,
+    pub cursor_y: f32,
+    /// The horizontal mouse cursor position change from the previous frame.
+    pub delta_x: f32,
+    /// The vertical mouse cursor position change from the previous frame.
+    pub delta_y: f32,
     /// The state of the left mouse button.
     pub left: MouseButtonData<I>,
     /// The state of the right mouse button.
@@ -87,10 +87,10 @@ where
 {
     fn default() -> Self {
         MouseState {
-            cursorx: -1.0,
-            cursory: -1.0,
-            previous_cursorx: -1.0,
-            previous_cursory: -1.0,
+            cursor_x: -1.0,
+            cursor_y: -1.0,
+            delta_x: -1.0,
+            delta_y: -1.0,
             left: MouseButtonData::default(),
             right: MouseButtonData::default(),
             middle: MouseButtonData::default(),
@@ -103,23 +103,23 @@ where
     I: GenerationalId,
 {
     /// Returns the delta of the mouse cursor position of the current and previous frame.
-    pub fn frame_delta(&self) -> (f32, f32) {
-        (self.cursorx - self.previous_cursorx, self.cursory - self.previous_cursory)
+    pub fn delta(&self) -> (f32, f32) {
+        (self.delta_x, self.delta_y)
     }
 
     /// Returns the delta of the mouse cursor position of the current frame and the frame the `button` got pressed.
-    pub fn delta(&self, button: MouseButton) -> (f32, f32) {
+    pub fn button_delta(&self, button: MouseButton) -> (f32, f32) {
         match button {
             MouseButton::Left => {
-                (self.cursorx - self.left.pos_down.0, self.cursory - self.left.pos_down.1)
+                (self.cursor_x - self.left.pos_down.0, self.cursor_y - self.left.pos_down.1)
             }
 
             MouseButton::Right => {
-                (self.cursorx - self.right.pos_down.0, self.cursory - self.right.pos_down.1)
+                (self.cursor_x - self.right.pos_down.0, self.cursor_y - self.right.pos_down.1)
             }
 
             MouseButton::Middle => {
-                (self.cursorx - self.middle.pos_down.0, self.cursory - self.middle.pos_down.1)
+                (self.cursor_x - self.middle.pos_down.0, self.cursor_y - self.middle.pos_down.1)
             }
 
             _ => (0.0, 0.0),

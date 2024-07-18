@@ -134,10 +134,10 @@ fn hover_entity(
 
     let bounds = cx.bounds();
 
-    let cursorx = cx.mouse.cursorx;
-    let cursory = cx.mouse.cursory;
+    let cursor_x = cx.mouse.cursor_x;
+    let cursor_y = cx.mouse.cursor_y;
 
-    if cursorx < 0.0 || cursory < 0.0 {
+    if cursor_x < 0.0 || cursor_y < 0.0 {
         return;
     }
 
@@ -146,7 +146,7 @@ fn hover_entity(
     transform = cx.transform() * transform;
 
     let t = transform.invert().unwrap();
-    let t = t.map_point((cursorx, cursory));
+    let t = t.map_point((cursor_x, cursor_y));
     let tx = t.x;
     let ty = t.y;
     let clipping = clip_bounds.intersection(&cx.clip_region());
