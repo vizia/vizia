@@ -38,7 +38,7 @@ use winit::{platform::windows::WindowAttributesExtWindows, raw_window_handle::Ha
 //     )
 // ))]
 // use raw_window_handle::{HasRawDisplayHandle, RawDisplayHandle};
-use vizia_window::Position;
+use vizia_window::WindowPosition;
 
 #[derive(Debug)]
 pub enum UserEvent {
@@ -261,6 +261,7 @@ impl ApplicationHandler<UserEvent> for Application {
         self.cx.add_window(Window {
             window: Some(main_window.clone()),
             on_close: None,
+            on_create: None,
             should_close: false,
         });
 
@@ -288,8 +289,11 @@ impl ApplicationHandler<UserEvent> for Application {
                 .create_window(event_loop, window_entity, &window_state.window_description, owner)
                 .expect("Failed to create window");
             self.cx.add_main_window(window_entity, &window_state.window_description, 1.0);
-            self.cx.mutate_window(window_entity, |_, win: &mut Window| {
-                win.window = Some(window.clone())
+            self.cx.mutate_window(window_entity, |cx, win: &mut Window| {
+                win.window = Some(window.clone());
+                if let Some(callback) = &win.on_create {
+                    (callback)(&mut EventContext::new_with_current(cx.context(), window_entity));
+                }
             });
         }
     }
@@ -335,6 +339,10 @@ impl ApplicationHandler<UserEvent> for Application {
                 }
             }
 
+            winit::event::WindowEvent::Moved(position) => {
+                self.cx.set_window_position(window.entity, position.x as f32, position.y as f32);
+            }
+
             winit::event::WindowEvent::CloseRequested | winit::event::WindowEvent::Destroyed => {
                 let window_entity = window.entity;
                 self.cx.emit_window_event(window_entity, WindowEvent::WindowClose);
@@ -342,6 +350,7 @@ impl ApplicationHandler<UserEvent> for Application {
             winit::event::WindowEvent::DroppedFile(path) => {
                 self.cx.emit_window_event(window.entity, WindowEvent::Drop(DropData::File(path)));
             }
+
             winit::event::WindowEvent::HoveredFile(_) => {}
             winit::event::WindowEvent::HoveredFileCancelled => {}
             winit::event::WindowEvent::Focused(is_focused) => {
@@ -573,8 +582,14 @@ impl ApplicationHandler<UserEvent> for Application {
                         )
                         .expect("Failed to create window");
 
-                    self.cx.mutate_window(*window_entity, |_, win: &mut Window| {
-                        win.window = Some(window.clone())
+                    self.cx.mutate_window(*window_entity, |cx, win: &mut Window| {
+                        win.window = Some(window.clone());
+                        if let Some(callback) = &win.on_create {
+                            (callback)(&mut EventContext::new_with_current(
+                                cx.context(),
+                                *window_entity,
+                            ));
+                        }
                     });
                 }
             }
@@ -633,7 +648,7 @@ impl WindowModifiers for Application {
         self
     }
 
-    fn position<P: Into<Position>>(mut self, position: impl Res<P>) -> Self {
+    fn position<P: Into<WindowPosition>>(mut self, position: impl Res<P>) -> Self {
         self.window_description.position = Some(position.get(&self.cx.0).into());
 
         position.set_or_bind(&mut self.cx.0, Entity::root(), |cx, size| {
@@ -712,6 +727,10 @@ impl WindowModifiers for Application {
     fn on_close(self, _callback: impl Fn(&mut EventContext)) -> Self {
         self
     }
+
+    fn on_create(self, _callback: impl Fn(&mut EventContext)) -> Self {
+        self
+    }
 }
 
 fn apply_window_description(description: &WindowDescription) -> WindowAttributes {
@@ -740,7 +759,7 @@ fn apply_window_description(description: &WindowDescription) -> WindowAttributes
         .with_resizable(description.resizable)
         .with_maximized(description.maximized)
         // Accesskit requires that the window start invisible until accesskit is initialized.
-        .with_visible(false)
+        //.with_visible(false)
         .with_window_level(if description.always_on_top {
             WindowLevel::AlwaysOnTop
         } else {

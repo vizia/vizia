@@ -307,6 +307,7 @@ pub fn create_surface(
 pub struct Window {
     pub window: Option<Arc<winit::window::Window>>,
     pub on_close: Option<Box<dyn Fn(&mut EventContext)>>,
+    pub on_create: Option<Box<dyn Fn(&mut EventContext)>>,
     pub should_close: bool,
 }
 
@@ -316,7 +317,7 @@ impl Window {
     }
 
     pub fn new(cx: &mut Context, content: impl Fn(&mut Context)) -> Handle<Self> {
-        Self { window: None, on_close: None, should_close: false }
+        Self { window: None, on_close: None, on_create: None, should_close: false }
             .build(cx, |cx| {
                 cx.windows.insert(cx.current(), WindowState::default());
                 (content)(cx);
@@ -325,7 +326,7 @@ impl Window {
     }
 
     pub fn popup(cx: &mut Context, is_modal: bool, content: impl Fn(&mut Context)) -> Handle<Self> {
-        Self { window: None, on_close: None, should_close: false }
+        Self { window: None, on_close: None, on_create: None, should_close: false }
             .build(cx, |cx| {
                 let parent_window = cx.parent_window();
                 if is_modal {
@@ -351,7 +352,7 @@ impl View for Window {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
             WindowEvent::Destroyed => {
-                let parent_window = cx.parent_window();
+                let parent_window = cx.parent_window().unwrap_or(Entity::root());
                 cx.emit_to(parent_window, WindowEvent::SetEnabled(true));
             }
 
@@ -396,7 +397,12 @@ impl View for Window {
             }
 
             WindowEvent::SetPosition(pos) => {
-                self.window().set_outer_position(LogicalPosition::new(pos.x, pos.y));
+                let parent_window_position = cx.window_position();
+                self.window().set_outer_position(LogicalPosition::new(
+                    parent_window_position.x + pos.x,
+                    parent_window_position.y + pos.y,
+                ));
+                meta.consume();
             }
 
             WindowEvent::SetResizable(flag) => {
@@ -413,6 +419,8 @@ impl View for Window {
 
             WindowEvent::SetVisible(flag) => {
                 self.window().set_visible(*flag);
+
+                meta.consume();
             }
 
             WindowEvent::SetDecorations(flag) => {
@@ -455,6 +463,11 @@ impl View for Window {
                 self.window().focus_window();
             }
 
+            WindowEvent::DragWindow => {
+                self.window().drag_window().expect("Failed to init drag window");
+                meta.consume();
+            }
+
             _ => {}
         })
     }
@@ -463,6 +476,10 @@ impl View for Window {
 impl<'a> WindowModifiers for Handle<'a, Window> {
     fn on_close(self, callback: impl Fn(&mut EventContext) + 'static) -> Self {
         self.modify(|window| window.on_close = Some(Box::new(callback)))
+    }
+
+    fn on_create(self, callback: impl Fn(&mut EventContext) + 'static) -> Self {
+        self.modify(|window| window.on_create = Some(Box::new(callback)))
     }
 
     fn title<T: ToString>(mut self, title: impl Res<T>) -> Self {
@@ -505,7 +522,7 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
         self
     }
 
-    fn position<P: Into<vizia_window::Position>>(mut self, position: impl Res<P>) -> Self {
+    fn position<P: Into<vizia_window::WindowPosition>>(mut self, position: impl Res<P>) -> Self {
         let entity = self.entity();
         let pos = Some(position.get(&self).into());
         if let Some(win_state) = self.context().windows.get_mut(&entity) {

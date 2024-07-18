@@ -20,7 +20,7 @@ use std::collections::{BinaryHeap, VecDeque};
 use std::rc::Rc;
 use std::sync::Mutex;
 use vizia_id::IdManager;
-use vizia_window::WindowDescription;
+use vizia_window::{WindowDescription, WindowPosition};
 
 #[cfg(all(feature = "clipboard", feature = "x11"))]
 use copypasta::ClipboardContext;
@@ -76,6 +76,7 @@ pub struct WindowState {
     pub owner: Option<Entity>,
     pub is_modal: bool,
     pub should_close: bool,
+    pub position: WindowPosition,
 }
 
 /// The main storage and control object for a Vizia application.

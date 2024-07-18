@@ -166,11 +166,6 @@ impl Model for ActionsModel {
                         (action)(cx);
                     }
                 }
-                if cx.is_draggable() {
-                    if let Some(action) = &self.on_drag_start {
-                        (action)(cx);
-                    }
-                }
             }
 
             WindowEvent::MouseDoubleClick(button) => {
@@ -207,6 +202,15 @@ impl Model for ActionsModel {
                 // if meta.target == cx.current() {
                 if let Some(action) = &self.on_over_out {
                     (action)(cx);
+                }
+
+                if cx.mouse.left.state == MouseButtonState::Pressed
+                    && cx.mouse.left.pressed == cx.current()
+                    && cx.is_draggable()
+                {
+                    if let Some(action) = &self.on_drag_start {
+                        (action)(cx);
+                    }
                 }
                 // }
             }

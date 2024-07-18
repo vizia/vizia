@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use vizia_style::Url;
 
 use crate::prelude::*;
@@ -23,7 +21,7 @@ impl View for Image {
 pub struct Svg {}
 
 impl Svg {
-    pub fn new<'a, T>(cx: &'a mut Context, data: impl Res<T>) -> Handle<'a, Self>
+    pub fn new<T>(cx: &mut Context, data: impl Res<T>) -> Handle<Self>
     where
         T: AsRef<[u8]> + 'static,
     {
