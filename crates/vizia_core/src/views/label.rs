@@ -159,7 +159,7 @@ impl Handle<'_, Label> {
         if let Some(id) = self.cx.resolve_entity_identifier(&identifier) {
             self.cx.style.labelled_by.insert(id, self.entity);
         }
-        self.modify(|label| label.describing = Some(identifier)).class("describing")
+        self.modify(|label| label.describing = Some(identifier)).class("describing").hidden(true)
     }
 }
 
