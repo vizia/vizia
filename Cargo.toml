@@ -31,22 +31,8 @@ name = "virtual_list"
 path = "examples/views/virtual_list.rs"
 
 [[example]]
-name = "fluent_translation"
-path = "examples/localization/fluent_translation.rs"
-
-[[example]]
-name = "fluent_variables"
-path = "examples/localization/fluent_variables.rs"
-
-[[example]]
 name = "l10n"
-path = "examples/localization/l10n.rs"
-
-[[example]]
-name = "locale_binding"
-path = "examples/localization/locale_binding.rs"
-
-
+path = "examples/l10n.rs"
 
 [[example]]
 name = "inline"
@@ -55,8 +41,6 @@ path = "examples/style/inline.rs"
 [[example]]
 name = "outline"
 path = "examples/style/outline.rs"
-
-
 
 [[example]]
 name = "blend_mode"
@@ -284,10 +268,6 @@ path = "examples/timers.rs"
 [[example]]
 name = "follow_system_theme"
 path = "examples/follow_system_theme.rs"
-
-[[example]]
-name = "accesskit"
-path = "examples/accessibility/accesskit.rs"
 
 [[example]]
 name = "markdown"

@@ -249,6 +249,7 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context) {
                 | cx.style.font_family.inherit_inline(entity, parent)
                 | cx.style.font_weight.inherit_inline(entity, parent)
                 | cx.style.font_slant.inherit_inline(entity, parent)
+                | cx.style.font_width.inherit_inline(entity, parent)
                 | cx.style.text_decoration_line.inherit_inline(entity, parent)
                 | cx.style.font_variation_settings.inherit_inline(entity, parent)
             {
@@ -267,6 +268,7 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context) {
                 | cx.style.font_family.inherit_shared(entity, parent)
                 | cx.style.font_weight.inherit_shared(entity, parent)
                 | cx.style.font_slant.inherit_shared(entity, parent)
+                | cx.style.font_width.inherit_shared(entity, parent)
                 | cx.style.text_decoration_line.inherit_shared(entity, parent)
                 | cx.style.font_variation_settings.inherit_shared(entity, parent)
             {

@@ -19,10 +19,10 @@ impl Model for AppData {
 
 fn input_box<L: Lens<Target = f32>>(
     cx: &mut Context,
-    date_lens: L,
+    lens: L,
     convert: impl Fn(f32) -> f32 + Send + Sync + 'static,
 ) {
-    Textbox::new(cx, date_lens.map(|num| format!("{:.0}", num)))
+    Textbox::new(cx, lens.map(|num| format!("{:.0}", num)))
         .on_edit(move |ex, text| {
             if let Ok(val) = text.parse() {
                 ex.emit(AppEvent::SetTemperature(convert(val)));
