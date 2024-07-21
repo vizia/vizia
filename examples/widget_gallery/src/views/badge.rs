@@ -4,12 +4,11 @@ use crate::components::DemoRegion;
 
 pub fn badge(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "Badge").class("title");
-        Label::new(cx, "").class("paragraph");
+        Markdown::new(cx, "# Badge");
 
         Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
 
-        Label::new(cx, "Basic badge").class("header");
+        Markdown::new(cx, "### Basic badge");
         DemoRegion::new(
             cx,
             |cx| {

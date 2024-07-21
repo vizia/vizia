@@ -224,6 +224,14 @@ fn add_block(
                 text_style.set_foreground_paint(&paint);
             }
 
+            if let Some(background_color) = style.background_color.get(entity) {
+                let mut paint = Paint::default();
+                paint.set_color(*background_color);
+                paint.set_anti_alias(false);
+                paint.set_blend_mode(BlendMode::SrcOver);
+                text_style.set_background_paint(&paint);
+            }
+
             // Font Size
             let font_size = style.font_size.get(entity).map_or(16.0, |f| f.0);
             text_style.set_font_size(font_size * style.scale_factor());
