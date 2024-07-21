@@ -9,7 +9,7 @@ pub fn avatar(cx: &mut Context) {
     cx.load_image(
         "vizia.png",
         include_bytes!("../../assets/vizia-logo-01.png"),
-        ImageRetentionPolicy::DropWhenUnusedForOneFrame,
+        ImageRetentionPolicy::DropWhenNoObservers,
     );
 
     VStack::new(cx, |cx|{

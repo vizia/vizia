@@ -8,13 +8,14 @@ use crate::components::DemoRegion;
 pub fn button(cx: &mut Context) {
     VStack::new(cx, |cx|{
 
-        Label::new(cx, "Button").class("title");
-        Label::new(cx, "A button can be used to send an event when pressed. Typically they are used to trigger an action.")
-            .class("paragraph");
+        Markdown::new(cx, "# Button
+A button can be used to send an event when pressed. Typically they are used to trigger an action.        
+        ");
 
         Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
 
-        Label::new(cx, "Basic button").class("header");
+        Markdown::new(cx, "### Basic button");
+
         DemoRegion::new(
             cx,
             |cx| {
@@ -22,7 +23,8 @@ pub fn button(cx: &mut Context) {
             }, r#"Button::new(cx, |cx| Label::new(cx, "Button"));"#
         );
 
-        Label::new(cx, "Button variants").class("header");
+        Markdown::new(cx, "### Button variants");
+        
         DemoRegion::new(
             cx,
             |cx| {
@@ -39,9 +41,8 @@ Button::new(cx, |cx| Label::new(cx, "Text"))
     .variant(ButtonVariant::Text);"#
         );
 
-        Label::new(cx, "Button with icon and label").class("header");
-        Label::new(cx, "An HStack can be used to add an icon as well as a label to a button. The icon can be positioned before or after the label by changing the order of the declarations.")
-            .class("paragraph");
+        Markdown::new(cx, "### Button with icon and label
+An HStack can be used to add an icon as well as a label to a button. The icon can be positioned before or after the label by changing the order of the declarations.");
 
         DemoRegion::new(
             cx,
