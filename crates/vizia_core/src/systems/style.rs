@@ -674,6 +674,10 @@ fn link_style_data(style: &mut Style, tree: &Tree<Entity>, entity: Entity, match
         should_redraw = true;
     }
 
+    if style.fill.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
     //
     if should_relayout {
         style.system_flags.set(SystemFlags::RELAYOUT, true);

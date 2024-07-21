@@ -5,6 +5,10 @@
     color: #181818;
 }
 
+icon svg {
+    fill: #181818;
+}
+
 *:focus-visible {
     outline-width: 1px;
     outline-color: #51afef;
@@ -32,13 +36,19 @@ avatar {
     color: white;
 }
 
+avatar svg {
+    fill: white;
+}
+
 /* BADGE */
 
 badge {
-    border-width: 2px;
-    border-color: white;
     background-color: #0062ff;
-    color: #fafafa;
+    color: white;
+}
+
+badge svg {
+    fill: #fafafa;
 }
 
 badge.success {
@@ -106,6 +116,11 @@ button-group.outline > button {
     transition: border-color 100ms;
 }
 
+button.outline svg,
+button-group.outline > button svg {
+    fill: #51afef;
+}
+
 button.outline:hover,
 button-group.outline > button:hover {
     background-color: #80caff40;
@@ -121,7 +136,6 @@ button.outline:disabled,
 button-group.outline:disabled > button {
     border-color: #ebebeb;
     background-color: #80caff00;
-    color: #626262;
     transition: background-color 100ms;
     transition: border-color 100ms;
 }
@@ -132,6 +146,11 @@ button-group.text > button {
     background-color: #80caff00;
     transition: background-color 100ms;
     color: #51afef;
+}
+
+button.text svg,
+button-group.text > button svg {
+    fill: #51afef;
 }
 
 button.text:hover,
@@ -154,12 +173,21 @@ button-group.text:disabled > button {
     transition: border-color 100ms;
 }
 
+button.text:disabled svg,
+button-group.text:disabled > button svg {
+    fill: #626262;
+}
+
 button:disabled {
     border-color: #c4c4c4;
     color: #a0a0a0;
     background-color: #fdfdfd;
     transition: background-color 100ms;
     transition: border-color 100ms;
+}
+
+button:disabled svg {
+    fill: #a0a0a0;
 }
 
 /* BUTTON GROUP */
@@ -228,7 +256,6 @@ checkbox {
     border-width: 1px;
     border-color: #d2d2d2;
     background-color: #fdfdfd;
-    child-space: 1s;
     transition: background-color 100ms;
     transition: border-color 100ms;
 }
@@ -257,9 +284,12 @@ checkbox:disabled {
 checkbox:checked {
     background-color: #51afef;
     border-color: #51afef;
-    color: #fff;
     transition: background-color 100ms;
     transition: border-color 100ms;
+}
+
+checkbox:checked svg {
+    fill: #fff;
 }
 
 checkbox:checked:hover {
@@ -639,45 +669,46 @@ rating:focus-visible {
     corner-radius: 4px;
 }
 
-rating .icon {
-    color: #c4c4c4;
-    font-size: x-large;
-    width: 20px;
-    height: 20px;
+rating icon {
     cursor: hand;
 }
 
-rating .icon:focus-visible {
+rating icon svg {
+    fill: #c4c4c4;
+    width: 20px;
+    height: 20px;
+}
+
+rating icon:focus-visible {
     outline-width: 1px;
     outline-color: #51afef;
     outline-offset: 3px;
     corner-radius: 4px;
 }
 
-rating .icon:checked {
-    color: gold;
+rating icon:checked svg {
+    fill: gold;
 }
 
-rating:over > .icon:enabled {
-    color: #c4c4c4;
+rating:over > icon:enabled svg {
+    fill: #c4c4c4;
 }
 
-rating:over > .icon.foo:enabled {
-    color: gold;
+rating:over > icon.foo:enabled svg {
+    fill: gold;
 }
 
-rating .icon:hover {
+rating icon:hover {
     scale: 1.2;
     transition: scale 100ms;
 }
 
-rating .icon:disabled {
-    color: #e5e5e5;
-    scale: 1;
+rating icon:disabled svg {
+    fill: #e5e5e5;
 }
 
-rating .icon:checked:disabled {
-    color: #dacf93;
+rating icon:checked:disabled svg {
+    fill: #dacf93;
 }
 
 /* SCROLLVIEW */

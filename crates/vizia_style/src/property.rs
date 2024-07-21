@@ -142,6 +142,8 @@ define_property! {
         "background-image": BackgroundImage(Vec<BackgroundImage<'i>>),
         "background-size": BackgroundSize(Vec<BackgroundSize>),
 
+        "fill": Fill(Color),
+
         // Text
         "font-size": FontSize(FontSize),
         "color": FontColor(Color),

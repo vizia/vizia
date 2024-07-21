@@ -19,13 +19,12 @@ impl Rating {
         Self { rating: lens.get(cx), max_rating, on_change: None }
             .build(cx, |cx| {
                 for i in 1..max_rating + 1 {
-                    Label::new(cx, ICON_STAR_FILLED)
+                    Icon::new(cx, ICON_STAR_FILLED)
                         // .navigable(true)
                         .checkable(true)
                         .numeric_value(1)
                         .role(Role::RadioButton)
                         .default_action_verb(DefaultActionVerb::Click)
-                        .class("icon")
                         .checked(lens.map(move |val| *val >= i))
                         .toggle_class("foo", Rating::rating.map(move |val| *val >= i))
                         .on_hover(move |ex| ex.emit(RatingEvent::SetRating(i)))

@@ -53,7 +53,7 @@ pub use element::Element;
 pub use form::{FormControl, FormGroup, FormPlacement};
 pub use image::*;
 pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
-pub use label::{Icon, Label};
+pub use label::Label;
 pub use list::*;
 pub use markdown::*;
 pub use menu::*;

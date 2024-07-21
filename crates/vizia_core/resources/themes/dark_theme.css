@@ -5,6 +5,10 @@
     color: #fafafa;
 }
 
+icon svg {
+    fill: #fafafa;
+}
+
 *:focus-visible {
     outline-width: 1px;
     outline-color: #51afef;
