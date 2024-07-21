@@ -107,7 +107,7 @@ impl Submenu {
                 });
                 // HStack::new(cx, |cx| {
                 (content)(cx).hoverable(false);
-                Label::new(cx, ICON_CHEVRON_RIGHT).class("icon").class("arrow").hoverable(false);
+                Icon::new(cx, ICON_CHEVRON_RIGHT).class("arrow").hoverable(false);
                 // });
                 Binding::new(cx, Submenu::is_open, move |cx, is_open| {
                     if is_open.get(cx) {

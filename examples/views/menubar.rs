@@ -85,7 +85,7 @@ fn main() -> Result<(), ApplicationError> {
                             |_| debug!("Cut"),
                             |cx| {
                                 HStack::new(cx, |cx| {
-                                    Label::new(cx, ICON_CUT).class("icon");
+                                    Icon::new(cx, ICON_CUT).class("icon");
                                     Label::new(cx, "Cut");
                                 })
                             },
@@ -95,7 +95,7 @@ fn main() -> Result<(), ApplicationError> {
                             |_| debug!("Copy"),
                             |cx| {
                                 HStack::new(cx, |cx| {
-                                    Label::new(cx, ICON_COPY).class("icon");
+                                    Icon::new(cx, ICON_COPY).class("icon");
                                     Label::new(cx, "Copy");
                                 })
                             },
@@ -105,7 +105,7 @@ fn main() -> Result<(), ApplicationError> {
                             |_| debug!("Paste"),
                             |cx| {
                                 HStack::new(cx, |cx| {
-                                    Label::new(cx, ICON_CLIPBOARD).class("icon");
+                                    Icon::new(cx, ICON_CLIPBOARD).class("icon");
                                     Label::new(cx, "Paste");
                                 })
                             },

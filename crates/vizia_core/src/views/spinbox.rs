@@ -46,55 +46,65 @@ impl Spinbox {
             on_increment: None,
         }
         .build(cx, move |cx| {
-            Icon::new(cx, "")
-                .bind(Spinbox::orientation, move |handle, spinbox_kind| {
-                    match spinbox_kind.get(&handle) {
-                        Orientation::Horizontal => {
-                            handle
-                                .text(Spinbox::icons.map(|icons| match icons {
-                                    SpinboxIcons::PlusMinus => ICON_MINUS,
-                                    SpinboxIcons::Chevrons => ICON_CHEVRON_LEFT,
-                                }))
-                                .on_press(|ex| ex.emit(SpinboxEvent::Decrement));
-                        }
-
-                        Orientation::Vertical => {
-                            handle
-                                .text(Spinbox::icons.map(|icons| match icons {
-                                    SpinboxIcons::PlusMinus => ICON_PLUS,
-                                    SpinboxIcons::Chevrons => ICON_CHEVRON_UP,
-                                }))
-                                .on_press(|ex| ex.emit(SpinboxEvent::Increment));
-                        }
+            Binding::new(cx, Spinbox::orientation, move |cx, spinbox_kind| {
+                match spinbox_kind.get(cx) {
+                    Orientation::Horizontal => {
+                        Svg::new(
+                            cx,
+                            Spinbox::icons.map(|icons| match icons {
+                                SpinboxIcons::PlusMinus => ICON_MINUS,
+                                SpinboxIcons::Chevrons => ICON_CHEVRON_LEFT,
+                            }),
+                        )
+                        .on_press(|ex| ex.emit(SpinboxEvent::Decrement))
+                        .navigable(true)
+                        .class("spinbox-button");
                     }
-                })
-                .navigable(true)
-                .class("spinbox-button");
+
+                    Orientation::Vertical => {
+                        Svg::new(
+                            cx,
+                            Spinbox::icons.map(|icons| match icons {
+                                SpinboxIcons::PlusMinus => ICON_PLUS,
+                                SpinboxIcons::Chevrons => ICON_CHEVRON_UP,
+                            }),
+                        )
+                        .on_press(|ex| ex.emit(SpinboxEvent::Increment))
+                        .navigable(true)
+                        .class("spinbox-button");
+                    }
+                }
+            });
             (content)(cx).class("spinbox-value").width(Stretch(1.0));
-            Icon::new(cx, "")
-                .bind(Spinbox::orientation, move |handle, spinbox_kind| {
-                    match spinbox_kind.get(&handle) {
-                        Orientation::Horizontal => {
-                            handle
-                                .text(Spinbox::icons.map(|icons| match icons {
-                                    SpinboxIcons::PlusMinus => ICON_PLUS,
-                                    SpinboxIcons::Chevrons => ICON_CHEVRON_RIGHT,
-                                }))
-                                .on_press(|ex| ex.emit(SpinboxEvent::Increment));
-                        }
-
-                        Orientation::Vertical => {
-                            handle
-                                .text(Spinbox::icons.map(|icons| match icons {
-                                    SpinboxIcons::PlusMinus => ICON_MINUS,
-                                    SpinboxIcons::Chevrons => ICON_CHEVRON_DOWN,
-                                }))
-                                .on_press(|ex| ex.emit(SpinboxEvent::Decrement));
-                        }
+            Binding::new(cx, Spinbox::orientation, move |cx, spinbox_kind| {
+                match spinbox_kind.get(cx) {
+                    Orientation::Horizontal => {
+                        Svg::new(
+                            cx,
+                            Spinbox::icons.map(|icons| match icons {
+                                SpinboxIcons::PlusMinus => ICON_PLUS,
+                                SpinboxIcons::Chevrons => ICON_CHEVRON_RIGHT,
+                            }),
+                        )
+                        .on_press(|ex| ex.emit(SpinboxEvent::Increment))
+                        .navigable(true)
+                        .class("spinbox-button");
                     }
-                })
-                .navigable(true)
-                .class("spinbox-button");
+
+                    Orientation::Vertical => {
+                        Svg::new(
+                            cx,
+                            Spinbox::icons.map(|icons| match icons {
+                                SpinboxIcons::PlusMinus => ICON_MINUS,
+                                SpinboxIcons::Chevrons => ICON_CHEVRON_DOWN,
+                            }),
+                        )
+                        .on_press(|ex| ex.emit(SpinboxEvent::Decrement))
+                        .navigable(true)
+                        .class("spinbox-button");
+                    }
+                }
+            });
         })
         .toggle_class("horizontal", Spinbox::orientation.map(|o| o == &Orientation::Horizontal))
         .toggle_class("vertical", Spinbox::orientation.map(|o| o == &Orientation::Vertical))

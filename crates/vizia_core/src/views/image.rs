@@ -1,3 +1,4 @@
+use sha2::{Digest, Sha256};
 use vizia_style::Url;
 
 use crate::prelude::*;
@@ -27,13 +28,16 @@ impl Svg {
     {
         Self {}.build(cx, |_| {}).bind(data, |mut handle, data| {
             let svg_data = data.get(&handle);
-            let num_images = handle.context().resource_manager.images.len();
+            let mut hasher = Sha256::default();
+            hasher.update(svg_data.as_ref());
+            let h = format!("{:x}", hasher.finalize());
+
             handle.context().load_svg(
-                &format!("svg{}", num_images),
+                &h,
                 svg_data.as_ref(),
-                ImageRetentionPolicy::Forever,
+                ImageRetentionPolicy::DropWhenNoObservers,
             );
-            handle.background_image(format!("'svg{}'", num_images).as_str());
+            handle.background_image(format!("'{}'", h).as_str()).hoverable(false);
         })
     }
 }
@@ -41,5 +45,24 @@ impl Svg {
 impl View for Svg {
     fn element(&self) -> Option<&'static str> {
         Some("svg")
+    }
+}
+
+pub struct Icon {}
+
+impl Icon {
+    pub fn new<T>(cx: &mut Context, data: impl Res<T>) -> Handle<Self>
+    where
+        T: AsRef<[u8]> + 'static,
+    {
+        Self {}.build(cx, |cx| {
+            Svg::new(cx, data);
+        })
+    }
+}
+
+impl View for Icon {
+    fn element(&self) -> Option<&'static str> {
+        Some("icon")
     }
 }

@@ -44,6 +44,7 @@ qfilter = "0.1.6"
 web-time = "1.1.0"
 comrak = "0.24"
 open = "5.2"
+sha2 = "0.10"
 
 [lib]
 doctest = false

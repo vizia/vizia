@@ -180,10 +180,6 @@ impl Context {
                 let mut asset_provider = TypefaceFontProvider::new();
 
                 asset_provider.register_typeface(
-                    default_font_manager.new_from_data(fonts::TABLER_ICONS, None).unwrap(),
-                    Some("tabler-icons"),
-                );
-                asset_provider.register_typeface(
                     default_font_manager.new_from_data(fonts::FIRACODE, None).unwrap(),
                     Some("Fira Code"),
                 );
@@ -803,9 +799,9 @@ impl Context {
         }
     }
 
-    pub fn load_svg(&mut self, path: &str, data: &[u8], policy: ImageRetentionPolicy) {
+    pub fn load_svg(&mut self, path: &str, data: &[u8], policy: ImageRetentionPolicy) -> ImageId {
         let id = if let Some(image_id) = self.resource_manager.image_ids.get(path) {
-            *image_id
+            return *image_id;
         } else {
             let id = self.resource_manager.image_id_manager.create();
             self.resource_manager.image_ids.insert(path.to_owned(), id);
@@ -831,6 +827,8 @@ impl Context {
             }
             self.style.needs_relayout();
         }
+
+        id
     }
 
     pub fn spawn<F>(&self, target: F)

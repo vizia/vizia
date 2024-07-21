@@ -220,9 +220,9 @@ impl IconButton {
     /// IconButton::new(cx, ICON_SHARE)
     ///     .on_press(|ex| ex.emit(AppEvent::Share))
     /// ```
-    pub fn new<S>(cx: &mut Context, icon: impl Res<S> + Clone) -> Handle<Self>
+    pub fn new<T>(cx: &mut Context, icon: impl Res<T>) -> Handle<Self>
     where
-        S: ToString,
+        T: AsRef<[u8]> + 'static,
     {
         Self { action: None }
             .build(cx, move |cx| {

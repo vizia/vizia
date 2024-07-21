@@ -1,4 +1,5 @@
 use morphorm::Node;
+use skia_safe::wrapper::PointerWrapper;
 use vizia_storage::MorphormChildIter;
 
 use crate::prelude::*;
@@ -260,14 +261,29 @@ impl Node for Entity {
                     ImageOrGradient::Image(image_name) => {
                         if let Some(image_id) = sublayout.resource_manager.image_ids.get(image_name)
                         {
-                            if let Some(ImageOrSvg::Image(image)) = sublayout
+                            match sublayout
                                 .resource_manager
                                 .images
                                 .get(image_id)
                                 .map(|stored_img| &stored_img.image)
                             {
-                                max_width = max_width.max(image.width() as f32);
-                                max_height = max_height.max(image.height() as f32);
+                                Some(ImageOrSvg::Image(image)) => {
+                                    max_width =
+                                        max_width.max(image.width() as f32 * store.scale_factor());
+                                    max_height = max_height
+                                        .max(image.height() as f32 * store.scale_factor());
+                                }
+
+                                Some(ImageOrSvg::Svg(svg)) => {
+                                    max_width = max_width.max(
+                                        svg.inner().fContainerSize.fWidth * store.scale_factor(),
+                                    );
+                                    max_height = max_height.max(
+                                        svg.inner().fContainerSize.fWidth * store.scale_factor(),
+                                    );
+                                }
+
+                                _ => {}
                             }
                         }
                     }

@@ -171,12 +171,24 @@ impl ResourceManager {
     }
 
     pub fn evict_unused_images(&mut self) {
-        self.images.retain(|_, img| match img.retention_policy {
-            ImageRetentionPolicy::DropWhenUnusedForOneFrame => img.used,
+        let rem = self
+            .images
+            .iter()
+            .filter_map(|(id, img)| match img.retention_policy {
+                ImageRetentionPolicy::DropWhenUnusedForOneFrame => (img.used).then(|| Some(*id)),
 
-            ImageRetentionPolicy::DropWhenNoObservers => !img.observers.is_empty(),
+                ImageRetentionPolicy::DropWhenNoObservers => {
+                    img.observers.is_empty().then(|| Some(*id))
+                }
 
-            ImageRetentionPolicy::Forever => true,
-        });
+                ImageRetentionPolicy::Forever => None,
+            })
+            .flatten()
+            .collect::<Vec<_>>();
+
+        for id in rem {
+            self.images.remove(&id);
+            self.image_ids.retain(|_, img| *img != id);
+        }
     }
 }

@@ -41,7 +41,10 @@ impl PickList {
                                 })
                                 .hoverable(false);
                             if show_handle {
-                                Label::new(cx, ICON_CHEVRON_DOWN).class("icon").hoverable(false);
+                                Icon::new(cx, ICON_CHEVRON_DOWN)
+                                    .class("icon")
+                                    .size(Pixels(16.0))
+                                    .hoverable(false);
                             }
                         })
                         .left(Pixels(0.0))

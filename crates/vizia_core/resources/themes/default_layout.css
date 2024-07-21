@@ -76,7 +76,7 @@ button > icon.inner {
     min-right: 0px;
 }
 
-button .inner > icon {
+button .inner > svg {
     size: 16px;
 }
 
@@ -135,8 +135,6 @@ toggle-button.icon {
 checkbox {
     width: 20px;
     height: 20px;
-    child-space: 1s;
-    font-family: "tabler-icons", sans-serif;
     cursor: hand;
 }
 
@@ -347,9 +345,13 @@ form-group > .legend {
 /* ICON */
 
 icon {
-    font-family: "tabler-icons", sans-serif;
     size: 24px;
+    min-size: auto;
     child-space: 1s;
+}
+
+icon svg {
+    size: 20px;
 }
 
 /* IMAGE */

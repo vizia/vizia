@@ -309,6 +309,8 @@ pub struct Style {
     pub(crate) caret_color: AnimatableSet<Color>,
     pub(crate) selection_color: AnimatableSet<Color>,
 
+    pub(crate) fill: AnimatableSet<Color>,
+
     // cursor Icon
     pub(crate) cursor: StyleSet<CursorIcon>,
 
@@ -679,6 +681,10 @@ impl Style {
                     insert_keyframe(&mut self.underline_color, animation_id, time, *value);
                 }
 
+                Property::Fill(value) => {
+                    insert_keyframe(&mut self.fill, animation_id, time, *value);
+                }
+
                 _ => {}
             }
         }
@@ -782,6 +788,8 @@ impl Style {
         self.max_bottom.play_animation(entity, animation, start_time, duration);
 
         self.underline_color.play_animation(entity, animation, start_time, duration);
+
+        self.fill.play_animation(entity, animation, start_time, duration);
     }
 
     pub(crate) fn is_animating(&self, entity: Entity, animation: Animation) -> bool {
@@ -835,6 +843,7 @@ impl Style {
             | self.min_bottom.has_active_animation(entity, animation)
             | self.max_bottom.has_active_animation(entity, animation)
             | self.underline_color.has_active_animation(entity, animation)
+            | self.fill.has_active_animation(entity, animation)
     }
 
     pub(crate) fn parse_theme(&mut self, stylesheet: &str) {
@@ -1182,6 +1191,11 @@ impl Style {
             "underline-color" => {
                 self.underline_color.insert_animation(animation, self.add_transition(transition));
                 self.underline_color.insert_transition(rule_id, animation);
+            }
+
+            "fill" => {
+                self.fill.insert_animation(animation, self.add_transition(transition));
+                self.fill.insert_transition(rule_id, animation);
             }
 
             _ => {}
@@ -1637,6 +1651,9 @@ impl Style {
             Property::TextDecorationLine(line) => {
                 self.text_decoration_line.insert_rule(rule_id, line);
             }
+            Property::Fill(fill) => {
+                self.fill.insert_rule(rule_id, fill);
+            }
             _ => {}
         }
     }
@@ -1818,6 +1835,8 @@ impl Style {
         self.max_bottom.remove(entity);
         self.text_range.remove(entity);
         self.text_span.remove(entity);
+
+        self.fill.remove(entity);
     }
 
     pub fn needs_restyle(&mut self, entity: Entity) {
@@ -1974,5 +1993,7 @@ impl Style {
         self.pointer_events.clear_rules();
 
         self.name.clear_rules();
+
+        self.fill.clear_rules();
     }
 }

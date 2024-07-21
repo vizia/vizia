@@ -137,8 +137,15 @@ impl Checkbox {
     /// ```
     pub fn new(cx: &mut Context, checked: impl Lens<Target = bool>) -> Handle<Self> {
         Self { on_toggle: None }
-            .build(cx, |_| {})
-            .text(checked.map(|flag| if *flag { ICON_CHECK } else { "" }))
+            .build(cx, |cx| {
+                Binding::new(cx, checked, |cx, checked| {
+                    if checked.get(cx) {
+                        Svg::new(cx, ICON_CHECK);
+                    }
+                })
+            })
+            //.text(checked.map(|flag| if *flag { ICON_CHECK } else { "" }))
+            //.background_image(checked.map(|flag| if *flag { "'check'" } else { "none" }))
             .checked(checked)
             .role(Role::CheckBox)
             .default_action_verb(DefaultActionVerb::Click)

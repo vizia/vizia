@@ -368,13 +368,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 };
 
                 if let Some(image) = image {
-                    if let Some(background_images) =
-                        cx.style.background_image.get_inline_mut(cx.current)
-                    {
-                        background_images.push(image);
-                    } else {
-                        cx.style.background_image.insert(cx.current, vec![image]);
-                    }
+                    cx.style.background_image.insert(cx.current, vec![image]);
                 }
 
                 cx.needs_redraw();

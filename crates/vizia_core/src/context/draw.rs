@@ -1,6 +1,8 @@
+use skia_safe::canvas::SaveLayerRec;
 use skia_safe::gradient_shader::GradientShaderColors;
 use skia_safe::path::ArcSize;
 use skia_safe::rrect::Corner;
+use skia_safe::wrapper::PointerWrapper;
 use skia_safe::{
     BlurStyle, ClipOp, MaskFilter, Matrix, Paint, PaintStyle, Path, PathDirection, PathEffect,
     Point, RRect, Rect, SamplingOptions, Shader, TileMode,
@@ -1069,13 +1071,36 @@ impl<'a> DrawContext<'a> {
                                     }
 
                                     ImageOrSvg::Svg(svg) => {
-                                        canvas.save();
+                                        canvas.save_layer(&SaveLayerRec::default());
+                                        let (scale_x, scale_y) = (
+                                            bounds.width() / svg.inner().fContainerSize.fWidth,
+                                            bounds.height() / svg.inner().fContainerSize.fHeight,
+                                        );
+
                                         canvas.translate((bounds.x, bounds.y));
-                                        svg.clone().set_container_size((
-                                            bounds.width() as i32,
-                                            bounds.height() as i32,
-                                        ));
+
+                                        if scale_x.is_finite() && scale_y.is_finite() {
+                                            canvas.scale((scale_x, scale_y));
+                                        } else {
+                                            svg.clone().set_container_size((
+                                                bounds.width(),
+                                                bounds.height(),
+                                            ));
+                                        }
+
                                         svg.render(canvas);
+
+                                        if let Some(color) =
+                                            self.style.fill.get(self.current).copied()
+                                        {
+                                            let mut paint = Paint::default();
+
+                                            paint.set_anti_alias(true);
+                                            paint.set_blend_mode(skia_safe::BlendMode::SrcIn);
+                                            paint.set_color(color);
+                                            canvas.draw_paint(&paint);
+                                        }
+
                                         canvas.restore();
                                     }
                                 }
