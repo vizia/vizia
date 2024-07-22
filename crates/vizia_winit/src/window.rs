@@ -317,12 +317,13 @@ impl Window {
     }
 
     pub fn new(cx: &mut Context, content: impl Fn(&mut Context)) -> Handle<Self> {
-        Self { window: None, on_close: None, on_create: None, should_close: false }
-            .build(cx, |cx| {
+        Self { window: None, on_close: None, on_create: None, should_close: false }.build(
+            cx,
+            |cx| {
                 cx.windows.insert(cx.current(), WindowState::default());
                 (content)(cx);
-            })
-            .background_color(Color::white())
+            },
+        )
     }
 
     pub fn popup(cx: &mut Context, is_modal: bool, content: impl Fn(&mut Context)) -> Handle<Self> {
@@ -344,11 +345,14 @@ impl Window {
                 (content)(cx);
             })
             .lock_focus_to_within()
-            .background_color(Color::white())
     }
 }
 
 impl View for Window {
+    fn element(&self) -> Option<&'static str> {
+        Some("window")
+    }
+
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
             WindowEvent::Destroyed => {
