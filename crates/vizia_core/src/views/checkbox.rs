@@ -144,8 +144,37 @@ impl Checkbox {
                     }
                 })
             })
-            //.text(checked.map(|flag| if *flag { ICON_CHECK } else { "" }))
-            //.background_image(checked.map(|flag| if *flag { "'check'" } else { "none" }))
+            .checked(checked)
+            .role(Role::CheckBox)
+            .default_action_verb(DefaultActionVerb::Click)
+            .navigable(true)
+    }
+
+    pub fn with_icons<T>(
+        cx: &mut Context,
+        checked: impl Lens<Target = bool>,
+        icon_default: Option<impl Res<T> + 'static + Clone>,
+        icon_checked: Option<impl Res<T> + 'static + Clone>,
+    ) -> Handle<Self>
+    where
+        T: AsRef<[u8]> + 'static,
+    {
+        Self { on_toggle: None }
+            .build(cx, |cx| {
+                Binding::new(cx, checked, move |cx, checked| {
+                    let icon_default = icon_default.clone();
+                    let icon_checked = icon_checked.clone();
+                    if checked.get(cx) {
+                        if let Some(icon) = icon_checked {
+                            Svg::new(cx, icon);
+                        }
+                    } else {
+                        if let Some(icon) = icon_default {
+                            Svg::new(cx, icon);
+                        }
+                    }
+                })
+            })
             .checked(checked)
             .role(Role::CheckBox)
             .default_action_verb(DefaultActionVerb::Click)

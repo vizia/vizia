@@ -1,6 +1,6 @@
 mod helpers;
 use helpers::*;
-use vizia::icons::ICON_X;
+use vizia::icons::{ICON_EYE, ICON_EYE_OFF, ICON_X};
 use vizia::prelude::*;
 
 #[derive(Debug, Lens)]
@@ -62,9 +62,8 @@ fn main() -> Result<(), ApplicationError> {
             Label::new(cx, "Checkbox with custom icon and label").class("h2");
 
             HStack::new(cx, |cx| {
-                Checkbox::new(cx, AppData::option1)
+                Checkbox::with_icons(cx, AppData::option1, Some(ICON_EYE_OFF), Some(ICON_EYE))
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleOptions))
-                    .text(AppData::option1.map(|flag| if *flag { ICON_X } else { "" }))
                     .id("checkbox_3");
                 Label::new(cx, "Checkbox 3").describing("checkbox_3");
             })
