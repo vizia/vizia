@@ -175,15 +175,14 @@ impl ResourceManager {
             .images
             .iter()
             .filter_map(|(id, img)| match img.retention_policy {
-                ImageRetentionPolicy::DropWhenUnusedForOneFrame => (img.used).then(|| Some(*id)),
+                ImageRetentionPolicy::DropWhenUnusedForOneFrame => (img.used).then_some(*id),
 
                 ImageRetentionPolicy::DropWhenNoObservers => {
-                    img.observers.is_empty().then(|| Some(*id))
+                    img.observers.is_empty().then_some(*id)
                 }
 
                 ImageRetentionPolicy::Forever => None,
             })
-            .flatten()
             .collect::<Vec<_>>();
 
         for id in rem {

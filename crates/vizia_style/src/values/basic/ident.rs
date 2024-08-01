@@ -30,7 +30,6 @@ impl<'i> From<Ident<'i>> for String {
 /// Dashed idents are used in cases where an identifier can be either author defined _or_ CSS-defined.
 /// Author defined idents must start with two dash characters ("--") or parsing will fail.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct DashedIdent<'i>(pub CowRcStr<'i>);
 
 impl<'i> Parse<'i> for DashedIdent<'i> {
