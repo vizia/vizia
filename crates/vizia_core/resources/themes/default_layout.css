@@ -81,7 +81,7 @@ button > icon.inner {
 }
 
 button .inner > svg {
-    size: 16px;
+    size: 24px;
 }
 
 button.icon {
@@ -355,7 +355,7 @@ icon {
 }
 
 icon svg {
-    size: 20px;
+    size: 24px;
 }
 
 /* IMAGE */

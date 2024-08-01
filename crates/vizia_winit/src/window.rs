@@ -97,8 +97,7 @@ impl WinState {
         window.set_ime_allowed(true);
         window.set_visible(true);
 
-        let template =
-            ConfigTemplateBuilder::new().with_alpha_size(8).with_transparency(cfg!(cgl_backend));
+        let template = ConfigTemplateBuilder::new().with_alpha_size(8).with_transparency(true);
         let display_builder = DisplayBuilder::new();
 
         let (_, gl_config) = display_builder

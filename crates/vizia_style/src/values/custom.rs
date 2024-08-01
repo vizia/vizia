@@ -41,7 +41,7 @@ impl<'i> UnparsedProperty<'i> {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct TokenList<'i>(#[cfg_attr(feature = "serde", serde(borrow))] pub Vec<TokenOrValue<'i>>);
+pub struct TokenList<'i>(pub Vec<TokenOrValue<'i>>);
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenOrValue<'i> {
@@ -214,10 +214,8 @@ fn try_parse_color_token<'i>(
 
 /// A CSS variable reference.
 #[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Variable<'i> {
     /// The variable name.
-    #[cfg_attr(feature = "serde", serde(borrow))]
     pub name: DashedIdent<'i>,
     /// A fallback value in case the variable is not defined.
     pub fallback: Option<TokenList<'i>>,

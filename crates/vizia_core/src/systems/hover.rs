@@ -120,7 +120,7 @@ fn hover_entity(
         .get(cx.current)
         .copied()
         .map(|pointer_events| match pointer_events {
-            PointerEvents::Auto => parent_pointer_events,
+            PointerEvents::Auto => true,
             PointerEvents::None => false,
         })
         .unwrap_or(parent_pointer_events);

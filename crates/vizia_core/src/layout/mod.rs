@@ -16,14 +16,14 @@
 //! Spacing is specified in [`Units`], which has four variants:
 //! - [`Pixels`](Units::Pixels) - Specifies the space as a fixed number of logical pixels. This value is scaled with the scale factor of the window.
 //! - `Percentage` - Specifies the space as a percentage of the parent size in the same axis, so parent width for `left` and `right` space
-//! and parent height for `top` and `bottom` space.
+//!   and parent height for `top` and `bottom` space.
 //! - `Stretch` - Specifies the space as a ratio of the remaining free space of the parent. This is best understood with an example.
-//! Let's say the parent is 400px wide and the child is 200px wide. The `left` and `right` space of the child are both set to `Stretch(1.0)`.
-//! This means that the ratio for each is 1/2, because each has stretch 1.0 and the total stretch factor in that axis is 2.0 (1.0 + 1.0).
-//! The remaining free space is the parent width minus any fixed space and size of the child, in this case the child width, so 400.0 - 200.0 = 200.0.
-//! Now the computed space for the `left` and `right` sides is 1/2 of the remaining free space, so 200.0 / 2.0 = 100.0.
-//! If the `left` space had been `Stretch(3.0)`, the ratio would have been 3/4 for `left` and 1/4 for `right` and the computed space would have
-//! been `150.0` for `left` and `50.0` for right.
+//!   Let's say the parent is 400px wide and the child is 200px wide. The `left` and `right` space of the child are both set to `Stretch(1.0)`.
+//!   This means that the ratio for each is 1/2, because each has stretch 1.0 and the total stretch factor in that axis is 2.0 (1.0 + 1.0).
+//!   The remaining free space is the parent width minus any fixed space and size of the child, in this case the child width, so 400.0 - 200.0 = 200.0.
+//!   Now the computed space for the `left` and `right` sides is 1/2 of the remaining free space, so 200.0 / 2.0 = 100.0.
+//!   If the `left` space had been `Stretch(3.0)`, the ratio would have been 3/4 for `left` and 1/4 for `right` and the computed space would have
+//!   been `150.0` for `left` and `50.0` for right.
 //! - `Auto` - The spacing is determined by the corresponding `child_space` of the parent. So `left` would be determined by the parent `child_left` etc.
 //!
 //! # Child Space
