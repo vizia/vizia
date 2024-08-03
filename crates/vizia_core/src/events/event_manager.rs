@@ -420,7 +420,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                             if w == f32::MAX { "inf".to_string() } else { w.to_string() },
                             if h == f32::MAX { "inf".to_string() } else { h.to_string() },
                         );
-                    } else if let Some(binding_name) =
+                    } else if let Some(_binding_name) =
                         cx.bindings.get(&entity).map(|binding| format!("{:?}", binding))
                     {
                         // println!(

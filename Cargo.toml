@@ -266,10 +266,6 @@ name = "timers"
 path = "examples/timers.rs"
 
 [[example]]
-name = "follow_system_theme"
-path = "examples/follow_system_theme.rs"
-
-[[example]]
 name = "markdown"
 path = "examples/views/markdown.rs"
 

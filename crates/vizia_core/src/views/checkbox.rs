@@ -168,10 +168,8 @@ impl Checkbox {
                         if let Some(icon) = icon_checked {
                             Svg::new(cx, icon);
                         }
-                    } else {
-                        if let Some(icon) = icon_default {
-                            Svg::new(cx, icon);
-                        }
+                    } else if let Some(icon) = icon_default {
+                        Svg::new(cx, icon);
                     }
                 })
             })

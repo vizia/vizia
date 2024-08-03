@@ -1,6 +1,6 @@
 mod helpers;
 use helpers::*;
-use vizia::icons::{ICON_EYE, ICON_EYE_OFF, ICON_X};
+use vizia::icons::{ICON_EYE, ICON_EYE_OFF};
 use vizia::prelude::*;
 
 #[derive(Debug, Lens)]
