@@ -1,4 +1,3 @@
-use skia_safe::canvas::SaveLayerRec;
 use skia_safe::gradient_shader::GradientShaderColors;
 use skia_safe::path::ArcSize;
 use skia_safe::rrect::Corner;
@@ -1093,7 +1092,6 @@ impl<'a> DrawContext<'a> {
                                         if !has_surface {
                                             let svg_canvas = svg_surface.canvas();
 
-                                            svg_canvas.save_layer(&SaveLayerRec::default());
                                             let (scale_x, scale_y) = (
                                                 bounds.width() / svg.inner().fContainerSize.fWidth,
                                                 bounds.height()
@@ -1121,8 +1119,6 @@ impl<'a> DrawContext<'a> {
                                                 paint.set_color(color);
                                                 svg_canvas.draw_paint(&paint);
                                             }
-
-                                            svg_canvas.restore();
                                         }
 
                                         svg_surface.draw(
