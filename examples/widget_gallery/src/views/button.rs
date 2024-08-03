@@ -24,7 +24,7 @@ A button can be used to send an event when pressed. Typically they are used to t
         );
 
         Markdown::new(cx, "### Button variants");
-        
+
         DemoRegion::new(
             cx,
             |cx| {
