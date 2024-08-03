@@ -3,6 +3,7 @@ use hashbrown::{hash_map::Entry, HashSet};
 use vizia_storage::Tree;
 
 use crate::{
+    cache::CachedData,
     entity::Entity,
     resource::{ImageOrSvg, ImageRetentionPolicy, ResourceManager, StoredImage},
     style::Style,
@@ -17,6 +18,7 @@ pub struct ResourceContext<'a> {
     pub(crate) resource_manager: &'a mut ResourceManager,
     pub(crate) style: &'a mut Style,
     pub(crate) tree: &'a Tree<Entity>,
+    pub(crate) cache: &'a mut CachedData,
 }
 
 impl<'a> ResourceContext<'a> {
@@ -27,6 +29,7 @@ impl<'a> ResourceContext<'a> {
             resource_manager: &mut cx.resource_manager,
             style: &mut cx.style,
             tree: &cx.tree,
+            cache: &mut cx.cache,
         }
     }
 

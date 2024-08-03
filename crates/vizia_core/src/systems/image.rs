@@ -25,7 +25,7 @@ pub(crate) fn image_system(cx: &mut Context) {
         }
     }
 
-    cx.resource_manager.evict_unused_images();
+    cx.resource_manager.evict_unused_images(cx.cache);
 }
 
 fn load_image(cx: &mut ResourceContext, entity: Entity, image_name: &str) {
