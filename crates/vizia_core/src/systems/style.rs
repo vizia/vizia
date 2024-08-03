@@ -234,14 +234,14 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
 }
 
 /// Link inheritable inline properties to their parent.
-pub(crate) fn inline_inheritance_system(cx: &mut Context) {
+pub(crate) fn inline_inheritance_system(cx: &mut Context, redraw_entities: &mut Vec<Entity>) {
     for entity in cx.tree.into_iter() {
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
             if cx.style.disabled.inherit_inline(entity, parent)
                 | cx.style.caret_color.inherit_inline(entity, parent)
                 | cx.style.selection_color.inherit_inline(entity, parent)
             {
-                cx.style.needs_redraw(entity);
+                redraw_entities.push(entity);
             }
 
             if cx.style.font_color.inherit_inline(entity, parent)
@@ -260,7 +260,7 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context) {
 }
 
 /// Link inheritable shared properties to their parent.
-pub(crate) fn shared_inheritance_system(cx: &mut Context) {
+pub(crate) fn shared_inheritance_system(cx: &mut Context, redraw_entities: &mut Vec<Entity>) {
     for entity in cx.tree.into_iter() {
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
             if cx.style.font_color.inherit_shared(entity, parent)
@@ -278,13 +278,19 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context) {
             if cx.style.caret_color.inherit_shared(entity, parent)
                 | cx.style.selection_color.inherit_shared(entity, parent)
             {
-                cx.style.needs_redraw(entity);
+                redraw_entities.push(entity);
             }
         }
     }
 }
 
-fn link_style_data(style: &mut Style, tree: &Tree<Entity>, entity: Entity, matched_rules: &[Rule]) {
+fn link_style_data(
+    style: &mut Style,
+    tree: &Tree<Entity>,
+    entity: Entity,
+    redraw_entities: &mut Vec<Entity>,
+    matched_rules: &[Rule],
+) {
     let mut should_relayout = false;
     let mut should_redraw = false;
     let mut should_reflow = false;
@@ -684,7 +690,7 @@ fn link_style_data(style: &mut Style, tree: &Tree<Entity>, entity: Entity, match
     }
 
     if should_redraw {
-        style.needs_redraw(entity);
+        redraw_entities.push(entity);
     }
 
     if should_reflow {
@@ -765,6 +771,10 @@ pub(crate) struct MatchedRulesCache {
 
 // Iterates the tree and determines the matching style rules for each entity, then links the entity to the corresponding style rule data.
 pub(crate) fn style_system(cx: &mut Context) {
+    let mut redraw_entities = Vec::new();
+
+    inline_inheritance_system(cx, &mut redraw_entities);
+
     if !cx.style.restyle.is_empty() {
         let iterator = TreeBreadthIterator::full(&cx.tree);
 
@@ -838,12 +848,17 @@ pub(crate) fn style_system(cx: &mut Context) {
                     &mut cx.style,
                     &cx.tree,
                     entity,
+                    &mut redraw_entities,
                     &matched_rules.iter().map(|(rule, _)| *rule).collect::<Vec<_>>(),
                 );
             }
         }
         cx.style.restyle.clear();
 
-        shared_inheritance_system(cx);
+        shared_inheritance_system(cx, &mut redraw_entities);
+
+        for entity in redraw_entities {
+            cx.needs_redraw(entity);
+        }
     }
 }

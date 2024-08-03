@@ -12,7 +12,7 @@ pub use self::{
     child_iter::MorphormChildIter,
     focus_iter::FocusTreeIterator,
     layout_child_iter::{DrawChildIterator, LayoutChildIterator},
-    layout_tree_iter::{LayoutSiblingIterator, LayoutTreeIterator},
+    layout_tree_iter::{DrawTreeIterator, LayoutSiblingIterator, LayoutTreeIterator},
     parent_iter::{LayoutParentIterator, ParentIterator},
     tree_depth_iter::TreeDepthIterator,
     tree_iter::{TreeBreadthIterator, TreeIterator},

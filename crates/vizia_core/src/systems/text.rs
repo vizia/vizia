@@ -35,6 +35,7 @@ pub(crate) fn text_system(cx: &mut Context) {
 
 pub(crate) fn text_layout_system(cx: &mut Context) {
     let iterator = LayoutTreeIterator::full(&cx.tree);
+    let mut redraw_entities = Vec::new();
     for entity in iterator {
         if !cx.style.text_layout.contains(entity) {
             continue;
@@ -72,10 +73,12 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
 
             layout_span(&cx.style, &mut cx.cache, &cx.tree, entity, paragraph, bounds);
 
-            cx.style.needs_redraw(entity);
+            redraw_entities.push(entity);
         }
     }
-
+    for entity in redraw_entities {
+        cx.needs_redraw(entity);
+    }
     cx.style.text_layout.clear();
 }
 

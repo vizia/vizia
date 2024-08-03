@@ -214,7 +214,7 @@ pub trait StyleModifiers: internal::Modifiable {
         let cx = self.context();
         let value = value.get(cx).into();
         cx.style.z_index.insert(entity, value);
-        cx.needs_redraw();
+        cx.needs_redraw(entity);
         // });
 
         self
@@ -229,7 +229,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 let value = v.get(cx).into();
                 cx.style.clip_path.insert(cx.current, value);
 
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 
@@ -245,7 +245,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 cx.style.overflowx.insert(cx.current, value);
                 cx.style.overflowy.insert(cx.current, value);
 
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 
@@ -279,7 +279,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 let value = v.get(cx).into();
                 cx.style.backdrop_filter.insert(cx.current, value);
 
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 
@@ -299,7 +299,7 @@ pub trait StyleModifiers: internal::Modifiable {
                     cx.style.shadow.insert(cx.current, vec![value]);
                 }
 
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 
@@ -315,7 +315,7 @@ pub trait StyleModifiers: internal::Modifiable {
 
                 cx.style.shadow.insert(cx.current, value);
 
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 
@@ -338,7 +338,7 @@ pub trait StyleModifiers: internal::Modifiable {
                         .insert(cx.current, vec![ImageOrGradient::Gradient(value)]);
                 }
 
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 
@@ -371,7 +371,7 @@ pub trait StyleModifiers: internal::Modifiable {
                     cx.style.background_image.insert(cx.current, vec![image]);
                 }
 
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 
@@ -443,7 +443,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 cx.style.corner_bottom_left_radius.insert(cx.current, value.bottom_left);
                 cx.style.corner_bottom_right_radius.insert(cx.current, value.bottom_right);
 
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 
@@ -493,7 +493,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 cx.style.corner_bottom_right_shape.insert(cx.current, value.2);
                 cx.style.corner_bottom_left_shape.insert(cx.current, value.3);
 
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 
@@ -543,7 +543,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 cx.style.corner_bottom_left_smoothing.insert(cx.current, value.2);
                 cx.style.corner_bottom_right_smoothing.insert(cx.current, value.3);
 
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 
@@ -602,7 +602,7 @@ pub trait StyleModifiers: internal::Modifiable {
             value.set_or_bind(cx, entity, move |cx, v| {
                 let value = v.get(cx).into();
                 cx.style.transform.insert(cx.current, value);
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 
@@ -619,7 +619,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 let x = value.x.to_length_or_percentage();
                 let y = value.y.to_length_or_percentage();
                 cx.style.transform_origin.insert(cx.current, Translate { x, y });
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 

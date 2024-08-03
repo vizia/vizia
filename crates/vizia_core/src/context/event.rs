@@ -713,13 +713,16 @@ impl<'a> EventContext<'a> {
 
     /// Marks the current view as needing to be redrawn.
     pub fn needs_redraw(&mut self) {
-        self.style.needs_redraw(self.current);
+        let parent_window = self.tree.get_parent_window(self.current).unwrap_or(Entity::root());
+        if let Some(window_state) = self.windows.get_mut(&parent_window) {
+            window_state.redraw_list.insert(self.current);
+        }
     }
 
     /// Marks the current view as needing a layout computation.
     pub fn needs_relayout(&mut self) {
         self.style.needs_relayout();
-        self.style.needs_redraw(self.current);
+        self.needs_redraw();
     }
 
     /// Marks the current view as needing to be restyled.
@@ -764,7 +767,7 @@ impl<'a> EventContext<'a> {
         for entity in self.tree.into_iter() {
             self.style.needs_restyle(entity);
             self.style.needs_relayout();
-            self.style.needs_redraw(entity);
+            //self.style.needs_redraw(entity);
             self.style.needs_text_update(entity);
         }
 

@@ -85,7 +85,7 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     }
 
     for entity in redraw_entities.iter() {
-        cx.style.redraw_list.insert(*entity);
+        cx.needs_redraw(*entity);
     }
 
     for entity in reflow_entities.iter() {

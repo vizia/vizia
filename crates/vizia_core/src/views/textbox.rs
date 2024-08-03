@@ -609,12 +609,12 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
 
     /// Sets the placeholder text that appears when the textbox has no value.
     pub fn placeholder<P: ToStringLocalized>(self, text: impl Res<P>) -> Self {
-        text.set_or_bind(self.cx, self.entity, |cx, val| {
+        text.set_or_bind(self.cx, self.entity, move |cx, val| {
             let txt = val.get(cx).to_string_local(cx);
             cx.emit(TextEvent::SetPlaceholder(txt.clone()));
             cx.style.name.insert(cx.current, txt);
             cx.needs_relayout();
-            cx.needs_redraw();
+            cx.needs_redraw(self.entity);
         });
 
         self
