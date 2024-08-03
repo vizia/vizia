@@ -157,7 +157,10 @@ where
                 if entity_sparse_index.data_index.is_inline()
                     && entity_sparse_index.data_index.index() < self.inline_data.dense.len()
                 {
-                    if entity_sparse_index.data_index.is_inherited() {
+                    if entity_sparse_index.data_index.is_inherited()
+                        && self.inline_data.sparse[entity_index].data_index.index()
+                            != parent_sparse_index.data_index.index()
+                    {
                         self.inline_data.sparse[entity_index] = Index {
                             data_index: DataIndex::inline(parent_sparse_index.data_index.index())
                                 .inherited(),
@@ -198,7 +201,10 @@ where
                 if !entity_sparse_index.data_index.is_inline()
                     && entity_sparse_index.data_index.index() < self.shared_data.dense.len()
                 {
-                    if entity_sparse_index.data_index.is_inherited() {
+                    if entity_sparse_index.data_index.is_inherited()
+                        && self.inline_data.sparse[entity_index].data_index.index()
+                            != parent_sparse_index.data_index.index()
+                    {
                         self.inline_data.sparse[entity_index] = Index {
                             data_index: DataIndex::shared(parent_sparse_index.data_index.index())
                                 .inherited(),

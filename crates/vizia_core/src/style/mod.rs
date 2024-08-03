@@ -364,7 +364,6 @@ pub struct Style {
     pub(crate) system_flags: SystemFlags,
 
     pub(crate) restyle: Bloom,
-    pub(crate) redraw_list: HashSet<Entity>,
     pub(crate) text_construction: Bloom,
     pub(crate) text_layout: Bloom,
     pub(crate) reaccess: Bloom,
@@ -1847,10 +1846,6 @@ impl Style {
         self.system_flags.set(SystemFlags::RELAYOUT, true);
     }
 
-    pub fn needs_redraw(&mut self, entity: Entity) {
-        self.redraw_list.insert(entity);
-    }
-
     pub fn needs_access_update(&mut self, entity: Entity) {
         self.reaccess.0.insert(entity).unwrap();
     }
@@ -1864,11 +1859,11 @@ impl Style {
         self.text_layout.0.insert(entity).unwrap();
     }
 
-    pub fn should_redraw<F: FnOnce()>(&mut self, f: F) {
-        if !self.redraw_list.is_empty() {
-            f();
-        }
-    }
+    // pub fn should_redraw<F: FnOnce()>(&mut self, f: F) {
+    //     if !self.redraw_list.is_empty() {
+    //         f();
+    //     }
+    // }
 
     // Remove all shared style data.
     pub fn clear_style_rules(&mut self) {

@@ -329,7 +329,7 @@ impl Handle<'_, ArcTrack> {
             if let Some(view) = cx.views.get_mut(&entity) {
                 if let Some(knob) = view.downcast_mut::<ArcTrack>() {
                     knob.normalized_value = value;
-                    cx.needs_redraw();
+                    cx.needs_redraw(entity);
                 }
             }
         });
@@ -543,7 +543,7 @@ impl Handle<'_, TickKnob> {
             if let Some(view) = cx.views.get_mut(&entity) {
                 if let Some(knob) = view.downcast_mut::<TickKnob>() {
                     knob.normalized_value = value;
-                    cx.needs_redraw();
+                    cx.needs_redraw(entity);
                 }
             }
         });

@@ -224,9 +224,6 @@ impl BackendContext {
 
     /// Calls the style system to match entities with shared styles.
     pub fn process_style_updates(&mut self) {
-        // Apply any inline style inheritance.
-        inline_inheritance_system(&mut self.0);
-
         style_system(&mut self.0);
 
         // Load any unloaded images and remove unused images.
@@ -262,10 +259,10 @@ impl BackendContext {
         );
     }
 
-    pub fn needs_refresh(&mut self) {
+    pub fn needs_refresh(&mut self, window_entity: Entity) {
         self.0.style.system_flags = SystemFlags::all();
-        self.0.style.needs_redraw(Entity::root());
-        self.0.style.needs_restyle(Entity::root());
+        // self.0.needs_redraw(window_entity);
+        self.0.style.needs_restyle(window_entity);
         self.0.style.needs_relayout();
     }
 

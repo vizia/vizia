@@ -286,9 +286,9 @@ impl ApplicationRunner {
 
         self.cx.process_visual_updates();
 
-        self.cx.style().should_redraw(|| {
+        if self.cx.0.windows.iter().any(|(_, window_state)| !window_state.redraw_list.is_empty()) {
             self.should_redraw = true;
-        });
+        }
     }
 
     pub fn render(&mut self) {
@@ -422,7 +422,7 @@ impl ApplicationRunner {
                 }
             }
             baseview::Event::Window(event) => match event {
-                baseview::WindowEvent::Focused => self.cx.needs_refresh(),
+                baseview::WindowEvent::Focused => self.cx.needs_refresh(Entity::root()),
                 baseview::WindowEvent::Resized(window_info) => {
                     let fb_info = {
                         let mut fboid: GLint = 0;
@@ -482,7 +482,7 @@ impl ApplicationRunner {
                         physical_size.1 as f32,
                     );
 
-                    self.cx.needs_refresh();
+                    self.cx.needs_refresh(Entity::root());
                 }
                 baseview::WindowEvent::WillClose => {
                     self.cx.send_event(Event::new(WindowEvent::WindowClose));

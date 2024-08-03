@@ -48,7 +48,7 @@ impl EventManager {
         'events: for event in self.event_queue.iter_mut() {
             // Handle internal events.
             event.take(|internal_event, _| match internal_event {
-                InternalEvent::Redraw => cx.needs_redraw(),
+                InternalEvent::Redraw => cx.needs_redraw(Entity::root()),
                 InternalEvent::LoadImage { path, image, policy } => {
                     if let Some(image) = image.lock().unwrap().take() {
                         ResourceContext::new(cx).load_image(path, image, policy);
@@ -420,15 +420,15 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                             if w == f32::MAX { "inf".to_string() } else { w.to_string() },
                             if h == f32::MAX { "inf".to_string() } else { h.to_string() },
                         );
-                    } else if let Some(_binding_name) =
+                    } else if let Some(binding_name) =
                         cx.bindings.get(&entity).map(|binding| format!("{:?}", binding))
                     {
-                        // println!(
-                        //     "{}{} binding observing {}",
-                        //     indents(entity),
-                        //     entity,
-                        //     binding_name,
-                        // );
+                        println!(
+                            "{}{} binding observing {}",
+                            indents(entity),
+                            entity,
+                            binding_name,
+                        );
                     } else {
                         println!(
                             "{}{} {}",

@@ -119,7 +119,7 @@ pub trait View: 'static + Sized {
         cx.tree.add(id, current).expect("Failed to add to tree");
         cx.cache.add(id);
         cx.style.add(id);
-        cx.style.needs_redraw(id);
+        cx.needs_redraw(id);
         cx.views.insert(id, Box::new(self));
         let parent_id = cx.tree.get_layout_parent(id).unwrap();
         let parent_node_id = parent_id.accesskit_id();

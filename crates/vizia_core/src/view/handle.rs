@@ -159,7 +159,7 @@ impl<'a, V> Handle<'a, V> {
 
     /// Marks the view as needing a redraw.
     pub fn needs_redraw(&mut self) {
-        self.cx.needs_redraw();
+        self.cx.needs_redraw(self.entity);
     }
 
     /// Returns the bounding box of the view.

@@ -31,6 +31,7 @@ pub(crate) fn layout_system(cx: &mut Context) {
         let iter = LayoutTreeIterator::full(cx.tree);
 
         for entity in iter {
+            cx.current = entity;
             if cx.style.display.get(entity).copied().unwrap_or_default() == Display::None {
                 continue;
             }
@@ -68,9 +69,9 @@ pub(crate) fn layout_system(cx: &mut Context) {
 
                         let new_bounds = BoundingBox { x, y, w, h };
 
-                        if new_bounds != *bounds && *bounds != BoundingBox::default() {
-                            cx.style.needs_redraw(entity);
-                        }
+                        // if new_bounds != *bounds && *bounds != BoundingBox::default() {
+                        //     cx.needs_redraw();
+                        // }
 
                         *bounds = new_bounds;
                     }
@@ -81,6 +82,7 @@ pub(crate) fn layout_system(cx: &mut Context) {
                 if !geo.is_empty()
                 // && cx.style.text.get(entity).is_some()
                 {
+                    cx.needs_redraw();
                     cx.style.needs_text_layout(entity);
                 }
 

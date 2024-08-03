@@ -295,6 +295,7 @@ impl ApplicationHandler<UserEvent> for Application {
                     (callback)(&mut EventContext::new_with_current(cx.context(), window_entity));
                 }
             });
+            self.cx.needs_refresh(window_entity);
         }
     }
 
@@ -313,7 +314,7 @@ impl ApplicationHandler<UserEvent> for Application {
             winit::event::WindowEvent::Resized(size) => {
                 window.resize(size);
                 self.cx.set_window_size(window.entity, size.width as f32, size.height as f32);
-                self.cx.needs_refresh();
+                self.cx.needs_refresh(window.entity);
                 window.window().request_redraw();
 
                 #[cfg(target_os = "windows")]
@@ -460,7 +461,7 @@ impl ApplicationHandler<UserEvent> for Application {
                 inner_size_writer: _,
             } => {
                 self.cx.set_scale_factor(scale_factor);
-                self.cx.needs_refresh();
+                self.cx.needs_refresh(window.entity);
             }
             winit::event::WindowEvent::ThemeChanged(theme) => {
                 let theme = match theme {
@@ -472,7 +473,7 @@ impl ApplicationHandler<UserEvent> for Application {
             winit::event::WindowEvent::Occluded(_) => {}
             winit::event::WindowEvent::RedrawRequested => {
                 for window in self.windows.values_mut() {
-                    self.cx.needs_refresh();
+                    //self.cx.needs_refresh(window.entity);
                     self.cx.draw(window.entity, &mut window.surface, &mut window.dirty_surface);
                     window.swap_buffers();
                 }
@@ -529,11 +530,11 @@ impl ApplicationHandler<UserEvent> for Application {
                 .expect("Failed to send event");
         }
 
-        self.cx.style().should_redraw(|| {
+        if self.cx.0.windows.iter().any(|(_, window_state)| !window_state.redraw_list.is_empty()) {
             for window in self.windows.values() {
                 window.window().request_redraw();
             }
-        });
+        }
 
         if self.control_flow != ControlFlow::Poll {
             if let Some(timer_time) = self.cx.get_next_timer_time() {

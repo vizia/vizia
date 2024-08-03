@@ -72,6 +72,7 @@ pub struct WindowState {
     pub scale_factor: f32,
     pub needs_relayout: bool,
     pub needs_redraw: bool,
+    pub redraw_list: HashSet<Entity>,
     pub dirty_rect: Option<BoundingBox>,
     pub owner: Option<Entity>,
     pub is_modal: bool,
@@ -83,7 +84,7 @@ pub struct WindowState {
 pub struct Context {
     pub(crate) entity_manager: IdManager<Entity>,
     pub(crate) entity_identifiers: HashMap<String, Entity>,
-    pub(crate) tree: Tree<Entity>,
+    pub tree: Tree<Entity>,
     pub(crate) current: Entity,
     pub(crate) views: Views,
     pub(crate) data: Models,
@@ -225,9 +226,11 @@ impl Context {
             drop_data: None,
         };
 
+        result.tree.set_window(Entity::root(), true);
+
         result.style.needs_restyle(Entity::root());
         result.style.needs_relayout();
-        result.style.needs_redraw(Entity::root());
+        result.needs_redraw(Entity::root());
 
         // Build the environment model at the root.
         Environment::new(&mut result).build(&mut result);
@@ -279,8 +282,15 @@ impl Context {
     }
 
     /// Mark the application as needing to rerun the draw method
-    pub fn needs_redraw(&mut self) {
-        self.style.needs_redraw(self.current);
+    pub fn needs_redraw(&mut self, entity: Entity) {
+        if entity == Entity::root() {
+            return;
+        }
+        let parent_window = self.tree.get_parent_window(entity).unwrap();
+        if let Some(window_state) = self.windows.get_mut(&parent_window) {
+            //println!("RD {} {}", entity, parent_window);
+            window_state.redraw_list.insert(entity);
+        }
     }
 
     /// Mark the application as needing to recompute view styles
@@ -309,7 +319,7 @@ impl Context {
         }
 
         if system_flags.contains(SystemFlags::REDRAW) {
-            self.style.needs_redraw(entity);
+            self.needs_redraw(entity);
         }
 
         if system_flags.contains(SystemFlags::REFLOW) {
@@ -403,7 +413,7 @@ impl Context {
         if !delete_list.is_empty() {
             self.style.needs_restyle(self.current);
             self.style.needs_relayout();
-            self.style.needs_redraw(self.current);
+            self.needs_redraw(self.current);
         }
 
         for entity in delete_list.iter().rev() {
@@ -484,15 +494,20 @@ impl Context {
 
             let window_entity = self.tree.get_parent_window(*entity).unwrap_or(Entity::root());
 
-            if let Some(draw_bounds) = self.cache.draw_bounds.get(*entity) {
-                if let Some(dirty_rect) =
-                    &mut self.windows.get_mut(&window_entity).unwrap().dirty_rect
-                {
-                    *dirty_rect = dirty_rect.union(draw_bounds);
-                } else {
-                    self.windows.get_mut(&window_entity).unwrap().dirty_rect = Some(*draw_bounds);
+            if !self.tree.is_window(*entity) {
+                if let Some(draw_bounds) = self.cache.draw_bounds.get(*entity) {
+                    if let Some(dirty_rect) =
+                        &mut self.windows.get_mut(&window_entity).unwrap().dirty_rect
+                    {
+                        *dirty_rect = dirty_rect.union(draw_bounds);
+                    } else {
+                        self.windows.get_mut(&window_entity).unwrap().dirty_rect =
+                            Some(*draw_bounds);
+                    }
                 }
             }
+
+            self.windows.get_mut(&window_entity).unwrap().redraw_list.remove(entity);
 
             if self.windows.contains_key(entity) {
                 self.windows.remove(entity);
@@ -506,7 +521,6 @@ impl Context {
             self.text_context.text_bounds.remove(*entity);
             self.text_context.text_paragraphs.remove(*entity);
             self.entity_manager.destroy(*entity);
-            self.style.redraw_list.remove(entity);
         }
     }
 

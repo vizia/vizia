@@ -5,7 +5,7 @@ use skia_safe::{
 };
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use vizia_storage::{DrawChildIterator, LayoutTreeIterator};
+use vizia_storage::{DrawChildIterator, DrawTreeIterator, LayoutTreeIterator};
 use vizia_style::BlendMode;
 
 pub(crate) fn transform_system(cx: &mut Context) {
@@ -154,17 +154,23 @@ pub(crate) fn draw_system(
     transform_system(cx);
 
     let children = cx
-        .style
+        .windows
+        .get(&window_entity)
+        .unwrap()
         .redraw_list
         .iter()
-        .flat_map(|entity| LayoutTreeIterator::subtree(&cx.tree, *entity))
+        .flat_map(|entity| DrawTreeIterator::subtree(&cx.tree, *entity))
         .collect::<Vec<_>>();
 
-    cx.style.redraw_list.extend(children.iter());
+    cx.windows.get_mut(&window_entity).unwrap().redraw_list.extend(children.iter());
 
-    for entity in cx.style.redraw_list.iter() {
+    for entity in cx.windows.get(&window_entity).unwrap().clone().redraw_list.iter() {
         // Skip binding views
         if cx.tree.is_ignored(*entity) {
+            continue;
+        }
+
+        if cx.tree.is_window(*entity) && *entity != window_entity {
             continue;
         }
 
@@ -235,20 +241,20 @@ pub(crate) fn draw_system(
     //     surface.canvas().draw_rect(&path, &paint);
     // }
 
-    cx.style.redraw_list.clear();
-    cx.windows.get_mut(&window_entity).unwrap().dirty_rect = None;
-
-    let iter = LayoutTreeIterator::full(&cx.tree);
-    for entity in iter {
+    for entity in cx.windows.get(&window_entity).unwrap().clone().redraw_list.iter() {
         if entity.visible(&cx.style) {
-            let draw_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
-            if let Some(dr) = cx.cache.draw_bounds.get_mut(entity) {
+            let draw_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, *entity);
+
+            if let Some(dr) = cx.cache.draw_bounds.get_mut(*entity) {
                 *dr = draw_bounds;
             } else {
-                cx.cache.draw_bounds.insert(entity, draw_bounds);
+                cx.cache.draw_bounds.insert(*entity, draw_bounds);
             }
         }
     }
+
+    cx.windows.get_mut(&window_entity).unwrap().redraw_list.clear();
+    cx.windows.get_mut(&window_entity).unwrap().dirty_rect = None;
 
     // canvas.flush();
 }
@@ -410,14 +416,16 @@ pub(crate) fn draw_bounds(
 
     layout_bounds = layout_bounds.union(&outline_bounds);
 
-    let matrix = cache.transform.get(entity).copied().unwrap();
+    let matrix = cache.transform.get(entity).copied().unwrap_or_default();
     // let transformed_bounds = bounds.transform(&matrix);
     let rect: Rect = layout_bounds.into();
     let tr = matrix.map_rect(rect).0;
 
     let dirty_bounds: BoundingBox = tr.into();
 
-    let parent = tree.get_layout_parent(entity).unwrap_or(Entity::root());
+    let parent = tree
+        .get_layout_parent(entity)
+        .unwrap_or(tree.get_parent_window(entity).unwrap_or(Entity::root()));
     if let Some(clip_bounds) = cache.clip_path.get(parent) {
         dirty_bounds.intersection(clip_bounds)
     } else {
