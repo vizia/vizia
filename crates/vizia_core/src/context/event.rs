@@ -195,6 +195,15 @@ impl<'a> EventContext<'a> {
         WindowPosition::new(0, 0)
     }
 
+    pub fn window_size(&self) -> WindowSize {
+        if let Some(parent_window) = self.parent_window() {
+            let bounds = self.cache.get_bounds(parent_window);
+            return WindowSize::new(bounds.width() as u32, bounds.height() as u32);
+        }
+
+        WindowSize::new(0, 0)
+    }
+
     /// Returns the [Entity] id associated with the given identifier.
     pub fn resolve_entity_identifier(&self, id: &str) -> Option<Entity> {
         self.entity_identifiers.get(id).cloned()
