@@ -1,5 +1,6 @@
 use crate::window_modifiers::WindowModifiers;
 use glutin::context::GlProfile;
+use glutin::surface::SwapInterval;
 use vizia_core::context::TreeProps;
 #[cfg(target_os = "windows")]
 use winit::platform::windows::WindowExtWindows;
@@ -154,9 +155,9 @@ impl WinState {
         let gl_context = not_current_gl_context.make_current(&gl_surface).unwrap();
 
         // if window_description.vsync {
-        //     gl_surface
-        //         .set_swap_interval(&gl_context, SwapInterval::Wait(NonZeroU32::new(1).unwrap()))
-        //         .expect("Failed to set vsync");
+        gl_surface
+            .set_swap_interval(&gl_context, SwapInterval::DontWait)
+            .expect("Failed to set vsync");
         // }
 
         // Build skia renderer
