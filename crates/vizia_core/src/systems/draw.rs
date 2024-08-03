@@ -238,7 +238,7 @@ pub(crate) fn draw_system(
     //     paint.set_style(skia_safe::PaintStyle::Stroke);
     //     paint.set_color(Color::red());
     //     paint.set_stroke_width(1.0);
-    //     surface.canvas().draw_rect(&path, &paint);
+    //     surface.canvas().draw_rect(path, &paint);
     // }
 
     for entity in cx.windows.get(&window_entity).unwrap().clone().redraw_list.iter() {
