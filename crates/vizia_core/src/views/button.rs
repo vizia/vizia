@@ -92,7 +92,7 @@ impl Button {
     {
         Self { action: None }
             .build(cx, move |cx| {
-                (content)(cx).hoverable(false).class("inner");
+                (content)(cx).hoverable(false);
             })
             .role(Role::Button)
             .default_action_verb(DefaultActionVerb::Click)
@@ -226,7 +226,7 @@ impl IconButton {
     {
         Self { action: None }
             .build(cx, move |cx| {
-                Icon::new(cx, icon).hoverable(false).class("inner");
+                Icon::new(cx, icon).hoverable(false);
             })
             .class("icon")
             .role(Role::Button)

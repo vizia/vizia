@@ -95,7 +95,7 @@ impl ViziaWindow {
 
         cx.0.windows.insert(
             Entity::root(),
-            WindowState { window_description: win_desc.clone(), ..Default::default() },
+            WindowState { window_description: win_desc, ..Default::default() },
         );
 
         cx.context().remove_user_themes();

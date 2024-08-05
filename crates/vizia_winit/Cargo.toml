@@ -6,7 +6,7 @@ edition = "2021"
 license = "MIT"
 repository = "https://github.com/vizia/vizia"
 description = "Winit backend for vizia"
-rust-version = "1.65"
+rust-version = "1.76"
 
 [features]
 x11 = ["winit/x11", "glutin/x11", "glutin-winit/x11"]

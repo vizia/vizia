@@ -277,10 +277,7 @@ impl Context {
 
     /// Mark the application as needing to rerun the draw method
     pub fn needs_redraw(&mut self, entity: Entity) {
-        if entity == Entity::root() {
-            return;
-        }
-        let parent_window = self.tree.get_parent_window(entity).unwrap();
+        let parent_window = self.tree.get_parent_window(entity).unwrap_or(Entity::root());
         if let Some(window_state) = self.windows.get_mut(&parent_window) {
             //println!("RD {} {}", entity, parent_window);
             window_state.redraw_list.insert(entity);
