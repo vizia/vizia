@@ -161,7 +161,7 @@ impl Event {
 /// The metadata of an [`Event`].
 #[derive(Debug, Clone, Copy)]
 pub struct EventMeta {
-    /// The entity that produced the event. Entity::null() for OS events or unspecified.
+    /// The entity that produced the event.
     pub origin: Entity,
     /// The entity the event should be sent to (or from in the case of subtree propagation).
     pub target: Entity,
