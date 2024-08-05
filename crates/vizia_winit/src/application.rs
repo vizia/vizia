@@ -21,12 +21,14 @@ use winit::{
     event::ElementState,
     event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy},
     keyboard::{NativeKeyCode, PhysicalKey},
-    raw_window_handle::RawWindowHandle,
     window::{WindowAttributes, WindowId, WindowLevel},
 };
 
 #[cfg(target_os = "windows")]
-use winit::{platform::windows::WindowAttributesExtWindows, raw_window_handle::HasWindowHandle};
+use winit::{
+    platform::windows::WindowAttributesExtWindows,
+    raw_window_handle::{HasWindowHandle, RawWindowHandle},
+};
 // #[cfg(all(
 //     feature = "clipboard",
 //     feature = "wayland",
