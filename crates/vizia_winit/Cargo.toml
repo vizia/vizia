@@ -31,7 +31,7 @@ raw-window-handle = "0.5"
 gl-rs = { package = "gl", version = "0.14.0" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-winapi = { version = "0.3.9", default-features = false, features = ["minwindef", "dwmapi"] }
+windows-sys = { version = "0.52", default-features = false, features = [ "Win32_Graphics_Dwm" ] }
 
 [lints]
 workspace = true
