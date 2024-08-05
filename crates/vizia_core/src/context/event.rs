@@ -186,22 +186,18 @@ impl<'a> EventContext<'a> {
     }
 
     pub fn window_position(&self) -> WindowPosition {
-        if let Some(parent_window) = self.parent_window() {
-            if let Some(state) = self.windows.get(&parent_window) {
-                return state.position;
-            }
+        let parent_window = self.parent_window().unwrap_or(Entity::root());
+        if let Some(state) = self.windows.get(&parent_window) {
+            return state.position;
         }
 
         WindowPosition::new(0, 0)
     }
 
     pub fn window_size(&self) -> WindowSize {
-        if let Some(parent_window) = self.parent_window() {
-            let bounds = self.cache.get_bounds(parent_window);
-            return WindowSize::new(bounds.width() as u32, bounds.height() as u32);
-        }
-
-        WindowSize::new(0, 0)
+        let parent_window = self.parent_window().unwrap_or(Entity::root());
+        let bounds = self.cache.get_bounds(parent_window);
+        WindowSize::new(bounds.width() as u32, bounds.height() as u32)
     }
 
     /// Returns the [Entity] id associated with the given identifier.
