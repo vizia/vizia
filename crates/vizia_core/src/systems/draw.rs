@@ -255,8 +255,6 @@ pub(crate) fn draw_system(
 
     cx.windows.get_mut(&window_entity).unwrap().redraw_list.clear();
     cx.windows.get_mut(&window_entity).unwrap().dirty_rect = None;
-
-    // canvas.flush();
 }
 
 fn draw_entity(
@@ -352,21 +350,9 @@ fn draw_entity(
     }
     canvas.restore();
     cx.current = current;
-
-    // if let Some(dirty_rect) = dirty_rect {
-    //     let bounds = cx.bounds();
-    //     if bounds.intersects(dirty_rect) {
-    //         let path: Rect = bounds.into();
-    //         let mut paint = Paint::default();
-    //         paint.set_style(skia_safe::PaintStyle::Stroke);
-    //         paint.set_color(Color::green());
-    //         paint.set_stroke_width(1.0);
-    //         canvas.draw_rect(&path, &paint);
-    //     }
-    // }
 }
 
-// Must be called after transform and clipping systems to be valid
+// Must be called after transform and clipping systems to be valid.
 pub(crate) fn draw_bounds(
     style: &Style,
     cache: &CachedData,
@@ -417,7 +403,7 @@ pub(crate) fn draw_bounds(
     layout_bounds = layout_bounds.union(&outline_bounds);
 
     let matrix = cache.transform.get(entity).copied().unwrap_or_default();
-    // let transformed_bounds = bounds.transform(&matrix);
+
     let rect: Rect = layout_bounds.into();
     let tr = matrix.map_rect(rect).0;
 

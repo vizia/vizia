@@ -18,8 +18,8 @@ avatar.rounded {
 }
 
 avatar > icon {
-    size: 100%;
-    font-size: 24;
+    size: 1s;
+    child-space: 4px;
 }
 
 avatar > image {
@@ -49,7 +49,7 @@ badge > label {
 }
 
 badge > icon {
-    size: 24px;
+    size: 1s;
 }
 
 /* BUTTON */
@@ -72,12 +72,10 @@ button > * {
 }
 
 button > icon {
+    size: 24px;
+    child-space: 0px;
     min-left: 0px;
     min-right: 0px;
-}
-
-button > icon > svg {
-    size: 24px;
 }
 
 button.icon {
@@ -111,7 +109,7 @@ toggle-button {
     cursor: hand;
 }
 
-toggle-button > .inner {
+toggle-button > * {
     size: auto;
     child-space: 1s;
     col-between: 4px;
@@ -119,10 +117,11 @@ toggle-button > .inner {
     min-right: 8px;
 }
 
-toggle-button > icon.inner {
-    min-left: 0px;
-    min-right: 0px;
-    width: 32px;
+toggle-button > icon {
+    min-left: 4px;
+    min-right: 4px;
+    size: 24px;
+    child-space: 0px;
 }
 
 toggle-button.icon {
@@ -136,6 +135,10 @@ checkbox {
     width: 20px;
     height: 20px;
     cursor: hand;
+}
+
+checkbox svg {
+    size: 1s;
 }
 
 /* CHIP */
@@ -346,10 +349,9 @@ form-group > .legend {
 
 icon {
     size: 24px;
-    child-space: 1s;
 }
 
-icon svg {
+icon > svg {
     size: 1s;
 }
 

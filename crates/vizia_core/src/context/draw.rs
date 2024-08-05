@@ -1,3 +1,4 @@
+use skia_safe::canvas::SaveLayerRec;
 use skia_safe::gradient_shader::GradientShaderColors;
 use skia_safe::path::ArcSize;
 use skia_safe::rrect::Corner;
@@ -1070,28 +1071,17 @@ impl<'a> DrawContext<'a> {
                                     }
 
                                     ImageOrSvg::Svg(svg) => {
-                                        let mut svgs = self.cache.svgs.borrow_mut();
+                                        let svg_width = svg.inner().fContainerSize.fWidth;
+                                        let svg_height = svg.inner().fContainerSize.fHeight;
 
-                                        let has_surface = svgs.contains_key(image_id);
-
-                                        let svg_surface =
-                                            svgs.entry(*image_id).or_insert_with(|| {
-                                                canvas
-                                                    .new_surface(
-                                                        &canvas.image_info().with_dimensions((
-                                                            svg.inner().fContainerSize.fWidth
-                                                                as i32,
-                                                            svg.inner().fContainerSize.fHeight
-                                                                as i32,
-                                                        )),
-                                                        None,
-                                                    )
-                                                    .unwrap()
-                                            });
-
-                                        if !has_surface {
-                                            let svg_canvas = svg_surface.canvas();
-
+                                        fn render_svg(
+                                            entity: Entity,
+                                            svg: &skia_safe::svg::Dom,
+                                            canvas: &Canvas,
+                                            style: &Style,
+                                            bounds: &BoundingBox,
+                                        ) {
+                                            canvas.save();
                                             let (scale_x, scale_y) = (
                                                 bounds.width() / svg.inner().fContainerSize.fWidth,
                                                 bounds.height()
@@ -1099,7 +1089,7 @@ impl<'a> DrawContext<'a> {
                                             );
 
                                             if scale_x.is_finite() && scale_y.is_finite() {
-                                                svg_canvas.scale((scale_x, scale_y));
+                                                canvas.scale((scale_x, scale_y));
                                             } else {
                                                 svg.clone().set_container_size((
                                                     bounds.width(),
@@ -1107,26 +1097,69 @@ impl<'a> DrawContext<'a> {
                                                 ));
                                             }
 
-                                            svg.render(svg_canvas);
+                                            svg.render(canvas);
 
-                                            if let Some(color) =
-                                                self.style.fill.get(self.current).copied()
-                                            {
+                                            if let Some(color) = style.fill.get(entity).copied() {
                                                 let mut paint = Paint::default();
 
                                                 paint.set_anti_alias(true);
                                                 paint.set_blend_mode(skia_safe::BlendMode::SrcIn);
                                                 paint.set_color(color);
-                                                svg_canvas.draw_paint(&paint);
+                                                canvas.draw_paint(&paint);
                                             }
+                                            canvas.restore();
                                         }
 
-                                        svg_surface.draw(
-                                            canvas,
-                                            (bounds.x, bounds.y),
-                                            SamplingOptions::default(),
-                                            None,
-                                        );
+                                        if bounds.width() == svg_width
+                                            && bounds.height() == svg_height
+                                        {
+                                            let mut svgs = self.cache.svgs.borrow_mut();
+
+                                            let has_surface = svgs.contains_key(image_id);
+
+                                            let svg_surface =
+                                                svgs.entry(*image_id).or_insert_with(|| {
+                                                    canvas
+                                                        .new_surface(
+                                                            &canvas.image_info().with_dimensions((
+                                                                svg_width as i32,
+                                                                svg_height as i32,
+                                                            )),
+                                                            None,
+                                                        )
+                                                        .unwrap()
+                                                });
+
+                                            if !has_surface {
+                                                let svg_canvas = svg_surface.canvas();
+
+                                                render_svg(
+                                                    self.current,
+                                                    svg,
+                                                    svg_canvas,
+                                                    self.style,
+                                                    &bounds,
+                                                );
+                                            }
+
+                                            svg_surface.draw(
+                                                canvas,
+                                                (bounds.x, bounds.y),
+                                                SamplingOptions::default(),
+                                                None,
+                                            );
+                                        } else {
+                                            canvas.save_layer(&SaveLayerRec::default());
+                                            canvas.translate((bounds.x, bounds.y));
+                                            render_svg(
+                                                self.current,
+                                                svg,
+                                                canvas,
+                                                self.style,
+                                                &bounds,
+                                            );
+                                            canvas.restore();
+                                        }
                                     }
                                 }
                             }

@@ -183,7 +183,6 @@ pub fn build_paragraph(
     add_block(style, tree, entity, &mut paragraph_builder, &mut 0);
 
     paragraph_builder.add_text("\u{200B}");
-    // paragraph_builder.add_text(" px");
     paragraph_builder.build().into()
 }
 

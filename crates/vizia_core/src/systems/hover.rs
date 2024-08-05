@@ -65,8 +65,8 @@ pub fn hover_system(cx: &mut Context, window_entity: Entity) {
         );
 
         let cursor = cx.style.cursor.get(hovered).cloned().unwrap_or_default();
-        // TODO: Decide if not changing the cursor when the view is disabled is the correct thing to do
-        if !cx.cursor_icon_locked && !cx.style.disabled.get(hovered).cloned().unwrap_or_default() {
+
+        if !cx.cursor_icon_locked {
             cx.emit(WindowEvent::SetCursor(cursor));
         }
 

@@ -33,13 +33,6 @@ pub(crate) fn binding_system(cx: &mut Context) {
         }
     }
 
-    // for img in cx.resource_manager.images.values_mut() {
-    //     if img.dirty {
-    //         observers.extend(img.observers.iter());
-    //         img.dirty = false;
-    //     }
-    // }
-
     if !observers.is_empty() {
         // Sort observers into tree ordering.
         let ordered_observers = cx

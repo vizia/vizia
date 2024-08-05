@@ -5,7 +5,7 @@
     color: #181818;
 }
 
-icon svg {
+icon > svg {
     fill: #181818;
 }
 
