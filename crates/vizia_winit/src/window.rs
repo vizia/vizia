@@ -48,43 +48,14 @@ pub struct WinState {
     pub window: Arc<winit::window::Window>,
     pub surface: skia_safe::Surface,
     pub dirty_surface: skia_safe::Surface,
-    pub is_initially_cloaked: bool,
     pub should_close: bool,
+    #[cfg(target_os = "windows")]
+    pub is_initially_cloaked: bool,
 }
 
 impl Drop for WinState {
     fn drop(&mut self) {
         self.gl_context.make_current(&self.gl_surface).unwrap();
-    }
-}
-
-#[cfg(target_os = "windows")]
-impl WinState {
-    /// Cloaks the window such that it is not visible to the user, but will still be composited.
-    /// We use this to work around the "blank window flash" startup bug on windows.
-    ///
-    /// <https://learn.microsoft.com/en-us/windows/win32/api/dwmapi/ne-dwmapi-dwmwindowattribute>
-    ///
-    pub(crate) fn _set_cloak(&self, state: bool) -> bool {
-        use winapi::shared::minwindef::{BOOL, FALSE, TRUE};
-        use winapi::um::dwmapi::{DwmSetWindowAttribute, DWMWA_CLOAK};
-        use winit::raw_window_handle::RawWindowHandle::Win32;
-
-        let Win32(handle) = self.window.window_handle().unwrap().as_raw() else {
-            unreachable!();
-        };
-
-        let value = if state { TRUE } else { FALSE };
-        let result = unsafe {
-            DwmSetWindowAttribute(
-                handle.hwnd.get() as _,
-                DWMWA_CLOAK,
-                &value as *const BOOL as *const _,
-                std::mem::size_of::<BOOL>() as u32,
-            )
-        };
-
-        result == 0 // success
     }
 }
 
@@ -213,8 +184,9 @@ impl WinState {
             window,
             surface,
             dirty_surface,
-            is_initially_cloaked: true,
             should_close: false,
+            #[cfg(target_os = "windows")]
+            is_initially_cloaked: true,
         })
     }
 
