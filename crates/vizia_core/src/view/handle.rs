@@ -4,7 +4,7 @@ use std::{
     marker::PhantomData,
 };
 
-/// A handle to a view which has been already built into the tree.
+/// A handle to a view which has been built into the tree.
 pub struct Handle<'a, V> {
     pub(crate) current: Entity,
     pub(crate) entity: Entity,
@@ -45,7 +45,7 @@ impl<'a, V> Handle<'a, V> {
         self.entity
     }
 
-    pub fn current(&self) -> Entity {
+    pub(crate) fn current(&self) -> Entity {
         self.current
     }
 
@@ -130,22 +130,6 @@ impl<'a, V> Handle<'a, V> {
         });
         self
     }
-
-    // pub fn subbind<L, F>(self, lens: L, closure: F) -> Self
-    // where
-    //     L: Lens,
-    //     <L as Lens>::Target: Data,
-    //     F: 'static + Fn(Handle<'_, V>, L),
-    // {
-    //     let entity = self.entity();
-    //     Binding::new(self.cx, lens, move |cx, data| {
-    //         let new_handle = Handle { entity, p: Default::default(), cx };
-    //         // new_handle.cx.set_current(new_handle.entity);
-    //         (closure)(new_handle, data);
-    //     });
-
-    //     self
-    // }
 
     /// Marks the view as needing a relayout.
     pub fn needs_relayout(&mut self) {

@@ -1,19 +1,18 @@
-#![allow(clippy::type_complexity)] // TODO: Fix these
+#![allow(clippy::type_complexity)]
 // To allow a match syntax in event handlers with one event variant
 #![allow(clippy::single_match)]
 // To allow enum names with the same prefix
 #![allow(clippy::enum_variant_names)]
 #![allow(clippy::only_used_in_recursion)]
 
-#[doc(hidden)]
-mod accessibility;
-pub(crate) mod animation;
+pub(crate) mod accessibility;
+pub mod animation;
 pub mod binding;
 #[doc(hidden)]
-pub mod cache;
+pub(crate) mod cache;
 pub mod context;
 #[doc(hidden)]
-pub mod entity;
+pub(crate) mod entity;
 pub mod environment;
 pub mod events;
 pub mod input;
@@ -23,7 +22,7 @@ pub mod model;
 pub mod modifiers;
 pub mod resource;
 pub mod style;
-pub mod systems;
+pub(crate) mod systems;
 pub(crate) mod text;
 #[doc(hidden)]
 pub mod tree;
@@ -34,16 +33,16 @@ pub mod window;
 
 mod storage;
 
-/// Contains types and functions used for custom drawing within views. This is a re-export of [skia-safe]().
+/// Contains types and functions used for custom drawing within views. This is a re-export of [skia-safe](https://github.com/rust-skia/rust-skia).
 pub mod vg {
     pub use skia_safe::*;
 }
 
-/// A collection of codepoints for built-in icons.
+/// A collection of built-in SVG icons.
 pub mod icons;
 
+#[doc(hidden)]
 pub mod fonts;
-pub use fonts::*;
 
 #[doc(hidden)]
 pub mod backend {
@@ -81,7 +80,7 @@ pub mod prelude {
         LinearGradientBuilder, ShadowBuilder, StyleModifiers, TextModifiers,
     };
     pub use super::resource::{ImageId, ImageRetentionPolicy};
-    pub use super::util::{IntoCssStr, CSS};
+    pub use super::util::IntoCssStr;
     pub use super::view::{Handle, View};
     pub use super::views::*;
     pub use super::window::{DropData, WindowEvent};

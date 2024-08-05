@@ -62,7 +62,7 @@ pub struct Environment {
     pub locale: LanguageIdentifier,
     /// Current application and system theme.
     pub theme: Theme,
-
+    /// The timer used to blink the caret of a textbox.
     pub(crate) caret_timer: Timer,
 }
 

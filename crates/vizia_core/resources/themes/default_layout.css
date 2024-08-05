@@ -1,7 +1,3 @@
-window {
-    background-color: white;
-}
-
 /* AVATAR */
 
 avatar {
@@ -53,7 +49,7 @@ badge > label {
 }
 
 badge > icon {
-    font-size: 24;
+    size: 24px;
 }
 
 /* BUTTON */
@@ -67,7 +63,7 @@ button {
     cursor: hand;
 }
 
-button > .inner {
+button > * {
     width: auto;
     child-space: 1s;
     col-between: 4px;
@@ -75,12 +71,12 @@ button > .inner {
     min-right: 8px;
 }
 
-button > icon.inner {
+button > icon {
     min-left: 0px;
     min-right: 0px;
 }
 
-button .inner > svg {
+button > icon > svg {
     size: 24px;
 }
 
@@ -350,12 +346,11 @@ form-group > .legend {
 
 icon {
     size: 24px;
-    min-size: auto;
     child-space: 1s;
 }
 
 icon svg {
-    size: 24px;
+    size: 1s;
 }
 
 /* IMAGE */

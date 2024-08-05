@@ -1,6 +1,6 @@
 use skia_safe::Rect;
 
-/// Represents the axis-aligned bounding box of a view.
+/// Represents an axis-aligned bounding box.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct BoundingBox {
     pub x: f32,

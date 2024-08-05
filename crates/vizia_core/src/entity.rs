@@ -9,12 +9,10 @@ use vizia_id::{
 /// is stored and loaded using entities.
 ///
 /// The [root entity](GenerationalId::root) represents the main window and is always valid. It can be used to set
-/// properties on the primary window, such as background color, as well as sending events
-/// to the window such as [`Restyle`] and [`Redraw`] events.
+/// properties on the primary window, such as background-color, as well as sending events
+/// to the window.
 ///
 /// [root entity]: GenerationalId::root()
-/// [`Restyle`]: crate::prelude::WindowEvent::Restyle
-/// [`Redraw`]: crate::prelude::WindowEvent::Redraw
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Entity(u64);
 
