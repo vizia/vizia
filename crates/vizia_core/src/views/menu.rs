@@ -224,6 +224,86 @@ impl View for Submenu {
         });
     }
 }
+/// opens the menu in the `menu` closure when you right click on the views in the `content` closure.
+#[derive(Lens)]
+pub struct RightClickMenu {
+    is_open: bool,
+}
+
+impl RightClickMenu {
+    pub fn new<V: View>(
+        cx: &mut Context,
+        content: impl Fn(&mut Context) -> Handle<V> + 'static,
+        menu: impl Fn(&mut Context) + 'static,
+    ) -> Handle<Self> {
+        let handle = Self { is_open: false }
+            .build(cx, |cx| {
+                cx.add_listener(move |menu_button: &mut Self, cx, event| {
+                    let flag: bool = menu_button.is_open;
+                    event.map(
+                        |window_event, meta: &mut crate::events::EventMeta| match window_event {
+                            WindowEvent::MouseDown(_) => {
+                                if flag && meta.origin != cx.current() {
+                                    // Check if the mouse was pressed outside of any descendants
+                                    if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
+                                        cx.emit(MenuEvent::CloseAll);
+                                        cx.emit(MenuEvent::Close);
+                                        // TODO: This might be needed
+                                        // meta.consume();
+                                    }
+                                }
+                            }
+
+                            _ => {}
+                        },
+                    );
+                });
+                (content)(cx);
+                MenuPopup::new(cx, RightClickMenu::is_open, false, move |cx| {
+                    (menu)(cx);
+                });
+            })
+            .checked(RightClickMenu::is_open)
+            .layout_type(LayoutType::Row)
+            .on_mouse_down(|cx, mouse| {
+                if mouse == MouseButton::Right {
+                    cx.emit(MenuEvent::ToggleOpen);
+                }
+            });
+
+        handle
+    }
+}
+
+impl View for RightClickMenu {
+    fn element(&self) -> Option<&'static str> {
+        Some("rightclickmenu")
+    }
+
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|menu_event, meta| match menu_event {
+            MenuEvent::Open => {
+                self.is_open = true;
+                meta.consume();
+            }
+
+            MenuEvent::Close => {
+                self.is_open = false;
+                // meta.consume();
+            }
+
+            MenuEvent::ToggleOpen => {
+                self.is_open ^= true;
+                if self.is_open {
+                    cx.emit(MenuEvent::MenuIsOpen);
+                }
+                meta.consume();
+            }
+
+            _ => {}
+        });
+    }
+}
 
 #[derive(Lens)]
 pub struct MenuButton {}
