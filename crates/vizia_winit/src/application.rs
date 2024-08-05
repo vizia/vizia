@@ -21,6 +21,7 @@ use winit::{
     event::ElementState,
     event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy},
     keyboard::{NativeKeyCode, PhysicalKey},
+    raw_window_handle::RawWindowHandle,
     window::{WindowAttributes, WindowId, WindowLevel},
 };
 
@@ -147,27 +148,41 @@ impl Application {
         #[allow(unused_mut)]
         let mut window_attributes = apply_window_description(window_description);
 
-        #[cfg(target_os = "windows")]
-        if let Some(owner) = owner {
-            use winit::raw_window_handle::RawWindowHandle::Win32;
-            let Win32(handle) = owner.window_handle().unwrap().as_raw() else {
-                unreachable!();
-            };
-            window_attributes = window_attributes.with_owner_window(handle.hwnd.get());
-        }
+        let window = {
+            #[cfg(target_os = "windows")]
+            {
+                if let Some(owner) = owner {
+                    let RawWindowHandle::Win32(handle) = owner.window_handle().unwrap().as_raw()
+                    else {
+                        unreachable!();
+                    };
+                    window_attributes = window_attributes.with_owner_window(handle.hwnd.get());
+                }
 
-        let window = event_loop.create_window(window_attributes)?;
+                // The current version of winit spawns new windows with unspecified position/size.
+                // As a workaround, we'll hide the window during creation and reveal it afterward.
+                let visible = window_attributes.visible;
+                let window_attributes = window_attributes.with_visible(false);
+
+                let window = event_loop.create_window(window_attributes)?;
+
+                // Another problem is the white background that briefly flashes on window creation.
+                // To avoid this one we must wait until the first draw is complete before revealing
+                // our window. The visible property won't work in this case as it prevents drawing.
+                // Instead we use the "cloak" attribute, which hides the window without that issue.
+                set_cloak(&window, true);
+                window.set_visible(visible);
+                window
+            }
+
+            #[cfg(not(target_os = "windows"))]
+            {
+                event_loop.create_window(window_attributes)?
+            }
+        };
 
         let window = Arc::new(window);
-
         let window_state = WinState::new(event_loop, window.clone(), window_entity)?;
-
-        // // On windows cloak (hide) the window initially, we later reveal it after the first draw.
-        // // This is a workaround to hide the "white flash" that occurs during application startup.
-        // #[cfg(target_os = "windows")]
-        // {
-        //     window_state.is_initially_cloaked = window_state.set_cloak(true);
-        // }
 
         let window_id = window_state.window.id();
         self.windows.insert(window_id, window_state);
@@ -476,16 +491,14 @@ impl ApplicationHandler<UserEvent> for Application {
                     //self.cx.needs_refresh(window.entity);
                     self.cx.draw(window.entity, &mut window.surface, &mut window.dirty_surface);
                     window.swap_buffers();
-                }
 
-                // // Un-cloak
-                // #[cfg(target_os = "windows")]
-                // if window.is_initially_cloaked {
-                //     window.is_initially_cloaked = false;
-                //     self.cx.draw(window.entity, &mut window.surface, &mut window.dirty_surface);
-                //     window.swap_buffers();
-                //     window.set_cloak(false);
-                // }
+                    // Un-cloak
+                    #[cfg(target_os = "windows")]
+                    if window.is_initially_cloaked {
+                        window.is_initially_cloaked = false;
+                        set_cloak(window.window(), false);
+                    }
+                }
             }
 
             _ => {}
@@ -773,4 +786,33 @@ fn apply_window_description(description: &WindowDescription) -> WindowAttributes
             )
             .unwrap()
         }))
+}
+
+/// Cloaks the window such that it is not visible to the user, but will still be composited.
+///
+/// <https://learn.microsoft.com/en-us/windows/win32/api/dwmapi/ne-dwmapi-dwmwindowattribute>
+///
+#[cfg(target_os = "windows")]
+fn set_cloak(window: &winit::window::Window, state: bool) -> bool {
+    use windows_sys::Win32::{
+        Foundation::{BOOL, FALSE, HWND, TRUE},
+        Graphics::Dwm::{DwmSetWindowAttribute, DWMWA_CLOAK},
+    };
+
+    let RawWindowHandle::Win32(handle) = window.window_handle().unwrap().as_raw() else {
+        unreachable!();
+    };
+
+    let value = if state { TRUE } else { FALSE };
+
+    let result = unsafe {
+        DwmSetWindowAttribute(
+            handle.hwnd.get() as HWND,
+            DWMWA_CLOAK as u32,
+            std::ptr::from_ref(&value).cast(),
+            std::mem::size_of::<BOOL>() as u32,
+        )
+    };
+
+    result == 0 // success
 }
