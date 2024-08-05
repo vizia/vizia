@@ -1,4 +1,4 @@
-use skia_safe::textlayout::Paragraph;
+use skia_safe::textlayout::{Paragraph, TypefaceFontProvider};
 use skia_safe::{textlayout::FontCollection, FontMgr};
 use vizia_storage::SparseSet;
 
@@ -7,6 +7,7 @@ use crate::{entity::Entity, layout::BoundingBox};
 pub struct TextContext {
     pub font_collection: FontCollection,
     pub default_font_manager: FontMgr,
+    pub asset_provider: TypefaceFontProvider,
     pub text_bounds: SparseSet<BoundingBox>,
     pub text_paragraphs: SparseSet<Paragraph>,
 }

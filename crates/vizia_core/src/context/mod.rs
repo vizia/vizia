@@ -176,7 +176,6 @@ impl Context {
                 let mut font_collection = FontCollection::new();
 
                 let default_font_manager = FontMgr::default();
-                // let mut default_family_name = None;
 
                 let mut asset_provider = TypefaceFontProvider::new();
 
@@ -184,6 +183,7 @@ impl Context {
                     default_font_manager.new_from_data(fonts::FIRACODE, None).unwrap(),
                     Some("Fira Code"),
                 );
+
                 asset_provider.register_typeface(
                     default_font_manager.new_from_data(fonts::ROBOTO, None).unwrap(),
                     Some("Roboto Flex"),
@@ -191,12 +191,13 @@ impl Context {
 
                 font_collection
                     .set_default_font_manager(default_font_manager.clone(), "Roboto Flex");
-                let asset_font_manager: FontMgr = asset_provider.into();
+                let asset_font_manager: FontMgr = asset_provider.clone().into();
                 font_collection.set_asset_font_manager(asset_font_manager);
 
                 TextContext {
                     font_collection,
                     default_font_manager,
+                    asset_provider,
                     text_bounds: Default::default(),
                     text_paragraphs: Default::default(),
                 }
@@ -248,13 +249,6 @@ impl Context {
     pub fn current(&self) -> Entity {
         self.current
     }
-
-    // /// Set the current entity. This is useful in user code when you're performing black magic and
-    // /// want to trick other parts of the code into thinking you're processing some other part of the
-    // /// tree.
-    // pub(crate) fn set_current(&mut self, e: Entity) {
-    //     self.current = e;
-    // }
 
     /// Makes the above black magic more explicit
     pub fn with_current<T>(&mut self, e: Entity, f: impl FnOnce(&mut Context) -> T) -> T {
@@ -568,8 +562,12 @@ impl Context {
         }
     }
 
-    pub fn add_font_mem(&mut self, _data: impl AsRef<[u8]>) {
+    pub fn add_font_mem(&mut self, data: impl AsRef<[u8]>) {
         // self.text_context.font_system().db_mut().load_font_data(data.as_ref().to_vec());
+        self.text_context.asset_provider.register_typeface(
+            self.text_context.default_font_manager.new_from_data(data.as_ref(), None).unwrap(),
+            None,
+        );
     }
 
     /// Sets the global default font for the application.
