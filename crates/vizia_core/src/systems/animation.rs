@@ -40,6 +40,8 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     // Clip Path
     redraw_entities.extend(cx.style.clip_path.tick(time));
 
+    redraw_entities.extend(cx.style.fill.tick(time));
+
     // Font Color
     reflow_entities.extend(cx.style.font_color.tick(time));
     // Font Size
