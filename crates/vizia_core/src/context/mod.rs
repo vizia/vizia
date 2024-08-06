@@ -35,7 +35,7 @@ pub use proxy::*;
 pub use resource::*;
 
 use crate::events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler};
-use crate::fonts;
+
 use crate::{
     binding::{BindingHandler, MapId},
     resource::StoredImage,
@@ -177,20 +177,9 @@ impl Context {
 
                 let default_font_manager = FontMgr::default();
 
-                let mut asset_provider = TypefaceFontProvider::new();
+                let asset_provider = TypefaceFontProvider::new();
 
-                asset_provider.register_typeface(
-                    default_font_manager.new_from_data(fonts::FIRACODE, None).unwrap(),
-                    Some("Fira Code"),
-                );
-
-                asset_provider.register_typeface(
-                    default_font_manager.new_from_data(fonts::ROBOTO, None).unwrap(),
-                    Some("Roboto Flex"),
-                );
-
-                font_collection
-                    .set_default_font_manager(default_font_manager.clone(), "Roboto Flex");
+                font_collection.set_default_font_manager(default_font_manager.clone(), None);
                 let asset_font_manager: FontMgr = asset_provider.clone().into();
                 font_collection.set_asset_font_manager(asset_font_manager);
 

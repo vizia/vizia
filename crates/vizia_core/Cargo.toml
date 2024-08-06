@@ -12,7 +12,6 @@ rust-version = "1.76"
 clipboard = ["copypasta"]
 x11 = ["copypasta?/x11"]
 wayland = ["copypasta?/wayland"]
-embedded_fonts = []
 
 [dependencies]
 vizia_derive = { path = "../vizia_derive" }
