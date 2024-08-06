@@ -80,7 +80,7 @@ pub mod prelude {
         LinearGradientBuilder, ShadowBuilder, StyleModifiers, TextModifiers,
     };
     pub use super::resource::{ImageId, ImageRetentionPolicy};
-    pub use super::util::IntoCssStr;
+    pub use super::util::{IntoCssStr, CSS};
     pub use super::view::{Handle, View};
     pub use super::views::*;
     pub use super::window::{DropData, WindowEvent};
