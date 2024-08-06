@@ -42,9 +42,6 @@ pub mod vg {
 pub mod icons;
 
 #[doc(hidden)]
-pub mod fonts;
-
-#[doc(hidden)]
 pub mod backend {
     pub use super::accessibility::IntoNode;
     pub use super::context::backend::BackendContext;

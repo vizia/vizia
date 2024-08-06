@@ -290,13 +290,12 @@ name = "debug"
 path = "examples/debug.rs"
 
 [features]
-default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts"]
+default = ["winit", "clipboard", "x11", "wayland"]
 clipboard = ["vizia_core/clipboard", "vizia_winit?/clipboard"]
 winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]
 x11 = ["vizia_winit?/x11", "vizia_core/x11"]
 wayland = ["vizia_winit?/wayland", "vizia_core/wayland"]
-embedded_fonts = ["vizia_core/embedded_fonts"]
 accesskit = ["vizia_winit?/accesskit"]
 
 [dependencies]
