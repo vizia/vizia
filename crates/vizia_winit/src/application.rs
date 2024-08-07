@@ -21,7 +21,7 @@ use winit::{
     event::ElementState,
     event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy},
     keyboard::{NativeKeyCode, PhysicalKey},
-    window::{WindowAttributes, WindowId, WindowLevel},
+    window::{CursorIcon, CustomCursor, WindowAttributes, WindowId, WindowLevel},
 };
 
 #[cfg(target_os = "windows")]
@@ -274,12 +274,14 @@ impl ApplicationHandler<UserEvent> for Application {
         let main_window: Arc<winit::window::Window> = self
             .create_window(event_loop, Entity::root(), &self.window_description.clone(), None)
             .expect("failed to create initial window");
+        let custom_cursors = Arc::new(load_default_cursors(event_loop));
         self.cx.add_main_window(Entity::root(), &self.window_description, 1.0);
         self.cx.add_window(Window {
             window: Some(main_window.clone()),
             on_close: None,
             on_create: None,
             should_close: false,
+            custom_cursors: custom_cursors.clone(),
         });
 
         self.cx.0.windows.insert(
@@ -308,6 +310,7 @@ impl ApplicationHandler<UserEvent> for Application {
             self.cx.add_main_window(window_entity, &window_state.window_description, 1.0);
             self.cx.mutate_window(window_entity, |cx, win: &mut Window| {
                 win.window = Some(window.clone());
+                win.custom_cursors = custom_cursors.clone();
                 if let Some(callback) = &win.on_create {
                     (callback)(&mut EventContext::new_with_current(cx.context(), window_entity));
                 }
@@ -817,4 +820,84 @@ fn set_cloak(window: &winit::window::Window, state: bool) -> bool {
     };
 
     result == 0 // success
+}
+
+pub fn load_default_cursors(event_loop: &ActiveEventLoop) -> HashMap<CursorIcon, CustomCursor> {
+    let mut custom_cursors = HashMap::new();
+
+    #[cfg(target_os = "windows")]
+    {
+        let mut load_cursor = |cursor, bytes, x, y| {
+            custom_cursors.insert(
+                cursor,
+                event_loop.create_custom_cursor(
+                    CustomCursor::from_rgba(bytes, 32, 32, x, y)
+                        .expect("Failed to create custom cursor"),
+                ),
+            );
+        };
+
+        load_cursor(
+            CursorIcon::Alias, //
+            include_bytes!("../resources/cursors/windows/aliasb"),
+            7,
+            4,
+        );
+        load_cursor(
+            CursorIcon::Cell, //
+            include_bytes!("../resources/cursors/windows/cell"),
+            7,
+            7,
+        );
+        load_cursor(
+            CursorIcon::ColResize,
+            include_bytes!("../resources/cursors/windows/col_resize"),
+            10,
+            8,
+        );
+        load_cursor(
+            CursorIcon::Copy, //
+            include_bytes!("../resources/cursors/windows/copy"),
+            7,
+            4,
+        );
+        load_cursor(
+            CursorIcon::Grab, //
+            include_bytes!("../resources/cursors/windows/grab"),
+            15,
+            15,
+        );
+        load_cursor(
+            CursorIcon::Grabbing, //
+            include_bytes!("../resources/cursors/windows/grabbing"),
+            15,
+            15,
+        );
+        load_cursor(
+            CursorIcon::RowResize, //
+            include_bytes!("../resources/cursors/windows/row_resize"),
+            9,
+            10,
+        );
+        load_cursor(
+            CursorIcon::VerticalText, //
+            include_bytes!("../resources/cursors/windows/vertical_text"),
+            9,
+            3,
+        );
+        load_cursor(
+            CursorIcon::ZoomIn, //
+            include_bytes!("../resources/cursors/windows/zoom_in"),
+            6,
+            6,
+        );
+        load_cursor(
+            CursorIcon::ZoomOut, //
+            include_bytes!("../resources/cursors/windows/zoom_out"),
+            6,
+            6,
+        );
+    }
+
+    custom_cursors
 }
