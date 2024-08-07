@@ -4,6 +4,7 @@ use vizia_core::context::TreeProps;
 #[cfg(target_os = "windows")]
 use winit::platform::windows::WindowExtWindows;
 
+use std::collections::HashMap;
 use std::error::Error;
 use std::num::NonZeroU32;
 use std::{ffi::CString, sync::Arc};
@@ -35,7 +36,7 @@ use skia_safe::{
 
 use vizia_core::prelude::*;
 use winit::event_loop::ActiveEventLoop;
-use winit::window::CursorGrabMode;
+use winit::window::{CursorGrabMode, CursorIcon, CustomCursor};
 use winit::{dpi::*, window::WindowId};
 
 pub struct WinState {
@@ -280,6 +281,7 @@ pub struct Window {
     pub on_close: Option<Box<dyn Fn(&mut EventContext)>>,
     pub on_create: Option<Box<dyn Fn(&mut EventContext)>>,
     pub should_close: bool,
+    pub(crate) custom_cursors: Arc<HashMap<CursorIcon, CustomCursor>>,
 }
 
 impl Window {
@@ -288,36 +290,42 @@ impl Window {
     }
 
     pub fn new(cx: &mut Context, content: impl Fn(&mut Context)) -> Handle<Self> {
-        Self { window: None, on_close: None, on_create: None, should_close: false }.build(
-            cx,
-            |cx| {
-                cx.windows.insert(cx.current(), WindowState::default());
-                cx.tree.set_window(cx.current(), true);
-                (content)(cx);
-            },
-        )
+        Self {
+            window: None,
+            on_close: None,
+            on_create: None,
+            should_close: false,
+            custom_cursors: Default::default(),
+        }
+        .build(cx, |cx| {
+            cx.windows.insert(cx.current(), WindowState::default());
+            cx.tree.set_window(cx.current(), true);
+            (content)(cx);
+        })
     }
 
     pub fn popup(cx: &mut Context, is_modal: bool, content: impl Fn(&mut Context)) -> Handle<Self> {
-        Self { window: None, on_close: None, on_create: None, should_close: false }
-            .build(cx, |cx| {
-                let parent_window = cx.parent_window();
-                if is_modal {
-                    cx.emit_to(parent_window, WindowEvent::SetEnabled(false));
-                }
+        Self {
+            window: None,
+            on_close: None,
+            on_create: None,
+            should_close: false,
+            custom_cursors: Default::default(),
+        }
+        .build(cx, |cx| {
+            let parent_window = cx.parent_window();
+            if is_modal {
+                cx.emit_to(parent_window, WindowEvent::SetEnabled(false));
+            }
 
-                cx.windows.insert(
-                    cx.current(),
-                    WindowState {
-                        owner: Some(parent_window),
-                        is_modal: true,
-                        ..Default::default()
-                    },
-                );
-                cx.tree.set_window(cx.current(), true);
-                (content)(cx);
-            })
-            .lock_focus_to_within()
+            cx.windows.insert(
+                cx.current(),
+                WindowState { owner: Some(parent_window), is_modal: true, ..Default::default() },
+            );
+            cx.tree.set_window(cx.current(), true);
+            (content)(cx);
+        })
+        .lock_focus_to_within()
     }
 }
 
@@ -347,12 +355,18 @@ impl View for Window {
             }
 
             WindowEvent::SetCursor(cursor) => {
-                if let Some(icon) = cursor_icon_to_cursor_icon(*cursor) {
-                    self.window().set_cursor_visible(true);
-                    self.window().set_cursor(icon);
-                } else {
+                let Some(icon) = cursor_icon_to_cursor_icon(*cursor) else {
                     self.window().set_cursor_visible(false);
+                    return;
+                };
+
+                if let Some(custom_icon) = self.custom_cursors.get(&icon) {
+                    self.window().set_cursor(custom_icon.clone());
+                } else {
+                    self.window().set_cursor(icon);
                 }
+
+                self.window().set_cursor_visible(true);
             }
 
             WindowEvent::SetTitle(title) => {
