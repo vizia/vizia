@@ -823,6 +823,7 @@ fn set_cloak(window: &winit::window::Window, state: bool) -> bool {
 }
 
 pub fn load_default_cursors(event_loop: &ActiveEventLoop) -> HashMap<CursorIcon, CustomCursor> {
+    #[allow(unused_mut)]
     let mut custom_cursors = HashMap::new();
 
     #[cfg(target_os = "windows")]

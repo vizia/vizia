@@ -8,12 +8,6 @@ use fnv::FnvHashMap;
 use skia_safe::{Matrix, Surface};
 use vizia_storage::SparseSet;
 
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub(crate) struct Pos {
-    pub(crate) x: f32,
-    pub(crate) y: f32,
-}
-
 /// Stores data which can be cached between system runs.
 ///
 /// When an event occurs or style data is changed systems run to determine the new state of the UI.
