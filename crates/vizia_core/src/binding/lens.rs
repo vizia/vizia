@@ -50,7 +50,7 @@ impl<T: Clone> LensValue<'_, T> {
     }
 }
 
-impl<T: Clone> AsRef<T> for LensValue<'_, T> {
+impl<T> AsRef<T> for LensValue<'_, T> {
     fn as_ref(&self) -> &T {
         self
     }
