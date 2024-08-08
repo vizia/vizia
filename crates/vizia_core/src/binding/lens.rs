@@ -15,7 +15,7 @@ use super::MapId;
 /// When deriving the `Lens` trait on a struct, the derive macro constructs a static type which implements the `Lens` trait for each field.
 /// The `view()` method takes a reference to the struct type as input and outputs a reference to the field.
 /// This provides a way to specify a binding to a specific field of some application data.
-pub trait Lens: 'static + Copy + std::fmt::Debug + std::hash::Hash {
+pub trait Lens: 'static + Copy + Debug + Hash {
     type Source;
     type Target;
 
@@ -162,7 +162,7 @@ pub struct Map<L: Lens, O> {
     o: PhantomData<O>,
 }
 
-impl<L: Lens, O: 'static> std::marker::Copy for Map<L, O> {}
+impl<L: Lens, O: 'static> Copy for Map<L, O> {}
 
 impl<L: Lens, O: 'static> Clone for Map<L, O> {
     fn clone(&self) -> Self {
@@ -192,7 +192,7 @@ impl<L: Lens, O: 'static> Lens for Map<L, O> {
     }
 }
 
-impl<L: Lens, O: 'static> std::fmt::Debug for Map<L, O> {
+impl<L: Lens, O: 'static> Debug for Map<L, O> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{:?}.map(?)", self.lens))
     }
@@ -211,7 +211,7 @@ pub struct MapRef<L: Lens, O> {
     o: PhantomData<O>,
 }
 
-impl<L: Lens, O: 'static> std::marker::Copy for MapRef<L, O> {}
+impl<L: Lens, O: 'static> Copy for MapRef<L, O> {}
 
 impl<L: Lens, O: 'static> Clone for MapRef<L, O> {
     fn clone(&self) -> Self {
@@ -244,7 +244,7 @@ impl<L: Lens, O: 'static> Lens for MapRef<L, O> {
     }
 }
 
-impl<L: Lens, O: 'static> std::fmt::Debug for MapRef<L, O> {
+impl<L: Lens, O: 'static> Debug for MapRef<L, O> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{:?}.map(?)", self.lens))
     }
@@ -304,7 +304,7 @@ impl<T: Clone, U: Clone> Clone for Then<T, U> {
     }
 }
 
-impl<A: Lens, B: Lens> std::fmt::Debug for Then<A, B> {
+impl<A: Lens, B: Lens> Debug for Then<A, B> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{:?}.then({:?})", self.a, self.b))
     }
@@ -351,7 +351,7 @@ impl<L: Lens, T> Hash for Index<L, T> {
 
 impl<L: Lens, T: 'static + Clone> Lens for Index<L, T>
 where
-    <L as Lens>::Target: std::ops::Deref<Target = [T]>,
+    <L as Lens>::Target: Deref<Target = [T]>,
 {
     type Source = L::Source;
     type Target = T;
@@ -434,7 +434,7 @@ impl<T: 'static> Lens for UnwrapLens<T> {
     }
 }
 
-impl<T: 'static> std::fmt::Debug for UnwrapLens<T> {
+impl<T: 'static> Debug for UnwrapLens<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str("unwrap")
     }
@@ -476,7 +476,7 @@ impl<T: 'static + Clone + TryInto<U>, U: 'static> Lens for IntoLens<T, U> {
     }
 }
 
-impl<T, U> std::fmt::Debug for IntoLens<T, U> {
+impl<T, U> Debug for IntoLens<T, U> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str("into")
     }
@@ -568,7 +568,7 @@ impl<L: Lens> Lens for Wrapper<L> {
     }
 }
 
-impl<L: Lens> std::fmt::Debug for Wrapper<L> {
+impl<L: Lens> Debug for Wrapper<L> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
     }
