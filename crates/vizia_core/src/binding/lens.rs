@@ -113,19 +113,19 @@ pub trait LensExt: Lens {
     }
 
     fn map<O: 'static, F: 'static + Fn(&Self::Target) -> O>(self, map: F) -> Map<Self, O> {
-        let id = MAP_MANAGER.with(|f| f.borrow_mut().create());
-        let entity = CURRENT.with(|f| *f.borrow());
-        MAPS.with(|f| {
-            f.borrow_mut().insert(id, (entity, Box::new(MapState { closure: Rc::new(map) })))
+        let id = MAP_MANAGER.with_borrow_mut(|f| f.create());
+        let entity = CURRENT.with_borrow(|f| *f);
+        MAPS.with_borrow_mut(|f| {
+            f.insert(id, (entity, Box::new(MapState { closure: Rc::new(map) })))
         });
         Map { id, lens: self, o: PhantomData }
     }
 
     fn map_ref<O: 'static, F: 'static + Fn(&Self::Target) -> &O>(self, map: F) -> MapRef<Self, O> {
-        let id = MAP_MANAGER.with(|f| f.borrow_mut().create());
-        let entity = CURRENT.with(|f| *f.borrow());
-        MAPS.with(|f| {
-            f.borrow_mut().insert(id, (entity, Box::new(MapRefState { closure: Rc::new(map) })))
+        let id = MAP_MANAGER.with_borrow_mut(|f| f.create());
+        let entity = CURRENT.with_borrow(|f| *f);
+        MAPS.with_borrow_mut(|f| {
+            f.insert(id, (entity, Box::new(MapRefState { closure: Rc::new(map) })))
         });
         MapRef { id, lens: self, o: PhantomData }
     }
@@ -175,20 +175,13 @@ impl<L: Lens, O: 'static> Lens for Map<L, O> {
     type Target = O;
 
     fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
-        if let Some(t) = self.lens.view(source) {
-            let closure = MAPS.with(|f| {
-                if let Some(lens_map) = f.borrow().get(&self.id) {
-                    if let Some(mapping) = lens_map.1.downcast_ref::<MapState<L::Target, O>>() {
-                        return Some(mapping.closure.clone());
-                    }
-                }
-
-                None
-            });
-            return Some(LensValue::Owned((closure?)(&*t)));
-        }
-
-        None
+        let target = self.lens.view(source)?;
+        let closure = MAPS.with_borrow(|f| {
+            let (_, any) = f.get(&self.id)?;
+            let MapState { closure } = any.downcast_ref()?;
+            Some(closure.clone())
+        })?;
+        Some(LensValue::Owned(closure(&*target)))
     }
 }
 
@@ -224,23 +217,17 @@ impl<L: Lens, O: 'static> Lens for MapRef<L, O> {
     type Target = O;
 
     fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
-        if let Some(t) = self.lens.view(source) {
-            let closure = MAPS.with(|f| {
-                if let Some(lens_map) = f.borrow().get(&self.id) {
-                    if let Some(mapping) = lens_map.1.downcast_ref::<MapRefState<L::Target, O>>() {
-                        return Some(mapping.closure.clone());
-                    }
-                }
+        let LensValue::Borrowed(target) = self.lens.view(source)? else {
+            unreachable!();
+        };
 
-                None
-            });
-            match t {
-                LensValue::Borrowed(b) => return Some(LensValue::Borrowed((closure?)(b))),
-                LensValue::Owned(_) => unreachable!(),
-            }
-        }
+        let closure = MAPS.with_borrow(|f| {
+            let (_, any) = f.get(&self.id)?;
+            let MapRefState { closure } = any.downcast_ref()?;
+            Some(closure.clone())
+        })?;
 
-        None
+        Some(LensValue::Borrowed(closure(target)))
     }
 }
 
