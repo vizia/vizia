@@ -1,10 +1,8 @@
 //! A model for system specific state which can be accessed by any model or view.
-use crate::prelude::LensValue;
 use crate::{
     context::{Context, EmitContext},
     events::{Timer, TimerAction},
     model::Model,
-    prelude::Wrapper,
     views::TextEvent,
     window::WindowEvent,
 };
@@ -20,7 +18,7 @@ pub enum ThemeMode {
     LightMode,
 }
 
-use crate::{binding::Lens, context::EventContext, events::Event};
+use crate::{context::EventContext, events::Event};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AppTheme {

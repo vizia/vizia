@@ -5,6 +5,8 @@
 #![allow(clippy::enum_variant_names)]
 #![allow(clippy::only_used_in_recursion)]
 
+extern crate self as vizia;
+
 pub(crate) mod accessibility;
 pub mod animation;
 pub mod binding;
