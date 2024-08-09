@@ -226,7 +226,6 @@ impl Context {
         Environment::new(&mut result).build(&mut result);
 
         result.entity_manager.create();
-        result.set_default_font(&["Fira Sans"]);
 
         result.style.role.insert(Entity::root(), Role::Window);
 
