@@ -1,4 +1,4 @@
-use vizia_style::{BorderRadius, ColorStop, Rect};
+use vizia_style::{ColorStop, CornerRadius, Rect};
 
 use super::internal;
 use crate::prelude::*;
@@ -97,13 +97,13 @@ pub trait StyleModifiers: internal::Modifiable {
             abilities.set(Abilities::CHECKABLE, true);
         }
 
-        self.context().with_current(current, |cx| {
-            state.set_or_bind(cx, entity, |cx, val| {
+        self.context().with_current(current, move |cx| {
+            state.set_or_bind(cx, entity, move |cx, val| {
                 let val = val.get(cx).into();
-                if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
+                if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
                     pseudo_classes.set(PseudoClassFlags::CHECKED, val);
                 }
-                cx.needs_restyle(cx.current);
+                cx.needs_restyle(entity);
             });
         });
 
@@ -214,7 +214,7 @@ pub trait StyleModifiers: internal::Modifiable {
         let cx = self.context();
         let value = value.get(cx).into();
         cx.style.z_index.insert(entity, value);
-        cx.needs_redraw();
+        cx.needs_redraw(entity);
         // });
 
         self
@@ -229,7 +229,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 let value = v.get(cx).into();
                 cx.style.clip_path.insert(cx.current, value);
 
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 
@@ -245,7 +245,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 cx.style.overflowx.insert(cx.current, value);
                 cx.style.overflowy.insert(cx.current, value);
 
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 
@@ -279,27 +279,43 @@ pub trait StyleModifiers: internal::Modifiable {
                 let value = v.get(cx).into();
                 cx.style.backdrop_filter.insert(cx.current, value);
 
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 
         self
     }
 
-    /// Add a box-shadow to the view.
-    fn box_shadow<U: Into<BoxShadow>>(mut self, value: impl Res<U>) -> Self {
+    /// Add a shadow to the view.
+    fn shadow<U: Into<Shadow>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, move |cx, v| {
                 let value = v.get(cx).into();
-                if let Some(box_shadows) = cx.style.box_shadow.get_inline_mut(cx.current) {
-                    box_shadows.push(value);
+                if let Some(shadows) = cx.style.shadow.get_inline_mut(cx.current) {
+                    shadows.push(value);
                 } else {
-                    cx.style.box_shadow.insert(cx.current, vec![value]);
+                    cx.style.shadow.insert(cx.current, vec![value]);
                 }
 
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
+            });
+        });
+
+        self
+    }
+
+    fn shadows<U: Into<Vec<Shadow>>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            value.set_or_bind(cx, entity, move |cx, v| {
+                let value = v.get(cx).into();
+
+                cx.style.shadow.insert(cx.current, value);
+
+                cx.needs_redraw(entity);
             });
         });
 
@@ -322,7 +338,7 @@ pub trait StyleModifiers: internal::Modifiable {
                         .insert(cx.current, vec![ImageOrGradient::Gradient(value)]);
                 }
 
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 
@@ -337,29 +353,25 @@ pub trait StyleModifiers: internal::Modifiable {
         SystemFlags::REDRAW
     );
 
-    fn background_image<'i, U: Into<Vec<BackgroundImage<'i>>>>(
-        mut self,
-        value: impl Res<U>,
-    ) -> Self {
+    fn background_image<'i, U: Into<BackgroundImage<'i>>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, move |cx, val| {
-                let images = val.get(cx).into();
-                let images = images
-                    .into_iter()
-                    .filter_map(|img| match img {
-                        BackgroundImage::Gradient(gradient) => {
-                            Some(ImageOrGradient::Gradient(*gradient))
-                        }
-                        BackgroundImage::Url(url) => {
-                            Some(ImageOrGradient::Image(url.url.to_string()))
-                        }
-                        _ => None,
-                    })
-                    .collect::<Vec<_>>();
-                cx.style.background_image.insert(cx.current, images);
-                cx.needs_redraw();
+                let image = val.get(cx).into();
+                let image = match image {
+                    BackgroundImage::Gradient(gradient) => {
+                        Some(ImageOrGradient::Gradient(*gradient))
+                    }
+                    BackgroundImage::Url(url) => Some(ImageOrGradient::Image(url.url.to_string())),
+                    _ => None,
+                };
+
+                if let Some(image) = image {
+                    cx.style.background_image.insert(cx.current, vec![image]);
+                }
+
+                cx.needs_redraw(entity);
             });
         });
 
@@ -382,35 +394,42 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     modifier!(
-        /// Sets the border radius for the top-left corner of the view.
-        border_top_left_radius,
+        /// Sets the border color of the view.
+        border_style,
+        BorderStyleKeyword,
+        SystemFlags::REDRAW
+    );
+
+    modifier!(
+        /// Sets the corner radius for the top-left corner of the view.
+        corner_top_left_radius,
         LengthOrPercentage,
         SystemFlags::REDRAW
     );
 
     modifier!(
-        /// Sets the border radius for the top-right corner of the view.
-        border_top_right_radius,
+        /// Sets the corner radius for the top-right corner of the view.
+        corner_top_right_radius,
         LengthOrPercentage,
         SystemFlags::REDRAW
     );
 
     modifier!(
-        /// Sets the border radius for the bottom-left corner of the view.
-        border_bottom_left_radius,
+        /// Sets the corner radius for the bottom-left corner of the view.
+        corner_bottom_left_radius,
         LengthOrPercentage,
         SystemFlags::REDRAW
     );
 
     modifier!(
-        /// Sets the border radius for the bottom-right corner of the view.
-        border_bottom_right_radius,
+        /// Sets the corner radius for the bottom-right corner of the view.
+        corner_bottom_right_radius,
         LengthOrPercentage,
         SystemFlags::REDRAW
     );
 
-    /// Sets the border radius for all four corners of the view.
-    fn border_radius<U: std::fmt::Debug + Into<BorderRadius>>(
+    /// Sets the corner radius for all four corners of the view.
+    fn corner_radius<U: std::fmt::Debug + Into<CornerRadius>>(
         mut self,
         value: impl Res<U>,
     ) -> Self {
@@ -419,12 +438,12 @@ pub trait StyleModifiers: internal::Modifiable {
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, move |cx, v| {
                 let value = v.get(cx).into();
-                cx.style.border_top_left_radius.insert(cx.current, value.top_left);
-                cx.style.border_top_right_radius.insert(cx.current, value.top_right);
-                cx.style.border_bottom_left_radius.insert(cx.current, value.bottom_left);
-                cx.style.border_bottom_right_radius.insert(cx.current, value.bottom_right);
+                cx.style.corner_top_left_radius.insert(cx.current, value.top_left);
+                cx.style.corner_top_right_radius.insert(cx.current, value.top_right);
+                cx.style.corner_bottom_left_radius.insert(cx.current, value.bottom_left);
+                cx.style.corner_bottom_right_radius.insert(cx.current, value.bottom_right);
 
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 
@@ -432,35 +451,35 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     modifier!(
-        /// Sets the border corner shape for the top-left corner of the view.
-        border_top_left_shape,
-        BorderCornerShape,
+        /// Sets the corner corner shape for the top-left corner of the view.
+        corner_top_left_shape,
+        CornerShape,
         SystemFlags::REDRAW
     );
 
     modifier!(
-        /// Sets the border corner shape for the top-right corner of the view.
-        border_top_right_shape,
-        BorderCornerShape,
+        /// Sets the corner corner shape for the top-right corner of the view.
+        corner_top_right_shape,
+        CornerShape,
         SystemFlags::REDRAW
     );
 
     modifier!(
-        /// Sets the border corner shape for the bottom-left corner of the view.
-        border_bottom_left_shape,
-        BorderCornerShape,
+        /// Sets the corner corner shape for the bottom-left corner of the view.
+        corner_bottom_left_shape,
+        CornerShape,
         SystemFlags::REDRAW
     );
 
     modifier!(
-        /// Sets the border corner shape for the bottom-right corner of the view.
-        border_bottom_right_shape,
-        BorderCornerShape,
+        /// Sets the corner corner shape for the bottom-right corner of the view.
+        corner_bottom_right_shape,
+        CornerShape,
         SystemFlags::REDRAW
     );
 
-    /// Sets the border corner shape for all four corners of the view.
-    fn border_corner_shape<U: std::fmt::Debug + Into<Rect<BorderCornerShape>>>(
+    /// Sets the corner shape for all four corners of the view.
+    fn corner_shape<U: std::fmt::Debug + Into<Rect<CornerShape>>>(
         mut self,
         value: impl Res<U>,
     ) -> Self {
@@ -469,12 +488,62 @@ pub trait StyleModifiers: internal::Modifiable {
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, move |cx, v| {
                 let value = v.get(cx).into();
-                cx.style.border_top_left_shape.insert(cx.current, value.0);
-                cx.style.border_top_right_shape.insert(cx.current, value.1);
-                cx.style.border_bottom_right_shape.insert(cx.current, value.2);
-                cx.style.border_bottom_left_shape.insert(cx.current, value.3);
+                cx.style.corner_top_left_shape.insert(cx.current, value.0);
+                cx.style.corner_top_right_shape.insert(cx.current, value.1);
+                cx.style.corner_bottom_right_shape.insert(cx.current, value.2);
+                cx.style.corner_bottom_left_shape.insert(cx.current, value.3);
 
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
+            });
+        });
+
+        self
+    }
+
+    modifier!(
+        /// Sets the corner smoothing for the top-left corner of the view.
+        corner_top_left_smoothing,
+        f32,
+        SystemFlags::REDRAW
+    );
+
+    modifier!(
+        /// Sets the corner smoothing for the top-right corner of the view.
+        corner_top_right_smoothing,
+        f32,
+        SystemFlags::REDRAW
+    );
+
+    modifier!(
+        /// Sets the corner smoothing for the bottom-left corner of the view.
+        corner_bottom_left_smoothing,
+        f32,
+        SystemFlags::REDRAW
+    );
+
+    modifier!(
+        /// Sets the corner smoothing for the bottom-right corner of the view.
+        corner_bottom_right_smoothing,
+        f32,
+        SystemFlags::REDRAW
+    );
+
+    /// Sets the corner smoothing for all four corners of the view.
+    fn corner_smoothing<U: std::fmt::Debug + Into<Rect<f32>>>(
+        mut self,
+        value: impl Res<U>,
+    ) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            value.set_or_bind(cx, entity, move |cx, v| {
+                let value = v.get(cx).into();
+                cx.style.corner_top_left_smoothing.insert(cx.current, value.0);
+                cx.style.corner_top_right_smoothing.insert(cx.current, value.1);
+                cx.style.corner_bottom_left_smoothing.insert(cx.current, value.2);
+                cx.style.corner_bottom_right_smoothing.insert(cx.current, value.3);
+
+                cx.needs_redraw(entity);
             });
         });
 
@@ -533,7 +602,7 @@ pub trait StyleModifiers: internal::Modifiable {
             value.set_or_bind(cx, entity, move |cx, v| {
                 let value = v.get(cx).into();
                 cx.style.transform.insert(cx.current, value);
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 
@@ -550,7 +619,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 let x = value.x.to_length_or_percentage();
                 let y = value.y.to_length_or_percentage();
                 cx.style.transform_origin.insert(cx.current, Translate { x, y });
-                cx.needs_redraw();
+                cx.needs_redraw(entity);
             });
         });
 
@@ -629,64 +698,64 @@ impl From<LinearGradientBuilder> for Gradient {
 }
 
 #[derive(Debug, Clone)]
-pub struct BoxShadowBuilder {
-    box_shadow: BoxShadow,
+pub struct ShadowBuilder {
+    shadow: Shadow,
 }
 
-impl Default for BoxShadowBuilder {
+impl Default for ShadowBuilder {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl BoxShadowBuilder {
+impl ShadowBuilder {
     pub fn new() -> Self {
-        Self { box_shadow: BoxShadow::default() }
+        Self { shadow: Shadow::default() }
     }
 
-    fn build(self) -> BoxShadow {
-        self.box_shadow
+    fn build(self) -> Shadow {
+        self.shadow
     }
 
     pub fn x_offset(mut self, offset: impl Into<Length>) -> Self {
-        self.box_shadow.x_offset = offset.into();
+        self.shadow.x_offset = offset.into();
 
         self
     }
 
     pub fn y_offset(mut self, offset: impl Into<Length>) -> Self {
-        self.box_shadow.y_offset = offset.into();
+        self.shadow.y_offset = offset.into();
 
         self
     }
 
     pub fn blur(mut self, radius: Length) -> Self {
-        self.box_shadow.blur_radius = Some(radius);
+        self.shadow.blur_radius = Some(radius);
 
         self
     }
 
     pub fn spread(mut self, radius: Length) -> Self {
-        self.box_shadow.spread_radius = Some(radius);
+        self.shadow.spread_radius = Some(radius);
 
         self
     }
 
     pub fn color(mut self, color: Color) -> Self {
-        self.box_shadow.color = Some(color);
+        self.shadow.color = Some(color);
 
         self
     }
 
     pub fn inset(mut self) -> Self {
-        self.box_shadow.inset = true;
+        self.shadow.inset = true;
 
         self
     }
 }
 
-impl From<BoxShadowBuilder> for BoxShadow {
-    fn from(value: BoxShadowBuilder) -> Self {
+impl From<ShadowBuilder> for Shadow {
+    fn from(value: ShadowBuilder) -> Self {
         value.build()
     }
 }

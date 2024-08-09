@@ -39,7 +39,7 @@ pub fn setup_logging() -> Result<(), ApplicationError> {
 fn theme_selection_dropdown(cx: &mut Context) {
     PickList::new(cx, AppData::theme_options, AppData::selected_theme, true)
         .on_select(|cx, index| cx.emit(AppEvent::SetThemeMode(index)))
-        .width(Pixels(85.0))
+        .width(Pixels(100.0))
         .tooltip(|cx| {
             Tooltip::new(cx, |cx| {
                 Label::new(cx, "Select Theme Mode");

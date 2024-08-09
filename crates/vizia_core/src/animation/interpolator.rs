@@ -1,11 +1,11 @@
 use morphorm::Units;
 use vizia_style::{
-    Angle, BackgroundSize, BoxShadow, ClipPath, Color, ColorStop, Display, Filter, FontSize,
-    Gradient, Length, LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LineDirection,
-    LinearGradient, Opacity, PercentageOrNumber, Rect, Scale, Transform, Translate, RGBA,
+    Angle, BackgroundSize, ClipPath, Color, ColorStop, Display, Filter, FontSize, Gradient, Length,
+    LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LineDirection, LinearGradient,
+    Opacity, PercentageOrNumber, Rect, Scale, Shadow, Transform, Translate, RGBA,
 };
 
-use femtovg::Transform2D;
+use skia_safe::Matrix;
 
 use crate::style::ImageOrGradient;
 
@@ -200,15 +200,17 @@ impl Interpolator for Transform {
 }
 
 // TODO: Split this into interpolated matrices for translation, rotation, scale, and skew
-impl Interpolator for Transform2D {
+impl Interpolator for Matrix {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         let mut transform = *start;
+
         transform[0] = f32::interpolate(&start[0], &end[0], t);
         transform[1] = f32::interpolate(&start[1], &end[1], t);
         transform[2] = f32::interpolate(&start[2], &end[2], t);
         transform[3] = f32::interpolate(&start[3], &end[3], t);
         transform[4] = f32::interpolate(&start[4], &end[4], t);
         transform[5] = f32::interpolate(&start[5], &end[5], t);
+
         transform
     }
 }
@@ -311,9 +313,9 @@ impl Interpolator for LinearGradient {
     }
 }
 
-impl Interpolator for BoxShadow {
+impl Interpolator for Shadow {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        BoxShadow {
+        Shadow {
             x_offset: Length::interpolate(&start.x_offset, &end.x_offset, t),
             y_offset: Length::interpolate(&start.y_offset, &end.y_offset, t),
             blur_radius: Option::interpolate(&start.blur_radius, &end.blur_radius, t),

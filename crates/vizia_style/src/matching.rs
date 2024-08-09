@@ -252,8 +252,6 @@ mod test {
                 MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
 
             let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
-
-            println!("Result: {}", result);
         }
     }
 
@@ -281,12 +279,10 @@ mod test {
 
             let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
 
-            println!("Result: {}", result);
             assert!(result);
 
             let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
 
-            println!("Result: {}", result);
             assert!(!result);
         }
     }

@@ -55,14 +55,17 @@ impl TimerState {
         self
     }
 
+    /// Returns the duration of the timer.
     pub fn duration(&self) -> Option<Duration> {
         self.duration
     }
 
+    /// Returns the tick interval of the timer.
     pub fn interval(&self) -> Duration {
         self.interval
     }
 
+    /// Converts the timer to an `f32` value indicating the progress of the timer between zero and one. Returns `None` for a timer with no fixed duration.
     pub fn progress(&self) -> Option<f32> {
         self.duration.map(|duration| {
             ((self.time - self.start_time).as_secs_f32() / duration.as_secs_f32()).clamp(0.0, 1.0)

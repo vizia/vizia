@@ -6,10 +6,13 @@ license = "MIT"
 repository = "https://github.com/vizia/vizia"
 edition = "2021"
 description = "The input components of vizia"
-rust-version = "1.65"
+rust-version = "1.76"
 
 [dependencies]
 vizia_id = { path = "../vizia_id" }
 
 keyboard-types = { version = "0.6", default-features = false }
 bitflags = "2.4"
+
+[lints]
+workspace = true

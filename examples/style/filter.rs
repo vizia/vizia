@@ -1,4 +1,3 @@
-use vizia::image;
 use vizia::prelude::*;
 
 const STYLE: &str = r#"
@@ -13,7 +12,7 @@ const STYLE: &str = r#"
         top: 300px;
         backdrop-filter: blur(16px);
         position-type: self-directed;
-        border-radius: 32px;
+        corner-radius: 32px;
         background-color: rgba(255, 255, 255, 0.4);
         border-width: 2px;
         border-color: rgba(255, 255, 255, 0.8);
@@ -53,11 +52,7 @@ fn main() -> Result<(), ApplicationError> {
         // Load an image into the binary
         cx.load_image(
             "sample.png",
-            image::load_from_memory_with_format(
-                include_bytes!("../resources/images/sample-hut-400x300.png"),
-                image::ImageFormat::Png,
-            )
-            .unwrap(),
+            include_bytes!("../resources/images/sample-hut-400x300.png"),
             ImageRetentionPolicy::DropWhenUnusedForOneFrame,
         );
 

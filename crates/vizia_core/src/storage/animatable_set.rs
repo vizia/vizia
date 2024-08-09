@@ -194,9 +194,21 @@ where
                 let entity_sparse_index = self.inline_data.sparse[entity_index];
 
                 if entity_sparse_index.data_index.is_inline()
-                    && entity_sparse_index.data_index.index() < self.inline_data.dense.len()
+                    && self.inline_data.sparse[entity_index].data_index.index()
+                        != parent_sparse_index.data_index.index()
                 {
-                    if entity_sparse_index.data_index.is_inherited() {
+                    if entity_sparse_index.data_index.index() < self.inline_data.dense.len() {
+                        if entity_sparse_index.data_index.is_inherited() {
+                            self.inline_data.sparse[entity_index] = InlineIndex {
+                                data_index: DataIndex::inline(
+                                    parent_sparse_index.data_index.index(),
+                                )
+                                .inherited(),
+                                anim_index: u32::MAX,
+                            };
+                            return true;
+                        }
+                    } else {
                         self.inline_data.sparse[entity_index] = InlineIndex {
                             data_index: DataIndex::inline(parent_sparse_index.data_index.index())
                                 .inherited(),
@@ -204,13 +216,6 @@ where
                         };
                         return true;
                     }
-                } else {
-                    self.inline_data.sparse[entity_index] = InlineIndex {
-                        data_index: DataIndex::inline(parent_sparse_index.data_index.index())
-                            .inherited(),
-                        anim_index: u32::MAX,
-                    };
-                    return true;
                 }
             }
         }
@@ -235,25 +240,32 @@ where
                 let entity_sparse_index = self.inline_data.sparse[entity_index];
 
                 if !entity_sparse_index.data_index.is_inline()
-                    && entity_sparse_index.data_index.index() < self.shared_data.dense.len()
+                    && self.inline_data.sparse[entity_index].data_index.index()
+                        != parent_sparse_index.data_index.index()
                 {
-                    if entity_sparse_index.data_index.is_inherited() {
-                        self.inline_data.sparse[entity_index] = InlineIndex {
-                            data_index: DataIndex::shared(parent_sparse_index.data_index.index())
+                    if entity_sparse_index.data_index.index() < self.shared_data.dense.len() {
+                        if entity_sparse_index.data_index.is_inherited() {
+                            self.inline_data.sparse[entity_index] = InlineIndex {
+                                data_index: DataIndex::shared(
+                                    parent_sparse_index.data_index.index(),
+                                )
                                 .inherited(),
-                            anim_index: u32::MAX,
-                        };
+                                anim_index: u32::MAX,
+                            };
+                            return true;
+                        }
+                    } else {
+                        if !entity_sparse_index.data_index.is_inline() {
+                            self.inline_data.sparse[entity_index] = InlineIndex {
+                                data_index: DataIndex::shared(
+                                    parent_sparse_index.data_index.index(),
+                                )
+                                .inherited(),
+                                anim_index: u32::MAX,
+                            };
+                        }
                         return true;
                     }
-                } else {
-                    if !entity_sparse_index.data_index.is_inline() {
-                        self.inline_data.sparse[entity_index] = InlineIndex {
-                            data_index: DataIndex::shared(parent_sparse_index.data_index.index())
-                                .inherited(),
-                            anim_index: u32::MAX,
-                        };
-                    }
-                    return true;
                 }
             }
         }
@@ -367,7 +379,9 @@ where
         }
     }
 
-    pub fn tick(&mut self, time: Instant) -> bool {
+    pub fn tick(&mut self, time: Instant) -> Vec<Entity> {
+        self.remove_innactive_animations();
+
         if self.has_animations() {
             for state in self.active_animations.iter_mut() {
                 // If the animation is already finished then skip
@@ -377,7 +391,7 @@ where
 
                 if state.keyframes.len() == 1 {
                     state.output = Some(state.keyframes[0].value.clone());
-                    return true;
+                    continue;
                 }
 
                 let elapsed_time = time.duration_since(state.start_time);
@@ -403,12 +417,13 @@ where
                 state.output = Some(T::interpolate(&start.value, &end.value, timing_t));
             }
 
-            self.remove_innactive_animations();
-
-            return true;
+            self.active_animations
+                .iter()
+                .flat_map(|state| state.entities.clone())
+                .collect::<Vec<Entity>>()
+        } else {
+            Vec::new()
         }
-
-        false
     }
 
     /// Returns true if the given entity is linked to an active animation

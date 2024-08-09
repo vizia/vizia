@@ -1,13 +1,15 @@
 use std::{cmp::Ordering, collections::BinaryHeap};
 
 use crate::prelude::*;
-use femtovg::Transform2D;
 use log::debug;
-use vizia_storage::{LayoutChildIterator, LayoutParentIterator};
+use skia_safe::Matrix;
+use vizia_storage::{DrawChildIterator, LayoutParentIterator};
 
 // Determines the hovered entity based on the mouse cursor position.
-pub(crate) fn hover_system(cx: &mut Context) {
-    if let Some(pseudo_classes) = cx.style.pseudo_classes.get(Entity::root()) {
+pub fn hover_system(cx: &mut Context, window_entity: Entity) {
+    cx.current = window_entity;
+
+    if let Some(pseudo_classes) = cx.style.pseudo_classes.get(window_entity) {
         if !pseudo_classes.contains(PseudoClassFlags::OVER) {
             return;
         }
@@ -15,11 +17,11 @@ pub(crate) fn hover_system(cx: &mut Context) {
 
     let mut queue = BinaryHeap::new();
     let pointer_events: bool =
-        cx.style.pointer_events.get(Entity::root()).copied().unwrap_or_default().into();
-    queue.push(ZEntity { index: 0, pointer_events, entity: Entity::root() });
-    let mut hovered = Entity::root();
-    let transform = Transform2D::identity();
-    // let clip_bounds = cx.cache.get_bounds(Entity::root());
+        cx.style.pointer_events.get(window_entity).copied().unwrap_or_default().into();
+    queue.push(ZEntity { index: 0, pointer_events, entity: window_entity });
+    let mut hovered = window_entity;
+    let transform = Matrix::new_identity();
+    // let clip_bounds = cx.cache.get_bounds(window_entity);
     let clip_bounds: BoundingBox =
         BoundingBox { x: -f32::MAX / 2.0, y: -f32::MAX / 2.0, w: f32::MAX, h: f32::MAX };
     while !queue.is_empty() {
@@ -38,7 +40,7 @@ pub(crate) fn hover_system(cx: &mut Context) {
     }
 
     // Set hover state for hovered view and ancestors
-    let parent_iter = LayoutParentIterator::new(&cx.tree, Some(hovered));
+    let parent_iter = LayoutParentIterator::new(&cx.tree, hovered);
     for ancestor in parent_iter {
         if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(ancestor) {
             if pseudo_classes.contains(PseudoClassFlags::OVER)
@@ -63,8 +65,8 @@ pub(crate) fn hover_system(cx: &mut Context) {
         );
 
         let cursor = cx.style.cursor.get(hovered).cloned().unwrap_or_default();
-        // TODO: Decide if not changing the cursor when the view is disabled is the correct thing to do
-        if !cx.cursor_icon_locked && !cx.style.disabled.get(hovered).cloned().unwrap_or_default() {
+
+        if !cx.cursor_icon_locked {
             cx.emit(WindowEvent::SetCursor(cursor));
         }
 
@@ -76,9 +78,10 @@ pub(crate) fn hover_system(cx: &mut Context) {
         cx.event_queue.push_back(Event::new(WindowEvent::MouseOver).target(hovered));
         cx.event_queue.push_back(Event::new(WindowEvent::MouseOut).target(cx.hovered));
 
-        cx.hovered = hovered;
+        cx.style.needs_restyle(cx.hovered);
+        cx.style.needs_restyle(hovered);
 
-        cx.style.needs_restyle();
+        cx.hovered = hovered;
     }
 }
 
@@ -88,7 +91,7 @@ fn hover_entity(
     parent_pointer_events: bool,
     queue: &mut BinaryHeap<ZEntity>,
     hovered: &mut Entity,
-    parent_transform: Transform2D,
+    parent_transform: Matrix,
     clip_bounds: &BoundingBox,
 ) {
     // Skip if non-hoverable (will skip any descendants)
@@ -105,7 +108,9 @@ fn hover_entity(
 
     // Skip if not displayed.
     // TODO: Should this skip descendants? Probably not...?
-    if cx.style.display.get(cx.current).copied().unwrap_or_default() == Display::None {
+    if cx.style.display.get(cx.current).copied().unwrap_or_default() == Display::None
+        && !cx.style.text_span.get(cx.current).copied().unwrap_or_default()
+    {
         return;
     }
 
@@ -115,7 +120,7 @@ fn hover_entity(
         .get(cx.current)
         .copied()
         .map(|pointer_events| match pointer_events {
-            PointerEvents::Auto => parent_pointer_events,
+            PointerEvents::Auto => true,
             PointerEvents::None => false,
         })
         .unwrap_or(parent_pointer_events);
@@ -129,24 +134,25 @@ fn hover_entity(
 
     let bounds = cx.bounds();
 
-    let cursorx = cx.mouse.cursorx;
-    let cursory = cx.mouse.cursory;
+    let cursor_x = cx.mouse.cursor_x;
+    let cursor_y = cx.mouse.cursor_y;
 
-    if cursorx < 0.0 || cursory < 0.0 {
+    if cursor_x < 0.0 || cursor_y < 0.0 {
         return;
     }
 
     let mut transform = parent_transform;
 
-    transform.premultiply(&cx.transform());
+    transform = cx.transform() * transform;
 
-    let mut t = transform;
-    t.inverse();
-    let (tx, ty) = t.transform_point(cursorx, cursory);
-
+    let t = transform.invert().unwrap();
+    let t = t.map_point((cursor_x, cursor_y));
+    let tx = t.x;
+    let ty = t.y;
     let clipping = clip_bounds.intersection(&cx.clip_region());
 
     let b = bounds.intersection(&clipping);
+    // let b = bounds;
 
     if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
         pseudo_classes.set(PseudoClassFlags::HOVER, false);
@@ -186,7 +192,7 @@ fn hover_entity(
         }
     }
 
-    let child_iter = LayoutChildIterator::new(cx.tree, cx.current);
+    let child_iter = DrawChildIterator::new(cx.tree, cx.current);
     for child in child_iter {
         cx.current = child;
         hover_entity(cx, current_z, pointer_events, queue, hovered, transform, &clipping);

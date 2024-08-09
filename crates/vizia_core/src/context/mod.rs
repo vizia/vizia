@@ -9,18 +9,23 @@ mod proxy;
 mod resource;
 
 use log::debug;
+use skia_safe::{
+    svg,
+    textlayout::{FontCollection, TypefaceFontProvider},
+    FontMgr,
+};
 use std::any::{Any, TypeId};
 use std::cell::RefCell;
 use std::collections::{BinaryHeap, VecDeque};
 use std::rc::Rc;
 use std::sync::Mutex;
 use vizia_id::IdManager;
+use vizia_window::{WindowDescription, WindowPosition};
 
 #[cfg(all(feature = "clipboard", feature = "x11"))]
 use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
-use cosmic_text::fontdb::Database;
 use hashbrown::{hash_map::Entry, HashMap, HashSet};
 
 pub use access::*;
@@ -29,23 +34,25 @@ pub use event::*;
 pub use proxy::*;
 pub use resource::*;
 
-use crate::binding::{BindingHandler, MapId};
-use crate::cache::CachedData;
 use crate::events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler};
-#[cfg(feature = "embedded_fonts")]
-use crate::fonts;
 
-use crate::fonts::TABLER_ICONS;
+use crate::{
+    binding::{BindingHandler, MapId},
+    resource::StoredImage,
+};
+use crate::{cache::CachedData, resource::ImageOrSvg};
+
 use crate::model::ModelDataStore;
 use crate::prelude::*;
-use crate::resource::{ImageOrId, ResourceManager, StoredImage};
-use crate::text::{TextConfig, TextContext};
+use crate::resource::ResourceManager;
+use crate::text::TextContext;
 use vizia_input::MouseState;
 use vizia_storage::{ChildIterator, LayoutTreeIterator};
 
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
 static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css");
+static MARKDOWN: &str = include_str!("../../resources/themes/markdown.css");
 
 type Views = HashMap<Entity, Box<dyn ViewHandler>>;
 type Models = HashMap<Entity, ModelDataStore>;
@@ -59,11 +66,25 @@ thread_local! {
     pub static CURRENT: RefCell<Entity> = RefCell::new(Entity::root());
 }
 
+#[derive(Default, Clone, Debug)]
+pub struct WindowState {
+    pub window_description: WindowDescription,
+    pub scale_factor: f32,
+    pub needs_relayout: bool,
+    pub needs_redraw: bool,
+    pub redraw_list: HashSet<Entity>,
+    pub dirty_rect: Option<BoundingBox>,
+    pub owner: Option<Entity>,
+    pub is_modal: bool,
+    pub should_close: bool,
+    pub position: WindowPosition,
+}
+
 /// The main storage and control object for a Vizia application.
 pub struct Context {
     pub(crate) entity_manager: IdManager<Entity>,
     pub(crate) entity_identifiers: HashMap<String, Entity>,
-    pub(crate) tree: Tree<Entity>,
+    pub tree: Tree<Entity>,
     pub(crate) current: Entity,
     pub(crate) views: Views,
     pub(crate) data: Models,
@@ -79,9 +100,9 @@ pub struct Context {
     pub(crate) global_listeners: Vec<Box<dyn Fn(&mut EventContext, &mut Event)>>,
     pub(crate) style: Style,
     pub(crate) cache: CachedData,
+    pub windows: HashMap<Entity, WindowState>,
 
-    pub(crate) canvases: HashMap<Entity, crate::prelude::Canvas>,
-    pub(crate) mouse: MouseState<Entity>,
+    pub mouse: MouseState<Entity>,
     pub(crate) modifiers: Modifiers,
 
     pub(crate) captured: Entity,
@@ -93,21 +114,9 @@ pub struct Context {
 
     pub(crate) resource_manager: ResourceManager,
 
-    pub(crate) text_context: TextContext,
-    pub(crate) text_config: TextConfig,
+    pub text_context: TextContext,
 
     pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
-
-    /// The window's size in logical pixels, before `user_scale_factor` gets applied to it. If this
-    /// value changed during a frame then the window will be resized and a
-    /// [`WindowEvent::GeometryChanged`] will be emitted.
-    pub(crate) window_size: WindowSize,
-    /// A scale factor used for uniformly scaling the window independently of any HiDPI scaling.
-    /// `window_size` gets multplied with this factor to get the actual logical window size. If this
-    /// changes during a frame, then the window will be resized at the end of the frame and a
-    /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
-    /// [`WindowDescription::user_scale_factor`](vizia_window::WindowDescription::user_scale_factor).
-    pub(crate) user_scale_factor: f64,
 
     #[cfg(feature = "clipboard")]
     pub(crate) clipboard: Box<dyn ClipboardProvider>,
@@ -125,30 +134,15 @@ pub struct Context {
 
 impl Default for Context {
     fn default() -> Self {
-        Context::new(WindowSize::new(800, 600), 1.0)
+        Context::new()
     }
 }
 
 impl Context {
     /// Creates a new context.
-    pub fn new(window_size: WindowSize, user_scale_factor: f64) -> Self {
+    pub fn new() -> Self {
         let mut cache = CachedData::default();
         cache.add(Entity::root());
-
-        let mut db = Database::new();
-        db.load_system_fonts();
-
-        // Add default fonts if the feature is enabled.
-        #[cfg(feature = "embedded_fonts")]
-        {
-            db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
-            db.load_font_data(Vec::from(fonts::ROBOTO_BOLD));
-            db.load_font_data(Vec::from(fonts::ROBOTO_ITALIC));
-            db.load_font_data(Vec::from(fonts::FIRACODE_REGULAR))
-        }
-
-        // Add icon font
-        db.load_font_data(Vec::from(TABLER_ICONS));
 
         let mut result = Self {
             entity_manager: IdManager::new(),
@@ -160,7 +154,7 @@ impl Context {
             bindings: HashMap::default(),
             style: Style::default(),
             cache,
-            canvases: HashMap::new(),
+            windows: HashMap::new(),
             event_queue: VecDeque::new(),
             event_schedule: BinaryHeap::new(),
             next_event_id: 0,
@@ -168,7 +162,7 @@ impl Context {
             running_timers: BinaryHeap::new(),
             tree_updates: Vec::new(),
             listeners: HashMap::default(),
-            global_listeners: vec![],
+            global_listeners: Vec::new(),
             mouse: MouseState::default(),
             modifiers: Modifiers::empty(),
             captured: Entity::null(),
@@ -178,17 +172,27 @@ impl Context {
             focus_stack: Vec::new(),
             cursor_icon_locked: false,
             resource_manager: ResourceManager::new(),
-            text_context: TextContext::new_from_locale_and_db(
-                sys_locale::get_locale().unwrap_or_else(|| "en-US".to_owned()),
-                db,
-            ),
+            text_context: {
+                let mut font_collection = FontCollection::new();
 
-            text_config: TextConfig::default(),
+                let default_font_manager = FontMgr::default();
+
+                let asset_provider = TypefaceFontProvider::new();
+
+                font_collection.set_default_font_manager(default_font_manager.clone(), None);
+                let asset_font_manager: FontMgr = asset_provider.clone().into();
+                font_collection.set_asset_font_manager(asset_font_manager);
+
+                TextContext {
+                    font_collection,
+                    default_font_manager,
+                    asset_provider,
+                    text_bounds: Default::default(),
+                    text_paragraphs: Default::default(),
+                }
+            },
 
             event_proxy: None,
-
-            window_size,
-            user_scale_factor,
 
             #[cfg(feature = "clipboard")]
             clipboard: {
@@ -212,15 +216,17 @@ impl Context {
             drop_data: None,
         };
 
-        result.style.needs_restyle();
+        result.tree.set_window(Entity::root(), true);
+
+        result.style.needs_restyle(Entity::root());
         result.style.needs_relayout();
-        result.style.needs_redraw();
+        result.needs_redraw(Entity::root());
 
         // Build the environment model at the root.
         Environment::new(&mut result).build(&mut result);
 
         result.entity_manager.create();
-        result.set_default_font(&["Roboto"]);
+        result.set_default_font(&["Fira Sans"]);
 
         result.style.role.insert(Entity::root(), Role::Window);
 
@@ -232,13 +238,6 @@ impl Context {
     pub fn current(&self) -> Entity {
         self.current
     }
-
-    // /// Set the current entity. This is useful in user code when you're performing black magic and
-    // /// want to trick other parts of the code into thinking you're processing some other part of the
-    // /// tree.
-    // pub(crate) fn set_current(&mut self, e: Entity) {
-    //     self.current = e;
-    // }
 
     /// Makes the above black magic more explicit
     pub fn with_current<T>(&mut self, e: Entity, f: impl FnOnce(&mut Context) -> T) -> T {
@@ -256,21 +255,8 @@ impl Context {
         self.data::<Environment>().unwrap()
     }
 
-    /// The window's size in logical pixels, before
-    /// [`user_scale_factor()`][Self::user_scale_factor()] gets applied to it. If this value changed
-    /// during a frame then the window will be resized and a [`WindowEvent::GeometryChanged`] will be
-    /// emitted.
-    pub fn window_size(&self) -> WindowSize {
-        self.window_size
-    }
-
-    /// A scale factor used for uniformly scaling the window independently of any HiDPI scaling.
-    /// `window_size` gets multplied with this factor to get the actual logical window size. If this
-    /// changes during a frame, then the window will be resized at the end of the frame and a
-    /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
-    /// [`WindowDescription::user_scale_factor`](vizia_window::WindowDescription::user_scale_factor).
-    pub fn user_scale_factor(&self) -> f64 {
-        self.user_scale_factor
+    pub fn parent_window(&self) -> Entity {
+        self.tree.get_parent_window(self.current).unwrap_or(Entity::root())
     }
 
     /// Returns the scale factor of the display.
@@ -279,8 +265,12 @@ impl Context {
     }
 
     /// Mark the application as needing to rerun the draw method
-    pub fn needs_redraw(&mut self) {
-        self.style.needs_redraw();
+    pub fn needs_redraw(&mut self, entity: Entity) {
+        let parent_window = self.tree.get_parent_window(entity).unwrap_or(Entity::root());
+        if let Some(window_state) = self.windows.get_mut(&parent_window) {
+            //println!("RD {} {}", entity, parent_window);
+            window_state.redraw_list.insert(entity);
+        }
     }
 
     /// Mark the application as needing to recompute view styles
@@ -295,7 +285,7 @@ impl Context {
         for descendant in iter {
             self.style.restyle.insert(descendant).unwrap();
         }
-        self.style.needs_restyle();
+        // self.style.needs_restyle();
     }
 
     /// Mark the application as needing to rerun layout computations
@@ -306,6 +296,14 @@ impl Context {
     pub(crate) fn set_system_flags(&mut self, entity: Entity, system_flags: SystemFlags) {
         if system_flags.contains(SystemFlags::RESTYLE) {
             self.needs_restyle(entity);
+        }
+
+        if system_flags.contains(SystemFlags::REDRAW) {
+            self.needs_redraw(entity);
+        }
+
+        if system_flags.contains(SystemFlags::REFLOW) {
+            self.style.needs_text_update(entity);
         }
     }
 
@@ -389,16 +387,25 @@ impl Context {
     }
 
     /// Removes the provided entity from the application.
-    pub(crate) fn remove(&mut self, entity: Entity) {
+    pub fn remove(&mut self, entity: Entity) {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
         if !delete_list.is_empty() {
-            self.style.needs_restyle();
+            self.style.needs_restyle(self.current);
             self.style.needs_relayout();
-            self.style.needs_redraw();
+            self.needs_redraw(self.current);
         }
 
         for entity in delete_list.iter().rev() {
+            if let Some(mut view) = self.views.remove(entity) {
+                view.event(
+                    &mut EventContext::new_with_current(self, *entity),
+                    &mut Event::new(WindowEvent::Destroyed).direct(*entity),
+                );
+
+                self.views.insert(*entity, view);
+            }
+
             if let Some(binding) = self.bindings.remove(entity) {
                 binding.remove(self);
 
@@ -428,31 +435,6 @@ impl Context {
 
             if self.captured == *entity {
                 self.captured = Entity::null();
-            }
-
-            // Remove any cached filter images associated with the entity.
-            if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
-                if let Some((s, t)) = self.cache.filter_image.get(*entity).cloned().flatten() {
-                    canvas.delete_image(s);
-                    canvas.delete_image(t);
-                }
-            }
-
-            // Remove any cached screenshot images associated with the entity.
-            if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
-                if let Some(s) = self.cache.screenshot_image.get(*entity).cloned().flatten() {
-                    canvas.delete_image(s);
-                }
-            }
-
-            // Remove any cached shadow images associated with the entity.
-            if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
-                if let Some(shadows) = self.cache.shadow_images.get(*entity).cloned() {
-                    for (s, t) in shadows.into_iter().flatten() {
-                        canvas.delete_image(s);
-                        canvas.delete_image(t);
-                    }
-                }
             }
 
             // Remove any map lenses associated with the entity.
@@ -490,13 +472,34 @@ impl Context {
                 self.stop_timer(timer);
             }
 
+            let window_entity = self.tree.get_parent_window(*entity).unwrap_or(Entity::root());
+
+            if !self.tree.is_window(*entity) {
+                if let Some(draw_bounds) = self.cache.draw_bounds.get(*entity) {
+                    if let Some(dirty_rect) =
+                        &mut self.windows.get_mut(&window_entity).unwrap().dirty_rect
+                    {
+                        *dirty_rect = dirty_rect.union(draw_bounds);
+                    } else {
+                        self.windows.get_mut(&window_entity).unwrap().dirty_rect =
+                            Some(*draw_bounds);
+                    }
+                }
+            }
+
+            self.windows.get_mut(&window_entity).unwrap().redraw_list.remove(entity);
+
+            if self.windows.contains_key(entity) {
+                self.windows.remove(entity);
+            }
+
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
             self.style.remove(*entity);
             self.data.remove(entity);
             self.views.remove(entity);
-            self.text_context.clear_buffer(*entity);
-            self.text_context.clear_bounds(*entity);
+            self.text_context.text_bounds.remove(*entity);
+            self.text_context.text_paragraphs.remove(*entity);
             self.entity_manager.destroy(*entity);
         }
     }
@@ -546,15 +549,19 @@ impl Context {
     }
 
     pub fn add_font_mem(&mut self, data: impl AsRef<[u8]>) {
-        self.text_context.font_system().db_mut().load_font_data(data.as_ref().to_vec());
+        // self.text_context.font_system().db_mut().load_font_data(data.as_ref().to_vec());
+        self.text_context.asset_provider.register_typeface(
+            self.text_context.default_font_manager.new_from_data(data.as_ref(), None).unwrap(),
+            None,
+        );
     }
 
     /// Sets the global default font for the application.
     pub fn set_default_font(&mut self, names: &[&str]) {
         self.style.default_font = names
             .iter()
-            .map(|x| FamilyOwned::Name(x.to_string()))
-            .chain(std::iter::once(FamilyOwned::SansSerif))
+            .map(|x| FamilyOwned::Named(x.to_string()))
+            .chain(std::iter::once(FamilyOwned::Generic(GenericFontFamily::SansSerif)))
             .collect();
     }
 
@@ -578,6 +585,7 @@ impl Context {
         self.resource_manager.themes.clear();
 
         self.add_theme(DEFAULT_LAYOUT);
+        self.add_theme(MARKDOWN);
         if !self.ignore_default_theme {
             let environment = self.data::<Environment>().expect("Failed to get environment");
             match environment.theme.get_current_theme() {
@@ -616,15 +624,15 @@ impl Context {
     /// let timer = cx.add_timer(Duration::from_secs(1), Some(Duration::from_secs(5)), |cx, reason|{
     ///     match reason {
     ///         TimerAction::Start => {
-    ///             println!("Start timer");
+    ///             debug!("Start timer");
     ///         }
     ///     
     ///         TimerAction::Tick(delta) => {
-    ///             println!("Tick timer: {:?}", delta);
+    ///             debug!("Tick timer: {:?}", delta);
     ///         }
     ///
     ///         TimerAction::Stop => {
-    ///             println!("Stop timer");
+    ///             debug!("Stop timer");
     ///         }
     ///     }
     /// });
@@ -757,35 +765,68 @@ impl Context {
         }
     }
 
-    pub fn load_image(
-        &mut self,
-        path: &str,
-        image: image::DynamicImage,
-        policy: ImageRetentionPolicy,
-    ) {
-        match self.resource_manager.images.entry(path.to_string()) {
-            Entry::Occupied(mut occ) => {
-                occ.get_mut().image = ImageOrId::Image(
-                    image,
-                    femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
-                );
-                occ.get_mut().dirty = true;
-                occ.get_mut().retention_policy = policy;
+    pub fn load_image(&mut self, path: &str, data: &'static [u8], policy: ImageRetentionPolicy) {
+        let id = if let Some(image_id) = self.resource_manager.image_ids.get(path) {
+            *image_id
+        } else {
+            let id = self.resource_manager.image_id_manager.create();
+            self.resource_manager.image_ids.insert(path.to_owned(), id);
+            id
+        };
+
+        if let Some(image) =
+            skia_safe::Image::from_encoded(unsafe { skia_safe::Data::new_bytes(data) })
+        {
+            match self.resource_manager.images.entry(id) {
+                Entry::Occupied(mut occ) => {
+                    occ.get_mut().image = ImageOrSvg::Image(image);
+                    occ.get_mut().dirty = true;
+                    occ.get_mut().retention_policy = policy;
+                }
+                Entry::Vacant(vac) => {
+                    vac.insert(StoredImage {
+                        image: ImageOrSvg::Image(image),
+                        retention_policy: policy,
+                        used: true,
+                        dirty: false,
+                        observers: HashSet::new(),
+                    });
+                }
             }
-            Entry::Vacant(vac) => {
-                vac.insert(StoredImage {
-                    image: ImageOrId::Image(
-                        image,
-                        femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
-                    ),
-                    retention_policy: policy,
-                    used: true,
-                    dirty: false,
-                    observers: HashSet::new(),
-                });
-            }
+            self.style.needs_relayout();
         }
-        self.style.needs_relayout();
+    }
+
+    pub fn load_svg(&mut self, path: &str, data: &[u8], policy: ImageRetentionPolicy) -> ImageId {
+        let id = if let Some(image_id) = self.resource_manager.image_ids.get(path) {
+            return *image_id;
+        } else {
+            let id = self.resource_manager.image_id_manager.create();
+            self.resource_manager.image_ids.insert(path.to_owned(), id);
+            id
+        };
+
+        if let Ok(svg) = svg::Dom::from_bytes(data, &self.text_context.default_font_manager) {
+            match self.resource_manager.images.entry(id) {
+                Entry::Occupied(mut occ) => {
+                    occ.get_mut().image = ImageOrSvg::Svg(svg);
+                    occ.get_mut().dirty = true;
+                    occ.get_mut().retention_policy = policy;
+                }
+                Entry::Vacant(vac) => {
+                    vac.insert(StoredImage {
+                        image: ImageOrSvg::Svg(svg),
+                        retention_policy: policy,
+                        used: true,
+                        dirty: false,
+                        observers: HashSet::new(),
+                    });
+                }
+            }
+            self.style.needs_relayout();
+        }
+
+        id
     }
 
     pub fn spawn<F>(&self, target: F)
@@ -835,17 +876,13 @@ impl Context {
             self.style.classes.insert(current, class_list);
         }
 
-        self.style.needs_restyle();
+        self.style.needs_restyle(self.current);
     }
 }
 
 pub(crate) enum InternalEvent {
     Redraw,
-    LoadImage {
-        path: String,
-        image: Mutex<Option<image::DynamicImage>>,
-        policy: ImageRetentionPolicy,
-    },
+    LoadImage { path: String, image: Mutex<Option<skia_safe::Image>>, policy: ImageRetentionPolicy },
 }
 
 pub struct LocalizationContext<'a> {

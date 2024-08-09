@@ -6,6 +6,9 @@ license = "MIT"
 repository = "https://github.com/vizia/vizia"
 edition = "2021"
 description = "Core components of vizia"
-rust-version = "1.65"
+rust-version = "1.76"
 
 [dependencies]
+
+[lints]
+workspace = true

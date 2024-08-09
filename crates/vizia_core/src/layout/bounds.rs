@@ -1,6 +1,6 @@
-use femtovg::Transform2D;
+use skia_safe::Rect;
 
-/// Represents the axis-aligned bounding box of a view.
+/// Represents an axis-aligned bounding box.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct BoundingBox {
     pub x: f32,
@@ -17,7 +17,7 @@ impl std::fmt::Display for BoundingBox {
 
 impl Default for BoundingBox {
     fn default() -> Self {
-        Self { x: 0.0, y: 0.0, w: f32::MAX, h: f32::MAX }
+        Self { x: 0.0, y: 0.0, w: 0.0, h: 0.0 }
     }
 }
 
@@ -97,25 +97,25 @@ impl BoundingBox {
     /// Bottom left point of bounds.
     #[inline(always)]
     pub fn bottom_left(&self) -> (f32, f32) {
-        (self.bottom(), self.left())
+        (self.left(), self.bottom())
     }
 
     /// Bottom right point of bounds.
     #[inline(always)]
     pub fn bottom_right(&self) -> (f32, f32) {
-        (self.bottom(), self.right())
+        (self.right(), self.bottom())
     }
 
     /// Top left point of bounds.
     #[inline(always)]
     pub fn top_left(&self) -> (f32, f32) {
-        (self.top(), self.left())
+        (self.left(), self.top())
     }
 
     /// Top right point of bounds.
     #[inline(always)]
     pub fn top_right(&self) -> (f32, f32) {
-        (self.top(), self.right())
+        (self.right(), self.top())
     }
 
     /// Shrinks by some `amount` in both directions and returns a new [`BoundingBox`].
@@ -164,6 +164,24 @@ impl BoundingBox {
         )
     }
 
+    pub fn expand_sides(&self, left: f32, top: f32, right: f32, bottom: f32) -> BoundingBox {
+        BoundingBox::from_min_max(
+            self.left() - left,
+            self.top() - top,
+            self.right() + right,
+            self.bottom() + bottom,
+        )
+    }
+
+    pub fn offset(&self, x: f32, y: f32) -> BoundingBox {
+        BoundingBox::from_min_max(
+            self.left() + x,
+            self.top() + y,
+            self.right() + x,
+            self.bottom() + y,
+        )
+    }
+
     /// Expands by some `amount` in both directions and returns a new [`BoundingBox`].
     #[inline(always)]
     #[must_use]
@@ -208,6 +226,14 @@ impl BoundingBox {
         BoundingBox::from_min_max(left, top, right, bottom)
     }
 
+    pub fn union(&self, other: &Self) -> Self {
+        let left = self.left().min(other.left());
+        let right = self.right().max(other.right());
+        let top = self.top().min(other.top());
+        let bottom = self.bottom().max(other.bottom());
+        BoundingBox::from_min_max(left, top, right, bottom)
+    }
+
     pub fn intersects(&self, other: &Self) -> bool {
         let x_hit = (self.x >= other.x && self.x < other.x + other.w)
             || (other.x >= self.x && other.x < self.x + self.w);
@@ -228,10 +254,26 @@ impl BoundingBox {
         x_hit && y_hit
     }
 
-    pub fn transform(&self, transform: &Transform2D) -> Self {
-        let (tl, tt) = transform.transform_point(self.x, self.y);
-        let (tr, tb) = transform.transform_point(self.right(), self.bottom());
-        BoundingBox::from_min_max(tl, tt, tr, tb)
+    pub fn diagonal(&self) -> f32 {
+        (self.width() * self.width() + self.height() * self.height()).sqrt()
+    }
+
+    // pub fn transform(&self, transform: &Transform2D) -> Self {
+    //     let (tl, tt) = transform.transform_point(self.x, self.y);
+    //     let (tr, tb) = transform.transform_point(self.right(), self.bottom());
+    //     BoundingBox::from_min_max(tl, tt, tr, tb)
+    // }
+}
+
+impl From<BoundingBox> for skia_safe::Rect {
+    fn from(bb: BoundingBox) -> Self {
+        skia_safe::Rect { left: bb.left(), top: bb.top(), right: bb.right(), bottom: bb.bottom() }
+    }
+}
+
+impl From<skia_safe::Rect> for BoundingBox {
+    fn from(bb: Rect) -> Self {
+        BoundingBox { x: bb.left(), y: bb.top(), w: bb.width(), h: bb.height() }
     }
 }
 

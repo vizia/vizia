@@ -6,20 +6,20 @@ avatar {
 }
 
 avatar.circle {
-    border-radius: 50%;
+    corner-radius: 50%;
 }
 
 avatar.square {
-    border-radius: 0px;
+    corner-radius: 0px;
 }
 
 avatar.rounded {
-    border-radius: 4px;
+    corner-radius: 4px;
 }
 
 avatar > icon {
-    size: 100%;
-    font-size: 24;
+    size: 1s;
+    child-space: 4px;
 }
 
 avatar > image {
@@ -28,18 +28,18 @@ avatar > image {
 }
 
 avatar.circle > image {
-    border-radius: 50%;
+    corner-radius: 50%;
 }
 
 avatar.rounded > image {
-    border-radius: 4px;
+    corner-radius: 4px;
 }
 
 /* BADGE */
 badge {
     position-type: self-directed;
     size: 20px;
-    border-radius: 50%;
+    corner-radius: 50%;
     child-space: 1s;
     font-size: 16;
 }
@@ -49,7 +49,7 @@ badge > label {
 }
 
 badge > icon {
-    font-size: 24;
+    size: 1s;
 }
 
 /* BUTTON */
@@ -63,7 +63,7 @@ button {
     cursor: hand;
 }
 
-button > .inner {
+button > * {
     width: auto;
     child-space: 1s;
     col-between: 4px;
@@ -71,13 +71,11 @@ button > .inner {
     min-right: 8px;
 }
 
-button > icon.inner {
+button > icon {
+    size: 24px;
+    child-space: 0px;
     min-left: 0px;
     min-right: 0px;
-}
-
-button .inner > icon {
-    size: 16px;
 }
 
 button.icon {
@@ -111,7 +109,7 @@ toggle-button {
     cursor: hand;
 }
 
-toggle-button > .inner {
+toggle-button > * {
     size: auto;
     child-space: 1s;
     col-between: 4px;
@@ -119,10 +117,11 @@ toggle-button > .inner {
     min-right: 8px;
 }
 
-toggle-button > icon.inner {
-    min-left: 0px;
-    min-right: 0px;
-    width: 32px;
+toggle-button > icon {
+    min-left: 4px;
+    min-right: 4px;
+    size: 24px;
+    child-space: 0px;
 }
 
 toggle-button.icon {
@@ -135,9 +134,11 @@ toggle-button.icon {
 checkbox {
     width: 20px;
     height: 20px;
-    child-space: 1s;
-    font-family: "tabler-icons", sans-serif;
     cursor: hand;
+}
+
+checkbox svg {
+    size: 1s;
 }
 
 /* CHIP */
@@ -243,7 +244,14 @@ combobox {
     height: 32px;
 }
 
-dropdown .dropdown-title,
+dropdown {
+    width: auto;
+}
+
+dropdown > * {
+    width: 1s;
+}
+
 combobox .title {
     width: 1s;
     height: 1s;
@@ -340,9 +348,11 @@ form-group > .legend {
 /* ICON */
 
 icon {
-    font-family: "tabler-icons", sans-serif;
     size: 24px;
-    child-space: 1s;
+}
+
+icon > svg {
+    size: 1s;
 }
 
 /* IMAGE */
@@ -357,7 +367,7 @@ image {
 knob {
     width: 32px;
     height: 32px;
-    border-radius: 50%;
+    corner-radius: 50%;
 }
 
 .knob-track {
@@ -372,7 +382,7 @@ knob {
     left: 2px;
     right: 2px;
     bottom: 2px;
-    border-radius: 50%;
+    corner-radius: 50%;
 }
 
 .knob-tick {
@@ -431,7 +441,6 @@ list list-item:checked {
 /* MENU */
 
 menubar {
-    child-space: 8px;
     size: auto;
 }
 
@@ -524,8 +533,8 @@ menubar submenu > popup {
 
 menubar > submenu {
     width: auto;
-    child-left: 16px;
-    child-right: 16px;
+    child-left: 12px;
+    child-right: 12px;
 }
 
 menubar > submenu > label {
@@ -551,6 +560,13 @@ submenu > .arrow {
     height: 1s;
     child-space: 1s;
     /* child-right: 0px; */
+}
+
+submenu divider {
+    height: 1px;
+    width: 1s;
+    top: 4px;
+    bottom: 4px;
 }
 
 /* NOTIFICATION */
@@ -657,7 +673,7 @@ scrollview {
     overflow: hidden;
 }
 
-scrollview > scroll_content {
+scrollview > scroll-content {
     width: auto;
     height: auto;
     min-width: 100%;
@@ -710,7 +726,7 @@ scrollbar.vertical .thumb {
 slider {
     height: 5px;
     width: 1s;
-    border-radius: 50%;
+    corner-radius: 50%;
 }
 
 slider.vertical {
@@ -758,7 +774,13 @@ spinbox .spinbox-value {
 }
 
 spinbox picklist.spinbox-value dropdown {
-    width: 100%;
+    width: 1s;
+    left: 0px;
+    right: 0px;
+}
+
+spinbox picklist.spinbox-value dropdown button {
+    width: 1s;
 }
 
 spinbox picklist.spinbox-value .dropdown-title {
@@ -832,11 +854,11 @@ tabview.vertical > scrollview.vertical {
     height: 1s;
 }
 
-tabview > scrollview > scroll_content {
+tabview > scrollview > scroll-content {
     layout-type: row;
 }
 
-tabview.vertical > scrollview.vertical > scroll_content {
+tabview.vertical > scrollview.vertical > scroll-content {
     layout-type: column;
 }
 

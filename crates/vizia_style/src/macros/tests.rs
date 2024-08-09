@@ -41,7 +41,6 @@ macro_rules! assert_parse {
                         let mut parser_input = cssparser::ParserInput::new(failure_string);
                         let mut parser = cssparser::Parser::new(&mut parser_input);
                         let result = <$parse_type>::parse(&mut parser);
-                        println!("{:?}", result);
                         assert!(result.is_err());
                     })+
                 }

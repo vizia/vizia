@@ -64,20 +64,23 @@ use hashbrown::{HashMap, HashSet};
 use indexmap::IndexMap;
 use log::warn;
 use std::fmt::Debug;
+use std::ops::{Deref, DerefMut, Range};
 
 use crate::prelude::*;
 
 pub use vizia_style::{
-    Angle, BackgroundImage, BackgroundSize, BorderCornerShape, BoxShadow, ClipPath, Color, CssRule,
-    CursorIcon, Display, Filter, FontFamily, FontSize, FontStretch, FontStyle, FontWeight,
-    FontWeightKeyword, GenericFontFamily, Gradient, HorizontalPosition, HorizontalPositionKeyword,
-    Length, LengthOrPercentage, LengthValue, LineDirection, LinearGradient, Matrix, Opacity,
-    Overflow, PointerEvents, Position, Scale, TextAlign, Transform, Transition, Translate,
+    Angle, BackgroundImage, BackgroundSize, BorderStyleKeyword, ClipPath, Color, CornerShape,
+    CssRule, CursorIcon, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation,
+    FontWeight, FontWeightKeyword, FontWidth, GenericFontFamily, Gradient, HorizontalPosition,
+    HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue, LineClamp, LineDirection,
+    LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position, Scale, Shadow, TextAlign,
+    TextDecorationLine, TextDecorationStyle, TextOverflow, Transform, Transition, Translate,
     VerticalPosition, VerticalPositionKeyword, Visibility, RGBA,
 };
 
 use vizia_style::{
-    EasingFunction, KeyframeSelector, ParserOptions, Property, SelectorList, Selectors, StyleSheet,
+    BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, SelectorList, Selectors,
+    StyleSheet,
 };
 
 mod rule;
@@ -121,14 +124,11 @@ impl Default for Abilities {
 
 bitflags! {
     pub struct SystemFlags: u8 {
-        /// Style system flag.
-        const RESTYLE = 1;
         /// Layout system flag.
-        const RELAYOUT = 1 << 1;
-        /// Draw system flag.
-        const REDRAW = 1 << 2;
-        /// Text constraints system flag.
-        const REFLOW = 1 << 5;
+        const RELAYOUT = 1;
+        const RESTYLE = 1 << 1;
+        const REFLOW = 1 << 2;
+        const REDRAW = 1 << 3;
     }
 }
 
@@ -144,7 +144,51 @@ pub enum ImageOrGradient {
     Gradient(Gradient),
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum FamilyOwned {
+    Generic(GenericFontFamily),
+    Named(String),
+}
+
+impl AsRef<str> for FamilyOwned {
+    fn as_ref(&self) -> &str {
+        match self {
+            FamilyOwned::Generic(generic) => match generic {
+                GenericFontFamily::Serif => "serif",
+                GenericFontFamily::SansSerif => "sans-serif",
+                GenericFontFamily::Cursive => todo!(),
+                GenericFontFamily::Fantasy => todo!(),
+                GenericFontFamily::Monospace => "Cascadia Mono",
+            },
+            FamilyOwned::Named(family) => family.as_str(),
+        }
+    }
+}
+
+pub(crate) struct Bloom(pub(crate) qfilter::Filter);
+
+impl Default for Bloom {
+    fn default() -> Self {
+        Self(qfilter::Filter::new_resizeable(10000, 10000000, 0.01))
+    }
+}
+
+impl Deref for Bloom {
+    type Target = qfilter::Filter;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Bloom {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 /// Stores the style properties of all entities in the application.
+#[derive(Default)]
 pub struct Style {
     pub(crate) rule_manager: IdManager<Rule>,
 
@@ -178,9 +222,6 @@ pub struct Style {
     pub text_value: SparseSet<String>,
     pub numeric_value: SparseSet<f64>,
 
-    // Display
-    pub(crate) display: AnimatableSet<Display>,
-
     // Visibility
     pub(crate) visibility: StyleSet<Visibility>,
 
@@ -200,6 +241,8 @@ pub struct Style {
     // Filters
     pub(crate) backdrop_filter: AnimatableSet<Filter>,
 
+    pub(crate) blend_mode: StyleSet<BlendMode>,
+
     // Transform
     pub(crate) transform: AnimatableSet<Vec<Transform>>,
     pub(crate) transform_origin: AnimatableSet<Translate>,
@@ -210,18 +253,25 @@ pub struct Style {
     // Border
     pub(crate) border_width: AnimatableSet<LengthOrPercentage>,
     pub(crate) border_color: AnimatableSet<Color>,
+    pub(crate) border_style: StyleSet<BorderStyleKeyword>,
 
-    // Border Shape
-    pub(crate) border_top_left_shape: StyleSet<BorderCornerShape>,
-    pub(crate) border_top_right_shape: StyleSet<BorderCornerShape>,
-    pub(crate) border_bottom_left_shape: StyleSet<BorderCornerShape>,
-    pub(crate) border_bottom_right_shape: StyleSet<BorderCornerShape>,
+    // Corner Shape
+    pub(crate) corner_top_left_shape: StyleSet<CornerShape>,
+    pub(crate) corner_top_right_shape: StyleSet<CornerShape>,
+    pub(crate) corner_bottom_left_shape: StyleSet<CornerShape>,
+    pub(crate) corner_bottom_right_shape: StyleSet<CornerShape>,
 
-    // Border Radius
-    pub(crate) border_top_left_radius: AnimatableSet<LengthOrPercentage>,
-    pub(crate) border_top_right_radius: AnimatableSet<LengthOrPercentage>,
-    pub(crate) border_bottom_left_radius: AnimatableSet<LengthOrPercentage>,
-    pub(crate) border_bottom_right_radius: AnimatableSet<LengthOrPercentage>,
+    // Corner Radius
+    pub(crate) corner_top_left_radius: AnimatableSet<LengthOrPercentage>,
+    pub(crate) corner_top_right_radius: AnimatableSet<LengthOrPercentage>,
+    pub(crate) corner_bottom_left_radius: AnimatableSet<LengthOrPercentage>,
+    pub(crate) corner_bottom_right_radius: AnimatableSet<LengthOrPercentage>,
+
+    // Corner Smoothing
+    pub(crate) corner_top_left_smoothing: AnimatableSet<f32>,
+    pub(crate) corner_top_right_smoothing: AnimatableSet<f32>,
+    pub(crate) corner_bottom_left_smoothing: AnimatableSet<f32>,
+    pub(crate) corner_bottom_right_smoothing: AnimatableSet<f32>,
 
     // Outline
     pub(crate) outline_width: AnimatableSet<LengthOrPercentage>,
@@ -233,20 +283,33 @@ pub struct Style {
     pub(crate) background_image: AnimatableSet<Vec<ImageOrGradient>>,
     pub(crate) background_size: AnimatableSet<Vec<BackgroundSize>>,
 
-    // Box Shadow
-    pub(crate) box_shadow: AnimatableSet<Vec<BoxShadow>>,
+    // Shadow
+    pub(crate) shadow: AnimatableSet<Vec<Shadow>>,
 
-    // Text & Font
+    // Text
+    pub text: SparseSet<String>,
     pub(crate) text_wrap: StyleSet<bool>,
+    pub(crate) text_overflow: StyleSet<TextOverflow>,
+    pub(crate) line_clamp: StyleSet<LineClamp>,
     pub(crate) text_align: StyleSet<TextAlign>,
+    pub(crate) text_decoration_line: StyleSet<TextDecorationLine>,
+    pub(crate) underline_style: StyleSet<TextDecorationLine>,
+    pub(crate) overline_style: StyleSet<TextDecorationStyle>,
+    pub(crate) strikethrough_style: StyleSet<TextDecorationStyle>,
+    pub(crate) underline_color: AnimatableSet<Color>,
+    pub(crate) overline_color: AnimatableSet<Color>,
+    pub(crate) strikethrough_color: AnimatableSet<Color>,
     pub(crate) font_family: StyleSet<Vec<FamilyOwned>>,
     pub(crate) font_color: AnimatableSet<Color>,
     pub(crate) font_size: AnimatableSet<FontSize>,
     pub(crate) font_weight: StyleSet<FontWeight>,
-    pub(crate) font_style: StyleSet<FontStyle>,
-    pub(crate) font_stretch: StyleSet<FontStretch>,
+    pub(crate) font_slant: StyleSet<FontSlant>,
+    pub(crate) font_width: StyleSet<FontWidth>,
+    pub(crate) font_variation_settings: StyleSet<Vec<FontVariation>>,
     pub(crate) caret_color: AnimatableSet<Color>,
     pub(crate) selection_color: AnimatableSet<Color>,
+
+    pub(crate) fill: AnimatableSet<Color>,
 
     // cursor Icon
     pub(crate) cursor: StyleSet<CursorIcon>,
@@ -254,6 +317,9 @@ pub struct Style {
     pub(crate) pointer_events: StyleSet<PointerEvents>,
 
     // LAYOUT
+
+    // Display
+    pub(crate) display: AnimatableSet<Display>,
 
     // Layout Type
     pub(crate) layout_type: StyleSet<LayoutType>,
@@ -297,118 +363,16 @@ pub struct Style {
 
     pub(crate) system_flags: SystemFlags,
 
-    // TODO: Probably swap this out for a bloom filter
-    // pub(crate) restyle: SparseSet<bool>,
-    pub(crate) restyle: qfilter::Filter,
+    pub(crate) restyle: Bloom,
+    pub(crate) text_construction: Bloom,
+    pub(crate) text_layout: Bloom,
+    pub(crate) reaccess: Bloom,
 
-    // TODO: When we can do incremental updates on a per entity basis, change this to a bitflag
-    // for layout, text layout, rendering, etc. to replace the above `needs_` members.
-    pub needs_text_layout: SparseSet<bool>,
-
-    pub reaccess: qfilter::Filter,
+    pub(crate) text_range: SparseSet<Range<usize>>,
+    pub(crate) text_span: SparseSet<bool>,
 
     /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
     pub(crate) dpi_factor: f64,
-}
-
-impl Default for Style {
-    fn default() -> Self {
-        Style {
-            rule_manager: Default::default(),
-            animation_manager: Default::default(),
-            animations: Default::default(),
-            pending_animations: Default::default(),
-            rules: Default::default(),
-            default_font: Default::default(),
-            ids: Default::default(),
-            classes: Default::default(),
-            pseudo_classes: Default::default(),
-            disabled: Default::default(),
-            abilities: Default::default(),
-            accesskit_node_classes: Default::default(),
-            name: Default::default(),
-            role: Default::default(),
-            default_action_verb: Default::default(),
-            live: Default::default(),
-            labelled_by: Default::default(),
-            hidden: Default::default(),
-            text_value: Default::default(),
-            numeric_value: Default::default(),
-            display: Default::default(),
-            visibility: Default::default(),
-            opacity: Default::default(),
-            z_index: Default::default(),
-            clip_path: Default::default(),
-            overflowx: Default::default(),
-            overflowy: Default::default(),
-            backdrop_filter: Default::default(),
-            transform: Default::default(),
-            transform_origin: Default::default(),
-            translate: Default::default(),
-            rotate: Default::default(),
-            scale: Default::default(),
-            border_width: Default::default(),
-            border_color: Default::default(),
-            border_top_left_shape: Default::default(),
-            border_top_right_shape: Default::default(),
-            border_bottom_left_shape: Default::default(),
-            border_bottom_right_shape: Default::default(),
-            border_top_left_radius: Default::default(),
-            border_top_right_radius: Default::default(),
-            border_bottom_left_radius: Default::default(),
-            border_bottom_right_radius: Default::default(),
-            outline_width: Default::default(),
-            outline_color: Default::default(),
-            outline_offset: Default::default(),
-            background_color: Default::default(),
-            background_image: Default::default(),
-            background_size: Default::default(),
-            box_shadow: Default::default(),
-            text_wrap: Default::default(),
-            text_align: Default::default(),
-            font_family: Default::default(),
-            font_color: Default::default(),
-            font_size: Default::default(),
-            font_weight: Default::default(),
-            font_style: Default::default(),
-            font_stretch: Default::default(),
-            caret_color: Default::default(),
-            selection_color: Default::default(),
-            cursor: Default::default(),
-            pointer_events: Default::default(),
-            layout_type: Default::default(),
-            position_type: Default::default(),
-            left: Default::default(),
-            right: Default::default(),
-            top: Default::default(),
-            bottom: Default::default(),
-            child_left: Default::default(),
-            child_right: Default::default(),
-            child_top: Default::default(),
-            child_bottom: Default::default(),
-            row_between: Default::default(),
-            col_between: Default::default(),
-            width: Default::default(),
-            height: Default::default(),
-            min_width: Default::default(),
-            max_width: Default::default(),
-            min_height: Default::default(),
-            max_height: Default::default(),
-            min_left: Default::default(),
-            max_left: Default::default(),
-            min_right: Default::default(),
-            max_right: Default::default(),
-            min_top: Default::default(),
-            max_top: Default::default(),
-            min_bottom: Default::default(),
-            max_bottom: Default::default(),
-            system_flags: Default::default(),
-            restyle: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
-            needs_text_layout: Default::default(),
-            reaccess: qfilter::Filter::new_resizeable(10000, 10000000, 0.01),
-            dpi_factor: Default::default(),
-        }
-    }
 }
 
 impl Style {
@@ -510,36 +474,36 @@ impl Style {
                     insert_keyframe(&mut self.border_color, animation_id, time, *value);
                 }
 
-                Property::BorderTopLeftRadius(value) => {
+                Property::CornerTopLeftRadius(value) => {
                     insert_keyframe(
-                        &mut self.border_top_left_radius,
+                        &mut self.corner_top_left_radius,
                         animation_id,
                         time,
                         value.clone(),
                     );
                 }
 
-                Property::BorderTopRightRadius(value) => {
+                Property::CornerTopRightRadius(value) => {
                     insert_keyframe(
-                        &mut self.border_top_right_radius,
+                        &mut self.corner_top_right_radius,
                         animation_id,
                         time,
                         value.clone(),
                     );
                 }
 
-                Property::BorderBottomLeftRadius(value) => {
+                Property::CornerBottomLeftRadius(value) => {
                     insert_keyframe(
-                        &mut self.border_bottom_left_radius,
+                        &mut self.corner_bottom_left_radius,
                         animation_id,
                         time,
                         value.clone(),
                     );
                 }
 
-                Property::BorderBottomRightRadius(value) => {
+                Property::CornerBottomRightRadius(value) => {
                     insert_keyframe(
-                        &mut self.border_bottom_right_radius,
+                        &mut self.corner_bottom_right_radius,
                         animation_id,
                         time,
                         value.clone(),
@@ -590,8 +554,8 @@ impl Style {
                 }
 
                 // BOX SHADOW
-                Property::BoxShadow(value) => {
-                    insert_keyframe(&mut self.box_shadow, animation_id, time, value.clone());
+                Property::Shadow(value) => {
+                    insert_keyframe(&mut self.shadow, animation_id, time, value.clone());
                 }
 
                 // TEXT
@@ -712,6 +676,14 @@ impl Style {
                     insert_keyframe(&mut self.max_bottom, animation_id, time, *value);
                 }
 
+                Property::UnderlineColor(value) => {
+                    insert_keyframe(&mut self.underline_color, animation_id, time, *value);
+                }
+
+                Property::Fill(value) => {
+                    insert_keyframe(&mut self.fill, animation_id, time, *value);
+                }
+
                 _ => {}
             }
         }
@@ -765,10 +737,10 @@ impl Style {
         self.border_width.play_animation(entity, animation, start_time, duration);
         self.border_color.play_animation(entity, animation, start_time, duration);
 
-        self.border_top_left_radius.play_animation(entity, animation, start_time, duration);
-        self.border_top_right_radius.play_animation(entity, animation, start_time, duration);
-        self.border_bottom_left_radius.play_animation(entity, animation, start_time, duration);
-        self.border_bottom_right_radius.play_animation(entity, animation, start_time, duration);
+        self.corner_top_left_radius.play_animation(entity, animation, start_time, duration);
+        self.corner_top_right_radius.play_animation(entity, animation, start_time, duration);
+        self.corner_bottom_left_radius.play_animation(entity, animation, start_time, duration);
+        self.corner_bottom_right_radius.play_animation(entity, animation, start_time, duration);
 
         self.outline_width.play_animation(entity, animation, start_time, duration);
         self.outline_color.play_animation(entity, animation, start_time, duration);
@@ -778,7 +750,7 @@ impl Style {
         self.background_image.play_animation(entity, animation, start_time, duration);
         self.background_size.play_animation(entity, animation, start_time, duration);
 
-        self.box_shadow.play_animation(entity, animation, start_time, duration);
+        self.shadow.play_animation(entity, animation, start_time, duration);
 
         self.font_color.play_animation(entity, animation, start_time, duration);
         self.font_size.play_animation(entity, animation, start_time, duration);
@@ -813,6 +785,10 @@ impl Style {
         self.max_top.play_animation(entity, animation, start_time, duration);
         self.min_bottom.play_animation(entity, animation, start_time, duration);
         self.max_bottom.play_animation(entity, animation, start_time, duration);
+
+        self.underline_color.play_animation(entity, animation, start_time, duration);
+
+        self.fill.play_animation(entity, animation, start_time, duration);
     }
 
     pub(crate) fn is_animating(&self, entity: Entity, animation: Animation) -> bool {
@@ -826,17 +802,17 @@ impl Style {
             | self.scale.has_active_animation(entity, animation)
             | self.border_width.has_active_animation(entity, animation)
             | self.border_color.has_active_animation(entity, animation)
-            | self.border_top_left_radius.has_active_animation(entity, animation)
-            | self.border_top_right_radius.has_active_animation(entity, animation)
-            | self.border_bottom_left_radius.has_active_animation(entity, animation)
-            | self.border_bottom_right_radius.has_active_animation(entity, animation)
+            | self.corner_top_left_radius.has_active_animation(entity, animation)
+            | self.corner_top_right_radius.has_active_animation(entity, animation)
+            | self.corner_bottom_left_radius.has_active_animation(entity, animation)
+            | self.corner_bottom_right_radius.has_active_animation(entity, animation)
             | self.outline_width.has_active_animation(entity, animation)
             | self.outline_color.has_active_animation(entity, animation)
             | self.outline_offset.has_active_animation(entity, animation)
             | self.background_color.has_active_animation(entity, animation)
             | self.background_image.has_active_animation(entity, animation)
             | self.background_size.has_active_animation(entity, animation)
-            | self.box_shadow.has_active_animation(entity, animation)
+            | self.shadow.has_active_animation(entity, animation)
             | self.font_color.has_active_animation(entity, animation)
             | self.font_size.has_active_animation(entity, animation)
             | self.caret_color.has_active_animation(entity, animation)
@@ -865,6 +841,8 @@ impl Style {
             | self.max_top.has_active_animation(entity, animation)
             | self.min_bottom.has_active_animation(entity, animation)
             | self.max_bottom.has_active_animation(entity, animation)
+            | self.underline_color.has_active_animation(entity, animation)
+            | self.fill.has_active_animation(entity, animation)
     }
 
     pub(crate) fn parse_theme(&mut self, stylesheet: &str) {
@@ -988,43 +966,43 @@ impl Style {
                 self.border_color.insert_transition(rule_id, animation);
             }
 
-            "border-radius" => {
-                self.border_bottom_left_radius
+            "corner-radius" => {
+                self.corner_bottom_left_radius
                     .insert_animation(animation, self.add_transition(transition));
-                self.border_bottom_left_radius.insert_transition(rule_id, animation);
-                self.border_bottom_right_radius
+                self.corner_bottom_left_radius.insert_transition(rule_id, animation);
+                self.corner_bottom_right_radius
                     .insert_animation(animation, self.add_transition(transition));
-                self.border_bottom_right_radius.insert_transition(rule_id, animation);
-                self.border_top_left_radius
+                self.corner_bottom_right_radius.insert_transition(rule_id, animation);
+                self.corner_top_left_radius
                     .insert_animation(animation, self.add_transition(transition));
-                self.border_top_left_radius.insert_transition(rule_id, animation);
-                self.border_top_right_radius
+                self.corner_top_left_radius.insert_transition(rule_id, animation);
+                self.corner_top_right_radius
                     .insert_animation(animation, self.add_transition(transition));
-                self.border_top_right_radius.insert_transition(rule_id, animation);
+                self.corner_top_right_radius.insert_transition(rule_id, animation);
             }
 
-            "border-top-left-radius" => {
-                self.border_top_left_radius
+            "corner-top-left-radius" => {
+                self.corner_top_left_radius
                     .insert_animation(animation, self.add_transition(transition));
-                self.border_top_left_radius.insert_transition(rule_id, animation);
+                self.corner_top_left_radius.insert_transition(rule_id, animation);
             }
 
-            "border-top-right-radius" => {
-                self.border_top_right_radius
+            "corner-top-right-radius" => {
+                self.corner_top_right_radius
                     .insert_animation(animation, self.add_transition(transition));
-                self.border_top_right_radius.insert_transition(rule_id, animation);
+                self.corner_top_right_radius.insert_transition(rule_id, animation);
             }
 
-            "border-bottom-left-radius" => {
-                self.border_bottom_left_radius
+            "corner-bottom-left-radius" => {
+                self.corner_bottom_left_radius
                     .insert_animation(animation, self.add_transition(transition));
-                self.border_bottom_left_radius.insert_transition(rule_id, animation);
+                self.corner_bottom_left_radius.insert_transition(rule_id, animation);
             }
 
-            "border-bottom-right-radius" => {
-                self.border_bottom_right_radius
+            "corner-bottom-right-radius" => {
+                self.corner_bottom_right_radius
                     .insert_animation(animation, self.add_transition(transition));
-                self.border_bottom_right_radius.insert_transition(rule_id, animation);
+                self.corner_bottom_right_radius.insert_transition(rule_id, animation);
             }
 
             "outline" => {
@@ -1064,9 +1042,9 @@ impl Style {
                 self.background_size.insert_transition(rule_id, animation);
             }
 
-            "box-shadow" => {
-                self.box_shadow.insert_animation(animation, self.add_transition(transition));
-                self.box_shadow.insert_transition(rule_id, animation);
+            "shadow" => {
+                self.shadow.insert_animation(animation, self.add_transition(transition));
+                self.shadow.insert_transition(rule_id, animation);
             }
 
             "color" => {
@@ -1209,6 +1187,16 @@ impl Style {
                 self.max_bottom.insert_transition(rule_id, animation);
             }
 
+            "underline-color" => {
+                self.underline_color.insert_animation(animation, self.add_transition(transition));
+                self.underline_color.insert_transition(rule_id, animation);
+            }
+
+            "fill" => {
+                self.fill.insert_animation(animation, self.add_transition(transition));
+                self.fill.insert_transition(rule_id, animation);
+            }
+
             _ => {}
         }
     }
@@ -1238,6 +1226,11 @@ impl Style {
             // Filters
             Property::BackdropFilter(filter) => {
                 self.backdrop_filter.insert_rule(rule_id, filter);
+            }
+
+            // Blend Mode
+            Property::BlendMode(blend_mode) => {
+                self.blend_mode.insert_rule(rule_id, blend_mode);
             }
 
             // Layout Type
@@ -1408,62 +1401,71 @@ impl Style {
                 if let Some(border_width) = border.width {
                     self.border_width.insert_rule(rule_id, border_width.into());
                 }
+
+                if let Some(border_style) = border.style {
+                    self.border_style.insert_rule(rule_id, border_style.top);
+                }
             }
 
             // Border
             Property::BorderWidth(border_width) => {
                 self.border_width.insert_rule(rule_id, border_width.top.0);
             }
+
             Property::BorderColor(color) => {
                 self.border_color.insert_rule(rule_id, color);
             }
 
+            Property::BorderStyle(style) => {
+                self.border_style.insert_rule(rule_id, style.top);
+            }
+
             // Border Radius
-            Property::BorderRadius(border_radius) => {
-                self.border_bottom_left_radius.insert_rule(rule_id, border_radius.bottom_left);
-                self.border_bottom_right_radius.insert_rule(rule_id, border_radius.bottom_right);
-                self.border_top_left_radius.insert_rule(rule_id, border_radius.top_left);
-                self.border_top_right_radius.insert_rule(rule_id, border_radius.top_right);
+            Property::CornerRadius(corner_radius) => {
+                self.corner_bottom_left_radius.insert_rule(rule_id, corner_radius.bottom_left);
+                self.corner_bottom_right_radius.insert_rule(rule_id, corner_radius.bottom_right);
+                self.corner_top_left_radius.insert_rule(rule_id, corner_radius.top_left);
+                self.corner_top_right_radius.insert_rule(rule_id, corner_radius.top_right);
             }
 
-            Property::BorderBottomLeftRadius(border_radius) => {
-                self.border_bottom_left_radius.insert_rule(rule_id, border_radius);
+            Property::CornerBottomLeftRadius(corner_radius) => {
+                self.corner_bottom_left_radius.insert_rule(rule_id, corner_radius);
             }
 
-            Property::BorderTopLeftRadius(border_radius) => {
-                self.border_top_left_radius.insert_rule(rule_id, border_radius);
+            Property::CornerTopLeftRadius(corner_radius) => {
+                self.corner_top_left_radius.insert_rule(rule_id, corner_radius);
             }
 
-            Property::BorderBottomRightRadius(border_radius) => {
-                self.border_bottom_right_radius.insert_rule(rule_id, border_radius);
+            Property::CornerBottomRightRadius(corner_radius) => {
+                self.corner_bottom_right_radius.insert_rule(rule_id, corner_radius);
             }
 
-            Property::BorderTopRightRadius(border_radius) => {
-                self.border_top_right_radius.insert_rule(rule_id, border_radius);
+            Property::CornerTopRightRadius(corner_radius) => {
+                self.corner_top_right_radius.insert_rule(rule_id, corner_radius);
             }
 
-            // Border Corner Shape
-            Property::BorderCornerShape(border_corner_shape) => {
-                self.border_top_left_shape.insert_rule(rule_id, border_corner_shape.0);
-                self.border_top_right_shape.insert_rule(rule_id, border_corner_shape.1);
-                self.border_bottom_right_shape.insert_rule(rule_id, border_corner_shape.2);
-                self.border_bottom_left_shape.insert_rule(rule_id, border_corner_shape.3);
+            // Corner Shape
+            Property::CornerShape(corner_shape) => {
+                self.corner_top_left_shape.insert_rule(rule_id, corner_shape.0);
+                self.corner_top_right_shape.insert_rule(rule_id, corner_shape.1);
+                self.corner_bottom_right_shape.insert_rule(rule_id, corner_shape.2);
+                self.corner_bottom_left_shape.insert_rule(rule_id, corner_shape.3);
             }
 
-            Property::BorderTopLeftShape(border_corner_shape) => {
-                self.border_top_left_shape.insert_rule(rule_id, border_corner_shape);
+            Property::CornerTopLeftShape(corner_shape) => {
+                self.corner_top_left_shape.insert_rule(rule_id, corner_shape);
             }
 
-            Property::BorderTopRightShape(border_corner_shape) => {
-                self.border_top_right_shape.insert_rule(rule_id, border_corner_shape);
+            Property::CornerTopRightShape(corner_shape) => {
+                self.corner_top_right_shape.insert_rule(rule_id, corner_shape);
             }
 
-            Property::BorderBottomLeftShape(border_corner_shape) => {
-                self.border_bottom_left_shape.insert_rule(rule_id, border_corner_shape);
+            Property::CornerBottomLeftShape(corner_shape) => {
+                self.corner_bottom_left_shape.insert_rule(rule_id, corner_shape);
             }
 
-            Property::BorderBottomRightShape(border_corner_shape) => {
-                self.border_bottom_right_shape.insert_rule(rule_id, border_corner_shape);
+            Property::CornerBottomRightShape(corner_shape) => {
+                self.corner_bottom_right_shape.insert_rule(rule_id, corner_shape);
             }
 
             // Font Family
@@ -1473,14 +1475,8 @@ impl Style {
                     font_family
                         .iter()
                         .map(|family| match family {
-                            FontFamily::Named(name) => FamilyOwned::Name(name.to_string()),
-                            FontFamily::Generic(generic) => match generic {
-                                GenericFontFamily::Serif => FamilyOwned::Serif,
-                                GenericFontFamily::SansSerif => FamilyOwned::SansSerif,
-                                GenericFontFamily::Cursive => FamilyOwned::Cursive,
-                                GenericFontFamily::Fantasy => FamilyOwned::Fantasy,
-                                GenericFontFamily::Monospace => FamilyOwned::Monospace,
-                            },
+                            FontFamily::Named(name) => FamilyOwned::Named(name.to_string()),
+                            FontFamily::Generic(generic) => FamilyOwned::Generic(*generic),
                         })
                         .collect::<Vec<_>>(),
                 );
@@ -1501,14 +1497,19 @@ impl Style {
                 self.font_weight.insert_rule(rule_id, font_weight);
             }
 
-            // Font Style
-            Property::FontStyle(font_style) => {
-                self.font_style.insert_rule(rule_id, font_style);
+            // Font Slant
+            Property::FontSlant(font_slant) => {
+                self.font_slant.insert_rule(rule_id, font_slant);
             }
 
-            // Font Stretch
-            Property::FontStretch(font_stretch) => {
-                self.font_stretch.insert_rule(rule_id, font_stretch);
+            // Font Width
+            Property::FontWidth(font_width) => {
+                self.font_width.insert_rule(rule_id, font_width);
+            }
+
+            // Font Variation Settings
+            Property::FontVariationSettings(font_variation_settings) => {
+                self.font_variation_settings.insert_rule(rule_id, font_variation_settings);
             }
 
             // Caret Color
@@ -1618,8 +1619,8 @@ impl Style {
             }
 
             // Box Shadows
-            Property::BoxShadow(box_shadows) => {
-                self.box_shadow.insert_rule(rule_id, box_shadows);
+            Property::Shadow(shadows) => {
+                self.shadow.insert_rule(rule_id, shadows);
             }
 
             // Cursor Icon
@@ -1640,7 +1641,18 @@ impl Style {
             Property::Custom(custom) => {
                 warn!("Custom Property: {}", custom.name);
             }
-
+            Property::TextOverflow(text_overflow) => {
+                self.text_overflow.insert_rule(rule_id, text_overflow);
+            }
+            Property::LineClamp(line_clamp) => {
+                self.line_clamp.insert_rule(rule_id, line_clamp);
+            }
+            Property::TextDecorationLine(line) => {
+                self.text_decoration_line.insert_rule(rule_id, line);
+            }
+            Property::Fill(fill) => {
+                self.fill.insert_rule(rule_id, fill);
+            }
             _ => {}
         }
     }
@@ -1674,9 +1686,9 @@ impl Style {
         self.pseudo_classes.insert(entity, PseudoClassFlags::VALID);
         self.classes.insert(entity, HashSet::new());
         self.abilities.insert(entity, Abilities::default());
-        self.system_flags = SystemFlags::RESTYLE | SystemFlags::RELAYOUT;
-        self.restyle.insert(entity).unwrap();
-        self.reaccess.insert(entity).unwrap();
+        self.system_flags = SystemFlags::RELAYOUT;
+        self.restyle.0.insert(entity).unwrap();
+        self.reaccess.0.insert(entity).unwrap();
     }
 
     // Remove style data for the given entity.
@@ -1713,6 +1725,9 @@ impl Style {
         // Backdrop Filter
         self.backdrop_filter.remove(entity);
 
+        // Blend Mode
+        self.blend_mode.remove(entity);
+
         // Transform
         self.transform.remove(entity);
         self.transform_origin.remove(entity);
@@ -1723,18 +1738,25 @@ impl Style {
         // Border
         self.border_width.remove(entity);
         self.border_color.remove(entity);
+        self.border_style.remove(entity);
 
-        // Border Shape
-        self.border_bottom_left_shape.remove(entity);
-        self.border_bottom_right_shape.remove(entity);
-        self.border_top_left_shape.remove(entity);
-        self.border_top_right_shape.remove(entity);
+        // Corner Shape
+        self.corner_bottom_left_shape.remove(entity);
+        self.corner_bottom_right_shape.remove(entity);
+        self.corner_top_left_shape.remove(entity);
+        self.corner_top_right_shape.remove(entity);
 
-        // Border Radius
-        self.border_bottom_left_radius.remove(entity);
-        self.border_bottom_right_radius.remove(entity);
-        self.border_top_left_radius.remove(entity);
-        self.border_top_right_radius.remove(entity);
+        // Corner Radius
+        self.corner_bottom_left_radius.remove(entity);
+        self.corner_bottom_right_radius.remove(entity);
+        self.corner_top_left_radius.remove(entity);
+        self.corner_top_right_radius.remove(entity);
+
+        // Corner Smoothing
+        self.corner_bottom_left_smoothing.remove(entity);
+        self.corner_bottom_right_smoothing.remove(entity);
+        self.corner_top_left_smoothing.remove(entity);
+        self.corner_top_right_smoothing.remove(entity);
 
         // Outline
         self.outline_width.remove(entity);
@@ -1747,19 +1769,24 @@ impl Style {
         self.background_size.remove(entity);
 
         // Box Shadow
-        self.box_shadow.remove(entity);
+        self.shadow.remove(entity);
 
         // Text and Font
+        self.text.remove(entity);
         self.text_wrap.remove(entity);
+        self.text_overflow.remove(entity);
+        self.line_clamp.remove(entity);
         self.text_align.remove(entity);
         self.font_family.remove(entity);
         self.font_color.remove(entity);
         self.font_size.remove(entity);
         self.font_weight.remove(entity);
-        self.font_style.remove(entity);
-        self.font_stretch.remove(entity);
+        self.font_slant.remove(entity);
+        self.font_width.remove(entity);
+        self.font_variation_settings.remove(entity);
         self.caret_color.remove(entity);
         self.selection_color.remove(entity);
+        self.text_decoration_line.remove(entity);
 
         // Cursor
         self.cursor.remove(entity);
@@ -1783,8 +1810,8 @@ impl Style {
         self.child_right.remove(entity);
         self.child_top.remove(entity);
         self.child_bottom.remove(entity);
-        self.col_between.remove(entity);
         self.row_between.remove(entity);
+        self.col_between.remove(entity);
 
         // Size
         self.width.remove(entity);
@@ -1805,32 +1832,38 @@ impl Style {
         self.max_top.remove(entity);
         self.min_bottom.remove(entity);
         self.max_bottom.remove(entity);
+        self.text_range.remove(entity);
+        self.text_span.remove(entity);
 
-        self.needs_text_layout.remove(entity);
+        self.fill.remove(entity);
     }
 
-    pub fn needs_restyle(&mut self) {
-        self.system_flags.set(SystemFlags::RESTYLE, true);
+    pub fn needs_restyle(&mut self, entity: Entity) {
+        self.restyle.0.insert(entity).unwrap();
     }
 
     pub fn needs_relayout(&mut self) {
         self.system_flags.set(SystemFlags::RELAYOUT, true);
     }
 
-    pub fn needs_redraw(&mut self) {
-        self.system_flags.set(SystemFlags::REDRAW, true);
-    }
-
     pub fn needs_access_update(&mut self, entity: Entity) {
-        self.reaccess.insert(entity).unwrap();
+        self.reaccess.0.insert(entity).unwrap();
     }
 
-    pub fn should_redraw<F: FnOnce()>(&mut self, f: F) {
-        if self.system_flags.contains(SystemFlags::REDRAW) {
-            f();
-            self.system_flags.set(SystemFlags::REDRAW, false);
-        }
+    pub fn needs_text_update(&mut self, entity: Entity) {
+        self.text_construction.0.insert(entity).unwrap();
+        self.text_layout.0.insert(entity).unwrap();
     }
+
+    pub fn needs_text_layout(&mut self, entity: Entity) {
+        self.text_layout.0.insert(entity).unwrap();
+    }
+
+    // pub fn should_redraw<F: FnOnce()>(&mut self, f: F) {
+    //     if !self.redraw_list.is_empty() {
+    //         f();
+    //     }
+    // }
 
     // Remove all shared style data.
     pub fn clear_style_rules(&mut self) {
@@ -1850,6 +1883,9 @@ impl Style {
         // Backdrop Filer
         self.backdrop_filter.clear_rules();
 
+        // Blend Mode
+        self.blend_mode.clear_rules();
+
         // Transform
         self.transform.clear_rules();
         self.transform_origin.clear_rules();
@@ -1863,18 +1899,25 @@ impl Style {
         // Border
         self.border_width.clear_rules();
         self.border_color.clear_rules();
+        self.border_style.clear_rules();
 
-        // Border Shape
-        self.border_bottom_left_shape.clear_rules();
-        self.border_bottom_right_shape.clear_rules();
-        self.border_top_left_shape.clear_rules();
-        self.border_top_right_shape.clear_rules();
+        // Corner Shape
+        self.corner_bottom_left_shape.clear_rules();
+        self.corner_bottom_right_shape.clear_rules();
+        self.corner_top_left_shape.clear_rules();
+        self.corner_top_right_shape.clear_rules();
 
-        // Border Radius
-        self.border_bottom_left_radius.clear_rules();
-        self.border_bottom_right_radius.clear_rules();
-        self.border_top_left_radius.clear_rules();
-        self.border_top_right_radius.clear_rules();
+        // Corner Radius
+        self.corner_bottom_left_radius.clear_rules();
+        self.corner_bottom_right_radius.clear_rules();
+        self.corner_top_left_radius.clear_rules();
+        self.corner_top_right_radius.clear_rules();
+
+        // Corner Smoothing
+        self.corner_bottom_left_smoothing.clear_rules();
+        self.corner_bottom_right_smoothing.clear_rules();
+        self.corner_top_left_smoothing.clear_rules();
+        self.corner_top_right_smoothing.clear_rules();
 
         // Outline
         self.outline_width.clear_rules();
@@ -1886,7 +1929,7 @@ impl Style {
         self.background_image.clear_rules();
         self.background_size.clear_rules();
 
-        self.box_shadow.clear_rules();
+        self.shadow.clear_rules();
 
         self.layout_type.clear_rules();
         self.position_type.clear_rules();
@@ -1927,19 +1970,25 @@ impl Style {
 
         // Text and Font
         self.text_wrap.clear_rules();
+        self.text_overflow.clear_rules();
+        self.line_clamp.clear_rules();
         self.text_align.clear_rules();
         self.font_family.clear_rules();
         self.font_weight.clear_rules();
-        self.font_style.clear_rules();
+        self.font_slant.clear_rules();
         self.font_color.clear_rules();
         self.font_size.clear_rules();
+        self.font_variation_settings.clear_rules();
         self.selection_color.clear_rules();
         self.caret_color.clear_rules();
+        self.text_decoration_line.clear_rules();
 
         self.cursor.clear_rules();
 
         self.pointer_events.clear_rules();
 
         self.name.clear_rules();
+
+        self.fill.clear_rules();
     }
 }

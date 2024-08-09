@@ -1,15 +1,12 @@
 //! The cache is a store for intermediate data produced while computing state, notably layout
 //! results. The main type here is CachedData, usually accessed via `cx.cache`.
 
-use crate::prelude::*;
-use femtovg::ImageId;
-use vizia_storage::SparseSet;
+use std::cell::RefCell;
 
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub(crate) struct Pos {
-    pub(crate) x: f32,
-    pub(crate) y: f32,
-}
+use crate::prelude::*;
+use fnv::FnvHashMap;
+use skia_safe::{Matrix, Surface};
+use vizia_storage::SparseSet;
 
 /// Stores data which can be cached between system runs.
 ///
@@ -18,27 +15,29 @@ pub(crate) struct Pos {
 #[derive(Default)]
 pub struct CachedData {
     pub(crate) bounds: SparseSet<BoundingBox>,
-    pub(crate) relative_position: SparseSet<Pos>,
-    pub(crate) shadow_images: SparseSet<Vec<Option<(ImageId, ImageId)>>>,
-    pub(crate) filter_image: SparseSet<Option<(ImageId, ImageId)>>,
-    pub(crate) screenshot_image: SparseSet<Option<ImageId>>,
+    pub(crate) draw_bounds: SparseSet<BoundingBox>,
+    pub(crate) relative_bounds: SparseSet<BoundingBox>,
     pub(crate) geo_changed: SparseSet<GeoChanged>,
+    pub(crate) transform: SparseSet<Matrix>,
+    pub(crate) clip_path: SparseSet<BoundingBox>,
+    pub(crate) svgs: RefCell<FnvHashMap<ImageId, Surface>>,
 }
 
 impl CachedData {
     pub(crate) fn add(&mut self, entity: Entity) {
         self.bounds.insert(entity, Default::default());
-        self.relative_position.insert(entity, Default::default());
+        self.relative_bounds.insert(entity, Default::default());
         self.geo_changed.insert(entity, GeoChanged::empty());
+        self.transform.insert(entity, Matrix::new_identity());
     }
 
     pub(crate) fn remove(&mut self, entity: Entity) {
         self.bounds.remove(entity);
-        self.relative_position.remove(entity);
-        self.shadow_images.remove(entity);
-        self.filter_image.remove(entity);
-        self.screenshot_image.remove(entity);
+        self.relative_bounds.remove(entity);
+        self.draw_bounds.remove(entity);
         self.geo_changed.remove(entity);
+        self.transform.remove(entity);
+        self.clip_path.remove(entity);
     }
 
     /// Returns the bounding box of the entity, determined by the layout system.

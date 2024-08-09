@@ -5,14 +5,10 @@ use crate::components::DemoRegion;
 #[derive(Lens)]
 pub struct CheckboxData {
     check_a: bool,
-    check_b: bool,
-    check_c: bool,
 }
 
 pub enum CheckboxEvent {
     ToggleA,
-    ToggleB,
-    ToggleC,
 }
 
 impl Model for CheckboxData {
@@ -21,29 +17,21 @@ impl Model for CheckboxData {
             CheckboxEvent::ToggleA => {
                 self.check_a ^= true;
             }
-
-            CheckboxEvent::ToggleB => {
-                self.check_b ^= true;
-            }
-
-            CheckboxEvent::ToggleC => {
-                self.check_c ^= true;
-            }
         });
     }
 }
 
 pub fn checkbox(cx: &mut Context) {
-    CheckboxData { check_a: true, check_b: false, check_c: false }.build(cx);
+    CheckboxData { check_a: true }.build(cx);
 
     VStack::new(cx, |cx| {
-        Label::new(cx, "Checkbox").class("title");
-        Label::new(cx, "A checkbox can be used to display a boolean value, or to select one or more items from a set of options.")
-            .class("paragraph");
+        Markdown::new(cx, "# Checkbox
+A checkbox can be used to display a boolean value, or to select one or more items from a set of options.        
+        ");
 
         Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
 
-        Label::new(cx, "Basic checkboxes").class("header");
+        Markdown::new(cx, "### Basic checkboxes");
 
         DemoRegion::new(cx, |cx|{
             Checkbox::new(cx, CheckboxData::check_a)
@@ -51,118 +39,27 @@ pub fn checkbox(cx: &mut Context) {
         }, r#"Checkbox::new(cx, CheckboxData::check_a)
     .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA));"#);
 
-        Label::new(cx, "Label").class("header");
-        Label::new(cx, "A `FormControl` can be used to add a label to a checkbox. Pressing on the label will also toggle the corresponding checkbox.")
-            .class("paragraph");
+        Markdown::new(cx, "### Labelled checkbox
+A `HStack` can be used to add a label to a checkbox. The describing modifier can be used to link a label to a particular checkbox. Pressing on the label will then toggle the corresponding checkbox.        
+        ");
 
         DemoRegion::new(cx, |cx|{
-            FormControl::new(cx, |cx| {
+            HStack::new(cx, |cx| {
                 Checkbox::new(cx, CheckboxData::check_a)
                     .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA))
-            }, "Label");
-
-            FormControl::new(cx, |cx| {
-                Checkbox::new(cx, CheckboxData::check_b)
-                    .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleB))
-            }, "Embed");
-
-            FormControl::new(cx, |cx| {
-                Checkbox::new(cx, CheckboxData::check_c)
-                    .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleC))
-            }, "Disabled")
-            .disabled(true);
-        }, r#"FormControl::new(cx, |cx| {
+                    .id("check");
+                Label::new(cx, "Label").describing("check");
+            })
+            .size(Auto)
+            .col_between(Pixels(8.0));
+        }, r#"HStack::new(cx, |cx| {
     Checkbox::new(cx, CheckboxData::check_a)
         .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA))
-}, "Label");
-
-FormControl::new(cx, |cx| {
-    Checkbox::new(cx, CheckboxData::check_b)
-        .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleB))
-}, "Embed");
-
-FormControl::new(cx, |cx| {
-    Checkbox::new(cx, CheckboxData::check_c)
-        .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleC))
-}, "Disabled")
-.disabled(true);"#);
-
-        Label::new(cx, "Form Group").class("header");
-        Label::new(cx, "The describing modifier can be used to link a label to a particular checkbox. Pressing on the label will then toggle the corresponding checkbox.")
-            .class("paragraph");
-
-        DemoRegion::new(cx, |cx|{
-            FormGroup::new(cx, "Options", |cx|{
-                FormControl::new(cx, |cx| {
-                    Checkbox::new(cx, CheckboxData::check_a)
-                        .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA))
-                }, "Left");
-
-                FormControl::new(cx, |cx| {
-                    Checkbox::new(cx, CheckboxData::check_b)
-                        .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleB))
-                }, "Middle");
-
-                FormControl::new(cx, |cx| {
-                    Checkbox::new(cx, CheckboxData::check_c)
-                        .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleC))
-                }, "Right");
-            });
-        }, r#"FormGroup::new(cx, "Gender", |cx|{
-    FormControl::new(cx, |cx| {
-        Checkbox::new(cx, CheckboxData::check_a)
-            .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA))
-    }, "Male");
-
-    FormControl::new(cx, |cx| {
-        Checkbox::new(cx, CheckboxData::check_b)
-            .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleB))
-    }, "Female");
-
-    FormControl::new(cx, |cx| {
-        Checkbox::new(cx, CheckboxData::check_c)
-            .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleC))
-    }, "Other");
-});"#);
-
-        Label::new(cx, "Label placement").class("header");
-        Label::new(cx, "The describing modifier can be used to link a label to a particular checkbox. Pressing on the label will then toggle the corresponding checkbox.")
-            .class("paragraph");
-
-        DemoRegion::new(cx, |cx|{
-            FormGroup::new(cx, "Options", |cx|{
-                FormControl::new(cx, |cx| {
-                    Checkbox::new(cx, CheckboxData::check_a)
-                        .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA))
-                }, "Left")
-                .label_placement(FormPlacement::Start);
-
-                FormControl::new(cx, |cx| {
-                    Checkbox::new(cx, CheckboxData::check_b)
-                        .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleB))
-                }, "Middle");
-
-                FormControl::new(cx, |cx| {
-                    Checkbox::new(cx, CheckboxData::check_c)
-                        .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleC))
-                }, "Right");
-            });
-        },r#"FormGroup::new(cx, "Gender", |cx|{
-    FormControl::new(cx, |cx| {
-        Checkbox::new(cx, CheckboxData::check_a)
-            .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA))
-    }, "Male");
-
-    FormControl::new(cx, |cx| {
-        Checkbox::new(cx, CheckboxData::check_b)
-            .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleB))
-    }, "Female");
-
-    FormControl::new(cx, |cx| {
-        Checkbox::new(cx, CheckboxData::check_c)
-            .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleC))
-    }, "Other");
-});"#);
+        .id("check");
+    Label::new(cx, "Label").describing("check");
+})
+.size(Auto)
+.col_between(Pixels(8.0));"#);
     })
     .class("panel");
 }

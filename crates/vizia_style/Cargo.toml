@@ -6,14 +6,17 @@ license = "MIT"
 repository = "https://github.com/vizia/vizia"
 edition = "2021"
 description = "The style components of vizia"
-rust-version = "1.65"
+rust-version = "1.76"
 
 [dependencies]
 cssparser = "0.29.6"
-femtovg = "0.9"
+skia-safe = {version = "0.75", features = ["textlayout"] }
 selectors = { version = "0.23.0", path = "./selectors" }
 # morphorm = {path = "../../../morphorm" }
 morphorm = {git = "https://github.com/vizia/morphorm.git", branch = "auto-min-size2"}
 # morphorm = "0.6.4"
 smallvec = "1.0"
 bitflags = "2.1.0"
+
+[lints]
+workspace = true

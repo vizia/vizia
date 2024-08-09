@@ -4,13 +4,17 @@ use crate::components::DemoRegion;
 
 pub fn button_group(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "Button Group").class("title");
-        Label::new(cx, "Buttons can be grouped by wrapping them in a ButtonGroup view.")
-            .class("paragraph");
+        Markdown::new(
+            cx,
+            "# Button Group
+Buttons can be grouped by wrapping them in a ButtonGroup view.        
+        ",
+        );
 
         Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
 
-        Label::new(cx, "Basic button group").class("header");
+        Markdown::new(cx, "### Basic button group");
+
         DemoRegion::new(
             cx,
             |cx| {
@@ -27,7 +31,8 @@ pub fn button_group(cx: &mut Context) {
 });"#,
         );
 
-        Label::new(cx, "Vertical button group").class("header");
+        Markdown::new(cx, "### Vertical button group").class("header");
+
         DemoRegion::new(
             cx,
             |cx| {

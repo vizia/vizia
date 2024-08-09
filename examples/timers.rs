@@ -1,3 +1,4 @@
+use log::debug;
 use vizia::prelude::*;
 
 #[derive(Lens)]
@@ -34,11 +35,11 @@ fn main() -> Result<(), ApplicationError> {
         // Emit event every second
         let timer = cx.add_timer(Duration::from_millis(10), None, |cx, action| match action {
             TimerAction::Start => {
-                println!("Start timer");
+                debug!("Start timer");
             }
 
             TimerAction::Stop => {
-                println!("Stop timer");
+                debug!("Stop timer");
             }
 
             TimerAction::Tick(_delta) => {

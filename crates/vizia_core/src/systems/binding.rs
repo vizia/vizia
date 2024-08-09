@@ -33,13 +33,6 @@ pub(crate) fn binding_system(cx: &mut Context) {
         }
     }
 
-    // for img in cx.resource_manager.images.values_mut() {
-    //     if img.dirty {
-    //         observers.extend(img.observers.iter());
-    //         img.dirty = false;
-    //     }
-    // }
-
     if !observers.is_empty() {
         // Sort observers into tree ordering.
         let ordered_observers = cx
@@ -47,14 +40,6 @@ pub(crate) fn binding_system(cx: &mut Context) {
             .into_iter()
             .filter_map(|ent| observers.get(&ent).map(|e| (ent, *e)))
             .collect::<Vec<_>>();
-
-        // println!(
-        //     "{:?}",
-        //     ordered_observers
-        //         .iter()
-        //         .map(|(ob, (src, _, _))| (ob.index(), src.index()))
-        //         .collect::<Vec<_>>()
-        // );
 
         let mut updated_stores: HashSet<StoreId> = HashSet::new();
 

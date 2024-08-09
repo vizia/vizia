@@ -54,7 +54,7 @@ button label {
     background-color: white;
     width: auto;
     height: 30px;
-    border-radius: 3px;
+    corner-radius: 3px;
     child-space: 1st;
     child-left: 10px;
     child-right: 10px;
@@ -90,7 +90,7 @@ button label {
     cursor: default;
     cursor: move;
     cursor: crosshair;
-    border-top-right-shape: bevel;
+    corner-top-right-shape: bevel;
     outer-shadow: 10px 8px 10px #123456;
     z-index: 9999900;
     transition: test 1s, test2 2s, test3 3s 4s;
@@ -110,8 +110,8 @@ button label {
     rotate: 20deg;
     scale: 20%, 10;
     border-corner-shape: bevel round round bevel;
-    border-top-left-shape: round;
-    border-top-right-shape: bevel;
+    corner-top-left-shape: round;
+    corner-top-right-shape: bevel;
 }
 
 test {

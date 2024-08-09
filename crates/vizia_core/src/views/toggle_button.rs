@@ -12,7 +12,7 @@ impl ToggleButton {
     ) -> Handle<Self> {
         Self { on_toggle: None }
             .build(cx, |cx| {
-                (content)(cx).hoverable(false).class("inner");
+                (content)(cx).hoverable(false);
             })
             .role(Role::ToggleButton)
             .navigable(true)

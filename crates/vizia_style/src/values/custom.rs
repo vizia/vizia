@@ -41,7 +41,7 @@ impl<'i> UnparsedProperty<'i> {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct TokenList<'i>(#[cfg_attr(feature = "serde", serde(borrow))] pub Vec<TokenOrValue<'i>>);
+pub struct TokenList<'i>(pub Vec<TokenOrValue<'i>>);
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenOrValue<'i> {
@@ -214,10 +214,8 @@ fn try_parse_color_token<'i>(
 
 /// A CSS variable reference.
 #[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Variable<'i> {
     /// The variable name.
-    #[cfg_attr(feature = "serde", serde(borrow))]
     pub name: DashedIdent<'i>,
     /// A fallback value in case the variable is not defined.
     pub fallback: Option<TokenList<'i>>,
@@ -248,8 +246,7 @@ mod tests {
         let success_string = "left";
         let mut parser_input = cssparser::ParserInput::new(success_string);
         let mut parser = cssparser::Parser::new(&mut parser_input);
-        let result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
-        println!("{:?}", result);
+        let _result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
         // assert_eq!(result, Ok($value));
     }
 
@@ -258,8 +255,7 @@ mod tests {
         let success_string = "#456789";
         let mut parser_input = cssparser::ParserInput::new(success_string);
         let mut parser = cssparser::Parser::new(&mut parser_input);
-        let result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
-        println!("{:?}", result);
+        let _result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
         // assert_eq!(result, Ok($value));
     }
 
@@ -268,8 +264,7 @@ mod tests {
         let success_string = "3px";
         let mut parser_input = cssparser::ParserInput::new(success_string);
         let mut parser = cssparser::Parser::new(&mut parser_input);
-        let result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
-        println!("{:?}", result);
+        let _result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
         // assert_eq!(result, Ok($value));
     }
 
@@ -278,8 +273,7 @@ mod tests {
         let success_string = "left 3px rgb(100, 200, 50)";
         let mut parser_input = cssparser::ParserInput::new(success_string);
         let mut parser = cssparser::Parser::new(&mut parser_input);
-        let result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
-        println!("{:?}", result);
+        let _result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
         // assert_eq!(result, Ok($value));
     }
 }

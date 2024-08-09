@@ -1,6 +1,7 @@
 mod helpers;
 use helpers::*;
 
+use log::debug;
 use vizia::icons::ICON_CHECK;
 use vizia::prelude::*;
 
@@ -10,7 +11,7 @@ fn main() -> Result<(), ApplicationError> {
             HStack::new(cx, |cx| {
                 // Basic Button
                 Button::new(cx, |cx| Label::new(cx, "Button"))
-                    .on_press(|_cx| println!("Button Pressed!"));
+                    .on_press(|_cx| debug!("Button Pressed!"));
                 // Accent Button
                 Button::new(cx, |cx| Label::new(cx, "Accent Button"))
                     .variant(ButtonVariant::Accent);
@@ -22,7 +23,7 @@ fn main() -> Result<(), ApplicationError> {
                 // Button with Icon
                 Button::new(cx, |cx| {
                     HStack::new(cx, |cx| {
-                        Label::new(cx, ICON_CHECK).class("icon");
+                        Icon::new(cx, ICON_CHECK).class("icon");
                         Label::new(cx, "Button with Icon");
                     })
                 });

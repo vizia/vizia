@@ -2,11 +2,6 @@ use crate::prelude::*;
 
 use vizia_style::{BorderWidth, Property};
 
-// pub struct AnimationDescription {
-//     duration: Duration,
-//     delay: Duration,
-// }
-
 pub struct AnimationBuilder<'a> {
     pub(crate) keyframes: Vec<KeyframeBuilder<'a>>,
 }
@@ -112,25 +107,25 @@ impl<'a> KeyframeBuilder<'a> {
     }
 
     pub fn border_top_left_radius(mut self, val: impl Into<LengthOrPercentage>) -> Self {
-        self.properties.push(Property::BorderTopLeftRadius(val.into()));
+        self.properties.push(Property::CornerTopLeftRadius(val.into()));
 
         self
     }
 
     pub fn border_top_right_radius(mut self, val: impl Into<LengthOrPercentage>) -> Self {
-        self.properties.push(Property::BorderTopRightRadius(val.into()));
+        self.properties.push(Property::CornerTopRightRadius(val.into()));
 
         self
     }
 
     pub fn border_bottom_left_radius(mut self, val: impl Into<LengthOrPercentage>) -> Self {
-        self.properties.push(Property::BorderBottomLeftRadius(val.into()));
+        self.properties.push(Property::CornerBottomLeftRadius(val.into()));
 
         self
     }
 
     pub fn border_bottom_right_radius(mut self, val: impl Into<LengthOrPercentage>) -> Self {
-        self.properties.push(Property::BorderBottomRightRadius(val.into()));
+        self.properties.push(Property::CornerBottomRightRadius(val.into()));
 
         self
     }
@@ -177,8 +172,8 @@ impl<'a> KeyframeBuilder<'a> {
 
     // BOX SHADOW
 
-    pub fn box_shadow(mut self, val: impl Into<Vec<BoxShadow>>) -> Self {
-        self.properties.push(Property::BoxShadow(val.into()));
+    pub fn shadow(mut self, val: impl Into<Vec<Shadow>>) -> Self {
+        self.properties.push(Property::Shadow(val.into()));
 
         self
     }

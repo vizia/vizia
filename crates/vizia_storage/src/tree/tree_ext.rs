@@ -61,7 +61,7 @@ where
     }
 
     fn parent_iter<'a>(&self, tree: &'a Tree<Self>) -> LayoutParentIterator<'a, I> {
-        LayoutParentIterator::new(tree, Some(*self))
+        LayoutParentIterator::new(tree, *self)
     }
 
     fn child_iter<'a>(&self, tree: &'a Tree<Self>) -> LayoutChildIterator<'a, I> {

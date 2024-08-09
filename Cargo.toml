@@ -5,10 +5,10 @@ edition = "2021"
 license = "MIT"
 description = "A Rust GUI Framework"
 autoexamples = false
-rust-version = "1.65"
+rust-version = "1.76"
 
 [workspace]
-members = [ "crates/*", "examples/widget_gallery"]
+members = [ "crates/*", "examples/widget_gallery", "examples/designer"]
 
 [[example]]
 name = "counter"
@@ -31,22 +31,8 @@ name = "virtual_list"
 path = "examples/views/virtual_list.rs"
 
 [[example]]
-name = "fluent_translation"
-path = "examples/localization/fluent_translation.rs"
-
-[[example]]
-name = "fluent_variables"
-path = "examples/localization/fluent_variables.rs"
-
-[[example]]
 name = "l10n"
-path = "examples/localization/l10n.rs"
-
-[[example]]
-name = "locale_binding"
-path = "examples/localization/locale_binding.rs"
-
-
+path = "examples/l10n.rs"
 
 [[example]]
 name = "inline"
@@ -56,9 +42,9 @@ path = "examples/style/inline.rs"
 name = "outline"
 path = "examples/style/outline.rs"
 
-
-
-
+[[example]]
+name = "blend_mode"
+path = "examples/style/blend_mode.rs"
 
 [[example]]
 name = "transform"
@@ -73,12 +59,8 @@ name = "gradient"
 path = "examples/style/gradient.rs"
 
 [[example]]
-name = "box_shadow"
-path = "examples/style/box_shadow.rs"
-
-[[example]]
-name = "border"
-path = "examples/style/border.rs"
+name = "shadow"
+path = "examples/style/shadow.rs"
 
 [[example]]
 name = "text"
@@ -268,10 +250,6 @@ name = "timer"
 path = "examples/7GUIs/timer.rs"
 
 [[example]]
-name = "user_scale"
-path = "examples/user_scale.rs"
-
-[[example]]
 name = "save_dialog"
 path = "examples/save_dialog.rs"
 
@@ -288,21 +266,36 @@ name = "timers"
 path = "examples/timers.rs"
 
 [[example]]
-name = "follow_system_theme"
-path = "examples/follow_system_theme.rs"
+name = "markdown"
+path = "examples/views/markdown.rs"
 
 [[example]]
-name = "accesskit"
-path = "examples/accessibility/accesskit.rs"
+name = "rich_text"
+path = "examples/rich_text.rs"
+
+[[example]]
+name = "multiwindow"
+path = "examples/multiwindow.rs"
+
+[[example]]
+name = "popup_window"
+path = "examples/popup_window.rs"
+
+[[example]]
+name = "svg"
+path = "examples/views/svg.rs"
+
+[[example]]
+name = "debug"
+path = "examples/debug.rs"
 
 [features]
-default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts"]
+default = ["winit", "clipboard", "x11", "wayland"]
 clipboard = ["vizia_core/clipboard", "vizia_winit?/clipboard"]
 winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]
 x11 = ["vizia_winit?/x11", "vizia_core/x11"]
 wayland = ["vizia_winit?/wayland", "vizia_core/wayland"]
-embedded_fonts = ["vizia_core/embedded_fonts"]
 accesskit = ["vizia_winit?/accesskit"]
 
 [dependencies]
@@ -316,3 +309,18 @@ chrono = "0.4.34"
 reqwest = { version = "0.11.18", features = ["blocking"] }
 log = "0.4.19"
 fern = { version = "0.6" }
+
+[workspace.lints.rust]
+# future_incompatible = "allow"
+# let_underscore = "allow"
+# nonstandard_style = "allow"
+# rust_2018_compatibility = "allow"
+# rust_2018_idioms = "allow"
+# rust_2021_compatibility = "allow"
+# unused = "allow"
+
+[workspace.lints.clippy]
+# cargo = "allow"
+# pedantic = "allow"
+# nursery = "allow"
+# separated_literal_suffix = "allow"

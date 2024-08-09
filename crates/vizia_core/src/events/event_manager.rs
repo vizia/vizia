@@ -18,9 +18,15 @@ const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 /// The [EventManager] is responsible for taking the events in the event queue in cx
 /// and dispatching them to views and models based on the target and propagation metadata of the event.
 #[doc(hidden)]
-pub(crate) struct EventManager {
+pub struct EventManager {
     // Queue of events to be processed.
     event_queue: Vec<Event>,
+}
+
+impl Default for EventManager {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl EventManager {
@@ -30,7 +36,7 @@ impl EventManager {
 
     /// Flush the event queue, dispatching events to their targets.
     /// Returns whether there are still more events to process, i.e. the event handlers sent events.
-    pub(crate) fn flush_events(&mut self, cx: &mut Context) -> bool {
+    pub fn flush_events(&mut self, cx: &mut Context) -> bool {
         // Clear the event queue in the event manager.
         self.event_queue.clear();
 
@@ -42,7 +48,7 @@ impl EventManager {
         'events: for event in self.event_queue.iter_mut() {
             // Handle internal events.
             event.take(|internal_event, _| match internal_event {
-                InternalEvent::Redraw => cx.needs_redraw(),
+                InternalEvent::Redraw => cx.needs_redraw(Entity::root()),
                 InternalEvent::LoadImage { path, image, policy } => {
                     if let Some(image) = image.lock().unwrap().take() {
                         ResourceContext::new(cx).load_image(path, image, policy);
@@ -80,7 +86,7 @@ impl EventManager {
 
             // Handle state updates for window events.
             event.map(|window_event, meta| {
-                if meta.origin == Entity::root() {
+                if cx.windows.contains_key(&meta.origin) {
                     internal_state_updates(cx, window_event, meta);
                 }
             });
@@ -192,20 +198,21 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
 
         WindowEvent::MouseMove(x, y) => {
             if !x.is_nan() && !y.is_nan() {
-                cx.mouse.previous_cursorx = cx.mouse.cursorx;
-                cx.mouse.previous_cursory = cx.mouse.cursory;
-                cx.mouse.cursorx = *x;
-                cx.mouse.cursory = *y;
+                cx.mouse.previous_cursor_x = cx.mouse.cursor_x;
+                cx.mouse.previous_cursor_y = cx.mouse.cursor_y;
+                cx.mouse.cursor_x = *x;
+                cx.mouse.cursor_y = *y;
+
+                hover_system(cx, meta.origin);
 
                 mutate_direct_or_up(meta, cx.captured, cx.hovered, false);
             }
 
-            // if cx.mouse.cursorx != cx.mouse.previous_cursorx
-            //     || cx.mouse.cursory != cx.mouse.previous_cursory
+            // if cx.mouse.cursor_x != cx.mouse.previous_cursor_x
+            //     || cx.mouse.cursor_y != cx.mouse.previous_cursor_y
             // {
             // }
 
-            hover_system(cx);
             // if let Some(dropped_file) = cx.dropped_file.take() {
             //     emit_direct_or_up(
             //         cx,
@@ -222,7 +229,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 MouseButton::Left => {
                     cx.mouse.left.state = MouseButtonState::Pressed;
 
-                    cx.mouse.left.pos_down = (cx.mouse.cursorx, cx.mouse.cursory);
+                    cx.mouse.left.pos_down = (cx.mouse.cursor_x, cx.mouse.cursor_y);
                     cx.mouse.left.pressed = cx.hovered;
                     cx.triggered = cx.hovered;
 
@@ -250,12 +257,12 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 }
                 MouseButton::Right => {
                     cx.mouse.right.state = MouseButtonState::Pressed;
-                    cx.mouse.right.pos_down = (cx.mouse.cursorx, cx.mouse.cursory);
+                    cx.mouse.right.pos_down = (cx.mouse.cursor_x, cx.mouse.cursor_y);
                     cx.mouse.right.pressed = cx.hovered;
                 }
                 MouseButton::Middle => {
                     cx.mouse.middle.state = MouseButtonState::Pressed;
-                    cx.mouse.middle.pos_down = (cx.mouse.cursorx, cx.mouse.cursory);
+                    cx.mouse.middle.pos_down = (cx.mouse.cursor_x, cx.mouse.cursor_y);
                     cx.mouse.middle.pressed = cx.hovered;
                 }
                 _ => {}
@@ -275,7 +282,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             // track double/triple -click
             let new_click_time = Instant::now();
             let click_duration = new_click_time - cx.click_time;
-            let new_click_pos = (cx.mouse.cursorx, cx.mouse.cursory);
+            let new_click_pos = (cx.mouse.cursor_x, cx.mouse.cursor_y);
             if click_duration <= DOUBLE_CLICK_INTERVAL
                 && new_click_pos == cx.click_pos
                 && *button == cx.click_button
@@ -301,17 +308,17 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
         WindowEvent::MouseUp(button) => {
             match button {
                 MouseButton::Left => {
-                    cx.mouse.left.pos_up = (cx.mouse.cursorx, cx.mouse.cursory);
+                    cx.mouse.left.pos_up = (cx.mouse.cursor_x, cx.mouse.cursor_y);
                     cx.mouse.left.released = cx.hovered;
                     cx.mouse.left.state = MouseButtonState::Released;
                 }
                 MouseButton::Right => {
-                    cx.mouse.right.pos_up = (cx.mouse.cursorx, cx.mouse.cursory);
+                    cx.mouse.right.pos_up = (cx.mouse.cursor_x, cx.mouse.cursor_y);
                     cx.mouse.right.released = cx.hovered;
                     cx.mouse.right.state = MouseButtonState::Released;
                 }
                 MouseButton::Middle => {
-                    cx.mouse.middle.pos_up = (cx.mouse.cursorx, cx.mouse.cursory);
+                    cx.mouse.middle.pos_up = (cx.mouse.cursor_x, cx.mouse.cursor_y);
                     cx.mouse.middle.released = cx.hovered;
                     cx.mouse.middle.state = MouseButtonState::Released;
                 }
@@ -355,20 +362,16 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 for entity in TreeIterator::full(&cx.tree) {
                     if let Some(model_data_store) = cx.data.get(&entity) {
                         if !model_data_store.models.is_empty() {
-                            println!("Models for {}", entity);
+                            debug!("Models for {}", entity);
                             for (_, model) in model_data_store.models.iter() {
-                                println!("M: {:?}", model.name())
+                                debug!("M: {:?}", model.name())
                             }
                         }
 
                         if !model_data_store.stores.is_empty() {
-                            println!("Stores for {}", entity);
+                            debug!("Stores for {}", entity);
                             for (_, store) in model_data_store.stores.iter() {
-                                println!(
-                                    "S: [{}] - Observers {:?}",
-                                    store.name(),
-                                    store.observers()
-                                )
+                                debug!("S: [{}] - Observers {:?}", store.name(), store.observers())
                             }
                         }
                     }
@@ -377,7 +380,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
 
             #[cfg(debug_assertions)]
             if *code == Code::KeyI && cx.modifiers.ctrl() {
-                println!("Entity tree");
+                debug!("Entity tree");
                 let (tree, views, cache) = (&cx.tree, &cx.views, &cx.cache);
                 let has_next_sibling = |entity| tree.get_next_sibling(entity).is_some();
                 let root_indents = |entity: Entity| {
@@ -474,18 +477,18 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             if *code == Code::KeyT
                 && cx.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
             {
-                debug!("Loaded font face info:");
-                for face in cx.text_context.font_system().db().faces() {
-                    debug!(
-                        "family: {:?}\npost_script_name: {:?}\nstyle: {:?}\nweight: {:?}\nstretch: {:?}\nmonospaced: {:?}\n",
-                        face.families,
-                        face.post_script_name,
-                        face.style,
-                        face.weight,
-                        face.stretch,
-                        face.monospaced,
-                    );
-                }
+                // debug!("Loaded font face info:");
+                // for face in cx.text_context.font_system().db().faces() {
+                //     debug!(
+                //         "family: {:?}\npost_script_name: {:?}\nstyle: {:?}\nweight: {:?}\nstretch: {:?}\nmonospaced: {:?}\n",
+                //         face.families,
+                //         face.post_script_name,
+                //         face.style,
+                //         face.weight,
+                //         face.stretch,
+                //         face.monospaced,
+                //     );
+                // }
             }
 
             if *code == Code::F5 {
@@ -603,20 +606,20 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             cx.set_focus_pseudo_classes(cx.focused, true, true);
         }
         WindowEvent::MouseEnter => {
-            if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(Entity::root()) {
+            if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(meta.origin) {
                 pseudo_class.set(PseudoClassFlags::OVER, true);
             }
         }
         WindowEvent::MouseLeave => {
-            if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(Entity::root()) {
+            if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(meta.origin) {
                 pseudo_class.set(PseudoClassFlags::OVER, false);
             }
 
-            let parent_iter = LayoutParentIterator::new(&cx.tree, Some(cx.hovered));
+            let parent_iter = LayoutParentIterator::new(&cx.tree, cx.hovered);
             for ancestor in parent_iter {
                 if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(ancestor) {
                     pseudo_classes.set(PseudoClassFlags::HOVER, false);
-                    cx.style.needs_restyle();
+                    cx.style.needs_restyle(ancestor);
                 }
             }
 

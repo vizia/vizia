@@ -15,7 +15,7 @@ use super::MapId;
 /// When deriving the `Lens` trait on a struct, the derive macro constructs a static type which implements the `Lens` trait for each field.
 /// The `view()` method takes a reference to the struct type as input and outputs a reference to the field.
 /// This provides a way to specify a binding to a specific field of some application data.
-pub trait Lens: 'static + Copy + std::fmt::Debug + std::hash::Hash {
+pub trait Lens: 'static + Copy + Debug + Hash {
     type Source;
     type Target;
 
@@ -50,7 +50,7 @@ impl<T: Clone> LensValue<'_, T> {
     }
 }
 
-impl<T: Clone> AsRef<T> for LensValue<'_, T> {
+impl<T> AsRef<T> for LensValue<'_, T> {
     fn as_ref(&self) -> &T {
         self
     }
@@ -104,7 +104,7 @@ pub trait LensExt: Lens {
         Then::new(self, other)
     }
 
-    fn index<T>(self, index: usize) -> Index<Self, T>
+    fn idx<T>(self, index: usize) -> Index<Self, T>
     where
         T: 'static,
         Self::Target: Deref<Target = [T]>,
@@ -113,19 +113,19 @@ pub trait LensExt: Lens {
     }
 
     fn map<O: 'static, F: 'static + Fn(&Self::Target) -> O>(self, map: F) -> Map<Self, O> {
-        let id = MAP_MANAGER.with(|f| f.borrow_mut().create());
-        let entity = CURRENT.with(|f| *f.borrow());
-        MAPS.with(|f| {
-            f.borrow_mut().insert(id, (entity, Box::new(MapState { closure: Rc::new(map) })))
+        let id = MAP_MANAGER.with_borrow_mut(|f| f.create());
+        let entity = CURRENT.with_borrow(|f| *f);
+        MAPS.with_borrow_mut(|f| {
+            f.insert(id, (entity, Box::new(MapState { closure: Rc::new(map) })))
         });
         Map { id, lens: self, o: PhantomData }
     }
 
     fn map_ref<O: 'static, F: 'static + Fn(&Self::Target) -> &O>(self, map: F) -> MapRef<Self, O> {
-        let id = MAP_MANAGER.with(|f| f.borrow_mut().create());
-        let entity = CURRENT.with(|f| *f.borrow());
-        MAPS.with(|f| {
-            f.borrow_mut().insert(id, (entity, Box::new(MapRefState { closure: Rc::new(map) })))
+        let id = MAP_MANAGER.with_borrow_mut(|f| f.create());
+        let entity = CURRENT.with_borrow(|f| *f);
+        MAPS.with_borrow_mut(|f| {
+            f.insert(id, (entity, Box::new(MapRefState { closure: Rc::new(map) })))
         });
         MapRef { id, lens: self, o: PhantomData }
     }
@@ -162,7 +162,7 @@ pub struct Map<L: Lens, O> {
     o: PhantomData<O>,
 }
 
-impl<L: Lens, O: 'static> std::marker::Copy for Map<L, O> {}
+impl<L: Lens, O: 'static> Copy for Map<L, O> {}
 
 impl<L: Lens, O: 'static> Clone for Map<L, O> {
     fn clone(&self) -> Self {
@@ -175,24 +175,17 @@ impl<L: Lens, O: 'static> Lens for Map<L, O> {
     type Target = O;
 
     fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
-        if let Some(t) = self.lens.view(source) {
-            let closure = MAPS.with(|f| {
-                if let Some(lens_map) = f.borrow().get(&self.id) {
-                    if let Some(mapping) = lens_map.1.downcast_ref::<MapState<L::Target, O>>() {
-                        return Some(mapping.closure.clone());
-                    }
-                }
-
-                None
-            });
-            return Some(LensValue::Owned((closure?)(&*t)));
-        }
-
-        None
+        let target = self.lens.view(source)?;
+        let closure = MAPS.with_borrow(|f| {
+            let (_, any) = f.get(&self.id)?;
+            let MapState { closure } = any.downcast_ref()?;
+            Some(closure.clone())
+        })?;
+        Some(LensValue::Owned(closure(&*target)))
     }
 }
 
-impl<L: Lens, O: 'static> std::fmt::Debug for Map<L, O> {
+impl<L: Lens, O: 'static> Debug for Map<L, O> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{:?}.map(?)", self.lens))
     }
@@ -211,7 +204,7 @@ pub struct MapRef<L: Lens, O> {
     o: PhantomData<O>,
 }
 
-impl<L: Lens, O: 'static> std::marker::Copy for MapRef<L, O> {}
+impl<L: Lens, O: 'static> Copy for MapRef<L, O> {}
 
 impl<L: Lens, O: 'static> Clone for MapRef<L, O> {
     fn clone(&self) -> Self {
@@ -224,27 +217,21 @@ impl<L: Lens, O: 'static> Lens for MapRef<L, O> {
     type Target = O;
 
     fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
-        if let Some(t) = self.lens.view(source) {
-            let closure = MAPS.with(|f| {
-                if let Some(lens_map) = f.borrow().get(&self.id) {
-                    if let Some(mapping) = lens_map.1.downcast_ref::<MapRefState<L::Target, O>>() {
-                        return Some(mapping.closure.clone());
-                    }
-                }
+        let LensValue::Borrowed(target) = self.lens.view(source)? else {
+            unreachable!();
+        };
 
-                None
-            });
-            match t {
-                LensValue::Borrowed(b) => return Some(LensValue::Borrowed((closure?)(b))),
-                LensValue::Owned(_) => unreachable!(),
-            }
-        }
+        let closure = MAPS.with_borrow(|f| {
+            let (_, any) = f.get(&self.id)?;
+            let MapRefState { closure } = any.downcast_ref()?;
+            Some(closure.clone())
+        })?;
 
-        None
+        Some(LensValue::Borrowed(closure(target)))
     }
 }
 
-impl<L: Lens, O: 'static> std::fmt::Debug for MapRef<L, O> {
+impl<L: Lens, O: 'static> Debug for MapRef<L, O> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{:?}.map(?)", self.lens))
     }
@@ -304,7 +291,7 @@ impl<T: Clone, U: Clone> Clone for Then<T, U> {
     }
 }
 
-impl<A: Lens, B: Lens> std::fmt::Debug for Then<A, B> {
+impl<A: Lens, B: Lens> Debug for Then<A, B> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{:?}.then({:?})", self.a, self.b))
     }
@@ -349,9 +336,9 @@ impl<L: Lens, T> Hash for Index<L, T> {
     }
 }
 
-impl<L: Lens, T: 'static> Lens for Index<L, T>
+impl<L: Lens, T: 'static + Clone> Lens for Index<L, T>
 where
-    <L as Lens>::Target: std::ops::Deref<Target = [T]>,
+    <L as Lens>::Target: Deref<Target = [T]>,
 {
     type Source = L::Source;
     type Target = T;
@@ -359,7 +346,7 @@ where
     fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
         self.lens.view(source).and_then(|v| match v {
             LensValue::Borrowed(v) => v.get(self.index).map(LensValue::Borrowed),
-            LensValue::Owned(_) => unreachable!(),
+            LensValue::Owned(v) => v.get(self.index).cloned().map(LensValue::Owned),
         })
     }
 }
@@ -434,7 +421,7 @@ impl<T: 'static> Lens for UnwrapLens<T> {
     }
 }
 
-impl<T: 'static> std::fmt::Debug for UnwrapLens<T> {
+impl<T: 'static> Debug for UnwrapLens<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str("unwrap")
     }
@@ -476,7 +463,7 @@ impl<T: 'static + Clone + TryInto<U>, U: 'static> Lens for IntoLens<T, U> {
     }
 }
 
-impl<T, U> std::fmt::Debug for IntoLens<T, U> {
+impl<T, U> Debug for IntoLens<T, U> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str("into")
     }
@@ -568,7 +555,7 @@ impl<L: Lens> Lens for Wrapper<L> {
     }
 }
 
-impl<L: Lens> std::fmt::Debug for Wrapper<L> {
+impl<L: Lens> Debug for Wrapper<L> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
     }
@@ -693,5 +680,17 @@ where
     type Output = AndLens<Self, L2>;
     fn bitand(self, rhs: L2) -> Self::Output {
         AndLens::new(self, rhs)
+    }
+}
+
+impl<T> Lens for &'static T
+where
+    T: 'static + Copy + Debug + Hash,
+{
+    type Source = ();
+    type Target = T;
+
+    fn view<'a>(&self, _source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        Some(LensValue::Borrowed(*self))
     }
 }

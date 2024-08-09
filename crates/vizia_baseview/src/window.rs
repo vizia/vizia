@@ -1,9 +1,16 @@
-use crate::{application::ApplicationRunner, Renderer};
+use crate::application::ApplicationRunner;
 use baseview::gl::GlConfig;
 use baseview::{
     Event, EventStatus, Window, WindowHandle, WindowHandler, WindowOpenOptions, WindowScalePolicy,
 };
+use gl::types::GLint;
+use gl_rs as gl;
 use raw_window_handle::HasRawWindowHandle;
+use skia_safe::gpu::gl::FramebufferInfo;
+use skia_safe::gpu::{
+    self, backend_render_targets, context_options, ContextOptions, SurfaceOrigin,
+};
+use skia_safe::{ColorType, Surface};
 
 use crate::proxy::BaseviewProxy;
 use vizia_core::backend::*;
@@ -18,7 +25,7 @@ pub(crate) struct ViziaWindow {
 
 impl ViziaWindow {
     fn new(
-        mut cx: Context,
+        mut cx: BackendContext,
         win_desc: WindowDescription,
         window_scale_policy: WindowScalePolicy,
         window: &mut baseview::Window,
@@ -26,11 +33,49 @@ impl ViziaWindow {
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
     ) -> ViziaWindow {
         let context = window.gl_context().expect("Window was created without OpenGL support");
-        let renderer = load_renderer(window);
 
         unsafe { context.make_current() };
 
-        let canvas = Canvas::new(renderer).expect("Cannot create canvas");
+        // Build skia renderer
+        gl::load_with(|s| context.get_proc_address(s));
+        let interface = skia_safe::gpu::gl::Interface::new_load_with(|name| {
+            if name == "eglGetCurrentDisplay" {
+                return std::ptr::null();
+            }
+            context.get_proc_address(name)
+        })
+        .expect("Could not create interface");
+
+        // https://github.com/rust-skia/rust-skia/issues/476
+        let mut context_options = ContextOptions::new();
+        context_options.skip_gl_error_checks = context_options::Enable::Yes;
+
+        let mut gr_context = skia_safe::gpu::direct_contexts::make_gl(interface, &context_options)
+            .expect("Could not create direct context");
+
+        let fb_info = {
+            let mut fboid: GLint = 0;
+            unsafe { gl::GetIntegerv(gl::FRAMEBUFFER_BINDING, &mut fboid) };
+
+            FramebufferInfo {
+                fboid: fboid.try_into().unwrap(),
+                format: skia_safe::gpu::gl::Format::RGBA8.into(),
+                ..Default::default()
+            }
+        };
+
+        let mut surface = create_surface(
+            (win_desc.inner_size.width as i32, win_desc.inner_size.height as i32),
+            fb_info,
+            &mut gr_context,
+        );
+
+        let dirty_surface = surface
+            .new_surface_with_dimensions((
+                win_desc.inner_size.width as i32,
+                win_desc.inner_size.height as i32,
+            ))
+            .unwrap();
 
         // Assume scale for now until there is an event with a new one.
         // Assume scale for now until there is an event with a new one.
@@ -45,14 +90,27 @@ impl ViziaWindow {
         };
         let dpi_factor = window_scale_factor * win_desc.user_scale_factor;
 
-        BackendContext::new(&mut cx).add_main_window(&win_desc, canvas, dpi_factor as f32);
+        cx.add_main_window(Entity::root(), &win_desc, dpi_factor as f32);
+        cx.add_window(WindowView {});
 
-        cx.remove_user_themes();
+        cx.0.windows.insert(
+            Entity::root(),
+            WindowState { window_description: win_desc, ..Default::default() },
+        );
+
+        cx.context().remove_user_themes();
         if let Some(builder) = builder {
-            (builder)(&mut cx);
+            (builder)(cx.context());
         }
 
-        let application = ApplicationRunner::new(cx, use_system_scaling, window_scale_factor);
+        let application = ApplicationRunner::new(
+            cx,
+            gr_context,
+            use_system_scaling,
+            window_scale_factor,
+            surface,
+            dirty_surface,
+        );
         unsafe { context.make_not_current() };
 
         ViziaWindow { application, on_idle }
@@ -69,7 +127,6 @@ impl ViziaWindow {
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
         ignore_default_theme: bool,
-        text_config: TextConfig,
     ) -> WindowHandle
     where
         P: HasRawWindowHandle,
@@ -92,23 +149,15 @@ impl ViziaWindow {
             parent,
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-                let mut context = Context::new(win_desc.inner_size, win_desc.user_scale_factor);
+                let mut cx = Context::new();
 
-                context.ignore_default_theme = ignore_default_theme;
-                context.remove_user_themes();
+                cx.ignore_default_theme = ignore_default_theme;
+                cx.remove_user_themes();
 
-                let mut cx = BackendContext::new(&mut context);
-                cx.set_text_config(text_config);
+                let mut cx = BackendContext::new(cx);
 
                 cx.set_event_proxy(Box::new(BaseviewProxy()));
-                ViziaWindow::new(
-                    context,
-                    win_desc,
-                    scale_policy,
-                    window,
-                    Some(Box::new(app)),
-                    on_idle,
-                )
+                ViziaWindow::new(cx, win_desc, scale_policy, window, Some(Box::new(app)), on_idle)
             },
         )
     }
@@ -122,7 +171,6 @@ impl ViziaWindow {
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
         ignore_default_theme: bool,
-        text_config: TextConfig,
     ) where
         F: Fn(&mut Context),
         F: 'static + Send,
@@ -140,23 +188,15 @@ impl ViziaWindow {
         Window::open_blocking(
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-                let mut context = Context::new(win_desc.inner_size, win_desc.user_scale_factor);
+                let mut cx = Context::new();
 
-                context.ignore_default_theme = ignore_default_theme;
-                context.remove_user_themes();
+                cx.ignore_default_theme = ignore_default_theme;
+                cx.remove_user_themes();
 
-                let mut cx = BackendContext::new(&mut context);
-                cx.set_text_config(text_config);
+                let mut cx = BackendContext::new(cx);
 
                 cx.set_event_proxy(Box::new(BaseviewProxy()));
-                ViziaWindow::new(
-                    context,
-                    win_desc,
-                    scale_policy,
-                    window,
-                    Some(Box::new(app)),
-                    on_idle,
-                )
+                ViziaWindow::new(cx, win_desc, scale_policy, window, Some(Box::new(app)), on_idle)
             },
         )
     }
@@ -177,6 +217,7 @@ impl WindowHandler for ViziaWindow {
 
     fn on_event(&mut self, _window: &mut Window<'_>, event: Event) -> EventStatus {
         let mut should_quit = false;
+
         self.application.handle_event(event, &mut should_quit);
 
         self.application.handle_idle(&self.on_idle);
@@ -189,17 +230,24 @@ impl WindowHandler for ViziaWindow {
     }
 }
 
-fn load_renderer(window: &Window) -> Renderer {
-    let context = window.gl_context().expect("Window was created without OpenGL support");
+pub struct WindowView {}
 
-    unsafe { context.make_current() };
+impl View for WindowView {}
 
-    let renderer = unsafe {
-        femtovg::renderer::OpenGl::new_from_function(|s| context.get_proc_address(s) as *const _)
-            .expect("Cannot create renderer")
-    };
+pub fn create_surface(
+    size: (i32, i32),
+    fb_info: FramebufferInfo,
+    gr_context: &mut skia_safe::gpu::DirectContext,
+) -> Surface {
+    let backend_render_target = backend_render_targets::make_gl(size, None, 8, fb_info);
 
-    unsafe { context.make_not_current() };
-
-    renderer
+    gpu::surfaces::wrap_backend_render_target(
+        gr_context,
+        &backend_render_target,
+        SurfaceOrigin::BottomLeft,
+        ColorType::RGBA8888,
+        None,
+        None,
+    )
+    .expect("Could not create skia surface")
 }

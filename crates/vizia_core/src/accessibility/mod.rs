@@ -2,7 +2,7 @@ use crate::entity::Entity;
 use accesskit::NodeId;
 use vizia_id::GenerationalId;
 
-/// Trait for converting between an `Entity`` and an accesskit `NodeId`.
+/// Trait for converting between an `Entity` and an accesskit `NodeId`.
 pub trait IntoNode {
     fn accesskit_id(&self) -> accesskit::NodeId;
 }

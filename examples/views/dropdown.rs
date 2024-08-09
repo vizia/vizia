@@ -33,7 +33,10 @@ fn main() -> Result<(), ApplicationError> {
         ExamplePage::new(cx, |cx| {
             Dropdown::new(
                 cx,
-                move |cx| Label::new(cx, AppData::choice),
+                move |cx| {
+                    Button::new(cx, |cx| Label::new(cx, AppData::choice))
+                        .on_press(|cx| cx.emit(PopupEvent::Switch));
+                },
                 move |cx| {
                     List::new(cx, AppData::list, |cx, _, item| {
                         Label::new(cx, item)

@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+// Helper trait for getting CSS from a string or path.
 pub trait IntoCssStr: 'static {
     fn get_style(&self) -> Result<String, std::io::Error>;
 }
@@ -32,6 +33,7 @@ impl IntoCssStr for Path {
     }
 }
 
+#[doc(hidden)]
 pub enum CSS {
     Path(PathBuf),
     String(String),
@@ -63,7 +65,7 @@ impl From<PathBuf> for CSS {
 #[macro_export]
 macro_rules! include_style {
     ($filename:tt) => {
-        $crate::prelude::CSS::from_file(concat!(env!("CARGO_MANIFEST_DIR"), "/", $filename))
+        $crate::util::CSS::from_file(concat!(env!("CARGO_MANIFEST_DIR"), "/", $filename))
     };
 }
 

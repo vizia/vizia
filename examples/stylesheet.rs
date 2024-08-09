@@ -6,7 +6,7 @@ fn main() -> Result<(), ApplicationError> {
         cx.add_stylesheet(include_style!("examples/resources/themes/test.css"))
             .expect("Failed to add stylesheet");
         HStack::new(cx, |cx| {
-            Element::new(cx).class("foo");
+            Element::new(cx).class("foo").on_press(|cx| cx.emit(WindowEvent::DragWindow));
         })
         .size(Pixels(200.0))
         .class("bar");

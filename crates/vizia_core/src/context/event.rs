@@ -4,9 +4,9 @@ use std::collections::{BinaryHeap, VecDeque};
 use std::error::Error;
 use std::rc::Rc;
 
-use femtovg::Transform2D;
 use hashbrown::{HashMap, HashSet};
 use vizia_storage::{LayoutTreeIterator, TreeIterator};
+use vizia_window::WindowPosition;
 
 use crate::animation::{AnimId, Interpolator};
 use crate::cache::CachedData;
@@ -16,6 +16,8 @@ use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use vizia_input::MouseState;
+
+use skia_safe::Matrix;
 
 use crate::text::TextContext;
 #[cfg(feature = "clipboard")]
@@ -79,13 +81,12 @@ pub struct EventContext<'a> {
     pub(crate) timers: &'a mut Vec<TimerState>,
     pub(crate) running_timers: &'a mut BinaryHeap<TimerState>,
     cursor_icon_locked: &'a mut bool,
-    window_size: &'a mut WindowSize,
-    user_scale_factor: &'a mut f64,
     #[cfg(feature = "clipboard")]
     clipboard: &'a mut Box<dyn ClipboardProvider>,
     pub(crate) event_proxy: &'a mut Option<Box<dyn crate::context::EventProxy>>,
     pub(crate) ignore_default_theme: &'a bool,
     pub(crate) drop_data: &'a mut Option<DropData>,
+    pub windows: &'a mut HashMap<Entity, WindowState>,
 }
 
 macro_rules! get_length_property {
@@ -132,13 +133,12 @@ impl<'a> EventContext<'a> {
             timers: &mut cx.timers,
             running_timers: &mut cx.running_timers,
             cursor_icon_locked: &mut cx.cursor_icon_locked,
-            window_size: &mut cx.window_size,
-            user_scale_factor: &mut cx.user_scale_factor,
             #[cfg(feature = "clipboard")]
             clipboard: &mut cx.clipboard,
             event_proxy: &mut cx.event_proxy,
             ignore_default_theme: &cx.ignore_default_theme,
             drop_data: &mut cx.drop_data,
+            windows: &mut cx.windows,
         }
     }
 
@@ -166,18 +166,38 @@ impl<'a> EventContext<'a> {
             timers: &mut cx.timers,
             running_timers: &mut cx.running_timers,
             cursor_icon_locked: &mut cx.cursor_icon_locked,
-            window_size: &mut cx.window_size,
-            user_scale_factor: &mut cx.user_scale_factor,
             #[cfg(feature = "clipboard")]
             clipboard: &mut cx.clipboard,
             event_proxy: &mut cx.event_proxy,
             ignore_default_theme: &cx.ignore_default_theme,
             drop_data: &mut cx.drop_data,
+            windows: &mut cx.windows,
         }
     }
 
-    pub fn get_view<V: View>(&self) -> Option<&V> {
-        self.views.get(&self.current).and_then(|view| view.downcast_ref::<V>())
+    // pub fn get_view<V: View>(&self) -> Option<&V> {
+    //     self.views.get(&self.current).and_then(|view| view.downcast_ref::<V>())
+    // }
+
+    pub fn close_window(&mut self) {
+        if let Some(state) = self.windows.get_mut(&self.current) {
+            state.should_close = true;
+        }
+    }
+
+    pub fn window_position(&self) -> WindowPosition {
+        let parent_window = self.parent_window().unwrap_or(Entity::root());
+        if let Some(state) = self.windows.get(&parent_window) {
+            return state.position;
+        }
+
+        WindowPosition::new(0, 0)
+    }
+
+    pub fn window_size(&self) -> WindowSize {
+        let parent_window = self.parent_window().unwrap_or(Entity::root());
+        let bounds = self.cache.get_bounds(parent_window);
+        WindowSize::new(bounds.width() as u32, bounds.height() as u32)
     }
 
     /// Returns the [Entity] id associated with the given identifier.
@@ -293,10 +313,8 @@ impl<'a> EventContext<'a> {
         }
     }
 
-    /// Returns the transform of the current view.
-    pub fn transform(&self) -> Transform2D {
-        let mut transform = Transform2D::identity();
-
+    /// Returns the 2D transform of the current view.
+    pub fn transform(&self) -> Matrix {
         let bounds = self.bounds();
         let scale_factor = self.scale_factor();
 
@@ -306,28 +324,29 @@ impl<'a> EventContext<'a> {
             .transform_origin
             .get(self.current)
             .map(|transform_origin| {
-                let mut origin = Transform2D::new_translation(bounds.left(), bounds.top());
+                let mut origin = Matrix::translate(bounds.top_left());
                 let offset = transform_origin.as_transform(bounds, scale_factor);
-                origin.premultiply(&offset);
+                origin = offset * origin;
                 origin
             })
-            .unwrap_or(Transform2D::new_translation(bounds.center().0, bounds.center().1));
-        transform.premultiply(&origin);
-        origin.inverse();
+            .unwrap_or(Matrix::translate(bounds.center()));
+        // transform = origin * transform;
+        let mut transform = origin;
+        origin = origin.invert().unwrap();
 
         // Apply translation.
         if let Some(translate) = self.style.translate.get(self.current) {
-            transform.premultiply(&translate.as_transform(bounds, scale_factor));
+            transform = transform * translate.as_transform(bounds, scale_factor);
         }
 
         // Apply rotation.
         if let Some(rotate) = self.style.rotate.get(self.current) {
-            transform.premultiply(&rotate.as_transform(bounds, scale_factor));
+            transform = transform * rotate.as_transform(bounds, scale_factor);
         }
 
         // Apply scaling.
         if let Some(scale) = self.style.scale.get(self.current) {
-            transform.premultiply(&scale.as_transform(bounds, scale_factor));
+            transform = transform * scale.as_transform(bounds, scale_factor);
         }
 
         // Apply transform functions.
@@ -342,16 +361,16 @@ impl<'a> EventContext<'a> {
                         let end_transform = end.value.as_transform(bounds, scale_factor);
                         let t = animation_state.t;
                         let animated_transform =
-                            Transform2D::interpolate(&start_transform, &end_transform, t);
-                        transform.premultiply(&animated_transform);
+                            Matrix::interpolate(&start_transform, &end_transform, t);
+                        transform = transform * animated_transform;
                     }
                 }
             } else {
-                transform.premultiply(&transforms.as_transform(bounds, scale_factor));
+                transform = transform * transforms.as_transform(bounds, scale_factor);
             }
         }
 
-        transform.premultiply(&origin);
+        transform = transform * origin;
 
         transform
     }
@@ -678,11 +697,11 @@ impl<'a> EventContext<'a> {
         if !self.ignore_default_theme {
             match theme_mode {
                 ThemeMode::LightMode => {
-                    self.resource_manager.themes[1] = String::from(LIGHT_THEME);
+                    self.resource_manager.themes[2] = String::from(LIGHT_THEME);
                 }
 
                 ThemeMode::DarkMode => {
-                    self.resource_manager.themes[1] = String::from(DARK_THEME);
+                    self.resource_manager.themes[2] = String::from(DARK_THEME);
                 }
             }
         }
@@ -690,15 +709,19 @@ impl<'a> EventContext<'a> {
 
     /// Marks the current view as needing to be redrawn.
     pub fn needs_redraw(&mut self) {
-        self.style.needs_redraw();
+        let parent_window = self.tree.get_parent_window(self.current).unwrap_or(Entity::root());
+        if let Some(window_state) = self.windows.get_mut(&parent_window) {
+            window_state.redraw_list.insert(self.current);
+        }
     }
 
     /// Marks the current view as needing a layout computation.
     pub fn needs_relayout(&mut self) {
         self.style.needs_relayout();
-        self.style.needs_redraw();
+        self.needs_redraw();
     }
 
+    /// Marks the current view as needing to be restyled.
     pub fn needs_restyle(&mut self) {
         self.style.restyle.insert(self.current).unwrap();
         let iter = if let Some(parent) = self.tree.get_layout_parent(self.current) {
@@ -710,7 +733,7 @@ impl<'a> EventContext<'a> {
         for descendant in iter {
             self.style.restyle.insert(descendant).unwrap();
         }
-        self.style.needs_restyle();
+        self.style.needs_restyle(self.current);
     }
 
     /// Reloads the stylesheets linked to the application.
@@ -738,12 +761,11 @@ impl<'a> EventContext<'a> {
         self.style.parse_theme(&overall_theme);
 
         for entity in self.tree.into_iter() {
-            self.style.restyle.insert(entity).unwrap();
+            self.style.needs_restyle(entity);
+            self.style.needs_relayout();
+            //self.style.needs_redraw(entity);
+            self.style.needs_text_update(entity);
         }
-
-        self.style.needs_restyle();
-        self.style.needs_relayout();
-        self.style.needs_redraw();
 
         Ok(())
     }
@@ -777,37 +799,6 @@ impl<'a> EventContext<'a> {
         {
             (f)(view);
         }
-    }
-
-    /// Returns the window's size in logical pixels, before
-    /// [`user_scale_factor()`][Self::user_scale_factor()] gets applied to it. If this value changed
-    /// during a frame then the window will be resized and a [`WindowEvent::GeometryChanged`] will
-    /// be emitted.
-    pub fn window_size(&self) -> WindowSize {
-        *self.window_size
-    }
-
-    /// Change the window size. A [`WindowEvent::GeometryChanged`] will be emitted when the window
-    /// has actually changed in size.
-    pub fn set_window_size(&mut self, new_size: WindowSize) {
-        *self.window_size = new_size;
-    }
-
-    /// A scale factor used for uniformly scaling the window independently of any HiDPI scaling.
-    /// `window_size` gets multplied with this factor to get the actual logical window size. If this
-    /// changes during a frame, then the window will be resized at the end of the frame and a
-    /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
-    /// [`WindowDescription::user_scale_factor`](vizia_window::WindowDescription::user_scale_factor).
-    pub fn user_scale_factor(&self) -> f64 {
-        *self.user_scale_factor
-    }
-
-    /// Change the user scale factor size. A [`WindowEvent::GeometryChanged`] will be emitted when the
-    /// window has actually changed in size.
-    pub fn set_user_scale_factor(&mut self, new_factor: f64) {
-        *self.user_scale_factor = new_factor;
-        self.style.system_flags.set(SystemFlags::RELAYOUT, true);
-        self.style.system_flags.set(SystemFlags::REFLOW, true);
     }
 
     // TODO: Abstract this to shared trait for all contexts
@@ -1118,9 +1109,8 @@ impl<'a> EventContext<'a> {
 
     /// Sets the text of the current view.
     pub fn set_text(&mut self, text: &str) {
-        self.text_context.set_text(self.current, text);
-
-        self.style.needs_text_layout.insert(self.current, true);
+        self.style.text.insert(self.current, text.to_owned());
+        self.style.needs_text_update(self.current);
         self.needs_relayout();
         self.needs_redraw();
     }
@@ -1159,15 +1149,15 @@ impl<'a> EventContext<'a> {
     /// let timer = cx.add_timer(Duration::from_secs(1), Some(Duration::from_secs(5)), |cx, reason|{
     ///     match reason {
     ///         TimerAction::Start => {
-    ///             println!("Start timer");
+    ///             debug!("Start timer");
     ///         }
     ///     
     ///         TimerAction::Tick(delta) => {
-    ///             println!("Tick timer: {:?}", delta);
+    ///             debug!("Tick timer: {:?}", delta);
     ///         }
     ///
     ///         TimerAction::Stop => {
-    ///             println!("Stop timer");
+    ///             debug!("Stop timer");
     ///         }
     ///     }
     /// });
@@ -1381,6 +1371,8 @@ pub trait TreeProps {
     fn parent(&self) -> Entity;
     /// Returns the id of the first_child of the current view.
     fn first_child(&self) -> Entity;
+
+    fn parent_window(&self) -> Option<Entity>;
 }
 
 impl<'a> TreeProps for EventContext<'a> {
@@ -1390,5 +1382,9 @@ impl<'a> TreeProps for EventContext<'a> {
 
     fn first_child(&self) -> Entity {
         self.tree.get_layout_first_child(self.current).unwrap()
+    }
+
+    fn parent_window(&self) -> Option<Entity> {
+        self.tree.get_parent_window(self.current)
     }
 }

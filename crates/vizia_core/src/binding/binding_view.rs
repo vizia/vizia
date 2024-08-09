@@ -54,7 +54,7 @@ where
 
         let binding = Self { entity: id, lens, content: Some(Box::new(builder)) };
 
-        CURRENT.with(|f| *f.borrow_mut() = id);
+        CURRENT.with_borrow_mut(|f| *f = id);
 
         let ancestors = cx.current().parent_iter(&cx.tree).collect::<HashSet<_>>();
         let new_ancestors = id.parent_iter(&cx.tree).collect::<Vec<_>>();

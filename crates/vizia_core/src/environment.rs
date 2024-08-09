@@ -15,8 +15,8 @@ use web_time::Duration;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum ThemeMode {
-    #[default]
     DarkMode,
+    #[default]
     LightMode,
 }
 
@@ -62,7 +62,7 @@ pub struct Environment {
     pub locale: LanguageIdentifier,
     /// Current application and system theme.
     pub theme: Theme,
-
+    /// The timer used to blink the caret of a textbox.
     pub(crate) caret_timer: Timer,
 }
 
