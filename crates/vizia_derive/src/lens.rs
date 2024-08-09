@@ -80,8 +80,8 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         if let GenericParam::Type(TypeParam { ident, .. }) = gp {
             lens_ty_idents.push(quote! {#ident});
             lens_ty_decls.push(quote! {#ident: 'static});
-            phantom_decls.push(quote! {std::marker::PhantomData<*const #ident>});
-            phantom_inits.push(quote! {std::marker::PhantomData});
+            phantom_decls.push(quote! {::std::marker::PhantomData<*const #ident>});
+            phantom_inits.push(quote! {::std::marker::PhantomData});
         }
     }
 
@@ -112,37 +112,35 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         quote! {
             #[doc = #struct_docs]
             #[allow(non_camel_case_types)]
-            #[derive(PartialEq, Eq)]
-            #struct_vis struct #field_name#lens_ty_generics(#(#phantom_decls),*);
+            #[derive(::std::cmp::PartialEq, ::std::cmp::Eq)]
+            #struct_vis struct #field_name #lens_ty_generics(#(#phantom_decls),*);
 
-            impl #lens_ty_generics #field_name#lens_ty_generics{
+            impl #lens_ty_generics #field_name #lens_ty_generics {
                 #[doc = #fn_docs]
                 pub const fn new()->Self{
                     Self(#(#phantom_inits),*)
                 }
             }
 
-            impl #lens_ty_generics_decls std::hash::Hash for #field_name#lens_ty_generics {
-                fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-                    std::any::TypeId::of::<Self>().hash(state);
+            impl #lens_ty_generics_decls ::std::hash::Hash for #field_name #lens_ty_generics {
+                fn hash<H: ::std::hash::Hasher>(&self, state: &mut H) {
+                    ::std::any::TypeId::of::<Self>().hash(state);
                 }
             }
 
-            impl #lens_ty_generics std::fmt::Debug for #field_name#lens_ty_generics {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    write!(f,"{}:{}",stringify!(#struct_type), stringify!(#field_name))
+            impl #lens_ty_generics ::std::fmt::Debug for #field_name #lens_ty_generics {
+                fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+                    write!(f, "{}:{}", stringify!(#struct_type), stringify!(#field_name))
                 }
             }
 
-            impl #lens_ty_generics Clone for #field_name#lens_ty_generics  {
-                fn clone(&self) -> #field_name#lens_ty_generics {
+            impl #lens_ty_generics ::std::clone::Clone for #field_name #lens_ty_generics  {
+                fn clone(&self) -> #field_name #lens_ty_generics {
                     *self
                 }
             }
 
-            impl #lens_ty_generics Copy for #field_name#lens_ty_generics {}
-
-
+            impl #lens_ty_generics ::std::marker::Copy for #field_name #lens_ty_generics {}
         }
     });
 
@@ -173,14 +171,12 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         let field_name = &f.ident.unwrap_named();
         let field_ty = &f.ty;
         quote! {
-
-            impl #impl_generics Lens for #twizzled_name::#field_name#lens_ty_generics #where_clause {
-
-                type Source = #struct_type#ty_generics;
+            impl #impl_generics ::vizia::prelude::Lens for #twizzled_name::#field_name #lens_ty_generics #where_clause {
+                type Source = #struct_type #ty_generics;
                 type Target = #field_ty;
 
-                fn view<'a>(&self, source: &'a #struct_type#ty_generics) -> Option<LensValue<'a, Self::Target>> {
-                    Some(LensValue::Borrowed(&source.#field_name))
+                fn view<'a>(&self, source: &'a #struct_type #ty_generics) -> ::std::option::Option<::vizia::prelude::LensValue<'a, Self::Target>> {
+                    ::std::option::Option::Some(::vizia::prelude::LensValue::Borrowed(&source.#field_name))
                 }
             }
         }
@@ -193,7 +189,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
 
         quote! {
             /// Lens for the corresponding field.
-            #field_vis const #lens_field_name: Wrapper<#twizzled_name::#field_name#lens_ty_generics> = Wrapper(#twizzled_name::#field_name::new());
+            #field_vis const #lens_field_name: ::vizia::prelude::Wrapper<#twizzled_name::#field_name #lens_ty_generics> = ::vizia::prelude::Wrapper(#twizzled_name::#field_name::new());
         }
     });
 
@@ -205,46 +201,46 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         #[doc = #mod_docs]
         #module_vis mod #twizzled_name {
             #(#defs)*
-            #[derive(PartialEq, Eq)]
+            #[derive(::std::cmp::PartialEq, ::std::cmp::Eq)]
             #[doc = #root_docs]
             #[allow(non_camel_case_types)]
-            #struct_vis struct root#lens_ty_generics(#(#phantom_decls),*);
+            #struct_vis struct root #lens_ty_generics(#(#phantom_decls),*);
 
-            impl #lens_ty_generics root#lens_ty_generics{
+            impl #lens_ty_generics root #lens_ty_generics {
                 pub const fn new()->Self{
                     Self(#(#phantom_inits),*)
                 }
             }
 
-            impl #lens_ty_generics_decls std::hash::Hash for root#lens_ty_generics {
-                fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-                    std::any::TypeId::of::<Self>().hash(state);
+            impl #lens_ty_generics_decls ::std::hash::Hash for root #lens_ty_generics {
+                fn hash<H: ::std::hash::Hasher>(&self, state: &mut H) {
+                    ::std::any::TypeId::of::<Self>().hash(state);
                 }
             }
 
-            impl #lens_ty_generics std::fmt::Debug for root#lens_ty_generics {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            impl #lens_ty_generics ::std::fmt::Debug for root #lens_ty_generics {
+                fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
                     write!(f,"{}",stringify!(#struct_type))
                 }
             }
 
-            impl #lens_ty_generics Clone for root#lens_ty_generics  {
-                fn clone(&self) -> root#lens_ty_generics {
+            impl #lens_ty_generics ::std::clone::Clone for root #lens_ty_generics  {
+                fn clone(&self) -> root #lens_ty_generics {
                     *self
                 }
             }
 
-            impl #lens_ty_generics Copy for root#lens_ty_generics {}
+            impl #lens_ty_generics ::std::marker::Copy for root #lens_ty_generics {}
         }
 
         #(#impls)*
 
-        impl #impl_generics Lens for #twizzled_name::root#lens_ty_generics {
-            type Source = #struct_type#ty_generics;
-            type Target = #struct_type#ty_generics;
+        impl #impl_generics ::vizia::prelude::Lens for #twizzled_name::root #lens_ty_generics {
+            type Source = #struct_type #ty_generics;
+            type Target = #struct_type #ty_generics;
 
-            fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
-                Some(LensValue::Borrowed(source))
+            fn view<'a>(&self, source: &'a Self::Source) -> ::std::option::Option<::vizia::prelude::LensValue<'a, Self::Target>> {
+                ::std::option::Option::Some(::vizia::prelude::LensValue::Borrowed(source))
             }
         }
 
@@ -253,7 +249,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         impl #impl_generics #struct_type #ty_generics #where_clause {
             #(#associated_items)*
 
-            pub const root: Wrapper<#twizzled_name::root#lens_ty_generics> = Wrapper(#twizzled_name::root::new());
+            pub const root: ::vizia::prelude::Wrapper<#twizzled_name::root #lens_ty_generics> = ::vizia::prelude::Wrapper(#twizzled_name::root::new());
         }
     };
 
@@ -358,7 +354,7 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
     let defs = usable_variants.iter().map(|(variant_name, _)| {
         quote! {
             #[allow(non_camel_case_types)]
-            #[derive(Copy, Clone, Hash, PartialEq, Eq)]
+            #[derive(:std::marker::Copy, ::std::clone::Clone, ::std::hash::Hash, ::std::cmp::PartialEq, ::std::cmp::Eq)]
             #struct_vis struct #variant_name();
 
             impl #variant_name {
@@ -367,8 +363,8 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
                 }
             }
 
-            impl std::fmt::Debug for #variant_name {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            impl ::std::fmt::Debug for #variant_name {
+                fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
                     write!(f,"{}:{}",stringify!(#enum_type), stringify!(#variant_name))
                 }
             }
@@ -378,22 +374,22 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
     let impls = usable_variants.iter().map(|(variant_name, variant_type)| {
         let name = format!("{}:{}", enum_type, variant_name);
         quote! {
-            impl Lens for #twizzled_name::#variant_name {
+            impl ::vizia::prelude::Lens for #twizzled_name::#variant_name {
                 type Source = #enum_type;
                 type Target = #variant_type;
 
-                fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+                fn view<'a>(&self, source: &'a Self::Source) -> Option<::vizia::prelude::LensValue<'a, Self::Target>> {
                     if let #enum_type::#variant_name(inner_value) = source {
-                        Some(LensValue::Borrowed(inner_value))
+                        ::std::option::Option::Some(::vizia::prelude::LensValue::Borrowed(inner_value))
                     } else {
-                        panic!("failed")
+                        ::std::panic!("failed")
                     }
 
                 }
             }
 
-            impl std::fmt::Debug for #twizzled_name::#variant_name {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            impl ::std::fmt::Debug for #twizzled_name::#variant_name {
+                fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
                     f.write_str(#name)
                 }
             }
