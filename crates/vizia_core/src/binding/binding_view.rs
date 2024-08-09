@@ -149,26 +149,21 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
     fn update(&mut self, cx: &mut Context) {
         cx.remove_children(cx.current());
 
-        let ids = MAPS.with(|f| {
-            let ids = f
-                .borrow()
-                .iter()
-                .filter(|(_, map)| map.0 == self.entity)
-                .map(|(id, _)| *id)
-                .collect::<Vec<_>>();
-            f.borrow_mut().retain(|_, map| map.0 != self.entity);
-
-            ids
-        });
-
-        MAP_MANAGER.with(|f| {
-            for id in ids {
-                f.borrow_mut().destroy(id);
-            }
+        MAP_MANAGER.with_borrow_mut(|manager| {
+            MAPS.with_borrow_mut(|maps| {
+                maps.retain(|id, (e, _)| {
+                    if *e == self.entity {
+                        manager.destroy(*id);
+                        false
+                    } else {
+                        true
+                    }
+                });
+            });
         });
 
         if let Some(builder) = &self.content {
-            CURRENT.with(|f| *f.borrow_mut() = self.entity);
+            CURRENT.with_borrow_mut(|f| *f = self.entity);
             (builder)(cx, self.lens);
         }
     }

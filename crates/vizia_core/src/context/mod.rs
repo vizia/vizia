@@ -239,13 +239,13 @@ impl Context {
     }
 
     /// Makes the above black magic more explicit
-    pub fn with_current<T>(&mut self, e: Entity, f: impl FnOnce(&mut Context) -> T) -> T {
-        let prev = self.current;
-        self.current = e;
-        CURRENT.with(|f| *f.borrow_mut() = e);
+    pub fn with_current<T>(&mut self, current: Entity, f: impl FnOnce(&mut Context) -> T) -> T {
+        let previous = self.current;
+        self.current = current;
+        CURRENT.with_borrow_mut(|f| *f = current);
         let ret = f(self);
-        CURRENT.with(|f| *f.borrow_mut() = prev);
-        self.current = prev;
+        CURRENT.with_borrow_mut(|f| *f = previous);
+        self.current = previous;
         ret
     }
 
@@ -437,22 +437,18 @@ impl Context {
             }
 
             // Remove any map lenses associated with the entity.
-            let ids = MAPS.with(|f| {
-                let ids = f
-                    .borrow()
-                    .iter()
-                    .filter(|(_, map)| map.0 == *entity)
-                    .map(|(id, _)| *id)
-                    .collect::<Vec<_>>();
-                f.borrow_mut().retain(|_, map| map.0 != *entity);
 
-                ids
-            });
-
-            MAP_MANAGER.with(|f| {
-                for id in ids {
-                    f.borrow_mut().destroy(id);
-                }
+            MAP_MANAGER.with_borrow_mut(|manager| {
+                MAPS.with_borrow_mut(|maps| {
+                    maps.retain(|id, (e, _)| {
+                        if e == entity {
+                            manager.destroy(*id);
+                            false
+                        } else {
+                            true
+                        }
+                    });
+                });
             });
 
             if let Some(parent) = self.tree.get_layout_parent(*entity) {
