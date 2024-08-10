@@ -146,10 +146,6 @@ name = "switch"
 path = "examples/views/switch.rs"
 
 [[example]]
-name = "notification"
-path = "examples/views/notification.rs"
-
-[[example]]
 name = "chip"
 path = "examples/views/chip.rs"
 

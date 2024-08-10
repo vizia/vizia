@@ -41,14 +41,12 @@ impl PickList {
                                 })
                                 .hoverable(false);
                             if show_handle {
-                                Icon::new(cx, ICON_CHEVRON_DOWN)
+                                Svg::new(cx, ICON_CHEVRON_DOWN)
                                     .class("icon")
                                     .size(Pixels(16.0))
                                     .hoverable(false);
                             }
                         })
-                        .left(Pixels(0.0))
-                        .right(Pixels(0.0))
                         .child_left(Pixels(0.0))
                         .child_right(Pixels(0.0))
                         .width(Stretch(1.0))
@@ -58,8 +56,6 @@ impl PickList {
                     .on_press(|cx| cx.emit(PopupEvent::Switch));
                 },
                 move |cx| {
-                    let window_height = cx.cache.get_height(Entity::root());
-                    let scale = cx.scale_factor();
                     ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
                         List::new(cx, list_lens, move |cx, index, item| {
                             Label::new(cx, item)
@@ -73,8 +69,7 @@ impl PickList {
                                 });
                         });
                     })
-                    .height(Auto)
-                    .max_height(Pixels(window_height / scale));
+                    .height(Auto);
                 },
             )
             .width(Stretch(1.0));

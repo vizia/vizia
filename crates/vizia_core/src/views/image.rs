@@ -47,22 +47,3 @@ impl View for Svg {
         Some("svg")
     }
 }
-
-pub struct Icon {}
-
-impl Icon {
-    pub fn new<T>(cx: &mut Context, data: impl Res<T>) -> Handle<Self>
-    where
-        T: AsRef<[u8]> + 'static,
-    {
-        Self {}.build(cx, |cx| {
-            Svg::new(cx, data);
-        })
-    }
-}
-
-impl View for Icon {
-    fn element(&self) -> Option<&'static str> {
-        Some("icon")
-    }
-}

@@ -23,7 +23,7 @@ pub(crate) struct AnimationState<T: Interpolator> {
     /// The duration of the animation.
     pub duration: Duration,
     /// The delay before the animation starts.
-    pub delay: f32,
+    pub delay: Duration,
     /// List of animation keyframes as (normalized time, value).
     pub keyframes: Vec<Keyframe<T>>,
     /// The output of value of the animation.
@@ -32,6 +32,8 @@ pub(crate) struct AnimationState<T: Interpolator> {
     pub persistent: bool,
     /// How far through the animation between 0.0 and 1.0.
     pub t: f32,
+
+    pub dt: f32,
 
     pub active: bool,
 
@@ -54,11 +56,12 @@ where
             id,
             start_time: Instant::now(),
             duration: Duration::new(0, 0),
-            delay: 0.0,
+            delay: Duration::new(0, 0),
             keyframes: Vec::new(),
             output: None,
             persistent: false,
             t: 0.0,
+            dt: 0.0,
             active: false,
             entities: HashSet::new(),
             from_rule: usize::MAX,
@@ -72,10 +75,8 @@ where
         self
     }
 
-    pub(crate) fn with_delay(mut self, delay: Option<Duration>) -> Self {
-        if let Some(delay) = delay {
-            self.delay = delay.as_secs_f32() / self.duration.as_secs_f32();
-        }
+    pub(crate) fn with_delay(mut self, delay: Duration) -> Self {
+        self.delay = delay;
 
         self
     }
@@ -111,11 +112,12 @@ where
             id: Animation::null(),
             start_time: Instant::now(),
             duration: Duration::new(0, 0),
-            delay: 0.0,
+            delay: Duration::new(0, 0),
             keyframes: Vec::new(),
             output: None,
             persistent: true,
             t: 0.0,
+            dt: 0.0,
             active: false,
             entities: HashSet::new(),
             from_rule: usize::MAX,

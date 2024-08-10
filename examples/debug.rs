@@ -68,7 +68,8 @@ fn main() -> Result<(), ApplicationError> {
 
         Window::new(cx, |cx| {
             HStack::new(cx, |cx| {
-                IconButton::new(cx, ICON_X).on_press(|cx| cx.emit(AppEvent::CloseWindow));
+                Button::new(cx, |cx| Svg::new(cx, ICON_X))
+                    .on_press(|cx| cx.emit(AppEvent::CloseWindow));
             })
             .on_press_down(|cx| cx.emit(WindowEvent::DragWindow))
             .background_color(Color::rgb(100, 100, 100))

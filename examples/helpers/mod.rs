@@ -139,7 +139,7 @@ impl View for ExamplePage {}
 fn theme_selection_dropdown(cx: &mut Context) {
     PickList::new(cx, ControlsData::theme_options, ControlsData::selected_theme, true)
         .on_select(|cx, index| cx.emit(ControlsEvent::SetThemeMode(index)))
-        .width(Pixels(85.0))
+        .width(Pixels(100.0))
         .tooltip(|cx| {
             Tooltip::new(cx, |cx| {
                 Label::new(cx, "Select Theme Mode");

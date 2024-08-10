@@ -42,6 +42,7 @@ pub struct Popup {
     placement: Placement,
     show_arrow: bool,
     arrow_size: Length,
+    should_reposition: bool,
 }
 
 impl Popup {
@@ -50,14 +51,15 @@ impl Popup {
             placement: Placement::Bottom,
             show_arrow: true,
             arrow_size: Length::Value(LengthValue::Px(0.0)),
+            should_reposition: true,
         }
         .build(cx, |cx| {
+            (content)(cx);
             Binding::new(cx, Popup::show_arrow, |cx, show_arrow| {
                 if show_arrow.get(cx) {
                     Arrow::new(cx);
                 }
             });
-            (content)(cx);
         })
         .position_type(PositionType::SelfDirected)
         .space(Pixels(0.0))
@@ -76,191 +78,201 @@ impl View for Popup {
                 let parent = cx.parent();
                 let parent_bounds = cx.cache.get_bounds(parent);
                 let bounds = cx.bounds();
-                let window_bounds = cx.cache.get_bounds(Entity::root());
-
+                let window_bounds =
+                    cx.cache.get_bounds(cx.parent_window().unwrap_or(Entity::root()));
+                let scale = cx.scale_factor();
                 let arrow_size = self.arrow_size.to_px().unwrap() * cx.scale_factor();
 
-                let mut available = AvailablePlacement::all();
+                let shift = if self.should_reposition {
+                    let mut available = AvailablePlacement::all();
 
-                let top_start_bounds = BoundingBox::from_min_max(
-                    parent_bounds.left(),
-                    parent_bounds.top() - bounds.height() - arrow_size,
-                    parent_bounds.left() + bounds.width(),
-                    parent_bounds.top(),
-                );
+                    let top_start_bounds = BoundingBox::from_min_max(
+                        parent_bounds.left(),
+                        parent_bounds.top() - bounds.height() - arrow_size,
+                        parent_bounds.left() + bounds.width(),
+                        parent_bounds.top(),
+                    );
 
-                available
-                    .set(AvailablePlacement::TOP_START, window_bounds.contains(&top_start_bounds));
+                    available.set(
+                        AvailablePlacement::TOP_START,
+                        window_bounds.contains(&top_start_bounds),
+                    );
 
-                let top_bounds = BoundingBox::from_min_max(
-                    parent_bounds.center().0 - bounds.width() / 2.0,
-                    parent_bounds.top() - bounds.height() - arrow_size,
-                    parent_bounds.center().0 + bounds.width() / 2.0,
-                    parent_bounds.top(),
-                );
+                    let top_bounds = BoundingBox::from_min_max(
+                        parent_bounds.center().0 - bounds.width() / 2.0,
+                        parent_bounds.top() - bounds.height() - arrow_size,
+                        parent_bounds.center().0 + bounds.width() / 2.0,
+                        parent_bounds.top(),
+                    );
 
-                available.set(AvailablePlacement::TOP, window_bounds.contains(&top_bounds));
+                    available.set(AvailablePlacement::TOP, window_bounds.contains(&top_bounds));
 
-                let top_end_bounds = BoundingBox::from_min_max(
-                    parent_bounds.right() - bounds.width(),
-                    parent_bounds.top() - bounds.height() - arrow_size,
-                    parent_bounds.right(),
-                    parent_bounds.top(),
-                );
+                    let top_end_bounds = BoundingBox::from_min_max(
+                        parent_bounds.right() - bounds.width(),
+                        parent_bounds.top() - bounds.height() - arrow_size,
+                        parent_bounds.right(),
+                        parent_bounds.top(),
+                    );
 
-                available.set(AvailablePlacement::TOP_END, window_bounds.contains(&top_end_bounds));
+                    available
+                        .set(AvailablePlacement::TOP_END, window_bounds.contains(&top_end_bounds));
 
-                let bottom_start_bounds = BoundingBox::from_min_max(
-                    parent_bounds.left(),
-                    parent_bounds.bottom(),
-                    parent_bounds.left() + bounds.width(),
-                    parent_bounds.bottom() + bounds.height() + arrow_size,
-                );
+                    let bottom_start_bounds = BoundingBox::from_min_max(
+                        parent_bounds.left(),
+                        parent_bounds.bottom(),
+                        parent_bounds.left() + bounds.width(),
+                        parent_bounds.bottom() + bounds.height() + arrow_size,
+                    );
 
-                available.set(
-                    AvailablePlacement::BOTTOM_START,
-                    window_bounds.contains(&bottom_start_bounds),
-                );
+                    available.set(
+                        AvailablePlacement::BOTTOM_START,
+                        window_bounds.contains(&bottom_start_bounds),
+                    );
 
-                let bottom_bounds = BoundingBox::from_min_max(
-                    parent_bounds.center().0 - bounds.width() / 2.0,
-                    parent_bounds.bottom(),
-                    parent_bounds.center().0 + bounds.width() / 2.0,
-                    parent_bounds.bottom() + bounds.height() + arrow_size,
-                );
+                    let bottom_bounds = BoundingBox::from_min_max(
+                        parent_bounds.center().0 - bounds.width() / 2.0,
+                        parent_bounds.bottom(),
+                        parent_bounds.center().0 + bounds.width() / 2.0,
+                        parent_bounds.bottom() + bounds.height() + arrow_size,
+                    );
 
-                available.set(AvailablePlacement::BOTTOM, window_bounds.contains(&bottom_bounds));
+                    available
+                        .set(AvailablePlacement::BOTTOM, window_bounds.contains(&bottom_bounds));
 
-                let bottom_end_bounds = BoundingBox::from_min_max(
-                    parent_bounds.right() - bounds.width(),
-                    parent_bounds.bottom(),
-                    parent_bounds.right(),
-                    parent_bounds.bottom() + bounds.height() + arrow_size,
-                );
+                    let bottom_end_bounds = BoundingBox::from_min_max(
+                        parent_bounds.right() - bounds.width(),
+                        parent_bounds.bottom(),
+                        parent_bounds.right(),
+                        parent_bounds.bottom() + bounds.height() + arrow_size,
+                    );
 
-                available.set(
-                    AvailablePlacement::BOTTOM_END,
-                    window_bounds.contains(&bottom_end_bounds),
-                );
+                    available.set(
+                        AvailablePlacement::BOTTOM_END,
+                        window_bounds.contains(&bottom_end_bounds),
+                    );
 
-                let left_start_bounds = BoundingBox::from_min_max(
-                    parent_bounds.left() - bounds.width() - arrow_size,
-                    parent_bounds.top(),
-                    parent_bounds.left(),
-                    parent_bounds.top() + bounds.height(),
-                );
+                    let left_start_bounds = BoundingBox::from_min_max(
+                        parent_bounds.left() - bounds.width() - arrow_size,
+                        parent_bounds.top(),
+                        parent_bounds.left(),
+                        parent_bounds.top() + bounds.height(),
+                    );
 
-                available.set(
-                    AvailablePlacement::LEFT_START,
-                    window_bounds.contains(&left_start_bounds),
-                );
+                    available.set(
+                        AvailablePlacement::LEFT_START,
+                        window_bounds.contains(&left_start_bounds),
+                    );
 
-                let left_bounds = BoundingBox::from_min_max(
-                    parent_bounds.left() - bounds.width() - arrow_size,
-                    parent_bounds.center().1 - bounds.height() / 2.0,
-                    parent_bounds.left(),
-                    parent_bounds.center().1 + bounds.height() / 2.0,
-                );
+                    let left_bounds = BoundingBox::from_min_max(
+                        parent_bounds.left() - bounds.width() - arrow_size,
+                        parent_bounds.center().1 - bounds.height() / 2.0,
+                        parent_bounds.left(),
+                        parent_bounds.center().1 + bounds.height() / 2.0,
+                    );
 
-                available.set(AvailablePlacement::LEFT, window_bounds.contains(&left_bounds));
+                    available.set(AvailablePlacement::LEFT, window_bounds.contains(&left_bounds));
 
-                let left_end_bounds = BoundingBox::from_min_max(
-                    parent_bounds.left() - bounds.width() - arrow_size,
-                    parent_bounds.bottom() - bounds.height(),
-                    parent_bounds.left(),
-                    parent_bounds.bottom(),
-                );
+                    let left_end_bounds = BoundingBox::from_min_max(
+                        parent_bounds.left() - bounds.width() - arrow_size,
+                        parent_bounds.bottom() - bounds.height(),
+                        parent_bounds.left(),
+                        parent_bounds.bottom(),
+                    );
 
-                available
-                    .set(AvailablePlacement::LEFT_END, window_bounds.contains(&left_end_bounds));
+                    available.set(
+                        AvailablePlacement::LEFT_END,
+                        window_bounds.contains(&left_end_bounds),
+                    );
 
-                let right_start_bounds = BoundingBox::from_min_max(
-                    parent_bounds.right(),
-                    parent_bounds.top(),
-                    parent_bounds.right() + bounds.width() + arrow_size,
-                    parent_bounds.top() + bounds.height(),
-                );
+                    let right_start_bounds = BoundingBox::from_min_max(
+                        parent_bounds.right(),
+                        parent_bounds.top(),
+                        parent_bounds.right() + bounds.width() + arrow_size,
+                        parent_bounds.top() + bounds.height(),
+                    );
 
-                available.set(
-                    AvailablePlacement::RIGHT_START,
-                    window_bounds.contains(&right_start_bounds),
-                );
+                    available.set(
+                        AvailablePlacement::RIGHT_START,
+                        window_bounds.contains(&right_start_bounds),
+                    );
 
-                let right_bounds = BoundingBox::from_min_max(
-                    parent_bounds.right(),
-                    parent_bounds.center().1 - bounds.height() / 2.0,
-                    parent_bounds.right() + bounds.width() + arrow_size,
-                    parent_bounds.center().1 + bounds.height() / 2.0,
-                );
+                    let right_bounds = BoundingBox::from_min_max(
+                        parent_bounds.right(),
+                        parent_bounds.center().1 - bounds.height() / 2.0,
+                        parent_bounds.right() + bounds.width() + arrow_size,
+                        parent_bounds.center().1 + bounds.height() / 2.0,
+                    );
 
-                available.set(AvailablePlacement::RIGHT, window_bounds.contains(&right_bounds));
+                    available.set(AvailablePlacement::RIGHT, window_bounds.contains(&right_bounds));
 
-                let right_end_bounds = BoundingBox::from_min_max(
-                    parent_bounds.right(),
-                    parent_bounds.bottom() - bounds.height(),
-                    parent_bounds.right() + bounds.width() + arrow_size,
-                    parent_bounds.bottom(),
-                );
+                    let right_end_bounds = BoundingBox::from_min_max(
+                        parent_bounds.right(),
+                        parent_bounds.bottom() - bounds.height(),
+                        parent_bounds.right() + bounds.width() + arrow_size,
+                        parent_bounds.bottom(),
+                    );
 
-                available
-                    .set(AvailablePlacement::RIGHT_END, window_bounds.contains(&right_end_bounds));
+                    available.set(
+                        AvailablePlacement::RIGHT_END,
+                        window_bounds.contains(&right_end_bounds),
+                    );
 
-                let scale = cx.scale_factor();
-
-                let shift = self.placement.place(available);
+                    self.placement.place(available)
+                } else {
+                    if let Some(first_child) = cx.tree.get_layout_first_child(cx.current) {
+                        let mut child_bounds = cx.cache.get_bounds(first_child);
+                        child_bounds.h = window_bounds.bottom()
+                            - parent_bounds.bottom()
+                            - arrow_size * scale
+                            - 8.0;
+                        cx.style.max_height.insert(first_child, Pixels(child_bounds.h / scale));
+                    }
+                    self.placement
+                };
 
                 let arrow_size = self.arrow_size.to_px().unwrap();
 
                 let translate = match shift {
                     Placement::Top => (
-                        Pixels(-(bounds.width() - parent_bounds.width()) / (2.0 * scale)),
-                        Pixels(-bounds.height() / scale - arrow_size),
+                        -(bounds.width() - parent_bounds.width()) / (2.0 * scale),
+                        -bounds.height() / scale - arrow_size,
                     ),
-                    Placement::TopStart => {
-                        (Pixels(0.0), Pixels(-bounds.height() / scale - arrow_size))
-                    }
+                    Placement::TopStart => (0.0, -bounds.height() / scale - arrow_size),
                     Placement::TopEnd => (
-                        Pixels(-(bounds.width() - parent_bounds.width()) / scale),
-                        Pixels(-bounds.height() / scale - arrow_size),
+                        -(bounds.width() - parent_bounds.width()) / scale,
+                        -bounds.height() / scale - arrow_size,
                     ),
                     Placement::Bottom => (
-                        Pixels(-(bounds.width() - parent_bounds.width()) / (2.0 * scale)),
-                        Pixels(parent_bounds.height() / scale + arrow_size),
+                        -(bounds.width() - parent_bounds.width()) / (2.0 * scale),
+                        parent_bounds.height() / scale + arrow_size,
                     ),
-                    Placement::BottomStart => {
-                        (Pixels(0.0), Pixels(parent_bounds.height() / scale + arrow_size))
-                    }
+                    Placement::BottomStart => (0.0, parent_bounds.height() / scale + arrow_size),
                     Placement::BottomEnd => (
-                        Pixels(-(bounds.width() - parent_bounds.width()) / scale),
-                        Pixels(parent_bounds.height() / scale + arrow_size),
+                        -(bounds.width() - parent_bounds.width()) / scale,
+                        parent_bounds.height() / scale + arrow_size,
                     ),
-                    Placement::LeftStart => {
-                        (Pixels(-(bounds.width() / scale) - arrow_size), Pixels(0.0))
-                    }
+                    Placement::LeftStart => (-(bounds.width() / scale) - arrow_size, 0.0),
                     Placement::Left => (
-                        Pixels(-(bounds.width() / scale) - arrow_size),
-                        Pixels(-(bounds.height() - parent_bounds.height()) / (2.0 * scale)),
+                        -(bounds.width() / scale) - arrow_size,
+                        -(bounds.height() - parent_bounds.height()) / (2.0 * scale),
                     ),
                     Placement::LeftEnd => (
-                        Pixels(-(bounds.width() / scale) - arrow_size),
-                        Pixels(-(bounds.height() - parent_bounds.height()) / scale),
+                        -(bounds.width() / scale) - arrow_size,
+                        -(bounds.height() - parent_bounds.height()) / scale,
                     ),
-                    Placement::RightStart => {
-                        (Pixels((parent_bounds.width() / scale) + arrow_size), Pixels(0.0))
-                    }
+                    Placement::RightStart => ((parent_bounds.width() / scale) + arrow_size, 0.0),
                     Placement::Right => (
-                        Pixels((parent_bounds.width() / scale) + arrow_size),
-                        Pixels(-(bounds.height() - parent_bounds.height()) / (2.0 * scale)),
+                        (parent_bounds.width() / scale) + arrow_size,
+                        -(bounds.height() - parent_bounds.height()) / (2.0 * scale),
                     ),
                     Placement::RightEnd => (
-                        Pixels((parent_bounds.width() / scale) + arrow_size),
-                        Pixels(-(bounds.height() - parent_bounds.height()) / scale),
+                        (parent_bounds.width() / scale) + arrow_size,
+                        -(bounds.height() - parent_bounds.height()) / scale,
                     ),
 
-                    _ => (Pixels(0.0), Pixels(0.0)),
+                    _ => (0.0, 0.0),
                 };
-
-                cx.set_translate(translate);
+                cx.set_translate((Pixels(translate.0.round()), Pixels(translate.1.round())));
             }
 
             _ => {}
@@ -411,14 +423,19 @@ impl<'a> Handle<'a, Popup> {
         })
     }
 
-    /// Sets whether the tooltip should include an arrow. Defaults to true.
+    /// Sets whether the popup should include an arrow. Defaults to true.
     pub fn arrow(self, show_arrow: bool) -> Self {
-        self.modify(|tooltip| tooltip.show_arrow = show_arrow)
+        self.modify(|popup| popup.show_arrow = show_arrow)
     }
 
-    /// Sets the size of the tooltip arrow, or gap if the arrow is hidden.
+    /// Sets the size of the popup arrow, or gap if the arrow is hidden.
     pub fn arrow_size(self, size: impl Into<Length>) -> Self {
-        self.modify(|tooltip| tooltip.arrow_size = size.into())
+        self.modify(|popup| popup.arrow_size = size.into())
+    }
+
+    /// Set to whether the popup should reposition to always be visible.
+    pub fn should_reposition(self, flag: bool) -> Self {
+        self.modify(|popup| popup.should_reposition = flag)
     }
 
     /// Registers a callback for when the user clicks off of the popup, usually with the intent of

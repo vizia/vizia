@@ -19,7 +19,7 @@ impl Rating {
         Self { rating: lens.get(cx), max_rating, on_change: None }
             .build(cx, |cx| {
                 for i in 1..max_rating + 1 {
-                    Icon::new(cx, ICON_STAR_FILLED)
+                    Svg::new(cx, ICON_STAR_FILLED)
                         // .navigable(true)
                         .checkable(true)
                         .numeric_value(1)

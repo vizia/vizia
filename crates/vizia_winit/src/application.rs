@@ -1,10 +1,10 @@
-use std::{collections::HashMap, error::Error, sync::Arc};
-
 use crate::{
     convert::{winit_key_code_to_code, winit_key_to_key},
     window::{WinState, Window},
     window_modifiers::WindowModifiers,
 };
+use hashbrown::HashMap;
+use std::{error::Error, sync::Arc};
 
 // #[cfg(feature = "accesskit")]
 // use accesskit::{Action, NodeBuilder, NodeId, TreeUpdate};

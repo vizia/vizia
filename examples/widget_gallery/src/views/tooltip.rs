@@ -13,7 +13,7 @@ pub fn tooltip(cx: &mut Context) {
         DemoRegion::new(
             cx,
             |cx| {
-                IconButton::new(cx, ICON_TRASH)
+                Button::new(cx, |cx |Svg::new(cx, ICON_TRASH))
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Delete");
                     }));

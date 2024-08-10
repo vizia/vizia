@@ -29,9 +29,10 @@ accesskit_winit = { version = "0.18", optional = true }
 glutin-winit = { version = "0.5" }
 raw-window-handle = "0.5"
 gl-rs = { package = "gl", version = "0.14.0" }
+hashbrown = "0.14"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows-sys = { version = "0.52", default-features = false, features = [ "Win32_Graphics_Dwm" ] }
+windows-sys = { version = "0.59", default-features = false, features = [ "Win32_Graphics_Dwm" ] }
 
 [lints]
 workspace = true

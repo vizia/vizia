@@ -25,7 +25,7 @@ impl DemoRegion {
                 .class("region");
                 Divider::horizontal(cx);
                 HStack::new(cx, |cx| {
-                    ToggleButton::new(cx, DemoRegion::open, |cx| Icon::new(cx, ICON_CODE))
+                    ToggleButton::new(cx, DemoRegion::open, |cx| Svg::new(cx, ICON_CODE))
                         .on_press(|ex| ex.emit(DemoRegionEvent::Toggle))
                         .space(Pixels(8.0))
                         .left(Stretch(1.0))

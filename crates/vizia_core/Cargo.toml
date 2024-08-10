@@ -35,13 +35,13 @@ sys-locale = "0.3.1"
 unicode-segmentation = "1.11.0"
 copypasta = {version = "0.10.1", optional = true, default-features = false }
 chrono = "0.4.34"
-hashbrown = "0.14.3"
+hashbrown = "0.14"
 log = "0.4.20"
 indexmap = "2.2.3"
-qfilter = "0.1.6"
+qfilter = "0.2.1"
 # reqwest = { version = "0.11.9", features = ["blocking"] }
 web-time = "1.1.0"
-comrak = "0.24"
+comrak = "0.26"
 open = "5.2"
 sha2 = "0.10"
 

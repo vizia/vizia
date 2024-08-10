@@ -213,18 +213,6 @@ fn main() -> Result<(), ApplicationError> {
                     },
                 ),
 
-                "Form" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            form(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
                 "HStack" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).class("tab-name").hoverable(false);
@@ -237,13 +225,13 @@ fn main() -> Result<(), ApplicationError> {
                     },
                 ),
 
-                "Icon" => TabPair::new(
+                "Svg" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            icon(cx);
+                            svg(cx);
                         })
                         .class("widgets");
                     },
@@ -316,18 +304,6 @@ fn main() -> Result<(), ApplicationError> {
                     |cx| {
                         ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
                             menu_bar(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Notification" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                            notification(cx);
                         })
                         .class("widgets");
                     },

@@ -44,13 +44,13 @@ fn main() -> Result<(), ApplicationError> {
                 .on_toggle(|cx| cx.emit(AppEvent::ToggleBold));
 
             ButtonGroup::new(cx, |cx| {
-                ToggleButton::new(cx, AppData::bold, |cx| Icon::new(cx, ICON_BOLD))
+                ToggleButton::new(cx, AppData::bold, |cx| Svg::new(cx, ICON_BOLD))
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleBold));
 
-                ToggleButton::new(cx, AppData::italic, |cx| Icon::new(cx, ICON_ITALIC))
+                ToggleButton::new(cx, AppData::italic, |cx| Svg::new(cx, ICON_ITALIC))
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleItalic));
 
-                ToggleButton::new(cx, AppData::underline, |cx| Icon::new(cx, ICON_UNDERLINE))
+                ToggleButton::new(cx, AppData::underline, |cx| Svg::new(cx, ICON_UNDERLINE))
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleUnderline));
             });
         });

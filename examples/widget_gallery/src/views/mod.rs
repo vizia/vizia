@@ -34,11 +34,8 @@ pub use dropdown::*;
 pub mod element;
 pub use element::*;
 
-pub mod form;
-pub use form::*;
-
-pub mod icon;
-pub use icon::*;
+pub mod svg;
+pub use svg::*;
 
 pub mod image;
 pub use image::*;
@@ -57,9 +54,6 @@ pub use menu::*;
 
 pub mod menu_bar;
 pub use menu_bar::*;
-
-pub mod notification;
-pub use notification::*;
 
 pub mod picklist;
 pub use picklist::*;

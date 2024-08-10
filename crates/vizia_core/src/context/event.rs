@@ -376,17 +376,23 @@ impl<'a> EventContext<'a> {
     }
 
     /// Trigger an animation with the given id to play on the current view.
-    pub fn play_animation(&mut self, anim_id: impl AnimId, duration: Duration) {
+    pub fn play_animation(&mut self, anim_id: impl AnimId, duration: Duration, delay: Duration) {
         if let Some(animation_id) = anim_id.get(self) {
-            self.style.enqueue_animation(self.current, animation_id, duration);
+            self.style.enqueue_animation(self.current, animation_id, duration, delay);
         }
     }
 
     /// Trigger an animation with the given id to play on a target view.
-    pub fn play_animation_for(&mut self, anim_id: impl AnimId, target: &str, duration: Duration) {
+    pub fn play_animation_for(
+        &mut self,
+        anim_id: impl AnimId,
+        target: &str,
+        duration: Duration,
+        delay: Duration,
+    ) {
         if let Some(target_entity) = self.resolve_entity_identifier(target) {
             if let Some(animation_id) = anim_id.get(self) {
-                self.style.enqueue_animation(target_entity, animation_id, duration)
+                self.style.enqueue_animation(target_entity, animation_id, duration, delay)
             }
         }
     }
@@ -1075,6 +1081,12 @@ impl<'a> EventContext<'a> {
 
     pub fn set_height(&mut self, height: Units) {
         self.style.height.insert(self.current, height);
+        self.needs_relayout();
+        self.needs_redraw();
+    }
+
+    pub fn set_max_height(&mut self, height: Units) {
+        self.style.max_height.insert(self.current, height);
         self.needs_relayout();
         self.needs_redraw();
     }
