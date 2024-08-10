@@ -16,8 +16,7 @@ pub struct TabView {
 impl TabView {
     pub fn new<L, T, F>(cx: &mut Context, lens: L, content: F) -> Handle<Self>
     where
-        L: Lens,
-        <L as Lens>::Target: std::ops::Deref<Target = [T]>,
+        L: Lens<Target: std::ops::Deref<Target = [T]>>,
         T: Clone + 'static,
         F: 'static + Clone + Fn(&mut Context, Index<L, T>) -> TabPair,
     {

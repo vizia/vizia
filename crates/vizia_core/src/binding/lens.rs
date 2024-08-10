@@ -336,9 +336,10 @@ impl<L: Lens, T> Hash for Index<L, T> {
     }
 }
 
-impl<L: Lens, T: 'static + Clone> Lens for Index<L, T>
+impl<L, T> Lens for Index<L, T>
 where
-    <L as Lens>::Target: Deref<Target = [T]>,
+    L: Lens<Target: Deref<Target = [T]>>,
+    T: 'static + Clone,
 {
     type Source = L::Source;
     type Target = T;

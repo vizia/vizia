@@ -37,10 +37,9 @@ pub(crate) struct BasicStore<L: Lens, T> {
     pub observers: HashSet<Entity>,
 }
 
-impl<L: Lens, T> Store for BasicStore<L, T>
+impl<L> Store for BasicStore<L, L::Target>
 where
-    L: Lens<Target = T>,
-    <L as Lens>::Target: Data,
+    L: Lens<Target: Data>,
 {
     fn contains_source(&self, model: ModelOrView) -> bool {
         model.downcast_ref::<L::Source>().is_some()

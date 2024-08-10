@@ -56,10 +56,9 @@ pub trait Res<T>: ResGet<T> {
     }
 }
 
-impl<L: ?Sized> ResGet<L::Target> for L
+impl<L> ResGet<L::Target> for L
 where
-    L: Lens,
-    L::Target: Clone,
+    L: Lens<Target: Clone> + ?Sized,
 {
     fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, L::Target>> {
         self.view(
@@ -75,8 +74,7 @@ where
 
 impl<L> Res<L::Target> for L
 where
-    L: Lens,
-    L::Target: Data,
+    L: Lens<Target: Data>,
 {
     fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
     where

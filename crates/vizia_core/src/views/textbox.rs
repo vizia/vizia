@@ -85,9 +85,9 @@ enum TextboxKind {
     MultiLineWrapped,
 }
 
-impl<L: Lens> Textbox<L>
+impl<L> Textbox<L>
 where
-    <L as Lens>::Target: Data + Clone + ToStringLocalized + std::str::FromStr,
+    L: Lens<Target: Data + Clone + ToStringLocalized + std::str::FromStr>,
 {
     /// Creates a new single-line textbox.
     ///
@@ -621,9 +621,9 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
     }
 }
 
-impl<L: Lens> View for Textbox<L>
+impl<L> View for Textbox<L>
 where
-    <L as Lens>::Target: Data + ToStringLocalized + std::str::FromStr,
+    L: Lens<Target: Data + ToStringLocalized + std::str::FromStr>,
 {
     fn element(&self) -> Option<&'static str> {
         Some("textbox")
