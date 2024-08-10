@@ -26,6 +26,7 @@ use crate::{modifiers::ModalModel, prelude::*};
 #[derive(Lens)]
 pub struct Tooltip {
     placement: Placement,
+    shift: Placement,
     show_arrow: bool,
     arrow_size: Length,
 }
@@ -55,6 +56,7 @@ impl Tooltip {
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
         Self {
             placement: Placement::Bottom,
+            shift: Placement::Bottom,
             show_arrow: true,
             arrow_size: Length::Value(LengthValue::Px(8.0)),
         }
@@ -113,7 +115,8 @@ impl View for Tooltip {
                 let parent = cx.parent();
                 let parent_bounds = cx.cache.get_bounds(parent);
                 let bounds = cx.bounds();
-                let window_bounds = cx.cache.get_bounds(Entity::root());
+                let window_bounds =
+                    cx.cache.get_bounds(cx.parent_window().unwrap_or(Entity::root()));
 
                 let arrow_size = self.arrow_size.to_px().unwrap() * cx.scale_factor();
 
@@ -244,60 +247,54 @@ impl View for Tooltip {
 
                 let scale = cx.scale_factor();
 
-                let shift = self.placement.place(available);
+                self.shift = self.placement.place(available);
+
+                println!("{:?} {:?}", self.placement, self.shift);
 
                 let arrow_size = self.arrow_size.to_px().unwrap();
 
-                let translate = match shift {
+                let translate = match self.shift {
                     Placement::Top => (
-                        Pixels(-(bounds.width() - parent_bounds.width()) / (2.0 * scale)),
-                        Pixels(-bounds.height() / scale - arrow_size),
+                        -(bounds.width() - parent_bounds.width()) / (2.0 * scale),
+                        -bounds.height() / scale - arrow_size,
                     ),
-                    Placement::TopStart => {
-                        (Pixels(0.0), Pixels(-bounds.height() / scale - arrow_size))
-                    }
+                    Placement::TopStart => (0.0, -bounds.height() / scale - arrow_size),
                     Placement::TopEnd => (
-                        Pixels(-(bounds.width() - parent_bounds.width()) / scale),
-                        Pixels(-bounds.height() / scale - arrow_size),
+                        -(bounds.width() - parent_bounds.width()) / scale,
+                        -bounds.height() / scale - arrow_size,
                     ),
                     Placement::Bottom => (
-                        Pixels(-(bounds.width() - parent_bounds.width()) / (2.0 * scale)),
-                        Pixels(parent_bounds.height() / scale + arrow_size),
+                        -(bounds.width() - parent_bounds.width()) / (2.0 * scale),
+                        parent_bounds.height() / scale + arrow_size,
                     ),
-                    Placement::BottomStart => {
-                        (Pixels(0.0), Pixels(parent_bounds.height() / scale + arrow_size))
-                    }
+                    Placement::BottomStart => (0.0, parent_bounds.height() / scale + arrow_size),
                     Placement::BottomEnd => (
-                        Pixels(-(bounds.width() - parent_bounds.width()) / scale),
-                        Pixels(parent_bounds.height() / scale + arrow_size),
+                        -(bounds.width() - parent_bounds.width()) / scale,
+                        parent_bounds.height() / scale + arrow_size,
                     ),
-                    Placement::LeftStart => {
-                        (Pixels(-(bounds.width() / scale) - arrow_size), Pixels(0.0))
-                    }
+                    Placement::LeftStart => (-(bounds.width() / scale) - arrow_size, 0.0),
                     Placement::Left => (
-                        Pixels(-(bounds.width() / scale) - arrow_size),
-                        Pixels(-(bounds.height() - parent_bounds.height()) / (2.0 * scale)),
+                        -(bounds.width() / scale) - arrow_size,
+                        -(bounds.height() - parent_bounds.height()) / (2.0 * scale),
                     ),
                     Placement::LeftEnd => (
-                        Pixels(-(bounds.width() / scale) - arrow_size),
-                        Pixels(-(bounds.height() - parent_bounds.height()) / scale),
+                        -(bounds.width() / scale) - arrow_size,
+                        -(bounds.height() - parent_bounds.height()) / scale,
                     ),
-                    Placement::RightStart => {
-                        (Pixels((parent_bounds.width() / scale) + arrow_size), Pixels(0.0))
-                    }
+                    Placement::RightStart => ((parent_bounds.width() / scale) + arrow_size, 0.0),
                     Placement::Right => (
-                        Pixels((parent_bounds.width() / scale) + arrow_size),
-                        Pixels(-(bounds.height() - parent_bounds.height()) / (2.0 * scale)),
+                        (parent_bounds.width() / scale) + arrow_size,
+                        -(bounds.height() - parent_bounds.height()) / (2.0 * scale),
                     ),
                     Placement::RightEnd => (
-                        Pixels((parent_bounds.width() / scale) + arrow_size),
-                        Pixels(-(bounds.height() - parent_bounds.height()) / scale),
+                        (parent_bounds.width() / scale) + arrow_size,
+                        -(bounds.height() - parent_bounds.height()) / scale,
                     ),
 
-                    _ => (Pixels(0.0), Pixels(0.0)),
+                    _ => (0.0, 0.0),
                 };
 
-                cx.set_translate(translate);
+                cx.set_translate((Pixels(translate.0.round()), Pixels(translate.1.round())));
             }
 
             _ => {}
@@ -312,6 +309,7 @@ impl<'a> Handle<'a, Tooltip> {
     pub fn placement(self, placement: Placement) -> Self {
         self.modify(|tooltip| {
             tooltip.placement = placement;
+            tooltip.shift = placement;
         })
     }
 
@@ -331,7 +329,7 @@ pub(crate) struct Arrow {}
 
 impl Arrow {
     pub(crate) fn new(cx: &mut Context) -> Handle<Self> {
-        Self {}.build(cx, |_| {}).bind(Tooltip::placement, |mut handle, placement| {
+        Self {}.build(cx, |_| {}).bind(Tooltip::shift, |mut handle, placement| {
             let (t, b) = match placement.get(&handle) {
                 Placement::TopStart | Placement::Top | Placement::TopEnd => {
                     (Percentage(100.0), Stretch(1.0))
@@ -388,7 +386,7 @@ impl View for Arrow {
     fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
         let bounds = cx.bounds();
         let mut path = vg::Path::new();
-        match Tooltip::placement.get(cx) {
+        match Tooltip::shift.get(cx) {
             Placement::Bottom | Placement::BottomStart | Placement::BottomEnd => {
                 path.move_to(bounds.bottom_left());
                 path.line_to(bounds.center_top());

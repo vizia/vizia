@@ -86,7 +86,7 @@ impl Badge {
     /// # use vizia_core::prelude::*;
     /// # let cx = &mut Context::default();
     /// Avatar::new(cx, |cx|{
-    ///     Icon::new(cx, ICON_USER);
+    ///     Svg::new(cx, ICON_USER);
     /// })
     /// .badge(|cx| Badge::new(|cx| Label::new("2")));
     /// ```

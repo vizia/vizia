@@ -86,62 +86,69 @@ where
                 .placeholder(Self::placeholder)
                 .class("title");
 
-            ComboPopup::new(cx, Self::is_open, false, move |cx: &mut Context| {
-                // Binding to the filter text.
-                Binding::new(cx, Self::filter_text, move |cx, _filter_text| {
-                    // Binding to the list of values.
-                    Binding::new(cx, list_lens, move |cx, list| {
-                        // Seems that the layout bugs out when rebuilding the contents of a scrollview that's been scrolled to 100%.
-                        // So instead we just rebuild the whole scrollview.
-                        ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
-                            let f = Self::filter_text.get(cx);
-                            // List view doesn't have an option for filtering (yet) so we do it manually instead.
-                            VStack::new(cx, |cx| {
-                                let ll = list
-                                    .get(cx)
-                                    .iter()
-                                    .enumerate()
-                                    .filter(|(_, item)| {
-                                        if f.is_empty() {
-                                            true
-                                        } else {
-                                            item.to_string()
-                                                .to_ascii_lowercase()
-                                                .contains(&f.to_ascii_lowercase())
+            Binding::new(cx, Self::is_open, move |cx, is_open| {
+                if is_open.get(cx) {
+                    Popup::new(cx, move |cx: &mut Context| {
+                        // Binding to the filter text.
+                        Binding::new(cx, Self::filter_text, move |cx, _filter_text| {
+                            // Binding to the list of values.
+                            Binding::new(cx, list_lens, move |cx, list| {
+                                // Seems that the layout bugs out when rebuilding the contents of a scrollview that's been scrolled to 100%.
+                                // So instead we just rebuild the whole scrollview.
+                                ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
+                                    let f = Self::filter_text.get(cx);
+                                    // List view doesn't have an option for filtering (yet) so we do it manually instead.
+                                    VStack::new(cx, |cx| {
+                                        let ll = list
+                                            .get(cx)
+                                            .iter()
+                                            .enumerate()
+                                            .filter(|(_, item)| {
+                                                if f.is_empty() {
+                                                    true
+                                                } else {
+                                                    item.to_string()
+                                                        .to_ascii_lowercase()
+                                                        .contains(&f.to_ascii_lowercase())
+                                                }
+                                            })
+                                            .map(|(idx, _)| idx)
+                                            .collect::<Vec<_>>();
+
+                                        for index in ll.into_iter() {
+                                            let item = list.idx(index);
+                                            Label::new(cx, item)
+                                                .child_top(Stretch(1.0))
+                                                .child_bottom(Stretch(1.0))
+                                                .checked(
+                                                    selected
+                                                        .map(move |selected| *selected == index),
+                                                )
+                                                .navigable(true)
+                                                .toggle_class(
+                                                    "nav",
+                                                    Self::hovered.map(move |nav| *nav == index),
+                                                )
+                                                .on_hover(move |cx| {
+                                                    cx.emit(ComboBoxEvent::SetHovered(index))
+                                                })
+                                                .on_press(move |cx| {
+                                                    cx.emit(ComboBoxEvent::SetOption(index));
+                                                });
                                         }
                                     })
-                                    .map(|(idx, _)| idx)
-                                    .collect::<Vec<_>>();
-
-                                for index in ll.into_iter() {
-                                    let item = list.idx(index);
-                                    Label::new(cx, item)
-                                        .child_top(Stretch(1.0))
-                                        .child_bottom(Stretch(1.0))
-                                        .checked(selected.map(move |selected| *selected == index))
-                                        .navigable(true)
-                                        .toggle_class(
-                                            "nav",
-                                            Self::hovered.map(move |nav| *nav == index),
-                                        )
-                                        .on_hover(move |cx| {
-                                            cx.emit(ComboBoxEvent::SetHovered(index))
-                                        })
-                                        .on_press(move |cx| {
-                                            cx.emit(ComboBoxEvent::SetOption(index));
-                                        });
-                                }
-                            })
-                            .height(Auto)
-                            .class("list");
-                        })
-                        .height(Auto);
-                    });
-                });
-            })
-            .top(Percentage(100.0))
-            .translate((Pixels(0.0), Pixels(4.0)))
-            .height(Auto);
+                                    .height(Auto)
+                                    .class("list");
+                                })
+                                .height(Auto);
+                                //.min_height(Auto);
+                            });
+                        });
+                    })
+                    .should_reposition(false)
+                    .arrow_size(Pixels(4.0));
+                }
+            });
         })
         .bind(selected, move |handle, selected| {
             let selected_item = list_lens.idx(selected.get(&handle)).get(&handle);
@@ -351,83 +358,5 @@ where
         self.modify(|combobox: &mut ComboBox<L1, L2, T>| {
             combobox.on_select = Some(Box::new(callback))
         })
-    }
-}
-
-pub struct ComboPopup {}
-
-impl ComboPopup {
-    pub fn new<F, L: Lens<Target = bool>>(
-        cx: &mut Context,
-        lens: L,
-        capture_focus: bool,
-        content: F,
-    ) -> Handle<Self>
-    where
-        F: 'static + Fn(&mut Context),
-    {
-        Self {}
-            .build(cx, |cx| {
-                let parent = cx.current;
-                Binding::new(cx, lens, move |cx, lens| {
-                    if let Some(geo) = cx.cache.geo_changed.get_mut(parent) {
-                        geo.set(GeoChanged::WIDTH_CHANGED, true);
-                    }
-
-                    if lens.get(cx) {
-                        if capture_focus {
-                            VStack::new(cx, &content).lock_focus_to_within();
-                        } else {
-                            (content)(cx);
-                        }
-                    }
-                });
-            })
-            .role(Role::Dialog)
-            .checked(lens)
-            .position_type(PositionType::SelfDirected)
-            .z_index(100)
-    }
-}
-
-impl View for ComboPopup {
-    fn element(&self) -> Option<&'static str> {
-        Some("popup")
-    }
-
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|window_event, _| match window_event {
-            WindowEvent::GeometryChanged(_) => {
-                let parent = cx.tree.get_parent(cx.current).unwrap();
-
-                let bounds = cx.bounds();
-                let parent_bounds = cx.cache.get_bounds(parent);
-                let window_bounds = cx.cache.get_bounds(Entity::root());
-
-                let space_below =
-                    window_bounds.bottom() - bounds.bottom() - 4.0 * cx.scale_factor();
-                let space_above = parent_bounds.top() - window_bounds.top();
-
-                let scale = cx.scale_factor();
-
-                if space_below < 0.0 {
-                    if space_above.abs() > bounds.h {
-                        cx.set_translate((
-                            Pixels(0.0),
-                            Pixels(-(bounds.h + parent_bounds.h) / scale - 4.0),
-                        ));
-                    } else if let Some(first_child) = cx.tree.get_layout_first_child(cx.current) {
-                        let mut child_bounds = cx.cache.get_bounds(first_child);
-                        child_bounds.h = window_bounds.bottom() - bounds.top() - 8.0 * scale;
-
-                        cx.style.max_height.insert(first_child, Pixels(child_bounds.h / scale));
-                    }
-                } else {
-                    cx.set_translate((Pixels(0.0), Pixels(4.0)));
-                }
-            }
-
-            _ => {}
-        });
     }
 }

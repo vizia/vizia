@@ -1,3 +1,12 @@
+@keyframes tooltip_fade {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
 /* AVATAR */
 
 avatar {
@@ -17,9 +26,8 @@ avatar.rounded {
     corner-radius: 4px;
 }
 
-avatar > icon {
-    size: 1s;
-    child-space: 4px;
+avatar > svg {
+    size: 24px;
 }
 
 avatar > image {
@@ -41,46 +49,43 @@ badge {
     size: 20px;
     corner-radius: 50%;
     child-space: 1s;
-    font-size: 16;
 }
 
 badge > label {
     font-size: 12;
 }
 
-badge > icon {
-    size: 1s;
+badge > svg {
+    space: 0px;
 }
 
 /* BUTTON */
-button {
-    width: auto;
-    height: 32px;
-    child-left: 1s;
-    child-right: 1s;
-    child-top: 1s;
-    child-bottom: 1s;
+button,
+toggle-button {
+    size: 32px;
+    min-width: auto;
+    child-space: 1s;
     cursor: hand;
+    child-left: 8px;
+    child-right: 8px;
 }
 
-button > * {
+button > *,
+toggle-button > * {
     width: auto;
     child-space: 1s;
     col-between: 4px;
-    min-left: 8px;
-    min-right: 8px;
 }
 
-button > icon {
-    size: 24px;
-    child-space: 0px;
-    min-left: 0px;
-    min-right: 0px;
+button > svg,
+toggle-button > svg {
+    size: 1s;
+    space: 4px;
 }
 
-button.icon {
-    size: 32px;
-    child-space: 1s;
+button > hstack > svg,
+toggle-button > hstack > svg {
+    size: 20px;
 }
 
 /* BUTTON GROUP */
@@ -98,46 +103,14 @@ button-group.vertical > toggle-button {
     width: 1s;
 }
 
-/* TOGGLE BUTTON */
-toggle-button {
-    width: auto;
-    height: 32px;
-    child-left: 1s;
-    child-right: 1s;
-    child-top: 1s;
-    child-bottom: 1s;
-    cursor: hand;
-}
-
-toggle-button > * {
-    size: auto;
-    child-space: 1s;
-    col-between: 4px;
-    min-left: 8px;
-    min-right: 8px;
-}
-
-toggle-button > icon {
-    min-left: 4px;
-    min-right: 4px;
-    size: 24px;
-    child-space: 0px;
-}
-
-toggle-button.icon {
-    size: 32px;
-    child-space: 1s;
-}
-
 /* CHECKBOX */
 
 checkbox {
-    width: 20px;
-    height: 20px;
+    size: 20px;
     cursor: hand;
 }
 
-checkbox svg {
+checkbox > svg {
     size: 1s;
 }
 
@@ -154,20 +127,24 @@ chip {
     font-size: small;
 }
 
-chip label {
+chip > label {
     height: auto;
     width: auto;
 }
 
-chip .close-icon {
+chip > .close-icon {
     right: 4px;
+}
+
+chip > .close-icon svg {
+    space: 0px;
 }
 
 /* DATEPICKER */
 
 datepicker {
-    width: 280px;
-    height: 280px;
+    width: 300px;
+    height: auto;
     child-space: 4px;
     row-between: 4px;
 }
@@ -178,7 +155,7 @@ datepicker {
     col-between: 4px;
 }
 
-.datepicker-header picklist dropdown popup {
+.datepicker-header dropdown popup {
     left: 1s;
     right: 1s;
     width: auto;
@@ -227,6 +204,16 @@ divider {
     height: 1px;
 }
 
+divider.horizontal {
+    width: 1s;
+    height: 1px;
+}
+
+divider.vertical {
+    height: 1s;
+    width: 1px;
+}
+
 vstack > divider {
     width: 1s;
     height: 1px;
@@ -249,7 +236,7 @@ dropdown {
 }
 
 dropdown > * {
-    width: 1s;
+    width: auto;
 }
 
 combobox .title {
@@ -259,14 +246,15 @@ combobox .title {
     child-right: 4px;
     child-top: 1s;
     child-bottom: 1s;
-    cursor: hand;
+    cursor: text;
 }
 
 dropdown popup,
 combobox popup {
-    width: auto;
+    size: auto;
     min-width: 100%;
-    height: auto;
+    left: 1s;
+    right: 1s;
 }
 
 dropdown popup list,
@@ -285,6 +273,7 @@ combobox popup scrollview scrollbar.vertical {
     right: 2px;
 }
 
+dropdown popup scrollview,
 combobox popup scrollview {
     width: 1s;
     min-width: auto;
@@ -306,67 +295,22 @@ combobox vstack {
     child-space: auto;
 }
 
-/* FORM CONTROL */
-form-control {
-    layout-type: row;
-    size: auto;
-    child-top: 1s;
-    child-bottom: 1s;
-    col-between: 5px;
-    row-between: 5px;
-}
-
-form-control.vertical {
-    layout-type: column;
-}
-
-form-control > label:first-child {
-    display: flex;
-}
-
-form-control > label:last-child {
-    display: none;
-}
-
-form-control.pos-start > label:first-child {
-    display: none;
-}
-
-form-control.pos-start > label:last-child {
-    display: flex;
-}
-
-form-group {
-    size: auto;
-    row-between: 12px;
-}
-
-form-group > .legend {
-    bottom: 8px;
-}
-
 /* ICON */
 
-icon {
-    size: 24px;
-}
-
-icon > svg {
+svg {
     size: 1s;
 }
 
 /* IMAGE */
 
 image {
-    width: auto;
-    height: auto;
+    size: auto;
 }
 
 /* KNOB */
 
 knob {
-    width: 32px;
-    height: 32px;
+    size: 32px;
     corner-radius: 50%;
 }
 
@@ -397,8 +341,7 @@ knob {
 /* LABEL */
 
 label {
-    width: auto;
-    height: auto;
+    size: auto;
     text-wrap: false;
 }
 
@@ -406,36 +349,15 @@ label.describing {
     cursor: hand;
 }
 
-label.icon {
-    font-family: "tabler-icons", sans-serif;
-}
-
 /* LIST */
 
 list {
-    width: auto;
-    height: auto;
+    size: auto;
 }
 
 list > scrollview {
-    width: auto;
-    height: auto;
+    size: auto;
     min-width: 100%;
-}
-
-list list-item {
-    height: auto;
-    width: auto;
-}
-
-list list-item:focus {
-    outline-color: rgb(232, 166, 166);
-    outline-width: 1px;
-    outline-offset: -1px;
-}
-
-list list-item:checked {
-    background-color: rgb(97, 97, 196);
 }
 
 /* MENU */
@@ -632,8 +554,7 @@ picklist {
 /* POPUP */
 
 popup {
-    width: auto;
-    height: auto;
+    size: auto;
     position-type: self-directed;
     z-index: 100;
 }
@@ -641,29 +562,26 @@ popup {
 /* PROGRESS BAR */
 
 progressbar {
-    height: 10px;
+    height: 12px;
     width: 1s;
 }
 
 /* RADIOBUTTON */
 
 radiobutton {
-    width: 16px;
-    height: 16px;
+    size: 16px;
     child-space: 1s;
     cursor: hand;
 }
 
 radiobutton .inner {
-    width: 8px;
-    height: 8px;
+    size: 8px;
 }
 
 /* RATING */
 
 rating {
     size: auto;
-    child-space: auto;
     layout-type: row;
 }
 
@@ -674,38 +592,30 @@ scrollview {
 }
 
 scrollview > scroll-content {
-    width: auto;
-    height: auto;
-    min-width: 100%;
-    min-height: 100%;
+    size: auto;
+    min-size: 100%;
 }
 
 scrollview > scrollbar.horizontal {
-    width: 1s;
-    height: 8px;
-    left: 0px;
-    right: 0px;
+    space: 0px;
     top: 1s;
-    bottom: 0px;
 }
 
 scrollview > scrollbar.vertical {
-    width: 8px;
-    height: 1s;
+    space: 0px;
     left: 1s;
-    top: 0px;
-    bottom: 0px;
-    right: 0px;
 }
 
 /* SCROLLBAR */
 
 scrollbar.horizontal {
+    width: 1s;
     height: 8px;
 }
 
 scrollbar.vertical {
     width: 8px;
+    height: 1s;
 }
 
 scrollbar .thumb {
@@ -777,26 +687,6 @@ spinbox picklist.spinbox-value dropdown {
     width: 1s;
     left: 0px;
     right: 0px;
-}
-
-spinbox picklist.spinbox-value dropdown button {
-    width: 1s;
-}
-
-spinbox picklist.spinbox-value .dropdown-title {
-    width: 1s;
-    col-between: 4px;
-}
-
-spinbox picklist.spinbox-value .dropdown-title label {
-    left: 1s;
-    right: 1s;
-}
-
-spinbox picklist popup {
-    width: 100px;
-    left: 1s;
-    right: 1s;
 }
 
 /* STACK */
@@ -886,16 +776,6 @@ tabheader.vertical .indicator {
     height: 1s;
 }
 
-.tabview-divider {
-    height: 1px;
-    width: 1s;
-}
-
-.tabview-divider.vertical {
-    width: 1px;
-    height: 1s;
-}
-
 /* TEXTBOX */
 
 textbox {
@@ -970,12 +850,10 @@ virtual-list label {
 /* XY PAD */
 
 xypad {
-    height: 50px;
-    width: 50px;
+    size: 50px;
 }
 
 xypad .thumb {
-    width: 10px;
-    height: 10px;
+    size: 10px;
     child-space: 1s;
 }

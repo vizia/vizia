@@ -312,6 +312,7 @@ where
         animation: Animation,
         start_time: Instant,
         duration: Duration,
+        delay: Duration,
     ) {
         let entity_index = entity.index();
 
@@ -362,6 +363,8 @@ where
             // Safe to unwrap because already checked that the animation exists
             let mut anim_state = self.animations.get(animation).cloned().unwrap();
             anim_state.duration = duration;
+            anim_state.delay = delay;
+            anim_state.dt = delay.as_secs_f32() / duration.as_secs_f32();
             anim_state.output = Some(
                 self.animations
                     .get(animation)
@@ -396,7 +399,7 @@ where
 
                 let elapsed_time = time.duration_since(state.start_time);
                 let mut normalised_time =
-                    (elapsed_time.as_secs_f32() / state.duration.as_secs_f32()) - state.delay;
+                    (elapsed_time.as_secs_f32() / state.duration.as_secs_f32()) - state.dt;
 
                 normalised_time = normalised_time.clamp(0.0, 1.0);
 
@@ -619,7 +622,7 @@ where
                                         .value
                                         .clone();
 
-                                current_anim_state.delay = current_anim_state.t - 1.0;
+                                current_anim_state.dt = current_anim_state.t - 1.0;
                                 current_anim_state.start_time = Instant::now();
                             } else {
                                 // Transitioning to new rule
@@ -657,11 +660,18 @@ where
                     transition_state.to_rule = shared_data_index.index();
 
                     let duration = transition_state.duration;
+                    let delay = transition_state.delay;
 
                     if transition_state.from_rule != DataIndex::null().index()
                         && transition_state.from_rule != transition_state.to_rule
                     {
-                        self.play_animation(entity, rule_animation, Instant::now(), duration);
+                        self.play_animation(
+                            entity,
+                            rule_animation,
+                            Instant::now(),
+                            duration,
+                            delay,
+                        );
                     }
                     //}
                 }

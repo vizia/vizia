@@ -169,7 +169,7 @@ pub(crate) struct Bloom(pub(crate) qfilter::Filter);
 
 impl Default for Bloom {
     fn default() -> Self {
-        Self(qfilter::Filter::new_resizeable(10000, 10000000, 0.01))
+        Self(qfilter::Filter::new_resizeable(10000, 10000000, 0.01).unwrap())
     }
 }
 
@@ -196,7 +196,7 @@ pub struct Style {
     pub(crate) animation_manager: IdManager<Animation>,
     pub(crate) animations: HashMap<String, Animation>,
     // List of animations to be started on the next frame
-    pub(crate) pending_animations: Vec<(Entity, Animation, Duration)>,
+    pub(crate) pending_animations: Vec<(Entity, Animation, Duration, Duration)>,
 
     // List of rules
     pub(crate) rules: IndexMap<Rule, SelectorList<Selectors>>,
@@ -703,8 +703,9 @@ impl Style {
         entity: Entity,
         animation: Animation,
         duration: Duration,
+        delay: Duration,
     ) {
-        self.pending_animations.push((entity, animation, duration));
+        self.pending_animations.push((entity, animation, duration, delay));
     }
 
     pub(crate) fn play_pending_animations(&mut self) {
@@ -712,8 +713,8 @@ impl Style {
 
         let pending_animations = self.pending_animations.drain(..).collect::<Vec<_>>();
 
-        for (entity, animation, duration) in pending_animations {
-            self.play_animation(entity, animation, start_time, duration)
+        for (entity, animation, duration, delay) in pending_animations {
+            self.play_animation(entity, animation, start_time + delay, duration, delay)
         }
     }
 
@@ -723,72 +724,75 @@ impl Style {
         animation: Animation,
         start_time: Instant,
         duration: Duration,
+        delay: Duration,
     ) {
-        self.display.play_animation(entity, animation, start_time, duration);
-        self.opacity.play_animation(entity, animation, start_time, duration);
-        self.clip_path.play_animation(entity, animation, start_time, duration);
+        self.display.play_animation(entity, animation, start_time, duration, delay);
+        self.opacity.play_animation(entity, animation, start_time, duration, delay);
+        self.clip_path.play_animation(entity, animation, start_time, duration, delay);
 
-        self.transform.play_animation(entity, animation, start_time, duration);
-        self.transform_origin.play_animation(entity, animation, start_time, duration);
-        self.translate.play_animation(entity, animation, start_time, duration);
-        self.rotate.play_animation(entity, animation, start_time, duration);
-        self.scale.play_animation(entity, animation, start_time, duration);
+        self.transform.play_animation(entity, animation, start_time, duration, delay);
+        self.transform_origin.play_animation(entity, animation, start_time, duration, delay);
+        self.translate.play_animation(entity, animation, start_time, duration, delay);
+        self.rotate.play_animation(entity, animation, start_time, duration, delay);
+        self.scale.play_animation(entity, animation, start_time, duration, delay);
 
-        self.border_width.play_animation(entity, animation, start_time, duration);
-        self.border_color.play_animation(entity, animation, start_time, duration);
+        self.border_width.play_animation(entity, animation, start_time, duration, delay);
+        self.border_color.play_animation(entity, animation, start_time, duration, delay);
 
-        self.corner_top_left_radius.play_animation(entity, animation, start_time, duration);
-        self.corner_top_right_radius.play_animation(entity, animation, start_time, duration);
-        self.corner_bottom_left_radius.play_animation(entity, animation, start_time, duration);
-        self.corner_bottom_right_radius.play_animation(entity, animation, start_time, duration);
+        self.corner_top_left_radius.play_animation(entity, animation, start_time, duration, delay);
+        self.corner_top_right_radius.play_animation(entity, animation, start_time, duration, delay);
+        self.corner_bottom_left_radius
+            .play_animation(entity, animation, start_time, duration, delay);
+        self.corner_bottom_right_radius
+            .play_animation(entity, animation, start_time, duration, delay);
 
-        self.outline_width.play_animation(entity, animation, start_time, duration);
-        self.outline_color.play_animation(entity, animation, start_time, duration);
-        self.outline_offset.play_animation(entity, animation, start_time, duration);
+        self.outline_width.play_animation(entity, animation, start_time, duration, delay);
+        self.outline_color.play_animation(entity, animation, start_time, duration, delay);
+        self.outline_offset.play_animation(entity, animation, start_time, duration, delay);
 
-        self.background_color.play_animation(entity, animation, start_time, duration);
-        self.background_image.play_animation(entity, animation, start_time, duration);
-        self.background_size.play_animation(entity, animation, start_time, duration);
+        self.background_color.play_animation(entity, animation, start_time, duration, delay);
+        self.background_image.play_animation(entity, animation, start_time, duration, delay);
+        self.background_size.play_animation(entity, animation, start_time, duration, delay);
 
-        self.shadow.play_animation(entity, animation, start_time, duration);
+        self.shadow.play_animation(entity, animation, start_time, duration, delay);
 
-        self.font_color.play_animation(entity, animation, start_time, duration);
-        self.font_size.play_animation(entity, animation, start_time, duration);
-        self.caret_color.play_animation(entity, animation, start_time, duration);
-        self.selection_color.play_animation(entity, animation, start_time, duration);
+        self.font_color.play_animation(entity, animation, start_time, duration, delay);
+        self.font_size.play_animation(entity, animation, start_time, duration, delay);
+        self.caret_color.play_animation(entity, animation, start_time, duration, delay);
+        self.selection_color.play_animation(entity, animation, start_time, duration, delay);
 
-        self.left.play_animation(entity, animation, start_time, duration);
-        self.right.play_animation(entity, animation, start_time, duration);
-        self.top.play_animation(entity, animation, start_time, duration);
-        self.bottom.play_animation(entity, animation, start_time, duration);
+        self.left.play_animation(entity, animation, start_time, duration, delay);
+        self.right.play_animation(entity, animation, start_time, duration, delay);
+        self.top.play_animation(entity, animation, start_time, duration, delay);
+        self.bottom.play_animation(entity, animation, start_time, duration, delay);
 
-        self.child_left.play_animation(entity, animation, start_time, duration);
-        self.child_right.play_animation(entity, animation, start_time, duration);
-        self.child_top.play_animation(entity, animation, start_time, duration);
-        self.child_bottom.play_animation(entity, animation, start_time, duration);
-        self.col_between.play_animation(entity, animation, start_time, duration);
-        self.row_between.play_animation(entity, animation, start_time, duration);
+        self.child_left.play_animation(entity, animation, start_time, duration, delay);
+        self.child_right.play_animation(entity, animation, start_time, duration, delay);
+        self.child_top.play_animation(entity, animation, start_time, duration, delay);
+        self.child_bottom.play_animation(entity, animation, start_time, duration, delay);
+        self.col_between.play_animation(entity, animation, start_time, duration, delay);
+        self.row_between.play_animation(entity, animation, start_time, duration, delay);
 
-        self.width.play_animation(entity, animation, start_time, duration);
-        self.height.play_animation(entity, animation, start_time, duration);
+        self.width.play_animation(entity, animation, start_time, duration, delay);
+        self.height.play_animation(entity, animation, start_time, duration, delay);
 
-        self.min_width.play_animation(entity, animation, start_time, duration);
-        self.max_width.play_animation(entity, animation, start_time, duration);
-        self.min_height.play_animation(entity, animation, start_time, duration);
-        self.max_height.play_animation(entity, animation, start_time, duration);
+        self.min_width.play_animation(entity, animation, start_time, duration, delay);
+        self.max_width.play_animation(entity, animation, start_time, duration, delay);
+        self.min_height.play_animation(entity, animation, start_time, duration, delay);
+        self.max_height.play_animation(entity, animation, start_time, duration, delay);
 
-        self.min_left.play_animation(entity, animation, start_time, duration);
-        self.max_left.play_animation(entity, animation, start_time, duration);
-        self.min_right.play_animation(entity, animation, start_time, duration);
-        self.max_right.play_animation(entity, animation, start_time, duration);
-        self.min_top.play_animation(entity, animation, start_time, duration);
-        self.max_top.play_animation(entity, animation, start_time, duration);
-        self.min_bottom.play_animation(entity, animation, start_time, duration);
-        self.max_bottom.play_animation(entity, animation, start_time, duration);
+        self.min_left.play_animation(entity, animation, start_time, duration, delay);
+        self.max_left.play_animation(entity, animation, start_time, duration, delay);
+        self.min_right.play_animation(entity, animation, start_time, duration, delay);
+        self.max_right.play_animation(entity, animation, start_time, duration, delay);
+        self.min_top.play_animation(entity, animation, start_time, duration, delay);
+        self.max_top.play_animation(entity, animation, start_time, duration, delay);
+        self.min_bottom.play_animation(entity, animation, start_time, duration, delay);
+        self.max_bottom.play_animation(entity, animation, start_time, duration, delay);
 
-        self.underline_color.play_animation(entity, animation, start_time, duration);
+        self.underline_color.play_animation(entity, animation, start_time, duration, delay);
 
-        self.fill.play_animation(entity, animation, start_time, duration);
+        self.fill.play_animation(entity, animation, start_time, duration, delay);
     }
 
     pub(crate) fn is_animating(&self, entity: Entity, animation: Animation) -> bool {
@@ -1676,7 +1680,7 @@ impl Style {
 
         AnimationState::new(Animation::null())
             .with_duration(transition.duration)
-            .with_delay(transition.delay)
+            .with_delay(transition.delay.unwrap_or_default())
             .with_keyframe(Keyframe { time: 0.0, value: Default::default(), timing_function })
             .with_keyframe(Keyframe { time: 1.0, value: Default::default(), timing_function })
     }

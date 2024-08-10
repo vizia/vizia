@@ -3,9 +3,12 @@
 :root {
     background-color: #ffffff;
     color: #181818;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",
+        "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji",
+        "Segoe UI Emoji";
 }
 
-icon > svg {
+svg {
     fill: #181818;
 }
 
@@ -444,8 +447,8 @@ dropdown list label:checked {
 }
 
 /* ICON */
-icon:disabled {
-    color: #a0a0a0;
+svg:disabled {
+    fill: #a0a0a0;
 }
 
 /* KNOB */
@@ -669,45 +672,45 @@ rating:focus-visible {
     corner-radius: 4px;
 }
 
-rating icon {
+rating svg {
     cursor: hand;
 }
 
-rating icon svg {
+rating svg {
     fill: #c4c4c4;
     width: 20px;
     height: 20px;
 }
 
-rating icon:focus-visible {
+rating svg:focus-visible {
     outline-width: 1px;
     outline-color: #51afef;
     outline-offset: 3px;
     corner-radius: 4px;
 }
 
-rating icon:checked svg {
+rating svg:checked {
     fill: gold;
 }
 
-rating:over > icon:enabled svg {
+rating:over > svg:enabled {
     fill: #c4c4c4;
 }
 
-rating:over > icon.foo:enabled svg {
+rating:over > svg.foo:enabled {
     fill: gold;
 }
 
-rating icon:hover {
+rating svg:hover {
     scale: 1.2;
     transition: scale 100ms;
 }
 
-rating icon:disabled svg {
+rating svg:disabled {
     fill: #e5e5e5;
 }
 
-rating icon:checked:disabled svg {
+rating svg:checked:disabled {
     fill: #dacf93;
 }
 
@@ -790,7 +793,16 @@ spinbox {
 
 spinbox .spinbox-button {
     cursor: hand;
-    corner-radius: 4px;
+    border-width: 0px;
+    background-color: transparent;
+}
+
+spinbox .spinbox-button:hover {
+    background-color: transparent;
+}
+
+spinbox .spinbox-button:active {
+    background-color: transparent;
 }
 
 spinbox .spinbox-button:focus-visible {

@@ -49,26 +49,30 @@ impl Spinbox {
             Binding::new(cx, Spinbox::orientation, move |cx, spinbox_kind| {
                 match spinbox_kind.get(cx) {
                     Orientation::Horizontal => {
-                        Svg::new(
-                            cx,
-                            Spinbox::icons.map(|icons| match icons {
-                                SpinboxIcons::PlusMinus => ICON_MINUS,
-                                SpinboxIcons::Chevrons => ICON_CHEVRON_LEFT,
-                            }),
-                        )
+                        Button::new(cx, |cx| {
+                            Svg::new(
+                                cx,
+                                Spinbox::icons.map(|icons| match icons {
+                                    SpinboxIcons::PlusMinus => ICON_MINUS,
+                                    SpinboxIcons::Chevrons => ICON_CHEVRON_LEFT,
+                                }),
+                            )
+                        })
                         .on_press(|ex| ex.emit(SpinboxEvent::Decrement))
                         .navigable(true)
                         .class("spinbox-button");
                     }
 
                     Orientation::Vertical => {
-                        Svg::new(
-                            cx,
-                            Spinbox::icons.map(|icons| match icons {
-                                SpinboxIcons::PlusMinus => ICON_PLUS,
-                                SpinboxIcons::Chevrons => ICON_CHEVRON_UP,
-                            }),
-                        )
+                        Button::new(cx, |cx| {
+                            Svg::new(
+                                cx,
+                                Spinbox::icons.map(|icons| match icons {
+                                    SpinboxIcons::PlusMinus => ICON_PLUS,
+                                    SpinboxIcons::Chevrons => ICON_CHEVRON_UP,
+                                }),
+                            )
+                        })
                         .on_press(|ex| ex.emit(SpinboxEvent::Increment))
                         .navigable(true)
                         .class("spinbox-button");
@@ -79,26 +83,30 @@ impl Spinbox {
             Binding::new(cx, Spinbox::orientation, move |cx, spinbox_kind| {
                 match spinbox_kind.get(cx) {
                     Orientation::Horizontal => {
-                        Svg::new(
-                            cx,
-                            Spinbox::icons.map(|icons| match icons {
-                                SpinboxIcons::PlusMinus => ICON_PLUS,
-                                SpinboxIcons::Chevrons => ICON_CHEVRON_RIGHT,
-                            }),
-                        )
+                        Button::new(cx, |cx| {
+                            Svg::new(
+                                cx,
+                                Spinbox::icons.map(|icons| match icons {
+                                    SpinboxIcons::PlusMinus => ICON_PLUS,
+                                    SpinboxIcons::Chevrons => ICON_CHEVRON_RIGHT,
+                                }),
+                            )
+                        })
                         .on_press(|ex| ex.emit(SpinboxEvent::Increment))
                         .navigable(true)
                         .class("spinbox-button");
                     }
 
                     Orientation::Vertical => {
-                        Svg::new(
-                            cx,
-                            Spinbox::icons.map(|icons| match icons {
-                                SpinboxIcons::PlusMinus => ICON_MINUS,
-                                SpinboxIcons::Chevrons => ICON_CHEVRON_DOWN,
-                            }),
-                        )
+                        Button::new(cx, |cx| {
+                            Svg::new(
+                                cx,
+                                Spinbox::icons.map(|icons| match icons {
+                                    SpinboxIcons::PlusMinus => ICON_MINUS,
+                                    SpinboxIcons::Chevrons => ICON_CHEVRON_DOWN,
+                                }),
+                            )
+                        })
                         .on_press(|ex| ex.emit(SpinboxEvent::Decrement))
                         .navigable(true)
                         .class("spinbox-button");

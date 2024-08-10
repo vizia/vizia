@@ -155,19 +155,19 @@ fn main() -> Result<(), ApplicationError> {
 
         //         ButtonGroup::new(cx, |cx|{
         //             ToggleButton::new(cx, AppData::selected_align.map(|align| *align == TextAlign::Left), |cx|{
-        //                 Icon::new(cx, ICON_ALIGN_LEFT)
+        //                 Svg::new(cx, ICON_ALIGN_LEFT)
         //             })
         //             .on_toggle(|cx| cx.emit(AppEvent::SetSelectedAlign(TextAlign::Left)));
         //             ToggleButton::new(cx, AppData::selected_align.map(|align| *align == TextAlign::Center), |cx|{
-        //                 Icon::new(cx, ICON_ALIGN_CENTER)
+        //                 Svg::new(cx, ICON_ALIGN_CENTER)
         //             })
         //             .on_toggle(|cx| cx.emit(AppEvent::SetSelectedAlign(TextAlign::Center)));
         //             ToggleButton::new(cx, AppData::selected_align.map(|align| *align == TextAlign::Right), |cx|{
-        //                 Icon::new(cx, ICON_ALIGN_RIGHT)
+        //                 Svg::new(cx, ICON_ALIGN_RIGHT)
         //             })
         //             .on_toggle(|cx| cx.emit(AppEvent::SetSelectedAlign(TextAlign::Right)));
         //             ToggleButton::new(cx, AppData::selected_align.map(|align| *align == TextAlign::Justify), |cx|{
-        //                 Icon::new(cx, ICON_ALIGN_JUSTIFIED)
+        //                 Svg::new(cx, ICON_ALIGN_JUSTIFIED)
         //             })
         //             .on_toggle(|cx| cx.emit(AppEvent::SetSelectedAlign(TextAlign::Justify)));
 

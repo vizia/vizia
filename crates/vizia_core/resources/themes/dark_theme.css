@@ -3,6 +3,9 @@
 :root {
     background-color: #202020;
     color: #fafafa;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",
+        "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji",
+        "Segoe UI Emoji";
 }
 
 icon svg {

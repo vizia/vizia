@@ -697,7 +697,7 @@ fn alignment4(cx: &mut Context) {
 fn alignment5(cx: &mut Context) {
     HStack::new(cx, |cx| {
         HStack::new(cx, |cx| {
-            Icon::new(cx, ICON_MOON)
+            Svg::new(cx, ICON_MOON)
                 .class("icon")
                 .text_wrap(false)
                 .size(Pixels(150.0))
@@ -708,7 +708,7 @@ fn alignment5(cx: &mut Context) {
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
-            Icon::new(cx, ICON_MOON)
+            Svg::new(cx, ICON_MOON)
                 .class("icon")
                 .text_wrap(false)
                 .size(Pixels(150.0))
@@ -721,7 +721,7 @@ fn alignment5(cx: &mut Context) {
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
-            Icon::new(cx, ICON_MOON)
+            Svg::new(cx, ICON_MOON)
                 .class("icon")
                 .size(Pixels(150.0))
                 .child_left(Stretch(1.0))
@@ -738,7 +738,7 @@ fn alignment5(cx: &mut Context) {
 
     HStack::new(cx, |cx| {
         HStack::new(cx, |cx| {
-            Icon::new(cx, ICON_MOON)
+            Svg::new(cx, ICON_MOON)
                 .class("icon")
                 .text_wrap(false)
                 .size(Pixels(150.0))
@@ -751,7 +751,7 @@ fn alignment5(cx: &mut Context) {
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
-            Icon::new(cx, ICON_MOON)
+            Svg::new(cx, ICON_MOON)
                 .class("icon")
                 .text_wrap(false)
                 .size(Pixels(150.0))
@@ -763,7 +763,7 @@ fn alignment5(cx: &mut Context) {
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
-            Icon::new(cx, ICON_MOON)
+            Svg::new(cx, ICON_MOON)
                 .class("icon")
                 .size(Pixels(150.0))
                 .child_top(Stretch(1.0))
@@ -782,7 +782,7 @@ fn alignment5(cx: &mut Context) {
 
     HStack::new(cx, |cx| {
         HStack::new(cx, |cx| {
-            Icon::new(cx, ICON_MOON)
+            Svg::new(cx, ICON_MOON)
                 .class("icon")
                 .text_wrap(false)
                 .size(Pixels(150.0))
@@ -795,7 +795,7 @@ fn alignment5(cx: &mut Context) {
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
-            Icon::new(cx, ICON_MOON)
+            Svg::new(cx, ICON_MOON)
                 .class("icon")
                 .text_wrap(false)
                 .size(Pixels(150.0))
@@ -808,7 +808,7 @@ fn alignment5(cx: &mut Context) {
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
-            Icon::new(cx, ICON_MOON)
+            Svg::new(cx, ICON_MOON)
                 .class("icon")
                 .size(Pixels(150.0))
                 .child_top(Stretch(1.0))

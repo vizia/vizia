@@ -24,10 +24,10 @@ An avatar is used to visually represent a person or entity and can contain text,
         Markdown::new(cx, "### Basic avatar");
         DemoRegion::new(cx, |cx|{
             Avatar::new(cx, |cx|{
-                Icon::new(cx, ICON_USER);
+                Svg::new(cx, ICON_USER);
             });
         },r#"Avatar::new(cx, |cx|{
-    Icon::new(cx, ICON_USER)
+    Svg::new(cx, ICON_USER)
 });"#);
 
         Markdown::new(cx, "### Avatar content
@@ -35,7 +35,7 @@ An avatar can contain an icon, text, or an image.");
 
         DemoRegion::new(cx, |cx|{
             Avatar::new(cx, |cx|{
-                Icon::new(cx, ICON_USER);
+                Svg::new(cx, ICON_USER);
             });
 
             Avatar::new(cx, |cx|{
@@ -46,7 +46,7 @@ An avatar can contain an icon, text, or an image.");
                 Image::new(cx, "vizia.png");
             });
         }, r#"Avatar::new(cx, |cx|{
-    Icon::new(cx, ICON_USER);
+    Svg::new(cx, ICON_USER);
 });
 
 Avatar::new(cx, |cx|{
@@ -64,7 +64,7 @@ The variant modifier can be used to select between a circle (default), square, a
 
         DemoRegion::new(cx, |cx|{
             Avatar::new(cx, |cx|{
-                Icon::new(cx, ICON_USER);
+                Svg::new(cx, ICON_USER);
             });
 
             Avatar::new(cx, |cx|{
@@ -75,7 +75,7 @@ The variant modifier can be used to select between a circle (default), square, a
                 Image::new(cx, "vizia.png");
             }).variant(AvatarVariant::Rounded);
         }, r#"Avatar::new(cx, |cx|{
-    Icon::new(cx, ICON_USER);
+    Svg::new(cx, ICON_USER);
 });
 
 Avatar::new(cx, |cx|{
@@ -92,38 +92,38 @@ The badge modifier can be used to add a badge to an avatar.
 
         DemoRegion::new(cx, |cx|{
             Avatar::new(cx, |cx|{
-                Icon::new(cx, ICON_USER);
+                Svg::new(cx, ICON_USER);
             })
-            .badge(|cx| Badge::new(cx, |cx| Icon::new(cx, ICON_CLOCK)).class("warning"));
+            .badge(|cx| Badge::new(cx, |cx| Svg::new(cx, ICON_CLOCK)).class("warning"));
 
             Avatar::new(cx, |cx|{
-                Icon::new(cx, ICON_USER);
+                Svg::new(cx, ICON_USER);
             })
             .badge(|cx| Badge::empty(cx).class("error"));
 
             Avatar::new(cx, |cx|{
-                Icon::new(cx, ICON_USER);
+                Svg::new(cx, ICON_USER);
             })
             .badge(|cx| Badge::empty(cx).class("success"));
 
             Avatar::new(cx, |cx|{
-                Icon::new(cx, ICON_USER);
+                Svg::new(cx, ICON_USER);
             })
             .badge(|cx| Badge::new(cx, |cx| Label::new(cx, "2")));
         }, r#"Avatar::new(cx, |cx|{
-    Icon::new(cx, ICON_USER);
-}).badge(|cx| Badge::new(cx, |cx| Icon::new(cx, ICON_CLOCK)).class("warning"));
+    Svg::new(cx, ICON_USER);
+}).badge(|cx| Badge::new(cx, |cx| Svg::new(cx, ICON_CLOCK)).class("warning"));
 
 Avatar::new(cx, |cx|{
-    Icon::new(cx, ICON_USER);
+    Svg::new(cx, ICON_USER);
 }).badge(|cx| Badge::empty(cx).class("error"));
 
 Avatar::new(cx, |cx|{
-    Icon::new(cx, ICON_USER);
+    Svg::new(cx, ICON_USER);
 }).badge(|cx| Badge::empty(cx).class("success"));
 
 Avatar::new(cx, |cx|{
-    Icon::new(cx, ICON_USER);
+    Svg::new(cx, ICON_USER);
 }).badge(|cx| Badge::new(cx, |cx| Label::new(cx, "2")));"#
         );
 

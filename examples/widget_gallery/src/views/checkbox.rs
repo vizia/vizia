@@ -51,6 +51,8 @@ A `HStack` can be used to add a label to a checkbox. The describing modifier can
                 Label::new(cx, "Label").describing("check");
             })
             .size(Auto)
+            .child_top(Stretch(1.0))
+            .child_bottom(Stretch(1.0))
             .col_between(Pixels(8.0));
         }, r#"HStack::new(cx, |cx| {
     Checkbox::new(cx, CheckboxData::check_a)

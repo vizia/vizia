@@ -67,17 +67,17 @@
 - ### __Flexible layout__
   Create flexible layouts which adapt to changes in size. Powered by [morphorm](https://github.com/vizia/morphorm).
 - ### __Powerful styling__
-  Take advantage of CSS with hot-reloading to fully customize the style of your application.
+  Take advantage of stylesheets with hot-reloading to fully customize the look of your application.
 - ### __Animations__
-  Bring your application to life with animatable style properties.
+  Bring your applications to life with animations.
 - ### __Built-in views and themes__
-  Utilize over 25 ready-made views as well as two built-in themes (light and dark) to get you started. Includes 4250+ icons, provided by [Tabler Icons](https://tabler-icons.io).
+  Utilize over 25 ready-made views as well as two built-in themes (light and dark) to get you started. Includes 4250+ SVG icons, provided by [Tabler Icons](https://tabler-icons.io).
 - ### __Accessibility__
   Make you applications accessible to assistive technologies such as screen readers, powered by [accesskit](https://github.com/accesskit/accesskit).
 - ### __Localization__
   Adapt your application to different locales, including translating text with [fluent](https://github.com/projectfluent/fluent-rs).
-- ### __GPU accelerated rendering__
-  Vizia leverages the GPU for fast graphical updates, powered by [femtovg](https://github.com/femtovg/femtovg).
+- ### __Optimised rendering__
+  Vizia leverages the powerful and robust [skia](https://github.com/rust-skia/rust-skia) library for rendering, with further optimizations to only draw what is necessary.  
 - ### __Audio plugin development__
   Vizia provides an alternative [baseview](https://github.com/RustAudio/baseview) windowing backend for audio plugin development, for example with the [nih-plug](https://github.com/robbert-vdh/nih-plug) framework.
 

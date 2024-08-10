@@ -66,45 +66,40 @@ pub fn radiobutton(cx: &mut Context) {
             cx,
             |cx| {
                 VStack::new(cx, |cx|{
-                FormControl::new(cx, |cx| {
-                    RadioButton::new(cx, RadioData::option.map(|option| *option == Options::First))
-                        .on_select(|cx| cx.emit(RadioEvent::SetOption(Options::First)))
-                }, "First");
-
-                FormControl::new(cx, |cx| {
-                    RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Second))
-                        .on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Second)))
-                }, "Second");
-
-                FormControl::new(cx, |cx| {
-                    RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Third))
-                        .on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Third)))
-                }, "Third")
-                .disabled(true);
-            }).class("group");
-            }, r#"TODO"#
-        );
-
-        Label::new(cx, "Radio group").class("header");
-        DemoRegion::new(
-            cx,
-            |cx| {
-                FormGroup::new(cx, "Gender", |cx|{
-                    FormControl::new(cx, |cx| {
+                    HStack::new(cx, |cx| {
                         RadioButton::new(cx, RadioData::option.map(|option| *option == Options::First))
-                            .on_select(|cx: &mut EventContext<'_>| cx.emit(RadioEvent::SetOption(Options::First)))
-                    }, "Male");
+                            .on_select(|cx| cx.emit(RadioEvent::SetOption(Options::First)))
+                            .id("r1");
+                        Label::new(cx, "First").describing("r1");
+                    })
+                    .size(Auto)
+                    .child_top(Stretch(1.0))
+                    .child_bottom(Stretch(1.0))
+                    .col_between(Pixels(8.0));
 
-                    FormControl::new(cx, |cx| {
+                    HStack::new(cx, |cx| {
                         RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Second))
                             .on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Second)))
-                    }, "Female");
+                            .id("r2");
+                        Label::new(cx, "Second").describing("r2");
+                    })
+                    .size(Auto)
+                    .child_top(Stretch(1.0))
+                    .child_bottom(Stretch(1.0))
+                    .col_between(Pixels(8.0));
 
-                    FormControl::new(cx, |cx|{
+                    HStack::new(cx, |cx| {
                         RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Third))
                             .on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Third)))
-                    }, "Other");
-                });
+                            .id("r3");
+                        Label::new(cx, "Third").describing("r3");
+                    })
+                    .size(Auto)
+                    .child_top(Stretch(1.0))
+                    .child_bottom(Stretch(1.0))
+                    .col_between(Pixels(8.0))
+                    .disabled(true);
+                }).size(Auto);
             }, r#"TODO"#
         );
     })

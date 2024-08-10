@@ -5,7 +5,6 @@ mod image_id;
 pub use image_id::ImageId;
 use vizia_id::{GenerationalId, IdManager};
 
-use crate::cache::CachedData;
 use crate::context::ResourceContext;
 use crate::entity::Entity;
 use crate::prelude::IntoCssStr;
@@ -171,7 +170,7 @@ impl ResourceManager {
         }
     }
 
-    pub fn evict_unused_images(&mut self, cache: &mut CachedData) {
+    pub fn evict_unused_images(&mut self) {
         let rem = self
             .images
             .iter()
@@ -189,7 +188,6 @@ impl ResourceManager {
         for id in rem {
             self.images.remove(&id);
             self.image_ids.retain(|_, img| *img != id);
-            cache.svgs.borrow_mut().remove(&id);
             self.image_id_manager.destroy(id);
         }
     }

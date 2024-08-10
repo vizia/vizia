@@ -48,9 +48,7 @@ impl TabView {
                 .z_index(1)
                 .toggle_class("vertical", TabView::is_vertical);
 
-                Element::new(cx)
-                    .class("tabview-divider")
-                    .toggle_class("vertical", TabView::is_vertical);
+                Divider::new(cx).toggle_class("vertical", TabView::is_vertical);
 
                 // Tab content
                 VStack::new(cx, |cx| {

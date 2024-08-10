@@ -32,7 +32,14 @@ impl Model for ModalModel {
             ModalEvent::HideMenu => {
                 self.menu_visible = false;
             }
-        })
+        });
+
+        event.map(|window_event, _| match window_event {
+            WindowEvent::MouseOver => self.tooltip_visible = true,
+            WindowEvent::MouseOut => self.tooltip_visible = false,
+            WindowEvent::PressDown { mouse: _ } => self.tooltip_visible = false,
+            _ => {}
+        });
     }
 }
 
@@ -456,7 +463,7 @@ pub trait ActionModifiers<V> {
     where
         F: 'static + Fn(&mut EventContext, GeoChanged) + Send + Sync;
 
-    fn tooltip<C: FnOnce(&mut Context) -> Handle<'_, Tooltip>>(self, content: C) -> Self;
+    fn tooltip<C: Fn(&mut Context) -> Handle<'_, Tooltip> + 'static>(self, content: C) -> Self;
 
     fn menu<C: FnOnce(&mut Context) -> Handle<'_, T>, T: View>(self, content: C) -> Self;
 
@@ -497,27 +504,26 @@ fn build_modal_model(cx: &mut Context, entity: Entity) {
 }
 
 impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
-    fn tooltip<C: FnOnce(&mut Context) -> Handle<'_, Tooltip>>(self, content: C) -> Self {
+    fn tooltip<C: Fn(&mut Context) -> Handle<'_, Tooltip> + 'static>(self, content: C) -> Self {
         let entity = self.entity();
 
         build_modal_model(self.cx, entity);
 
-        let s = self
-            .on_over(|cx| cx.emit(ModalEvent::ShowTooltip))
-            .on_over_out(|cx| cx.emit(ModalEvent::HideTooltip));
-
-        s.cx.with_current(entity, |cx| {
-            (content)(cx).class("tooltip").bind(ModalModel::tooltip_visible, |mut handle, vis| {
-                let is_visible = vis.get(&handle);
-                handle = handle.toggle_class("vis", is_visible);
-
-                if is_visible {
-                    handle.context().emit(WindowEvent::GeometryChanged(GeoChanged::empty()));
+        self.cx.with_current(entity, move |cx| {
+            Binding::new(cx, ModalModel::tooltip_visible, move |cx, tooltip_visible| {
+                if tooltip_visible.get(cx) {
+                    (content)(cx).on_build(|cx| {
+                        cx.play_animation(
+                            "tooltip_fade",
+                            Duration::from_millis(100),
+                            Duration::from_millis(500),
+                        )
+                    });
                 }
             });
         });
 
-        s
+        self
     }
 
     fn menu<C: FnOnce(&mut Context) -> Handle<'_, T>, T: View>(self, content: C) -> Self {
@@ -550,16 +556,6 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
             .views
             .get_mut(&self.entity)
             .and_then(|view_handler| view_handler.downcast_mut::<Button>())
-        {
-            view.action = Some(Box::new(action));
-            return self;
-        }
-
-        if let Some(view) = self
-            .cx
-            .views
-            .get_mut(&self.entity)
-            .and_then(|view_handler| view_handler.downcast_mut::<IconButton>())
         {
             view.action = Some(Box::new(action));
             return self;

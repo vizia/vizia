@@ -183,21 +183,21 @@ fn main() -> Result<(), ApplicationError> {
                     ToggleButton::new(
                         cx,
                         AppData::text_align.map(|ta| *ta == TextAlign::Left),
-                        |cx| Icon::new(cx, ICON_ALIGN_LEFT),
+                        |cx| Svg::new(cx, ICON_ALIGN_LEFT),
                     )
                     .on_toggle(|cx| cx.emit(AppEvent::SetTextAlign(TextAlign::Left)));
 
                     ToggleButton::new(
                         cx,
                         AppData::text_align.map(|ta| *ta == TextAlign::Center),
-                        |cx| Icon::new(cx, ICON_ALIGN_CENTER),
+                        |cx| Svg::new(cx, ICON_ALIGN_CENTER),
                     )
                     .on_toggle(|cx| cx.emit(AppEvent::SetTextAlign(TextAlign::Center)));
 
                     ToggleButton::new(
                         cx,
                         AppData::text_align.map(|ta| *ta == TextAlign::Right),
-                        |cx| Icon::new(cx, ICON_ALIGN_RIGHT),
+                        |cx| Svg::new(cx, ICON_ALIGN_RIGHT),
                     )
                     .on_toggle(|cx| cx.emit(AppEvent::SetTextAlign(TextAlign::Right)));
                 });
@@ -209,7 +209,7 @@ fn main() -> Result<(), ApplicationError> {
                             Textbox::new(cx, AppData::font_size)
                                 .width(Pixels(100.0))
                                 .on_submit(|cx, val, _| cx.emit(AppEvent::SetFontSize(val)));
-                            IconButton::new(cx, ICON_CHEVRON_DOWN)
+                            Button::new(cx, |cx| Svg::new(cx, ICON_CHEVRON_DOWN))
                                 .on_press(|cx| cx.emit(PopupEvent::Switch));
                         });
                     },
@@ -232,7 +232,7 @@ fn main() -> Result<(), ApplicationError> {
                         cx,
                         AppData::text_decoration_line
                             .map(|td| td.contains(TextDecorationLine::Overline)),
-                        |cx| Icon::new(cx, ICON_OVERLINE),
+                        |cx| Svg::new(cx, ICON_OVERLINE),
                     )
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleOverline));
                 })
@@ -243,7 +243,7 @@ fn main() -> Result<(), ApplicationError> {
                         cx,
                         AppData::text_decoration_line
                             .map(|td| td.contains(TextDecorationLine::Strikethrough)),
-                        |cx| Icon::new(cx, ICON_STRIKETHROUGH),
+                        |cx| Svg::new(cx, ICON_STRIKETHROUGH),
                     )
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleStrikethrough));
                 })
@@ -254,7 +254,7 @@ fn main() -> Result<(), ApplicationError> {
                         cx,
                         AppData::text_decoration_line
                             .map(|td| td.contains(TextDecorationLine::Underline)),
-                        |cx| Icon::new(cx, ICON_UNDERLINE),
+                        |cx| Svg::new(cx, ICON_UNDERLINE),
                     )
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleUnderline));
                 })

@@ -61,6 +61,7 @@ fn main() -> Result<(), ApplicationError> {
 
         ExamplePage::new(cx, |cx| {
             Spinbox::new(cx, AppState::spinbox_value_1)
+                .icons(SpinboxIcons::PlusMinus)
                 .width(Pixels(100.0))
                 .on_increment(|ex| ex.emit(AppEvent::Increment1))
                 .on_decrement(|ex| ex.emit(AppEvent::Decrement1));

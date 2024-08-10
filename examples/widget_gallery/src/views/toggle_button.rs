@@ -60,27 +60,25 @@ pub fn toggle_button(cx: &mut Context) {
             cx,
             |cx| {
                 ButtonGroup::new(cx, |cx| {
-                    ToggleButton::new(cx, ToggleData::bold, |cx| Icon::new(cx, ICON_BOLD))
+                    ToggleButton::new(cx, ToggleData::bold, |cx| Svg::new(cx, ICON_BOLD))
                         .on_toggle(|cx| cx.emit(ToggleEvent::Bold));
 
-                    ToggleButton::new(cx, ToggleData::italic, |cx| Icon::new(cx, ICON_ITALIC))
+                    ToggleButton::new(cx, ToggleData::italic, |cx| Svg::new(cx, ICON_ITALIC))
                         .on_toggle(|cx| cx.emit(ToggleEvent::Italic));
 
-                    ToggleButton::new(cx, ToggleData::underline, |cx| {
-                        Icon::new(cx, ICON_UNDERLINE)
-                    })
-                    .on_toggle(|cx| cx.emit(ToggleEvent::Underline));
+                    ToggleButton::new(cx, ToggleData::underline, |cx| Svg::new(cx, ICON_UNDERLINE))
+                        .on_toggle(|cx| cx.emit(ToggleEvent::Underline));
                 });
             },
             r#"ButtonGroup::new(cx, |cx| {
-    ToggleButton::new(cx, ToggleData::bold, |cx| Icon::new(cx, ICON_BOLD))
+    ToggleButton::new(cx, ToggleData::bold, |cx| Svg::new(cx, ICON_BOLD))
         .on_toggle(|cx| cx.emit(ToggleEvent::ToggleBold));
 
-    ToggleButton::new(cx, ToggleData::italic, |cx| Icon::new(cx, ICON_ITALIC))
+    ToggleButton::new(cx, ToggleData::italic, |cx| Svg::new(cx, ICON_ITALIC))
         .on_toggle(|cx| cx.emit(ToggleEvent::ToggleItalic));
 
     ToggleButton::new(cx, ToggleData::underline, |cx| {
-        Icon::new(cx, ICON_UNDERLINE)
+        Svg::new(cx, ICON_UNDERLINE)
     })
     .on_toggle(|cx| cx.emit(ToggleEvent::ToggleUnderline));
 });"#,

@@ -49,7 +49,7 @@ fn main() -> Result<(), ApplicationError> {
                     .width(Stretch(1.0))
                     .placeholder("Search")
                     .on_edit(|cx, text| cx.emit(AppEvent::SetEditableText(text)));
-                Icon::new(cx, ICON_SEARCH)
+                Svg::new(cx, ICON_SEARCH)
                     .color(Color::gray())
                     .position_type(PositionType::SelfDirected);
             })

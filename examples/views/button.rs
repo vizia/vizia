@@ -23,7 +23,7 @@ fn main() -> Result<(), ApplicationError> {
                 // Button with Icon
                 Button::new(cx, |cx| {
                     HStack::new(cx, |cx| {
-                        Icon::new(cx, ICON_CHECK).class("icon");
+                        Svg::new(cx, ICON_CHECK).class("icon");
                         Label::new(cx, "Button with Icon");
                     })
                 });

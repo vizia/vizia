@@ -4,7 +4,7 @@ use vizia_core::context::TreeProps;
 #[cfg(target_os = "windows")]
 use winit::platform::windows::WindowExtWindows;
 
-use std::collections::HashMap;
+use hashbrown::HashMap;
 use std::error::Error;
 use std::num::NonZeroU32;
 use std::{ffi::CString, sync::Arc};

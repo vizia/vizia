@@ -49,7 +49,7 @@ An HStack can be used to add an icon as well as a label to a button. The icon ca
             |cx| {
                 Button::new(cx, |cx| {
                     HStack::new(cx, |cx| {
-                        Icon::new(cx, ICON_TRASH);
+                        Svg::new(cx, ICON_TRASH);
                         Label::new(cx, "Delete");
                     })
                 })
@@ -58,13 +58,13 @@ An HStack can be used to add an icon as well as a label to a button. The icon ca
                 Button::new(cx, |cx| {
                     HStack::new(cx, |cx| {
                         Label::new(cx, "Edit");
-                        Icon::new(cx, ICON_PENCIL);
+                        Svg::new(cx, ICON_PENCIL);
                     })
                 })
                 .class("accent");
             }, r#"Button::new(cx, |cx| {
     HStack::new(cx, |cx| {
-        Icon::new(cx, ICON_TRASH);
+        Svg::new(cx, ICON_TRASH);
         Label::new(cx, "Delete");
     })
 })
@@ -73,7 +73,7 @@ An HStack can be used to add an icon as well as a label to a button. The icon ca
 Button::new(cx, |cx| {
     HStack::new(cx, |cx| {
         Label::new(cx, "Edit");
-        Icon::new(cx, ICON_PENCIL);
+        Svg::new(cx, ICON_PENCIL);
     })
 })
 .class("accent");"#
