@@ -23,9 +23,7 @@ where
 
 impl<L> Binding<L>
 where
-    L: 'static + Lens,
-    <L as Lens>::Source: 'static,
-    <L as Lens>::Target: Data,
+    L: 'static + Lens<Source: 'static, Target: Data>,
 {
     /// Creates a new binding view.
     ///
@@ -59,14 +57,14 @@ where
         let ancestors = cx.current().parent_iter(&cx.tree).collect::<HashSet<_>>();
         let new_ancestors = id.parent_iter(&cx.tree).collect::<Vec<_>>();
 
-        fn insert_store<L: Lens>(
+        fn insert_store<L>(
             ancestors: &HashSet<Entity>,
             stores: &mut HashMap<StoreId, Box<dyn Store>>,
             model_data: ModelOrView,
             lens: L,
             id: Entity,
         ) where
-            L::Target: Data,
+            L: Lens<Target: Data>,
         {
             let key = get_storeid(&lens);
 

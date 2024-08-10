@@ -27,9 +27,9 @@ pub enum SpinboxIcons {
 impl_res_simple!(SpinboxIcons);
 
 impl Spinbox {
-    pub fn new<L: Lens>(cx: &mut Context, lens: L) -> Handle<Spinbox>
+    pub fn new<L>(cx: &mut Context, lens: L) -> Handle<Spinbox>
     where
-        <L as Lens>::Target: Data + ToStringLocalized,
+        L: Lens<Target: Data + ToStringLocalized>,
     {
         Self::custom(cx, move |cx| Label::new(cx, lens))
     }

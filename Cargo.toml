@@ -5,7 +5,7 @@ edition = "2021"
 license = "MIT"
 description = "A Rust GUI Framework"
 autoexamples = false
-rust-version = "1.76"
+rust-version = "1.79"
 
 [workspace]
 members = [ "crates/*", "examples/widget_gallery", "examples/designer"]
