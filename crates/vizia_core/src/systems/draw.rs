@@ -422,9 +422,9 @@ pub(crate) fn draw_bounds(
         .get_layout_parent(entity)
         .unwrap_or(tree.get_parent_window(entity).unwrap_or(Entity::root()));
     if let Some(clip_bounds) = cache.clip_path.get(parent) {
-        dirty_bounds.intersection(clip_bounds)
+        dirty_bounds.intersection(clip_bounds).round()
     } else {
-        dirty_bounds
+        dirty_bounds.round()
     }
 }
 
