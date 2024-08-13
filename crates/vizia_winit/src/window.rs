@@ -97,6 +97,7 @@ impl WinState {
 
         let context_attributes = ContextAttributesBuilder::new()
             .with_profile(GlProfile::Core)
+            .with_context_api(ContextApi::OpenGl(None))
             .build(Some(raw_window_handle));
 
         let fallback_context_attributes = ContextAttributesBuilder::new()
@@ -114,7 +115,7 @@ impl WinState {
 
         let (width, height): (u32, u32) = window.inner_size().into();
 
-        let attrs = SurfaceAttributesBuilder::<WindowSurface>::new().build(
+        let attrs = SurfaceAttributesBuilder::<WindowSurface>::new().with_srgb(Some(true)).build(
             raw_window_handle,
             NonZeroU32::new(width.max(1)).unwrap(),
             NonZeroU32::new(height.max(1)).unwrap(),
@@ -196,7 +197,12 @@ impl WinState {
         &self.window
     }
 
+    pub fn make_current(&mut self) {
+        self.gl_context.make_current(&self.gl_surface).unwrap();
+    }
+
     pub fn resize(&mut self, size: PhysicalSize<u32>) {
+        self.gl_context.make_current(&self.gl_surface).unwrap();
         let (width, height): (u32, u32) = size.into();
 
         if width == 0 || height == 0 {
@@ -235,7 +241,6 @@ impl WinState {
     }
 
     pub fn swap_buffers(&mut self) {
-        self.gl_context.make_current(&self.gl_surface).unwrap();
         self.gr_context.flush_and_submit();
         self.gl_surface.swap_buffers(&self.gl_context).expect("Failed to swap buffers");
     }
@@ -604,6 +609,15 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
             win_state.window_description.icon = Some(image);
             win_state.window_description.icon_width = width;
             win_state.window_description.icon_height = height;
+        }
+
+        self
+    }
+
+    fn enabled_window_buttons(mut self, window_buttons: WindowButtons) -> Self {
+        let entity = self.entity();
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.enabled_window_buttons = window_buttons;
         }
 
         self

@@ -26,7 +26,7 @@ skia-safe = { version = "0.75", features = ["textlayout", "svg"] }
 # morphorm = {path = "../../../morphorm" }
 morphorm = {git = "https://github.com/vizia/morphorm.git", branch = "auto-min-size2"}
 # morphorm = "0.6.4"
-bitflags = "2.4.2"
+bitflags = "2.6"
 fnv = "1.0.7"
 fluent-bundle = "0.15.2"
 fluent-langneg = "0.13.0"

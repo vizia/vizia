@@ -6,10 +6,7 @@
     font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",
         "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji",
         "Segoe UI Emoji";
-}
-
-svg {
-    fill: #181818;
+    font-variation-settings: "wght" 400;
 }
 
 *:focus-visible {
@@ -47,7 +44,7 @@ avatar svg {
 
 badge {
     background-color: #0062ff;
-    color: white;
+    color: #fafafa;
 }
 
 badge svg {
@@ -1002,12 +999,6 @@ tooltip {
     background-color: #181818;
     corner-radius: 4px;
     color: #fafafa;
-    opacity: 0;
-}
-
-tooltip.vis {
-    opacity: 1;
-    transition: opacity 100ms 500ms;
 }
 
 tooltip arrow {

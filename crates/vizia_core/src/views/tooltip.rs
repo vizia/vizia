@@ -249,8 +249,6 @@ impl View for Tooltip {
 
                 self.shift = self.placement.place(available);
 
-                println!("{:?} {:?}", self.placement, self.shift);
-
                 let arrow_size = self.arrow_size.to_px().unwrap();
 
                 let translate = match self.shift {

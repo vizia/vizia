@@ -4,7 +4,7 @@ use crate::{
     window_modifiers::WindowModifiers,
 };
 use hashbrown::HashMap;
-use std::{error::Error, sync::Arc};
+use std::{error::Error, fmt::Display, sync::Arc};
 
 // #[cfg(feature = "accesskit")]
 // use accesskit::{Action, NodeBuilder, NodeId, TreeUpdate};
@@ -70,6 +70,17 @@ pub enum ApplicationError {
     EventLoopError(EventLoopError),
     LogError,
 }
+
+impl Display for ApplicationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ApplicationError::EventLoopError(ele) => write!(f, "{}", ele),
+            ApplicationError::LogError => write!(f, "log error"),
+        }
+    }
+}
+
+impl std::error::Error for ApplicationError {}
 
 ///Creating a new application creates a root `Window` and a `Context`. Views declared within the closure passed to `Application::new()` are added to the context and rendered into the root window.
 ///
@@ -493,6 +504,7 @@ impl ApplicationHandler<UserEvent> for Application {
             winit::event::WindowEvent::Occluded(_) => {}
             winit::event::WindowEvent::RedrawRequested => {
                 for window in self.windows.values_mut() {
+                    window.make_current();
                     //self.cx.needs_refresh(window.entity);
                     self.cx.draw(window.entity, &mut window.surface, &mut window.dirty_surface);
                     window.swap_buffers();
@@ -747,6 +759,12 @@ impl WindowModifiers for Application {
     fn on_create(self, _callback: impl Fn(&mut EventContext)) -> Self {
         self
     }
+
+    fn enabled_window_buttons(mut self, window_buttons: WindowButtons) -> Self {
+        self.window_description.enabled_window_buttons = window_buttons;
+
+        self
+    }
 }
 
 fn apply_window_description(description: &WindowDescription) -> WindowAttributes {
@@ -791,6 +809,10 @@ fn apply_window_description(description: &WindowDescription) -> WindowAttributes
             )
             .unwrap()
         }))
+        .with_enabled_buttons(
+            winit::window::WindowButtons::from_bits(description.enabled_window_buttons.bits())
+                .unwrap(),
+        )
 }
 
 /// Cloaks the window such that it is not visible to the user, but will still be composited.

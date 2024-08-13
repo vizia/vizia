@@ -54,6 +54,15 @@ impl From<WindowPosition> for (u32, u32) {
     }
 }
 
+bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    pub struct WindowButtons: u32 {
+        const CLOSE  = 1 << 0;
+        const MINIMIZE  = 1 << 1;
+        const MAXIMIZE  = 1 << 2;
+    }
+}
+
 /// Passed to the window to set initial window properties.
 #[derive(Clone, Debug)]
 pub struct WindowDescription {
@@ -72,6 +81,7 @@ pub struct WindowDescription {
     pub decorations: bool,
     pub always_on_top: bool,
     pub vsync: bool,
+    pub enabled_window_buttons: WindowButtons,
 
     // Change this to resource id when the resource manager is working
     pub icon: Option<Vec<u8>>,
@@ -96,6 +106,7 @@ impl Default for WindowDescription {
             decorations: true,
             always_on_top: false,
             vsync: true,
+            enabled_window_buttons: WindowButtons::all(),
 
             icon: None,
             icon_width: 0,

@@ -89,7 +89,7 @@ pub mod prelude {
     pub use vizia_id::GenerationalId;
     pub use vizia_input::{Code, Key, KeyChord, Modifiers, MouseButton, MouseButtonState};
     pub use vizia_storage::{Tree, TreeExt};
-    pub use vizia_window::{WindowPosition, WindowSize};
+    pub use vizia_window::{WindowButtons, WindowPosition, WindowSize};
 
     pub use super::style::*;
 

@@ -32,7 +32,7 @@ where
 {
     pub fn new() -> Self {
         Self {
-            generation: Vec::new(),
+            generation: vec![0],
             free_list: VecDeque::with_capacity(MINIMUM_FREE_INDICES),
 
             p: PhantomData,
@@ -41,6 +41,7 @@ where
 
     pub fn reset(&mut self) {
         self.generation.clear();
+        self.generation.push(0);
         self.free_list.clear();
     }
 

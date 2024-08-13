@@ -8,7 +8,7 @@ pub(crate) struct TimingFunction {
 
 impl Default for TimingFunction {
     fn default() -> Self {
-        Self::linear()
+        Self::ease_in_out()
     }
 }
 
