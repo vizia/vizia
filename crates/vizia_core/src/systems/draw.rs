@@ -197,6 +197,7 @@ pub(crate) fn draw_system(
     if let Some(dirty_rect) = cx.windows.get_mut(&window_entity).unwrap().dirty_rect {
         let rect: Rect = dirty_rect.into();
         canvas.clip_rect(rect, ClipOp::Intersect, false);
+        canvas.clear(Color::transparent());
     }
 
     cx.resource_manager.mark_images_unused();
@@ -229,6 +230,7 @@ pub(crate) fn draw_system(
     }
     canvas.restore();
 
+    surface.canvas().clear(Color::transparent());
     dirty_surface.draw(surface.canvas(), (0, 0), SamplingOptions::default(), None);
 
     // Debug draw dirty rect
