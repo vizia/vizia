@@ -418,11 +418,17 @@ pub(crate) fn draw_bounds(
 
     let dirty_bounds: BoundingBox = tr.into();
 
+    let z_index = style.z_index.get(entity).copied().unwrap_or_default();
+
     let parent = tree
         .get_layout_parent(entity)
         .unwrap_or(tree.get_parent_window(entity).unwrap_or(Entity::root()));
     if let Some(clip_bounds) = cache.clip_path.get(parent) {
-        dirty_bounds.intersection(clip_bounds).round()
+        if z_index != 0 {
+            dirty_bounds.round()
+        } else {
+            dirty_bounds.intersection(clip_bounds).round()
+        }
     } else {
         dirty_bounds.round()
     }

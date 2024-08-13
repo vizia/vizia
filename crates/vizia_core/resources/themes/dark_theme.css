@@ -2,14 +2,11 @@
 
 :root {
     background-color: #202020;
-    color: #fafafa;
+    color: #f1f1f1;
     font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",
         "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji",
         "Segoe UI Emoji";
-}
-
-icon svg {
-    fill: #fafafa;
+    font-variation-settings: "wght" 350;
 }
 
 *:focus-visible {
@@ -38,12 +35,19 @@ avatar {
     background-color: #343434;
 }
 
+avatar svg {
+    fill: #181818;
+}
+
 /* BADGE */
 
 badge {
-    border-width: 2px;
-    border-color: white;
+    color: white;
     background-color: #0062ff;
+}
+
+badge svg {
+    fill: #fafafa;
 }
 
 badge.success {
@@ -927,12 +931,6 @@ tooltip {
     child-space: 4px;
     background-color: #888;
     corner-radius: 4px;
-    opacity: 0;
-}
-
-tooltip.vis {
-    opacity: 1;
-    transition: opacity 100ms 500ms;
 }
 
 tooltip arrow {

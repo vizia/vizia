@@ -1,5 +1,5 @@
 use vizia_core::{binding::Res, context::EventContext};
-use vizia_window::{WindowPosition, WindowSize};
+use vizia_window::{WindowButtons, WindowPosition, WindowSize};
 
 /// Modifiers for setting the properties of a window.
 pub trait WindowModifiers {
@@ -197,4 +197,6 @@ pub trait WindowModifiers {
     /// .run();
     /// ```
     fn icon(self, width: u32, height: u32, image: Vec<u8>) -> Self;
+
+    fn enabled_window_buttons(self, window_buttons: WindowButtons) -> Self;
 }

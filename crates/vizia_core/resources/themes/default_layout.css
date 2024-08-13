@@ -62,8 +62,8 @@ badge > svg {
 /* BUTTON */
 button,
 toggle-button {
-    size: 32px;
-    min-width: auto;
+    height: 32px;
+    width: auto;
     child-space: 1s;
     cursor: hand;
     child-left: 8px;
