@@ -175,9 +175,9 @@ impl<'a> EventContext<'a> {
         }
     }
 
-    // pub fn get_view<V: View>(&self) -> Option<&V> {
-    //     self.views.get(&self.current).and_then(|view| view.downcast_ref::<V>())
-    // }
+    pub fn get_view<V: View>(&self) -> Option<&V> {
+        self.views.get(&self.current).and_then(|view| view.downcast_ref::<V>())
+    }
 
     pub fn close_window(&mut self) {
         if let Some(state) = self.windows.get_mut(&self.current) {

@@ -21,6 +21,7 @@ pub mod prelude {
         application::{Application, ApplicationError},
         window::Window,
         window_modifiers::WindowModifiers,
+        ModifyWindow,
     };
 
     #[cfg(all(not(feature = "winit"), feature = "baseview"))]
