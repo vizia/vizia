@@ -258,10 +258,6 @@ impl BoundingBox {
         (self.width() * self.width() + self.height() * self.height()).sqrt()
     }
 
-    pub fn round(&self) -> Self {
-        Self { x: self.x.round(), y: self.y.round(), w: self.w.round(), h: self.h.round() }
-    }
-
     // pub fn transform(&self, transform: &Transform2D) -> Self {
     //     let (tl, tt) = transform.transform_point(self.x, self.y);
     //     let (tr, tb) = transform.transform_point(self.right(), self.bottom());
