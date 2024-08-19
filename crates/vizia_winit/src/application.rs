@@ -864,8 +864,8 @@ pub fn load_default_cursors(event_loop: &ActiveEventLoop) -> HashMap<CursorIcon,
         load_cursor(
             CursorIcon::Alias, //
             include_bytes!("../resources/cursors/windows/aliasb"),
-            7,
-            4,
+            0,
+            0,
         );
         load_cursor(
             CursorIcon::Cell, //
@@ -882,20 +882,20 @@ pub fn load_default_cursors(event_loop: &ActiveEventLoop) -> HashMap<CursorIcon,
         load_cursor(
             CursorIcon::Copy, //
             include_bytes!("../resources/cursors/windows/copy"),
-            7,
-            4,
+            0,
+            0,
         );
         load_cursor(
             CursorIcon::Grab, //
             include_bytes!("../resources/cursors/windows/grab"),
-            15,
-            15,
+            6,
+            0,
         );
         load_cursor(
             CursorIcon::Grabbing, //
             include_bytes!("../resources/cursors/windows/grabbing"),
-            15,
-            15,
+            6,
+            0,
         );
         load_cursor(
             CursorIcon::RowResize, //
