@@ -153,39 +153,40 @@ pub(crate) fn draw_system(
 
     transform_system(cx);
 
-    let children = cx
-        .windows
-        .get(&window_entity)
-        .unwrap()
-        .redraw_list
+    let window = cx.windows.get_mut(&window_entity).unwrap();
+
+    let mut dirty_rect = std::mem::take(&mut window.dirty_rect);
+    let mut redraw_list = std::mem::take(&mut window.redraw_list);
+
+    let children = redraw_list
         .iter()
         .flat_map(|entity| DrawTreeIterator::subtree(&cx.tree, *entity))
         .collect::<Vec<_>>();
 
-    cx.windows.get_mut(&window_entity).unwrap().redraw_list.extend(children.iter());
+    redraw_list.extend(children);
 
-    for entity in cx.windows.get(&window_entity).unwrap().clone().redraw_list.iter() {
+    for &entity in &redraw_list {
         // Skip binding views
-        if cx.tree.is_ignored(*entity) {
+        if cx.tree.is_ignored(entity) {
             continue;
         }
 
-        if cx.tree.is_window(*entity) && *entity != window_entity {
+        if cx.tree.is_window(entity) && entity != window_entity {
             continue;
         }
 
         if entity.visible(&cx.style) {
-            let mut draw_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, *entity);
+            let mut draw_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
 
-            if let Some(previous_draw_bounds) = cx.cache.draw_bounds.get(*entity) {
+            if let Some(previous_draw_bounds) = cx.cache.draw_bounds.get(entity) {
                 draw_bounds = draw_bounds.union(previous_draw_bounds);
             }
 
             if draw_bounds.w != 0.0 && draw_bounds.h != 0.0 {
-                if let Some(dr) = &mut cx.windows.get_mut(&window_entity).unwrap().dirty_rect {
+                if let Some(dr) = &mut dirty_rect {
                     *dr = dr.union(&draw_bounds);
                 } else {
-                    cx.windows.get_mut(&window_entity).unwrap().dirty_rect = Some(draw_bounds);
+                    dirty_rect = Some(draw_bounds);
                 }
             }
         }
@@ -194,8 +195,8 @@ pub(crate) fn draw_system(
     let canvas = dirty_surface.canvas();
 
     canvas.save();
-    if let Some(dirty_rect) = cx.windows.get_mut(&window_entity).unwrap().dirty_rect {
-        let rect: Rect = dirty_rect.into();
+
+    if let Some(rect) = dirty_rect.map(Rect::from) {
         canvas.clip_rect(rect, ClipOp::Intersect, false);
         canvas.clear(Color::transparent());
     }
@@ -204,8 +205,8 @@ pub(crate) fn draw_system(
 
     let mut queue = BinaryHeap::new();
     queue.push(ZEntity { index: 0, entity: window_entity, visible: true });
-    while !queue.is_empty() {
-        let zentity = queue.pop().unwrap();
+
+    while let Some(zentity) = queue.pop() {
         canvas.save();
         draw_entity(
             &mut DrawContext {
@@ -220,7 +221,7 @@ pub(crate) fn draw_system(
                 modifiers: &cx.modifiers,
                 mouse: &cx.mouse,
             },
-            &cx.windows.get(&window_entity).unwrap().dirty_rect,
+            &dirty_rect,
             canvas,
             zentity.index,
             &mut queue,
@@ -228,35 +229,35 @@ pub(crate) fn draw_system(
         );
         canvas.restore();
     }
+
     canvas.restore();
 
     surface.canvas().clear(Color::transparent());
     dirty_surface.draw(surface.canvas(), (0, 0), SamplingOptions::default(), None);
 
     // Debug draw dirty rect
-    // if let Some(dirty_rect) = cx.windows.get_mut(&window_entity).unwrap().dirty_rect {
-    //     let path: Rect = dirty_rect.into();
+    // if let Some(rect) = dirty_rect.map(Rect::from) {
     //     let mut paint = Paint::default();
     //     paint.set_style(skia_safe::PaintStyle::Stroke);
     //     paint.set_color(Color::red());
     //     paint.set_stroke_width(1.0);
-    //     surface.canvas().draw_rect(path, &paint);
+    //     surface.canvas().draw_rect(rect, &paint);
     // }
 
-    for entity in cx.windows.get(&window_entity).unwrap().clone().redraw_list.iter() {
+    for entity in redraw_list {
         if entity.visible(&cx.style) {
-            let draw_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, *entity);
+            let draw_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
 
-            if let Some(dr) = cx.cache.draw_bounds.get_mut(*entity) {
+            if let Some(dr) = cx.cache.draw_bounds.get_mut(entity) {
                 *dr = draw_bounds;
             } else {
-                cx.cache.draw_bounds.insert(*entity, draw_bounds);
+                cx.cache.draw_bounds.insert(entity, draw_bounds);
             }
         }
     }
 
-    cx.windows.get_mut(&window_entity).unwrap().redraw_list.clear();
-    cx.windows.get_mut(&window_entity).unwrap().dirty_rect = None;
+    window.redraw_list.clear();
+    window.dirty_rect = None;
 }
 
 fn draw_entity(
