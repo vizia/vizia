@@ -405,15 +405,6 @@ pub(crate) fn draw_bounds(
 
     layout_bounds = layout_bounds.union(&outline_bounds);
 
-    let mut border_bounds = layout_bounds;
-
-    if let Some(border_width) = style.border_width.get(entity) {
-        border_bounds = border_bounds
-            .expand(border_width.to_pixels(layout_bounds.diagonal(), style.scale_factor()) / 2.0);
-    }
-
-    layout_bounds = layout_bounds.union(&border_bounds);
-
     let matrix = cache.transform.get(entity).copied().unwrap_or_default();
 
     let rect: Rect = layout_bounds.into();
