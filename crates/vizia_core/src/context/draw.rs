@@ -700,7 +700,7 @@ impl<'a> DrawContext<'a> {
         let outline_width = self.outline_width();
         let outline_color = self.outline_color();
 
-        if outline_width >= 0.0 && outline_color.a() != 0 {
+        if outline_width > 0.0 && outline_color.a() != 0 {
             let outline_offset = self.outline_offset();
 
             let bounds = self.bounds();
