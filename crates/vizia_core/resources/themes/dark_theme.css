@@ -473,7 +473,7 @@ menubutton:disabled {
 
 menubutton .shortcut {
     color: #c4c4c4;
-    font-size: medium;
+    font-size: 12;
 }
 
 submenu {

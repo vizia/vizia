@@ -371,13 +371,27 @@ menubutton {
     width: 1s;
     child-left: 8px;
     child-right: 8px;
+    child-top: 1s;
+    child-bottom: 1s;
+    col-between: 8px;
+}
+
+menubutton > hstack,
+submenu > hstack {
+    height: auto;
+    child-top: 1s;
+    child-bottom: 1s;
+    col-between: 8px;
 }
 
 submenu {
     height: 32px;
-    width: auto;
+    width: 1s;
     child-left: 8px;
     child-right: 8px;
+    child-top: 1s;
+    child-bottom: 1s;
+    col-between: 8px;
 }
 
 submenu submenu,
@@ -385,54 +399,27 @@ dropdown > popup > submenu {
     width: 1s;
 }
 
-menubutton label {
-    child-top: 1s;
-    child-bottom: 1s;
-    width: 1s;
-    height: 1s;
-}
-
-menubutton .icon,
-menubutton .shortcut {
-    child-space: 1s;
-    width: auto;
-    height: 1s;
-}
-
+submenu .icon,
 menubutton .icon {
-    child-right: 4px;
+    size: 20px;
 }
 
 menubutton .shortcut {
-    child-left: 4px;
-    child-right: 4px;
+    left: 1s;
 }
 
-submenu label {
-    child-top: 1s;
-    child-bottom: 1s;
-    size: 1s;
-}
-
-submenu > label {
-    width: auto;
-}
-
-submenu submenu label,
+/* submenu submenu label,
 dropdown > popup > submenu label {
     child-top: 1s;
     child-bottom: 1s;
     size: 1s;
     width: 1s;
-}
+} */
 
 submenu > popup {
-    top: 100%;
     height: auto;
-    width: 160px;
+    width: 250px;
     child-space: 8px;
-    left: 1s;
-    right: 1s;
 }
 
 submenu submenu > popup,
@@ -459,15 +446,6 @@ menubar > submenu {
     child-right: 12px;
 }
 
-menubar > submenu > label {
-    width: auto;
-}
-
-menubar > submenu > popup {
-    left: 0px;
-    top: 100%;
-}
-
 submenu > .arrow {
     display: none;
 }
@@ -478,10 +456,9 @@ menu submenu > .arrow {
 }
 
 submenu > .arrow {
-    width: auto;
-    height: 1s;
-    child-space: 1s;
-    /* child-right: 0px; */
+    size: 20px;
+    left: 1s;
+    right: 4px;
 }
 
 submenu divider {
