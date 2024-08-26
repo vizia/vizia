@@ -3,10 +3,9 @@
 use std::any::{Any, TypeId};
 
 use crate::binding::Store;
+use crate::binding::StoreId;
 use crate::{events::ViewHandler, prelude::*};
 use hashbrown::HashMap;
-
-use crate::binding::StoreId;
 
 /// A trait implemented by application data in order to respond to events and mutate state.
 ///
@@ -61,12 +60,17 @@ pub trait Model: 'static + Sized {
     /// }
     /// ```
     fn build(self, cx: &mut Context) {
-        if let Some(model_data_store) = cx.data.get_mut(&cx.current()) {
+        let current = if cx.tree.is_ignored(cx.current) {
+            cx.tree.get_layout_parent(cx.current).unwrap()
+        } else {
+            cx.current
+        };
+        if let Some(model_data_store) = cx.data.get_mut(&current) {
             model_data_store.models.insert(TypeId::of::<Self>(), Box::new(self));
         } else {
             let mut models: HashMap<TypeId, Box<dyn ModelData>> = HashMap::new();
             models.insert(TypeId::of::<Self>(), Box::new(self));
-            cx.data.insert(cx.current(), ModelDataStore { models, stores: HashMap::default() });
+            cx.data.insert(current, ModelDataStore { models, stores: HashMap::default() });
         }
     }
 
