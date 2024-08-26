@@ -4,105 +4,23 @@ use crate::prelude::*;
 
 #[derive(Lens)]
 pub struct VirtualList {
-    num_items: usize,
-    item_height: f32,
-    visible_range: Range<usize>,
-    scroll_y: f32,
     scroll_to_cursor: bool,
     on_change: Option<Box<dyn Fn(&mut EventContext, Range<usize>)>>,
 }
 
 pub enum VirtualListEvent {
-    SetNumItems(usize),
     SetScrollY(f32),
 }
 
-impl VirtualList {
-    pub fn new<V: View, L: Lens, T: 'static>(
-        cx: &mut Context,
-        list: L,
-        item_height: f32,
-        item_content: impl 'static + Copy + Fn(&mut Context, usize, MapRef<L, T>) -> Handle<V>,
-    ) -> Handle<Self>
-    where
-        L::Target: Deref<Target = [T]>,
-    {
-        Self::new_generic(
-            cx,
-            list,
-            |list| list.len(),
-            |list, index| &list[index],
-            item_height,
-            item_content,
-        )
-    }
+#[derive(Lens)]
+struct VirtualListData {
+    num_items: usize,
+    item_height: f32,
+    visible_range: Range<usize>,
+    scroll_y: f32,
+}
 
-    pub fn new_generic<V: View, L: Lens, T: 'static>(
-        cx: &mut Context,
-        list: L,
-        list_len: impl 'static + Fn(&L::Target) -> usize,
-        list_index: impl 'static + Copy + Fn(&L::Target, usize) -> &T,
-        item_height: f32,
-        item_content: impl 'static + Copy + Fn(&mut Context, usize, MapRef<L, T>) -> Handle<V>,
-    ) -> Handle<Self> {
-        let num_items = list.map(list_len);
-        Self {
-            num_items: num_items.get(cx),
-            item_height,
-            visible_range: 0..0,
-            scroll_y: 0.0,
-            scroll_to_cursor: true,
-            on_change: None,
-        }
-        .build(cx, |cx| {
-            ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
-                Binding::new(cx, num_items, move |cx, lens| {
-                    let num_items = lens.get(cx);
-                    cx.emit(VirtualListEvent::SetNumItems(num_items));
-                    // The ScrollView contains a VStack which is sized to the total height
-                    // needed to fit all items. This ensures we have a correct scroll bar.
-                    VStack::new(cx, |cx| {
-                        // Within the VStack we create a view for each visible item.
-                        // This binding ensures the amount of views stay up to date.
-                        let num_visible_items = Self::visible_range.map(Range::len);
-                        Binding::new(cx, num_visible_items, move |cx, lens| {
-                            for i in 0..lens.get(cx).min(num_items) {
-                                // Each item of the range maps to an index into the backing list.
-                                // As we scroll the index may change, representing an item going in/out of visibility.
-                                // Wrap `item_content` in a binding to said index, so it rebuilds only when necessary.
-                                let item_index = Self::visible_item_index(i);
-                                Binding::new(cx, item_index, move |cx, lens| {
-                                    let index = lens.get(cx);
-                                    HStack::new(cx, move |cx| {
-                                        let item =
-                                            list.map_ref(move |list| list_index(list, index));
-                                        item_content(cx, index, item).height(Percentage(100.0));
-                                    })
-                                    .height(Pixels(item_height))
-                                    .position_type(PositionType::SelfDirected)
-                                    .bind(
-                                        item_index,
-                                        move |handle, lens| {
-                                            let index = lens.get(&handle);
-                                            handle.top(Pixels(index as f32 * item_height));
-                                        },
-                                    );
-                                });
-                            }
-                        });
-                    })
-                    .height(Pixels(num_items as f32 * item_height));
-                })
-            })
-            .scroll_to_cursor(true)
-            .on_scroll(|cx, _, y| {
-                if y.is_finite() {
-                    cx.emit(VirtualListEvent::SetScrollY(y));
-                }
-            });
-        })
-    }
-
+impl VirtualListData {
     fn evaluate_index(index: usize, start: usize, end: usize) -> usize {
         match end - start {
             0 => 0,
@@ -146,40 +64,22 @@ impl VirtualList {
 
         self.visible_range = start_index..end_index.min(self.num_items);
 
-        if let Some(callback) = &self.on_change {
-            (callback)(cx, self.visible_range.clone())
-        }
+        // if let Some(callback) = &self.on_change {
+        //     (callback)(cx, self.visible_range.clone())
+        // }
     }
 }
 
-impl View for VirtualList {
-    fn element(&self) -> Option<&'static str> {
-        Some("virtual-list")
-    }
-
+impl Model for VirtualListData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|virtual_list_event, _| match virtual_list_event {
-            VirtualListEvent::SetNumItems(num_items) => {
-                if self.num_items != *num_items {
-                    self.num_items = *num_items;
-                    self.recalc(cx);
-                    // Bit of a hack until scrollview is changed to take a lens for x/y
-                    cx.emit_custom(
-                        Event::new(ScrollEvent::SetY(0.0))
-                            .propagate(Propagation::Subtree)
-                            .origin(cx.current)
-                            .target(cx.current),
-                    );
-                }
-            }
-
             VirtualListEvent::SetScrollY(scroll_y) => {
                 self.scroll_y = *scroll_y;
                 self.recalc(cx);
 
-                if let Some(callback) = &self.on_change {
-                    (callback)(cx, self.visible_range.clone())
-                }
+                // if let Some(callback) = &self.on_change {
+                //     (callback)(cx, self.visible_range.clone())
+                // }
             }
         });
 
@@ -195,6 +95,97 @@ impl View for VirtualList {
     }
 }
 
+impl VirtualList {
+    pub fn new<V: View, L: Lens, T: 'static>(
+        cx: &mut Context,
+        list: L,
+        item_height: f32,
+        item_content: impl 'static + Copy + Fn(&mut Context, usize, MapRef<L, T>) -> Handle<V>,
+    ) -> Handle<Self>
+    where
+        L::Target: Deref<Target = [T]>,
+    {
+        Self::new_generic(
+            cx,
+            list,
+            |list| list.len(),
+            |list, index| &list[index],
+            item_height,
+            item_content,
+        )
+    }
+
+    pub fn new_generic<V: View, L: Lens, T: 'static>(
+        cx: &mut Context,
+        list: L,
+        list_len: impl 'static + Fn(&L::Target) -> usize,
+        list_index: impl 'static + Copy + Fn(&L::Target, usize) -> &T,
+        item_height: f32,
+        item_content: impl 'static + Copy + Fn(&mut Context, usize, MapRef<L, T>) -> Handle<V>,
+    ) -> Handle<Self> {
+        let vl = cx.current;
+        let num_items = list.map(list_len);
+        Self { scroll_to_cursor: true, on_change: None }.build(cx, |cx| {
+            Binding::new(cx, num_items, move |cx, lens| {
+                let num_items = lens.get(cx);
+
+                let mut data =
+                    VirtualListData { num_items, item_height, visible_range: 0..0, scroll_y: 0.0 };
+                data.recalc(&mut EventContext::new_with_current(cx, vl));
+                data.build(cx);
+
+                ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
+                    // The ScrollView contains a VStack which is sized to the total height
+                    // needed to fit all items. This ensures we have a correct scroll bar.
+                    VStack::new(cx, |cx| {
+                        // Within the VStack we create a view for each visible item.
+                        // This binding ensures the amount of views stay up to date.
+                        let num_visible_items = VirtualListData::visible_range.map(Range::len);
+                        Binding::new(cx, num_visible_items, move |cx, lens| {
+                            for i in 0..lens.get(cx).min(num_items) {
+                                // Each item of the range maps to an index into the backing list.
+                                // As we scroll the index may change, representing an item going in/out of visibility.
+                                // Wrap `item_content` in a binding to said index, so it rebuilds only when necessary.
+                                let item_index = VirtualListData::visible_item_index(i);
+                                Binding::new(cx, item_index, move |cx, lens| {
+                                    let index = lens.get(cx);
+                                    HStack::new(cx, move |cx| {
+                                        let item =
+                                            list.map_ref(move |list| list_index(list, index));
+                                        item_content(cx, index, item).height(Percentage(100.0));
+                                    })
+                                    .height(Pixels(item_height))
+                                    .position_type(PositionType::SelfDirected)
+                                    .bind(
+                                        item_index,
+                                        move |handle, lens| {
+                                            let index = lens.get(&handle);
+                                            handle.top(Pixels(index as f32 * item_height));
+                                        },
+                                    );
+                                });
+                            }
+                        })
+                    })
+                    .height(Pixels(num_items as f32 * item_height));
+                })
+                .scroll_to_cursor(true)
+                .on_scroll(|cx, _, y| {
+                    if y.is_finite() {
+                        cx.emit(VirtualListEvent::SetScrollY(y));
+                    }
+                });
+            })
+        })
+    }
+}
+
+impl View for VirtualList {
+    fn element(&self) -> Option<&'static str> {
+        Some("virtual-list")
+    }
+}
+
 impl<'a> Handle<'a, VirtualList> {
     pub fn scroll_to_cursor(self, flag: bool) -> Self {
         self.modify(|virtual_list: &mut VirtualList| {
@@ -202,9 +193,9 @@ impl<'a> Handle<'a, VirtualList> {
         })
     }
 
-    pub fn on_change(self, callback: impl Fn(&mut EventContext, Range<usize>) + 'static) -> Self {
-        self.modify(|virtual_list| virtual_list.on_change = Some(Box::new(callback)))
-    }
+    // pub fn on_change(self, callback: impl Fn(&mut EventContext, Range<usize>) + 'static) -> Self {
+    //     self.modify(|virtual_list| virtual_list.on_change = Some(Box::new(callback)))
+    // }
 }
 
 #[cfg(test)]
@@ -213,7 +204,7 @@ mod tests {
 
     fn evaluate_indices(range: Range<usize>) -> Vec<usize> {
         (0..range.len())
-            .map(|index| VirtualList::evaluate_index(index, range.start, range.end))
+            .map(|index| VirtualListData::evaluate_index(index, range.start, range.end))
             .collect()
     }
 
