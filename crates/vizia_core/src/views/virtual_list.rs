@@ -138,6 +138,7 @@ impl VirtualList {
             ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
                 Binding::new(cx, num_items, move |cx, lens| {
                     let num_items = lens.get(cx);
+                    cx.emit(ScrollEvent::SetY(0.0));
                     // The ScrollView contains a VStack which is sized to the total height
                     // needed to fit all items. This ensures we have a correct scroll bar.
                     VStack::new(cx, |cx| {
