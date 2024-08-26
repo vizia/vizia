@@ -133,8 +133,11 @@ impl VirtualList {
                     VirtualListData { num_items, item_height, visible_range: 0..0, scroll_y: 0.0 };
                 data.recalc(&mut EventContext::new_with_current(cx, vl));
                 data.build(cx);
+            });
 
-                ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
+            ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
+                Binding::new(cx, num_items, move |cx, lens| {
+                    let num_items = lens.get(cx);
                     // The ScrollView contains a VStack which is sized to the total height
                     // needed to fit all items. This ensures we have a correct scroll bar.
                     VStack::new(cx, |cx| {
@@ -169,13 +172,13 @@ impl VirtualList {
                     })
                     .height(Pixels(num_items as f32 * item_height));
                 })
-                .scroll_to_cursor(true)
-                .on_scroll(|cx, _, y| {
-                    if y.is_finite() {
-                        cx.emit(VirtualListEvent::SetScrollY(y));
-                    }
-                });
             })
+            .scroll_to_cursor(true)
+            .on_scroll(|cx, _, y| {
+                if y.is_finite() {
+                    cx.emit(VirtualListEvent::SetScrollY(y));
+                }
+            });
         })
     }
 }
