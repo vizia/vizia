@@ -36,7 +36,7 @@ use skia_safe::{
 
 use vizia_core::prelude::*;
 use winit::event_loop::ActiveEventLoop;
-use winit::window::{CursorGrabMode, CursorIcon, CustomCursor};
+use winit::window::{CursorGrabMode, CursorIcon, CustomCursor, WindowLevel};
 use winit::{dpi::*, window::WindowId};
 
 pub struct WinState {
@@ -462,6 +462,14 @@ impl View for Window {
             WindowEvent::DragWindow => {
                 self.window().drag_window().expect("Failed to init drag window");
                 meta.consume();
+            }
+
+            WindowEvent::SetAlwaysOnTop(flag) => {
+                self.window().set_window_level(if *flag {
+                    WindowLevel::AlwaysOnTop
+                } else {
+                    WindowLevel::Normal
+                });
             }
 
             _ => {}
