@@ -27,20 +27,20 @@ skia-safe = { version = "0.75", features = ["textlayout", "svg"] }
 morphorm = {git = "https://github.com/vizia/morphorm.git", branch = "auto-min-size2"}
 # morphorm = "0.6.4"
 bitflags = "2.6"
-fnv = "1.0.7"
-fluent-bundle = "0.15.2"
-fluent-langneg = "0.13.0"
+fnv = "1.0"
+fluent-bundle = "0.15"
+fluent-langneg = "0.13"
 unic-langid = {version = "0.9.4", features = ["macros"]}
 sys-locale = "0.3.1"
 unicode-segmentation = "1.11.0"
 copypasta = {version = "0.10.1", optional = true, default-features = false }
-chrono = "0.4.34"
+chrono = "0.4"
 hashbrown = "0.14"
-log = "0.4.20"
-indexmap = "2.2.3"
-qfilter = "0.2.1"
+log = "0.4"
+indexmap = "2.4"
+qfilter = "0.2"
 # reqwest = { version = "0.11.9", features = ["blocking"] }
-web-time = "1.1.0"
+web-time = "1.1"
 comrak = {version = "0.27", default-features = false }
 open = "5.2"
 sha2 = "0.10"

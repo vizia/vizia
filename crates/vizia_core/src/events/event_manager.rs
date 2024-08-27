@@ -9,7 +9,9 @@ use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use log::debug;
 use std::any::Any;
 use vizia_storage::LayoutParentIterator;
-use vizia_storage::{ParentIterator, TreeIterator};
+#[cfg(debug_assertions)]
+use vizia_storage::ParentIterator;
+use vizia_storage::TreeIterator;
 
 const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 

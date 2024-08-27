@@ -28,6 +28,7 @@ pub(crate) trait Store {
     /// Returns true if the model or view is the source of the store.
     fn contains_source(&self, model: ModelOrView) -> bool;
 
+    #[cfg(debug_assertions)]
     fn name(&self) -> String;
 }
 
@@ -74,6 +75,7 @@ where
         self.observers.len()
     }
 
+    #[cfg(debug_assertions)]
     fn name(&self) -> String {
         format!("{:?}", self.lens)
     }

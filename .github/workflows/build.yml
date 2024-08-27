@@ -36,4 +36,4 @@ jobs:
         toolchain: stable
         override: true
     - name: Build
-      run: cargo check --all-targets --no-default-features --features x11,wayland,clipboard,${{ matrix.backend }}
+      run: cargo check --release --all-targets --no-default-features --features x11,wayland,clipboard,${{ matrix.backend }}
