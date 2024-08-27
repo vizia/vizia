@@ -126,7 +126,7 @@ impl TabHeader {
     where
         F: 'static + Fn(&mut Context),
     {
-        Self { index }.build(cx, |cx| (content)(cx))
+        Self { index }.build(cx, |cx| (content)(cx)).navigable(true)
     }
 }
 
@@ -137,7 +137,7 @@ impl View for TabHeader {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _meta| match window_event {
-            WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
+            WindowEvent::PressDown { mouse: _ } => {
                 cx.emit(TabEvent::SetSelected(self.index));
             }
 
