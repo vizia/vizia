@@ -193,12 +193,13 @@ where
 
                 let entity_sparse_index = self.inline_data.sparse[entity_index];
 
-                if entity_sparse_index.data_index.is_inline()
-                    && self.inline_data.sparse[entity_index].data_index.index()
-                        != parent_sparse_index.data_index.index()
+                if self.inline_data.sparse[entity_index].data_index.index()
+                    != parent_sparse_index.data_index.index()
                 {
                     if entity_sparse_index.data_index.index() < self.inline_data.dense.len() {
-                        if entity_sparse_index.data_index.is_inherited() {
+                        if entity_sparse_index.data_index.is_inherited()
+                            && entity_sparse_index.data_index.is_inline()
+                        {
                             self.inline_data.sparse[entity_index] = InlineIndex {
                                 data_index: DataIndex::inline(
                                     parent_sparse_index.data_index.index(),
