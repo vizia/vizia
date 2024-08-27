@@ -45,11 +45,7 @@ impl DataIndex {
 
     /// Returns true if the data index refers to inline data.
     pub fn is_inline(&self) -> bool {
-        if *self == Self::null() {
-            false
-        } else {
-            (self.0 & INLINE_MASK).rotate_left(1) != 0
-        }
+        (self.0 & INLINE_MASK).rotate_left(1) != 0
     }
 
     /// Returns true if the data index refers to an inherited value
@@ -158,12 +154,13 @@ where
 
                 let entity_sparse_index = self.inline_data.sparse[entity_index];
 
-                if entity_sparse_index.data_index.is_inline()
-                    && self.inline_data.sparse[entity_index].data_index.index()
-                        != parent_sparse_index.data_index.index()
+                if self.inline_data.sparse[entity_index].data_index.index()
+                    != parent_sparse_index.data_index.index()
                 {
                     if entity_sparse_index.data_index.index() < self.inline_data.dense.len() {
-                        if entity_sparse_index.data_index.is_inherited() {
+                        if entity_sparse_index.data_index.is_inherited()
+                            && entity_sparse_index.data_index.is_inline()
+                        {
                             self.inline_data.sparse[entity_index] = Index {
                                 data_index: DataIndex::inline(
                                     parent_sparse_index.data_index.index(),
