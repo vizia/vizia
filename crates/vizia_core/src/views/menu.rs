@@ -135,7 +135,7 @@ impl Submenu {
                 // .on_press_down(|cx| cx.emit(MenuEvent::CloseAll));
                 // .on_blur(|cx| cx.emit(MenuEvent::CloseAll));
             })
-            // .navigable(true)
+            .navigable(true)
             .checked(Submenu::is_open)
             .layout_type(LayoutType::Row)
             .on_press(|cx| cx.emit(MenuEvent::ToggleOpen));
@@ -252,7 +252,7 @@ impl MenuButton {
                 cx.emit(MenuEvent::Close);
             })
             .role(Role::MenuItem)
-        // .navigable(true)
+            .navigable(true)
     }
 }
 

@@ -79,7 +79,7 @@ toggle-button > * {
 
 button > svg,
 toggle-button > svg {
-    size: 1s;
+    size: 20px;
     space: 4px;
 }
 
