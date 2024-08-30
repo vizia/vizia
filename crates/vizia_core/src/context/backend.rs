@@ -113,8 +113,8 @@ impl BackendContext {
         window_entity: Entity,
         surface: &mut Surface,
         dirty_surface: &mut Surface,
-    ) {
-        draw_system(&mut self.0, window_entity, surface, dirty_surface);
+    ) -> bool {
+        draw_system(&mut self.0, window_entity, surface, dirty_surface)
     }
 
     /// Set the current entity. This is useful in user code when you're performing black magic and

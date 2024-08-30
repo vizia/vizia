@@ -506,8 +506,9 @@ impl ApplicationHandler<UserEvent> for Application {
                 for window in self.windows.values_mut() {
                     window.make_current();
                     //self.cx.needs_refresh(window.entity);
-                    self.cx.draw(window.entity, &mut window.surface, &mut window.dirty_surface);
-                    window.swap_buffers();
+                    if self.cx.draw(window.entity, &mut window.surface, &mut window.dirty_surface) {
+                        window.swap_buffers();
+                    }
 
                     // Un-cloak
                     #[cfg(target_os = "windows")]
