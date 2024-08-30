@@ -292,9 +292,10 @@ impl ApplicationRunner {
     }
 
     pub fn render(&mut self) {
-        self.cx.draw(Entity::root(), &mut self.surface, &mut self.dirty_surface);
-        self.gr_context.flush_and_submit();
-        self.should_redraw = false;
+        if self.cx.draw(Entity::root(), &mut self.surface, &mut self.dirty_surface) {
+            self.gr_context.flush_and_submit();
+            self.should_redraw = false;
+        }
     }
 
     pub fn handle_event(&mut self, event: baseview::Event, should_quit: &mut bool) {

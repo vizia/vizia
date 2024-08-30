@@ -5,7 +5,7 @@ use skia_safe::{
 };
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use vizia_storage::{DrawChildIterator, DrawTreeIterator, LayoutTreeIterator};
+use vizia_storage::{DrawChildIterator, LayoutTreeIterator};
 use vizia_style::BlendMode;
 
 pub(crate) fn transform_system(cx: &mut Context) {
@@ -142,13 +142,13 @@ pub(crate) fn draw_system(
     window_entity: Entity,
     surface: &mut Surface,
     dirty_surface: &mut Surface,
-) {
+) -> bool {
     if cx.windows.is_empty() {
-        return;
+        return false;
     }
 
     if !cx.entity_manager.is_alive(window_entity) {
-        return;
+        return false;
     }
 
     transform_system(cx);
@@ -156,14 +156,11 @@ pub(crate) fn draw_system(
     let window = cx.windows.get_mut(&window_entity).unwrap();
 
     let mut dirty_rect = std::mem::take(&mut window.dirty_rect);
-    let mut redraw_list = std::mem::take(&mut window.redraw_list);
+    let redraw_list = std::mem::take(&mut window.redraw_list);
 
-    let children = redraw_list
-        .iter()
-        .flat_map(|entity| DrawTreeIterator::subtree(&cx.tree, *entity))
-        .collect::<Vec<_>>();
-
-    redraw_list.extend(children);
+    if redraw_list.is_empty() {
+        return false;
+    }
 
     for &entity in &redraw_list {
         // Skip binding views
@@ -189,7 +186,17 @@ pub(crate) fn draw_system(
                     dirty_rect = Some(draw_bounds);
                 }
             }
+
+            if let Some(dr) = cx.cache.draw_bounds.get_mut(entity) {
+                *dr = draw_bounds;
+            } else {
+                cx.cache.draw_bounds.insert(entity, draw_bounds);
+            }
         }
+    }
+
+    if dirty_rect.is_none() {
+        return false;
     }
 
     let canvas = dirty_surface.canvas();
@@ -244,20 +251,10 @@ pub(crate) fn draw_system(
     //     surface.canvas().draw_rect(rect, &paint);
     // }
 
-    for entity in redraw_list {
-        if entity.visible(&cx.style) {
-            let draw_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
-
-            if let Some(dr) = cx.cache.draw_bounds.get_mut(entity) {
-                *dr = draw_bounds;
-            } else {
-                cx.cache.draw_bounds.insert(entity, draw_bounds);
-            }
-        }
-    }
-
     window.redraw_list.clear();
     window.dirty_rect = None;
+
+    true
 }
 
 fn draw_entity(
@@ -410,7 +407,17 @@ pub(crate) fn draw_bounds(
     let rect: Rect = layout_bounds.into();
     let tr = matrix.map_rect(rect).0;
 
-    let dirty_bounds: BoundingBox = tr.into();
+    let mut dirty_bounds: BoundingBox = tr.into();
+
+    //
+    if style.overflowx.get(entity).copied().unwrap_or_default() == Overflow::Visible
+        || style.overflowy.get(entity).copied().unwrap_or_default() == Overflow::Visible
+    {
+        let child_iter = DrawChildIterator::new(tree, entity);
+        for child in child_iter {
+            dirty_bounds = dirty_bounds.union(&draw_bounds(style, cache, tree, child));
+        }
+    }
 
     let z_index = style.z_index.get(entity).copied().unwrap_or_default();
 
