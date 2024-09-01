@@ -275,6 +275,14 @@ impl BoundingBox {
     //     let (tr, tb) = transform.transform_point(self.right(), self.bottom());
     //     BoundingBox::from_min_max(tl, tt, tr, tb)
     // }
+
+    /// Returns `true` if the bounds are empty.
+    ///
+    /// An empty bounds has a width or height less than or equal to zero.
+    ///
+    pub fn is_empty(&self) -> bool {
+        !(self.left() < self.right() && self.top() < self.bottom())
+    }
 }
 
 impl From<BoundingBox> for skia_safe::Rect {
