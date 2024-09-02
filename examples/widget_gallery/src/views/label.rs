@@ -13,7 +13,7 @@ pub fn label(cx: &mut Context) {
         DemoRegion::new(
             cx,
             |cx| {
-                Label::new(cx, "Hello Vizia").background_color(Color::red());
+                Label::new(cx, "Hello Vizia");
             },
             r#"Label::new(cx, "Hello Vizia");"#,
         );

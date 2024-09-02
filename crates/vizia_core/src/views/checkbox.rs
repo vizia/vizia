@@ -3,7 +3,7 @@ use crate::prelude::*;
 
 /// A checkbox used to display and toggle a boolean state.
 ///
-/// Pressing on the checkbox with the primary mouse button triggers the [`on_toggle`](Checkbox::on_toggle) callback.
+/// Pressing the checkbox triggers the [`on_toggle`](Checkbox::on_toggle) callback.
 ///
 /// # Examples
 ///
@@ -85,7 +85,7 @@ use crate::prelude::*;
 ///
 /// ## Custom checkbox
 ///
-/// The `text` modifier combined with a `map` on the lens can be used to customize the icon used by the checkbox.
+/// The `with_icons` constructor can be used to create a checkbox with custom icons for both checked and unchecked states.
 ///
 /// ```
 /// # use vizia_core::prelude::*;
@@ -106,9 +106,8 @@ use crate::prelude::*;
 /// # AppData { value: false }.build(cx);
 /// # use vizia_core::icons::ICON_X;
 ///
-/// Checkbox::new(cx, AppData::value)
-///     .on_toggle(|cx| cx.emit(AppEvent::ToggleValue))
-///     .text(AppData::value.map(|flag| if *flag {ICON_X} else {""}));
+/// Checkbox::with_icons(cx, AppData::value, None, Some(ICON_X))
+///     .on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
 /// ```
 pub struct Checkbox {
     on_toggle: Option<Box<dyn Fn(&mut EventContext)>>,
@@ -150,6 +149,32 @@ impl Checkbox {
             .navigable(true)
     }
 
+    /// Creates a new checkbox with custom icons for both checked and unchecked states.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// #
+    /// # #[derive(Lens)]
+    /// # struct AppData {
+    /// #     value: bool,
+    /// # }
+    /// #
+    /// # impl Model for AppData {}
+    /// #
+    /// # enum AppEvent {
+    /// #     ToggleValue,
+    /// # }
+    /// #
+    /// # let cx = &mut Context::default();
+    /// #
+    /// # AppData { value: false }.build(cx);
+    /// # use vizia_core::icons::ICON_X;
+    ///
+    /// Checkbox::with_icons(cx, AppData::value, None, Some(ICON_X))
+    ///     .on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
+    /// ```
     pub fn with_icons<T>(
         cx: &mut Context,
         checked: impl Lens<Target = bool>,

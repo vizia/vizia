@@ -79,7 +79,7 @@ impl Spinbox {
                     }
                 }
             });
-            (content)(cx).class("spinbox-value").width(Stretch(1.0));
+            (content)(cx).class("spinbox-value");
             Binding::new(cx, Spinbox::orientation, move |cx, spinbox_kind| {
                 match spinbox_kind.get(cx) {
                     Orientation::Horizontal => {

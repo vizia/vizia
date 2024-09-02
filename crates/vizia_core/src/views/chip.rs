@@ -52,6 +52,7 @@ impl View for Chip {
     }
 }
 
+/// Used in conjunction with the `variant`modifier for selecting the style variant of a chip.
 #[derive(Debug, Clone, Copy, Data, PartialEq, Eq)]
 pub enum ChipVariant {
     Filled,
@@ -67,6 +68,18 @@ impl<'a> Handle<'a, Chip> {
         })
     }
 
+    /// Selects the style variant to be used by the chip.
+    ///
+    /// # Example
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// #
+    /// #
+    /// # let cx = &mut Context::default();
+    /// #
+    /// Chip::new(cx, "Chip")
+    ///     .variant(ChipVariant::Filled);
+    /// ```
     pub fn variant<U: Into<ChipVariant>>(self, variant: impl Res<U>) -> Self {
         self.bind(variant, |handle, variant| {
             let variant = variant.get(&handle).into();

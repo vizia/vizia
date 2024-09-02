@@ -63,10 +63,6 @@ impl VirtualListData {
         let end_index = 1 + (visible_end / item_height).trunc() as usize;
 
         self.visible_range = start_index..end_index.min(self.num_items);
-
-        // if let Some(callback) = &self.on_change {
-        //     (callback)(cx, self.visible_range.clone())
-        // }
     }
 }
 
@@ -76,10 +72,6 @@ impl Model for VirtualListData {
             VirtualListEvent::SetScrollY(scroll_y) => {
                 self.scroll_y = *scroll_y;
                 self.recalc(cx);
-
-                // if let Some(callback) = &self.on_change {
-                //     (callback)(cx, self.visible_range.clone())
-                // }
             }
         });
 
@@ -196,10 +188,6 @@ impl<'a> Handle<'a, VirtualList> {
             virtual_list.scroll_to_cursor = flag;
         })
     }
-
-    // pub fn on_change(self, callback: impl Fn(&mut EventContext, Range<usize>) + 'static) -> Self {
-    //     self.modify(|virtual_list| virtual_list.on_change = Some(Box::new(callback)))
-    // }
 }
 
 #[cfg(test)]
