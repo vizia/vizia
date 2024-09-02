@@ -14,9 +14,10 @@ impl ToggleButton {
             .build(cx, |cx| {
                 (content)(cx).hoverable(false);
             })
-            .role(Role::ToggleButton)
+            .role(Role::Button)
             .navigable(true)
             .default_action_verb(DefaultActionVerb::Click)
+            .checkable(true) // to let the accesskit know button is toggleable
             .checked(lens)
     }
 }

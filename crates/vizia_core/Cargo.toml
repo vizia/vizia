@@ -20,7 +20,7 @@ vizia_id = { path = "../vizia_id" }
 vizia_input = { path = "../vizia_input" }
 vizia_window = { path = "../vizia_window" }
 vizia_style = { path = "../vizia_style"}
-accesskit = "0.12.0"
+accesskit = "0.16"
 
 skia-safe = { version = "0.75", features = ["textlayout", "svg"] }
 # morphorm = {path = "../../../morphorm" }

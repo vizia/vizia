@@ -281,10 +281,12 @@ pub fn create_surface(
     .expect("Could not create skia surface")
 }
 
+type WindowCallback = Option<Box<dyn Fn(&mut EventContext)>>;
+
 pub struct Window {
     pub window: Option<Arc<winit::window::Window>>,
-    pub on_close: Option<Box<dyn Fn(&mut EventContext)>>,
-    pub on_create: Option<Box<dyn Fn(&mut EventContext)>>,
+    pub on_close: WindowCallback,
+    pub on_create: WindowCallback,
     pub should_close: bool,
     pub(crate) custom_cursors: Arc<HashMap<CursorIcon, CustomCursor>>,
 }

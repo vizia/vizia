@@ -134,8 +134,8 @@ pub trait View: 'static + Sized {
         };
 
         if let Some(parent_node) = get_access_node(&mut access_context, &mut cx.views, parent_id) {
-            let parent_node = parent_node.node_builder.build(&mut cx.style.accesskit_node_classes);
-            let node = NodeBuilder::default().build(&mut cx.style.accesskit_node_classes);
+            let parent_node = parent_node.node_builder.build();
+            let node = NodeBuilder::default().build();
 
             cx.tree_updates.push(Some(TreeUpdate {
                 nodes: vec![(parent_node_id, parent_node), (node_id, node)],
