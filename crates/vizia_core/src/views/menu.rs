@@ -19,8 +19,6 @@ impl MenuBar {
                                     // Check if the mouse was pressed outside of any descendants
                                     if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
                                         cx.emit(MenuEvent::CloseAll);
-                                        // TODO: This might be needed
-                                        // meta.consume();
                                     }
                                 }
                             }

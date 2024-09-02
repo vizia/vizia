@@ -80,7 +80,7 @@ demo-region.open hstack.controls {
 
 demo-region hstack.region {
     corner-radius: 4px;
-    child-space: 40px;
+    child-space: 50px;
     child-left: 1s;
     child-right: 1s;
     height: auto;

@@ -517,8 +517,16 @@ menubutton:disabled {
 }
 
 menubutton .shortcut {
-    color: #c4c4c4;
+    color: #424242;
     font-size: 12;
+}
+
+menubutton svg {
+    fill: #424242;
+}
+
+submenu svg {
+    fill: #181818;
 }
 
 submenu {
@@ -584,6 +592,7 @@ notification {
 progressbar {
     corner-radius: 50%;
     background-color: #f4f4f4;
+    overflow: hidden;
 }
 
 progressbar:disabled {
@@ -591,7 +600,6 @@ progressbar:disabled {
 }
 
 progressbar .progressbar-bar {
-    corner-radius: 50%;
     background-color: #51afef;
 }
 
