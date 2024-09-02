@@ -742,7 +742,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn invalid_inline() {
-        DataIndex::inline(std::usize::MAX);
+        DataIndex::inline(usize::MAX);
     }
 
     /// Test for creating a shared data index and retrieving the index.

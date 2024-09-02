@@ -210,8 +210,6 @@ pub struct Style {
     pub(crate) disabled: StyleSet<bool>,
     pub(crate) abilities: SparseSet<Abilities>,
 
-    pub(crate) accesskit_node_classes: accesskit::NodeClassSet,
-
     // Accessibility Properties
     pub name: StyleSet<String>,
     pub role: SparseSet<Role>,

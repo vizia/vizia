@@ -56,7 +56,7 @@ pub struct AppData {
 //     }
 // }
 
-pub const FONT_SIZES: &'static [f32] = &[12.0, 14.0];
+pub const FONT_SIZES: &[f32] = &[12.0, 14.0];
 
 pub enum AppEvent {
     SetCornerTopRightRadius(f32),
@@ -146,16 +146,16 @@ impl Model for AppData {
             }
             // AppEvent::SetShadowColor(idx, col) => todo!(),
             AppEvent::SetShadowX(idx, val) => {
-                self.shadows[*idx].x_offset = Length::px(*val).into();
+                self.shadows[*idx].x_offset = Length::px(*val);
             }
             AppEvent::SetShadowY(idx, val) => {
-                self.shadows[*idx].y_offset = Length::px(*val).into();
+                self.shadows[*idx].y_offset = Length::px(*val);
             }
             AppEvent::SetShadowBlur(idx, val) => {
-                self.shadows[*idx].blur_radius = Some(Length::px(*val).into());
+                self.shadows[*idx].blur_radius = Some(Length::px(*val));
             }
             AppEvent::SetShadowSpread(idx, val) => {
-                self.shadows[*idx].spread_radius = Some(Length::px(*val).into());
+                self.shadows[*idx].spread_radius = Some(Length::px(*val));
             }
             AppEvent::SetShadowType(idx, val) => {
                 self.shadows[*idx].inset = *val;

@@ -103,11 +103,7 @@ impl Label {
     where
         T: ToStringLocalized,
     {
-        Self { describing: None }
-            .build(cx, |_| {})
-            .text(text.clone())
-            .role(Role::StaticText)
-            .name(text)
+        Self { describing: None }.build(cx, |_| {}).text(text.clone()).role(Role::Label).name(text)
     }
 
     pub fn rich<T>(
@@ -123,7 +119,7 @@ impl Label {
                 children(cx);
             })
             .text(text.clone())
-            .role(Role::StaticText)
+            .role(Role::Label)
             .name(text)
     }
 }

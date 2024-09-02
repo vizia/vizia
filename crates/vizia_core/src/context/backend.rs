@@ -201,11 +201,6 @@ impl BackendContext {
         self.0.resource_manager.renegotiate_language();
     }
 
-    /// Returns a mutable reference to the accesskit node classes.
-    pub fn accesskit_node_classes(&mut self) -> &mut accesskit::NodeClassSet {
-        &mut self.style().accesskit_node_classes
-    }
-
     /// Calls the accessibility system and updates the accesskit node tree.
     pub fn process_tree_updates(
         &mut self,

@@ -1,5 +1,5 @@
 use crate::{accessibility::IntoNode, events::ViewHandler, prelude::*};
-use accesskit::{Checked, NodeBuilder, NodeId, Rect, TreeUpdate};
+use accesskit::{NodeBuilder, NodeId, Rect, Toggled, TreeUpdate};
 use hashbrown::HashMap;
 use vizia_storage::LayoutTreeIterator;
 
@@ -36,19 +36,15 @@ pub(crate) fn accessibility_system(cx: &mut Context) {
                     continue;
                 }
 
-                let mut nodes = vec![(
-                    node.node_id(),
-                    node.node_builder.build(&mut cx.style.accesskit_node_classes),
-                )];
+                let mut nodes = vec![(node.node_id(), node.node_builder.build())];
 
                 // If child nodes were generated then append them to the nodes list
                 if !node.children.is_empty() {
-                    nodes.extend(node.children.into_iter().map(|child_node| {
-                        (
-                            child_node.node_id(),
-                            child_node.node_builder.build(&mut cx.style.accesskit_node_classes),
-                        )
-                    }));
+                    nodes.extend(
+                        node.children.into_iter().map(|child_node| {
+                            (child_node.node_id(), child_node.node_builder.build())
+                        }),
+                    );
                 }
 
                 cx.tree_updates.push(Some(TreeUpdate {
@@ -157,9 +153,9 @@ pub(crate) fn get_access_node(
             .map(|pseudoclass| pseudoclass.contains(PseudoClassFlags::CHECKED))
         {
             if checked {
-                node_builder.set_checked(Checked::True);
+                node_builder.set_toggled(Toggled::True);
             } else {
-                node_builder.set_checked(Checked::False);
+                node_builder.set_toggled(Toggled::False);
             }
         }
     }
