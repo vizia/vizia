@@ -9,7 +9,7 @@ define_enum! {
         /// The text is clipped and not accessible.
         #[default]
         "clip": Clip,
-        /// Renders an ellipsis ("...") to represent the clipped text.
+        /// Renders an ellipsis ("…") to represent the clipped text.
         "ellipsis": Ellipsis,
     }
 }
