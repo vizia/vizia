@@ -66,7 +66,9 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                 .copied()
                 .unwrap_or(bounds.shrink_sides(padding_left, 0.0, padding_right, 0.0));
 
-            if !cx.style.width.get(entity).copied().unwrap_or_default().is_auto() {
+            if !cx.style.width.get(entity).copied().unwrap_or_default().is_auto()
+                && !cx.style.height.get(entity).copied().unwrap_or_default().is_auto()
+            {
                 if cx.style.text_overflow.get(entity).copied().unwrap_or_default()
                     == TextOverflow::Clip
                 {
@@ -76,8 +78,6 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                 } else {
                     paragraph.layout(text_bounds.width());
                 }
-
-                // paragraph.layout(bounds.width() - padding_left - padding_right);
             }
 
             layout_span(&cx.style, &mut cx.cache, &cx.tree, entity, paragraph, bounds);
