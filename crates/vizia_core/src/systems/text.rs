@@ -66,9 +66,18 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                 .copied()
                 .unwrap_or(bounds.shrink_sides(padding_left, 0.0, padding_right, 0.0));
 
-            if !cx.style.width.get(entity).copied().unwrap_or_default().is_auto() {
-                paragraph.layout(text_bounds.width());
-                // paragraph.layout(bounds.width() - padding_left - padding_right);
+            if !cx.style.width.get(entity).copied().unwrap_or_default().is_auto()
+                && !cx.style.height.get(entity).copied().unwrap_or_default().is_auto()
+            {
+                if cx.style.text_overflow.get(entity).copied().unwrap_or_default()
+                    == TextOverflow::Clip
+                {
+                    paragraph.layout(f32::MAX);
+                    paragraph
+                        .layout(text_bounds.width().max(paragraph.min_intrinsic_width() + 1.0));
+                } else {
+                    paragraph.layout(text_bounds.width());
+                }
             }
 
             layout_span(&cx.style, &mut cx.cache, &cx.tree, entity, paragraph, bounds);
@@ -145,7 +154,7 @@ pub fn build_paragraph(
     // Overflow
     match style.text_overflow.get(entity) {
         Some(&TextOverflow::Ellipsis) => {
-            paragraph_style.set_ellipsis("...");
+            paragraph_style.set_ellipsis("…");
         }
 
         Some(&TextOverflow::Clip) => {
@@ -160,6 +169,12 @@ pub fn build_paragraph(
     // Line Clamp
     if let Some(line_clamp) = style.line_clamp.get(entity) {
         paragraph_style.set_max_lines(line_clamp.0 as usize);
+    }
+
+    if let Some(text_wrap) = style.text_wrap.get(entity).copied() {
+        if !text_wrap {
+            paragraph_style.set_max_lines(1);
+        }
     }
 
     // Text Align

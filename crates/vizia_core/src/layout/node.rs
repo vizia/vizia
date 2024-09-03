@@ -217,20 +217,31 @@ impl Node for Entity {
             padding_left += border_width;
             padding_top += border_width;
 
-            let text_width = if store.text_wrap.get(*self).copied().unwrap_or(true) {
-                if let Some(width) = width {
-                    width - child_space_x
-                } else {
-                    paragraph.min_intrinsic_width().ceil()
+            let text_width = match (
+                store.text_wrap.get(*self).copied().unwrap_or(true),
+                store.text_overflow.get(*self).copied(),
+            ) {
+                (true, _) => {
+                    if let Some(width) = width {
+                        width - child_space_x
+                    } else {
+                        paragraph.min_intrinsic_width().ceil()
+                    }
                 }
-            } else if store.text_overflow.get(*self).is_some() {
-                if let Some(width) = width {
-                    width - child_space_x
-                } else {
-                    paragraph.max_intrinsic_width().ceil()
+                (false, Some(TextOverflow::Ellipsis)) => {
+                    if let Some(width) = width {
+                        width - child_space_x
+                    } else {
+                        paragraph.max_intrinsic_width().ceil()
+                    }
                 }
-            } else {
-                paragraph.max_intrinsic_width().ceil()
+                _ => {
+                    if let Some(width) = width {
+                        (width - child_space_x).max(paragraph.min_intrinsic_width().ceil())
+                    } else {
+                        paragraph.max_intrinsic_width().ceil()
+                    }
+                }
             };
 
             paragraph.layout(text_width);
