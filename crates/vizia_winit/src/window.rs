@@ -395,7 +395,11 @@ impl View for Window {
             }
 
             WindowEvent::SetPosition(pos) => {
-                let parent_window_position = cx.window_position();
+                let parent_window_position = if cx.current() == Entity::root() {
+                    WindowPosition::new(0, 0)
+                } else {
+                    cx.window_position()
+                };
                 self.window().set_outer_position(LogicalPosition::new(
                     parent_window_position.x + pos.x,
                     parent_window_position.y + pos.y,
