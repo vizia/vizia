@@ -2,10 +2,10 @@
 name = "vizia_baseview"
 version = "0.1.0"
 authors = ["George Atkinson <geomyles@yahoo.co.uk>", "Billy Messenger <BillyDM@protonmail.com>"]
-edition = "2021"
-license = "MIT"
-repository = "https://github.com/vizia/vizia"
 description = "Baseview backend for vizia"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 vizia_core = { path = "../vizia_core" }

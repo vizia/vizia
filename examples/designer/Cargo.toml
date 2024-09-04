@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-vizia = {path = "../../../vizia"}
+vizia.workspace = true
 fern = "0.6"
 log = "0.4"
 chrono = "0.4"

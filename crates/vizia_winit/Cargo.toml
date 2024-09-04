@@ -1,11 +1,11 @@
 [package]
 name = "vizia_winit"
 version = "0.1.0"
-authors = ["George Atkinson"]
-edition = "2021"
-license = "MIT"
-repository = "https://github.com/vizia/vizia"
 description = "Winit backend for vizia"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 rust-version = "1.76"
 
 [features]
