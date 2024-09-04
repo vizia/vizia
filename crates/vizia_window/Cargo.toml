@@ -1,16 +1,15 @@
 [package]
 name = "vizia_window"
-version = "0.1.0"
 description = "The window components of vizia"
+version.workspace = true
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-rust-version = "1.76"
 
 [dependencies]
-vizia_input = { path = "../vizia_input" }
-vizia_style = { path = "../vizia_style" }
+vizia_input.workspace = true
+vizia_style.workspace = true
 # morphorm = {path = "../../../morphorm" }
 morphorm = {git = "https://github.com/vizia/morphorm.git", branch = "auto-min-size2"}
 # morphorm = "0.6.4"

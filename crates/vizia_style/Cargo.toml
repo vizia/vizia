@@ -1,12 +1,11 @@
 [package]
 name = "vizia_style"
-version = "0.1.0"
 description = "The style components of vizia"
+version.workspace = true
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-rust-version = "1.76"
 
 [dependencies]
 cssparser = "0.29.6"

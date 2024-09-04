@@ -1,12 +1,9 @@
-use lazy_static::lazy_static;
 use std::collections::VecDeque;
-use std::sync::Mutex;
+use std::sync::{LazyLock, Mutex};
 use vizia_core::context::EventProxy;
 use vizia_core::events::Event;
 
-lazy_static! {
-    pub(crate) static ref PROXY_QUEUE: Mutex<VecDeque<Event>> = Mutex::new(VecDeque::new());
-}
+pub(crate) static PROXY_QUEUE: LazyLock<Mutex<VecDeque<Event>>> = LazyLock::new(Mutex::default);
 
 pub(crate) fn queue_put(event: Event) {
     PROXY_QUEUE.lock().unwrap().push_back(event)
