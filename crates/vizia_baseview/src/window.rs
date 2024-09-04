@@ -156,7 +156,7 @@ impl ViziaWindow {
 
                 let mut cx = BackendContext::new(cx);
 
-                cx.set_event_proxy(Box::new(BaseviewProxy()));
+                cx.set_event_proxy(Box::new(BaseviewProxy));
                 ViziaWindow::new(cx, win_desc, scale_policy, window, Some(Box::new(app)), on_idle)
             },
         )
@@ -195,7 +195,7 @@ impl ViziaWindow {
 
                 let mut cx = BackendContext::new(cx);
 
-                cx.set_event_proxy(Box::new(BaseviewProxy()));
+                cx.set_event_proxy(Box::new(BaseviewProxy));
                 ViziaWindow::new(cx, win_desc, scale_policy, window, Some(Box::new(app)), on_idle)
             },
         )
