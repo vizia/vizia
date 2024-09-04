@@ -27,70 +27,68 @@ fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { text: String::from("This is some text"), text2: String::from("سلام") }.build(cx);
         VStack::new(cx, |cx| {
-            TabView::new(cx, StaticLens::<&[&str]>::new(&STATIC_LIST), |cx, item| {
-                match *item.get_ref(cx).unwrap() {
-                    "Wrapping" => TabPair::new(
-                        move |cx| {
-                            Label::new(cx, item).hoverable(false);
-                            Element::new(cx).class("indicator");
-                        },
-                        |cx| {
-                            wrapping(cx);
-                        },
-                    ),
+            TabView::new(cx, &STATIC_LIST, |cx, item| match *item.get_ref(cx).unwrap() {
+                "Wrapping" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).hoverable(false);
+                        Element::new(cx).class("indicator");
+                    },
+                    |cx| {
+                        wrapping(cx);
+                    },
+                ),
 
-                    "Alignment" => TabPair::new(
-                        move |cx| {
-                            Label::new(cx, item).hoverable(false);
-                            Element::new(cx).class("indicator");
-                        },
-                        |cx| {
-                            alignment(cx);
-                        },
-                    ),
+                "Alignment" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).hoverable(false);
+                        Element::new(cx).class("indicator");
+                    },
+                    |cx| {
+                        alignment(cx);
+                    },
+                ),
 
-                    "Alignment2" => TabPair::new(
-                        move |cx| {
-                            Label::new(cx, item).hoverable(false);
-                            Element::new(cx).class("indicator");
-                        },
-                        |cx| {
-                            alignment2(cx);
-                        },
-                    ),
+                "Alignment2" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).hoverable(false);
+                        Element::new(cx).class("indicator");
+                    },
+                    |cx| {
+                        alignment2(cx);
+                    },
+                ),
 
-                    "Alignment3" => TabPair::new(
-                        move |cx| {
-                            Label::new(cx, item).hoverable(false);
-                            Element::new(cx).class("indicator");
-                        },
-                        |cx| {
-                            alignment3(cx);
-                        },
-                    ),
+                "Alignment3" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).hoverable(false);
+                        Element::new(cx).class("indicator");
+                    },
+                    |cx| {
+                        alignment3(cx);
+                    },
+                ),
 
-                    "Alignment4" => TabPair::new(
-                        move |cx| {
-                            Label::new(cx, item).hoverable(false);
-                            Element::new(cx).class("indicator");
-                        },
-                        |cx: &mut Context| {
-                            alignment4(cx);
-                        },
-                    ),
+                "Alignment4" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).hoverable(false);
+                        Element::new(cx).class("indicator");
+                    },
+                    |cx: &mut Context| {
+                        alignment4(cx);
+                    },
+                ),
 
-                    "Alignment5" => TabPair::new(
-                        move |cx| {
-                            Label::new(cx, item).hoverable(false);
-                            Element::new(cx).class("indicator");
-                        },
-                        |cx: &mut Context| {
-                            alignment5(cx);
-                        },
-                    ),
+                "Alignment5" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).hoverable(false);
+                        Element::new(cx).class("indicator");
+                    },
+                    |cx: &mut Context| {
+                        alignment5(cx);
+                    },
+                ),
 
-                    _ => unreachable!(),
-                }
+                _ => unreachable!(),
             });
 
             // Textbox::new(cx, AppData::text.index(0))

@@ -14,7 +14,7 @@ pub(crate) fn queue_get() -> Option<Event> {
 }
 
 #[derive(Clone)]
-pub(crate) struct BaseviewProxy();
+pub(crate) struct BaseviewProxy;
 
 impl EventProxy for BaseviewProxy {
     fn send(&self, event: Event) -> Result<(), ()> {
