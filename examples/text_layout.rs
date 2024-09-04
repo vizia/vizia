@@ -1,11 +1,8 @@
-use lazy_static::lazy_static;
 use vizia::prelude::*;
 use vizia_core::icons::ICON_MOON;
 
-lazy_static! {
-    pub static ref STATIC_LIST: Vec<&'static str> =
-        vec!["Wrapping", "Alignment", "Alignment2", "Alignment3", "Alignment4", "Alignment5"];
-}
+static STATIC_LIST: &[&str] =
+    &["Wrapping", "Alignment", "Alignment2", "Alignment3", "Alignment4", "Alignment5"];
 
 #[derive(Lens)]
 pub struct AppData {
@@ -30,10 +27,8 @@ fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { text: String::from("This is some text"), text2: String::from("سلام") }.build(cx);
         VStack::new(cx, |cx| {
-            TabView::new(
-                cx,
-                StaticLens::<Vec<&'static str>>::new(STATIC_LIST.as_ref()),
-                |cx, item| match *item.get_ref(cx).unwrap() {
+            TabView::new(cx, StaticLens::<&[&str]>::new(&STATIC_LIST), |cx, item| {
+                match *item.get_ref(cx).unwrap() {
                     "Wrapping" => TabPair::new(
                         move |cx| {
                             Label::new(cx, item).hoverable(false);
@@ -95,8 +90,8 @@ fn main() -> Result<(), ApplicationError> {
                     ),
 
                     _ => unreachable!(),
-                },
-            );
+                }
+            });
 
             // Textbox::new(cx, AppData::text.index(0))
             //     .on_submit(|ex, txt, _| ex.emit(AppEvent::SetText(0, txt.clone())));

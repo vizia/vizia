@@ -6,7 +6,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-rust-version = "1.79"
+rust-version = "1.80"
 
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
@@ -23,7 +23,6 @@ vizia_winit = { workspace = true, optional = true }
 vizia_baseview = { workspace = true, optional = true }
 
 [dev-dependencies]
-lazy_static = "1.4"
 chrono = "0.4"
 # reqwest = { version = "0.12", features = ["blocking"] }
 log = "0.4"
@@ -44,6 +43,12 @@ vizia = { version = "0.1.0", path = "." }
 vizia_core = { version = "0.1.0", path = "crates/vizia_core" }
 vizia_winit = { version = "0.1.0", path = "crates/vizia_winit" }
 vizia_baseview = { version = "0.1.0", path = "crates/vizia_baseview" }
+vizia_derive = { version = "0.1.0", path = "crates/vizia_derive" }
+vizia_id = { version = "0.1.0", path = "crates/vizia_id" }
+vizia_input = { version = "0.1.0", path = "crates/vizia_input" }
+vizia_storage = { version = "0.1.0", path = "crates/vizia_storage" }
+vizia_style = { version = "0.1.0", path = "crates/vizia_style" }
+vizia_window = { version = "0.1.0", path = "crates/vizia_window" }
 
 [workspace.lints.rust]
 # future_incompatible = "allow"

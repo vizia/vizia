@@ -1,18 +1,17 @@
 [package]
 name = "vizia_input"
-version = "0.1.0"
 description = "The input components of vizia"
+version.workspace = true
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-rust-version = "1.76"
 
 [dependencies]
-vizia_id = { path = "../vizia_id" }
+vizia_id.workspace = true
 
 keyboard-types = { version = "0.6", default-features = false }
-bitflags = "2.4"
+bitflags = "2.6"
 
 [lints]
 workspace = true

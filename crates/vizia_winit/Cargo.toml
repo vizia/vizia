@@ -1,12 +1,11 @@
 [package]
 name = "vizia_winit"
-version = "0.1.0"
 description = "Winit backend for vizia"
+version.workspace = true
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-rust-version = "1.76"
 
 [features]
 x11 = ["winit/x11", "glutin/x11", "glutin-winit/x11"]
@@ -15,10 +14,10 @@ clipboard = ["copypasta"]
 accesskit = ["accesskit_winit"]
 
 [dependencies]
-vizia_input = { path = "../vizia_input" }
-vizia_core = { path = "../vizia_core" }
-vizia_id = { path = "../vizia_id" }
-vizia_window = { path = "../vizia_window" }
+vizia_input.workspace = true
+vizia_core.workspace = true
+vizia_id.workspace = true
+vizia_window.workspace = true
 
 accesskit = "0.16"
 winit = { version = "0.30" }

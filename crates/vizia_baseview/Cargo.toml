@@ -1,21 +1,20 @@
 [package]
 name = "vizia_baseview"
-version = "0.1.0"
 authors = ["George Atkinson <geomyles@yahoo.co.uk>", "Billy Messenger <BillyDM@protonmail.com>"]
 description = "Baseview backend for vizia"
+version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 
 [dependencies]
-vizia_core = { path = "../vizia_core" }
-vizia_input = { path = "../vizia_input" }
-vizia_id = { path = "../vizia_id" }
+vizia_core.workspace = true
+vizia_input.workspace = true
+vizia_id.workspace = true
 
 baseview = { git = "https://github.com/RustAudio/baseview.git", rev = "579130ecb4f9f315ae52190af42f0ea46aeaa4a2", features = ["opengl"] }
-raw-window-handle = "0.5.2"
-lazy_static = "1.4.0"
-gl-rs = { package = "gl", version = "0.14.0" }
+raw-window-handle = "0.5"
+gl-rs = { package = "gl", version = "0.14" }
 skia-safe = {version = "0.75", features = ["gl"]}
 
 [lints]

@@ -1,12 +1,11 @@
 [package]
 name = "vizia_core"
-version = "0.1.0"
 description = "Core components of vizia"
+version.workspace = true
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-rust-version = "1.76"
 
 [features]
 clipboard = ["copypasta"]
@@ -14,12 +13,12 @@ x11 = ["copypasta?/x11"]
 wayland = ["copypasta?/wayland"]
 
 [dependencies]
-vizia_derive = { path = "../vizia_derive" }
-vizia_storage = { path = "../vizia_storage" }
-vizia_id = { path = "../vizia_id" }
-vizia_input = { path = "../vizia_input" }
-vizia_window = { path = "../vizia_window" }
-vizia_style = { path = "../vizia_style"}
+vizia_derive.workspace = true
+vizia_storage.workspace = true
+vizia_id.workspace = true
+vizia_input.workspace = true
+vizia_window.workspace = true
+vizia_style.workspace = true
 accesskit = "0.16"
 
 skia-safe = { version = "0.75", features = ["textlayout", "svg"] }
@@ -30,10 +29,10 @@ bitflags = "2.6"
 fnv = "1.0"
 fluent-bundle = "0.15"
 fluent-langneg = "0.13"
-unic-langid = {version = "0.9.4", features = ["macros"]}
-sys-locale = "0.3.1"
-unicode-segmentation = "1.11.0"
-copypasta = {version = "0.10.1", optional = true, default-features = false }
+unic-langid = {version = "0.9", features = ["macros"]}
+sys-locale = "0.3"
+unicode-segmentation = "1.11"
+copypasta = {version = "0.10", optional = true, default-features = false }
 chrono = "0.4"
 hashbrown = "0.14"
 log = "0.4"
