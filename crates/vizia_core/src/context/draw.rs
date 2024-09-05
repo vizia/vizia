@@ -57,7 +57,7 @@ use vizia_input::MouseState;
 pub struct DrawContext<'a> {
     pub(crate) current: Entity,
     pub(crate) style: &'a Style,
-    pub(crate) cache: &'a mut CachedData,
+    pub(crate) cache: &'a CachedData,
     pub(crate) tree: &'a Tree<Entity>,
     pub(crate) data: &'a HashMap<Entity, ModelDataStore>,
     pub(crate) views: &'a mut HashMap<Entity, Box<dyn ViewHandler>>,

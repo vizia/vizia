@@ -173,17 +173,19 @@ pub(crate) fn draw_system(
         }
 
         if entity.visible(&cx.style) {
-            let mut draw_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
+            let draw_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
+
+            let mut dirty_bounds = draw_bounds;
 
             if let Some(previous_draw_bounds) = cx.cache.draw_bounds.get(entity) {
-                draw_bounds = draw_bounds.union(previous_draw_bounds);
+                dirty_bounds = dirty_bounds.union(previous_draw_bounds);
             }
 
-            if draw_bounds.w != 0.0 && draw_bounds.h != 0.0 {
+            if dirty_bounds.w != 0.0 && dirty_bounds.h != 0.0 {
                 if let Some(dr) = &mut dirty_rect {
-                    *dr = dr.union(&draw_bounds);
+                    *dr = dr.union(&dirty_bounds);
                 } else {
-                    dirty_rect = Some(draw_bounds);
+                    dirty_rect = Some(dirty_bounds);
                 }
             }
 
@@ -219,7 +221,7 @@ pub(crate) fn draw_system(
             &mut DrawContext {
                 current: zentity.entity,
                 style: &cx.style,
-                cache: &mut cx.cache,
+                cache: &cx.cache,
                 tree: &cx.tree,
                 data: &cx.data,
                 views: &mut cx.views,
@@ -250,9 +252,6 @@ pub(crate) fn draw_system(
     //     paint.set_stroke_width(1.0);
     //     surface.canvas().draw_rect(rect, &paint);
     // }
-
-    window.redraw_list.clear();
-    window.dirty_rect = None;
 
     true
 }
