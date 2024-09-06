@@ -84,9 +84,7 @@ impl From<Units> for LengthPercentageOrAuto {
     fn from(units: Units) -> Self {
         match units {
             Units::Pixels(val) => Length::Value(LengthValue::Px(val)).into(),
-            Units::Percentage(val) => {
-                Self::LengthPercentage(LengthOrPercentage::Percentage(val))
-            }
+            Units::Percentage(val) => Self::LengthPercentage(LengthOrPercentage::Percentage(val)),
             _ => Self::Auto,
         }
     }
