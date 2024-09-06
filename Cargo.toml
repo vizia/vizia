@@ -81,7 +81,7 @@ uninlined_format_args = "warn"
 zero_sized_map_values = "warn"
 mismatching_type_param_order = "warn"
 debug_assert_with_mut_call = "warn"
-use_self = "warn"
+# use_self = "warn"
 collection_is_never_read = "warn"
 
 [[example]]
