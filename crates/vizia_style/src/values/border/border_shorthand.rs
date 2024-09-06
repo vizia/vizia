@@ -67,7 +67,7 @@ impl<'i> Parse<'i> for Border {
             break;
         }
         if any {
-            Ok(Self { width, style, color })
+            Ok(Border { width, style, color })
         } else {
             Err(cssparser::ParseError {
                 kind: cssparser::ParseErrorKind::Custom(CustomParseError::InvalidDeclaration),

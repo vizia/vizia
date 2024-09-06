@@ -64,7 +64,7 @@ impl ScrollView {
             container_height: 0.0,
         }
         .build(cx, move |cx| {
-            ScrollContent::new(cx, content).bind(Self::root, |handle, data| {
+            ScrollContent::new(cx, content).bind(ScrollView::root, |handle, data| {
                 let scale_factor = handle.scale_factor();
                 let data = data.get(&handle);
                 let left = ((data.inner_width - data.container_width) * data.scroll_x).round()
@@ -77,8 +77,8 @@ impl ScrollView {
             if scroll_y {
                 Scrollbar::new(
                     cx,
-                    Self::scroll_y,
-                    RatioLens::new(Self::container_height, Self::inner_height),
+                    ScrollView::scroll_y,
+                    RatioLens::new(ScrollView::container_height, ScrollView::inner_height),
                     Orientation::Vertical,
                     |cx, value| {
                         cx.emit(ScrollEvent::SetY(value));
@@ -91,8 +91,8 @@ impl ScrollView {
             if scroll_x {
                 Scrollbar::new(
                     cx,
-                    Self::scroll_x,
-                    RatioLens::new(Self::container_width, Self::inner_width),
+                    ScrollView::scroll_x,
+                    RatioLens::new(ScrollView::container_width, ScrollView::inner_width),
                     Orientation::Horizontal,
                     |cx, value| {
                         cx.emit(ScrollEvent::SetX(value));
@@ -104,11 +104,11 @@ impl ScrollView {
         })
         .toggle_class(
             "h-scroll",
-            Self::root.map(|data| data.container_width < data.inner_width),
+            ScrollView::root.map(|data| data.container_width < data.inner_width),
         )
         .toggle_class(
             "v-scroll",
-            Self::root.map(|data| data.container_height < data.inner_height),
+            ScrollView::root.map(|data| data.container_height < data.inner_height),
         )
     }
 

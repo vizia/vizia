@@ -60,14 +60,14 @@ pub struct Keyframe<'i> {
 impl<'i> Parse<'i> for KeyframeSelector {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         if let Ok(val) = input.try_parse(Percentage::parse) {
-            return Ok(Self::Percentage(val));
+            return Ok(KeyframeSelector::Percentage(val));
         }
 
         let location = input.current_source_location();
         let ident = input.expect_ident()?;
         match_ignore_ascii_case! { ident,
-            "from" => Ok(Self::From),
-            "to" => Ok(Self::To),
+            "from" => Ok(KeyframeSelector::From),
+            "to" => Ok(KeyframeSelector::To),
             _ => Err(location.new_unexpected_token_error(
                 cssparser::Token::Ident(ident.clone())
             ))

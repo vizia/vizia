@@ -54,7 +54,7 @@ where
         } else {
             let idx = (self.generation.len()) as u64;
             self.generation.push(0);
-            assert!(idx < IDX_MAX, "ID index exceeds maximum allowed value of {IDX_MAX}");
+            assert!(idx < IDX_MAX, "ID index exceeds maximum allowed value of {}", IDX_MAX);
             idx
         };
 

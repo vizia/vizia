@@ -71,7 +71,7 @@ pub enum LengthValue {
 
 impl Default for LengthValue {
     fn default() -> Self {
-        Self::Px(0.0)
+        LengthValue::Px(0.0)
     }
 }
 
@@ -121,13 +121,13 @@ impl LengthValue {
     /// Returns the amount of pixels of the length if calculateable.
     pub fn to_px(&self) -> Option<f32> {
         match self {
-            Self::Px(value) => Some(*value),
-            Self::In(value) => Some(value * Self::PX_PER_IN),
-            Self::Cm(value) => Some(value * Self::PX_PER_CM),
-            Self::Mm(value) => Some(value * Self::PX_PER_MM),
-            Self::Q(value) => Some(value * Self::PX_PER_Q),
-            Self::Pt(value) => Some(value * Self::PX_PER_PT),
-            Self::Pc(value) => Some(value * Self::PX_PER_PC),
+            LengthValue::Px(value) => Some(*value),
+            LengthValue::In(value) => Some(value * Self::PX_PER_IN),
+            LengthValue::Cm(value) => Some(value * Self::PX_PER_CM),
+            LengthValue::Mm(value) => Some(value * Self::PX_PER_MM),
+            LengthValue::Q(value) => Some(value * Self::PX_PER_Q),
+            LengthValue::Pt(value) => Some(value * Self::PX_PER_PT),
+            LengthValue::Pc(value) => Some(value * Self::PX_PER_PC),
             _ => None,
         }
     }
@@ -154,8 +154,8 @@ impl LengthValue {
     }
 }
 
-impl TryAdd<Self> for LengthValue {
-    fn try_add(&self, other: &Self) -> Option<Self> {
+impl TryAdd<LengthValue> for LengthValue {
+    fn try_add(&self, other: &LengthValue) -> Option<LengthValue> {
         use LengthValue::*;
         match (self, other) {
             (Px(a), Px(b)) => Some(Px(a + b)),
@@ -187,7 +187,7 @@ impl TryAdd<Self> for LengthValue {
 impl std::ops::Mul<f32> for LengthValue {
     type Output = Self;
 
-    fn mul(self, other: f32) -> Self {
+    fn mul(self, other: f32) -> LengthValue {
         use LengthValue::*;
         match self {
             Px(value) => Px(value * other),
@@ -255,8 +255,8 @@ impl std::cmp::PartialOrd<f32> for LengthValue {
     }
 }
 
-impl std::cmp::PartialOrd<Self> for LengthValue {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+impl std::cmp::PartialOrd<LengthValue> for LengthValue {
+    fn partial_cmp(&self, other: &LengthValue) -> Option<std::cmp::Ordering> {
         use LengthValue::*;
         match (self, other) {
             (Em(a), Em(b))

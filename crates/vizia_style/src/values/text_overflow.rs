@@ -19,7 +19,7 @@ pub struct LineClamp(pub u32);
 
 impl Default for LineClamp {
     fn default() -> Self {
-        Self(1)
+        LineClamp(1)
     }
 }
 
@@ -34,18 +34,18 @@ impl From<&str> for LineClamp {
     fn from(s: &str) -> Self {
         let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
-        Self::parse(&mut parser).unwrap_or_default()
+        LineClamp::parse(&mut parser).unwrap_or_default()
     }
 }
 
 impl From<u32> for LineClamp {
     fn from(number: u32) -> Self {
-        Self(number)
+        LineClamp(number)
     }
 }
 
 impl From<i32> for LineClamp {
     fn from(number: i32) -> Self {
-        Self(number as u32)
+        LineClamp(number as u32)
     }
 }

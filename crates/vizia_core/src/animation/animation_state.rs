@@ -52,7 +52,7 @@ where
 {
     /// Create a new animation state with the given [Animation] id.
     pub(crate) fn new(id: Animation) -> Self {
-        Self {
+        AnimationState {
             id,
             start_time: Instant::now(),
             duration: Duration::new(0, 0),
@@ -108,7 +108,7 @@ where
     Prop: Interpolator,
 {
     fn default() -> Self {
-        Self {
+        AnimationState {
             id: Animation::null(),
             start_time: Instant::now(),
             duration: Duration::new(0, 0),

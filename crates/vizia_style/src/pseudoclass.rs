@@ -40,32 +40,32 @@ impl ToCss for PseudoClass {
         W: std::fmt::Write,
     {
         match *self {
-            Self::Hover => dest.write_str(":hover"),
-            Self::Active => dest.write_str(":active"),
-            Self::Over => dest.write_str(":over"),
-            Self::Focus => dest.write_str(":focus"),
-            Self::FocusVisible => dest.write_str(":focus-visible"),
-            Self::FocusWithin => dest.write_str(":focus-within"),
-            Self::Enabled => dest.write_str(":enabled"),
-            Self::Disabled => dest.write_str(":disabled"),
-            Self::ReadOnly => dest.write_str(":read-only"),
-            Self::ReadWrite => dest.write_str(":read-write"),
-            Self::PlaceHolderShown => dest.write_str(":placeholder-shown"),
-            Self::Default => dest.write_str(":default"),
-            Self::Checked => dest.write_str(":checked"),
-            Self::Indeterminate => dest.write_str(":indeterminate"),
-            Self::Blank => dest.write_str(":blank"),
-            Self::Valid => dest.write_str(":valid"),
-            Self::Invalid => dest.write_str(":invalid"),
-            Self::InRange => dest.write_str(":in-range"),
-            Self::OutOfRange => dest.write_str(":out-of-range"),
-            Self::Required => dest.write_str(":required"),
-            Self::Optional => dest.write_str(":optional"),
-            Self::UserValid => dest.write_str(":user-valid"),
-            Self::UserInvalid => dest.write_str(":user-invalid"),
-            Self::Lang(ref _lang) => dest.write_str(":lang()"),
-            Self::Dir(_) => dest.write_str(":dir()"),
-            Self::Custom(_) => dest.write_str(":custom"),
+            PseudoClass::Hover => dest.write_str(":hover"),
+            PseudoClass::Active => dest.write_str(":active"),
+            PseudoClass::Over => dest.write_str(":over"),
+            PseudoClass::Focus => dest.write_str(":focus"),
+            PseudoClass::FocusVisible => dest.write_str(":focus-visible"),
+            PseudoClass::FocusWithin => dest.write_str(":focus-within"),
+            PseudoClass::Enabled => dest.write_str(":enabled"),
+            PseudoClass::Disabled => dest.write_str(":disabled"),
+            PseudoClass::ReadOnly => dest.write_str(":read-only"),
+            PseudoClass::ReadWrite => dest.write_str(":read-write"),
+            PseudoClass::PlaceHolderShown => dest.write_str(":placeholder-shown"),
+            PseudoClass::Default => dest.write_str(":default"),
+            PseudoClass::Checked => dest.write_str(":checked"),
+            PseudoClass::Indeterminate => dest.write_str(":indeterminate"),
+            PseudoClass::Blank => dest.write_str(":blank"),
+            PseudoClass::Valid => dest.write_str(":valid"),
+            PseudoClass::Invalid => dest.write_str(":invalid"),
+            PseudoClass::InRange => dest.write_str(":in-range"),
+            PseudoClass::OutOfRange => dest.write_str(":out-of-range"),
+            PseudoClass::Required => dest.write_str(":required"),
+            PseudoClass::Optional => dest.write_str(":optional"),
+            PseudoClass::UserValid => dest.write_str(":user-valid"),
+            PseudoClass::UserInvalid => dest.write_str(":user-invalid"),
+            PseudoClass::Lang(ref _lang) => dest.write_str(":lang()"),
+            PseudoClass::Dir(_) => dest.write_str(":dir()"),
+            PseudoClass::Custom(_) => dest.write_str(":custom"),
         }
     }
 }
@@ -74,10 +74,10 @@ impl selectors::parser::NonTSPseudoClass for PseudoClass {
     type Impl = Selectors;
 
     fn is_active_or_hover(&self) -> bool {
-        matches!(*self, Self::Active | Self::Hover)
+        matches!(*self, PseudoClass::Active | PseudoClass::Hover)
     }
 
     fn is_user_action_state(&self) -> bool {
-        matches!(*self, Self::Active | Self::Hover | Self::Focus)
+        matches!(*self, PseudoClass::Active | PseudoClass::Hover | PseudoClass::Focus)
     }
 }

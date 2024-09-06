@@ -14,9 +14,9 @@ define_enum! {
 impl From<bool> for Direction {
     fn from(boolean: bool) -> Self {
         if boolean {
-            Self::Ltr
+            Direction::Ltr
         } else {
-            Self::Rtl
+            Direction::Rtl
         }
     }
 }

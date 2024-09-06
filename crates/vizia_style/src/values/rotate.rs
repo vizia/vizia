@@ -25,8 +25,8 @@ impl_parse! {
 }
 
 impl<T: Into<Angle>> From<T> for Rotate {
-    fn from(value: T) -> Self {
-        Self { angle: value.into() }
+    fn from(value: T) -> Rotate {
+        Rotate { angle: value.into() }
     }
 }
 

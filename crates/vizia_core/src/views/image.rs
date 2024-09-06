@@ -37,7 +37,7 @@ impl Svg {
                 svg_data.as_ref(),
                 ImageRetentionPolicy::DropWhenNoObservers,
             );
-            handle.background_image(format!("'{h}'").as_str()).hoverable(false);
+            handle.background_image(format!("'{}'", h).as_str()).hoverable(false);
         })
     }
 }

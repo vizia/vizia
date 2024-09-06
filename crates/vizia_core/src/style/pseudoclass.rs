@@ -34,32 +34,32 @@ bitflags! {
 
 impl Default for PseudoClassFlags {
     fn default() -> Self {
-        Self::empty()
+        PseudoClassFlags::empty()
     }
 }
 
 // TODO
 impl std::fmt::Display for PseudoClassFlags {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.contains(Self::HOVER) {
+        if self.contains(PseudoClassFlags::HOVER) {
             write!(f, ":hover")?;
         }
-        if self.contains(Self::OVER) {
+        if self.contains(PseudoClassFlags::OVER) {
             write!(f, ":over")?;
         }
-        if self.contains(Self::ACTIVE) {
+        if self.contains(PseudoClassFlags::ACTIVE) {
             write!(f, ":active")?;
         }
-        if self.contains(Self::FOCUS) {
+        if self.contains(PseudoClassFlags::FOCUS) {
             write!(f, ":focus")?;
         }
-        if self.contains(Self::CHECKED) {
+        if self.contains(PseudoClassFlags::CHECKED) {
             write!(f, ":checked")?;
         }
-        if self.contains(Self::FOCUS_WITHIN) {
+        if self.contains(PseudoClassFlags::FOCUS_WITHIN) {
             write!(f, ":focus-within")?;
         }
-        if self.contains(Self::FOCUS_VISIBLE) {
+        if self.contains(PseudoClassFlags::FOCUS_VISIBLE) {
             write!(f, ":focus-visible")?;
         }
 

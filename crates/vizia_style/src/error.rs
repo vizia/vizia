@@ -1,5 +1,3 @@
-// TODO: maybe cleanup the error using thiserror crate
-
 use cssparser::{BasicParseErrorKind, CowRcStr, ParseError, ParseErrorKind, Token};
 use selectors::parser::SelectorParseErrorKind;
 use std::fmt;
@@ -14,7 +12,7 @@ impl<T: fmt::Display> fmt::Display for Error<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.kind.fmt(f)?;
         if let Some(loc) = &self.location {
-            write!(f, " at {loc}")?;
+            write!(f, " at {}", loc)?;
         }
         Ok(())
     }
@@ -35,7 +33,7 @@ pub struct ErrorLocation {
 impl ErrorLocation {
     /// Create a new error location from a source location and filename.
     pub fn new(loc: Location, filename: String) -> Self {
-        Self { filename, line: loc.line, column: loc.column }
+        ErrorLocation { filename, line: loc.line, column: loc.column }
     }
 }
 
@@ -69,8 +67,8 @@ pub enum CustomParseError<'i> {
 }
 
 impl<'i> From<SelectorParseErrorKind<'i>> for CustomParseError<'i> {
-    fn from(err: SelectorParseErrorKind<'i>) -> Self {
-        Self::SelectorError(err.into())
+    fn from(err: SelectorParseErrorKind<'i>) -> CustomParseError<'i> {
+        CustomParseError::SelectorError(err.into())
     }
 }
 
@@ -162,32 +160,35 @@ impl<'i> SelectorError<'i> {
     fn _reason(&self) -> String {
         use SelectorError::*;
         match self {
-        NoQualifiedNameInAttributeSelector(token) => format!("No qualified name in attribute selector: {token:?}."),
+        NoQualifiedNameInAttributeSelector(token) => format!("No qualified name in attribute selector: {:?}.", token),
         EmptySelector => "Invalid empty selector.".into(),
         DanglingCombinator => "Invalid dangling combinator in selector.".into(),
         MissingNestingSelector => "A nesting selector (&) is required in each selector of a @nest rule.".into(),
         MissingNestingPrefix => "A nesting selector (&) is required as a prefix of each selector in a nested style rule.".into(),
-        UnexpectedTokenInAttributeSelector(token) => format!("Unexpected token in attribute selector: {token:?}"),
-        PseudoElementExpectedIdent(token) => format!("Invalid token in pseudo element: {token:?}"),
-        UnsupportedPseudoClassOrElement(name) => format!("Unsupported pseudo class or element: {name}"),
-        UnexpectedIdent(name) => format!("Unexpected identifier: {name}"),
-        ExpectedNamespace(name) => format!("Expected namespace: {name}"),
-        ExpectedBarInAttr(name) => format!("Expected | in attribute, got {name:?}"),
-        BadValueInAttr(token) => format!("Invalid value in attribute selector: {token:?}"),
-        InvalidQualNameInAttr(token) => format!("Invalid qualified name in attribute selector: {token:?}"),
-        ExplicitNamespaceUnexpectedToken(token) => format!("Unexpected token in namespace selector: {token:?}"),
-        ClassNeedsIdent(token) => format!("Expected identifier in class selector, got {token:?}"),
+        UnexpectedTokenInAttributeSelector(token) => format!("Unexpected token in attribute selector: {:?}", token),
+        PseudoElementExpectedIdent(token) => format!("Invalid token in pseudo element: {:?}", token),
+        UnsupportedPseudoClassOrElement(name) => format!("Unsupported pseudo class or element: {}", name),
+        UnexpectedIdent(name) => format!("Unexpected identifier: {}", name),
+        ExpectedNamespace(name) => format!("Expected namespace: {}", name),
+        ExpectedBarInAttr(name) => format!("Expected | in attribute, got {:?}", name),
+        BadValueInAttr(token) => format!("Invalid value in attribute selector: {:?}", token),
+        InvalidQualNameInAttr(token) => format!("Invalid qualified name in attribute selector: {:?}", token),
+        ExplicitNamespaceUnexpectedToken(token) => format!("Unexpected token in namespace selector: {:?}", token),
+        ClassNeedsIdent(token) => format!("Expected identifier in class selector, got {:?}", token),
         InvalidPseudoClassBeforeWebKitScrollbar => "Pseudo class must be prefixed by a ::-webkit-scrollbar pseudo element".into(),
         InvalidPseudoClassAfterWebKitScrollbar => "Invalid pseudo class after ::-webkit-scrollbar pseudo element".into(),
         InvalidPseudoClassAfterPseudoElement => "Invalid pseudo class after pseudo element. Only user action pseudo classes (e.g. :hover, :active) are allowed.".into(),
-        err => format!("Error parsing selector: {err:?}")
+        err => format!("Error parsing selector: {:?}", err)
         }
     }
 }
 
 impl<'i> Error<CustomParseError<'i>> {
     /// Creates an error from a cssparser error.
-    pub fn from(err: ParseError<'i, CustomParseError<'i>>, filename: String) -> Self {
+    pub fn from(
+        err: ParseError<'i, CustomParseError<'i>>,
+        filename: String,
+    ) -> Error<CustomParseError<'i>> {
         let kind = match err.kind {
             ParseErrorKind::Basic(b) => match &b {
                 BasicParseErrorKind::UnexpectedToken(t) => {

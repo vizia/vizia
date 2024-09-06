@@ -126,8 +126,7 @@ fn parse_node<'a>(
         }
 
         NodeValue::CodeBlock(code_block) => {
-            // TODO: delete this
-            println!("{code_block:?}");
+            println!("{:?}", code_block);
             let mut code = code_block.literal.to_owned();
             code.pop().unwrap();
             ScrollView::new(cx, 0.0, 0.0, true, false, |cx| {

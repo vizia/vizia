@@ -132,7 +132,7 @@ test {
     #[test]
     fn parse_stylsheet() {
         let style_sheet = StyleSheet::parse("test.css", CSS_EXAMPLE, ParserOptions::default());
-        println!("{style_sheet:#?}");
+        println!("{:#?}", style_sheet);
     }
 }
 

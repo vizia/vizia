@@ -25,7 +25,7 @@ impl Badge {
         F: FnOnce(&mut Context),
     {
         Self { placement: None }.build(cx, content).bind(
-            Self::placement,
+            Badge::placement,
             |mut handle, placement| {
                 if let Some(placement) = placement.get(&handle) {
                     let (t, b) = match placement {

@@ -70,13 +70,13 @@ struct Index {
 
 impl Default for Index {
     fn default() -> Self {
-        Self { data_index: DataIndex::null(), anim_index: u32::MAX }
+        Index { data_index: DataIndex::null(), anim_index: u32::MAX }
     }
 }
 
 impl SparseSetIndex for Index {
     fn new(index: usize) -> Self {
-        Self { data_index: DataIndex::inline(index), anim_index: u32::MAX }
+        Index { data_index: DataIndex::inline(index), anim_index: u32::MAX }
     }
 
     fn null() -> Self {

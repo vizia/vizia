@@ -16,7 +16,7 @@ impl WindowSize {
 
 impl From<(u32, u32)> for WindowSize {
     fn from(s: (u32, u32)) -> Self {
-        Self::new(s.0, s.1)
+        WindowSize::new(s.0, s.1)
     }
 }
 
@@ -38,13 +38,13 @@ pub struct WindowPosition {
 impl WindowPosition {
     /// Creates a new window position.
     pub fn new(x: u32, y: u32) -> Self {
-        Self { x, y }
+        WindowPosition { x, y }
     }
 }
 
 impl From<(u32, u32)> for WindowPosition {
     fn from(s: (u32, u32)) -> Self {
-        Self::new(s.0, s.1)
+        WindowPosition::new(s.0, s.1)
     }
 }
 
@@ -92,7 +92,7 @@ pub struct WindowDescription {
 impl Default for WindowDescription {
     fn default() -> Self {
         Self {
-            title: "Vizia Application".to_owned(),
+            title: "Vizia Application".to_string(),
             inner_size: WindowSize::new(800, 600),
             min_inner_size: Some(WindowSize::new(100, 100)),
             max_inner_size: None,
@@ -117,11 +117,11 @@ impl Default for WindowDescription {
 
 impl WindowDescription {
     pub fn new() -> Self {
-        Self::default()
+        WindowDescription::default()
     }
 
     pub fn with_title(mut self, title: &str) -> Self {
-        self.title = title.to_owned();
+        self.title = title.to_string();
 
         self
     }

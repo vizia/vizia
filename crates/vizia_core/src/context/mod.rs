@@ -134,7 +134,7 @@ pub struct Context {
 
 impl Default for Context {
     fn default() -> Self {
-        Self::new()
+        Context::new()
     }
 }
 
@@ -239,7 +239,7 @@ impl Context {
     }
 
     /// Makes the above black magic more explicit
-    pub fn with_current<T>(&mut self, current: Entity, f: impl FnOnce(&mut Self) -> T) -> T {
+    pub fn with_current<T>(&mut self, current: Entity, f: impl FnOnce(&mut Context) -> T) -> T {
         let previous = self.current;
         self.current = current;
         CURRENT.with_borrow_mut(|f| *f = current);
@@ -427,9 +427,9 @@ impl Context {
 
             if self.focused == *entity {
                 if let Some(new_focus) = self.focus_stack.pop() {
-                    self.with_current(new_focus, Self::focus);
+                    self.with_current(new_focus, |cx| cx.focus());
                 } else {
-                    self.with_current(Entity::root(), Self::focus);
+                    self.with_current(Entity::root(), |cx| cx.focus());
                 }
             }
 
@@ -698,7 +698,7 @@ impl Context {
     }
 
     /// Returns true if the timer with the provided timer id is currently running.
-    pub fn timer_is_running(&self, timer: Timer) -> bool {
+    pub fn timer_is_running(&mut self, timer: Timer) -> bool {
         for timer_state in self.running_timers.iter() {
             if timer_state.id == timer {
                 return true;
@@ -846,7 +846,7 @@ impl Context {
 
     /// Finds the entity that identifier identifies
     pub fn resolve_entity_identifier(&self, identity: &str) -> Option<Entity> {
-        self.entity_identifiers.get(identity).copied()
+        self.entity_identifiers.get(identity).cloned()
     }
 
     /// Toggles the addition/removal of a class name for the current view.
@@ -862,13 +862,13 @@ impl Context {
         let current = self.current();
         if let Some(class_list) = self.style.classes.get_mut(current) {
             if applied {
-                class_list.insert(class_name.to_owned());
+                class_list.insert(class_name.to_string());
             } else {
                 class_list.remove(class_name);
             }
         } else if applied {
             let mut class_list = HashSet::new();
-            class_list.insert(class_name.to_owned());
+            class_list.insert(class_name.to_string());
             self.style.classes.insert(current, class_list);
         }
 

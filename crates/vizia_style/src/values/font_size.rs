@@ -18,44 +18,44 @@ impl_parse! {
 impl From<FontSizeKeyword> for FontSize {
     fn from(font_size_keyword: FontSizeKeyword) -> Self {
         match font_size_keyword {
-            FontSizeKeyword::XXSmall => Self(8.0),
-            FontSizeKeyword::XSmall => Self(10.0),
-            FontSizeKeyword::Small => Self(12.0),
-            FontSizeKeyword::Medium => Self(14.0),
-            FontSizeKeyword::Large => Self(16.0),
-            FontSizeKeyword::XLarge => Self(18.0),
-            FontSizeKeyword::XXLarge => Self(20.0),
+            FontSizeKeyword::XXSmall => FontSize(8.0),
+            FontSizeKeyword::XSmall => FontSize(10.0),
+            FontSizeKeyword::Small => FontSize(12.0),
+            FontSizeKeyword::Medium => FontSize(14.0),
+            FontSizeKeyword::Large => FontSize(16.0),
+            FontSizeKeyword::XLarge => FontSize(18.0),
+            FontSizeKeyword::XXLarge => FontSize(20.0),
         }
     }
 }
 
 impl Default for FontSize {
     fn default() -> Self {
-        Self(14.0)
+        FontSize(14.0)
     }
 }
 
 impl From<u32> for FontSize {
     fn from(number: u32) -> Self {
-        Self(number as f32)
+        FontSize(number as f32)
     }
 }
 
 impl From<i32> for FontSize {
     fn from(number: i32) -> Self {
-        Self(number as f32)
+        FontSize(number as f32)
     }
 }
 
 impl From<f32> for FontSize {
     fn from(number: f32) -> Self {
-        Self(number)
+        FontSize(number)
     }
 }
 
 impl From<f64> for FontSize {
     fn from(number: f64) -> Self {
-        Self(number as f32)
+        FontSize(number as f32)
     }
 }
 
@@ -63,7 +63,7 @@ impl From<&str> for FontSize {
     fn from(s: &str) -> Self {
         let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
-        Self::parse(&mut parser).unwrap_or_default()
+        FontSize::parse(&mut parser).unwrap_or_default()
     }
 }
 

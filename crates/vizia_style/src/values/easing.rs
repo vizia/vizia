@@ -16,13 +16,13 @@ pub enum EasingFunction {
 impl<'i> Parse<'i> for EasingFunction {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         let location = input.current_source_location();
-        if let Ok(ident) = input.try_parse(cssparser::Parser::expect_ident_cloned) {
+        if let Ok(ident) = input.try_parse(|i| i.expect_ident_cloned()) {
             let keyword = match_ignore_ascii_case! { &ident,
-              "linear" => Self::Linear,
-              "ease" => Self::Ease,
-              "ease-in" => Self::EaseIn,
-              "ease-out" => Self::EaseOut,
-              "ease-in-out" => Self::EaseInOut,
+              "linear" => EasingFunction::Linear,
+              "ease" => EasingFunction::Ease,
+              "ease-in" => EasingFunction::EaseIn,
+              "ease-out" => EasingFunction::EaseOut,
+              "ease-in-out" => EasingFunction::EaseInOut,
             //   "step-start" => EasingFunction::Steps { count: 1, position: StepPosition::Start },
             //   "step-end" => EasingFunction::Steps { count: 1, position: StepPosition::End },
               _ => return Err(location.new_unexpected_token_error(Token::Ident(ident.clone())))
@@ -35,14 +35,14 @@ impl<'i> Parse<'i> for EasingFunction {
             match_ignore_ascii_case! { &function,
               "cubic-bezier" => {
                 // let x1 = CSSNumber::parse(input)?;
-                let x1 = input.try_parse(cssparser::Parser::expect_number)?;
+                let x1 = input.try_parse(|input| input.expect_number())?;
                 input.expect_comma()?;
-                let y1 = input.try_parse(cssparser::Parser::expect_number)?;
+                let y1 = input.try_parse(|input| input.expect_number())?;
                 input.expect_comma()?;
-                let x2 = input.try_parse(cssparser::Parser::expect_number)?;
+                let x2 = input.try_parse(|input| input.expect_number())?;
                 input.expect_comma()?;
-                let y2 = input.try_parse(cssparser::Parser::expect_number)?;
-                Ok(Self::CubicBezier(x1, y1, x2, y2))
+                let y2 = input.try_parse(|input| input.expect_number())?;
+                Ok(EasingFunction::CubicBezier(x1, y1, x2, y2))
               },
             //   "steps" => {
             //     let count = CSSInteger::parse(input)?;

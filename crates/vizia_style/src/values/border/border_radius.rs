@@ -33,7 +33,7 @@ impl_parse! {
 
 impl From<Rect<LengthOrPercentage>> for CornerRadius {
     fn from(rect: Rect<LengthOrPercentage>) -> Self {
-        Self::new(rect.0, rect.1, rect.2, rect.3)
+        CornerRadius::new(rect.0, rect.1, rect.2, rect.3)
     }
 }
 
@@ -83,7 +83,7 @@ impl From<Rect<LengthOrPercentage>> for CornerRadius {
 impl<T: Into<LengthOrPercentage>> From<T> for CornerRadius {
     fn from(value: T) -> Self {
         let length: LengthOrPercentage = value.into();
-        Self::new(length.clone(), length.clone(), length.clone(), length)
+        CornerRadius::new(length.clone(), length.clone(), length.clone(), length)
     }
 }
 
@@ -91,7 +91,7 @@ impl<T1: Into<LengthOrPercentage>, T2: Into<LengthOrPercentage>> From<(T1, T2)> 
     fn from(value: (T1, T2)) -> Self {
         let length1: LengthOrPercentage = value.0.into();
         let length2: LengthOrPercentage = value.1.into();
-        Self::new(length1.clone(), length2.clone(), length1, length2)
+        CornerRadius::new(length1.clone(), length2.clone(), length1, length2)
     }
 }
 
@@ -102,7 +102,7 @@ impl<T1: Into<LengthOrPercentage>, T2: Into<LengthOrPercentage>, T3: Into<Length
         let length1: LengthOrPercentage = value.0.into();
         let length2: LengthOrPercentage = value.1.into();
         let length3: LengthOrPercentage = value.2.into();
-        Self::new(length1, length2.clone(), length3, length2)
+        CornerRadius::new(length1, length2.clone(), length3, length2)
     }
 }
 
@@ -118,7 +118,7 @@ impl<
         let length2: LengthOrPercentage = value.1.into();
         let length3: LengthOrPercentage = value.2.into();
         let length4: LengthOrPercentage = value.3.into();
-        Self::new(length1, length2, length3, length4)
+        CornerRadius::new(length1, length2, length3, length4)
     }
 }
 

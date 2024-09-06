@@ -15,13 +15,13 @@ impl_parse! {
 
 impl From<f32> for AlphaValue {
     fn from(number: f32) -> Self {
-        Self(number)
+        AlphaValue(number)
     }
 }
 
 impl From<Percentage> for AlphaValue {
     fn from(percentage: Percentage) -> Self {
-        Self(percentage.0)
+        AlphaValue(percentage.0)
     }
 }
 

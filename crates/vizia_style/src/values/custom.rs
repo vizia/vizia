@@ -56,7 +56,7 @@ pub enum TokenOrValue<'i> {
 }
 
 impl<'i> From<Token<'i>> for TokenOrValue<'i> {
-    fn from(token: Token<'i>) -> Self {
+    fn from(token: Token<'i>) -> TokenOrValue<'i> {
         TokenOrValue::Token(token)
     }
 }
@@ -225,7 +225,7 @@ impl<'i> Variable<'i> {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         let name = DashedIdent::parse(input)?;
 
-        let fallback = if input.try_parse(cssparser::Parser::expect_comma).is_ok() {
+        let fallback = if input.try_parse(|input| input.expect_comma()).is_ok() {
             Some(TokenList::parse(input)?)
         } else {
             None

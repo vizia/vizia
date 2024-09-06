@@ -43,13 +43,13 @@ impl From<&str> for Scale {
     fn from(s: &str) -> Self {
         let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
-        Self::parse(&mut parser).unwrap_or_default()
+        Scale::parse(&mut parser).unwrap_or_default()
     }
 }
 
 impl<T1: Into<PercentageOrNumber>, T2: Into<PercentageOrNumber>> From<(T1, T2)> for Scale {
-    fn from(value: (T1, T2)) -> Self {
-        Self { x: value.0.into(), y: value.1.into() }
+    fn from(value: (T1, T2)) -> Scale {
+        Scale { x: value.0.into(), y: value.1.into() }
     }
 }
 

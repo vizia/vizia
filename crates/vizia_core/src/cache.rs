@@ -38,7 +38,7 @@ impl CachedData {
 
     /// Returns the bounding box of the entity, determined by the layout system.
     pub fn get_bounds(&self, entity: Entity) -> BoundingBox {
-        self.bounds.get(entity).copied().unwrap()
+        self.bounds.get(entity).cloned().unwrap()
     }
 
     /// Returns the x position of the entity.

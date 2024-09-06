@@ -14,7 +14,7 @@ pub enum Gradient {
 
 impl From<LinearGradient> for Gradient {
     fn from(linear_gradient: LinearGradient) -> Self {
-        Self::Linear(linear_gradient)
+        Gradient::Linear(linear_gradient)
     }
 }
 
@@ -24,8 +24,8 @@ impl<'i> Parse<'i> for Gradient {
         let func = input.expect_function()?.clone();
         input.parse_nested_block(|input| {
             match_ignore_ascii_case! { &func,
-              "linear-gradient" => Ok(Self::Linear(LinearGradient::parse(input)?)),
-              "radial-gradient" => Ok(Self::Radial(RadialGradient::parse(input)?)),
+              "linear-gradient" => Ok(Gradient::Linear(LinearGradient::parse(input)?)),
+              "radial-gradient" => Ok(Gradient::Radial(RadialGradient::parse(input)?)),
               _ => Err(location.new_unexpected_token_error(cssparser::Token::Ident(func.clone())))
             }
         })
@@ -36,7 +36,7 @@ impl From<&str> for Gradient {
     fn from(s: &str) -> Self {
         let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
-        Self::parse(&mut parser).unwrap_or_default()
+        Gradient::parse(&mut parser).unwrap_or_default()
     }
 }
 
@@ -50,30 +50,30 @@ pub enum LineDirection {
 
 impl Default for LineDirection {
     fn default() -> Self {
-        Self::Horizontal(HorizontalPositionKeyword::Right)
+        LineDirection::Horizontal(HorizontalPositionKeyword::Right)
     }
 }
 
 impl<'i> Parse<'i> for LineDirection {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         if let Ok(angle) = input.try_parse(Angle::parse) {
-            return Ok(Self::Angle(angle));
+            return Ok(LineDirection::Angle(angle));
         }
 
         input.expect_ident_matching("to")?;
 
         if let Ok(x) = input.try_parse(HorizontalPositionKeyword::parse) {
             if let Ok(y) = input.try_parse(VerticalPositionKeyword::parse) {
-                return Ok(Self::Corner { horizontal: x, vertical: y });
+                return Ok(LineDirection::Corner { horizontal: x, vertical: y });
             }
-            return Ok(Self::Horizontal(x));
+            return Ok(LineDirection::Horizontal(x));
         }
 
         let y = VerticalPositionKeyword::parse(input)?;
         if let Ok(x) = input.try_parse(HorizontalPositionKeyword::parse) {
-            return Ok(Self::Corner { horizontal: x, vertical: y });
+            return Ok(LineDirection::Corner { horizontal: x, vertical: y });
         }
-        Ok(Self::Vertical(y))
+        Ok(LineDirection::Vertical(y))
     }
 }
 
@@ -81,31 +81,31 @@ impl From<&str> for LineDirection {
     fn from(s: &str) -> Self {
         let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
-        Self::parse(&mut parser).unwrap_or_default()
+        LineDirection::parse(&mut parser).unwrap_or_default()
     }
 }
 
 impl From<Angle> for LineDirection {
     fn from(angle: Angle) -> Self {
-        Self::Angle(angle)
+        LineDirection::Angle(angle)
     }
 }
 
 impl From<HorizontalPositionKeyword> for LineDirection {
     fn from(horizontal_position_keyword: HorizontalPositionKeyword) -> Self {
-        Self::Horizontal(horizontal_position_keyword)
+        LineDirection::Horizontal(horizontal_position_keyword)
     }
 }
 
 impl From<VerticalPositionKeyword> for LineDirection {
     fn from(vertical_position_keyword: VerticalPositionKeyword) -> Self {
-        Self::Vertical(vertical_position_keyword)
+        LineDirection::Vertical(vertical_position_keyword)
     }
 }
 
 impl From<(HorizontalPositionKeyword, VerticalPositionKeyword)> for LineDirection {
     fn from(corner: (HorizontalPositionKeyword, VerticalPositionKeyword)) -> Self {
-        Self::Corner { horizontal: corner.0, vertical: corner.1 }
+        LineDirection::Corner { horizontal: corner.0, vertical: corner.1 }
     }
 }
 
@@ -125,7 +125,7 @@ impl<'i> Parse<'i> for LinearGradient {
             LineDirection::Vertical(VerticalPositionKeyword::Bottom)
         };
         let stops = parse_items(input)?;
-        Ok(Self { direction, stops })
+        Ok(LinearGradient { direction, stops })
     }
 }
 
@@ -179,7 +179,7 @@ pub struct RadialGradient {
 impl<'i> RadialGradient {
     fn parse<'t>(
         input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    ) -> Result<RadialGradient, ParseError<'i, CustomParseError<'i>>> {
         // let shape = input.try_parse(EndingShape::parse).ok();
         let position = input
             .try_parse(|input| {
@@ -193,7 +193,7 @@ impl<'i> RadialGradient {
         // }
 
         let stops = parse_items(input)?;
-        Ok(Self {
+        Ok(RadialGradient {
             // shape: shape.unwrap_or_default(),
             position: position.unwrap_or(Position::center()),
             stops,
@@ -211,18 +211,18 @@ impl<'i, D: Parse<'i>> Parse<'i> for ColorStop<D> {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         let color = Color::parse(input)?;
         let position = input.try_parse(D::parse).ok();
-        Ok(Self { color, position })
+        Ok(ColorStop { color, position })
     }
 }
 
 impl<D> From<Color> for ColorStop<D> {
     fn from(value: Color) -> Self {
-        Self { color: value, position: None }
+        ColorStop { color: value, position: None }
     }
 }
 
 impl<D> From<(Color, D)> for ColorStop<D> {
     fn from(value: (Color, D)) -> Self {
-        Self { color: value.0, position: Some(value.1) }
+        ColorStop { color: value.0, position: Some(value.1) }
     }
 }

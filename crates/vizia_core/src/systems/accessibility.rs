@@ -23,36 +23,40 @@ pub(crate) fn accessibility_system(cx: &mut Context) {
                 text_context: &mut cx.text_context,
             };
 
-            let node = get_access_node(&mut access_context, &mut cx.views, entity);
+            if let Some(node) = get_access_node(&mut access_context, &mut cx.views, entity) {
+                let navigable = cx
+                    .style
+                    .abilities
+                    .get(entity)
+                    .copied()
+                    .unwrap_or_default()
+                    .contains(Abilities::NAVIGABLE);
 
-            let navigable = cx
-                .style
-                .abilities
-                .get(entity)
-                .copied()
-                .unwrap_or_default()
-                .contains(Abilities::NAVIGABLE);
+                if node.node_builder.role() == Role::Unknown && !navigable {
+                    continue;
+                }
 
-            if node.node_builder.role() == Role::Unknown && !navigable {
-                continue;
+                let mut nodes = vec![(node.node_id(), node.node_builder.build())];
+
+                // If child nodes were generated then append them to the nodes list
+                if !node.children.is_empty() {
+                    nodes.extend(
+                        node.children.into_iter().map(|child_node| {
+                            (child_node.node_id(), child_node.node_builder.build())
+                        }),
+                    );
+                }
+
+                cx.tree_updates.push(Some(TreeUpdate {
+                    nodes,
+                    tree: None,
+                    focus: if cx.window_has_focus {
+                        cx.focused.accesskit_id()
+                    } else {
+                        NodeId(0u64)
+                    },
+                }));
             }
-
-            let mut nodes = vec![(node.node_id(), node.node_builder.build())];
-
-            // If child nodes were generated then append them to the nodes list
-            if !node.children.is_empty() {
-                nodes.extend(
-                    node.children
-                        .into_iter()
-                        .map(|child_node| (child_node.node_id(), child_node.node_builder.build())),
-                );
-            }
-
-            cx.tree_updates.push(Some(TreeUpdate {
-                nodes,
-                tree: None,
-                focus: if cx.window_has_focus { cx.focused.accesskit_id() } else { NodeId(0u64) },
-            }));
 
             // }
         }
@@ -65,7 +69,7 @@ pub(crate) fn get_access_node(
     cx: &mut AccessContext,
     views: &mut HashMap<Entity, Box<dyn ViewHandler>>,
     entity: Entity,
-) -> AccessNode {
+) -> Option<AccessNode> {
     let mut node_builder = NodeBuilder::default();
 
     if let Some(role) = cx.style.role.get(entity) {
@@ -170,7 +174,8 @@ pub(crate) fn get_access_node(
         entity.child_iter(cx.tree).map(|entity| entity.accesskit_id()).collect::<Vec<_>>();
 
     // Children added by `accessibility` function
-    let mut child_ids = node.children.iter().map(AccessNode::node_id).collect::<Vec<_>>();
+    let mut child_ids =
+        node.children.iter().map(|child_node| child_node.node_id()).collect::<Vec<_>>();
 
     child_ids.extend(children);
 
@@ -178,5 +183,5 @@ pub(crate) fn get_access_node(
         node.node_builder.set_children(child_ids);
     }
 
-    node
+    Some(node)
 }
