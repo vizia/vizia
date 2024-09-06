@@ -225,7 +225,10 @@ pub enum FrequencyDisplayMode {
 
 impl Default for FrequencyDisplayMode {
     fn default() -> Self {
-        Self::HzThenKHz { under_1k: DisplayDecimals::One, over_1k: DisplayDecimals::Two }
+        Self::HzThenKHz {
+            under_1k: DisplayDecimals::One,
+            over_1k: DisplayDecimals::Two,
+        }
     }
 }
 

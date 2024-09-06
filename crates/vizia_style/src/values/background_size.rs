@@ -12,7 +12,10 @@ pub enum BackgroundSize {
 
 impl Default for BackgroundSize {
     fn default() -> Self {
-        Self::Explicit { width: LengthPercentageOrAuto::Auto, height: LengthPercentageOrAuto::Auto }
+        Self::Explicit {
+            width: LengthPercentageOrAuto::Auto,
+            height: LengthPercentageOrAuto::Auto,
+        }
     }
 }
 

@@ -116,9 +116,18 @@ impl From<TextDecorationLine> for skia_safe::textlayout::TextDecoration {
     fn from(value: TextDecorationLine) -> Self {
         let mut decoration = Self::empty();
 
-        decoration.set(Self::UNDERLINE, value.contains(TextDecorationLine::Underline));
-        decoration.set(Self::OVERLINE, value.contains(TextDecorationLine::Overline));
-        decoration.set(Self::LINE_THROUGH, value.contains(TextDecorationLine::Strikethrough));
+        decoration.set(
+            Self::UNDERLINE,
+            value.contains(TextDecorationLine::Underline),
+        );
+        decoration.set(
+            Self::OVERLINE,
+            value.contains(TextDecorationLine::Overline),
+        );
+        decoration.set(
+            Self::LINE_THROUGH,
+            value.contains(TextDecorationLine::Strikethrough),
+        );
 
         decoration
     }
