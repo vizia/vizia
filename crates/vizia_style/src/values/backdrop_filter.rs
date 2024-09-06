@@ -8,7 +8,7 @@ pub enum Filter {
 
 impl Default for Filter {
     fn default() -> Self {
-        Filter::Blur(Length::default())
+        Self::Blur(Length::default())
     }
 }
 
@@ -20,7 +20,7 @@ impl<'i> Parse<'i> for Filter {
             let location = input.current_source_location();
             match_ignore_ascii_case! { &function,
                 "blur" => {
-                    Ok(Filter::Blur(input.try_parse(Length::parse).unwrap_or(Length::px(0.0))))
+                    Ok(Self::Blur(input.try_parse(Length::parse).unwrap_or(Length::px(0.0))))
                 },
 
                 _ => {

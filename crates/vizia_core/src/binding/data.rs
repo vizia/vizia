@@ -99,25 +99,25 @@ impl Data for f64 {
 
 impl<T: ?Sized + 'static> Data for Arc<T> {
     fn same(&self, other: &Self) -> bool {
-        Arc::ptr_eq(self, other)
+        Self::ptr_eq(self, other)
     }
 }
 
 impl<T: ?Sized + 'static> Data for std::sync::Weak<T> {
     fn same(&self, other: &Self) -> bool {
-        std::sync::Weak::ptr_eq(self, other)
+        Self::ptr_eq(self, other)
     }
 }
 
 impl<T: ?Sized + 'static> Data for Rc<T> {
     fn same(&self, other: &Self) -> bool {
-        Rc::ptr_eq(self, other)
+        Self::ptr_eq(self, other)
     }
 }
 
 impl<T: ?Sized + 'static> Data for std::rc::Weak<T> {
     fn same(&self, other: &Self) -> bool {
-        std::rc::Weak::ptr_eq(self, other)
+        Self::ptr_eq(self, other)
     }
 }
 

@@ -77,9 +77,7 @@ where
     ///
     /// Panics if the key is null.
     pub fn insert<K: GenerationalId>(&mut self, key: K, value: V) {
-        if key.is_null() {
-            panic!("Key is null");
-        }
+        assert!(!key.is_null(), "Key is null");
 
         if let Some(stored_value) = self.get_mut(key) {
             *stored_value = value;

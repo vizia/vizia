@@ -26,7 +26,7 @@ impl Rating {
                         .role(Role::RadioButton)
                         .default_action_verb(DefaultActionVerb::Click)
                         .checked(lens.map(move |val| *val >= i))
-                        .toggle_class("foo", Rating::rating.map(move |val| *val >= i))
+                        .toggle_class("foo", Self::rating.map(move |val| *val >= i))
                         .on_hover(move |ex| ex.emit(RatingEvent::SetRating(i)))
                         .on_press(|ex| ex.emit(RatingEvent::EmitRating));
                 }

@@ -16,9 +16,9 @@ define_enum! {
 impl From<bool> for Display {
     fn from(boolean: bool) -> Self {
         if boolean {
-            Display::Flex
+            Self::Flex
         } else {
-            Display::None
+            Self::None
         }
     }
 }

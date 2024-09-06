@@ -153,7 +153,7 @@ impl EditableText for String {
     }
 
     fn from_str(s: &str) -> Self {
-        s.to_string()
+        s.to_owned()
     }
 
     fn preceding_line_break(&self, from: usize) -> usize {

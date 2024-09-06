@@ -178,7 +178,11 @@ impl Localized {
     /// })
     /// .run();
     pub fn new(key: &str) -> Self {
-        Self { key: key.to_owned(), args: HashMap::new(), map: Rc::new(|s| s.to_string()) }
+        Self {
+            key: key.to_owned(),
+            args: HashMap::new(),
+            map: Rc::new(std::string::ToString::to_string),
+        }
     }
 
     /// Sets a mapping function to apply to the translated text.
@@ -247,15 +251,12 @@ impl ResGet<String> for Localized {
         let cx = cx.as_context().expect("Failed to get context");
         let locale = &cx.environment().locale;
         let bundle = cx.resource_manager.current_translation(locale);
-        let message = if let Some(msg) = bundle.get_message(&self.key) {
-            msg
-        } else {
+
+        let Some(message) = bundle.get_message(&self.key) else {
             return (self.map)(&self.key);
         };
 
-        let value = if let Some(value) = message.value() {
-            value
-        } else {
+        let Some(value) = message.value() else {
             return (self.map)(&self.key);
         };
 
@@ -266,7 +267,7 @@ impl ResGet<String> for Localized {
         if err.is_empty() {
             (self.map)(&res)
         } else {
-            format!("{} {{ERROR: {:?}}}", res, err)
+            format!("{res} {{ERROR: {err:?}}}")
         }
     }
 }
@@ -274,7 +275,7 @@ impl ResGet<String> for Localized {
 impl Res<String> for Localized {
     fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Localized),
+        F: 'static + Clone + Fn(&mut Context, Self),
     {
         let self2 = self.clone();
         Binding::new(cx, Environment::locale, move |cx, _| {
@@ -323,16 +324,13 @@ impl ToStringLocalized for Localized {
 
         let locale = &cx.environment().locale;
         let bundle = cx.resource_manager.current_translation(locale);
-        let message = if let Some(msg) = bundle.get_message(&self.key) {
-            msg
-        } else {
+
+        let Some(message) = bundle.get_message(&self.key) else {
             // Warn here of missing key
             return (self.map)(&self.key);
         };
 
-        let value = if let Some(value) = message.value() {
-            value
-        } else {
+        let Some(value) = message.value() else {
             // Warn here of missing value
             return (self.map)(&self.key);
         };
@@ -344,7 +342,7 @@ impl ToStringLocalized for Localized {
         if err.is_empty() {
             (self.map)(&res)
         } else {
-            format!("{} {{ERROR: {:?}}}", res, err)
+            format!("{res} {{ERROR: {err:?}}}")
         }
     }
 }

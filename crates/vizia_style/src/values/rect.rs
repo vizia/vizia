@@ -24,21 +24,15 @@ where
         let location = input.current_source_location();
         let first = T::parse(input)?;
 
-        let second = if let Ok(second) = input.try_parse(T::parse) {
-            second
-        } else {
+        let Ok(second) = input.try_parse(T::parse) else {
             return Ok(Self(first.clone(), first.clone(), first.clone(), first));
         };
 
-        let third = if let Ok(third) = input.try_parse(T::parse) {
-            third
-        } else {
+        let Ok(third) = input.try_parse(T::parse) else {
             return Ok(Self(first.clone(), second.clone(), first, second));
         };
 
-        let fourth = if let Ok(fourth) = input.try_parse(T::parse) {
-            fourth
-        } else {
+        let Ok(fourth) = input.try_parse(T::parse) else {
             return Ok(Self(first, second.clone(), third, second));
         };
 
@@ -66,25 +60,25 @@ where
     fn from(s: &str) -> Self {
         let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
-        Rect::parse(&mut parser).unwrap_or_default()
+        Self::parse(&mut parser).unwrap_or_default()
     }
 }
 
 impl<T: Clone> From<(T, T)> for Rect<T> {
     fn from(value: (T, T)) -> Self {
-        Rect(value.0.clone(), value.1.clone(), value.0.clone(), value.1)
+        Self(value.0.clone(), value.1.clone(), value.0.clone(), value.1)
     }
 }
 
 impl<T: Clone> From<(T, T, T)> for Rect<T> {
     fn from(value: (T, T, T)) -> Self {
-        Rect(value.0.clone(), value.1.clone(), value.2.clone(), value.1)
+        Self(value.0.clone(), value.1.clone(), value.2.clone(), value.1)
     }
 }
 
 impl<T: Clone> From<(T, T, T, T)> for Rect<T> {
     fn from(value: (T, T, T, T)) -> Self {
-        Rect(value.0.clone(), value.1.clone(), value.2.clone(), value.3)
+        Self(value.0.clone(), value.1.clone(), value.2.clone(), value.3)
     }
 }
 

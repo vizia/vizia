@@ -17,13 +17,13 @@ impl From<BorderWidthKeyword> for BorderWidthValue {
     fn from(border_width_keyword: BorderWidthKeyword) -> Self {
         match border_width_keyword {
             BorderWidthKeyword::Thin => {
-                BorderWidthValue(LengthOrPercentage::Length(Length::px(1.0)))
+                Self(LengthOrPercentage::Length(Length::px(1.0)))
             }
             BorderWidthKeyword::Medium => {
-                BorderWidthValue(LengthOrPercentage::Length(Length::px(3.0)))
+                Self(LengthOrPercentage::Length(Length::px(3.0)))
             }
             BorderWidthKeyword::Thick => {
-                BorderWidthValue(LengthOrPercentage::Length(Length::px(5.0)))
+                Self(LengthOrPercentage::Length(Length::px(5.0)))
             }
         }
     }
@@ -31,7 +31,7 @@ impl From<BorderWidthKeyword> for BorderWidthValue {
 
 impl From<Length> for BorderWidthValue {
     fn from(length: Length) -> Self {
-        BorderWidthValue(LengthOrPercentage::Length(length))
+        Self(LengthOrPercentage::Length(length))
     }
 }
 

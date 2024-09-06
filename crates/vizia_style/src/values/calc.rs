@@ -24,8 +24,8 @@ impl<
             + std::ops::Mul<f32, Output = V>
             + std::ops::Add<V, Output = V>
             + std::cmp::PartialOrd<V>
-            + std::convert::Into<Calc<V>>
-            + std::convert::From<Calc<V>>
+            + std::convert::Into<Self>
+            + std::convert::From<Self>
             + std::fmt::Debug,
     > Parse<'i> for Calc<V>
 {
@@ -34,40 +34,40 @@ impl<
         let f = input.expect_function()?;
         match_ignore_ascii_case! { f,
             "calc" => {
-                let calc = input.parse_nested_block(Calc::parse_sum)?;
+                let calc = input.parse_nested_block(Self::parse_sum)?;
                 match calc {
-                    Calc::Value(_) | Calc::Number(_) => Ok(calc),
-                    _ => Ok(Calc::Function(Box::new(MathFunction::Calc(calc))))
+                    Self::Value(_) | Self::Number(_) => Ok(calc),
+                    _ => Ok(Self::Function(Box::new(MathFunction::Calc(calc))))
                 }
             },
             "min" => {
-                let mut args = input.parse_nested_block(|input| input.parse_comma_separated(Calc::parse_sum))?;
-                let mut reduced = Calc::reduce_args(&mut args, std::cmp::Ordering::Less);
+                let mut args = input.parse_nested_block(|input| input.parse_comma_separated(Self::parse_sum))?;
+                let mut reduced = Self::reduce_args(&mut args, std::cmp::Ordering::Less);
                 if reduced.len() == 1 {
                     return Ok(reduced.remove(0))
                 }
-                 Ok(Calc::Function(Box::new(MathFunction::Min(reduced))))
+                 Ok(Self::Function(Box::new(MathFunction::Min(reduced))))
             },
             "max" => {
-                let mut args = input.parse_nested_block(|input| input.parse_comma_separated(Calc::parse_sum))?;
-                let mut reduced = Calc::reduce_args(&mut args, std::cmp::Ordering::Greater);
+                let mut args = input.parse_nested_block(|input| input.parse_comma_separated(Self::parse_sum))?;
+                let mut reduced = Self::reduce_args(&mut args, std::cmp::Ordering::Greater);
                 if reduced.len() == 1 {
                 return Ok(reduced.remove(0))
                 }
-                Ok(Calc::Function(Box::new(MathFunction::Max(reduced))))
+                Ok(Self::Function(Box::new(MathFunction::Max(reduced))))
             },
             "clamp" => {
                 let (mut min, mut center, mut max) = input.parse_nested_block(|input| {
-                let min = Some(Calc::parse_sum(input)?);
+                let min = Some(Self::parse_sum(input)?);
                 input.expect_comma()?;
-                let center: Calc<V> = Calc::parse_sum(input)?;
+                let center: Self = Self::parse_sum(input)?;
                 input.expect_comma()?;
-                let max = Some(Calc::parse_sum(input)?);
+                let max = Some(Self::parse_sum(input)?);
                 Ok((min, center, max))
                 })?;
 
                 // According to the spec, the minimum should "win" over the maximum if they are in the wrong order.
-                let cmp = if let (Some(Calc::Value(max_val)), Calc::Value(center_val)) = (&max, &center) {
+                let cmp = if let (Some(Self::Value(max_val)), Self::Value(center_val)) = (&max, &center) {
                     center_val.partial_cmp(max_val)
                 } else {
                     None
@@ -85,7 +85,7 @@ impl<
                     None => {}
                 }
 
-                let cmp = if let (Some(Calc::Value(min_val)), Calc::Value(center_val)) = (&min, &center) {
+                let cmp = if let (Some(Self::Value(min_val)), Self::Value(center_val)) = (&min, &center) {
                     center_val.partial_cmp(min_val)
                 } else {
                     None
@@ -106,9 +106,9 @@ impl<
                 // Generate clamp(), min(), max(), or value depending on which arguments are left.
                 match (min, max) {
                     (None, None) => Ok(center),
-                    (Some(min), None) => Ok(Calc::Function(Box::new(MathFunction::Max(vec![min, center])))),
-                    (None, Some(max)) => Ok(Calc::Function(Box::new(MathFunction::Min(vec![center, max])))),
-                    (Some(min), Some(max)) => Ok(Calc::Function(Box::new(MathFunction::Clamp(min, center, max))))
+                    (Some(min), None) => Ok(Self::Function(Box::new(MathFunction::Max(vec![min, center])))),
+                    (None, Some(max)) => Ok(Self::Function(Box::new(MathFunction::Min(vec![center, max])))),
+                    (Some(min), Some(max)) => Ok(Self::Function(Box::new(MathFunction::Clamp(min, center, max))))
                 }
             },
             _ => Err(location.new_unexpected_token_error(Token::Ident(f.clone()))),
@@ -122,15 +122,15 @@ impl<
             + std::ops::Mul<f32, Output = V>
             + std::ops::Add<V, Output = V>
             + std::cmp::PartialOrd<V>
-            + std::convert::Into<Calc<V>>
-            + std::convert::From<Calc<V>>
+            + std::convert::Into<Self>
+            + std::convert::From<Self>
             + std::fmt::Debug,
     > Calc<V>
 {
     fn parse_sum<'t>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
-        let mut cur: Calc<V> = Calc::parse_product(input)?;
+        let mut cur: Self = Self::parse_product(input)?;
         loop {
             let start = input.state();
             match input.next_including_whitespace() {
@@ -140,11 +140,11 @@ impl<
                     }
                     match *input.next()? {
                         Token::Delim('+') => {
-                            let next = Calc::parse_product(input)?;
+                            let next = Self::parse_product(input)?;
                             cur = cur + next;
                         }
                         Token::Delim('-') => {
-                            let mut rhs = Calc::parse_product(input)?;
+                            let mut rhs = Self::parse_product(input)?;
                             rhs = rhs * -1.0;
                             cur = cur + rhs;
                         }
@@ -166,16 +166,16 @@ impl<
     fn parse_product<'t>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
-        let mut node = Calc::parse_value(input)?;
+        let mut node = Self::parse_value(input)?;
         loop {
             let start = input.state();
             match input.next() {
                 Ok(&Token::Delim('*')) => {
                     // At least one of the operands must be a number.
                     let rhs = Self::parse_value(input)?;
-                    if let Calc::Number(val) = rhs {
+                    if let Self::Number(val) = rhs {
                         node = node * val;
-                    } else if let Calc::Number(val) = node {
+                    } else if let Self::Number(val) = node {
                         node = rhs;
                         node = node * val;
                     } else {
@@ -184,7 +184,7 @@ impl<
                 }
                 Ok(&Token::Delim('/')) => {
                     let rhs = Self::parse_value(input)?;
-                    if let Calc::Number(val) = rhs {
+                    if let Self::Number(val) = rhs {
                         if val != 0.0 {
                             node = node * (1.0 / val);
                             continue;
@@ -207,40 +207,40 @@ impl<
         // Parse nested calc() and other math functions.
         if let Ok(calc) = input.try_parse(Self::parse) {
             match calc {
-                Calc::Function(f) => {
+                Self::Function(f) => {
                     return Ok(match *f {
                         MathFunction::Calc(c) => c,
-                        _ => Calc::Function(f),
+                        _ => Self::Function(f),
                     })
                 }
                 c => return Ok(c),
             }
         }
 
-        if input.try_parse(|input| input.expect_parenthesis_block()).is_ok() {
-            return input.parse_nested_block(Calc::parse_sum);
+        if input.try_parse(cssparser::Parser::expect_parenthesis_block).is_ok() {
+            return input.parse_nested_block(Self::parse_sum);
         }
 
-        if let Ok(num) = input.try_parse(|input| input.expect_number()) {
-            return Ok(Calc::Number(num));
+        if let Ok(num) = input.try_parse(cssparser::Parser::expect_number) {
+            return Ok(Self::Number(num));
         }
 
         if let Ok(value) = input.try_parse(V::parse) {
-            return Ok(Calc::Value(Box::new(value)));
+            return Ok(Self::Value(Box::new(value)));
         }
 
         Err(input.new_error_for_next_token())
     }
 
-    fn reduce_args(args: &mut Vec<Calc<V>>, cmp: std::cmp::Ordering) -> Vec<Calc<V>> {
+    fn reduce_args(args: &mut Vec<Self>, cmp: std::cmp::Ordering) -> Vec<Self> {
         // Reduces the arguments of a min() or max() expression, combining compatible values.
         // e.g. min(1px, 1em, 2px, 3in) => min(1px, 1em)
-        let mut reduced: Vec<Calc<V>> = vec![];
+        let mut reduced: Vec<Self> = vec![];
         for arg in args.drain(..) {
             let mut found = None;
-            if let Calc::Value(val) = &arg {
+            if let Self::Value(val) = &arg {
                 for b in reduced.iter_mut() {
-                    if let Calc::Value(v) = b {
+                    if let Self::Value(v) = b {
                         match val.partial_cmp(v) {
                             Some(ord) if ord == cmp => {
                                 found = Some(Some(b));
@@ -276,19 +276,19 @@ impl<V: std::ops::Mul<f32, Output = V>> std::ops::Mul<f32> for Calc<V> {
         }
 
         match self {
-            Calc::Value(v) => Calc::Value(Box::new(*v * other)),
-            Calc::Number(n) => Calc::Number(n * other),
-            Calc::Sum(a, b) => Calc::Sum(Box::new(*a * other), Box::new(*b * other)),
-            Calc::Product(num, calc) => {
+            Self::Value(v) => Self::Value(Box::new(*v * other)),
+            Self::Number(n) => Self::Number(n * other),
+            Self::Sum(a, b) => Self::Sum(Box::new(*a * other), Box::new(*b * other)),
+            Self::Product(num, calc) => {
                 let num = num * other;
                 if num == 1.0 {
                     return *calc;
                 }
-                Calc::Product(num, calc)
+                Self::Product(num, calc)
             }
-            Calc::Function(f) => match *f {
-                MathFunction::Calc(c) => Calc::Function(Box::new(MathFunction::Calc(c * other))),
-                _ => Calc::Product(other, Box::new(Calc::Function(f))),
+            Self::Function(f) => match *f {
+                MathFunction::Calc(c) => Self::Function(Box::new(MathFunction::Calc(c * other))),
+                _ => Self::Product(other, Box::new(Self::Function(f))),
             },
         }
     }
@@ -296,19 +296,19 @@ impl<V: std::ops::Mul<f32, Output = V>> std::ops::Mul<f32> for Calc<V> {
 
 impl<
         V: std::ops::Add<V, Output = V>
-            + std::convert::Into<Calc<V>>
-            + std::convert::From<Calc<V>>
+            + std::convert::Into<Self>
+            + std::convert::From<Self>
             + std::fmt::Debug,
-    > std::ops::Add<Calc<V>> for Calc<V>
+    > std::ops::Add<Self> for Calc<V>
 {
     type Output = Self;
 
-    fn add(self, other: Calc<V>) -> Calc<V> {
+    fn add(self, other: Self) -> Self {
         match (self, other) {
-            (Calc::Value(a), Calc::Value(b)) => (*a + *b).into(),
-            (Calc::Number(a), Calc::Number(b)) => Calc::Number(a + b),
-            (Calc::Value(a), b) => (*a + V::from(b)).into(),
-            (a, Calc::Value(b)) => (V::from(a) + *b).into(),
+            (Self::Value(a), Self::Value(b)) => (*a + *b).into(),
+            (Self::Number(a), Self::Number(b)) => Self::Number(a + b),
+            (Self::Value(a), b) => (*a + V::from(b)).into(),
+            (a, Self::Value(b)) => (V::from(a) + *b).into(),
             (a, b) => (V::from(a) + V::from(b)).into(),
         }
     }
@@ -317,8 +317,8 @@ impl<
 impl<V: std::cmp::PartialEq<f32>> std::cmp::PartialEq<f32> for Calc<V> {
     fn eq(&self, other: &f32) -> bool {
         match self {
-            Calc::Value(a) => **a == *other,
-            Calc::Number(a) => *a == *other,
+            Self::Value(a) => **a == *other,
+            Self::Number(a) => *a == *other,
             _ => false,
         }
     }
@@ -327,8 +327,8 @@ impl<V: std::cmp::PartialEq<f32>> std::cmp::PartialEq<f32> for Calc<V> {
 impl<V: std::cmp::PartialOrd<f32>> std::cmp::PartialOrd<f32> for Calc<V> {
     fn partial_cmp(&self, other: &f32) -> Option<std::cmp::Ordering> {
         match self {
-            Calc::Value(a) => a.partial_cmp(other),
-            Calc::Number(a) => a.partial_cmp(other),
+            Self::Value(a) => a.partial_cmp(other),
+            Self::Number(a) => a.partial_cmp(other),
             _ => None,
         }
     }

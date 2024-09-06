@@ -48,33 +48,33 @@ impl<'i> Parse<'i> for Transform {
                     let x = LengthOrPercentage::parse(input)?;
                     input.expect_comma()?;
                     let y = LengthOrPercentage::parse(input)?;
-                    Ok(Transform::Translate((x, y)))
+                    Ok(Self::Translate((x, y)))
                 },
                 "translatex" => {
                     let x = LengthOrPercentage::parse(input)?;
-                    Ok(Transform::TranslateX(x))
+                    Ok(Self::TranslateX(x))
                 },
                 "translatey" => {
                     let y = LengthOrPercentage::parse(input)?;
-                    Ok(Transform::TranslateY(y))
+                    Ok(Self::TranslateY(y))
                 },
                 "scale" => {
                     let x = PercentageOrNumber::parse(input)?;
                     input.expect_comma()?;
                     let y = PercentageOrNumber::parse(input)?;
-                    Ok(Transform::Scale((x, y)))
+                    Ok(Self::Scale((x, y)))
                 },
                 "scalex" => {
                     let x = PercentageOrNumber::parse(input)?;
-                    Ok(Transform::ScaleX(x))
+                    Ok(Self::ScaleX(x))
                 },
                 "scaley" => {
                     let y = PercentageOrNumber::parse(input)?;
-                    Ok(Transform::ScaleY(y))
+                    Ok(Self::ScaleY(y))
                 },
                 "rotate" => {
                     let angle = Angle::parse(input)?;
-                    Ok(Transform::Rotate(angle))
+                    Ok(Self::Rotate(angle))
                 },
                 // "rotatex" => {
                 //     let x = Angle::parse(input)?;
@@ -88,15 +88,15 @@ impl<'i> Parse<'i> for Transform {
                     let x = Angle::parse(input)?;
                     input.expect_comma()?;
                     let y = Angle::parse(input)?;
-                    Ok(Transform::Skew(x, y))
+                    Ok(Self::Skew(x, y))
                 },
                 "skewx" => {
                     let x = Angle::parse(input)?;
-                    Ok(Transform::SkewX(x))
+                    Ok(Self::SkewX(x))
                 },
                 "skewy" => {
                     let y = Angle::parse(input)?;
-                    Ok(Transform::SkewY(y))
+                    Ok(Self::SkewY(y))
                 },
                 // "perspective" => {
                 //     let length = Length::parse(input)?;
@@ -104,7 +104,7 @@ impl<'i> Parse<'i> for Transform {
                 // },
                 "matrix" => {
                     let matrix = Matrix::parse(input)?;
-                    Ok(Transform::Matrix(matrix))
+                    Ok(Self::Matrix(matrix))
                 },
                 _ => {
                     Err(location.new_unexpected_token_error(Token::Ident(function)))

@@ -176,7 +176,7 @@ impl WinState {
             .unwrap();
 
         // Build our window
-        Ok(WinState {
+        Ok(Self {
             entity,
             gl_config,
             gl_context,
@@ -197,7 +197,7 @@ impl WinState {
         &self.window
     }
 
-    pub fn make_current(&mut self) {
+    pub fn make_current(&self) {
         self.gl_context.make_current(&self.gl_surface).unwrap();
     }
 
@@ -517,7 +517,7 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
 
     fn min_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
         let entity = self.entity();
-        let size = size.get(&self).map(|size| size.into());
+        let size = size.get(&self).map(S::into);
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
             win_state.window_description.min_inner_size = size;
         }
@@ -527,7 +527,7 @@ impl<'a> WindowModifiers for Handle<'a, Window> {
 
     fn max_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
         let entity = self.entity();
-        let size = size.get(&self).map(|size| size.into());
+        let size = size.get(&self).map(S::into);
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
             win_state.window_description.max_inner_size = size;
         }

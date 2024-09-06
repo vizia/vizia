@@ -19,11 +19,7 @@ impl BackendContext {
     }
 
     /// Helper function for mutating the state of a window.
-    pub fn mutate_window<W: Any, F: Fn(&mut BackendContext, &mut W)>(
-        &mut self,
-        window_entity: Entity,
-        f: F,
-    ) {
+    pub fn mutate_window<W: Any, F: Fn(&mut Self, &mut W)>(&mut self, window_entity: Entity, f: F) {
         if let Some(mut window_event_handler) = self.0.views.remove(&window_entity) {
             if let Some(window) = window_event_handler.downcast_mut::<W>() {
                 f(self, window);
@@ -173,9 +169,10 @@ impl BackendContext {
     /// You should not call this method unless you are writing a windowing backend, in which case
     /// you should consult the existing windowing backends for usage information.
     pub fn set_event_proxy(&mut self, proxy: Box<dyn EventProxy>) {
-        if self.0.event_proxy.is_some() {
-            panic!("Set the event proxy twice. This should never happen.");
-        }
+        assert!(
+            self.0.event_proxy.is_none(),
+            "Set the event proxy twice. This should never happen."
+        );
 
         self.0.event_proxy = Some(proxy);
     }

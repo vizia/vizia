@@ -30,9 +30,9 @@ impl Chip {
                     .child_bottom(Stretch(1.0))
                     .top(Pixels(0.0))
                     .bottom(Pixels(0.0));
-                Binding::new(cx, Chip::on_close.map(|on_close| on_close.is_some()), |cx, val| {
+                Binding::new(cx, Self::on_close.map(Option::is_some), |cx, val| {
                     if val.get(cx) {
-                        let on_close = Chip::on_close.get(cx).unwrap();
+                        let on_close = Self::on_close.get(cx).unwrap();
                         Button::new(cx, |cx| Svg::new(cx, ICON_X))
                             .class("close-icon")
                             .height(Pixels(16.0))

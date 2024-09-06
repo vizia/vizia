@@ -106,7 +106,7 @@ impl ResourceManager {
             },
         );
 
-        ResourceManager {
+        Self {
             themes: Vec::new(),
 
             image_id_manager,

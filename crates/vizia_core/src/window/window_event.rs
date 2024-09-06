@@ -13,13 +13,13 @@ pub enum DropData {
 
 impl From<Entity> for DropData {
     fn from(value: Entity) -> Self {
-        DropData::Id(value)
+        Self::Id(value)
     }
 }
 
 impl From<PathBuf> for DropData {
     fn from(value: PathBuf) -> Self {
-        DropData::File(value)
+        Self::File(value)
     }
 }
 
