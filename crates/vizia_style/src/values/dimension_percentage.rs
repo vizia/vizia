@@ -48,9 +48,7 @@ impl<D: std::ops::Mul<f32, Output = D>> std::ops::Mul<f32> for DimensionPercenta
     fn mul(self, other: f32) -> Self {
         match self {
             Self::Dimension(l) => Self::Dimension(l * other),
-            Self::Percentage(p) => {
-                Self::Percentage(Percentage(p.0 * other))
-            }
+            Self::Percentage(p) => Self::Percentage(Percentage(p.0 * other)),
             Self::Calc(c) => Self::Calc(Box::new(*c * other)),
         }
     }
@@ -85,15 +83,11 @@ impl<
             (Self::Calc(a), other) => match &**a {
                 Calc::Value(v) => v.add_recursive(other),
                 Calc::Sum(a, b) => {
-                    if let Some(res) =
-                        Self::Calc(Box::new(*a.clone())).add_recursive(other)
-                    {
+                    if let Some(res) = Self::Calc(Box::new(*a.clone())).add_recursive(other) {
                         return Some(res.add(Self::from(*b.clone())));
                     }
 
-                    if let Some(res) =
-                        Self::Calc(Box::new(*b.clone())).add_recursive(other)
-                    {
+                    if let Some(res) = Self::Calc(Box::new(*b.clone())).add_recursive(other) {
                         return Some(Self::from(*a.clone()).add(res));
                     }
 
@@ -104,15 +98,11 @@ impl<
             (other, Self::Calc(b)) => match &**b {
                 Calc::Value(v) => other.add_recursive(v),
                 Calc::Sum(a, b) => {
-                    if let Some(res) =
-                        other.add_recursive(&Self::Calc(Box::new(*a.clone())))
-                    {
+                    if let Some(res) = other.add_recursive(&Self::Calc(Box::new(*a.clone()))) {
                         return Some(res.add(Self::from(*b.clone())));
                     }
 
-                    if let Some(res) =
-                        other.add_recursive(&Self::Calc(Box::new(*b.clone())))
-                    {
+                    if let Some(res) = other.add_recursive(&Self::Calc(Box::new(*b.clone()))) {
                         return Some(Self::from(*a.clone()).add(res));
                     }
 
@@ -141,33 +131,22 @@ impl<
         }
 
         match (a, b) {
-            (Self::Calc(a), Self::Calc(b)) => {
-                Self::Calc(Box::new(*a + *b))
-            }
+            (Self::Calc(a), Self::Calc(b)) => Self::Calc(Box::new(*a + *b)),
             (Self::Calc(calc), b) => {
                 if let Calc::Value(a) = *calc {
                     a.add(b)
                 } else {
-                    Self::Calc(Box::new(Calc::Sum(
-                        Box::new(*calc),
-                        Box::new(b.into()),
-                    )))
+                    Self::Calc(Box::new(Calc::Sum(Box::new(*calc), Box::new(b.into()))))
                 }
             }
             (a, Self::Calc(calc)) => {
                 if let Calc::Value(b) = *calc {
                     a.add(*b)
                 } else {
-                    Self::Calc(Box::new(Calc::Sum(
-                        Box::new(a.into()),
-                        Box::new(*calc),
-                    )))
+                    Self::Calc(Box::new(Calc::Sum(Box::new(a.into()), Box::new(*calc))))
                 }
             }
-            (a, b) => Self::Calc(Box::new(Calc::Sum(
-                Box::new(a.into()),
-                Box::new(b.into()),
-            ))),
+            (a, b) => Self::Calc(Box::new(Calc::Sum(Box::new(a.into()), Box::new(b.into())))),
         }
     }
 }
@@ -207,17 +186,11 @@ impl<D: std::cmp::PartialOrd<f32>> std::cmp::PartialOrd<f32> for DimensionPercen
     }
 }
 
-impl<D: std::cmp::PartialOrd<D>> std::cmp::PartialOrd<Self>
-    for DimensionPercentage<D>
-{
+impl<D: std::cmp::PartialOrd<D>> std::cmp::PartialOrd<Self> for DimensionPercentage<D> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         match (self, other) {
-            (Self::Dimension(a), Self::Dimension(b)) => {
-                a.partial_cmp(b)
-            }
-            (Self::Percentage(a), Self::Percentage(b)) => {
-                a.partial_cmp(b)
-            }
+            (Self::Dimension(a), Self::Dimension(b)) => a.partial_cmp(b),
+            (Self::Percentage(a), Self::Percentage(b)) => a.partial_cmp(b),
             _ => None,
         }
     }

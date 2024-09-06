@@ -90,9 +90,7 @@ impl Interpolator for RGBA {
 impl Interpolator for Filter {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
-            (Self::Blur(start), Self::Blur(end)) => {
-                Self::Blur(Length::interpolate(start, end, t))
-            }
+            (Self::Blur(start), Self::Blur(end)) => Self::Blur(Length::interpolate(start, end, t)),
         }
     }
 }
@@ -128,10 +126,9 @@ impl Interpolator for LengthOrPercentage {
                 Self::Length(Length::interpolate(start_val, end_val, t))
             }
 
-            (
-                Self::Percentage(start_val),
-                Self::Percentage(end_val),
-            ) => Self::Percentage(f32::interpolate(start_val, end_val, t)),
+            (Self::Percentage(start_val), Self::Percentage(end_val)) => {
+                Self::Percentage(f32::interpolate(start_val, end_val, t))
+            }
 
             _ => Self::default(),
         }
@@ -141,12 +138,9 @@ impl Interpolator for LengthOrPercentage {
 impl Interpolator for LengthPercentageOrAuto {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
-            (
-                Self::LengthPercentage(start_val),
-                Self::LengthPercentage(end_val),
-            ) => Self::LengthPercentage(LengthOrPercentage::interpolate(
-                start_val, end_val, t,
-            )),
+            (Self::LengthPercentage(start_val), Self::LengthPercentage(end_val)) => {
+                Self::LengthPercentage(LengthOrPercentage::interpolate(start_val, end_val, t))
+            }
 
             _ => end.clone(),
         }
@@ -160,10 +154,9 @@ impl Interpolator for PercentageOrNumber {
                 Self::Number(f32::interpolate(start_val, end_val, t))
             }
 
-            (
-                Self::Percentage(start_val),
-                Self::Percentage(end_val),
-            ) => Self::Percentage(f32::interpolate(start_val, end_val, t)),
+            (Self::Percentage(start_val), Self::Percentage(end_val)) => {
+                Self::Percentage(f32::interpolate(start_val, end_val, t))
+            }
 
             _ => Self::default(),
         }
@@ -228,10 +221,9 @@ impl<T: Interpolator> Interpolator for Vec<T> {
 impl Interpolator for ImageOrGradient {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
-            (
-                Self::Gradient(gradient_start),
-                Self::Gradient(gradient_end),
-            ) => Self::Gradient(Gradient::interpolate(gradient_start, gradient_end, t)),
+            (Self::Gradient(gradient_start), Self::Gradient(gradient_end)) => {
+                Self::Gradient(Gradient::interpolate(gradient_start, gradient_end, t))
+            }
             _ => end.clone(),
         }
     }
