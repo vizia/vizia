@@ -146,7 +146,7 @@ pub trait LensExt: Lens {
 }
 
 // Implement LensExt for all types which implement Lens.
-impl<T: Lens + ?Sized> LensExt for T {}
+impl<T: Lens> LensExt for T {}
 
 pub struct MapState<T, O> {
     closure: Rc<dyn Fn(&T) -> O>,
