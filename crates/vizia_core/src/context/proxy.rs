@@ -27,10 +27,10 @@ pub enum ProxyEmitError {
 impl std::fmt::Display for ProxyEmitError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ProxyEmitError::Unsupported => {
+            Self::Unsupported => {
                 f.write_str("The current runtime does not support proxying events")
             }
-            ProxyEmitError::EventLoopClosed => {
+            Self::EventLoopClosed => {
                 f.write_str("Sending an event to an event loop which has been closed")
             }
         }
@@ -40,7 +40,7 @@ impl std::fmt::Display for ProxyEmitError {
 impl std::error::Error for ProxyEmitError {}
 
 impl ContextProxy {
-    pub fn emit<M: Any + Send>(&mut self, message: M) -> Result<(), ProxyEmitError> {
+    pub fn emit<M: Any + Send>(&self, message: M) -> Result<(), ProxyEmitError> {
         if let Some(proxy) = &self.event_proxy {
             let event = Event::new(message)
                 .target(self.current)
@@ -53,11 +53,7 @@ impl ContextProxy {
         }
     }
 
-    pub fn emit_to<M: Any + Send>(
-        &mut self,
-        target: Entity,
-        message: M,
-    ) -> Result<(), ProxyEmitError> {
+    pub fn emit_to<M: Any + Send>(&self, target: Entity, message: M) -> Result<(), ProxyEmitError> {
         if let Some(proxy) = &self.event_proxy {
             let event = Event::new(message)
                 .target(target)
@@ -70,12 +66,12 @@ impl ContextProxy {
         }
     }
 
-    pub fn redraw(&mut self) -> Result<(), ProxyEmitError> {
+    pub fn redraw(&self) -> Result<(), ProxyEmitError> {
         self.emit(InternalEvent::Redraw)
     }
 
     pub fn load_image(
-        &mut self,
+        &self,
         path: String,
         data: &[u8],
         policy: ImageRetentionPolicy,
@@ -89,7 +85,7 @@ impl ContextProxy {
 
     pub fn spawn<F>(&self, target: F)
     where
-        F: 'static + Send + FnOnce(&mut ContextProxy),
+        F: 'static + Send + FnOnce(&mut Self),
     {
         let mut cxp = self.clone();
         std::thread::spawn(move || target(&mut cxp));

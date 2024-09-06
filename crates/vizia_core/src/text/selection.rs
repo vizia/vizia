@@ -9,7 +9,7 @@ pub struct Selection {
 
 impl Selection {
     pub fn new(anchor: usize, active: usize) -> Self {
-        Selection { anchor, active, h_pos: None }
+        Self { anchor, active, h_pos: None }
     }
 
     /// Construct a new selection from this selection, with the provided h_pos.
@@ -32,7 +32,7 @@ impl Selection {
     }
 
     pub fn caret(caret: usize) -> Self {
-        Selection { anchor: caret, active: caret, h_pos: None }
+        Self { anchor: caret, active: caret, h_pos: None }
     }
 
     pub fn min(&self) -> usize {

@@ -117,8 +117,8 @@ bitflags! {
 }
 
 impl Default for Abilities {
-    fn default() -> Abilities {
-        Abilities::HOVERABLE
+    fn default() -> Self {
+        Self::HOVERABLE
     }
 }
 
@@ -134,7 +134,7 @@ bitflags! {
 
 impl Default for SystemFlags {
     fn default() -> Self {
-        SystemFlags::all()
+        Self::all()
     }
 }
 
@@ -153,14 +153,14 @@ pub enum FamilyOwned {
 impl AsRef<str> for FamilyOwned {
     fn as_ref(&self) -> &str {
         match self {
-            FamilyOwned::Generic(generic) => match generic {
+            Self::Generic(generic) => match generic {
                 GenericFontFamily::Serif => "serif",
                 GenericFontFamily::SansSerif => "sans-serif",
                 GenericFontFamily::Cursive => todo!(),
                 GenericFontFamily::Fantasy => todo!(),
                 GenericFontFamily::Monospace => "Cascadia Mono",
             },
-            FamilyOwned::Named(family) => family.as_str(),
+            Self::Named(family) => family.as_str(),
         }
     }
 }

@@ -48,7 +48,7 @@ pub enum FieldIdent {
 
 impl FieldIdent {
     pub fn unwrap_named(&self) -> syn::Ident {
-        if let FieldIdent::Named(s) = self {
+        if let Self::Named(s) = self {
             syn::Ident::new(s, Span::call_site())
         } else {
             panic!("Unwrap named called on unnamed FieldIdent");
@@ -92,7 +92,7 @@ impl Fields<DataAttr> {
             .map(|(i, field)| Field::<DataAttr>::parse_ast(field, i))
             .collect::<Result<Vec<_>, _>>()?;
 
-        Ok(Fields { kind, fields })
+        Ok(Self { kind, fields })
     }
 }
 
@@ -109,7 +109,7 @@ impl Fields<LensAttrs> {
             .map(|(i, field)| Field::<LensAttrs>::parse_ast(field, i))
             .collect::<Result<Vec<_>, _>>()?;
 
-        Ok(Fields { kind, fields })
+        Ok(Self { kind, fields })
     }
 }
 
@@ -164,7 +164,7 @@ impl Field<DataAttr> {
                 })?;
             }
         }
-        Ok(Field { ident, ty, vis, attrs: data_attr })
+        Ok(Self { ident, ty, vis, attrs: data_attr })
     }
 
     pub fn same_fn_path_tokens(&self) -> TokenStream {
@@ -227,7 +227,7 @@ impl Field<LensAttrs> {
                 })?;
             }
         }
-        Ok(Field { ident, ty, vis, attrs: LensAttrs { ignore, lens_name_override } })
+        Ok(Self { ident, ty, vis, attrs: LensAttrs { ignore, lens_name_override } })
     }
 }
 
@@ -248,9 +248,7 @@ impl<Attrs> Field<Attrs> {
 }
 
 fn parse_lit_into_expr_path(lit: &syn::Lit) -> Result<ExprPath, Error> {
-    let string = if let syn::Lit::Str(lit) = lit {
-        lit
-    } else {
+    let syn::Lit::Str(string) = lit else {
         return Err(Error::new(lit.span(), "expected str, found... something else"));
     };
 

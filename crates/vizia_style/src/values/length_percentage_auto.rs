@@ -13,7 +13,7 @@ pub enum LengthPercentageOrAuto {
 
 impl Default for LengthPercentageOrAuto {
     fn default() -> Self {
-        LengthPercentageOrAuto::LengthPercentage(LengthOrPercentage::Length(Length::default()))
+        Self::LengthPercentage(LengthOrPercentage::Length(Length::default()))
     }
 }
 
@@ -22,9 +22,9 @@ impl LengthPercentageOrAuto {
     // > dpi, font_size, size of 0 char, viewport size, min of bounds
     pub fn to_pixels(&self, min_bounds: f32, scale: f32) -> f32 {
         match self {
-            LengthPercentageOrAuto::LengthPercentage(length) => length.to_pixels(min_bounds, scale),
+            Self::LengthPercentage(length) => length.to_pixels(min_bounds, scale),
 
-            LengthPercentageOrAuto::Auto => 0.0,
+            Self::Auto => 0.0,
         }
     }
 
@@ -44,31 +44,31 @@ impl_parse! {
 
 impl From<LengthValue> for LengthPercentageOrAuto {
     fn from(value: LengthValue) -> Self {
-        LengthPercentageOrAuto::LengthPercentage(LengthOrPercentage::Length(Length::Value(value)))
+        Self::LengthPercentage(LengthOrPercentage::Length(Length::Value(value)))
     }
 }
 
 impl From<Length> for LengthPercentageOrAuto {
     fn from(length: Length) -> Self {
-        LengthPercentageOrAuto::LengthPercentage(LengthOrPercentage::Length(length))
+        Self::LengthPercentage(LengthOrPercentage::Length(length))
     }
 }
 
 impl From<LengthOrPercentage> for LengthPercentageOrAuto {
     fn from(length: LengthOrPercentage) -> Self {
-        LengthPercentageOrAuto::LengthPercentage(length)
+        Self::LengthPercentage(length)
     }
 }
 
 impl From<AutoKeyword> for LengthPercentageOrAuto {
     fn from(_: AutoKeyword) -> Self {
-        LengthPercentageOrAuto::Auto
+        Self::Auto
     }
 }
 
 impl From<Percentage> for LengthPercentageOrAuto {
     fn from(percentage: Percentage) -> Self {
-        LengthPercentageOrAuto::LengthPercentage(LengthOrPercentage::Percentage(percentage.0))
+        Self::LengthPercentage(LengthOrPercentage::Percentage(percentage.0))
     }
 }
 
@@ -76,7 +76,7 @@ impl From<&str> for LengthPercentageOrAuto {
     fn from(s: &str) -> Self {
         let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
-        LengthPercentageOrAuto::parse(&mut parser).unwrap_or_default()
+        Self::parse(&mut parser).unwrap_or_default()
     }
 }
 
@@ -85,9 +85,9 @@ impl From<Units> for LengthPercentageOrAuto {
         match units {
             Units::Pixels(val) => Length::Value(LengthValue::Px(val)).into(),
             Units::Percentage(val) => {
-                LengthPercentageOrAuto::LengthPercentage(LengthOrPercentage::Percentage(val))
+                Self::LengthPercentage(LengthOrPercentage::Percentage(val))
             }
-            _ => LengthPercentageOrAuto::Auto,
+            _ => Self::Auto,
         }
     }
 }

@@ -47,7 +47,7 @@ where
 
 impl<T> From<(T, T, T, T, T, T)> for Matrix<T> {
     fn from(value: (T, T, T, T, T, T)) -> Self {
-        Matrix { a: value.0, b: value.1, c: value.2, d: value.3, e: value.4, f: value.5 }
+        Self { a: value.0, b: value.1, c: value.2, d: value.3, e: value.4, f: value.5 }
     }
 }
 

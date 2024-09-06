@@ -124,7 +124,7 @@ impl Datepicker {
         .build(cx, move |cx| {
             HStack::new(cx, |cx| {
                 Spinbox::custom(cx, |cx| {
-                    PickList::new(cx, Datepicker::months, Datepicker::selected_month, false)
+                    PickList::new(cx, Self::months, Self::selected_month, false)
                         .on_select(|ex, index| ex.emit(DatepickerEvent::SelectMonth(index)))
                         .width(Stretch(1.0))
                 })
@@ -132,7 +132,7 @@ impl Datepicker {
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
                 .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementMonth));
                 Spinbox::custom(cx, |cx| {
-                    Textbox::new(cx, Datepicker::view_date.map(|date| date.year()))
+                    Textbox::new(cx, Self::view_date.map(Datelike::year))
                         .on_edit(|ex, v| ex.emit(DatepickerEvent::SelectYear(v)))
                 })
                 .icons(SpinboxIcons::PlusMinus)
@@ -160,7 +160,7 @@ impl Datepicker {
                         HStack::new(cx, |cx| {
                             for x in 0..7 {
                                 Label::new(cx, "").bind(
-                                    Datepicker::view_date,
+                                    Self::view_date,
                                     move |handle, view_date| {
                                         let view_date = view_date.get(&handle);
 

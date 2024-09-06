@@ -11,8 +11,8 @@ pub enum BackgroundSize {
 }
 
 impl Default for BackgroundSize {
-    fn default() -> BackgroundSize {
-        BackgroundSize::Explicit {
+    fn default() -> Self {
+        Self::Explicit {
             width: LengthPercentageOrAuto::Auto,
             height: LengthPercentageOrAuto::Auto,
         }
@@ -25,14 +25,14 @@ impl<'i> Parse<'i> for BackgroundSize {
             let height = input
                 .try_parse(LengthPercentageOrAuto::parse)
                 .unwrap_or(LengthPercentageOrAuto::Auto);
-            return Ok(BackgroundSize::Explicit { width, height });
+            return Ok(Self::Explicit { width, height });
         }
 
         let location = input.current_source_location();
         let ident = input.expect_ident()?;
         Ok(match_ignore_ascii_case! { ident,
-          "cover" => BackgroundSize::Cover,
-          "contain" => BackgroundSize::Contain,
+          "cover" => Self::Cover,
+          "contain" => Self::Contain,
           _ => return Err(location.new_unexpected_token_error(
             cssparser::Token::Ident(ident.clone())
           ))

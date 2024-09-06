@@ -49,7 +49,7 @@ impl<'i> Parse<'i> for TextDecoration {
             break;
         }
 
-        Ok(TextDecoration {
+        Ok(Self {
             line: line.unwrap_or_default(),
             style: style.unwrap_or_default(),
             thickness: thickness.unwrap_or_default(),
@@ -71,14 +71,14 @@ bitflags! {
 }
 
 impl Default for TextDecorationLine {
-    fn default() -> TextDecorationLine {
-        TextDecorationLine::empty()
+    fn default() -> Self {
+        Self::empty()
     }
 }
 
 impl<'i> Parse<'i> for TextDecorationLine {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
-        let mut value = TextDecorationLine::empty();
+        let mut value = Self::empty();
         let mut any = false;
 
         loop {
@@ -86,10 +86,10 @@ impl<'i> Parse<'i> for TextDecorationLine {
                 let location = input.current_source_location();
                 let ident = input.expect_ident()?;
                 Ok(match_ignore_ascii_case! { &ident,
-                  "none" if value.is_empty() => TextDecorationLine::empty(),
-                  "underline" => TextDecorationLine::Underline,
-                  "overline" => TextDecorationLine::Overline,
-                  "strikethrough" | "line-through" => TextDecorationLine::Strikethrough,
+                  "none" if value.is_empty() => Self::empty(),
+                  "underline" => Self::Underline,
+                  "overline" => Self::Overline,
+                  "strikethrough" | "line-through" => Self::Strikethrough,
                   _ => return Err(location.new_unexpected_token_error(
                     cssparser::Token::Ident(ident.clone())
                   ))
@@ -114,18 +114,18 @@ impl<'i> Parse<'i> for TextDecorationLine {
 
 impl From<TextDecorationLine> for skia_safe::textlayout::TextDecoration {
     fn from(value: TextDecorationLine) -> Self {
-        let mut decoration = skia_safe::textlayout::TextDecoration::empty();
+        let mut decoration = Self::empty();
 
         decoration.set(
-            skia_safe::textlayout::TextDecoration::UNDERLINE,
+            Self::UNDERLINE,
             value.contains(TextDecorationLine::Underline),
         );
         decoration.set(
-            skia_safe::textlayout::TextDecoration::OVERLINE,
+            Self::OVERLINE,
             value.contains(TextDecorationLine::Overline),
         );
         decoration.set(
-            skia_safe::textlayout::TextDecoration::LINE_THROUGH,
+            Self::LINE_THROUGH,
             value.contains(TextDecorationLine::Strikethrough),
         );
 
@@ -153,11 +153,11 @@ define_enum! {
 impl From<TextDecorationStyle> for skia_safe::textlayout::TextDecorationStyle {
     fn from(value: TextDecorationStyle) -> Self {
         match value {
-            TextDecorationStyle::Solid => skia_safe::textlayout::TextDecorationStyle::Solid,
-            TextDecorationStyle::Dashed => skia_safe::textlayout::TextDecorationStyle::Dashed,
-            TextDecorationStyle::Dotted => skia_safe::textlayout::TextDecorationStyle::Dotted,
-            TextDecorationStyle::Double => skia_safe::textlayout::TextDecorationStyle::Double,
-            TextDecorationStyle::Wavy => skia_safe::textlayout::TextDecorationStyle::Wavy,
+            TextDecorationStyle::Solid => Self::Solid,
+            TextDecorationStyle::Dashed => Self::Dashed,
+            TextDecorationStyle::Dotted => Self::Dotted,
+            TextDecorationStyle::Double => Self::Double,
+            TextDecorationStyle::Wavy => Self::Wavy,
         }
     }
 }

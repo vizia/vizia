@@ -32,11 +32,11 @@ impl TabView {
                             let l = lens.idx(index);
                             let builder = (content2)(cx, l).header;
                             TabHeader::new(cx, index, builder)
-                                .bind(TabView::selected_index, move |handle, selected_index| {
+                                .bind(Self::selected_index, move |handle, selected_index| {
                                     let selected_index = selected_index.get(handle.cx);
                                     handle.checked(selected_index == index);
                                 })
-                                .toggle_class("vertical", TabView::is_vertical);
+                                .toggle_class("vertical", Self::is_vertical);
                         }
                     })
                     //})
@@ -45,13 +45,13 @@ impl TabView {
                 })
                 .class("tabview-header")
                 .z_index(1)
-                .toggle_class("vertical", TabView::is_vertical);
+                .toggle_class("vertical", Self::is_vertical);
 
-                Divider::new(cx).toggle_class("vertical", TabView::is_vertical);
+                Divider::new(cx).toggle_class("vertical", Self::is_vertical);
 
                 // Tab content
                 VStack::new(cx, |cx| {
-                    Binding::new(cx, TabView::selected_index, move |cx, selected| {
+                    Binding::new(cx, Self::selected_index, move |cx, selected| {
                         let selected = selected.get(cx);
                         let l = lens.idx(selected);
                         ((content)(cx, l).content)(cx);
@@ -60,7 +60,7 @@ impl TabView {
                 .overflow(Overflow::Hidden)
                 .class("tabview-content-wrapper");
             })
-            .toggle_class("vertical", TabView::is_vertical)
+            .toggle_class("vertical", Self::is_vertical)
     }
 }
 

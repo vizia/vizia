@@ -11,7 +11,7 @@ pub enum LengthOrPercentage {
 
 impl Default for LengthOrPercentage {
     fn default() -> Self {
-        LengthOrPercentage::Length(Length::default())
+        Self::Length(Length::default())
     }
 }
 
@@ -20,7 +20,7 @@ impl LengthOrPercentage {
     // > dpi, font_size, size of 0 char, viewport size, min of bounds
     pub fn to_pixels(&self, min_bounds: f32, scale: f32) -> f32 {
         match self {
-            LengthOrPercentage::Length(length) => {
+            Self::Length(length) => {
                 match length {
                     Length::Value(val) => {
                         if let LengthValue::Px(pixels) = val {
@@ -35,7 +35,7 @@ impl LengthOrPercentage {
                 }
             }
 
-            LengthOrPercentage::Percentage(val) => {
+            Self::Percentage(val) => {
                 return (val / 100.0) * min_bounds;
             }
         }
@@ -59,19 +59,19 @@ impl_parse! {
 
 impl From<LengthValue> for LengthOrPercentage {
     fn from(value: LengthValue) -> Self {
-        LengthOrPercentage::Length(Length::Value(value))
+        Self::Length(Length::Value(value))
     }
 }
 
 impl From<Length> for LengthOrPercentage {
     fn from(length: Length) -> Self {
-        LengthOrPercentage::Length(length)
+        Self::Length(length)
     }
 }
 
 impl From<Percentage> for LengthOrPercentage {
     fn from(percentage: Percentage) -> Self {
-        LengthOrPercentage::Percentage(percentage.0)
+        Self::Percentage(percentage.0)
     }
 }
 
@@ -79,7 +79,7 @@ impl From<&str> for LengthOrPercentage {
     fn from(s: &str) -> Self {
         let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
-        LengthOrPercentage::parse(&mut parser).unwrap_or_default()
+        Self::parse(&mut parser).unwrap_or_default()
     }
 }
 
@@ -87,8 +87,8 @@ impl From<Units> for LengthOrPercentage {
     fn from(units: Units) -> Self {
         match units {
             Units::Pixels(val) => Length::Value(LengthValue::Px(val)).into(),
-            Units::Percentage(val) => LengthOrPercentage::Percentage(val),
-            _ => LengthOrPercentage::default(),
+            Units::Percentage(val) => Self::Percentage(val),
+            _ => Self::default(),
         }
     }
 }

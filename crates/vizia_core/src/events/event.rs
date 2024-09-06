@@ -38,7 +38,7 @@ impl Event {
     where
         M: Any + Send,
     {
-        Event { meta: Default::default(), message: Some(Box::new(message)) }
+        Self { meta: Default::default(), message: Some(Box::new(message)) }
     }
 
     /// Sets the target of the event.

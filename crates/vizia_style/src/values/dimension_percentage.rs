@@ -26,16 +26,16 @@ impl<
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         match input.try_parse(Calc::parse) {
             Ok(Calc::Value(v)) => return Ok(*v),
-            Ok(calc) => return Ok(DimensionPercentage::Calc(Box::new(calc))),
+            Ok(calc) => return Ok(Self::Calc(Box::new(calc))),
             _ => {}
         }
 
         if let Ok(length) = input.try_parse(D::parse) {
-            return Ok(DimensionPercentage::Dimension(length));
+            return Ok(Self::Dimension(length));
         }
 
         if let Ok(percent) = input.try_parse(Percentage::parse) {
-            return Ok(DimensionPercentage::Percentage(percent));
+            return Ok(Self::Percentage(percent));
         }
 
         Err(input.new_error_for_next_token())
@@ -45,24 +45,24 @@ impl<
 impl<D: std::ops::Mul<f32, Output = D>> std::ops::Mul<f32> for DimensionPercentage<D> {
     type Output = Self;
 
-    fn mul(self, other: f32) -> DimensionPercentage<D> {
+    fn mul(self, other: f32) -> Self {
         match self {
-            DimensionPercentage::Dimension(l) => DimensionPercentage::Dimension(l * other),
-            DimensionPercentage::Percentage(p) => {
-                DimensionPercentage::Percentage(Percentage(p.0 * other))
+            Self::Dimension(l) => Self::Dimension(l * other),
+            Self::Percentage(p) => {
+                Self::Percentage(Percentage(p.0 * other))
             }
-            DimensionPercentage::Calc(c) => DimensionPercentage::Calc(Box::new(*c * other)),
+            Self::Calc(c) => Self::Calc(Box::new(*c * other)),
         }
     }
 }
 
 impl<
         D: TryAdd<D> + Clone + std::cmp::PartialEq<f32> + std::cmp::PartialOrd<f32> + std::fmt::Debug,
-    > std::ops::Add<DimensionPercentage<D>> for DimensionPercentage<D>
+    > std::ops::Add<Self> for DimensionPercentage<D>
 {
     type Output = Self;
 
-    fn add(self, other: DimensionPercentage<D>) -> DimensionPercentage<D> {
+    fn add(self, other: Self) -> Self {
         match self.add_recursive(&other) {
             Some(r) => r,
             None => self.add(other),
@@ -74,46 +74,46 @@ impl<
         D: TryAdd<D> + Clone + std::cmp::PartialEq<f32> + std::cmp::PartialOrd<f32> + std::fmt::Debug,
     > DimensionPercentage<D>
 {
-    fn add_recursive(&self, other: &DimensionPercentage<D>) -> Option<DimensionPercentage<D>> {
+    fn add_recursive(&self, other: &Self) -> Option<Self> {
         match (self, other) {
-            (DimensionPercentage::Dimension(a), DimensionPercentage::Dimension(b)) => {
+            (Self::Dimension(a), Self::Dimension(b)) => {
                 a.try_add(b).map(DimensionPercentage::Dimension)
             }
-            (DimensionPercentage::Percentage(a), DimensionPercentage::Percentage(b)) => {
-                Some(DimensionPercentage::Percentage(Percentage(a.0 + b.0)))
+            (Self::Percentage(a), Self::Percentage(b)) => {
+                Some(Self::Percentage(Percentage(a.0 + b.0)))
             }
-            (DimensionPercentage::Calc(a), other) => match &**a {
+            (Self::Calc(a), other) => match &**a {
                 Calc::Value(v) => v.add_recursive(other),
                 Calc::Sum(a, b) => {
                     if let Some(res) =
-                        DimensionPercentage::Calc(Box::new(*a.clone())).add_recursive(other)
+                        Self::Calc(Box::new(*a.clone())).add_recursive(other)
                     {
-                        return Some(res.add(DimensionPercentage::from(*b.clone())));
+                        return Some(res.add(Self::from(*b.clone())));
                     }
 
                     if let Some(res) =
-                        DimensionPercentage::Calc(Box::new(*b.clone())).add_recursive(other)
+                        Self::Calc(Box::new(*b.clone())).add_recursive(other)
                     {
-                        return Some(DimensionPercentage::from(*a.clone()).add(res));
+                        return Some(Self::from(*a.clone()).add(res));
                     }
 
                     None
                 }
                 _ => None,
             },
-            (other, DimensionPercentage::Calc(b)) => match &**b {
+            (other, Self::Calc(b)) => match &**b {
                 Calc::Value(v) => other.add_recursive(v),
                 Calc::Sum(a, b) => {
                     if let Some(res) =
-                        other.add_recursive(&DimensionPercentage::Calc(Box::new(*a.clone())))
+                        other.add_recursive(&Self::Calc(Box::new(*a.clone())))
                     {
-                        return Some(res.add(DimensionPercentage::from(*b.clone())));
+                        return Some(res.add(Self::from(*b.clone())));
                     }
 
                     if let Some(res) =
-                        other.add_recursive(&DimensionPercentage::Calc(Box::new(*b.clone())))
+                        other.add_recursive(&Self::Calc(Box::new(*b.clone())))
                     {
-                        return Some(DimensionPercentage::from(*a.clone()).add(res));
+                        return Some(Self::from(*a.clone()).add(res));
                     }
 
                     None
@@ -124,7 +124,7 @@ impl<
         }
     }
 
-    fn add(self, other: DimensionPercentage<D>) -> DimensionPercentage<D> {
+    fn add(self, other: Self) -> Self {
         let mut a = self;
         let mut b = other;
 
@@ -141,30 +141,30 @@ impl<
         }
 
         match (a, b) {
-            (DimensionPercentage::Calc(a), DimensionPercentage::Calc(b)) => {
-                DimensionPercentage::Calc(Box::new(*a + *b))
+            (Self::Calc(a), Self::Calc(b)) => {
+                Self::Calc(Box::new(*a + *b))
             }
-            (DimensionPercentage::Calc(calc), b) => {
+            (Self::Calc(calc), b) => {
                 if let Calc::Value(a) = *calc {
                     a.add(b)
                 } else {
-                    DimensionPercentage::Calc(Box::new(Calc::Sum(
+                    Self::Calc(Box::new(Calc::Sum(
                         Box::new(*calc),
                         Box::new(b.into()),
                     )))
                 }
             }
-            (a, DimensionPercentage::Calc(calc)) => {
+            (a, Self::Calc(calc)) => {
                 if let Calc::Value(b) = *calc {
                     a.add(*b)
                 } else {
-                    DimensionPercentage::Calc(Box::new(Calc::Sum(
+                    Self::Calc(Box::new(Calc::Sum(
                         Box::new(a.into()),
                         Box::new(*calc),
                     )))
                 }
             }
-            (a, b) => DimensionPercentage::Calc(Box::new(Calc::Sum(
+            (a, b) => Self::Calc(Box::new(Calc::Sum(
                 Box::new(a.into()),
                 Box::new(b.into()),
             ))),
@@ -176,23 +176,23 @@ impl<D> From<DimensionPercentage<D>> for Calc<DimensionPercentage<D>> {
     fn from(value: DimensionPercentage<D>) -> Self {
         match value {
             DimensionPercentage::Calc(c) => *c,
-            b => Calc::Value(Box::new(b)),
+            b => Self::Value(Box::new(b)),
         }
     }
 }
 
-impl<D> std::convert::From<Calc<DimensionPercentage<D>>> for DimensionPercentage<D> {
-    fn from(calc: Calc<DimensionPercentage<D>>) -> DimensionPercentage<D> {
-        DimensionPercentage::Calc(Box::new(calc))
+impl<D> std::convert::From<Calc<Self>> for DimensionPercentage<D> {
+    fn from(calc: Calc<Self>) -> Self {
+        Self::Calc(Box::new(calc))
     }
 }
 
 impl<D: std::cmp::PartialEq<f32>> std::cmp::PartialEq<f32> for DimensionPercentage<D> {
     fn eq(&self, other: &f32) -> bool {
         match self {
-            DimensionPercentage::Dimension(a) => *a == *other,
-            DimensionPercentage::Percentage(a) => *a == *other,
-            DimensionPercentage::Calc(_) => false,
+            Self::Dimension(a) => *a == *other,
+            Self::Percentage(a) => *a == *other,
+            Self::Calc(_) => false,
         }
     }
 }
@@ -200,22 +200,22 @@ impl<D: std::cmp::PartialEq<f32>> std::cmp::PartialEq<f32> for DimensionPercenta
 impl<D: std::cmp::PartialOrd<f32>> std::cmp::PartialOrd<f32> for DimensionPercentage<D> {
     fn partial_cmp(&self, other: &f32) -> Option<std::cmp::Ordering> {
         match self {
-            DimensionPercentage::Dimension(a) => a.partial_cmp(other),
-            DimensionPercentage::Percentage(a) => a.partial_cmp(other),
-            DimensionPercentage::Calc(_) => None,
+            Self::Dimension(a) => a.partial_cmp(other),
+            Self::Percentage(a) => a.partial_cmp(other),
+            Self::Calc(_) => None,
         }
     }
 }
 
-impl<D: std::cmp::PartialOrd<D>> std::cmp::PartialOrd<DimensionPercentage<D>>
+impl<D: std::cmp::PartialOrd<D>> std::cmp::PartialOrd<Self>
     for DimensionPercentage<D>
 {
-    fn partial_cmp(&self, other: &DimensionPercentage<D>) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         match (self, other) {
-            (DimensionPercentage::Dimension(a), DimensionPercentage::Dimension(b)) => {
+            (Self::Dimension(a), Self::Dimension(b)) => {
                 a.partial_cmp(b)
             }
-            (DimensionPercentage::Percentage(a), DimensionPercentage::Percentage(b)) => {
+            (Self::Percentage(a), Self::Percentage(b)) => {
                 a.partial_cmp(b)
             }
             _ => None,

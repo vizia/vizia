@@ -13,18 +13,18 @@ bitflags! {
 
 impl Modifiers {
     pub fn shift(&self) -> bool {
-        self.contains(Modifiers::SHIFT)
+        self.contains(Self::SHIFT)
     }
 
     pub fn alt(&self) -> bool {
-        self.contains(Modifiers::ALT)
+        self.contains(Self::ALT)
     }
 
     pub fn ctrl(&self) -> bool {
-        self.contains(Modifiers::CTRL)
+        self.contains(Self::CTRL)
     }
 
     pub fn logo(&self) -> bool {
-        self.contains(Modifiers::SUPER)
+        self.contains(Self::SUPER)
     }
 }

@@ -19,8 +19,8 @@ impl Position {
         Self { x: horizontal.into(), y: vertical.into() }
     }
 
-    pub fn center() -> Position {
-        Position { x: HorizontalPosition::Center, y: VerticalPosition::Center }
+    pub fn center() -> Self {
+        Self { x: HorizontalPosition::Center, y: VerticalPosition::Center }
     }
 
     pub fn is_center(&self) -> bool {
@@ -29,8 +29,8 @@ impl Position {
 }
 
 impl Default for Position {
-    fn default() -> Position {
-        Position {
+    fn default() -> Self {
+        Self {
             x: HorizontalPosition::Length(LengthOrPercentage::Percentage(0.0)),
             y: VerticalPosition::Length(LengthOrPercentage::Percentage(0.0)),
         }
@@ -43,7 +43,7 @@ where
     L2: Into<LengthOrPercentage>,
 {
     fn from(value: (L1, L2)) -> Self {
-        Position {
+        Self {
             x: HorizontalPosition::Length(value.0.into()),
             y: VerticalPosition::Length(value.1.into()),
         }
@@ -55,7 +55,7 @@ impl<'i> Parse<'i> for Position {
         if let Ok(x) = input.try_parse(HorizontalPosition::parse) {
             // Try parsing a vertical position next.
             if let Ok(y) = input.try_parse(VerticalPosition::parse) {
-                return Ok(Position { x, y });
+                return Ok(Self { x, y });
             }
 
             // If it didn't work, assume the first actually represents a y position,
@@ -63,17 +63,17 @@ impl<'i> Parse<'i> for Position {
             let x =
                 input.try_parse(HorizontalPosition::parse).unwrap_or(HorizontalPosition::Center);
             let y: PositionComponent<VerticalPositionKeyword> = VerticalPosition::Center;
-            Ok(Position { x, y })
+            Ok(Self { x, y })
         } else if let Ok(y) = input.try_parse(VerticalPosition::parse) {
             // Try parsing a horizontal position next.
             if let Ok(x) = input.try_parse(HorizontalPosition::parse) {
-                return Ok(Position { x, y });
+                return Ok(Self { x, y });
             } else {
-                return Ok(Position { x: HorizontalPosition::Center, y: VerticalPosition::Center });
+                return Ok(Self { x: HorizontalPosition::Center, y: VerticalPosition::Center });
             }
         } else {
             // Return default or return an error?
-            return Ok(Position { x: HorizontalPosition::Center, y: VerticalPosition::Center });
+            return Ok(Self { x: HorizontalPosition::Center, y: VerticalPosition::Center });
         }
     }
 }
@@ -91,17 +91,17 @@ pub enum PositionComponent<S: Copy + Into<LengthOrPercentage>> {
 impl<S: Copy + Into<LengthOrPercentage>> PositionComponent<S> {
     fn is_center(&self) -> bool {
         match self {
-            PositionComponent::Center => true,
-            PositionComponent::Length(LengthOrPercentage::Percentage(p)) => *p == 50.0,
+            Self::Center => true,
+            Self::Length(LengthOrPercentage::Percentage(p)) => *p == 50.0,
             _ => false,
         }
     }
 
     pub fn to_length_or_percentage(&self) -> LengthOrPercentage {
         match self {
-            PositionComponent::Center => LengthOrPercentage::Percentage(50.0),
-            PositionComponent::Length(len) => len.clone(),
-            PositionComponent::Side(side) => (*side).into(),
+            Self::Center => LengthOrPercentage::Percentage(50.0),
+            Self::Length(len) => len.clone(),
+            Self::Side(side) => (*side).into(),
         }
     }
 }
@@ -109,23 +109,23 @@ impl<S: Copy + Into<LengthOrPercentage>> PositionComponent<S> {
 impl<'i, S: Parse<'i> + Copy + Into<LengthOrPercentage>> Parse<'i> for PositionComponent<S> {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         if input.try_parse(|i| i.expect_ident_matching("center")).is_ok() {
-            return Ok(PositionComponent::Center);
+            return Ok(Self::Center);
         }
 
         if let Ok(lp) = input.try_parse(|input| LengthOrPercentage::parse(input)) {
-            return Ok(PositionComponent::Length(lp));
+            return Ok(Self::Length(lp));
         }
 
         let keyword = S::parse(input)?;
-        Ok(PositionComponent::Side(keyword))
+        Ok(Self::Side(keyword))
     }
 }
 
 impl From<HorizontalPositionKeyword> for LengthOrPercentage {
     fn from(value: HorizontalPositionKeyword) -> Self {
         match value {
-            HorizontalPositionKeyword::Left => LengthOrPercentage::Length(Length::px(0.0)),
-            HorizontalPositionKeyword::Right => LengthOrPercentage::Percentage(100.0),
+            HorizontalPositionKeyword::Left => Self::Length(Length::px(0.0)),
+            HorizontalPositionKeyword::Right => Self::Percentage(100.0),
         }
     }
 }
@@ -133,8 +133,8 @@ impl From<HorizontalPositionKeyword> for LengthOrPercentage {
 impl From<VerticalPositionKeyword> for LengthOrPercentage {
     fn from(value: VerticalPositionKeyword) -> Self {
         match value {
-            VerticalPositionKeyword::Top => LengthOrPercentage::Length(Length::px(0.0)),
-            VerticalPositionKeyword::Bottom => LengthOrPercentage::Percentage(100.0),
+            VerticalPositionKeyword::Top => Self::Length(Length::px(0.0)),
+            VerticalPositionKeyword::Bottom => Self::Percentage(100.0),
         }
     }
 }
@@ -145,7 +145,7 @@ pub type VerticalPosition = PositionComponent<VerticalPositionKeyword>;
 impl From<HorizontalPosition> for LengthOrPercentage {
     fn from(value: HorizontalPosition) -> Self {
         match value {
-            HorizontalPosition::Center => LengthOrPercentage::Percentage(50.0),
+            HorizontalPosition::Center => Self::Percentage(50.0),
             HorizontalPosition::Length(val) => val,
             HorizontalPosition::Side(side) => side.into(),
         }
@@ -155,7 +155,7 @@ impl From<HorizontalPosition> for LengthOrPercentage {
 impl From<VerticalPosition> for LengthOrPercentage {
     fn from(value: VerticalPosition) -> Self {
         match value {
-            VerticalPosition::Center => LengthOrPercentage::Percentage(50.0),
+            VerticalPosition::Center => Self::Percentage(50.0),
             VerticalPosition::Length(val) => val,
             VerticalPosition::Side(side) => side.into(),
         }
@@ -164,12 +164,12 @@ impl From<VerticalPosition> for LengthOrPercentage {
 
 impl From<HorizontalPositionKeyword> for HorizontalPosition {
     fn from(value: HorizontalPositionKeyword) -> Self {
-        HorizontalPosition::Side(value)
+        Self::Side(value)
     }
 }
 
 impl From<VerticalPositionKeyword> for VerticalPosition {
     fn from(value: VerticalPositionKeyword) -> Self {
-        VerticalPosition::Side(value)
+        Self::Side(value)
     }
 }

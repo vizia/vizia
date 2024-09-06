@@ -20,12 +20,12 @@ pub enum DisplayDecimals {
 impl DisplayDecimals {
     pub fn display_value(&self, value: f32) -> String {
         match self {
-            DisplayDecimals::Zero => format!("{:.0}", value),
-            DisplayDecimals::One => format!("{:.1}", value),
-            DisplayDecimals::Two => format!("{:.2}", value),
-            DisplayDecimals::Three => format!("{:.3}", value),
-            DisplayDecimals::Four => format!("{:.4}", value),
-            DisplayDecimals::Five => format!("{:.5}", value),
+            Self::Zero => format!("{value:.0}"),
+            Self::One => format!("{value:.1}"),
+            Self::Two => format!("{value:.2}"),
+            Self::Three => format!("{value:.3}"),
+            Self::Four => format!("{value:.4}"),
+            Self::Five => format!("{value:.5}"),
         }
     }
 }
@@ -48,11 +48,11 @@ impl ValueScaling {
         let map = |x: f32| -> f32 { (x * (max - min)) + min };
 
         match self {
-            ValueScaling::Linear => map(normalized),
+            Self::Linear => map(normalized),
 
-            ValueScaling::Power(exponent) => map(normalized.powf(*exponent)),
+            Self::Power(exponent) => map(normalized.powf(*exponent)),
 
-            ValueScaling::Frequency => {
+            Self::Frequency => {
                 let minl = min.log2();
                 let range = max.log2() - minl;
                 2.0f32.powf((normalized * range) + minl)
@@ -70,11 +70,11 @@ impl ValueScaling {
         let unmap = |x: f32| -> f32 { (x - min) / (max - min) };
 
         match self {
-            ValueScaling::Linear => unmap(value),
+            Self::Linear => unmap(value),
 
-            ValueScaling::Power(exponent) => unmap(value).powf(1.0 / *exponent),
+            Self::Power(exponent) => unmap(value).powf(1.0 / *exponent),
 
-            ValueScaling::Frequency => {
+            Self::Frequency => {
                 let minl = min.log2();
                 let range = max.log2() - minl;
                 (value.log2() - minl) / range
@@ -225,7 +225,7 @@ pub enum FrequencyDisplayMode {
 
 impl Default for FrequencyDisplayMode {
     fn default() -> Self {
-        FrequencyDisplayMode::HzThenKHz {
+        Self::HzThenKHz {
             under_1k: DisplayDecimals::One,
             over_1k: DisplayDecimals::Two,
         }
@@ -379,7 +379,7 @@ impl NormalizedMap for IntMap {
             (display_map)(int)
         } else {
             // Display the plain integer instead.
-            format!("{}", int)
+            format!("{int}")
         }
     }
 

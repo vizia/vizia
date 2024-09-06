@@ -79,7 +79,7 @@ impl<'a, V> Handle<'a, V> {
                     )
                 })
                 .unwrap_or(self.cx.focus_stack.pop().unwrap());
-            self.cx.with_current(new_focus, |cx| cx.focus());
+            self.cx.with_current(new_focus, Context::focus);
         }
         self
     }

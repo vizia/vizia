@@ -13,9 +13,9 @@ pub struct SubLayout<'a> {
 
 impl Node for Entity {
     type Store = Style;
-    type Tree = Tree<Entity>;
-    type CacheKey = Entity;
-    type ChildIter<'t> = MorphormChildIter<'t, Entity>;
+    type Tree = Tree<Self>;
+    type CacheKey = Self;
+    type ChildIter<'t> = MorphormChildIter<'t, Self>;
     type SubLayout<'a> = SubLayout<'a>;
 
     fn children<'t>(&'t self, tree: &'t Self::Tree) -> Self::ChildIter<'t> {
@@ -31,113 +31,113 @@ impl Node for Entity {
     }
 
     fn layout_type(&self, store: &Self::Store) -> Option<morphorm::LayoutType> {
-        store.layout_type.get(*self).cloned()
+        store.layout_type.get(*self).copied()
     }
 
     fn position_type(&self, store: &Self::Store) -> Option<morphorm::PositionType> {
-        store.position_type.get(*self).cloned()
+        store.position_type.get(*self).copied()
     }
 
     fn left(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.left.get(*self).cloned().map(|l| match l {
+        store.left.get(*self).copied().map(|l| match l {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn min_left(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.min_left.get(*self).cloned().map(|l| match l {
+        store.min_left.get(*self).copied().map(|l| match l {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn max_left(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.max_left.get(*self).cloned().map(|l| match l {
+        store.max_left.get(*self).copied().map(|l| match l {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn right(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.right.get(*self).cloned().map(|r| match r {
+        store.right.get(*self).copied().map(|r| match r {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn min_right(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.min_right.get(*self).cloned().map(|r| match r {
+        store.min_right.get(*self).copied().map(|r| match r {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn max_right(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.max_right.get(*self).cloned().map(|r| match r {
+        store.max_right.get(*self).copied().map(|r| match r {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn top(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.top.get(*self).cloned().map(|t| match t {
+        store.top.get(*self).copied().map(|t| match t {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn min_top(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.min_top.get(*self).cloned().map(|t| match t {
+        store.min_top.get(*self).copied().map(|t| match t {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn max_top(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.max_top.get(*self).cloned().map(|t| match t {
+        store.max_top.get(*self).copied().map(|t| match t {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn bottom(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.bottom.get(*self).cloned().map(|b| match b {
+        store.bottom.get(*self).copied().map(|b| match b {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn min_bottom(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.min_bottom.get(*self).cloned().map(|b| match b {
+        store.min_bottom.get(*self).copied().map(|b| match b {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn max_bottom(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.max_bottom.get(*self).cloned().map(|b| match b {
+        store.max_bottom.get(*self).copied().map(|b| match b {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn width(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.width.get(*self).cloned().map(|w| match w {
+        store.width.get(*self).copied().map(|w| match w {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn min_width(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.min_width.get(*self).cloned().map(|w| match w {
+        store.min_width.get(*self).copied().map(|w| match w {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn max_width(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.max_width.get(*self).cloned().map(|w| match w {
+        store.max_width.get(*self).copied().map(|w| match w {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
@@ -311,63 +311,63 @@ impl Node for Entity {
     }
 
     fn height(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.height.get(*self).cloned().map(|h| match h {
+        store.height.get(*self).copied().map(|h| match h {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn min_height(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.min_height.get(*self).cloned().map(|h| match h {
+        store.min_height.get(*self).copied().map(|h| match h {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn max_height(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.max_height.get(*self).cloned().map(|h| match h {
+        store.max_height.get(*self).copied().map(|h| match h {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn child_left(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.child_left.get(*self).cloned().map(|l| match l {
+        store.child_left.get(*self).copied().map(|l| match l {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn child_right(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.child_right.get(*self).cloned().map(|r| match r {
+        store.child_right.get(*self).copied().map(|r| match r {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn child_top(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.child_top.get(*self).cloned().map(|t| match t {
+        store.child_top.get(*self).copied().map(|t| match t {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn child_bottom(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.child_bottom.get(*self).cloned().map(|b| match b {
+        store.child_bottom.get(*self).copied().map(|b| match b {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn row_between(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.row_between.get(*self).cloned().map(|v| match v {
+        store.row_between.get(*self).copied().map(|v| match v {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn col_between(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.col_between.get(*self).cloned().map(|v| match v {
+        store.col_between.get(*self).copied().map(|v| match v {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })

@@ -1,7 +1,5 @@
 //! # Vizia
 
-extern crate self as vizia;
-
 #[cfg(all(not(feature = "baseview"), feature = "winit"))]
 pub use vizia_winit::application::{Application, ApplicationError};
 

@@ -101,7 +101,7 @@ struct NestedRuleParser<'a, 'o, 'i> {
 }
 
 impl<'a, 'o, 'i> NestedRuleParser<'a, 'o, 'i> {
-    fn _parse_nested_rules<'t>(&mut self, input: &mut Parser<'i, 't>) -> CssRuleList<'i> {
+    fn _parse_nested_rules<'t>(&self, input: &mut Parser<'i, 't>) -> CssRuleList<'i> {
         let nested_parser =
             NestedRuleParser { default_namespace: self.default_namespace, options: self.options };
 

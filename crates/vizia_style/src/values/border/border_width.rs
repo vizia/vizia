@@ -35,7 +35,7 @@ impl_parse! {
 
 impl From<Rect<BorderWidthValue>> for BorderWidth {
     fn from(rect: Rect<BorderWidthValue>) -> Self {
-        BorderWidth::new(rect.0, rect.1, rect.2, rect.3)
+        Self::new(rect.0, rect.1, rect.2, rect.3)
     }
 }
 
