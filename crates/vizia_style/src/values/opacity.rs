@@ -8,7 +8,7 @@ pub struct Opacity(pub f32);
 
 impl Default for Opacity {
     fn default() -> Self {
-        Self(1.0)
+        Opacity(1.0)
     }
 }
 
@@ -25,25 +25,25 @@ impl From<&str> for Opacity {
     fn from(s: &str) -> Self {
         let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
-        Self::parse(&mut parser).unwrap_or_default()
+        Opacity::parse(&mut parser).unwrap_or_default()
     }
 }
 
 impl From<f32> for Opacity {
     fn from(number: f32) -> Self {
-        Self(number)
+        Opacity(number)
     }
 }
 
 impl From<f64> for Opacity {
     fn from(number: f64) -> Self {
-        Self(number as f32)
+        Opacity(number as f32)
     }
 }
 
 impl From<Percentage> for Opacity {
     fn from(percentage: Percentage) -> Self {
-        Self(percentage.0)
+        Opacity(percentage.0)
     }
 }
 

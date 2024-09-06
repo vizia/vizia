@@ -156,7 +156,7 @@ where
             on_blur: None,
             on_cancel: None,
             validate: None,
-            placeholder: String::new(),
+            placeholder: String::from(""),
             show_caret: true,
             caret_timer,
             selection: Selection::new(0, 0),
@@ -363,7 +363,7 @@ where
     fn clone_selected(&self, cx: &mut EventContext) -> Option<String> {
         if let Some(text) = cx.style.text.get(cx.current) {
             let substring = &text[self.selection.range()];
-            return Some(substring.to_owned());
+            return Some(substring.to_string());
         }
 
         None

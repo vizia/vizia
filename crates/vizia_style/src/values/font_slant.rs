@@ -15,9 +15,9 @@ define_enum! {
 impl From<FontSlant> for Slant {
     fn from(value: FontSlant) -> Self {
         match value {
-            FontSlant::Normal => Self::Upright,
-            FontSlant::Italic => Self::Italic,
-            FontSlant::Oblique => Self::Oblique,
+            FontSlant::Normal => Slant::Upright,
+            FontSlant::Italic => Slant::Italic,
+            FontSlant::Oblique => Slant::Oblique,
         }
     }
 }

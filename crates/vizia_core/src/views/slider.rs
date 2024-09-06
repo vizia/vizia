@@ -116,7 +116,7 @@ where
             on_changing: None,
         }
         .build(cx, move |cx| {
-            Binding::new(cx, Self::internal, move |cx, slider_data| {
+            Binding::new(cx, Slider::<L>::internal, move |cx, slider_data| {
                 ZStack::new(cx, move |cx| {
                     let slider_data = slider_data.get(cx);
                     let thumb_size = slider_data.thumb_size;
@@ -184,7 +184,7 @@ where
         .numeric_value(lens.map(|val| (*val as f64 * 100.0).round() / 100.0))
         .text_value(lens.map(|val| {
             let v = (*val as f64 * 100.0).round() / 100.0;
-            format!("{v}")
+            format!("{}", v)
         }))
         .navigable(true)
     }
@@ -530,7 +530,7 @@ impl NamedSlider {
         Self { on_changing: None }
             .build(cx, move |cx| {
                 Binding::new(cx, lens, move |cx, lens| {
-                    Textbox::new(cx, lens.map(|v| format!("{v:.2}"))).on_submit(|cx, txt, _| {
+                    Textbox::new(cx, lens.map(|v| format!("{:.2}", v))).on_submit(|cx, txt, _| {
                         if let Ok(val) = txt.parse() {
                             cx.emit(NamedSliderEvent::Change(val));
                         }

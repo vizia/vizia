@@ -14,7 +14,7 @@ impl_parse! {
 
 impl From<AutoKeyword> for Units {
     fn from(_: AutoKeyword) -> Self {
-        Self::Auto
+        Units::Auto
     }
 }
 

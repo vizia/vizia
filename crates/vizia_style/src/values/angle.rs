@@ -15,7 +15,7 @@ pub enum Angle {
 
 impl Default for Angle {
     fn default() -> Self {
-        Self::Rad(0.0)
+        Angle::Rad(0.0)
     }
 }
 
@@ -43,26 +43,26 @@ impl Angle {
     pub fn to_radians(&self) -> f32 {
         const RAD_PER_DEG: f32 = std::f32::consts::PI / 180.0;
         match self {
-            Self::Deg(deg) => deg * RAD_PER_DEG,
-            Self::Rad(rad) => *rad,
-            Self::Grad(grad) => grad * 180.0 / 200.0 * RAD_PER_DEG,
-            Self::Turn(turn) => turn * 360.0 * RAD_PER_DEG,
+            Angle::Deg(deg) => deg * RAD_PER_DEG,
+            Angle::Rad(rad) => *rad,
+            Angle::Grad(grad) => grad * 180.0 / 200.0 * RAD_PER_DEG,
+            Angle::Turn(turn) => turn * 360.0 * RAD_PER_DEG,
         }
     }
 
     pub fn to_degrees(&self) -> f32 {
         const DEG_PER_RAD: f32 = 180.0 / std::f32::consts::PI;
         match self {
-            Self::Deg(deg) => *deg,
-            Self::Rad(rad) => rad * DEG_PER_RAD,
-            Self::Grad(grad) => grad * 180.0 / 200.0,
-            Self::Turn(turn) => turn * 360.0,
+            Angle::Deg(deg) => *deg,
+            Angle::Rad(rad) => rad * DEG_PER_RAD,
+            Angle::Grad(grad) => grad * 180.0 / 200.0,
+            Angle::Turn(turn) => turn * 360.0,
         }
     }
 }
 
-impl From<Calc<Self>> for Angle {
-    fn from(calc: Calc<Self>) -> Self {
+impl From<Calc<Angle>> for Angle {
+    fn from(calc: Calc<Angle>) -> Self {
         match calc {
             Calc::Value(v) => *v,
             _ => unreachable!(),
@@ -72,47 +72,47 @@ impl From<Calc<Self>> for Angle {
 
 impl From<Angle> for Calc<Angle> {
     fn from(angle: Angle) -> Self {
-        Self::Value(Box::new(angle))
+        Calc::Value(Box::new(angle))
     }
 }
 
 impl std::ops::Mul<f32> for Angle {
     type Output = Self;
 
-    fn mul(self, other: f32) -> Self {
+    fn mul(self, other: f32) -> Angle {
         match self {
-            Self::Deg(v) => Self::Deg(v * other),
-            Self::Rad(v) => Self::Deg(v * other),
-            Self::Grad(v) => Self::Deg(v * other),
-            Self::Turn(v) => Self::Deg(v * other),
+            Angle::Deg(v) => Angle::Deg(v * other),
+            Angle::Rad(v) => Angle::Deg(v * other),
+            Angle::Grad(v) => Angle::Deg(v * other),
+            Angle::Turn(v) => Angle::Deg(v * other),
         }
     }
 }
 
-impl std::ops::Add<Self> for Angle {
+impl std::ops::Add<Angle> for Angle {
     type Output = Self;
 
-    fn add(self, other: Self) -> Self {
-        Self::Deg(self.to_degrees() + other.to_degrees())
+    fn add(self, other: Angle) -> Angle {
+        Angle::Deg(self.to_degrees() + other.to_degrees())
     }
 }
 
-impl TryAdd<Self> for Angle {
-    fn try_add(&self, other: &Self) -> Option<Self> {
-        Some(Self::Deg(self.to_degrees() + other.to_degrees()))
+impl TryAdd<Angle> for Angle {
+    fn try_add(&self, other: &Angle) -> Option<Angle> {
+        Some(Angle::Deg(self.to_degrees() + other.to_degrees()))
     }
 }
 
 impl std::cmp::PartialEq<f32> for Angle {
     fn eq(&self, other: &f32) -> bool {
         match self {
-            Self::Deg(a) | Self::Rad(a) | Self::Grad(a) | Self::Turn(a) => a == other,
+            Angle::Deg(a) | Angle::Rad(a) | Angle::Grad(a) | Angle::Turn(a) => a == other,
         }
     }
 }
 
-impl std::cmp::PartialEq<Self> for Angle {
-    fn eq(&self, other: &Self) -> bool {
+impl std::cmp::PartialEq<Angle> for Angle {
+    fn eq(&self, other: &Angle) -> bool {
         self.to_degrees() == other.to_degrees()
     }
 }
@@ -120,13 +120,13 @@ impl std::cmp::PartialEq<Self> for Angle {
 impl std::cmp::PartialOrd<f32> for Angle {
     fn partial_cmp(&self, other: &f32) -> Option<std::cmp::Ordering> {
         match self {
-            Self::Deg(a) | Self::Rad(a) | Self::Grad(a) | Self::Turn(a) => a.partial_cmp(other),
+            Angle::Deg(a) | Angle::Rad(a) | Angle::Grad(a) | Angle::Turn(a) => a.partial_cmp(other),
         }
     }
 }
 
-impl std::cmp::PartialOrd<Self> for Angle {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+impl std::cmp::PartialOrd<Angle> for Angle {
+    fn partial_cmp(&self, other: &Angle) -> Option<std::cmp::Ordering> {
         self.to_degrees().partial_cmp(&other.to_degrees())
     }
 }

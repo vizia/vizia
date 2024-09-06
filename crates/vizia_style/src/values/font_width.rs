@@ -24,22 +24,22 @@ impl<'i> Parse<'i> for FontWidth {
         let location = input.current_source_location();
         match input.try_parse(Ident::parse) {
             Ok(ident) => match ident.0.as_ref() {
-                "ultra-condensed" => Ok(Self::UltraCondensed),
-                "extra-condensed" => Ok(Self::ExtraCondensed),
-                "condensed" => Ok(Self::Condensed),
-                "semi-condensed" => Ok(Self::SemiCondensed),
-                "normal" => Ok(Self::Normal),
-                "semi-expanded" => Ok(Self::SemiExpanded),
-                "expanded" => Ok(Self::Expanded),
-                "extra-expanded" => Ok(Self::ExtraExpanded),
-                "ultra-expanded" => Ok(Self::UltraExpanded),
+                "ultra-condensed" => Ok(FontWidth::UltraCondensed),
+                "extra-condensed" => Ok(FontWidth::ExtraCondensed),
+                "condensed" => Ok(FontWidth::Condensed),
+                "semi-condensed" => Ok(FontWidth::SemiCondensed),
+                "normal" => Ok(FontWidth::Normal),
+                "semi-expanded" => Ok(FontWidth::SemiExpanded),
+                "expanded" => Ok(FontWidth::Expanded),
+                "extra-expanded" => Ok(FontWidth::ExtraExpanded),
+                "ultra-expanded" => Ok(FontWidth::UltraExpanded),
                 _ => Err(cssparser::ParseError {
                     kind: cssparser::ParseErrorKind::Custom(CustomParseError::InvalidValue),
                     location,
                 }),
             },
 
-            Err(_) => input.try_parse(Percentage::parse).map(std::convert::Into::into),
+            Err(_) => input.try_parse(Percentage::parse).map(|val| val.into()),
         }
     }
 }
@@ -47,23 +47,23 @@ impl<'i> Parse<'i> for FontWidth {
 impl From<Percentage> for FontWidth {
     fn from(p: Percentage) -> Self {
         if p.0 >= 0.0 && p.0 <= 0.5625 {
-            Self::UltraCondensed
+            FontWidth::UltraCondensed
         } else if p.0 > 0.5625 && p.0 <= 0.6875 {
-            Self::ExtraCondensed
+            FontWidth::ExtraCondensed
         } else if p.0 > 0.6875 && p.0 <= 0.7625 {
-            Self::Condensed
+            FontWidth::Condensed
         } else if p.0 > 0.7625 && p.0 <= 0.8875 {
-            Self::SemiCondensed
+            FontWidth::SemiCondensed
         } else if p.0 > 0.8875 && p.0 <= 1.0125 {
-            Self::Normal
+            FontWidth::Normal
         } else if p.0 > 1.0125 && p.0 <= 1.1375 {
-            Self::SemiExpanded
+            FontWidth::SemiExpanded
         } else if p.0 > 1.1375 && p.0 <= 1.375 {
-            Self::Expanded
+            FontWidth::Expanded
         } else if p.0 > 1.375 && p.0 <= 1.75 {
-            Self::ExtraExpanded
+            FontWidth::ExtraExpanded
         } else {
-            Self::UltraExpanded
+            FontWidth::UltraExpanded
         }
     }
 }
@@ -71,15 +71,15 @@ impl From<Percentage> for FontWidth {
 impl From<FontWidth> for Width {
     fn from(value: FontWidth) -> Self {
         match value {
-            FontWidth::UltraCondensed => Self::ULTRA_CONDENSED,
-            FontWidth::ExtraCondensed => Self::EXTRA_CONDENSED,
-            FontWidth::Condensed => Self::CONDENSED,
-            FontWidth::SemiCondensed => Self::SEMI_CONDENSED,
-            FontWidth::Normal => Self::NORMAL,
-            FontWidth::SemiExpanded => Self::SEMI_EXPANDED,
-            FontWidth::Expanded => Self::EXPANDED,
-            FontWidth::ExtraExpanded => Self::EXTRA_EXPANDED,
-            FontWidth::UltraExpanded => Self::ULTRA_EXPANDED,
+            FontWidth::UltraCondensed => Width::ULTRA_CONDENSED,
+            FontWidth::ExtraCondensed => Width::EXTRA_CONDENSED,
+            FontWidth::Condensed => Width::CONDENSED,
+            FontWidth::SemiCondensed => Width::SEMI_CONDENSED,
+            FontWidth::Normal => Width::NORMAL,
+            FontWidth::SemiExpanded => Width::SEMI_EXPANDED,
+            FontWidth::Expanded => Width::EXPANDED,
+            FontWidth::ExtraExpanded => Width::EXTRA_EXPANDED,
+            FontWidth::UltraExpanded => Width::ULTRA_EXPANDED,
         }
     }
 }

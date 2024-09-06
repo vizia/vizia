@@ -123,8 +123,8 @@ mod test {
         let correct = [r, a, c, d, b, e];
         let forward = TreeIterator::full(&t);
         let backward = TreeIterator::full(&t).rev();
-        assert!(forward.eq(correct.iter().copied()));
-        assert!(backward.eq(correct.iter().copied().rev()));
+        assert!(forward.eq(correct.iter().cloned()));
+        assert!(backward.eq(correct.iter().cloned().rev()));
 
         // correct DoubleEndedIterator behavior, each item yielded only once
         let mut double = TreeIterator::full(&t);
@@ -147,8 +147,8 @@ mod test {
         let correct = [a, c, d];
         let forward = TreeIterator::subtree(&t, a);
         let backward = TreeIterator::subtree(&t, a).rev();
-        assert!(forward.eq(correct.iter().copied()));
-        assert!(backward.eq(correct.iter().copied().rev()));
+        assert!(forward.eq(correct.iter().cloned()));
+        assert!(backward.eq(correct.iter().cloned().rev()));
         Ok(())
     }
 
@@ -165,7 +165,7 @@ mod test {
         let correct = [r, a, b, c, d, e];
         let forward = TreeBreadthIterator::full(&t);
 
-        assert!(forward.eq(correct.iter().copied()));
+        assert!(forward.eq(correct.iter().cloned()));
 
         Ok(())
     }

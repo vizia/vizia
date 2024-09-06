@@ -16,7 +16,7 @@ impl_parse! {
 
 impl From<f32> for Stretch {
     fn from(number: f32) -> Self {
-        Self(number)
+        Stretch(number)
     }
 }
 

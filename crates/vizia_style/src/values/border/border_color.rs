@@ -29,13 +29,13 @@ impl_parse! {
 
 impl From<Rect<Color>> for BorderColor {
     fn from(rect: Rect<Color>) -> Self {
-        Self::new(rect.0, rect.1, rect.2, rect.3)
+        BorderColor::new(rect.0, rect.1, rect.2, rect.3)
     }
 }
 
 impl From<Color> for BorderColor {
     fn from(col: Color) -> Self {
-        Self::new(col, col, col, col)
+        BorderColor::new(col, col, col, col)
     }
 }
 

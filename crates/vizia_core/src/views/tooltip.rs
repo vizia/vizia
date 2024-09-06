@@ -61,7 +61,7 @@ impl Tooltip {
             arrow_size: Length::Value(LengthValue::Px(8.0)),
         }
         .build(cx, |cx| {
-            Binding::new(cx, Self::show_arrow, |cx, show_arrow| {
+            Binding::new(cx, Tooltip::show_arrow, |cx, show_arrow| {
                 if show_arrow.get(cx) {
                     Arrow::new(cx);
                 }
@@ -73,7 +73,7 @@ impl Tooltip {
         .position_type(PositionType::SelfDirected)
         .space(Pixels(0.0))
         .on_build(|ex| {
-            ex.add_listener(move |tooltip: &mut Self, ex, event| {
+            ex.add_listener(move |tooltip: &mut Tooltip, ex, event| {
                 let flag = ModalModel::tooltip_visible.get(ex);
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {

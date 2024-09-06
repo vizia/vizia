@@ -54,7 +54,7 @@ impl From<&str> for FontVariation {
     fn from(s: &str) -> Self {
         let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
-        Self::parse(&mut parser).unwrap_or_default()
+        FontVariation::parse(&mut parser).unwrap_or_default()
     }
 }
 

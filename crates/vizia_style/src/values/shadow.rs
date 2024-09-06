@@ -48,7 +48,7 @@ impl<'i> Parse<'i> for Shadow {
         let color = input.try_parse(Color::parse).ok();
         let inset = input.try_parse(InsetKeyword::parse).map(|_| true).unwrap_or(false);
 
-        Ok(Self::new(x_offset, y_offset, blur_radius, spread_radius, color, inset))
+        Ok(Shadow::new(x_offset, y_offset, blur_radius, spread_radius, color, inset))
     }
 }
 
@@ -62,7 +62,7 @@ impl From<&str> for Shadow {
     fn from(s: &str) -> Self {
         let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
-        Self::parse(&mut parser).unwrap_or_default()
+        Shadow::parse(&mut parser).unwrap_or_default()
     }
 }
 

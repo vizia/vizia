@@ -112,7 +112,7 @@ fn derive_enum(
                 })
                 .collect();
 
-            if fields.kind == FieldKind::Named {
+            if let FieldKind::Named = fields.kind {
                 let lefts: Vec<_> = fields
                     .iter()
                     .map(|field| {

@@ -4,7 +4,7 @@ use crate::prelude::*;
 macro_rules! impl_res_simple {
     ($t:ty) => {
         impl ResGet<$t> for $t {
-            fn get_ref(&self, _: &impl DataContext) -> Option<LensValue<$t>> {
+            fn get_ref<'a>(&self, _: &impl DataContext) -> Option<LensValue<$t>> {
                 Some(LensValue::Borrowed(self))
             }
 
@@ -63,7 +63,7 @@ where
     fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, L::Target>> {
         self.view(
             cx.data()
-                .unwrap_or_else(|| panic!("Failed to get data from context for lens: {self:?}")),
+                .unwrap_or_else(|| panic!("Failed to get data from context for lens: {:?}", self)),
         )
     }
 
@@ -134,7 +134,7 @@ impl_res_simple!(AvatarVariant);
 impl_res_clone!(FamilyOwned);
 impl_res_simple!(TextDecorationLine);
 
-impl<'i> ResGet<Self> for FontFamily<'i> {
+impl<'i> ResGet<FontFamily<'i>> for FontFamily<'i> {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -144,9 +144,9 @@ impl<'i> ResGet<Self> for FontFamily<'i> {
     }
 }
 
-impl<'i> Res<Self> for FontFamily<'i> {}
+impl<'i> Res<FontFamily<'i>> for FontFamily<'i> {}
 
-impl<'i> ResGet<Self> for BackgroundImage<'i> {
+impl<'i> ResGet<BackgroundImage<'i>> for BackgroundImage<'i> {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -156,7 +156,7 @@ impl<'i> ResGet<Self> for BackgroundImage<'i> {
     }
 }
 
-impl<'i> Res<Self> for BackgroundImage<'i> {}
+impl<'i> Res<BackgroundImage<'i>> for BackgroundImage<'i> {}
 
 impl<'s> ResGet<&'s str> for &'s str {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
@@ -182,7 +182,7 @@ impl<'s> ResGet<&'s String> for &'s String {
 
 impl<'s> Res<&'s String> for &'s String {}
 
-impl ResGet<Self> for String {
+impl ResGet<String> for String {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -192,9 +192,116 @@ impl ResGet<Self> for String {
     }
 }
 
-impl Res<Self> for String {}
+impl Res<String> for String {}
 
-impl ResGet<Self> for Transform {
+impl ResGet<Transform> for Transform {
+    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
+        Some(LensValue::Borrowed(self))
+    }
+
+    fn get(&self, _: &impl DataContext) -> Transform {
+        self.clone()
+    }
+}
+
+impl Res<Transform> for Transform {}
+
+impl ResGet<Color> for Color {
+    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
+        Some(LensValue::Borrowed(self))
+    }
+
+    fn get(&self, _: &impl DataContext) -> Color {
+        *self
+    }
+}
+
+impl Res<Color> for Color {}
+
+impl ResGet<LinearGradient> for LinearGradient {
+    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
+        Some(LensValue::Borrowed(self))
+    }
+
+    fn get(&self, _: &impl DataContext) -> LinearGradient {
+        self.clone()
+    }
+}
+
+impl Res<LinearGradient> for LinearGradient {}
+
+impl ResGet<Units> for Units {
+    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
+        Some(LensValue::Borrowed(self))
+    }
+
+    fn get(&self, _: &impl DataContext) -> Units {
+        *self
+    }
+}
+
+impl Res<Units> for Units {}
+
+impl ResGet<Visibility> for Visibility {
+    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
+        Some(LensValue::Borrowed(self))
+    }
+
+    fn get(&self, _: &impl DataContext) -> Visibility {
+        *self
+    }
+}
+
+impl Res<Visibility> for Visibility {}
+
+impl ResGet<Display> for Display {
+    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
+        Some(LensValue::Borrowed(self))
+    }
+
+    fn get(&self, _: &impl DataContext) -> Display {
+        *self
+    }
+}
+
+impl Res<Display> for Display {}
+
+impl ResGet<LayoutType> for LayoutType {
+    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
+        Some(LensValue::Borrowed(self))
+    }
+
+    fn get(&self, _: &impl DataContext) -> LayoutType {
+        *self
+    }
+}
+impl Res<LayoutType> for LayoutType {}
+
+impl ResGet<PositionType> for PositionType {
+    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
+        Some(LensValue::Borrowed(self))
+    }
+
+    fn get(&self, _: &impl DataContext) -> PositionType {
+        *self
+    }
+}
+
+impl Res<PositionType> for PositionType {}
+
+impl<T: Clone + ResGet<T>> ResGet<Option<T>> for Option<T> {
+    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
+        Some(LensValue::Borrowed(self))
+    }
+
+    fn get(&self, _: &impl DataContext) -> Option<T> {
+        self.clone()
+    }
+}
+
+impl<T: Clone + ResGet<T>> Res<Option<T>> for Option<T> {}
+
+impl ResGet<Length> for Length {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -204,21 +311,9 @@ impl ResGet<Self> for Transform {
     }
 }
 
-impl Res<Self> for Transform {}
+impl Res<Length> for Length {}
 
-impl ResGet<Self> for Color {
-    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
-        Some(LensValue::Borrowed(self))
-    }
-
-    fn get(&self, _: &impl DataContext) -> Self {
-        *self
-    }
-}
-
-impl Res<Self> for Color {}
-
-impl ResGet<Self> for LinearGradient {
+impl ResGet<LengthOrPercentage> for LengthOrPercentage {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -228,9 +323,9 @@ impl ResGet<Self> for LinearGradient {
     }
 }
 
-impl Res<Self> for LinearGradient {}
+impl Res<LengthOrPercentage> for LengthOrPercentage {}
 
-impl ResGet<Self> for Units {
+impl ResGet<RGBA> for RGBA {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
@@ -240,114 +335,19 @@ impl ResGet<Self> for Units {
     }
 }
 
-impl Res<Self> for Units {}
+impl Res<RGBA> for RGBA {}
 
-impl ResGet<Self> for Visibility {
+impl<T: Clone + ResGet<T>> ResGet<Vec<T>> for Vec<T> {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
 
-    fn get(&self, _: &impl DataContext) -> Self {
-        *self
-    }
-}
-
-impl Res<Self> for Visibility {}
-
-impl ResGet<Self> for Display {
-    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
-        Some(LensValue::Borrowed(self))
-    }
-
-    fn get(&self, _: &impl DataContext) -> Self {
-        *self
-    }
-}
-
-impl Res<Self> for Display {}
-
-impl ResGet<Self> for LayoutType {
-    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
-        Some(LensValue::Borrowed(self))
-    }
-
-    fn get(&self, _: &impl DataContext) -> Self {
-        *self
-    }
-}
-impl Res<Self> for LayoutType {}
-
-impl ResGet<Self> for PositionType {
-    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
-        Some(LensValue::Borrowed(self))
-    }
-
-    fn get(&self, _: &impl DataContext) -> Self {
-        *self
-    }
-}
-
-impl Res<Self> for PositionType {}
-
-impl<T: Clone + ResGet<T>> ResGet<Self> for Option<T> {
-    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
-        Some(LensValue::Borrowed(self))
-    }
-
-    fn get(&self, _: &impl DataContext) -> Self {
+    fn get(&self, _: &impl DataContext) -> Vec<T> {
         self.clone()
     }
 }
 
-impl<T: Clone + ResGet<T>> Res<Self> for Option<T> {}
-
-impl ResGet<Self> for Length {
-    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
-        Some(LensValue::Borrowed(self))
-    }
-
-    fn get(&self, _: &impl DataContext) -> Self {
-        self.clone()
-    }
-}
-
-impl Res<Self> for Length {}
-
-impl ResGet<Self> for LengthOrPercentage {
-    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
-        Some(LensValue::Borrowed(self))
-    }
-
-    fn get(&self, _: &impl DataContext) -> Self {
-        self.clone()
-    }
-}
-
-impl Res<Self> for LengthOrPercentage {}
-
-impl ResGet<Self> for RGBA {
-    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
-        Some(LensValue::Borrowed(self))
-    }
-
-    fn get(&self, _: &impl DataContext) -> Self {
-        *self
-    }
-}
-
-impl Res<Self> for RGBA {}
-
-impl<T: Clone + ResGet<T>> ResGet<Self> for Vec<T> {
-    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
-        Some(LensValue::Borrowed(self))
-    }
-
-    fn get(&self, _: &impl DataContext) -> Self {
-        self.clone()
-    }
-}
-
-impl<T: Clone + ResGet<T>> Res<Self> for Vec<T> {}
+impl<T: Clone + ResGet<T>> Res<Vec<T>> for Vec<T> {}
 
 impl<T: Clone + ResGet<T>, const N: usize> ResGet<[T; N]> for [T; N] {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {

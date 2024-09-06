@@ -40,7 +40,7 @@ where
 {
     pub fn new(cx: &mut Context, list_lens: L1, selected: L2) -> Handle<Self> {
         Self {
-            filter_text: String::new(),
+            filter_text: String::from(""),
             on_select: None,
             list_lens,
             selected,

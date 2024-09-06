@@ -22,10 +22,10 @@ impl Direction {
             "writing direction must be resolved"
         );
         match self {
-            Self::Upstream => true,
-            Self::Downstream => false,
-            Self::Left => matches!(direction, WritingDirection::LeftToRight),
-            Self::Right => matches!(direction, WritingDirection::RightToLeft),
+            Direction::Upstream => true,
+            Direction::Downstream => false,
+            Direction::Left => matches!(direction, WritingDirection::LeftToRight),
+            Direction::Right => matches!(direction, WritingDirection::RightToLeft),
         }
     }
 }

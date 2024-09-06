@@ -113,7 +113,7 @@ pub trait LensExt: Lens {
     }
 
     fn map<O: 'static, F: 'static + Fn(&Self::Target) -> O>(self, map: F) -> Map<Self, O> {
-        let id = MAP_MANAGER.with_borrow_mut(vizia_id::IdManager::create);
+        let id = MAP_MANAGER.with_borrow_mut(|f| f.create());
         let entity = CURRENT.with_borrow(|f| *f);
         MAPS.with_borrow_mut(|f| {
             f.insert(id, (entity, Box::new(MapState { closure: Rc::new(map) })))
@@ -122,7 +122,7 @@ pub trait LensExt: Lens {
     }
 
     fn map_ref<O: 'static, F: 'static + Fn(&Self::Target) -> &O>(self, map: F) -> MapRef<Self, O> {
-        let id = MAP_MANAGER.with_borrow_mut(vizia_id::IdManager::create);
+        let id = MAP_MANAGER.with_borrow_mut(|f| f.create());
         let entity = CURRENT.with_borrow(|f| *f);
         MAPS.with_borrow_mut(|f| {
             f.insert(id, (entity, Box::new(MapRefState { closure: Rc::new(map) })))
@@ -390,7 +390,7 @@ impl<T> Lens for StaticLens<T> {
 
 impl<T> StaticLens<T> {
     pub fn new(data: &'static T) -> Self {
-        Self { data }
+        StaticLens { data }
     }
 }
 

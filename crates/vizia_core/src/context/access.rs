@@ -42,7 +42,7 @@ impl AccessNode {
     }
 
     /// Adds a child accessibility node.
-    pub fn add_child(&mut self, child: Self) {
+    pub fn add_child(&mut self, child: AccessNode) {
         self.children.push(child);
     }
 

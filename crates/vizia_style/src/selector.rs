@@ -10,14 +10,14 @@ pub struct Selectors;
 pub struct SelectorString(pub String);
 
 impl<'a> std::convert::From<CowRcStr<'a>> for SelectorString {
-    fn from(s: CowRcStr<'a>) -> Self {
-        Self(s.to_string())
+    fn from(s: CowRcStr<'a>) -> SelectorString {
+        SelectorString(s.to_string())
     }
 }
 
 impl std::convert::From<&str> for SelectorString {
-    fn from(s: &str) -> Self {
-        Self(s.to_owned())
+    fn from(s: &str) -> SelectorString {
+        SelectorString(s.to_string())
     }
 }
 
@@ -34,8 +34,8 @@ impl ToCss for SelectorString {
 pub struct SelectorIdent(pub String);
 
 impl std::convert::From<&str> for SelectorIdent {
-    fn from(s: &str) -> Self {
-        Self(s.to_owned())
+    fn from(s: &str) -> SelectorIdent {
+        SelectorIdent(s.to_string())
     }
 }
 
@@ -49,8 +49,8 @@ impl ToCss for SelectorIdent {
 }
 
 impl<'a> std::convert::From<CowRcStr<'a>> for SelectorIdent {
-    fn from(s: CowRcStr<'a>) -> Self {
-        Self(s.to_string())
+    fn from(s: CowRcStr<'a>) -> SelectorIdent {
+        SelectorIdent(s.to_string())
     }
 }
 
@@ -124,8 +124,8 @@ impl<'a, 'i> selectors::parser::Parser<'i> for SelectorParser<'a, 'i> {
             "lang" => {
                 let langs = parser.parse_comma_separated(|parser|{
                     parser.expect_ident_or_string()
-                        .map(CowRcStr::to_string)
-                        .map_err(ParseError::from)
+                        .map(|s| s.to_string())
+                        .map_err(|e| e.into())
                 })?;
                 Lang(langs)
             },

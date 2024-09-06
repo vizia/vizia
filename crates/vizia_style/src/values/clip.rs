@@ -10,19 +10,19 @@ pub enum ClipPath {
 
 impl From<Rect<LengthOrPercentage>> for ClipPath {
     fn from(value: Rect<LengthOrPercentage>) -> Self {
-        Self::Shape(value)
+        ClipPath::Shape(value)
     }
 }
 
 impl From<LengthOrPercentage> for ClipPath {
     fn from(value: LengthOrPercentage) -> Self {
-        Self::Shape(Rect(value.clone(), value.clone(), value.clone(), value))
+        ClipPath::Shape(Rect(value.clone(), value.clone(), value.clone(), value))
     }
 }
 
 impl From<Length> for ClipPath {
     fn from(value: Length) -> Self {
-        Self::Shape(Rect(
+        ClipPath::Shape(Rect(
             value.clone().into(),
             value.clone().into(),
             value.clone().into(),
@@ -36,7 +36,7 @@ impl<'i> Parse<'i> for ClipPath {
         input: &mut cssparser::Parser<'i, 't>,
     ) -> Result<Self, cssparser::ParseError<'i, crate::CustomParseError<'i>>> {
         if input.try_parse(AutoKeyword::parse).is_ok() {
-            Ok(Self::Auto)
+            Ok(ClipPath::Auto)
         } else {
             let function = input.expect_function()?.clone();
 
@@ -45,7 +45,7 @@ impl<'i> Parse<'i> for ClipPath {
                 match_ignore_ascii_case! { &function,
                     "inset" | "rect" => {
                         let rect = Rect::parse(input)?;
-                        Ok(Self::Shape(rect))
+                        Ok(ClipPath::Shape(rect))
                     },
 
                     _ => {

@@ -79,7 +79,7 @@ impl Submenu {
         content: impl Fn(&mut Context) -> Handle<V> + 'static,
         menu: impl Fn(&mut Context) + 'static,
     ) -> Handle<Self> {
-        let is_submenu = cx.data::<Self>().is_some();
+        let is_submenu = cx.data::<Submenu>().is_some();
 
         let handle = Self { is_open: false, open_on_hover: is_submenu, is_submenu }
             .build(cx, |cx| {
@@ -107,12 +107,12 @@ impl Submenu {
                 (content)(cx).hoverable(false);
                 Svg::new(cx, ICON_CHEVRON_RIGHT).class("arrow").hoverable(false);
                 // });
-                Binding::new(cx, Self::is_open, move |cx, is_open| {
+                Binding::new(cx, Submenu::is_open, move |cx, is_open| {
                     if is_open.get(cx) {
                         Popup::new(cx, |cx| {
                             (menu)(cx);
                         })
-                        .placement(Self::is_submenu.map(|is_submenu| {
+                        .placement(Submenu::is_submenu.map(|is_submenu| {
                             if *is_submenu {
                                 Placement::RightStart
                             } else {
@@ -120,7 +120,7 @@ impl Submenu {
                             }
                         }))
                         .arrow_size(Pixels(0.0))
-                        .checked(Self::is_open)
+                        .checked(Submenu::is_open)
                         .on_hover(|cx| {
                             cx.emit_custom(
                                 Event::new(MenuEvent::Close)
@@ -134,7 +134,7 @@ impl Submenu {
                 // .on_blur(|cx| cx.emit(MenuEvent::CloseAll));
             })
             .navigable(true)
-            .checked(Self::is_open)
+            .checked(Submenu::is_open)
             .layout_type(LayoutType::Row)
             .on_press(|cx| cx.emit(MenuEvent::ToggleOpen));
 

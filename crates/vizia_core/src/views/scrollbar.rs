@@ -94,7 +94,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
         }
     }
 
-    fn change(&self, cx: &mut EventContext, new_val: f32) {
+    fn change(&mut self, cx: &mut EventContext, new_val: f32) {
         if let Some(callback) = &self.on_changing {
             callback(cx, new_val.clamp(0.0, 1.0));
         }

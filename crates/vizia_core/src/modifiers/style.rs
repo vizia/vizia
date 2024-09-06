@@ -54,7 +54,7 @@ pub trait StyleModifiers: internal::Modifiable {
     fn class(mut self, name: &str) -> Self {
         let entity = self.entity();
         if let Some(class_list) = self.context().style.classes.get_mut(entity) {
-            class_list.insert(name.to_owned());
+            class_list.insert(name.to_string());
         }
 
         self.context().needs_restyle(entity);
@@ -673,11 +673,11 @@ impl Default for LinearGradientBuilder {
 
 impl LinearGradientBuilder {
     pub fn new() -> Self {
-        Self { direction: LineDirection::default(), stops: Vec::new() }
+        LinearGradientBuilder { direction: LineDirection::default(), stops: Vec::new() }
     }
 
     pub fn with_direction(direction: impl Into<LineDirection>) -> Self {
-        Self { direction: direction.into(), stops: Vec::new() }
+        LinearGradientBuilder { direction: direction.into(), stops: Vec::new() }
     }
 
     fn build(self) -> Gradient {

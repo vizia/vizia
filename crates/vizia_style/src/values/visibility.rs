@@ -18,9 +18,9 @@ define_enum! {
 impl From<bool> for Visibility {
     fn from(boolean: bool) -> Self {
         if boolean {
-            Self::Visible
+            Visibility::Visible
         } else {
-            Self::Hidden
+            Visibility::Hidden
         }
     }
 }

@@ -49,7 +49,7 @@ where
     I: GenerationalId,
 {
     fn default() -> Self {
-        Self {
+        MouseButtonData {
             state: MouseButtonState::Released,
             pos_down: (0.0, 0.0),
             pos_up: (0.0, 0.0),
@@ -86,7 +86,7 @@ where
     I: GenerationalId,
 {
     fn default() -> Self {
-        Self {
+        MouseState {
             cursor_x: -1.0,
             cursor_y: -1.0,
             previous_cursor_x: -1.0,

@@ -23,7 +23,7 @@ impl Interpolator for f32 {
 
 impl Interpolator for i32 {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        ((start + (end - start)) as f32 * t).round() as Self
+        ((start + (end - start)) as f32 * t).round() as i32
     }
 }
 
@@ -36,17 +36,17 @@ impl Interpolator for (f32, f32) {
 impl Interpolator for Units {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         let s = match start {
-            Self::Pixels(val) => val,
-            Self::Percentage(val) => val,
-            Self::Stretch(val) => val,
-            Self::Auto => return *end,
+            Units::Pixels(val) => val,
+            Units::Percentage(val) => val,
+            Units::Stretch(val) => val,
+            Units::Auto => return *end,
         };
 
         match end {
-            Self::Pixels(e) => Self::Pixels(f32::interpolate(s, e, t)),
-            Self::Percentage(e) => Self::Percentage(f32::interpolate(s, e, t)),
-            Self::Stretch(e) => Self::Stretch(f32::interpolate(s, e, t)),
-            Self::Auto => *end,
+            Units::Pixels(e) => Units::Pixels(f32::interpolate(s, e, t)),
+            Units::Percentage(e) => Units::Percentage(f32::interpolate(s, e, t)),
+            Units::Stretch(e) => Units::Stretch(f32::interpolate(s, e, t)),
+            Units::Auto => *end,
         }
     }
 }
@@ -63,7 +63,7 @@ impl Interpolator for Display {
 
 impl Interpolator for Opacity {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        Self(start.0 + (end.0 - start.0) * t)
+        Opacity(start.0 + (end.0 - start.0) * t)
     }
 }
 
@@ -73,7 +73,7 @@ impl Interpolator for Color {
         let g = (end.g() as f64 - start.g() as f64).mul_add(t as f64, start.g() as f64) as u8;
         let b = (end.b() as f64 - start.b() as f64).mul_add(t as f64, start.b() as f64) as u8;
         let a = (end.a() as f64 - start.a() as f64).mul_add(t as f64, start.a() as f64) as u8;
-        Self::rgba(r, g, b, a)
+        Color::rgba(r, g, b, a)
     }
 }
 
@@ -83,15 +83,15 @@ impl Interpolator for RGBA {
         let g = (end.g() as f64 - start.g() as f64).mul_add(t as f64, start.g() as f64) as u8;
         let b = (end.b() as f64 - start.b() as f64).mul_add(t as f64, start.b() as f64) as u8;
         let a = (end.a() as f64 - start.a() as f64).mul_add(t as f64, start.a() as f64) as u8;
-        Self::rgba(r, g, b, a)
+        RGBA::rgba(r, g, b, a)
     }
 }
 
 impl Interpolator for Filter {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
-            (Self::Blur(start), Self::Blur(end)) => {
-                Self::Blur(Length::interpolate(start, end, t))
+            (Filter::Blur(start), Filter::Blur(end)) => {
+                Filter::Blur(Length::interpolate(start, end, t))
             }
         }
     }
@@ -100,11 +100,11 @@ impl Interpolator for Filter {
 impl Interpolator for LengthValue {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (end, start) {
-            (Self::Px(end_val), Self::Px(start_val)) => {
-                Self::Px(f32::interpolate(start_val, end_val, t))
+            (LengthValue::Px(end_val), LengthValue::Px(start_val)) => {
+                LengthValue::Px(f32::interpolate(start_val, end_val, t))
             }
 
-            _ => Self::default(),
+            _ => LengthValue::default(),
         }
     }
 }
@@ -112,11 +112,11 @@ impl Interpolator for LengthValue {
 impl Interpolator for Length {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (end, start) {
-            (Self::Value(end_val), Self::Value(start_val)) => {
-                Self::Value(LengthValue::interpolate(start_val, end_val, t))
+            (Length::Value(end_val), Length::Value(start_val)) => {
+                Length::Value(LengthValue::interpolate(start_val, end_val, t))
             }
 
-            _ => Self::default(),
+            _ => Length::default(),
         }
     }
 }
@@ -124,16 +124,16 @@ impl Interpolator for Length {
 impl Interpolator for LengthOrPercentage {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
-            (Self::Length(start_val), Self::Length(end_val)) => {
-                Self::Length(Length::interpolate(start_val, end_val, t))
+            (LengthOrPercentage::Length(start_val), LengthOrPercentage::Length(end_val)) => {
+                LengthOrPercentage::Length(Length::interpolate(start_val, end_val, t))
             }
 
             (
-                Self::Percentage(start_val),
-                Self::Percentage(end_val),
-            ) => Self::Percentage(f32::interpolate(start_val, end_val, t)),
+                LengthOrPercentage::Percentage(start_val),
+                LengthOrPercentage::Percentage(end_val),
+            ) => LengthOrPercentage::Percentage(f32::interpolate(start_val, end_val, t)),
 
-            _ => Self::default(),
+            _ => LengthOrPercentage::default(),
         }
     }
 }
@@ -142,9 +142,9 @@ impl Interpolator for LengthPercentageOrAuto {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
             (
-                Self::LengthPercentage(start_val),
-                Self::LengthPercentage(end_val),
-            ) => Self::LengthPercentage(LengthOrPercentage::interpolate(
+                LengthPercentageOrAuto::LengthPercentage(start_val),
+                LengthPercentageOrAuto::LengthPercentage(end_val),
+            ) => LengthPercentageOrAuto::LengthPercentage(LengthOrPercentage::interpolate(
                 start_val, end_val, t,
             )),
 
@@ -156,16 +156,16 @@ impl Interpolator for LengthPercentageOrAuto {
 impl Interpolator for PercentageOrNumber {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
-            (Self::Number(start_val), Self::Number(end_val)) => {
-                Self::Number(f32::interpolate(start_val, end_val, t))
+            (PercentageOrNumber::Number(start_val), PercentageOrNumber::Number(end_val)) => {
+                PercentageOrNumber::Number(f32::interpolate(start_val, end_val, t))
             }
 
             (
-                Self::Percentage(start_val),
-                Self::Percentage(end_val),
-            ) => Self::Percentage(f32::interpolate(start_val, end_val, t)),
+                PercentageOrNumber::Percentage(start_val),
+                PercentageOrNumber::Percentage(end_val),
+            ) => PercentageOrNumber::Percentage(f32::interpolate(start_val, end_val, t)),
 
-            _ => Self::default(),
+            _ => PercentageOrNumber::default(),
         }
     }
 }
@@ -174,7 +174,7 @@ impl Interpolator for Translate {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         let x = LengthOrPercentage::interpolate(&start.x, &end.x, t);
         let y = LengthOrPercentage::interpolate(&start.y, &end.y, t);
-        Self { x, y }
+        Translate { x, y }
     }
 }
 
@@ -182,14 +182,14 @@ impl Interpolator for Scale {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         let x = PercentageOrNumber::interpolate(&start.x, &end.x, t);
         let y = PercentageOrNumber::interpolate(&start.y, &end.y, t);
-        Self { x, y }
+        Scale { x, y }
     }
 }
 
 impl Interpolator for Angle {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         let r = start.to_radians() + (end.to_radians() - start.to_radians()) * t;
-        Self::Rad(r)
+        Angle::Rad(r)
     }
 }
 
@@ -221,7 +221,7 @@ impl<T: Interpolator> Interpolator for Vec<T> {
             .iter()
             .zip(end.iter())
             .map(|(start, end)| T::interpolate(start, end, t))
-            .collect::<Self>()
+            .collect::<Vec<T>>()
     }
 }
 
@@ -229,9 +229,9 @@ impl Interpolator for ImageOrGradient {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
             (
-                Self::Gradient(gradient_start),
-                Self::Gradient(gradient_end),
-            ) => Self::Gradient(Gradient::interpolate(gradient_start, gradient_end, t)),
+                ImageOrGradient::Gradient(gradient_start),
+                ImageOrGradient::Gradient(gradient_end),
+            ) => ImageOrGradient::Gradient(Gradient::interpolate(gradient_start, gradient_end, t)),
             _ => end.clone(),
         }
     }
@@ -241,12 +241,12 @@ impl Interpolator for BackgroundSize {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
             (
-                Self::Explicit { width: start_width, height: start_height },
-                Self::Explicit { width: end_width, height: end_height },
+                BackgroundSize::Explicit { width: start_width, height: start_height },
+                BackgroundSize::Explicit { width: end_width, height: end_height },
             ) => {
                 let width = LengthPercentageOrAuto::interpolate(start_width, end_width, t);
                 let height = LengthPercentageOrAuto::interpolate(start_height, end_height, t);
-                Self::Explicit { width, height }
+                BackgroundSize::Explicit { width, height }
             }
 
             _ => end.clone(),
@@ -257,8 +257,8 @@ impl Interpolator for BackgroundSize {
 impl Interpolator for Gradient {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
-            (Self::Linear(start_gradient), Self::Linear(end_gradient)) => {
-                Self::Linear(LinearGradient::interpolate(start_gradient, end_gradient, t))
+            (Gradient::Linear(start_gradient), Gradient::Linear(end_gradient)) => {
+                Gradient::Linear(LinearGradient::interpolate(start_gradient, end_gradient, t))
             }
 
             _ => end.clone(),
@@ -269,8 +269,8 @@ impl Interpolator for Gradient {
 impl Interpolator for LineDirection {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
-            (Self::Angle(start_angle), Self::Angle(end_angle)) => {
-                Self::Angle(Angle::interpolate(start_angle, end_angle, t))
+            (LineDirection::Angle(start_angle), LineDirection::Angle(end_angle)) => {
+                LineDirection::Angle(Angle::interpolate(start_angle, end_angle, t))
             }
 
             _ => *end,
@@ -281,7 +281,7 @@ impl Interpolator for LineDirection {
 impl Interpolator for LinearGradient {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         if start.stops.len() == end.stops.len() {
-            Self {
+            LinearGradient {
                 direction: LineDirection::interpolate(&start.direction, &end.direction, t),
                 stops: start
                     .stops
@@ -315,7 +315,7 @@ impl Interpolator for LinearGradient {
 
 impl Interpolator for Shadow {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        Self {
+        Shadow {
             x_offset: Length::interpolate(&start.x_offset, &end.x_offset, t),
             y_offset: Length::interpolate(&start.y_offset, &end.y_offset, t),
             blur_radius: Option::interpolate(&start.blur_radius, &end.blur_radius, t),
@@ -339,13 +339,13 @@ impl<T: Interpolator + Clone + Default> Interpolator for Option<T> {
 
 impl Interpolator for FontSize {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        Self(f32::interpolate(&start.0, &end.0, t))
+        FontSize(f32::interpolate(&start.0, &end.0, t))
     }
 }
 
 impl<T: Interpolator> Interpolator for Rect<T> {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        Self(
+        Rect(
             T::interpolate(&start.0, &end.0, t),
             T::interpolate(&start.1, &end.1, t),
             T::interpolate(&start.2, &end.2, t),
@@ -357,7 +357,7 @@ impl<T: Interpolator> Interpolator for Rect<T> {
 impl Interpolator for ClipPath {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
-            (Self::Shape(s), Self::Shape(e)) => Self::Shape(Rect::interpolate(s, e, t)),
+            (ClipPath::Shape(s), ClipPath::Shape(e)) => ClipPath::Shape(Rect::interpolate(s, e, t)),
             _ => end.clone(),
         }
     }

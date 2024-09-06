@@ -16,10 +16,10 @@ impl ToCss for PseudoElement {
         W: std::fmt::Write,
     {
         match *self {
-            Self::After => todo!(),
-            Self::Before => todo!(),
-            Self::Selection => todo!(),
-            Self::Custom(_) => todo!(),
+            PseudoElement::After => todo!(),
+            PseudoElement::Before => todo!(),
+            PseudoElement::Selection => todo!(),
+            PseudoElement::Custom(_) => todo!(),
         }
     }
 }
@@ -33,6 +33,6 @@ impl selectors::parser::PseudoElement for PseudoElement {
 
     // TODO - Remove this
     fn valid_after_slotted(&self) -> bool {
-        matches!(*self, Self::Before | Self::After)
+        matches!(*self, PseudoElement::Before | PseudoElement::After)
     }
 }

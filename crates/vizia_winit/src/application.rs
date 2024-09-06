@@ -53,13 +53,13 @@ pub enum UserEvent {
 #[cfg(feature = "accesskit")]
 impl From<accesskit_winit::ActionRequestEvent> for UserEvent {
     fn from(action_request_event: accesskit_winit::ActionRequestEvent) -> Self {
-        Self::AccessKitActionRequest(action_request_event)
+        UserEvent::AccessKitActionRequest(action_request_event)
     }
 }
 
 impl From<vizia_core::events::Event> for UserEvent {
     fn from(event: vizia_core::events::Event) -> Self {
-        Self::Event(event)
+        UserEvent::Event(event)
     }
 }
 
@@ -74,8 +74,8 @@ pub enum ApplicationError {
 impl Display for ApplicationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::EventLoopError(ele) => write!(f, "{ele}"),
-            Self::LogError => write!(f, "log error"),
+            ApplicationError::EventLoopError(ele) => write!(f, "{}", ele),
+            ApplicationError::LogError => write!(f, "log error"),
         }
     }
 }
@@ -114,7 +114,7 @@ impl EventProxy for WinitEventProxy {
     }
 
     fn make_clone(&self) -> Box<dyn EventProxy> {
-        Box::new(Self(self.0.clone()))
+        Box::new(WinitEventProxy(self.0.clone()))
     }
 }
 
@@ -336,7 +336,10 @@ impl ApplicationHandler<UserEvent> for Application {
         window_id: WindowId,
         event: winit::event::WindowEvent,
     ) {
-        let Some(window) = self.windows.get_mut(&window_id) else { return };
+        let window = match self.windows.get_mut(&window_id) {
+            Some(window) => window,
+            None => return,
+        };
 
         match event {
             winit::event::WindowEvent::Resized(size) => {
@@ -656,20 +659,20 @@ impl WindowModifiers for Application {
     }
 
     fn min_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
-        self.window_description.min_inner_size = size.get(&self.cx.0).map(S::into);
+        self.window_description.min_inner_size = size.get(&self.cx.0).map(|s| s.into());
 
         size.set_or_bind(&mut self.cx.0, Entity::root(), |cx, size| {
-            cx.emit(WindowEvent::SetMinSize(size.get(cx).map(S::into)));
+            cx.emit(WindowEvent::SetMinSize(size.get(cx).map(|s| s.into())));
         });
 
         self
     }
 
     fn max_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
-        self.window_description.max_inner_size = size.get(&self.cx.0).map(S::into);
+        self.window_description.max_inner_size = size.get(&self.cx.0).map(|s| s.into());
 
         size.set_or_bind(&mut self.cx.0, Entity::root(), |cx, size| {
-            cx.emit(WindowEvent::SetMaxSize(size.get(cx).map(S::into)));
+            cx.emit(WindowEvent::SetMaxSize(size.get(cx).map(|s| s.into())));
         });
         self
     }

@@ -15,8 +15,8 @@ impl_parse! {
     }
 }
 
-impl From<Calc<Self>> for Percentage {
-    fn from(calc: Calc<Self>) -> Self {
+impl From<Calc<Percentage>> for Percentage {
+    fn from(calc: Calc<Percentage>) -> Self {
         match calc {
             Calc::Value(v) => *v,
             _ => unreachable!(),
@@ -26,23 +26,23 @@ impl From<Calc<Self>> for Percentage {
 
 impl From<Percentage> for Calc<Percentage> {
     fn from(percentage: Percentage) -> Self {
-        Self::Value(Box::new(percentage))
+        Calc::Value(Box::new(percentage))
     }
 }
 
 impl std::ops::Mul<f32> for Percentage {
     type Output = Self;
 
-    fn mul(self, other: f32) -> Self {
-        Self(self.0 * other)
+    fn mul(self, other: f32) -> Percentage {
+        Percentage(self.0 * other)
     }
 }
 
-impl std::ops::Add<Self> for Percentage {
+impl std::ops::Add<Percentage> for Percentage {
     type Output = Self;
 
-    fn add(self, other: Self) -> Self {
-        Self(self.0 + other.0)
+    fn add(self, other: Percentage) -> Percentage {
+        Percentage(self.0 + other.0)
     }
 }
 
@@ -58,8 +58,8 @@ impl std::cmp::PartialOrd<f32> for Percentage {
     }
 }
 
-impl std::cmp::PartialOrd<Self> for Percentage {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+impl std::cmp::PartialOrd<Percentage> for Percentage {
+    fn partial_cmp(&self, other: &Percentage) -> Option<std::cmp::Ordering> {
         self.0.partial_cmp(&other.0)
     }
 }

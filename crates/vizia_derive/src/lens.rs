@@ -97,12 +97,16 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
     let defs = fields.iter().filter(|f| !f.attrs.ignore).map(|f| {
         let field_name = &f.ident.unwrap_named();
         let struct_docs = format!(
-            "Lens for the field `{field_name}` on [`{struct_type}`](super::{struct_type})."
+            "Lens for the field `{field}` on [`{ty}`](super::{ty}).",
+            field = field_name,
+            ty = struct_type,
         );
 
         let fn_docs = format!(
-            "Creates a new lens for the field `{field_name}` on [`{struct_type}`](super::{struct_type}). \
-            Use [`{struct_type}::{field_name}`](super::{struct_type}::{field_name}) instead."
+            "Creates a new lens for the field `{field}` on [`{ty}`](super::{ty}). \
+            Use [`{ty}::{field}`](super::{ty}::{field}) instead.",
+            field = field_name,
+            ty = struct_type,
         );
 
         quote! {
@@ -189,8 +193,8 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         }
     });
 
-    let mod_docs = format!("Derived lenses for [`{struct_type}`].");
-    let root_docs = format!("Lens for the whole [`{struct_type}`](super::{struct_type}) struct.");
+    let mod_docs = format!("Derived lenses for [`{}`].", struct_type);
+    let root_docs = format!("Lens for the whole [`{ty}`](super::{ty}) struct.", ty = struct_type);
     //let lens_docs = format!("# Lenses for [`{ty}`](super::{ty})", ty = struct_type);
 
     let expanded = quote! {
@@ -310,7 +314,9 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
     let module_vis = &input.vis;
     let struct_vis = increase_visibility(module_vis);
 
-    let syn::Data::Enum(syn::DataEnum { variants, .. }) = &input.data else {
+    let variants = if let syn::Data::Enum(syn::DataEnum { variants, .. }) = &input.data {
+        variants
+    } else {
         panic!("I don't know what this case being triggered means. Please open an issue!")
     };
 
@@ -327,8 +333,9 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
             _ => None,
         })
         .collect::<Vec<_>>();
-
-    assert!(!usable_variants.is_empty(), "This enum has no variants which can have Lenses built. A valid variant has exactly one unnamed field. If you think this is unreasonable, please work on https://github.com/rust-lang/rfcs/pull/2593");
+    if usable_variants.is_empty() {
+        panic!("This enum has no variants which can have Lenses built. A valid variant has exactly one unnamed field. If you think this is unreasonable, please work on https://github.com/rust-lang/rfcs/pull/2593")
+    }
 
     let twizzled_name = if is_camel_case(&enum_type.to_string()) {
         let temp_name = format!("{}_derived_lenses", to_snake_case(&enum_type.to_string()));
@@ -340,10 +347,9 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
         ));
     };
 
-    assert!(
-        input.generics.params.is_empty(),
-        "Lens implementations can only be derived from non-generic enums (for now)"
-    );
+    if !input.generics.params.is_empty() {
+        panic!("Lens implementations can only be derived from non-generic enums (for now)");
+    }
 
     let defs = usable_variants.iter().map(|(variant_name, _)| {
         quote! {
@@ -366,7 +372,7 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
     });
 
     let impls = usable_variants.iter().map(|(variant_name, variant_type)| {
-        let name = format!("{enum_type}:{variant_name}");
+        let name = format!("{}:{}", enum_type, variant_name);
         quote! {
             impl ::vizia::prelude::Lens for #twizzled_name::#variant_name {
                 type Source = #enum_type;
