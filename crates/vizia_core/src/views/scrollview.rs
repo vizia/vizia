@@ -102,8 +102,14 @@ impl ScrollView {
                 .scroll_to_cursor(Self::scroll_to_cursor);
             }
         })
-        .toggle_class("h-scroll", Self::root.map(|data| data.container_width < data.inner_width))
-        .toggle_class("v-scroll", Self::root.map(|data| data.container_height < data.inner_height))
+        .toggle_class(
+            "h-scroll",
+            Self::root.map(|data| data.container_width < data.inner_width),
+        )
+        .toggle_class(
+            "v-scroll",
+            Self::root.map(|data| data.container_height < data.inner_height),
+        )
     }
 
     fn reset(&mut self) {

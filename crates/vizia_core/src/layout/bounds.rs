@@ -134,14 +134,24 @@ impl BoundingBox {
     #[inline(always)]
     #[must_use]
     pub fn shrink_horizontal(&self, amount: f32) -> Self {
-        Self::from_min_max(self.left() + amount, self.top(), self.right() - amount, self.bottom())
+        Self::from_min_max(
+            self.left() + amount,
+            self.top(),
+            self.right() - amount,
+            self.bottom(),
+        )
     }
 
     /// Shrinks by some `amount` vertically and returns a new [`BoundingBox`].
     #[inline(always)]
     #[must_use]
     pub fn shrink_vertical(&self, amount: f32) -> Self {
-        Self::from_min_max(self.left(), self.top() + amount, self.right(), self.bottom() - amount)
+        Self::from_min_max(
+            self.left(),
+            self.top() + amount,
+            self.right(),
+            self.bottom() - amount,
+        )
     }
 
     /// Shrinks each side by the given separate amounts and returns a new [`BoundingBox`].
@@ -164,7 +174,12 @@ impl BoundingBox {
     }
 
     pub fn offset(&self, x: f32, y: f32) -> Self {
-        Self::from_min_max(self.left() + x, self.top() + y, self.right() + x, self.bottom() + y)
+        Self::from_min_max(
+            self.left() + x,
+            self.top() + y,
+            self.right() + x,
+            self.bottom() + y,
+        )
     }
 
     /// Expands by some `amount` in both directions and returns a new [`BoundingBox`].
@@ -183,14 +198,24 @@ impl BoundingBox {
     #[inline(always)]
     #[must_use]
     pub fn expand_horizontal(&self, amount: f32) -> Self {
-        Self::from_min_max(self.left() - amount, self.top(), self.right() + amount, self.bottom())
+        Self::from_min_max(
+            self.left() - amount,
+            self.top(),
+            self.right() + amount,
+            self.bottom(),
+        )
     }
 
     /// Expands by some `amount` vertically and returns a new [`BoundingBox`].
     #[inline(always)]
     #[must_use]
     pub fn expand_vertical(&self, amount: f32) -> Self {
-        Self::from_min_max(self.left(), self.top() - amount, self.right(), self.bottom() + amount)
+        Self::from_min_max(
+            self.left(),
+            self.top() - amount,
+            self.right(),
+            self.bottom() + amount,
+        )
     }
 
     pub fn intersection(&self, other: &Self) -> Self {

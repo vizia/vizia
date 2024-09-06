@@ -177,7 +177,9 @@ pub struct RadialGradient {
 }
 
 impl<'i> RadialGradient {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(
+        input: &mut Parser<'i, 't>,
+    ) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         // let shape = input.try_parse(EndingShape::parse).ok();
         let position = input
             .try_parse(|input| {
