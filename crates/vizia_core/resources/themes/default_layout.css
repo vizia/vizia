@@ -691,12 +691,10 @@ tabheader {
     cursor: hand;
 }
 
-tabheader label {
-    height: 32px;
-    child-left: 12px;
-    child-right: 12px;
-    child-top: 1s;
-    child-bottom: 1s;
+tabheader > label {
+    space: 1s;
+    child-left: 16px;
+    child-right: 16px;
 }
 
 tabheader .indicator {
