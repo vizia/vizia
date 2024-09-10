@@ -686,9 +686,14 @@ tabview.vertical > scrollview.vertical > scroll-content {
 }
 
 tabheader {
+    layout-type: column;
     width: auto;
     height: 32px;
     cursor: hand;
+}
+
+tabheader.vertical {
+    layout-type: row;
 }
 
 tabheader > label {
