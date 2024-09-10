@@ -25,7 +25,6 @@ impl TabView {
                 let content2 = content.clone();
                 // Tab headers
                 ScrollView::new(cx, 0.0, 0.0, true, true, move |cx| {
-                    //VStack::new(cx, move |cx| {
                     Binding::new(cx, lens.map(|list| list.len()), move |cx, list_length| {
                         let list_length = list_length.get(cx);
                         for index in 0..list_length {
@@ -39,9 +38,6 @@ impl TabView {
                                 .toggle_class("vertical", TabView::is_vertical);
                         }
                     })
-                    //})
-                    //.toggle_class("vertical", TabView::is_vertical)
-                    //.class("tabview-tabheader-wrapper");
                 })
                 .class("tabview-header")
                 .z_index(1)
