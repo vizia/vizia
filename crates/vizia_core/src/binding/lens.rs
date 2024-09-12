@@ -212,22 +212,21 @@ impl<L: Lens, O: 'static> Clone for MapRef<L, O> {
     }
 }
 
-impl<L: Lens, O: 'static> Lens for MapRef<L, O> {
+impl<L: Lens, O: 'static + Clone> Lens for MapRef<L, O> {
     type Source = L::Source;
     type Target = O;
 
     fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
-        let LensValue::Borrowed(target) = self.lens.view(source)? else {
-            unreachable!();
-        };
-
         let closure = MAPS.with_borrow(|f| {
             let (_, any) = f.get(&self.id)?;
             let MapRefState { closure } = any.downcast_ref()?;
             Some(closure.clone())
         })?;
 
-        Some(LensValue::Borrowed(closure(target)))
+        match self.lens.view(source)? {
+            LensValue::Borrowed(target) => Some(LensValue::Borrowed(closure(target))),
+            LensValue::Owned(target) => Some(LensValue::Owned(closure(&target).clone())),
+        }
     }
 }
 
