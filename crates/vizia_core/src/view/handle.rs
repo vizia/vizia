@@ -3,6 +3,7 @@ use std::{
     any::{Any, TypeId},
     marker::PhantomData,
 };
+use crate::context::LocalizationContext;
 
 /// A handle to a view which has been built into the tree.
 pub struct Handle<'a, V> {
@@ -36,6 +37,10 @@ impl<'a, V> DataContext for Handle<'a, V> {
         }
 
         None
+    }
+
+    fn as_context(&self) -> Option<LocalizationContext<'_>> {
+        Some(LocalizationContext::from_context(self.cx))
     }
 }
 
