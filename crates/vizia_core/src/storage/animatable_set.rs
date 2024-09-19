@@ -80,13 +80,13 @@ pub(crate) struct InlineIndex {
 
 impl Default for InlineIndex {
     fn default() -> Self {
-        InlineIndex { data_index: DataIndex::null(), anim_index: u32::MAX }
+        Self { data_index: DataIndex::null(), anim_index: u32::MAX }
     }
 }
 
 impl SparseSetIndex for InlineIndex {
     fn new(index: usize) -> Self {
-        InlineIndex { data_index: DataIndex::inline(index), anim_index: u32::MAX }
+        Self { data_index: DataIndex::inline(index), anim_index: u32::MAX }
     }
 
     fn null() -> Self {
@@ -106,13 +106,13 @@ pub(crate) struct SharedIndex {
 
 impl Default for SharedIndex {
     fn default() -> Self {
-        SharedIndex { data_index: u32::MAX, animation: Animation::null() }
+        Self { data_index: u32::MAX, animation: Animation::null() }
     }
 }
 
 impl SparseSetIndex for SharedIndex {
     fn new(index: usize) -> Self {
-        SharedIndex { data_index: index as u32, animation: Animation::null() }
+        Self { data_index: index as u32, animation: Animation::null() }
     }
 
     fn null() -> Self {

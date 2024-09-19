@@ -24,8 +24,8 @@ impl Default for BoundingBox {
 impl BoundingBox {
     /// Construct a [`BoundingBox`] from checked minimum and maximum values.
     #[inline(always)]
-    pub fn from_min_max(min_x: f32, min_y: f32, max_x: f32, max_y: f32) -> BoundingBox {
-        BoundingBox { x: min_x, y: min_y, w: max_x - min_x, h: max_y - min_y }
+    pub fn from_min_max(min_x: f32, min_y: f32, max_x: f32, max_y: f32) -> Self {
+        Self { x: min_x, y: min_y, w: max_x - min_x, h: max_y - min_y }
     }
 
     /// Left side of bounds equivalent to `x`.
@@ -121,8 +121,8 @@ impl BoundingBox {
     /// Shrinks by some `amount` in both directions and returns a new [`BoundingBox`].
     #[inline(always)]
     #[must_use]
-    pub fn shrink(&self, amount: f32) -> BoundingBox {
-        BoundingBox::from_min_max(
+    pub fn shrink(&self, amount: f32) -> Self {
+        Self::from_min_max(
             self.left() + amount,
             self.top() + amount,
             self.right() - amount,
@@ -133,30 +133,20 @@ impl BoundingBox {
     /// Shrinks by some `amount` horizontally and returns a new [`BoundingBox`].
     #[inline(always)]
     #[must_use]
-    pub fn shrink_horizontal(&self, amount: f32) -> BoundingBox {
-        BoundingBox::from_min_max(
-            self.left() + amount,
-            self.top(),
-            self.right() - amount,
-            self.bottom(),
-        )
+    pub fn shrink_horizontal(&self, amount: f32) -> Self {
+        Self::from_min_max(self.left() + amount, self.top(), self.right() - amount, self.bottom())
     }
 
     /// Shrinks by some `amount` vertically and returns a new [`BoundingBox`].
     #[inline(always)]
     #[must_use]
-    pub fn shrink_vertical(&self, amount: f32) -> BoundingBox {
-        BoundingBox::from_min_max(
-            self.left(),
-            self.top() + amount,
-            self.right(),
-            self.bottom() - amount,
-        )
+    pub fn shrink_vertical(&self, amount: f32) -> Self {
+        Self::from_min_max(self.left(), self.top() + amount, self.right(), self.bottom() - amount)
     }
 
     /// Shrinks each side by the given separate amounts and returns a new [`BoundingBox`].
-    pub fn shrink_sides(&self, left: f32, top: f32, right: f32, bottom: f32) -> BoundingBox {
-        BoundingBox::from_min_max(
+    pub fn shrink_sides(&self, left: f32, top: f32, right: f32, bottom: f32) -> Self {
+        Self::from_min_max(
             self.left() + left,
             self.top() + top,
             self.right() - right,
@@ -164,8 +154,8 @@ impl BoundingBox {
         )
     }
 
-    pub fn expand_sides(&self, left: f32, top: f32, right: f32, bottom: f32) -> BoundingBox {
-        BoundingBox::from_min_max(
+    pub fn expand_sides(&self, left: f32, top: f32, right: f32, bottom: f32) -> Self {
+        Self::from_min_max(
             self.left() - left,
             self.top() - top,
             self.right() + right,
@@ -173,20 +163,15 @@ impl BoundingBox {
         )
     }
 
-    pub fn offset(&self, x: f32, y: f32) -> BoundingBox {
-        BoundingBox::from_min_max(
-            self.left() + x,
-            self.top() + y,
-            self.right() + x,
-            self.bottom() + y,
-        )
+    pub fn offset(&self, x: f32, y: f32) -> Self {
+        Self::from_min_max(self.left() + x, self.top() + y, self.right() + x, self.bottom() + y)
     }
 
     /// Expands by some `amount` in both directions and returns a new [`BoundingBox`].
     #[inline(always)]
     #[must_use]
-    pub fn expand(&self, amount: f32) -> BoundingBox {
-        BoundingBox::from_min_max(
+    pub fn expand(&self, amount: f32) -> Self {
+        Self::from_min_max(
             self.left() - amount,
             self.top() - amount,
             self.right() + amount,
@@ -197,25 +182,15 @@ impl BoundingBox {
     /// Expands by some `amount` horizontally and returns a new [`BoundingBox`].
     #[inline(always)]
     #[must_use]
-    pub fn expand_horizontal(&self, amount: f32) -> BoundingBox {
-        BoundingBox::from_min_max(
-            self.left() - amount,
-            self.top(),
-            self.right() + amount,
-            self.bottom(),
-        )
+    pub fn expand_horizontal(&self, amount: f32) -> Self {
+        Self::from_min_max(self.left() - amount, self.top(), self.right() + amount, self.bottom())
     }
 
     /// Expands by some `amount` vertically and returns a new [`BoundingBox`].
     #[inline(always)]
     #[must_use]
-    pub fn expand_vertical(&self, amount: f32) -> BoundingBox {
-        BoundingBox::from_min_max(
-            self.left(),
-            self.top() - amount,
-            self.right(),
-            self.bottom() + amount,
-        )
+    pub fn expand_vertical(&self, amount: f32) -> Self {
+        Self::from_min_max(self.left(), self.top() - amount, self.right(), self.bottom() + amount)
     }
 
     pub fn intersection(&self, other: &Self) -> Self {
@@ -223,7 +198,7 @@ impl BoundingBox {
         let right = self.right().min(other.right());
         let top = self.top().max(other.top());
         let bottom = self.bottom().min(other.bottom());
-        BoundingBox::from_min_max(left, top, right, bottom)
+        Self::from_min_max(left, top, right, bottom)
     }
 
     pub fn union(&self, other: &Self) -> Self {
@@ -231,7 +206,7 @@ impl BoundingBox {
         let right = self.right().max(other.right());
         let top = self.top().min(other.top());
         let bottom = self.bottom().max(other.bottom());
-        BoundingBox::from_min_max(left, top, right, bottom)
+        Self::from_min_max(left, top, right, bottom)
     }
 
     pub fn intersects(&self, other: &Self) -> bool {
@@ -267,13 +242,13 @@ impl BoundingBox {
 
 impl From<BoundingBox> for skia_safe::Rect {
     fn from(bb: BoundingBox) -> Self {
-        skia_safe::Rect { left: bb.left(), top: bb.top(), right: bb.right(), bottom: bb.bottom() }
+        Self { left: bb.left(), top: bb.top(), right: bb.right(), bottom: bb.bottom() }
     }
 }
 
 impl From<skia_safe::Rect> for BoundingBox {
     fn from(bb: Rect) -> Self {
-        BoundingBox { x: bb.left(), y: bb.top(), w: bb.width(), h: bb.height() }
+        Self { x: bb.left(), y: bb.top(), w: bb.width(), h: bb.height() }
     }
 }
 

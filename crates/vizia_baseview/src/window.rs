@@ -31,7 +31,7 @@ impl ViziaWindow {
         window: &mut baseview::Window,
         builder: Option<Box<dyn FnOnce(&mut Context) + Send>>,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
-    ) -> ViziaWindow {
+    ) -> Self {
         let context = window.gl_context().expect("Window was created without OpenGL support");
 
         unsafe { context.make_current() };
@@ -113,7 +113,7 @@ impl ViziaWindow {
         );
         unsafe { context.make_not_current() };
 
-        ViziaWindow { application, on_idle }
+        Self { application, on_idle }
     }
 
     /// Open a new child window.
@@ -148,7 +148,7 @@ impl ViziaWindow {
         Window::open_parented(
             parent,
             window_settings,
-            move |window: &mut baseview::Window<'_>| -> ViziaWindow {
+            move |window: &mut baseview::Window<'_>| -> Self {
                 let mut cx = Context::new();
 
                 cx.ignore_default_theme = ignore_default_theme;
@@ -157,7 +157,7 @@ impl ViziaWindow {
                 let mut cx = BackendContext::new(cx);
 
                 cx.set_event_proxy(Box::new(BaseviewProxy));
-                ViziaWindow::new(cx, win_desc, scale_policy, window, Some(Box::new(app)), on_idle)
+                Self::new(cx, win_desc, scale_policy, window, Some(Box::new(app)), on_idle)
             },
         )
     }
@@ -185,20 +185,17 @@ impl ViziaWindow {
             gl_config: Some(GlConfig { vsync: false, ..GlConfig::default() }),
         };
 
-        Window::open_blocking(
-            window_settings,
-            move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-                let mut cx = Context::new();
+        Window::open_blocking(window_settings, move |window: &mut baseview::Window<'_>| -> Self {
+            let mut cx = Context::new();
 
-                cx.ignore_default_theme = ignore_default_theme;
-                cx.remove_user_themes();
+            cx.ignore_default_theme = ignore_default_theme;
+            cx.remove_user_themes();
 
-                let mut cx = BackendContext::new(cx);
+            let mut cx = BackendContext::new(cx);
 
-                cx.set_event_proxy(Box::new(BaseviewProxy));
-                ViziaWindow::new(cx, win_desc, scale_policy, window, Some(Box::new(app)), on_idle)
-            },
-        )
+            cx.set_event_proxy(Box::new(BaseviewProxy));
+            Self::new(cx, win_desc, scale_policy, window, Some(Box::new(app)), on_idle)
+        })
     }
 }
 

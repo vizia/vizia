@@ -15,9 +15,9 @@ define_enum! {
 impl From<bool> for PointerEvents {
     fn from(boolean: bool) -> Self {
         if boolean {
-            PointerEvents::Auto
+            Self::Auto
         } else {
-            PointerEvents::None
+            Self::None
         }
     }
 }

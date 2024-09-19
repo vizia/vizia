@@ -55,7 +55,7 @@ impl Popup {
         }
         .build(cx, |cx| {
             (content)(cx);
-            Binding::new(cx, Popup::show_arrow, |cx, show_arrow| {
+            Binding::new(cx, Self::show_arrow, |cx, show_arrow| {
                 if show_arrow.get(cx) {
                     Arrow::new(cx);
                 }
@@ -322,50 +322,50 @@ bitflags! {
 impl AvailablePlacement {
     fn can_place(&self, placement: Placement) -> bool {
         match placement {
-            Placement::Bottom => self.contains(AvailablePlacement::BOTTOM),
-            Placement::BottomStart => self.contains(AvailablePlacement::BOTTOM_START),
-            Placement::BottomEnd => self.contains(AvailablePlacement::BOTTOM_END),
-            Placement::Top => self.contains(AvailablePlacement::TOP),
-            Placement::TopStart => self.contains(AvailablePlacement::TOP_START),
-            Placement::TopEnd => self.contains(AvailablePlacement::TOP_END),
-            Placement::Left => self.contains(AvailablePlacement::LEFT),
-            Placement::LeftStart => self.contains(AvailablePlacement::LEFT_START),
-            Placement::LeftEnd => self.contains(AvailablePlacement::LEFT_END),
-            Placement::Right => self.contains(AvailablePlacement::RIGHT),
-            Placement::RightStart => self.contains(AvailablePlacement::RIGHT_START),
-            Placement::RightEnd => self.contains(AvailablePlacement::RIGHT_END),
+            Placement::Bottom => self.contains(Self::BOTTOM),
+            Placement::BottomStart => self.contains(Self::BOTTOM_START),
+            Placement::BottomEnd => self.contains(Self::BOTTOM_END),
+            Placement::Top => self.contains(Self::TOP),
+            Placement::TopStart => self.contains(Self::TOP_START),
+            Placement::TopEnd => self.contains(Self::TOP_END),
+            Placement::Left => self.contains(Self::LEFT),
+            Placement::LeftStart => self.contains(Self::LEFT_START),
+            Placement::LeftEnd => self.contains(Self::LEFT_END),
+            Placement::Right => self.contains(Self::RIGHT),
+            Placement::RightStart => self.contains(Self::RIGHT_START),
+            Placement::RightEnd => self.contains(Self::RIGHT_END),
             _ => false,
         }
     }
 }
 
 impl Placement {
-    fn from_int(int: u16) -> Placement {
+    fn from_int(int: u16) -> Self {
         match int {
-            0 => Placement::TopStart,
-            1 => Placement::Top,
-            2 => Placement::TopEnd,
-            3 => Placement::BottomStart,
-            4 => Placement::Bottom,
-            5 => Placement::BottomEnd,
-            6 => Placement::RightStart,
-            7 => Placement::Right,
-            8 => Placement::RightEnd,
-            9 => Placement::LeftStart,
-            10 => Placement::Left,
-            11 => Placement::LeftEnd,
-            12 => Placement::Over,
-            _ => Placement::Cursor,
+            0 => Self::TopStart,
+            1 => Self::Top,
+            2 => Self::TopEnd,
+            3 => Self::BottomStart,
+            4 => Self::Bottom,
+            5 => Self::BottomEnd,
+            6 => Self::RightStart,
+            7 => Self::Right,
+            8 => Self::RightEnd,
+            9 => Self::LeftStart,
+            10 => Self::Left,
+            11 => Self::LeftEnd,
+            12 => Self::Over,
+            _ => Self::Cursor,
         }
     }
 
-    pub(crate) fn place(&self, available: AvailablePlacement) -> Placement {
-        if *self == Placement::Over || *self == Placement::Cursor {
+    pub(crate) fn place(&self, available: AvailablePlacement) -> Self {
+        if *self == Self::Over || *self == Self::Cursor {
             return *self;
         }
 
         if available.is_empty() {
-            return Placement::Over;
+            return Self::Over;
         }
 
         let mut placement = *self;
@@ -392,22 +392,22 @@ impl Placement {
         const RIGHT_END: [u16; 12] = [12, 0, 1, 2, 3, 4, 11, 6, 7, 5, 9, 10];
 
         let states = match original {
-            Placement::TopStart => TOP_START,
-            Placement::Top => TOP,
-            Placement::TopEnd => TOP_END,
-            Placement::BottomStart => BOTTOM_START,
-            Placement::Bottom => BOTTOM,
-            Placement::BottomEnd => BOTTOM_END,
-            Placement::RightStart => RIGHT_START,
-            Placement::Right => RIGHT,
-            Placement::RightEnd => RIGHT_END,
-            Placement::LeftStart => LEFT_START,
-            Placement::Left => LEFT,
-            Placement::LeftEnd => LEFT_END,
+            Self::TopStart => TOP_START,
+            Self::Top => TOP,
+            Self::TopEnd => TOP_END,
+            Self::BottomStart => BOTTOM_START,
+            Self::Bottom => BOTTOM,
+            Self::BottomEnd => BOTTOM_END,
+            Self::RightStart => RIGHT_START,
+            Self::Right => RIGHT,
+            Self::RightEnd => RIGHT_END,
+            Self::LeftStart => LEFT_START,
+            Self::Left => LEFT,
+            Self::LeftEnd => LEFT_END,
             _ => unreachable!(),
         };
 
-        Placement::from_int(states[*self as usize])
+        Self::from_int(states[*self as usize])
     }
 }
 

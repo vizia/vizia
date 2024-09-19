@@ -184,7 +184,7 @@ impl ApplicationRunner {
         surface: skia_safe::Surface,
         dirty_surface: skia_safe::Surface,
     ) -> Self {
-        ApplicationRunner {
+        Self {
             should_redraw: true,
             gr_context,
             event_manager: EventManager::new(),

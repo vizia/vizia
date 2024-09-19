@@ -114,7 +114,7 @@ where
     pub fn lock_focus_within(&self, entity: I) -> I {
         entity
             .parent_iter(self)
-            .find(|&entity| self.lock_focus_within.get(entity.index()).cloned().unwrap_or_default())
+            .find(|&entity| self.lock_focus_within.get(entity.index()).copied().unwrap_or_default())
             .unwrap_or(I::root())
     }
 

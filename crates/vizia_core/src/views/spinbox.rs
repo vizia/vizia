@@ -27,14 +27,14 @@ pub enum SpinboxIcons {
 impl_res_simple!(SpinboxIcons);
 
 impl Spinbox {
-    pub fn new<L>(cx: &mut Context, lens: L) -> Handle<Spinbox>
+    pub fn new<L>(cx: &mut Context, lens: L) -> Handle<Self>
     where
         L: Lens<Target: Data + ToStringLocalized>,
     {
         Self::custom(cx, move |cx| Label::new(cx, lens))
     }
 
-    pub fn custom<F, V>(cx: &mut Context, content: F) -> Handle<Spinbox>
+    pub fn custom<F, V>(cx: &mut Context, content: F) -> Handle<Self>
     where
         F: Fn(&mut Context) -> Handle<V>,
         V: 'static + View,
@@ -46,13 +46,13 @@ impl Spinbox {
             on_increment: None,
         }
         .build(cx, move |cx| {
-            Binding::new(cx, Spinbox::orientation, move |cx, spinbox_kind| {
+            Binding::new(cx, Self::orientation, move |cx, spinbox_kind| {
                 match spinbox_kind.get(cx) {
                     Orientation::Horizontal => {
                         Button::new(cx, |cx| {
                             Svg::new(
                                 cx,
-                                Spinbox::icons.map(|icons| match icons {
+                                Self::icons.map(|icons| match icons {
                                     SpinboxIcons::PlusMinus => ICON_MINUS,
                                     SpinboxIcons::Chevrons => ICON_CHEVRON_LEFT,
                                 }),
@@ -67,7 +67,7 @@ impl Spinbox {
                         Button::new(cx, |cx| {
                             Svg::new(
                                 cx,
-                                Spinbox::icons.map(|icons| match icons {
+                                Self::icons.map(|icons| match icons {
                                     SpinboxIcons::PlusMinus => ICON_PLUS,
                                     SpinboxIcons::Chevrons => ICON_CHEVRON_UP,
                                 }),
@@ -80,13 +80,13 @@ impl Spinbox {
                 }
             });
             (content)(cx).class("spinbox-value");
-            Binding::new(cx, Spinbox::orientation, move |cx, spinbox_kind| {
+            Binding::new(cx, Self::orientation, move |cx, spinbox_kind| {
                 match spinbox_kind.get(cx) {
                     Orientation::Horizontal => {
                         Button::new(cx, |cx| {
                             Svg::new(
                                 cx,
-                                Spinbox::icons.map(|icons| match icons {
+                                Self::icons.map(|icons| match icons {
                                     SpinboxIcons::PlusMinus => ICON_PLUS,
                                     SpinboxIcons::Chevrons => ICON_CHEVRON_RIGHT,
                                 }),
@@ -101,7 +101,7 @@ impl Spinbox {
                         Button::new(cx, |cx| {
                             Svg::new(
                                 cx,
-                                Spinbox::icons.map(|icons| match icons {
+                                Self::icons.map(|icons| match icons {
                                     SpinboxIcons::PlusMinus => ICON_MINUS,
                                     SpinboxIcons::Chevrons => ICON_CHEVRON_DOWN,
                                 }),
@@ -114,8 +114,8 @@ impl Spinbox {
                 }
             });
         })
-        .toggle_class("horizontal", Spinbox::orientation.map(|o| o == &Orientation::Horizontal))
-        .toggle_class("vertical", Spinbox::orientation.map(|o| o == &Orientation::Vertical))
+        .toggle_class("horizontal", Self::orientation.map(|o| o == &Orientation::Horizontal))
+        .toggle_class("vertical", Self::orientation.map(|o| o == &Orientation::Vertical))
         .navigable(true)
     }
 }

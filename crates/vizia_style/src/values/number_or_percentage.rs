@@ -14,16 +14,16 @@ pub enum PercentageOrNumber {
 impl PercentageOrNumber {
     pub fn to_factor(&self) -> f32 {
         match self {
-            PercentageOrNumber::Percentage(val) => *val / 100.0,
-            PercentageOrNumber::Number(val) => *val,
+            Self::Percentage(val) => *val / 100.0,
+            Self::Number(val) => *val,
         }
     }
 
     pub fn to_number(&self, min_bounds: f32) -> f32 {
         match self {
-            PercentageOrNumber::Number(num) => *num,
+            Self::Number(num) => *num,
 
-            PercentageOrNumber::Percentage(val) => (val / 100.0) * min_bounds,
+            Self::Percentage(val) => (val / 100.0) * min_bounds,
         }
     }
 }
@@ -45,27 +45,27 @@ impl_parse! {
 
 impl From<Percentage> for PercentageOrNumber {
     fn from(percentage: Percentage) -> Self {
-        PercentageOrNumber::Percentage(percentage.0)
+        Self::Percentage(percentage.0)
     }
 }
 
 impl From<f32> for PercentageOrNumber {
     fn from(number: f32) -> Self {
-        PercentageOrNumber::Number(number)
+        Self::Number(number)
     }
 }
 
 impl From<f64> for PercentageOrNumber {
     fn from(number: f64) -> Self {
-        PercentageOrNumber::Number(number as f32)
+        Self::Number(number as f32)
     }
 }
 
 impl From<Units> for PercentageOrNumber {
     fn from(value: Units) -> Self {
         match value {
-            Units::Percentage(val) => PercentageOrNumber::Percentage(val),
-            _ => PercentageOrNumber::default(),
+            Units::Percentage(val) => Self::Percentage(val),
+            _ => Self::default(),
         }
     }
 }

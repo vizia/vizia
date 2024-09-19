@@ -17,12 +17,12 @@ impl From<&str> for CornerShape {
     fn from(s: &str) -> Self {
         let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
-        CornerShape::parse(&mut parser).unwrap_or_default()
+        Self::parse(&mut parser).unwrap_or_default()
     }
 }
 
 impl From<CornerShape> for Rect<CornerShape> {
     fn from(value: CornerShape) -> Self {
-        Rect(value, value, value, value)
+        Self(value, value, value, value)
     }
 }

@@ -19,7 +19,7 @@ pub(crate) fn is_navigatable(
     // }
 
     // Skip disabled widgets
-    if style.disabled.get(node).cloned().unwrap_or_default() {
+    if style.disabled.get(node).copied().unwrap_or_default() {
         return false;
     }
 

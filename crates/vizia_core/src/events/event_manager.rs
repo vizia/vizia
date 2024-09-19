@@ -33,7 +33,7 @@ impl Default for EventManager {
 
 impl EventManager {
     pub fn new() -> Self {
-        EventManager { event_queue: Vec::with_capacity(10) }
+        Self { event_queue: Vec::with_capacity(10) }
     }
 
     /// Flush the event queue, dispatching events to their targets.
@@ -156,7 +156,7 @@ fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {
     if let Some(ids) = cx
         .data
         .get(&entity)
-        .map(|model_data_store| model_data_store.models.keys().cloned().collect::<Vec<_>>())
+        .map(|model_data_store| model_data_store.models.keys().copied().collect::<Vec<_>>())
     {
         for id in ids {
             if let Some(mut model) = cx
@@ -408,7 +408,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                         let mut class_names = String::new();
                         if let Some(classes) = classes {
                             for class in classes.iter() {
-                                class_names += &format!(".{}", class);
+                                class_names += &format!(".{class}");
                             }
                         }
                         println!(
@@ -419,11 +419,11 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                             class_names,
                             cache.get_bounds(entity).x,
                             cache.get_bounds(entity).y,
-                            if w == f32::MAX { "inf".to_string() } else { w.to_string() },
-                            if h == f32::MAX { "inf".to_string() } else { h.to_string() },
+                            if w == f32::MAX { "inf".to_owned() } else { w.to_string() },
+                            if h == f32::MAX { "inf".to_owned() } else { h.to_string() },
                         );
                     } else if let Some(binding_name) =
-                        cx.bindings.get(&entity).map(|binding| format!("{:?}", binding))
+                        cx.bindings.get(&entity).map(|binding| format!("{binding:?}"))
                     {
                         println!(
                             "{}{} binding observing {}",

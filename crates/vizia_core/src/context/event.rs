@@ -202,7 +202,7 @@ impl<'a> EventContext<'a> {
 
     /// Returns the [Entity] id associated with the given identifier.
     pub fn resolve_entity_identifier(&self, id: &str) -> Option<Entity> {
-        self.entity_identifiers.get(id).cloned()
+        self.entity_identifiers.get(id).copied()
     }
 
     /// Returns the [Entity] id of the current view.
@@ -603,7 +603,7 @@ impl<'a> EventContext<'a> {
 
     /// Returns true if the current view is disabled.
     pub fn is_disabled(&self) -> bool {
-        self.style.disabled.get(self.current()).cloned().unwrap_or_default()
+        self.style.disabled.get(self.current()).copied().unwrap_or_default()
     }
 
     /// Returns true if the current view is checked.
@@ -635,7 +635,7 @@ impl<'a> EventContext<'a> {
     pub fn unlock_cursor_icon(&mut self) {
         *self.cursor_icon_locked = false;
         let hovered = *self.hovered;
-        let cursor = self.style.cursor.get(hovered).cloned().unwrap_or_default();
+        let cursor = self.style.cursor.get(hovered).copied().unwrap_or_default();
         self.emit(WindowEvent::SetCursor(cursor));
     }
 
@@ -680,13 +680,13 @@ impl<'a> EventContext<'a> {
         let current = self.current();
         if let Some(class_list) = self.style.classes.get_mut(current) {
             if applied {
-                class_list.insert(class_name.to_string());
+                class_list.insert(class_name.to_owned());
             } else {
                 class_list.remove(class_name);
             }
         } else if applied {
             let mut class_list = HashSet::new();
-            class_list.insert(class_name.to_string());
+            class_list.insert(class_name.to_owned());
             self.style.classes.insert(current, class_list);
         }
 
@@ -814,14 +814,14 @@ impl<'a> EventContext<'a> {
     /// Returns the background color of the view.
     ///
     /// Returns a transparent color if the view does not have a background color.
-    pub fn background_color(&mut self) -> Color {
+    pub fn background_color(&self) -> Color {
         self.style.background_color.get(self.current).copied().unwrap_or_default()
     }
 
     // Setters
 
     pub fn set_id(&mut self, id: &str) {
-        self.style.ids.insert(self.current, id.to_string())
+        self.style.ids.insert(self.current, id.to_owned())
     }
 
     // Pseudoclass Setters
@@ -943,7 +943,7 @@ impl<'a> EventContext<'a> {
 
     /// Sets the accessibility name of the view.
     pub fn set_name(&mut self, name: &str) {
-        self.style.name.insert(self.current, name.to_string());
+        self.style.name.insert(self.current, name.to_owned());
     }
 
     /// Sets the accessibility role of the view.
@@ -975,7 +975,7 @@ impl<'a> EventContext<'a> {
 
     /// Sets a text value used for accessbility for the current view.
     pub fn text_value(&mut self, text: &str) {
-        self.style.text_value.insert(self.current, text.to_string());
+        self.style.text_value.insert(self.current, text.to_owned());
     }
 
     /// Sets a numeric value used for accessibility for the current view.
@@ -1265,7 +1265,7 @@ impl<'a> EventContext<'a> {
     }
 
     /// Returns true if the timer with the provided timer id is currently running.
-    pub fn timer_is_running(&mut self, timer: Timer) -> bool {
+    pub fn timer_is_running(&self, timer: Timer) -> bool {
         for timer_state in self.running_timers.iter() {
             if timer_state.id == timer {
                 return true;

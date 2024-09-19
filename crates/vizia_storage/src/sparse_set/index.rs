@@ -10,7 +10,7 @@ impl SparseSetIndex for usize {
     }
 
     fn null() -> Self {
-        usize::MAX
+        Self::MAX
     }
 
     fn index(&self) -> usize {

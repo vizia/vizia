@@ -19,48 +19,48 @@ impl_parse! {
 impl From<FontWeightKeyword> for FontWeight {
     fn from(font_weight_keyword: FontWeightKeyword) -> Self {
         match font_weight_keyword {
-            FontWeightKeyword::Thin => FontWeight(100),
-            FontWeightKeyword::Hairline => FontWeight(100),
-            FontWeightKeyword::ExtraLight => FontWeight(200),
-            FontWeightKeyword::UltraLight => FontWeight(200),
-            FontWeightKeyword::Light => FontWeight(300),
-            FontWeightKeyword::Normal => FontWeight(400),
-            FontWeightKeyword::Regular => FontWeight(400),
-            FontWeightKeyword::Medium => FontWeight(500),
-            FontWeightKeyword::SemiBold => FontWeight(600),
-            FontWeightKeyword::DemiBold => FontWeight(600),
-            FontWeightKeyword::Bold => FontWeight(700),
-            FontWeightKeyword::ExtraBold => FontWeight(800),
-            FontWeightKeyword::UltraBold => FontWeight(800),
-            FontWeightKeyword::Black => FontWeight(900),
-            FontWeightKeyword::Heavy => FontWeight(900),
-            FontWeightKeyword::ExtraBlack => FontWeight(950),
-            FontWeightKeyword::UltraBlack => FontWeight(950),
+            FontWeightKeyword::Thin => Self(100),
+            FontWeightKeyword::Hairline => Self(100),
+            FontWeightKeyword::ExtraLight => Self(200),
+            FontWeightKeyword::UltraLight => Self(200),
+            FontWeightKeyword::Light => Self(300),
+            FontWeightKeyword::Normal => Self(400),
+            FontWeightKeyword::Regular => Self(400),
+            FontWeightKeyword::Medium => Self(500),
+            FontWeightKeyword::SemiBold => Self(600),
+            FontWeightKeyword::DemiBold => Self(600),
+            FontWeightKeyword::Bold => Self(700),
+            FontWeightKeyword::ExtraBold => Self(800),
+            FontWeightKeyword::UltraBold => Self(800),
+            FontWeightKeyword::Black => Self(900),
+            FontWeightKeyword::Heavy => Self(900),
+            FontWeightKeyword::ExtraBlack => Self(950),
+            FontWeightKeyword::UltraBlack => Self(950),
         }
     }
 }
 
 impl Default for FontWeight {
     fn default() -> Self {
-        FontWeight(400)
+        Self(400)
     }
 }
 
 impl From<u16> for FontWeight {
     fn from(number: u16) -> Self {
-        FontWeight(number)
+        Self(number)
     }
 }
 
 impl From<u32> for FontWeight {
     fn from(number: u32) -> Self {
-        FontWeight(number as u16)
+        Self(number as u16)
     }
 }
 
 impl From<i32> for FontWeight {
     fn from(number: i32) -> Self {
-        FontWeight(number as u16)
+        Self(number as u16)
     }
 }
 
@@ -68,7 +68,7 @@ impl From<&str> for FontWeight {
     fn from(s: &str) -> Self {
         let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
-        FontWeight::parse(&mut parser).unwrap_or_default()
+        Self::parse(&mut parser).unwrap_or_default()
     }
 }
 
@@ -80,6 +80,6 @@ impl From<FontWeight> for u16 {
 
 impl From<FontWeight> for Weight {
     fn from(value: FontWeight) -> Self {
-        Weight::from(value.0 as i32)
+        Self::from(value.0 as i32)
     }
 }

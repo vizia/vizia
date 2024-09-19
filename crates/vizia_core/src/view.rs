@@ -133,16 +133,16 @@ pub trait View: 'static + Sized {
             text_context: &mut cx.text_context,
         };
 
-        if let Some(parent_node) = get_access_node(&mut access_context, &mut cx.views, parent_id) {
-            let parent_node = parent_node.node_builder.build();
-            let node = NodeBuilder::default().build();
+        let parent_node = get_access_node(&mut access_context, &mut cx.views, parent_id);
 
-            cx.tree_updates.push(Some(TreeUpdate {
-                nodes: vec![(parent_node_id, parent_node), (node_id, node)],
-                tree: None,
-                focus: cx.focused.accesskit_id(),
-            }));
-        }
+        let parent_node = parent_node.node_builder.build();
+        let node = NodeBuilder::default().build();
+
+        cx.tree_updates.push(Some(TreeUpdate {
+            nodes: vec![(parent_node_id, parent_node), (node_id, node)],
+            tree: None,
+            focus: cx.focused.accesskit_id(),
+        }));
 
         cx.data.insert(id, ModelDataStore::default());
 

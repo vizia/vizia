@@ -9,7 +9,7 @@ use skia_safe::{
 };
 use std::any::{Any, TypeId};
 use std::f32::consts::SQRT_2;
-use vizia_style::LengthPercentageOrAuto;
+use vizia_style::{Length, LengthPercentageOrAuto};
 
 use hashbrown::HashMap;
 
@@ -643,7 +643,7 @@ impl<'a> DrawContext<'a> {
     }
 
     /// Draw background color or background image (including gradients) for the current view.
-    pub fn draw_background(&mut self, canvas: &Canvas) {
+    pub fn draw_background(&self, canvas: &Canvas) {
         let path = self.build_path(self.bounds(), (0.0, 0.0));
         let background_color = self.background_color();
         if background_color.a() != 0 {
@@ -662,7 +662,7 @@ impl<'a> DrawContext<'a> {
     }
 
     /// Draw the border of the current view.
-    pub fn draw_border(&mut self, canvas: &Canvas) {
+    pub fn draw_border(&self, canvas: &Canvas) {
         let border_color = self.border_color();
         let border_width = self.border_width();
         let border_style = self.border_style();
@@ -696,7 +696,7 @@ impl<'a> DrawContext<'a> {
     }
 
     /// Draw the outline of the current view.
-    pub fn draw_outline(&mut self, canvas: &Canvas) {
+    pub fn draw_outline(&self, canvas: &Canvas) {
         let outline_width = self.outline_width();
         let outline_color = self.outline_color();
 
@@ -721,7 +721,7 @@ impl<'a> DrawContext<'a> {
     }
 
     /// Draw shadows for the current view.
-    pub fn draw_shadows(&mut self, canvas: &Canvas) {
+    pub fn draw_shadows(&self, canvas: &Canvas) {
         if let Some(shadows) = self.shadows() {
             if shadows.is_empty() {
                 return;
@@ -737,11 +737,11 @@ impl<'a> DrawContext<'a> {
                 let shadow_x_offset = shadow.x_offset.to_px().unwrap_or(0.0) * self.scale_factor();
                 let shadow_y_offset = shadow.y_offset.to_px().unwrap_or(0.0) * self.scale_factor();
                 let spread_radius =
-                    shadow.spread_radius.as_ref().and_then(|l| l.to_px()).unwrap_or(0.0)
+                    shadow.spread_radius.as_ref().and_then(Length::to_px).unwrap_or(0.0)
                         * self.scale_factor();
 
                 let blur_radius =
-                    shadow.blur_radius.as_ref().and_then(|br| br.to_px()).unwrap_or(0.0);
+                    shadow.blur_radius.as_ref().and_then(Length::to_px).unwrap_or(0.0);
 
                 if shadow_color.a() == 0
                     || (shadow_x_offset == 0.0
@@ -789,7 +789,7 @@ impl<'a> DrawContext<'a> {
     }
 
     /// Draw background images (including gradients) for the current view.
-    fn draw_background_images(&mut self, canvas: &Canvas, path: &Path) {
+    fn draw_background_images(&self, canvas: &Canvas, path: &Path) {
         let bounds = self.bounds();
 
         if let Some(images) = self.background_images() {
@@ -1111,7 +1111,7 @@ impl<'a> DrawContext<'a> {
     }
 
     /// Draw any text for the current view.
-    pub fn draw_text(&mut self, canvas: &Canvas) {
+    pub fn draw_text(&self, canvas: &Canvas) {
         if let Some(paragraph) = self.text_context.text_paragraphs.get(self.current) {
             let bounds = self.bounds();
 

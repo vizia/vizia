@@ -8,9 +8,9 @@ pub trait IntoCssStr: 'static {
 impl IntoCssStr for CSS {
     fn get_style(&self) -> Result<String, std::io::Error> {
         match self {
-            CSS::Path(path) => std::fs::read_to_string(path),
+            Self::Path(path) => std::fs::read_to_string(path),
 
-            CSS::String(style_string) => Ok(style_string.to_owned()),
+            Self::String(style_string) => Ok(style_string.to_owned()),
         }
     }
 }
@@ -51,13 +51,13 @@ impl CSS {
 
 impl From<&str> for CSS {
     fn from(value: &str) -> Self {
-        CSS::from_string(value)
+        Self::from_string(value)
     }
 }
 
 impl From<PathBuf> for CSS {
     fn from(value: PathBuf) -> Self {
-        CSS::from_file(value)
+        Self::from_file(value)
     }
 }
 

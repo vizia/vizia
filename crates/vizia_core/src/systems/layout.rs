@@ -124,7 +124,7 @@ fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {
     if let Some(ids) = cx
         .data
         .get(&entity)
-        .map(|model_data_store| model_data_store.models.keys().cloned().collect::<Vec<_>>())
+        .map(|model_data_store| model_data_store.models.keys().copied().collect::<Vec<_>>())
     {
         for id in ids {
             if let Some(mut model) = cx
