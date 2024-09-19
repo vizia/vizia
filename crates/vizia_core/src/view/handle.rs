@@ -1,9 +1,9 @@
+use crate::context::LocalizationContext;
 use crate::prelude::*;
 use std::{
     any::{Any, TypeId},
     marker::PhantomData,
 };
-use crate::context::LocalizationContext;
 
 /// A handle to a view which has been built into the tree.
 pub struct Handle<'a, V> {
