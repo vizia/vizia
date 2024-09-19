@@ -126,7 +126,7 @@ impl TabHeader {
     where
         F: 'static + Fn(&mut Context),
     {
-        Self { index }.build(cx, |cx| (content)(cx)).navigable(true)
+        Self { index }.build(cx, |cx| (content)(cx))
     }
 }
 

@@ -55,15 +55,13 @@ impl PickList {
                 },
                 move |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
-                        List::new(cx, list_lens, move |cx, index, item| {
-                            Label::new(cx, item)
-                                .alignment(Alignment::Center)
-                                .checked(selected.map(move |selected| *selected == index))
-                                .navigable(true)
-                                .on_press(move |cx| {
-                                    cx.emit(PickListEvent::SetOption(index));
-                                    cx.emit(PopupEvent::Close);
-                                });
+                        List::new(cx, list_lens, move |cx, _, item| {
+                            Label::new(cx, item).hoverable(false);
+                        })
+                        .selected(selected.map(|s| vec![*s]))
+                        .on_select(|cx, index| {
+                            cx.emit(PickListEvent::SetOption(index));
+                            cx.emit(PopupEvent::Close);
                         });
                     })
                     .height(Auto);
