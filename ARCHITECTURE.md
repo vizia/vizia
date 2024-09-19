@@ -10,14 +10,13 @@ Vizia is split into a number of internal sub-crates for specific purposes:
 - `vizia_derive` - Derive macros such as `Lens` and `Data`.
 - `vizia_id` - A utility crate for providing generational IDs.
 - `vizia_input` - Types which are specific to user input such as mouse state, keyboard modifiers, and keymaps.
-- `vizia_storage` - Storage types used by core. This includes a sparse set and a tree, as well as various iterators tree traversal.
+- `vizia_storage` - Storage types used by core. This includes a sparse set and a tree, as well as various iterators for tree traversal.
 - `vizia_style` - Style property types as well as style parsing and matching.
 - `vizia_window` -  Types specific to a window such as the window description and cursor icon.
 - `vizia_winit` - Windowing backend utilising [Winit], which is the default windowing backend.
 
 * External Crates*
 - `skia` - 2D drawing crate.
-- `cosmic-text` - Text engine for font selection as well as shaping, layout, and rasterizing of text.
 - `morphorm` - Provides daptive layout for a tree of nodes.
 - `fluent` - Provides localization including text translation substitution.
 - `accesskit` - Provides integration with platform accessibility APIs for use with assisstive technologies such as screen readers.

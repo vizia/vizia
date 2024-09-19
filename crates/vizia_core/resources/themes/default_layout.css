@@ -359,6 +359,26 @@ list > scrollview {
     min-width: 100%;
 }
 
+list > list-item {
+    min-width: auto;
+    width: 1s;
+    height: 30px;
+    child-top: 1s;
+    child-bottom: 1s;
+}
+
+list > list-item.focused {
+    background-color: rgb(163, 163, 163);
+}
+
+list > list-item:hover {
+    background-color: rgb(123, 123, 255);
+}
+
+list > list-item:checked {
+    background-color: blue;
+}
+
 /* MENU */
 
 menubar {

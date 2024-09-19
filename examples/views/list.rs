@@ -11,7 +11,7 @@ impl Model for AppData {}
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let list: Vec<u32> = (10..14u32).collect();
+        let list: Vec<u32> = (0..14u32).collect();
         AppData { list }.build(cx);
 
         ExamplePage::new(cx, |cx| {
