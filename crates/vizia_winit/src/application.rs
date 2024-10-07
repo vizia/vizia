@@ -303,6 +303,15 @@ impl ApplicationHandler<UserEvent> for Application {
             },
         );
 
+        // set current system theme if available
+        if let Some(theme) = main_window.theme() {
+            let theme = match theme {
+                winit::window::Theme::Light => ThemeMode::LightMode,
+                winit::window::Theme::Dark => ThemeMode::DarkMode,
+            };
+            self.cx.emit_origin(WindowEvent::ThemeChanged(theme));
+        }
+
         self.cx.0.remove_user_themes();
 
         for (window_entity, window_state) in self.cx.0.windows.clone().into_iter() {
