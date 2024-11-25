@@ -53,7 +53,7 @@ pub struct Location {
     pub column: u32,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum CustomParseError<'i> {
     InvalidValue,
     InvalidDeclaration,
@@ -72,7 +72,7 @@ impl<'i> From<SelectorParseErrorKind<'i>> for CustomParseError<'i> {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum SelectorError<'i> {
     NoQualifiedNameInAttributeSelector(Token<'i>),
     EmptySelector,

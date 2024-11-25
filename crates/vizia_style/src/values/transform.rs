@@ -1,7 +1,5 @@
 use crate::{Angle, CustomParseError, LengthOrPercentage, Matrix, Parse, PercentageOrNumber};
-use cssparser::{
-    match_ignore_ascii_case, ParseError, Parser, Token, _cssparser_internal_to_lowercase,
-};
+use cssparser::{match_ignore_ascii_case, ParseError, Parser, Token};
 
 /// An individual transform function.
 #[derive(Debug, PartialEq, Clone)]

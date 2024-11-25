@@ -1,6 +1,7 @@
 use crate::{define_enum, CustomParseError, LengthOrPercentage, Parse};
 use bitflags::bitflags;
 use cssparser::*;
+use cssparser_color::Color;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TextDecoration {

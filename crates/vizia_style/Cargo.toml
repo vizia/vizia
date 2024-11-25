@@ -8,14 +8,17 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-cssparser = "0.29.6"
+cssparser = "0.34"
+cssparser-color = "0.2"
 skia-safe = {version = "0.75", features = ["textlayout"] }
-selectors = { version = "0.23.0", path = "./selectors" }
+# selectors = { version = "0.23.0", path = "./selectors" }
+selectors = "0.26"
 # morphorm = {path = "../../../morphorm" }
 morphorm = {git = "https://github.com/vizia/morphorm.git", branch = "auto-min-size2"}
 # morphorm = "0.6.4"
 smallvec = "1.0"
 bitflags = "2.6"
+precomputed-hash = "*"
 
 [lints]
 workspace = true

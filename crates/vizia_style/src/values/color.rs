@@ -64,7 +64,7 @@ impl_parse! {
     Color,
 
     try_parse {
-        cssparser::Color,
+        cssparser_color::Color,
     }
 }
 
@@ -74,11 +74,12 @@ impl From<RGBA> for Color {
     }
 }
 
-impl From<cssparser::Color> for Color {
-    fn from(color: cssparser::Color) -> Self {
+impl From<cssparser_color::Color> for Color {
+    fn from(color: cssparser_color::Color) -> Self {
         match color {
-            cssparser::Color::CurrentColor => Color::CurrentColor,
-            cssparser::Color::RGBA(rgba) => Color::RGBA(rgba.into()),
+            cssparser_color::Color::CurrentColor => Color::CurrentColor,
+            cssparser_color::Color::Rgba(rgba) => Color::RGBA(rgba.into()),
+            _ => Color::CurrentColor,
         }
     }
 }
@@ -559,9 +560,9 @@ impl From<Color> for RGBA {
     }
 }
 
-impl From<cssparser::RGBA> for RGBA {
-    fn from(rgba: cssparser::RGBA) -> Self {
-        Self::rgba(rgba.red, rgba.green, rgba.blue, rgba.alpha)
+impl From<cssparser_color::RgbaLegacy> for RGBA {
+    fn from(rgba: cssparser_color::RgbaLegacy) -> Self {
+        Self::rgba(rgba.red, rgba.green, rgba.blue, (rgba.alpha * 255.0) as u8)
     }
 }
 

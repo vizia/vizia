@@ -848,8 +848,7 @@ impl Style {
     }
 
     pub(crate) fn parse_theme(&mut self, stylesheet: &str) {
-        if let Ok(stylesheet) = StyleSheet::parse("test.css", stylesheet, ParserOptions::default())
-        {
+        if let Ok(stylesheet) = StyleSheet::parse(stylesheet, ParserOptions::new()) {
             let rules = stylesheet.rules.0;
 
             for rule in rules {
@@ -905,6 +904,8 @@ impl Style {
                     _ => {}
                 }
             }
+        } else {
+            println!("Failed to parse stylesheet");
         }
     }
 

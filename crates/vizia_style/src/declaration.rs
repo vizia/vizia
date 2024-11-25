@@ -9,22 +9,24 @@ pub struct DeclarationBlock<'i> {
 }
 
 impl<'i> DeclarationBlock<'i> {
-    pub fn parse<'a, 'o, 't>(
+    pub fn parse<'a, 't>(
         input: &mut Parser<'i, 't>,
-        options: &'a ParserOptions<'o>,
+        options: &'a ParserOptions<'i>,
     ) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         let mut important_declarations = DeclarationList::new();
         let mut declarations = DeclarationList::new();
-        let parser = DeclarationListParser::new(
-            input,
-            PropertyDeclarationParser {
-                important_declarations: &mut important_declarations,
-                declarations: &mut declarations,
-                options,
-            },
-        );
+        let mut decl_parser = PropertyDeclarationParser {
+            important_declarations: &mut important_declarations,
+            declarations: &mut declarations,
+            options,
+        };
+        let parser = RuleBodyParser::new(input, &mut decl_parser);
         for res in parser {
             if let Err((err, _)) = res {
+                if options.error_recovery {
+                    options.warn(err);
+                    continue;
+                }
                 return Err(err);
             }
         }
@@ -33,13 +35,13 @@ impl<'i> DeclarationBlock<'i> {
     }
 }
 
-struct PropertyDeclarationParser<'a, 'o, 'i> {
+struct PropertyDeclarationParser<'a, 'i> {
     declarations: &'a mut Vec<Property<'i>>,
     important_declarations: &'a mut Vec<Property<'i>>,
-    options: &'a ParserOptions<'o>,
+    options: &'a ParserOptions<'i>,
 }
 
-impl<'a, 'o, 'i> DeclarationParser<'i> for PropertyDeclarationParser<'a, 'o, 'i> {
+impl<'a, 'i> DeclarationParser<'i> for PropertyDeclarationParser<'a, 'i> {
     type Declaration = ();
     type Error = CustomParseError<'i>;
 
@@ -77,11 +79,28 @@ pub(crate) fn parse_declaration<'i>(
     Ok(())
 }
 
-pub(crate) type DeclarationList<'i> = Vec<Property<'i>>;
-
-/// Default methods reject all at rules.
-impl<'a, 'o, 'i> AtRuleParser<'i> for PropertyDeclarationParser<'a, 'o, 'i> {
+impl<'a, 'i> AtRuleParser<'i> for PropertyDeclarationParser<'a, 'i> {
     type Prelude = ();
     type AtRule = ();
     type Error = CustomParseError<'i>;
 }
+
+impl<'a, 'i> QualifiedRuleParser<'i> for PropertyDeclarationParser<'a, 'i> {
+    type Prelude = ();
+    type QualifiedRule = ();
+    type Error = CustomParseError<'i>;
+}
+
+impl<'a, 'i> RuleBodyItemParser<'i, (), CustomParseError<'i>>
+    for PropertyDeclarationParser<'a, 'i>
+{
+    fn parse_qualified(&self) -> bool {
+        false
+    }
+
+    fn parse_declarations(&self) -> bool {
+        true
+    }
+}
+
+pub(crate) type DeclarationList<'i> = Vec<Property<'i>>;
