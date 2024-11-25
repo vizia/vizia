@@ -1,41 +1,46 @@
 use crate::error::Error;
-use crate::{CssRule, ParserOptions};
+use crate::ParserOptions;
 
 use crate::rule::TopLevelRuleParser;
 use crate::{CssRuleList, CustomParseError};
 use cssparser::*;
 
 #[derive(Debug)]
-pub struct StyleSheet<'i, 'o> {
+pub struct StyleSheet<'i> {
     // List of top level rules
     pub rules: CssRuleList<'i>,
 
-    pub options: ParserOptions<'o>,
+    pub options: ParserOptions<'i>,
 }
 
-impl<'i, 'o> StyleSheet<'i, 'o> {
+impl<'i> StyleSheet<'i> {
     pub fn parse(
-        filename: &str,
         code: &'i str,
-        options: ParserOptions<'o>,
+        options: ParserOptions<'i>,
     ) -> Result<Self, Error<CustomParseError<'i>>> {
         let mut input = ParserInput::new(code);
         let mut parser = Parser::new(&mut input);
-        let rule_list_parser =
-            RuleListParser::new_for_stylesheet(&mut parser, TopLevelRuleParser::new(&options));
 
-        let mut rules = vec![];
-        for rule in rule_list_parser {
-            let rule = match rule {
-                Ok((_, CssRule::Ignored)) => continue,
-                Ok((_, rule)) => rule,
-                Err((e, _)) => return Err(Error::from(e, filename.to_owned())),
-            };
+        let mut rules = CssRuleList(vec![]);
+        let mut rule_parser = TopLevelRuleParser::new(&options, &mut rules);
+        let mut rule_list_parser = StyleSheetParser::new(&mut parser, &mut rule_parser);
 
-            rules.push(rule)
+        while let Some(rule) = rule_list_parser.next() {
+            match rule {
+                Ok(_) => {}
+                Err((e, _)) => {
+                    let options = &mut rule_list_parser.parser.options;
+                    if options.error_recovery {
+                        options.warn(e);
+                        continue;
+                    }
+
+                    return Err(Error::from(e, options.filename.clone()));
+                }
+            }
         }
 
-        Ok(StyleSheet { rules: CssRuleList(rules), options })
+        Ok(StyleSheet { rules, options })
     }
 }
 
@@ -119,19 +124,9 @@ test {
 }
 "#;
 
-    //     const EXAMPLE: &str = r#"
-    //     :root {
-    //         --main-bg-color: brown;
-    //     }
-
-    //     button {
-    //         background-color: var(--main-bg-color);
-    //     }
-    // "#;
-
     #[test]
     fn parse_stylsheet() {
-        let style_sheet = StyleSheet::parse("test.css", CSS_EXAMPLE, ParserOptions::default());
+        let style_sheet = StyleSheet::parse(CSS_EXAMPLE, ParserOptions::default());
         println!("{:#?}", style_sheet);
     }
 }

@@ -2,13 +2,14 @@ use crate::{events::ViewHandler, prelude::*};
 use hashbrown::HashMap;
 use vizia_storage::{LayoutParentIterator, TreeBreadthIterator};
 use vizia_style::{
-    matches_selector_list,
+    matches_selector,
     selectors::{
         attr::{AttrSelectorOperation, CaseSensitivity, NamespaceConstraint},
-        parser::Component,
-        SelectorImpl,
+        context::{MatchingForInvalidation, NeedsSelectorFlags, SelectorCaches},
+        matching::ElementSelectorFlags,
+        parser::{Component, NthType},
+        OpaqueElement, SelectorImpl,
     },
-    selectors::{matching::ElementSelectorFlags, OpaqueElement},
     Element, MatchingContext, MatchingMode, PseudoClass, QuirksMode, SelectorIdent, Selectors,
 };
 
@@ -170,15 +171,11 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
         false
     }
 
-    fn match_non_ts_pseudo_class<F>(
+    fn match_non_ts_pseudo_class(
         &self,
         pc: &<Self::Impl as SelectorImpl>::NonTSPseudoClass,
         _context: &mut MatchingContext<'_, Self::Impl>,
-        _flags_setter: &mut F,
-    ) -> bool
-    where
-        F: FnMut(&Self, ElementSelectorFlags),
-    {
+    ) -> bool {
         if let Some(psudeo_class_flag) = self.store.pseudo_classes.get(self.entity) {
             match pc {
                 PseudoClass::Hover => psudeo_class_flag.contains(PseudoClassFlags::HOVER),
@@ -230,6 +227,23 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
         } else {
             false
         }
+    }
+
+    fn first_element_child(&self) -> Option<Self> {
+        None
+    }
+
+    fn apply_selector_flags(&self, _flags: ElementSelectorFlags) {}
+
+    fn has_custom_state(&self, _name: &<Self::Impl as SelectorImpl>::Identifier) -> bool {
+        false
+    }
+
+    fn add_element_unique_hashes(
+        &self,
+        _filter: &mut vizia_style::selectors::bloom::BloomFilter,
+    ) -> bool {
+        false
     }
 }
 
@@ -711,17 +725,28 @@ pub(crate) fn compute_matched_rules(
     matched_rules: &mut Vec<(Rule, u32)>,
 ) {
     for (rule, selector_list) in cx.style.rules.iter() {
-        let mut context =
-            MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
-
-        let (matches, specificity) = matches_selector_list(
-            selector_list,
-            &Node { entity, store: &cx.style, tree: &cx.tree, views: &cx.views },
-            &mut context,
+        let mut cache = SelectorCaches::default();
+        let mut context = MatchingContext::new(
+            MatchingMode::Normal,
+            None,
+            &mut cache,
+            QuirksMode::NoQuirks,
+            NeedsSelectorFlags::No,
+            MatchingForInvalidation::No,
         );
 
-        if matches {
-            matched_rules.push((*rule, specificity));
+        for selector in selector_list.slice() {
+            let matches = matches_selector(
+                selector,
+                0,
+                None,
+                &Node { entity, store: &cx.style, tree: &cx.tree, views: &cx.views },
+                &mut context,
+            );
+            if matches {
+                matched_rules.push((*rule, selector.specificity()));
+                break;
+            }
         }
     }
 
@@ -805,19 +830,14 @@ pub(crate) fn style_system(cx: &mut Context) {
 
                         for rule in entry.rules.iter() {
                             if let Some(selectors) = cx.style.rules.get(&rule.0) {
-                                for selector in selectors.0.iter() {
+                                for selector in selectors.slice() {
                                     for component in selector.iter() {
                                         match *component {
-                                            Component::FirstChild
-                                            | Component::LastChild
-                                            | Component::NthChild(_, _)
-                                            | Component::FirstOfType
-                                            | Component::LastOfType
-                                            | Component::NthLastChild(_, _)
-                                            | Component::NthOfType(_, _)
-                                            | Component::NthLastOfType(_, _)
-                                            | Component::OnlyChild
-                                            | Component::OnlyOfType => {
+                                            Component::Nth(n)
+                                                if n.ty == NthType::Child
+                                                    || n.ty == NthType::LastChild
+                                                    || n.ty == NthType::OnlyChild =>
+                                            {
                                                 matched_rules.clear();
                                                 compute_match = true;
                                                 continue 'cache;

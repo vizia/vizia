@@ -3,7 +3,7 @@ pub use selectors::SelectorList;
 
 pub use selectors::{
     context::{MatchingContext, MatchingMode, QuirksMode},
-    matching::matches_selector_list,
+    matching::{matches_selector, matches_selector_list},
     Element,
 };
 
@@ -16,19 +16,24 @@ mod test {
 
     use cssparser::*;
     use selectors::{
-        context::{MatchingContext, MatchingMode, QuirksMode},
+        context::{
+            MatchingContext, MatchingForInvalidation, MatchingMode, NeedsSelectorFlags, QuirksMode,
+            SelectorCaches,
+        },
         matching::matches_selector_list,
         OpaqueElement, SelectorList,
     };
 
-    use crate::{CustomParseError, SelectorIdent, SelectorParser, Selectors};
+    use crate::{CustomParseError, ParserOptions, SelectorIdent, SelectorParser, Selectors};
 
     fn parse(input: &str) -> Result<SelectorList<Selectors>, ParseError<'_, CustomParseError<'_>>> {
         let mut parser_input = ParserInput::new(input);
         let mut parser = Parser::new(&mut parser_input);
+        let options = ParserOptions::default();
         SelectorList::parse(
-            &SelectorParser { default_namespace: &None, is_nesting_allowed: true },
+            &SelectorParser { options: &options },
             &mut parser,
+            selectors::parser::ParseRelative::No,
         )
     }
 
@@ -185,15 +190,11 @@ mod test {
             false
         }
 
-        fn match_non_ts_pseudo_class<F>(
+        fn match_non_ts_pseudo_class(
             &self,
             pc: &<Self::Impl as selectors::SelectorImpl>::NonTSPseudoClass,
             context: &mut selectors::context::MatchingContext<'_, Self::Impl>,
-            flags_setter: &mut F,
-        ) -> bool
-        where
-            F: FnMut(&Self, selectors::matching::ElementSelectorFlags),
-        {
+        ) -> bool {
             if let Some(psudeo_class_flag) = self.store.pseudo_class.get(&self.entity) {
                 match pc {
                     crate::PseudoClass::Hover => psudeo_class_flag.contains(PseudoClass::HOVER),
@@ -227,6 +228,25 @@ mod test {
                 false
             }
         }
+
+        fn first_element_child(&self) -> Option<Self> {
+            None
+        }
+
+        fn apply_selector_flags(&self, flags: selectors::matching::ElementSelectorFlags) {
+            todo!()
+        }
+
+        fn has_custom_state(
+            &self,
+            name: &<Self::Impl as selectors::SelectorImpl>::Identifier,
+        ) -> bool {
+            false
+        }
+
+        fn add_element_unique_hashes(&self, filter: &mut selectors::bloom::BloomFilter) -> bool {
+            false
+        }
     }
 
     #[test]
@@ -248,10 +268,17 @@ mod test {
         let child_node = Node { entity: child, store: &store };
 
         if let Ok(selector_list) = parse("*") {
-            let mut context =
-                MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
+            let mut cache = SelectorCaches::default();
+            let mut context = MatchingContext::new(
+                MatchingMode::Normal,
+                None,
+                &mut cache,
+                QuirksMode::NoQuirks,
+                NeedsSelectorFlags::No,
+                MatchingForInvalidation::No,
+            );
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
+            let result = matches_selector_list(&selector_list, &root_node, &mut context);
         }
     }
 
@@ -274,14 +301,21 @@ mod test {
         let child_node = Node { entity: child, store: &store };
 
         if let Ok(selector_list) = parse("window") {
-            let mut context =
-                MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
+            let mut cache = SelectorCaches::default();
+            let mut context = MatchingContext::new(
+                MatchingMode::Normal,
+                None,
+                &mut cache,
+                QuirksMode::NoQuirks,
+                NeedsSelectorFlags::No,
+                MatchingForInvalidation::No,
+            );
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
+            let result = matches_selector_list(&selector_list, &root_node, &mut context);
 
             assert!(result);
 
-            let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
+            let result = matches_selector_list(&selector_list, &child_node, &mut context);
 
             assert!(!result);
         }
@@ -316,46 +350,74 @@ mod test {
         let child_node = Node { entity: child, store: &store };
 
         if let Ok(selector_list) = parse(".foo") {
-            let mut context =
-                MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
+            let mut cache = SelectorCaches::default();
+            let mut context = MatchingContext::new(
+                MatchingMode::Normal,
+                None,
+                &mut cache,
+                QuirksMode::NoQuirks,
+                NeedsSelectorFlags::No,
+                MatchingForInvalidation::No,
+            );
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
+            let result = matches_selector_list(&selector_list, &root_node, &mut context);
             assert!(result);
 
-            let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
+            let result = matches_selector_list(&selector_list, &child_node, &mut context);
             assert!(!result);
         }
 
         if let Ok(selector_list) = parse(".bar") {
-            let mut context =
-                MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
+            let mut cache = SelectorCaches::default();
+            let mut context = MatchingContext::new(
+                MatchingMode::Normal,
+                None,
+                &mut cache,
+                QuirksMode::NoQuirks,
+                NeedsSelectorFlags::No,
+                MatchingForInvalidation::No,
+            );
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
+            let result = matches_selector_list(&selector_list, &root_node, &mut context);
             assert!(result);
 
-            let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
+            let result = matches_selector_list(&selector_list, &child_node, &mut context);
             assert!(result);
         }
 
         if let Ok(selector_list) = parse(".foo.bar") {
-            let mut context =
-                MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
+            let mut cache = SelectorCaches::default();
+            let mut context = MatchingContext::new(
+                MatchingMode::Normal,
+                None,
+                &mut cache,
+                QuirksMode::NoQuirks,
+                NeedsSelectorFlags::No,
+                MatchingForInvalidation::No,
+            );
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
+            let result = matches_selector_list(&selector_list, &root_node, &mut context);
             assert!(result);
 
-            let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
+            let result = matches_selector_list(&selector_list, &child_node, &mut context);
             assert!(!result);
         }
 
         if let Ok(selector_list) = parse(".foo, .bar") {
-            let mut context =
-                MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
+            let mut cache = SelectorCaches::default();
+            let mut context = MatchingContext::new(
+                MatchingMode::Normal,
+                None,
+                &mut cache,
+                QuirksMode::NoQuirks,
+                NeedsSelectorFlags::No,
+                MatchingForInvalidation::No,
+            );
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
+            let result = matches_selector_list(&selector_list, &root_node, &mut context);
             assert!(result);
 
-            let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
+            let result = matches_selector_list(&selector_list, &child_node, &mut context);
             assert!(result);
         }
     }
@@ -385,13 +447,20 @@ mod test {
         let child_node = Node { entity: child, store: &store };
 
         if let Ok(selector_list) = parse("window:hover") {
-            let mut context =
-                MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
+            let mut cache = SelectorCaches::default();
+            let mut context = MatchingContext::new(
+                MatchingMode::Normal,
+                None,
+                &mut cache,
+                QuirksMode::NoQuirks,
+                NeedsSelectorFlags::No,
+                MatchingForInvalidation::No,
+            );
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
+            let result = matches_selector_list(&selector_list, &root_node, &mut context);
             assert!(result);
 
-            let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
+            let result = matches_selector_list(&selector_list, &child_node, &mut context);
             assert!(!result);
         }
     }

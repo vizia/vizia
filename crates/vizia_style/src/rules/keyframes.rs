@@ -1,6 +1,8 @@
 use cssparser::*;
 
-use crate::{CustomParseError, DeclarationBlock, Ident, Parse, ParserOptions, Percentage};
+use crate::{
+    CustomParseError, DeclarationBlock, Ident, Location, Parse, ParserOptions, Percentage,
+};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum KeyframesName<'i> {
@@ -42,6 +44,7 @@ impl<'i> Parse<'i> for KeyframesName<'i> {
 pub struct KeyframesRule<'i> {
     pub name: KeyframesName<'i>,
     pub keyframes: Vec<Keyframe<'i>>,
+    pub loc: Location,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -104,5 +107,20 @@ impl<'i> QualifiedRuleParser<'i> for KeyframeListParser {
         // For now there are no options that apply within @keyframes
         let options = ParserOptions::default();
         Ok(Keyframe { selectors, declarations: DeclarationBlock::parse(input, &options)? })
+    }
+}
+
+impl<'i> DeclarationParser<'i> for KeyframeListParser {
+    type Declaration = Keyframe<'i>;
+    type Error = CustomParseError<'i>;
+}
+
+impl<'i> RuleBodyItemParser<'i, Keyframe<'i>, CustomParseError<'i>> for KeyframeListParser {
+    fn parse_qualified(&self) -> bool {
+        true
+    }
+
+    fn parse_declarations(&self) -> bool {
+        false
     }
 }

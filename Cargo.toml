@@ -33,7 +33,7 @@ members = [ "crates/*", "examples/widget_gallery", "examples/designer"]
 
 [workspace.package]
 version = "0.1.0"
-authors = ["George Atkinson <geomyles@yahoo.co.uk>"]
+authors = ["George Atkinson"]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/vizia/vizia"
