@@ -25,7 +25,7 @@ impl View for Divider {
     }
 }
 
-impl<'a> Handle<'a, Divider> {
+impl Handle<'_, Divider> {
     pub fn orientation(self, orientation: impl Res<Orientation>) -> Self {
         self.bind(orientation, move |handle, orientation| {
             let orientation = orientation.get(&handle);

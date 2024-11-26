@@ -70,7 +70,7 @@ mod internal {
         fn current(&self) -> Entity;
     }
 
-    impl<'a, V> Modifiable for Handle<'a, V> {
+    impl<V> Modifiable for Handle<'_, V> {
         fn context(&mut self) -> &mut Context {
             self.cx
         }

@@ -22,14 +22,14 @@ pub(crate) struct Node<'s, 't, 'v> {
     views: &'v HashMap<Entity, Box<dyn ViewHandler>>,
 }
 
-impl<'s, 't, 'v> std::fmt::Debug for Node<'s, 't, 'v> {
+impl std::fmt::Debug for Node<'_, '_, '_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.entity)
     }
 }
 
 /// Used for selector matching.
-impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
+impl Element for Node<'_, '_, '_> {
     type Impl = Selectors;
 
     fn opaque(&self) -> OpaqueElement {

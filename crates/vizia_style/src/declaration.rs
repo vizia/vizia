@@ -41,7 +41,7 @@ struct PropertyDeclarationParser<'a, 'i> {
     options: &'a ParserOptions<'i>,
 }
 
-impl<'a, 'i> DeclarationParser<'i> for PropertyDeclarationParser<'a, 'i> {
+impl<'i> DeclarationParser<'i> for PropertyDeclarationParser<'_, 'i> {
     type Declaration = ();
     type Error = CustomParseError<'i>;
 
@@ -79,21 +79,19 @@ pub(crate) fn parse_declaration<'i>(
     Ok(())
 }
 
-impl<'a, 'i> AtRuleParser<'i> for PropertyDeclarationParser<'a, 'i> {
+impl<'i> AtRuleParser<'i> for PropertyDeclarationParser<'_, 'i> {
     type Prelude = ();
     type AtRule = ();
     type Error = CustomParseError<'i>;
 }
 
-impl<'a, 'i> QualifiedRuleParser<'i> for PropertyDeclarationParser<'a, 'i> {
+impl<'i> QualifiedRuleParser<'i> for PropertyDeclarationParser<'_, 'i> {
     type Prelude = ();
     type QualifiedRule = ();
     type Error = CustomParseError<'i>;
 }
 
-impl<'a, 'i> RuleBodyItemParser<'i, (), CustomParseError<'i>>
-    for PropertyDeclarationParser<'a, 'i>
-{
+impl<'i> RuleBodyItemParser<'i, (), CustomParseError<'i>> for PropertyDeclarationParser<'_, 'i> {
     fn parse_qualified(&self) -> bool {
         false
     }

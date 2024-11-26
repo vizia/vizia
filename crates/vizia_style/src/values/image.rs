@@ -9,7 +9,7 @@ pub enum BackgroundImage<'i> {
     Gradient(Box<Gradient>),
 }
 
-impl<'i> BackgroundImage<'i> {
+impl BackgroundImage<'_> {
     pub fn is_gradient(&self) -> bool {
         matches!(self, BackgroundImage::Gradient(_))
     }
@@ -35,7 +35,7 @@ impl<'i> Parse<'i> for BackgroundImage<'i> {
     }
 }
 
-impl<'i> From<Gradient> for BackgroundImage<'i> {
+impl From<Gradient> for BackgroundImage<'_> {
     fn from(gradient: Gradient) -> Self {
         BackgroundImage::Gradient(Box::new(gradient))
     }

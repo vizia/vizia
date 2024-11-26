@@ -418,4 +418,4 @@ pub trait LayoutModifiers: internal::Modifiable {
     }
 }
 
-impl<'a, V: View> LayoutModifiers for Handle<'a, V> {}
+impl<V: View> LayoutModifiers for Handle<'_, V> {}

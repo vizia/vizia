@@ -300,7 +300,7 @@ impl View for Datepicker {
     }
 }
 
-impl<'a> Handle<'a, Datepicker> {
+impl Handle<'_, Datepicker> {
     pub fn on_select<F: 'static + Fn(&mut EventContext, NaiveDate)>(self, callback: F) -> Self {
         self.modify(|datepicker: &mut Datepicker| datepicker.on_select = Some(Box::new(callback)))
     }

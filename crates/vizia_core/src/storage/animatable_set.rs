@@ -430,7 +430,7 @@ where
         }
     }
 
-    /// Returns true if the given entity is linked to an active animation
+    // Returns true if the given entity is linked to an active animation
     // pub fn is_animating(&self, entity: Entity) -> bool {
     //     let entity_index = entity.index();
     //     if entity_index < self.inline_data.sparse.len() {
@@ -493,7 +493,7 @@ where
         false
     }
 
-    /// Returns a reference to any inline data on the entity if it exists.
+    // Returns a reference to any inline data on the entity if it exists.
     // pub fn get_inline(&self, entity: Entity) -> Option<&T> {
     //     let entity_index = entity.index();
     //     if entity_index < self.inline_data.sparse.len() {

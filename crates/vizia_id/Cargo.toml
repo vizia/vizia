@@ -1,6 +1,6 @@
 [package]
 name = "vizia_id"
-description = "Core components of vizia"
+description = "Generational ID type used by vizia"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true

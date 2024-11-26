@@ -6,13 +6,13 @@ pub struct AnimationBuilder<'a> {
     pub(crate) keyframes: Vec<KeyframeBuilder<'a>>,
 }
 
-impl<'a> Default for AnimationBuilder<'a> {
+impl Default for AnimationBuilder<'_> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'a> AnimationBuilder<'a> {
+impl AnimationBuilder<'_> {
     pub fn new() -> Self {
         Self { keyframes: Vec::new() }
     }

@@ -68,7 +68,7 @@ pub trait ToggleButtonModifiers {
     fn on_toggle(self, callback: impl Fn(&mut EventContext) + 'static) -> Self;
 }
 
-impl<'a> ToggleButtonModifiers for Handle<'a, ToggleButton> {
+impl ToggleButtonModifiers for Handle<'_, ToggleButton> {
     fn on_toggle(self, callback: impl Fn(&mut EventContext) + 'static) -> Self {
         self.modify(|toggle_button| toggle_button.on_toggle = Some(Box::new(callback)))
     }

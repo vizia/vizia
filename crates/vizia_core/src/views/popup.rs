@@ -411,7 +411,7 @@ impl Placement {
     }
 }
 
-impl<'a> Handle<'a, Popup> {
+impl Handle<'_, Popup> {
     /// Sets the position where the tooltip should appear relative to its parent element.
     /// Defaults to `Placement::Bottom`.
     pub fn placement(self, placement: impl Res<Placement>) -> Self {

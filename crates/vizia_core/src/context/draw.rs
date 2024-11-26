@@ -119,7 +119,7 @@ macro_rules! get_length_property {
     };
 }
 
-impl<'a> DrawContext<'a> {
+impl DrawContext<'_> {
     /// Returns the bounds of the current view.
     pub fn bounds(&self) -> BoundingBox {
         self.cache.get_bounds(self.current)
@@ -1176,7 +1176,7 @@ impl<'a> DrawContext<'a> {
     }
 }
 
-impl<'a> DataContext for DrawContext<'a> {
+impl DataContext for DrawContext<'_> {
     fn data<T: 'static>(&self) -> Option<&T> {
         // Return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {

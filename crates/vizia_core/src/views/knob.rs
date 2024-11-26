@@ -107,7 +107,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
     }
 }
 
-impl<'a, L: Lens<Target = f32>> Handle<'a, Knob<L>> {
+impl<L: Lens<Target = f32>> Handle<'_, Knob<L>> {
     pub fn on_changing<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, f32),

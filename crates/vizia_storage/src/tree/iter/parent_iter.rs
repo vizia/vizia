@@ -19,7 +19,7 @@ where
     }
 }
 
-impl<'a, I> Iterator for ParentIterator<'a, I>
+impl<I> Iterator for ParentIterator<'_, I>
 where
     I: GenerationalId,
 {
@@ -52,7 +52,7 @@ where
     }
 }
 
-impl<'a, I> Iterator for LayoutParentIterator<'a, I>
+impl<I> Iterator for LayoutParentIterator<'_, I>
 where
     I: GenerationalId,
 {

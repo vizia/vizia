@@ -156,7 +156,7 @@ impl<'i> From<SelectorParseErrorKind<'i>> for SelectorError<'i> {
     }
 }
 
-impl<'i> SelectorError<'i> {
+impl SelectorError<'_> {
     fn _reason(&self) -> String {
         use SelectorError::*;
         match self {

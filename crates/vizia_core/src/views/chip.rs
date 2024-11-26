@@ -61,7 +61,7 @@ pub enum ChipVariant {
 
 impl_res_simple!(ChipVariant);
 
-impl<'a> Handle<'a, Chip> {
+impl Handle<'_, Chip> {
     pub fn on_close(self, callback: impl 'static + Fn(&mut EventContext) + Send + Sync) -> Self {
         self.modify(|chip: &mut Chip| {
             chip.on_close = Some(Arc::new(callback));

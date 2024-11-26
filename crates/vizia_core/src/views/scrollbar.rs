@@ -237,7 +237,7 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
     }
 }
 
-impl<'a, L1: 'static + Lens<Target = f32>> Handle<'a, Scrollbar<L1>> {
+impl<L1: 'static + Lens<Target = f32>> Handle<'_, Scrollbar<L1>> {
     pub fn scroll_to_cursor(mut self, scroll_to_cursor: impl Res<bool>) -> Self {
         let entity = self.entity();
         scroll_to_cursor.set_or_bind(self.context(), entity, |cx, val| {

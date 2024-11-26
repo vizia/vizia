@@ -13,7 +13,7 @@ use vizia_core::{
 };
 use window::Window;
 
-impl<'a> ModifyWindow for EventContext<'a> {
+impl ModifyWindow for EventContext<'_> {
     fn modify_window<T>(&mut self, f: impl FnOnce(&winit::window::Window) -> T) -> Option<T> {
         self.with_current(self.parent_window().unwrap_or(Entity::root()), move |cx| {
             cx.get_view::<Window>()

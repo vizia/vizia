@@ -24,7 +24,7 @@ where
     }
 }
 
-impl<'a, I> Iterator for TreeDepthIterator<'a, I>
+impl<I> Iterator for TreeDepthIterator<'_, I>
 where
     I: GenerationalId,
 {

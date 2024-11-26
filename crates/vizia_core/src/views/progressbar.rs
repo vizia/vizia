@@ -124,7 +124,7 @@ impl ProgressBar {
     }
 }
 
-impl<'a> Handle<'a, ProgressBar> {
+impl Handle<'_, ProgressBar> {
     /// Set the color of the bar inside the ProgressBar.
     ///
     /// you also pass a lens to this method if you want to be able to change the color

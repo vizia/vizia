@@ -29,7 +29,7 @@ where
     }
 }
 
-impl<'a, I> Iterator for TreeIterator<'a, I>
+impl<I> Iterator for TreeIterator<'_, I>
 where
     I: GenerationalId,
 {
@@ -42,7 +42,7 @@ where
     }
 }
 
-impl<'a, I> DoubleEndedIterator for TreeIterator<'a, I>
+impl<I> DoubleEndedIterator for TreeIterator<'_, I>
 where
     I: GenerationalId,
 {
@@ -77,7 +77,7 @@ where
     }
 }
 
-impl<'a, I> Iterator for TreeBreadthIterator<'a, I>
+impl<I> Iterator for TreeBreadthIterator<'_, I>
 where
     I: GenerationalId,
 {

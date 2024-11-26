@@ -80,7 +80,7 @@ pub struct SelectorParser<'a, 'i> {
     pub options: &'a ParserOptions<'i>,
 }
 
-impl<'a, 'i> selectors::parser::Parser<'i> for SelectorParser<'a, 'i> {
+impl<'i> selectors::parser::Parser<'i> for SelectorParser<'_, 'i> {
     type Impl = Selectors;
     type Error = CustomParseError<'i>;
 

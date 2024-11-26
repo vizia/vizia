@@ -82,7 +82,7 @@ impl View for TabView {
     }
 }
 
-impl<'a> Handle<'a, TabView> {
+impl Handle<'_, TabView> {
     pub fn vertical(self) -> Self {
         self.modify(|tabview: &mut TabView| tabview.is_vertical = true)
     }

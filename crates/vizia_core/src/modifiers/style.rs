@@ -657,7 +657,7 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 }
 
-impl<'a, V: View> StyleModifiers for Handle<'a, V> {}
+impl<V: View> StyleModifiers for Handle<'_, V> {}
 
 #[derive(Debug, Clone)]
 pub struct LinearGradientBuilder {

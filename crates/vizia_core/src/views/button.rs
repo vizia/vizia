@@ -162,7 +162,7 @@ pub trait ButtonModifiers {
     fn variant<U: Into<ButtonVariant>>(self, variant: impl Res<U>) -> Self;
 }
 
-impl<'a> ButtonModifiers for Handle<'a, Button> {
+impl ButtonModifiers for Handle<'_, Button> {
     fn variant<U: Into<ButtonVariant>>(mut self, variant: impl Res<U>) -> Self {
         let entity = self.entity();
         variant.set_or_bind(self.context(), entity, |cx, val| {
@@ -237,13 +237,13 @@ impl View for ButtonGroup {
     }
 }
 
-impl<'a> Handle<'a, ButtonGroup> {
+impl Handle<'_, ButtonGroup> {
     pub fn vertical(self, is_vertical: impl Res<bool>) -> Self {
         self.toggle_class("vertical", is_vertical)
     }
 }
 
-impl<'a> ButtonModifiers for Handle<'a, ButtonGroup> {
+impl ButtonModifiers for Handle<'_, ButtonGroup> {
     fn variant<U: Into<ButtonVariant>>(mut self, variant: impl Res<U>) -> Self {
         let entity = self.entity();
         variant.set_or_bind(self.context(), entity, |cx, val| {

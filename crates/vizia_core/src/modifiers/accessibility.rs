@@ -93,4 +93,4 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     }
 }
 
-impl<'a, V: View> AccessibilityModifiers for Handle<'a, V> {}
+impl<V: View> AccessibilityModifiers for Handle<'_, V> {}
