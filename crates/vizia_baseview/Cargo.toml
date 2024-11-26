@@ -15,7 +15,11 @@ vizia_id.workspace = true
 baseview = { git = "https://github.com/RustAudio/baseview.git", rev = "579130ecb4f9f315ae52190af42f0ea46aeaa4a2", features = ["opengl"] }
 raw-window-handle = "0.5"
 gl-rs = { package = "gl", version = "0.14" }
-skia-safe = {version = "0.75", features = ["gl"]}
+skia-safe = { version = "0.80", features = ["gl", "textlayout", "svg"] }
+
+[target."cfg(target_os = \"linux\")".dependencies.skia-safe]
+version = "0.80"
+features = ["gl", "textlayout", "svg", "x11", "wayland"]
 
 [lints]
 workspace = true

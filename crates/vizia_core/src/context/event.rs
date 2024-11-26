@@ -1294,7 +1294,7 @@ impl<'a> EventContext<'a> {
     }
 }
 
-impl<'a> DataContext for EventContext<'a> {
+impl DataContext for EventContext<'_> {
     fn data<T: 'static>(&self) -> Option<&T> {
         // Return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
@@ -1325,7 +1325,7 @@ impl<'a> DataContext for EventContext<'a> {
     }
 }
 
-impl<'a> EmitContext for EventContext<'a> {
+impl EmitContext for EventContext<'_> {
     fn emit<M: Any + Send>(&mut self, message: M) {
         self.event_queue.push_back(
             Event::new(message)
@@ -1387,7 +1387,7 @@ pub trait TreeProps {
     fn parent_window(&self) -> Option<Entity>;
 }
 
-impl<'a> TreeProps for EventContext<'a> {
+impl TreeProps for EventContext<'_> {
     fn parent(&self) -> Entity {
         self.tree.get_layout_parent(self.current).unwrap()
     }

@@ -23,7 +23,7 @@ where
     }
 }
 
-impl<'a, I> Iterator for LayoutTreeIterator<'a, I>
+impl<I> Iterator for LayoutTreeIterator<'_, I>
 where
     I: GenerationalId,
 {
@@ -43,7 +43,7 @@ where
     }
 }
 
-impl<'a, I> DoubleEndedIterator for LayoutTreeIterator<'a, I>
+impl<I> DoubleEndedIterator for LayoutTreeIterator<'_, I>
 where
     I: GenerationalId,
 {
@@ -88,7 +88,7 @@ where
     }
 }
 
-impl<'a, I> Iterator for LayoutSiblingIterator<'a, I>
+impl<I> Iterator for LayoutSiblingIterator<'_, I>
 where
     I: GenerationalId,
 {
@@ -108,7 +108,7 @@ where
     }
 }
 
-impl<'a, I> DoubleEndedIterator for LayoutSiblingIterator<'a, I>
+impl<I> DoubleEndedIterator for LayoutSiblingIterator<'_, I>
 where
     I: GenerationalId,
 {
@@ -148,7 +148,7 @@ where
     }
 }
 
-impl<'a, I> Iterator for DrawTreeIterator<'a, I>
+impl<I> Iterator for DrawTreeIterator<'_, I>
 where
     I: GenerationalId,
 {
@@ -168,7 +168,7 @@ where
     }
 }
 
-impl<'a, I> DoubleEndedIterator for DrawTreeIterator<'a, I>
+impl<I> DoubleEndedIterator for DrawTreeIterator<'_, I>
 where
     I: GenerationalId,
 {

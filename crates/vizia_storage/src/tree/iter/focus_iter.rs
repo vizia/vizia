@@ -36,7 +36,7 @@ where
     }
 }
 
-impl<'a, I> Iterator for FocusTreeIterator<'a, I>
+impl<I> Iterator for FocusTreeIterator<'_, I>
 where
     I: GenerationalId,
 {
@@ -56,7 +56,7 @@ where
     }
 }
 
-impl<'a, I> DoubleEndedIterator for FocusTreeIterator<'a, I>
+impl<I> DoubleEndedIterator for FocusTreeIterator<'_, I>
 where
     I: GenerationalId,
 {

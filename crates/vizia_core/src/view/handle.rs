@@ -13,7 +13,7 @@ pub struct Handle<'a, V> {
     pub(crate) cx: &'a mut Context,
 }
 
-impl<'a, V> DataContext for Handle<'a, V> {
+impl<V> DataContext for Handle<'_, V> {
     fn data<T: 'static>(&self) -> Option<&T> {
         // Return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
@@ -44,7 +44,7 @@ impl<'a, V> DataContext for Handle<'a, V> {
     }
 }
 
-impl<'a, V> Handle<'a, V> {
+impl<V> Handle<'_, V> {
     /// Returns the [`Entity`] id of the view.
     pub fn entity(&self) -> Entity {
         self.entity
@@ -162,7 +162,7 @@ impl<'a, V> Handle<'a, V> {
     }
 }
 
-impl<'a, V> AsMut<Context> for Handle<'a, V> {
+impl<V> AsMut<Context> for Handle<'_, V> {
     fn as_mut(&mut self) -> &mut Context {
         self.context()
     }

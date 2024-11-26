@@ -36,7 +36,7 @@ impl View for Avatar {
     }
 }
 
-impl<'a> Handle<'a, Avatar> {
+impl Handle<'_, Avatar> {
     /// Selects the style variant for the Avatar.
     pub fn variant<U: Into<AvatarVariant>>(mut self, variant: impl Res<U>) -> Self {
         let entity = self.entity();

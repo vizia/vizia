@@ -182,7 +182,7 @@ impl View for VirtualList {
     }
 }
 
-impl<'a> Handle<'a, VirtualList> {
+impl Handle<'_, VirtualList> {
     pub fn scroll_to_cursor(self, flag: bool) -> Self {
         self.modify(|virtual_list: &mut VirtualList| {
             virtual_list.scroll_to_cursor = flag;

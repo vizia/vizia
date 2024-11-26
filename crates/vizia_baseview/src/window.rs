@@ -8,7 +8,7 @@ use gl_rs as gl;
 use raw_window_handle::HasRawWindowHandle;
 use skia_safe::gpu::gl::FramebufferInfo;
 use skia_safe::gpu::{
-    self, backend_render_targets, context_options, ContextOptions, SurfaceOrigin,
+    self, backend_render_targets, ganesh::context_options, ContextOptions, SurfaceOrigin,
 };
 use skia_safe::{ColorType, Surface};
 

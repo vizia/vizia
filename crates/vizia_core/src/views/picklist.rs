@@ -93,7 +93,7 @@ impl View for PickList {
     }
 }
 
-impl<'v> Handle<'v, PickList> {
+impl Handle<'_, PickList> {
     pub fn on_select<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, usize),
@@ -156,7 +156,7 @@ impl View for ScrollList {
     }
 }
 
-impl<'v> Handle<'v, ScrollList> {
+impl Handle<'_, ScrollList> {
     pub fn on_select<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, usize),

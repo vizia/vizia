@@ -22,12 +22,12 @@ pub struct TopLevelRuleParser<'a, 'i> {
     rules: &'a mut CssRuleList<'i>,
 }
 
-impl<'a, 'b, 'i> TopLevelRuleParser<'a, 'i> {
+impl<'a, 'i> TopLevelRuleParser<'a, 'i> {
     pub fn new(options: &'a ParserOptions<'i>, rules: &'a mut CssRuleList<'i>) -> Self {
         TopLevelRuleParser { options, state: State::Start, rules }
     }
 
-    pub fn nested<'x: 'b>(&'x mut self) -> NestedRuleParser<'_, 'i> {
+    pub fn nested<'x>(&'x mut self) -> NestedRuleParser<'x, 'i> {
         NestedRuleParser {
             options: self.options,
             declarations: DeclarationList::new(),
@@ -44,7 +44,7 @@ pub enum AtRulePrelude<'i> {
     Keyframes(KeyframesName<'i>),
 }
 
-impl<'a, 'i> AtRuleParser<'i> for TopLevelRuleParser<'a, 'i> {
+impl<'i> AtRuleParser<'i> for TopLevelRuleParser<'_, 'i> {
     type Prelude = AtRulePrelude<'i>;
     type AtRule = ();
     type Error = CustomParseError<'i>;
@@ -68,7 +68,7 @@ impl<'a, 'i> AtRuleParser<'i> for TopLevelRuleParser<'a, 'i> {
     }
 }
 
-impl<'a, 'i> QualifiedRuleParser<'i> for TopLevelRuleParser<'a, 'i> {
+impl<'i> QualifiedRuleParser<'i> for TopLevelRuleParser<'_, 'i> {
     type Prelude = SelectorList<Selectors>;
     type QualifiedRule = ();
     type Error = CustomParseError<'i>;
@@ -100,7 +100,7 @@ pub struct NestedRuleParser<'a, 'i> {
     allow_declarations: bool,
 }
 
-impl<'a, 'i> NestedRuleParser<'a, 'i> {
+impl<'i> NestedRuleParser<'_, 'i> {
     pub fn parse_nested<'t>(
         &mut self,
         input: &mut Parser<'i, 't>,
@@ -163,7 +163,7 @@ impl<'a, 'i> NestedRuleParser<'a, 'i> {
     }
 }
 
-impl<'a, 'i> AtRuleParser<'i> for NestedRuleParser<'a, 'i> {
+impl<'i> AtRuleParser<'i> for NestedRuleParser<'_, 'i> {
     type Prelude = AtRulePrelude<'i>;
     type AtRule = ();
     type Error = CustomParseError<'i>;
@@ -204,7 +204,7 @@ impl<'a, 'i> AtRuleParser<'i> for NestedRuleParser<'a, 'i> {
     }
 }
 
-impl<'a, 'i> QualifiedRuleParser<'i> for NestedRuleParser<'a, 'i> {
+impl<'i> QualifiedRuleParser<'i> for NestedRuleParser<'_, 'i> {
     type Prelude = SelectorList<Selectors>;
     type QualifiedRule = ();
     type Error = CustomParseError<'i>;
@@ -232,7 +232,7 @@ impl<'a, 'i> QualifiedRuleParser<'i> for NestedRuleParser<'a, 'i> {
 }
 
 /// Parse a declaration within {} block: `color: blue`
-impl<'a, 'i> cssparser::DeclarationParser<'i> for NestedRuleParser<'a, 'i> {
+impl<'i> cssparser::DeclarationParser<'i> for NestedRuleParser<'_, 'i> {
     type Declaration = ();
     type Error = CustomParseError<'i>;
 
@@ -251,7 +251,7 @@ impl<'a, 'i> cssparser::DeclarationParser<'i> for NestedRuleParser<'a, 'i> {
     }
 }
 
-impl<'a, 'i> RuleBodyItemParser<'i, (), CustomParseError<'i>> for NestedRuleParser<'a, 'i> {
+impl<'i> RuleBodyItemParser<'i, (), CustomParseError<'i>> for NestedRuleParser<'_, 'i> {
     fn parse_qualified(&self) -> bool {
         true
     }

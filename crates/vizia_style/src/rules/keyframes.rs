@@ -10,7 +10,7 @@ pub enum KeyframesName<'i> {
     Custom(CowRcStr<'i>),
 }
 
-impl<'i> KeyframesName<'i> {
+impl KeyframesName<'_> {
     pub fn as_string(&self) -> String {
         match self {
             KeyframesName::Ident(name) => name.0.to_owned().to_string(),
@@ -35,7 +35,7 @@ impl<'i> Parse<'i> for KeyframesName<'i> {
             }
 
             Token::QuotedString(ref s) => Ok(KeyframesName::Custom(s.clone())),
-            t => return Err(input.new_unexpected_token_error(t.clone())),
+            t => Err(input.new_unexpected_token_error(t.clone())),
         }
     }
 }

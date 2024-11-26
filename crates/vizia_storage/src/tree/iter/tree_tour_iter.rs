@@ -21,7 +21,7 @@ where
     }
 }
 
-impl<'a, I, F, O> Iterator for TreeTourIterator<'a, I, F>
+impl<I, F, O> Iterator for TreeTourIterator<'_, I, F>
 where
     I: GenerationalId,
     F: FnMut(I, TourDirection) -> (Option<O>, TourStep),

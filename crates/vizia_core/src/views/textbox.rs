@@ -559,7 +559,7 @@ where
     }
 }
 
-impl<'a, L: Lens> Handle<'a, Textbox<L>> {
+impl<L: Lens> Handle<'_, Textbox<L>> {
     /// Sets the callback triggered when a textbox is edited, i.e. text is inserted/deleted.
     ///
     /// Callback provides the current text of the textbox.

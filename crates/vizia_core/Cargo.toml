@@ -21,7 +21,7 @@ vizia_window.workspace = true
 vizia_style.workspace = true
 accesskit = "0.16"
 
-skia-safe = { version = "0.75", features = ["textlayout", "svg"] }
+skia-safe = { version = "0.80", features = ["gl", "textlayout", "svg"] }
 # morphorm = {path = "../../../morphorm" }
 morphorm = {git = "https://github.com/vizia/morphorm.git", branch = "auto-min-size2"}
 # morphorm = "0.6.4"
@@ -34,15 +34,19 @@ sys-locale = "0.3"
 unicode-segmentation = "1.11"
 copypasta = {version = "0.10", optional = true, default-features = false }
 chrono = "0.4"
-hashbrown = "0.14"
+hashbrown = "0.15"
 log = "0.4"
 indexmap = "2.4"
 qfilter = "0.2"
 # reqwest = { version = "0.11.9", features = ["blocking"] }
 web-time = "1.1"
-comrak = {version = "0.27", default-features = false }
+comrak = {version = "0.31", default-features = false }
 open = "5.2"
 sha2 = "0.10"
+
+[target."cfg(target_os = \"linux\")".dependencies.skia-safe]
+version = "0.80"
+features = ["gl", "textlayout", "svg", "x11", "wayland"]
 
 [lib]
 doctest = false

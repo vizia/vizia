@@ -119,4 +119,4 @@ pub trait AbilityModifiers: internal::Modifiable {
     }
 }
 
-impl<'a, V> AbilityModifiers for Handle<'a, V> {}
+impl<V> AbilityModifiers for Handle<'_, V> {}

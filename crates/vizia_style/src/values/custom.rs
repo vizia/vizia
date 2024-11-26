@@ -62,7 +62,7 @@ impl<'i> From<Token<'i>> for TokenOrValue<'i> {
     }
 }
 
-impl<'i> TokenOrValue<'i> {
+impl TokenOrValue<'_> {
     /// Returns whether the token is whitespace.
     pub fn is_whitespace(&self) -> bool {
         matches!(self, TokenOrValue::Token(Token::WhiteSpace(_)))
@@ -88,7 +88,7 @@ impl<'i> TokenList<'i> {
                 return Ok(TokenList(slice.to_vec()));
             }
 
-            return Ok(TokenList(tokens));
+            Ok(TokenList(tokens))
         })
     }
 

@@ -11,7 +11,7 @@ pub struct AccessContext<'a> {
     pub(crate) text_context: &'a mut TextContext,
 }
 
-impl<'a> AccessContext<'a> {
+impl AccessContext<'_> {
     /// Returns the bounds of the current view.
     pub fn bounds(&self) -> BoundingBox {
         self.cache.get_bounds(self.current)

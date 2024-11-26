@@ -802,7 +802,8 @@ impl Context {
             id
         };
 
-        if let Ok(svg) = svg::Dom::from_bytes(data, &self.text_context.default_font_manager) {
+        if let Ok(svg) = svg::Dom::from_bytes(data, self.text_context.default_font_manager.clone())
+        {
             match self.resource_manager.images.entry(id) {
                 Entry::Occupied(mut occ) => {
                     occ.get_mut().image = ImageOrSvg::Svg(svg);
@@ -1070,7 +1071,7 @@ impl DataContext for Context {
     }
 }
 
-impl<'a> DataContext for LocalizationContext<'a> {
+impl DataContext for LocalizationContext<'_> {
     fn data<T: 'static>(&self) -> Option<&T> {
         // return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {

@@ -345,7 +345,7 @@ where
     }
 }
 
-impl<'v, L1, L2, T> Handle<'v, ComboBox<L1, L2, T>>
+impl<L1, L2, T> Handle<'_, ComboBox<L1, L2, T>>
 where
     L1: Lens<Target = Vec<T>>,
     T: 'static + Data + ToString,

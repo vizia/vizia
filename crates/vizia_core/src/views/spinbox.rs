@@ -120,7 +120,7 @@ impl Spinbox {
     }
 }
 
-impl<'a> Handle<'a, Spinbox> {
+impl Handle<'_, Spinbox> {
     pub fn on_increment<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,

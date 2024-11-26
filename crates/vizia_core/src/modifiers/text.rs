@@ -137,4 +137,4 @@ pub trait TextModifiers: internal::Modifiable {
     );
 }
 
-impl<'a, V> TextModifiers for Handle<'a, V> {}
+impl<V> TextModifiers for Handle<'_, V> {}

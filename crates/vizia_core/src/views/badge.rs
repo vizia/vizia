@@ -107,7 +107,7 @@ impl View for Badge {
     }
 }
 
-impl<'a> Handle<'a, Badge> {
+impl Handle<'_, Badge> {
     /// Sets the placement of a badge relative to its parent when used with the `badge` modifier.
     pub fn placement(self, placement: BadgePlacement) -> Self {
         self.modify(|badge| badge.placement = Some(placement))

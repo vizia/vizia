@@ -160,7 +160,7 @@ where
     }
 }
 
-impl<'a, I> Iterator for ChildIterator<'a, I>
+impl<I> Iterator for ChildIterator<'_, I>
 where
     I: GenerationalId,
 {
@@ -182,7 +182,7 @@ where
     }
 }
 
-impl<'a, I> DoubleEndedIterator for ChildIterator<'a, I>
+impl<I> DoubleEndedIterator for ChildIterator<'_, I>
 where
     I: GenerationalId,
 {

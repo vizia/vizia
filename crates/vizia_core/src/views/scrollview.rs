@@ -233,7 +233,7 @@ impl View for ScrollView {
     }
 }
 
-impl<'a> Handle<'a, ScrollView> {
+impl Handle<'_, ScrollView> {
     /// Sets a callback which will be called when a scrollview is scrolled, either with the mouse wheel, touchpad, or using the scroll bars.
     pub fn on_scroll(
         self,

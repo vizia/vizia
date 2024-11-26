@@ -13,7 +13,7 @@ impl<'i> Parse<'i> for Ident<'i> {
     }
 }
 
-impl<'i> From<String> for Ident<'i> {
+impl From<String> for Ident<'_> {
     fn from(string: String) -> Self {
         Ident(string.into())
     }

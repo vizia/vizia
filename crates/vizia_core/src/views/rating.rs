@@ -84,7 +84,7 @@ impl View for Rating {
     }
 }
 
-impl<'a> Handle<'a, Rating> {
+impl Handle<'_, Rating> {
     pub fn on_change<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, u32),

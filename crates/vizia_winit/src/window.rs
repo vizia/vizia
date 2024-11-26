@@ -28,7 +28,7 @@ use glutin::{
 
 use skia_safe::{
     gpu::{
-        self, backend_render_targets, context_options, gl::FramebufferInfo, ContextOptions,
+        self, backend_render_targets, ganesh::context_options, gl::FramebufferInfo, ContextOptions,
         SurfaceOrigin,
     },
     ColorSpace, ColorType, PixelGeometry, Surface, SurfaceProps, SurfacePropsFlags,
@@ -486,7 +486,7 @@ impl View for Window {
     }
 }
 
-impl<'a> WindowModifiers for Handle<'a, Window> {
+impl WindowModifiers for Handle<'_, Window> {
     fn on_close(self, callback: impl Fn(&mut EventContext) + 'static) -> Self {
         self.modify(|window| window.on_close = Some(Box::new(callback)))
     }

@@ -503,7 +503,7 @@ fn build_modal_model(cx: &mut Context, entity: Entity) {
     }
 }
 
-impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
+impl<V: View> ActionModifiers<V> for Handle<'_, V> {
     fn tooltip<C: Fn(&mut Context) -> Handle<'_, Tooltip> + 'static>(self, content: C) -> Self {
         let entity = self.entity();
 

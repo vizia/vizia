@@ -300,7 +300,7 @@ impl View for Tooltip {
     }
 }
 
-impl<'a> Handle<'a, Tooltip> {
+impl Handle<'_, Tooltip> {
     // TODO: Change this to use Res when lens value PR is merged
     /// Sets the position where the tooltip should appear relative to its parent element.
     /// Defaults to `Placement::Bottom`.

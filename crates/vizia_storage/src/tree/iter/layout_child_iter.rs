@@ -24,7 +24,7 @@ where
     }
 }
 
-impl<'a, I> Iterator for LayoutChildIterator<'a, I>
+impl<I> Iterator for LayoutChildIterator<'_, I>
 where
     I: GenerationalId,
 {
@@ -44,7 +44,7 @@ where
     }
 }
 
-impl<'a, I> DoubleEndedIterator for LayoutChildIterator<'a, I>
+impl<I> DoubleEndedIterator for LayoutChildIterator<'_, I>
 where
     I: GenerationalId,
 {
@@ -91,7 +91,7 @@ where
     }
 }
 
-impl<'a, I> Iterator for DrawChildIterator<'a, I>
+impl<I> Iterator for DrawChildIterator<'_, I>
 where
     I: GenerationalId,
 {
@@ -113,7 +113,7 @@ where
     }
 }
 
-impl<'a, I> DoubleEndedIterator for DrawChildIterator<'a, I>
+impl<I> DoubleEndedIterator for DrawChildIterator<'_, I>
 where
     I: GenerationalId,
 {

@@ -52,7 +52,7 @@ impl<'i> Parse<'i> for EasingFunction {
             //     }).unwrap_or_default();
             //     Ok(EasingFunction::Steps { count, position })
             //   },
-              _ => return Err(location.new_unexpected_token_error(Token::Ident(function.clone())))
+              _ => Err(location.new_unexpected_token_error(Token::Ident(function.clone())))
             }
         })
     }
