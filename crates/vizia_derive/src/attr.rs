@@ -26,7 +26,6 @@ const DATA_EQ_ATTR_PATH: &str = "eq";
 const LENS_NAME_OVERRIDE_ATTR_PATH: &str = "name";
 
 /// The fields for a struct or an enum variant.
-#[derive(Debug)]
 pub struct Fields<Attrs> {
     pub kind: FieldKind,
     fields: Vec<Field<Attrs>>,
@@ -56,7 +55,6 @@ impl FieldIdent {
     }
 }
 
-#[derive(Debug)]
 pub struct Field<Attrs> {
     pub ident: FieldIdent,
     pub ty: syn::Type,
@@ -64,12 +62,23 @@ pub struct Field<Attrs> {
     pub attrs: Attrs,
 }
 
-#[derive(Debug, PartialEq)]
 pub enum DataAttr {
     Empty,
     Ignore,
     SameFn(ExprPath),
     Eq,
+}
+
+impl PartialEq for DataAttr {
+    fn eq(&self, other: &Self) -> bool {
+        matches!(
+            (self, other),
+            (DataAttr::Empty, DataAttr::Empty)
+                | (DataAttr::Ignore, DataAttr::Ignore)
+                | (DataAttr::SameFn(_), DataAttr::SameFn(_))
+                | (DataAttr::Eq, DataAttr::Eq)
+        )
+    }
 }
 
 #[derive(Debug)]
