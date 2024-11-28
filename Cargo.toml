@@ -7,6 +7,7 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version = "1.82"
+exclude = ["assets/", "examples/"]
 
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
