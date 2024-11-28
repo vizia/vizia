@@ -11,11 +11,8 @@ repository.workspace = true
 cssparser = "0.34"
 cssparser-color = "0.2"
 skia-safe = { version = "0.80", features = ["gl", "textlayout", "svg"] }
-# selectors = { version = "0.23.0", path = "./selectors" }
 selectors = "0.26"
-# morphorm = {path = "../../../morphorm" }
-morphorm = {git = "https://github.com/vizia/morphorm.git", branch = "auto-min-size2"}
-# morphorm = "0.6.4"
+morphorm = "0.6.5"
 smallvec = "1.0"
 bitflags = "2.6"
 precomputed-hash = "*"
