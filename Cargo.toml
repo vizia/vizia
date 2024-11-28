@@ -13,7 +13,6 @@ exclude = ["assets/", "examples/"]
 default = ["winit", "clipboard", "x11", "wayland"]
 clipboard = ["vizia_core/clipboard", "vizia_winit?/clipboard"]
 winit = ["vizia_winit"]
-baseview = ["vizia_baseview"]
 x11 = ["vizia_winit?/x11", "vizia_core/x11"]
 wayland = ["vizia_winit?/wayland", "vizia_core/wayland"]
 accesskit = ["vizia_winit?/accesskit"]
@@ -21,7 +20,6 @@ accesskit = ["vizia_winit?/accesskit"]
 [dependencies]
 vizia_core.workspace = true
 vizia_winit = { workspace = true, optional = true }
-vizia_baseview = { workspace = true, optional = true }
 
 [dev-dependencies]
 chrono = "0.4"
@@ -30,7 +28,7 @@ log = "0.4"
 fern = "0.7"
 
 [workspace]
-members = [ "crates/*", "examples/widget_gallery", "examples/designer"]
+members = [ "crates/*"]
 
 [workspace.package]
 version = "0.2.0"
@@ -43,7 +41,6 @@ repository = "https://github.com/vizia/vizia"
 vizia = { version = "0.2.0", path = "." }
 vizia_core = { version = "0.2.0", path = "crates/vizia_core" }
 vizia_winit = { version = "0.2.0", path = "crates/vizia_winit" }
-vizia_baseview = { version = "0.2.0", path = "crates/vizia_baseview" }
 vizia_derive = { version = "0.2.0", path = "crates/vizia_derive" }
 vizia_id = { version = "0.2.0", path = "crates/vizia_id" }
 vizia_input = { version = "0.2.0", path = "crates/vizia_input" }
