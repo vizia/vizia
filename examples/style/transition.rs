@@ -31,7 +31,7 @@ const STYLE: &str = r#"
         size: 100px;
         left: 0px;
         background-color: #606060;
-        child-space: 1s;
+        padding: 1s;
     }
 
     .container {

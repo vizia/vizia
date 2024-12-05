@@ -69,8 +69,8 @@ fn main() -> Result<(), ApplicationError> {
         })
         .size(Auto)
         .space(Units::Stretch(1.0))
-        .child_space(Stretch(1.0))
-        .row_between(Units::Pixels(10.0));
+        .alignment(Alignment::Center)
+        .vertical_gap(Units::Pixels(10.0));
     })
     .title("Timer")
     .inner_size((300, 300))

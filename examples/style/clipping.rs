@@ -8,8 +8,8 @@ const STYLE: &str = r#"
     }
 
     .row {
-        child-space: 1s;
-        col-between: 40px;
+        padding: 1s;
+        horizontal-gap: 40px;
     }
 
     element {

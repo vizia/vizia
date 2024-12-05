@@ -1,3 +1,4 @@
+pub mod alignment;
 pub mod alpha;
 pub mod angle;
 pub mod backdrop_filter;
@@ -55,6 +56,7 @@ pub mod url;
 pub mod vertical_position_keyword;
 pub mod visibility;
 
+pub use alignment::*;
 pub use alpha::*;
 pub use angle::*;
 pub use backdrop_filter::*;

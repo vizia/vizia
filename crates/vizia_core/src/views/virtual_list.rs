@@ -151,7 +151,7 @@ impl VirtualList {
                                         item_content(cx, index, item).height(Percentage(100.0));
                                     })
                                     .height(Pixels(item_height))
-                                    .position_type(PositionType::SelfDirected)
+                                    .position_type(PositionType::Absolute)
                                     .bind(
                                         item_index,
                                         move |handle, lens| {

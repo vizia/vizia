@@ -84,6 +84,7 @@ fn main() -> Result<(), ApplicationError> {
                 )
                 .on_select(|cx, val| cx.emit(AppEvent::Set3(val)))
             })
+            .width(Pixels(100.0))
             .on_increment(|ex| ex.emit(AppEvent::Increment3))
             .on_decrement(|ex| ex.emit(AppEvent::Decrement3));
         });

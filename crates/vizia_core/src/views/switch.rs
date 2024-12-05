@@ -110,11 +110,11 @@ impl Switch {
                 Element::new(cx)
                     .class("switch-handle-bg")
                     .hoverable(false)
-                    .position_type(PositionType::SelfDirected);
+                    .position_type(PositionType::Absolute);
                 Element::new(cx)
                     .class("switch-handle")
                     .hoverable(false)
-                    .position_type(PositionType::SelfDirected);
+                    .position_type(PositionType::Absolute);
             })
             .checked(checked)
             .navigable(true)
