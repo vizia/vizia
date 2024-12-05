@@ -26,8 +26,8 @@ fn main() -> Result<(), ApplicationError> {
                 .size(Units::Pixels(300.0))
                 .class("bg-default");
             })
-            .child_space(Stretch(1.0))
-            .col_between(Pixels(50.0));
+            .alignment(Alignment::Center)
+            .horizontal_gap(Pixels(50.0));
         });
     })
     .title("Scrollview")

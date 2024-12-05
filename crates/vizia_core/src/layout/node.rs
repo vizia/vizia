@@ -31,29 +31,15 @@ impl Node for Entity {
     }
 
     fn layout_type(&self, store: &Self::Store) -> Option<morphorm::LayoutType> {
-        store.layout_type.get(*self).cloned()
+        store.layout_type.get(*self).copied()
     }
 
     fn position_type(&self, store: &Self::Store) -> Option<morphorm::PositionType> {
-        store.position_type.get(*self).cloned()
+        store.position_type.get(*self).copied()
     }
 
     fn left(&self, store: &Self::Store) -> Option<morphorm::Units> {
         store.left.get(*self).cloned().map(|l| match l {
-            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
-            t => t,
-        })
-    }
-
-    fn min_left(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.min_left.get(*self).cloned().map(|l| match l {
-            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
-            t => t,
-        })
-    }
-
-    fn max_left(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.max_left.get(*self).cloned().map(|l| match l {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
@@ -66,20 +52,6 @@ impl Node for Entity {
         })
     }
 
-    fn min_right(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.min_right.get(*self).cloned().map(|r| match r {
-            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
-            t => t,
-        })
-    }
-
-    fn max_right(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.max_right.get(*self).cloned().map(|r| match r {
-            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
-            t => t,
-        })
-    }
-
     fn top(&self, store: &Self::Store) -> Option<morphorm::Units> {
         store.top.get(*self).cloned().map(|t| match t {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
@@ -87,36 +59,8 @@ impl Node for Entity {
         })
     }
 
-    fn min_top(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.min_top.get(*self).cloned().map(|t| match t {
-            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
-            t => t,
-        })
-    }
-
-    fn max_top(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.max_top.get(*self).cloned().map(|t| match t {
-            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
-            t => t,
-        })
-    }
-
     fn bottom(&self, store: &Self::Store) -> Option<morphorm::Units> {
         store.bottom.get(*self).cloned().map(|b| match b {
-            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
-            t => t,
-        })
-    }
-
-    fn min_bottom(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.min_bottom.get(*self).cloned().map(|b| match b {
-            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
-            t => t,
-        })
-    }
-
-    fn max_bottom(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.max_bottom.get(*self).cloned().map(|b| match b {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
@@ -153,11 +97,11 @@ impl Node for Entity {
         if let Some(paragraph) = sublayout.text_context.text_paragraphs.get_mut(*self) {
             // // If the width is known use that, else use 0 for wrapping text or 999999 for non-wrapping text.
             // let max_width = if let Some(width) = width {
-            //     let child_left =
-            //         store.child_left.get(*self).cloned().unwrap_or_default().to_px(width, 0.0)
+            //     let padding_left =
+            //         store.padding_left.get(*self).cloned().unwrap_or_default().to_px(width, 0.0)
             //             * store.scale_factor();
-            //     let child_right =
-            //         store.child_right.get(*self).cloned().unwrap_or_default().to_px(width, 0.0)
+            //     let padding_right =
+            //         store.padding_right.get(*self).cloned().unwrap_or_default().to_px(width, 0.0)
             //             * store.scale_factor();
             //     let border_width = store
             //         .border_width
@@ -166,40 +110,40 @@ impl Node for Entity {
             //         .unwrap_or_default()
             //         .to_pixels(0.0, store.scale_factor());
 
-            //     width.ceil() - child_left - child_right - border_width - border_width
+            //     width.ceil() - padding_left - padding_right - border_width - border_width
             // } else {
             //     f32::MAX
             // };
 
             paragraph.layout(f32::MAX);
 
-            let child_left = store.child_left.get(*self).copied().unwrap_or_default();
-            let child_right = store.child_right.get(*self).copied().unwrap_or_default();
-            let child_top = store.child_top.get(*self).copied().unwrap_or_default();
-            let child_bottom = store.child_bottom.get(*self).copied().unwrap_or_default();
+            let padding_left = store.padding_left.get(*self).copied().unwrap_or_default();
+            let padding_right = store.padding_right.get(*self).copied().unwrap_or_default();
+            let padding_top = store.padding_top.get(*self).copied().unwrap_or_default();
+            let padding_bottom = store.padding_bottom.get(*self).copied().unwrap_or_default();
 
             let mut child_space_x = 0.0;
             let mut child_space_y = 0.0;
 
-            let mut padding_left = 0.0;
-            let mut padding_top = 0.0;
+            let mut p_left = 0.0;
+            let mut p_top = 0.0;
 
             // shrink the bounding box based on pixel values
-            if let Pixels(val) = child_left {
+            if let Pixels(val) = padding_left {
                 let val = val * store.scale_factor();
                 child_space_x += val;
-                padding_left += val;
+                p_left += val;
             }
-            if let Pixels(val) = child_right {
+            if let Pixels(val) = padding_right {
                 let val = val * store.scale_factor();
                 child_space_x += val;
             }
-            if let Pixels(val) = child_top {
+            if let Pixels(val) = padding_top {
                 let val = val * store.scale_factor();
                 child_space_y += val;
-                padding_top += val;
+                p_top += val;
             }
-            if let Pixels(val) = child_bottom {
+            if let Pixels(val) = padding_bottom {
                 let val = val * store.scale_factor();
                 child_space_y += val;
             }
@@ -214,8 +158,8 @@ impl Node for Entity {
             child_space_x += 2.0 * border_width;
             child_space_y += 2.0 * border_width;
 
-            padding_left += border_width;
-            padding_top += border_width;
+            p_left += border_width;
+            p_top += border_width;
 
             let text_width = match (
                 store.text_wrap.get(*self).copied().unwrap_or(true),
@@ -260,7 +204,7 @@ impl Node for Entity {
             // Cache the text_width/ text_height in the text context so we can use it to compute transforms later
             sublayout.text_context.set_text_bounds(
                 *self,
-                BoundingBox { x: padding_left, y: padding_top, w: text_width, h: text_height },
+                BoundingBox { x: p_left, y: p_top, w: text_width, h: text_height },
             );
 
             Some((width, height))
@@ -331,43 +275,43 @@ impl Node for Entity {
         })
     }
 
-    fn child_left(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.child_left.get(*self).cloned().map(|l| match l {
+    fn padding_left(&self, store: &Self::Store) -> Option<morphorm::Units> {
+        store.padding_left.get(*self).cloned().map(|l| match l {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
-    fn child_right(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.child_right.get(*self).cloned().map(|r| match r {
+    fn padding_right(&self, store: &Self::Store) -> Option<morphorm::Units> {
+        store.padding_right.get(*self).cloned().map(|r| match r {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
-    fn child_top(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.child_top.get(*self).cloned().map(|t| match t {
+    fn padding_top(&self, store: &Self::Store) -> Option<morphorm::Units> {
+        store.padding_top.get(*self).cloned().map(|t| match t {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
-    fn child_bottom(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.child_bottom.get(*self).cloned().map(|b| match b {
+    fn padding_bottom(&self, store: &Self::Store) -> Option<morphorm::Units> {
+        store.padding_bottom.get(*self).cloned().map(|b| match b {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
-    fn row_between(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.row_between.get(*self).cloned().map(|v| match v {
+    fn vertical_gap(&self, store: &Self::Store) -> Option<morphorm::Units> {
+        store.vertical_gap.get(*self).cloned().map(|v| match v {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
-    fn col_between(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.col_between.get(*self).cloned().map(|v| match v {
+    fn horizontal_gap(&self, store: &Self::Store) -> Option<morphorm::Units> {
+        store.horizontal_gap.get(*self).cloned().map(|v| match v {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
@@ -406,6 +350,46 @@ impl Node for Entity {
                 Units::Pixels(store.logical_to_physical(val.to_px().unwrap_or_default()))
             }
             LengthOrPercentage::Percentage(val) => Units::Percentage(*val),
+        })
+    }
+
+    fn alignment(&self, store: &Self::Store) -> Option<morphorm::Alignment> {
+        store.alignment.get(*self).copied()
+    }
+
+    fn vertical_scroll(&self, store: &Self::Store) -> Option<f32> {
+        store.vertical_scroll.get(*self).copied()
+    }
+
+    fn horizontal_scroll(&self, store: &Self::Store) -> Option<f32> {
+        store.horizontal_scroll.get(*self).copied()
+    }
+
+    fn min_vertical_gap(&self, store: &Self::Store) -> Option<Units> {
+        store.min_vertical_gap.get(*self).cloned().map(|h| match h {
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
+            t => t,
+        })
+    }
+
+    fn min_horizontal_gap(&self, store: &Self::Store) -> Option<Units> {
+        store.min_horizontal_gap.get(*self).cloned().map(|h| match h {
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
+            t => t,
+        })
+    }
+
+    fn max_vertical_gap(&self, store: &Self::Store) -> Option<Units> {
+        store.max_vertical_gap.get(*self).cloned().map(|h| match h {
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
+            t => t,
+        })
+    }
+
+    fn max_horizontal_gap(&self, store: &Self::Store) -> Option<Units> {
+        store.max_horizontal_gap.get(*self).cloned().map(|h| match h {
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
+            t => t,
         })
     }
 }

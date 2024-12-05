@@ -49,17 +49,15 @@ fn main() -> Result<(), ApplicationError> {
                     );
                 })
                 .size(Auto)
-                .col_between(Pixels(5.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0));
+                .horizontal_gap(Pixels(5.0))
+                .alignment(Alignment::Center);
                 Slider::new(cx, AppData::xy_data.map(|data| data.0))
                     .width(Pixels(100.0))
                     .height(Pixels(10.0))
                     .range(0.0..1.0)
                     .on_changing(move |cx, val| cx.emit(AppEvent::XSliderChange(val)));
             })
-            .child_left(Stretch(1.0))
-            .child_right(Stretch(1.0));
+            .alignment(Alignment::Center);
         });
     })
     .title("XY Pad")

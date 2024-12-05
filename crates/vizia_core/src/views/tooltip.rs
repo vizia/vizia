@@ -70,7 +70,7 @@ impl Tooltip {
         })
         .z_index(110)
         .hoverable(false)
-        .position_type(PositionType::SelfDirected)
+        .position_type(PositionType::Absolute)
         .space(Pixels(0.0))
         .on_build(|ex| {
             ex.add_listener(move |tooltip: &mut Tooltip, ex, event| {

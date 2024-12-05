@@ -373,46 +373,6 @@ fn link_style_data(
         should_redraw = true;
     }
 
-    if style.min_left.link(entity, matched_rules) {
-        should_relayout = true;
-        should_redraw = true;
-    }
-
-    if style.min_right.link(entity, matched_rules) {
-        should_relayout = true;
-        should_redraw = true;
-    }
-
-    if style.min_top.link(entity, matched_rules) {
-        should_relayout = true;
-        should_redraw = true;
-    }
-
-    if style.min_bottom.link(entity, matched_rules) {
-        should_relayout = true;
-        should_redraw = true;
-    }
-
-    if style.max_left.link(entity, matched_rules) {
-        should_relayout = true;
-        should_redraw = true;
-    }
-
-    if style.max_right.link(entity, matched_rules) {
-        should_relayout = true;
-        should_redraw = true;
-    }
-
-    if style.max_top.link(entity, matched_rules) {
-        should_relayout = true;
-        should_redraw = true;
-    }
-
-    if style.max_bottom.link(entity, matched_rules) {
-        should_relayout = true;
-        should_redraw = true;
-    }
-
     // Size
     if style.width.link(entity, matched_rules) {
         should_relayout = true;
@@ -441,6 +401,27 @@ fn link_style_data(
     }
 
     if style.min_height.link(entity, matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    // Gap Constraints
+    if style.max_horizontal_gap.link(entity, matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if style.min_horizontal_gap.link(entity, matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if style.max_vertical_gap.link(entity, matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if style.min_vertical_gap.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
     }
@@ -511,6 +492,11 @@ fn link_style_data(
     }
 
     if style.position_type.link(entity, matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if style.alignment.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
     }
@@ -649,32 +635,32 @@ fn link_style_data(
         should_redraw = true;
     }
 
-    if style.child_left.link(entity, matched_rules) {
+    if style.padding_left.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.child_right.link(entity, matched_rules) {
+    if style.padding_right.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.child_top.link(entity, matched_rules) {
+    if style.padding_top.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.child_bottom.link(entity, matched_rules) {
+    if style.padding_bottom.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.row_between.link(entity, matched_rules) {
+    if style.vertical_gap.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.col_between.link(entity, matched_rules) {
+    if style.horizontal_gap.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
     }

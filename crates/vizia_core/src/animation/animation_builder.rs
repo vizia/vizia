@@ -230,40 +230,40 @@ impl<'a> KeyframeBuilder<'a> {
         self
     }
 
-    // CHILD SPACE
+    // PADDING
 
-    pub fn child_left(mut self, val: impl Into<Units>) -> Self {
-        self.properties.push(Property::ChildLeft(val.into()));
-
-        self
-    }
-
-    pub fn child_right(mut self, val: impl Into<Units>) -> Self {
-        self.properties.push(Property::ChildRight(val.into()));
+    pub fn padding_left(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::PaddingLeft(val.into()));
 
         self
     }
 
-    pub fn child_top(mut self, val: impl Into<Units>) -> Self {
-        self.properties.push(Property::ChildTop(val.into()));
+    pub fn padding_right(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::PaddingRight(val.into()));
 
         self
     }
 
-    pub fn child_bottom(mut self, val: impl Into<Units>) -> Self {
-        self.properties.push(Property::ChildBottom(val.into()));
+    pub fn padding_top(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::PaddingTop(val.into()));
 
         self
     }
 
-    pub fn col_between(mut self, val: impl Into<Units>) -> Self {
-        self.properties.push(Property::ColBetween(val.into()));
+    pub fn padding_bottom(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::PaddingBottom(val.into()));
 
         self
     }
 
-    pub fn row_between(mut self, val: impl Into<Units>) -> Self {
-        self.properties.push(Property::RowBetween(val.into()));
+    pub fn horizontal_gap(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::HorizontalGap(val.into()));
+
+        self
+    }
+
+    pub fn vertical_gap(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::VerticalGap(val.into()));
 
         self
     }
@@ -303,55 +303,6 @@ impl<'a> KeyframeBuilder<'a> {
 
     pub fn max_height(mut self, val: impl Into<Units>) -> Self {
         self.properties.push(Property::MaxHeight(val.into()));
-
-        self
-    }
-
-    // SPACE CONSTRAINTS
-    pub fn min_left(mut self, val: impl Into<Units>) -> Self {
-        self.properties.push(Property::MinLeft(val.into()));
-
-        self
-    }
-
-    pub fn max_left(mut self, val: impl Into<Units>) -> Self {
-        self.properties.push(Property::MaxLeft(val.into()));
-
-        self
-    }
-
-    pub fn min_right(mut self, val: impl Into<Units>) -> Self {
-        self.properties.push(Property::MinRight(val.into()));
-
-        self
-    }
-
-    pub fn max_right(mut self, val: impl Into<Units>) -> Self {
-        self.properties.push(Property::MaxRight(val.into()));
-
-        self
-    }
-
-    pub fn min_top(mut self, val: impl Into<Units>) -> Self {
-        self.properties.push(Property::MinTop(val.into()));
-
-        self
-    }
-
-    pub fn max_top(mut self, val: impl Into<Units>) -> Self {
-        self.properties.push(Property::MaxTop(val.into()));
-
-        self
-    }
-
-    pub fn min_bottom(mut self, val: impl Into<Units>) -> Self {
-        self.properties.push(Property::MinBottom(val.into()));
-
-        self
-    }
-
-    pub fn max_bottom(mut self, val: impl Into<Units>) -> Self {
-        self.properties.push(Property::MaxBottom(val.into()));
 
         self
     }

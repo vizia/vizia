@@ -5,7 +5,7 @@
 //! The [`layout_type()`](crate::modifiers::LayoutModifiers::layout_type) modifier (or `layout-type` css property) is used to determine how a container positions its children,
 //! and can be used to select between a vertical `Column`, horizontal `Row`, or `Grid`.
 //!
-//! The [`position_type()`](crate::modifiers::LayoutModifiers::position_type) modifier (or `position-type` css property) is used to determine whether a child view respects the
+//! The [`position()`](crate::modifiers::LayoutModifiers::position) modifier (or `position-type` css property) is used to determine whether a child view respects the
 //! stack position determined by the parent (`parent-directed`), or whether to position itself relative to the top-left of its parent
 //! and ignore its siblings (`self-directed`).
 //!
@@ -24,7 +24,7 @@
 //!   Now the computed space for the `left` and `right` sides is 1/2 of the remaining free space, so 200.0 / 2.0 = 100.0.
 //!   If the `left` space had been `Stretch(3.0)`, the ratio would have been 3/4 for `left` and 1/4 for `right` and the computed space would have
 //!   been `150.0` for `left` and `50.0` for right.
-//! - `Auto` - The spacing is determined by the corresponding `child_space` of the parent. So `left` would be determined by the parent `child_left` etc.
+//! - `Auto` - The spacing is determined by the corresponding `child_space` of the parent. So `left` would be determined by the parent `padding_left` etc.
 //!
 //! # Child Space
 pub(crate) mod cache;

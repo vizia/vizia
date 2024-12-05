@@ -22,8 +22,8 @@ fn main() -> Result<(), ApplicationError> {
             })
             .height(Pixels(100.0))
             .width(Auto)
-            .col_between(Pixels(20.0))
-            .child_space(Stretch(1.0));
+            .horizontal_gap(Pixels(20.0))
+            .alignment(Alignment::Center);
 
             Element::new(cx)
                 .size(Pixels(100.0))

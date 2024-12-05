@@ -30,7 +30,9 @@ fn main() -> Result<(), ApplicationError> {
         .build(cx);
 
         ExamplePage::vertical(cx, |cx| {
-            Label::new(cx, "A label can display a static string of unicode 😂");
+            Label::new(cx, "A label can display a static string of unicode 😂")
+                .background_color(Color::gray())
+                .padding(Pixels(20.0));
 
             Label::new(cx, AppData::text);
 
@@ -57,9 +59,8 @@ fn main() -> Result<(), ApplicationError> {
             })
             .width(Auto)
             .height(Auto)
-            .child_top(Stretch(1.0))
-            .child_bottom(Stretch(1.0))
-            .col_between(Pixels(8.0));
+            .alignment(Alignment::Center)
+            .horizontal_gap(Pixels(8.0));
         });
     })
     .title("Label")

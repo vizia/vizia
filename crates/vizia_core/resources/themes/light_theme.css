@@ -192,61 +192,46 @@ button:disabled svg {
 
 /* BUTTON GROUP */
 
+button-group {
+    gap: -1px;
+}
+
+button-group.accent {
+    gap: 1px;
+}
+
 button-group > button,
 button-group > toggle-button,
 button-group > textbox {
     corner-radius: 0px;
-    right: -1px;
 }
 
 button-group.vertical > button,
 button-group.vertical > toggle-button,
 button-group > textbox {
     corner-radius: 0px;
-    right: auto;
-    bottom: -1px;
 }
 
 button-group > :first-child {
     corner-top-left-radius: 4px;
     corner-bottom-left-radius: 4px;
-    right: -1px;
-    left: auto;
 }
 
 button-group > :last-child {
     corner-top-right-radius: 4px;
     corner-bottom-right-radius: 4px;
-    left: -1px;
-    right: auto;
 }
 
 button-group.vertical > :first-child {
     corner-radius: 0px;
     corner-top-right-radius: 4px;
     corner-top-left-radius: 4px;
-    right: auto;
-    bottom: -1px;
 }
 
 button-group.vertical > :last-child {
     corner-radius: 0px;
     corner-bottom-right-radius: 4px;
     corner-bottom-left-radius: 4px;
-    left: auto;
-    top: -1px;
-}
-
-button-group.accent {
-    col-between: 1px;
-}
-
-button-group.accent > :first-child {
-    right: auto;
-}
-
-button-group.accent > :last-child {
-    left: auto;
 }
 
 /* CHECKBOX */
@@ -565,7 +550,7 @@ submenu > popup {
     border-width: 1px;
     border-color: #d2d2d2;
     background-color: #fdfdfd;
-    child-space: 8px;
+    padding: 8px;
     corner-radius: 4px;
     shadow: 0px 2px 16px #4f4f4f38;
 }
@@ -628,12 +613,9 @@ popup {
 /* RADIOBUTTON */
 
 radiobutton {
-    width: 16px;
-    height: 16px;
     border-width: 2px;
     corner-radius: 50%;
     border-color: #d2d2d2;
-    child-space: 1s;
 }
 
 radiobutton:hover {
@@ -722,16 +704,12 @@ rating svg:checked:disabled {
 /* SCROLLVIEW */
 
 scrollview > scrollbar {
-    display: none;
+    display: flex;
 }
 
 scrollview.h-scroll > scrollbar,
 scrollview.v-scroll > scrollbar {
     display: flex;
-}
-
-scrollbar {
-    background-color: transparent;
 }
 
 scrollbar .thumb {
@@ -785,7 +763,7 @@ slider .thumb {
     corner-radius: 6px;
     width: 12px;
     height: 12px;
-    child-space: 1s;
+    padding: 1s;
 }
 
 /* SPINBOX */
@@ -1003,7 +981,7 @@ toggle-button:disabled {
 
 /* TOOLTIP */
 tooltip {
-    child-space: 8px;
+    padding: 8px;
     background-color: #181818;
     corner-radius: 4px;
     color: #fafafa;

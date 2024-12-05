@@ -55,10 +55,9 @@ fn sliders(cx: &mut Context) {
         Slider::new(cx, AppData::color.map(|c| c.b() as f32 / 255.0))
             .on_changing(|cx, val| cx.emit(AppEvent::SetBlue(val)));
     })
-    .child_space(Pixels(20.0))
-    .child_top(Stretch(1.0))
-    .child_bottom(Stretch(1.0))
-    .row_between(Pixels(12.0));
+    .padding(Pixels(20.0))
+    .alignment(Alignment::Center)
+    .vertical_gap(Pixels(12.0));
 }
 
 #[cfg(not(feature = "baseview"))]
@@ -74,10 +73,9 @@ fn main() -> Result<(), ApplicationError> {
             .on_press_down(|cx| cx.emit(WindowEvent::DragWindow))
             .background_color(Color::rgb(100, 100, 100))
             .height(Pixels(40.0))
-            .child_left(Stretch(1.0))
-            .child_top(Stretch(1.0))
-            .child_bottom(Stretch(1.0))
-            .child_right(Pixels(4.0));
+            .alignment(Alignment::Center)
+            .alignment(Alignment::Center)
+            .padding_right(Pixels(4.0));
             sliders(cx);
         })
         //.on_create(|cx| cx.emit(WindowEvent::DragWindow))

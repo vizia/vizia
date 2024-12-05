@@ -15,7 +15,7 @@
 
 avatar {
     size: 50px;
-    child-space: 1s;
+    alignment: center;
 }
 
 avatar.circle {
@@ -49,15 +49,15 @@ avatar.rounded > image {
 
 /* BADGE */
 badge {
-    position-type: self-directed;
+    position-type: absolute;
     size: 20px;
     corner-radius: 50%;
-    child-space: 1s;
+    alignment: center;
 }
 
 badge > label {
     font-size: 12;
-    child-space: 1s;
+    alignment: center;
     size: auto;
 }
 
@@ -71,17 +71,17 @@ button,
 toggle-button {
     height: 32px;
     width: auto;
-    child-space: 1s;
+    alignment: center;
     cursor: hand;
-    child-left: 8px;
-    child-right: 8px;
+    padding-left: 8px;
+    padding-right: 8px;
 }
 
 button > *,
 toggle-button > * {
     width: auto;
-    child-space: 1s;
-    col-between: 4px;
+    alignment: center;
+    horizontal-gap: 4px;
 }
 
 button > hstack > svg,
@@ -102,7 +102,7 @@ button-group.vertical {
 button-group.vertical > button,
 button-group.vertical > toggle-button {
     width: 1s;
-    child-space: 1s;
+    alignment: center;
 }
 
 /* CHECKBOX */
@@ -121,26 +121,24 @@ checkbox > svg {
 chip {
     width: auto;
     height: 24px;
-    child-left: 8px;
-    child-right: 8px;
-    child-top: 1s;
-    child-bottom: 1s;
-    col-between: 4px;
+    padding-left: 8px;
+    padding-right: 8px;
+    alignment: center;
+    horizontal-gap: 4px;
     font-size: small;
 }
 
-chip > label {
-    height: auto;
-    width: auto;
+chip.close {
+    padding-left: 8px;
+    padding-right: 4px;
 }
 
 chip > .close-icon {
-    right: 4px;
+    padding: 0px;
 }
 
 chip > .close-icon svg {
     size: 1s;
-    space: 0px;
 }
 
 /* DATEPICKER */
@@ -148,14 +146,14 @@ chip > .close-icon svg {
 datepicker {
     width: auto;
     height: auto;
-    child-space: 4px;
-    row-between: 4px;
+    padding: 4px;
+    vertical-gap: 4px;
 }
 
 .datepicker-header {
     width: auto;
     height: auto;
-    col-between: 4px;
+    horizontal-gap: 4px;
 }
 
 .datepicker-header dropdown popup {
@@ -172,13 +170,13 @@ datepicker {
 }
 
 .datepicker-calendar-headers {
-    child-left: 1s;
-    child-right: 1s;
+    padding-left: 1s;
+    padding-right: 1s;
     height: auto;
 }
 
 .datepicker-calendar-header {
-    child-space: 1s;
+    alignment: center;
     width: 32px;
     height: 32px;
 }
@@ -186,13 +184,13 @@ datepicker {
 .datepicker-calendar-day {
     width: 32px;
     height: 32px;
-    child-space: 1s;
+    alignment: center;
 }
 
 .datepicker-calendar-day-disabled {
     width: 32px;
     height: 32px;
-    child-space: 1s;
+    alignment: center;
 }
 
 .datepicker-selected-date {
@@ -245,10 +243,9 @@ dropdown > * {
 combobox .title {
     width: 1s;
     height: 1s;
-    child-left: 8px;
-    child-right: 4px;
-    child-top: 1s;
-    child-bottom: 1s;
+    padding-left: 8px;
+    padding-right: 8px;
+    alignment: left;
     cursor: text;
 }
 
@@ -265,8 +262,8 @@ combobox popup .list {
     width: 1s;
     min-width: auto;
     height: auto;
-    child-top: 4px;
-    child-bottom: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
 }
 
 dropdown popup scrollview scrollbar.vertical,
@@ -287,15 +284,14 @@ combobox .list label {
     width: 1s;
     min-width: auto;
     height: 32px;
-    child-left: 6px;
-    child-right: 6px;
-    child-top: 1s;
-    child-bottom: 1s;
+    padding-left: 6px;
+    padding-right: 6px;
+    alignment: left;
 }
 
 dropdown vstack,
 combobox vstack {
-    child-space: auto;
+    padding: auto;
 }
 
 /* ICON */
@@ -372,29 +368,26 @@ menubar {
 menubutton {
     height: 32px;
     width: 1s;
-    child-left: 8px;
-    child-right: 8px;
-    child-top: 1s;
-    child-bottom: 1s;
-    col-between: 8px;
+    padding-left: 8px;
+    padding-right: 8px;
+    alignment: left;
+    horizontal-gap: 8px;
 }
 
 menubutton > hstack,
 submenu > hstack {
     height: auto;
-    child-top: 1s;
-    child-bottom: 1s;
-    col-between: 8px;
+    alignment: left;
+    horizontal-gap: 8px;
 }
 
 submenu {
     height: 32px;
     width: 1s;
-    child-left: 8px;
-    child-right: 8px;
-    child-top: 1s;
-    child-bottom: 1s;
-    col-between: 8px;
+    padding-left: 8px;
+    padding-right: 8px;
+    alignment: left;
+    horizontal-gap: 1s;
 }
 
 submenu submenu,
@@ -413,8 +406,7 @@ menubutton .shortcut {
 
 /* submenu submenu label,
 dropdown > popup > submenu label {
-    child-top: 1s;
-    child-bottom: 1s;
+    alignment: center;
     size: 1s;
     width: 1s;
 } */
@@ -422,7 +414,7 @@ dropdown > popup > submenu label {
 submenu > popup {
     height: auto;
     width: 250px;
-    child-space: 8px;
+    padding: 8px;
 }
 
 submenu submenu > popup,
@@ -445,8 +437,8 @@ menubar submenu > popup {
 
 menubar > submenu {
     width: auto;
-    child-left: 12px;
-    child-right: 12px;
+    padding-left: 12px;
+    padding-right: 12px;
 }
 
 submenu > .arrow {
@@ -481,7 +473,7 @@ picklist {
 
 popup {
     size: auto;
-    position-type: self-directed;
+    position-type: absolute;
     z-index: 100;
 }
 
@@ -496,7 +488,7 @@ progressbar {
 
 radiobutton {
     size: 16px;
-    child-space: 1s;
+    alignment: center;
     cursor: hand;
 }
 
@@ -523,12 +515,10 @@ scrollview > scroll-content {
 }
 
 scrollview > scrollbar.horizontal {
-    space: 0px;
     top: 1s;
 }
 
 scrollview > scrollbar.vertical {
-    space: 0px;
     left: 1s;
 }
 
@@ -573,36 +563,33 @@ slider.vertical {
 slider .thumb {
     width: 16px;
     height: 16px;
-    top: 1s;
-    bottom: 1s;
-    child-space: 1s;
 }
 
 /* SPINBOX */
 
 spinbox {
-    child-space: 1s;
+    alignment: center;
 }
 
 spinbox.horizontal {
     layout-type: row;
     height: 32px;
-    child-left: 4px;
-    child-right: 4px;
-    col-between: 4px;
+    padding-left: 4px;
+    padding-right: 4px;
+    horizontal-gap: 4px;
 }
 
 spinbox.vertical {
     layout-type: column;
     width: 32px;
-    child-top: 4px;
-    child-bottom: 4px;
-    row-between: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    vertical-gap: 4px;
 }
 
 spinbox .spinbox-button {
     size: 24px;
-    child-space: 1s;
+    alignment: center;
 }
 
 spinbox .spinbox-button > svg {
@@ -613,7 +600,7 @@ spinbox .spinbox-value {
     width: 1s;
     min-width: auto;
     height: auto;
-    child-space: 1s;
+    alignment: center;
 }
 
 spinbox picklist.spinbox-value dropdown {
@@ -625,7 +612,7 @@ spinbox picklist.spinbox-value dropdown {
 /* STACK */
 
 zstack > * {
-    position-type: self-directed;
+    position-type: absolute;
 }
 
 /* SWITCH */
@@ -693,10 +680,9 @@ tabheader {
 
 tabheader label {
     height: 32px;
-    child-left: 12px;
-    child-right: 12px;
-    child-top: 1s;
-    child-bottom: 1s;
+    padding-left: 12px;
+    padding-right: 12px;
+    alignment: left;
 }
 
 tabheader .indicator {
@@ -715,10 +701,9 @@ textbox {
     overflow: hidden;
     width: auto;
     height: 32px;
-    child-left: 10px;
-    child-right: 10px;
-    child-top: 1s;
-    child-bottom: 1s;
+    padding-left: 10px;
+    padding-right: 10px;
+    alignment: left;
     cursor: text;
     caret-color: transparent;
     selection-color: #6464c888;
@@ -737,23 +722,22 @@ textbox:checked:read-only.caret {
 }
 
 textbox > label.placeholder {
-    child-left: 10px;
-    child-top: 1s;
-    child-bottom: 1s;
+    padding-left: 8px;
+    alignment: left;
 }
 
 textbox.icon-before {
-    child-left: 30px;
+    padding-left: 30px;
 }
 
 textbox.icon-before > label.placeholder {
-    child-left: 30px;
+    padding-left: 30px;
 }
 
 textbox.multiline {
     height: auto;
-    child-top: 4px;
-    child-bottom: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
 }
 
 textbox:disabled {
@@ -763,20 +747,19 @@ textbox:disabled {
 /* TOOLTIP */
 
 tooltip {
-    position-type: self-directed;
+    position-type: absolute;
     z-index: 110;
     size: auto;
 }
 
 tooltip arrow {
-    position-type: self-directed;
+    position-type: absolute;
 }
 
 /* VIRTUAL LIST */
 virtual-list label {
-    child-top: 1s;
-    child-bottom: 1s;
-    child-left: 5px;
+    alignment: left;
+    padding-left: 5px;
     width: 1s;
 }
 
@@ -788,5 +771,5 @@ xypad {
 
 xypad .thumb {
     size: 10px;
-    child-space: 1s;
+    alignment: center;
 }

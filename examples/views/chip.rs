@@ -26,13 +26,13 @@ fn main() -> Result<(), ApplicationError> {
         }
         .build(cx);
 
-        ExamplePage::new(cx, |cx| {
+        ExamplePage::vertical(cx, |cx| {
             Chip::new(cx, AppData::chip);
             List::new(cx, AppData::chips, |cx, index, item| {
                 Chip::new(cx, item).on_close(move |cx| cx.emit(AppEvent::CloseChip(index)));
             })
             .layout_type(LayoutType::Row)
-            .col_between(Pixels(4.0));
+            .horizontal_gap(Pixels(4.0));
         });
     })
     .title("Chip")

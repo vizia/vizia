@@ -69,13 +69,14 @@ use std::ops::{Deref, DerefMut, Range};
 use crate::prelude::*;
 
 pub use vizia_style::{
-    Angle, BackgroundImage, BackgroundSize, BorderStyleKeyword, ClipPath, Color, CornerShape,
-    CssRule, CursorIcon, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation,
-    FontWeight, FontWeightKeyword, FontWidth, GenericFontFamily, Gradient, HorizontalPosition,
-    HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue, LineClamp, LineDirection,
-    LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position, Scale, Shadow, TextAlign,
-    TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform,
-    Transition, Translate, VerticalPosition, VerticalPositionKeyword, Visibility, RGBA,
+    Alignment, Angle, BackgroundImage, BackgroundSize, BorderStyleKeyword, ClipPath, Color,
+    CornerShape, CssRule, CursorIcon, Display, Filter, FontFamily, FontSize, FontSlant,
+    FontVariation, FontWeight, FontWeightKeyword, FontWidth, GenericFontFamily, Gradient,
+    HorizontalPosition, HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue,
+    LineClamp, LineDirection, LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position,
+    PositionType, Scale, Shadow, TextAlign, TextDecorationLine, TextDecorationStyle, TextOverflow,
+    TextStroke, TextStrokeStyle, Transform, Transition, Translate, VerticalPosition,
+    VerticalPositionKeyword, Visibility, RGBA,
 };
 
 use vizia_style::{
@@ -324,8 +325,10 @@ pub struct Style {
     // Layout Type
     pub(crate) layout_type: StyleSet<LayoutType>,
 
-    // Position Type
+    // Position
     pub(crate) position_type: StyleSet<PositionType>,
+
+    pub(crate) alignment: StyleSet<Alignment>,
 
     // Spacing
     pub(crate) left: AnimatableSet<Units>,
@@ -333,13 +336,17 @@ pub struct Style {
     pub(crate) top: AnimatableSet<Units>,
     pub(crate) bottom: AnimatableSet<Units>,
 
-    // Child Spacing
-    pub(crate) child_left: AnimatableSet<Units>,
-    pub(crate) child_right: AnimatableSet<Units>,
-    pub(crate) child_top: AnimatableSet<Units>,
-    pub(crate) child_bottom: AnimatableSet<Units>,
-    pub(crate) row_between: AnimatableSet<Units>,
-    pub(crate) col_between: AnimatableSet<Units>,
+    // Padding
+    pub(crate) padding_left: AnimatableSet<Units>,
+    pub(crate) padding_right: AnimatableSet<Units>,
+    pub(crate) padding_top: AnimatableSet<Units>,
+    pub(crate) padding_bottom: AnimatableSet<Units>,
+    pub(crate) vertical_gap: AnimatableSet<Units>,
+    pub(crate) horizontal_gap: AnimatableSet<Units>,
+
+    // Scrolling
+    pub(crate) vertical_scroll: AnimatableSet<f32>,
+    pub(crate) horizontal_scroll: AnimatableSet<f32>,
 
     // Size
     pub(crate) width: AnimatableSet<Units>,
@@ -351,15 +358,11 @@ pub struct Style {
     pub(crate) min_height: AnimatableSet<Units>,
     pub(crate) max_height: AnimatableSet<Units>,
 
-    // Spacing Constraints
-    pub(crate) min_left: AnimatableSet<Units>,
-    pub(crate) max_left: AnimatableSet<Units>,
-    pub(crate) min_right: AnimatableSet<Units>,
-    pub(crate) max_right: AnimatableSet<Units>,
-    pub(crate) min_top: AnimatableSet<Units>,
-    pub(crate) max_top: AnimatableSet<Units>,
-    pub(crate) min_bottom: AnimatableSet<Units>,
-    pub(crate) max_bottom: AnimatableSet<Units>,
+    // Gap Constraints
+    pub(crate) min_horizontal_gap: AnimatableSet<Units>,
+    pub(crate) max_horizontal_gap: AnimatableSet<Units>,
+    pub(crate) min_vertical_gap: AnimatableSet<Units>,
+    pub(crate) max_vertical_gap: AnimatableSet<Units>,
 
     pub(crate) system_flags: SystemFlags,
 
@@ -592,29 +595,61 @@ impl Style {
                     insert_keyframe(&mut self.bottom, animation_id, time, *value);
                 }
 
-                // CHILD SPACE
-                Property::ChildLeft(value) => {
-                    insert_keyframe(&mut self.child_left, animation_id, time, *value);
+                // Padding
+                Property::PaddingLeft(value) => {
+                    insert_keyframe(&mut self.padding_left, animation_id, time, *value);
                 }
 
-                Property::ChildRight(value) => {
-                    insert_keyframe(&mut self.child_right, animation_id, time, *value);
+                Property::PaddingRight(value) => {
+                    insert_keyframe(&mut self.padding_right, animation_id, time, *value);
                 }
 
-                Property::ChildTop(value) => {
-                    insert_keyframe(&mut self.child_top, animation_id, time, *value);
+                Property::PaddingTop(value) => {
+                    insert_keyframe(&mut self.padding_top, animation_id, time, *value);
                 }
 
-                Property::ChildBottom(value) => {
-                    insert_keyframe(&mut self.child_bottom, animation_id, time, *value);
+                Property::PaddingBottom(value) => {
+                    insert_keyframe(&mut self.padding_bottom, animation_id, time, *value);
                 }
 
-                Property::ColBetween(value) => {
-                    insert_keyframe(&mut self.col_between, animation_id, time, *value);
+                Property::HorizontalGap(value) => {
+                    insert_keyframe(&mut self.horizontal_gap, animation_id, time, *value);
                 }
 
-                Property::RowBetween(value) => {
-                    insert_keyframe(&mut self.row_between, animation_id, time, *value);
+                Property::VerticalGap(value) => {
+                    insert_keyframe(&mut self.vertical_gap, animation_id, time, *value);
+                }
+
+                Property::Gap(value) => {
+                    insert_keyframe(&mut self.horizontal_gap, animation_id, time, *value);
+                    insert_keyframe(&mut self.vertical_gap, animation_id, time, *value);
+                }
+
+                // GAP CONSSTRAINTS
+                Property::MinGap(value) => {
+                    insert_keyframe(&mut self.min_horizontal_gap, animation_id, time, *value);
+                    insert_keyframe(&mut self.min_vertical_gap, animation_id, time, *value);
+                }
+
+                Property::MaxGap(value) => {
+                    insert_keyframe(&mut self.max_horizontal_gap, animation_id, time, *value);
+                    insert_keyframe(&mut self.max_vertical_gap, animation_id, time, *value);
+                }
+
+                Property::MinHorizontalGap(value) => {
+                    insert_keyframe(&mut self.min_horizontal_gap, animation_id, time, *value);
+                }
+
+                Property::MaxHorizontalGap(value) => {
+                    insert_keyframe(&mut self.max_horizontal_gap, animation_id, time, *value);
+                }
+
+                Property::MinVerticalGap(value) => {
+                    insert_keyframe(&mut self.min_vertical_gap, animation_id, time, *value);
+                }
+
+                Property::MaxVerticalGap(value) => {
+                    insert_keyframe(&mut self.max_vertical_gap, animation_id, time, *value);
                 }
 
                 // SIZE
@@ -641,39 +676,6 @@ impl Style {
 
                 Property::MaxHeight(value) => {
                     insert_keyframe(&mut self.max_height, animation_id, time, *value);
-                }
-
-                // SPACE CONSTRAINTS
-                Property::MinLeft(value) => {
-                    insert_keyframe(&mut self.min_left, animation_id, time, *value);
-                }
-
-                Property::MaxLeft(value) => {
-                    insert_keyframe(&mut self.max_left, animation_id, time, *value);
-                }
-
-                Property::MinRight(value) => {
-                    insert_keyframe(&mut self.min_right, animation_id, time, *value);
-                }
-
-                Property::MaxRight(value) => {
-                    insert_keyframe(&mut self.max_right, animation_id, time, *value);
-                }
-
-                Property::MinTop(value) => {
-                    insert_keyframe(&mut self.min_top, animation_id, time, *value);
-                }
-
-                Property::MaxTop(value) => {
-                    insert_keyframe(&mut self.max_top, animation_id, time, *value);
-                }
-
-                Property::MinBottom(value) => {
-                    insert_keyframe(&mut self.min_bottom, animation_id, time, *value);
-                }
-
-                Property::MaxBottom(value) => {
-                    insert_keyframe(&mut self.max_bottom, animation_id, time, *value);
                 }
 
                 Property::UnderlineColor(value) => {
@@ -766,12 +768,12 @@ impl Style {
         self.top.play_animation(entity, animation, start_time, duration, delay);
         self.bottom.play_animation(entity, animation, start_time, duration, delay);
 
-        self.child_left.play_animation(entity, animation, start_time, duration, delay);
-        self.child_right.play_animation(entity, animation, start_time, duration, delay);
-        self.child_top.play_animation(entity, animation, start_time, duration, delay);
-        self.child_bottom.play_animation(entity, animation, start_time, duration, delay);
-        self.col_between.play_animation(entity, animation, start_time, duration, delay);
-        self.row_between.play_animation(entity, animation, start_time, duration, delay);
+        self.padding_left.play_animation(entity, animation, start_time, duration, delay);
+        self.padding_right.play_animation(entity, animation, start_time, duration, delay);
+        self.padding_top.play_animation(entity, animation, start_time, duration, delay);
+        self.padding_bottom.play_animation(entity, animation, start_time, duration, delay);
+        self.horizontal_gap.play_animation(entity, animation, start_time, duration, delay);
+        self.vertical_gap.play_animation(entity, animation, start_time, duration, delay);
 
         self.width.play_animation(entity, animation, start_time, duration, delay);
         self.height.play_animation(entity, animation, start_time, duration, delay);
@@ -781,14 +783,10 @@ impl Style {
         self.min_height.play_animation(entity, animation, start_time, duration, delay);
         self.max_height.play_animation(entity, animation, start_time, duration, delay);
 
-        self.min_left.play_animation(entity, animation, start_time, duration, delay);
-        self.max_left.play_animation(entity, animation, start_time, duration, delay);
-        self.min_right.play_animation(entity, animation, start_time, duration, delay);
-        self.max_right.play_animation(entity, animation, start_time, duration, delay);
-        self.min_top.play_animation(entity, animation, start_time, duration, delay);
-        self.max_top.play_animation(entity, animation, start_time, duration, delay);
-        self.min_bottom.play_animation(entity, animation, start_time, duration, delay);
-        self.max_bottom.play_animation(entity, animation, start_time, duration, delay);
+        self.min_horizontal_gap.play_animation(entity, animation, start_time, duration, delay);
+        self.max_horizontal_gap.play_animation(entity, animation, start_time, duration, delay);
+        self.min_vertical_gap.play_animation(entity, animation, start_time, duration, delay);
+        self.max_vertical_gap.play_animation(entity, animation, start_time, duration, delay);
 
         self.underline_color.play_animation(entity, animation, start_time, duration, delay);
 
@@ -825,26 +823,22 @@ impl Style {
             | self.right.has_active_animation(entity, animation)
             | self.top.has_active_animation(entity, animation)
             | self.bottom.has_active_animation(entity, animation)
-            | self.child_left.has_active_animation(entity, animation)
-            | self.child_right.has_active_animation(entity, animation)
-            | self.child_top.has_active_animation(entity, animation)
-            | self.child_bottom.has_active_animation(entity, animation)
-            | self.col_between.has_active_animation(entity, animation)
-            | self.row_between.has_active_animation(entity, animation)
+            | self.padding_left.has_active_animation(entity, animation)
+            | self.padding_right.has_active_animation(entity, animation)
+            | self.padding_top.has_active_animation(entity, animation)
+            | self.padding_bottom.has_active_animation(entity, animation)
+            | self.horizontal_gap.has_active_animation(entity, animation)
+            | self.vertical_gap.has_active_animation(entity, animation)
             | self.width.has_active_animation(entity, animation)
             | self.height.has_active_animation(entity, animation)
             | self.min_width.has_active_animation(entity, animation)
             | self.max_width.has_active_animation(entity, animation)
             | self.min_height.has_active_animation(entity, animation)
             | self.max_height.has_active_animation(entity, animation)
-            | self.min_left.has_active_animation(entity, animation)
-            | self.max_left.has_active_animation(entity, animation)
-            | self.min_right.has_active_animation(entity, animation)
-            | self.max_right.has_active_animation(entity, animation)
-            | self.min_top.has_active_animation(entity, animation)
-            | self.max_top.has_active_animation(entity, animation)
-            | self.min_bottom.has_active_animation(entity, animation)
-            | self.max_bottom.has_active_animation(entity, animation)
+            | self.min_horizontal_gap.has_active_animation(entity, animation)
+            | self.max_horizontal_gap.has_active_animation(entity, animation)
+            | self.min_vertical_gap.has_active_animation(entity, animation)
+            | self.max_vertical_gap.has_active_animation(entity, animation)
             | self.underline_color.has_active_animation(entity, animation)
             | self.fill.has_active_animation(entity, animation)
     }
@@ -1092,34 +1086,41 @@ impl Style {
                 self.bottom.insert_transition(rule_id, animation);
             }
 
-            "child-left" => {
-                self.child_left.insert_animation(animation, self.add_transition(transition));
-                self.child_left.insert_transition(rule_id, animation);
+            "padding-left" => {
+                self.padding_left.insert_animation(animation, self.add_transition(transition));
+                self.padding_left.insert_transition(rule_id, animation);
             }
 
-            "child-right" => {
-                self.child_right.insert_animation(animation, self.add_transition(transition));
-                self.child_right.insert_transition(rule_id, animation);
+            "padding-right" => {
+                self.padding_right.insert_animation(animation, self.add_transition(transition));
+                self.padding_right.insert_transition(rule_id, animation);
             }
 
-            "child-top" => {
-                self.child_top.insert_animation(animation, self.add_transition(transition));
-                self.child_top.insert_transition(rule_id, animation);
+            "padding-top" => {
+                self.padding_top.insert_animation(animation, self.add_transition(transition));
+                self.padding_top.insert_transition(rule_id, animation);
             }
 
-            "child-bottom" => {
-                self.child_bottom.insert_animation(animation, self.add_transition(transition));
-                self.child_bottom.insert_transition(rule_id, animation);
+            "padding-bottom" => {
+                self.padding_bottom.insert_animation(animation, self.add_transition(transition));
+                self.padding_bottom.insert_transition(rule_id, animation);
             }
 
-            "col-between" => {
-                self.col_between.insert_animation(animation, self.add_transition(transition));
-                self.col_between.insert_transition(rule_id, animation);
+            "horizontal-gap" => {
+                self.horizontal_gap.insert_animation(animation, self.add_transition(transition));
+                self.horizontal_gap.insert_transition(rule_id, animation);
             }
 
-            "row-between" => {
-                self.row_between.insert_animation(animation, self.add_transition(transition));
-                self.row_between.insert_transition(rule_id, animation);
+            "vertical-gap" => {
+                self.vertical_gap.insert_animation(animation, self.add_transition(transition));
+                self.vertical_gap.insert_transition(rule_id, animation);
+            }
+
+            "gap" => {
+                self.horizontal_gap.insert_animation(animation, self.add_transition(transition));
+                self.horizontal_gap.insert_transition(rule_id, animation);
+                self.vertical_gap.insert_animation(animation, self.add_transition(transition));
+                self.vertical_gap.insert_transition(rule_id, animation);
             }
 
             "width" => {
@@ -1152,44 +1153,26 @@ impl Style {
                 self.max_height.insert_transition(rule_id, animation);
             }
 
-            "min-left" => {
-                self.min_left.insert_animation(animation, self.add_transition(transition));
-                self.min_left.insert_transition(rule_id, animation);
+            "min-horizontal-gap" => {
+                self.min_horizontal_gap
+                    .insert_animation(animation, self.add_transition(transition));
+                self.min_horizontal_gap.insert_transition(rule_id, animation);
             }
 
-            "max-left" => {
-                self.max_left.insert_animation(animation, self.add_transition(transition));
-                self.max_left.insert_transition(rule_id, animation);
+            "max-horizontal-gap" => {
+                self.max_horizontal_gap
+                    .insert_animation(animation, self.add_transition(transition));
+                self.max_horizontal_gap.insert_transition(rule_id, animation);
             }
 
-            "min-right" => {
-                self.min_right.insert_animation(animation, self.add_transition(transition));
-                self.min_right.insert_transition(rule_id, animation);
+            "min-vertical-gap" => {
+                self.min_vertical_gap.insert_animation(animation, self.add_transition(transition));
+                self.min_vertical_gap.insert_transition(rule_id, animation);
             }
 
-            "max-right" => {
-                self.max_right.insert_animation(animation, self.add_transition(transition));
-                self.max_right.insert_transition(rule_id, animation);
-            }
-
-            "min-top" => {
-                self.min_top.insert_animation(animation, self.add_transition(transition));
-                self.min_top.insert_transition(rule_id, animation);
-            }
-
-            "max-top" => {
-                self.max_top.insert_animation(animation, self.add_transition(transition));
-                self.max_top.insert_transition(rule_id, animation);
-            }
-
-            "min-bottom" => {
-                self.min_bottom.insert_animation(animation, self.add_transition(transition));
-                self.min_bottom.insert_transition(rule_id, animation);
-            }
-
-            "max-bottom" => {
-                self.max_bottom.insert_animation(animation, self.add_transition(transition));
-                self.max_bottom.insert_transition(rule_id, animation);
+            "max-vertical-gap" => {
+                self.max_vertical_gap.insert_animation(animation, self.add_transition(transition));
+                self.max_vertical_gap.insert_transition(rule_id, animation);
             }
 
             "underline-color" => {
@@ -1244,8 +1227,12 @@ impl Style {
             }
 
             // Position Type
-            Property::PositionType(position_type) => {
-                self.position_type.insert_rule(rule_id, position_type);
+            Property::PositionType(position) => {
+                self.position_type.insert_rule(rule_id, position);
+            }
+
+            Property::Alignment(alignment) => {
+                self.alignment.insert_rule(rule_id, alignment);
             }
 
             // Space
@@ -1286,83 +1273,41 @@ impl Style {
                 self.height.insert_rule(rule_id, height);
             }
 
-            // Child Space
-            Property::ChildSpace(child_space) => {
-                self.child_left.insert_rule(rule_id, child_space);
-                self.child_right.insert_rule(rule_id, child_space);
-                self.child_top.insert_rule(rule_id, child_space);
-                self.child_bottom.insert_rule(rule_id, child_space);
+            // Padding
+            Property::Padding(padding) => {
+                self.padding_left.insert_rule(rule_id, padding);
+                self.padding_right.insert_rule(rule_id, padding);
+                self.padding_top.insert_rule(rule_id, padding);
+                self.padding_bottom.insert_rule(rule_id, padding);
             }
 
-            Property::ChildLeft(child_left) => {
-                self.child_left.insert_rule(rule_id, child_left);
+            Property::PaddingLeft(padding_left) => {
+                self.padding_left.insert_rule(rule_id, padding_left);
             }
 
-            Property::ChildRight(child_right) => {
-                self.child_right.insert_rule(rule_id, child_right);
+            Property::PaddingRight(padding_right) => {
+                self.padding_right.insert_rule(rule_id, padding_right);
             }
 
-            Property::ChildTop(child_top) => {
-                self.child_top.insert_rule(rule_id, child_top);
+            Property::PaddingTop(padding_top) => {
+                self.padding_top.insert_rule(rule_id, padding_top);
             }
 
-            Property::ChildBottom(child_bottom) => {
-                self.child_bottom.insert_rule(rule_id, child_bottom);
+            Property::PaddingBottom(padding_bottom) => {
+                self.padding_bottom.insert_rule(rule_id, padding_bottom);
             }
 
-            Property::RowBetween(row_between) => {
-                self.row_between.insert_rule(rule_id, row_between);
+            Property::VerticalGap(vertical_gap) => {
+                self.vertical_gap.insert_rule(rule_id, vertical_gap);
             }
 
-            Property::ColBetween(col_between) => {
-                self.col_between.insert_rule(rule_id, col_between);
+            Property::HorizontalGap(horizontal_gap) => {
+                self.horizontal_gap.insert_rule(rule_id, horizontal_gap);
             }
 
-            // Space Constraints
-            Property::MinSpace(min_space) => {
-                self.min_left.insert_rule(rule_id, min_space);
-                self.min_right.insert_rule(rule_id, min_space);
-                self.min_top.insert_rule(rule_id, min_space);
-                self.min_bottom.insert_rule(rule_id, min_space);
-            }
-
-            Property::MinLeft(min_left) => {
-                self.min_left.insert_rule(rule_id, min_left);
-            }
-
-            Property::MinRight(min_right) => {
-                self.min_right.insert_rule(rule_id, min_right);
-            }
-
-            Property::MinTop(min_top) => {
-                self.min_top.insert_rule(rule_id, min_top);
-            }
-
-            Property::MinBottom(min_bottom) => {
-                self.min_bottom.insert_rule(rule_id, min_bottom);
-            }
-
-            Property::MaxSpace(max_space) => {
-                self.max_left.insert_rule(rule_id, max_space);
-                self.max_right.insert_rule(rule_id, max_space);
-                self.max_top.insert_rule(rule_id, max_space);
-                self.max_bottom.insert_rule(rule_id, max_space);
-            }
-
-            Property::MaxLeft(max_left) => {
-                self.max_left.insert_rule(rule_id, max_left);
-            }
-
-            Property::MaxRight(max_right) => {
-                self.max_right.insert_rule(rule_id, max_right);
-            }
-
-            Property::MaxTop(max_top) => {
-                self.max_top.insert_rule(rule_id, max_top);
-            }
-
-            Property::MaxBottom(max_bottom) => {
-                self.max_bottom.insert_rule(rule_id, max_bottom);
+            Property::Gap(gap) => {
+                self.horizontal_gap.insert_rule(rule_id, gap);
+                self.vertical_gap.insert_rule(rule_id, gap);
             }
 
             // Size Constraints
@@ -1390,6 +1335,33 @@ impl Style {
 
             Property::MaxHeight(max_height) => {
                 self.max_height.insert_rule(rule_id, max_height);
+            }
+
+            // Gap Constraints
+            Property::MinGap(min_gap) => {
+                self.min_horizontal_gap.insert_rule(rule_id, min_gap);
+                self.min_vertical_gap.insert_rule(rule_id, min_gap);
+            }
+
+            Property::MinHorizontalGap(min_gap) => {
+                self.min_horizontal_gap.insert_rule(rule_id, min_gap);
+            }
+
+            Property::MinVerticalGap(min_gap) => {
+                self.min_vertical_gap.insert_rule(rule_id, min_gap);
+            }
+
+            Property::MaxGap(max_gap) => {
+                self.max_horizontal_gap.insert_rule(rule_id, max_gap);
+                self.max_vertical_gap.insert_rule(rule_id, max_gap);
+            }
+
+            Property::MaxHorizontalGap(max_gap) => {
+                self.max_horizontal_gap.insert_rule(rule_id, max_gap);
+            }
+
+            Property::MaxVerticalGap(max_gap) => {
+                self.max_vertical_gap.insert_rule(rule_id, max_gap);
             }
 
             // Background Colour
@@ -1816,19 +1788,25 @@ impl Style {
         // Position Type
         self.position_type.remove(entity);
 
+        self.alignment.remove(entity);
+
         // Space
         self.left.remove(entity);
         self.right.remove(entity);
         self.top.remove(entity);
         self.bottom.remove(entity);
 
-        // Child Space
-        self.child_left.remove(entity);
-        self.child_right.remove(entity);
-        self.child_top.remove(entity);
-        self.child_bottom.remove(entity);
-        self.row_between.remove(entity);
-        self.col_between.remove(entity);
+        // Padding
+        self.padding_left.remove(entity);
+        self.padding_right.remove(entity);
+        self.padding_top.remove(entity);
+        self.padding_bottom.remove(entity);
+        self.vertical_gap.remove(entity);
+        self.horizontal_gap.remove(entity);
+
+        // Scrolling
+        self.vertical_scroll.remove(entity);
+        self.horizontal_scroll.remove(entity);
 
         // Size
         self.width.remove(entity);
@@ -1840,15 +1818,11 @@ impl Style {
         self.min_height.remove(entity);
         self.max_height.remove(entity);
 
-        // Space Constraints
-        self.min_left.remove(entity);
-        self.max_left.remove(entity);
-        self.min_right.remove(entity);
-        self.max_right.remove(entity);
-        self.min_top.remove(entity);
-        self.max_top.remove(entity);
-        self.min_bottom.remove(entity);
-        self.max_bottom.remove(entity);
+        self.min_horizontal_gap.remove(entity);
+        self.max_horizontal_gap.remove(entity);
+        self.min_vertical_gap.remove(entity);
+        self.max_vertical_gap.remove(entity);
+
         self.text_range.remove(entity);
         self.text_span.remove(entity);
 
@@ -1950,6 +1924,7 @@ impl Style {
 
         self.layout_type.clear_rules();
         self.position_type.clear_rules();
+        self.alignment.clear_rules();
 
         // Space
         self.left.clear_rules();
@@ -1961,29 +1936,28 @@ impl Style {
         self.width.clear_rules();
         self.height.clear_rules();
 
-        // Space Constraints
-        self.min_left.clear_rules();
-        self.max_left.clear_rules();
-        self.min_right.clear_rules();
-        self.max_right.clear_rules();
-        self.min_top.clear_rules();
-        self.max_top.clear_rules();
-        self.min_bottom.clear_rules();
-        self.max_bottom.clear_rules();
-
         // Size Constraints
         self.min_width.clear_rules();
         self.max_width.clear_rules();
         self.min_height.clear_rules();
         self.max_height.clear_rules();
 
-        // Child Space
-        self.child_left.clear_rules();
-        self.child_right.clear_rules();
-        self.child_top.clear_rules();
-        self.child_bottom.clear_rules();
-        self.col_between.clear_rules();
-        self.row_between.clear_rules();
+        self.min_horizontal_gap.clear_rules();
+        self.max_horizontal_gap.clear_rules();
+        self.min_vertical_gap.clear_rules();
+        self.max_vertical_gap.clear_rules();
+
+        // Padding
+        self.padding_left.clear_rules();
+        self.padding_right.clear_rules();
+        self.padding_top.clear_rules();
+        self.padding_bottom.clear_rules();
+        self.horizontal_gap.clear_rules();
+        self.vertical_gap.clear_rules();
+
+        // Scrolling
+        self.horizontal_scroll.clear_rules();
+        self.vertical_scroll.clear_rules();
 
         // Text and Font
         self.text_wrap.clear_rules();

@@ -10,7 +10,7 @@ fn main() -> Result<(), ApplicationError> {
             // .clip_path(Pixels(0.0))
             .backdrop_filter(Filter::Blur(Length::px(10.0)))
             .layout_type(LayoutType::Row)
-            .position_type(PositionType::ParentDirected)
+            .position_type(PositionType::Relative)
             .space(Pixels(30.0))
             .left(Pixels(30.0))
             .right(Pixels(30.0))

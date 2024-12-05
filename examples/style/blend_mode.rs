@@ -16,12 +16,12 @@ fn main() -> Result<(), ApplicationError> {
             Element::new(cx)
                 .size(Pixels(50.0))
                 .background_color(Color::green())
-                .position_type(PositionType::SelfDirected);
+                .position_type(PositionType::Absolute);
             Element::new(cx)
                 .size(Pixels(50.0))
                 .left(Pixels(25.0))
                 .background_color(Color::blue())
-                .position_type(PositionType::SelfDirected);
+                .position_type(PositionType::Absolute);
         })
         .class("multiply")
         .size(Pixels(100.0));

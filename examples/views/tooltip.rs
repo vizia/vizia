@@ -6,7 +6,7 @@ const STYLE: &str = r#"
     element.test {
         background-color: rgb(100, 100, 100);
         size: 100px;
-        child-space: 1s;
+        padding: 1s;
     }
 "#;
 
@@ -20,9 +20,9 @@ fn main() -> Result<(), ApplicationError> {
                     .text("Top Start")
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").child_space(Pixels(4.0));
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .child_space(Pixels(4.0))
+                        .padding(Pixels(4.0))
                         .size(Auto)
                         .placement(Placement::TopStart)
                     })
@@ -32,9 +32,9 @@ fn main() -> Result<(), ApplicationError> {
                     .text("Top")
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").child_space(Pixels(4.0));
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .child_space(Pixels(4.0))
+                        .padding(Pixels(4.0))
                         .size(Auto)
                         .placement(Placement::Top)
                     })
@@ -44,25 +44,25 @@ fn main() -> Result<(), ApplicationError> {
                     .text("Top End")
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").child_space(Pixels(4.0));
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .child_space(Pixels(4.0))
+                        .padding(Pixels(4.0))
                         .size(Auto)
                         .placement(Placement::TopEnd)
                     })
                     .class("test");
             })
             .size(Auto)
-            .col_between(Pixels(8.0));
+            .horizontal_gap(Pixels(8.0));
 
             HStack::new(cx, |cx| {
                 Element::new(cx)
                     .text("LeftStart")
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").child_space(Pixels(4.0));
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .child_space(Pixels(4.0))
+                        .padding(Pixels(4.0))
                         .size(Auto)
                         .placement(Placement::LeftStart)
                     })
@@ -72,9 +72,9 @@ fn main() -> Result<(), ApplicationError> {
                     .text("Left")
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").child_space(Pixels(4.0));
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .child_space(Pixels(4.0))
+                        .padding(Pixels(4.0))
                         .size(Auto)
                         .placement(Placement::Left)
                     })
@@ -84,25 +84,25 @@ fn main() -> Result<(), ApplicationError> {
                     .text("LeftEnd")
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").child_space(Pixels(4.0));
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .child_space(Pixels(4.0))
+                        .padding(Pixels(4.0))
                         .size(Auto)
                         .placement(Placement::LeftEnd)
                     })
                     .class("test");
             })
             .size(Auto)
-            .col_between(Pixels(8.0));
+            .horizontal_gap(Pixels(8.0));
 
             HStack::new(cx, |cx| {
                 Element::new(cx)
                     .text("RightStart")
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").child_space(Pixels(4.0));
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .child_space(Pixels(4.0))
+                        .padding(Pixels(4.0))
                         .size(Auto)
                         .placement(Placement::RightStart)
                     })
@@ -112,9 +112,9 @@ fn main() -> Result<(), ApplicationError> {
                     .text("Right")
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").child_space(Pixels(4.0));
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .child_space(Pixels(4.0))
+                        .padding(Pixels(4.0))
                         .size(Auto)
                         .placement(Placement::Right)
                     })
@@ -124,25 +124,25 @@ fn main() -> Result<(), ApplicationError> {
                     .text("RightEnd")
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").child_space(Pixels(4.0));
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .child_space(Pixels(4.0))
+                        .padding(Pixels(4.0))
                         .size(Auto)
                         .placement(Placement::RightEnd)
                     })
                     .class("test");
             })
             .size(Auto)
-            .col_between(Pixels(8.0));
+            .horizontal_gap(Pixels(8.0));
 
             HStack::new(cx, |cx| {
                 Element::new(cx)
                     .text("BottomStart")
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").child_space(Pixels(4.0));
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .child_space(Pixels(4.0))
+                        .padding(Pixels(4.0))
                         .size(Auto)
                         .placement(Placement::BottomStart)
                     })
@@ -152,9 +152,9 @@ fn main() -> Result<(), ApplicationError> {
                     .text("Bottom")
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").child_space(Pixels(4.0));
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .child_space(Pixels(4.0))
+                        .padding(Pixels(4.0))
                         .size(Auto)
                         .placement(Placement::Bottom)
                     })
@@ -164,25 +164,25 @@ fn main() -> Result<(), ApplicationError> {
                     .text("BottomEnd")
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").child_space(Pixels(4.0));
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .child_space(Pixels(4.0))
+                        .padding(Pixels(4.0))
                         .size(Auto)
                         .placement(Placement::BottomEnd)
                     })
                     .class("test");
             })
             .size(Auto)
-            .col_between(Pixels(8.0));
+            .horizontal_gap(Pixels(8.0));
 
             HStack::new(cx, |cx| {
                 Element::new(cx)
                     .text("Over")
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").child_space(Pixels(4.0));
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .child_space(Pixels(4.0))
+                        .padding(Pixels(4.0))
                         .size(Auto)
                         .placement(Placement::Over)
                     })
@@ -192,16 +192,16 @@ fn main() -> Result<(), ApplicationError> {
                     .text("Cursor")
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").child_space(Pixels(4.0));
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .child_space(Pixels(4.0))
+                        .padding(Pixels(4.0))
                         .size(Auto)
                         .placement(Placement::Cursor)
                     })
                     .class("test");
             })
             .size(Auto)
-            .col_between(Pixels(8.0));
+            .horizontal_gap(Pixels(8.0));
         });
     })
     .title("Tooltip")

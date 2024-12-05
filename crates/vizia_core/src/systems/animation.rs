@@ -64,23 +64,19 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     relayout_entities.extend(cx.style.max_height.tick(time));
     relayout_entities.extend(cx.style.min_width.tick(time));
     relayout_entities.extend(cx.style.min_height.tick(time));
-    // Min/Max Space
-    relayout_entities.extend(cx.style.min_left.tick(time));
-    relayout_entities.extend(cx.style.max_left.tick(time));
-    relayout_entities.extend(cx.style.min_right.tick(time));
-    relayout_entities.extend(cx.style.max_right.tick(time));
-    relayout_entities.extend(cx.style.min_top.tick(time));
-    relayout_entities.extend(cx.style.max_top.tick(time));
-    relayout_entities.extend(cx.style.min_bottom.tick(time));
-    relayout_entities.extend(cx.style.max_bottom.tick(time));
+    // Min/Max Gap
+    relayout_entities.extend(cx.style.max_horizontal_gap.tick(time));
+    relayout_entities.extend(cx.style.max_vertical_gap.tick(time));
+    relayout_entities.extend(cx.style.min_horizontal_gap.tick(time));
+    relayout_entities.extend(cx.style.min_vertical_gap.tick(time));
     // Row/Col Between
-    relayout_entities.extend(cx.style.row_between.tick(time));
-    relayout_entities.extend(cx.style.col_between.tick(time));
+    relayout_entities.extend(cx.style.vertical_gap.tick(time));
+    relayout_entities.extend(cx.style.horizontal_gap.tick(time));
     // Child Space
-    relayout_entities.extend(cx.style.child_left.tick(time));
-    relayout_entities.extend(cx.style.child_right.tick(time));
-    relayout_entities.extend(cx.style.child_top.tick(time));
-    relayout_entities.extend(cx.style.child_bottom.tick(time));
+    relayout_entities.extend(cx.style.padding_left.tick(time));
+    relayout_entities.extend(cx.style.padding_right.tick(time));
+    relayout_entities.extend(cx.style.padding_top.tick(time));
+    relayout_entities.extend(cx.style.padding_bottom.tick(time));
 
     if !relayout_entities.is_empty() {
         cx.style.system_flags.set(SystemFlags::RELAYOUT, true);

@@ -24,12 +24,7 @@ impl Chip {
     {
         Self { on_close: None }
             .build(cx, move |cx| {
-                Label::new(cx, text)
-                    .height(Stretch(1.0))
-                    .child_top(Stretch(1.0))
-                    .child_bottom(Stretch(1.0))
-                    .top(Pixels(0.0))
-                    .bottom(Pixels(0.0));
+                Label::new(cx, text).height(Stretch(1.0)).alignment(Alignment::Left);
                 Binding::new(cx, Chip::on_close.map(|on_close| on_close.is_some()), |cx, val| {
                     if val.get(cx) {
                         let on_close = Chip::on_close.get(cx).unwrap();
@@ -37,11 +32,12 @@ impl Chip {
                             .class("close-icon")
                             .height(Pixels(16.0))
                             .width(Pixels(16.0))
-                            .child_space(Stretch(1.0))
+                            .alignment(Alignment::Center)
                             .on_press(move |cx| (on_close)(cx));
                     }
                 });
             })
+            .toggle_class("close", Chip::on_close.map(|on_close| on_close.is_some()))
             .layout_type(LayoutType::Row)
     }
 }

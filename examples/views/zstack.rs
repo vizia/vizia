@@ -12,7 +12,7 @@ fn main() -> Result<(), ApplicationError> {
                     .background_color(color);
             }
         })
-        .child_space(Stretch(1.0));
+        .alignment(Alignment::Center);
     })
     .title("ZStack")
     .run()

@@ -5,8 +5,8 @@ const STYLE: &str = r#"
 
 :root {
     layout-type: row;
-    col-between: 20px;
-    child-space: 1s;
+    horizontal-gap: 20px;
+    padding: 1s;
 }
 
 element {
