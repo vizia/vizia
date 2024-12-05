@@ -46,7 +46,7 @@ fn main() -> Result<(), ApplicationError> {
                     cx.emit(AppEvent::SetNumber(val));
                 })
                 .width(Pixels(200.0))
-                .child_left(Pixels(5.0));
+                .padding_left(Pixels(5.0));
 
             // Label::new(cx, "Please enter a number less than 50")
             //     .class("validation_error_label")
@@ -55,16 +55,14 @@ fn main() -> Result<(), ApplicationError> {
             Label::new(cx, AppData::number)
                 .width(Pixels(200.0))
                 .height(Pixels(32.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .child_left(Pixels(5.0));
+                .alignment(Alignment::Center)
+                .padding_left(Pixels(5.0));
         })
-        .child_top(Stretch(1.0))
-        .child_bottom(Stretch(1.0))
+        .alignment(Alignment::Center)
         .height(Auto)
         .space(Stretch(1.0))
-        .child_space(Stretch(1.0))
-        .col_between(Pixels(10.0));
+        .alignment(Alignment::Center)
+        .horizontal_gap(Pixels(10.0));
     })
     .title("Number Input")
     .run()

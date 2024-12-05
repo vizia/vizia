@@ -12,7 +12,7 @@ impl XYPad {
             .build(cx, |cx| {
                 // Thumb
                 Element::new(cx)
-                    .position_type(PositionType::SelfDirected)
+                    .position_type(PositionType::Absolute)
                     .left(lens.map(|(x, _)| Percentage(*x * 100.0)))
                     .top(lens.map(|(_, y)| Percentage((1.0 - *y) * 100.0)))
                     .translate(Translate::new(

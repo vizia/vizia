@@ -53,10 +53,9 @@ fn main() -> Result<(), ApplicationError> {
                         Slider::new(cx, AppData::color.map(|c| c.b() as f32 / 255.0))
                             .on_changing(|cx, val| cx.emit(AppEvent::SetBlue(val)));
                     })
-                    .child_space(Pixels(20.0))
-                    .child_top(Stretch(1.0))
-                    .child_bottom(Stretch(1.0))
-                    .row_between(Pixels(12.0));
+                    .padding(Pixels(20.0))
+                    .alignment(Alignment::Center)
+                    .vertical_gap(Pixels(12.0));
                 })
                 .on_close(|cx| {
                     cx.emit(AppEvent::PopupClosed);
@@ -71,7 +70,7 @@ fn main() -> Result<(), ApplicationError> {
             Button::new(cx, |cx| Label::new(cx, "Show Popup"))
                 .on_press(|cx| cx.emit(AppEvent::ShowPopup));
         })
-        .child_space(Pixels(20.0))
+        .padding(Pixels(20.0))
         .background_color(AppData::color);
     })
     .title("Main")

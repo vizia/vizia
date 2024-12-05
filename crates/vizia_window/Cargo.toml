@@ -10,7 +10,8 @@ repository.workspace = true
 [dependencies]
 vizia_input.workspace = true
 vizia_style.workspace = true
-morphorm = "0.6.5"
+# morphorm = {path = "../../../morpshorm"}
+morphorm = {git = "https://github.com/vizia/morphorm", branch = "alternate"}
 accesskit = "0.16"
 bitflags = "2.6"
 

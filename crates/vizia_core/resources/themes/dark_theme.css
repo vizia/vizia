@@ -171,59 +171,44 @@ button svg {
 
 /* BUTTON GROUP */
 
+button-group {
+    gap: 1px;
+}
+
 button-group > button,
 button-group > toggle-button {
     corner-radius: 0px;
-    right: -1px;
 }
 
 button-group.vertical > button,
 button-group.vertical > toggle-button {
     corner-radius: 0px;
-    right: auto;
-    bottom: -1px;
 }
 
 button-group > :first-child {
     corner-top-left-radius: 4px;
     corner-bottom-left-radius: 4px;
-    right: -1px;
-    left: auto;
 }
 
 button-group > :last-child {
     corner-top-right-radius: 4px;
     corner-bottom-right-radius: 4px;
-    left: -1px;
-    right: auto;
 }
 
 button-group.vertical > :first-child {
     corner-radius: 0px;
     corner-top-right-radius: 4px;
     corner-top-left-radius: 4px;
-    right: auto;
-    bottom: -1px;
 }
 
 button-group.vertical > :last-child {
     corner-radius: 0px;
     corner-bottom-right-radius: 4px;
     corner-bottom-left-radius: 4px;
-    left: auto;
-    top: -1px;
 }
 
 button-group.accent {
-    col-between: 1px;
-}
-
-button-group.accent > :first-child {
-    right: auto;
-}
-
-button-group.accent > :last-child {
-    left: auto;
+    gap: 1px;
 }
 
 /* CHECKBOX */
@@ -514,14 +499,13 @@ submenu:disabled {
 }
 
 submenu > popup {
-    child-space: 8px;
+    padding: 8px;
 }
 
 menu-divider {
     height: 9px;
     width: 1s;
-    child-top: 1s;
-    child-bottom: 1s;
+    alignment: center;
 }
 
 menu-divider .line {
@@ -533,7 +517,7 @@ menu-divider .line {
 
 notification {
     background-color: #262626;
-    child-space: 8px;
+    padding: 8px;
     corner-radius: 4px;
     shadow: 0px 2px 16px #00000038;
 }
@@ -785,7 +769,7 @@ spinbox picklist.spinbox-value dropdown {
 spinbox picklist.spinbox-value {
     background-color: transparent;
     border-width: 0px;
-    col-between: 4px;
+    horizontal-gap: 4px;
 }
 
 /* SWITCH */
@@ -945,7 +929,7 @@ toggle-button svg {
 
 /* TOOLTIP */
 tooltip {
-    child-space: 4px;
+    padding: 4px;
     background-color: #888;
     corner-radius: 4px;
 }

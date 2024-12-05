@@ -68,7 +68,7 @@ pub fn tooltip(cx: &mut Context) {
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::BottomStart));
-                }).row_between(Pixels(8.0)).size(Auto);
+                }).vertical_gap(Pixels(8.0)).size(Auto);
 
                 VStack::new(cx, |cx|{
                     Button::new(cx, |cx|{
@@ -110,7 +110,7 @@ pub fn tooltip(cx: &mut Context) {
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::Bottom));
-                }).row_between(Pixels(8.0)).size(Auto);
+                }).vertical_gap(Pixels(8.0)).size(Auto);
 
                 VStack::new(cx, |cx|{
                     Button::new(cx, |cx|{
@@ -152,7 +152,7 @@ pub fn tooltip(cx: &mut Context) {
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::BottomEnd));
-                }).row_between(Pixels(8.0)).size(Auto);
+                }).vertical_gap(Pixels(8.0)).size(Auto);
             }, r#"IconButton::new(cx, ICON_TRASH).tooltip(|cx| Tooltip::new(cx, |cx|{
     Label::new(cx, "Delete");
 }));"#

@@ -45,7 +45,7 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
             let bounds = cx.cache.get_bounds(entity);
             let padding_left = cx
                 .style
-                .child_left
+                .padding_left
                 .get(entity)
                 .copied()
                 .unwrap_or_default()
@@ -53,7 +53,7 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                 * cx.style.scale_factor();
             let padding_right = cx
                 .style
-                .child_right
+                .padding_right
                 .get(entity)
                 .copied()
                 .unwrap_or_default()
@@ -181,11 +181,13 @@ pub fn build_paragraph(
     paragraph_style.set_text_align(
         if let Some(text_align) = style.text_align.get(entity) {
             *text_align
-        } else if let Some(Units::Stretch(_)) = style.child_left.get(entity) {
-            if let Some(Units::Stretch(_)) = style.child_right.get(entity) {
-                TextAlign::Center
-            } else {
-                TextAlign::Right
+        } else if let Some(alignment) = style.alignment.get(entity) {
+            match alignment {
+                Alignment::TopLeft | Alignment::Left | Alignment::BottomLeft => TextAlign::Left,
+                Alignment::TopCenter | Alignment::Center | Alignment::BottomCenter => {
+                    TextAlign::Center
+                }
+                Alignment::TopRight | Alignment::Right | Alignment::BottomRight => TextAlign::Right,
             }
         } else {
             TextAlign::Left

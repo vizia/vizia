@@ -87,7 +87,7 @@ impl BackendContext {
         self.0.style.restyle.insert(window_entity).unwrap();
         self.0.style.reaccess.insert(window_entity).unwrap();
 
-        self.0.style.position_type.insert(window_entity, PositionType::SelfDirected);
+        self.0.style.position_type.insert(window_entity, PositionType::Absolute);
 
         self.0.tree.set_window(window_entity, true);
 

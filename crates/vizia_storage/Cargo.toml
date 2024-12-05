@@ -9,7 +9,8 @@ repository.workspace = true
 
 [dependencies]
 vizia_id.workspace = true
-morphorm = "0.6.4"
+# morphorm = {path = "../../../morphorm"}
+morphorm = {git = "https://github.com/vizia/morphorm", branch = "alternate"}
 
 [lints]
 workspace = true

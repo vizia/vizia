@@ -182,7 +182,7 @@ where
                         .size(Stretch(1.0))
                         .space(Pixels(0.0))
                         .hoverable(false)
-                        .position_type(PositionType::SelfDirected)
+                        .position_type(PositionType::Absolute)
                         .hidden(true)
                         .class("placeholder")
                         .bind(lens, |handle, lens| {
@@ -282,28 +282,51 @@ where
     fn coordinates_global_to_text(&self, cx: &EventContext, x: f32, y: f32) -> (f32, f32) {
         let bounds = cx.bounds();
 
-        let child_left = cx.style.child_left.get(cx.current).copied().unwrap_or_default();
-        let child_top = cx.style.child_top.get(cx.current).copied().unwrap_or_default();
-        let _child_right = cx.style.child_right.get(cx.current).copied().unwrap_or_default();
-        let _child_bottom = cx.style.child_bottom.get(cx.current).copied().unwrap_or_default();
+        if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+            let padding_left = cx.style.padding_left.get(cx.current).copied().unwrap_or_default();
+            let padding_top = cx.style.padding_top.get(cx.current).copied().unwrap_or_default();
+            let _padding_right =
+                cx.style.padding_right.get(cx.current).copied().unwrap_or_default();
+            let padding_bottom =
+                cx.style.padding_bottom.get(cx.current).copied().unwrap_or_default();
 
-        let logical_parent_width = cx.physical_to_logical(bounds.w);
-        let logical_parent_height = cx.physical_to_logical(bounds.h);
+            let logical_parent_width = cx.physical_to_logical(bounds.w);
+            let logical_parent_height = cx.physical_to_logical(bounds.h);
 
-        let child_left = child_left.to_px(logical_parent_width, 0.0) * cx.scale_factor();
-        let child_top = child_top.to_px(logical_parent_height, 0.0) * cx.scale_factor();
+            let padding_left = padding_left.to_px(logical_parent_width, 0.0) * cx.scale_factor();
+            let padding_top = padding_top.to_px(logical_parent_height, 0.0) * cx.scale_factor();
+            let padding_bottom =
+                padding_bottom.to_px(logical_parent_height, 0.0) * cx.scale_factor();
 
-        // let total_height = cx.text_context.with_buffer(cx.current, |_, buffer| {
-        //     buffer.layout_runs().len() as f32 * buffer.metrics().line_height
-        // });
+            let (mut top, _) = match cx.style.alignment.get(cx.current).copied().unwrap_or_default()
+            {
+                Alignment::TopLeft => (0.0, 0.0),
+                Alignment::TopCenter => (0.0, 0.5),
+                Alignment::TopRight => (0.0, 1.0),
+                Alignment::Left => (0.5, 0.0),
+                Alignment::Center => (0.5, 0.5),
+                Alignment::Right => (0.5, 1.0),
+                Alignment::BottomLeft => (1.0, 0.0),
+                Alignment::BottomCenter => (1.0, 0.5),
+                Alignment::BottomRight => (1.0, 1.0),
+            };
 
-        // let x = x - bounds.x - self.transform.0 - child_left;
-        // let y = y - self.transform.1 - bounds.y - (bounds.h - total_height) * justify_y - child_top;
+            top *= bounds.height() - padding_top - padding_bottom - paragraph.height();
 
-        let x = x - bounds.x - child_left;
-        let y = y - bounds.y - child_top;
+            // let total_height = cx.text_context.with_buffer(cx.current, |_, buffer| {
+            //     buffer.layout_runs().len() as f32 * buffer.metrics().line_height
+            // });
 
-        (x, y)
+            // let x = x - bounds.x - self.transform.0 - padding_left;
+            // let y = y - self.transform.1 - bounds.y - (bounds.h - total_height) * justify_y - padding_top;
+
+            let x = x - bounds.x - padding_left;
+            let y = y - bounds.y - padding_top - top;
+
+            (x, y)
+        } else {
+            (x, y)
+        }
     }
 
     /// This function takes window-global physical coordinates.
@@ -402,62 +425,39 @@ where
                     for cursor_rect in cursor_rects {
                         let bounds = cx.bounds();
 
-                        let mut vertical_flex_sum = 0.0;
-                        let mut horizontal_flex_sum = 0.0;
+                        let alignment = cx.alignment();
 
-                        let mut padding_top = match cx.child_top() {
+                        let (mut top, left) = match alignment {
+                            Alignment::TopLeft => (0.0, 0.0),
+                            Alignment::TopCenter => (0.0, 0.5),
+                            Alignment::TopRight => (0.0, 1.0),
+                            Alignment::Left => (0.5, 0.0),
+                            Alignment::Center => (0.5, 0.5),
+                            Alignment::Right => (0.5, 1.0),
+                            Alignment::BottomLeft => (1.0, 0.0),
+                            Alignment::BottomCenter => (1.0, 0.5),
+                            Alignment::BottomRight => (1.0, 1.0),
+                        };
+
+                        let padding_top = match cx.padding_top() {
                             Units::Pixels(val) => val,
-                            Units::Stretch(val) => {
-                                vertical_flex_sum += val;
-                                0.0
-                            }
                             _ => 0.0,
                         };
 
-                        let padding_bottom = match cx.child_bottom() {
+                        let padding_bottom = match cx.padding_bottom() {
                             Units::Pixels(val) => val,
-                            Units::Stretch(val) => {
-                                vertical_flex_sum += val;
-                                0.0
-                            }
                             _ => 0.0,
                         };
 
-                        let vertical_free_space =
-                            bounds.height() - paragraph.height() - padding_top - padding_bottom;
+                        top *= bounds.height() - padding_top - padding_bottom - paragraph.height();
 
-                        if let Units::Stretch(val) = cx.child_top() {
-                            padding_top = (vertical_free_space * val / vertical_flex_sum).round()
-                        }
-
-                        let mut padding_left = match cx.child_left() {
+                        let padding_left = match cx.padding_left() {
                             Units::Pixels(val) => val,
-                            Units::Stretch(val) => {
-                                horizontal_flex_sum += val;
-                                0.0
-                            }
                             _ => 0.0,
                         };
 
-                        let padding_right = match cx.child_right() {
-                            Units::Pixels(val) => val,
-                            Units::Stretch(val) => {
-                                horizontal_flex_sum += val;
-                                0.0
-                            }
-                            _ => 0.0,
-                        };
-
-                        let horizontal_free_space =
-                            bounds.width() - paragraph.max_width() - padding_left - padding_right;
-
-                        if let Units::Stretch(val) = cx.child_left() {
-                            padding_left =
-                                (horizontal_free_space * val / horizontal_flex_sum).round()
-                        }
-
-                        let x = bounds.x + padding_left + cursor_rect.rect.left;
-                        let y = bounds.y + padding_top + cursor_rect.rect.top;
+                        let x = bounds.x + padding_left + cursor_rect.rect.left + left;
+                        let y = bounds.y + padding_top + cursor_rect.rect.top + top;
 
                         let x2 = x + (cursor_rect.rect.right - cursor_rect.rect.left);
                         let y2 = y + (cursor_rect.rect.bottom - cursor_rect.rect.top);
@@ -490,61 +490,39 @@ where
 
                 let cursor_rect = rects.first().unwrap();
 
-                let mut vertical_flex_sum = 0.0;
-                let mut horizontal_flex_sum = 0.0;
+                let alignment = cx.alignment();
 
-                let mut padding_top = match cx.child_top() {
+                let (mut top, _) = match alignment {
+                    Alignment::TopLeft => (0.0, 0.0),
+                    Alignment::TopCenter => (0.0, 0.5),
+                    Alignment::TopRight => (0.0, 1.0),
+                    Alignment::Left => (0.5, 0.0),
+                    Alignment::Center => (0.5, 0.5),
+                    Alignment::Right => (0.5, 1.0),
+                    Alignment::BottomLeft => (1.0, 0.0),
+                    Alignment::BottomCenter => (1.0, 0.5),
+                    Alignment::BottomRight => (1.0, 1.0),
+                };
+
+                let padding_top = match cx.padding_top() {
                     Units::Pixels(val) => val,
-                    Units::Stretch(val) => {
-                        vertical_flex_sum += val;
-                        0.0
-                    }
                     _ => 0.0,
                 };
 
-                let padding_bottom = match cx.child_bottom() {
+                let padding_bottom = match cx.padding_bottom() {
                     Units::Pixels(val) => val,
-                    Units::Stretch(val) => {
-                        vertical_flex_sum += val;
-                        0.0
-                    }
                     _ => 0.0,
                 };
 
-                let vertical_free_space =
-                    bounds.height() - paragraph.height() - padding_top - padding_bottom;
+                top *= bounds.height() - padding_top - padding_bottom - paragraph.height();
 
-                if let Units::Stretch(val) = cx.child_top() {
-                    padding_top = (vertical_free_space * val / vertical_flex_sum).round()
-                }
-
-                let mut padding_left = match cx.child_left() {
+                let padding_left = match cx.padding_left() {
                     Units::Pixels(val) => val,
-                    Units::Stretch(val) => {
-                        horizontal_flex_sum += val;
-                        0.0
-                    }
                     _ => 0.0,
                 };
-
-                let padding_right = match cx.child_right() {
-                    Units::Pixels(val) => val,
-                    Units::Stretch(val) => {
-                        horizontal_flex_sum += val;
-                        0.0
-                    }
-                    _ => 0.0,
-                };
-
-                let horizontal_free_space =
-                    bounds.width() - paragraph.max_width() - padding_left - padding_right;
-
-                if let Units::Stretch(val) = cx.child_left() {
-                    padding_left = (horizontal_free_space * val / horizontal_flex_sum).round()
-                }
 
                 let x = (bounds.x + padding_left + cursor_rect.rect.left).round();
-                let y = (bounds.y + padding_top + cursor_rect.rect.top).round();
+                let y = (bounds.y + padding_top + cursor_rect.rect.top + top).round();
 
                 let x2 = x + 1.0;
                 let y2 = y + (cursor_rect.rect.bottom - cursor_rect.rect.top);

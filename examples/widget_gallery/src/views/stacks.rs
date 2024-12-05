@@ -20,7 +20,7 @@ pub fn hstack(cx: &mut Context) {
                     Element::new(cx).size(Pixels(100.0)).background_color(Color::blue());
                 })
                 .height(Auto)
-                .child_space(Stretch(1.0));
+                .alignment(Alignment::Center);
             },
             r#"HStack::new(cx, |cx| {
         Element::new(cx).size(Pixels(100.0)).background_color(Color::red());
@@ -28,7 +28,7 @@ pub fn hstack(cx: &mut Context) {
         Element::new(cx).size(Pixels(100.0)).background_color(Color::blue());
     })
     .height(Auto)
-    .child_space(Stretch(1.0));"#,
+    .alignment(Alignment::Center);"#,
         );
     })
     .class("panel");
@@ -52,7 +52,7 @@ pub fn vstack(cx: &mut Context) {
                     Element::new(cx).size(Pixels(100.0)).background_color(Color::blue());
                 })
                 .height(Auto)
-                .child_space(Stretch(1.0));
+                .alignment(Alignment::Center);
             },
             r#"VStack::new(cx, |cx| {
         Element::new(cx).size(Pixels(100.0)).background_color(Color::red());
@@ -60,7 +60,7 @@ pub fn vstack(cx: &mut Context) {
         Element::new(cx).size(Pixels(100.0)).background_color(Color::blue());
     })
     .height(Auto)
-    .child_space(Stretch(1.0));"#,
+    .alignment(Alignment::Center);"#,
         );
     })
     .class("panel");
@@ -82,15 +82,15 @@ pub fn zstack(cx: &mut Context) {
                     Element::new(cx).size(Pixels(100.0)).background_color(Color::red());
                     Element::new(cx)
                         .size(Pixels(100.0))
-                        .space(Pixels(40.0))
+                        .space(Pixels(20.0))
                         .background_color(Color::green());
                     Element::new(cx)
                         .size(Pixels(100.0))
-                        .space(Pixels(60.0))
+                        .space(Pixels(40.0))
                         .background_color(Color::blue());
                 })
                 .size(Pixels(140.0))
-                .child_space(Stretch(1.0));
+                .alignment(Alignment::Center);
             },
             r#"ZStack::new(cx, |cx| {
         Element::new(cx).size(Pixels(100.0)).background_color(Color::red());
@@ -104,7 +104,7 @@ pub fn zstack(cx: &mut Context) {
             .background_color(Color::blue());
     })
     .height(Auto)
-    .child_space(Stretch(1.0));"#,
+    .alignment(Alignment::Center);"#,
         );
     })
     .class("panel");

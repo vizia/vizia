@@ -401,24 +401,28 @@ impl DrawContext<'_> {
     }
 
     get_units_property!(
-        /// Returns the child-left space of the current view.
-        child_left
+        /// Returns the padding-left space of the current view.
+        padding_left
     );
 
     get_units_property!(
-        /// Returns the child-right space of the current view.
-        child_right
+        /// Returns the padding-right space of the current view.
+        padding_right
     );
 
     get_units_property!(
-        /// Returns the child-top space of the current view.
-        child_top
+        /// Returns the padding-top space of the current view.
+        padding_top
     );
 
     get_units_property!(
-        /// Returns the child-bottom space of the current view.
-        child_bottom
+        /// Returns the padding-bottom space of the current view.
+        padding_bottom
     );
+
+    pub fn alignment(&self) -> Alignment {
+        self.style.alignment.get(self.current).copied().unwrap_or_default()
+    }
 
     get_color_property!(background_color);
     get_color_property!(border_color);
@@ -1124,62 +1128,40 @@ impl DrawContext<'_> {
         if let Some(paragraph) = self.text_context.text_paragraphs.get(self.current) {
             let bounds = self.bounds();
 
-            let mut vertical_flex_sum = 0.0;
-            let mut horizontal_flex_sum = 0.0;
+            let alignment = self.alignment();
 
-            let mut padding_top = match self.child_top() {
+            let (mut top, _) = match alignment {
+                Alignment::TopLeft => (0.0, 0.0),
+                Alignment::TopCenter => (0.0, 0.5),
+                Alignment::TopRight => (0.0, 1.0),
+                Alignment::Left => (0.5, 0.0),
+                Alignment::Center => (0.5, 0.5),
+                Alignment::Right => (0.5, 1.0),
+                Alignment::BottomLeft => (1.0, 0.0),
+                Alignment::BottomCenter => (1.0, 0.5),
+                Alignment::BottomRight => (1.0, 1.0),
+            };
+
+            let padding_top = match self.padding_top() {
                 Units::Pixels(val) => val,
-                Units::Stretch(val) => {
-                    vertical_flex_sum += val;
-                    0.0
-                }
                 _ => 0.0,
             };
 
-            let padding_bottom = match self.child_bottom() {
+            let padding_bottom = match self.padding_bottom() {
                 Units::Pixels(val) => val,
-                Units::Stretch(val) => {
-                    vertical_flex_sum += val;
-                    0.0
-                }
                 _ => 0.0,
             };
 
-            let vertical_free_space =
-                bounds.height() - paragraph.height() - padding_top - padding_bottom;
+            top *= bounds.height() - padding_top - padding_bottom - paragraph.height();
 
-            if let Units::Stretch(val) = self.child_top() {
-                padding_top = (vertical_free_space * val / vertical_flex_sum).round()
-            }
-
-            let mut padding_left = match self.child_left() {
+            let padding_left = match self.padding_left() {
                 Units::Pixels(val) => val,
-                Units::Stretch(val) => {
-                    horizontal_flex_sum += val;
-                    0.0
-                }
                 _ => 0.0,
             };
-
-            let padding_right = match self.child_right() {
-                Units::Pixels(val) => val,
-                Units::Stretch(val) => {
-                    horizontal_flex_sum += val;
-                    0.0
-                }
-                _ => 0.0,
-            };
-
-            let horizontal_free_space =
-                bounds.width() - paragraph.max_width() - padding_left - padding_right;
-
-            if let Units::Stretch(val) = self.child_left() {
-                padding_left = (horizontal_free_space * val / horizontal_flex_sum).round()
-            }
 
             paragraph.paint(
                 canvas,
-                ((bounds.x + padding_left).round(), (bounds.y + padding_top).round()),
+                ((bounds.x + padding_left).round(), (bounds.y + padding_top + top).round()),
             );
         }
     }

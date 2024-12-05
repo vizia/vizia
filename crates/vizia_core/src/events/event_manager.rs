@@ -397,7 +397,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             }
 
             #[cfg(debug_assertions)]
-            if *code == Code::KeyI && cx.modifiers.ctrl() {
+            if *code == Code::KeyI {
                 debug!("Entity tree");
                 let (tree, views, cache) = (&cx.tree, &cx.views, &cx.cache);
                 let has_next_sibling = |entity| tree.get_next_sibling(entity).is_some();

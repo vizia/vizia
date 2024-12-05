@@ -3,8 +3,8 @@ use vizia::prelude::*;
 
 const STYLE: &str = r#"
     .container {
-        child-space: 1s;
-        row-between: 10px;
+        padding: 1s;
+        vertical-gap: 10px;
     }
 
     .container > * {

@@ -73,9 +73,8 @@ pub fn radiobutton(cx: &mut Context) {
                         Label::new(cx, "First").describing("r1");
                     })
                     .size(Auto)
-                    .child_top(Stretch(1.0))
-                    .child_bottom(Stretch(1.0))
-                    .col_between(Pixels(8.0));
+                    .alignment(Alignment::Center)
+                    .horizontal_gap(Pixels(8.0));
 
                     HStack::new(cx, |cx| {
                         RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Second))
@@ -84,9 +83,8 @@ pub fn radiobutton(cx: &mut Context) {
                         Label::new(cx, "Second").describing("r2");
                     })
                     .size(Auto)
-                    .child_top(Stretch(1.0))
-                    .child_bottom(Stretch(1.0))
-                    .col_between(Pixels(8.0));
+                    .alignment(Alignment::Center)
+                    .horizontal_gap(Pixels(8.0));
 
                     HStack::new(cx, |cx| {
                         RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Third))
@@ -95,12 +93,11 @@ pub fn radiobutton(cx: &mut Context) {
                         Label::new(cx, "Third").describing("r3");
                     })
                     .size(Auto)
-                    .child_top(Stretch(1.0))
-                    .child_bottom(Stretch(1.0))
-                    .col_between(Pixels(8.0))
+                    .alignment(Alignment::Center)
+                    .horizontal_gap(Pixels(8.0))
                     .disabled(true);
                 })
-                .row_between(Pixels(4.0))
+                .vertical_gap(Pixels(4.0))
                 .size(Auto);
             }, r#"TODO"#
         );

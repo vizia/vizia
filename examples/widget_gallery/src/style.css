@@ -1,16 +1,15 @@
 .container {
-    child-space: 0px;
+    padding: 0px;
 }
 
 scrollview.widgets > scroll-content {
-    child-space: 20px;
-    child-left: 1s;
-    child-right: 1s;
-    row-between: 15px;
+    padding: 20px;
+    alignment: top-center;
+    vertical-gap: 15px;
 }
 
 tabview.widgets > scrollview > scroll-content {
-    child-space: 8px;
+    padding: 8px;
 }
 
 tabview.widgets tabheader label.tab-name {
@@ -24,7 +23,6 @@ tabview.widgets tabheader:checked label.tab-name {
 
 vstack.panel {
     height: auto;
-    bottom: 20px;
     width: 3s;
     min-width: 500px;
     max-width: 700px;
@@ -51,8 +49,8 @@ label.paragraph {
 
 demo-region {
     corner-radius: 4px;
-    /* child-space: 40px; */
-    /* child-left: 1s;
+    /* padding: 40px; */
+    /* padding-left: 1s;
     child-right: 1s; */
     height: auto;
     border: 1px #d2d2d2;
@@ -67,11 +65,11 @@ demo-region label.code {
 
 demo-region hstack.controls {
     height: auto;
-    child-top: 4px;
-    child-bottom: 4px;
+    padding: 4px;
     background-color: #f4f4f4;
     corner-bottom-left-radius: 4px;
     corner-bottom-right-radius: 4px;
+    alignment: right;
 }
 
 demo-region.open hstack.controls {
@@ -80,12 +78,11 @@ demo-region.open hstack.controls {
 
 demo-region hstack.region {
     corner-radius: 4px;
-    child-space: 50px;
-    child-left: 1s;
-    child-right: 1s;
+    padding: 50px;
+    alignment: center;
     height: auto;
     min-height: 100px;
-    col-between: 12px;
+    horizontal-gap: 12px;
 }
 
 demo-region > divider {
@@ -97,7 +94,7 @@ demo-region > hstack.code {
     color: white;
     font-family: monospace;
     width: 1s;
-    child-space: 10px;
+    padding: 10px;
     corner-radius: 4px;
     corner-top-left-radius: 0px;
     corner-top-right-radius: 0px;
@@ -105,5 +102,5 @@ demo-region > hstack.code {
 }
 
 markdown {
-    child-space: 0px;
+    padding: 0px;
 }

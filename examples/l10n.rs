@@ -52,9 +52,8 @@ fn main() -> Result<(), ApplicationError> {
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleLanguage));
                 Label::new(cx, "Toggle Language").describing("toggle-language");
             })
-            .child_top(Stretch(1.0))
-            .child_bottom(Stretch(1.0))
-            .col_between(Pixels(10.0))
+            .alignment(Alignment::Center)
+            .horizontal_gap(Pixels(10.0))
             .height(Auto);
 
             // Use the `Localized` type with a `Label` to provide a translation key.
@@ -67,10 +66,9 @@ fn main() -> Result<(), ApplicationError> {
                     cx.emit(AppEvent::SetName(text));
                 });
             })
-            .child_top(Stretch(1.0))
-            .child_bottom(Stretch(1.0))
+            .alignment(Alignment::Center)
             .height(Auto)
-            .col_between(Pixels(5.0));
+            .horizontal_gap(Pixels(5.0));
 
             Label::new(cx, Localized::new("intro").arg("name", AppData::name));
 
@@ -81,7 +79,7 @@ fn main() -> Result<(), ApplicationError> {
             Button::new(cx, |cx| Label::new(cx, Localized::new("refresh")))
                 .on_press(|cx| cx.emit(AppEvent::ReceiveEmail));
         })
-        .row_between(Pixels(10.0))
+        .vertical_gap(Pixels(10.0))
         .space(Pixels(10.0));
     })
     .title("Localization")

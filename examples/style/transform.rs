@@ -123,7 +123,7 @@ fn main() -> Result<(), ApplicationError> {
                 Element::new(cx).class("translateY").text("translateY");
             })
             .size(Auto)
-            .col_between(Pixels(10.0));
+            .horizontal_gap(Pixels(10.0));
             Element::new(cx).text("rotate").class("rotate");
             HStack::new(cx, |cx| {
                 Element::new(cx).class("scale").text("scale");
@@ -131,7 +131,7 @@ fn main() -> Result<(), ApplicationError> {
                 Element::new(cx).class("scaleY").text("scaleY");
             })
             .size(Auto)
-            .col_between(Pixels(10.0));
+            .horizontal_gap(Pixels(10.0));
 
             HStack::new(cx, |cx| {
                 Element::new(cx).class("skew").text("skew");
@@ -139,12 +139,12 @@ fn main() -> Result<(), ApplicationError> {
                 Element::new(cx).class("skewY").text("skewY");
             })
             .size(Auto)
-            .col_between(Pixels(10.0));
+            .horizontal_gap(Pixels(10.0));
             Element::new(cx).class("multi").text("multi");
             Element::new(cx).class("matrix").text("matrix");
         })
-        .child_space(Stretch(1.0))
-        .row_between(Pixels(10.0));
+        .alignment(Alignment::Center)
+        .vertical_gap(Pixels(10.0));
 
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
@@ -159,7 +159,7 @@ fn main() -> Result<(), ApplicationError> {
                     .transform(Transform::TranslateY(Pixels(10.0).into()));
             })
             .size(Auto)
-            .col_between(Pixels(10.0));
+            .horizontal_gap(Pixels(10.0));
             Element::new(cx).text("rotate").transform(Transform::Rotate(Angle::Deg(40.0)));
             HStack::new(cx, |cx| {
                 Element::new(cx)
@@ -169,7 +169,7 @@ fn main() -> Result<(), ApplicationError> {
                 Element::new(cx).text("scaleY").transform(Transform::ScaleY(0.5.into()));
             })
             .size(Auto)
-            .col_between(Pixels(10.0));
+            .horizontal_gap(Pixels(10.0));
 
             HStack::new(cx, |cx| {
                 Element::new(cx)
@@ -179,7 +179,7 @@ fn main() -> Result<(), ApplicationError> {
                 Element::new(cx).text("skewY").transform(Transform::SkewY(Angle::Deg(20.0)));
             })
             .size(Auto)
-            .col_between(Pixels(10.0));
+            .horizontal_gap(Pixels(10.0));
             Element::new(cx).text("multi").transform([
                 Transform::Translate((Pixels(10.0).into(), Pixels(10.0).into())),
                 Transform::Rotate(Angle::Deg(40.0)),
@@ -190,8 +190,8 @@ fn main() -> Result<(), ApplicationError> {
                 .text("matrix")
                 .transform(Transform::Matrix((1.0, 2.0, 3.0, 4.0, 5.0, 6.0).into()));
         })
-        .child_space(Stretch(1.0))
-        .row_between(Pixels(10.0));
+        .alignment(Alignment::Center)
+        .vertical_gap(Pixels(10.0));
 
         Element::new(cx).class("translate2");
         Element::new(cx).class("rotate2");
