@@ -3,12 +3,12 @@ use vizia::prelude::*;
 const STYLE: &str = r#"
 
     :root {
-        child-space: 1s;
+        padding: 1s;
     }
 
     hstack {
-        child-space: 1s;
-        col-between: 40px;
+        padding: 1s;
+        horizontal-gap: 40px;
     }
 
     element {

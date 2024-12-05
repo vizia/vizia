@@ -2,12 +2,12 @@ use vizia::prelude::*;
 
 const STYLE: &str = r#"
     :root {
-        child-space: 10px;
+        padding: 10px;
     }
 
     hstack {
         height: 35px;
-        col-between: 10px;
+        horizontal-gap: 10px;
     }
 
     button {

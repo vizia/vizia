@@ -7,27 +7,27 @@ const STYLE: &str = r#"
 
     hstack {
         height: auto;
-        col-between: 10px;
-        child-top: 1s;
-        child-bottom: 1s;
+        horizontal-gap: 10px;
+        padding-top: 1s;
+        padding-bottom: 1s;
     }
 
     vstack {
         height: 1s;
-        row-between: 10px;
+        vertical-gap: 10px;
     }
 
     button {
         width: 1s;
-        child-space: 1s;
+        padding: 1s;
     }
 
     list label {
         width: 1s;
         height: 32px;
-        child-left: 5px;
-        child-top: 1s;
-        child-bottom: 1s;
+        padding-left: 5px;
+        padding-top: 1s;
+        padding-bottom: 1s;
     }
 
     list label:checked {
@@ -160,8 +160,8 @@ fn main() -> Result<(), ApplicationError> {
                 });
             })
             .height(Stretch(1.0))
-            .child_top(Pixels(0.0))
-            .child_bottom(Pixels(0.0));
+            .padding_top(Pixels(0.0))
+            .padding_bottom(Pixels(0.0));
 
             HStack::new(cx, |cx| {
                 Button::new(cx, |cx| Label::new(cx, "Create"))
@@ -171,9 +171,9 @@ fn main() -> Result<(), ApplicationError> {
                 Button::new(cx, |cx| Label::new(cx, "Delete"))
                     .on_press(|cx| cx.emit(AppEvent::Delete));
             })
-            .col_between(Pixels(10.0));
+            .horizontal_gap(Pixels(10.0));
         })
-        .child_space(Pixels(10.0));
+        .padding(Pixels(10.0));
     })
     .title("CRUD")
     .inner_size((450, 200))

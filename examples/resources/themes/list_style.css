@@ -1,5 +1,5 @@
 list {
-    row-between: 5px;
+    vertical-gap: 5px;
     width: auto;
     height: auto;
 }
@@ -7,10 +7,10 @@ list {
 list label {
     width: 100px;
     height: 30px;
-    child-space: 1s;
+    padding: 1s;
     border-color: #595959;
     border-width: 1px;
-    child-space: 1s;
+    padding: 1s;
 }
 
 list label:focus-visible {
@@ -24,8 +24,8 @@ list label:checked {
 }
 
 vstack.container {
-    child-space: 1s;
-    row-between: 5px;
+    padding: 1s;
+    vertical-gap: 5px;
     size: auto;
     space: 1s;
     top: 100px;

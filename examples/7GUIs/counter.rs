@@ -26,8 +26,8 @@ fn main() -> Result<(), ApplicationError> {
                 .on_press(|cx| cx.emit(AppEvent::Increment));
             Label::new(cx, AppData::count).width(Pixels(50.0)).live(Live::Polite);
         })
-        .child_space(Stretch(1.0))
-        .col_between(Pixels(50.0));
+        .alignment(Alignment::Center)
+        .horizontal_gap(Pixels(50.0));
     })
     .title("Counter")
     .inner_size((400, 100))

@@ -610,7 +610,7 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     /// Sets the transform origin of the the view.
-    fn transform_origin<U: Into<Position>>(mut self, value: impl Res<U>) -> Self {
+    fn transform_origin<U: Into<Offset>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {

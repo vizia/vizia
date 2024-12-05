@@ -326,7 +326,7 @@ impl Data for morphorm::LayoutType {
     }
 }
 
-impl Data for morphorm::PositionType {
+impl Data for morphorm::Position {
     fn same(&self, other: &Self) -> bool {
         *self == *other
     }

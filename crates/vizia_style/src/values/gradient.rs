@@ -1,5 +1,5 @@
 use crate::{
-    Angle, Color, CustomParseError, HorizontalPositionKeyword, LengthOrPercentage, Parse, Position,
+    Angle, Color, CustomParseError, HorizontalPositionKeyword, LengthOrPercentage, Offset, Parse,
     VerticalPositionKeyword,
 };
 use cssparser::*;
@@ -172,7 +172,7 @@ fn parse_items<'i, 't, D: Parse<'i>>(
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct RadialGradient {
-    pub position: Position,
+    pub position: Offset,
     pub stops: Vec<ColorStop<LengthOrPercentage>>,
 }
 
@@ -184,7 +184,7 @@ impl<'i> RadialGradient {
         let position = input
             .try_parse(|input| {
                 input.expect_ident_matching("at")?;
-                Position::parse(input)
+                Offset::parse(input)
             })
             .ok();
 
@@ -195,7 +195,7 @@ impl<'i> RadialGradient {
         let stops = parse_items(input)?;
         Ok(RadialGradient {
             // shape: shape.unwrap_or_default(),
-            position: position.unwrap_or(Position::center()),
+            position: position.unwrap_or(Offset::center()),
             stops,
         })
     }

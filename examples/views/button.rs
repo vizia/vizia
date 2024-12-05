@@ -29,7 +29,7 @@ fn main() -> Result<(), ApplicationError> {
                 });
             })
             .size(Auto)
-            .col_between(Pixels(10.0));
+            .horizontal_gap(Pixels(10.0));
         });
     })
     .title("Button")

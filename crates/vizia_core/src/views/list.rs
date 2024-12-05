@@ -101,7 +101,6 @@ impl List {
                 });
                 // });
             })
-            .width(Stretch(1.0))
             .role(Role::List)
     }
 }
