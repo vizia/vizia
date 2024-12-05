@@ -3,7 +3,7 @@ use vizia::prelude::*;
 const STYLE: &str = r#"
 
     :root {
-        child-space: 1s;
+        padding: 1s;
     }
 
     element {

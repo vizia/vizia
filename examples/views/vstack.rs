@@ -9,7 +9,7 @@ fn main() -> Result<(), ApplicationError> {
                 Element::new(cx).size(Pixels(100.0)).background_color(color);
             }
         })
-        .child_space(Stretch(1.0));
+        .alignment(Alignment::Center);
     })
     .title("VStack")
     .run()

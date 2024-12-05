@@ -51,7 +51,9 @@ fn main() -> Result<(), ApplicationError> {
                     .on_edit(|cx, text| cx.emit(AppEvent::SetEditableText(text)));
                 Svg::new(cx, ICON_SEARCH)
                     .color(Color::gray())
-                    .position_type(PositionType::SelfDirected);
+                    .position_type(PositionType::Absolute)
+                    .top(Stretch(1.0))
+                    .bottom(Stretch(1.0));
             })
             .height(Auto)
             .width(Pixels(300.0));

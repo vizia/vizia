@@ -7,9 +7,9 @@ const STYLE: &str = r#"
         height: 30px;
         border-width: 1px;
         border-color: #505050;
-        child-top: 1s;
-        child-bottom: 1s;
-        child-left: 5px;
+        padding-top: 1s;
+        padding-bottom: 1s;
+        padding-left: 5px;
         text-wrap: false;
     }
 
@@ -176,8 +176,8 @@ fn main() -> Result<(), ApplicationError> {
                 Label::new(cx, "ContextMenu").class("context-menu");
                 Label::new(cx, "Cell").class("cell");
             })
-            .child_space(Stretch(1.0))
-            .row_between(Pixels(10.0));
+            .alignment(Alignment::Center)
+            .vertical_gap(Pixels(10.0));
 
             VStack::new(cx, |cx| {
                 Label::new(cx, "VerticalText").class("vertical-text");
@@ -193,8 +193,8 @@ fn main() -> Result<(), ApplicationError> {
                 Label::new(cx, "NResize").class("n-resize");
                 Label::new(cx, "NeResize").class("ne-resize");
             })
-            .child_space(Stretch(1.0))
-            .row_between(Pixels(10.0));
+            .alignment(Alignment::Center)
+            .vertical_gap(Pixels(10.0));
 
             VStack::new(cx, |cx| {
                 Label::new(cx, "NwResize").class("nw-resize");
@@ -210,10 +210,10 @@ fn main() -> Result<(), ApplicationError> {
                 Label::new(cx, "RowResize").class("row-resize");
                 Label::new(cx, "None").class("none");
             })
-            .child_space(Stretch(1.0))
-            .row_between(Pixels(10.0));
+            .alignment(Alignment::Center)
+            .vertical_gap(Pixels(10.0));
         })
-        .child_space(Stretch(1.0));
+        .alignment(Alignment::Center);
     })
     .title("Cursor Icon")
     .inner_size((800, 600))

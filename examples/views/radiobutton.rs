@@ -56,7 +56,7 @@ fn main() -> Result<(), ApplicationError> {
                 }
             })
             .size(Auto)
-            .col_between(Pixels(20.0));
+            .horizontal_gap(Pixels(20.0));
 
             Label::new(cx, "Radiobuttons with labels").top(Pixels(20.0));
 
@@ -75,12 +75,11 @@ fn main() -> Result<(), ApplicationError> {
                             .describing(format!("button_{i}"));
                     })
                     .size(Auto)
-                    .child_top(Stretch(1.0))
-                    .child_bottom(Stretch(1.0))
-                    .col_between(Pixels(5.0));
+                    .alignment(Alignment::Center)
+                    .horizontal_gap(Pixels(5.0));
                 }
             })
-            .row_between(Pixels(10.0))
+            .vertical_gap(Pixels(10.0))
             .size(Auto);
         });
     })

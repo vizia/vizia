@@ -7,7 +7,7 @@ markdown {
         "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji",
         "Segoe UI Emoji";
     font-size: 16;
-    child-space: 20px;
+    padding: 20px;
 }
 
 markdown .h1,
@@ -17,8 +17,8 @@ markdown .h4,
 markdown .h5,
 markdown .h6 {
     width: 1s;
-    top: 24px;
-    bottom: 16px;
+    padding-top: 24px;
+    padding-bottom: 16px;
     font-weight: 600;
 }
 
@@ -27,7 +27,7 @@ markdown .h1 {
 }
 
 markdown .h2 {
-    child-bottom: 4px;
+    padding-bottom: 4px;
     font-size: 24;
 }
 
@@ -49,8 +49,8 @@ markdown .h6 {
 }
 
 markdown .p {
-    top: 0;
-    bottom: 16px;
+    padding-top: 0;
+    padding-bottom: 16px;
     text-wrap: true;
     width: 1s;
 }
@@ -70,7 +70,7 @@ markdown .strikethrough {
 markdown .code {
     font-family: monospace;
     background-color: #afb8c133;
-    child-space: 12px;
+    padding: 12px;
     width: 1s;
     min-width: auto;
 }
@@ -87,7 +87,7 @@ markdown .li .h4,
 markdown .li .h5,
 markdown .li .h6 {
     space: 0px;
-    child-space: 0px;
+    padding: 0px;
 }
 
 .testy {

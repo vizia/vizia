@@ -10,16 +10,15 @@ const STYLE: &str = r#"
 
     .modal {
         space: 1s;
-        child-space: 8px;
-        child-left: 1s;
-        child-right: 1s;
+        padding: 8px;
+        alignment: center;
         background-color: white;
         corner-radius: 3px;
         border-width: 1px;
         border-color: #999999;
         outer-shadow: 0 3 10 #00000055;
         overflow: visible;
-        child-space: 10px;
+        padding: 10px;
         height: auto;
     }
 
@@ -27,16 +26,16 @@ const STYLE: &str = r#"
         width: auto;
         height: auto;
         space: 5px;
-        child-space: 1s;
+        padding: 1s;
     }
 
     .modal button {
         corner-radius: 3px;
-        child-space: 1s;
+        padding: 1s;
     }
 
     .modal hstack {
-        col-between: 20px;
+        horizontal-gap: 20px;
         size: auto;
     }
 "#;
@@ -94,7 +93,7 @@ fn main() -> Result<(), ApplicationError> {
                 .on_press(|cx| cx.emit(WindowEvent::WindowClose));
             Button::new(cx, |cx| Label::new(cx, "Save")).on_press(|cx| cx.emit(AppEvent::Save));
         })
-        .col_between(Pixels(10.0))
+        .horizontal_gap(Pixels(10.0))
         .space(Pixels(20.0));
 
         Binding::new(cx, AppData::show_dialog, |cx, show_dialog| {
@@ -103,7 +102,7 @@ fn main() -> Result<(), ApplicationError> {
                     VStack::new(cx, |cx| {
                         Label::new(cx, "Save before close?")
                             .width(Stretch(1.0))
-                            .child_space(Stretch(1.0));
+                            .alignment(Alignment::Center);
                         HStack::new(cx, |cx| {
                             Button::new(cx, |cx| Label::new(cx, "Save & Close"))
                                 .on_press(|cx| cx.emit(AppEvent::SaveAndClose))
@@ -114,11 +113,11 @@ fn main() -> Result<(), ApplicationError> {
                                 .on_press(|cx| cx.emit(AppEvent::CloseModal))
                                 .width(Pixels(120.0));
                         })
-                        .col_between(Pixels(10.0))
+                        .horizontal_gap(Pixels(10.0))
                         .size(Auto);
                     })
-                    .child_space(Stretch(1.0))
-                    .row_between(Pixels(20.0));
+                    .alignment(Alignment::Center)
+                    .vertical_gap(Pixels(20.0));
                 })
                 .on_close(|cx| cx.emit(AppEvent::CloseModal))
                 .title("Save work?")
@@ -129,7 +128,7 @@ fn main() -> Result<(), ApplicationError> {
 
         Element::new(cx)
             .size(Stretch(1.0))
-            .position_type(PositionType::SelfDirected)
+            .position_type(PositionType::Absolute)
             .backdrop_filter(Filter::Blur(Pixels(2.0).into()))
             .display(AppData::show_dialog);
     })

@@ -42,9 +42,8 @@ fn main() -> Result<(), ApplicationError> {
                 Label::new(cx, "Switch 1").describing("Switch_1");
             })
             .size(Auto)
-            .col_between(Pixels(5.0))
-            .child_top(Stretch(1.0))
-            .child_bottom(Stretch(1.0));
+            .horizontal_gap(Pixels(5.0))
+            .alignment(Alignment::Center);
 
             HStack::new(cx, |cx| {
                 Switch::new(cx, AppData::option2)
@@ -53,9 +52,8 @@ fn main() -> Result<(), ApplicationError> {
                 Label::new(cx, "Switch 2").describing("Switch_2");
             })
             .size(Auto)
-            .col_between(Pixels(5.0))
-            .child_top(Stretch(1.0))
-            .child_bottom(Stretch(1.0));
+            .horizontal_gap(Pixels(5.0))
+            .alignment(Alignment::Center);
         });
     })
     .title("Switch")

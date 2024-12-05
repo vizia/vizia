@@ -127,8 +127,8 @@ fn main() {
             // Declare a label which is bound to part of the model, updating when it changes
             Label::new(cx, AppData::count).width(Pixels(50.0));
         })
-        .child_space(Stretch(1.0))  // Apply style and layout modifiers
-        .col_between(Pixels(50.0));
+        .alignment(Alignment::Center)  // Apply style and layout modifiers
+        .horizontal_gap(Pixels(50.0));
     })
     .title("Counter") // Configure window properties
     .inner_size((400, 100))
