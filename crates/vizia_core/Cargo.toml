@@ -32,7 +32,7 @@ sys-locale = "0.3"
 unicode-segmentation = "1.11"
 copypasta = {version = "0.10", optional = true, default-features = false }
 chrono = "0.4"
-hashbrown = "0.15"
+hashbrown = "0.14"
 log = "0.4"
 indexmap = "2.4"
 qfilter = "0.2"

@@ -1,4 +1,4 @@
-use hashbrown::{DefaultHashBuilder, HashSet};
+use hashbrown::{hash_map::DefaultHashBuilder, HashSet};
 use std::any::TypeId;
 use std::hash::{BuildHasher, Hash, Hasher};
 
