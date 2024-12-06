@@ -61,7 +61,7 @@ impl Popup {
                 }
             });
         })
-        .position_type(PositionType::SelfDirected)
+        .position(Position::Absolute)
         .space(Pixels(0.0))
     }
 }
@@ -478,7 +478,7 @@ pub(crate) struct Arrow {}
 
 impl Arrow {
     pub(crate) fn new(cx: &mut Context) -> Handle<Self> {
-        Self {}.build(cx, |_| {}).position_type(PositionType::SelfDirected).bind(
+        Self {}.build(cx, |_| {}).position(Position::Absolute).bind(
             Popup::placement,
             |mut handle, placement| {
                 let (t, b) = match placement.get(&handle) {

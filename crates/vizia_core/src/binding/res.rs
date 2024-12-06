@@ -127,12 +127,13 @@ impl_res_simple!(Opacity);
 impl_res_simple!(FontWidth);
 impl_res_clone!(Translate);
 impl_res_clone!(Scale);
-impl_res_clone!(Position);
+impl_res_clone!(Offset);
 impl_res_simple!(PointerEvents);
 impl_res_simple!(ButtonVariant);
 impl_res_simple!(AvatarVariant);
 impl_res_clone!(FamilyOwned);
 impl_res_simple!(TextDecorationLine);
+impl_res_simple!(Alignment);
 
 impl<'i> ResGet<FontFamily<'i>> for FontFamily<'i> {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
@@ -277,17 +278,17 @@ impl ResGet<LayoutType> for LayoutType {
 }
 impl Res<LayoutType> for LayoutType {}
 
-impl ResGet<PositionType> for PositionType {
+impl ResGet<Position> for Position {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
 
-    fn get(&self, _: &impl DataContext) -> PositionType {
+    fn get(&self, _: &impl DataContext) -> Position {
         *self
     }
 }
 
-impl Res<PositionType> for PositionType {}
+impl Res<Position> for Position {}
 
 impl<T: Clone + ResGet<T>> ResGet<Option<T>> for Option<T> {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {

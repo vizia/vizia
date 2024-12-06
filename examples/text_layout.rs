@@ -106,11 +106,11 @@ fn main() -> Result<(), ApplicationError> {
 
             // Textbox::new_multiline(cx, AppData::text.index(3), true)
             // .width(Pixels(200.0))
-            // .child_left(Stretch(1.0))
+            // .alignment(Alignment::Center)
             // .on_submit(|ex, txt, _| ex.emit(AppEvent::SetText(3, txt.clone())));
         })
-        .child_space(Pixels(20.0))
-        .row_between(Pixels(20.0));
+        .padding(Pixels(20.0))
+        .vertical_gap(Pixels(20.0));
     })
     .title("Text")
     .inner_size((1200, 600))
@@ -121,21 +121,21 @@ fn wrapping(cx: &mut Context) {
     HStack::new(cx, |cx| {
         HStack::new(cx, |cx| {
             Label::new(cx, "This is some non-wrapping text")
-                .child_space(Pixels(10.0))
+                .padding(Pixels(10.0))
                 .background_color(Color::rgb(200, 100, 200));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Label::new(cx, "This is some text which should wrap on the longest word.")
                 .text_wrap(true)
-                .child_space(Pixels(10.0))
+                .padding(Pixels(10.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(50.0))
+        .padding(Pixels(50.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
@@ -145,37 +145,37 @@ fn wrapping(cx: &mut Context) {
             )
             .text_wrap(true)
             .width(Pixels(100.0))
-            .child_space(Pixels(10.0))
+            .padding(Pixels(10.0))
             .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Label::new(cx, "This is some text which should\nwrap because of a hard break.")
                 .text_wrap(false)
                 .width(Auto)
-                .child_space(Pixels(10.0))
+                .padding(Pixels(10.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Label::new(cx, "This is some text which should\nwrap because of soft and hard breaks.")
                 .text_wrap(true)
                 .width(Pixels(100.0))
-                .child_space(Pixels(10.0))
+                .padding(Pixels(10.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
     })
-    .col_between(Pixels(50.0))
-    .child_space(Pixels(50.0));
+    .horizontal_gap(Pixels(50.0))
+    .padding(Pixels(50.0));
 }
 
 fn alignment(cx: &mut Context) {
@@ -187,118 +187,115 @@ fn alignment(cx: &mut Context) {
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Label::new(cx, "This is some\ntext aligned to\nthe top center")
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_left(Stretch(1.0))
-                .child_right(Stretch(1.0))
+                .alignment(Alignment::Center)
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Label::new(cx, "This is some\ntext aligned to\nthe top right")
                 .size(Pixels(150.0))
-                .child_left(Stretch(1.0))
-                .child_right(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_right(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
     })
     .size(Auto)
-    .col_between(Pixels(20.0))
-    .child_space(Pixels(20.0));
+    .horizontal_gap(Pixels(20.0))
+    .padding(Pixels(20.0));
 
     HStack::new(cx, |cx| {
         HStack::new(cx, |cx| {
             Label::new(cx, "This is some\ntext aligned to\nthe middle left")
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
+                .alignment(Alignment::Center)
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Label::new(cx, "This is some\ntext aligned to\nthe middle center")
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_space(Stretch(1.0))
+                .alignment(Alignment::Center)
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Label::new(cx, "This is some\ntext aligned to\nthe middle right")
                 .size(Pixels(150.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .child_left(Stretch(1.0))
-                .child_right(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .alignment(Alignment::Center)
+                .padding_right(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
     })
     .size(Auto)
-    .col_between(Pixels(20.0))
-    .child_space(Pixels(20.0));
+    .horizontal_gap(Pixels(20.0))
+    .padding(Pixels(20.0));
 
     HStack::new(cx, |cx| {
         HStack::new(cx, |cx| {
             Label::new(cx, "This is some\ntext aligned to\nthe bottom left")
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_bottom(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Label::new(cx, "This is some\ntext aligned to\nthe bottom center")
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_space(Stretch(1.0))
-                .child_bottom(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_bottom(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Label::new(cx, "This is some\ntext aligned to\nthe bottom right")
                 .size(Pixels(150.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Pixels(0.0))
-                .child_left(Stretch(1.0))
-                .child_right(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_bottom(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_right(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
     })
     .size(Auto)
-    .col_between(Pixels(20.0))
-    .child_space(Pixels(20.0));
+    .horizontal_gap(Pixels(20.0))
+    .padding(Pixels(20.0));
 }
 
 fn alignment2(cx: &mut Context) {
@@ -307,124 +304,118 @@ fn alignment2(cx: &mut Context) {
             Label::new(cx, "سلام")
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_right(Stretch(1.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Label::new(cx, "سلام")
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_left(Stretch(1.0))
-                .child_right(Stretch(1.0))
+                .alignment(Alignment::Center)
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Label::new(cx, "سلام")
                 .size(Pixels(150.0))
-                .child_left(Stretch(1.0))
-                .child_right(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_right(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
     })
     .size(Auto)
-    .col_between(Pixels(20.0))
-    .child_space(Pixels(20.0));
+    .horizontal_gap(Pixels(20.0))
+    .padding(Pixels(20.0));
 
     HStack::new(cx, |cx| {
         HStack::new(cx, |cx| {
             Label::new(cx, "سلام")
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .child_right(Stretch(1.0))
+                .alignment(Alignment::Center)
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Label::new(cx, "سلام")
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_space(Stretch(1.0))
+                .alignment(Alignment::Center)
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Label::new(cx, "سلام")
                 .size(Pixels(150.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .child_left(Stretch(1.0))
-                .child_right(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .alignment(Alignment::Center)
+                .padding_right(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
     })
     .size(Auto)
-    .col_between(Pixels(20.0))
-    .child_space(Pixels(20.0));
+    .horizontal_gap(Pixels(20.0))
+    .padding(Pixels(20.0));
 
     HStack::new(cx, |cx| {
         HStack::new(cx, |cx| {
             Label::new(cx, "سلام")
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Pixels(0.0))
-                .child_right(Stretch(1.0))
+                .alignment(Alignment::Center)
+                .padding_bottom(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Label::new(cx, "سلام")
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_space(Stretch(1.0))
-                .child_bottom(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_bottom(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Label::new(cx, "سلام")
                 .size(Pixels(150.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Pixels(0.0))
-                .child_left(Stretch(1.0))
-                .child_right(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_bottom(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_right(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
     })
     .size(Auto)
-    .col_between(Pixels(20.0))
-    .child_space(Pixels(20.0));
+    .horizontal_gap(Pixels(20.0))
+    .padding(Pixels(20.0));
 }
 
 fn alignment3(cx: &mut Context) {
@@ -433,128 +424,122 @@ fn alignment3(cx: &mut Context) {
             Textbox::new(cx, AppData::text)
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_space(Pixels(0.0))
-                .child_right(Stretch(1.0))
+                .padding(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Textbox::new(cx, AppData::text)
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_top(Pixels(0.0))
-                .child_left(Stretch(1.0))
-                .child_right(Stretch(1.0))
+                .padding_top(Pixels(0.0))
+                .alignment(Alignment::Center)
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Textbox::new(cx, AppData::text)
                 .size(Pixels(150.0))
-                .child_top(Pixels(0.0))
-                .child_left(Stretch(1.0))
-                .child_right(Pixels(0.0))
+                .padding_top(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_right(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
     })
     .size(Auto)
-    .col_between(Pixels(20.0))
-    .child_space(Pixels(20.0));
+    .horizontal_gap(Pixels(20.0))
+    .padding(Pixels(20.0));
 
     HStack::new(cx, |cx| {
         HStack::new(cx, |cx| {
             Textbox::new(cx, AppData::text)
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_left(Pixels(0.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .child_right(Stretch(1.0))
+                .padding_left(Pixels(0.0))
+                .alignment(Alignment::Center)
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Textbox::new(cx, AppData::text)
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_space(Stretch(1.0))
+                .alignment(Alignment::Center)
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Textbox::new(cx, AppData::text)
                 .size(Pixels(150.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .child_left(Stretch(1.0))
-                .child_right(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .alignment(Alignment::Center)
+                .padding_right(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
     })
     .size(Auto)
-    .col_between(Pixels(20.0))
-    .child_space(Pixels(20.0));
+    .horizontal_gap(Pixels(20.0))
+    .padding(Pixels(20.0));
 
     HStack::new(cx, |cx| {
         HStack::new(cx, |cx| {
             Textbox::new(cx, AppData::text)
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_space(Pixels(0.0))
-                .child_top(Stretch(1.0))
-                .child_right(Stretch(1.0))
+                .padding(Pixels(0.0))
+                .alignment(Alignment::Center)
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Textbox::new(cx, AppData::text)
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_space(Stretch(1.0))
-                .child_bottom(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_bottom(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Textbox::new(cx, AppData::text)
                 .size(Pixels(150.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Pixels(0.0))
-                .child_left(Stretch(1.0))
-                .child_right(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_bottom(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_right(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
     })
     .size(Auto)
-    .col_between(Pixels(20.0))
-    .child_space(Pixels(20.0));
+    .horizontal_gap(Pixels(20.0))
+    .padding(Pixels(20.0));
 }
 
 fn alignment4(cx: &mut Context) {
@@ -563,128 +548,122 @@ fn alignment4(cx: &mut Context) {
             Textbox::new(cx, AppData::text2)
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_space(Pixels(0.0))
-                .child_right(Stretch(1.0))
+                .padding(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Textbox::new(cx, AppData::text2)
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_top(Pixels(0.0))
-                .child_left(Stretch(1.0))
-                .child_right(Stretch(1.0))
+                .padding_top(Pixels(0.0))
+                .alignment(Alignment::Center)
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Textbox::new(cx, AppData::text2)
                 .size(Pixels(150.0))
-                .child_top(Pixels(0.0))
-                .child_left(Stretch(1.0))
-                .child_right(Pixels(0.0))
+                .padding_top(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_right(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
     })
     .size(Auto)
-    .col_between(Pixels(20.0))
-    .child_space(Pixels(20.0));
+    .horizontal_gap(Pixels(20.0))
+    .padding(Pixels(20.0));
 
     HStack::new(cx, |cx| {
         HStack::new(cx, |cx| {
             Textbox::new(cx, AppData::text2)
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_left(Pixels(0.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .child_right(Stretch(1.0))
+                .padding_left(Pixels(0.0))
+                .alignment(Alignment::Center)
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Textbox::new(cx, AppData::text2)
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_space(Stretch(1.0))
+                .alignment(Alignment::Center)
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Textbox::new(cx, AppData::text2)
                 .size(Pixels(150.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .child_left(Stretch(1.0))
-                .child_right(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .alignment(Alignment::Center)
+                .padding_right(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
     })
     .size(Auto)
-    .col_between(Pixels(20.0))
-    .child_space(Pixels(20.0));
+    .horizontal_gap(Pixels(20.0))
+    .padding(Pixels(20.0));
 
     HStack::new(cx, |cx| {
         HStack::new(cx, |cx| {
             Textbox::new(cx, AppData::text2)
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_space(Pixels(0.0))
-                .child_top(Stretch(1.0))
-                .child_right(Stretch(1.0))
+                .padding(Pixels(0.0))
+                .alignment(Alignment::Center)
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Textbox::new(cx, AppData::text2)
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_space(Stretch(1.0))
-                .child_bottom(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_bottom(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Textbox::new(cx, AppData::text2)
                 .size(Pixels(150.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Pixels(0.0))
-                .child_left(Stretch(1.0))
-                .child_right(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_bottom(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_right(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
     })
     .size(Auto)
-    .col_between(Pixels(20.0))
-    .child_space(Pixels(20.0));
+    .horizontal_gap(Pixels(20.0))
+    .padding(Pixels(20.0));
 }
 
 fn alignment5(cx: &mut Context) {
@@ -697,7 +676,7 @@ fn alignment5(cx: &mut Context) {
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
@@ -705,29 +684,28 @@ fn alignment5(cx: &mut Context) {
                 .class("icon")
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_left(Stretch(1.0))
-                .child_right(Stretch(1.0))
+                .alignment(Alignment::Center)
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Svg::new(cx, ICON_MOON)
                 .class("icon")
                 .size(Pixels(150.0))
-                .child_left(Stretch(1.0))
-                .child_right(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_right(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
     })
     .size(Auto)
-    .col_between(Pixels(20.0))
-    .child_space(Pixels(20.0));
+    .horizontal_gap(Pixels(20.0))
+    .padding(Pixels(20.0));
 
     HStack::new(cx, |cx| {
         HStack::new(cx, |cx| {
@@ -735,12 +713,11 @@ fn alignment5(cx: &mut Context) {
                 .class("icon")
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
+                .alignment(Alignment::Center)
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
@@ -748,30 +725,29 @@ fn alignment5(cx: &mut Context) {
                 .class("icon")
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_space(Stretch(1.0))
+                .alignment(Alignment::Center)
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Svg::new(cx, ICON_MOON)
                 .class("icon")
                 .size(Pixels(150.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .child_left(Stretch(1.0))
-                .child_right(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .alignment(Alignment::Center)
+                .padding_right(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
     })
     .size(Auto)
-    .col_between(Pixels(20.0))
-    .child_space(Pixels(20.0));
+    .horizontal_gap(Pixels(20.0))
+    .padding(Pixels(20.0));
 
     HStack::new(cx, |cx| {
         HStack::new(cx, |cx| {
@@ -779,12 +755,12 @@ fn alignment5(cx: &mut Context) {
                 .class("icon")
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_bottom(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
@@ -792,29 +768,29 @@ fn alignment5(cx: &mut Context) {
                 .class("icon")
                 .text_wrap(false)
                 .size(Pixels(150.0))
-                .child_space(Stretch(1.0))
-                .child_bottom(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_bottom(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
 
         HStack::new(cx, |cx| {
             Svg::new(cx, ICON_MOON)
                 .class("icon")
                 .size(Pixels(150.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Pixels(0.0))
-                .child_left(Stretch(1.0))
-                .child_right(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_bottom(Pixels(0.0))
+                .alignment(Alignment::Center)
+                .padding_right(Pixels(0.0))
                 .background_color(Color::rgb(200, 100, 100));
         })
         .size(Auto)
-        .child_space(Pixels(10.0))
+        .padding(Pixels(10.0))
         .background_color(Color::rgb(100, 200, 100));
     })
     .size(Auto)
-    .col_between(Pixels(20.0))
-    .child_space(Pixels(20.0));
+    .horizontal_gap(Pixels(20.0))
+    .padding(Pixels(20.0));
 }

@@ -8,9 +8,9 @@ pub const CENTER_LAYOUT: &str = r#"
     .container {
         width: 1s;
         height: 1s;
-        child-space: 1s;
-        col-between: 20px;
-        row-between: 20px;
+        alignment: center;
+        horizontal-gap: 20px;
+        vertical-gap: 20px;
     }
 "#;
 
@@ -63,36 +63,35 @@ impl ExamplePage {
             ControlsData::default().build(cx);
             cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System)); // set system theme
 
-            HStack::new(cx, |cx| {
-                HStack::new(cx, |cx| {
-                    Switch::new(cx, ControlsData::disabled)
-                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
-                    // .tooltip(|cx| {
-                    //     Tooltip::new(cx, |cx| {
-                    //         Label::new(cx, "Toggle disabled");
-                    //     })
-                    // });
-                    Label::new(cx, "Toggle Disabled");
-                })
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .col_between(Pixels(5.0))
-                .top(Stretch(1.0))
-                .bottom(Stretch(1.0))
-                .size(Auto);
+            // HStack::new(cx, |cx| {
+            //     HStack::new(cx, |cx| {
+            //         Switch::new(cx, ControlsData::disabled)
+            //             .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
+            //         // .tooltip(|cx| {
+            //         //     Tooltip::new(cx, |cx| {
+            //         //         Label::new(cx, "Toggle disabled");
+            //         //     })
+            //         // });
+            //         Label::new(cx, "Toggle Disabled");
+            //     })
+            //     .alignment(Alignment::Left)
+            //     .horizontal_gap(Pixels(5.0))
+            //     .top(Stretch(1.0))
+            //     .bottom(Stretch(1.0))
+            //     .size(Auto);
 
-                theme_selection_dropdown(cx);
-            })
-            .height(Auto)
-            .width(Stretch(1.0))
-            .child_top(Pixels(10.0))
-            .child_bottom(Pixels(10.0))
-            .child_left(Stretch(1.0))
-            .child_right(Pixels(20.0))
-            .top(Pixels(0.0))
-            .left(Pixels(0.0))
-            .right(Pixels(0.0))
-            .col_between(Pixels(20.0));
+            //     theme_selection_dropdown(cx);
+            // })
+            // .height(Auto)
+            // .width(Stretch(1.0))
+            // .padding_top(Pixels(10.0))
+            // .padding_bottom(Pixels(10.0))
+            // .alignment(Alignment::Right)
+            // .padding_right(Pixels(20.0))
+            // .top(Pixels(0.0))
+            // .left(Pixels(0.0))
+            // .right(Pixels(0.0))
+            // .horizontal_gap(Pixels(20.0));
 
             VStack::new(cx, |cx| {
                 (content)(cx);
@@ -111,36 +110,36 @@ impl ExamplePage {
             ControlsData::default().build(cx);
             cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System)); // set system theme
 
-            HStack::new(cx, |cx| {
-                HStack::new(cx, |cx| {
-                    Switch::new(cx, ControlsData::disabled)
-                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
-                    // .tooltip(|cx| {
-                    //     Tooltip::new(cx, |cx| {
-                    //         Label::new(cx, "Toggle disabled");
-                    //     })
-                    // });
-                    Label::new(cx, "Toggle Disabled");
-                })
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .col_between(Pixels(5.0))
-                .top(Stretch(1.0))
-                .bottom(Stretch(1.0))
-                .size(Auto);
+            // HStack::new(cx, |cx| {
+            //     HStack::new(cx, |cx| {
+            //         Switch::new(cx, ControlsData::disabled)
+            //             .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
+            //         // .tooltip(|cx| {
+            //         //     Tooltip::new(cx, |cx| {
+            //         //         Label::new(cx, "Toggle disabled");
+            //         //     })
+            //         // });
+            //         Label::new(cx, "Toggle Disabled");
+            //     })
+            //     .alignment(Alignment::Center)
+            //     
+            //     .horizontal_gap(Pixels(5.0))
+            //     .top(Stretch(1.0))
+            //     .bottom(Stretch(1.0))
+            //     .size(Auto);
 
-                theme_selection_dropdown(cx);
-            })
-            .height(Auto)
-            .width(Stretch(1.0))
-            .child_top(Pixels(10.0))
-            .child_bottom(Pixels(10.0))
-            .child_left(Stretch(1.0))
-            .child_right(Pixels(20.0))
-            .top(Pixels(0.0))
-            .left(Pixels(0.0))
-            .right(Pixels(0.0))
-            .col_between(Pixels(20.0));
+            //     theme_selection_dropdown(cx);
+            // })
+            // .height(Auto)
+            // .width(Stretch(1.0))
+            // .padding_top(Pixels(10.0))
+            // .padding_bottom(Pixels(10.0))
+            // .alignment(Alignment::Center)
+            // .padding_right(Pixels(20.0))
+            // .top(Pixels(0.0))
+            // .left(Pixels(0.0))
+            // .right(Pixels(0.0))
+            // .horizontal_gap(Pixels(20.0));
 
             HStack::new(cx, |cx| {
                 let _e = HStack::new(cx, |cx| {

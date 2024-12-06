@@ -94,7 +94,7 @@ pub mod prelude {
     pub use super::style::*;
 
     pub use morphorm::Units::*;
-    pub use morphorm::{LayoutType, PositionType, Units};
+    pub use morphorm::{LayoutType, Position, Units};
     pub use unic_langid::{langid, LanguageIdentifier};
     pub use web_time::{Duration, Instant};
 }

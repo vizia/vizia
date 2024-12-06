@@ -49,8 +49,8 @@ fn main() -> Result<(), ApplicationError> {
             input_box(cx, AppData::temperature.map(celcius_to_fahrenheit), fahrenheit_to_celcius);
             Label::new(cx, "Fahrenheit");
         })
-        .child_space(Stretch(1.0))
-        .col_between(Pixels(10.0));
+        .alignment(Alignment::Center)
+        .horizontal_gap(Pixels(10.0));
     })
     .title("Temperature Converter")
     .inner_size((450, 100))

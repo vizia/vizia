@@ -6,7 +6,7 @@ pub trait LayoutModifiers: internal::Modifiable {
     modifier!(
         /// Sets the layout type of the view.
         ///
-        /// The layout type controls how a parent will position any children which have `PositionType::ParentDirected`.
+        /// The layout type controls how a parent will position any children which have `Position::Relative`.
         /// Accepts any value, or lens to a target, with a type which can be converted into `LayoutType`.
         ///
         /// There are three variants:
@@ -40,19 +40,19 @@ pub trait LayoutModifiers: internal::Modifiable {
         ///
         /// The position type determines how a child will be positioned within a parent.
         ///
-        /// - `PositionType::ParentDirected` - The child will be positioned relative to its siblings in a stack
+        /// - `Position::Relative` - The child will be positioned relative to its siblings in a stack
         /// (if parent layout type is `Row` or `Column`), or relative to its grid position (if parent layout type is `Grid`).
-        /// - `PositionType::SelfDirected` - The child will be positioned relative to the top-left corner of its parents bounding box
+        /// - `Position::Absolute` - The child will be positioned relative to the top-left corner of its parents bounding box
         /// and will ignore its siblings or grid position. This is approximately equivalent to absolute positioning.
         ///
         /// # Example
         /// ```
         /// # use vizia_core::prelude::*;
         /// # let cx = &mut Context::default();
-        /// Element::new(cx).position_type(PositionType::SelfDirected);
+        /// Element::new(cx).position(Position::Absolute);
         /// ```
-        position_type,
-        PositionType,
+        position,
+        Position,
         SystemFlags::RELAYOUT
     );
 
@@ -64,7 +64,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// - `Units::Pixels(...)` - The left space will be a fixed number of points. This will scale with the DPI of the target display.
         /// - `Units::Percentage(...)` - The left space will be a proportion of the parent width.
         /// - `Units::Stretch(...)` - The left space will be a ratio of the remaining free space, see [`Units`](crate::prelude::Units).
-        /// - `Units::Auto` - The left space will be determined by the parent `child-left`, see [`child_left`](crate::prelude::LayoutModifiers::left).
+        /// - `Units::Auto` - The left space will be determined by the parent `padding-left`, see [`padding_left`](crate::prelude::LayoutModifiers::left).
         ///
         /// # Example
         /// ```
@@ -85,7 +85,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// - `Units::Pixels(...)` - The right space will be a fixed number of points. This will scale with the DPI of the target display.
         /// - `Units::Percentage(...)` - The right space will be a proportion of the parent width.
         /// - `Units::Stretch(...)` - The right space will be a ratio of the remaining free space, see [`Units`](crate::prelude::Units).
-        /// - `Units::Auto` - The right space will be determined by the parent `child-left`, see [`child_left`](crate::prelude::LayoutModifiers::left).
+        /// - `Units::Auto` - The right space will be determined by the parent `padding-left`, see [`padding_left`](crate::prelude::LayoutModifiers::left).
         ///
         /// # Example
         /// ```
@@ -106,7 +106,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// - `Units::Pixels(...)` - The top space will be a fixed number of points. This will scale with the DPI of the target display.
         /// - `Units::Percentage(...)` - The top space will be a proportion of the parent width.
         /// - `Units::Stretch(...)` - The top space will be a ratio of the remaining free space, see [`Units`](crate::prelude::Units).
-        /// - `Units::Auto` - The top space will be determined by the parent `child-left`, see [`child_left`](crate::prelude::LayoutModifiers::left).
+        /// - `Units::Auto` - The top space will be determined by the parent `padding-left`, see [`padding_left`](crate::prelude::LayoutModifiers::left).
         ///
         /// # Example
         /// ```
@@ -127,7 +127,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// - `Units::Pixels(...)` - The bottom space will be a fixed number of points. This will scale with the DPI of the target display.
         /// - `Units::Percentage(...)` - The bottom space will be a proportion of the parent width.
         /// - `Units::Stretch(...)` - The bottom space will be a ratio of the remaining free space, see [`Units`](crate::prelude::Units).
-        /// - `Units::Auto` - The bottom space will be determined by the parent `child-left`, see [`child_left`](crate::prelude::LayoutModifiers::left).
+        /// - `Units::Auto` - The bottom space will be determined by the parent `padding-left`, see [`padding_left`](crate::prelude::LayoutModifiers::left).
         ///
         /// # Example
         /// ```
@@ -194,7 +194,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// Sets the space between the left side of the view and the left side of its children.
         ///
         /// Applies only to child views which have a `left` property set to `Auto`.
-        child_left,
+        padding_left,
         Units,
         SystemFlags::RELAYOUT
     );
@@ -203,7 +203,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// Sets the space between the right side of the view and the right side of its children.
         ///
         /// Applies only to child views which have a `right` property set to `Auto`.
-        child_right,
+        padding_right,
         Units,
         SystemFlags::RELAYOUT
     );
@@ -212,7 +212,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// Sets the space between the top side of the view and the top side of its children.
         ///
         /// Applies only to child views which have a `top` property set to `Auto`.
-        child_top,
+        padding_top,
         Units,
         SystemFlags::RELAYOUT
     );
@@ -221,24 +221,26 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// Sets the space between the bottom side of the view and the bottom side of its children.
         ///
         /// Applies only to child views which have a `bottom` property set to `Auto`.
-        child_bottom,
+        padding_bottom,
         Units,
         SystemFlags::RELAYOUT
     );
 
+    modifier!(alignment, Alignment, SystemFlags::RELAYOUT);
+
     /// Sets the space between the vew and its children.
     ///
     /// The child_space works by overriding the `Auto` space properties of its children.
-    fn child_space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn padding<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
             value.set_or_bind(cx, entity, move |cx, v| {
                 let value = v.get(cx).into();
-                cx.style.child_left.insert(cx.current, value);
-                cx.style.child_right.insert(cx.current, value);
-                cx.style.child_top.insert(cx.current, value);
-                cx.style.child_bottom.insert(cx.current, value);
+                cx.style.padding_left.insert(cx.current, value);
+                cx.style.padding_right.insert(cx.current, value);
+                cx.style.padding_top.insert(cx.current, value);
+                cx.style.padding_bottom.insert(cx.current, value);
 
                 cx.style.needs_relayout();
             });
@@ -249,17 +251,21 @@ pub trait LayoutModifiers: internal::Modifiable {
 
     modifier!(
         /// Sets the space between the views children in a vertical stack.
-        row_between,
+        vertical_gap,
         Units,
         SystemFlags::RELAYOUT
     );
 
     modifier!(
         /// Sets the space between the views children in a horizontal stack.
-        col_between,
+        horizontal_gap,
         Units,
         SystemFlags::RELAYOUT
     );
+
+    modifier!(vertical_scroll, f32, SystemFlags::RELAYOUT);
+
+    modifier!(horizontal_scroll, f32, SystemFlags::RELAYOUT);
 
     modifier!(
         /// Sets the minimum width of the view.
@@ -317,100 +323,6 @@ pub trait LayoutModifiers: internal::Modifiable {
                 cx.style.max_height.insert(cx.current, value);
 
                 cx.needs_relayout();
-            });
-        });
-
-        self
-    }
-
-    modifier!(
-        /// Sets the minimum left space of the view.
-        min_left,
-        Units,
-        SystemFlags::RELAYOUT
-    );
-
-    modifier!(
-        /// Sets the minimum right space of the view.
-        min_right,
-        Units,
-        SystemFlags::RELAYOUT
-    );
-
-    modifier!(
-        /// Sets the minimum top space of the view.
-        min_top,
-        Units,
-        SystemFlags::RELAYOUT
-    );
-
-    modifier!(
-        /// Sets the minimum bottom space of the view.
-        min_bottom,
-        Units,
-        SystemFlags::RELAYOUT
-    );
-
-    /// Sets the minimum space for all sides of the view.
-    fn min_space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
-        let entity = self.entity();
-        let current = self.current();
-        self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
-                cx.style.min_left.insert(cx.current, value);
-                cx.style.min_right.insert(cx.current, value);
-                cx.style.min_top.insert(cx.current, value);
-                cx.style.min_bottom.insert(cx.current, value);
-
-                cx.style.needs_relayout();
-            });
-        });
-
-        self
-    }
-
-    modifier!(
-        /// Sets the maximum left space of the view.
-        max_left,
-        Units,
-        SystemFlags::RELAYOUT
-    );
-
-    modifier!(
-        /// Sets the maximum right space of the view.
-        max_right,
-        Units,
-        SystemFlags::RELAYOUT
-    );
-
-    modifier!(
-        /// Sets the maximum top space of the view.
-        max_top,
-        Units,
-        SystemFlags::RELAYOUT
-    );
-
-    modifier!(
-        /// Sets the maximum bottom space of the view.
-        max_bottom,
-        Units,
-        SystemFlags::RELAYOUT
-    );
-
-    /// Sets the maximum space for all sides of the view.
-    fn max_space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
-        let entity = self.entity();
-        let current = self.current();
-        self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
-                cx.style.max_left.insert(cx.current, value);
-                cx.style.max_right.insert(cx.current, value);
-                cx.style.max_top.insert(cx.current, value);
-                cx.style.max_bottom.insert(cx.current, value);
-
-                cx.style.needs_relayout();
             });
         });
 

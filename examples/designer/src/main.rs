@@ -58,8 +58,8 @@ fn labelled_control<T: ToStringLocalized>(
         content(cx);
         Label::new(cx, label).font_size(12.0);
     })
-    .row_between(Pixels(4.0))
-    .child_space(Stretch(1.0))
+    .vertical_gap(Pixels(4.0))
+    .alignment(Alignment::Center)
     .width(Auto)
     .height(Auto);
 }
@@ -142,7 +142,7 @@ fn main() -> Result<(), ApplicationError> {
                     .text_align(AppData::text_align)
                     .text_decoration_line(AppData::text_decoration_line);
             })
-            .child_space(Stretch(1.0));
+            .alignment(Alignment::Center);
             Divider::new(cx);
             VStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
@@ -173,7 +173,7 @@ fn main() -> Result<(), ApplicationError> {
                     });
                 })
                 .height(Auto)
-                .col_between(Pixels(8.0));
+                .horizontal_gap(Pixels(8.0));
 
                 ComboBox::new(cx, AppData::fonts, AppData::selected_font)
                     .width(Stretch(1.0))
@@ -293,7 +293,7 @@ fn main() -> Result<(), ApplicationError> {
                 //             }))
                 //         });
                 //     })
-                //     .col_between(Pixels(8.0))
+                //     .horizontal_gap(Pixels(8.0))
                 //     .height(Auto);
                 //     HStack::new(cx, |cx| {
                 //         UnitEditor::new(
@@ -319,7 +319,7 @@ fn main() -> Result<(), ApplicationError> {
                 //             }))
                 //         });
                 //     })
-                //     .col_between(Pixels(8.0))
+                //     .horizontal_gap(Pixels(8.0))
                 //     .height(Auto);
                 //     HStack::new(cx, |cx| {
                 //         UnitEditor::new(
@@ -345,7 +345,7 @@ fn main() -> Result<(), ApplicationError> {
                 //             }))
                 //         });
                 //     })
-                //     .col_between(Pixels(8.0))
+                //     .horizontal_gap(Pixels(8.0))
                 //     .height(Auto);
                 //     HStack::new(cx, |cx| {
                 //         UnitEditor::new(
@@ -371,7 +371,7 @@ fn main() -> Result<(), ApplicationError> {
                 //             }))
                 //         });
                 //     })
-                //     .col_between(Pixels(8.0))
+                //     .horizontal_gap(Pixels(8.0))
                 //     .height(Auto);
                 // })
                 // .height(Auto);
@@ -452,7 +452,7 @@ fn main() -> Result<(), ApplicationError> {
                 //                 cx.emit(AppEvent::SetShadowType(idx, val == 1))
                 //             });
                 //         })
-                //         .col_between(Pixels(8.0))
+                //         .horizontal_gap(Pixels(8.0))
                 //         .width(Auto)
                 //         .height(Auto);
                 //     })
@@ -461,8 +461,8 @@ fn main() -> Result<(), ApplicationError> {
                 // .width(Auto)
                 // .height(Auto);
             })
-            .row_between(Pixels(8.0))
-            .child_space(Pixels(20.0))
+            .vertical_gap(Pixels(8.0))
+            .padding(Pixels(20.0))
             .width(Auto)
             .min_width(Pixels(400.0));
         });
