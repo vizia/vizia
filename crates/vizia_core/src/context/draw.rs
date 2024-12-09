@@ -65,6 +65,7 @@ pub struct DrawContext<'a> {
     pub(crate) text_context: &'a mut TextContext,
     pub(crate) modifiers: &'a Modifiers,
     pub(crate) mouse: &'a MouseState<Entity>,
+    pub(crate) windows: &'a mut HashMap<Entity, WindowState>,
 }
 
 macro_rules! get_units_property {
@@ -123,6 +124,14 @@ impl DrawContext<'_> {
     /// Returns the bounds of the current view.
     pub fn bounds(&self) -> BoundingBox {
         self.cache.get_bounds(self.current)
+    }
+
+    /// Marks the current view as needing to be redrawn.
+    pub fn needs_redraw(&mut self) {
+        let parent_window = self.tree.get_parent_window(self.current).unwrap_or(Entity::root());
+        if let Some(window_state) = self.windows.get_mut(&parent_window) {
+            window_state.redraw_list.insert(self.current);
+        }
     }
 
     /// Returns the z-index of the current view.

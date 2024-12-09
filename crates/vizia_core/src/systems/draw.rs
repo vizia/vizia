@@ -229,6 +229,7 @@ pub(crate) fn draw_system(
                 text_context: &mut cx.text_context,
                 modifiers: &cx.modifiers,
                 mouse: &cx.mouse,
+                windows: &mut cx.windows,
             },
             &dirty_rect,
             canvas,
