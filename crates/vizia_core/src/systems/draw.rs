@@ -158,9 +158,9 @@ pub(crate) fn draw_system(
     let mut dirty_rect = std::mem::take(&mut window.dirty_rect);
     let redraw_list = std::mem::take(&mut window.redraw_list);
 
-    if redraw_list.is_empty() {
-        return false;
-    }
+    // if redraw_list.is_empty() {
+    //     return false;
+    // }
 
     for &entity in &redraw_list {
         // Skip binding views
@@ -197,9 +197,9 @@ pub(crate) fn draw_system(
         }
     }
 
-    if dirty_rect.is_none() {
-        return false;
-    }
+    // if dirty_rect.is_none() {
+    //     return true;
+    // }
 
     let canvas = dirty_surface.canvas();
 
