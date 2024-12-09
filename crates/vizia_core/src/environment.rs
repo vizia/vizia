@@ -1,11 +1,5 @@
 //! A model for system specific state which can be accessed by any model or view.
-use crate::{
-    context::{Context, EmitContext},
-    events::{Timer, TimerAction},
-    model::Model,
-    views::TextEvent,
-    window::WindowEvent,
-};
+use crate::prelude::*;
 
 use unic_langid::LanguageIdentifier;
 use vizia_derive::Lens;
