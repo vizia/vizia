@@ -575,8 +575,9 @@ impl WindowModifiers for Handle<'_, Window> {
         self
     }
 
-    fn visible(mut self, flag: bool) -> Self {
+    fn visible(mut self, flag: impl Res<bool>) -> Self {
         let entity = self.entity();
+        let flag = flag.get(&self);
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
             win_state.window_description.visible = flag
         }
