@@ -127,7 +127,7 @@ pub trait WindowModifiers {
     /// .visible(false)
     /// .run();
     /// ```
-    fn visible(self, flag: bool) -> Self;
+    fn visible(self, flag: impl Res<bool>) -> Self;
     /// Sets whether the window is transparent. Accepts a boolean value, or lens to a boolean value.
     ///
     /// # Example
