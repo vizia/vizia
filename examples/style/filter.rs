@@ -11,12 +11,12 @@ const STYLE: &str = r#"
         left: 300px;
         top: 300px;
         backdrop-filter: blur(16px);
-        position-type: self-directed;
+        position: absolute;
         corner-radius: 32px;
         background-color: rgba(255, 255, 255, 0.4);
         border-width: 2px;
         border-color: rgba(255, 255, 255, 0.8);
-        child-space: 30px;
+        padding: 30px;
     }
 
     label {

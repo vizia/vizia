@@ -33,10 +33,9 @@ fn main() -> Result<(), ApplicationError> {
                 Label::new(cx, AppData::value.map(|val| format!("{:.2}", (val + 50.0) / 100.0)))
                     .width(Pixels(50.0));
             })
-            .child_top(Stretch(1.0))
-            .child_bottom(Stretch(1.0))
+            .alignment(Alignment::Center)
             .height(Auto)
-            .col_between(Pixels(8.0));
+            .horizontal_gap(Pixels(8.0));
 
             HStack::new(cx, |cx| {
                 Slider::new(cx, AppData::value)
@@ -44,10 +43,9 @@ fn main() -> Result<(), ApplicationError> {
                     .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)));
                 Label::new(cx, AppData::value.map(|val| format!("{:.2}", val))).width(Pixels(50.0));
             })
-            .child_top(Stretch(1.0))
-            .child_bottom(Stretch(1.0))
+            .alignment(Alignment::Center)
             .height(Auto)
-            .col_between(Pixels(8.0));
+            .horizontal_gap(Pixels(8.0));
 
             VStack::new(cx, |cx| {
                 Slider::new(cx, AppData::value)
@@ -55,12 +53,11 @@ fn main() -> Result<(), ApplicationError> {
                     .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)))
                     .class("vertical");
                 Label::new(cx, AppData::value.map(|val| format!("{:.2}", val)))
-                    .child_space(Stretch(1.0))
+                    .alignment(Alignment::Center)
                     .width(Pixels(50.0));
             })
-            .child_left(Stretch(1.0))
-            .child_right(Stretch(1.0))
-            .row_between(Pixels(8.0));
+            .alignment(Alignment::Center)
+            .vertical_gap(Pixels(8.0));
         });
     })
     .title("Slider")

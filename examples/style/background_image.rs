@@ -60,7 +60,7 @@ fn main() -> Result<(), ApplicationError> {
 
         Label::new(cx, "Any view can be styled with a background image. An Image view can be used to present a non-tiling background image.")
             .width(Stretch(1.0))
-            .position_type(PositionType::SelfDirected)
+            .position_type(PositionType::Absolute)
             .space(Pixels(10.0));
 
         Element::new(cx).class("auto-size").background_color(Color::red());

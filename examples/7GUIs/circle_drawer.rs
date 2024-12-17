@@ -3,17 +3,17 @@ use vizia::prelude::*;
 
 // const STYLE: &str = r#"
 //     :root {
-//         child-space: 10px;
+//         padding: 10px;
 //     }
 
 //     .header {
 //         left: 1s;
 //         right: 1s;
-//         col-between: 5px;
+//         horizontal-gap: 5px;
 //     }
 
 //     circle-drawer {
-//         row-between: 10px;
+//         vertical-gap: 10px;
 //     }
 
 //     circle-drawer-canvas {
@@ -22,7 +22,7 @@ use vizia::prelude::*;
 //     }
 
 //     .dialog-box {
-//         child-space: 1s;
+//         padding: 1s;
 //         width: 460px;
 //         height: 100px;
 //         space: 1s;
@@ -33,8 +33,8 @@ use vizia::prelude::*;
 //     }
 
 //     .dialog-box vstack {
-//         child-space: 1s;
-//         row-between: 15px;
+//         padding: 1s;
+//         vertical-gap: 15px;
 //     }
 
 //     .dialog-box vstack slider {

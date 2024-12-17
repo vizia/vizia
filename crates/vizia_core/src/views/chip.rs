@@ -26,8 +26,7 @@ impl Chip {
             .build(cx, move |cx| {
                 Label::new(cx, text)
                     .height(Stretch(1.0))
-                    .child_top(Stretch(1.0))
-                    .child_bottom(Stretch(1.0))
+                    .alignment(Alignment::Center)
                     .top(Pixels(0.0))
                     .bottom(Pixels(0.0));
                 Binding::new(cx, Chip::on_close.map(|on_close| on_close.is_some()), |cx, val| {
@@ -37,7 +36,7 @@ impl Chip {
                             .class("close-icon")
                             .height(Pixels(16.0))
                             .width(Pixels(16.0))
-                            .child_space(Stretch(1.0))
+                            .alignment(Alignment::Center)
                             .on_press(move |cx| (on_close)(cx));
                     }
                 });
