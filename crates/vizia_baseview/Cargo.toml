@@ -12,7 +12,7 @@ vizia_core.workspace = true
 vizia_input.workspace = true
 vizia_id.workspace = true
 
-baseview = { git = "https://github.com/RustAudio/baseview.git", rev = "579130ecb4f9f315ae52190af42f0ea46aeaa4a2", features = ["opengl"] }
+baseview = { git = "https://github.com/RustAudio/baseview.git", rev = "9a0b42c09d712777b2edb4c5e0cb6baf21e988f0", features = ["opengl"] }
 raw-window-handle = "0.5"
 gl-rs = { package = "gl", version = "0.14" }
 skia-safe = { version = "0.80", features = ["gl", "textlayout", "svg"] }
