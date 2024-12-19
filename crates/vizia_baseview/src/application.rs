@@ -206,7 +206,17 @@ impl ApplicationRunner {
         }
 
         // Events
-        while self.event_manager.flush_events(self.cx.context()) {}
+        self.event_manager.flush_events(self.cx.context(), |window_event| match window_event {
+            // For some reason calling window.close() crashes baseview on macos
+            // WindowEvent::WindowClose => *should_close = true,
+            WindowEvent::FocusIn => {
+                #[cfg(not(target_os = "linux"))] // not implemented for linux yet
+                if !window.has_focus() {
+                    window.focus();
+                }
+            }
+            _ => {}
+        });
 
         // if *cx.window_size() != self.current_window_size
         //     || cx.user_scale_factor() != self.current_user_scale_factor

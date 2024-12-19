@@ -38,116 +38,132 @@ impl EventManager {
 
     /// Flush the event queue, dispatching events to their targets.
     /// Returns whether there are still more events to process, i.e. the event handlers sent events.
-    pub fn flush_events(&mut self, cx: &mut Context) -> bool {
-        // Clear the event queue in the event manager.
-        self.event_queue.clear();
+    pub fn flush_events(
+        &mut self,
+        cx: &mut Context,
+        mut window_event_callback: impl FnMut(&WindowEvent),
+    ) {
+        while {
+            // Clear the event queue in the event manager.
+            self.event_queue.clear();
 
-        // Move events from cx to event manager. This is so the cx can be passed
-        // mutably to the view when handling events.
-        self.event_queue.extend(cx.event_queue.drain(0..));
+            // Move events from cx to event manager. This is so the cx can be passed
+            // mutably to the view when handling events.
+            self.event_queue.extend(cx.event_queue.drain(0..));
 
-        // Loop over the events in the event queue.
-        'events: for event in self.event_queue.iter_mut() {
-            // Handle internal events.
-            event.take(|internal_event, _| match internal_event {
-                InternalEvent::Redraw => cx.needs_redraw(Entity::root()),
-                InternalEvent::LoadImage { path, image, policy } => {
-                    if let Some(image) = image.lock().unwrap().take() {
-                        ResourceContext::new(cx).load_image(path, image, policy);
+            // Loop over the events in the event queue.
+            'events: for event in self.event_queue.iter_mut() {
+                // Handle internal events.
+                event.take(|internal_event, _| match internal_event {
+                    InternalEvent::Redraw => cx.needs_redraw(Entity::root()),
+                    InternalEvent::LoadImage { path, image, policy } => {
+                        if let Some(image) = image.lock().unwrap().take() {
+                            ResourceContext::new(cx).load_image(path, image, policy);
+                        }
+                    }
+                });
+
+                // Send events to any global listeners.
+                let mut global_listeners = vec![];
+                std::mem::swap(&mut cx.global_listeners, &mut global_listeners);
+                for listener in &global_listeners {
+                    cx.with_current(Entity::root(), |cx| {
+                        listener(&mut EventContext::new(cx), event)
+                    });
+                }
+                std::mem::swap(&mut cx.global_listeners, &mut global_listeners);
+
+                // Send events to any local listeners.
+                let listeners = cx.listeners.keys().copied().collect::<Vec<Entity>>();
+                for entity in listeners {
+                    if let Some(listener) = cx.listeners.remove(&entity) {
+                        if let Some(mut event_handler) = cx.views.remove(&entity) {
+                            cx.with_current(entity, |cx| {
+                                (listener)(
+                                    event_handler.as_mut(),
+                                    &mut EventContext::new(cx),
+                                    event,
+                                );
+                            });
+
+                            cx.views.insert(entity, event_handler);
+                        }
+
+                        cx.listeners.insert(entity, listener);
+                    }
+
+                    if event.meta.consumed {
+                        continue 'events;
                     }
                 }
-            });
 
-            // Send events to any global listeners.
-            let mut global_listeners = vec![];
-            std::mem::swap(&mut cx.global_listeners, &mut global_listeners);
-            for listener in &global_listeners {
-                cx.with_current(Entity::root(), |cx| listener(&mut EventContext::new(cx), event));
-            }
-            std::mem::swap(&mut cx.global_listeners, &mut global_listeners);
-
-            // Send events to any local listeners.
-            let listeners = cx.listeners.keys().copied().collect::<Vec<Entity>>();
-            for entity in listeners {
-                if let Some(listener) = cx.listeners.remove(&entity) {
-                    if let Some(mut event_handler) = cx.views.remove(&entity) {
-                        cx.with_current(entity, |cx| {
-                            (listener)(event_handler.as_mut(), &mut EventContext::new(cx), event);
-                        });
-
-                        cx.views.insert(entity, event_handler);
+                // Handle state updates for window events.
+                event.map(|window_event, meta| {
+                    if cx.windows.contains_key(&meta.origin) {
+                        internal_state_updates(cx, window_event, meta);
                     }
+                });
 
-                    cx.listeners.insert(entity, listener);
-                }
-
+                // Skip to next event if the current event was consumed when handling internal state updates.
                 if event.meta.consumed {
                     continue 'events;
                 }
-            }
 
-            // Handle state updates for window events.
-            event.map(|window_event, meta| {
-                if cx.windows.contains_key(&meta.origin) {
-                    internal_state_updates(cx, window_event, meta);
+                let cx = &mut EventContext::new(cx);
+
+                // Copy the target to prevent multiple mutable borrows error.
+                let target = event.meta.target;
+
+                // Send event to target.
+                visit_entity(cx, target, event);
+
+                // Skip to next event if the current event was consumed.
+                if event.meta.consumed {
+                    continue 'events;
                 }
-            });
 
-            // Skip to next event if the current event was consumed when handling internal state updates.
-            if event.meta.consumed {
-                continue 'events;
-            }
+                // Propagate up from target to root (not including the target).
+                if event.meta.propagation == Propagation::Up {
+                    // Create a parent iterator and skip the first element which is the target.
+                    let iter = target.parent_iter(cx.tree).skip(1);
 
-            let cx = &mut EventContext::new(cx);
+                    for entity in iter {
+                        // Send event to all ancestors of the target.
+                        visit_entity(cx, entity, event);
 
-            // Copy the target to prevent multiple mutable borrows error.
-            let target = event.meta.target;
-
-            // Send event to target.
-            visit_entity(cx, target, event);
-
-            // Skip to next event if the current event was consumed.
-            if event.meta.consumed {
-                continue 'events;
-            }
-
-            // Propagate up from target to root (not including the target).
-            if event.meta.propagation == Propagation::Up {
-                // Create a parent iterator and skip the first element which is the target.
-                let iter = target.parent_iter(cx.tree).skip(1);
-
-                for entity in iter {
-                    // Send event to all ancestors of the target.
-                    visit_entity(cx, entity, event);
-
-                    // Skip to the next event if the current event was consumed.
-                    if event.meta.consumed {
-                        continue 'events;
+                        // Skip to the next event if the current event was consumed.
+                        if event.meta.consumed {
+                            continue 'events;
+                        }
                     }
                 }
-            }
 
-            // Propagate the event down the subtree from the target (not including the target).
-            if event.meta.propagation == Propagation::Subtree {
-                // Create a branch (subtree) iterator and skip the first element which is the target.
-                let iter = target.branch_iter(cx.tree).skip(1);
+                // Propagate the event down the subtree from the target (not including the target).
+                if event.meta.propagation == Propagation::Subtree {
+                    // Create a branch (subtree) iterator and skip the first element which is the target.
+                    let iter = target.branch_iter(cx.tree).skip(1);
 
-                for entity in iter {
-                    // Send event to all entities in the subtree after the target.
-                    visit_entity(cx, entity, event);
+                    for entity in iter {
+                        // Send event to all entities in the subtree after the target.
+                        visit_entity(cx, entity, event);
 
-                    // Skip to the next event if the current event was consumed.
-                    if event.meta.consumed {
-                        continue 'events;
+                        // Skip to the next event if the current event was consumed.
+                        if event.meta.consumed {
+                            continue 'events;
+                        }
                     }
                 }
+
+                event.map(|window_event: &WindowEvent, _| {
+                    (window_event_callback)(window_event);
+                });
             }
-        }
 
-        binding_system(cx);
+            binding_system(cx);
 
-        // Return true if there are new events in the queue.
-        !cx.event_queue.is_empty()
+            // Return true if there are new events in the queue.
+            !cx.event_queue.is_empty()
+        } {}
     }
 }
 
