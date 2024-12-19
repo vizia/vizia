@@ -359,7 +359,7 @@ impl ApplicationHandler<UserEvent> for Application {
 
                 #[cfg(target_os = "windows")]
                 {
-                    while self.event_manager.flush_events(self.cx.context()) {}
+                    self.event_manager.flush_events(self.cx.context(), |_| {});
 
                     self.cx.process_style_updates();
 
@@ -540,7 +540,7 @@ impl ApplicationHandler<UserEvent> for Application {
 
         event_loop.set_control_flow(self.control_flow);
 
-        while self.event_manager.flush_events(self.cx.context()) {}
+        self.event_manager.flush_events(self.cx.context(), |_| {});
 
         self.cx.process_style_updates();
 

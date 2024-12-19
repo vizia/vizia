@@ -478,6 +478,8 @@ impl<'a> EventContext<'a> {
         }
         self.set_focus_pseudo_classes(new_focus, true, focus_visible);
 
+        self.emit_to(Entity::root(), WindowEvent::FocusIn);
+
         self.needs_restyle();
     }
 
