@@ -1,11 +1,11 @@
 use crate::{
-    define_property, Angle, BackgroundImage, BackgroundSize, BlendMode, Border, BorderStyle,
-    BorderWidth, ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError,
-    CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
-    FontWidth, LayoutType, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow, Parse,
-    PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign, TextDecoration,
-    TextDecorationLine, TextDecorationStyle, TextOverflow, Transform, Transition, Translate, Units,
-    UnparsedProperty, Visibility,
+    define_property, Alignment, Angle, BackgroundImage, BackgroundSize, BlendMode, Border,
+    BorderStyle, BorderWidth, ClipPath, Color, CornerRadius, CornerShape, CursorIcon,
+    CustomParseError, CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant,
+    FontVariation, FontWeight, FontWidth, LayoutType, LengthOrPercentage, LineClamp, Opacity,
+    Outline, Overflow, Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow,
+    TextAlign, TextDecoration, TextDecorationLine, TextDecorationStyle, TextOverflow, Transform,
+    Transition, Translate, Units, UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -26,6 +26,8 @@ define_property! {
         "layout-type": LayoutType(LayoutType),
         "position-type": PositionType(PositionType),
 
+        "alignment": Alignment(Alignment),
+
         // Position and Size
         "space": Space(Units),
         "left": Left(Units),
@@ -37,18 +39,6 @@ define_property! {
         "bottom": Bottom(Units),
 
         // Constraints
-        "min-space": MinSpace(Units),
-        "min-left": MinLeft(Units),
-        "min-right": MinRight(Units),
-        "min-top": MinTop(Units),
-        "min-bottom": MinBottom(Units),
-
-        "max-space": MaxSpace(Units),
-        "max-left": MaxLeft(Units),
-        "max-right": MaxRight(Units),
-        "max-top": MaxTop(Units),
-        "max-bottom": MaxBottom(Units),
-
         "min-size": MinSize(Units),
         "min-width": MinWidth(Units),
         "min-height": MinHeight(Units),
@@ -57,14 +47,14 @@ define_property! {
         "max-width": MaxWidth(Units),
         "max-height": MaxHeight(Units),
 
-        // Child Spacing
-        "child-space": ChildSpace(Units),
-        "child-left": ChildLeft(Units),
-        "child-right": ChildRight(Units),
-        "child-top": ChildTop(Units),
-        "child-bottom": ChildBottom(Units),
-        "row-between": RowBetween(Units),
-        "col-between": ColBetween(Units),
+        // Padding
+        "padding": Padding(Units),
+        "padding-left": PaddingLeft(Units),
+        "padding-right": PaddingRight(Units),
+        "padding-top": PaddingTop(Units),
+        "padding-bottom": PaddingBottom(Units),
+        "vertical-gap": VerticalGap(Units),
+        "horizontal-gap": HorizontalGap(Units),
         // ----- Border -----
 
         // Border Shorthand

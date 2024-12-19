@@ -64,15 +64,18 @@ impl ScrollView {
             container_height: 0.0,
         }
         .build(cx, move |cx| {
-            ScrollContent::new(cx, content).bind(ScrollView::root, |handle, data| {
-                let scale_factor = handle.scale_factor();
-                let data = data.get(&handle);
-                let left = ((data.inner_width - data.container_width) * data.scroll_x).round()
-                    / scale_factor;
-                let top = ((data.inner_height - data.container_height) * data.scroll_y).round()
-                    / scale_factor;
-                handle.left(Units::Pixels(-left.abs())).top(Units::Pixels(-top.abs()));
-            });
+            ScrollContent::new(cx, content);
+
+            // .bind(ScrollView::scroll_y, |handle, data| {
+            //     let scale_factor = handle.scale_factor();
+            //     let data = data.get(&handle);
+            //     // let left = ((data.inner_width - data.container_width) * data.scroll_x).round()
+            //     //     / scale_factor;
+            //     // let top = ((data.inner_height - data.container_height) * data.scroll_y).round()
+            //     //     / scale_factor;
+            //     // handle.left(Units::Pixels(-left.abs())).top(Units::Pixels(-top.abs()));
+            //     println!("sy {}", data);
+            // });
 
             if scroll_y {
                 Scrollbar::new(
@@ -84,7 +87,7 @@ impl ScrollView {
                         cx.emit(ScrollEvent::SetY(value));
                     },
                 )
-                .position_type(PositionType::SelfDirected)
+                .position_type(PositionType::Absolute)
                 .scroll_to_cursor(Self::scroll_to_cursor);
             }
 
@@ -98,9 +101,13 @@ impl ScrollView {
                         cx.emit(ScrollEvent::SetX(value));
                     },
                 )
-                .position_type(PositionType::SelfDirected)
+                .position_type(PositionType::Absolute)
                 .scroll_to_cursor(Self::scroll_to_cursor);
             }
+        })
+        .bind(ScrollView::root, |handle, data| {
+            let data = data.get(&handle);
+            handle.vertical_scroll(data.scroll_y).horizontal_scroll(data.scroll_x);
         })
         .toggle_class(
             "h-scroll",

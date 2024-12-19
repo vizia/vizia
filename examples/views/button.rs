@@ -27,9 +27,10 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, "Button with Icon");
                     })
                 });
+                Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"));
             })
             .size(Auto)
-            .col_between(Pixels(10.0));
+            .horizontal_gap(Pixels(10.0));
         });
     })
     .title("Button")

@@ -215,7 +215,7 @@ button-group.vertical > :last-child {
 }
 
 button-group.accent {
-    col-between: 1px;
+    horizontal-gap: 1px;
 }
 
 button-group.accent > :first-child {
@@ -514,14 +514,13 @@ submenu:disabled {
 }
 
 submenu > popup {
-    child-space: 8px;
+    padding: 8px;
 }
 
 menu-divider {
     height: 9px;
     width: 1s;
-    child-top: 1s;
-    child-bottom: 1s;
+    alignment: center;
 }
 
 menu-divider .line {
@@ -533,7 +532,7 @@ menu-divider .line {
 
 notification {
     background-color: #262626;
-    child-space: 8px;
+    padding: 8px;
     corner-radius: 4px;
     shadow: 0px 2px 16px #00000038;
 }
@@ -785,7 +784,7 @@ spinbox picklist.spinbox-value dropdown {
 spinbox picklist.spinbox-value {
     background-color: transparent;
     border-width: 0px;
-    col-between: 4px;
+    horizontal-gap: 4px;
 }
 
 /* SWITCH */
@@ -945,7 +944,7 @@ toggle-button svg {
 
 /* TOOLTIP */
 tooltip {
-    child-space: 4px;
+    padding: 4px;
     background-color: #888;
     corner-radius: 4px;
 }

@@ -25,7 +25,7 @@ const STYLE: &str = r#"
         text-overflow: ellipsis;
         line-clamp: 1;
         width: 1s;
-        child-space: 1s;
+        padding: 1s;
     }
 
     .caret_color:checked .textbox_content {
@@ -132,7 +132,7 @@ fn main() -> Result<(), ApplicationError> {
         //         .font_weight(AppData::selected_weight)
         //         .font_size(AppData::selected_size)
         //         .text_align(AppData::selected_align);
-        //     }).child_space(Stretch(1.0));
+        //     }).alignment(Alignment::Center);
 
         //     VStack::new(cx, |cx|{
         //         PickList::new(cx, AppData::fonts, true, move |index, label| {
@@ -151,7 +151,7 @@ fn main() -> Result<(), ApplicationError> {
         //                 .width(Stretch(1.0))
         //                 .on_item_select(|cx, item| cx.emit(AppEvent::SetSelectedSize(item)));
 
-        //         }).col_between(Pixels(4.0)).height(Auto);
+        //         }).horizontal_gap(Pixels(4.0)).height(Auto);
 
         //         ButtonGroup::new(cx, |cx|{
         //             ToggleButton::new(cx, AppData::selected_align.map(|align| *align == TextAlign::Left), |cx|{
@@ -172,7 +172,7 @@ fn main() -> Result<(), ApplicationError> {
         //             .on_toggle(|cx| cx.emit(AppEvent::SetSelectedAlign(TextAlign::Justify)));
 
         //         });
-        //     }).width(Pixels(200.0)).shadow("-2px 0px 10px #22222255").child_space(Pixels(10.0)).row_between(Pixels(10.0));
+        //     }).width(Pixels(200.0)).shadow("-2px 0px 10px #22222255").padding(Pixels(10.0)).vertical_gap(Pixels(10.0));
         // });
 
         VStack::new(cx, |cx| {
@@ -188,8 +188,8 @@ fn main() -> Result<(), ApplicationError> {
                 .line_clamp(1)
                 .text_align(TextAlign::Center);
         })
-        .row_between(Pixels(10.0))
-        .child_space(Pixels(10.0));
+        .vertical_gap(Pixels(10.0))
+        .padding(Pixels(10.0));
 
         // Textbox::new(cx, AppData::text)
         //     .on_edit(|cx, text| cx.emit(AppDataSetter::Text(text)))

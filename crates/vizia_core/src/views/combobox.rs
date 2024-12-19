@@ -82,7 +82,6 @@ where
                 .on_cancel(|_| {})
                 .width(Stretch(1.0))
                 .height(Pixels(32.0))
-                .space(Pixels(0.0))
                 .placeholder(Self::placeholder)
                 .class("title");
 
@@ -118,8 +117,7 @@ where
                                         for index in ll.into_iter() {
                                             let item = list.idx(index);
                                             Label::new(cx, item)
-                                                .child_top(Stretch(1.0))
-                                                .child_bottom(Stretch(1.0))
+                                                .alignment(Alignment::Left)
                                                 .checked(
                                                     selected
                                                         .map(move |selected| *selected == index),

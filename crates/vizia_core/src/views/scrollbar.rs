@@ -44,6 +44,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
                     let value = value.get(&handle);
                     match orientation {
                         Orientation::Horizontal => {
+                            println!("{}", value);
                             handle.left(Units::Stretch(value)).right(Units::Stretch(1.0 - value))
                         }
                         Orientation::Vertical => {
@@ -57,7 +58,8 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
                         Orientation::Horizontal => handle.width(Units::Percentage(ratio * 100.0)),
                         Orientation::Vertical => handle.height(Units::Percentage(ratio * 100.0)),
                     };
-                });
+                })
+                .position_type(PositionType::Absolute);
         })
         .pointer_events(PointerEvents::Auto)
         .class(match orientation {

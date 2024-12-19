@@ -61,9 +61,9 @@ fn main() -> Result<(), ApplicationError> {
                 // toggle_disabled_switch(cx);
                 theme_selection_dropdown(cx);
             })
-            .child_space(Pixels(8.0))
-            .child_left(Stretch(1.0))
-            .col_between(Pixels(20.0))
+            .padding(Pixels(8.0))
+            .alignment(Alignment::Right)
+            .horizontal_gap(Pixels(20.0))
             .height(Auto);
 
             Divider::new(cx);

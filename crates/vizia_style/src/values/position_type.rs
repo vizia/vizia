@@ -6,8 +6,8 @@ impl_parse! {
 
     tokens {
         ident {
-            "self-directed" => PositionType::SelfDirected,
-            "parent-directed" => PositionType::ParentDirected,
+            "absolute" => PositionType::Absolute,
+            "relative" => PositionType::Relative,
         }
     }
 }
@@ -18,11 +18,11 @@ mod tests {
     use crate::tests::assert_parse;
 
     assert_parse! {
-        PositionType, assert_position_type,
+        PositionType, assert_position,
 
         ident {
-            "self-directed" => PositionType::SelfDirected,
-            "parent-directed" => PositionType::ParentDirected,
+            "absolute" => PositionType::Absolute,
+            "relative" => PositionType::Relative,
         }
     }
 }

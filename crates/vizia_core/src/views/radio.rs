@@ -87,10 +87,7 @@ impl RadioButton {
     pub fn new(cx: &mut Context, checked: impl Lens<Target = bool>) -> Handle<Self> {
         Self { on_select: None }
             .build(cx, |cx| {
-                Element::new(cx)
-                    .class("inner")
-                    .hoverable(false)
-                    .position_type(PositionType::SelfDirected);
+                Element::new(cx).class("inner").hoverable(false);
             })
             .checked(checked)
             .navigable(true)
