@@ -90,7 +90,7 @@ impl<V> Handle<'_, V> {
     }
 
     /// Mody the internal data of the view.
-    pub fn modify<F>(self, f: F) -> Self
+    pub fn modify<F>(mut self, f: F) -> Self
     where
         F: FnOnce(&mut V),
         V: 'static,
@@ -103,6 +103,9 @@ impl<V> Handle<'_, V> {
         {
             (f)(view);
         }
+
+        // Send an event to force the modification to happen within the same event loop.
+        self.context().emit(WindowEvent::Redraw);
 
         self
     }
