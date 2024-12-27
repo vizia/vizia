@@ -4,12 +4,12 @@ use crate::DemoRegion;
 
 pub fn scrollview(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "Scrollview").class("title");
-        Label::new(cx, "").class("paragraph");
+        Markdown::new(cx, "# Scrollview");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Vertical scroll view").class("header");
+        Markdown::new(cx, "### Vertical scroll view");
+
         DemoRegion::new(
             cx,
             |cx| {

@@ -6,7 +6,7 @@ pub fn badge(cx: &mut Context) {
     VStack::new(cx, |cx| {
         Markdown::new(cx, "# Badge");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
         Markdown::new(cx, "### Basic badge");
         DemoRegion::new(

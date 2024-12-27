@@ -54,17 +54,15 @@ impl PickList {
                     .on_press(|cx| cx.emit(PopupEvent::Switch));
                 },
                 move |cx| {
-                    ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
-                        List::new(cx, list_lens, move |cx, _, item| {
-                            Label::new(cx, item).hoverable(false);
-                        })
-                        .selected(selected.map(|s| vec![*s]))
-                        .on_select(|cx, index| {
-                            cx.emit(PickListEvent::SetOption(index));
-                            cx.emit(PopupEvent::Close);
-                        });
+                    List::new(cx, list_lens, move |cx, _, item| {
+                        Label::new(cx, item).hoverable(false);
                     })
-                    .height(Auto);
+                    .selected(selected.map(|s| vec![*s]))
+                    .on_select(|cx, index| {
+                        cx.emit(PickListEvent::SetOption(index));
+                        cx.emit(PopupEvent::Close);
+                    })
+                    .focused(true);
                 },
             )
             .width(Stretch(1.0));

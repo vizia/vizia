@@ -39,12 +39,12 @@ pub fn toggle_button(cx: &mut Context) {
     ToggleData { bold: false, italic: false, underline: false }.build(cx);
 
     VStack::new(cx, |cx| {
-        Label::new(cx, "ToggleButton").class("title");
-        Label::new(cx, "").class("paragraph");
+        Markdown::new(cx, "# ToggleButton");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Basic toggle button").class("header");
+        Markdown::new(cx, "### Basic toggle button");
+
         DemoRegion::new(
             cx,
             |cx| {
@@ -55,7 +55,8 @@ pub fn toggle_button(cx: &mut Context) {
     .on_toggle(|cx| cx.emit(ToggleEvent::ToggleBold));"#,
         );
 
-        Label::new(cx, "Toggle button group").class("header");
+        Markdown::new(cx, "### Toggle button group");
+
         DemoRegion::new(
             cx,
             |cx| {

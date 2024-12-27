@@ -25,12 +25,11 @@ pub fn datepicker(cx: &mut Context) {
     VStack::new(cx, |cx| {
         DatepickerState { date: Utc::now().date_naive() }.build(cx);
 
-        Label::new(cx, "Datepicker").class("title");
-        Label::new(cx, "").class("paragraph");
+        Markdown::new(cx, "# Datepicker");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Basic datepicker").class("header");
+        Markdown::new(cx, "### Basic datepicker");
 
         DemoRegion::new(
             cx,

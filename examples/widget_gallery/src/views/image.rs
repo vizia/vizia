@@ -4,8 +4,7 @@ use crate::DemoRegion;
 
 pub fn image(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "Image").class("title");
-        Label::new(cx, "").class("paragraph");
+        Markdown::new(cx, "# Image");
 
         Divider::new(cx);
 

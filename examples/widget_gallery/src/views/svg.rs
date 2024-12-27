@@ -4,10 +4,9 @@ use crate::components::DemoRegion;
 
 pub fn svg(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "Svg").class("title");
-        Label::new(cx, "").class("paragraph");
+        Markdown::new(cx, "# Svg");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
         DemoRegion::new(
             cx,

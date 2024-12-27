@@ -5,12 +5,12 @@ use crate::components::DemoRegion;
 
 pub fn menu(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "Menu").class("title");
-        Label::new(cx, "").class("paragraph");
+        Markdown::new(cx, "# Menu");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Basic menu").class("header");
+        Markdown::new(cx, "### Basic menu");
+
         DemoRegion::new(
             cx,
             |cx| {

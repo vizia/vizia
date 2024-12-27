@@ -33,12 +33,12 @@ pub fn picklist(cx: &mut Context) {
     .build(cx);
 
     VStack::new(cx, |cx| {
-        Label::new(cx, "Picklist").class("title");
-        Label::new(cx, "").class("paragraph");
+        Markdown::new(cx, "# Picklist");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Basic picklist").class("header");
+        Markdown::new(cx, "### Basic picklist");
+
         DemoRegion::new(
             cx,
             |cx| {

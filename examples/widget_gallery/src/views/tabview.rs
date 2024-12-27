@@ -13,12 +13,17 @@ pub fn tabview(cx: &mut Context) {
     TabData { tabs: vec!["Tab1", "Tab2"] }.build(cx);
 
     VStack::new(cx, |cx| {
-        Label::new(cx, "Label").class("title");
-        Label::new(cx, "A label can be used to display a string of text.").class("paragraph");
+        Markdown::new(
+            cx,
+            "# Label
+A label can be used to display a string of text.        
+        ",
+        );
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Basic tab view").class("header");
+        Label::new(cx, "### Basic tab view");
+
         DemoRegion::new(
             cx,
             |cx| {

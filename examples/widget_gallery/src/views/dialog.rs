@@ -4,12 +4,11 @@ use crate::DemoRegion;
 
 pub fn dialog(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "Dialog").class("title");
-        Label::new(cx, "").class("paragraph");
+        Markdown::new(cx, "# Dialog");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Basic dialog").class("header");
+        Markdown::new(cx, "### Basic dialog");
 
         DemoRegion::new(
             cx,

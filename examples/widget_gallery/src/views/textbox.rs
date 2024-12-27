@@ -23,13 +23,17 @@ pub fn textbox(cx: &mut Context) {
     TextboxData { text: "Hello Vizia".to_string() }.build(cx);
 
     VStack::new(cx, |cx| {
-        Label::new(cx, "Textbox").class("title");
-        Label::new(cx, "A textbox can be used to display a string of text which can be edited.")
-            .class("paragraph");
+        Markdown::new(
+            cx,
+            "# Textbox
+A textbox can be used to display a string of text which can be edited.        
+        ",
+        );
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Basic textbox").class("header");
+        Markdown::new(cx, "### Basic textbox");
+
         DemoRegion::new(
             cx,
             |cx| {

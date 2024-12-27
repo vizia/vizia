@@ -4,12 +4,11 @@ use crate::DemoRegion;
 
 pub fn divider(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "Divider").class("title");
-        Label::new(cx, "").class("paragraph");
+        Markdown::new(cx, "# Divider");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Basic divider").class("header");
+        Markdown::new(cx, "### Basic divider");
 
         DemoRegion::new(
             cx,

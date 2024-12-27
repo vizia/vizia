@@ -99,12 +99,12 @@ pub fn spinbox(cx: &mut Context) {
     .build(cx);
 
     VStack::new(cx, |cx| {
-        Label::new(cx, "Spinbox").class("title");
-        Label::new(cx, "").class("paragraph");
+        Markdown::new(cx, "# Spinbox");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Basic spinbox").class("header");
+        Label::new(cx, "### Basic spinbox");
+
         DemoRegion::new(
             cx,
             |cx| {

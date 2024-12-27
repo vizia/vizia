@@ -351,15 +351,14 @@ label.describing {
 /* LIST */
 
 list {
-    size: auto;
+    size: 1s;
 }
 
 list > scrollview {
-    size: auto;
     min-width: 100%;
 }
 
-list > list-item {
+list list-item {
     min-width: auto;
     width: 1s;
     height: 30px;
@@ -367,15 +366,15 @@ list > list-item {
     child-bottom: 1s;
 }
 
-list > list-item.focused {
+list list-item.focused {
     background-color: rgb(163, 163, 163);
 }
 
-list > list-item:hover {
+list list-item:hover {
     background-color: rgb(123, 123, 255);
 }
 
-list > list-item:checked {
+list list-item:checked {
     background-color: blue;
 }
 
@@ -489,11 +488,18 @@ picklist {
     size: auto;
 }
 
+picklist list {
+    size: auto;
+}
+
+picklist list > scrollview {
+    height: auto;
+}
+
 /* POPUP */
 
 popup {
     size: auto;
-    position-type: absolute;
     z-index: 100;
 }
 

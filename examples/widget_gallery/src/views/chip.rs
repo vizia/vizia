@@ -4,13 +4,16 @@ use crate::components::DemoRegion;
 
 pub fn chip(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "Chip").class("title");
-        Label::new(cx, "A chip can be used to inform the user of the status of specific data.")
-            .class("paragraph");
+        Markdown::new(
+            cx,
+            "# Chip
+A chip can be used to inform the user of the status of specific data.        
+        ",
+        );
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Basic chip").class("header");
+        Markdown::new(cx, "### Basic chip");
 
         DemoRegion::new(
             cx,
@@ -20,7 +23,7 @@ pub fn chip(cx: &mut Context) {
             r#"Chip::new(cx, "Chip");"#,
         );
 
-        Label::new(cx, "Chip variants").class("header");
+        Markdown::new(cx, "### Chip variants");
 
         DemoRegion::new(
             cx,
@@ -34,7 +37,7 @@ Chip::new(cx, "Outline")
     .variant(ChipVariant::Outline);"#,
         );
 
-        Label::new(cx, "Chip actions").class("header");
+        Markdown::new(cx, "### Chip actions");
 
         DemoRegion::new(
             cx,
