@@ -33,12 +33,11 @@ pub fn combobox(cx: &mut Context) {
         }
         .build(cx);
 
-        Label::new(cx, "Combobox").class("title");
-        Label::new(cx, "").class("paragraph");
+        Markdown::new(cx, "# Combobox");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Basic combobox").class("header");
+        Markdown::new(cx, "### Basic combobox");
 
         DemoRegion::new(
             cx,

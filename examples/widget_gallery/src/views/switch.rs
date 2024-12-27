@@ -25,12 +25,12 @@ pub fn switch(cx: &mut Context) {
     SwitchData { flag: true }.build(cx);
 
     VStack::new(cx, |cx| {
-        Label::new(cx, "Switch").class("title");
-        Label::new(cx, "").class("paragraph");
+        Markdown::new(cx, "# Switch");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Basic switch").class("header");
+        Markdown::new(cx, "### Basic switch");
+
         DemoRegion::new(
             cx,
             |cx| {

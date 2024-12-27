@@ -8,7 +8,7 @@ pub fn hstack(cx: &mut Context) {
         Label::new(cx, "The hstack container can be used to layout views in a row.")
             .class("paragraph");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
         Label::new(cx, "HStack").class("header");
         DemoRegion::new(
@@ -40,7 +40,7 @@ pub fn vstack(cx: &mut Context) {
         Label::new(cx, "The vstack container can be used to layout views in a column.")
             .class("paragraph");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
         Label::new(cx, "Label").class("header");
         DemoRegion::new(
@@ -68,13 +68,17 @@ pub fn vstack(cx: &mut Context) {
 
 pub fn zstack(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "ZStack").class("title");
-        Label::new(cx, "The zstack container can be used to layout views in a vertical stack.")
-            .class("paragraph");
+        Markdown::new(
+            cx,
+            "# ZStack
+The zstack container can be used to layout views in a vertical stack.        
+        ",
+        );
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Label").class("header");
+        Label::new(cx, "### ZStack");
+
         DemoRegion::new(
             cx,
             |cx| {

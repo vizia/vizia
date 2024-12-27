@@ -16,7 +16,7 @@ fn main() -> Result<(), ApplicationError> {
 
         ExamplePage::new(cx, |cx| {
             List::new(cx, AppData::list, |cx, _, item| {
-                Label::new(cx, item).hoverable(false).width(Pixels(100.0)).height(Pixels(30.0));
+                Label::new(cx, item).hoverable(false);
             });
         });
     })

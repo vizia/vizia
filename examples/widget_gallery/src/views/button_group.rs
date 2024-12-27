@@ -11,7 +11,7 @@ Buttons can be grouped by wrapping them in a ButtonGroup view.
         ",
         );
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
         Markdown::new(cx, "### Basic button group");
 

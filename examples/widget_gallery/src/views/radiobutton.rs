@@ -43,11 +43,11 @@ pub fn radiobutton(cx: &mut Context) {
     RadioData { option: Options::First }.build(cx);
 
     VStack::new(cx, |cx| {
-        Label::new(cx, "Radiobutton").class("title");
-        Label::new(cx, "A radio button can be used to select an option from a set of options.")
-        .class("paragraph");
+        Markdown::new(cx, "# Radiobutton
+A radio button can be used to select an option from a set of options.        
+        ");
 
-        Label::new(cx, "Basic radio button").class("header");
+        Markdown::new(cx, "### Basic radio button");
 
         DemoRegion::new(
             cx,
@@ -58,10 +58,10 @@ pub fn radiobutton(cx: &mut Context) {
             }, r#"TODO"#
         );
 
-        Label::new(cx, "Radio button and label").class("header");
-        Label::new(cx, "The describing modifier can be used to link a label to a particular radiobutton. Pressing on the label will then toggle the corresponding radiobutton. Alternatively, a FormControl can be used.")
-        .class("paragraph");
-
+        Markdown::new(cx, "### Radio button and label
+The describing modifier can be used to link a label to a particular radiobutton. Pressing on the label will then toggle the corresponding radiobutton. Alternatively, a FormControl can be used.        
+        ").class("header");
+        
         DemoRegion::new(
             cx,
             |cx| {

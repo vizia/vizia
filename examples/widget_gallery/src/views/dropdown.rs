@@ -30,12 +30,11 @@ pub fn dropdown(cx: &mut Context) {
     .build(cx);
 
     VStack::new(cx, |cx| {
-        Label::new(cx, "Dropdown").class("title");
-        Label::new(cx, "").class("paragraph");
+        Markdown::new(cx, "# Dropdown");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Basic dropdown").class("header");
+        Markdown::new(cx, "### Basic dropdown");
 
         DemoRegion::new(
             cx,

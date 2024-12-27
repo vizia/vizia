@@ -41,12 +41,12 @@ pub fn progressbar(cx: &mut Context) {
     ProgressData { progress: 0.0, timer }.build(cx);
 
     VStack::new(cx, |cx| {
-        Label::new(cx, "ProgressBar").class("title");
-        Label::new(cx, "").class("paragraph");
+        Markdown::new(cx, "# ProgressBar");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Basic progress bar").class("header");
+        Markdown::new(cx, "### Basic progress bar");
+
         DemoRegion::new(
             cx,
             |cx| {

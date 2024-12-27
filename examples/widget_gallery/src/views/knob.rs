@@ -24,10 +24,9 @@ pub fn knob(cx: &mut Context) {
     VStack::new(cx, |cx| {
         KnobState { value: 0.2 }.build(cx);
 
-        Label::new(cx, "Knob").class("title");
-        Label::new(cx, "").class("paragraph");
+        Markdown::new(cx, "# Knob");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
         DemoRegion::new(
             cx,

@@ -4,12 +4,11 @@ use crate::DemoRegion;
 
 pub fn element(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "Element").class("title");
-        Label::new(cx, "").class("paragraph");
+        Markdown::new(cx, "# Element");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Element").class("header");
+        Markdown::new(cx, "### Element");
 
         DemoRegion::new(
             cx,

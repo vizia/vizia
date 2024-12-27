@@ -14,12 +14,12 @@ pub fn virtual_list(cx: &mut Context) {
     VirtualListData { list }.build(cx);
 
     VStack::new(cx, |cx| {
-        Label::new(cx, "Virtual List").class("title");
-        Label::new(cx, "").class("paragraph");
+        Markdown::new(cx, "# Virtual List");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Basic virtual list").class("header");
+        Markdown::new(cx, "### Basic virtual list");
+
         DemoRegion::new(
             cx,
             |cx| {

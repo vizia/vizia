@@ -29,7 +29,7 @@ pub fn checkbox(cx: &mut Context) {
 A checkbox can be used to display a boolean value, or to select one or more items from a set of options.        
         ");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
         Markdown::new(cx, "### Basic checkboxes");
 

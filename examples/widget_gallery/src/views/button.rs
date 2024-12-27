@@ -12,7 +12,7 @@ pub fn button(cx: &mut Context) {
 A button can be used to send an event when pressed. Typically they are used to trigger an action.        
         ");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
         Markdown::new(cx, "### Basic button");
 

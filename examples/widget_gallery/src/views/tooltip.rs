@@ -5,11 +5,12 @@ use crate::components::DemoRegion;
 pub fn tooltip(cx: &mut Context) {
     VStack::new(cx, |cx|{
 
-        Label::new(cx, "Tooltip").class("title");
-        Label::new(cx, "A tooltip displays supplemental information near its target view. Tooltips are triggered on hover or focus of the target view and dismissed on blur or mouse-out of the target or tooltip container.")
-            .class("paragraph");
+        Markdown::new(cx, "# Tooltip
+A tooltip displays supplemental information near its target view. Tooltips are triggered on hover or focus of the target view and dismissed on blur or mouse-out of the target or tooltip container.        
+        ");
 
-        Label::new(cx, "Basic tooltip").class("header");
+        Markdown::new(cx, "### Basic tooltip");
+
         DemoRegion::new(
             cx,
             |cx| {
@@ -23,7 +24,8 @@ pub fn tooltip(cx: &mut Context) {
     }));"#
         );
 
-        Label::new(cx, "Tooltip placement").class("header");
+        Markdown::new(cx, "### Tooltip placement");
+
         DemoRegion::new(
             cx,
             |cx| {

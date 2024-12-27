@@ -7,12 +7,12 @@ use crate::DemoRegion;
 
 pub fn menu_bar(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "MenuBar").class("title");
-        Label::new(cx, "A label can be used to display a string of text.").class("paragraph");
+        Markdown::new(cx, "# MenuBar");
 
-        Divider::new(cx).top(Pixels(12.0)).bottom(Pixels(12.0));
+        Divider::new(cx);
 
-        Label::new(cx, "Basic menu bar").class("header");
+        Markdown::new(cx, "### Basic menu bar");
+
         DemoRegion::new(
             cx,
             |cx| {

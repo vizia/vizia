@@ -57,7 +57,7 @@ impl List {
         Self {
             list_len: num_items.get(cx),
             selected: BTreeSet::default(),
-            selectable: Selectable::Single,
+            selectable: Selectable::Multi,
             focused: None,
             on_select: None,
         }
@@ -72,34 +72,29 @@ impl List {
                     KeymapEntry::new("Select Previous", |cx| cx.emit(ListEvent::FocusPrev)),
                 ),
                 (
-                    KeyChord::new(Modifiers::empty(), Code::Escape),
-                    KeymapEntry::new("Clear Selection", |cx| cx.emit(ListEvent::ClearSelection)),
-                ),
-                (
-                    KeyChord::new(Modifiers::empty(), Code::Enter),
+                    KeyChord::new(Modifiers::empty(), Code::Space),
                     KeymapEntry::new("Select Focused", |cx| cx.emit(ListEvent::SelectFocused)),
                 ),
             ])
             .build(cx);
 
-            // ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
-            // Bind to the list data
-            Binding::new(cx, num_items, move |cx, num_items| {
-                // If the number of list items is different to the number of children of the ListView
-                // then remove and rebuild all the children
+            ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
+                // Bind to the list data
+                Binding::new(cx, num_items, move |cx, num_items| {
+                    // If the number of list items is different to the number of children of the ListView
+                    // then remove and rebuild all the children
 
-                for index in 0..num_items.get(cx) {
-                    let item = list.map_ref(move |list| list_index(list, index));
-                    let content = content.clone();
-                    ListItem::new(cx, index, item, move |cx, index, item| {
-                        content(cx, index, item);
-                    });
-                    // item_content(cx, index, item);
-                }
+                    for index in 0..num_items.get(cx) {
+                        let item = list.map_ref(move |list| list_index(list, index));
+                        let content = content.clone();
+                        ListItem::new(cx, index, item, move |cx, index, item| {
+                            content(cx, index, item);
+                        });
+                    }
+                });
             });
-            // });
         })
-        .width(Stretch(1.0))
+        .navigable(true)
         .role(Role::List)
     }
 }
@@ -115,19 +110,29 @@ impl View for List {
                 cx.focus();
                 match self.selectable {
                     Selectable::Single => {
-                        self.selected.clear();
-                        self.selected.insert(index);
-                        self.focused = Some(index);
-                        if let Some(on_select) = &self.on_select {
-                            on_select(cx, index);
+                        if self.selected.contains(&index) {
+                            self.selected.clear();
+                            self.focused = None;
+                        } else {
+                            self.selected.clear();
+                            self.selected.insert(index);
+                            self.focused = Some(index);
+                            if let Some(on_select) = &self.on_select {
+                                on_select(cx, index);
+                            }
                         }
                     }
 
                     Selectable::Multi => {
-                        self.selected.insert(index);
-                        self.focused = Some(index);
-                        if let Some(on_select) = &self.on_select {
-                            on_select(cx, index);
+                        if self.selected.contains(&index) {
+                            self.selected.remove(&index);
+                            self.focused = None;
+                        } else {
+                            self.selected.insert(index);
+                            self.focused = Some(index);
+                            if let Some(on_select) = &self.on_select {
+                                on_select(cx, index);
+                            }
                         }
                     }
 
@@ -184,7 +189,12 @@ impl<'v> Handle<'v, List> {
     {
         self.bind(selected, |handle, s| {
             let ss = s.get(&handle).deref().to_vec();
-            handle.modify(|list| list.selected.extend(ss.iter()));
+            handle.modify(|list| {
+                for idx in ss {
+                    list.selected.insert(idx);
+                    list.focused = Some(idx);
+                }
+            });
         })
     }
 
@@ -193,6 +203,10 @@ impl<'v> Handle<'v, List> {
         F: 'static + Fn(&mut EventContext, usize),
     {
         self.modify(|list: &mut List| list.on_select = Some(Box::new(callback)))
+    }
+
+    pub fn selectable(self, selectable: Selectable) -> Self {
+        self.modify(|list: &mut List| list.selectable = selectable)
     }
 }
 
