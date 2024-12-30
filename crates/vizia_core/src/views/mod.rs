@@ -55,7 +55,7 @@ pub use list::*;
 #[cfg(feature = "markdown")]
 pub use markdown::*;
 pub use menu::*;
-pub use picklist::{PickList, ScrollList};
+pub use picklist::*;
 pub use popup::*;
 pub use progressbar::ProgressBar;
 pub use radio::RadioButton;
@@ -66,7 +66,7 @@ pub use slider::{NamedSlider, Slider};
 pub use spinbox::{Spinbox, SpinboxEvent, SpinboxIcons};
 pub use stack::{HStack, VStack, ZStack};
 pub use switch::Switch;
-pub use tabview::{TabEvent, TabPair, TabView};
+pub use tabview::*;
 pub use textbox::{TextEvent, Textbox};
 pub use toggle_button::{ToggleButton, ToggleButtonModifiers};
 pub use tooltip::Tooltip;

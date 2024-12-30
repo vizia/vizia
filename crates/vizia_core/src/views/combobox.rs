@@ -94,7 +94,7 @@ where
                             Binding::new(cx, list_lens, move |cx, list| {
                                 // Seems that the layout bugs out when rebuilding the contents of a scrollview that's been scrolled to 100%.
                                 // So instead we just rebuild the whole scrollview.
-                                ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
+                                ScrollView::new(cx, move |cx| {
                                     let f = Self::filter_text.get(cx);
                                     // List view doesn't have an option for filtering (yet) so we do it manually instead.
                                     VStack::new(cx, |cx| {
@@ -138,6 +138,7 @@ where
                                     .height(Auto)
                                     .class("list");
                                 })
+                                .show_horizontal_scrollbar(false)
                                 .height(Auto);
                                 //.min_height(Auto);
                             });

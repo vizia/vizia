@@ -38,7 +38,7 @@ impl DemoRegion {
                 .class("controls");
                 // Element::new(cx).class("divider");
                 HStack::new(cx, move |cx| {
-                    ScrollView::new(cx, 0.0, 0.0, true, true, move |cx| {
+                    ScrollView::new(cx, move |cx| {
                         Label::new(cx, code).class("code");
                     })
                     .height(Auto);

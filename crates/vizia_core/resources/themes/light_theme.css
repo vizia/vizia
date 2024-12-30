@@ -482,6 +482,18 @@ list label.dark {
     background-color: #00000015;
 }
 
+list.selectable list-item.focused {
+    background-color: #a3a3a3;
+}
+
+list.selectable list-item:hover {
+    background-color: #7b7bff;
+}
+
+list.selectable list-item:checked {
+    background-color: #0000ff;
+}
+
 /* MENU */
 
 menubutton {
@@ -704,7 +716,7 @@ rating svg:checked:disabled {
 /* SCROLLVIEW */
 
 scrollview > scrollbar {
-    display: flex;
+    display: none;
 }
 
 scrollview.h-scroll > scrollbar,

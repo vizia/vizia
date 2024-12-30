@@ -1,4 +1,6 @@
-use crate::prelude::*;
+use std::ops::Deref;
+
+use crate::{icons::ICON_PLUS, prelude::*};
 
 pub enum TabEvent {
     SetSelected(usize),
@@ -24,7 +26,7 @@ impl TabView {
             .build(cx, move |cx| {
                 let content2 = content.clone();
                 // Tab headers
-                ScrollView::new(cx, 0.0, 0.0, true, true, move |cx| {
+                ScrollView::new(cx, move |cx| {
                     //VStack::new(cx, move |cx| {
                     Binding::new(cx, lens.map(|list| list.len()), move |cx, list_length| {
                         let list_length = list_length.get(cx);
@@ -143,5 +145,34 @@ impl View for TabHeader {
 
             _ => {}
         });
+    }
+}
+
+pub struct TabBar {}
+
+impl TabBar {
+    pub fn new<L: Lens, T: 'static>(
+        cx: &mut Context,
+        list: L,
+        item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
+    ) -> Handle<Self>
+    where
+        L::Target: Deref<Target = [T]>,
+    {
+        Self {}
+            .build(cx, |cx| {
+                List::new(cx, list, item_content)
+                    .selectable(Selectable::Single)
+                    .layout_type(LayoutType::Row);
+                Button::new(cx, |cx| Svg::new(cx, ICON_PLUS));
+            })
+            .alignment(Alignment::Left)
+            .layout_type(LayoutType::Row)
+    }
+}
+
+impl View for TabBar {
+    fn element(&self) -> Option<&'static str> {
+        Some("tabbar")
     }
 }

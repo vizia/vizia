@@ -65,6 +65,7 @@ pub trait Model: 'static + Sized {
         } else {
             cx.current
         };
+
         if let Some(model_data_store) = cx.data.get_mut(&current) {
             model_data_store.models.insert(TypeId::of::<Self>(), Box::new(self));
         } else {

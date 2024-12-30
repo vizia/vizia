@@ -33,7 +33,7 @@ fn main() -> Result<(), ApplicationError> {
         // A [link](https://github.com/vizia/vizia)
         // "#,
         //         );
-        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+        ScrollView::new(cx, |cx| {
             Markdown::new(
                 cx,
                 r#"

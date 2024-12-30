@@ -29,6 +29,8 @@ pub struct List {
     selected: BTreeSet<usize>,
     selectable: Selectable,
     focused: Option<usize>,
+    selection_follows_focus: bool,
+    horizontal: bool,
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
 }
 
@@ -57,28 +59,58 @@ impl List {
         Self {
             list_len: num_items.get(cx),
             selected: BTreeSet::default(),
-            selectable: Selectable::Multi,
+            selectable: Selectable::None,
             focused: None,
+            selection_follows_focus: false,
+            horizontal: false,
             on_select: None,
         }
         .build(cx, move |cx| {
             Keymap::from(vec![
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowDown),
-                    KeymapEntry::new("Select Next", |cx| cx.emit(ListEvent::FocusNext)),
+                    KeymapEntry::new("Focus Next", |cx| cx.emit(ListEvent::FocusNext)),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowUp),
-                    KeymapEntry::new("Select Previous", |cx| cx.emit(ListEvent::FocusPrev)),
+                    KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::Space),
                     KeymapEntry::new("Select Focused", |cx| cx.emit(ListEvent::SelectFocused)),
                 ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::Enter),
+                    KeymapEntry::new("Select Focused", |cx| cx.emit(ListEvent::SelectFocused)),
+                ),
             ])
             .build(cx);
 
-            ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
+            Binding::new(cx, List::horizontal, |cx, horizontal| {
+                if horizontal.get(cx) {
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowDown),
+                        "Focus Next",
+                    ));
+
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowUp),
+                        "Focus Previous",
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowRight),
+                        KeymapEntry::new("Focus Next", |cx| cx.emit(ListEvent::FocusNext)),
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
+                        KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
+                    ));
+                }
+            });
+
+            ScrollView::new(cx, move |cx| {
                 // Bind to the list data
                 Binding::new(cx, num_items, move |cx, num_items| {
                     // If the number of list items is different to the number of children of the ListView
@@ -94,6 +126,8 @@ impl List {
                 });
             });
         })
+        .toggle_class("selectable", List::selectable.map(|s| *s != Selectable::None))
+        .toggle_class("horizontal", List::horizontal)
         .navigable(true)
         .role(Role::List)
     }
@@ -139,12 +173,13 @@ impl View for List {
                     Selectable::None => {}
                 }
             }
+
             ListEvent::SelectFocused => {
                 if let Some(focused) = &self.focused {
-                    println!("{}", focused);
                     cx.emit(ListEvent::Select(*focused))
                 }
             }
+
             ListEvent::SelectNext => {
                 if self.selected.is_empty() {
                     self.selected.insert(0);
@@ -153,6 +188,7 @@ impl View for List {
                     self.selected.insert((last + 1).min(self.list_len - 1));
                 }
             }
+
             ListEvent::SelectPrev => {
                 if let Some(first) = self.selected.first().copied() {
                     self.selected.clear();
@@ -164,18 +200,36 @@ impl View for List {
             ListEvent::ClearSelection => {
                 self.selected.clear();
             }
+
             ListEvent::FocusNext => {
                 if let Some(focused) = &mut self.focused {
-                    *focused = focused.saturating_add(1).min(self.list_len.saturating_sub(1));
+                    *focused = focused.saturating_add(1);
+
+                    if *focused == self.list_len {
+                        *focused = 0;
+                    }
                 } else {
                     self.focused = Some(0);
                 }
+
+                if self.selection_follows_focus {
+                    cx.emit(ListEvent::SelectFocused);
+                }
             }
+
             ListEvent::FocusPrev => {
                 if let Some(focused) = &mut self.focused {
+                    if *focused == 0 {
+                        *focused = self.list_len;
+                    }
+
                     *focused = focused.saturating_sub(1);
                 } else {
                     self.focused = Some(self.list_len.saturating_sub(1));
+                }
+
+                if self.selection_follows_focus {
+                    cx.emit(ListEvent::SelectFocused);
                 }
             }
         })
@@ -205,8 +259,25 @@ impl<'v> Handle<'v, List> {
         self.modify(|list: &mut List| list.on_select = Some(Box::new(callback)))
     }
 
-    pub fn selectable(self, selectable: Selectable) -> Self {
-        self.modify(|list: &mut List| list.selectable = selectable)
+    pub fn selectable<U: Into<Selectable>>(self, selectable: impl Res<U>) -> Self {
+        self.bind(selectable, |handle, selectable| {
+            let s = selectable.get(&handle).into();
+            handle.modify(|list: &mut List| list.selectable = s);
+        })
+    }
+
+    pub fn selection_follows_focus<U: Into<bool>>(self, flag: impl Res<U>) -> Self {
+        self.bind(flag, |handle, selection_follows_focus| {
+            let s = selection_follows_focus.get(&handle).into();
+            handle.modify(|list: &mut List| list.selection_follows_focus = s);
+        })
+    }
+
+    pub fn horizontal<U: Into<bool>>(self, flag: impl Res<U>) -> Self {
+        self.bind(flag, |handle, horizontal| {
+            let s = horizontal.get(&handle).into();
+            handle.modify(|list: &mut List| list.horizontal = s);
+        })
     }
 }
 

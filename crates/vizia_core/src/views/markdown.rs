@@ -131,9 +131,10 @@ fn parse_node<'a>(
             println!("{:?}", code_block);
             let mut code = code_block.literal.to_owned();
             code.pop().unwrap();
-            ScrollView::new(cx, 0.0, 0.0, true, false, |cx| {
+            ScrollView::new(cx, |cx| {
                 Label::new(cx, code).class("code");
             })
+            .show_vertical_scrollbar(false)
             .height(Auto)
             .width(Stretch(1.0));
         }
