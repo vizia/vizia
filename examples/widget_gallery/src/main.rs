@@ -74,7 +74,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             avatar(cx);
                         })
                         .class("widgets");
@@ -86,7 +86,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             badge(cx);
                         })
                         .class("widgets");
@@ -98,7 +98,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             button(cx);
                         })
                         .class("widgets");
@@ -110,7 +110,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             button_group(cx);
                         })
                         .class("widgets");
@@ -122,7 +122,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             checkbox(cx);
                         })
                         .class("widgets");
@@ -134,7 +134,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             chip(cx);
                         })
                         .class("widgets");
@@ -146,7 +146,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             combobox(cx);
                         })
                         .class("widgets");
@@ -158,7 +158,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             datepicker(cx);
                         })
                         .class("widgets");
@@ -170,7 +170,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             dialog(cx);
                         })
                         .class("widgets");
@@ -182,7 +182,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             divider(cx);
                         })
                         .class("widgets");
@@ -194,7 +194,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             dropdown(cx);
                         })
                         .class("widgets");
@@ -206,7 +206,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             element(cx);
                         })
                         .class("widgets");
@@ -218,7 +218,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             hstack(cx);
                         })
                         .class("widgets");
@@ -230,7 +230,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             svg(cx);
                         })
                         .class("widgets");
@@ -242,7 +242,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             image(cx);
                         })
                         .class("widgets");
@@ -254,7 +254,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             knob(cx);
                         })
                         .class("widgets");
@@ -266,7 +266,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             label(cx);
                         })
                         .class("widgets");
@@ -278,7 +278,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             list(cx);
                         })
                         .class("widgets");
@@ -290,7 +290,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             menu(cx);
                         })
                         .class("widgets");
@@ -302,7 +302,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             menu_bar(cx);
                         })
                         .class("widgets");
@@ -314,7 +314,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             picklist(cx);
                         })
                         .class("widgets");
@@ -326,7 +326,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             progressbar(cx);
                         })
                         .class("widgets");
@@ -338,7 +338,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             radiobutton(cx);
                         })
                         .class("widgets");
@@ -350,7 +350,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             rating(cx);
                         })
                         .class("widgets");
@@ -362,7 +362,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             scrollview(cx);
                         })
                         .class("widgets");
@@ -374,7 +374,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             slider(cx);
                         })
                         .class("widgets");
@@ -386,7 +386,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             spinbox(cx);
                         })
                         .class("widgets");
@@ -398,7 +398,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             switch(cx);
                         })
                         .class("widgets");
@@ -410,7 +410,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             tabview(cx);
                         })
                         .class("widgets");
@@ -422,7 +422,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             textbox(cx);
                         })
                         .class("widgets");
@@ -434,7 +434,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             toggle_button(cx);
                         })
                         .class("widgets");
@@ -446,7 +446,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             tooltip(cx);
                         })
                         .class("widgets");
@@ -458,7 +458,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             virtual_list(cx);
                         })
                         .class("widgets");
@@ -470,7 +470,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             vstack(cx);
                         })
                         .class("widgets");
@@ -482,7 +482,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
-                        ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        ScrollView::new(cx, |cx| {
                             zstack(cx);
                         })
                         .class("widgets");

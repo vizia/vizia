@@ -127,7 +127,7 @@ impl VirtualList {
                 data.build(cx);
             });
 
-            ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
+            ScrollView::new(cx, move |cx| {
                 Binding::new(cx, num_items, move |cx, lens| {
                     let num_items = lens.get(cx);
                     cx.emit(ScrollEvent::SetY(0.0));
@@ -166,6 +166,7 @@ impl VirtualList {
                     .height(Pixels(num_items as f32 * item_height));
                 })
             })
+            .show_horizontal_scrollbar(false)
             .scroll_to_cursor(true)
             .on_scroll(|cx, _, y| {
                 if y.is_finite() {

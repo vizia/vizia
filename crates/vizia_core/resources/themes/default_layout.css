@@ -354,6 +354,19 @@ list {
     size: 1s;
 }
 
+list.horizontal {
+    height: auto;
+}
+
+list.horizontal scrollview {
+    height: auto;
+}
+
+list.horizontal scroll-content {
+    layout-type: row;
+    height: auto;
+}
+
 list > scrollview {
     min-width: 100%;
 }
@@ -362,20 +375,7 @@ list list-item {
     min-width: auto;
     width: 1s;
     height: 30px;
-    child-top: 1s;
-    child-bottom: 1s;
-}
-
-list list-item.focused {
-    background-color: rgb(163, 163, 163);
-}
-
-list list-item:hover {
-    background-color: rgb(123, 123, 255);
-}
-
-list list-item:checked {
-    background-color: blue;
+    alignment: left;
 }
 
 /* MENU */
@@ -719,6 +719,42 @@ tabheader .indicator {
 tabheader.vertical .indicator {
     width: 2px;
     height: 1s;
+}
+
+tabbar {
+    background-color: red;
+    height: auto;
+    gap: 4px;
+}
+
+tabbar button {
+    size: 30px;
+}
+
+tabbar scrollview {
+    height: auto;
+}
+
+tabbar list {
+    height: auto;
+    max-width: auto;
+    background-color: green;
+}
+
+tabbar scroll-content {
+    layout-type: row;
+}
+
+tabbar list-item {
+    width: auto;
+    height: auto;
+}
+
+.tab {
+    width: auto;
+    min-width: 100px;
+    height: 30px;
+    alignment: left;
 }
 
 /* TEXTBOX */
