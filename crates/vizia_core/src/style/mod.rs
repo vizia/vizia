@@ -74,8 +74,8 @@ pub use vizia_style::{
     CornerShape, CssRule, CursorIcon, Display, Filter, FontFamily, FontSize, FontSlant,
     FontVariation, FontWeight, FontWeightKeyword, FontWidth, GenericFontFamily, Gradient,
     HorizontalPosition, HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue,
-    LineClamp, LineDirection, LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position,
-    PositionType, Scale, Shadow, TextAlign, TextDecorationLine, TextDecorationStyle, TextOverflow,
+    LineClamp, LineDirection, LineHeight, LinearGradient, Matrix, Opacity, Overflow, PointerEvents,
+    Position, Scale, Shadow, TextAlign, TextDecorationLine, TextDecorationStyle, TextOverflow,
     TextStroke, TextStrokeStyle, Transform, Transition, Translate, VerticalPosition,
     VerticalPositionKeyword, Visibility, RGBA,
 };
@@ -330,6 +330,7 @@ pub struct Style {
     pub(crate) selection_color: AnimatableSet<Color>,
     pub(crate) letter_spacing: AnimatableSet<Length>,
     pub(crate) word_spacing: AnimatableSet<Length>,
+    pub(crate) line_height: AnimatableSet<LineHeight>,
 
     pub(crate) fill: AnimatableSet<Color>,
 
@@ -725,6 +726,10 @@ impl Style {
                     insert_keyframe(&mut self.word_spacing, animation_id, time, value.0.clone());
                 }
 
+                Property::LineHeight(value) => {
+                    insert_keyframe(&mut self.line_height, animation_id, time, value.clone());
+                }
+
                 _ => {}
             }
         }
@@ -833,6 +838,8 @@ impl Style {
 
         self.letter_spacing.play_animation(entity, animation, start_time, duration, delay);
         self.word_spacing.play_animation(entity, animation, start_time, duration, delay);
+
+        self.line_height.play_animation(entity, animation, start_time, duration, delay);
     }
 
     pub(crate) fn is_animating(&self, entity: Entity, animation: Animation) -> bool {
@@ -885,6 +892,7 @@ impl Style {
             | self.fill.has_active_animation(entity, animation)
             | self.letter_spacing.has_active_animation(entity, animation)
             | self.word_spacing.has_active_animation(entity, animation)
+            | self.line_height.has_active_animation(entity, animation)
     }
 
     pub(crate) fn parse_theme(&mut self, stylesheet: &str) {
@@ -1241,6 +1249,11 @@ impl Style {
                 self.word_spacing.insert_transition(rule_id, animation);
             }
 
+            "line-height" => {
+                self.line_height.insert_animation(animation, self.add_transition(transition));
+                self.line_height.insert_transition(rule_id, animation);
+            }
+
             _ => {}
         }
     }
@@ -1578,6 +1591,10 @@ impl Style {
                 self.word_spacing.insert_rule(rule_id, word_spacing.0);
             }
 
+            Property::LineHeight(line_height) => {
+                self.line_height.insert_rule(rule_id, line_height);
+            }
+
             // Caret Color
             Property::CaretColor(caret_color) => {
                 self.caret_color.insert_rule(rule_id, caret_color);
@@ -1867,6 +1884,7 @@ impl Style {
         self.text_stroke_style.remove(entity);
         self.letter_spacing.remove(entity);
         self.word_spacing.remove(entity);
+        self.line_height.remove(entity);
 
         // Cursor
         self.cursor.remove(entity);
@@ -2082,6 +2100,7 @@ impl Style {
         self.text_stroke_style.clear_rules();
         self.letter_spacing.clear_rules();
         self.word_spacing.clear_rules();
+        self.line_height.clear_rules();
 
         self.cursor.clear_rules();
 
