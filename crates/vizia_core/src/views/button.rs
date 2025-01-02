@@ -163,38 +163,39 @@ pub trait ButtonModifiers {
 }
 
 impl ButtonModifiers for Handle<'_, Button> {
-    fn variant<U: Into<ButtonVariant>>(mut self, variant: impl Res<U>) -> Self {
-        let entity = self.entity();
-        variant.set_or_bind(self.context(), entity, |cx, val| {
-            let var: ButtonVariant = val.get(cx).into();
+    fn variant<U: Into<ButtonVariant>>(self, variant: impl Res<U>) -> Self {
+        self.bind(variant, |handle, val| {
+            let var: ButtonVariant = val.get(&handle).into();
             match var {
                 ButtonVariant::Normal => {
-                    cx.toggle_class("accent", false);
-                    cx.toggle_class("outline", false);
-                    cx.toggle_class("text", false);
+                    handle
+                        .toggle_class("accent", false)
+                        .toggle_class("outline", false)
+                        .toggle_class("text", false);
                 }
 
                 ButtonVariant::Accent => {
-                    cx.toggle_class("accent", true);
-                    cx.toggle_class("outline", false);
-                    cx.toggle_class("text", false);
+                    handle
+                        .toggle_class("accent", true)
+                        .toggle_class("outline", false)
+                        .toggle_class("text", false);
                 }
 
                 ButtonVariant::Outline => {
-                    cx.toggle_class("accent", false);
-                    cx.toggle_class("outline", true);
-                    cx.toggle_class("text", false);
+                    handle
+                        .toggle_class("accent", false)
+                        .toggle_class("outline", true)
+                        .toggle_class("text", false);
                 }
 
                 ButtonVariant::Text => {
-                    cx.toggle_class("accent", false);
-                    cx.toggle_class("outline", false);
-                    cx.toggle_class("text", true);
+                    handle
+                        .toggle_class("accent", false)
+                        .toggle_class("outline", false)
+                        .toggle_class("text", true);
                 }
             }
-        });
-
-        self
+        })
     }
 }
 
@@ -206,14 +207,8 @@ impl ButtonGroup {
     /// # Example
     /// ```
     /// # use vizia_core::prelude::*;
-    /// #
-    /// # enum AppEvent {
-    /// #     Share,
-    /// # }
     ///
     /// # let cx = &mut Context::default();
-    /// #
-    /// use vizia::icons::ICON_SHARE;
     ///
     /// ButtonGroup::new(cx, |cx| {
     ///     Button::new(cx, |cx| Label::new(cx, "ONE"));
@@ -244,37 +239,38 @@ impl Handle<'_, ButtonGroup> {
 }
 
 impl ButtonModifiers for Handle<'_, ButtonGroup> {
-    fn variant<U: Into<ButtonVariant>>(mut self, variant: impl Res<U>) -> Self {
-        let entity = self.entity();
-        variant.set_or_bind(self.context(), entity, |cx, val| {
-            let var: ButtonVariant = val.get(cx).into();
+    fn variant<U: Into<ButtonVariant>>(self, variant: impl Res<U>) -> Self {
+        self.bind(variant, |handle, val| {
+            let var: ButtonVariant = val.get(&handle).into();
             match var {
                 ButtonVariant::Normal => {
-                    cx.toggle_class("accent", false);
-                    cx.toggle_class("outline", false);
-                    cx.toggle_class("text", false);
+                    handle
+                        .toggle_class("accent", false)
+                        .toggle_class("outline", false)
+                        .toggle_class("text", false);
                 }
 
                 ButtonVariant::Accent => {
-                    cx.toggle_class("accent", true);
-                    cx.toggle_class("outline", false);
-                    cx.toggle_class("text", false);
+                    handle
+                        .toggle_class("accent", true)
+                        .toggle_class("outline", false)
+                        .toggle_class("text", false);
                 }
 
                 ButtonVariant::Outline => {
-                    cx.toggle_class("accent", false);
-                    cx.toggle_class("outline", true);
-                    cx.toggle_class("text", false);
+                    handle
+                        .toggle_class("accent", false)
+                        .toggle_class("outline", true)
+                        .toggle_class("text", false);
                 }
 
                 ButtonVariant::Text => {
-                    cx.toggle_class("accent", false);
-                    cx.toggle_class("outline", false);
-                    cx.toggle_class("text", true);
+                    handle
+                        .toggle_class("accent", false)
+                        .toggle_class("outline", false)
+                        .toggle_class("text", true);
                 }
             }
-        });
-
-        self
+        })
     }
 }

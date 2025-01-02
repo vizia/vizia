@@ -1,6 +1,9 @@
 pub mod avatar;
 pub use avatar::*;
 
+pub mod avatar_group;
+pub use avatar_group::*;
+
 pub mod badge;
 pub use badge::*;
 

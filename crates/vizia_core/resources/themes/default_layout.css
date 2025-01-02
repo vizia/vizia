@@ -47,6 +47,12 @@ avatar.rounded > image {
     corner-radius: 4px;
 }
 
+/* AVATAR GROUP */
+
+avatar-group > avatar {
+    border: 2px solid #fff;
+}
+
 /* BADGE */
 badge {
     position-type: absolute;
@@ -258,12 +264,17 @@ combobox popup {
 }
 
 dropdown popup list,
-combobox popup .list {
+combobox popup list {
     width: 1s;
     min-width: auto;
     height: auto;
     padding-top: 4px;
     padding-bottom: 4px;
+}
+
+dropdown popup list > scrollview,
+combobox popup list > scrollview {
+    height: auto;
 }
 
 dropdown popup scrollview scrollbar.vertical,

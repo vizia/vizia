@@ -9,7 +9,7 @@ use crate::prelude::*;
 ///
 /// ## Basic checkbox
 ///
-/// The checkbox must bound to some boolean data.
+/// The checkbox must be bound to some boolean data.
 ///
 /// ```
 /// # use vizia_core::prelude::*;
@@ -51,7 +51,8 @@ use crate::prelude::*;
 /// #
 /// # AppData { value: false }.build(cx);
 /// #
-/// Checkbox::new(cx, AppData::value).on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
+/// Checkbox::new(cx, AppData::value)
+///     .on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
 /// ```
 ///
 /// ## Checkbox with a label
@@ -78,8 +79,10 @@ use crate::prelude::*;
 /// # AppData { value: false }.build(cx);
 /// #
 /// HStack::new(cx, |cx| {
-///     Checkbox::new(cx, AppData::value).id("check1");
-///     Label::new(cx, "Press me").describing("check1");
+///     Checkbox::new(cx, AppData::value)
+///         .id("check1");
+///     Label::new(cx, "Press me")
+///         .describing("check1");
 /// });
 /// ```
 ///
@@ -250,7 +253,8 @@ impl Handle<'_, Checkbox> {
     /// #
     /// # AppData { value: false }.build(cx);
     /// #
-    /// Checkbox::new(cx, AppData::value).on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
+    /// Checkbox::new(cx, AppData::value)
+    ///     .on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
     /// ```
     pub fn on_toggle<F>(self, callback: F) -> Self
     where

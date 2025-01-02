@@ -34,6 +34,18 @@ fn main() -> Result<(), ApplicationError> {
             .horizontal(AppData::horizontal)
             .selectable(Selectable::Single)
             .selection_follows_focus(true);
+
+            List::new_filtered(
+                cx,
+                AppData::list,
+                |item| *item % 2 == 0,
+                |cx, _, item| {
+                    Label::new(cx, item).hoverable(false);
+                },
+            )
+            .horizontal(AppData::horizontal)
+            .selectable(Selectable::Single)
+            .selection_follows_focus(true);
         });
     })
     .title("List")

@@ -38,32 +38,32 @@ impl View for Avatar {
 
 impl Handle<'_, Avatar> {
     /// Selects the style variant for the Avatar.
-    pub fn variant<U: Into<AvatarVariant>>(mut self, variant: impl Res<U>) -> Self {
-        let entity = self.entity();
-        variant.set_or_bind(self.context(), entity, |cx, val| {
-            let var: AvatarVariant = val.get(cx).into();
+    pub fn variant<U: Into<AvatarVariant>>(self, variant: impl Res<U>) -> Self {
+        self.bind(variant, |handle, val| {
+            let var: AvatarVariant = val.get(&handle).into();
             match var {
                 AvatarVariant::Circle => {
-                    cx.toggle_class("circle", true);
-                    cx.toggle_class("square", false);
-                    cx.toggle_class("rounded", false);
+                    handle
+                        .toggle_class("circle", true)
+                        .toggle_class("square", false)
+                        .toggle_class("rounded", false);
                 }
 
                 AvatarVariant::Square => {
-                    cx.toggle_class("circle", false);
-                    cx.toggle_class("square", true);
-                    cx.toggle_class("rounded", false);
+                    handle
+                        .toggle_class("circle", false)
+                        .toggle_class("square", true)
+                        .toggle_class("rounded", false);
                 }
 
                 AvatarVariant::Rounded => {
-                    cx.toggle_class("circle", false);
-                    cx.toggle_class("square", false);
-                    cx.toggle_class("rounded", true);
+                    handle
+                        .toggle_class("circle", false)
+                        .toggle_class("square", false)
+                        .toggle_class("rounded", true);
                 }
             }
-        });
-
-        self
+        })
     }
 
     /// Adds a badge to the Avatar.
@@ -78,5 +78,22 @@ impl Handle<'_, Avatar> {
         });
 
         self
+    }
+}
+
+pub struct AvatarGroup {}
+
+impl AvatarGroup {
+    pub fn new<F>(cx: &mut Context, content: F) -> Handle<Self>
+    where
+        F: FnOnce(&mut Context),
+    {
+        Self {}.build(cx, content).size(Auto).gap(Pixels(-20.0)).layout_type(LayoutType::Row)
+    }
+}
+
+impl View for AvatarGroup {
+    fn element(&self) -> Option<&'static str> {
+        Some("avatar-group")
     }
 }

@@ -144,7 +144,8 @@ impl Handle<'_, Switch> {
     /// #
     /// # AppData { value: false }.build(cx);
     /// #
-    /// Switch::new(cx, AppData::value).on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
+    /// Switch::new(cx, AppData::value)
+    ///     .on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
     /// ```
     pub fn on_toggle<F>(self, callback: F) -> Self
     where

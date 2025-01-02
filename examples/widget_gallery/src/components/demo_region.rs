@@ -27,8 +27,6 @@ impl DemoRegion {
                 HStack::new(cx, |cx| {
                     ToggleButton::new(cx, DemoRegion::open, |cx| Svg::new(cx, ICON_CODE))
                         .on_press(|ex| ex.emit(DemoRegionEvent::Toggle))
-                        .space(Pixels(8.0))
-                        .left(Stretch(1.0))
                         .tooltip(|cx| {
                             Tooltip::new(cx, |cx| {
                                 Label::new(cx, "Toggle Code");
