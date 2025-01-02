@@ -161,11 +161,7 @@ impl Dropdown {
             PopupData::default().build(cx);
 
             (trigger)(cx);
-            // .class("dropdown-title")
-            // .width(Stretch(1.0))
-            // .checked(PopupData::is_open)
-            // .navigable(true)
-            // .on_press(|cx| cx.emit(PopupEvent::Switch));
+
             Binding::new(cx, PopupData::is_open, move |cx, is_open| {
                 if is_open.get(cx) {
                     Popup::new(cx, |cx| {

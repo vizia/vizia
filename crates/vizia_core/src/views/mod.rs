@@ -68,7 +68,7 @@ pub use stack::{HStack, VStack, ZStack};
 pub use switch::Switch;
 pub use tabview::*;
 pub use textbox::{TextEvent, Textbox};
-pub use toggle_button::{ToggleButton, ToggleButtonModifiers};
+pub use toggle_button::ToggleButton;
 pub use tooltip::Tooltip;
 pub use virtual_list::*;
 pub use xypad::XYPad;

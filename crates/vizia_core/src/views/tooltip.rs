@@ -301,24 +301,32 @@ impl View for Tooltip {
 }
 
 impl Handle<'_, Tooltip> {
-    // TODO: Change this to use Res when lens value PR is merged
     /// Sets the position where the tooltip should appear relative to its parent element.
     /// Defaults to `Placement::Bottom`.
-    pub fn placement(self, placement: Placement) -> Self {
-        self.modify(|tooltip| {
-            tooltip.placement = placement;
-            tooltip.shift = placement;
+    pub fn placement<U: Into<Placement>>(self, placement: impl Res<U>) -> Self {
+        self.bind(placement, |handle, val| {
+            let placement = val.get(&handle).into();
+            handle.modify(|tooltip| {
+                tooltip.placement = placement;
+                tooltip.shift = placement;
+            });
         })
     }
 
-    // TODO: Change this to use Res when lens value PR is merged
     /// Sets whether the tooltip should include an arrow. Defaults to true.
-    pub fn arrow(self, show_arrow: bool) -> Self {
-        self.modify(|tooltip| tooltip.show_arrow = show_arrow)
+    pub fn arrow<U: Into<bool>>(self, show_arrow: impl Res<U>) -> Self {
+        self.bind(show_arrow, |handle, val| {
+            let show_arrow = val.get(&handle).into();
+            handle.modify(|tooltip| tooltip.show_arrow = show_arrow);
+        })
     }
 
-    pub fn arrow_size(self, size: impl Into<Length>) -> Self {
-        self.modify(|tooltip| tooltip.arrow_size = size.into())
+    // Sets the size of the tooltip arrow if enabled.
+    pub fn arrow_size<U: Into<Length>>(self, size: impl Res<U>) -> Self {
+        self.bind(size, |handle, val| {
+            let size = val.get(&handle).into();
+            handle.modify(|tooltip| tooltip.arrow_size = size);
+        })
     }
 }
 

@@ -36,6 +36,7 @@ impl AppData {
             disabled: false,
             tabs: vec![
                 "Avatar",
+                "Avatar Group",
                 "Badge",
                 "Button",
                 "Button Group",

@@ -72,6 +72,10 @@ demo-region hstack.controls {
     alignment: right;
 }
 
+demo-region toggle-button svg {
+    size: 20px;
+}
+
 demo-region.open hstack.controls {
     corner-radius: 0px;
 }

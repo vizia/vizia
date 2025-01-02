@@ -46,12 +46,31 @@ impl List {
         Self::new_generic(cx, list, |list| list.len(), |list, index| &list[index], item_content)
     }
 
-    /// Creates a new List view with a binding to the given lens and a template for constructing the list items
+    pub fn new_filtered<L: Lens, T: 'static>(
+        cx: &mut Context,
+        list: L,
+        filter: impl 'static + Clone + FnMut(&&T) -> bool,
+        item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
+    ) -> Handle<Self>
+    where
+        L::Target: Deref<Target = [T]>,
+    {
+        let f = filter.clone();
+        Self::new_generic(
+            cx,
+            list,
+            move |list| list.iter().filter(filter.clone()).count(),
+            move |list, index| list.iter().filter(f.clone()).nth(index).unwrap(),
+            item_content,
+        )
+    }
+
+    /// Creates a new List view with a binding to the given lens and a template for constructing the list items.
     pub fn new_generic<L: Lens, T: 'static>(
         cx: &mut Context,
         list: L,
         list_len: impl 'static + Fn(&L::Target) -> usize,
-        list_index: impl 'static + Copy + Fn(&L::Target, usize) -> &T,
+        list_index: impl 'static + Clone + Fn(&L::Target, usize) -> &T,
         item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
     ) -> Handle<Self> {
         let content = Rc::new(item_content);
@@ -117,7 +136,8 @@ impl List {
                     // then remove and rebuild all the children
 
                     for index in 0..num_items.get(cx) {
-                        let item = list.map_ref(move |list| list_index(list, index));
+                        let ll = list_index.clone();
+                        let item = list.map_ref(move |list| ll(list, index));
                         let content = content.clone();
                         ListItem::new(cx, index, item, move |cx, index, item| {
                             content(cx, index, item);

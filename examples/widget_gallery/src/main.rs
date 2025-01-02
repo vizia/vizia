@@ -24,9 +24,7 @@ pub fn setup_logging() -> Result<(), ApplicationError> {
         })
         // Add blanket level filter
         .level(MAIN_LOG_LEVEL)
-        .level_for("cosmic_text::buffer", LevelFilter::Warn)
         .level_for("selectors::matching", LevelFilter::Warn)
-        .level_for("cosmic_text::font::system::std", LevelFilter::Warn)
         // Output to stdout
         .chain(std::io::stdout())
         // Apply globally
@@ -76,6 +74,18 @@ fn main() -> Result<(), ApplicationError> {
                     |cx| {
                         ScrollView::new(cx, |cx| {
                             avatar(cx);
+                        })
+                        .class("widgets");
+                    },
+                ),
+
+                "Avatar Group" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).class("tab-name").hoverable(false);
+                    },
+                    |cx| {
+                        ScrollView::new(cx, |cx| {
+                            avatar_group(cx);
                         })
                         .class("widgets");
                     },

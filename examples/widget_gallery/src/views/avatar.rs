@@ -17,9 +17,7 @@ pub fn avatar(cx: &mut Context) {
 An avatar is used to visually represent a person or entity and can contain text, an icon, or an image.
         ");
 
-        Divider::new(cx)
-            .top(Pixels(12.0))
-            .bottom(Pixels(12.0));
+        Divider::new(cx);
 
         Markdown::new(cx, "### Basic avatar");
         DemoRegion::new(cx, |cx|{
@@ -59,7 +57,7 @@ Avatar::new(cx, |cx|{
 
 
         Markdown::new(cx, "### Avatar variants
-The variant modifier can be used to select between a circle (default), square, and rounded avatar shape.
+The `variant` modifier can be used to select between a circle (default), square, and rounded avatar shape.
         ");
 
         DemoRegion::new(cx, |cx|{

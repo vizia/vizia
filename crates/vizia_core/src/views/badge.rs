@@ -14,6 +14,8 @@ pub enum BadgePlacement {
     BottomRight,
 }
 
+impl_res_simple!(BadgePlacement);
+
 #[derive(Lens)]
 pub struct Badge {
     placement: Option<BadgePlacement>,
@@ -109,7 +111,10 @@ impl View for Badge {
 
 impl Handle<'_, Badge> {
     /// Sets the placement of a badge relative to its parent when used with the `badge` modifier.
-    pub fn placement(self, placement: BadgePlacement) -> Self {
-        self.modify(|badge| badge.placement = Some(placement))
+    pub fn placement<U: Into<BadgePlacement>>(self, placement: impl Res<U>) -> Self {
+        self.bind(placement, |handle, val| {
+            let placement = val.get(&handle).into();
+            handle.modify(|badge| badge.placement = Some(placement));
+        })
     }
 }

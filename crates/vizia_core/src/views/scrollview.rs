@@ -14,7 +14,7 @@ pub enum ScrollEvent {
     ScrollX(f32),
     /// Adds given progress to scroll position for the y axis and clamps between 0 and 1
     ScrollY(f32),
-    /// Sets the Size for the inner VStack which holds the content
+    /// Sets the size for the inner scroll-content view which holds the content
     ChildGeo(f32, f32),
 }
 
