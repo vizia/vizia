@@ -303,6 +303,10 @@ where
     /// a rule any transition associated with that rule will play for that entity.
     ///
     pub(crate) fn insert_transition(&mut self, rule: Rule, animation: Animation) {
+        if !self.shared_data.contains(rule) {
+            self.insert_rule(rule, T::default());
+        }
+
         // Check if the rule exists
         if self.shared_data.contains(rule) && self.animations.contains(animation) {
             self.shared_data.sparse[rule.index()].animation = animation;
@@ -681,7 +685,7 @@ where
                             self.shared_data.dense[entity_data_index.index()].value.clone();
                         transition_state.keyframes.first_mut().unwrap().value = start_data;
                     } else {
-                        transition_state.keyframes.first_mut().unwrap().value = end.clone();
+                        transition_state.keyframes.first_mut().unwrap().value = T::default();
                     }
 
                     transition_state.keyframes.last_mut().unwrap().value = end.clone();
@@ -692,9 +696,7 @@ where
                     let duration = transition_state.duration;
                     let delay = transition_state.delay;
 
-                    if transition_state.from_rule != DataIndex::null().index()
-                        && transition_state.from_rule != transition_state.to_rule
-                    {
+                    if transition_state.from_rule != transition_state.to_rule {
                         self.play_animation(
                             entity,
                             rule_animation,
