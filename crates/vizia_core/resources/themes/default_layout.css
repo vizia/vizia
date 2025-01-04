@@ -598,7 +598,7 @@ spinbox .spinbox-button > svg {
 
 spinbox .spinbox-value {
     width: 1s;
-    /* min-width: auto; */
+    min-width: auto;
     height: auto;
     alignment: center;
 }
