@@ -1,21 +1,22 @@
 use crate::prelude::*;
 
+/// The Divider view provides a thin, unobtrusive line for visually separating views.
 pub struct Divider {}
 
 impl Divider {
-    /// Creates a dividing line. Orientation is determined by context (default horizontal).
+    /// Creates a dividing line. Orientation is determined by context.
     pub fn new(cx: &mut Context) -> Handle<Self> {
         Self {}.build(cx, |_| {})
     }
 
     /// Creates a horizontal dividing line.
     pub fn horizontal(cx: &mut Context) -> Handle<Self> {
-        Self {}.build(cx, |_| {}).class("horizontal")
+        Self::new(cx).class("horizontal")
     }
 
     /// Creates a vertical dividing line.
     pub fn vertical(cx: &mut Context) -> Handle<Self> {
-        Self {}.build(cx, |_| {}).class("vertical")
+        Self::new(cx).class("vertical")
     }
 }
 
@@ -30,9 +31,9 @@ impl Handle<'_, Divider> {
         self.bind(orientation, move |handle, orientation| {
             let orientation = orientation.get(&handle);
             if orientation == Orientation::Horizontal {
-                handle.class("horizontal");
+                handle.toggle_class("horizontal", true).toggle_class("vertical", false);
             } else {
-                handle.class("vertical");
+                handle.toggle_class("horizontal", false).toggle_class("vertical", true);
             }
         })
     }

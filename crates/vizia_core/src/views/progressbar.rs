@@ -1,8 +1,8 @@
 use crate::prelude::*;
 
-/// A simple ProgressBar that can be used to show progress of something.
+/// A simple progress bar that can be used to show the progress of something.
 ///
-/// The input lens need to be a [f32] with range of `0.0..1.0`
+/// The input lens need to be a lens to an [f32] with range of `0.0..1.0`.
 ///
 /// # Example
 ///

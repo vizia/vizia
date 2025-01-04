@@ -61,7 +61,7 @@ A radio button can be used to select an option from a set of options.
         Markdown::new(cx, "### Radio button and label
 The describing modifier can be used to link a label to a particular radiobutton. Pressing on the label will then toggle the corresponding radiobutton. Alternatively, a FormControl can be used.        
         ").class("header");
-        
+
         DemoRegion::new(
             cx,
             |cx| {

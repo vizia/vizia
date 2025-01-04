@@ -379,7 +379,7 @@ list.horizontal scroll-content {
 }
 
 list > scrollview {
-    min-width: 100%;
+    /* min-width: 100%; */
 }
 
 list list-item {
@@ -398,26 +398,30 @@ menubar {
 menubutton {
     height: 32px;
     width: 1s;
+    min-width: auto;
     padding-left: 8px;
     padding-right: 8px;
     alignment: left;
-    horizontal-gap: 8px;
+    gap: 8px;
 }
 
 menubutton > hstack,
 submenu > hstack {
     height: auto;
+    min-width: auto;
     alignment: left;
-    horizontal-gap: 8px;
+    gap: 8px;
 }
 
 submenu {
     height: 32px;
     width: 1s;
+    min-width: auto;
     padding-left: 8px;
-    padding-right: 8px;
+    /* padding-right: 8px; */
     alignment: left;
-    horizontal-gap: 1s;
+    gap: 1s;
+    min-gap: 12px;
 }
 
 submenu submenu,
@@ -443,7 +447,7 @@ dropdown > popup > submenu label {
 
 submenu > popup {
     height: auto;
-    width: 250px;
+    width: auto;
     padding: 8px;
 }
 
@@ -742,23 +746,31 @@ tabbar button {
     size: 30px;
 }
 
-tabbar scrollview {
+tabbar > list > scrollview {
     height: auto;
+    width: 1s;
+    max-width: auto;
+    background-color: blue;
 }
 
-tabbar list {
+tabbar > list {
     height: auto;
     max-width: auto;
+    width: 1s;
     background-color: green;
 }
 
-tabbar scroll-content {
+tabbar > list > scrollview > scroll-content {
+    height: auto;
     layout-type: row;
+    max-width: auto;
+    width: 1s;
+    background-color: purple;
 }
 
 tabbar list-item {
-    width: auto;
-    height: auto;
+    width: 100px;
+    height: 32px;
 }
 
 .tab {

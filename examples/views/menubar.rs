@@ -20,6 +20,7 @@ fn main() -> Result<(), ApplicationError> {
                                     Label::new(cx, "New");
                                     Label::new(cx, "Ctrl + N").class("shortcut");
                                 })
+                                .gap(Stretch(1.0))
                             },
                         );
                         MenuButton::new(
@@ -30,6 +31,7 @@ fn main() -> Result<(), ApplicationError> {
                                     Label::new(cx, "Open");
                                     Label::new(cx, "Ctrl + O").class("shortcut");
                                 })
+                                .gap(Stretch(1.0))
                             },
                         );
                         Submenu::new(
@@ -69,10 +71,14 @@ fn main() -> Result<(), ApplicationError> {
                                 );
                             },
                         );
+                        Spacer::new(cx).height(Pixels(4.0));
                         Divider::new(cx);
+                        Spacer::new(cx).height(Pixels(4.0));
                         MenuButton::new(cx, |_| debug!("Save"), |cx| Label::new(cx, "Save"));
                         MenuButton::new(cx, |_| debug!("Save As"), |cx| Label::new(cx, "Save As"));
+                        Spacer::new(cx).height(Pixels(4.0));
                         Divider::new(cx);
+                        Spacer::new(cx).height(Pixels(4.0));
                         MenuButton::new(cx, |_| debug!("Quit"), |cx| Label::new(cx, "Quit"));
                     },
                 );

@@ -1,7 +1,4 @@
-use vizia::{
-    icons::{ICON_CLOCK, ICON_USER},
-    prelude::*,
-};
+use vizia::{icons::ICON_USER, prelude::*};
 
 use crate::components::DemoRegion;
 
@@ -34,7 +31,6 @@ An avatar is used to visually represent a person or entity and can contain text,
                     Svg::new(cx, ICON_USER);
                 });
             });
-            
         },r#"Avatar::new(cx, |cx|{
     Svg::new(cx, ICON_USER)
 });"#);

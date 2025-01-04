@@ -47,7 +47,7 @@ pub use datepicker::Datepicker;
 pub use dialog::*;
 pub use divider::*;
 pub use dropdown::Dropdown;
-pub use element::Element;
+pub use element::*;
 pub use image::*;
 pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
 pub use label::Label;
