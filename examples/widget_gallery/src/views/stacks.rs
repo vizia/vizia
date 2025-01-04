@@ -4,13 +4,17 @@ use crate::DemoRegion;
 
 pub fn hstack(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "HStack").class("title");
-        Label::new(cx, "The hstack container can be used to layout views in a row.")
-            .class("paragraph");
+        Markdown::new(
+            cx,
+            "# HStack
+The hstack container can be used to layout views in a row.        
+        ",
+        );
 
         Divider::new(cx);
 
-        Label::new(cx, "HStack").class("header");
+        Markdown::new(cx, "### HStack");
+
         DemoRegion::new(
             cx,
             |cx| {
@@ -36,13 +40,17 @@ pub fn hstack(cx: &mut Context) {
 
 pub fn vstack(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "VStack").class("title");
-        Label::new(cx, "The vstack container can be used to layout views in a column.")
-            .class("paragraph");
+        Markdown::new(
+            cx,
+            "# VStack
+The vstack container can be used to layout views in a column.        
+        ",
+        );
 
         Divider::new(cx);
 
-        Label::new(cx, "Label").class("header");
+        Markdown::new(cx, "## VStack");
+
         DemoRegion::new(
             cx,
             |cx| {
@@ -77,7 +85,7 @@ The zstack container can be used to layout views in a vertical stack.
 
         Divider::new(cx);
 
-        Label::new(cx, "### ZStack");
+        Markdown::new(cx, "### ZStack");
 
         DemoRegion::new(
             cx,

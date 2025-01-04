@@ -17,7 +17,7 @@ impl ToggleButton {
             .role(Role::Button)
             .navigable(true)
             .default_action_verb(DefaultActionVerb::Click)
-            .checkable(true) // to let the accesskit know button is toggleable
+            .checkable(true) // To let the accesskit know button is toggleable
             .checked(lens)
     }
 }

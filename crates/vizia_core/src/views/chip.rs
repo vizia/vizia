@@ -8,7 +8,7 @@ pub struct Chip {
 }
 
 impl Chip {
-    /// Creates a new Chip view.
+    /// Creates a new [Chip] view with the provided text.
     ///
     /// # Example
     /// ```
@@ -48,7 +48,7 @@ impl View for Chip {
     }
 }
 
-/// Used in conjunction with the `variant`modifier for selecting the style variant of a chip.
+/// Used in conjunction with the `variant` modifier for selecting the style variant of a chip.
 #[derive(Debug, Clone, Copy, Data, PartialEq, Eq)]
 pub enum ChipVariant {
     Filled,
@@ -64,7 +64,7 @@ impl Handle<'_, Chip> {
         })
     }
 
-    /// Selects the style variant to be used by the chip.
+    /// Selects the style variant to be used by the chip. Accepts a value of, or lens to, a [ChipVariant].
     ///
     /// # Example
     /// ```

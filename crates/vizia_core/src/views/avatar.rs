@@ -9,7 +9,7 @@ pub enum AvatarVariant {
     Rounded,
 }
 
-/// An avatar is used to visually represent a person or entity and can contain text, an icon, or an image.
+/// An avatar view is used to visually represent a person or entity and can contain text, an icon, or an image.
 ///
 /// # Example
 /// ```
@@ -22,6 +22,15 @@ pub enum AvatarVariant {
 pub struct Avatar {}
 
 impl Avatar {
+    /// Creates a new avatar with the given content.
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// # let cx = &mut Context::default();
+    /// Avatar::new(cx, |cx|{
+    ///     Svg::new(cx, ICON_USER);
+    /// });
+    /// ```
     pub fn new<F>(cx: &mut Context, content: F) -> Handle<Self>
     where
         F: FnOnce(&mut Context),
@@ -37,7 +46,16 @@ impl View for Avatar {
 }
 
 impl Handle<'_, Avatar> {
-    /// Selects the style variant for the Avatar.
+    /// Selects the geometric variant of the Avatar. Accepts a value of, or lens to, an [AvatarVariant].
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// # let cx = &mut Context::default();
+    /// Avatar::new(cx, |cx|{
+    ///     Svg::new(cx, ICON_USER);
+    /// })
+    /// .variant(AvatarVariant::Rounded);
+    /// ```
     pub fn variant<U: Into<AvatarVariant>>(self, variant: impl Res<U>) -> Self {
         self.bind(variant, |handle, val| {
             let var: AvatarVariant = val.get(&handle).into();
@@ -67,6 +85,15 @@ impl Handle<'_, Avatar> {
     }
 
     /// Adds a badge to the Avatar.
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// # let cx = &mut Context::default();
+    /// Avatar::new(cx, |cx|{
+    ///     Svg::new(cx, ICON_USER);
+    /// })
+    /// .badge(|cx| Badge::empty(cx).class("error"));
+    /// ```
     pub fn badge<F>(mut self, content: F) -> Self
     where
         F: FnOnce(&mut Context) -> Handle<'_, Badge>,

@@ -118,3 +118,17 @@ impl View for Element {
         Some("element")
     }
 }
+
+pub struct Spacer;
+
+impl Spacer {
+    pub fn new(cx: &mut Context) -> Handle<Self> {
+        Self {}.build(cx, |_| {})
+    }
+}
+
+impl View for Spacer {
+    fn element(&self) -> Option<&'static str> {
+        Some("spacer")
+    }
+}

@@ -151,7 +151,8 @@ impl Handle<'_, RadioButton> {
     /// #
     /// # AppData { value: false }.build(cx);
     /// #
-    /// RadioButton::new(cx, AppData::value).on_select(|cx| cx.emit(AppEvent::ToggleValue));
+    /// RadioButton::new(cx, AppData::value)
+    ///     .on_select(|cx| cx.emit(AppEvent::ToggleValue));
     /// ```
     pub fn on_select<F>(self, callback: F) -> Self
     where

@@ -78,12 +78,21 @@ impl Badge {
     }
 
     /// Creates an empty badge.
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// # let cx = &mut Context::default();
+    /// Avatar::new(cx, |cx|{
+    ///     Svg::new(cx, ICON_USER);
+    /// })
+    /// .badge(|cx| Badge::empty(cx).class("error"));
+    /// ```
     pub fn empty(cx: &mut Context) -> Handle<Self> {
         Self::common(cx, |_| {})
     }
 
-    /// Creates a new badge.
-    /// # Example
+    /// Creates a new badge with the provided content.
+    ///
     /// ```
     /// # use vizia_core::prelude::*;
     /// # let cx = &mut Context::default();
@@ -110,7 +119,7 @@ impl View for Badge {
 }
 
 impl Handle<'_, Badge> {
-    /// Sets the placement of a badge relative to its parent when used with the `badge` modifier.
+    /// Sets the placement of a badge relative to its parent. Accepts a value of, or lens to, a [BadgePlacement].
     pub fn placement<U: Into<BadgePlacement>>(self, placement: impl Res<U>) -> Self {
         self.bind(placement, |handle, val| {
             let placement = val.get(&handle).into();
