@@ -11,6 +11,7 @@ repository.workspace = true
 clipboard = ["copypasta"]
 x11 = ["copypasta?/x11"]
 wayland = ["copypasta?/wayland"]
+markdown = ["comrak"]
 
 [dependencies]
 vizia_derive.workspace = true
@@ -38,7 +39,7 @@ indexmap = "2.4"
 qfilter = "0.2"
 # reqwest = { version = "0.11.9", features = ["blocking"] }
 web-time = "1.1"
-comrak = { version = "0.33", default-features = false }
+comrak = { version = "0.33", default-features = false, optional = true }
 open = "5.2"
 sha2 = "0.10"
 
