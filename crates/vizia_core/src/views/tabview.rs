@@ -164,7 +164,10 @@ impl TabBar {
                 List::new(cx, list, item_content)
                     .selectable(Selectable::Single)
                     .layout_type(LayoutType::Row);
-                Button::new(cx, |cx| Svg::new(cx, ICON_PLUS));
+                Button::new(cx, |cx| Svg::new(cx, ICON_PLUS).size(Stretch(1.0)))
+                    .variant(ButtonVariant::Text)
+                    .padding(Pixels(0.0))
+                    .size(Pixels(16.0));
             })
             .alignment(Alignment::Left)
             .layout_type(LayoutType::Row)
