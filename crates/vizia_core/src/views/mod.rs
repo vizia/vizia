@@ -52,6 +52,7 @@ pub use image::*;
 pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
 pub use label::Label;
 pub use list::*;
+#[cfg(feature = "markdown")]
 pub use markdown::*;
 pub use menu::*;
 pub use picklist::{PickList, ScrollList};

@@ -1,3 +1,5 @@
+#![cfg(feature = "markdown")]
+
 use std::cell::RefCell;
 
 use comrak::nodes::{Ast, NodeValue};
