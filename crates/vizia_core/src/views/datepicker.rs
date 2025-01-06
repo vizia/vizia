@@ -128,15 +128,17 @@ impl Datepicker {
                         .on_select(|ex, index| ex.emit(DatepickerEvent::SelectMonth(index)))
                         .width(Stretch(1.0))
                 })
-                .width(Pixels(150.0))
+                .width(Pixels(140.0))
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
                 .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementMonth));
                 Spinbox::custom(cx, |cx| {
                     Textbox::new(cx, Datepicker::view_date.map(|date| date.year()))
+                        .width(Stretch(1.0))
+                        .padding(Pixels(1.0))
                         .on_edit(|ex, v| ex.emit(DatepickerEvent::SelectYear(v)))
                 })
+                .width(Pixels(100.0))
                 .icons(SpinboxIcons::PlusMinus)
-                .width(Auto)
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementYear))
                 .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementYear));
             })

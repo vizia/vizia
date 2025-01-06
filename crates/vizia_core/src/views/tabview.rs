@@ -157,7 +157,7 @@ impl TabBar {
         item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
     ) -> Handle<Self>
     where
-        L::Target: Deref<Target = [T]>,
+        L::Target: Deref<Target = [T]> + Data,
     {
         Self {}
             .build(cx, |cx| {

@@ -110,58 +110,6 @@ where
                                 cx.emit(ComboBoxEvent::SetOption(index));
                                 cx.emit(PopupEvent::Close);
                             });
-                            // // Binding to the list of values.
-                            // Binding::new(cx, list_lens, move |cx, list| {
-                            //     // Seems that the layout bugs out when rebuilding the contents of a scrollview that's been scrolled to 100%.
-                            //     // So instead we just rebuild the whole scrollview.
-                            //     ScrollView::new(cx, move |cx| {
-                            //         let f = Self::filter_text.get(cx);
-                            //         // List view doesn't have an option for filtering (yet) so we do it manually instead.
-                            //         VStack::new(cx, |cx| {
-                            //             let ll = list
-                            //                 .get(cx)
-                            //                 .iter()
-                            //                 .enumerate()
-                            //                 .filter(|(_, item)| {
-                            //                     if f.is_empty() {
-                            //                         true
-                            //                     } else {
-                            //                         item.to_string()
-                            //                             .to_ascii_lowercase()
-                            //                             .contains(&f.to_ascii_lowercase())
-                            //                     }
-                            //                 })
-                            //                 .map(|(idx, _)| idx)
-                            //                 .collect::<Vec<_>>();
-
-                            //             for index in ll.into_iter() {
-                            //                 let item = list.idx(index);
-                            //                 Label::new(cx, item)
-                            //                     .alignment(Alignment::Left)
-                            //                     .checked(
-                            //                         selected
-                            //                             .map(move |selected| *selected == index),
-                            //                     )
-                            //                     .navigable(true)
-                            //                     .toggle_class(
-                            //                         "nav",
-                            //                         Self::hovered.map(move |nav| *nav == index),
-                            //                     )
-                            //                     .on_hover(move |cx| {
-                            //                         cx.emit(ComboBoxEvent::SetHovered(index))
-                            //                     })
-                            //                     .on_press(move |cx| {
-                            //                         cx.emit(ComboBoxEvent::SetOption(index));
-                            //                     });
-                            //             }
-                            //         })
-                            //         .height(Auto)
-                            //         .class("list");
-                            //     })
-                            //     .show_horizontal_scrollbar(false)
-                            //     .height(Auto);
-                            //     //.min_height(Auto);
-                            // });
                         });
                     })
                     .should_reposition(false)
@@ -247,12 +195,6 @@ where
         });
 
         event.map(|window_event, meta| match window_event {
-            // WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-            //     if !self.is_open {
-            //         self.is_open = true;
-            //         self.hovered = self.selected.get(cx);
-            //     }
-            // }
             WindowEvent::KeyDown(code, _) => match code {
                 Code::ArrowDown => {
                     // Forward events to list
@@ -264,33 +206,6 @@ where
                                 .propagate(Propagation::Subtree),
                         );
                     }
-
-                    // if !self.is_open {
-                    //     self.is_open = true;
-                    // } else {
-                    //     let filter = |(_, txt): &(usize, &T)| {
-                    //         if self.filter_text.is_empty() {
-                    //             true
-                    //         } else {
-                    //             txt.to_string()
-                    //                 .to_ascii_lowercase()
-                    //                 .contains(&self.filter_text.to_ascii_lowercase())
-                    //         }
-                    //     };
-
-                    //     let list = self.list_lens.get(cx);
-                    //     if let Some((next_index, _)) = list
-                    //         .iter()
-                    //         .enumerate()
-                    //         .filter(filter)
-                    //         .skip_while(|(idx, _)| *idx != self.hovered)
-                    //         .nth(1)
-                    //     {
-                    //         self.hovered = next_index;
-                    //     } else {
-                    //         self.hovered = list.iter().enumerate().find(filter).unwrap().0;
-                    //     }
-                    // }
                 }
 
                 Code::ArrowUp => {
@@ -303,33 +218,6 @@ where
                                 .propagate(Propagation::Subtree),
                         );
                     }
-                    // if !self.is_open {
-                    //     self.is_open = true;
-                    // } else {
-                    //     let filter = |(_, txt): &(usize, &T)| {
-                    //         if self.filter_text.is_empty() {
-                    //             true
-                    //         } else {
-                    //             txt.to_string()
-                    //                 .to_ascii_lowercase()
-                    //                 .contains(&self.filter_text.to_ascii_lowercase())
-                    //         }
-                    //     };
-
-                    //     let list = self.list_lens.get(cx);
-                    //     if let Some((next_index, _)) = list
-                    //         .iter()
-                    //         .enumerate()
-                    //         .rev()
-                    //         .filter(filter)
-                    //         .skip_while(|(idx, _)| *idx != self.hovered)
-                    //         .nth(1)
-                    //     {
-                    //         self.hovered = next_index;
-                    //     } else {
-                    //         self.hovered = list.iter().enumerate().rev().find(filter).unwrap().0;
-                    //     }
-                    // }
                 }
 
                 Code::Enter => {

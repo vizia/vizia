@@ -46,9 +46,6 @@ impl View for XYPad {
                 cx.capture();
                 let mouse = cx.mouse();
                 if meta.target == current {
-                    // let width = cx.cache.get_width(current);
-                    // let height = cx.cache.get_height(current);
-
                     let mut dx = (mouse.left.pos_down.0 - cx.cache.get_posx(current))
                         / cx.cache.get_width(current);
                     let mut dy = (mouse.left.pos_down.1 - cx.cache.get_posy(current))
