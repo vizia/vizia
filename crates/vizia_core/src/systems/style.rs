@@ -265,6 +265,8 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context, redraw_entities: &mut 
                 | cx.style.font_slant.inherit_inline(entity, parent)
                 | cx.style.font_width.inherit_inline(entity, parent)
                 | cx.style.text_decoration_line.inherit_inline(entity, parent)
+                | cx.style.text_stroke_width.inherit_inline(entity, parent)
+                | cx.style.text_stroke_style.inherit_inline(entity, parent)
                 | cx.style.font_variation_settings.inherit_inline(entity, parent)
             {
                 cx.style.needs_text_update(entity);
@@ -284,6 +286,8 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context, redraw_entities: &mut 
                 | cx.style.font_slant.inherit_shared(entity, parent)
                 | cx.style.font_width.inherit_shared(entity, parent)
                 | cx.style.text_decoration_line.inherit_shared(entity, parent)
+                | cx.style.text_stroke_width.inherit_shared(entity, parent)
+                | cx.style.text_stroke_style.inherit_shared(entity, parent)
                 | cx.style.font_variation_settings.inherit_shared(entity, parent)
             {
                 cx.style.needs_text_update(entity);
@@ -596,6 +600,16 @@ fn link_style_data(
     }
 
     if style.text_decoration_line.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.text_stroke_width.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.text_stroke_style.link(entity, matched_rules) {
         should_redraw = true;
         should_reflow = true;
     }

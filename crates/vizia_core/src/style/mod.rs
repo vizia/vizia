@@ -74,8 +74,8 @@ pub use vizia_style::{
     FontWeight, FontWeightKeyword, FontWidth, GenericFontFamily, Gradient, HorizontalPosition,
     HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue, LineClamp, LineDirection,
     LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position, Scale, Shadow, TextAlign,
-    TextDecorationLine, TextDecorationStyle, TextOverflow, Transform, Transition, Translate,
-    VerticalPosition, VerticalPositionKeyword, Visibility, RGBA,
+    TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform,
+    Transition, Translate, VerticalPosition, VerticalPositionKeyword, Visibility, RGBA,
 };
 
 use vizia_style::{
@@ -291,6 +291,8 @@ pub struct Style {
     pub(crate) line_clamp: StyleSet<LineClamp>,
     pub(crate) text_align: StyleSet<TextAlign>,
     pub(crate) text_decoration_line: StyleSet<TextDecorationLine>,
+    pub(crate) text_stroke_width: StyleSet<Length>,
+    pub(crate) text_stroke_style: StyleSet<TextStrokeStyle>,
     pub(crate) underline_style: StyleSet<TextDecorationLine>,
     pub(crate) overline_style: StyleSet<TextDecorationStyle>,
     pub(crate) strikethrough_style: StyleSet<TextDecorationStyle>,
@@ -1653,6 +1655,16 @@ impl Style {
             Property::TextDecorationLine(line) => {
                 self.text_decoration_line.insert_rule(rule_id, line);
             }
+            Property::TextStroke(stroke) => {
+                self.text_stroke_width.insert_rule(rule_id, stroke.width);
+                self.text_stroke_style.insert_rule(rule_id, stroke.style);
+            }
+            Property::TextStrokeWidth(stroke_width) => {
+                self.text_stroke_width.insert_rule(rule_id, stroke_width);
+            }
+            Property::TextStrokeStyle(stroke_style) => {
+                self.text_stroke_style.insert_rule(rule_id, stroke_style);
+            }
             Property::Fill(fill) => {
                 self.fill.insert_rule(rule_id, fill);
             }
@@ -1790,6 +1802,8 @@ impl Style {
         self.caret_color.remove(entity);
         self.selection_color.remove(entity);
         self.text_decoration_line.remove(entity);
+        self.text_stroke_width.remove(entity);
+        self.text_stroke_style.remove(entity);
 
         // Cursor
         self.cursor.remove(entity);
@@ -1985,6 +1999,8 @@ impl Style {
         self.selection_color.clear_rules();
         self.caret_color.clear_rules();
         self.text_decoration_line.clear_rules();
+        self.text_stroke_width.clear_rules();
+        self.text_stroke_style.clear_rules();
 
         self.cursor.clear_rules();
 

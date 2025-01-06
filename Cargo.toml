@@ -30,7 +30,7 @@ log = "0.4"
 fern = "0.7"
 
 [workspace]
-members = [ "crates/*", "examples/widget_gallery", "examples/designer"]
+members = ["crates/*", "examples/widget_gallery", "examples/designer"]
 
 [workspace.package]
 version = "0.2.0"
@@ -121,6 +121,10 @@ path = "examples/style/shadow.rs"
 [[example]]
 name = "text"
 path = "examples/style/text.rs"
+
+[[example]]
+name = "text_stroke"
+path = "examples/style/text_stroke.rs"
 
 [[example]]
 name = "filter"

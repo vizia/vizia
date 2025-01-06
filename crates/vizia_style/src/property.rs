@@ -2,10 +2,10 @@ use crate::{
     define_property, Angle, BackgroundImage, BackgroundSize, BlendMode, Border, BorderStyle,
     BorderWidth, ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError,
     CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
-    FontWidth, LayoutType, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow, Parse,
-    PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign, TextDecoration,
-    TextDecorationLine, TextDecorationStyle, TextOverflow, Transform, Transition, Translate, Units,
-    UnparsedProperty, Visibility,
+    FontWidth, LayoutType, Length, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow,
+    Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign, TextDecoration,
+    TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform,
+    Transition, Translate, Units, UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -160,6 +160,9 @@ define_property! {
         "line-clamp": LineClamp(LineClamp),
         "text-decoration": TextDecoration(TextDecoration),
         "text-decoration-line": TextDecorationLine(TextDecorationLine),
+        "text-stroke": TextStroke(TextStroke),
+        "text-stroke-width": TextStrokeWidth(Length),
+        "text-stroke-style": TextStrokeStyle(TextStrokeStyle),
         "underline-style": UnderlineStyle(TextDecorationStyle),
         "underline-thickness": UnderlineThickness(LengthOrPercentage),
         "underline-color": UnderlineColor(Color),

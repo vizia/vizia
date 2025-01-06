@@ -135,6 +135,35 @@ pub trait TextModifiers: internal::Modifiable {
         TextDecorationLine,
         SystemFlags::REFLOW
     );
+
+    modifier!(
+        /// Sets the width of the text stroke.
+        /// This sets Skia's [`skia_safe::textlayout::TextStyle`]'s foreground [`skia_safe::Paint`] to
+        /// draw a stroke on the text.
+        ///
+        /// See also [`Self::text_stroke_style`].
+        text_stroke_width,
+        Length,
+        SystemFlags::REFLOW
+    );
+
+    modifier!(
+        /// Sets the paint style of the text stroke.
+        /// You can either draw text with a stroke, or just the stroke outline.
+        ///
+        /// If you desire to paint the text stroke in a separate colour to the
+        /// fill property, Skia does not seem to support this (see the
+        /// [discussion on the PR to add text stroke](https://github.com/vizia/vizia/pull/528)).
+        ///
+        /// A workaround would involve a [`ZStack`] to overlay two copies of the
+        /// same text, one with a stroke and one without. These can have two
+        /// different colours. See also the [Flutter documentation](
+        /// https://api.flutter.dev/flutter/painting/TextStyle-class.html#painting.TextStyle.6)
+        /// on achieving this.
+        text_stroke_style,
+        TextStrokeStyle,
+        SystemFlags::REFLOW
+    );
 }
 
 impl<V> TextModifiers for Handle<'_, V> {}

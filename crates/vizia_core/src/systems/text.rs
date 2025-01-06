@@ -232,14 +232,23 @@ fn add_block(
                     .unwrap_or(&[FamilyOwned::Generic(GenericFontFamily::SansSerif)]),
             );
 
+            let mut paint = Paint::default();
             // Font Color
             if let Some(font_color) = style.font_color.get(entity) {
-                let mut paint = Paint::default();
                 paint.set_color(*font_color);
                 paint.set_anti_alias(false);
                 paint.set_blend_mode(BlendMode::SrcOver);
-                text_style.set_foreground_paint(&paint);
             }
+
+            if let Some(text_stroke) = style.text_stroke_width.get(entity) {
+                paint.set_stroke_width(text_stroke.to_px().unwrap_or(0.0));
+                paint.set_style(
+                    (*style.text_stroke_style.get(entity).unwrap_or(&TextStrokeStyle::default()))
+                        .into(),
+                );
+            }
+
+            text_style.set_foreground_paint(&paint);
 
             if let Some(background_color) = style.background_color.get(entity) {
                 if style.text_span.get(entity).is_some() {
