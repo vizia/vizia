@@ -11,6 +11,7 @@ pub const CENTER_LAYOUT: &str = r#"
         alignment: center;
         horizontal-gap: 20px;
         vertical-gap: 20px;
+        padding: 100px;
     }
 "#;
 
