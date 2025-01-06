@@ -360,6 +360,7 @@ where
     // /// This function takes window-global physical dimensions.
     // fn scroll(&mut self, cx: &mut EventContext, x: f32, y: f32) {}
 
+    #[cfg(feature = "clipboard")]
     fn clone_selected(&self, cx: &mut EventContext) -> Option<String> {
         if let Some(text) = cx.style.text.get(cx.current) {
             let substring = &text[self.selection.range()];
