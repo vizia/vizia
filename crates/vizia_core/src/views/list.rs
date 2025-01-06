@@ -41,9 +41,16 @@ impl List {
         item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
     ) -> Handle<Self>
     where
-        L::Target: Deref<Target = [T]>,
+        L::Target: Deref<Target = [T]> + Data,
     {
-        Self::new_generic(cx, list, |list| list.len(), |list, index| &list[index], item_content)
+        Self::new_generic(
+            cx,
+            list,
+            |list| list.len(),
+            |list, index| &list[index],
+            |_| true,
+            item_content,
+        )
     }
 
     pub fn new_filtered<L: Lens, T: 'static>(
@@ -53,14 +60,15 @@ impl List {
         item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
     ) -> Handle<Self>
     where
-        L::Target: Deref<Target = [T]>,
+        L::Target: Deref<Target = [T]> + Data,
     {
         let f = filter.clone();
         Self::new_generic(
             cx,
             list,
             move |list| list.iter().filter(filter.clone()).count(),
-            move |list, index| list.iter().filter(f.clone()).nth(index).unwrap(),
+            move |list, index| &list[index],
+            f,
             item_content,
         )
     }
@@ -71,8 +79,12 @@ impl List {
         list: L,
         list_len: impl 'static + Fn(&L::Target) -> usize,
         list_index: impl 'static + Clone + Fn(&L::Target, usize) -> &T,
+        filter: impl 'static + Clone + FnMut(&&T) -> bool,
         item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
-    ) -> Handle<Self> {
+    ) -> Handle<Self>
+    where
+        L::Target: Deref<Target = [T]> + Data,
+    {
         let content = Rc::new(item_content);
         let num_items = list.map(list_len);
         Self {
@@ -131,11 +143,20 @@ impl List {
 
             ScrollView::new(cx, move |cx| {
                 // Bind to the list data
-                Binding::new(cx, num_items, move |cx, num_items| {
+                Binding::new(cx, num_items, move |cx, _| {
                     // If the number of list items is different to the number of children of the ListView
                     // then remove and rebuild all the children
 
-                    for index in 0..num_items.get(cx) {
+                    let mut f = filter.clone();
+                    let ll = list
+                        .get(cx)
+                        .iter()
+                        .enumerate()
+                        .filter(|(_, v)| f(v))
+                        .map(|(idx, _)| idx)
+                        .collect::<Vec<_>>();
+
+                    for index in ll.into_iter() {
                         let ll = list_index.clone();
                         let item = list.map_ref(move |list| ll(list, index));
                         let content = content.clone();
@@ -256,7 +277,7 @@ impl View for List {
     }
 }
 
-impl<'v> Handle<'v, List> {
+impl Handle<'_, List> {
     pub fn selected<S: Lens>(self, selected: S) -> Self
     where
         S::Target: Deref<Target = [usize]> + Data,

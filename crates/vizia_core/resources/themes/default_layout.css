@@ -154,6 +154,7 @@ datepicker {
     height: auto;
     padding: 4px;
     vertical-gap: 4px;
+    alignment: center;
 }
 
 .datepicker-header {
@@ -171,13 +172,10 @@ datepicker {
 .datepicker-calendar {
     width: auto;
     height: auto;
-    left: 1s;
-    right: 1s;
 }
 
 .datepicker-calendar-headers {
-    padding-left: 1s;
-    padding-right: 1s;
+    alignment: center;
     height: auto;
 }
 

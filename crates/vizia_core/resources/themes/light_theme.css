@@ -491,7 +491,7 @@ list.selectable list-item:hover {
 }
 
 list.selectable list-item:checked {
-    background-color: #0000ff;
+    background-color: #51afef;
 }
 
 /* MENU */
