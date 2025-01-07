@@ -18,6 +18,7 @@ impl Markdown {
 
                 let mut options = Options::default();
                 options.extension.strikethrough = true;
+                options.extension.table = true;
 
                 // Parse the document into a root `AstNode`
                 let root = parse_document(&arena, document, &options);
@@ -160,6 +161,40 @@ fn parse_node<'a>(
                     parse_node(cx, child, list_level);
                 }
             });
+        }
+
+        NodeValue::Table(_table) => {
+            VStack::new(cx, |cx| {
+                for child in node.children() {
+                    parse_node(cx, child, list_level);
+                }
+            })
+            .class("table")
+            .width(Stretch(1.0))
+            .height(Auto);
+        }
+
+        NodeValue::TableRow(headers) => {
+            HStack::new(cx, |cx| {
+                for child in node.children() {
+                    parse_node(cx, child, list_level);
+                }
+            })
+            .class("table-row")
+            .toggle_class("table-headers", *headers)
+            .width(Stretch(1.0))
+            .height(Auto);
+            Divider::horizontal(cx);
+        }
+
+        NodeValue::TableCell => {
+            Label::rich(cx, "", |cx| {
+                for child in node.children() {
+                    parse_node(cx, child, list_level);
+                }
+            })
+            .class("table-cell")
+            .width(Stretch(1.0));
         }
 
         _ => {}

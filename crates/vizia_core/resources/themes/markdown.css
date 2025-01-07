@@ -49,7 +49,7 @@ markdown .h6 {
 }
 
 markdown .p {
-    padding-top: 0;
+    padding-top: 16px;
     padding-bottom: 16px;
     text-wrap: true;
     width: 1s;
@@ -99,5 +99,21 @@ markdown .li .h6 {
 }
 
 .testy .span:hover {
+    font-weight: bold;
+}
+
+markdown .table {
+    padding-bottom: 16px;
+}
+
+markdown .table-cell {
+    height: 1s;
+    min-height: auto;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    alignment: top-left;
+}
+
+markdown .table-row.table-headers .table-cell {
     font-weight: bold;
 }

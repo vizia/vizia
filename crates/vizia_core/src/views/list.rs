@@ -29,6 +29,7 @@ pub struct List {
     selected: BTreeSet<usize>,
     selectable: Selectable,
     focused: Option<usize>,
+    focus_visible: bool,
     selection_follows_focus: bool,
     horizontal: bool,
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
@@ -92,6 +93,7 @@ impl List {
             selected: BTreeSet::default(),
             selectable: Selectable::None,
             focused: None,
+            focus_visible: false,
             selection_follows_focus: false,
             horizontal: false,
             on_select: None,
@@ -192,6 +194,7 @@ impl View for List {
                             self.selected.clear();
                             self.selected.insert(index);
                             self.focused = Some(index);
+                            self.focus_visible = false;
                             if let Some(on_select) = &self.on_select {
                                 on_select(cx, index);
                             }
@@ -205,6 +208,7 @@ impl View for List {
                         } else {
                             self.selected.insert(index);
                             self.focused = Some(index);
+                            self.focus_visible = false;
                             if let Some(on_select) = &self.on_select {
                                 on_select(cx, index);
                             }
@@ -246,12 +250,14 @@ impl View for List {
                 if let Some(focused) = &mut self.focused {
                     *focused = focused.saturating_add(1);
 
-                    if *focused == self.list_len {
+                    if *focused >= self.list_len {
                         *focused = 0;
                     }
                 } else {
                     self.focused = Some(0);
                 }
+
+                self.focus_visible = true;
 
                 if self.selection_follows_focus {
                     cx.emit(ListEvent::SelectFocused);
@@ -268,6 +274,8 @@ impl View for List {
                 } else {
                     self.focused = Some(self.list_len.saturating_sub(1));
                 }
+
+                self.focus_visible = true;
 
                 if self.selection_follows_focus {
                     cx.emit(ListEvent::SelectFocused);
@@ -337,7 +345,11 @@ impl ListItem {
             })
             .role(Role::ListItem)
             .checked(List::selected.map(move |selected| selected.contains(&index)))
-            .toggle_class("focused", List::focused.map(move |focused| *focused == Some(index)))
+            //.toggle_class("focused", List::focused.map(move |focused| *focused == Some(index)))
+            .focused_with_visibility(
+                List::focused.map(move |f| *f == Some(index)),
+                List::focus_visible,
+            )
             .on_press(move |cx| cx.emit(ListEvent::Select(index)))
     }
 }

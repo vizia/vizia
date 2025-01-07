@@ -36,9 +36,13 @@ fn main() -> Result<(), ApplicationError> {
         ScrollView::new(cx, |cx| {
             Markdown::new(
                 cx,
-                r#"
-some `code` inline
-"#,
+                "
+| Month    | Savings |
+| -------- | ------- |
+| January  | $250    |
+| February | $80     |
+| March    | $420    |
+",
             );
         });
     })

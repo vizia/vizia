@@ -137,26 +137,26 @@ impl Dropdown {
         F: 'static + Fn(&mut Context),
     {
         Self {}.build(cx, move |cx| {
-            cx.add_listener(move |_dropdown: &mut Self, cx, event| {
-                event.map(|window_event, meta| match window_event {
-                    WindowEvent::PressDown { mouse: _ } => {
-                        if meta.origin != cx.current() {
-                            // Check if the mouse was pressed outside of any descendants
-                            if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
-                                cx.emit(PopupEvent::Close);
-                            }
-                        }
-                    }
+            // cx.add_listener(move |_dropdown: &mut Self, cx, event| {
+            //     event.map(|window_event, meta| match window_event {
+            //         WindowEvent::PressDown { mouse: _ } => {
+            //             if meta.origin != cx.current() {
+            //                 // Check if the mouse was pressed outside of any descendants
+            //                 if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
+            //                     cx.emit(PopupEvent::Close);
+            //                 }
+            //             }
+            //         }
 
-                    WindowEvent::KeyDown(code, _) => {
-                        if *code == Code::Escape {
-                            cx.emit(PopupEvent::Close);
-                        }
-                    }
+            //         WindowEvent::KeyDown(code, _) => {
+            //             if *code == Code::Escape {
+            //                 cx.emit(PopupEvent::Close);
+            //             }
+            //         }
 
-                    _ => {}
-                });
-            });
+            //         _ => {}
+            //     });
+            // });
 
             PopupData::default().build(cx);
 

@@ -134,6 +134,31 @@ pub trait StyleModifiers: internal::Modifiable {
         self
     }
 
+    fn focused_with_visibility<U: Into<bool>>(
+        mut self,
+        focus: impl Res<U> + Copy + 'static,
+        visibility: impl Res<U> + Copy + 'static,
+    ) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+
+        self.context().with_current(current, move |cx| {
+            focus.set_or_bind(cx, entity, move |cx, f| {
+                visibility.set_or_bind(cx, entity, move |cx, v| {
+                    let focus = f.get(cx).into();
+                    let visibility = v.get(cx).into();
+                    if focus {
+                        //cx.focus();
+                        cx.focus_with_visibility(visibility);
+                        cx.needs_restyle(cx.current);
+                    }
+                });
+            });
+        });
+
+        self
+    }
+
     fn read_only<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();

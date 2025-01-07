@@ -589,7 +589,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 }
             }
 
-            if matches!(*code, Code::Enter | Code::NumpadEnter) {
+            if matches!(*code, Code::Enter | Code::NumpadEnter | Code::Space) {
                 cx.triggered = cx.focused;
                 if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.triggered) {
                     pseudo_classes.set(PseudoClassFlags::ACTIVE, true);
@@ -599,7 +599,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
         }
         WindowEvent::KeyUp(code, _) => {
             meta.target = cx.focused;
-            if matches!(code, Code::Enter | Code::NumpadEnter) {
+            if matches!(code, Code::Enter | Code::NumpadEnter | Code::Space) {
                 if cx.focused == cx.triggered {
                     cx.with_current(cx.triggered, |cx| {
                         cx.emit(WindowEvent::Press { mouse: false })
