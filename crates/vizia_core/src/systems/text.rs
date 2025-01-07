@@ -171,11 +171,11 @@ pub fn build_paragraph(
         paragraph_style.set_max_lines(line_clamp.0 as usize);
     }
 
-    if let Some(text_wrap) = style.text_wrap.get(entity).copied() {
-        if !text_wrap {
-            paragraph_style.set_max_lines(1);
-        }
-    }
+    // if let Some(text_wrap) = style.text_wrap.get(entity).copied() {
+    //     if !text_wrap {
+    //         paragraph_style.set_max_lines(1);
+    //     }
+    // }
 
     // Text Align
     paragraph_style.set_text_align(

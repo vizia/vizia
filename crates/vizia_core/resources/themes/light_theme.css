@@ -7,6 +7,7 @@
         "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji",
         "Segoe UI Emoji";
     font-variation-settings: "wght" 400;
+    font-size: 14;
 }
 
 *:focus-visible {
@@ -476,6 +477,10 @@ label.describing {
     cursor: hand;
 }
 
+label.field-label {
+    font-size: 12;
+}
+
 /* LIST */
 
 list label.dark {
@@ -616,9 +621,49 @@ picklist:focus-visible {
     outline-offset: 3px;
 }
 
+picklist list list-item {
+    cursor: hand;
+}
+
+picklist list.selectable list-item .focus-indicator {
+    width: 2px;
+    position-type: absolute;
+    background-color: #0062ff;
+    visibility: hidden;
+}
+
+picklist list.selectable list-item:focus-visible .focus-indicator {
+    visibility: visible;
+}
+
+picklist list.selectable list-item:checked {
+    background-color: transparent;
+}
+
+picklist list.selectable list-item .checkmark {
+    fill: #0062ff;
+    visibility: hidden;
+}
+
+picklist list.selectable list-item:checked .checkmark {
+    visibility: visible;
+}
+
+picklist list.selectable list-item:hover {
+    background-color: #eaeaea;
+}
+
+picklist list.selectable list-item:focus-visible {
+    background-color: #eaeaea;
+    outline-color: transparent;
+}
+
 /* POPUP */
 
 popup {
+    background-color: #ffffff;
+    corner-radius: 4px;
+    border: 1px #d2d2d2;
     shadow: 0px 3px 12px #00000038;
 }
 
@@ -811,7 +856,7 @@ spinbox textbox.spinbox-value {
     corner-radius: 0px;
 }
 
-spinbox picklist.spinbox-value > dropdown > button {
+spinbox picklist.spinbox-value > button {
     background-color: transparent;
     border-width: 0px;
 }

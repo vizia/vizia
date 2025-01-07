@@ -253,16 +253,14 @@ combobox .title {
     cursor: text;
 }
 
-dropdown popup,
-combobox popup {
+popup {
     size: auto;
     min-width: 100%;
     left: 1s;
     right: 1s;
 }
 
-dropdown popup list,
-combobox popup list {
+popup > list {
     width: 1s;
     min-width: auto;
     height: auto;
@@ -270,32 +268,38 @@ combobox popup list {
     padding-bottom: 4px;
 }
 
-dropdown popup list > scrollview,
-combobox popup list > scrollview {
+popup > list > scrollview {
     height: auto;
+    width: 1s;
+    min-width: auto;
 }
 
-dropdown popup scrollview scrollbar.vertical,
-combobox popup scrollview scrollbar.vertical {
+popup > list > scrollview > scroll-content {
+    height: auto;
+    width: 1s;
+    min-width: auto;
+}
+
+popup scrollview scrollbar.vertical {
     top: 4px;
     bottom: 4px;
     right: 2px;
 }
 
-dropdown popup scrollview,
-combobox popup scrollview {
+popup scrollview {
     width: 1s;
     min-width: auto;
 }
 
-dropdown list label,
-combobox .list label {
+popup list list-item {
     width: 1s;
     min-width: auto;
     height: 32px;
     padding-left: 6px;
     padding-right: 6px;
     alignment: left;
+    gap: 4px;
+    layout-type: row;
 }
 
 dropdown vstack,
@@ -496,15 +500,9 @@ submenu divider {
 /* PICKLIST */
 
 picklist {
-    size: auto;
-}
-
-picklist list {
-    size: auto;
-}
-
-picklist list > scrollview {
-    height: auto;
+    width: auto;
+    height: 32px;
+    min-width: 64px;
 }
 
 /* POPUP */

@@ -39,12 +39,18 @@ fn main() -> Result<(), ApplicationError> {
                 "Eleven",
                 "Twelve",
             ],
-            selected_option: 0,
+            selected_option: usize::MAX,
         }
         .build(cx);
 
-        ExamplePage::new(cx, |cx| {
+        ExamplePage::vertical(cx, |cx| {
             PickList::new(cx, AppState::options, AppState::selected_option, true)
+                .placeholder("Select an option...")
+                .on_select(|cx, index| cx.emit(AppEvent::SetOption(index)))
+                .width(Pixels(150.0));
+
+            PickList::new(cx, AppState::options, AppState::selected_option, true)
+                .placeholder("Select an option...")
                 .on_select(|cx, index| cx.emit(AppEvent::SetOption(index)))
                 .width(Pixels(100.0));
         });
