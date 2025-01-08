@@ -615,13 +615,25 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
         WindowEvent::CharInput(_) => {
             meta.target = cx.focused;
         }
-        WindowEvent::FocusOut => {
-            cx.set_focus_pseudo_classes(cx.focused, false, true);
-            cx.focused = Entity::null();
-        }
-        WindowEvent::FocusIn => {
-            cx.focused = meta.target;
-            cx.set_focus_pseudo_classes(cx.focused, true, true);
+        WindowEvent::WindowFocused(is_focused) => {
+            if *is_focused {
+                cx.set_focus_pseudo_classes(cx.focused, true, true);
+                cx.needs_restyle(cx.focused);
+                cx.needs_redraw(cx.focused);
+            } else {
+                cx.set_focus_pseudo_classes(cx.focused, false, true);
+                cx.needs_restyle(cx.focused);
+
+                cx.event_queue.push_back(
+                    Event::new(WindowEvent::FocusVisibility(false))
+                        .target(cx.focused)
+                        .origin(Entity::root()), //.propagate(Propagation::Direct),
+                );
+
+                cx.event_queue.push_back(
+                    Event::new(WindowEvent::MouseOut).target(cx.hovered).origin(Entity::root()), // .propagate(Propagation::Direct),
+                );
+            }
         }
         WindowEvent::MouseEnter => {
             if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(meta.origin) {

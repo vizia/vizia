@@ -478,7 +478,8 @@ impl<'a> EventContext<'a> {
         }
         self.set_focus_pseudo_classes(new_focus, true, focus_visible);
 
-        self.emit_to(Entity::root(), WindowEvent::FocusIn);
+        self.emit_custom(Event::new(WindowEvent::FocusVisibility(focus_visible)).target(old_focus));
+        self.emit_custom(Event::new(WindowEvent::FocusVisibility(focus_visible)).target(new_focus));
 
         self.needs_restyle();
     }

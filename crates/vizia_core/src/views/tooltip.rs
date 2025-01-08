@@ -1,6 +1,6 @@
 use crate::context::TreeProps;
+use crate::prelude::*;
 use crate::vg;
-use crate::{modifiers::ModalModel, prelude::*};
 
 /// A tooltip view.
 ///
@@ -55,8 +55,8 @@ impl Tooltip {
     /// ```
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
         Self {
-            placement: Placement::Bottom,
-            shift: Placement::Bottom,
+            placement: Placement::Top,
+            shift: Placement::Top,
             show_arrow: true,
             arrow_size: Length::Value(LengthValue::Px(8.0)),
         }
@@ -74,14 +74,7 @@ impl Tooltip {
         .space(Pixels(0.0))
         .on_build(|ex| {
             ex.add_listener(move |tooltip: &mut Tooltip, ex, event| {
-                let flag = ModalModel::tooltip_visible.get(ex);
-                event.map(|window_event, meta| match window_event {
-                    WindowEvent::MouseDown(_) => {
-                        if flag && meta.origin != ex.current() {
-                            ex.toggle_class("vis", false);
-                        }
-                    }
-
+                event.map(|window_event, _| match window_event {
                     WindowEvent::MouseMove(x, y) => {
                         if tooltip.placement == Placement::Cursor && !x.is_nan() && !y.is_nan() {
                             let scale = ex.scale_factor();
@@ -364,7 +357,7 @@ impl Arrow {
                 _ => (Stretch(1.0), Stretch(1.0)),
             };
 
-            handle = handle.top(t).bottom(b).left(l).right(r);
+            handle = handle.top(t).bottom(b).left(l).right(r).position_type(PositionType::Absolute);
 
             handle.bind(Tooltip::arrow_size, move |handle, arrow_size| {
                 let arrow_size = arrow_size.get(&handle).to_px().unwrap_or(8.0);

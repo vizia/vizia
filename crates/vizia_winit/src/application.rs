@@ -395,6 +395,8 @@ impl ApplicationHandler<UserEvent> for Application {
             winit::event::WindowEvent::HoveredFile(_) => {}
             winit::event::WindowEvent::HoveredFileCancelled => {}
             winit::event::WindowEvent::Focused(is_focused) => {
+                self.cx.emit_window_event(window.entity, WindowEvent::WindowFocused(is_focused));
+
                 self.cx.0.window_has_focus = is_focused;
                 // #[cfg(feature = "accesskit")]
                 // accesskit.update_if_active(|| TreeUpdate {

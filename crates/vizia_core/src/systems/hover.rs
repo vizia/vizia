@@ -56,7 +56,7 @@ pub fn hover_system(cx: &mut Context, window_entity: Entity) {
         debug!(
             "Hover changed to {:?} parent: {:?}, view: {}, posx: {}, posy: {} width: {} height: {}",
             hovered,
-            cx.tree.get_parent(hovered),
+            cx.tree.get_layout_parent(hovered),
             cx.views.get(&hovered).map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")),
             cx.cache.get_posx(hovered),
             cx.cache.get_posy(hovered),
