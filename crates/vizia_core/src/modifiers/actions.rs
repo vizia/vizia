@@ -3,7 +3,7 @@ use std::any::TypeId;
 
 #[derive(Lens)]
 pub struct ModalModel {
-    pub tooltip_visible: bool,
+    pub tooltip_visible: (bool, bool),
     pub menu_visible: bool,
 }
 
@@ -15,14 +15,14 @@ pub enum ModalEvent {
 }
 
 impl Model for ModalModel {
-    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|modal_event, _| match modal_event {
             ModalEvent::ShowTooltip => {
-                self.tooltip_visible = true;
+                self.tooltip_visible = (true, true);
             }
 
             ModalEvent::HideTooltip => {
-                self.tooltip_visible = false;
+                self.tooltip_visible = (false, true);
             }
 
             ModalEvent::ShowMenu => {
@@ -35,9 +35,23 @@ impl Model for ModalModel {
         });
 
         event.map(|window_event, _| match window_event {
-            WindowEvent::MouseOver => self.tooltip_visible = true,
-            WindowEvent::MouseOut => self.tooltip_visible = false,
-            WindowEvent::PressDown { mouse: _ } => self.tooltip_visible = false,
+            WindowEvent::MouseOver => {
+                if !self.tooltip_visible.0 {
+                    self.tooltip_visible = (true, true);
+                }
+            }
+            WindowEvent::MouseOut => self.tooltip_visible = (false, true),
+            WindowEvent::FocusIn => {
+                if !self.tooltip_visible.0 {
+                    self.tooltip_visible = (true, false);
+                }
+            }
+            WindowEvent::FocusOut => self.tooltip_visible = (false, false),
+            WindowEvent::FocusVisibility(vis) if !(*vis) => self.tooltip_visible = (false, false),
+            WindowEvent::KeyDown(code, _) if *code == Code::Escape => {
+                self.tooltip_visible = (false, false)
+            }
+            WindowEvent::PressDown { mouse: _ } => self.tooltip_visible = (false, true),
             _ => {}
         });
     }
@@ -498,7 +512,7 @@ fn build_modal_model(cx: &mut Context, entity: Entity) {
         .is_none()
     {
         cx.with_current(entity, |cx| {
-            ModalModel { tooltip_visible: false, menu_visible: false }.build(cx);
+            ModalModel { tooltip_visible: (false, true), menu_visible: false }.build(cx);
         });
     }
 }
@@ -511,13 +525,16 @@ impl<V: View> ActionModifiers<V> for Handle<'_, V> {
 
         self.cx.with_current(entity, move |cx| {
             Binding::new(cx, ModalModel::tooltip_visible, move |cx, tooltip_visible| {
-                if tooltip_visible.get(cx) {
+                let tooltip_visible = tooltip_visible.get(cx);
+                if tooltip_visible.0 {
                     (content)(cx).on_build(|cx| {
-                        cx.play_animation(
-                            "tooltip_fade",
-                            Duration::from_millis(100),
-                            Duration::from_millis(500),
-                        )
+                        if tooltip_visible.1 {
+                            cx.play_animation(
+                                "tooltip_fade",
+                                Duration::from_millis(100),
+                                Duration::from_millis(500),
+                            )
+                        }
                     });
                 }
             });

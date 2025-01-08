@@ -1066,6 +1066,10 @@ tooltip arrow {
     background-color: #181818;
 }
 
+tooltip svg {
+    fill: #fafafa;
+}
+
 /* VIRTUAL LIST */
 
 virtual-list label.dark {

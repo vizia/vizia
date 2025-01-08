@@ -1,4 +1,7 @@
-use vizia::{icons::ICON_TRASH, prelude::*};
+use vizia::{
+    icons::{ICON_INFO_CIRCLE, ICON_TRASH},
+    prelude::*,
+};
 
 use crate::components::DemoRegion;
 
@@ -17,6 +20,24 @@ A tooltip displays supplemental information near its target view. Tooltips are t
                 Button::new(cx, |cx |Svg::new(cx, ICON_TRASH))
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Delete");
+                    }));
+            }, r#"IconButton::new(cx, ICON_TRASH)
+    .tooltip(|cx| Tooltip::new(cx, |cx|{
+        Label::new(cx, "Delete");
+    }));"#
+        );
+
+        Markdown::new(cx, "### Tooltip content");
+
+        DemoRegion::new(
+            cx,
+            |cx| {
+                Button::new(cx, |cx |Svg::new(cx, ICON_TRASH))
+                    .tooltip(|cx| Tooltip::new(cx, |cx|{
+                        HStack::new(cx, |cx|{
+                            Svg::new(cx, ICON_INFO_CIRCLE);
+                            Label::new(cx, "Delete");
+                        }).size(Auto).alignment(Alignment::Left);
                     }));
             }, r#"IconButton::new(cx, ICON_TRASH)
     .tooltip(|cx| Tooltip::new(cx, |cx|{

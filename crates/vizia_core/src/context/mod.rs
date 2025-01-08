@@ -359,6 +359,9 @@ impl Context {
         }
         self.set_focus_pseudo_classes(new_focus, true, focus_visible);
 
+        self.emit_custom(Event::new(WindowEvent::FocusVisibility(focus_visible)).target(old_focus));
+        self.emit_custom(Event::new(WindowEvent::FocusVisibility(focus_visible)).target(new_focus));
+
         self.needs_restyle(self.focused);
         self.needs_restyle(self.current);
         self.style.needs_access_update(self.focused);

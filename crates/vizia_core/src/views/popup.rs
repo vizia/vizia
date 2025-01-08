@@ -509,7 +509,13 @@ impl Arrow {
                     _ => (Stretch(1.0), Stretch(1.0)),
                 };
 
-                handle = handle.top(t).bottom(b).left(l).right(r);
+                handle = handle
+                    .top(t)
+                    .bottom(b)
+                    .left(l)
+                    .right(r)
+                    .position_type(PositionType::Absolute)
+                    .hoverable(false);
 
                 handle.bind(Popup::arrow_size, move |handle, arrow_size| {
                     let arrow_size = arrow_size.get(&handle).to_px().unwrap_or(8.0);

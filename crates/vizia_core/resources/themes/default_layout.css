@@ -830,13 +830,8 @@ textbox:disabled {
 /* TOOLTIP */
 
 tooltip {
-    position-type: absolute;
-    z-index: 110;
     size: auto;
-}
-
-tooltip arrow {
-    position-type: absolute;
+    max-width: 160px;
 }
 
 /* VIRTUAL LIST */

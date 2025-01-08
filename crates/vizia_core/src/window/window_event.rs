@@ -63,6 +63,10 @@ pub enum WindowEvent {
     FocusIn,
     // Emitted when an entity loses keyboard focus.
     FocusOut,
+    // Emitted when an entity's focus visibility has changed.
+    FocusVisibility(bool),
+    // Emitted when the window gains or loses focus
+    WindowFocused(bool),
     /// Emitted when a character is typed.
     CharInput(char),
     /// Emitted when a keyboard key is pressed.
