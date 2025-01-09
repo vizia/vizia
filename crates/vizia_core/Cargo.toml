@@ -38,7 +38,7 @@ indexmap = "2.4"
 qfilter = "0.2"
 # reqwest = { version = "0.11.9", features = ["blocking"] }
 web-time = "1.1"
-comrak = {version = "0.31", default-features = false }
+comrak = { version = "0.33", default-features = false }
 open = "5.2"
 sha2 = "0.10"
 
