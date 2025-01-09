@@ -37,8 +37,8 @@ fn main() -> Result<(), ApplicationError> {
                 .class("example_5");
         })
         .font_size(40.0)
-        .row_between(Pixels(10.0))
-        .child_space(Pixels(10.0));
+        .gap(Pixels(10.0))
+        .padding(Pixels(10.0));
     })
     .run()
 }
