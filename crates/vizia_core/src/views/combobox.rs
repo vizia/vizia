@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 
 use crate::prelude::*;
 
+/// A ComboBox view which combines a textbox with a picklist, allowing users to filter to only the options matching a query.
 #[derive(Lens)]
 pub struct ComboBox<
     L1: Lens<Target = Vec<T>>,
