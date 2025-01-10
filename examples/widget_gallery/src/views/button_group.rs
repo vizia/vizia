@@ -41,7 +41,6 @@ Buttons can be grouped by wrapping them in a ButtonGroup view.
                     Button::new(cx, |cx| Label::new(cx, "Two"));
                     Button::new(cx, |cx| Label::new(cx, "Three"));
                 })
-                .width(Pixels(100.0))
                 .vertical(true);
             },
             r#"ButtonGroup::new(cx, |cx|{

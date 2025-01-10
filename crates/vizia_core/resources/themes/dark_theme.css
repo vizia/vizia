@@ -315,7 +315,7 @@ combobox > textbox > label.placeholder {
     color: #fafafa;
 }
 
-combobox .list label {
+combobox list list-item {
     cursor: hand;
 }
 
@@ -523,6 +523,53 @@ notification {
 }
 
 /* PICKLIST */
+
+picklist {
+    corner-radius: 4px;
+}
+
+picklist:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef;
+    outline-offset: 3px;
+}
+
+picklist list list-item {
+    cursor: hand;
+}
+
+picklist list.selectable list-item .focus-indicator {
+    width: 2px;
+    position-type: absolute;
+    background-color: #51afef;
+    visibility: hidden;
+}
+
+picklist list.selectable list-item:focus-visible .focus-indicator {
+    visibility: visible;
+}
+
+picklist list.selectable list-item:checked {
+    background-color: transparent;
+}
+
+picklist list.selectable list-item .checkmark {
+    fill: #51afef;
+    visibility: hidden;
+}
+
+picklist list.selectable list-item:checked .checkmark {
+    visibility: visible;
+}
+
+picklist list.selectable list-item:hover {
+    background-color: #404040;
+}
+
+picklist list.selectable list-item:focus-visible {
+    background-color: #404040;
+    outline-color: transparent;
+}
 
 /* POPUP */
 
