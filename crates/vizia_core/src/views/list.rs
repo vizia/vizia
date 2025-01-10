@@ -22,7 +22,7 @@ pub enum ListEvent {
     ClearSelection,
 }
 
-/// A view for creating a list of items from a binding to a `Vec<T>`
+/// A view for creating a list of items from a binding to an iteratable list.
 #[derive(Lens)]
 pub struct List {
     list_len: usize,

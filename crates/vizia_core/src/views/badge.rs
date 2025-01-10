@@ -16,6 +16,7 @@ pub enum BadgePlacement {
 
 impl_res_simple!(BadgePlacement);
 
+/// A Badge view for showing notifications, counts, or status information.
 #[derive(Lens)]
 pub struct Badge {
     placement: Option<BadgePlacement>,

@@ -7,6 +7,7 @@ use comrak::{parse_document, Arena, Options};
 
 use crate::prelude::*;
 
+// A view which parses and displays markdown as rich text.
 pub struct Markdown {}
 
 impl Markdown {
