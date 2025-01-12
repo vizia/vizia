@@ -175,8 +175,14 @@ impl<'a> EventContext<'a> {
         }
     }
 
+    /// Returns a reference to the current view associated with the event context.
     pub fn get_view<V: View>(&self) -> Option<&V> {
         self.views.get(&self.current).and_then(|view| view.downcast_ref::<V>())
+    }
+
+    /// Returns a reference to the specified view by entity.
+    pub fn get_view_with<V: View>(&self, entity: Entity) -> Option<&V> {
+        self.views.get(&entity).and_then(|view| view.downcast_ref::<V>())
     }
 
     pub fn close_window(&mut self) {
