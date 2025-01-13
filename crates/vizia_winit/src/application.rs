@@ -1,3 +1,5 @@
+#[cfg(target_os = "windows")]
+use crate::window::set_cloak;
 use crate::{
     convert::{winit_key_code_to_code, winit_key_to_key},
     window::{WinState, Window},
@@ -24,11 +26,6 @@ use winit::{
     window::{CursorIcon, CustomCursor, WindowAttributes, WindowId, WindowLevel},
 };
 
-#[cfg(target_os = "windows")]
-use winit::{
-    platform::windows::WindowAttributesExtWindows,
-    raw_window_handle::{HasWindowHandle, RawWindowHandle},
-};
 // #[cfg(all(
 //     feature = "clipboard",
 //     feature = "wayland",
@@ -161,41 +158,8 @@ impl Application {
         #[allow(unused_mut)]
         let mut window_attributes = apply_window_description(window_description);
 
-        let window = {
-            #[cfg(target_os = "windows")]
-            {
-                if let Some(owner) = owner {
-                    let RawWindowHandle::Win32(handle) = owner.window_handle().unwrap().as_raw()
-                    else {
-                        unreachable!();
-                    };
-                    window_attributes = window_attributes.with_owner_window(handle.hwnd.get());
-                }
-
-                // The current version of winit spawns new windows with unspecified position/size.
-                // As a workaround, we'll hide the window during creation and reveal it afterward.
-                let visible = window_attributes.visible;
-                let window_attributes = window_attributes.with_visible(false);
-
-                let window = event_loop.create_window(window_attributes)?;
-
-                // Another problem is the white background that briefly flashes on window creation.
-                // To avoid this one we must wait until the first draw is complete before revealing
-                // our window. The visible property won't work in this case as it prevents drawing.
-                // Instead we use the "cloak" attribute, which hides the window without that issue.
-                set_cloak(&window, true);
-                window.set_visible(visible);
-                window
-            }
-
-            #[cfg(not(target_os = "windows"))]
-            {
-                event_loop.create_window(window_attributes)?
-            }
-        };
-
-        let window = Arc::new(window);
-        let window_state = WinState::new(event_loop, window.clone(), window_entity)?;
+        let window_state = WinState::new(event_loop, window_entity, window_attributes, owner)?;
+        let window = window_state.window.clone();
 
         let window_id = window_state.window.id();
         self.windows.insert(window_id, window_state);
@@ -282,60 +246,72 @@ impl ApplicationHandler<UserEvent> for Application {
     }
 
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        let main_window: Arc<winit::window::Window> = self
-            .create_window(event_loop, Entity::root(), &self.window_description.clone(), None)
-            .expect("failed to create initial window");
-        let custom_cursors = Arc::new(load_default_cursors(event_loop));
-        self.cx.add_main_window(Entity::root(), &self.window_description, 1.0);
-        self.cx.add_window(Window {
-            window: Some(main_window.clone()),
-            on_close: None,
-            on_create: None,
-            should_close: false,
-            custom_cursors: custom_cursors.clone(),
-        });
+        if self.windows.is_empty() {
+            // Create the main window
+            let main_window: Arc<winit::window::Window> = self
+                .create_window(event_loop, Entity::root(), &self.window_description.clone(), None)
+                .expect("failed to create initial window");
+            let custom_cursors = Arc::new(load_default_cursors(event_loop));
+            self.cx.add_main_window(Entity::root(), &self.window_description, 1.0);
+            self.cx.add_window(Window {
+                window: Some(main_window.clone()),
+                on_close: None,
+                on_create: None,
+                should_close: false,
+                custom_cursors: custom_cursors.clone(),
+            });
 
-        self.cx.0.windows.insert(
-            Entity::root(),
-            WindowState {
-                window_description: self.window_description.clone(),
-                ..Default::default()
-            },
-        );
+            self.cx.0.windows.insert(
+                Entity::root(),
+                WindowState {
+                    window_description: self.window_description.clone(),
+                    ..Default::default()
+                },
+            );
 
-        // set current system theme if available
-        if let Some(theme) = main_window.theme() {
-            let theme = match theme {
-                winit::window::Theme::Light => ThemeMode::LightMode,
-                winit::window::Theme::Dark => ThemeMode::DarkMode,
-            };
-            self.cx.emit_origin(WindowEvent::ThemeChanged(theme));
-        }
-
-        self.cx.0.remove_user_themes();
-
-        for (window_entity, window_state) in self.cx.0.windows.clone().into_iter() {
-            if window_entity == Entity::root() {
-                continue;
+            // set current system theme if available
+            if let Some(theme) = main_window.theme() {
+                let theme = match theme {
+                    winit::window::Theme::Light => ThemeMode::LightMode,
+                    winit::window::Theme::Dark => ThemeMode::DarkMode,
+                };
+                self.cx.emit_origin(WindowEvent::ThemeChanged(theme));
             }
-            let owner = window_state.owner.and_then(|entity| {
-                self.window_ids
-                    .get(&entity)
-                    .and_then(|id| self.windows.get(id).map(|ws| ws.window.clone()))
-            });
 
-            let window = self
-                .create_window(event_loop, window_entity, &window_state.window_description, owner)
-                .expect("Failed to create window");
-            self.cx.add_main_window(window_entity, &window_state.window_description, 1.0);
-            self.cx.mutate_window(window_entity, |cx, win: &mut Window| {
-                win.window = Some(window.clone());
-                win.custom_cursors = custom_cursors.clone();
-                if let Some(callback) = &win.on_create {
-                    (callback)(&mut EventContext::new_with_current(cx.context(), window_entity));
+            self.cx.0.remove_user_themes();
+
+            // Create any subwindows
+            for (window_entity, window_state) in self.cx.0.windows.clone().into_iter() {
+                if window_entity == Entity::root() {
+                    continue;
                 }
-            });
-            self.cx.needs_refresh(window_entity);
+                let owner = window_state.owner.and_then(|entity| {
+                    self.window_ids
+                        .get(&entity)
+                        .and_then(|id| self.windows.get(id).map(|ws| ws.window.clone()))
+                });
+
+                let window = self
+                    .create_window(
+                        event_loop,
+                        window_entity,
+                        &window_state.window_description,
+                        owner,
+                    )
+                    .expect("Failed to create window");
+                self.cx.add_main_window(window_entity, &window_state.window_description, 1.0);
+                self.cx.mutate_window(window_entity, |cx, win: &mut Window| {
+                    win.window = Some(window.clone());
+                    win.custom_cursors = custom_cursors.clone();
+                    if let Some(callback) = &win.on_create {
+                        (callback)(&mut EventContext::new_with_current(
+                            cx.context(),
+                            window_entity,
+                        ));
+                    }
+                });
+                self.cx.needs_refresh(window_entity);
+            }
         }
     }
 
@@ -829,35 +805,6 @@ fn apply_window_description(description: &WindowDescription) -> WindowAttributes
             winit::window::WindowButtons::from_bits(description.enabled_window_buttons.bits())
                 .unwrap(),
         )
-}
-
-/// Cloaks the window such that it is not visible to the user, but will still be composited.
-///
-/// <https://learn.microsoft.com/en-us/windows/win32/api/dwmapi/ne-dwmapi-dwmwindowattribute>
-///
-#[cfg(target_os = "windows")]
-fn set_cloak(window: &winit::window::Window, state: bool) -> bool {
-    use windows_sys::Win32::{
-        Foundation::{BOOL, FALSE, HWND, TRUE},
-        Graphics::Dwm::{DwmSetWindowAttribute, DWMWA_CLOAK},
-    };
-
-    let RawWindowHandle::Win32(handle) = window.window_handle().unwrap().as_raw() else {
-        unreachable!();
-    };
-
-    let value = if state { TRUE } else { FALSE };
-
-    let result = unsafe {
-        DwmSetWindowAttribute(
-            handle.hwnd.get() as HWND,
-            DWMWA_CLOAK as u32,
-            std::ptr::from_ref(&value).cast(),
-            std::mem::size_of::<BOOL>() as u32,
-        )
-    };
-
-    result == 0 // success
 }
 
 #[allow(unused_variables)]

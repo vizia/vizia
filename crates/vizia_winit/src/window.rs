@@ -3,14 +3,15 @@ use glutin::context::GlProfile;
 use vizia_core::context::TreeProps;
 #[cfg(target_os = "windows")]
 use winit::platform::windows::WindowExtWindows;
+#[cfg(target_os = "windows")]
+use winit::{platform::windows::WindowAttributesExtWindows, raw_window_handle::RawWindowHandle};
 
+use crate::convert::cursor_icon_to_cursor_icon;
 use hashbrown::HashMap;
 use std::error::Error;
 use std::num::NonZeroU32;
 use std::{ffi::CString, sync::Arc};
 use winit::raw_window_handle::HasWindowHandle;
-
-use crate::convert::cursor_icon_to_cursor_icon;
 
 use gl_rs as gl;
 use glutin::config::Config;
@@ -36,7 +37,7 @@ use skia_safe::{
 
 use vizia_core::prelude::*;
 use winit::event_loop::ActiveEventLoop;
-use winit::window::{CursorGrabMode, CursorIcon, CustomCursor, WindowLevel};
+use winit::window::{CursorGrabMode, CursorIcon, CustomCursor, WindowAttributes, WindowLevel};
 use winit::{dpi::*, window::WindowId};
 
 pub struct WinState {
@@ -63,33 +64,46 @@ impl Drop for WinState {
 impl WinState {
     pub fn new(
         event_loop: &ActiveEventLoop,
-        window: Arc<winit::window::Window>,
         entity: Entity,
+        #[allow(unused_mut)] mut window_attributes: WindowAttributes,
+        #[allow(unused_variables)] owner: Option<Arc<winit::window::Window>>,
     ) -> Result<Self, Box<dyn Error>> {
+        #[cfg(target_os = "windows")]
+        let (window, gl_config) = {
+            if let Some(owner) = owner {
+                let RawWindowHandle::Win32(handle) = owner.window_handle().unwrap().as_raw() else {
+                    unreachable!();
+                };
+                window_attributes = window_attributes.with_owner_window(handle.hwnd.get());
+            }
+
+            // The current version of winit spawns new windows with unspecified position/size.
+            // As a workaround, we'll hide the window during creation and reveal it afterward.
+            let visible = window_attributes.visible;
+            let window_attributes = window_attributes.with_visible(false);
+
+            let (window, config) = build_window(event_loop, window_attributes);
+
+            let window = window.expect("Could not create window with OpenGL context");
+            // Another problem is the white background that briefly flashes on window creation.
+            // To avoid this one we must wait until the first draw is complete before revealing
+            // our window. The visible property won't work in this case as it prevents drawing.
+            // Instead we use the "cloak" attribute, which hides the window without that issue.
+            set_cloak(&window, true);
+            window.set_visible(visible);
+
+            (window, config)
+        };
+
+        #[cfg(not(target_os = "windows"))]
+        let (window, gl_config) = {
+            let (window, config) = build_window(event_loop, window_attributes);
+            let window = window.expect("Could not create window with OpenGL context");
+            (window, config)
+        };
+
         window.set_ime_allowed(true);
         window.set_visible(true);
-
-        let template = ConfigTemplateBuilder::new().with_alpha_size(8).with_transparency(true);
-        let display_builder = DisplayBuilder::new();
-
-        let (_, gl_config) = display_builder
-            .build(event_loop, template, |configs| {
-                // Find the config with the maximum number of samples, so our triangle will
-                // be smooth.
-                configs
-                    .reduce(|accum, config| {
-                        let transparency_check = config.supports_transparency().unwrap_or(false)
-                            & !accum.supports_transparency().unwrap_or(false);
-
-                        if transparency_check || config.num_samples() < accum.num_samples() {
-                            config
-                        } else {
-                            accum
-                        }
-                    })
-                    .unwrap()
-            })
-            .unwrap();
 
         let raw_window_handle = window.window_handle().unwrap().as_raw();
 
@@ -183,7 +197,7 @@ impl WinState {
             id: window.id(),
             gr_context,
             gl_surface,
-            window,
+            window: Arc::new(window),
             surface,
             dirty_surface,
             should_close: false,
@@ -244,6 +258,62 @@ impl WinState {
         self.gr_context.flush_and_submit();
         self.gl_surface.swap_buffers(&self.gl_context).expect("Failed to swap buffers");
     }
+}
+
+fn build_window(
+    event_loop: &ActiveEventLoop,
+    window_attributes: WindowAttributes,
+) -> (Option<winit::window::Window>, Config) {
+    let template = ConfigTemplateBuilder::new().with_alpha_size(8).with_transparency(true);
+    let display_builder = DisplayBuilder::new().with_window_attributes(Some(window_attributes));
+
+    display_builder
+        .build(event_loop, template, |configs| {
+            // Find the config with the maximum number of samples, so our triangle will
+            // be smooth.
+            configs
+                .reduce(|accum, config| {
+                    let transparency_check = config.supports_transparency().unwrap_or(false)
+                        & !accum.supports_transparency().unwrap_or(false);
+
+                    if transparency_check || config.num_samples() < accum.num_samples() {
+                        config
+                    } else {
+                        accum
+                    }
+                })
+                .unwrap()
+        })
+        .unwrap()
+}
+
+/// Cloaks the window such that it is not visible to the user, but will still be composited.
+///
+/// <https://learn.microsoft.com/en-us/windows/win32/api/dwmapi/ne-dwmapi-dwmwindowattribute>
+///
+#[cfg(target_os = "windows")]
+pub fn set_cloak(window: &winit::window::Window, state: bool) -> bool {
+    use windows_sys::Win32::{
+        Foundation::{BOOL, FALSE, HWND, TRUE},
+        Graphics::Dwm::{DwmSetWindowAttribute, DWMWA_CLOAK},
+    };
+
+    let RawWindowHandle::Win32(handle) = window.window_handle().unwrap().as_raw() else {
+        unreachable!();
+    };
+
+    let value = if state { TRUE } else { FALSE };
+
+    let result = unsafe {
+        DwmSetWindowAttribute(
+            handle.hwnd.get() as HWND,
+            DWMWA_CLOAK as u32,
+            std::ptr::from_ref(&value).cast(),
+            std::mem::size_of::<BOOL>() as u32,
+        )
+    };
+
+    result == 0 // success
 }
 
 pub fn create_surface(
