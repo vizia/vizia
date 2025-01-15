@@ -99,7 +99,7 @@ fn main() -> Result<(), ApplicationError> {
                 Label::new(cx, "Duration:");
                 Slider::new(cx, TimerData::total_time.map(|v| v.as_secs_f32()))
                     .range(0.0..30.0)
-                    .on_changing(|cx, v| cx.emit(TimerEvent::SetDuration(v)));
+                    .on_change(|cx, v| cx.emit(TimerEvent::SetDuration(v)));
             });
 
             Button::new(cx, |cx| Label::new(cx, "Reset")).on_press(|cx| cx.emit(TimerEvent::Reset));

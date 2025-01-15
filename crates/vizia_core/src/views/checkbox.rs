@@ -205,6 +205,7 @@ impl Checkbox {
             .navigable(true)
     }
 
+    /// Creates a new checkbox in an intermediate state.
     pub fn intermediate(
         cx: &mut Context,
         checked: impl Lens<Target = bool>,

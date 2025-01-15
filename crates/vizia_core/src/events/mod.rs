@@ -84,6 +84,7 @@
 //! }
 //! ```
 
+/// Dispatches events to views and models.
 pub mod event_manager;
 pub use event_manager::EventManager;
 

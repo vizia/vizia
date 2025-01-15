@@ -7,10 +7,11 @@ use comrak::{parse_document, Arena, Options};
 
 use crate::prelude::*;
 
-// A view which parses and displays markdown as rich text.
+/// A view which parses and displays markdown as rich text.
 pub struct Markdown {}
 
 impl Markdown {
+    /// Create a new [Markdown] view.
     pub fn new<'a>(cx: &'a mut Context, document: &str) -> Handle<'a, Self> {
         Self {}
             .build(cx, |cx| {
@@ -198,30 +199,5 @@ fn parse_node<'a>(
         }
 
         _ => {}
-    }
-}
-
-pub struct TextSpan {}
-
-impl TextSpan {
-    pub fn new<'a>(
-        cx: &'a mut Context,
-        text: &str,
-        children: impl Fn(&mut Context),
-    ) -> Handle<'a, Self> {
-        Self {}
-            .build(cx, |cx| {
-                cx.style.text_span.insert(cx.current(), true);
-                children(cx);
-            })
-            .text(text)
-            .display(Display::None)
-            .pointer_events(PointerEvents::None)
-    }
-}
-
-impl View for TextSpan {
-    fn element(&self) -> Option<&'static str> {
-        Some("text-span")
     }
 }

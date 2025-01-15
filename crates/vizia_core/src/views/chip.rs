@@ -51,13 +51,17 @@ impl View for Chip {
 /// Used in conjunction with the `variant` modifier for selecting the style variant of a chip.
 #[derive(Debug, Clone, Copy, Data, PartialEq, Eq)]
 pub enum ChipVariant {
+    /// A filled chip.
     Filled,
+    /// A chip with no fill and just a border.
     Outline,
 }
 
 impl_res_simple!(ChipVariant);
 
 impl Handle<'_, Chip> {
+    /// Set the callback triggered when the close button of the chip is pressed.
+    /// The chip close button is not displayed by default. Setting this callback causes the close button to be displayed.
     pub fn on_close(self, callback: impl 'static + Fn(&mut EventContext) + Send + Sync) -> Self {
         self.modify(|chip: &mut Chip| {
             chip.on_close = Some(Arc::new(callback));

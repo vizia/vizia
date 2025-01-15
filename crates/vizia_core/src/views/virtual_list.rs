@@ -2,13 +2,14 @@ use std::ops::{Deref, Range};
 
 use crate::prelude::*;
 
+/// A view for creating a list of items from a binding to an iteratable list. Rather than creating a view for each item, items are recycled in the list.
 #[derive(Lens)]
 pub struct VirtualList {
     scroll_to_cursor: bool,
     on_change: Option<Box<dyn Fn(&mut EventContext, Range<usize>)>>,
 }
 
-pub enum VirtualListEvent {
+pub(crate) enum VirtualListEvent {
     SetScrollY(f32),
 }
 
@@ -88,6 +89,7 @@ impl Model for VirtualListData {
 }
 
 impl VirtualList {
+    /// Creates a new [VirtualList] view.
     pub fn new<V: View, L: Lens, T: 'static>(
         cx: &mut Context,
         list: L,
@@ -107,6 +109,7 @@ impl VirtualList {
         )
     }
 
+    /// Creates a new [VirtualList] view with a binding to the given lens and a template for constructing the list items.
     pub fn new_generic<V: View, L: Lens, T: 'static>(
         cx: &mut Context,
         list: L,
@@ -184,6 +187,7 @@ impl View for VirtualList {
 }
 
 impl Handle<'_, VirtualList> {
+    /// Sets whether the scrollbar should move to the cursor when pressed.
     pub fn scroll_to_cursor(self, flag: bool) -> Self {
         self.modify(|virtual_list: &mut VirtualList| {
             virtual_list.scroll_to_cursor = flag;

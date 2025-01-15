@@ -3,14 +3,22 @@ use crate::prelude::*;
 /// Enum which represents the placement of a badge on its parent.
 #[derive(Default, Debug, Clone, Copy, Data, PartialEq)]
 pub enum BadgePlacement {
+    /// The badge should be placed at the top-left of the view.
     TopLeft,
+    /// The badge should be placed at the top of the view.
     Top,
+    /// The badge should be placed at the top-right of the view.
     #[default]
     TopRight,
+    /// The badge should be placed at the left of the view.
     Left,
+    /// The badge should be placed at the right of the view.
     Right,
+    /// The badge should be placed at the bottom-left of the view.
     BottomLeft,
+    /// The badge should be placed at the bottom of the view.
     Bottom,
+    /// The badge should be placed at the bottom-right of the view.
     BottomRight,
 }
 

@@ -5,6 +5,7 @@ use crate::prelude::*;
 
 pub(crate) const SCROLL_SENSITIVITY: f32 = 20.0;
 
+/// Events for setting the properties of a scroll view.
 pub enum ScrollEvent {
     /// Sets the progress of scroll position between 0 and 1 for the x axis
     SetX(f32),
@@ -18,6 +19,7 @@ pub enum ScrollEvent {
     ChildGeo(f32, f32),
 }
 
+/// A container a view which allows the user to scroll any overflowed content.
 #[derive(Lens, Data, Clone)]
 pub struct ScrollView {
     /// Progress of scroll position between 0 and 1 for the x axis
@@ -37,14 +39,16 @@ pub struct ScrollView {
     pub container_width: f32,
     /// Height of the outer `ScrollView` which wraps the inner (typically smaller than inner_height)
     pub container_height: f32,
-
+    /// Whether the scrollbar should move to the cursor when pressed.
     pub scroll_to_cursor: bool,
-
+    /// Whether the horizontal scrollbar should be visible.
     pub show_horizontal_scrollbar: bool,
+    /// Whether the vertical scrollbar should be visible.
     pub show_vertical_scrollbar: bool,
 }
 
 impl ScrollView {
+    /// Creates a new [ScrollView].
     pub fn new<F>(cx: &mut Context, content: F) -> Handle<Self>
     where
         F: 'static + FnOnce(&mut Context),
@@ -289,10 +293,12 @@ impl Handle<'_, ScrollView> {
         self.modify(|scrollview: &mut ScrollView| scrollview.on_scroll = Some(Arc::new(callback)))
     }
 
+    /// Sets whether the scrollbar should move to the cursor when pressed.
     pub fn scroll_to_cursor(self, scroll_to_cursor: bool) -> Self {
         self.modify(|scrollview: &mut ScrollView| scrollview.scroll_to_cursor = scroll_to_cursor)
     }
 
+    /// Set the horizontal scroll position of the [ScrollView]. Accepts a value or lens to an 'f32' between 0 and 1.
     pub fn scroll_x(self, scrollx: impl Res<f32>) -> Self {
         self.bind(scrollx, |handle, scrollx| {
             let sx = scrollx.get(&handle);
@@ -300,6 +306,7 @@ impl Handle<'_, ScrollView> {
         })
     }
 
+    /// Set the vertical scroll position of the [ScrollView]. Accepts a value or lens to an 'f32' between 0 and 1.
     pub fn scroll_y(self, scrollx: impl Res<f32>) -> Self {
         self.bind(scrollx, |handle, scrolly| {
             let sy = scrolly.get(&handle);
@@ -307,6 +314,7 @@ impl Handle<'_, ScrollView> {
         })
     }
 
+    /// Sets whether the horizontal scrollbar should be visible.
     pub fn show_horizontal_scrollbar(self, flag: impl Res<bool>) -> Self {
         self.bind(flag, |handle, show_scrollbar| {
             let s = show_scrollbar.get(&handle);
@@ -314,6 +322,7 @@ impl Handle<'_, ScrollView> {
         })
     }
 
+    /// Sets whether the vertical scrollbar should be visible.
     pub fn show_vertical_scrollbar(self, flag: impl Res<bool>) -> Self {
         self.bind(flag, |handle, show_scrollbar| {
             let s = show_scrollbar.get(&handle);

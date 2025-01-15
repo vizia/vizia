@@ -6,8 +6,11 @@ use vizia_style::CursorIcon;
 use vizia_window::{WindowPosition, WindowSize};
 
 #[derive(Debug, Clone)]
+/// Data associated with a drop event.
 pub enum DropData {
+    /// Path to a dropped file.
     File(PathBuf),
+    ///  Entity ID of a dropped entity.
     Id(Entity),
 }
 
@@ -41,10 +44,12 @@ pub enum WindowEvent {
     MouseUp(MouseButton),
     /// Emitted when the primary mouse button or trigger key is pressed and then released on a view
     Press {
+        /// Whether the press event was triggered by the mouse.
         mouse: bool,
     },
     /// Emitted when the primary mouse button or trigger key is pressed on a view
     PressDown {
+        /// Whether the press down event was triggered by the mouse.
         mouse: bool,
     },
     /// Emitted when the mouse cursor is moved
@@ -59,13 +64,13 @@ pub enum WindowEvent {
     MouseEnter,
     /// Emitted when the mouse cursor leaves an entity.
     MouseLeave,
-    // Emitted when an entity gains keyboard focus.
+    /// Emitted when an entity gains keyboard focus.
     FocusIn,
-    // Emitted when an entity loses keyboard focus.
+    /// Emitted when an entity loses keyboard focus.
     FocusOut,
-    // Emitted when an entity's focus visibility has changed.
+    /// Emitted when an entity's focus visibility has changed.
     FocusVisibility(bool),
-    // Emitted when the window gains or loses focus
+    /// Emitted when the window gains or loses focus
     WindowFocused(bool),
     /// Emitted when a character is typed.
     CharInput(char),
@@ -122,14 +127,15 @@ pub enum WindowEvent {
     FocusPrev,
     /// Prints the debug message to the console.
     Debug(String),
+    /// Represents an action requested by an accessibility technology.
     ActionRequest(accesskit::ActionRequest),
     /// Reloads all application stylesheets.
     ReloadStyles,
-
+    /// Enables or disabled mouse and keyboard input to the window.
     SetEnabled(bool),
-
+    /// Puts the window in a drag state.
     DragWindow,
 
-    // ToDo: Move this
+    /// Emitted when the window is destroyed.
     Destroyed,
 }

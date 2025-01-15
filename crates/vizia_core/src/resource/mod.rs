@@ -26,10 +26,14 @@ pub(crate) struct StoredImage {
     pub observers: HashSet<Entity>,
 }
 
+/// An image should be stored in the resource manager.
 #[derive(Copy, Clone, PartialEq)]
 pub enum ImageRetentionPolicy {
+    ///  The image should live for the entire duration of the application.
     Forever,
+    /// The image should be dropped when not used for one frame.
     DropWhenUnusedForOneFrame,
+    /// The image should be dropped when no views are using the image.
     DropWhenNoObservers,
 }
 

@@ -62,10 +62,11 @@ type Models = HashMap<Entity, ModelDataStore>;
 type Bindings = HashMap<Entity, Box<dyn BindingHandler>>;
 
 thread_local! {
+    /// ID manager for lens map functions.
     pub static MAP_MANAGER: RefCell<IdManager<MapId>> = RefCell::new(IdManager::new());
-    // Store of mapping functions used for lens maps.
+    /// Store of mapping functions used for lens maps.
     pub static MAPS: RefCell<HashMap<MapId, (Entity, Box<dyn Any>)>> = RefCell::new(HashMap::new());
-    // The 'current' entity which is used for storing lens map mapping functions as per above.
+    /// The 'current' entity which is used for storing lens map mapping functions as per above.
     pub static CURRENT: RefCell<Entity> = RefCell::new(Entity::root());
 }
 
@@ -258,6 +259,7 @@ impl Context {
         self.data::<Environment>().unwrap()
     }
 
+    /// Returns the entity id of the  parent window to the current view.
     pub fn parent_window(&self) -> Entity {
         self.tree.get_parent_window(self.current).unwrap_or(Entity::root())
     }
@@ -930,11 +932,13 @@ pub trait DataContext {
     /// Get model/view data from the context. Returns `None` if the data does not exist.
     fn data<T: 'static>(&self) -> Option<&T>;
 
-    fn as_context(&self) -> Option<LocalizationContext<'_>> {
+    /// Convert the current context into a [LocalizationContext].
+    fn localization_context(&self) -> Option<LocalizationContext<'_>> {
         None
     }
 }
 
+/// A trait for any Context-like object that lets you emit events.
 pub trait EmitContext {
     /// Send an event containing the provided message up the tree from the current entity.
     ///
@@ -1073,7 +1077,7 @@ impl DataContext for Context {
         None
     }
 
-    fn as_context(&self) -> Option<LocalizationContext<'_>> {
+    fn localization_context(&self) -> Option<LocalizationContext<'_>> {
         Some(LocalizationContext::from_context(self))
     }
 }

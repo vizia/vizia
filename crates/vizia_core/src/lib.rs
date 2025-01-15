@@ -1,9 +1,12 @@
+//! Vizia
+
 #![allow(clippy::type_complexity)]
 // To allow a match syntax in event handlers with one event variant
 #![allow(clippy::single_match)]
 // To allow enum names with the same prefix
 #![allow(clippy::enum_variant_names)]
 #![allow(clippy::only_used_in_recursion)]
+// #![warn(missing_docs)]
 
 extern crate self as vizia;
 
@@ -28,6 +31,7 @@ pub(crate) mod systems;
 pub(crate) mod text;
 #[doc(hidden)]
 pub mod tree;
+/// Helper utilities
 pub mod util;
 pub mod view;
 pub mod views;

@@ -20,7 +20,8 @@ pub struct ResourceContext<'a> {
 }
 
 impl<'a> ResourceContext<'a> {
-    pub fn new(cx: &'a mut Context) -> Self {
+    /// Creates a new [ResourceContext].
+    pub(crate) fn new(cx: &'a mut Context) -> Self {
         Self {
             current: cx.current,
             event_proxy: &cx.event_proxy,
@@ -30,6 +31,7 @@ impl<'a> ResourceContext<'a> {
         }
     }
 
+    /// Executes the given closure in a spawned thread.
     pub fn spawn<F>(&self, target: F)
     where
         F: 'static + Send + FnOnce(&mut ContextProxy),
@@ -42,6 +44,7 @@ impl<'a> ResourceContext<'a> {
         std::thread::spawn(move || target(&mut cxp));
     }
 
+    /// Loads the provided image into the resource manager.
     pub fn load_image(
         &mut self,
         path: String,

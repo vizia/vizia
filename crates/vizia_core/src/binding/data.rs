@@ -7,6 +7,7 @@ use crate::prelude::*;
 /// A trait for fast comparisons of data. Implemented by any type which can be bound to,
 /// i.e. can be cached and compared against previous versions.
 pub trait Data: 'static + Clone {
+    /// A method which determines whether two pieces of data are the same.
     fn same(&self, other: &Self) -> bool;
 }
 

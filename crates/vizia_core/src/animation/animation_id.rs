@@ -11,7 +11,9 @@ pub struct Animation(u64);
 
 impl_generational_id!(Animation);
 
+/// Trait for getting the animation id From an [Animation] or an animation name.
 pub trait AnimId {
+    /// Returns the animation associated with the id.
     fn get(&self, cx: &EventContext) -> Option<Animation>;
 }
 

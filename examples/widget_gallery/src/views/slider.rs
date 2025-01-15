@@ -35,7 +35,7 @@ pub fn slider(cx: &mut Context) {
             cx,
             |cx| {
                 Slider::new(cx, SliderData::value)
-                    .on_changing(|cx, value| cx.emit(SliderEvent::SetValue(value)));
+                    .on_change(|cx, value| cx.emit(SliderEvent::SetValue(value)));
             },
             r#"Slider::new(cx, SliderData::value)
     .on_changing(|cx, value| cx.emit(SliderEvent::SetValue(value)));"#,

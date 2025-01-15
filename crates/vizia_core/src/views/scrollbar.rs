@@ -1,6 +1,7 @@
 use crate::context::TreeProps;
 use crate::prelude::*;
 
+/// A view which represents a bar that can be dragged to manipulate a scrollview.
 pub struct Scrollbar<L1> {
     value: L1,
     orientation: Orientation,
@@ -18,6 +19,7 @@ enum ScrollBarEvent {
 }
 
 impl<L1: Lens<Target = f32>> Scrollbar<L1> {
+    /// Create a new [Scrollbar] view.
     pub fn new<F, L2: Lens<Target = f32>>(
         cx: &mut Context,
         value: L1,
@@ -239,6 +241,7 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
 }
 
 impl<L1: 'static + Lens<Target = f32>> Handle<'_, Scrollbar<L1>> {
+    /// Sets whether the scrollbar should move to the cursor when pressed.
     pub fn scroll_to_cursor(mut self, scroll_to_cursor: impl Res<bool>) -> Self {
         let entity = self.entity();
         scroll_to_cursor.set_or_bind(self.context(), entity, |cx, val| {

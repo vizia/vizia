@@ -138,9 +138,13 @@ impl View for Button {
 /// Used in conjunction with the [`variant`](ButtonModifiers::variant) modifier for selecting the style variant of a button or button group.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ButtonVariant {
+    /// A normal button.
     Normal,
+    /// A button with an accent color.
     Accent,
+    /// A button with just a border.
     Outline,
+    /// A button with just text.
     Text,
 }
 
@@ -198,6 +202,7 @@ impl ButtonModifiers for Handle<'_, Button> {
     }
 }
 
+/// A view which represents a group of buttons.
 pub struct ButtonGroup {}
 
 impl ButtonGroup {
@@ -232,6 +237,7 @@ impl View for ButtonGroup {
 }
 
 impl Handle<'_, ButtonGroup> {
+    /// Sets whether the button group is in vertical orientation.
     pub fn vertical(self, is_vertical: impl Res<bool>) -> Self {
         self.toggle_class("vertical", is_vertical)
     }

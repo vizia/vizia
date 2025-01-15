@@ -1,3 +1,4 @@
+#![allow(unused)]
 use crate::prelude::*;
 
 use vizia_storage::{SparseSetGeneric, SparseSetIndex};

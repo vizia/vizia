@@ -226,7 +226,12 @@ pub trait LayoutModifiers: internal::Modifiable {
         SystemFlags::RELAYOUT
     );
 
-    modifier!(alignment, Alignment, SystemFlags::RELAYOUT);
+    modifier!(
+        /// Set the alignment of the view.
+        alignment,
+        Alignment,
+        SystemFlags::RELAYOUT
+    );
 
     /// Sets the space between the vew and its children.
     ///
@@ -280,9 +285,19 @@ pub trait LayoutModifiers: internal::Modifiable {
         self
     }
 
-    modifier!(vertical_scroll, f32, SystemFlags::RELAYOUT);
+    modifier!(
+        /// Set the vertical scroll position of the view.
+        vertical_scroll,
+        f32,
+        SystemFlags::RELAYOUT
+    );
 
-    modifier!(horizontal_scroll, f32, SystemFlags::RELAYOUT);
+    modifier!(
+        /// Set the horizontal scroll position of the view.
+        horizontal_scroll,
+        f32,
+        SystemFlags::RELAYOUT
+    );
 
     modifier!(
         /// Sets the minimum width of the view.

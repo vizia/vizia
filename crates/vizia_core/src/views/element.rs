@@ -119,9 +119,11 @@ impl View for Element {
     }
 }
 
+/// A view which can be used to add stretch space between two other views.
 pub struct Spacer;
 
 impl Spacer {
+    /// Creates a new [Spacer] view.
     pub fn new(cx: &mut Context) -> Handle<Self> {
         Self {}.build(cx, |_| {})
     }

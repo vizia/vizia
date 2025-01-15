@@ -84,6 +84,7 @@ pub struct RadioButton {
 }
 
 impl RadioButton {
+    /// Creates a new [RadioButton] view.
     pub fn new(cx: &mut Context, checked: impl Lens<Target = bool>) -> Handle<Self> {
         Self { on_select: None }
             .build(cx, |cx| {

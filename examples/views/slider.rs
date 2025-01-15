@@ -29,7 +29,7 @@ fn main() -> Result<(), ApplicationError> {
             HStack::new(cx, |cx| {
                 Slider::new(cx, AppData::value.map(|val| (val + 50.0) / 100.0))
                     .range(0.0..1.0)
-                    .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(-50.0 + (val * 100.0))));
+                    .on_change(move |cx, val| cx.emit(AppEvent::SetValue(-50.0 + (val * 100.0))));
                 Label::new(cx, AppData::value.map(|val| format!("{:.2}", (val + 50.0) / 100.0)))
                     .width(Pixels(50.0));
             })
@@ -40,7 +40,7 @@ fn main() -> Result<(), ApplicationError> {
             HStack::new(cx, |cx| {
                 Slider::new(cx, AppData::value)
                     .range(-50.0..50.0)
-                    .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)));
+                    .on_change(move |cx, val| cx.emit(AppEvent::SetValue(val)));
                 Label::new(cx, AppData::value.map(|val| format!("{:.2}", val))).width(Pixels(50.0));
             })
             .alignment(Alignment::Center)
@@ -50,7 +50,7 @@ fn main() -> Result<(), ApplicationError> {
             VStack::new(cx, |cx| {
                 Slider::new(cx, AppData::value)
                     .range(-50.0..50.0)
-                    .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)))
+                    .on_change(move |cx, val| cx.emit(AppEvent::SetValue(val)))
                     .class("vertical");
                 Label::new(cx, AppData::value.map(|val| format!("{:.2}", val)))
                     .alignment(Alignment::Center)

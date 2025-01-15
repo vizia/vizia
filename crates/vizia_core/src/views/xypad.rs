@@ -1,5 +1,6 @@
 use crate::prelude::*;
 
+/// A view which allows the user to manipulate 2 floating point values simultaneously on a two dimensional pane.
 pub struct XYPad {
     is_dragging: bool,
 
@@ -7,6 +8,7 @@ pub struct XYPad {
 }
 
 impl XYPad {
+    /// creates a new [XYPad] view.
     pub fn new<L: Lens<Target = (f32, f32)>>(cx: &mut Context, lens: L) -> Handle<Self> {
         Self { is_dragging: false, on_change: None }
             .build(cx, |cx| {
@@ -92,6 +94,7 @@ impl View for XYPad {
 }
 
 impl Handle<'_, XYPad> {
+    /// Set the callback which will be triggered when the XYPad is manipulated.
     pub fn on_change<F: Fn(&mut EventContext, f32, f32) + 'static>(self, callback: F) -> Self {
         self.modify(|xypad| xypad.on_change = Some(Box::new(callback)))
     }

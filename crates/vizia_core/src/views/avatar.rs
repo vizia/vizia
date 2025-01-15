@@ -4,8 +4,11 @@ use crate::prelude::*;
 #[derive(Debug, Default, Clone, Copy, Data, PartialEq)]
 pub enum AvatarVariant {
     #[default]
+    /// Represents a circular avatar shape.
     Circle,
+    /// Represents a square avatar shape.
     Square,
+    /// Represents a  rounded rectangle avatar shape.
     Rounded,
 }
 
@@ -108,9 +111,11 @@ impl Handle<'_, Avatar> {
     }
 }
 
+/// The [AvatarGroup] view can be used to group a series of avatars together.
 pub struct AvatarGroup {}
 
 impl AvatarGroup {
+    /// Create a new [AvatarGroup]. The content should be a series of [Avatar] views.
     pub fn new<F>(cx: &mut Context, content: F) -> Handle<Self>
     where
         F: FnOnce(&mut Context),

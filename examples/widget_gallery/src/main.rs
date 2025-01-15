@@ -175,18 +175,6 @@ fn main() -> Result<(), ApplicationError> {
                     },
                 ),
 
-                "Dialog" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            dialog(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
                 "Divider" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).class("tab-name").hoverable(false);

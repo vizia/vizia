@@ -3,9 +3,11 @@ use vizia_style::Url;
 
 use crate::prelude::*;
 
+/// A view which presents an image.
 pub struct Image {}
 
 impl Image {
+    /// Creates a new [Image] view.
     pub fn new<T: ToString>(cx: &mut Context, img: impl Res<T>) -> Handle<'_, Self> {
         // TODO: Make this reactive
         let img = BackgroundImage::Url(Url { url: img.get(cx).to_string().into() });
@@ -19,9 +21,11 @@ impl View for Image {
     }
 }
 
+/// A view which presents an SVG image.
 pub struct Svg {}
 
 impl Svg {
+    /// Creates a new [Svg] view.
     pub fn new<T>(cx: &mut Context, data: impl Res<T>) -> Handle<Self>
     where
         T: AsRef<[u8]> + 'static,

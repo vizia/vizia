@@ -420,21 +420,40 @@ impl DrawContext<'_> {
         padding_bottom
     );
 
+    /// Returns the alignment of the current view.
     pub fn alignment(&self) -> Alignment {
         self.style.alignment.get(self.current).copied().unwrap_or_default()
     }
 
-    get_color_property!(background_color);
-    get_color_property!(border_color);
+    get_color_property!(
+        /// Returns the background color of the current view.
+        background_color
+    );
+
+    get_color_property!(
+        /// Returns the border color of the current view.
+        border_color
+    );
 
     /// Returns the border style of the current view.
     pub fn border_style(&self) -> BorderStyleKeyword {
         self.style.border_style.get(self.current).copied().unwrap_or_default()
     }
 
-    get_color_property!(selection_color);
-    get_color_property!(caret_color);
-    get_color_property!(font_color);
+    get_color_property!(
+        /// Returns the text selection color for the current view.
+        selection_color
+    );
+
+    get_color_property!(
+        /// Returns the text caret color for the current view.
+        caret_color
+    );
+
+    get_color_property!(
+        /// Returns the font color for the current view.
+        font_color
+    );
 
     /// Returns whether the current view should have its text wrapped.
     pub fn text_wrap(&self) -> bool {
@@ -456,19 +475,22 @@ impl DrawContext<'_> {
         self.style.line_clamp.get(self.current).copied().map(|lc| lc.0 as usize)
     }
 
-    /// Returns a reference to the shadows of the current view.
+    /// Returns a reference to any shadows of the current view.
     pub fn shadows(&self) -> Option<&Vec<Shadow>> {
         self.style.shadow.get(self.current)
     }
 
+    /// Return to reference to any filter applied to the current view.
     pub fn backdrop_filter(&self) -> Option<&Filter> {
         self.style.backdrop_filter.get(self.current)
     }
 
+    /// Returns a reference to any images of the current view.
     pub fn background_images(&self) -> Option<&Vec<ImageOrGradient>> {
         self.style.background_image.get(self.current)
     }
 
+    ///  Returns a list of background sizes for the current view.
     pub fn background_size(&self) -> Vec<BackgroundSize> {
         self.style.background_size.get(self.current).cloned().unwrap_or_default()
     }

@@ -424,7 +424,7 @@ impl View for Window {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
             WindowEvent::Destroyed => {
-                let parent_window = cx.parent_window().unwrap_or(Entity::root());
+                let parent_window = cx.parent_window();
                 cx.emit_to(parent_window, WindowEvent::SetEnabled(true));
             }
 
