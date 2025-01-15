@@ -42,7 +42,7 @@ fn main() -> Result<(), ApplicationError> {
                         .width(Pixels(10.0))
                         .height(Pixels(100.0))
                         .range(0.0..1.0)
-                        .on_changing(move |cx, val| cx.emit(AppEvent::YSliderChange(val)));
+                        .on_change(move |cx, val| cx.emit(AppEvent::YSliderChange(val)));
                     // XY pad
                     XYPad::new(cx, AppData::xy_data.map(|data| (data.0, data.1))).on_change(
                         |ex, value_x, value_y| ex.emit(AppEvent::XYPadChange(value_x, value_y)),
@@ -55,7 +55,7 @@ fn main() -> Result<(), ApplicationError> {
                     .width(Pixels(100.0))
                     .height(Pixels(10.0))
                     .range(0.0..1.0)
-                    .on_changing(move |cx, val| cx.emit(AppEvent::XSliderChange(val)));
+                    .on_change(move |cx, val| cx.emit(AppEvent::XSliderChange(val)));
             })
             .alignment(Alignment::Center);
         });

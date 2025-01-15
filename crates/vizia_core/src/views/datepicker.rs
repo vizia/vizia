@@ -31,7 +31,7 @@ const MONTHS: [&str; 12] = [
 const DAYS_HEADER: [&str; 7] =
     ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-pub enum DatepickerEvent {
+pub(crate) enum DatepickerEvent {
     IncrementMonth,
     DecrementMonth,
     SelectMonth(usize),
@@ -108,6 +108,7 @@ impl Datepicker {
         }
     }
 
+    /// Create a new [Datepicker] view.
     pub fn new<L, D>(cx: &mut Context, lens: L) -> Handle<Self>
     where
         L: Lens<Target = D>,
@@ -303,6 +304,7 @@ impl View for Datepicker {
 }
 
 impl Handle<'_, Datepicker> {
+    /// Set the callback triggered when a date is selected from the [Datepicker] view.
     pub fn on_select<F: 'static + Fn(&mut EventContext, NaiveDate)>(self, callback: F) -> Self {
         self.modify(|datepicker: &mut Datepicker| datepicker.on_select = Some(Box::new(callback)))
     }

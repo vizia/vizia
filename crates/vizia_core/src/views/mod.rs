@@ -7,7 +7,6 @@ mod checkbox;
 mod chip;
 mod combobox;
 mod datepicker;
-mod dialog;
 mod divider;
 mod dropdown;
 mod element;
@@ -17,7 +16,6 @@ mod label;
 mod list;
 mod markdown;
 mod menu;
-pub mod normalized_map;
 mod picklist;
 mod popup;
 mod progressbar;
@@ -39,46 +37,84 @@ mod xypad;
 pub use crate::binding::Binding;
 pub use avatar::*;
 pub use badge::*;
-pub use button::{Button, ButtonGroup, ButtonModifiers, ButtonVariant};
-pub use checkbox::Checkbox;
+pub use button::*;
+pub use checkbox::*;
 pub use chip::*;
 pub use combobox::*;
-pub use datepicker::Datepicker;
-pub use dialog::*;
+pub use datepicker::*;
 pub use divider::*;
-pub use dropdown::Dropdown;
+pub use dropdown::*;
 pub use element::*;
 pub use image::*;
-pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
-pub use label::Label;
+pub use knob::*;
+pub use label::*;
 pub use list::*;
 #[cfg(feature = "markdown")]
 pub use markdown::*;
 pub use menu::*;
 pub use picklist::*;
 pub use popup::*;
-pub use progressbar::ProgressBar;
-pub use radio::RadioButton;
-pub use rating::Rating;
-pub use scrollbar::Scrollbar;
-pub use scrollview::{ScrollEvent, ScrollView};
-pub use slider::{NamedSlider, Slider};
-pub use spinbox::{Spinbox, SpinboxEvent, SpinboxIcons};
-pub use stack::{HStack, VStack, ZStack};
-pub use switch::Switch;
+pub use progressbar::*;
+pub use radio::*;
+pub use rating::*;
+pub use scrollbar::*;
+pub use scrollview::*;
+pub use slider::*;
+pub use spinbox::*;
+pub use stack::*;
+pub use switch::*;
 pub use tabview::*;
-pub use textbox::{TextEvent, Textbox};
-pub use toggle_button::ToggleButton;
-pub use tooltip::Tooltip;
+pub use textbox::*;
+pub use toggle_button::*;
+pub use tooltip::*;
 pub use virtual_list::*;
-pub use xypad::XYPad;
+pub use xypad::*;
 
-use crate::prelude::Data;
+use crate::prelude::*;
 
 /// The orientation of a widget, such as a slider or scrollbar
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Data)]
 pub enum Orientation {
     #[default]
+    /// A horizontal orientation.
     Horizontal,
+    /// A vertical orientation.
     Vertical,
 }
+
+impl_res_simple!(Orientation);
+
+/// Describes the placement of a view relative to its parent element.
+#[derive(Debug, Clone, Copy, Data, PartialEq, Eq)]
+pub enum Placement {
+    /// The view should be placed above its parent with its left edge aligned with the left edge of its parent.
+    TopStart,
+    /// The view should be placed above its parent with its center aligned with the center of its parent.
+    Top,
+    /// The view should be placed above its parent with its right edge aligned with the right edge of its parent.
+    TopEnd,
+    /// The view should be placed below its parent with its left edge aligned with the left edge of its parent.
+    BottomStart,
+    /// The view should be placed below its parent with its center aligned with the center of its parent.
+    Bottom,
+    /// The view should be placed below its parent with its right edge aligned with the right edge of its parent.
+    BottomEnd,
+    /// The view should be placed to the right of its parent with its top edge aligned with the top edge of its parent.
+    RightStart,
+    /// The view should be placed to the right of its parent with its center aligned with the center of its parent.
+    Right,
+    /// The view should be placed to the right of its parent with its bottom edge aligned with the bottom edge of its parent.
+    RightEnd,
+    /// The view should be placed to the left of its parent with its top edge aligned with the top edge of its parent.
+    LeftStart,
+    /// The view should be placed to the left of its parent with its center aligned with the center of its parent.
+    Left,
+    /// The view should be placed to the left of its parent with its bottom edge aligned with the bottom edge of its parent.
+    LeftEnd,
+    /// The view should be placed over its parent.
+    Over,
+    /// The view should follow the cursor.
+    Cursor,
+}
+
+impl_res_simple!(Placement);

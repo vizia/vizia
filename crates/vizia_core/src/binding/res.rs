@@ -1,6 +1,7 @@
 use crate::prelude::*;
 
 #[macro_export]
+/// A macro for implementing the [Res] trait for simple `Copy` types.
 macro_rules! impl_res_simple {
     ($t:ty) => {
         impl ResGet<$t> for $t {
@@ -17,6 +18,8 @@ macro_rules! impl_res_simple {
     };
 }
 
+#[macro_export]
+/// A macro for implementing the [Res] trait for `Clone` types.
 macro_rules! impl_res_clone {
     ($t:ty) => {
         impl ResGet<$t> for $t {
@@ -33,9 +36,11 @@ macro_rules! impl_res_clone {
     };
 }
 
+/// A trait for retrieving the value of a lens.
 pub trait ResGet<T> {
+    /// Returns the value of a lens by reference.
     fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, T>>;
-
+    /// returns the value of a lens by value.
     fn get(&self, _: &impl DataContext) -> T;
 }
 

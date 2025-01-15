@@ -39,7 +39,7 @@ impl<V> DataContext for Handle<'_, V> {
         None
     }
 
-    fn as_context(&self) -> Option<LocalizationContext<'_>> {
+    fn localization_context(&self) -> Option<LocalizationContext<'_>> {
         Some(LocalizationContext::from_context(self.cx))
     }
 }
@@ -59,6 +59,7 @@ impl<V> Handle<'_, V> {
         self.cx
     }
 
+    ///  Returns the entity id of the parent view.
     pub fn parent(&self) -> Entity {
         self.cx.tree.get_parent(self.entity).unwrap_or(Entity::root())
     }
@@ -122,6 +123,7 @@ impl<V> Handle<'_, V> {
         self
     }
 
+    /// Creates a binding to the given lens and provides a closure which can be used to mutate the view through a handle.
     pub fn bind<R, T, F>(self, res: R, closure: F) -> Self
     where
         R: Res<T>,

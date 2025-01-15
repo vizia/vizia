@@ -1,12 +1,14 @@
 use crate::modifiers::ModalEvent;
 use crate::{icons::ICON_CHEVRON_RIGHT, prelude::*};
 
+/// A view which represents a horizontal group of menus.
 #[derive(Lens)]
 pub struct MenuBar {
     is_open: bool,
 }
 
 impl MenuBar {
+    /// Creates a new [MenuBar] view.
     pub fn new(cx: &mut Context, content: impl Fn(&mut Context)) -> Handle<Self> {
         Self { is_open: false }
             .build(cx, |cx| {
@@ -57,15 +59,21 @@ impl View for MenuBar {
     }
 }
 
+/// Events used by menus.
 pub enum MenuEvent {
+    /// Toggle the open state of the menu.
     ToggleOpen,
-    HoverMenu,
+    /// Sets the menu to an open state.
     Open,
+    /// Sets the menu to a closed state.
     Close,
+    /// Closes the menu and any submenus.
     CloseAll,
+    /// Event emitted when a menu or submenu is opened.
     MenuIsOpen,
 }
 
+/// A view which represents a submenu within a menu.
 #[derive(Lens)]
 pub struct Submenu {
     is_open: bool,
@@ -74,6 +82,7 @@ pub struct Submenu {
 }
 
 impl Submenu {
+    /// Creates a new [Submenu] view.
     pub fn new<V: View>(
         cx: &mut Context,
         content: impl Fn(&mut Context) -> Handle<V> + 'static,
@@ -230,10 +239,12 @@ impl View for Submenu {
     }
 }
 
+/// A view which represents a pressable item within a menu.
 #[derive(Lens)]
 pub struct MenuButton {}
 
 impl MenuButton {
+    /// Creates a new [MenuButton] view.
     pub fn new<V: View>(
         cx: &mut Context,
         action: impl Fn(&mut EventContext) + Send + Sync + 'static,

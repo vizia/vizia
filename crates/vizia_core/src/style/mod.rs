@@ -124,7 +124,7 @@ impl Default for Abilities {
 }
 
 bitflags! {
-    pub struct SystemFlags: u8 {
+    pub(crate) struct SystemFlags: u8 {
         /// Layout system flag.
         const RELAYOUT = 1;
         const RESTYLE = 1 << 1;
@@ -139,15 +139,21 @@ impl Default for SystemFlags {
     }
 }
 
+/// An enum which represents an image or a gradient.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ImageOrGradient {
+    /// Represents an image by name.
     Image(String),
+    /// A gradient.
     Gradient(Gradient),
 }
 
+/// A font-family.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FamilyOwned {
+    /// A generic font-family.
     Generic(GenericFontFamily),
+    /// A named front-family.
     Named(String),
 }
 
@@ -212,14 +218,13 @@ pub struct Style {
     pub(crate) abilities: SparseSet<Abilities>,
 
     // Accessibility Properties
-    pub name: StyleSet<String>,
-    pub role: SparseSet<Role>,
-    // pub default_action_verb: SparseSet<DefaultActionVerb>,
-    pub live: SparseSet<Live>,
-    pub labelled_by: SparseSet<Entity>,
-    pub hidden: SparseSet<bool>,
-    pub text_value: SparseSet<String>,
-    pub numeric_value: SparseSet<f64>,
+    pub(crate) name: StyleSet<String>,
+    pub(crate) role: SparseSet<Role>,
+    pub(crate) live: SparseSet<Live>,
+    pub(crate) labelled_by: SparseSet<Entity>,
+    pub(crate) hidden: SparseSet<bool>,
+    pub(crate) text_value: SparseSet<String>,
+    pub(crate) numeric_value: SparseSet<f64>,
 
     // Visibility
     pub(crate) visibility: StyleSet<Visibility>,
@@ -286,7 +291,7 @@ pub struct Style {
     pub(crate) shadow: AnimatableSet<Vec<Shadow>>,
 
     // Text
-    pub text: SparseSet<String>,
+    pub(crate) text: SparseSet<String>,
     pub(crate) text_wrap: StyleSet<bool>,
     pub(crate) text_overflow: StyleSet<TextOverflow>,
     pub(crate) line_clamp: StyleSet<LineClamp>,
@@ -379,6 +384,7 @@ pub struct Style {
 }
 
 impl Style {
+    /// Returns the scale factor of the application.
     pub fn scale_factor(&self) -> f32 {
         self.dpi_factor as f32
     }
@@ -1669,7 +1675,7 @@ impl Style {
     }
 
     // Add style data for the given entity.
-    pub fn add(&mut self, entity: Entity) {
+    pub(crate) fn add(&mut self, entity: Entity) {
         self.pseudo_classes.insert(entity, PseudoClassFlags::VALID);
         self.classes.insert(entity, HashSet::new());
         self.abilities.insert(entity, Abilities::default());
@@ -1679,7 +1685,7 @@ impl Style {
     }
 
     // Remove style data for the given entity.
-    pub fn remove(&mut self, entity: Entity) {
+    pub(crate) fn remove(&mut self, entity: Entity) {
         self.ids.remove(entity);
         self.classes.remove(entity);
         self.pseudo_classes.remove(entity);
@@ -1829,24 +1835,24 @@ impl Style {
         self.fill.remove(entity);
     }
 
-    pub fn needs_restyle(&mut self, entity: Entity) {
+    pub(crate) fn needs_restyle(&mut self, entity: Entity) {
         self.restyle.0.insert(entity).unwrap();
     }
 
-    pub fn needs_relayout(&mut self) {
+    pub(crate) fn needs_relayout(&mut self) {
         self.system_flags.set(SystemFlags::RELAYOUT, true);
     }
 
-    pub fn needs_access_update(&mut self, entity: Entity) {
+    pub(crate) fn needs_access_update(&mut self, entity: Entity) {
         self.reaccess.0.insert(entity).unwrap();
     }
 
-    pub fn needs_text_update(&mut self, entity: Entity) {
+    pub(crate) fn needs_text_update(&mut self, entity: Entity) {
         self.text_construction.0.insert(entity).unwrap();
         self.text_layout.0.insert(entity).unwrap();
     }
 
-    pub fn needs_text_layout(&mut self, entity: Entity) {
+    pub(crate) fn needs_text_layout(&mut self, entity: Entity) {
         self.text_layout.0.insert(entity).unwrap();
     }
 
@@ -1857,7 +1863,7 @@ impl Style {
     // }
 
     // Remove all shared style data.
-    pub fn clear_style_rules(&mut self) {
+    pub(crate) fn clear_style_rules(&mut self) {
         self.disabled.clear_rules();
         // Display
         self.display.clear_rules();

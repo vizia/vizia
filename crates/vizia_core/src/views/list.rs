@@ -2,23 +2,31 @@ use std::{collections::BTreeSet, ops::Deref, rc::Rc};
 
 use crate::prelude::*;
 
+/// Represents how items can be selected in a list.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum Selectable {
     #[default]
+    /// Items in the list cannot be selected.
     None,
+    /// A single item in the list can be selected.
     Single,
+    /// Multiple items in the list can be selected simultaneously.
     Multi,
 }
 
 impl_res_simple!(Selectable);
 
+/// Events used by the [List] view
 pub enum ListEvent {
+    /// Selects a list item with the given index.
     Select(usize),
+    /// Selects the focused list item.
     SelectFocused,
-    SelectNext,
-    SelectPrev,
+    ///  Moves the focus to the next item in the list.
     FocusNext,
+    ///  Moves the focus to the previous item in the list.
     FocusPrev,
+    /// Deselects all items from the list
     ClearSelection,
 }
 
@@ -36,6 +44,7 @@ pub struct List {
 }
 
 impl List {
+    /// Creates a new [List] view.
     pub fn new<L: Lens, T: 'static>(
         cx: &mut Context,
         list: L,
@@ -54,6 +63,7 @@ impl List {
         )
     }
 
+    /// Creates a new [List] view with a provided filter closure.
     pub fn new_filtered<L: Lens, T: 'static>(
         cx: &mut Context,
         list: L,
@@ -74,7 +84,7 @@ impl List {
         )
     }
 
-    /// Creates a new List view with a binding to the given lens and a template for constructing the list items.
+    /// Creates a new [List] view with a binding to the given lens and a template for constructing the list items.
     pub fn new_generic<L: Lens, T: 'static>(
         cx: &mut Context,
         list: L,
@@ -225,23 +235,6 @@ impl View for List {
                 }
             }
 
-            ListEvent::SelectNext => {
-                if self.selected.is_empty() {
-                    self.selected.insert(0);
-                } else if let Some(last) = self.selected.last().copied() {
-                    self.selected.clear();
-                    self.selected.insert((last + 1).min(self.list_len - 1));
-                }
-            }
-
-            ListEvent::SelectPrev => {
-                if let Some(first) = self.selected.first().copied() {
-                    self.selected.clear();
-                    self.selected
-                        .insert(first.saturating_sub(1).min(self.list_len.saturating_sub(1)));
-                }
-            }
-
             ListEvent::ClearSelection => {
                 self.selected.clear();
             }
@@ -286,6 +279,7 @@ impl View for List {
 }
 
 impl Handle<'_, List> {
+    /// Sets the  selected items of the list. Takes a lens to a list of indices.
     pub fn selected<S: Lens>(self, selected: S) -> Self
     where
         S::Target: Deref<Target = [usize]> + Data,
@@ -301,6 +295,7 @@ impl Handle<'_, List> {
         })
     }
 
+    /// Sets the callback triggered when a [ListItem] is selected.
     pub fn on_select<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, usize),
@@ -308,6 +303,7 @@ impl Handle<'_, List> {
         self.modify(|list: &mut List| list.on_select = Some(Box::new(callback)))
     }
 
+    /// Set the selectable state of the [List].
     pub fn selectable<U: Into<Selectable>>(self, selectable: impl Res<U>) -> Self {
         self.bind(selectable, |handle, selectable| {
             let s = selectable.get(&handle).into();
@@ -315,6 +311,7 @@ impl Handle<'_, List> {
         })
     }
 
+    /// Sets whether the selection should follow the focus.
     pub fn selection_follows_focus<U: Into<bool>>(self, flag: impl Res<U>) -> Self {
         self.bind(flag, |handle, selection_follows_focus| {
             let s = selection_follows_focus.get(&handle).into();
@@ -322,6 +319,8 @@ impl Handle<'_, List> {
         })
     }
 
+    // todo: replace with orientation
+    /// Sets the orientation of the list.
     pub fn horizontal<U: Into<bool>>(self, flag: impl Res<U>) -> Self {
         self.bind(flag, |handle, horizontal| {
             let s = horizontal.get(&handle).into();
@@ -330,9 +329,11 @@ impl Handle<'_, List> {
     }
 }
 
+/// A view which represents a selectable item within a list.
 pub struct ListItem {}
 
 impl ListItem {
+    /// Create a new [ListItem] view.
     pub fn new<L: Lens, T: 'static>(
         cx: &mut Context,
         index: usize,

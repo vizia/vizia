@@ -49,7 +49,7 @@ pub enum TextEvent {
     SetPlaceholder(String),
     /// Trigger the `on_blur` callback.
     Blur,
-
+    /// Toggle the visibility of the text Caret.
     ToggleCaret,
 }
 
@@ -408,7 +408,7 @@ where
         }
     }
 
-    pub fn draw_selection(&self, cx: &mut DrawContext, canvas: &Canvas) {
+    fn draw_selection(&self, cx: &mut DrawContext, canvas: &Canvas) {
         if !self.selection.is_caret() {
             if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
                 if let Some(text) = cx.style.text.get(cx.current) {

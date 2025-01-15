@@ -11,11 +11,11 @@ use crate::{context::EventContext, entity::Entity};
 /// which is the time difference between the current frame time and the timer time. Typically this will be 0-2 ms.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TimerAction {
-    // The timer was started.
+    /// The timer was started.
     Start,
-    // The timer was ticked, i.e. called after an interval. The `delta` represents the time difference between the current frame time and the timer time.
+    /// The timer was ticked, i.e. called after an interval. The `delta` represents the time difference between the current frame time and the timer time.
     Tick(Duration),
-    // The timer was stopped.
+    /// The timer was stopped.
     Stop,
 }
 

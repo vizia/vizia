@@ -4,8 +4,10 @@ use bitflags::bitflags;
 
 use crate::vg;
 
+/// A model which can be used by views which contain a popup.
 #[derive(Debug, Default, Data, Lens, Clone)]
 pub struct PopupData {
+    /// The open state of the popup.
     pub is_open: bool,
 }
 
@@ -36,13 +38,18 @@ impl Model for PopupData {
     }
 }
 
+/// Events used by the [Popup] view.
 #[derive(Debug)]
 pub enum PopupEvent {
+    /// Opens the popup.
     Open,
+    /// Closes the popup.
     Close,
+    /// Switches the state of the popup from closed to open or open to closed.
     Switch,
 }
 
+/// A view for displaying popup content.
 #[derive(Lens)]
 pub struct Popup {
     placement: Placement,
@@ -52,6 +59,7 @@ pub struct Popup {
 }
 
 impl Popup {
+    /// Creates a new [Popup] view.
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
         Self {
             placement: Placement::Bottom,
@@ -84,8 +92,7 @@ impl View for Popup {
                 let parent = cx.parent();
                 let parent_bounds = cx.cache.get_bounds(parent);
                 let bounds = cx.bounds();
-                let window_bounds =
-                    cx.cache.get_bounds(cx.parent_window().unwrap_or(Entity::root()));
+                let window_bounds = cx.cache.get_bounds(cx.parent_window());
                 let scale = cx.scale_factor();
                 let arrow_size = self.arrow_size.to_px().unwrap() * cx.scale_factor();
 
@@ -285,27 +292,6 @@ impl View for Popup {
         });
     }
 }
-
-/// Describes the placement of a popup relative to its parent element.
-#[derive(Debug, Clone, Copy, Data, PartialEq, Eq)]
-pub enum Placement {
-    TopStart,
-    Top,
-    TopEnd,
-    BottomStart,
-    Bottom,
-    BottomEnd,
-    RightStart,
-    Right,
-    RightEnd,
-    LeftStart,
-    Left,
-    LeftEnd,
-    Over,
-    Cursor,
-}
-
-impl_res_simple!(Placement);
 
 bitflags! {
     #[derive(Debug, Clone, Copy)]

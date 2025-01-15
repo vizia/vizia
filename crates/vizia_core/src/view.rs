@@ -269,6 +269,7 @@ pub trait View: 'static + Sized {
     }
 
     #[allow(unused_variables)]
+    /// Provides a way to configure the accessibility features of a view.
     fn accessibility(&self, cx: &mut AccessContext, node: &mut AccessNode) {}
 }
 

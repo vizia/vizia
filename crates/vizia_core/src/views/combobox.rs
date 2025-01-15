@@ -25,10 +25,9 @@ pub struct ComboBox<
     p: PhantomData<T>,
 }
 
-pub enum ComboBoxEvent {
+pub(crate) enum ComboBoxEvent {
     SetOption(usize),
     SetFilterText(String),
-    Close,
 }
 
 impl<L1, L2, T> ComboBox<L1, L2, T>
@@ -37,6 +36,7 @@ where
     T: 'static + Data + ToString,
     L2: Copy + Lens<Target = usize>,
 {
+    /// Creates a new [ComboBox] view.
     pub fn new(cx: &mut Context, list_lens: L1, selected: L2) -> Handle<Self> {
         Self {
             filter_text: String::from(""),
@@ -169,10 +169,6 @@ where
                 // Reopen the popup in case it was closed with the ESC key.
                 self.is_open = true;
             }
-
-            ComboBoxEvent::Close => {
-                self.is_open = false;
-            }
         });
 
         event.map(|textbox_event, _| match textbox_event {
@@ -254,6 +250,7 @@ where
     T: 'static + Data + ToString,
     L2: Lens<Target = usize>,
 {
+    /// Set the callback triggered when an item is selected from the [ComboBox] dropdown list.
     pub fn on_select<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, usize),

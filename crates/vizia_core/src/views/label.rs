@@ -88,7 +88,7 @@ pub struct Label {
 }
 
 impl Label {
-    /// Creates a new label.
+    /// Creates a new [Label] view.
     ///
     /// # Examples
     ///
@@ -106,6 +106,7 @@ impl Label {
         Self { describing: None }.build(cx, |_| {}).text(text.clone()).role(Role::Label).name(text)
     }
 
+    /// Creates a new rich [Label] view.
     pub fn rich<T>(
         cx: &mut Context,
         text: impl Res<T> + Clone,
@@ -188,5 +189,32 @@ impl View for Label {
             }
             _ => {}
         });
+    }
+}
+
+/// A view which represents a span of text within a label.
+pub struct TextSpan {}
+
+impl TextSpan {
+    /// Create a new [TextSpan] view.
+    pub fn new<'a>(
+        cx: &'a mut Context,
+        text: &str,
+        children: impl Fn(&mut Context),
+    ) -> Handle<'a, Self> {
+        Self {}
+            .build(cx, |cx| {
+                cx.style.text_span.insert(cx.current(), true);
+                children(cx);
+            })
+            .text(text)
+            .display(Display::None)
+            .pointer_events(PointerEvents::None)
+    }
+}
+
+impl View for TextSpan {
+    fn element(&self) -> Option<&'static str> {
+        Some("text-span")
     }
 }

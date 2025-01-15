@@ -5,25 +5,30 @@ use unic_langid::LanguageIdentifier;
 use vizia_derive::Lens;
 use web_time::Duration;
 
+/// And enum which represents the current built-in theme mode.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum ThemeMode {
+    /// The built-in vizia dark theme.
     DarkMode,
+    /// The built-in vizia light theme.
     #[default]
     LightMode,
 }
 
 use crate::{context::EventContext, events::Event};
 
+/// Represents the theme used by the application.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AppTheme {
     /// System theme, if we choose this as our theme vizia
     /// will follow system theme in supported platforms.
     System,
-    /// builtin vizia themes
+    /// Built-in vizia themes.
     BuiltIn(ThemeMode),
     // Custom(String),
 }
 
+/// Represents the theme used by the application.
 #[derive(Lens)]
 pub struct Theme {
     /// The current application theme
@@ -39,6 +44,7 @@ impl Default for Theme {
 }
 
 impl Theme {
+    /// Returns the current theme of the application.
     pub fn get_current_theme(&self) -> ThemeMode {
         match self.app_theme {
             AppTheme::System => self.sys_theme.unwrap_or_default(),
@@ -59,7 +65,7 @@ pub struct Environment {
 }
 
 impl Environment {
-    pub fn new(cx: &mut Context) -> Self {
+    pub(crate) fn new(cx: &mut Context) -> Self {
         let locale = sys_locale::get_locale().and_then(|l| l.parse().ok()).unwrap_or_default();
         let caret_timer = cx.add_timer(Duration::from_millis(530), None, |cx, action| {
             if matches!(action, TimerAction::Tick(_)) {

@@ -111,6 +111,7 @@ pub trait Model: 'static + Sized {
     #[allow(unused_variables)]
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {}
 
+    /// Returns the name of the [Model] if it has one.
     #[cfg(debug_assertions)]
     fn name(&self) -> Option<&'static str> {
         None

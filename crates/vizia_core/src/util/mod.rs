@@ -1,7 +1,8 @@
 use std::path::{Path, PathBuf};
 
-// Helper trait for getting CSS from a string or path.
+/// Helper trait for getting CSS from a string or path.
 pub trait IntoCssStr: 'static {
+    /// Returns a string containing CSS.
     fn get_style(&self) -> Result<String, std::io::Error>;
 }
 
@@ -63,6 +64,7 @@ impl From<PathBuf> for CSS {
 
 #[cfg(debug_assertions)]
 #[macro_export]
+/// A macro which parses CSS from a file at runtime in debug mode, and includes the file in the binary in release mode.
 macro_rules! include_style {
     ($filename:tt) => {
         $crate::util::CSS::from_file(concat!(env!("CARGO_MANIFEST_DIR"), "/", $filename))

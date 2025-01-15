@@ -1,5 +1,6 @@
 use crate::{icons::ICON_STAR_FILLED, prelude::*};
 
+/// A view which represents a rating as a number of filled stars.
 #[derive(Lens)]
 pub struct Rating {
     rating: u32,
@@ -15,6 +16,7 @@ pub(crate) enum RatingEvent {
 }
 
 impl Rating {
+    /// Creates a new [Rating] view.
     pub fn new(cx: &mut Context, max_rating: u32, lens: impl Lens<Target = u32>) -> Handle<Self> {
         Self { rating: lens.get(cx), max_rating, on_change: None }
             .build(cx, |cx| {
@@ -84,6 +86,7 @@ impl View for Rating {
 }
 
 impl Handle<'_, Rating> {
+    /// Set the callback which is triggered when the rating changes.
     pub fn on_change<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, u32),

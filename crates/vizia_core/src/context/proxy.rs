@@ -11,7 +11,9 @@ use crate::prelude::*;
 /// It supports a small subset of context operations. You will get one of these passed to you when
 /// you create a new thread with the [`spawn`](crate::context::Context::spawn) method on [`Context`].
 pub struct ContextProxy {
+    /// The current entity when the proxy context was created.
     pub current: Entity,
+    /// An event proxy used to send events back to the main thread.
     pub event_proxy: Option<Box<dyn EventProxy>>,
 }
 

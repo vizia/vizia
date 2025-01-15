@@ -134,6 +134,7 @@ pub trait StyleModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets the focused state of the view as well as the focus visibility.
     fn focused_with_visibility<U: Into<bool>>(
         mut self,
         focus: impl Res<U> + Copy + 'static,
@@ -159,6 +160,7 @@ pub trait StyleModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets whether the view should be in a read-only state.
     fn read_only<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
@@ -176,6 +178,7 @@ pub trait StyleModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets whether the view should be in a read-write state.
     fn read_write<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
@@ -261,6 +264,7 @@ pub trait StyleModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets the overflow behavior of the view in the horizontal and vertical directions simultaneously.
     fn overflow<U: Into<Overflow>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
@@ -331,6 +335,7 @@ pub trait StyleModifiers: internal::Modifiable {
         self
     }
 
+    /// Set the shadows of the view.
     fn shadows<U: Into<Vec<Shadow>>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
@@ -347,6 +352,7 @@ pub trait StyleModifiers: internal::Modifiable {
         self
     }
 
+    /// Set the background gradient of the view.
     fn background_gradient<U: Into<Gradient>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
@@ -378,6 +384,7 @@ pub trait StyleModifiers: internal::Modifiable {
         SystemFlags::REDRAW
     );
 
+    /// Set the background image of the view.
     fn background_image<'i, U: Into<BackgroundImage<'i>>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
@@ -684,6 +691,7 @@ pub trait StyleModifiers: internal::Modifiable {
 
 impl<V: View> StyleModifiers for Handle<'_, V> {}
 
+/// A builder for constructing linear gradients.
 #[derive(Debug, Clone)]
 pub struct LinearGradientBuilder {
     direction: LineDirection,
@@ -697,10 +705,12 @@ impl Default for LinearGradientBuilder {
 }
 
 impl LinearGradientBuilder {
+    /// Creates a new [LinearGradientBuilder].
     pub fn new() -> Self {
         LinearGradientBuilder { direction: LineDirection::default(), stops: Vec::new() }
     }
 
+    /// Set the direction of the linear gradient.
     pub fn with_direction(direction: impl Into<LineDirection>) -> Self {
         LinearGradientBuilder { direction: direction.into(), stops: Vec::new() }
     }
@@ -709,6 +719,7 @@ impl LinearGradientBuilder {
         Gradient::Linear(LinearGradient { direction: self.direction, stops: self.stops })
     }
 
+    /// Add a color stop to the linear gradient.
     pub fn add_stop(mut self, stop: impl Into<ColorStop<LengthOrPercentage>>) -> Self {
         self.stops.push(stop.into());
 
@@ -722,6 +733,7 @@ impl From<LinearGradientBuilder> for Gradient {
     }
 }
 
+/// A builder for constructing a shadow.
 #[derive(Debug, Clone)]
 pub struct ShadowBuilder {
     shadow: Shadow,
@@ -734,6 +746,7 @@ impl Default for ShadowBuilder {
 }
 
 impl ShadowBuilder {
+    /// Creates a new [ShadowBuilder].
     pub fn new() -> Self {
         Self { shadow: Shadow::default() }
     }
@@ -742,36 +755,42 @@ impl ShadowBuilder {
         self.shadow
     }
 
+    /// Sets the horizontal offset of the shadow.
     pub fn x_offset(mut self, offset: impl Into<Length>) -> Self {
         self.shadow.x_offset = offset.into();
 
         self
     }
 
+    /// Set the vertical offset of the shadow.
     pub fn y_offset(mut self, offset: impl Into<Length>) -> Self {
         self.shadow.y_offset = offset.into();
 
         self
     }
 
+    /// Sets the blur radius of the shadow.
     pub fn blur(mut self, radius: Length) -> Self {
         self.shadow.blur_radius = Some(radius);
 
         self
     }
 
+    /// Sets the spread amount of the shadow.
     pub fn spread(mut self, radius: Length) -> Self {
         self.shadow.spread_radius = Some(radius);
 
         self
     }
 
+    /// Sets the color of the shadow.
     pub fn color(mut self, color: Color) -> Self {
         self.shadow.color = Some(color);
 
         self
     }
 
+    /// Sets whether the shadow should be inset.
     pub fn inset(mut self) -> Self {
         self.shadow.inset = true;
 

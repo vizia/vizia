@@ -2,15 +2,20 @@ use crate::prelude::*;
 use std::any::TypeId;
 
 #[derive(Lens)]
-pub struct ModalModel {
+pub(crate) struct ModalModel {
     pub tooltip_visible: (bool, bool),
     pub menu_visible: bool,
 }
 
+/// An event used to modify the modal properties of a view, such as an attached tooltip.
 pub enum ModalEvent {
+    /// Show the attached tooltip.
     ShowTooltip,
+    /// Hide the attached tooltip.
     HideTooltip,
+    /// Show the attached menu.
     ShowMenu,
+    /// Hide the attached menu.
     HideMenu,
 }
 
@@ -477,14 +482,18 @@ pub trait ActionModifiers<V> {
     where
         F: 'static + Fn(&mut EventContext, GeoChanged) + Send + Sync;
 
+    /// Adds a popup tooltip to the view.
     fn tooltip<C: Fn(&mut Context) -> Handle<'_, Tooltip> + 'static>(self, content: C) -> Self;
 
+    /// Adds a popup menu to the view.
     fn menu<C: FnOnce(&mut Context) -> Handle<'_, T>, T: View>(self, content: C) -> Self;
 
+    /// Adds a callback which is performed when the view is dragged during a drag and drop operation.
     fn on_drag<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync;
 
+    /// Adds a callback which is performed when data is dropped on the view during a drag and drop operation.
     fn on_drop<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, DropData) + Send + Sync;

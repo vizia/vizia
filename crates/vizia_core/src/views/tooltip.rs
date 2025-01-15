@@ -108,8 +108,7 @@ impl View for Tooltip {
                 let parent = cx.parent();
                 let parent_bounds = cx.cache.get_bounds(parent);
                 let bounds = cx.bounds();
-                let window_bounds =
-                    cx.cache.get_bounds(cx.parent_window().unwrap_or(Entity::root()));
+                let window_bounds = cx.cache.get_bounds(cx.parent_window());
 
                 let arrow_size = self.arrow_size.to_px().unwrap() * cx.scale_factor();
 
@@ -314,7 +313,7 @@ impl Handle<'_, Tooltip> {
         })
     }
 
-    // Sets the size of the tooltip arrow if enabled.
+    /// Sets the size of the tooltip arrow if enabled.
     pub fn arrow_size<U: Into<Length>>(self, size: impl Res<U>) -> Self {
         self.bind(size, |handle, val| {
             let size = val.get(&handle).into();

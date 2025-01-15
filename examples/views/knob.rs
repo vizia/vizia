@@ -27,7 +27,7 @@ fn main() -> Result<(), ApplicationError> {
         AppData { value: 0.2 }.build(cx);
 
         ExamplePage::new(cx, |cx| {
-            Knob::new(cx, 0.5, AppData::value, false).on_changing(|cx, val| {
+            Knob::new(cx, 0.5, AppData::value, false).on_change(|cx, val| {
                 cx.emit(AppEvent::SetValue(val));
             });
         });

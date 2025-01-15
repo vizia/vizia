@@ -13,6 +13,7 @@ static DEFAULT_MODIFIER_SCALAR: f32 = 0.04;
 
 use std::{default, f32::consts::PI};
 
+/// A circular view which represents a value.
 pub struct Knob<L> {
     lens: L,
     default_normal: f32,
@@ -30,6 +31,7 @@ pub struct Knob<L> {
 }
 
 impl<L: Lens<Target = f32>> Knob<L> {
+    /// Create a new [Knob] view.
     pub fn new(
         cx: &mut Context,
         normalized_default: impl Res<f32>,
@@ -75,6 +77,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
         .navigable(true)
     }
 
+    /// Create a custom [Knob] view.
     pub fn custom<F, V: View>(
         cx: &mut Context,
         default_normal: f32,
@@ -108,7 +111,8 @@ impl<L: Lens<Target = f32>> Knob<L> {
 }
 
 impl<L: Lens<Target = f32>> Handle<'_, Knob<L>> {
-    pub fn on_changing<F>(self, callback: F) -> Self
+    /// Sets the callback triggered when the knob value is changed.
+    pub fn on_change<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, f32),
     {
@@ -215,6 +219,7 @@ pub struct ArcTrack {
 }
 
 impl ArcTrack {
+    /// Creates a new [ArcTrack] view.
     pub fn new(
         cx: &mut Context,
         center: bool,
@@ -359,6 +364,7 @@ pub struct Ticks {
     mode: KnobMode,
 }
 impl Ticks {
+    /// Creates a new [Ticks] view.
     pub fn new(
         cx: &mut Context,
         radius: Units,
@@ -446,6 +452,7 @@ pub struct TickKnob {
     mode: KnobMode,
 }
 impl TickKnob {
+    /// Creates a new [TickKnob] view.
     pub fn new(
         cx: &mut Context,
         radius: Units,

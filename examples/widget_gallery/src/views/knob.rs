@@ -32,7 +32,7 @@ pub fn knob(cx: &mut Context) {
             cx,
             |cx| {
                 Knob::new(cx, 0.5, KnobState::value, false)
-                    .on_changing(|cx, val| cx.emit(KnobEvent::SetValue(val)));
+                    .on_change(|cx, val| cx.emit(KnobEvent::SetValue(val)));
             },
             r#"Knob::new(cx, 0.5, KnobState::value, false)
     .on_changing(|cx, val| cx.emit(KnobEvent::SetValue(val)));"#,

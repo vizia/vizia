@@ -25,9 +25,6 @@ pub use combobox::*;
 pub mod datepicker;
 pub use datepicker::*;
 
-pub mod dialog;
-pub use dialog::*;
-
 pub mod divider;
 pub use divider::*;
 

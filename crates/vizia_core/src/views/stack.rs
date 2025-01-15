@@ -6,6 +6,7 @@ use crate::prelude::*;
 pub struct VStack {}
 
 impl VStack {
+    /// Creates a new [VStack].
     pub fn new<F>(cx: &mut Context, content: F) -> Handle<Self>
     where
         F: FnOnce(&mut Context),
@@ -28,6 +29,7 @@ impl View for VStack {
 pub struct HStack {}
 
 impl HStack {
+    /// Creates a new [HStack].
     pub fn new<F>(cx: &mut Context, content: F) -> Handle<Self>
     where
         F: FnOnce(&mut Context),
@@ -51,6 +53,7 @@ impl View for HStack {
 pub struct ZStack {}
 
 impl ZStack {
+    /// Creates a new [ZStack].
     pub fn new<F>(cx: &mut Context, content: F) -> Handle<Self>
     where
         F: FnOnce(&mut Context),

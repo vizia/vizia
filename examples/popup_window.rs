@@ -47,11 +47,11 @@ fn main() -> Result<(), ApplicationError> {
                 Window::popup(cx, false, |cx| {
                     VStack::new(cx, |cx: &mut Context| {
                         Slider::new(cx, AppData::color.map(|c| c.r() as f32 / 255.0))
-                            .on_changing(|cx, val| cx.emit(AppEvent::SetRed(val)));
+                            .on_change(|cx, val| cx.emit(AppEvent::SetRed(val)));
                         Slider::new(cx, AppData::color.map(|c| c.g() as f32 / 255.0))
-                            .on_changing(|cx, val| cx.emit(AppEvent::SetGreen(val)));
+                            .on_change(|cx, val| cx.emit(AppEvent::SetGreen(val)));
                         Slider::new(cx, AppData::color.map(|c| c.b() as f32 / 255.0))
-                            .on_changing(|cx, val| cx.emit(AppEvent::SetBlue(val)));
+                            .on_change(|cx, val| cx.emit(AppEvent::SetBlue(val)));
                     })
                     .padding(Pixels(20.0))
                     .alignment(Alignment::Center)

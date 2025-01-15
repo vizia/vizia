@@ -3,9 +3,13 @@ use skia_safe::Rect;
 /// Represents an axis-aligned bounding box.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct BoundingBox {
+    /// The horizontal x position of the bounding box.
     pub x: f32,
+    /// The vertical y position of the bounding box.
     pub y: f32,
+    /// The width of the bounding box.
     pub w: f32,
+    /// The height of the bounding box.
     pub h: f32,
 }
 
@@ -164,6 +168,7 @@ impl BoundingBox {
         )
     }
 
+    /// Expands each side by the given separate amounts and returns a new [`BoundingBox`].
     pub fn expand_sides(&self, left: f32, top: f32, right: f32, bottom: f32) -> BoundingBox {
         BoundingBox::from_min_max(
             self.left() - left,
@@ -173,6 +178,7 @@ impl BoundingBox {
         )
     }
 
+    /// Shifts the bounding box by the given X and Y offsets and returns a new [`BoundingBox`].
     pub fn offset(&self, x: f32, y: f32) -> BoundingBox {
         BoundingBox::from_min_max(
             self.left() + x,
@@ -218,6 +224,7 @@ impl BoundingBox {
         )
     }
 
+    /// Returns a new [BoundingBox] representing the intersection of the current bounding box and the given bounding box.
     pub fn intersection(&self, other: &Self) -> Self {
         let left = self.left().max(other.left());
         let right = self.right().min(other.right());
@@ -226,6 +233,7 @@ impl BoundingBox {
         BoundingBox::from_min_max(left, top, right, bottom)
     }
 
+    /// Returns a new [BoundingBox] representing the union of the current bounding box and the given bounding box.
     pub fn union(&self, other: &Self) -> Self {
         let left = self.left().min(other.left());
         let right = self.right().max(other.right());
@@ -234,6 +242,7 @@ impl BoundingBox {
         BoundingBox::from_min_max(left, top, right, bottom)
     }
 
+    /// Returns true if the current bounding box and the given bounding box intersect.
     pub fn intersects(&self, other: &Self) -> bool {
         let x_hit = (self.x >= other.x && self.x < other.x + other.w)
             || (other.x >= self.x && other.x < self.x + self.w);
@@ -242,18 +251,21 @@ impl BoundingBox {
         x_hit && y_hit
     }
 
+    /// Returns true if the given bounding box is contained within the current bounding box.
     pub fn contains(&self, other: &Self) -> bool {
         let x_hit = other.x >= self.x && other.x + other.w < self.x + self.w;
         let y_hit = other.y >= self.y && other.y + other.h < self.y + self.h;
         x_hit && y_hit
     }
 
+    /// Returns true if the given point is contained within the current bounding box.
     pub fn contains_point(&self, x: f32, y: f32) -> bool {
         let x_hit = x >= self.x && x < self.x + self.w;
         let y_hit = y >= self.y && y < self.y + self.h;
         x_hit && y_hit
     }
 
+    /// Because the diagonal distance of the current bounding box.
     pub fn diagonal(&self) -> f32 {
         (self.width() * self.width() + self.height() * self.height()).sqrt()
     }

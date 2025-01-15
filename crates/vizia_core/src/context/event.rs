@@ -65,7 +65,7 @@ pub struct EventContext<'a> {
     pub(crate) triggered: &'a mut Entity,
     pub(crate) style: &'a mut Style,
     pub(crate) entity_identifiers: &'a HashMap<String, Entity>,
-    pub cache: &'a mut CachedData,
+    pub(crate) cache: &'a mut CachedData,
     pub(crate) tree: &'a Tree<Entity>,
     pub(crate) data: &'a mut HashMap<Entity, ModelDataStore>,
     pub(crate) views: &'a mut HashMap<Entity, Box<dyn ViewHandler>>,
@@ -109,6 +109,7 @@ macro_rules! get_length_property {
 }
 
 impl<'a> EventContext<'a> {
+    /// Creates a new [EventContext].
     pub fn new(cx: &'a mut Context) -> Self {
         Self {
             current: cx.current,
@@ -142,6 +143,7 @@ impl<'a> EventContext<'a> {
         }
     }
 
+    /// Creates a new [EventContext] with the given current [Entity].
     pub fn new_with_current(cx: &'a mut Context, current: Entity) -> Self {
         Self {
             current,
@@ -192,7 +194,7 @@ impl<'a> EventContext<'a> {
     }
 
     pub fn window_position(&self) -> WindowPosition {
-        let parent_window = self.parent_window().unwrap_or(Entity::root());
+        let parent_window = self.parent_window();
         if let Some(state) = self.windows.get(&parent_window) {
             return state.position;
         }
@@ -201,7 +203,7 @@ impl<'a> EventContext<'a> {
     }
 
     pub fn window_size(&self) -> WindowSize {
-        let parent_window = self.parent_window().unwrap_or(Entity::root());
+        let parent_window = self.parent_window();
         let bounds = self.cache.get_bounds(parent_window);
         WindowSize::new(bounds.width() as u32, bounds.height() as u32)
     }
@@ -242,7 +244,7 @@ impl<'a> EventContext<'a> {
         ret
     }
 
-    // Returns true if in a drop state.
+    /// Returns true if in a drop state.
     pub fn has_drop_data(&self) -> bool {
         self.drop_data.is_some()
     }
@@ -252,9 +254,9 @@ impl<'a> EventContext<'a> {
         self.cache.get_bounds(self.current)
     }
 
-    pub fn set_bounds(&mut self, bounds: BoundingBox) {
-        self.cache.set_bounds(self.current, bounds);
-    }
+    // pub fn set_bounds(&mut self, bounds: BoundingBox) {
+    //     self.cache.set_bounds(self.current, bounds);
+    // }
 
     /// Returns the scale factor.
     pub fn scale_factor(&self) -> f32 {
@@ -533,6 +535,7 @@ impl<'a> EventContext<'a> {
         }
     }
 
+    /// Moves the keyboard focus to the previous navigable view.
     pub fn focus_prev(&mut self) {
         let lock_focus_to = self.tree.lock_focus_within(*self.focused);
         let prev_focused = if let Some(prev_focused) =
@@ -602,6 +605,7 @@ impl<'a> EventContext<'a> {
         self.focused() == self.current
     }
 
+    /// Returns true if the current view can be dragged in a drag and drop operation.
     pub fn is_draggable(&self) -> bool {
         self.style
             .abilities
@@ -653,6 +657,7 @@ impl<'a> EventContext<'a> {
         *self.cursor_icon_locked
     }
 
+    /// Sets the drop data of the current view.
     pub fn set_drop_data(&mut self, data: impl Into<DropData>) {
         *self.drop_data = Some(data.into())
     }
@@ -1329,7 +1334,7 @@ impl DataContext for EventContext<'_> {
         None
     }
 
-    fn as_context(&self) -> Option<LocalizationContext<'_>> {
+    fn localization_context(&self) -> Option<LocalizationContext<'_>> {
         Some(LocalizationContext::from_event_context(self))
     }
 }
@@ -1388,12 +1393,12 @@ impl EmitContext for EventContext<'_> {
 
 /// Trait for querying properties of the tree from a context.
 pub trait TreeProps {
-    /// Returns the id of the parent of the current view.
+    /// Returns the entity id of the parent of the current view.
     fn parent(&self) -> Entity;
-    /// Returns the id of the first_child of the current view.
+    /// Returns the entity id of the first_child of the current view.
     fn first_child(&self) -> Entity;
-
-    fn parent_window(&self) -> Option<Entity>;
+    /// Returns the entity id of the parent window of the current view.
+    fn parent_window(&self) -> Entity;
 }
 
 impl TreeProps for EventContext<'_> {
@@ -1405,7 +1410,7 @@ impl TreeProps for EventContext<'_> {
         self.tree.get_layout_first_child(self.current).unwrap()
     }
 
-    fn parent_window(&self) -> Option<Entity> {
-        self.tree.get_parent_window(self.current)
+    fn parent_window(&self) -> Entity {
+        self.tree.get_parent_window(self.current).unwrap_or(Entity::root())
     }
 }

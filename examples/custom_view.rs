@@ -51,9 +51,7 @@ fn main() -> Result<(), ApplicationError> {
         AppData { color: Color::red() }.build(cx);
         CustomView::new(cx, AppData::color).size(Pixels(200.0));
         Slider::new(cx, AppData::color.map(|c| c.r() as f32 / 255.0))
-            .on_changing(|cx, val| {
-                cx.emit(AppEvent::SetColor(Color::rgb((val * 255.0) as u8, 0, 0)))
-            })
+            .on_change(|cx, val| cx.emit(AppEvent::SetColor(Color::rgb((val * 255.0) as u8, 0, 0))))
             .width(Pixels(200.0))
             .space(Pixels(20.0));
     })

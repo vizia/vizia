@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 // Adapted from Druid lens.rs
 
 // Copyright 2019 The Druid Authors.
@@ -207,6 +209,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
             #struct_vis struct root #lens_ty_generics(#(#phantom_decls),*);
 
             impl #lens_ty_generics root #lens_ty_generics {
+                ///
                 pub const fn new()->Self{
                     Self(#(#phantom_inits),*)
                 }

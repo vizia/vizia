@@ -245,7 +245,7 @@ impl ResGet<String> for Localized {
     }
 
     fn get(&self, cx: &impl DataContext) -> String {
-        let cx = cx.as_context().expect("Failed to get context");
+        let cx = cx.localization_context().expect("Failed to get context");
         let locale = &cx.environment().locale;
         let bundle = cx.resource_manager.current_translation(locale);
         let message = if let Some(msg) = bundle.get_message(&self.key) {
@@ -315,13 +315,15 @@ impl<T: ToString> ToStringLocalized for T {
     }
 }
 
+/// A trait for converting from [Localized] to a `String` via a translation using fluent.
 pub trait ToStringLocalized {
+    /// Method for converting the current type to a `String` via a translation using fluent.
     fn to_string_local(&self, cx: &impl DataContext) -> String;
 }
 
 impl ToStringLocalized for Localized {
     fn to_string_local(&self, cx: &impl DataContext) -> String {
-        let cx = cx.as_context().expect("Failed to get context");
+        let cx = cx.localization_context().expect("Failed to get context");
 
         let locale = &cx.environment().locale;
         let bundle = cx.resource_manager.current_translation(locale);

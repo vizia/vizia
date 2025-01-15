@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 pub const ICON_A_B_2: &str = r#"
 <svg
   xmlns="http://www.w3.org/2000/svg"

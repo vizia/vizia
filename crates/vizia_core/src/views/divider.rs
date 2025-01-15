@@ -27,6 +27,7 @@ impl View for Divider {
 }
 
 impl Handle<'_, Divider> {
+    /// Set the orientation of the divider. Accepts a value or a lens to an [Orientation].
     pub fn orientation(self, orientation: impl Res<Orientation>) -> Self {
         self.bind(orientation, move |handle, orientation| {
             let orientation = orientation.get(&handle);

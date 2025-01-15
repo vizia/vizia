@@ -44,7 +44,6 @@ impl AppData {
                 "Chip",
                 "Combobox",
                 "Datepicker",
-                "Dialog",
                 "Divider",
                 "Dropdown",
                 "Element",

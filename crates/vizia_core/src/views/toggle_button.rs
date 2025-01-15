@@ -1,10 +1,12 @@
 use crate::prelude::*;
 
+/// A button which can be toggled between two states.
 pub struct ToggleButton {
     on_toggle: Option<Box<dyn Fn(&mut EventContext)>>,
 }
 
 impl ToggleButton {
+    /// Create a new [ToggleButton] view.
     pub fn new<V: View>(
         cx: &mut Context,
         lens: impl Lens<Target = bool>,
@@ -64,6 +66,7 @@ impl View for ToggleButton {
 }
 
 impl Handle<'_, ToggleButton> {
+    /// Sets the callback triggered when the [ToggleButton] is toggled.
     pub fn on_toggle(self, callback: impl Fn(&mut EventContext) + 'static) -> Self {
         self.modify(|toggle_button| toggle_button.on_toggle = Some(Box::new(callback)))
     }

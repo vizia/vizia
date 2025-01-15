@@ -4,6 +4,7 @@ use crate::context::TreeProps;
 use crate::icons::{ICON_CHECK, ICON_CHEVRON_DOWN};
 use crate::prelude::*;
 
+/// A view which allows the user to select an item from a dropdown list.
 #[derive(Lens)]
 pub struct PickList {
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
@@ -11,11 +12,12 @@ pub struct PickList {
     is_open: bool,
 }
 
-pub enum PickListEvent {
+pub(crate) enum PickListEvent {
     SetOption(usize),
 }
 
 impl PickList {
+    /// Creates a new [PickList] view.
     pub fn new<L1, L2, T>(
         cx: &mut Context,
         list: L1,
@@ -133,7 +135,7 @@ impl Handle<'_, PickList> {
         })
     }
 
-    // Sets the callback triggered when an option is selected.
+    /// Sets the callback triggered when an option is selected.
     pub fn on_select<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, usize),
