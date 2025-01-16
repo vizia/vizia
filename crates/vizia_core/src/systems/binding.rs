@@ -1,4 +1,4 @@
-use crate::{binding::StoreId, model::ModelOrView, prelude::*};
+use crate::{binding::StoreId, context::FetchContext, prelude::*};
 use hashbrown::{HashMap, HashSet};
 use std::any::TypeId;
 
@@ -34,30 +34,28 @@ pub(crate) fn binding_system(cx: &mut Context) {
 
             if updated_stores.contains(&store_id) {
                 update_binding(cx, observer);
-            } else if let Some(store) =
-                cx.stores.get_mut(&source).and_then(|stores| stores.get_mut(&store_id))
+            } else if let Some(mut store) =
+                cx.stores.get_mut(&source).and_then(|stores| stores.remove(&store_id))
             {
-                let view = cx
-                    .views
-                    .get(&source)
-                    .filter(|view| view.id() == model_id)
-                    .map(|view| ModelOrView::View(view.as_ref()));
+                let view = cx.views.get(&source).filter(|view| view.id() == model_id).is_some();
 
-                let model_or_view = if view.is_some() {
-                    view
-                } else {
-                    cx.models
-                        .get(&source)
-                        .and_then(|models| models.get(&model_id))
-                        .map(|model| ModelOrView::Model(model.as_ref()))
-                };
+                let model =
+                    cx.models.get(&source).and_then(|models| models.get(&model_id)).is_some();
 
-                if let Some(model_or_view) = model_or_view {
-                    if store.update(model_or_view) {
-                        updated_stores.insert(store_id);
-                        update_binding(cx, observer);
-                    }
+                if model || view {
+                    cx.with_current(source, |cx| {
+                        if store.update(&FetchContext {
+                            entity: source,
+                            models: &mut cx.models,
+                            views: &mut cx.views,
+                        }) {
+                            updated_stores.insert(store_id);
+                            update_binding(cx, observer);
+                        }
+                    })
                 }
+
+                cx.stores.get_mut(&source).and_then(|stores| stores.insert(store_id, store));
             }
         }
     }

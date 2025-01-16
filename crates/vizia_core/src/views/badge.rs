@@ -80,7 +80,7 @@ impl Badge {
                         BadgePlacement::Left => (Percentage(50.0), Percentage(0.0)),
                         BadgePlacement::Right => (Percentage(-50.0), Percentage(0.0)),
                     };
-                    handle.translate(translate);
+                    //handle.translate(translate);
                 }
             },
         )

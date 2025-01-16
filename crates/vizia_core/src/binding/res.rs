@@ -66,10 +66,7 @@ where
     L: Lens<Target: Clone>,
 {
     fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, L::Target>> {
-        self.view(
-            cx.data()
-                .unwrap_or_else(|| panic!("Failed to get data from context for lens: {:?}", self)),
-        )
+        self.view(cx)
     }
 
     fn get(&self, cx: &impl DataContext) -> L::Target {
@@ -369,17 +366,17 @@ impl<T: Clone + ResGet<T>, const N: usize> ResGet<[T; N]> for [T; N] {
 
 impl<T: Clone + ResGet<T>, const N: usize> Res<[T; N]> for [T; N] {}
 
-impl<T1: Clone, T2: Clone> ResGet<(T1, T2)> for (T1, T2) {
-    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
-        Some(LensValue::Borrowed(self))
-    }
+// impl<T1: Clone, T2: Clone> ResGet<(T1, T2)> for (T1, T2) {
+//     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
+//         Some(LensValue::Borrowed(self))
+//     }
 
-    fn get(&self, _cx: &impl DataContext) -> (T1, T2) {
-        self.clone()
-    }
-}
+//     fn get(&self, _cx: &impl DataContext) -> (T1, T2) {
+//         self.clone()
+//     }
+// }
 
-impl<T1: Clone, T2: Clone> Res<(T1, T2)> for (T1, T2) {}
+// impl<T1: Clone, T2: Clone> Res<(T1, T2)> for (T1, T2) {}
 
 impl<T1: Clone, T2: Clone, T3: Clone> ResGet<(T1, T2, T3)> for (T1, T2, T3) {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {

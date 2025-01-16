@@ -1,9 +1,5 @@
-use hashbrown::{HashMap, HashSet};
-use std::any::TypeId;
-
-use crate::binding::{BasicStore, Store, StoreId};
+use crate::binding::get_storeid;
 use crate::context::{CURRENT, MAPS, MAP_MANAGER};
-use crate::model::ModelOrView;
 use crate::prelude::*;
 
 /// A view with a binding which rebuilds its contents when the observed data changes.
@@ -54,82 +50,9 @@ where
 
         CURRENT.with_borrow_mut(|f| *f = id);
 
-        let ancestors = cx.current().parent_iter(&cx.tree).collect::<HashSet<_>>();
-        let new_ancestors = id.parent_iter(&cx.tree).collect::<Vec<_>>();
-
-        fn insert_store<L>(
-            entity: Entity,
-            ancestors: &HashSet<Entity>,
-            stores: &mut HashMap<Entity, HashMap<StoreId, Box<dyn Store>>>,
-            model_data: ModelOrView,
-            lens: L,
-            id: Entity,
-        ) where
-            L: Lens<Target: Data>,
-        {
-            if !stores.contains_key(&entity) {
-                stores.insert(entity, HashMap::new());
-            }
-
-            if let Some(stores) = stores.get_mut(&entity) {
-                let key = lens.id();
-
-                if let Some(store) = stores.get_mut(&key) {
-                    let observers = store.observers();
-
-                    if ancestors.intersection(observers).next().is_none() {
-                        store.add_observer(id);
-                    }
-                } else {
-                    let mut observers = HashSet::new();
-                    observers.insert(id);
-
-                    let model = model_data.downcast_ref::<L::Source>().unwrap();
-
-                    let old = lens.view(model).map(|val| val.into_owned());
-
-                    let store = Box::new(BasicStore { lens, old, observers });
-
-                    stores.insert(key, store);
-                }
-            }
-        }
-
-        // Check if there's already a store with the same lens somewhere up the tree. If there is, add this binding as an observer,
-        // else create a new store with this binding as an observer.
-        for entity in new_ancestors {
-            // Check for view store
-            if let Some(view_handler) = cx.views.get(&entity) {
-                if view_handler.as_any_ref().is::<L::Source>() {
-                    insert_store(
-                        entity,
-                        &ancestors,
-                        &mut cx.stores,
-                        ModelOrView::View(view_handler.as_ref()),
-                        lens,
-                        id,
-                    );
-
-                    break;
-                }
-            }
-
-            if let Some(models) = cx.models.get_mut(&entity) {
-                // Check for model store
-                if let Some(model_data) = models.get(&TypeId::of::<L::Source>()) {
-                    insert_store(
-                        entity,
-                        &ancestors,
-                        &mut cx.stores,
-                        ModelOrView::Model(model_data.as_ref()),
-                        lens,
-                        id,
-                    );
-
-                    break;
-                }
-            }
-        }
+        cx.with_current(id, |cx| {
+            lens.bind(cx);
+        });
 
         cx.bindings.insert(id, Box::new(binding));
 

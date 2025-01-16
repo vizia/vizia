@@ -177,8 +177,8 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
                 type Source = #struct_type #ty_generics;
                 type Target = #field_ty;
 
-                fn view<'a>(&self, source: &'a #struct_type #ty_generics) -> ::std::option::Option<LensValue<'a, Self::Target>> {
-                    ::std::option::Option::Some(LensValue::Borrowed(&source.#field_name))
+                fn view<'a>(&self, cx: &'a impl DataContext) -> ::std::option::Option<LensValue<'a, Self::Target>> {
+                    ::std::option::Option::Some(LensValue::Borrowed(&cx.data::<Self::Source>()?.#field_name))
                 }
             }
         }
@@ -242,8 +242,8 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
             type Source = #struct_type #ty_generics;
             type Target = #struct_type #ty_generics;
 
-            fn view<'a>(&self, source: &'a Self::Source) -> ::std::option::Option<LensValue<'a, Self::Target>> {
-                ::std::option::Option::Some(LensValue::Borrowed(source))
+            fn view<'a>(&self, cx: &'a impl DataContext) -> ::std::option::Option<LensValue<'a, Self::Target>> {
+                ::std::option::Option::Some(LensValue::Borrowed(cx.data::<Self::Source>()?))
             }
         }
 
