@@ -22,8 +22,8 @@ impl<V> DataContext for Handle<'_, V> {
 
         for entity in self.entity.parent_iter(&self.cx.tree) {
             // Return any model data.
-            if let Some(model_data_store) = self.cx.data.get(&entity) {
-                if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
+            if let Some(models) = self.cx.models.get(&entity) {
+                if let Some(model) = models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }
             }

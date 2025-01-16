@@ -16,11 +16,12 @@ use hashbrown::HashMap;
 use crate::animation::Interpolator;
 use crate::cache::CachedData;
 use crate::events::ViewHandler;
-use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::resource::{ImageOrSvg, ResourceManager};
 use crate::text::TextContext;
 use vizia_input::MouseState;
+
+use super::ModelData;
 
 /// A context used when drawing a view.
 ///
@@ -59,7 +60,7 @@ pub struct DrawContext<'a> {
     pub(crate) style: &'a Style,
     pub(crate) cache: &'a mut CachedData,
     pub(crate) tree: &'a Tree<Entity>,
-    pub(crate) data: &'a HashMap<Entity, ModelDataStore>,
+    pub(crate) models: &'a HashMap<Entity, HashMap<TypeId, Box<dyn ModelData>>>,
     pub(crate) views: &'a mut HashMap<Entity, Box<dyn ViewHandler>>,
     pub(crate) resource_manager: &'a ResourceManager,
     pub(crate) text_context: &'a mut TextContext,
@@ -1245,8 +1246,8 @@ impl DataContext for DrawContext<'_> {
 
         for entity in self.current.parent_iter(self.tree) {
             // Return model data.
-            if let Some(model_data_store) = self.data.get(&entity) {
-                if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
+            if let Some(models) = self.models.get(&entity) {
+                if let Some(model) = models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }
             }

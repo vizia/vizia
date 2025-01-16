@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-use std::any::Any;
+use std::any::{Any, TypeId};
 
 #[doc(hidden)]
 pub(crate) trait ViewHandler: Any {
@@ -17,6 +17,8 @@ pub(crate) trait ViewHandler: Any {
     fn as_any_ref(&self) -> &dyn Any;
 
     fn as_any_mut(&mut self) -> &mut dyn Any;
+
+    fn id(&self) -> TypeId;
 }
 
 impl dyn ViewHandler {

@@ -169,24 +169,18 @@ impl EventManager {
 
 fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {
     // Send event to models attached to the entity
-    if let Some(ids) = cx
-        .data
-        .get(&entity)
-        .map(|model_data_store| model_data_store.models.keys().cloned().collect::<Vec<_>>())
+    if let Some(ids) =
+        cx.models.get(&entity).map(|models| models.keys().cloned().collect::<Vec<_>>())
     {
         for id in ids {
-            if let Some(mut model) = cx
-                .data
-                .get_mut(&entity)
-                .and_then(|model_data_store| model_data_store.models.remove(&id))
+            if let Some(mut model) =
+                cx.models.get_mut(&entity).and_then(|models| models.remove(&id))
             {
                 cx.current = entity;
 
                 model.event(cx, event);
 
-                cx.data
-                    .get_mut(&entity)
-                    .and_then(|model_data_store| model_data_store.models.insert(id, model));
+                cx.models.get_mut(&entity).and_then(|models| models.insert(id, model));
             }
         }
     }
@@ -378,17 +372,19 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             #[cfg(debug_assertions)]
             if *code == Code::KeyP && cx.modifiers.ctrl() {
                 for entity in TreeIterator::full(&cx.tree) {
-                    if let Some(model_data_store) = cx.data.get(&entity) {
-                        if !model_data_store.models.is_empty() {
+                    if let Some(models) = cx.models.get(&entity) {
+                        if !models.is_empty() {
                             debug!("Models for {}", entity);
-                            for (_, model) in model_data_store.models.iter() {
+                            for (_, model) in models.iter() {
                                 debug!("M: {:?}", model.name())
                             }
                         }
+                    }
 
-                        if !model_data_store.stores.is_empty() {
+                    if let Some(stores) = cx.stores.get(&entity) {
+                        if !stores.is_empty() {
                             debug!("Stores for {}", entity);
-                            for (_, store) in model_data_store.stores.iter() {
+                            for (_, store) in stores.iter() {
                                 debug!("S: [{}] - Observers {:?}", store.name(), store.observers())
                             }
                         }

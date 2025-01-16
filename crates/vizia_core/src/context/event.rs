@@ -11,7 +11,6 @@ use vizia_window::WindowPosition;
 use crate::animation::{AnimId, Interpolator};
 use crate::cache::CachedData;
 use crate::events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler};
-use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
@@ -23,7 +22,10 @@ use crate::text::TextContext;
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
-use super::{LocalizationContext, DARK_THEME, LIGHT_THEME};
+use super::{LocalizationContext, ModelData, DARK_THEME, LIGHT_THEME};
+
+type Views = HashMap<Entity, Box<dyn ViewHandler>>;
+type Models = HashMap<Entity, HashMap<TypeId, Box<dyn ModelData>>>;
 
 /// A context used when handling events.
 ///
@@ -67,8 +69,8 @@ pub struct EventContext<'a> {
     pub(crate) entity_identifiers: &'a HashMap<String, Entity>,
     pub cache: &'a mut CachedData,
     pub(crate) tree: &'a Tree<Entity>,
-    pub(crate) data: &'a mut HashMap<Entity, ModelDataStore>,
-    pub(crate) views: &'a mut HashMap<Entity, Box<dyn ViewHandler>>,
+    pub(crate) models: &'a mut Models,
+    pub(crate) views: &'a mut Views,
     pub(crate) listeners:
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub(crate) resource_manager: &'a mut ResourceManager,
@@ -121,7 +123,7 @@ impl<'a> EventContext<'a> {
             style: &mut cx.style,
             cache: &mut cx.cache,
             tree: &cx.tree,
-            data: &mut cx.data,
+            models: &mut cx.models,
             views: &mut cx.views,
             listeners: &mut cx.listeners,
             resource_manager: &mut cx.resource_manager,
@@ -155,7 +157,7 @@ impl<'a> EventContext<'a> {
             style: &mut cx.style,
             cache: &mut cx.cache,
             tree: &cx.tree,
-            data: &mut cx.data,
+            models: &mut cx.models,
             views: &mut cx.views,
             listeners: &mut cx.listeners,
             resource_manager: &mut cx.resource_manager,
@@ -436,12 +438,12 @@ impl<'a> EventContext<'a> {
 
     /// Sets the language used by the application for localization.
     pub fn set_language(&mut self, lang: LanguageIdentifier) {
-        if let Some(mut model_data_store) = self.data.remove(&Entity::root()) {
-            if let Some(model) = model_data_store.models.get_mut(&TypeId::of::<Environment>()) {
+        if let Some(mut models) = self.models.remove(&Entity::root()) {
+            if let Some(model) = models.get_mut(&TypeId::of::<Environment>()) {
                 model.event(self, &mut Event::new(EnvironmentEvent::SetLocale(lang)));
             }
 
-            self.data.insert(Entity::root(), model_data_store);
+            self.models.insert(Entity::root(), models);
         }
     }
 
@@ -1343,8 +1345,8 @@ impl DataContext for EventContext<'_> {
 
         for entity in self.current.parent_iter(self.tree) {
             // Return model data.
-            if let Some(model_data_store) = self.data.get(&entity) {
-                if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
+            if let Some(models) = self.models.get(&entity) {
+                if let Some(model) = models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }
             }

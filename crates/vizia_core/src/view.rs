@@ -13,12 +13,12 @@
 //! ```
 
 use crate::accessibility::IntoNode;
-use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::systems::get_access_node;
-use std::any::Any;
+use std::any::{Any, TypeId};
 mod handle;
 pub use handle::Handle;
+use hashbrown::HashMap;
 
 use crate::events::ViewHandler;
 use accesskit::{Node, TreeUpdate};
@@ -144,7 +144,8 @@ pub trait View: 'static + Sized {
             }));
         }
 
-        cx.data.insert(id, ModelDataStore::default());
+        cx.models.insert(id, HashMap::default());
+        cx.stores.insert(id, HashMap::default());
 
         let handle = Handle { current: id, entity: id, p: Default::default(), cx };
 
@@ -294,5 +295,9 @@ where
 
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
+    }
+
+    fn id(&self) -> std::any::TypeId {
+        TypeId::of::<T>()
     }
 }

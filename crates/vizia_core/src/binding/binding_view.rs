@@ -58,66 +58,75 @@ where
         let new_ancestors = id.parent_iter(&cx.tree).collect::<Vec<_>>();
 
         fn insert_store<L>(
+            entity: Entity,
             ancestors: &HashSet<Entity>,
-            stores: &mut HashMap<StoreId, Box<dyn Store>>,
+            stores: &mut HashMap<Entity, HashMap<StoreId, Box<dyn Store>>>,
             model_data: ModelOrView,
             lens: L,
             id: Entity,
         ) where
             L: Lens<Target: Data>,
         {
-            let key = get_storeid(&lens);
+            if !stores.contains_key(&entity) {
+                stores.insert(entity, HashMap::new());
+            }
 
-            if let Some(store) = stores.get_mut(&key) {
-                let observers = store.observers();
+            if let Some(stores) = stores.get_mut(&entity) {
+                let key = get_storeid(&lens);
 
-                if ancestors.intersection(observers).next().is_none() {
-                    store.add_observer(id);
+                if let Some(store) = stores.get_mut(&key) {
+                    let observers = store.observers();
+
+                    if ancestors.intersection(observers).next().is_none() {
+                        store.add_observer(id);
+                    }
+                } else {
+                    let mut observers = HashSet::new();
+                    observers.insert(id);
+
+                    let model = model_data.downcast_ref::<L::Source>().unwrap();
+
+                    let old = lens.view(model).map(|val| val.into_owned());
+
+                    let store = Box::new(BasicStore { lens, old, observers });
+
+                    stores.insert(key, store);
                 }
-            } else {
-                let mut observers = HashSet::new();
-                observers.insert(id);
-
-                let model = model_data.downcast_ref::<L::Source>().unwrap();
-
-                let old = lens.view(model).map(|val| val.into_owned());
-
-                let store = Box::new(BasicStore { lens, old, observers });
-
-                stores.insert(key, store);
             }
         }
 
         // Check if there's already a store with the same lens somewhere up the tree. If there is, add this binding as an observer,
         // else create a new store with this binding as an observer.
         for entity in new_ancestors {
-            if let Some(model_data_store) = cx.data.get_mut(&entity) {
-                // Check for model store
-                if let Some(model_data) = model_data_store.models.get(&TypeId::of::<L::Source>()) {
+            // Check for view store
+            if let Some(view_handler) = cx.views.get(&entity) {
+                if view_handler.as_any_ref().is::<L::Source>() {
                     insert_store(
+                        entity,
                         &ancestors,
-                        &mut model_data_store.stores,
-                        ModelOrView::Model(model_data.as_ref()),
+                        &mut cx.stores,
+                        ModelOrView::View(view_handler.as_ref()),
                         lens,
                         id,
                     );
 
                     break;
                 }
+            }
 
-                // Check for view store
-                if let Some(view_handler) = cx.views.get(&entity) {
-                    if view_handler.as_any_ref().is::<L::Source>() {
-                        insert_store(
-                            &ancestors,
-                            &mut model_data_store.stores,
-                            ModelOrView::View(view_handler.as_ref()),
-                            lens,
-                            id,
-                        );
+            if let Some(models) = cx.models.get_mut(&entity) {
+                // Check for model store
+                if let Some(model_data) = models.get(&TypeId::of::<L::Source>()) {
+                    insert_store(
+                        entity,
+                        &ancestors,
+                        &mut cx.stores,
+                        ModelOrView::Model(model_data.as_ref()),
+                        lens,
+                        id,
+                    );
 
-                        break;
-                    }
+                    break;
                 }
             }
         }
@@ -168,31 +177,22 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
 
     fn remove(&self, cx: &mut Context) {
         for entity in self.entity.parent_iter(&cx.tree) {
-            if let Some(model_data_store) = cx.data.get_mut(&entity) {
-                let key = get_storeid(&self.lens);
+            let key = get_storeid(&self.lens);
 
-                // Check for model store
-                if model_data_store.models.get(&TypeId::of::<L::Source>()).is_some() {
-                    if let Some(store) = model_data_store.stores.get_mut(&key) {
+            if let Some(stores) = cx.stores.get_mut(&entity) {
+                if let Some(store) = stores.get_mut(&key) {
+                    let source = store.source();
+                    if cx.views.get(&entity).filter(|view| view.id() == source).is_some()
+                        || cx
+                            .models
+                            .get(&entity)
+                            .filter(|models| models.contains_key(&source))
+                            .is_some()
+                    {
                         store.remove_observer(&self.entity);
 
                         if store.num_observers() == 0 {
-                            model_data_store.stores.remove(&key);
-                        }
-                    }
-
-                    break;
-                }
-
-                // Check for view store
-                if let Some(view_handler) = cx.views.get(&entity) {
-                    if view_handler.as_any_ref().is::<L::Source>() {
-                        if let Some(store) = model_data_store.stores.get_mut(&key) {
-                            store.remove_observer(&self.entity);
-
-                            if store.num_observers() == 0 {
-                                model_data_store.stores.remove(&key);
-                            }
+                            stores.remove(&key);
                         }
 
                         break;
