@@ -501,11 +501,7 @@ pub trait ActionModifiers<V> {
 
 // If the entity doesn't have an `ActionsModel` then add one to the entity
 fn build_action_model(cx: &mut Context, entity: Entity) {
-    if cx
-        .data
-        .get(&entity)
-        .and_then(|model_data_store| model_data_store.models.get(&TypeId::of::<ActionsModel>()))
-        .is_none()
+    if cx.models.get(&entity).and_then(|models| models.get(&TypeId::of::<ActionsModel>())).is_none()
     {
         cx.with_current(entity, |cx| {
             ActionsModel::new().build(cx);
@@ -514,12 +510,7 @@ fn build_action_model(cx: &mut Context, entity: Entity) {
 }
 
 fn build_modal_model(cx: &mut Context, entity: Entity) {
-    if cx
-        .data
-        .get(&entity)
-        .and_then(|model_data_store| model_data_store.models.get(&TypeId::of::<ModalModel>()))
-        .is_none()
-    {
+    if cx.models.get(&entity).and_then(|models| models.get(&TypeId::of::<ModalModel>())).is_none() {
         cx.with_current(entity, |cx| {
             ModalModel { tooltip_visible: (false, true), menu_visible: false }.build(cx);
         });

@@ -1,11 +1,8 @@
 //! Models are used to store application data and can be bound to by views to visually display the data.
 
-use std::any::{Any, TypeId};
-
-use crate::binding::Store;
-use crate::binding::StoreId;
 use crate::{events::ViewHandler, prelude::*};
 use hashbrown::HashMap;
+use std::any::{Any, TypeId};
 
 /// A trait implemented by application data in order to respond to events and mutate state.
 ///
@@ -66,12 +63,12 @@ pub trait Model: 'static + Sized {
             cx.current
         };
 
-        if let Some(model_data_store) = cx.data.get_mut(&current) {
-            model_data_store.models.insert(TypeId::of::<Self>(), Box::new(self));
+        if let Some(models) = cx.models.get_mut(&current) {
+            models.insert(TypeId::of::<Self>(), Box::new(self));
         } else {
             let mut models: HashMap<TypeId, Box<dyn ModelData>> = HashMap::new();
             models.insert(TypeId::of::<Self>(), Box::new(self));
-            cx.data.insert(current, ModelDataStore { models, stores: HashMap::default() });
+            cx.models.insert(current, models);
         }
     }
 
@@ -146,12 +143,6 @@ impl<T: Model> ModelData for T {
     fn name(&self) -> Option<&'static str> {
         <T as Model>::name(self)
     }
-}
-
-#[derive(Default)]
-pub(crate) struct ModelDataStore {
-    pub models: HashMap<TypeId, Box<dyn ModelData>>,
-    pub stores: HashMap<StoreId, Box<dyn Store>>,
 }
 
 impl Model for () {}

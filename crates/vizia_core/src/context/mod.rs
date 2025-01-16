@@ -37,7 +37,11 @@ pub use event::*;
 pub use proxy::*;
 pub use resource::*;
 
-use crate::events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler};
+use crate::{
+    binding::{Store, StoreId},
+    events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler},
+    model::ModelData,
+};
 
 use crate::{
     binding::{BindingHandler, MapId},
@@ -45,7 +49,6 @@ use crate::{
 };
 use crate::{cache::CachedData, resource::ImageOrSvg};
 
-use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::text::TextContext;
@@ -58,7 +61,8 @@ static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css"
 static MARKDOWN: &str = include_str!("../../resources/themes/markdown.css");
 
 type Views = HashMap<Entity, Box<dyn ViewHandler>>;
-type Models = HashMap<Entity, ModelDataStore>;
+type Models = HashMap<Entity, HashMap<TypeId, Box<dyn ModelData>>>;
+type Stores = HashMap<Entity, HashMap<StoreId, Box<dyn Store>>>;
 type Bindings = HashMap<Entity, Box<dyn BindingHandler>>;
 
 thread_local! {
@@ -92,7 +96,8 @@ pub struct Context {
     pub tree: Tree<Entity>,
     pub(crate) current: Entity,
     pub(crate) views: Views,
-    pub(crate) data: Models,
+    pub(crate) models: Models,
+    pub(crate) stores: Stores,
     pub(crate) bindings: Bindings,
     pub(crate) event_queue: VecDeque<Event>,
     pub(crate) event_schedule: BinaryHeap<TimedEvent>,
@@ -155,7 +160,8 @@ impl Context {
             tree: Tree::new(),
             current: Entity::root(),
             views: HashMap::default(),
-            data: HashMap::default(),
+            models: HashMap::default(),
+            stores: HashMap::default(),
             bindings: HashMap::default(),
             style: Style::default(),
             cache,
@@ -501,7 +507,8 @@ impl Context {
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
             self.style.remove(*entity);
-            self.data.remove(entity);
+            self.models.remove(entity);
+            self.stores.remove(entity);
             self.views.remove(entity);
             self.text_context.text_bounds.remove(*entity);
             self.text_context.text_paragraphs.remove(*entity);
@@ -544,12 +551,12 @@ impl Context {
     /// Sets the language used by the application for localization.
     pub fn set_language(&mut self, lang: LanguageIdentifier) {
         let cx = &mut EventContext::new(self);
-        if let Some(mut model_data_store) = cx.data.remove(&Entity::root()) {
-            if let Some(model) = model_data_store.models.get_mut(&TypeId::of::<Environment>()) {
+        if let Some(mut models) = cx.models.remove(&Entity::root()) {
+            if let Some(model) = models.get_mut(&TypeId::of::<Environment>()) {
                 model.event(cx, &mut Event::new(EnvironmentEvent::SetLocale(lang)));
             }
 
-            self.data.insert(Entity::root(), model_data_store);
+            self.models.insert(Entity::root(), models);
         }
     }
 
@@ -894,8 +901,8 @@ pub(crate) enum InternalEvent {
 pub struct LocalizationContext<'a> {
     pub(crate) current: Entity,
     pub(crate) resource_manager: &'a ResourceManager,
-    pub(crate) data: &'a HashMap<Entity, ModelDataStore>,
-    pub(crate) views: &'a HashMap<Entity, Box<dyn ViewHandler>>,
+    pub(crate) models: &'a Models,
+    pub(crate) views: &'a Views,
     pub(crate) tree: &'a Tree<Entity>,
 }
 
@@ -904,7 +911,7 @@ impl<'a> LocalizationContext<'a> {
         Self {
             current: cx.current,
             resource_manager: &cx.resource_manager,
-            data: &cx.data,
+            models: &cx.models,
             views: &cx.views,
             tree: &cx.tree,
         }
@@ -914,7 +921,7 @@ impl<'a> LocalizationContext<'a> {
         Self {
             current: cx.current,
             resource_manager: cx.resource_manager,
-            data: cx.data,
+            models: cx.models,
             views: cx.views,
             tree: cx.tree,
         }
@@ -1060,8 +1067,8 @@ impl DataContext for Context {
 
         for entity in self.current.parent_iter(&self.tree) {
             // Return any model data.
-            if let Some(model_data_store) = self.data.get(&entity) {
-                if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
+            if let Some(models) = self.models.get(&entity) {
+                if let Some(model) = models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }
             }
@@ -1091,8 +1098,8 @@ impl DataContext for LocalizationContext<'_> {
 
         for entity in self.current.parent_iter(self.tree) {
             // Return any model data.
-            if let Some(model_data_store) = self.data.get(&entity) {
-                if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
+            if let Some(models) = self.models.get(&entity) {
+                if let Some(model) = models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }
             }
