@@ -366,38 +366,50 @@ impl<T: Clone + ResGet<T>, const N: usize> ResGet<[T; N]> for [T; N] {
 
 impl<T: Clone + ResGet<T>, const N: usize> Res<[T; N]> for [T; N] {}
 
-// impl<T1: Clone, T2: Clone> ResGet<(T1, T2)> for (T1, T2) {
-//     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
-//         Some(LensValue::Borrowed(self))
-//     }
-
-//     fn get(&self, _cx: &impl DataContext) -> (T1, T2) {
-//         self.clone()
-//     }
-// }
-
-// impl<T1: Clone, T2: Clone> Res<(T1, T2)> for (T1, T2) {}
-
-impl<T1: Clone, T2: Clone, T3: Clone> ResGet<(T1, T2, T3)> for (T1, T2, T3) {
+impl ResGet<(i32, i32)> for (i32, i32) {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
 
-    fn get(&self, _cx: &impl DataContext) -> (T1, T2, T3) {
-        self.clone()
+    fn get(&self, _cx: &impl DataContext) -> (i32, i32) {
+        *self
     }
 }
 
-impl<T1: Clone, T2: Clone, T3: Clone> Res<(T1, T2, T3)> for (T1, T2, T3) {}
+impl Res<(i32, i32)> for (i32, i32) {}
 
-impl<T1: Clone, T2: Clone, T3: Clone, T4: Clone> ResGet<(T1, T2, T3, T4)> for (T1, T2, T3, T4) {
+impl ResGet<(u32, u32)> for (u32, u32) {
     fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
         Some(LensValue::Borrowed(self))
     }
 
-    fn get(&self, _cx: &impl DataContext) -> (T1, T2, T3, T4) {
-        self.clone()
+    fn get(&self, _cx: &impl DataContext) -> (u32, u32) {
+        *self
     }
 }
 
-impl<T1: Clone, T2: Clone, T3: Clone, T4: Clone> Res<(T1, T2, T3, T4)> for (T1, T2, T3, T4) {}
+impl Res<(u32, u32)> for (u32, u32) {}
+
+impl ResGet<(f32, f32)> for (f32, f32) {
+    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
+        Some(LensValue::Borrowed(self))
+    }
+
+    fn get(&self, _cx: &impl DataContext) -> (f32, f32) {
+        *self
+    }
+}
+
+impl Res<(f32, f32)> for (f32, f32) {}
+
+impl ResGet<(Units, Units)> for (Units, Units) {
+    fn get_ref<'a>(&'a self, _: &'a impl DataContext) -> Option<LensValue<'a, Self>> {
+        Some(LensValue::Borrowed(self))
+    }
+
+    fn get(&self, _cx: &impl DataContext) -> (Units, Units) {
+        *self
+    }
+}
+
+impl Res<(Units, Units)> for (Units, Units) {}
