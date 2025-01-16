@@ -97,14 +97,7 @@ where
     L: Lens<Target: Into<FluentValue<'static>> + Data>,
 {
     fn get_val(&self, cx: &LocalizationContext) -> FluentValue<'static> {
-        self.lens
-            .view(
-                cx.data()
-                    .expect("Failed to get data from context. Has it been built into the tree?"),
-            )
-            .unwrap()
-            .into_owned()
-            .into()
+        self.lens.view(cx).unwrap().into_owned().into()
     }
 
     fn make_clone(&self) -> Box<dyn FluentStore> {

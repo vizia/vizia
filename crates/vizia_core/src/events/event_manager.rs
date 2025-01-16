@@ -370,22 +370,26 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             meta.target = cx.focused;
 
             #[cfg(debug_assertions)]
-            if *code == Code::KeyP && cx.modifiers.ctrl() {
+            if *code == Code::KeyP {
                 for entity in TreeIterator::full(&cx.tree) {
                     if let Some(models) = cx.models.get(&entity) {
                         if !models.is_empty() {
-                            debug!("Models for {}", entity);
+                            println!("Models for {}", entity);
                             for (_, model) in models.iter() {
-                                debug!("M: {:?}", model.name())
+                                println!("M: {:?}", model.name())
                             }
                         }
                     }
 
                     if let Some(stores) = cx.stores.get(&entity) {
                         if !stores.is_empty() {
-                            debug!("Stores for {}", entity);
+                            println!("Stores for {}", entity);
                             for (_, store) in stores.iter() {
-                                debug!("S: [{}] - Observers {:?}", store.name(), store.observers())
+                                println!(
+                                    "S: [{}] - Observers {:?}",
+                                    store.name(),
+                                    store.observers()
+                                )
                             }
                         }
                     }

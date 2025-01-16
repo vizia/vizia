@@ -2,7 +2,8 @@ use hashbrown::{hash_map::DefaultHashBuilder, HashSet};
 use std::any::TypeId;
 use std::hash::{BuildHasher, Hash, Hasher};
 
-use crate::{model::ModelOrView, prelude::*};
+use crate::context::FetchContext;
+use crate::prelude::*;
 
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct StoreId(pub u64);
@@ -16,7 +17,7 @@ pub(crate) fn get_storeid<T: 'static + Hash>(t: &T) -> StoreId {
 
 pub(crate) trait Store {
     /// Updates the model data, returning true if the data changed.
-    fn update(&mut self, model: ModelOrView) -> bool;
+    fn update(&mut self, cx: &FetchContext) -> bool;
     /// Returns the set of observers for the store.
     fn observers(&self) -> &HashSet<Entity>;
     /// Adds an observer to the store.
@@ -46,9 +47,8 @@ where
         TypeId::of::<L::Source>()
     }
 
-    fn update(&mut self, model: ModelOrView) -> bool {
-        let Some(data) = model.downcast_ref::<L::Source>() else { return false };
-        let Some(new_data) = self.lens.view(data) else { return false };
+    fn update(&mut self, cx: &FetchContext) -> bool {
+        let Some(new_data) = self.lens.view(cx) else { return false };
 
         if matches!(&self.old, Some(old) if old.same(&new_data)) {
             return false;

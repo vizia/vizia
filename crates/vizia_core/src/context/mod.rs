@@ -38,7 +38,7 @@ pub use proxy::*;
 pub use resource::*;
 
 use crate::{
-    binding::{Store, StoreId},
+    binding::{get_storeid, BasicStore, Store, StoreId},
     events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler},
     model::ModelData,
 };
@@ -938,6 +938,11 @@ impl<'a> LocalizationContext<'a> {
 pub trait DataContext {
     /// Get model/view data from the context. Returns `None` if the data does not exist.
     fn data<T: 'static>(&self) -> Option<&T>;
+    fn bind<L: Lens>(&mut self, lens: &L)
+    where
+        L::Target: Data,
+    {
+    }
 
     /// Convert the current context into a [LocalizationContext].
     fn localization_context(&self) -> Option<LocalizationContext<'_>> {
@@ -945,7 +950,37 @@ pub trait DataContext {
     }
 }
 
-/// A trait for any Context-like object that lets you emit events.
+pub struct FetchContext<'a> {
+    pub entity: Entity,
+    pub(crate) models: &'a mut Models,
+    pub(crate) views: &'a mut Views,
+}
+
+impl<'a> DataContext for FetchContext<'a> {
+    fn data<T: 'static>(&self) -> Option<&T> {
+        // return data for the static model.
+        if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
+            return Some(t);
+        }
+
+        // Return any model data.
+        if let Some(models) = self.models.get(&self.entity) {
+            if let Some(model) = models.get(&TypeId::of::<T>()) {
+                return model.downcast_ref::<T>();
+            }
+        }
+
+        // Return any view data.
+        if let Some(view_handler) = self.views.get(&self.entity) {
+            if let Some(data) = view_handler.downcast_ref::<T>() {
+                return Some(data);
+            }
+        }
+
+        None
+    }
+}
+
 pub trait EmitContext {
     /// Send an event containing the provided message up the tree from the current entity.
     ///
@@ -1082,6 +1117,71 @@ impl DataContext for Context {
         }
 
         None
+    }
+
+    fn bind<L: Lens>(&mut self, lens: &L)
+    where
+        L::Target: Data,
+    {
+        fn insert_store<L: Lens>(
+            entity: Entity,
+            //ancestors: &HashSet<Entity>,
+            stores: &mut HashMap<Entity, HashMap<StoreId, Box<dyn Store>>>,
+            lens: &L,
+            id: Entity,
+        ) where
+            L::Target: Data,
+        {
+            if !stores.contains_key(&entity) {
+                stores.insert(entity, HashMap::new());
+            }
+
+            if let Some(stores) = stores.get_mut(&entity) {
+                let key = get_storeid(lens);
+
+                if let Some(store) = stores.get_mut(&key) {
+                    // let observers = store.observers();
+
+                    //if ancestors.intersection(observers).next().is_none() {
+                    store.add_observer(id);
+                    //}
+                } else {
+                    let mut observers = HashSet::new();
+                    observers.insert(id);
+
+                    //let model = model_data.downcast_ref::<L::Source>().unwrap();
+
+                    //let old = lens.view(cx).map(|val| val.into_owned());
+
+                    let store = Box::new(BasicStore { lens: *lens, old: None, observers });
+
+                    stores.insert(key, store);
+                }
+            }
+        }
+
+        // return data for the static model.
+        if <dyn Any>::downcast_ref::<L::Source>(&()).is_some() {
+            insert_store(Entity::root(), &mut self.stores, lens, self.current);
+        } else {
+            for entity in self.current.parent_iter(&self.tree) {
+                // Return any model data.
+                if let Some(models) = self.models.get(&entity) {
+                    if models.get(&TypeId::of::<L::Source>()).is_some() {
+                        insert_store(entity, &mut self.stores, lens, self.current);
+                        break;
+                    }
+                }
+
+                // Return any view data.
+                if let Some(view_handler) = self.views.get(&entity) {
+                    if view_handler.downcast_ref::<L::Source>().is_some() {
+                        insert_store(entity, &mut self.stores, lens, self.current);
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     fn localization_context(&self) -> Option<LocalizationContext<'_>> {

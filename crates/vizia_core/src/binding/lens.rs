@@ -6,9 +6,9 @@ use std::marker::PhantomData;
 use std::ops::{BitAnd, BitOr, Deref};
 use std::rc::Rc;
 
-use crate::context::{CURRENT, MAPS, MAP_MANAGER};
+use crate::context::{DataContext, CURRENT, MAPS, MAP_MANAGER};
 
-use super::MapId;
+use super::{Data, MapId};
 
 /// A Lens allows the construction of a reference to a piece of some data, e.g. a field of a struct.
 ///
@@ -19,8 +19,25 @@ pub trait Lens: 'static + Copy + Debug + Hash {
     type Source;
     type Target;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>>;
+    fn view<'a>(&self, cx: &'a impl DataContext) -> Option<LensValue<'a, Self::Target>>;
+    fn bind(&self, cx: &mut impl DataContext)
+    where
+        Self::Target: Data,
+    {
+        cx.bind(self);
+    }
 }
+
+// pub trait Bindable: Lens
+// where
+//     Self::Target: Data,
+// {
+//     fn bind(&self, cx: &mut impl DataContext) {
+//         cx.bind(self);
+//     }
+// }
+
+// impl<L: Lens> Bindable for L where L::Target: Data {}
 
 /// A type returned by `Lens::view()` which contains either a reference to model data or an owned value.
 pub enum LensValue<'a, T> {
@@ -88,21 +105,21 @@ pub trait LensExt: Lens {
         AndLens::new(self, other)
     }
 
-    /// Used to construct a lens to some data contained within some other lensed data.
-    ///
-    /// # Example
-    /// Binds a label to `other_data`, which is a field of a struct `SomeData`, which is a field of the root `AppData` model:
-    /// ```compile_fail
-    /// Binding::new(cx, AppData::some_data.then(SomeData::other_data), |cx, data|{
-    ///
-    /// });
-    /// ```
-    fn then<Other>(self, other: Other) -> Then<Self, Other>
-    where
-        Other: Lens<Source = Self::Target>,
-    {
-        Then::new(self, other)
-    }
+    // /// Used to construct a lens to some data contained within some other lensed data.
+    // ///
+    // /// # Example
+    // /// Binds a label to `other_data`, which is a field of a struct `SomeData`, which is a field of the root `AppData` model:
+    // /// ```compile_fail
+    // /// Binding::new(cx, AppData::some_data.then(SomeData::other_data), |cx, data|{
+    // ///
+    // /// });
+    // /// ```
+    // fn then<Other>(self, other: Other) -> Then<Self, Other>
+    // where
+    //     Other: Lens<Source = Self::Target>,
+    // {
+    //     Then::new(self, other)
+    // }
 
     fn idx<T>(self, index: usize) -> Index<Self, T>
     where
@@ -130,19 +147,19 @@ pub trait LensExt: Lens {
         MapRef { id, lens: self, o: PhantomData }
     }
 
-    fn unwrap<T: 'static>(self) -> Then<Self, UnwrapLens<T>>
-    where
-        Self: Lens<Target = Option<T>>,
-    {
-        self.then(UnwrapLens::new())
-    }
+    // fn unwrap<T: 'static>(self) -> Then<Self, UnwrapLens<T>>
+    // where
+    //     Self: Lens<Target = Option<T>>,
+    // {
+    //     self.then(UnwrapLens::new())
+    // }
 
-    fn into_lens<T: 'static>(self) -> Then<Self, IntoLens<Self::Target, T>>
-    where
-        Self::Target: Clone + Into<T>,
-    {
-        self.then(IntoLens::new())
-    }
+    // fn into_lens<T: 'static>(self) -> Then<Self, IntoLens<Self::Target, T>>
+    // where
+    //     Self::Target: Clone + Into<T>,
+    // {
+    //     self.then(IntoLens::new())
+    // }
 }
 
 // Implement LensExt for all types which implement Lens.
@@ -170,12 +187,12 @@ impl<L: Lens, O: 'static> Clone for Map<L, O> {
     }
 }
 
-impl<L: Lens, O: 'static> Lens for Map<L, O> {
+impl<L: Lens, O: 'static + Data> Lens for Map<L, O> {
     type Source = L::Source;
     type Target = O;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
-        let target = self.lens.view(source)?;
+    fn view<'a>(&self, cx: &'a impl DataContext) -> Option<LensValue<'a, Self::Target>> {
+        let target = self.lens.view(cx)?;
         let closure = MAPS.with_borrow(|f| {
             let (_, any) = f.get(&self.id)?;
             let MapState { closure } = any.downcast_ref()?;
@@ -212,18 +229,18 @@ impl<L: Lens, O: 'static> Clone for MapRef<L, O> {
     }
 }
 
-impl<L: Lens, O: 'static + Clone> Lens for MapRef<L, O> {
+impl<L: Lens, O: 'static + Data> Lens for MapRef<L, O> {
     type Source = L::Source;
     type Target = O;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+    fn view<'a>(&self, cx: &'a impl DataContext) -> Option<LensValue<'a, Self::Target>> {
         let closure = MAPS.with_borrow(|f| {
             let (_, any) = f.get(&self.id)?;
             let MapRefState { closure } = any.downcast_ref()?;
             Some(closure.clone())
         })?;
 
-        match self.lens.view(source)? {
+        match self.lens.view(cx)? {
             LensValue::Borrowed(target) => Some(LensValue::Borrowed(closure(target))),
             LensValue::Owned(target) => Some(LensValue::Owned(closure(&target).clone())),
         }
@@ -243,60 +260,60 @@ impl<L: Lens, O: 'static> Hash for MapRef<L, O> {
     }
 }
 
-/// `Lens` composed of two lenses joined together
-#[derive(Hash)]
-pub struct Then<A, B> {
-    a: A,
-    b: B,
-}
+// /// `Lens` composed of two lenses joined together
+// #[derive(Hash)]
+// pub struct Then<A, B> {
+//     a: A,
+//     b: B,
+// }
 
-impl<A, B> Then<A, B> {
-    pub fn new(a: A, b: B) -> Self
-    where
-        A: Lens,
-        B: Lens,
-    {
-        Self { a, b }
-    }
-}
+// impl<A, B> Then<A, B> {
+//     pub fn new(a: A, b: B) -> Self
+//     where
+//         A: Lens,
+//         B: Lens,
+//     {
+//         Self { a, b }
+//     }
+// }
 
-impl<A, B> Lens for Then<A, B>
-where
-    A: Lens,
-    B: Lens<Source = A::Target>,
-{
-    type Source = A::Source;
-    type Target = B::Target;
+// impl<A, B> Lens for Then<A, B>
+// where
+//     A: Lens,
+//     B: Lens<Source = A::Target>,
+// {
+//     type Source = A::Source;
+//     type Target = B::Target;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
-        if let Some(val) = self.a.view(source) {
-            let val = match val {
-                LensValue::Borrowed(val) => return self.b.view(val),
-                LensValue::Owned(ref val) => val,
-            };
-            match self.b.view(val) {
-                Some(LensValue::Owned(val)) => return Some(LensValue::Owned(val)),
-                _ => unreachable!(),
-            }
-        }
+//     fn view<'a>(&self, cx: &'a impl DataContext) -> Option<LensValue<'a, Self::Target>> {
+//         if let Some(val) = self.a.view(cx) {
+//             let val = match val {
+//                 LensValue::Borrowed(val) => return self.b.view(val),
+//                 LensValue::Owned(ref val) => val,
+//             };
+//             match self.b.view(val) {
+//                 Some(LensValue::Owned(val)) => return Some(LensValue::Owned(val)),
+//                 _ => unreachable!(),
+//             }
+//         }
 
-        None
-    }
-}
+//         None
+//     }
+// }
 
-impl<T: Clone, U: Clone> Clone for Then<T, U> {
-    fn clone(&self) -> Self {
-        Self { a: self.a.clone(), b: self.b.clone() }
-    }
-}
+// impl<T: Clone, U: Clone> Clone for Then<T, U> {
+//     fn clone(&self) -> Self {
+//         Self { a: self.a.clone(), b: self.b.clone() }
+//     }
+// }
 
-impl<A: Lens, B: Lens> Debug for Then<A, B> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("{:?}.then({:?})", self.a, self.b))
-    }
-}
+// impl<A: Lens, B: Lens> Debug for Then<A, B> {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+//         f.write_fmt(format_args!("{:?}.then({:?})", self.a, self.b))
+//     }
+// }
 
-impl<T: Copy, U: Copy> Copy for Then<T, U> {}
+// impl<T: Copy, U: Copy> Copy for Then<T, U> {}
 
 pub struct Index<L, T> {
     lens: L,
@@ -338,13 +355,13 @@ impl<L: Lens, T> Hash for Index<L, T> {
 impl<L, T> Lens for Index<L, T>
 where
     L: Lens<Target: Deref<Target = [T]>>,
-    T: 'static + Clone,
+    T: 'static + Data,
 {
     type Source = L::Source;
     type Target = T;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
-        self.lens.view(source).and_then(|v| match v {
+    fn view<'a>(&self, cx: &'a impl DataContext) -> Option<LensValue<'a, Self::Target>> {
+        self.lens.view(cx).and_then(|v| match v {
             LensValue::Borrowed(v) => v.get(self.index).map(LensValue::Borrowed),
             LensValue::Owned(v) => v.get(self.index).cloned().map(LensValue::Owned),
         })
@@ -378,11 +395,11 @@ impl<T> Hash for StaticLens<T> {
     }
 }
 
-impl<T> Lens for StaticLens<T> {
+impl<T: Data> Lens for StaticLens<T> {
     type Source = ();
     type Target = T;
 
-    fn view<'a>(&self, _: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+    fn view<'a>(&self, _: &'a impl DataContext) -> Option<LensValue<'a, Self::Target>> {
         Some(LensValue::Borrowed(self.data))
     }
 }
@@ -393,88 +410,88 @@ impl<T> StaticLens<T> {
     }
 }
 
-#[derive(Default)]
-pub struct UnwrapLens<T> {
-    t: PhantomData<T>,
-}
+// #[derive(Default)]
+// pub struct UnwrapLens<T> {
+//     t: PhantomData<T>,
+// }
 
-impl<T> Clone for UnwrapLens<T> {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
+// impl<T> Clone for UnwrapLens<T> {
+//     fn clone(&self) -> Self {
+//         *self
+//     }
+// }
 
-impl<T> UnwrapLens<T> {
-    pub fn new() -> Self {
-        Self { t: PhantomData }
-    }
-}
+// impl<T> UnwrapLens<T> {
+//     pub fn new() -> Self {
+//         Self { t: PhantomData }
+//     }
+// }
 
-impl<T> Copy for UnwrapLens<T> {}
+// impl<T> Copy for UnwrapLens<T> {}
 
-impl<T: 'static> Lens for UnwrapLens<T> {
-    type Source = Option<T>;
-    type Target = T;
+// impl<T: 'static> Lens for UnwrapLens<T> {
+//     type Source = Option<T>;
+//     type Target = T;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
-        source.as_ref().map(LensValue::Borrowed)
-    }
-}
+//     fn view<'a>(&self, cx: &'a impl DataContext) -> Option<LensValue<'a, Self::Target>> {
+//         cx.as_ref().map(LensValue::Borrowed)
+//     }
+// }
 
-impl<T: 'static> Debug for UnwrapLens<T> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str("unwrap")
-    }
-}
+// impl<T: 'static> Debug for UnwrapLens<T> {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+//         f.write_str("unwrap")
+//     }
+// }
 
-impl<T: 'static> Hash for UnwrapLens<T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        let id = TypeId::of::<Self>();
-        id.hash(state);
-    }
-}
+// impl<T: 'static> Hash for UnwrapLens<T> {
+//     fn hash<H: Hasher>(&self, state: &mut H) {
+//         let id = TypeId::of::<Self>();
+//         id.hash(state);
+//     }
+// }
 
-#[derive(Default)]
-pub struct IntoLens<T, U> {
-    t: PhantomData<T>,
-    u: PhantomData<U>,
-}
+// #[derive(Default)]
+// pub struct IntoLens<T, U> {
+//     t: PhantomData<T>,
+//     u: PhantomData<U>,
+// }
 
-impl<T, U> IntoLens<T, U> {
-    pub fn new() -> Self {
-        Self { t: Default::default(), u: Default::default() }
-    }
-}
+// impl<T, U> IntoLens<T, U> {
+//     pub fn new() -> Self {
+//         Self { t: Default::default(), u: Default::default() }
+//     }
+// }
 
-impl<T, U> Clone for IntoLens<T, U> {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
+// impl<T, U> Clone for IntoLens<T, U> {
+//     fn clone(&self) -> Self {
+//         *self
+//     }
+// }
 
-impl<T, U> Copy for IntoLens<T, U> {}
+// impl<T, U> Copy for IntoLens<T, U> {}
 
-impl<T: 'static + Clone + TryInto<U>, U: 'static> Lens for IntoLens<T, U> {
-    type Source = T;
-    type Target = U;
+// impl<T: 'static + Clone + TryInto<U>, U: 'static> Lens for IntoLens<T, U> {
+//     type Source = T;
+//     type Target = U;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
-        source.clone().try_into().ok().map(|t| LensValue::Owned(t))
-    }
-}
+//     fn view<'a>(&self, cx: &'a impl DataContext) -> Option<LensValue<'a, Self::Target>> {
+//         cx.clone().try_into().ok().map(|t| LensValue::Owned(t))
+//     }
+// }
 
-impl<T, U> Debug for IntoLens<T, U> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str("into")
-    }
-}
+// impl<T, U> Debug for IntoLens<T, U> {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+//         f.write_str("into")
+//     }
+// }
 
-impl<T: 'static, U: 'static> Hash for IntoLens<T, U> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        let id = TypeId::of::<Self>();
-        id.hash(state);
-    }
-}
+// impl<T: 'static, U: 'static> Hash for IntoLens<T, U> {
+//     fn hash<H: Hasher>(&self, state: &mut H) {
+//         let id = TypeId::of::<Self>();
+//         id.hash(state);
+//     }
+// }
 
 #[derive(Hash, Copy, Clone, Debug)]
 pub struct RatioLens<L1, L2> {
@@ -496,9 +513,9 @@ where
     type Source = L1::Source;
     type Target = f32;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, f32>> {
-        let num = self.numerator.view(source)?.into_owned();
-        let den = self.denominator.view(source)?.into_owned();
+    fn view<'a>(&self, cx: &'a impl DataContext) -> Option<LensValue<'a, f32>> {
+        let num = self.numerator.view(cx)?.into_owned();
+        let den = self.denominator.view(cx)?.into_owned();
         Some(LensValue::Owned(num / den))
     }
 }
@@ -527,9 +544,9 @@ where
     type Source = L1::Source;
     type Target = bool;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
-        let v1 = self.lens1.view(source)?.into_owned();
-        let v2 = self.lens2.view(source)?.into_owned();
+    fn view<'a>(&self, cx: &'a impl DataContext) -> Option<LensValue<'a, Self::Target>> {
+        let v1 = self.lens1.view(cx)?.into_owned();
+        let v2 = self.lens2.view(cx)?.into_owned();
 
         Some(LensValue::Owned(v1 | v2))
     }
@@ -550,8 +567,8 @@ impl<L: Lens> Lens for Wrapper<L> {
     type Source = L::Source;
     type Target = L::Target;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
-        self.0.view(source)
+    fn view<'a>(&self, cx: &'a impl DataContext) -> Option<LensValue<'a, Self::Target>> {
+        self.0.view(cx)
     }
 }
 
@@ -582,16 +599,16 @@ where
     }
 }
 
-impl<A: Lens, L1: Lens<Target = bool>, L2: Lens<Target = bool>> BitOr<L2> for Then<A, L1>
-where
-    A: Lens<Source = L2::Source>,
-    L1: Lens<Source = A::Target>,
-{
-    type Output = OrLens<Self, L2>;
-    fn bitor(self, rhs: L2) -> Self::Output {
-        OrLens::new(self, rhs)
-    }
-}
+// impl<A: Lens, L1: Lens<Target = bool>, L2: Lens<Target = bool>> BitOr<L2> for Then<A, L1>
+// where
+//     A: Lens<Source = L2::Source>,
+//     L1: Lens<Source = A::Target>,
+// {
+//     type Output = OrLens<Self, L2>;
+//     fn bitor(self, rhs: L2) -> Self::Output {
+//         OrLens::new(self, rhs)
+//     }
+// }
 
 impl<L, L2: Lens<Target = bool>> BitOr<L2> for Map<L, bool>
 where
@@ -627,9 +644,9 @@ where
     type Source = L1::Source;
     type Target = bool;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
-        let v1 = self.lens1.view(source)?.into_owned();
-        let v2 = self.lens2.view(source)?.into_owned();
+    fn view<'a>(&self, cx: &'a impl DataContext) -> Option<LensValue<'a, Self::Target>> {
+        let v1 = self.lens1.view(cx)?.into_owned();
+        let v2 = self.lens2.view(cx)?.into_owned();
 
         Some(LensValue::Owned(v1 | v2))
     }
@@ -662,16 +679,16 @@ where
     }
 }
 
-impl<A: Lens, L1: Lens<Target = bool>, L2: Lens<Target = bool>> BitAnd<L2> for Then<A, L1>
-where
-    A: Lens<Source = L2::Source>,
-    L1: Lens<Source = A::Target>,
-{
-    type Output = AndLens<Self, L2>;
-    fn bitand(self, rhs: L2) -> Self::Output {
-        AndLens::new(self, rhs)
-    }
-}
+// impl<A: Lens, L1: Lens<Target = bool>, L2: Lens<Target = bool>> BitAnd<L2> for Then<A, L1>
+// where
+//     A: Lens<Source = L2::Source>,
+//     L1: Lens<Source = A::Target>,
+// {
+//     type Output = AndLens<Self, L2>;
+//     fn bitand(self, rhs: L2) -> Self::Output {
+//         AndLens::new(self, rhs)
+//     }
+// }
 
 impl<L, L2: Lens<Target = bool>> BitAnd<L2> for Map<L, bool>
 where
@@ -685,12 +702,31 @@ where
 
 impl<T> Lens for &'static T
 where
-    T: 'static + Copy + Debug + Hash,
+    T: 'static + Copy + Debug + Hash + Data,
 {
     type Source = ();
     type Target = T;
 
-    fn view<'a>(&self, _source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+    fn view<'a>(&self, _source: &'a impl DataContext) -> Option<LensValue<'a, Self::Target>> {
         Some(LensValue::Borrowed(*self))
+    }
+}
+
+impl<A: Lens, B: Lens> Lens for (A, B)
+where
+    A::Target: Data,
+    B::Target: Data,
+{
+    type Source = (A::Source, B::Source);
+    type Target = (A::Target, B::Target);
+    fn view<'a>(&self, cx: &'a impl DataContext) -> Option<LensValue<'a, Self::Target>> {
+        Some(LensValue::Owned((self.0.view(cx)?.into_owned(), self.1.view(cx)?.into_owned())))
+    }
+    fn bind(&self, cx: &mut impl DataContext)
+    where
+        Self::Target: Data,
+    {
+        self.0.bind(cx);
+        self.1.bind(cx);
     }
 }
