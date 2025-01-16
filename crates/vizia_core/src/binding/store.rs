@@ -42,7 +42,7 @@ where
     L: Lens<Target: Data>,
 {
     fn source(&self) -> TypeId {
-        TypeId::of::<L::Source>()
+        self.lens.sources().first().copied().unwrap()
     }
 
     fn update(&mut self, cx: &FetchContext) -> bool {

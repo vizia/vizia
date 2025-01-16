@@ -26,6 +26,12 @@ impl From<WindowSize> for (u32, u32) {
     }
 }
 
+impl From<(i32, i32)> for WindowSize {
+    fn from(s: (i32, i32)) -> Self {
+        WindowSize::new(s.0 as u32, s.1 as u32)
+    }
+}
+
 /// The logical position of a window in screen coordinates.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct WindowPosition {
@@ -51,6 +57,12 @@ impl From<(u32, u32)> for WindowPosition {
 impl From<WindowPosition> for (u32, u32) {
     fn from(s: WindowPosition) -> Self {
         (s.x, s.y)
+    }
+}
+
+impl From<(i32, i32)> for WindowPosition {
+    fn from(s: (i32, i32)) -> Self {
+        WindowPosition::new(s.0 as u32, s.1 as u32)
     }
 }
 

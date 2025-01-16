@@ -938,7 +938,7 @@ impl<'a> LocalizationContext<'a> {
 pub trait DataContext {
     /// Get model/view data from the context. Returns `None` if the data does not exist.
     fn data<T: 'static>(&self) -> Option<&T>;
-    fn bind<L: Lens>(&mut self, lens: &L)
+    fn bind<L: Lens>(&mut self, #[allow(unused)] lens: &L)
     where
         L::Target: Data,
     {
@@ -956,7 +956,7 @@ pub struct FetchContext<'a> {
     pub(crate) views: &'a mut Views,
 }
 
-impl<'a> DataContext for FetchContext<'a> {
+impl DataContext for FetchContext<'_> {
     fn data<T: 'static>(&self) -> Option<&T> {
         // return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
@@ -1160,24 +1160,28 @@ impl DataContext for Context {
             }
         }
 
-        // return data for the static model.
-        if <dyn Any>::downcast_ref::<L::Source>(&()).is_some() {
-            insert_store(Entity::root(), &mut self.stores, lens, self.current);
-        } else {
-            for entity in self.current.parent_iter(&self.tree) {
-                // Return any model data.
-                if let Some(models) = self.models.get(&entity) {
-                    if models.get(&TypeId::of::<L::Source>()).is_some() {
-                        insert_store(entity, &mut self.stores, lens, self.current);
-                        break;
+        // let type_id = TypeId::of::<L::Source>();
+        let sources = lens.sources();
+        for type_id in sources.iter() {
+            // return data for the static model.
+            if <dyn Any>::downcast_ref::<L::Source>(&()).is_some() {
+                insert_store(Entity::root(), &mut self.stores, lens, self.current);
+            } else {
+                for entity in self.current.parent_iter(&self.tree) {
+                    // Return any model data.
+                    if let Some(models) = self.models.get(&entity) {
+                        if models.get(type_id).is_some() {
+                            insert_store(entity, &mut self.stores, lens, self.current);
+                            //break;
+                        }
                     }
-                }
 
-                // Return any view data.
-                if let Some(view_handler) = self.views.get(&entity) {
-                    if view_handler.downcast_ref::<L::Source>().is_some() {
-                        insert_store(entity, &mut self.stores, lens, self.current);
-                        break;
+                    // Return any view data.
+                    if let Some(view_handler) = self.views.get(&entity) {
+                        if view_handler.id() == *type_id {
+                            insert_store(entity, &mut self.stores, lens, self.current);
+                            //break;
+                        }
                     }
                 }
             }
