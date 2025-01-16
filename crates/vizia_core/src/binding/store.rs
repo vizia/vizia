@@ -26,7 +26,7 @@ pub(crate) trait Store {
     /// Returns the number of obersers for the store.
     fn num_observers(&self) -> usize;
     /// Returns true if the model or view is the source of the store.
-    fn contains_source(&self, model: ModelOrView) -> bool;
+    fn source(&self) -> TypeId;
 
     #[cfg(debug_assertions)]
     fn name(&self) -> String;
@@ -42,8 +42,8 @@ impl<L> Store for BasicStore<L, L::Target>
 where
     L: Lens<Target: Data>,
 {
-    fn contains_source(&self, model: ModelOrView) -> bool {
-        model.downcast_ref::<L::Source>().is_some()
+    fn source(&self) -> TypeId {
+        TypeId::of::<L::Source>()
     }
 
     fn update(&mut self, model: ModelOrView) -> bool {

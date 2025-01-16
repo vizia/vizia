@@ -123,24 +123,18 @@ pub(crate) fn layout_system(cx: &mut Context) {
 
 fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {
     // Send event to models attached to the entity
-    if let Some(ids) = cx
-        .data
-        .get(&entity)
-        .map(|model_data_store| model_data_store.models.keys().cloned().collect::<Vec<_>>())
+    if let Some(ids) =
+        cx.models.get(&entity).map(|models| models.keys().cloned().collect::<Vec<_>>())
     {
         for id in ids {
-            if let Some(mut model) = cx
-                .data
-                .get_mut(&entity)
-                .and_then(|model_data_store| model_data_store.models.remove(&id))
+            if let Some(mut model) =
+                cx.models.get_mut(&entity).and_then(|models| models.remove(&id))
             {
                 cx.current = entity;
 
                 model.event(cx, event);
 
-                cx.data
-                    .get_mut(&entity)
-                    .and_then(|model_data_store| model_data_store.models.insert(id, model));
+                cx.models.get_mut(&entity).and_then(|models| models.insert(id, model));
             }
         }
     }
