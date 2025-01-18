@@ -2,6 +2,8 @@ use crate::animation::{AnimationState, Interpolator};
 use crate::prelude::*;
 use vizia_storage::{SparseSet, SparseSetGeneric, SparseSetIndex};
 
+use super::PropValue;
+
 const INDEX_MASK: u32 = u32::MAX / 4;
 const INLINE_MASK: u32 = 1 << 31;
 const INHERITED_MASK: u32 = 1 << 30;
@@ -517,7 +519,7 @@ where
         false
     }
 
-    // Returns a reference to any inline data on the entity if it exists.
+    // // Returns a reference to any inline data on the entity if it exists.
     // pub fn get_inline(&self, entity: Entity) -> Option<&T> {
     //     let entity_index = entity.index();
     //     if entity_index < self.inline_data.sparse.len() {
@@ -543,10 +545,39 @@ where
         None
     }
 
-    // /// Returns a reference to any shared data for a given rule if it exists.
-    // pub(crate) fn get_shared(&self, rule: Rule) -> Option<&T> {
-    //     self.shared_data.get(rule)
-    // }
+    /// Returns a reference to any shared data for a given rule if it exists.
+    pub(crate) fn get_shared(&self, rule: Rule) -> Option<&T> {
+        self.shared_data.get(rule)
+    }
+
+    pub(crate) fn get_property(&self, entity: Entity) -> Option<PropValue<T>> {
+        let entity_index = entity.index();
+        if entity_index < self.inline_data.sparse.len() {
+            // Animations override inline and shared styling
+            let animation_index = self.inline_data.sparse[entity_index].anim_index as usize;
+
+            if animation_index < self.active_animations.len() {
+                return Some(PropValue::Animating(
+                    self.active_animations[animation_index].get_output().cloned().unwrap(),
+                ));
+            }
+
+            let data_index = self.inline_data.sparse[entity_index].data_index;
+            if data_index.is_inline() {
+                if data_index.index() < self.inline_data.dense.len() {
+                    return Some(PropValue::Inline(
+                        self.inline_data.dense[data_index.index()].value.clone(),
+                    ));
+                }
+            } else if data_index.index() < self.shared_data.dense.len() {
+                return Some(PropValue::Shared(
+                    self.shared_data.dense[data_index.index()].value.clone(),
+                ));
+            }
+        }
+
+        None
+    }
 
     // /// Returns a mutable reference to any shared data for a given rule if it exists.
     // pub(crate) fn get_shared_mut(&mut self, rule: Rule) -> Option<&mut T> {

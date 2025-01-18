@@ -3,6 +3,8 @@ use crate::prelude::*;
 
 use vizia_storage::{SparseSetGeneric, SparseSetIndex};
 
+use super::PropValue;
+
 const INDEX_MASK: u32 = u32::MAX / 4;
 const INLINE_MASK: u32 = 1 << 31;
 const INHERITED_MASK: u32 = 1 << 30;
@@ -110,7 +112,7 @@ impl<T> Default for StyleSet<T> {
 
 impl<T> StyleSet<T>
 where
-    T: 'static + std::fmt::Debug,
+    T: 'static + std::fmt::Debug + Default + Clone,
 {
     /// Create a new empty styleset.
     pub fn new() -> Self {
@@ -282,15 +284,35 @@ where
         None
     }
 
-    // /// Returns a reference to any shared data for a given rule if it exists.
-    // pub(crate) fn get_shared(&self, rule: Rule) -> Option<&T> {
-    //     self.shared_data.get(rule)
-    // }
+    /// Returns a reference to any shared data for a given rule if it exists.
+    pub(crate) fn get_shared(&self, rule: Rule) -> Option<&T> {
+        self.shared_data.get(rule)
+    }
 
     // /// Returns a mutable reference to any shared data for a given rule if it exists.
     // pub(crate) fn get_shared_mut(&mut self, rule: Rule) -> Option<&mut T> {
     //     self.shared_data.get_mut(rule)
     // }
+
+    pub(crate) fn get_property(&self, entity: Entity) -> Option<PropValue<T>> {
+        let entity_index = entity.index();
+        if entity_index < self.inline_data.sparse.len() {
+            let data_index = self.inline_data.sparse[entity_index].data_index;
+            if data_index.is_inline() {
+                if data_index.index() < self.inline_data.dense.len() {
+                    return Some(PropValue::Inline(
+                        self.inline_data.dense[data_index.index()].value.clone(),
+                    ));
+                }
+            } else if data_index.index() < self.shared_data.dense.len() {
+                return Some(PropValue::Shared(
+                    self.shared_data.dense[data_index.index()].value.clone(),
+                ));
+            }
+        }
+
+        None
+    }
 
     /// Get the animated, inline, or shared data value from the storage.
     pub fn get(&self, entity: Entity) -> Option<&T> {

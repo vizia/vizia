@@ -1,5 +1,6 @@
 pub mod application;
 mod convert;
+pub mod debug_view;
 pub mod window;
 pub mod window_modifiers;
 

@@ -277,3 +277,25 @@ impl std::cmp::PartialOrd<LengthValue> for LengthValue {
         }
     }
 }
+
+impl std::fmt::Display for LengthValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LengthValue::Px(v) => write!(f, "{v}px"),
+            LengthValue::In(_) => todo!(),
+            LengthValue::Cm(_) => todo!(),
+            LengthValue::Mm(_) => todo!(),
+            LengthValue::Q(_) => todo!(),
+            LengthValue::Pt(_) => todo!(),
+            LengthValue::Pc(_) => todo!(),
+            LengthValue::Em(_) => todo!(),
+            LengthValue::Ex(_) => todo!(),
+            LengthValue::Ch(_) => todo!(),
+            LengthValue::Rem(_) => todo!(),
+            LengthValue::Vw(_) => todo!(),
+            LengthValue::Vh(_) => todo!(),
+            LengthValue::Vmin(_) => todo!(),
+            LengthValue::Vmax(_) => todo!(),
+        }
+    }
+}

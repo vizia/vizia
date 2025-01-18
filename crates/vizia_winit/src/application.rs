@@ -2,6 +2,7 @@
 use crate::window::set_cloak;
 use crate::{
     convert::{winit_key_code_to_code, winit_key_to_key},
+    debug_view::DebugView,
     window::{WinState, Window},
     window_modifiers::WindowModifiers,
 };
@@ -139,7 +140,10 @@ impl Application {
 
         cx.renegotiate_language();
         cx.0.remove_user_themes();
-        (content)(cx.context());
+
+        DebugView::new(cx.context(), |cx| {
+            (content)(cx);
+        });
 
         let proxy = event_loop.create_proxy();
 

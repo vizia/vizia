@@ -304,6 +304,7 @@ popup list list-item {
     width: 1s;
     min-width: auto;
     height: 32px;
+    min-height: auto;
     padding-left: 6px;
     padding-right: 6px;
     alignment: left;
@@ -949,4 +950,8 @@ collapsible.open .content {
     height: auto;
     max-height: auto;
     transition: max-height 300ms;
+}
+
+inspector list.computed-list list-item {
+    height: auto;
 }

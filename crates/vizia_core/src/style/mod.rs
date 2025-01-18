@@ -69,6 +69,8 @@ use vizia_style::selectors::parser::{AncestorHashes, Selector};
 
 use crate::prelude::*;
 
+use vizia_style::ToCss;
+
 pub use vizia_style::{
     Alignment, Angle, BackgroundImage, BackgroundSize, BorderStyleKeyword, ClipPath, Color,
     CornerShape, CssRule, CursorIcon, Display, Filter, FontFamily, FontSize, FontSlant,
@@ -2053,5 +2055,79 @@ impl Style {
         self.name.clear_rules();
 
         self.fill.clear_rules();
+    }
+
+    pub(crate) fn rule_str(&self, rule: Rule) -> (String, Vec<(String, String)>) {
+        let mut selectors_str = String::new();
+        let mut props = Vec::new();
+        if let Some(selectors) = self.rules.get(&rule) {
+            selectors_str = selectors.selector.to_css_string();
+            self.width
+                .get_shared(rule)
+                .map(|value| props.push((format!("    width: "), format!("{}", value))));
+            self.height
+                .get_shared(rule)
+                .map(|value| props.push((format!("    height: "), format!("{}", value))));
+            self.layout_type
+                .get_shared(rule)
+                .map(|value| props.push((format!("    layout-type: "), format!("{}", value))));
+            self.alignment
+                .get_shared(rule)
+                .map(|value| props.push((format!("    alignment: "), format!("{}", value))));
+            self.padding_top
+                .get_shared(rule)
+                .map(|value| props.push((format!("    padding-top: "), format!("{}", value))));
+            self.padding_left
+                .get_shared(rule)
+                .map(|value| props.push((format!("    padding-left: "), format!("{}", value))));
+            self.padding_right
+                .get_shared(rule)
+                .map(|value| props.push((format!("    padding-right: "), format!("{}", value))));
+            self.padding_bottom
+                .get_shared(rule)
+                .map(|value| props.push((format!("    padding-bottom: "), format!("{}", value))));
+            self.position_type
+                .get_shared(rule)
+                .map(|value| props.push((format!("    position-type: "), format!("{}", value))));
+            self.top
+                .get_shared(rule)
+                .map(|value| props.push((format!("    top: "), format!("{}", value))));
+            self.left
+                .get_shared(rule)
+                .map(|value| props.push((format!("    left: "), format!("{}", value))));
+            self.right
+                .get_shared(rule)
+                .map(|value| props.push((format!("    right: "), format!("{}", value))));
+            self.bottom
+                .get_shared(rule)
+                .map(|value| props.push((format!("    bottom: "), format!("{}", value))));
+
+            self.background_color
+                .get_shared(rule)
+                .map(|value| props.push((format!("    background-color: "), format!("{}", value))));
+
+            self.border_color
+                .get_shared(rule)
+                .map(|value| props.push((format!("    border-color: "), format!("{}", value))));
+
+            self.font_color
+                .get_shared(rule)
+                .map(|value| props.push((format!("    color: "), format!("{}", value))));
+
+            self.corner_top_left_radius.get_shared(rule).map(|value| {
+                props.push((format!("    corner-top-left-radius: "), format!("{}", value)))
+            });
+            self.corner_top_right_radius.get_shared(rule).map(|value| {
+                props.push((format!("    corner-top-right-radius: "), format!("{}", value)))
+            });
+            self.corner_bottom_right_radius.get_shared(rule).map(|value| {
+                props.push((format!("    corner-bottom-right-radius: "), format!("{}", value)))
+            });
+            self.corner_bottom_left_radius.get_shared(rule).map(|value| {
+                props.push((format!("    corner-bottom-left-radius: "), format!("{}", value)))
+            });
+        }
+
+        (selectors_str, props)
     }
 }

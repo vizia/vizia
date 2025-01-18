@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::{macros::impl_parse, Length, LengthValue, Parse, Percentage};
 use cssparser::*;
 use morphorm::Units;
@@ -89,6 +91,15 @@ impl From<Units> for LengthOrPercentage {
             Units::Pixels(val) => Length::Value(LengthValue::Px(val)).into(),
             Units::Percentage(val) => LengthOrPercentage::Percentage(val),
             _ => LengthOrPercentage::default(),
+        }
+    }
+}
+
+impl std::fmt::Display for LengthOrPercentage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LengthOrPercentage::Length(length) => std::fmt::Display::fmt(&length, f),
+            LengthOrPercentage::Percentage(p) => write!(f, "{p}%"),
         }
     }
 }

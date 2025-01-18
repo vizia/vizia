@@ -789,7 +789,6 @@ fn has_same_selector(style: &Style, entity1: Entity, entity2: Entity) -> bool {
             };
         }
     }
-
     let id1 = if let Some(id) = style.ids.get(entity1) { id } else { "" };
     let id2 = if let Some(id) = style.ids.get(entity2) { id } else { "" };
 

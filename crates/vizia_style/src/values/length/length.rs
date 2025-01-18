@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use morphorm::Units;
 
 use crate::{
@@ -202,6 +204,15 @@ impl From<Units> for Length {
         match value {
             Units::Pixels(val) => Length::px(val),
             _ => Length::default(),
+        }
+    }
+}
+
+impl std::fmt::Display for Length {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Length::Value(length_value) => std::fmt::Display::fmt(&length_value, f),
+            Length::Calc(_calc) => todo!(),
         }
     }
 }

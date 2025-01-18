@@ -39,4 +39,5 @@ pub use selector::*;
 
 pub use selectors;
 
+pub use cssparser::ToCss;
 pub use precomputed_hash;

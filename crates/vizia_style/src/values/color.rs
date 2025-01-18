@@ -828,6 +828,21 @@ impl From<&str> for Color {
     }
 }
 
+impl std::fmt::Display for Color {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Color::CurrentColor => write!(f, "current-color"),
+            Color::RGBA(rgba) if rgba.a() == 255 => {
+                write!(f, "rgb({}, {}, {})", rgba.r(), rgba.g(), rgba.b())
+            }
+            Color::RGBA(rgba) if rgba.a() != 255 => {
+                write!(f, "rgba({}, {}, {}, {})", rgba.r(), rgba.g(), rgba.b(), rgba.a())
+            }
+            _ => unreachable!(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
