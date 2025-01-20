@@ -18,6 +18,10 @@ impl BackendContext {
         Self(cx)
     }
 
+    pub fn init_accessibility_tree(&mut self) -> accesskit::TreeUpdate {
+        initial_accessibility_system(&mut self.0)
+    }
+
     /// Helper function for mutating the state of a window.
     pub fn mutate_window<W: Any, F: Fn(&mut BackendContext, &mut W)>(
         &mut self,
@@ -202,19 +206,8 @@ impl BackendContext {
     }
 
     /// Calls the accessibility system and updates the accesskit node tree.
-    pub fn process_tree_updates(
-        &mut self,
-        process: impl Fn(&mut Vec<Option<accesskit::TreeUpdate>>),
-    ) {
+    pub fn process_tree_updates(&mut self) {
         accessibility_system(&mut self.0);
-
-        if !self.0.tree_updates.is_empty() {
-            (process)(&mut self.0.tree_updates)
-        }
-
-        // TODO: Fix this
-        // self.0.tree_updates.retain(|update| update.is_some());
-        self.0.tree_updates.clear();
     }
 
     /// Calls the style system to match entities with shared styles.

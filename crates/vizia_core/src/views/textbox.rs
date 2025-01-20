@@ -197,7 +197,6 @@ where
         .navigable(true)
         .role(Role::TextInput)
         .text_value(lens)
-        .default_action_verb(DefaultActionVerb::Focus)
         .toggle_class("caret", Self::show_caret)
         .text(lens)
     }
@@ -629,7 +628,7 @@ where
                 for line in line_metrics.iter() {
                     // We need a child node per line
                     let mut line_node = AccessNode::new_from_parent(node_id, line.line_number);
-                    line_node.set_role(Role::InlineTextBox);
+                    line_node.set_role(Role::TextInput);
                     line_node.set_bounds(BoundingBox {
                         x: line.left as f32,
                         y: (line.baseline - line.ascent) as f32,
@@ -751,8 +750,6 @@ where
         //         character_index: selection_active_cursor,
         //     },
         // });
-
-        node.node_builder.set_default_action_verb(DefaultActionVerb::Focus);
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {

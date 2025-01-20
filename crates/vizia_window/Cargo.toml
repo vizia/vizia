@@ -12,7 +12,7 @@ vizia_input.workspace = true
 vizia_style.workspace = true
 # morphorm = {path = "../../../morpshorm"}
 morphorm = {git = "https://github.com/vizia/morphorm", branch = "alternate"}
-accesskit = "0.16"
+accesskit = "0.17"
 bitflags = "2.6"
 
 [lints]

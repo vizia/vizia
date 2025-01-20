@@ -1,4 +1,4 @@
-use accesskit::{NodeBuilder, NodeId, Rect, TextDirection, TextSelection};
+use accesskit::{Node, NodeId, Rect, TextDirection, TextSelection};
 
 use crate::{cache::CachedData, prelude::*, text::TextContext};
 
@@ -22,7 +22,7 @@ impl AccessContext<'_> {
 #[derive(Debug)]
 pub struct AccessNode {
     pub(crate) node_id: NodeId,
-    pub(crate) node_builder: NodeBuilder,
+    pub(crate) node_builder: Node,
     pub(crate) children: Vec<AccessNode>,
 }
 
@@ -33,7 +33,7 @@ impl AccessNode {
         node_id |= index as u64;
         let node_id: NodeId = NodeId(node_id);
 
-        Self { node_id, node_builder: NodeBuilder::default(), children: Vec::new() }
+        Self { node_id, node_builder: Node::default(), children: Vec::new() }
     }
 
     /// Returns the accesskit id of the access node.

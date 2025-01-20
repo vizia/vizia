@@ -148,7 +148,6 @@ impl Checkbox {
             })
             .checked(checked)
             .role(Role::CheckBox)
-            .default_action_verb(DefaultActionVerb::Click)
             .navigable(true)
     }
 
@@ -203,7 +202,6 @@ impl Checkbox {
             })
             .checked(checked)
             .role(Role::CheckBox)
-            .default_action_verb(DefaultActionVerb::Click)
             .navigable(true)
     }
 
@@ -286,7 +284,7 @@ impl View for Checkbox {
             }
 
             WindowEvent::ActionRequest(action) => match action.action {
-                Action::Default => {
+                Action::Click => {
                     if let Some(callback) = &self.on_toggle {
                         (callback)(cx);
                     }

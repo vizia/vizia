@@ -21,7 +21,7 @@ mod handle;
 pub use handle::Handle;
 
 use crate::events::ViewHandler;
-use accesskit::{NodeBuilder, TreeUpdate};
+use accesskit::{Node, TreeUpdate};
 
 /// A view is any object which can be displayed on the screen.
 ///
@@ -134,8 +134,8 @@ pub trait View: 'static + Sized {
         };
 
         if let Some(parent_node) = get_access_node(&mut access_context, &mut cx.views, parent_id) {
-            let parent_node = parent_node.node_builder.build();
-            let node = NodeBuilder::default().build();
+            let parent_node = parent_node.node_builder;
+            let node = Node::default();
 
             cx.tree_updates.push(Some(TreeUpdate {
                 nodes: vec![(parent_node_id, parent_node), (node_id, node)],

@@ -8,10 +8,11 @@ license.workspace = true
 repository.workspace = true
 
 [features]
+default = ["accesskit"]
 x11 = ["winit/x11", "glutin/x11", "glutin-winit/x11"]
 wayland = ["winit/wayland", "winit/wayland-dlopen", "winit/wayland-csd-adwaita", "glutin-winit/wayland", "copypasta?/wayland"]
 clipboard = ["copypasta"]
-accesskit = ["accesskit_winit"]
+accesskit = ["dep:accesskit_winit", "dep:accesskit"]
 
 [dependencies]
 vizia_input.workspace = true
@@ -19,12 +20,12 @@ vizia_core.workspace = true
 vizia_id.workspace = true
 vizia_window.workspace = true
 
-accesskit = "0.16"
+accesskit = {version = "0.17", optional = true}
 winit = { version = "0.30" }
 skia-safe = { version = "0.80", features = ["gl", "textlayout", "svg"] }
 glutin = { version = "0.32" }
 copypasta = {version = "0.10", optional = true, default-features = false }
-accesskit_winit = { version = "0.22", optional = true }
+accesskit_winit = { version = "0.23", optional = true}
 glutin-winit = { version = "0.5" }
 gl-rs = { package = "gl", version = "0.14.0" }
 hashbrown = "0.14"

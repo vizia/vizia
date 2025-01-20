@@ -5,6 +5,8 @@ use crate::{
     window::{WinState, Window},
     window_modifiers::WindowModifiers,
 };
+#[cfg(feature = "accesskit")]
+use accesskit_winit::Adapter;
 use hashbrown::HashMap;
 use std::{error::Error, fmt::Display, sync::Arc};
 
@@ -44,13 +46,13 @@ use vizia_window::WindowPosition;
 pub enum UserEvent {
     Event(Event),
     #[cfg(feature = "accesskit")]
-    AccessKitActionRequest(accesskit_winit::ActionRequestEvent),
+    AccessKitEvent(accesskit_winit::Event),
 }
 
 #[cfg(feature = "accesskit")]
-impl From<accesskit_winit::ActionRequestEvent> for UserEvent {
-    fn from(action_request_event: accesskit_winit::ActionRequestEvent) -> Self {
-        UserEvent::AccessKitActionRequest(action_request_event)
+impl From<accesskit_winit::Event> for UserEvent {
+    fn from(action_request_event: accesskit_winit::Event) -> Self {
+        UserEvent::AccessKitEvent(action_request_event)
     }
 }
 
@@ -101,6 +103,10 @@ pub struct Application {
     event_loop_proxy: EventLoopProxy<UserEvent>,
     windows: HashMap<WindowId, WinState>,
     window_ids: HashMap<Entity, WindowId>,
+    #[cfg(feature = "accesskit")]
+    accesskit_adapter: Option<accesskit_winit::Adapter>,
+    #[cfg(feature = "accesskit")]
+    adapter_initialized: bool,
 }
 
 pub struct WinitEventProxy(EventLoopProxy<UserEvent>);
@@ -145,6 +151,10 @@ impl Application {
             event_loop_proxy: proxy,
             windows: HashMap::new(),
             window_ids: HashMap::new(),
+            #[cfg(feature = "accesskit")]
+            accesskit_adapter: None,
+            #[cfg(feature = "accesskit")]
+            adapter_initialized: false,
         }
     }
 
@@ -223,23 +233,37 @@ impl ApplicationHandler<UserEvent> for Application {
             }
 
             #[cfg(feature = "accesskit")]
-            UserEvent::AccessKitActionRequest(action_request_event) => {
-                let node_id = action_request_event.request.target;
-
-                if action_request_event.request.action != Action::ScrollIntoView {
-                    let entity = Entity::new(node_id.0 as u64, 0);
-
-                    // Handle focus action from screen reader
-                    if action_request_event.request.action == Action::Focus {
-                        cx.0.with_current(entity, |cx| {
-                            cx.focus();
-                        });
+            UserEvent::AccessKitEvent(access_event) => {
+                match access_event.window_event {
+                    accesskit_winit::WindowEvent::InitialTreeRequested => {
+                        let tree_update = self.cx.init_accessibility_tree();
+                        if let Some(adapter) = &mut self.accesskit_adapter {
+                            adapter.update_if_active(|| {
+                                self.adapter_initialized = true;
+                                tree_update
+                            });
+                        }
                     }
+                    accesskit_winit::WindowEvent::ActionRequested(action_request) => {
+                        let node_id = action_request.target;
 
-                    cx.send_event(
-                        Event::new(WindowEvent::ActionRequest(action_request_event.request))
-                            .direct(entity),
-                    );
+                        if action_request.action != Action::ScrollIntoView {
+                            let entity = Entity::new(node_id.0, 0);
+
+                            // Handle focus action from screen reader
+                            if action_request.action == Action::Focus {
+                                self.cx.0.with_current(entity, |cx| {
+                                    cx.focus();
+                                });
+                            }
+
+                            self.cx.send_event(
+                                Event::new(WindowEvent::ActionRequest(action_request))
+                                    .direct(entity),
+                            );
+                        }
+                    }
+                    accesskit_winit::WindowEvent::AccessibilityDeactivated => todo!(),
                 }
             }
         }
@@ -268,6 +292,14 @@ impl ApplicationHandler<UserEvent> for Application {
                     ..Default::default()
                 },
             );
+
+            #[cfg(feature = "accesskit")]
+            {
+                self.accesskit_adapter = Some(Adapter::with_event_loop_proxy(
+                    &main_window,
+                    self.event_loop_proxy.clone(),
+                ));
+            }
 
             // set current system theme if available
             if let Some(theme) = main_window.theme() {
@@ -350,12 +382,24 @@ impl ApplicationHandler<UserEvent> for Application {
 
                     self.cx.process_visual_updates();
 
-                    #[cfg(feature = "accesskit")]
-                    self.cx.process_tree_updates(|tree_updates| {
-                        for update in tree_updates.iter_mut() {
-                            accesskit.update_if_active(|| update.take().unwrap());
-                        }
-                    });
+                    // #[cfg(feature = "accesskit")]
+
+                    // self.cx.process_tree_updates(|tree_updates| {
+                    //     for update in tree_updates.iter_mut() {
+                    //         self.accesskit_adapter
+                    //             .unwrap()
+                    //             .update_if_active(|| update.take().unwrap());
+                    //     }
+                    // });
+
+                    // for update in self.cx.0.tree_updates.iter_mut() {
+                    //     self.accesskit_adapter
+                    //         .as_mut()
+                    //         .unwrap()
+                    //         .update_if_active(|| update.take().unwrap());
+                    // }
+
+                    // self.cx.0.tree_updates.clear();
 
                     window.window().request_redraw();
                 }
@@ -536,11 +580,20 @@ impl ApplicationHandler<UserEvent> for Application {
         self.cx.process_visual_updates();
 
         #[cfg(feature = "accesskit")]
-        cx.process_tree_updates(|tree_updates| {
-            for update in tree_updates.iter_mut() {
-                accesskit.update_if_active(|| update.take().unwrap());
+        {
+            self.cx.process_tree_updates();
+
+            if self.adapter_initialized {
+                for update in self.cx.0.tree_updates.iter_mut() {
+                    self.accesskit_adapter
+                        .as_mut()
+                        .unwrap()
+                        .update_if_active(|| update.take().unwrap());
+                }
             }
-        });
+
+            self.cx.0.tree_updates.clear();
+        }
 
         if let Some(idle_callback) = &self.on_idle {
             self.cx.set_current(Entity::root());

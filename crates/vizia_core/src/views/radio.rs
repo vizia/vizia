@@ -93,7 +93,6 @@ impl RadioButton {
             .navigable(true)
             .checkable(true)
             .role(Role::RadioButton)
-            .default_action_verb(DefaultActionVerb::Click)
     }
 }
 
@@ -114,7 +113,7 @@ impl View for RadioButton {
             }
 
             WindowEvent::ActionRequest(request) => match request.action {
-                Action::Default => {
+                Action::Click => {
                     if let Some(callback) = &self.on_select {
                         (callback)(cx);
                     }

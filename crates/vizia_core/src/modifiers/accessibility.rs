@@ -28,15 +28,15 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         self
     }
 
-    /// Sets the accessibility default action for the view.
-    fn default_action_verb(mut self, action_verb: DefaultActionVerb) -> Self {
-        let id = self.entity();
+    // /// Sets the accessibility default action for the view.
+    // fn default_action_verb(mut self, action_verb: DefaultActionVerb) -> Self {
+    //     let id = self.entity();
 
-        self.context().style.default_action_verb.insert(id, action_verb);
-        self.context().style.needs_access_update(id);
+    //     self.context().style.default_action_verb.insert(id, action_verb);
+    //     self.context().style.needs_access_update(id);
 
-        self
-    }
+    //     self
+    // }
 
     /// Sets whether the view should act as an accessibility live region.
     fn live(mut self, live: Live) -> Self {
