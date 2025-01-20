@@ -83,7 +83,7 @@ pub mod prelude {
     pub use super::view::{Handle, View};
     pub use super::views::*;
     pub use super::window::{DropData, WindowEvent};
-    pub use accesskit::{Action, DefaultActionVerb, Live, Role};
+    pub use accesskit::{Action, Live, Role};
     pub use skia_safe::Canvas;
     pub use vizia_derive::{Data, Lens};
     pub use vizia_id::GenerationalId;

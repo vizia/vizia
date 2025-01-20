@@ -16,7 +16,6 @@ impl ToggleButton {
             })
             .role(Role::Button)
             .navigable(true)
-            .default_action_verb(DefaultActionVerb::Click)
             .checkable(true) // To let the accesskit know button is toggleable
             .checked(lens)
     }
@@ -50,7 +49,7 @@ impl View for ToggleButton {
             }
 
             WindowEvent::ActionRequest(action) => match action.action {
-                Action::Default => {
+                Action::Click => {
                     if let Some(callback) = &self.on_toggle {
                         (callback)(cx);
                     }

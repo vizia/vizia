@@ -20,7 +20,7 @@ vizia_id.workspace = true
 vizia_input.workspace = true
 vizia_window.workspace = true
 vizia_style.workspace = true
-accesskit = "0.16"
+accesskit = "0.17"
 
 skia-safe = { version = "0.80", features = ["gl", "textlayout", "svg"] }
 # morphorm = {path = "../../../morphorm"}

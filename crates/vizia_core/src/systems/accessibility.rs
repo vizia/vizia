@@ -1,12 +1,12 @@
 use crate::{accessibility::IntoNode, events::ViewHandler, prelude::*};
-use accesskit::{NodeBuilder, NodeId, Rect, Toggled, TreeUpdate};
+use accesskit::{Node, NodeId, Rect, Toggled, Tree, TreeUpdate};
 use hashbrown::HashMap;
 use vizia_storage::LayoutTreeIterator;
 
 /// Updates node properties from view properties
 /// Should be run after layout so that things like bounding box are correct.
 /// This system doesn't change the structure of the accessibility tree as this is done when views are built/removed.
-pub(crate) fn accessibility_system(cx: &mut Context) {
+pub fn accessibility_system(cx: &mut Context) {
     if !cx.style.reaccess.is_empty() {
         let iterator = LayoutTreeIterator::full(&cx.tree);
 
@@ -36,14 +36,14 @@ pub(crate) fn accessibility_system(cx: &mut Context) {
                     continue;
                 }
 
-                let mut nodes = vec![(node.node_id(), node.node_builder.build())];
+                let mut nodes = vec![(node.node_id(), node.node_builder)];
 
                 // If child nodes were generated then append them to the nodes list
                 if !node.children.is_empty() {
                     nodes.extend(
-                        node.children.into_iter().map(|child_node| {
-                            (child_node.node_id(), child_node.node_builder.build())
-                        }),
+                        node.children
+                            .into_iter()
+                            .map(|child_node| (child_node.node_id(), child_node.node_builder)),
                     );
                 }
 
@@ -65,12 +65,64 @@ pub(crate) fn accessibility_system(cx: &mut Context) {
     }
 }
 
+pub fn initial_accessibility_system(cx: &mut Context) -> TreeUpdate {
+    let iterator = LayoutTreeIterator::full(&cx.tree);
+
+    let mut nodes = vec![];
+
+    for entity in iterator {
+        let mut access_context = AccessContext {
+            current: entity,
+            tree: &cx.tree,
+            cache: &cx.cache,
+            style: &cx.style,
+            text_context: &mut cx.text_context,
+        };
+
+        if let Some(node) = get_access_node(&mut access_context, &mut cx.views, entity) {
+            // let navigable = cx
+            //     .style
+            //     .abilities
+            //     .get(entity)
+            //     .copied()
+            //     .unwrap_or_default()
+            //     .contains(Abilities::NAVIGABLE);
+
+            // if node.node_builder.role() == Role::Unknown && !navigable {
+            //     continue;
+            // }
+
+            //let mut nodes = vec![(node.node_id(), node.node_builder)];
+            nodes.push((node.node_id(), node.node_builder));
+
+            println!("{:?}", nodes.iter().map(|(id, _)| id).collect::<Vec<_>>());
+
+            // If child nodes were generated then append them to the nodes list
+            if !node.children.is_empty() {
+                nodes.extend(
+                    node.children
+                        .into_iter()
+                        .map(|child_node| (child_node.node_id(), child_node.node_builder)),
+                );
+            }
+        }
+
+        // }
+    }
+
+    TreeUpdate {
+        nodes,
+        tree: Some(Tree::new(Entity::root().accesskit_id())),
+        focus: Entity::root().accesskit_id(),
+    }
+}
+
 pub(crate) fn get_access_node(
     cx: &mut AccessContext,
     views: &mut HashMap<Entity, Box<dyn ViewHandler>>,
     entity: Entity,
 ) -> Option<AccessNode> {
-    let mut node_builder = NodeBuilder::default();
+    let mut node_builder = Node::default();
 
     if let Some(role) = cx.style.role.get(entity) {
         node_builder.set_role(*role);
@@ -110,9 +162,9 @@ pub(crate) fn get_access_node(
         node_builder.set_value(value.clone().into_boxed_str());
     }
 
-    if let Some(name) = cx.style.name.get(entity) {
-        node_builder.set_name(name.clone().into_boxed_str());
-    }
+    // if let Some(name) = cx.style.name.get(entity) {
+    //     node_builder.set_name(name.clone().into_boxed_str());
+    // }
 
     if let Some(numeric_value) = cx.style.numeric_value.get(entity) {
         node_builder.set_numeric_value(*numeric_value);
@@ -130,9 +182,9 @@ pub(crate) fn get_access_node(
         node_builder.set_live(*live);
     }
 
-    if let Some(default_action_verb) = cx.style.default_action_verb.get(entity) {
-        node_builder.set_default_action_verb(*default_action_verb);
-    }
+    // if let Some(default_action_verb) = cx.style.default_action_verb.get(entity) {
+    //     node_builder.set_default_action_verb(*default_action_verb);
+    // }
 
     if let Some(labelled_by) = cx.style.labelled_by.get(entity) {
         node_builder.set_labelled_by(vec![labelled_by.accesskit_id()]);
@@ -163,6 +215,8 @@ pub(crate) fn get_access_node(
     let mut node =
         AccessNode { node_id: entity.accesskit_id(), node_builder, children: Vec::new() };
 
+    println!("node: {:?}", node.node_id());
+
     if let Some(view) = views.remove(&entity) {
         view.accessibility(cx, &mut node);
 
@@ -178,6 +232,8 @@ pub(crate) fn get_access_node(
         node.children.iter().map(|child_node| child_node.node_id()).collect::<Vec<_>>();
 
     child_ids.extend(children);
+
+    println!("children: {:?}", child_ids);
 
     if !child_ids.is_empty() {
         node.node_builder.set_children(child_ids);

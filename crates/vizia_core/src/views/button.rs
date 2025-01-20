@@ -95,7 +95,6 @@ impl Button {
                 (content)(cx).hoverable(false);
             })
             .role(Role::Button)
-            .default_action_verb(DefaultActionVerb::Click)
             .navigable(true)
     }
 }
@@ -122,7 +121,7 @@ impl View for Button {
             }
 
             WindowEvent::ActionRequest(action) => match action.action {
-                Action::Default => {
+                Action::Click => {
                     if let Some(action) = &self.action {
                         (action)(cx);
                     }

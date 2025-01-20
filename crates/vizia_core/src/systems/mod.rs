@@ -8,7 +8,7 @@ pub(crate) mod layout;
 pub(crate) mod style;
 pub(crate) mod text;
 pub(crate) use self::image::*;
-pub(crate) use accessibility::*;
+pub use accessibility::*;
 pub(crate) use animation::*;
 pub(crate) use binding::*;
 pub(crate) use draw::*;

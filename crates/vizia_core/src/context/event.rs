@@ -960,10 +960,10 @@ impl<'a> EventContext<'a> {
         self.style.role.insert(self.current, role);
     }
 
-    /// Sets the accessibility default action verb of the view.
-    pub fn set_default_action_verb(&mut self, default_action_verb: DefaultActionVerb) {
-        self.style.default_action_verb.insert(self.current, default_action_verb);
-    }
+    // /// Sets the accessibility default action verb of the view.
+    // pub fn set_default_action_verb(&mut self, default_action_verb: DefaultActionVerb) {
+    //     self.style.default_action_verb.insert(self.current, default_action_verb);
+    // }
 
     /// Sets the view to be an accessibility live region.
     pub fn set_live(&mut self, live: Live) {
