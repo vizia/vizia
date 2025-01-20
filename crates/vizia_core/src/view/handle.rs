@@ -125,7 +125,7 @@ impl<V> Handle<'_, V> {
     pub fn bind<R, T, F>(self, res: R, closure: F) -> Self
     where
         R: Res<T>,
-        F: 'static + Clone + Fn(Handle<'_, V>, R),
+        F: 'static + Fn(Handle<'_, V>, R),
     {
         let entity = self.entity();
         let current = self.current();

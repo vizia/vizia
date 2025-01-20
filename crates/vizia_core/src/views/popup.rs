@@ -9,6 +9,12 @@ pub struct PopupData {
     pub is_open: bool,
 }
 
+impl From<PopupData> for bool {
+    fn from(value: PopupData) -> Self {
+        value.is_open
+    }
+}
+
 impl Model for PopupData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|popup_event, meta| match popup_event {
@@ -412,7 +418,7 @@ impl Placement {
 }
 
 impl Handle<'_, Popup> {
-    /// Sets the position where the tooltip should appear relative to its parent element.
+    /// Sets the position where the popup should appear relative to its parent element.
     /// Defaults to `Placement::Bottom`.
     pub fn placement(self, placement: impl Res<Placement>) -> Self {
         self.bind(placement, |handle, placement| {
@@ -424,18 +430,27 @@ impl Handle<'_, Popup> {
     }
 
     /// Sets whether the popup should include an arrow. Defaults to true.
-    pub fn arrow(self, show_arrow: bool) -> Self {
-        self.modify(|popup| popup.show_arrow = show_arrow)
+    pub fn show_arrow(self, show_arrow: impl Res<bool>) -> Self {
+        self.bind(show_arrow, |handle, show_arrow| {
+            let show_arrow = show_arrow.get(&handle);
+            handle.modify(|popup| popup.show_arrow = show_arrow);
+        })
     }
 
     /// Sets the size of the popup arrow, or gap if the arrow is hidden.
-    pub fn arrow_size(self, size: impl Into<Length>) -> Self {
-        self.modify(|popup| popup.arrow_size = size.into())
+    pub fn arrow_size<U: Into<Length>>(self, size: impl Res<U>) -> Self {
+        self.bind(size, |handle, size| {
+            let size = size.get(&handle).into();
+            handle.modify(|popup| popup.arrow_size = size);
+        })
     }
 
     /// Set to whether the popup should reposition to always be visible.
-    pub fn should_reposition(self, flag: bool) -> Self {
-        self.modify(|popup| popup.should_reposition = flag)
+    pub fn should_reposition(self, should_reposition: impl Res<bool>) -> Self {
+        self.bind(should_reposition, |handle, should_reposition| {
+            let should_reposition = should_reposition.get(&handle);
+            handle.modify(|popup| popup.should_reposition = should_reposition);
+        })
     }
 
     /// Registers a callback for when the user clicks off of the popup, usually with the intent of

@@ -74,6 +74,7 @@ use fluent_bundle::FluentArgs;
 use fluent_bundle::FluentValue;
 use hashbrown::HashMap;
 use std::rc::Rc;
+use std::sync::Arc;
 
 pub(crate) trait FluentStore {
     fn get_val(&self, cx: &LocalizationContext) -> FluentValue<'static>;
@@ -274,9 +275,10 @@ impl ResGet<String> for Localized {
 impl Res<String> for Localized {
     fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Localized),
+        F: 'static + Fn(&mut Context, Localized),
     {
         let self2 = self.clone();
+        let closure = Arc::new(closure);
         Binding::new(cx, Environment::locale, move |cx, _| {
             cx.with_current(entity, |cx| {
                 let lenses = self2.args.values().map(|x| x.make_clone()).collect::<Vec<_>>();

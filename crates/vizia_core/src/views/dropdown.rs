@@ -117,7 +117,14 @@ use crate::prelude::*;
 ///     });
 /// }).width(Pixels(100.0));
 /// ```
-pub struct Dropdown;
+#[derive(Lens)]
+pub struct Dropdown {
+    is_open: PopupData,
+    placement: Placement,
+    show_arrow: bool,
+    arrow_size: Length,
+    should_reposition: bool,
+}
 
 impl Dropdown {
     /// Creates a new dropdown.
@@ -136,38 +143,26 @@ impl Dropdown {
         L: 'static + Fn(&mut Context),
         F: 'static + Fn(&mut Context),
     {
-        Self {}.build(cx, move |cx| {
-            // cx.add_listener(move |_dropdown: &mut Self, cx, event| {
-            //     event.map(|window_event, meta| match window_event {
-            //         WindowEvent::PressDown { mouse: _ } => {
-            //             if meta.origin != cx.current() {
-            //                 // Check if the mouse was pressed outside of any descendants
-            //                 if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
-            //                     cx.emit(PopupEvent::Close);
-            //                 }
-            //             }
-            //         }
-
-            //         WindowEvent::KeyDown(code, _) => {
-            //             if *code == Code::Escape {
-            //                 cx.emit(PopupEvent::Close);
-            //             }
-            //         }
-
-            //         _ => {}
-            //     });
-            // });
-
-            PopupData::default().build(cx);
-
+        Self {
+            is_open: PopupData::default(),
+            placement: Placement::Bottom,
+            show_arrow: true,
+            arrow_size: Length::Value(LengthValue::Px(4.0)),
+            should_reposition: true,
+        }
+        .build(cx, move |cx| {
             (trigger)(cx);
 
-            Binding::new(cx, PopupData::is_open, move |cx, is_open| {
-                if is_open.get(cx) {
+            Binding::new(cx, Self::is_open, move |cx, is_open| {
+                if is_open.get(cx).into() {
                     Popup::new(cx, |cx| {
                         (content)(cx);
                     })
-                    .arrow_size(Pixels(4.0));
+                    .on_blur(|cx| cx.emit(PopupEvent::Close))
+                    .placement(Dropdown::placement)
+                    .show_arrow(Dropdown::show_arrow)
+                    .arrow_size(Dropdown::arrow_size)
+                    .should_reposition(Dropdown::should_reposition);
                 }
             })
         })
@@ -177,5 +172,37 @@ impl Dropdown {
 impl View for Dropdown {
     fn element(&self) -> Option<&'static str> {
         Some("dropdown")
+    }
+
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        self.is_open.event(cx, event);
+    }
+}
+
+impl Handle<'_, Dropdown> {
+    /// Sets the position where the tooltip should appear relative to its parent element.
+    /// Defaults to `Placement::Bottom`.
+    pub fn placement(self, placement: impl Res<Placement>) -> Self {
+        self.bind(placement, |handle, placement| {
+            let placement = placement.get(&handle);
+            handle.modify(|dropdown| {
+                dropdown.placement = placement;
+            });
+        })
+    }
+
+    /// Sets whether the popup should include an arrow. Defaults to true.
+    pub fn show_arrow(self, show_arrow: bool) -> Self {
+        self.modify(|dropdown| dropdown.show_arrow = show_arrow)
+    }
+
+    /// Sets the size of the popup arrow, or gap if the arrow is hidden.
+    pub fn arrow_size(self, size: impl Into<Length>) -> Self {
+        self.modify(|dropdown| dropdown.arrow_size = size.into())
+    }
+
+    /// Set to whether the popup should reposition to always be visible.
+    pub fn should_reposition(self, flag: bool) -> Self {
+        self.modify(|dropdown| dropdown.should_reposition = flag)
     }
 }
