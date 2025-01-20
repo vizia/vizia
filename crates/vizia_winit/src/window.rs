@@ -366,7 +366,7 @@ impl Window {
         self.window.as_ref().unwrap()
     }
 
-    pub fn new(cx: &mut Context, content: impl Fn(&mut Context)) -> Handle<Self> {
+    pub fn new(cx: &mut Context, content: impl 'static + Fn(&mut Context)) -> Handle<Self> {
         Self {
             window: None,
             on_close: None,
@@ -375,13 +375,19 @@ impl Window {
             custom_cursors: Default::default(),
         }
         .build(cx, |cx| {
-            cx.windows.insert(cx.current(), WindowState::default());
+            cx.windows.insert(
+                cx.current(),
+                WindowState { content: Some(Arc::new(content)), ..Default::default() },
+            );
             cx.tree.set_window(cx.current(), true);
-            (content)(cx);
         })
     }
 
-    pub fn popup(cx: &mut Context, is_modal: bool, content: impl Fn(&mut Context)) -> Handle<Self> {
+    pub fn popup(
+        cx: &mut Context,
+        is_modal: bool,
+        content: impl 'static + Fn(&mut Context),
+    ) -> Handle<Self> {
         Self {
             window: None,
             on_close: None,
@@ -397,10 +403,14 @@ impl Window {
 
             cx.windows.insert(
                 cx.current(),
-                WindowState { owner: Some(parent_window), is_modal: true, ..Default::default() },
+                WindowState {
+                    owner: Some(parent_window),
+                    is_modal: true,
+                    content: Some(Arc::new(content)),
+                    ..Default::default()
+                },
             );
             cx.tree.set_window(cx.current(), true);
-            (content)(cx);
         })
         .lock_focus_to_within()
     }
