@@ -81,7 +81,7 @@ where
     ///
     /// Works by comparing the id generation with an internal store of id generations.
     pub fn is_alive(&self, id: I) -> bool {
-        self.generation[id.index()] == id.generation()
+        !id.is_null() && self.generation[id.index()] == id.generation()
     }
 }
 

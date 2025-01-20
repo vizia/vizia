@@ -14,11 +14,14 @@ use skia_safe::{
     textlayout::{FontCollection, TypefaceFontProvider},
     FontMgr,
 };
-use std::any::{Any, TypeId};
 use std::cell::RefCell;
 use std::collections::{BinaryHeap, VecDeque};
 use std::rc::Rc;
 use std::sync::Mutex;
+use std::{
+    any::{Any, TypeId},
+    sync::Arc,
+};
 use vizia_id::IdManager;
 use vizia_window::{WindowDescription, WindowPosition};
 
@@ -66,7 +69,7 @@ thread_local! {
     pub static CURRENT: RefCell<Entity> = RefCell::new(Entity::root());
 }
 
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Clone)]
 pub struct WindowState {
     pub window_description: WindowDescription,
     pub scale_factor: f32,
@@ -78,6 +81,7 @@ pub struct WindowState {
     pub is_modal: bool,
     pub should_close: bool,
     pub position: WindowPosition,
+    pub content: Option<Arc<dyn Fn(&mut Context)>>,
 }
 
 /// The main storage and control object for a Vizia application.

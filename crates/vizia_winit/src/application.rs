@@ -300,6 +300,11 @@ impl ApplicationHandler<UserEvent> for Application {
                     )
                     .expect("Failed to create window");
                 self.cx.add_main_window(window_entity, &window_state.window_description, 1.0);
+                self.cx.0.with_current(window_entity, |cx| {
+                    if let Some(content) = &window_state.content {
+                        (content)(cx)
+                    }
+                });
                 self.cx.mutate_window(window_entity, |cx, win: &mut Window| {
                     win.window = Some(window.clone());
                     win.custom_cursors = custom_cursors.clone();
@@ -597,6 +602,12 @@ impl ApplicationHandler<UserEvent> for Application {
                             owner,
                         )
                         .expect("Failed to create window");
+
+                    self.cx.0.with_current(*window_entity, |cx| {
+                        if let Some(content) = &window_state.content {
+                            (content)(cx)
+                        }
+                    });
 
                     self.cx.mutate_window(*window_entity, |cx, win: &mut Window| {
                         win.window = Some(window.clone());
