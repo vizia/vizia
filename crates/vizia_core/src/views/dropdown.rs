@@ -119,11 +119,11 @@ use crate::prelude::*;
 /// ```
 #[derive(Lens)]
 pub struct Dropdown {
-    is_open: PopupData,
-    placement: Placement,
-    show_arrow: bool,
-    arrow_size: Length,
-    should_reposition: bool,
+    pub is_open: PopupData,
+    pub placement: Placement,
+    pub show_arrow: bool,
+    pub arrow_size: Length,
+    pub should_reposition: bool,
 }
 
 impl Dropdown {
