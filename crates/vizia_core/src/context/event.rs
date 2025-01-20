@@ -65,7 +65,7 @@ pub struct EventContext<'a> {
     pub(crate) triggered: &'a mut Entity,
     pub(crate) style: &'a mut Style,
     pub(crate) entity_identifiers: &'a HashMap<String, Entity>,
-    pub(crate) cache: &'a mut CachedData,
+    pub cache: &'a mut CachedData,
     pub(crate) tree: &'a Tree<Entity>,
     pub(crate) data: &'a mut HashMap<Entity, ModelDataStore>,
     pub(crate) views: &'a mut HashMap<Entity, Box<dyn ViewHandler>>,
