@@ -95,8 +95,6 @@ pub fn initial_accessibility_system(cx: &mut Context) -> TreeUpdate {
             //let mut nodes = vec![(node.node_id(), node.node_builder)];
             nodes.push((node.node_id(), node.node_builder));
 
-            println!("{:?}", nodes.iter().map(|(id, _)| id).collect::<Vec<_>>());
-
             // If child nodes were generated then append them to the nodes list
             if !node.children.is_empty() {
                 nodes.extend(
@@ -215,8 +213,6 @@ pub(crate) fn get_access_node(
     let mut node =
         AccessNode { node_id: entity.accesskit_id(), node_builder, children: Vec::new() };
 
-    println!("node: {:?}", node.node_id());
-
     if let Some(view) = views.remove(&entity) {
         view.accessibility(cx, &mut node);
 
@@ -232,8 +228,6 @@ pub(crate) fn get_access_node(
         node.children.iter().map(|child_node| child_node.node_id()).collect::<Vec<_>>();
 
     child_ids.extend(children);
-
-    println!("children: {:?}", child_ids);
 
     if !child_ids.is_empty() {
         node.node_builder.set_children(child_ids);
