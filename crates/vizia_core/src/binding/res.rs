@@ -48,7 +48,7 @@ pub trait Res<T>: ResGet<T> {
     fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
     where
         Self: Sized,
-        F: 'static + Clone + Fn(&mut Context, Self),
+        F: 'static + Fn(&mut Context, Self),
     {
         cx.with_current(entity, |cx| {
             (closure)(cx, self);
