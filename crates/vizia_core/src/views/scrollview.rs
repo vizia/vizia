@@ -100,9 +100,14 @@ impl ScrollView {
                 }
             });
         })
-        .bind(ScrollView::root, |handle, data| {
+        .bind(ScrollView::root, |mut handle, data| {
             let data = data.get(&handle);
-            handle.horizontal_scroll(data.scroll_x).vertical_scroll(data.scroll_y);
+            let scale_factor = handle.context().scale_factor();
+            let top = ((data.inner_height - data.container_height) * data.scroll_y).round()
+                / scale_factor;
+            let left = ((data.inner_height - data.container_height) * data.scroll_x).round()
+                / scale_factor;
+            handle.horizontal_scroll(-left.abs()).vertical_scroll(-top.abs());
         })
         .toggle_class(
             "h-scroll",
@@ -237,7 +242,6 @@ impl View for ScrollView {
                         self.scroll_x = ((left * scale_factor)
                             / (self.inner_width - self.container_width))
                             .clamp(0.0, 1.0);
-
                         if let Some(callback) = &self.on_scroll {
                             (callback)(cx, self.scroll_x, self.scroll_y);
                         }
