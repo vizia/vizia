@@ -249,6 +249,7 @@ impl BackendContext {
     }
 
     pub fn needs_refresh(&mut self, window_entity: Entity) {
+        self.0.cache.path.remove(window_entity);
         self.0.style.system_flags = SystemFlags::all();
         self.0.needs_redraw(window_entity);
         self.0.style.needs_restyle(window_entity);

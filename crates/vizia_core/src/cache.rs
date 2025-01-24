@@ -2,7 +2,7 @@
 //! results. The main type here is CachedData, usually accessed via `cx.cache`.
 
 use crate::prelude::*;
-use skia_safe::Matrix;
+use skia_safe::{Matrix, Path};
 use vizia_storage::SparseSet;
 
 /// Stores data which can be cached between system runs.
@@ -17,6 +17,7 @@ pub struct CachedData {
     pub(crate) geo_changed: SparseSet<GeoChanged>,
     pub(crate) transform: SparseSet<Matrix>,
     pub(crate) clip_path: SparseSet<BoundingBox>,
+    pub(crate) path: SparseSet<Path>,
 }
 
 impl CachedData {
@@ -34,6 +35,7 @@ impl CachedData {
         self.geo_changed.remove(entity);
         self.transform.remove(entity);
         self.clip_path.remove(entity);
+        self.path.remove(entity);
     }
 
     /// Returns the bounding box of the entity, determined by the layout system.

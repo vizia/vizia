@@ -411,12 +411,18 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     // Border Properties
-    modifier!(
-        /// Sets the border width of the view.
-        border_width,
-        LengthOrPercentage,
-        SystemFlags::RELAYOUT | SystemFlags::REDRAW
-    );
+    fn border_width<U: Into<LengthOrPercentage>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        value.set_or_bind(self.context(), current, move |cx, v| {
+            cx.style.border_width.insert(entity, v.get(cx).into());
+            cx.cache.path.remove(entity);
+            cx.style.system_flags |= SystemFlags::RELAYOUT | SystemFlags::REDRAW;
+            cx.set_system_flags(entity, SystemFlags::RELAYOUT | SystemFlags::REDRAW);
+        });
+
+        self
+    }
 
     modifier!(
         /// Sets the border color of the view.
