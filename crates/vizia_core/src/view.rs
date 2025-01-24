@@ -252,18 +252,13 @@ pub trait View: 'static + Sized {
         if bounds.w == 0.0 || bounds.h == 0.0 {
             return;
         }
-        // cx.draw_backdrop_filter(canvas, &mut path);
 
         cx.draw_background(canvas);
         cx.draw_shadows(canvas);
 
         cx.draw_border(canvas);
 
-        // cx.draw_inset_shadows(canvas, &mut path);
-
         cx.draw_outline(canvas);
-
-        // cx.draw_text_and_selection(canvas);
 
         cx.draw_text(canvas);
     }

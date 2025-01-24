@@ -57,10 +57,12 @@ pub(crate) fn layout_system(cx: &mut Context) {
 
                         if w != bounds.w {
                             geo_changed.set(GeoChanged::WIDTH_CHANGED, true);
+                            cx.cache.path.remove(entity);
                         }
 
                         if h != bounds.h {
                             geo_changed.set(GeoChanged::HEIGHT_CHANGED, true);
+                            cx.cache.path.remove(entity);
                         }
 
                         if let Some(geo) = cx.cache.geo_changed.get_mut(entity) {

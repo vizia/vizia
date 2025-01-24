@@ -1,4 +1,4 @@
-use crate::{events::ViewHandler, prelude::*};
+use crate::{cache::CachedData, events::ViewHandler, prelude::*};
 use hashbrown::HashMap;
 use vizia_storage::{LayoutParentIterator, TreeBreadthIterator};
 use vizia_style::{
@@ -304,6 +304,7 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context, redraw_entities: &mut 
 
 fn link_style_data(
     style: &mut Style,
+    cache: &mut CachedData,
     tree: &Tree<Entity>,
     entity: Entity,
     redraw_entities: &mut Vec<Entity>,
@@ -430,6 +431,7 @@ fn link_style_data(
     if style.border_width.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
+        cache.path.remove(entity);
     }
 
     if style.border_color.link(entity, matched_rules) {
@@ -866,6 +868,7 @@ pub(crate) fn style_system(cx: &mut Context) {
             if !matched_rules.is_empty() {
                 link_style_data(
                     &mut cx.style,
+                    &mut cx.cache,
                     &cx.tree,
                     entity,
                     &mut redraw_entities,

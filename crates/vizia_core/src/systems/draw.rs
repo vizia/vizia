@@ -221,7 +221,7 @@ pub(crate) fn draw_system(
             &mut DrawContext {
                 current: zentity.entity,
                 style: &cx.style,
-                cache: &cx.cache,
+                cache: &mut cx.cache,
                 tree: &cx.tree,
                 data: &cx.data,
                 views: &mut cx.views,
