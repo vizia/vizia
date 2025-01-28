@@ -1,6 +1,7 @@
 use std::any::Any;
 
 use skia_safe::Surface;
+use vizia_storage::LayoutTreeIterator;
 use vizia_window::{WindowDescription, WindowPosition};
 
 use super::EventProxy;
@@ -252,6 +253,12 @@ impl BackendContext {
         self.0.needs_redraw(window_entity);
         self.0.style.needs_restyle(window_entity);
         self.0.style.needs_relayout();
+        let iter = LayoutTreeIterator::full(&self.0.tree);
+        for entity in iter {
+            self.0.style.needs_text_layout(entity);
+            self.0.style.needs_text_update(entity);
+            self.0.style.needs_restyle(entity);
+        }
     }
 
     pub fn process_timers(&mut self) {

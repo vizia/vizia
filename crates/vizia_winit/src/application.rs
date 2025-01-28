@@ -276,7 +276,11 @@ impl ApplicationHandler<UserEvent> for Application {
                 .create_window(event_loop, Entity::root(), &self.window_description.clone(), None)
                 .expect("failed to create initial window");
             let custom_cursors = Arc::new(load_default_cursors(event_loop));
-            self.cx.add_main_window(Entity::root(), &self.window_description, 1.0);
+            self.cx.add_main_window(
+                Entity::root(),
+                &self.window_description,
+                main_window.scale_factor() as f32,
+            );
             self.cx.add_window(Window {
                 window: Some(main_window.clone()),
                 on_close: None,
@@ -331,7 +335,13 @@ impl ApplicationHandler<UserEvent> for Application {
                         owner,
                     )
                     .expect("Failed to create window");
-                self.cx.add_main_window(window_entity, &window_state.window_description, 1.0);
+
+                self.cx.add_main_window(
+                    window_entity,
+                    &window_state.window_description,
+                    window.scale_factor() as f32,
+                );
+
                 self.cx.0.with_current(window_entity, |cx| {
                     if let Some(content) = &window_state.content {
                         (content)(cx)
@@ -639,8 +649,6 @@ impl ApplicationHandler<UserEvent> for Application {
         if self.windows.len() != self.cx.0.windows.len() {
             for (window_entity, window_state) in self.cx.0.windows.clone().iter() {
                 if !self.window_ids.contains_key(window_entity) {
-                    self.cx.add_main_window(*window_entity, &window_state.window_description, 1.0);
-
                     let owner = window_state.owner.and_then(|entity| {
                         self.window_ids
                             .get(&entity)
@@ -655,6 +663,12 @@ impl ApplicationHandler<UserEvent> for Application {
                             owner,
                         )
                         .expect("Failed to create window");
+
+                    self.cx.add_main_window(
+                        *window_entity,
+                        &window_state.window_description,
+                        window.scale_factor() as f32,
+                    );
 
                     self.cx.0.with_current(*window_entity, |cx| {
                         if let Some(content) = &window_state.content {

@@ -358,11 +358,11 @@ impl Node for Entity {
     }
 
     fn vertical_scroll(&self, store: &Self::Store) -> Option<f32> {
-        store.vertical_scroll.get(*self).copied()
+        store.vertical_scroll.get(*self).cloned().map(|val| store.logical_to_physical(val))
     }
 
     fn horizontal_scroll(&self, store: &Self::Store) -> Option<f32> {
-        store.horizontal_scroll.get(*self).copied()
+        store.horizontal_scroll.get(*self).cloned().map(|val| store.logical_to_physical(val))
     }
 
     fn min_vertical_gap(&self, store: &Self::Store) -> Option<Units> {
