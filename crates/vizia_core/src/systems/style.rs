@@ -726,7 +726,7 @@ pub(crate) fn compute_matched_rules(
     entity: Entity,
     matched_rules: &mut Vec<(Rule, u32)>,
 ) {
-    for (rule, selector_list) in cx.style.rules.iter() {
+    for (rule_id, rule) in cx.style.rules.iter() {
         let mut cache = SelectorCaches::default();
         let mut context = MatchingContext::new(
             MatchingMode::Normal,
@@ -737,18 +737,17 @@ pub(crate) fn compute_matched_rules(
             MatchingForInvalidation::No,
         );
 
-        for selector in selector_list.slice() {
-            let matches = matches_selector(
-                selector,
-                0,
-                None,
-                &Node { entity, store: &cx.style, tree: &cx.tree, views: &cx.views },
-                &mut context,
-            );
-            if matches {
-                matched_rules.push((*rule, selector.specificity()));
-                break;
-            }
+        let matches = matches_selector(
+            &rule.selector,
+            0,
+            Some(&rule.hashes),
+            &Node { entity, store: &cx.style, tree: &cx.tree, views: &cx.views },
+            &mut context,
+        );
+
+        if matches {
+            matched_rules.push((*rule_id, rule.selector.specificity()));
+            //break;
         }
     }
 
@@ -805,7 +804,7 @@ pub(crate) fn style_system(cx: &mut Context) {
     if !cx.style.restyle.is_empty() {
         let iterator = TreeBreadthIterator::full(&cx.tree);
 
-        let mut parent = None;
+        let mut parent: Option<Entity> = None;
         let mut cache: Vec<MatchedRulesCache> = Vec::with_capacity(50);
 
         // Restyle the entire application.
@@ -831,22 +830,20 @@ pub(crate) fn style_system(cx: &mut Context) {
                         compute_match = false;
 
                         for rule in entry.rules.iter() {
-                            if let Some(selectors) = cx.style.rules.get(&rule.0) {
-                                for selector in selectors.slice() {
-                                    for component in selector.iter() {
-                                        match *component {
-                                            Component::Nth(n)
-                                                if n.ty == NthType::Child
-                                                    || n.ty == NthType::LastChild
-                                                    || n.ty == NthType::OnlyChild =>
-                                            {
-                                                matched_rules.clear();
-                                                compute_match = true;
-                                                continue 'cache;
-                                            }
-
-                                            _ => {}
+                            if let Some(style_rule) = cx.style.rules.get(&rule.0) {
+                                for component in style_rule.selector.iter() {
+                                    match *component {
+                                        Component::Nth(n)
+                                            if n.ty == NthType::Child
+                                                || n.ty == NthType::LastChild
+                                                || n.ty == NthType::OnlyChild =>
+                                        {
+                                            matched_rules.clear();
+                                            compute_match = true;
+                                            continue 'cache;
                                         }
+
+                                        _ => {}
                                     }
                                 }
                             }
