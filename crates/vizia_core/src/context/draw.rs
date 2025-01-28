@@ -775,10 +775,12 @@ impl DrawContext<'_> {
             let bounds = self.bounds();
 
             let half_outline_width = outline_width / 2.0;
-            let outline_path = self.build_path(
+            let mut outline_path = self.build_path(
                 bounds,
                 (half_outline_width + outline_offset, half_outline_width + outline_offset),
             );
+
+            outline_path.offset(self.bounds().top_left());
 
             let mut outline_paint = Paint::default();
             outline_paint.set_color(outline_color);
@@ -798,7 +800,9 @@ impl DrawContext<'_> {
 
             let bounds = self.bounds();
 
-            let path = self.build_path(bounds, (0.0, 0.0));
+            let mut path = self.build_path(bounds, (0.0, 0.0));
+
+            path.offset(bounds.top_left());
 
             for shadow in shadows.iter().rev() {
                 let shadow_color = shadow.color.unwrap_or_default();
@@ -828,6 +832,7 @@ impl DrawContext<'_> {
                 shadow_paint.set_style(PaintStyle::Fill);
 
                 let mut shadow_path = self.build_path(bounds, (outset, outset));
+                shadow_path.offset(bounds.top_left());
 
                 shadow_paint.set_color(shadow_color);
 
