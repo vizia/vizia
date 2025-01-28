@@ -50,7 +50,7 @@ fn main() -> Result<(), ApplicationError> {
         AppState { count: 0, timer }.build(cx);
 
         VStack::new(cx, |cx| {
-            Label::new(cx, AppState::count).font_size(100.0);
+            Label::new(cx, AppState::count).font_size(80.0);
 
             Button::new(cx, |cx| Label::new(cx, "Start")).on_press(move |cx| {
                 cx.start_timer(timer);
@@ -67,10 +67,9 @@ fn main() -> Result<(), ApplicationError> {
                 });
             });
         })
-        .size(Auto)
-        .space(Units::Stretch(1.0))
+        .size(Stretch(1.0))
         .alignment(Alignment::Center)
-        .vertical_gap(Units::Pixels(10.0));
+        .gap(Units::Pixels(8.0));
     })
     .title("Timer")
     .inner_size((300, 300))
