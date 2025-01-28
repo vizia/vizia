@@ -3,11 +3,11 @@ use vizia::prelude::*;
 const STYLE: &str = r#"
 
     :root {
-        padding: 1s;
+        alignment: center;
     }
 
     hstack {
-        padding: 1s;
+        alignment: center;
         horizontal-gap: 40px;
     }
 
