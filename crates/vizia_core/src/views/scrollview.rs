@@ -105,8 +105,8 @@ impl ScrollView {
             let scale_factor = handle.context().scale_factor();
             let top = ((data.inner_height - data.container_height) * data.scroll_y).round()
                 / scale_factor;
-            let left = ((data.inner_width - data.container_width) * data.scroll_x).round()
-                / scale_factor;
+            let left =
+                ((data.inner_width - data.container_width) * data.scroll_x).round() / scale_factor;
             handle.horizontal_scroll(-left.abs()).vertical_scroll(-top.abs());
         })
         .toggle_class(
