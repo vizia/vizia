@@ -65,6 +65,7 @@ use indexmap::IndexMap;
 use log::warn;
 use std::fmt::Debug;
 use std::ops::{Deref, DerefMut, Range};
+use vizia_style::selectors::parser::{AncestorHashes, Selector};
 
 use crate::prelude::*;
 
@@ -80,8 +81,7 @@ pub use vizia_style::{
 };
 
 use vizia_style::{
-    BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, SelectorList, Selectors,
-    StyleSheet,
+    BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, Selectors, StyleSheet,
 };
 
 mod rule;
@@ -194,6 +194,19 @@ impl DerefMut for Bloom {
     }
 }
 
+pub(crate) struct StyleRule {
+    pub(crate) selector: Selector<Selectors>,
+    /// The ancestor hashes associated with the selector.
+    pub(crate) hashes: AncestorHashes,
+}
+
+impl StyleRule {
+    pub(crate) fn new(selector: Selector<Selectors>) -> Self {
+        let hashes = AncestorHashes::new(&selector, vizia_style::QuirksMode::NoQuirks);
+        Self { selector, hashes }
+    }
+}
+
 /// Stores the style properties of all entities in the application.
 #[derive(Default)]
 pub struct Style {
@@ -206,7 +219,7 @@ pub struct Style {
     pub(crate) pending_animations: Vec<(Entity, Animation, Duration, Duration)>,
 
     // List of rules
-    pub(crate) rules: IndexMap<Rule, SelectorList<Selectors>>,
+    pub(crate) rules: IndexMap<Rule, StyleRule>,
 
     pub(crate) default_font: Vec<FamilyOwned>,
 
@@ -856,24 +869,26 @@ impl Style {
             for rule in rules {
                 match rule {
                     CssRule::Style(style_rule) => {
-                        let rule_id = self.rule_manager.create();
+                        // let selectors = style_rule.selectors;
 
-                        let selectors = style_rule.selectors;
+                        for selector in style_rule.selectors.slice() {
+                            let rule_id = self.rule_manager.create();
 
-                        self.rules.insert(rule_id, selectors);
+                            for property in style_rule.declarations.declarations.iter() {
+                                match property {
+                                    Property::Transition(transitions) => {
+                                        for transition in transitions.iter() {
+                                            self.insert_transition(rule_id, transition);
+                                        }
+                                    }
 
-                        for property in style_rule.declarations.declarations {
-                            match property {
-                                Property::Transition(transitions) => {
-                                    for transition in transitions.iter() {
-                                        self.insert_transition(rule_id, transition);
+                                    _ => {
+                                        self.insert_property(rule_id, property);
                                     }
                                 }
-
-                                _ => {
-                                    self.insert_property(rule_id, property);
-                                }
                             }
+
+                            self.rules.insert(rule_id, StyleRule::new(selector.clone()));
                         }
                     }
 
@@ -1195,8 +1210,8 @@ impl Style {
         }
     }
 
-    fn insert_property(&mut self, rule_id: Rule, property: Property) {
-        match property {
+    fn insert_property(&mut self, rule_id: Rule, property: &Property) {
+        match property.clone() {
             // Display
             Property::Display(display) => {
                 self.display.insert_rule(rule_id, display);

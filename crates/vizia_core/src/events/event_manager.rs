@@ -485,7 +485,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 for rule in result.into_iter() {
                     for selectors in cx.style.rules.iter() {
                         if *selectors.0 == rule.0 {
-                            debug!("{:?}", selectors.1);
+                            debug!("{:?}", selectors.1.selector);
                         }
                     }
                 }
