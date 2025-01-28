@@ -1113,20 +1113,46 @@ impl<'a> EventContext<'a> {
         self.needs_redraw();
     }
 
-    pub fn set_top(&mut self, left: Units) {
-        self.style.top.insert(self.current, left);
+    pub fn set_top(&mut self, top: Units) {
+        self.style.top.insert(self.current, top);
         self.needs_relayout();
         self.needs_redraw();
     }
 
-    pub fn set_right(&mut self, left: Units) {
-        self.style.right.insert(self.current, left);
+    pub fn set_right(&mut self, right: Units) {
+        self.style.right.insert(self.current, right);
         self.needs_relayout();
         self.needs_redraw();
     }
 
-    pub fn set_bottom(&mut self, left: Units) {
-        self.style.bottom.insert(self.current, left);
+    pub fn set_bottom(&mut self, bottom: Units) {
+        self.style.bottom.insert(self.current, bottom);
+        self.needs_relayout();
+        self.needs_redraw();
+    }
+
+    // PADDING
+
+    pub fn set_padding_left(&mut self, padding_left: Units) {
+        self.style.padding_left.insert(self.current, padding_left);
+        self.needs_relayout();
+        self.needs_redraw();
+    }
+
+    pub fn set_padding_top(&mut self, padding_top: Units) {
+        self.style.padding_top.insert(self.current, padding_top);
+        self.needs_relayout();
+        self.needs_redraw();
+    }
+
+    pub fn set_padding_right(&mut self, padding_right: Units) {
+        self.style.padding_right.insert(self.current, padding_right);
+        self.needs_relayout();
+        self.needs_redraw();
+    }
+
+    pub fn set_padding_bottom(&mut self, padding_bottom: Units) {
+        self.style.padding_bottom.insert(self.current, padding_bottom);
         self.needs_relayout();
         self.needs_redraw();
     }
