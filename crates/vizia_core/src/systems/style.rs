@@ -846,32 +846,26 @@ pub(crate) fn style_system(cx: &mut Context) {
             {
                 // if has same selector look up rules
                 'cache: for entry in &cache {
-                    if has_same_selector(cx, entry.entity, entity) {
-                        matched_rules.clone_from(&entry.rules);
-                        compute_match = false;
+                    if !has_same_selector(cx, entry.entity, entity) {
+                        continue;
+                    }
 
-                        for rule in entry.rules.iter() {
-                            if let Some(style_rule) = cx.style.rules.get(&rule.0) {
-                                for component in style_rule.selector.iter() {
-                                    match *component {
-                                        Component::Nth(n)
-                                            if n.ty == NthType::Child
-                                                || n.ty == NthType::LastChild
-                                                || n.ty == NthType::OnlyChild =>
-                                        {
-                                            matched_rules.clear();
-                                            compute_match = true;
-                                            continue 'cache;
-                                        }
+                    matched_rules.clone_from(&entry.rules);
+                    compute_match = false;
 
-                                        _ => {}
-                                    }
-                                }
+                    for (rule, _) in &entry.rules {
+                        let Some(style_rule) = cx.style.rules.get(rule) else { continue };
+                        for component in style_rule.selector.iter() {
+                            let Component::Nth(n) = component else { continue };
+                            if let NthType::Child | NthType::LastChild | NthType::OnlyChild = n.ty {
+                                matched_rules.clear();
+                                compute_match = true;
+                                continue 'cache;
                             }
                         }
-
-                        break 'cache;
                     }
+
+                    break;
                 }
             } else {
                 parent = current_parent;
