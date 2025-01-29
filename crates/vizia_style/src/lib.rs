@@ -38,3 +38,5 @@ mod selector;
 pub use selector::*;
 
 pub use selectors;
+
+pub use precomputed_hash;

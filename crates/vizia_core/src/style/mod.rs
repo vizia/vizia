@@ -226,6 +226,7 @@ pub struct Style {
     pub(crate) default_font: Vec<FamilyOwned>,
 
     // CSS Selector Properties
+    pub(crate) element: SparseSet<u32>,
     pub(crate) ids: SparseSet<String>,
     pub(crate) classes: SparseSet<HashSet<String>>,
     pub(crate) pseudo_classes: SparseSet<PseudoClassFlags>,
