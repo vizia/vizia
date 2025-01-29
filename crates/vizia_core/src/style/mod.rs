@@ -65,6 +65,7 @@ use indexmap::IndexMap;
 use log::warn;
 use std::fmt::Debug;
 use std::ops::{Deref, DerefMut, Range};
+use vizia_style::selectors::bloom::BloomFilter;
 use vizia_style::selectors::parser::{AncestorHashes, Selector};
 
 use crate::prelude::*;
@@ -220,6 +221,7 @@ pub struct Style {
 
     // List of rules
     pub(crate) rules: IndexMap<Rule, StyleRule>,
+    pub(crate) style_bloom: BloomFilter,
 
     pub(crate) default_font: Vec<FamilyOwned>,
 

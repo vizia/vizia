@@ -43,6 +43,7 @@ web-time = "1.1"
 comrak = { version = "0.33", default-features = false, optional = true }
 open = "5.2"
 sha2 = "0.10"
+fxhash = "*"
 
 [target."cfg(target_os = \"linux\")".dependencies.skia-safe]
 version = "0.80"

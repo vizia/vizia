@@ -17,6 +17,7 @@ morphorm = {git = "https://github.com/vizia/morphorm", branch = "alternate"}
 smallvec = "1.0"
 bitflags = "2.6"
 precomputed-hash = "0.1"
+fxhash = "*"
 
 [target."cfg(target_os = \"linux\")".dependencies.skia-safe]
 version = "0.80"

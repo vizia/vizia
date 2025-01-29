@@ -730,7 +730,7 @@ pub(crate) fn compute_matched_rules(
         let mut cache = SelectorCaches::default();
         let mut context = MatchingContext::new(
             MatchingMode::Normal,
-            None,
+            Some(&cx.style.style_bloom),
             &mut cache,
             QuirksMode::NoQuirks,
             NeedsSelectorFlags::No,
@@ -790,6 +790,30 @@ fn has_same_selector(cx: &Context, entity1: Entity, entity2: Entity) -> bool {
     true
 }
 
+fn compute_element_hash(
+    entity: Entity,
+    views: &HashMap<Entity, Box<dyn ViewHandler>>,
+    tree: &Tree<Entity>,
+    style: &mut Style,
+) {
+    let parent_iter = LayoutParentIterator::new(tree, entity);
+
+    for ancestor in parent_iter {
+        let element = views.get(&ancestor).and_then(|view| view.element()).unwrap_or_default();
+        style.style_bloom.insert_hash(fxhash::hash32(element));
+
+        if let Some(id) = style.ids.get(ancestor) {
+            style.style_bloom.insert_hash(fxhash::hash32(id));
+        }
+
+        if let Some(classes) = style.classes.get(ancestor) {
+            for class in classes {
+                style.style_bloom.insert_hash(fxhash::hash32(class));
+            }
+        }
+    }
+}
+
 pub(crate) struct MatchedRulesCache {
     pub entity: Entity,
     pub rules: Vec<(Rule, u32)>,
@@ -797,6 +821,9 @@ pub(crate) struct MatchedRulesCache {
 
 // Iterates the tree and determines the matching style rules for each entity, then links the entity to the corresponding style rule data.
 pub(crate) fn style_system(cx: &mut Context) {
+    // use std::time::Instant;
+    // let now = Instant::now();
+
     let mut redraw_entities = Vec::new();
 
     inline_inheritance_system(cx, &mut redraw_entities);
@@ -806,6 +833,7 @@ pub(crate) fn style_system(cx: &mut Context) {
 
         let mut parent: Option<Entity> = None;
         let mut cache: Vec<MatchedRulesCache> = Vec::with_capacity(50);
+        let mut matched_rules = Vec::with_capacity(50);
 
         // Restyle the entire application.
         for entity in iterator {
@@ -813,7 +841,9 @@ pub(crate) fn style_system(cx: &mut Context) {
                 continue;
             }
 
-            let mut matched_rules = Vec::with_capacity(50);
+            compute_element_hash(entity, &cx.views, &cx.tree, &mut cx.style);
+
+            matched_rules.clear();
 
             let current_parent = cx.tree.get_layout_parent(entity);
 
@@ -863,6 +893,7 @@ pub(crate) fn style_system(cx: &mut Context) {
             }
 
             if !matched_rules.is_empty() {
+                // println!("{} {:?}", entity, matched_rules);
                 link_style_data(
                     &mut cx.style,
                     &mut cx.cache,
@@ -880,5 +911,8 @@ pub(crate) fn style_system(cx: &mut Context) {
         for entity in redraw_entities {
             cx.needs_redraw(entity);
         }
+
+        // let elapsed = now.elapsed();
+        // println!("Elapsed: {:.2?}", elapsed);
     }
 }
