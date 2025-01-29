@@ -1,4 +1,4 @@
-use std::hash::{DefaultHasher, Hash, Hasher};
+use std::hash::Hash;
 
 use cssparser::*;
 use precomputed_hash::PrecomputedHash;

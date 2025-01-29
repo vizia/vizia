@@ -3,6 +3,7 @@ use hashbrown::HashMap;
 use vizia_storage::{LayoutParentIterator, TreeBreadthIterator};
 use vizia_style::{
     matches_selector,
+    precomputed_hash::PrecomputedHash,
     selectors::{
         attr::{AttrSelectorOperation, CaseSensitivity, NamespaceConstraint},
         context::{MatchingForInvalidation, NeedsSelectorFlags, SelectorCaches},
@@ -88,8 +89,8 @@ impl Element for Node<'_, '_, '_> {
     }
 
     fn has_local_name(&self, local_name: &SelectorIdent) -> bool {
-        if let Some(element) = self.views.get(&self.entity).and_then(|view| view.element()) {
-            return element == local_name.0;
+        if let Some(element) = self.store.element.get(self.entity) {
+            return element == &local_name.precomputed_hash();
         }
 
         false
@@ -115,10 +116,8 @@ impl Element for Node<'_, '_, '_> {
     }
 
     fn is_same_type(&self, other: &Self) -> bool {
-        if let Some(element) = self.views.get(&self.entity).and_then(|view| view.element()) {
-            if let Some(other_element) =
-                self.views.get(&other.entity).and_then(|view| view.element())
-            {
+        if let Some(element) = self.store.element.get(self.entity) {
+            if let Some(other_element) = self.store.element.get(other.entity) {
                 return element == other_element;
             }
         }
@@ -726,17 +725,16 @@ pub(crate) fn compute_matched_rules(
     entity: Entity,
     matched_rules: &mut Vec<(Rule, u32)>,
 ) {
+    let mut cache = SelectorCaches::default();
+    let mut context = MatchingContext::new(
+        MatchingMode::Normal,
+        Some(&cx.style.style_bloom),
+        &mut cache,
+        QuirksMode::NoQuirks,
+        NeedsSelectorFlags::Yes,
+        MatchingForInvalidation::No,
+    );
     for (rule_id, rule) in cx.style.rules.iter() {
-        let mut cache = SelectorCaches::default();
-        let mut context = MatchingContext::new(
-            MatchingMode::Normal,
-            Some(&cx.style.style_bloom),
-            &mut cache,
-            QuirksMode::NoQuirks,
-            NeedsSelectorFlags::No,
-            MatchingForInvalidation::No,
-        );
-
         let matches = matches_selector(
             &rule.selector,
             0,
@@ -756,13 +754,13 @@ pub(crate) fn compute_matched_rules(
 }
 
 fn has_same_selector(cx: &Context, entity1: Entity, entity2: Entity) -> bool {
-    let element1 = cx.views.get(&entity1).and_then(|view| view.element()).unwrap_or_default();
-
-    let element2 = cx.views.get(&entity2).and_then(|view| view.element()).unwrap_or_default();
-
-    if element1 != element2 {
-        return false;
-    };
+    if let Some(element1) = cx.style.element.get(entity1) {
+        if let Some(element2) = cx.style.element.get(entity2) {
+            if element1 != element2 {
+                return false;
+            };
+        }
+    }
 
     let id1 = if let Some(id) = cx.style.ids.get(entity1) { id } else { "" };
     let id2 = if let Some(id) = cx.style.ids.get(entity2) { id } else { "" };
@@ -790,17 +788,13 @@ fn has_same_selector(cx: &Context, entity1: Entity, entity2: Entity) -> bool {
     true
 }
 
-fn compute_element_hash(
-    entity: Entity,
-    views: &HashMap<Entity, Box<dyn ViewHandler>>,
-    tree: &Tree<Entity>,
-    style: &mut Style,
-) {
+fn compute_element_hash(entity: Entity, tree: &Tree<Entity>, style: &mut Style) {
     let parent_iter = LayoutParentIterator::new(tree, entity);
 
     for ancestor in parent_iter {
-        let element = views.get(&ancestor).and_then(|view| view.element()).unwrap_or_default();
-        style.style_bloom.insert_hash(fxhash::hash32(element));
+        if let Some(element) = style.element.get(ancestor) {
+            style.style_bloom.insert_hash(*element);
+        }
 
         if let Some(id) = style.ids.get(ancestor) {
             style.style_bloom.insert_hash(fxhash::hash32(id));
@@ -821,9 +815,6 @@ pub(crate) struct MatchedRulesCache {
 
 // Iterates the tree and determines the matching style rules for each entity, then links the entity to the corresponding style rule data.
 pub(crate) fn style_system(cx: &mut Context) {
-    // use std::time::Instant;
-    // let now = Instant::now();
-
     let mut redraw_entities = Vec::new();
 
     inline_inheritance_system(cx, &mut redraw_entities);
@@ -841,7 +832,7 @@ pub(crate) fn style_system(cx: &mut Context) {
                 continue;
             }
 
-            compute_element_hash(entity, &cx.views, &cx.tree, &mut cx.style);
+            compute_element_hash(entity, &cx.tree, &mut cx.style);
 
             matched_rules.clear();
 
@@ -893,7 +884,6 @@ pub(crate) fn style_system(cx: &mut Context) {
             }
 
             if !matched_rules.is_empty() {
-                // println!("{} {:?}", entity, matched_rules);
                 link_style_data(
                     &mut cx.style,
                     &mut cx.cache,
@@ -911,8 +901,5 @@ pub(crate) fn style_system(cx: &mut Context) {
         for entity in redraw_entities {
             cx.needs_redraw(entity);
         }
-
-        // let elapsed = now.elapsed();
-        // println!("Elapsed: {:.2?}", elapsed);
     }
 }

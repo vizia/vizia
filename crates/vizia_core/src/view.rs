@@ -120,7 +120,13 @@ pub trait View: 'static + Sized {
         cx.cache.add(id);
         cx.style.add(id);
         cx.needs_redraw(id);
+
+        if let Some(element) = self.element() {
+            cx.style.element.insert(id, fxhash::hash32(element));
+        }
+
         cx.views.insert(id, Box::new(self));
+
         let parent_id = cx.tree.get_layout_parent(id).unwrap();
         let parent_node_id = parent_id.accesskit_id();
         let node_id = id.accesskit_id();
