@@ -575,7 +575,7 @@ where
     }
 
     /// Link an entity to some shared data.
-    pub(crate) fn link(&mut self, entity: Entity, rules: &[Rule]) -> bool {
+    pub(crate) fn link(&mut self, entity: Entity, rules: &[(Rule, u32)]) -> bool {
         let entity_index = entity.index();
 
         // Check if the entity already has some data
@@ -588,7 +588,7 @@ where
         }
 
         // Loop through matched rules and link to the first valid rule
-        for rule in rules.iter() {
+        for (rule, _) in rules {
             if let Some(shared_data_index) = self.shared_data.dense_idx(*rule) {
                 // If the entity doesn't have any previous shared data then create space for it
                 if entity_index >= self.inline_data.sparse.len() {

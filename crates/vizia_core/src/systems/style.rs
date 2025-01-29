@@ -307,7 +307,7 @@ fn link_style_data(
     tree: &Tree<Entity>,
     entity: Entity,
     redraw_entities: &mut Vec<Entity>,
-    matched_rules: &[Rule],
+    matched_rules: &[(Rule, u32)],
 ) {
     let mut should_relayout = false;
     let mut should_redraw = false;
@@ -884,7 +884,7 @@ pub(crate) fn style_system(cx: &mut Context) {
                     &cx.tree,
                     entity,
                     &mut redraw_entities,
-                    &matched_rules.iter().map(|(rule, _)| *rule).collect::<Vec<_>>(),
+                    &matched_rules,
                 );
             }
         }
