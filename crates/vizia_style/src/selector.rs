@@ -1,3 +1,5 @@
+use std::hash::{DefaultHasher, Hash, Hasher};
+
 use cssparser::*;
 use precomputed_hash::PrecomputedHash;
 use selectors::SelectorImpl;
@@ -57,7 +59,7 @@ impl<'a> std::convert::From<CowRcStr<'a>> for SelectorIdent {
 
 impl PrecomputedHash for SelectorIdent {
     fn precomputed_hash(&self) -> u32 {
-        0
+        fxhash::hash32(self.0.as_str())
     }
 }
 
