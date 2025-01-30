@@ -1,6 +1,7 @@
 use crate::{cache::CachedData, prelude::*};
 use dashmap::DashMap;
 use hashbrown::HashMap;
+#[cfg(feature = "rayon")]
 use rayon::prelude::*;
 use vizia_storage::{LayoutParentIterator, TreeBreadthIterator};
 use vizia_style::{
@@ -830,6 +831,82 @@ pub(crate) struct MatchedRulesCache {
     pub rules: Vec<(Rule, u32)>,
 }
 
+#[cfg(feature = "rayon")]
+fn matched_rules_parallel(
+    entities: &Vec<Entity>,
+    style: &Style,
+    tree: &Tree<Entity>,
+) -> HashMap<Entity, Vec<(Rule, u32)>> {
+    let num_threads = std::thread::available_parallelism().map_or(1, |n| n.get());
+    let min_len = entities.len().div_ceil(num_threads);
+
+    let rule_cache = DashMap::<Entity, Vec<MatchedRulesCache>>::new();
+
+    entities
+        .par_iter()
+        .with_min_len(min_len)
+        .map_init(BloomFilter::default, |filter, entity| {
+            matched_rules_inner(entity, style, tree, filter, &rule_cache)
+        })
+        .flatten_iter()
+        .collect()
+}
+
+fn matched_rules(
+    entities: &Vec<Entity>,
+    style: &Style,
+    tree: &Tree<Entity>,
+) -> HashMap<Entity, Vec<(Rule, u32)>> {
+    let rule_cache = DashMap::<Entity, Vec<MatchedRulesCache>>::new();
+    let filter = &mut BloomFilter::default();
+    entities
+        .iter()
+        .map(|entity| matched_rules_inner(entity, style, tree, filter, &rule_cache))
+        .flatten()
+        .collect()
+}
+
+fn matched_rules_inner(
+    entity: &Entity,
+    style: &Style,
+    tree: &Tree<Entity>,
+    filter: &mut BloomFilter,
+    rule_cache: &DashMap<Entity, Vec<MatchedRulesCache>>,
+) -> Option<(Entity, Vec<(Rule, u32)>)> {
+    compute_element_hash(*entity, tree, style, filter);
+
+    let parent = tree.get_layout_parent(*entity).unwrap_or(Entity::root());
+
+    let mut matched_index = None;
+
+    if !tree.is_first_child(*entity) && !tree.is_last_child(*entity) {
+        if let Some(cache) = rule_cache.get(&parent) {
+            matched_index = cache.iter().position(|entry| {
+                has_same_selector(style, entry.entity, *entity)
+                    && !has_nth_child_rule(style, &entry.rules)
+            });
+        }
+    }
+
+    let rules = match matched_index {
+        Some(i) => rule_cache.get(&parent).unwrap()[i].rules.clone(),
+        None => {
+            let rules = compute_matched_rules(*entity, style, tree, filter);
+
+            let mut entry = rule_cache.entry(parent).or_default();
+            entry.value_mut().push(MatchedRulesCache { entity: *entity, rules: rules.clone() });
+
+            rules
+        }
+    };
+
+    if !rules.is_empty() {
+        Some((*entity, rules))
+    } else {
+        None
+    }
+}
+
 // Iterates the tree and determines the matching style rules for each entity, then links the entity to the corresponding style rule data.
 pub(crate) fn style_system(cx: &mut Context) {
     let mut redraw_entities = Vec::new();
@@ -841,54 +918,20 @@ pub(crate) fn style_system(cx: &mut Context) {
             .filter(|e| cx.style.restyle.contains(*e))
             .collect::<Vec<_>>();
 
-        let num_threads = std::thread::available_parallelism().map_or(1, |n| n.get());
-        let min_len = entities.len().div_ceil(num_threads);
+        // TODO: Tune this number
+        let matched_rules = if entities.len() * cx.style.rules.len() < 1000 {
+            matched_rules(&entities, &cx.style, &cx.tree)
+        } else {
+            #[cfg(feature = "rayon")]
+            {
+                matched_rules_parallel(&entities, &cx.style, &cx.tree)
+            }
 
-        let rule_cache = DashMap::<Entity, Vec<MatchedRulesCache>>::new();
-
-        let Context { style: store, tree, .. } = cx;
-
-        let matched_rules: HashMap<Entity, Vec<(Rule, u32)>> = entities
-            .par_iter()
-            .with_min_len(min_len)
-            .map_init(BloomFilter::default, |filter, entity| {
-                compute_element_hash(*entity, tree, store, filter);
-
-                let parent = tree.get_layout_parent(*entity).unwrap_or(Entity::root());
-
-                let mut matched_index = None;
-
-                if !tree.is_first_child(*entity) && !tree.is_last_child(*entity) {
-                    if let Some(cache) = rule_cache.get(&parent) {
-                        matched_index = cache.iter().position(|entry| {
-                            has_same_selector(store, entry.entity, *entity)
-                                && !has_nth_child_rule(store, &entry.rules)
-                        });
-                    }
-                }
-
-                let rules = match matched_index {
-                    Some(i) => rule_cache.get(&parent).unwrap()[i].rules.clone(),
-                    None => {
-                        let rules = compute_matched_rules(*entity, store, tree, filter);
-
-                        let mut entry = rule_cache.entry(parent).or_default();
-                        entry
-                            .value_mut()
-                            .push(MatchedRulesCache { entity: *entity, rules: rules.clone() });
-
-                        rules
-                    }
-                };
-
-                if !rules.is_empty() {
-                    Some((*entity, rules))
-                } else {
-                    None
-                }
-            })
-            .flatten_iter()
-            .collect();
+            #[cfg(not(feature = "rayon"))]
+            {
+                matched_rules(&entities, &cx.style, &cx.tree)
+            }
+        };
 
         //  Apply matched rules to entities
         for entity in entities.into_iter() {
