@@ -1,5 +1,5 @@
 use crate::{cache::CachedData, prelude::*};
-use dashmap::DashMap;
+use dashmap::{DashMap, ReadOnlyView};
 use hashbrown::HashMap;
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
@@ -826,84 +826,95 @@ pub(crate) fn compute_element_hash(
     }
 }
 
-pub(crate) struct MatchedRulesCache {
+struct MatchedRulesCache {
     pub entity: Entity,
     pub rules: Vec<(Rule, u32)>,
 }
 
-#[cfg(feature = "rayon")]
-fn matched_rules_parallel(
-    entities: &Vec<Entity>,
-    style: &Style,
-    tree: &Tree<Entity>,
-) -> HashMap<Entity, Vec<(Rule, u32)>> {
-    let num_threads = std::thread::available_parallelism().map_or(1, |n| n.get());
-    let min_len = entities.len().div_ceil(num_threads);
-
-    let rule_cache = DashMap::<Entity, Vec<MatchedRulesCache>>::new();
-
-    entities
-        .par_iter()
-        .with_min_len(min_len)
-        .map_init(BloomFilter::default, |filter, entity| {
-            matched_rules_inner(entity, style, tree, filter, &rule_cache)
-        })
-        .flatten_iter()
-        .collect()
+struct MatchedRules {
+    cache: ReadOnlyView<Entity, Vec<MatchedRulesCache>>,
+    // Stores the key/index into the cache to get the rules for a given entity.
+    rules: HashMap<Entity, (Entity, usize)>,
 }
 
-fn matched_rules(
-    entities: &Vec<Entity>,
-    style: &Style,
-    tree: &Tree<Entity>,
-) -> HashMap<Entity, Vec<(Rule, u32)>> {
-    let rule_cache = DashMap::<Entity, Vec<MatchedRulesCache>>::new();
-    let filter = &mut BloomFilter::default();
-    entities
-        .iter()
-        .map(|entity| matched_rules_inner(entity, style, tree, filter, &rule_cache))
-        .flatten()
-        .collect()
-}
+impl MatchedRules {
+    fn build(entities: &[Entity], style: &Style, tree: &Tree<Entity>) -> Self {
+        let filter = &mut BloomFilter::default();
 
-fn matched_rules_inner(
-    entity: &Entity,
-    style: &Style,
-    tree: &Tree<Entity>,
-    filter: &mut BloomFilter,
-    rule_cache: &DashMap<Entity, Vec<MatchedRulesCache>>,
-) -> Option<(Entity, Vec<(Rule, u32)>)> {
-    compute_element_hash(*entity, tree, style, filter);
+        let cache = DashMap::new();
+        let rules = entities
+            .iter()
+            .flat_map(|entity| Self::build_inner(*entity, style, tree, filter, &cache))
+            .collect();
 
-    let parent = tree.get_layout_parent(*entity).unwrap_or(Entity::root());
-
-    let mut matched_index = None;
-
-    if !tree.is_first_child(*entity) && !tree.is_last_child(*entity) {
-        if let Some(cache) = rule_cache.get(&parent) {
-            matched_index = cache.iter().position(|entry| {
-                has_same_selector(style, entry.entity, *entity)
-                    && !has_nth_child_rule(style, &entry.rules)
-            });
-        }
+        Self { rules, cache: cache.into_read_only() }
     }
 
-    let rules = match matched_index {
-        Some(i) => rule_cache.get(&parent).unwrap()[i].rules.clone(),
-        None => {
-            let rules = compute_matched_rules(*entity, style, tree, filter);
+    #[cfg(feature = "rayon")]
+    fn build_parallel(entities: &[Entity], style: &Style, tree: &Tree<Entity>) -> Self {
+        let num_threads = std::thread::available_parallelism().map_or(1, |n| n.get());
 
-            let mut entry = rule_cache.entry(parent).or_default();
-            entry.value_mut().push(MatchedRulesCache { entity: *entity, rules: rules.clone() });
+        // Potential tuning oppertunity:
+        // Lower values make the BloomFilter more effective.
+        // Higher values allow more work be done in parellel.
+        let min_len = entities.len().div_ceil(num_threads);
 
-            rules
+        let cache = DashMap::new();
+        let rules = entities
+            .par_iter()
+            .with_min_len(min_len.clamp(1, 8))
+            .map_init(BloomFilter::default, |filter, entity| {
+                Self::build_inner(*entity, style, tree, filter, &cache)
+            })
+            .flatten_iter()
+            .collect();
+
+        Self { rules, cache: cache.into_read_only() }
+    }
+
+    fn build_inner(
+        entity: Entity,
+        style: &Style,
+        tree: &Tree<Entity>,
+        filter: &mut BloomFilter,
+        rule_cache: &DashMap<Entity, Vec<MatchedRulesCache>>,
+    ) -> Option<(Entity, (Entity, usize))> {
+        compute_element_hash(entity, tree, style, filter);
+
+        let parent = tree.get_layout_parent(entity).unwrap_or(Entity::root());
+
+        let mut matched_index = None;
+
+        if !tree.is_first_child(entity) && !tree.is_last_child(entity) {
+            if let Some(cache) = rule_cache.get(&parent) {
+                matched_index = cache.iter().position(|entry| {
+                    has_same_selector(style, entry.entity, entity)
+                        && !has_nth_child_rule(style, &entry.rules)
+                });
+            }
         }
-    };
 
-    if !rules.is_empty() {
-        Some((*entity, rules))
-    } else {
-        None
+        if matched_index.is_none() {
+            let rules = compute_matched_rules(entity, style, tree, filter);
+            if !rules.is_empty() {
+                let mut entry = rule_cache.entry(parent).or_default();
+                entry.value_mut().push(MatchedRulesCache { entity, rules });
+                matched_index = Some(entry.value().len() - 1);
+            }
+        }
+
+        matched_index.map(|i| (entity, (parent, i)))
+    }
+
+    fn get(&self, entity: &Entity) -> Option<&[(Rule, u32)]> {
+        let (parent, i) = self.rules.get(entity)?;
+        let parent_cache = self.cache.get(parent)?;
+        let entry = parent_cache.get(*i)?;
+        if entry.rules.is_empty() {
+            None
+        } else {
+            Some(&entry.rules)
+        }
     }
 }
 
@@ -913,47 +924,48 @@ pub(crate) fn style_system(cx: &mut Context) {
 
     inline_inheritance_system(cx, &mut redraw_entities);
 
-    if !cx.style.restyle.is_empty() {
-        let entities = TreeBreadthIterator::full(&cx.tree)
-            .filter(|e| cx.style.restyle.contains(*e))
-            .collect::<Vec<_>>();
+    if cx.style.restyle.is_empty() {
+        return;
+    }
 
-        // TODO: Tune this number
-        let matched_rules = if entities.len() * cx.style.rules.len() < 1000 {
-            matched_rules(&entities, &cx.style, &cx.tree)
-        } else {
-            #[cfg(feature = "rayon")]
-            {
-                matched_rules_parallel(&entities, &cx.style, &cx.tree)
-            }
+    let entities = TreeBreadthIterator::full(&cx.tree)
+        .filter(|e| cx.style.restyle.contains(*e))
+        .collect::<Vec<_>>();
 
-            #[cfg(not(feature = "rayon"))]
-            {
-                matched_rules(&entities, &cx.style, &cx.tree)
-            }
-        };
+    // TODO: Tune this number. Or perhaps make it customizable?
+    let parallel = entities.len() * cx.style.rules.len() >= 4096;
 
-        //  Apply matched rules to entities
-        for entity in entities.into_iter() {
-            if let Some(matched_rules) =
-                matched_rules.get(&entity).filter(|matched_rules| !matched_rules.is_empty())
-            {
-                link_style_data(
-                    &mut cx.style,
-                    &mut cx.cache,
-                    &cx.tree,
-                    entity,
-                    &mut redraw_entities,
-                    matched_rules,
-                );
-            }
+    let matched_rules = if !parallel {
+        MatchedRules::build(&entities, &cx.style, &cx.tree)
+    } else {
+        #[cfg(feature = "rayon")]
+        {
+            MatchedRules::build_parallel(&entities, &cx.style, &cx.tree)
         }
-        cx.style.restyle.clear();
-
-        shared_inheritance_system(cx, &mut redraw_entities);
-
-        for entity in redraw_entities {
-            cx.needs_redraw(entity);
+        #[cfg(not(feature = "rayon"))]
+        {
+            MatchedRules::build(&entities, &cx.style, &cx.tree)
         }
+    };
+
+    //  Apply matched rules to entities
+    for entity in entities {
+        if let Some(matched_rules) = matched_rules.get(&entity) {
+            link_style_data(
+                &mut cx.style,
+                &mut cx.cache,
+                &cx.tree,
+                entity,
+                &mut redraw_entities,
+                matched_rules,
+            );
+        }
+    }
+    cx.style.restyle.clear();
+
+    shared_inheritance_system(cx, &mut redraw_entities);
+
+    for entity in redraw_entities {
+        cx.needs_redraw(entity);
     }
 }
