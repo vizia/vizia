@@ -1,6 +1,4 @@
-use std::sync::{Arc, Mutex};
-
-use crate::{cache::CachedData, events::ViewHandler, prelude::*, storage::style_set::StyleSet};
+use crate::{cache::CachedData, prelude::*};
 use dashmap::DashMap;
 use hashbrown::HashMap;
 use rayon::prelude::*;
@@ -802,7 +800,7 @@ fn has_nth_child_rule(style: &Style, rules: &[(Rule, u32)]) -> bool {
     false
 }
 
-fn compute_element_hash(
+pub(crate) fn compute_element_hash(
     entity: Entity,
     tree: &Tree<Entity>,
     style: &Style,
@@ -834,30 +832,26 @@ pub(crate) struct MatchedRulesCache {
 
 // Iterates the tree and determines the matching style rules for each entity, then links the entity to the corresponding style rule data.
 pub(crate) fn style_system(cx: &mut Context) {
-    // use std::time::Instant;
-    // let now = Instant::now();
     let mut redraw_entities = Vec::new();
 
     inline_inheritance_system(cx, &mut redraw_entities);
 
     if !cx.style.restyle.is_empty() {
-        let iterator = TreeBreadthIterator::full(&cx.tree).collect::<Vec<_>>();
+        let entities = TreeBreadthIterator::full(&cx.tree)
+            .filter(|e| cx.style.restyle.contains(*e))
+            .collect::<Vec<_>>();
 
         let num_threads = std::thread::available_parallelism().map_or(1, |n| n.get());
-        let min_len = (cx.style.rules.len() + num_threads - 1) / num_threads;
+        let min_len = entities.len().div_ceil(num_threads);
 
-        let rule_cache = Arc::new(DashMap::<Entity, Vec<MatchedRulesCache>>::new());
+        let rule_cache = DashMap::<Entity, Vec<MatchedRulesCache>>::new();
 
         let Context { style: store, tree, .. } = cx;
 
-        let matched_rules: HashMap<Entity, Vec<(Rule, u32)>> = iterator
+        let matched_rules: HashMap<Entity, Vec<(Rule, u32)>> = entities
             .par_iter()
             .with_min_len(min_len)
             .map_init(BloomFilter::default, |filter, entity| {
-                if !store.restyle.contains(entity) {
-                    return None;
-                };
-
                 compute_element_hash(*entity, tree, store, filter);
 
                 let parent = tree.get_layout_parent(*entity).unwrap_or(Entity::root());
@@ -887,8 +881,6 @@ pub(crate) fn style_system(cx: &mut Context) {
                     }
                 };
 
-                // let rules = compute_matched_rules(*entity, store, tree, filter);
-
                 if !rules.is_empty() {
                     Some((*entity, rules))
                 } else {
@@ -898,52 +890,19 @@ pub(crate) fn style_system(cx: &mut Context) {
             .flatten_iter()
             .collect();
 
-        // Restyle the entire application.
-        for entity in iterator.into_iter() {
-            if !cx.style.restyle.contains(entity) {
-                continue;
-            }
-
-            // compute_element_hash(entity, &cx.tree, &mut cx.style);
-
-            // let current_parent = cx.tree.get_layout_parent(entity);
-
-            // let mut matched_index = None;
-
-            // if current_parent == parent
-            //     && !cx.tree.is_first_child(entity)
-            //     && !cx.tree.is_last_child(entity)
-            // {
-            //     matched_index = cache.iter().position(|entry| {
-            //         has_same_selector(cx, entry.entity, entity)
-            //             && !has_nth_child_rule(cx, &entry.rules)
-            //     });
-            // } else {
-            //     parent = current_parent;
-            //     cache.clear();
-            // }
-
-            // let matched_rules = match matched_index {
-            //     Some(i) => &cache[i].rules,
-            //     None => {
-            //         let rules = compute_matched_rules(cx, entity);
-            //         cache.push(MatchedRulesCache { entity, rules });
-            //         let entry = cache.last_mut().unwrap();
-            //         &entry.rules
-            //     }
-            // };
-
-            if let Some(matched_rules) = matched_rules.get(&entity) {
-                if !matched_rules.is_empty() {
-                    link_style_data(
-                        &mut cx.style,
-                        &mut cx.cache,
-                        &cx.tree,
-                        entity,
-                        &mut redraw_entities,
-                        &matched_rules,
-                    );
-                }
+        //  Apply matched rules to entities
+        for entity in entities.into_iter() {
+            if let Some(matched_rules) =
+                matched_rules.get(&entity).filter(|matched_rules| !matched_rules.is_empty())
+            {
+                link_style_data(
+                    &mut cx.style,
+                    &mut cx.cache,
+                    &cx.tree,
+                    entity,
+                    &mut redraw_entities,
+                    matched_rules,
+                );
             }
         }
         cx.style.restyle.clear();
@@ -954,6 +913,4 @@ pub(crate) fn style_system(cx: &mut Context) {
             cx.needs_redraw(entity);
         }
     }
-    // let elapsed = now.elapsed();
-    // println!("Elapsed: {:.2?}", elapsed);
 }
