@@ -737,14 +737,11 @@ pub(crate) fn compute_matched_rules(
         NeedsSelectorFlags::Yes,
         MatchingForInvalidation::No,
     );
+
+    let node = Node { entity, store, tree };
+
     for (rule_id, rule) in store.rules.iter() {
-        let matches = matches_selector(
-            &rule.selector,
-            0,
-            Some(&rule.hashes),
-            &Node { entity, store, tree },
-            &mut context,
-        );
+        let matches = matches_selector(&rule.selector, 0, Some(&rule.hashes), &node, &mut context);
 
         if matches {
             matched_rules.push((*rule_id, rule.selector.specificity()));
@@ -756,32 +753,32 @@ pub(crate) fn compute_matched_rules(
     matched_rules
 }
 
-fn has_same_selector(cx: &Context, entity1: Entity, entity2: Entity) -> bool {
-    if let Some(element1) = cx.style.element.get(entity1) {
-        if let Some(element2) = cx.style.element.get(entity2) {
+fn has_same_selector(style: &Style, entity1: Entity, entity2: Entity) -> bool {
+    if let Some(element1) = style.element.get(entity1) {
+        if let Some(element2) = style.element.get(entity2) {
             if element1 != element2 {
                 return false;
             };
         }
     }
 
-    let id1 = if let Some(id) = cx.style.ids.get(entity1) { id } else { "" };
-    let id2 = if let Some(id) = cx.style.ids.get(entity2) { id } else { "" };
+    let id1 = if let Some(id) = style.ids.get(entity1) { id } else { "" };
+    let id2 = if let Some(id) = style.ids.get(entity2) { id } else { "" };
 
     if id1 != id2 {
         return false;
     }
 
-    if let Some(classes1) = cx.style.classes.get(entity1) {
-        if let Some(classes2) = cx.style.classes.get(entity2) {
+    if let Some(classes1) = style.classes.get(entity1) {
+        if let Some(classes2) = style.classes.get(entity2) {
             if !classes2.is_subset(classes1) || !classes1.is_subset(classes2) {
                 return false;
             }
         }
     }
 
-    if let Some(psudeo_class_flag1) = cx.style.pseudo_classes.get(entity1) {
-        if let Some(psudeo_class_flag2) = cx.style.pseudo_classes.get(entity2) {
+    if let Some(psudeo_class_flag1) = style.pseudo_classes.get(entity1) {
+        if let Some(psudeo_class_flag2) = style.pseudo_classes.get(entity2) {
             if psudeo_class_flag2.bits() != psudeo_class_flag1.bits() {
                 return false;
             }
@@ -791,9 +788,9 @@ fn has_same_selector(cx: &Context, entity1: Entity, entity2: Entity) -> bool {
     true
 }
 
-fn has_nth_child_rule(cx: &Context, rules: &[(Rule, u32)]) -> bool {
+fn has_nth_child_rule(style: &Style, rules: &[(Rule, u32)]) -> bool {
     for (rule, _) in rules {
-        let Some(style_rule) = cx.style.rules.get(rule) else { continue };
+        let Some(style_rule) = style.rules.get(rule) else { continue };
         for component in style_rule.selector.iter() {
             let Component::Nth(n) = component else { continue };
             if let NthType::Child | NthType::LastChild | NthType::OnlyChild = n.ty {
@@ -846,26 +843,73 @@ pub(crate) fn style_system(cx: &mut Context) {
         let iterator = TreeBreadthIterator::full(&cx.tree).collect::<Vec<_>>();
 
         let mut parent: Option<Entity> = None;
-        let mut cache: Vec<MatchedRulesCache> = Vec::with_capacity(50);
+        let rule_cache: Arc<Mutex<HashMap<Entity, Vec<MatchedRulesCache>>>> =
+            Arc::new(Mutex::new(HashMap::new()));
+
+        //Vec<MatchedRulesCache> = Vec::with_capacity(50);
 
         let num_threads = std::thread::available_parallelism().map_or(1, |n| n.get());
         let min_len = (cx.style.rules.len() + num_threads - 1) / num_threads;
 
-        let matched_rules = Arc::new(Mutex::new(StyleSet::new()));
+        // let matched_rules = Arc::new(Mutex::new(StyleSet::new()));
 
         let Context { style: store, tree, .. } = cx;
 
-        iterator.par_iter().with_min_len(min_len).for_each_init(
-            BloomFilter::default,
-            |filter, entity| {
+        let matched_rules: std::collections::HashMap<Entity, Vec<(Rule, u32)>> = iterator
+            .par_iter()
+            .with_min_len(min_len)
+            .map_init(BloomFilter::default, |filter, entity| {
                 if store.restyle.contains(entity) {
                     compute_element_hash(*entity, tree, store, filter);
-                    let rules = compute_matched_rules(*entity, store, tree, filter);
-                    let mut mr = matched_rules.lock().unwrap();
-                    mr.insert(*entity, rules);
+
+                    let parent = tree.get_layout_parent(*entity).unwrap_or(Entity::root());
+
+                    let mut matched_index = None;
+
+                    if !tree.is_first_child(*entity) && !tree.is_last_child(*entity) {
+                        if let Some(cache) = rule_cache.lock().unwrap().get(&parent) {
+                            matched_index = cache.iter().position(|entry| {
+                                has_same_selector(store, entry.entity, *entity)
+                                    && !has_nth_child_rule(store, &entry.rules)
+                            });
+                        }
+                    }
+
+                    let rules = match matched_index {
+                        Some(i) => {
+                            let cache = rule_cache.lock().unwrap();
+                            cache.get(&parent).unwrap()[i].rules.clone()
+                        }
+                        None => {
+                            let rules = compute_matched_rules(*entity, store, tree, filter);
+                            let mut cache = rule_cache.lock().unwrap();
+                            if let Some(rule_cache) = cache.get_mut(&parent) {
+                                rule_cache.push(MatchedRulesCache { entity: *entity, rules });
+                            } else {
+                                cache.insert(
+                                    parent,
+                                    vec![MatchedRulesCache { entity: *entity, rules }],
+                                );
+                            }
+
+                            let entry = cache.get(&parent).unwrap().last().unwrap();
+                            entry.rules.clone()
+                        }
+                    };
+
+                    // let rules = compute_matched_rules(*entity, store, tree, filter);
+
+                    if !rules.is_empty() {
+                        Some((*entity, rules))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
                 }
-            },
-        );
+            })
+            .flatten_iter()
+            .collect();
 
         // Restyle the entire application.
         for entity in iterator.into_iter() {
@@ -902,7 +946,7 @@ pub(crate) fn style_system(cx: &mut Context) {
             //     }
             // };
 
-            if let Some(matched_rules) = matched_rules.lock().unwrap().get(entity) {
+            if let Some(matched_rules) = matched_rules.get(&entity) {
                 if !matched_rules.is_empty() {
                     link_style_data(
                         &mut cx.style,
