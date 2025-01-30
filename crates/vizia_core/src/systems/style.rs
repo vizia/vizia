@@ -1,5 +1,4 @@
-use crate::{cache::CachedData, events::ViewHandler, prelude::*};
-use hashbrown::HashMap;
+use crate::{cache::CachedData, prelude::*};
 use vizia_storage::{LayoutParentIterator, TreeBreadthIterator};
 use vizia_style::{
     matches_selector,
@@ -16,21 +15,20 @@ use vizia_style::{
 
 /// A node used for style matching.
 #[derive(Clone)]
-pub(crate) struct Node<'s, 't, 'v> {
+pub(crate) struct Node<'s, 't> {
     entity: Entity,
     store: &'s Style,
     tree: &'t Tree<Entity>,
-    views: &'v HashMap<Entity, Box<dyn ViewHandler>>,
 }
 
-impl std::fmt::Debug for Node<'_, '_, '_> {
+impl std::fmt::Debug for Node<'_, '_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.entity)
     }
 }
 
 /// Used for selector matching.
-impl Element for Node<'_, '_, '_> {
+impl Element for Node<'_, '_> {
     type Impl = Selectors;
 
     fn opaque(&self) -> OpaqueElement {
@@ -54,7 +52,6 @@ impl Element for Node<'_, '_, '_> {
             entity: parent,
             store: self.store,
             tree: self.tree,
-            views: self.views,
         })
     }
 
@@ -63,7 +60,6 @@ impl Element for Node<'_, '_, '_> {
             entity: parent,
             store: self.store,
             tree: self.tree,
-            views: self.views,
         })
     }
 
@@ -72,7 +68,6 @@ impl Element for Node<'_, '_, '_> {
             entity: parent,
             store: self.store,
             tree: self.tree,
-            views: self.views,
         })
     }
 
@@ -737,13 +732,12 @@ pub(crate) fn compute_matched_rules(cx: &Context, entity: Entity) -> Vec<(Rule, 
             &rule.selector,
             0,
             Some(&rule.hashes),
-            &Node { entity, store: &cx.style, tree: &cx.tree, views: &cx.views },
+            &Node { entity, store: &cx.style, tree: &cx.tree },
             &mut context,
         );
 
         if matches {
             matched_rules.push((*rule_id, rule.selector.specificity()));
-            //break;
         }
     }
 
@@ -879,7 +873,7 @@ pub(crate) fn style_system(cx: &mut Context) {
                     &cx.tree,
                     entity,
                     &mut redraw_entities,
-                    &matched_rules,
+                    matched_rules,
                 );
             }
         }
