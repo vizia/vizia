@@ -458,33 +458,33 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 }
             }
 
-            #[cfg(debug_assertions)]
-            if *code == Code::KeyS
-                && cx.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
-            {
-                let result = compute_matched_rules(cx, cx.hovered);
+            // #[cfg(debug_assertions)]
+            // if *code == Code::KeyS
+            //     && cx.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
+            // {
+            //     let result = compute_matched_rules(cx, cx.hovered);
 
-                let entity = cx.hovered;
-                debug!("/* Matched rules for Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",
-                    entity,
-                    entity.parent(&cx.tree),
-                    cx
-                        .views
-                        .get(&entity)
-                        .map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")),
-                    cx.cache.get_posx(entity),
-                    cx.cache.get_posy(entity),
-                    cx.cache.get_width(entity),
-                    cx.cache.get_height(entity)
-                );
-                for rule in result.into_iter() {
-                    for selectors in cx.style.rules.iter() {
-                        if *selectors.0 == rule.0 {
-                            debug!("{:?}", selectors.1.selector);
-                        }
-                    }
-                }
-            }
+            //     let entity = cx.hovered;
+            //     debug!("/* Matched rules for Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",
+            //         entity,
+            //         entity.parent(&cx.tree),
+            //         cx
+            //             .views
+            //             .get(&entity)
+            //             .map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")),
+            //         cx.cache.get_posx(entity),
+            //         cx.cache.get_posy(entity),
+            //         cx.cache.get_width(entity),
+            //         cx.cache.get_height(entity)
+            //     );
+            //     for rule in result.into_iter() {
+            //         for selectors in cx.style.rules.iter() {
+            //             if *selectors.0 == rule.0 {
+            //                 debug!("{:?}", selectors.1.selector);
+            //             }
+            //         }
+            //     }
+            // }
 
             #[cfg(debug_assertions)]
             if *code == Code::KeyT
