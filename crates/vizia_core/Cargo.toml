@@ -34,7 +34,7 @@ sys-locale = "0.3"
 unicode-segmentation = "1.11"
 copypasta = {version = "0.10", optional = true, default-features = false }
 chrono = "0.4"
-hashbrown = "0.14"
+hashbrown = { version = "0.14", features = ["rayon"] }
 log = "0.4"
 indexmap = { version = "2.4", features = ["rayon"] }
 qfilter = "0.2"
@@ -45,6 +45,7 @@ open = "5.2"
 sha2 = "0.10"
 fxhash = "*"
 rayon = "*"
+dashmap = { version = "*", features = [ "rayon", "inline" ] }
 
 [target."cfg(target_os = \"linux\")".dependencies.skia-safe]
 version = "0.80"

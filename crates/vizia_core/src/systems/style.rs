@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use crate::{cache::CachedData, events::ViewHandler, prelude::*, storage::style_set::StyleSet};
+use dashmap::DashMap;
 use hashbrown::HashMap;
 use rayon::prelude::*;
 use vizia_storage::{LayoutParentIterator, TreeBreadthIterator};
@@ -842,68 +843,54 @@ pub(crate) fn style_system(cx: &mut Context) {
     if !cx.style.restyle.is_empty() {
         let iterator = TreeBreadthIterator::full(&cx.tree).collect::<Vec<_>>();
 
-        let mut parent: Option<Entity> = None;
-        let rule_cache: Arc<Mutex<HashMap<Entity, Vec<MatchedRulesCache>>>> =
-            Arc::new(Mutex::new(HashMap::new()));
-
-        //Vec<MatchedRulesCache> = Vec::with_capacity(50);
-
         let num_threads = std::thread::available_parallelism().map_or(1, |n| n.get());
         let min_len = (cx.style.rules.len() + num_threads - 1) / num_threads;
 
-        // let matched_rules = Arc::new(Mutex::new(StyleSet::new()));
+        let rule_cache = Arc::new(DashMap::<Entity, Vec<MatchedRulesCache>>::new());
 
         let Context { style: store, tree, .. } = cx;
 
-        let matched_rules: std::collections::HashMap<Entity, Vec<(Rule, u32)>> = iterator
+        let matched_rules: HashMap<Entity, Vec<(Rule, u32)>> = iterator
             .par_iter()
             .with_min_len(min_len)
             .map_init(BloomFilter::default, |filter, entity| {
-                if store.restyle.contains(entity) {
-                    compute_element_hash(*entity, tree, store, filter);
+                if !store.restyle.contains(entity) {
+                    return None;
+                };
 
-                    let parent = tree.get_layout_parent(*entity).unwrap_or(Entity::root());
+                compute_element_hash(*entity, tree, store, filter);
 
-                    let mut matched_index = None;
+                let parent = tree.get_layout_parent(*entity).unwrap_or(Entity::root());
 
-                    if !tree.is_first_child(*entity) && !tree.is_last_child(*entity) {
-                        if let Some(cache) = rule_cache.lock().unwrap().get(&parent) {
-                            matched_index = cache.iter().position(|entry| {
-                                has_same_selector(store, entry.entity, *entity)
-                                    && !has_nth_child_rule(store, &entry.rules)
-                            });
-                        }
+                let mut matched_index = None;
+
+                if !tree.is_first_child(*entity) && !tree.is_last_child(*entity) {
+                    if let Some(cache) = rule_cache.get(&parent) {
+                        matched_index = cache.iter().position(|entry| {
+                            has_same_selector(store, entry.entity, *entity)
+                                && !has_nth_child_rule(store, &entry.rules)
+                        });
                     }
+                }
 
-                    let rules = match matched_index {
-                        Some(i) => {
-                            let cache = rule_cache.lock().unwrap();
-                            cache.get(&parent).unwrap()[i].rules.clone()
-                        }
-                        None => {
-                            let rules = compute_matched_rules(*entity, store, tree, filter);
-                            let mut cache = rule_cache.lock().unwrap();
-                            if let Some(rule_cache) = cache.get_mut(&parent) {
-                                rule_cache.push(MatchedRulesCache { entity: *entity, rules });
-                            } else {
-                                cache.insert(
-                                    parent,
-                                    vec![MatchedRulesCache { entity: *entity, rules }],
-                                );
-                            }
+                let rules = match matched_index {
+                    Some(i) => rule_cache.get(&parent).unwrap()[i].rules.clone(),
+                    None => {
+                        let rules = compute_matched_rules(*entity, store, tree, filter);
 
-                            let entry = cache.get(&parent).unwrap().last().unwrap();
-                            entry.rules.clone()
-                        }
-                    };
+                        let mut entry = rule_cache.entry(parent).or_default();
+                        entry
+                            .value_mut()
+                            .push(MatchedRulesCache { entity: *entity, rules: rules.clone() });
 
-                    // let rules = compute_matched_rules(*entity, store, tree, filter);
-
-                    if !rules.is_empty() {
-                        Some((*entity, rules))
-                    } else {
-                        None
+                        rules
                     }
+                };
+
+                // let rules = compute_matched_rules(*entity, store, tree, filter);
+
+                if !rules.is_empty() {
+                    Some((*entity, rules))
                 } else {
                     None
                 }
