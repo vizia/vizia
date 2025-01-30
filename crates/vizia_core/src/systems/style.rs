@@ -17,21 +17,20 @@ use vizia_style::{
 
 /// A node used for style matching.
 #[derive(Clone)]
-pub(crate) struct Node<'s, 't, 'v> {
+pub(crate) struct Node<'s, 't> {
     entity: Entity,
     store: &'s Style,
     tree: &'t Tree<Entity>,
-    views: &'v HashMap<Entity, Box<dyn ViewHandler>>,
 }
 
-impl std::fmt::Debug for Node<'_, '_, '_> {
+impl std::fmt::Debug for Node<'_, '_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.entity)
     }
 }
 
 /// Used for selector matching.
-impl Element for Node<'_, '_, '_> {
+impl Element for Node<'_, '_> {
     type Impl = Selectors;
 
     fn opaque(&self) -> OpaqueElement {
@@ -55,7 +54,6 @@ impl Element for Node<'_, '_, '_> {
             entity: parent,
             store: self.store,
             tree: self.tree,
-            views: self.views,
         })
     }
 
@@ -64,7 +62,6 @@ impl Element for Node<'_, '_, '_> {
             entity: parent,
             store: self.store,
             tree: self.tree,
-            views: self.views,
         })
     }
 
@@ -73,7 +70,6 @@ impl Element for Node<'_, '_, '_> {
             entity: parent,
             store: self.store,
             tree: self.tree,
-            views: self.views,
         })
     }
 
@@ -723,7 +719,7 @@ fn link_style_data(
 /// Compute a list of matching style rules for a given entity.
 pub(crate) fn compute_matched_rules(cx: &Context, entity: Entity) -> Vec<(Rule, u32)> {
     let Context { style: store, tree, views, .. } = cx;
-    let element = Node { entity, store, tree, views };
+    let element = Node { entity, store, tree };
 
     let num_threads = std::thread::available_parallelism().map_or(1, |n| n.get());
     let min_len = (store.rules.len() + num_threads - 1) / num_threads;
