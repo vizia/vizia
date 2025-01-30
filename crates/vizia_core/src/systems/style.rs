@@ -720,11 +720,9 @@ fn link_style_data(
 }
 
 /// Compute a list of matching style rules for a given entity.
-pub(crate) fn compute_matched_rules(
-    cx: &Context,
-    entity: Entity,
-    matched_rules: &mut Vec<(Rule, u32)>,
-) {
+pub(crate) fn compute_matched_rules(cx: &Context, entity: Entity) -> Vec<(Rule, u32)> {
+    let mut matched_rules = Vec::with_capacity(16);
+
     let mut cache = SelectorCaches::default();
     let mut context = MatchingContext::new(
         MatchingMode::Normal,
@@ -749,8 +747,9 @@ pub(crate) fn compute_matched_rules(
         }
     }
 
-    matched_rules.sort_by_cached_key(|(_, s)| *s);
+    matched_rules.sort_by_key(|(_, s)| *s);
     matched_rules.reverse();
+    matched_rules
 }
 
 fn has_same_selector(cx: &Context, entity1: Entity, entity2: Entity) -> bool {
@@ -786,6 +785,19 @@ fn has_same_selector(cx: &Context, entity1: Entity, entity2: Entity) -> bool {
     }
 
     true
+}
+
+fn has_nth_child_rule(cx: &Context, rules: &[(Rule, u32)]) -> bool {
+    for (rule, _) in rules {
+        let Some(style_rule) = cx.style.rules.get(rule) else { continue };
+        for component in style_rule.selector.iter() {
+            let Component::Nth(n) = component else { continue };
+            if let NthType::Child | NthType::LastChild | NthType::OnlyChild = n.ty {
+                return true;
+            }
+        }
+    }
+    false
 }
 
 fn compute_element_hash(entity: Entity, tree: &Tree<Entity>, style: &mut Style) {
@@ -824,7 +836,6 @@ pub(crate) fn style_system(cx: &mut Context) {
 
         let mut parent: Option<Entity> = None;
         let mut cache: Vec<MatchedRulesCache> = Vec::with_capacity(50);
-        let mut matched_rules = Vec::with_capacity(50);
 
         // Restyle the entire application.
         for entity in iterator {
@@ -834,48 +845,32 @@ pub(crate) fn style_system(cx: &mut Context) {
 
             compute_element_hash(entity, &cx.tree, &mut cx.style);
 
-            matched_rules.clear();
-
             let current_parent = cx.tree.get_layout_parent(entity);
 
-            let mut compute_match = true;
+            let mut matched_index = None;
 
             if current_parent == parent
                 && !cx.tree.is_first_child(entity)
                 && !cx.tree.is_last_child(entity)
             {
-                // if has same selector look up rules
-                'cache: for entry in &cache {
-                    if !has_same_selector(cx, entry.entity, entity) {
-                        continue;
-                    }
-
-                    matched_rules.clone_from(&entry.rules);
-                    compute_match = false;
-
-                    for (rule, _) in &entry.rules {
-                        let Some(style_rule) = cx.style.rules.get(rule) else { continue };
-                        for component in style_rule.selector.iter() {
-                            let Component::Nth(n) = component else { continue };
-                            if let NthType::Child | NthType::LastChild | NthType::OnlyChild = n.ty {
-                                matched_rules.clear();
-                                compute_match = true;
-                                continue 'cache;
-                            }
-                        }
-                    }
-
-                    break;
-                }
+                matched_index = cache.iter().position(|entry| {
+                    has_same_selector(cx, entry.entity, entity)
+                        && !has_nth_child_rule(cx, &entry.rules)
+                });
             } else {
                 parent = current_parent;
                 cache.clear();
             }
 
-            if compute_match {
-                compute_matched_rules(cx, entity, &mut matched_rules);
-                cache.push(MatchedRulesCache { entity, rules: matched_rules.clone() });
-            }
+            let matched_rules = match matched_index {
+                Some(i) => &cache[i].rules,
+                None => {
+                    let rules = compute_matched_rules(cx, entity);
+                    cache.push(MatchedRulesCache { entity, rules });
+                    let entry = cache.last_mut().unwrap();
+                    &entry.rules
+                }
+            };
 
             if !matched_rules.is_empty() {
                 link_style_data(

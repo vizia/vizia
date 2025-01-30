@@ -462,8 +462,7 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             if *code == Code::KeyS
                 && cx.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
             {
-                let mut result = vec![];
-                compute_matched_rules(cx, cx.hovered, &mut result);
+                let result = compute_matched_rules(cx, cx.hovered);
 
                 let entity = cx.hovered;
                 debug!("/* Matched rules for Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",
