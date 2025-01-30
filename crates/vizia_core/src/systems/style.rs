@@ -1,5 +1,4 @@
-use crate::{cache::CachedData, events::ViewHandler, prelude::*};
-use hashbrown::HashMap;
+use crate::{cache::CachedData, prelude::*};
 use vizia_storage::{LayoutParentIterator, TreeBreadthIterator};
 use vizia_style::{
     matches_selector,
@@ -16,21 +15,20 @@ use vizia_style::{
 
 /// A node used for style matching.
 #[derive(Clone)]
-pub(crate) struct Node<'s, 't, 'v> {
+pub(crate) struct Node<'s, 't> {
     entity: Entity,
     store: &'s Style,
     tree: &'t Tree<Entity>,
-    views: &'v HashMap<Entity, Box<dyn ViewHandler>>,
 }
 
-impl std::fmt::Debug for Node<'_, '_, '_> {
+impl std::fmt::Debug for Node<'_, '_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.entity)
     }
 }
 
 /// Used for selector matching.
-impl Element for Node<'_, '_, '_> {
+impl Element for Node<'_, '_> {
     type Impl = Selectors;
 
     fn opaque(&self) -> OpaqueElement {
@@ -54,7 +52,6 @@ impl Element for Node<'_, '_, '_> {
             entity: parent,
             store: self.store,
             tree: self.tree,
-            views: self.views,
         })
     }
 
@@ -63,7 +60,6 @@ impl Element for Node<'_, '_, '_> {
             entity: parent,
             store: self.store,
             tree: self.tree,
-            views: self.views,
         })
     }
 
@@ -72,7 +68,6 @@ impl Element for Node<'_, '_, '_> {
             entity: parent,
             store: self.store,
             tree: self.tree,
-            views: self.views,
         })
     }
 
@@ -307,7 +302,7 @@ fn link_style_data(
     tree: &Tree<Entity>,
     entity: Entity,
     redraw_entities: &mut Vec<Entity>,
-    matched_rules: &[Rule],
+    matched_rules: &[(Rule, u32)],
 ) {
     let mut should_relayout = false;
     let mut should_redraw = false;
@@ -720,11 +715,9 @@ fn link_style_data(
 }
 
 /// Compute a list of matching style rules for a given entity.
-pub(crate) fn compute_matched_rules(
-    cx: &Context,
-    entity: Entity,
-    matched_rules: &mut Vec<(Rule, u32)>,
-) {
+pub(crate) fn compute_matched_rules(cx: &Context, entity: Entity) -> Vec<(Rule, u32)> {
+    let mut matched_rules = Vec::with_capacity(16);
+
     let mut cache = SelectorCaches::default();
     let mut context = MatchingContext::new(
         MatchingMode::Normal,
@@ -739,18 +732,18 @@ pub(crate) fn compute_matched_rules(
             &rule.selector,
             0,
             Some(&rule.hashes),
-            &Node { entity, store: &cx.style, tree: &cx.tree, views: &cx.views },
+            &Node { entity, store: &cx.style, tree: &cx.tree },
             &mut context,
         );
 
         if matches {
             matched_rules.push((*rule_id, rule.selector.specificity()));
-            //break;
         }
     }
 
-    matched_rules.sort_by_cached_key(|(_, s)| *s);
+    matched_rules.sort_by_key(|(_, s)| *s);
     matched_rules.reverse();
+    matched_rules
 }
 
 fn has_same_selector(cx: &Context, entity1: Entity, entity2: Entity) -> bool {
@@ -786,6 +779,19 @@ fn has_same_selector(cx: &Context, entity1: Entity, entity2: Entity) -> bool {
     }
 
     true
+}
+
+fn has_nth_child_rule(cx: &Context, rules: &[(Rule, u32)]) -> bool {
+    for (rule, _) in rules {
+        let Some(style_rule) = cx.style.rules.get(rule) else { continue };
+        for component in style_rule.selector.iter() {
+            let Component::Nth(n) = component else { continue };
+            if let NthType::Child | NthType::LastChild | NthType::OnlyChild = n.ty {
+                return true;
+            }
+        }
+    }
+    false
 }
 
 fn compute_element_hash(entity: Entity, tree: &Tree<Entity>, style: &mut Style) {
@@ -824,7 +830,6 @@ pub(crate) fn style_system(cx: &mut Context) {
 
         let mut parent: Option<Entity> = None;
         let mut cache: Vec<MatchedRulesCache> = Vec::with_capacity(50);
-        let mut matched_rules = Vec::with_capacity(50);
 
         // Restyle the entire application.
         for entity in iterator {
@@ -834,54 +839,32 @@ pub(crate) fn style_system(cx: &mut Context) {
 
             compute_element_hash(entity, &cx.tree, &mut cx.style);
 
-            matched_rules.clear();
-
             let current_parent = cx.tree.get_layout_parent(entity);
 
-            let mut compute_match = true;
+            let mut matched_index = None;
 
             if current_parent == parent
                 && !cx.tree.is_first_child(entity)
                 && !cx.tree.is_last_child(entity)
             {
-                // if has same selector look up rules
-                'cache: for entry in &cache {
-                    if has_same_selector(cx, entry.entity, entity) {
-                        matched_rules.clone_from(&entry.rules);
-                        compute_match = false;
-
-                        for rule in entry.rules.iter() {
-                            if let Some(style_rule) = cx.style.rules.get(&rule.0) {
-                                for component in style_rule.selector.iter() {
-                                    match *component {
-                                        Component::Nth(n)
-                                            if n.ty == NthType::Child
-                                                || n.ty == NthType::LastChild
-                                                || n.ty == NthType::OnlyChild =>
-                                        {
-                                            matched_rules.clear();
-                                            compute_match = true;
-                                            continue 'cache;
-                                        }
-
-                                        _ => {}
-                                    }
-                                }
-                            }
-                        }
-
-                        break 'cache;
-                    }
-                }
+                matched_index = cache.iter().position(|entry| {
+                    has_same_selector(cx, entry.entity, entity)
+                        && !has_nth_child_rule(cx, &entry.rules)
+                });
             } else {
                 parent = current_parent;
                 cache.clear();
             }
 
-            if compute_match {
-                compute_matched_rules(cx, entity, &mut matched_rules);
-                cache.push(MatchedRulesCache { entity, rules: matched_rules.clone() });
-            }
+            let matched_rules = match matched_index {
+                Some(i) => &cache[i].rules,
+                None => {
+                    let rules = compute_matched_rules(cx, entity);
+                    cache.push(MatchedRulesCache { entity, rules });
+                    let entry = cache.last_mut().unwrap();
+                    &entry.rules
+                }
+            };
 
             if !matched_rules.is_empty() {
                 link_style_data(
@@ -890,7 +873,7 @@ pub(crate) fn style_system(cx: &mut Context) {
                     &cx.tree,
                     entity,
                     &mut redraw_entities,
-                    &matched_rules.iter().map(|(rule, _)| *rule).collect::<Vec<_>>(),
+                    matched_rules,
                 );
             }
         }
