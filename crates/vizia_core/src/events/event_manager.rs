@@ -3,7 +3,7 @@ use crate::events::EventMeta;
 use crate::prelude::*;
 #[cfg(debug_assertions)]
 use crate::systems::compute_matched_rules;
-use crate::systems::{binding_system, compute_element_hash, hover_system};
+use crate::systems::{binding_system, hover_system};
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
 #[cfg(debug_assertions)]
 use log::debug;
@@ -12,7 +12,6 @@ use vizia_storage::LayoutParentIterator;
 #[cfg(debug_assertions)]
 use vizia_storage::ParentIterator;
 use vizia_storage::TreeIterator;
-use vizia_style::selectors::bloom::BloomFilter;
 
 const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 
@@ -463,6 +462,9 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             if *code == Code::KeyS
                 && cx.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
             {
+                use crate::systems::compute_element_hash;
+                use vizia_style::selectors::bloom::BloomFilter;
+
                 let mut filter = BloomFilter::default();
                 compute_element_hash(cx.hovered, &cx.tree, &cx.style, &mut filter);
                 let result = compute_matched_rules(cx.hovered, &cx.style, &cx.tree, &filter);
