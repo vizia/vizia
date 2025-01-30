@@ -844,7 +844,7 @@ impl MatchedRules {
         let cache = DashMap::new();
         let rules = entities
             .iter()
-            .flat_map(|entity| Self::build_inner(*entity, style, tree, filter, &cache))
+            .filter_map(|entity| Self::build_inner(*entity, style, tree, filter, &cache))
             .collect();
 
         Self { rules, cache: cache.into_read_only() }
@@ -862,7 +862,7 @@ impl MatchedRules {
         let cache = DashMap::new();
         let rules = entities
             .par_iter()
-            .with_min_len(min_len.clamp(1, 8))
+            .with_min_len(min_len)
             .map_init(BloomFilter::default, |filter, entity| {
                 Self::build_inner(*entity, style, tree, filter, &cache)
             })
