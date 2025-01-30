@@ -1,5 +1,6 @@
 use crate::{cache::CachedData, events::ViewHandler, prelude::*};
 use hashbrown::HashMap;
+use rayon::prelude::*;
 use vizia_storage::{LayoutParentIterator, TreeBreadthIterator};
 use vizia_style::{
     matches_selector,
@@ -721,31 +722,33 @@ fn link_style_data(
 
 /// Compute a list of matching style rules for a given entity.
 pub(crate) fn compute_matched_rules(cx: &Context, entity: Entity) -> Vec<(Rule, u32)> {
-    let mut matched_rules = Vec::with_capacity(16);
+    let Context { style: store, tree, views, .. } = cx;
+    let element = Node { entity, store, tree, views };
 
-    let mut cache = SelectorCaches::default();
-    let mut context = MatchingContext::new(
-        MatchingMode::Normal,
-        Some(&cx.style.style_bloom),
-        &mut cache,
-        QuirksMode::NoQuirks,
-        NeedsSelectorFlags::Yes,
-        MatchingForInvalidation::No,
-    );
-    for (rule_id, rule) in cx.style.rules.iter() {
-        let matches = matches_selector(
-            &rule.selector,
-            0,
-            Some(&rule.hashes),
-            &Node { entity, store: &cx.style, tree: &cx.tree, views: &cx.views },
-            &mut context,
-        );
+    let num_threads = std::thread::available_parallelism().map_or(1, |n| n.get());
+    let min_len = (store.rules.len() + num_threads - 1) / num_threads;
 
-        if matches {
-            matched_rules.push((*rule_id, rule.selector.specificity()));
-            //break;
-        }
-    }
+    let mut matched_rules: Vec<_> = store
+        .rules
+        .par_iter()
+        .with_min_len(min_len)
+        .map_init(SelectorCaches::default, |cache, (rule_id, rule)| {
+            let mut context = MatchingContext::<'_, Selectors>::new(
+                MatchingMode::Normal,
+                Some(&store.style_bloom),
+                cache,
+                QuirksMode::NoQuirks,
+                NeedsSelectorFlags::Yes,
+                MatchingForInvalidation::No,
+            );
+            if matches_selector(&rule.selector, 0, Some(&rule.hashes), &element, &mut context) {
+                Some((*rule_id, rule.selector.specificity()))
+            } else {
+                None
+            }
+        })
+        .flatten_iter()
+        .collect();
 
     matched_rules.sort_by_key(|(_, s)| *s);
     matched_rules.reverse();
