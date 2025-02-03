@@ -21,7 +21,7 @@ pub trait Lens: 'static + Copy + Debug {
 
     fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>>;
     fn id(&self) -> StoreId {
-        StoreId::Source(fxhash::hash64(&TypeId::of::<Self>()))
+        StoreId::Source(TypeId::of::<Self>())
     }
 }
 
