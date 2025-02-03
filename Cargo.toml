@@ -27,7 +27,6 @@ vizia_baseview = { workspace = true, optional = true }
 
 [dev-dependencies]
 chrono = "0.4"
-# reqwest = { version = "0.12", features = ["blocking"] }
 log = "0.4"
 fern = "0.7"
 

@@ -10,17 +10,16 @@ repository.workspace = true
 [dependencies]
 cssparser = "0.34"
 cssparser-color = "0.2"
-skia-safe = { version = "0.80", features = ["gl", "textlayout", "svg"] }
+skia-safe = { version = "0.81", features = ["gl", "textlayout", "svg"] }
 selectors = "0.26"
 # morphorm = {path = "../../../morphorm"}
 morphorm = {git = "https://github.com/vizia/morphorm", branch = "alternate"}
-smallvec = "1.0"
-bitflags = "2.6"
+bitflags = "2.8"
 precomputed-hash = "0.1"
 fxhash = "0.2"
 
 [target."cfg(target_os = \"linux\")".dependencies.skia-safe]
-version = "0.80"
+version = "0.81"
 features = ["gl", "textlayout", "svg", "x11", "wayland"]
 
 [lints]

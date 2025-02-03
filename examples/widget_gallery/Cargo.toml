@@ -5,6 +5,6 @@ edition = "2021"
 
 [dependencies]
 vizia.workspace = true
-fern = "0.6.2"
+fern = "0.7"
 log = "0.4.19"
 chrono = "0.4.34"

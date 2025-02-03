@@ -22,16 +22,16 @@ vizia_window.workspace = true
 
 accesskit = {version = "0.17", optional = true}
 winit = { version = "0.30" }
-skia-safe = { version = "0.80", features = ["gl", "textlayout", "svg"] }
+skia-safe = { version = "0.81", features = ["gl", "textlayout", "svg"] }
 glutin = { version = "0.32" }
 copypasta = {version = "0.10", optional = true, default-features = false }
 accesskit_winit = { version = "0.23", optional = true}
 glutin-winit = { version = "0.5" }
 gl-rs = { package = "gl", version = "0.14.0" }
-hashbrown = "0.14"
+hashbrown = "0.15"
 
 [target."cfg(target_os = \"linux\")".dependencies.skia-safe]
-version = "0.80"
+version = "0.81"
 features = ["gl", "textlayout", "svg", "x11", "wayland"]
 
 [target.'cfg(target_os = "windows")'.dependencies]

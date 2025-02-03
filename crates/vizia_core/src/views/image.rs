@@ -1,4 +1,3 @@
-use sha2::{Digest, Sha256};
 use vizia_style::Url;
 
 use crate::prelude::*;
@@ -32,9 +31,7 @@ impl Svg {
     {
         Self {}.build(cx, |_| {}).bind(data, |mut handle, data| {
             let svg_data = data.get(&handle);
-            let mut hasher = Sha256::default();
-            hasher.update(svg_data.as_ref());
-            let h = format!("{:x}", hasher.finalize());
+            let h = format!("{:x}", fxhash::hash64(svg_data.as_ref()));
 
             handle.context().load_svg(
                 &h,

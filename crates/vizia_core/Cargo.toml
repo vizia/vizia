@@ -12,7 +12,7 @@ clipboard = ["copypasta"]
 x11 = ["copypasta?/x11"]
 wayland = ["copypasta?/wayland"]
 markdown = ["comrak"]
-rayon = ["dep:rayon", "hashbrown/rayon"]
+rayon = ["dep:rayon", "dep:dashmap", "indexmap/rayon", "hashbrown/rayon", "dashmap/rayon"]
 
 [dependencies]
 vizia_derive.workspace = true
@@ -23,32 +23,30 @@ vizia_window.workspace = true
 vizia_style.workspace = true
 accesskit = "0.17"
 
-skia-safe = { version = "0.80", features = ["gl", "textlayout", "svg"] }
+skia-safe = { version = "0.81", features = ["gl", "textlayout", "svg"] }
 # morphorm = {path = "../../../morphorm"}
 morphorm = {git = "https://github.com/vizia/morphorm", branch = "alternate"}
-bitflags = "2.6"
-fnv = "1.0"
+bitflags = "2.8"
 fluent-bundle = "0.15"
 fluent-langneg = "0.13"
 unic-langid = {version = "0.9", features = ["macros"]}
 sys-locale = "0.3"
-unicode-segmentation = "1.11"
+unicode-segmentation = "1.12"
 copypasta = {version = "0.10", optional = true, default-features = false }
 chrono = "0.4"
-hashbrown = { version = "0.14" }
+hashbrown = "0.14"
 log = "0.4"
-indexmap = { version = "2.4" }
+indexmap = "2.7"
 qfilter = "0.2"
 web-time = "1.1"
-comrak = { version = "0.33", default-features = false, optional = true }
-open = "5.2"
-sha2 = "0.10"
+comrak = { version = "0.35", default-features = false, optional = true }
+open = "5.3"
 fxhash = "0.2"
-rayon = { version = "1.10", optional = true }
-dashmap = { version = "6.1", features = [ "inline" ] }
+rayon = {version = "1.10", optional = true}
+dashmap = { version = "6.1", features = ["inline"], optional = true}
 
 [target."cfg(target_os = \"linux\")".dependencies.skia-safe]
-version = "0.80"
+version = "0.81"
 features = ["gl", "textlayout", "svg", "x11", "wayland"]
 
 [lib]

@@ -1,4 +1,5 @@
 use crate::{cache::CachedData, prelude::*};
+#[cfg(feature = "rayon")]
 use dashmap::{DashMap, ReadOnlyView};
 use hashbrown::HashMap;
 #[cfg(feature = "rayon")]
@@ -832,7 +833,10 @@ struct MatchedRulesCache {
 }
 
 struct MatchedRules {
+    #[cfg(feature = "rayon")]
     cache: ReadOnlyView<Entity, Vec<MatchedRulesCache>>,
+    #[cfg(not(feature = "rayon"))]
+    cache: HashMap<Entity, Vec<MatchedRulesCache>>,
     // Stores the key/index into the cache to get the rules for a given entity.
     rules: HashMap<Entity, (Entity, usize)>,
 }
@@ -841,13 +845,13 @@ impl MatchedRules {
     fn build(entities: &[Entity], style: &Style, tree: &Tree<Entity>) -> Self {
         let filter = &mut BloomFilter::default();
 
-        let cache = DashMap::new();
+        let mut cache = HashMap::new();
         let rules = entities
             .iter()
-            .filter_map(|entity| Self::build_inner(*entity, style, tree, filter, &cache))
+            .filter_map(|entity| Self::build_inner(*entity, style, tree, filter, &mut cache))
             .collect();
 
-        Self { rules, cache: cache.into_read_only() }
+        Self { rules, cache }
     }
 
     #[cfg(feature = "rayon")]
@@ -877,7 +881,8 @@ impl MatchedRules {
         style: &Style,
         tree: &Tree<Entity>,
         filter: &mut BloomFilter,
-        rule_cache: &DashMap<Entity, Vec<MatchedRulesCache>>,
+        #[cfg(feature = "rayon")] rule_cache: &DashMap<Entity, Vec<MatchedRulesCache>>,
+        #[cfg(not(feature = "rayon"))] rule_cache: &mut HashMap<Entity, Vec<MatchedRulesCache>>,
     ) -> Option<(Entity, (Entity, usize))> {
         compute_element_hash(entity, tree, style, filter);
 
@@ -897,9 +902,18 @@ impl MatchedRules {
         if matched_index.is_none() {
             let rules = compute_matched_rules(entity, style, tree, filter);
             if !rules.is_empty() {
-                let mut entry = rule_cache.entry(parent).or_default();
-                entry.value_mut().push(MatchedRulesCache { entity, rules });
-                matched_index = Some(entry.value().len() - 1);
+                #[cfg(feature = "rayon")]
+                {
+                    let mut entry = rule_cache.entry(parent).or_default();
+                    entry.value_mut().push(MatchedRulesCache { entity, rules });
+                    matched_index = Some(entry.value().len() - 1);
+                }
+                #[cfg(not(feature = "rayon"))]
+                {
+                    let entry = rule_cache.entry(parent).or_default();
+                    entry.push(MatchedRulesCache { entity, rules });
+                    matched_index = Some(entry.len() - 1);
+                }
             }
         }
 
