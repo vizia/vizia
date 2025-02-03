@@ -1,5 +1,5 @@
 use vizia_core::{binding::Res, context::EventContext};
-use vizia_window::{WindowButtons, WindowPosition, WindowSize};
+use vizia_window::{Anchor, AnchorTarget, WindowButtons, WindowPosition, WindowSize};
 
 /// Modifiers for setting the properties of a window.
 pub trait WindowModifiers {
@@ -76,6 +76,15 @@ pub trait WindowModifiers {
     /// .run();
     /// ```
     fn position<P: Into<WindowPosition>>(self, position: impl Res<P>) -> Self;
+
+    fn offset<P: Into<WindowPosition>>(self, offset: impl Res<P>) -> Self;
+
+    fn anchor<P: Into<Anchor>>(self, anchor: impl Res<P>) -> Self;
+
+    fn anchor_target<P: Into<AnchorTarget>>(self, anchor_target: impl Res<P>) -> Self;
+
+    fn parent_anchor<P: Into<Anchor>>(self, anchor: impl Res<P>) -> Self;
+
     /// Sets whether the window can be resized. Accepts a boolean value, or lens to a boolean value.
     ///
     /// # Example

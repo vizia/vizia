@@ -2,7 +2,7 @@ use std::any::Any;
 
 use skia_safe::Surface;
 use vizia_storage::LayoutTreeIterator;
-use vizia_window::{WindowDescription, WindowPosition};
+use vizia_window::WindowDescription;
 
 use super::EventProxy;
 use crate::{cache::CachedData, prelude::*, systems::*};
@@ -96,10 +96,10 @@ impl BackendContext {
 
         self.0.tree.set_window(window_entity, true);
 
-        let physical_x = window_description.position.unwrap_or_default().x as f32 * dpi_factor;
-        let physical_y = window_description.position.unwrap_or_default().y as f32 * dpi_factor;
+        // let physical_x = window_description.position.unwrap_or_default().x as f32 * dpi_factor;
+        // let physical_y = window_description.position.unwrap_or_default().y as f32 * dpi_factor;
 
-        self.set_window_position(window_entity, physical_x, physical_y);
+        // self.set_window_position(window_entity, physical_x, physical_y);
     }
 
     /// Returns a reference to the [`Environment`] model.
@@ -150,16 +150,6 @@ impl BackendContext {
         let logical_height = self.0.style.physical_to_logical(physical_height);
         self.0.style.width.insert(window_entity, Units::Pixels(logical_width));
         self.0.style.height.insert(window_entity, Units::Pixels(logical_height));
-    }
-
-    pub fn set_window_position(&mut self, window_entity: Entity, physical_x: f32, physical_y: f32) {
-        let logical_x = self.0.style.physical_to_logical(physical_x);
-        let logical_y = self.0.style.physical_to_logical(physical_y);
-
-        if let Some(state) = self.0.windows.get_mut(&window_entity) {
-            state.position =
-                WindowPosition::new(logical_x.round() as u32, logical_y.round() as u32);
-        }
     }
 
     /// Temporarily sets the current entity, calls the provided closure, and then resets the current entity back to previous.
