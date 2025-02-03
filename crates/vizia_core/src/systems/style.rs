@@ -842,6 +842,7 @@ struct MatchedRules {
 }
 
 impl MatchedRules {
+    #[cfg(not(feature = "rayon"))]
     fn build(entities: &[Entity], style: &Style, tree: &Tree<Entity>) -> Self {
         let filter = &mut BloomFilter::default();
 
@@ -946,12 +947,7 @@ pub(crate) fn style_system(cx: &mut Context) {
         .filter(|e| cx.style.restyle.contains(*e))
         .collect::<Vec<_>>();
 
-    // TODO: Tune this number. Or perhaps make it customizable?
-    let parallel = entities.len() * cx.style.rules.len() >= 4096;
-
-    let matched_rules = if !parallel {
-        MatchedRules::build(&entities, &cx.style, &cx.tree)
-    } else {
+    let matched_rules = {
         #[cfg(feature = "rayon")]
         {
             MatchedRules::build_parallel(&entities, &cx.style, &cx.tree)

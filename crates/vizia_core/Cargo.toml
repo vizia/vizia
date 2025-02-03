@@ -12,7 +12,7 @@ clipboard = ["copypasta"]
 x11 = ["copypasta?/x11"]
 wayland = ["copypasta?/wayland"]
 markdown = ["comrak"]
-rayon = ["dep:rayon", "dep:dashmap", "indexmap/rayon", "hashbrown/rayon", "dashmap/rayon"]
+rayon = ["dep:rayon", "dep:dashmap", "hashbrown/rayon"]
 
 [dependencies]
 vizia_derive.workspace = true
