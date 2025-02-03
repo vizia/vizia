@@ -1,17 +1,13 @@
-use hashbrown::{hash_map::DefaultHashBuilder, HashSet};
+use hashbrown::HashSet;
 use std::any::TypeId;
-use std::hash::{BuildHasher, Hash, Hasher};
+use std::hash::Hash;
 
 use crate::{model::ModelOrView, prelude::*};
 
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct StoreId(pub u64);
-
-pub(crate) fn get_storeid<T: 'static + Hash>(t: &T) -> StoreId {
-    let mut s = DefaultHashBuilder::default().build_hasher();
-    TypeId::of::<T>().hash(&mut s);
-    t.hash(&mut s);
-    StoreId(s.finish())
+pub enum StoreId {
+    Source(u64),
+    Map(u64),
 }
 
 pub(crate) trait Store {
