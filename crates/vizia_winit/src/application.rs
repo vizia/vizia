@@ -20,7 +20,7 @@ use vizia_core::prelude::*;
 use vizia_core::{backend::*, events::EventManager};
 use winit::{
     application::ApplicationHandler,
-    dpi::{LogicalPosition, LogicalSize},
+    dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize},
     error::EventLoopError,
     event::ElementState,
     event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy},
@@ -40,7 +40,7 @@ use winit::{
 //     )
 // ))]
 // use raw_window_handle::{HasRawDisplayHandle, RawDisplayHandle};
-use vizia_window::WindowPosition;
+use vizia_window::{Anchor, AnchorTarget, WindowPosition};
 
 #[derive(Debug)]
 pub enum UserEvent {
@@ -170,6 +170,106 @@ impl Application {
 
         let window_state = WinState::new(event_loop, window_entity, window_attributes, owner)?;
         let window = window_state.window.clone();
+
+        if let Some(position) = window_description.position {
+            window.set_outer_position(LogicalPosition::new(position.x, position.y));
+        } else {
+            let (anchor, mut parent_anchor) =
+                match (window_description.anchor, window_description.parent_anchor) {
+                    (Some(a), None) => (Some(a), Some(a)),
+                    (None, Some(b)) => (Some(b.opposite()), Some(b)),
+                    t => t,
+                };
+
+            if let Some(anchor) = anchor {
+                let (y, x) = match anchor {
+                    Anchor::TopLeft => (0.0, 0.0),
+                    Anchor::TopCenter => (0.0, 0.5),
+                    Anchor::TopRight => (0.0, 1.0),
+                    Anchor::Left => (0.5, 0.0),
+                    Anchor::Center => (0.5, 0.5),
+                    Anchor::Right => (0.5, 1.0),
+                    Anchor::BottomLeft => (1.0, 0.0),
+                    Anchor::BottomCenter => (1.0, 0.5),
+                    Anchor::BottomRight => (1.0, 1.0),
+                };
+
+                let window_size = window.inner_size();
+
+                let anchor_target = window_description.anchor_target.unwrap_or_default();
+                let parent = match anchor_target {
+                    AnchorTarget::Monitor => window
+                        .current_monitor()
+                        .map(|monitor| (PhysicalPosition::default(), monitor.size())),
+                    AnchorTarget::Window => self
+                        .cx
+                        .0
+                        .tree
+                        .get_parent_window(window_entity)
+                        .and_then(|parent_window| self.window_ids.get(&parent_window))
+                        .and_then(|id| self.windows.get(id))
+                        .map(|win_state| {
+                            (
+                                win_state.window.outer_position().unwrap(),
+                                win_state.window.inner_size(),
+                            )
+                        }),
+                    AnchorTarget::Mouse => self
+                        .cx
+                        .0
+                        .tree
+                        .get_parent_window(window_entity)
+                        .and_then(|parent_window| self.window_ids.get(&parent_window))
+                        .and_then(|id| self.windows.get(id))
+                        .map(|win_state| {
+                            let pos = win_state.window.outer_position().unwrap();
+                            (
+                                PhysicalPosition::new(
+                                    pos.x + self.cx.0.mouse.cursor_x as i32,
+                                    pos.y + self.cx.0.mouse.cursor_y as i32,
+                                ),
+                                PhysicalSize::new(0, 0),
+                            )
+                        }),
+                };
+
+                if let Some((parent_position, parent_size)) = parent {
+                    if anchor_target != AnchorTarget::Window {
+                        parent_anchor = Some(anchor);
+                    }
+
+                    let (py, px) = match parent_anchor.unwrap_or_default() {
+                        Anchor::TopLeft => (0.0, 0.0),
+                        Anchor::TopCenter => (0.0, 0.5),
+                        Anchor::TopRight => (0.0, 1.0),
+                        Anchor::Left => (0.5, 0.0),
+                        Anchor::Center => (0.5, 0.5),
+                        Anchor::Right => (0.5, 1.0),
+                        Anchor::BottomLeft => (1.0, 0.0),
+                        Anchor::BottomCenter => (1.0, 0.5),
+                        Anchor::BottomRight => (1.0, 1.0),
+                    };
+
+                    let x = (((parent_size.width as f32 * px) as i32
+                        - (window_size.width as f32 * x) as i32)
+                        as f32) as i32;
+                    let y = (((parent_size.height as f32 * py) as i32
+                        - (window_size.height as f32 * y) as i32)
+                        as f32) as i32;
+
+                    let offset = window_description.offset.unwrap_or_default();
+                    let offset: PhysicalPosition<i32> = PhysicalPosition::from_logical(
+                        LogicalPosition::new(offset.x as i32, offset.y as i32),
+                        window.scale_factor(),
+                    );
+
+                    window.set_outer_position(PhysicalPosition::new(
+                        parent_position.x + x as i32 + offset.x,
+                        parent_position.y + y as i32 + offset.y,
+                    ));
+                }
+            }
+        }
 
         let window_id = window_state.window.id();
         self.windows.insert(window_id, window_state);
@@ -415,9 +515,7 @@ impl ApplicationHandler<UserEvent> for Application {
                 }
             }
 
-            winit::event::WindowEvent::Moved(position) => {
-                self.cx.set_window_position(window.entity, position.x as f32, position.y as f32);
-            }
+            winit::event::WindowEvent::Moved(_position) => {}
 
             winit::event::WindowEvent::CloseRequested | winit::event::WindowEvent::Destroyed => {
                 let window_entity = window.entity;
@@ -748,6 +846,30 @@ impl WindowModifiers for Application {
         position.set_or_bind(&mut self.cx.0, Entity::root(), |cx, size| {
             cx.emit(WindowEvent::SetPosition(size.get(cx).into()));
         });
+
+        self
+    }
+
+    fn offset<P: Into<WindowPosition>>(mut self, offset: impl Res<P>) -> Self {
+        self.window_description.offset = Some(offset.get(&self.cx.0).into());
+
+        self
+    }
+
+    fn anchor<P: Into<Anchor>>(mut self, anchor: impl Res<P>) -> Self {
+        self.window_description.anchor = Some(anchor.get(&self.cx.0).into());
+
+        self
+    }
+
+    fn anchor_target<P: Into<AnchorTarget>>(mut self, anchor_target: impl Res<P>) -> Self {
+        self.window_description.anchor_target = Some(anchor_target.get(&self.cx.0).into());
+
+        self
+    }
+
+    fn parent_anchor<P: Into<Anchor>>(mut self, parent_anchor: impl Res<P>) -> Self {
+        self.window_description.parent_anchor = Some(parent_anchor.get(&self.cx.0).into());
 
         self
     }

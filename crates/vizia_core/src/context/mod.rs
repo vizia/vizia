@@ -23,7 +23,7 @@ use std::{
     sync::Arc,
 };
 use vizia_id::IdManager;
-use vizia_window::{WindowDescription, WindowPosition};
+use vizia_window::WindowDescription;
 
 #[cfg(all(feature = "clipboard", feature = "x11"))]
 use copypasta::ClipboardContext;
@@ -85,7 +85,6 @@ pub struct WindowState {
     pub owner: Option<Entity>,
     pub is_modal: bool,
     pub should_close: bool,
-    pub position: WindowPosition,
     pub content: Option<Arc<dyn Fn(&mut Context)>>,
 }
 

@@ -1,6 +1,7 @@
 use crate::window_modifiers::WindowModifiers;
 use glutin::context::GlProfile;
 use vizia_core::context::TreeProps;
+use vizia_window::AnchorTarget;
 #[cfg(target_os = "windows")]
 use winit::platform::windows::WindowExtWindows;
 #[cfg(target_os = "windows")]
@@ -412,6 +413,7 @@ impl Window {
             );
             cx.tree.set_window(cx.current(), true);
         })
+        .anchor_target(AnchorTarget::Window)
         .lock_focus_to_within()
     }
 }
@@ -475,15 +477,7 @@ impl View for Window {
             }
 
             WindowEvent::SetPosition(pos) => {
-                let parent_window_position = if cx.current() == Entity::root() {
-                    WindowPosition::new(0, 0)
-                } else {
-                    cx.window_position()
-                };
-                self.window().set_outer_position(LogicalPosition::new(
-                    parent_window_position.x + pos.x,
-                    parent_window_position.y + pos.y,
-                ));
+                self.window().set_outer_position(LogicalPosition::new(pos.x, pos.y));
                 meta.consume();
             }
 
@@ -617,6 +611,49 @@ impl WindowModifiers for Handle<'_, Window> {
         let pos = Some(position.get(&self).into());
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
             win_state.window_description.position = pos;
+        }
+
+        self
+    }
+
+    fn offset<P: Into<vizia_window::WindowPosition>>(mut self, offset: impl Res<P>) -> Self {
+        let entity = self.entity();
+        let offset = Some(offset.get(&self).into());
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.offset = offset;
+        }
+
+        self
+    }
+
+    fn anchor<P: Into<vizia_window::Anchor>>(mut self, anchor: impl Res<P>) -> Self {
+        let entity = self.entity();
+        let anchor = Some(anchor.get(&self).into());
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.anchor = anchor;
+        }
+
+        self
+    }
+
+    fn anchor_target<P: Into<vizia_window::AnchorTarget>>(
+        mut self,
+        anchor_target: impl Res<P>,
+    ) -> Self {
+        let entity = self.entity();
+        let anchor_target = Some(anchor_target.get(&self).into());
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.anchor_target = anchor_target;
+        }
+
+        self
+    }
+
+    fn parent_anchor<P: Into<Anchor>>(mut self, parent_anchor: impl Res<P>) -> Self {
+        let entity = self.entity();
+        let parent_anchor = Some(parent_anchor.get(&self).into());
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.parent_anchor = parent_anchor;
         }
 
         self

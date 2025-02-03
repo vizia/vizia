@@ -62,7 +62,9 @@ fn main() -> Result<(), ApplicationError> {
                 })
                 .title("Set color...")
                 .inner_size((400, 200))
-                .position((500, 100));
+                .anchor(Anchor::TopRight)
+                .parent_anchor(Anchor::TopLeft)
+                .anchor_target(AnchorTarget::Mouse);
             }
         });
 
@@ -74,5 +76,6 @@ fn main() -> Result<(), ApplicationError> {
         .background_color(AppData::color);
     })
     .title("Main")
+    .position((100, 100))
     .run()
 }
