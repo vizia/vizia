@@ -6,7 +6,7 @@ use crate::{model::ModelOrView, prelude::*};
 
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum StoreId {
-    Source(u64),
+    Source(TypeId),
     Map(u64),
 }
 
