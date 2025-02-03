@@ -1,25 +1,28 @@
 use std::any::TypeId;
 use std::borrow::Borrow;
 use std::fmt::{Debug, Formatter};
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 use std::marker::PhantomData;
 use std::ops::{BitAnd, BitOr, Deref};
 use std::rc::Rc;
 
 use crate::context::{CURRENT, MAPS, MAP_MANAGER};
 
-use super::MapId;
+use super::{MapId, StoreId};
 
 /// A Lens allows the construction of a reference to a piece of some data, e.g. a field of a struct.
 ///
 /// When deriving the `Lens` trait on a struct, the derive macro constructs a static type which implements the `Lens` trait for each field.
 /// The `view()` method takes a reference to the struct type as input and outputs a reference to the field.
 /// This provides a way to specify a binding to a specific field of some application data.
-pub trait Lens: 'static + Copy + Debug + Hash {
+pub trait Lens: 'static + Copy + Debug {
     type Source;
     type Target;
 
     fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>>;
+    fn id(&self) -> StoreId {
+        StoreId::Source(fxhash::hash64(&TypeId::of::<Self>()))
+    }
 }
 
 /// A type returned by `Lens::view()` which contains either a reference to model data or an owned value.
@@ -183,18 +186,15 @@ impl<L: Lens, O: 'static> Lens for Map<L, O> {
         })?;
         Some(LensValue::Owned(closure(&*target)))
     }
+
+    fn id(&self) -> StoreId {
+        StoreId::Map(self.id.0)
+    }
 }
 
 impl<L: Lens, O: 'static> Debug for Map<L, O> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{:?}.map(?)", self.lens))
-    }
-}
-
-impl<L: Lens, O: 'static> Hash for Map<L, O> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.lens.hash(state);
-        self.id.hash(state);
     }
 }
 
@@ -228,6 +228,10 @@ impl<L: Lens, O: 'static + Clone> Lens for MapRef<L, O> {
             LensValue::Owned(target) => Some(LensValue::Owned(closure(&target).clone())),
         }
     }
+
+    fn id(&self) -> StoreId {
+        StoreId::Map(self.id.0)
+    }
 }
 
 impl<L: Lens, O: 'static> Debug for MapRef<L, O> {
@@ -236,15 +240,7 @@ impl<L: Lens, O: 'static> Debug for MapRef<L, O> {
     }
 }
 
-impl<L: Lens, O: 'static> Hash for MapRef<L, O> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.lens.hash(state);
-        self.id.hash(state);
-    }
-}
-
 /// `Lens` composed of two lenses joined together
-#[derive(Hash)]
 pub struct Then<A, B> {
     a: A,
     b: B,
@@ -328,13 +324,6 @@ impl<L: Lens, T> Debug for Index<L, T> {
     }
 }
 
-impl<L: Lens, T> Hash for Index<L, T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.lens.hash(state);
-        self.index.hash(state);
-    }
-}
-
 impl<L, T> Lens for Index<L, T>
 where
     L: Lens<Target: Deref<Target = [T]>>,
@@ -368,13 +357,6 @@ impl<T> Debug for StaticLens<T> {
         f.write_str("Static Lens: ")?;
         TypeId::of::<T>().fmt(f)?;
         Ok(())
-    }
-}
-
-impl<T> Hash for StaticLens<T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        let id = TypeId::of::<Self>();
-        id.hash(state);
     }
 }
 
@@ -427,13 +409,6 @@ impl<T: 'static> Debug for UnwrapLens<T> {
     }
 }
 
-impl<T: 'static> Hash for UnwrapLens<T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        let id = TypeId::of::<Self>();
-        id.hash(state);
-    }
-}
-
 #[derive(Default)]
 pub struct IntoLens<T, U> {
     t: PhantomData<T>,
@@ -469,14 +444,7 @@ impl<T, U> Debug for IntoLens<T, U> {
     }
 }
 
-impl<T: 'static, U: 'static> Hash for IntoLens<T, U> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        let id = TypeId::of::<Self>();
-        id.hash(state);
-    }
-}
-
-#[derive(Hash, Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct RatioLens<L1, L2> {
     numerator: L1,
     denominator: L2,
@@ -503,7 +471,7 @@ where
     }
 }
 
-#[derive(Hash, Debug, Copy)]
+#[derive(Debug, Copy)]
 pub struct OrLens<L1, L2> {
     lens1: L1,
     lens2: L2,
@@ -541,7 +509,7 @@ impl<L1: Clone, L2: Clone> Clone for OrLens<L1, L2> {
     }
 }
 
-#[derive(Hash, Clone)]
+#[derive(Clone)]
 pub struct Wrapper<L>(pub L);
 
 impl<L: Copy> Copy for Wrapper<L> {}
@@ -603,7 +571,7 @@ where
     }
 }
 
-#[derive(Hash, Debug, Copy)]
+#[derive(Debug, Copy)]
 pub struct AndLens<L1, L2> {
     lens1: L1,
     lens2: L2,
