@@ -462,8 +462,12 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             if *code == Code::KeyS
                 && cx.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
             {
-                let mut result = vec![];
-                compute_matched_rules(cx, cx.hovered, &mut result);
+                use crate::systems::compute_element_hash;
+                use vizia_style::selectors::bloom::BloomFilter;
+
+                let mut filter = BloomFilter::default();
+                compute_element_hash(cx.hovered, &cx.tree, &cx.style, &mut filter);
+                let result = compute_matched_rules(cx.hovered, &cx.style, &cx.tree, &filter);
 
                 let entity = cx.hovered;
                 debug!("/* Matched rules for Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",

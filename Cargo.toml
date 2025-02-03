@@ -18,6 +18,7 @@ x11 = ["vizia_winit?/x11", "vizia_core/x11"]
 wayland = ["vizia_winit?/wayland", "vizia_core/wayland"]
 accesskit = ["vizia_winit?/accesskit"]
 markdown = ["vizia_core/markdown"]
+rayon = ["vizia_core/rayon"]
 
 [dependencies]
 vizia_core.workspace = true
