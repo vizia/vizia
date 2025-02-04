@@ -9,8 +9,9 @@ pub(crate) fn binding_system(cx: &mut Context) {
         for (store_id, store) in stores.iter() {
             let model_id = store.source();
 
-            observers
-                .extend(store.observers().iter().map(|e| (*e, (*entity, model_id, *store_id))));
+            observers.extend(
+                store.observers().iter().map(|e| (*e, (*entity, model_id, store_id.clone()))),
+            );
         }
     }
 
@@ -19,7 +20,7 @@ pub(crate) fn binding_system(cx: &mut Context) {
         let ordered_observers = cx
             .tree
             .into_iter()
-            .filter_map(|ent| observers.get(&ent).map(|e| (ent, *e)))
+            .filter_map(|ent| observers.get(&ent).map(|e| (ent, e.clone())))
             .collect::<Vec<_>>();
 
         let mut updated_stores: HashSet<StoreId> = HashSet::new();
