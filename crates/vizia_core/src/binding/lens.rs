@@ -344,7 +344,7 @@ where
     }
 
     fn id(&self) -> StoreId {
-        StoreId::Index(TypeId::of::<Self>(), self.index as u64)
+        StoreId::Index(TypeId::of::<Self>(), self.index)
     }
 }
 

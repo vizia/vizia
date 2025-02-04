@@ -7,7 +7,7 @@ use crate::{model::ModelOrView, prelude::*};
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum StoreId {
     Source(TypeId),
-    Index(TypeId, u64),
+    Index(TypeId, usize),
     Recursive(Box<(StoreId, StoreId)>),
     Map(u64),
 }
