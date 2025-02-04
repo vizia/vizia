@@ -278,6 +278,10 @@ where
 
         None
     }
+
+    fn id(&self) -> StoreId {
+        StoreId::Recursive((self.a.id(), self.b.id()).into())
+    }
 }
 
 impl<T: Clone, U: Clone> Clone for Then<T, U> {
@@ -337,6 +341,10 @@ where
             LensValue::Borrowed(v) => v.get(self.index).map(LensValue::Borrowed),
             LensValue::Owned(v) => v.get(self.index).cloned().map(LensValue::Owned),
         })
+    }
+
+    fn id(&self) -> StoreId {
+        StoreId::Index(TypeId::of::<Self>(), self.index as u64)
     }
 }
 
