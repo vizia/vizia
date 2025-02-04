@@ -11,6 +11,10 @@ use vizia_storage::{LayoutChildIterator, LayoutTreeIterator};
 use crate::{cache::CachedData, prelude::*};
 
 pub(crate) fn text_system(cx: &mut Context) {
+    if cx.style.text.is_empty() || cx.style.text_construction.is_empty() {
+        return;
+    }
+
     let iterator = LayoutTreeIterator::full(&cx.tree);
     for entity in iterator {
         if !cx.style.text_construction.contains(entity) {
@@ -34,6 +38,10 @@ pub(crate) fn text_system(cx: &mut Context) {
 }
 
 pub(crate) fn text_layout_system(cx: &mut Context) {
+    if cx.style.text_layout.is_empty() {
+        return;
+    }
+
     let iterator = LayoutTreeIterator::full(&cx.tree);
     let mut redraw_entities = Vec::new();
     for entity in iterator {
