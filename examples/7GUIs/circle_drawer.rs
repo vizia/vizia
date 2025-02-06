@@ -1,5 +1,6 @@
 use vizia::prelude::*;
-use vizia::vg::{Paint, Path};
+use vizia::vg::{Paint, PaintStyle, Path, Point};
+use vizia_winit::application::{Application, ApplicationError};
 
 const STYLE: &str = r#"
     :root {
@@ -193,8 +194,8 @@ impl Model for CircleDrawerData {
                 }
 
                 if !self.dialog_open {
-                    let x = cx.physical_to_logical(cx.mouse().cursorx);
-                    let y = cx.physical_to_logical(cx.mouse().cursory);
+                    let x = cx.physical_to_logical(cx.mouse().cursor_x);
+                    let y = cx.physical_to_logical(cx.mouse().cursor_y);
 
                     self.circles_data.update_selected(x, y);
                 }
@@ -215,8 +216,8 @@ impl Model for CircleDrawerData {
                         ));
                     }
 
-                    let x = cx.physical_to_logical(cx.mouse().cursorx);
-                    let y = cx.physical_to_logical(cx.mouse().cursory);
+                    let x = cx.physical_to_logical(cx.mouse().cursor_x);
+                    let y = cx.physical_to_logical(cx.mouse().cursor_y);
 
                     self.circles_data.update_selected(x, y);
                 }
@@ -229,10 +230,10 @@ struct CircleDrawerCanvas;
 
 impl CircleDrawerCanvas {
     fn new(cx: &mut Context, lens: impl Lens<Target = CircleData>) -> Handle<Self> {
-        Self.build(cx, |cx| {
-            Binding::new(cx, lens, |cx, _| cx.needs_redraw());
-        })
-        .overflow(Overflow::Hidden)
+        Self {}
+            .build(cx, |cx| {})
+            .bind(lens, |mut handle, _| handle.needs_redraw())
+            .overflow(Overflow::Hidden)
     }
 }
 
@@ -245,8 +246,8 @@ impl View for CircleDrawerCanvas {
         event.map(|event, _| match event {
             WindowEvent::MouseDown(button) => match button {
                 MouseButton::Left => {
-                    let x = cx.mouse().cursorx;
-                    let y = cx.mouse().cursory;
+                    let x = cx.mouse().cursor_x;
+                    let y = cx.mouse().cursor_y;
 
                     cx.emit(CircleDrawerEvent::AddCircle(x, y))
                 }
@@ -258,23 +259,31 @@ impl View for CircleDrawerCanvas {
         })
     }
 
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        let mut path = cx.build_path();
-        cx.draw_border(canvas, &mut path);
+    fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
+        cx.draw_border(canvas);
+        let mut paint = Paint::default();
 
-        let paint = Paint::color(Color::black().into()).with_line_width(2.0);
+        paint.set_color(Color::black());
+        paint.set_style(PaintStyle::Stroke);
+        paint.set_stroke_width(2.0);
+        paint.set_anti_alias(true);
 
         let circle_data = CircleDrawerData::circles_data.get(cx);
         for (idx, Circle { x, y, r }) in circle_data.circles.iter().copied().enumerate() {
-            let mut path = Path::new();
-            path.circle(cx.logical_to_physical(x), cx.logical_to_physical(y), r);
+            let mut path = Path::circle(
+                Point::new(cx.logical_to_physical(x), cx.logical_to_physical(y)),
+                r,
+                None,
+            );
 
             if circle_data.selected.is_some_and(|i| i == idx) {
-                let paint = Paint::color(Color::gray().into());
-                canvas.fill_path(&path, &paint);
+                let mut paint = Paint::default();
+                paint.set_color(Color::gray());
+                paint.set_style(PaintStyle::Fill);
+                canvas.draw_path(&path, &paint);
             }
 
-            canvas.stroke_path(&path, &paint);
+            canvas.draw_path(&path, &paint);
         }
     }
 }
@@ -296,9 +305,10 @@ impl CircleDrawer {
                             cx.emit(CircleDrawerEvent::ToggleRightMenu);
                         });
                     })
-                    .size(Auto)
                     .left(CircleDrawerData::menu_posx)
                     .top(CircleDrawerData::menu_posy)
+                    .max_width(Auto)
+                    .size(Auto)
                     .on_blur(|cx| cx.emit(CircleDrawerEvent::ToggleRightMenu))
                     .lock_focus_to_within();
                 }
@@ -330,20 +340,20 @@ impl CircleDrawer {
                                 cx,
                                 CircleDrawerData::circles_data
                                     .then(CircleData::circles)
-                                    .index(selected)
+                                    .idx(selected)
                                     .map(|c| c.r),
                             )
                             .range(4.0..150.0)
-                            .on_changing(|cx, value| {
-                                cx.emit(CircleDrawerEvent::ChangeRadius(value))
-                            });
+                            .on_change(|cx, value| cx.emit(CircleDrawerEvent::ChangeRadius(value)));
                         })
                         .size(Auto);
                     })
-                    .on_blur(|cx| cx.emit(CircleDrawerEvent::ToggleDialog))
                     .class("dialog-box")
+                    .on_blur(|cx| cx.emit(CircleDrawerEvent::ToggleDialog))
                     .top(Stretch(1.0))
+                    .alignment(Alignment::Center)
                     .bottom(Stretch(0.01))
+                    .max_width(Auto)
                     .left(Stretch(1.0))
                     .right(Stretch(1.0));
                 }
@@ -362,8 +372,11 @@ impl CircleDrawer {
                     )
                     .on_press(|cx| cx.emit(CircleDrawerEvent::Redo));
             })
-            .size(Auto)
-            .class("header");
+            .class("header")
+            .alignment(Alignment::Center)
+            .bottom(Percentage(95.0))
+            .max_height(Auto)
+            .height(Percentage(5.0));
 
             CircleDrawerCanvas::new(cx, CircleDrawerData::circles_data);
         })
@@ -380,6 +393,5 @@ fn main() -> Result<(), ApplicationError> {
     Application::new(|cx: &mut Context| {
         CircleDrawer::new(cx);
     })
-    .title("Circle drawer")
     .run()
 }
