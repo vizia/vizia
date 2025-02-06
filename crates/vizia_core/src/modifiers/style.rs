@@ -202,7 +202,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// This property is inherited by the descendants of the view.
         disabled,
         bool,
-        SystemFlags::RESTYLE
+        SystemFlags::RESTYLE | SystemFlags::INHERIT_INLINE
     );
 
     modifier!(
@@ -211,7 +211,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// A display value of `Display::None` causes the view to be ignored by both layout and rendering.
         display,
         Display,
-        SystemFlags::RELAYOUT | SystemFlags::REDRAW
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
@@ -256,8 +256,7 @@ pub trait StyleModifiers: internal::Modifiable {
             value.set_or_bind(cx, entity, move |cx, v| {
                 let value = v.get(cx).into();
                 cx.style.clip_path.insert(cx.current, value);
-
-                cx.needs_redraw(entity);
+                cx.style.needs_reclip(entity, &cx.tree);
             });
         });
 
@@ -273,8 +272,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 let value = v.get(cx).into();
                 cx.style.overflowx.insert(cx.current, value);
                 cx.style.overflowy.insert(cx.current, value);
-
-                cx.needs_redraw(entity);
+                cx.style.needs_reclip(entity, &cx.tree);
             });
         });
 
@@ -287,7 +285,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// The overflow behavior determines whether child views can render outside the bounds of their parent.
         overflowx,
         Overflow,
-        SystemFlags::REDRAW
+        SystemFlags::RECLIP
     );
 
     modifier!(
@@ -296,7 +294,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// The overflow behavior determines whether child views can render outside the bounds of their parent.
         overflowy,
         Overflow,
-        SystemFlags::REDRAW
+        SystemFlags::RECLIP
     );
 
     /// Sets the backdrop filter for the view.
@@ -307,7 +305,6 @@ pub trait StyleModifiers: internal::Modifiable {
             value.set_or_bind(cx, entity, move |cx, v| {
                 let value = v.get(cx).into();
                 cx.style.backdrop_filter.insert(cx.current, value);
-
                 cx.needs_redraw(entity);
             });
         });
@@ -640,7 +637,7 @@ pub trait StyleModifiers: internal::Modifiable {
             value.set_or_bind(cx, entity, move |cx, v| {
                 let value = v.get(cx).into();
                 cx.style.transform.insert(cx.current, value);
-                cx.needs_redraw(entity);
+                cx.style.needs_retransform(entity, &cx.tree);
             });
         });
 
@@ -657,7 +654,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 let x = value.x.to_length_or_percentage();
                 let y = value.y.to_length_or_percentage();
                 cx.style.transform_origin.insert(cx.current, Translate { x, y });
-                cx.needs_redraw(entity);
+                cx.style.needs_retransform(entity, &cx.tree);
             });
         });
 
@@ -671,7 +668,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// Translation applies to the rendered view and does not affect layout.
         translate,
         Translate,
-        SystemFlags::REDRAW
+        SystemFlags::RETRANSFORM
     );
 
     // Rotate
@@ -681,7 +678,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// Rotation applies to the rendered view and does not affect layout.
         rotate,
         Angle,
-        SystemFlags::REDRAW
+        SystemFlags::RETRANSFORM
     );
 
     // Scale
@@ -691,7 +688,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// Scale applies to the rendered view and does not affect layout.
         scale,
         Scale,
-        SystemFlags::REDRAW
+        SystemFlags::RETRANSFORM
     );
 }
 

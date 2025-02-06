@@ -1,141 +1,10 @@
-use crate::{animation::Interpolator, cache::CachedData, prelude::*};
+use crate::{cache::CachedData, prelude::*};
 use morphorm::Node;
-use skia_safe::{
-    canvas::SaveLayerRec, ClipOp, ImageFilter, Matrix, Paint, Rect, SamplingOptions, Surface,
-};
+use skia_safe::{canvas::SaveLayerRec, ClipOp, ImageFilter, Paint, Rect, SamplingOptions, Surface};
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use vizia_storage::{DrawChildIterator, LayoutTreeIterator};
+use vizia_storage::DrawChildIterator;
 use vizia_style::BlendMode;
-
-pub(crate) fn transform_system(cx: &mut Context) {
-    let iter = LayoutTreeIterator::full(&cx.tree);
-
-    for entity in iter {
-        let bounds = cx.cache.bounds.get(entity).copied().unwrap();
-        if let Some(parent) = cx.tree.get_layout_parent(entity) {
-            let parent_transform = cx.cache.transform.get(parent).copied().unwrap();
-            if let Some(tx) = cx.cache.transform.get_mut(entity) {
-                let scale_factor = cx.style.scale_factor();
-
-                // Apply transform origin.
-                let mut origin = cx
-                    .style
-                    .transform_origin
-                    .get(entity)
-                    .map(|transform_origin| {
-                        let mut origin = skia_safe::Matrix::translate(bounds.top_left());
-                        let offset = transform_origin.as_transform(bounds, scale_factor);
-                        origin = offset * origin;
-                        origin
-                    })
-                    .unwrap_or(skia_safe::Matrix::translate(bounds.center()));
-                // transform = origin * transform;
-                let mut transform = origin;
-                origin = origin.invert().unwrap();
-
-                // Apply translation.
-                if let Some(translate) = cx.style.translate.get(entity) {
-                    transform = transform * translate.as_transform(bounds, scale_factor);
-                }
-
-                // Apply rotation.
-                if let Some(rotate) = cx.style.rotate.get(entity) {
-                    transform = transform * rotate.as_transform(bounds, scale_factor);
-                }
-
-                // Apply scaling.
-                if let Some(scale) = cx.style.scale.get(entity) {
-                    transform = transform * scale.as_transform(bounds, scale_factor);
-                }
-
-                // Apply transform functions.
-                if let Some(transforms) = cx.style.transform.get(entity) {
-                    // Check if the transform is currently animating
-                    // Get the animation state
-                    // Manually interpolate the value to get the overall transform for the current frame
-                    if let Some(animation_state) = cx.style.transform.get_active_animation(entity) {
-                        if let Some(start) = animation_state.keyframes.first() {
-                            if let Some(end) = animation_state.keyframes.last() {
-                                let start_transform =
-                                    start.value.as_transform(bounds, scale_factor);
-                                let end_transform = end.value.as_transform(bounds, scale_factor);
-                                let t = animation_state.t;
-                                let animated_transform = skia_safe::Matrix::interpolate(
-                                    &start_transform,
-                                    &end_transform,
-                                    t,
-                                );
-                                transform = transform * animated_transform;
-                            }
-                        }
-                    } else {
-                        transform = transform * transforms.as_transform(bounds, scale_factor);
-                    }
-                }
-
-                transform = transform * origin;
-
-                *tx = parent_transform * transform;
-            }
-
-            let overflowx = cx.style.overflowx.get(entity).copied().unwrap_or_default();
-            let overflowy = cx.style.overflowy.get(entity).copied().unwrap_or_default();
-
-            let scale = cx.style.scale_factor();
-
-            let clip_bounds = cx
-                .style
-                .clip_path
-                .get(entity)
-                .map(|clip| match clip {
-                    ClipPath::Auto => bounds,
-                    ClipPath::Shape(rect) => bounds.shrink_sides(
-                        rect.3.to_pixels(bounds.w, scale),
-                        rect.0.to_pixels(bounds.h, scale),
-                        rect.1.to_pixels(bounds.w, scale),
-                        rect.2.to_pixels(bounds.h, scale),
-                    ),
-                })
-                .unwrap_or(bounds);
-
-            let root_bounds = BoundingBox::from_min_max(-f32::MAX, -f32::MAX, f32::MAX, f32::MAX);
-
-            let clip_bounds = match (overflowx, overflowy) {
-                (Overflow::Visible, Overflow::Visible) => root_bounds,
-                (Overflow::Hidden, Overflow::Visible) => {
-                    let left = clip_bounds.left();
-                    let right = clip_bounds.right();
-                    let top = root_bounds.top();
-                    let bottom = root_bounds.bottom();
-                    BoundingBox::from_min_max(left, top, right, bottom)
-                }
-                (Overflow::Visible, Overflow::Hidden) => {
-                    let left = root_bounds.left();
-                    let right = root_bounds.right();
-                    let top = clip_bounds.top();
-                    let bottom = clip_bounds.bottom();
-                    BoundingBox::from_min_max(left, top, right, bottom)
-                }
-                (Overflow::Hidden, Overflow::Hidden) => clip_bounds,
-            };
-
-            let transform =
-                cx.cache.transform.get(entity).copied().unwrap_or(Matrix::new_identity());
-
-            let rect: skia_safe::Rect = clip_bounds.into();
-            let clip_bounds: BoundingBox = transform.map_rect(rect).0.into();
-
-            let parent_clip_bounds = cx.cache.clip_path.get(parent).copied().unwrap_or(root_bounds);
-
-            if let Some(clip_path) = cx.cache.clip_path.get_mut(entity) {
-                *clip_path = clip_bounds.intersection(&parent_clip_bounds);
-            } else {
-                cx.cache.clip_path.insert(entity, clip_bounds.intersection(&parent_clip_bounds));
-            }
-        }
-    }
-}
 
 pub(crate) fn draw_system(
     cx: &mut Context,
@@ -150,8 +19,6 @@ pub(crate) fn draw_system(
     if !cx.entity_manager.is_alive(window_entity) {
         return false;
     }
-
-    transform_system(cx);
 
     let window = cx.windows.get_mut(&window_entity).unwrap();
 
@@ -408,6 +275,8 @@ pub(crate) fn draw_bounds(
     let tr = matrix.map_rect(rect).0;
 
     let mut dirty_bounds: BoundingBox = tr.into();
+
+    dirty_bounds = dirty_bounds.expand(1.0);
 
     //
     if style.overflowx.get(entity).copied().unwrap_or_default() == Overflow::Visible

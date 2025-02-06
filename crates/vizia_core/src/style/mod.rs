@@ -98,7 +98,7 @@ use crate::storage::animatable_set::AnimatableSet;
 use crate::storage::style_set::StyleSet;
 use bitflags::bitflags;
 use vizia_id::IdManager;
-use vizia_storage::SparseSet;
+use vizia_storage::{LayoutTreeIterator, SparseSet};
 
 bitflags! {
     /// Describes the capabilities of a view with respect to user interaction.
@@ -129,7 +129,11 @@ bitflags! {
         const RELAYOUT = 1;
         const RESTYLE = 1 << 1;
         const REFLOW = 1 << 2;
-        const REDRAW = 1 << 3;
+        const RETRANSFORM = 1 << 3;
+        const RECLIP = 1 << 4;
+        const INHERIT_INLINE = 1 << 5;
+        const INHERIT_SHARED = 1 << 6;
+        const REDRAW = 1 << 7;
     }
 }
 
@@ -389,6 +393,10 @@ pub struct Style {
     pub(crate) text_construction: Bloom,
     pub(crate) text_layout: Bloom,
     pub(crate) reaccess: Bloom,
+    pub(crate) retransform: Bloom,
+    pub(crate) reclip: Bloom,
+    pub(crate) inherit_inline: Bloom,
+    pub(crate) inherit_shared: Bloom,
 
     pub(crate) text_range: SparseSet<Range<usize>>,
     pub(crate) text_span: SparseSet<bool>,
@@ -1869,7 +1877,41 @@ impl Style {
     }
 
     pub(crate) fn needs_text_layout(&mut self, entity: Entity) {
-        self.text_layout.0.insert(entity).unwrap();
+        if self.text.get(entity).is_some() {
+            self.text_layout.0.insert(entity).unwrap();
+        }
+    }
+
+    pub(crate) fn needs_retransform(&mut self, entity: Entity, tree: &Tree<Entity>) {
+        self.retransform.0.insert(entity).unwrap();
+        let iter = LayoutTreeIterator::subtree(tree, entity);
+        for entity in iter {
+            self.retransform.0.insert(entity).unwrap();
+        }
+    }
+
+    pub(crate) fn needs_reclip(&mut self, entity: Entity, tree: &Tree<Entity>) {
+        self.reclip.0.insert(entity).unwrap();
+        let iter = LayoutTreeIterator::subtree(tree, entity);
+        for entity in iter {
+            self.reclip.0.insert(entity).unwrap();
+        }
+    }
+
+    pub(crate) fn needs_inherit_inline(&mut self, entity: Entity, tree: &Tree<Entity>) {
+        self.inherit_inline.0.insert(entity).unwrap();
+        let iter = LayoutTreeIterator::subtree(tree, entity);
+        for entity in iter {
+            self.inherit_inline.0.insert(entity).unwrap();
+        }
+    }
+
+    pub(crate) fn needs_inherit_shared(&mut self, entity: Entity, tree: &Tree<Entity>) {
+        self.inherit_shared.0.insert(entity).unwrap();
+        let iter = LayoutTreeIterator::subtree(tree, entity);
+        for entity in iter {
+            self.inherit_shared.0.insert(entity).unwrap();
+        }
     }
 
     // pub fn should_redraw<F: FnOnce()>(&mut self, f: F) {

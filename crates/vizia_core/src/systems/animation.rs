@@ -10,6 +10,8 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     let mut redraw_entities = Vec::new();
     let mut reflow_entities = Vec::new();
     let mut relayout_entities = Vec::new();
+    let mut retransform_entities = Vec::new();
+    let mut reclip_entities = Vec::new();
 
     // Properties which affect rendering
     // Opacity
@@ -28,17 +30,17 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     // Box Shadow
     redraw_entities.extend(cx.style.shadow.tick(time));
     // Transform
-    redraw_entities.extend(cx.style.transform.tick(time));
-    redraw_entities.extend(cx.style.transform_origin.tick(time));
-    redraw_entities.extend(cx.style.translate.tick(time));
-    redraw_entities.extend(cx.style.rotate.tick(time));
-    redraw_entities.extend(cx.style.scale.tick(time));
+    retransform_entities.extend(cx.style.transform.tick(time));
+    retransform_entities.extend(cx.style.transform_origin.tick(time));
+    retransform_entities.extend(cx.style.translate.tick(time));
+    retransform_entities.extend(cx.style.rotate.tick(time));
+    retransform_entities.extend(cx.style.scale.tick(time));
     // Outline
     redraw_entities.extend(cx.style.outline_color.tick(time));
     redraw_entities.extend(cx.style.outline_offset.tick(time));
     redraw_entities.extend(cx.style.outline_width.tick(time));
     // Clip Path
-    redraw_entities.extend(cx.style.clip_path.tick(time));
+    reclip_entities.extend(cx.style.clip_path.tick(time));
 
     redraw_entities.extend(cx.style.fill.tick(time));
 
@@ -90,5 +92,17 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
         cx.style.text_construction.insert(*entity).unwrap();
     }
 
-    !redraw_entities.is_empty() | !relayout_entities.is_empty() | !reflow_entities.is_empty()
+    for entity in retransform_entities.iter() {
+        cx.style.needs_retransform(*entity, &cx.tree);
+    }
+
+    for entity in reclip_entities.iter() {
+        cx.style.needs_reclip(*entity, &cx.tree);
+    }
+
+    !redraw_entities.is_empty()
+        | !relayout_entities.is_empty()
+        | !reflow_entities.is_empty()
+        | !retransform_entities.is_empty()
+        | !reclip_entities.is_empty()
 }

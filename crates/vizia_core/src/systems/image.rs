@@ -4,7 +4,8 @@ use crate::prelude::*;
 use crate::style::ImageOrGradient;
 // use hashbrown::HashSet;
 
-// Iterate the tree and load any images used by entities which aren't already loaded. Remove any images no longer being used.
+// Iterates the tree and loads any images used by entities which aren't already loaded.
+// Removes any images no longer being used.
 pub(crate) fn image_system(cx: &mut Context) {
     let cx = &mut ResourceContext::new(cx);
 
@@ -29,8 +30,6 @@ pub(crate) fn image_system(cx: &mut Context) {
 }
 
 fn load_image(cx: &mut ResourceContext, entity: Entity, image_name: &str) {
-    // if let Some(image_id) = cx.resource_manager.image_ids.get(image_name) {}
-
     if !try_load_image(cx, entity, image_name) {
         // Image doesn't exists yet so call the image loader
         if let Some(callback) = cx.resource_manager.image_loader.take() {
@@ -48,26 +47,6 @@ fn try_load_image(cx: &mut ResourceContext, entity: Entity, image_name: &str) ->
     if let Some(image_id) = cx.resource_manager.image_ids.get(&image_name.to_owned()) {
         // Check if the image is already loaded
         if let Some(image_store) = cx.resource_manager.images.get_mut(image_id) {
-            // match &image_store.image {
-            //     // Image exists and is already loaded so just add this entity as an observer and mark image as used
-            //     ::Id(_, _) => {
-            //         // TODO: check if the image is actually the same?
-            //         image_store.observers.insert(entity);
-            //         image_store.used = true;
-            //     }
-
-            //     // Image exists but isn't loaded yet
-            //     ImageOrId::Image(_, _) => {
-            //         if let Some(canvas) = cx.canvases.get_mut(&Entity::root()) {
-            //             // This loads the image and sets the image id
-            //             image_store.image.id(canvas);
-            //             image_store.used = true;
-            //             cx.style.needs_relayout();
-            //             cx.style.needs_redraw();
-            //         }
-            //     }
-            // }
-
             image_store.observers.insert(entity);
             image_store.used = true;
 
