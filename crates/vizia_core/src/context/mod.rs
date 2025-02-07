@@ -288,6 +288,7 @@ impl Context {
     /// Mark the application as needing to recompute view styles
     pub fn needs_restyle(&mut self, entity: Entity) {
         self.style.restyle.insert(entity).unwrap();
+        // Because of sibling selectors all siblings and their descendants need restyling too.
         let iter = if let Some(parent) = self.tree.get_layout_parent(entity) {
             LayoutTreeIterator::subtree(&self.tree, parent)
         } else {
@@ -297,7 +298,6 @@ impl Context {
         for descendant in iter {
             self.style.restyle.insert(descendant).unwrap();
         }
-        // self.style.needs_restyle();
     }
 
     /// Mark the application as needing to rerun layout computations
@@ -316,6 +316,18 @@ impl Context {
 
         if system_flags.contains(SystemFlags::REFLOW) {
             self.style.needs_text_update(entity);
+        }
+
+        if system_flags.contains(SystemFlags::RETRANSFORM) {
+            self.style.needs_retransform(entity, &self.tree);
+        }
+
+        if system_flags.contains(SystemFlags::RECLIP) {
+            self.style.needs_reclip(entity, &self.tree);
+        }
+
+        if system_flags.contains(SystemFlags::INHERIT_INLINE) {
+            self.style.needs_inherit_inline(entity, &self.tree);
         }
     }
 

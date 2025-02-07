@@ -7,62 +7,61 @@ use vizia_storage::LayoutTreeIterator;
 /// Should be run after layout so that things like bounding box are correct.
 /// This system doesn't change the structure of the accessibility tree as this is done when views are built/removed.
 pub fn accessibility_system(cx: &mut Context) {
-    if !cx.style.reaccess.is_empty() {
-        let iterator = LayoutTreeIterator::full(&cx.tree);
+    // Skip if no entities need  updating
+    if cx.style.reaccess.is_empty() {
+        return;
+    }
 
-        for entity in iterator {
-            if !cx.style.reaccess.contains(entity) {
+    let iterator = LayoutTreeIterator::full(&cx.tree);
+
+    for entity in iterator {
+        if !cx.style.reaccess.contains(entity) {
+            continue;
+        }
+
+        let mut access_context = AccessContext {
+            current: entity,
+            tree: &cx.tree,
+            cache: &cx.cache,
+            style: &cx.style,
+            text_context: &mut cx.text_context,
+        };
+
+        if let Some(node) = get_access_node(&mut access_context, &mut cx.views, entity) {
+            let navigable = cx
+                .style
+                .abilities
+                .get(entity)
+                .copied()
+                .unwrap_or_default()
+                .contains(Abilities::NAVIGABLE);
+
+            if node.node_builder.role() == Role::Unknown && !navigable {
                 continue;
             }
 
-            let mut access_context = AccessContext {
-                current: entity,
-                tree: &cx.tree,
-                cache: &cx.cache,
-                style: &cx.style,
-                text_context: &mut cx.text_context,
-            };
+            let mut nodes = vec![(node.node_id(), node.node_builder)];
 
-            if let Some(node) = get_access_node(&mut access_context, &mut cx.views, entity) {
-                let navigable = cx
-                    .style
-                    .abilities
-                    .get(entity)
-                    .copied()
-                    .unwrap_or_default()
-                    .contains(Abilities::NAVIGABLE);
-
-                if node.node_builder.role() == Role::Unknown && !navigable {
-                    continue;
-                }
-
-                let mut nodes = vec![(node.node_id(), node.node_builder)];
-
-                // If child nodes were generated then append them to the nodes list
-                if !node.children.is_empty() {
-                    nodes.extend(
-                        node.children
-                            .into_iter()
-                            .map(|child_node| (child_node.node_id(), child_node.node_builder)),
-                    );
-                }
-
-                cx.tree_updates.push(Some(TreeUpdate {
-                    nodes,
-                    tree: None,
-                    focus: if cx.window_has_focus {
-                        cx.focused.accesskit_id()
-                    } else {
-                        NodeId(0u64)
-                    },
-                }));
+            // If child nodes were generated then append them to the nodes list
+            if !node.children.is_empty() {
+                nodes.extend(
+                    node.children
+                        .into_iter()
+                        .map(|child_node| (child_node.node_id(), child_node.node_builder)),
+                );
             }
 
-            // }
+            cx.tree_updates.push(Some(TreeUpdate {
+                nodes,
+                tree: None,
+                focus: if cx.window_has_focus { cx.focused.accesskit_id() } else { NodeId(0u64) },
+            }));
         }
 
-        cx.style.reaccess.clear();
+        // }
     }
+
+    cx.style.reaccess.clear();
 }
 
 pub fn initial_accessibility_system(cx: &mut Context) -> TreeUpdate {

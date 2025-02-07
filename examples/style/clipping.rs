@@ -13,6 +13,7 @@ const STYLE: &str = r#"
     }
 
     element {
+        position-type: absolute;
         size: 75px;
         left: 50px;
         top: 50px;
@@ -32,7 +33,7 @@ const STYLE: &str = r#"
     }
 
     .overflow:over {
-        overflow: hidden;
+        overflow: visible;
     }
 
     .overflowx {
@@ -92,23 +93,31 @@ fn main() -> Result<(), ApplicationError> {
             .class("container")
             .class("overflow");
 
-            // HStack::new(cx, |cx| {
-            //     Element::new(cx);
-            // })
-            // .class("container")
-            // .class("overflowx");
+            HStack::new(cx, |cx| {
+                Element::new(cx);
+            })
+            .class("container")
+            .class("overflowx");
 
-            // HStack::new(cx, |cx| {
-            //     Element::new(cx);
-            // })
-            // .class("container")
-            // .class("overflowy");
+            HStack::new(cx, |cx| {
+                Element::new(cx);
+            })
+            .class("container")
+            .class("overflowy");
 
-            // HStack::new(cx, |cx| {
-            //     Element::new(cx);
-            // })
-            // .class("container")
-            // .class("clipping");
+            HStack::new(cx, |cx| {
+                Element::new(cx);
+            })
+            .class("container")
+            .class("clipping");
+
+            HStack::new(cx, |cx| {
+                HStack::new(cx, |cx| {
+                    Element::new(cx);
+                });
+            })
+            .class("container")
+            .class("overflow");
         })
         .class("row");
     })

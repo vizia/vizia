@@ -4,7 +4,7 @@ use vizia_storage::LayoutTreeIterator;
 use crate::layout::node::SubLayout;
 use crate::prelude::*;
 
-use super::{text_layout_system, text_system};
+use super::{clipping_system, text_layout_system, text_system, transform_system};
 
 /// Determines the size and position of views.
 /// TODO: Currently relayout is done on an entire tree rather than incrementally.
@@ -71,31 +71,37 @@ pub(crate) fn layout_system(cx: &mut Context) {
 
                         let new_bounds = BoundingBox { x, y, w, h };
 
-                        // if new_bounds != *bounds && *bounds != BoundingBox::default() {
-                        //     cx.needs_redraw();
-                        // }
-
                         *bounds = new_bounds;
                     }
                 }
             }
 
             if let Some(geo) = cx.cache.geo_changed.get(entity).copied() {
-                if !geo.is_empty()
-                // && cx.style.text.get(entity).is_some()
-                {
+                if !geo.is_empty() {
                     cx.needs_redraw();
                     cx.style.needs_text_layout(entity);
-                }
+                    cx.style.needs_retransform(entity, &cx.tree);
+                    cx.style.needs_reclip(entity, &cx.tree);
 
-                // TODO: Use geo changed to determine whether an entity needs to be redrawn.
-
-                if !geo.is_empty() {
                     let mut event = Event::new(WindowEvent::GeometryChanged(geo))
                         .target(entity)
                         .origin(entity)
                         .propagate(Propagation::Direct);
                     visit_entity(cx, entity, &mut event);
+
+                    // A relayout, retransform, or reclip, can cause the element under the cursor to change. So we push a mouse move event here to force
+                    // a new event cycle and the hover system to trigger.
+                    if let Some(proxy) = &cx.event_proxy {
+                        let event = Event::new(WindowEvent::MouseMove(
+                            cx.mouse.cursor_x,
+                            cx.mouse.cursor_y,
+                        ))
+                        .target(Entity::root())
+                        .origin(Entity::root())
+                        .propagate(Propagation::Up);
+
+                        proxy.send(event).expect("Failed to send event");
+                    }
                 }
             }
 
@@ -104,21 +110,12 @@ pub(crate) fn layout_system(cx: &mut Context) {
             }
         }
 
-        // A relayout, retransform, or reclip, can cause the element under the cursor to change. So we push a mouse move event here to force
-        // a new event cycle and the hover system to trigger.
-        if let Some(proxy) = &cx.event_proxy {
-            let event = Event::new(WindowEvent::MouseMove(cx.mouse.cursor_x, cx.mouse.cursor_y))
-                .target(Entity::root())
-                .origin(Entity::root())
-                .propagate(Propagation::Up);
-
-            proxy.send(event).expect("Failed to send event");
-        }
-
         cx.style.system_flags.set(SystemFlags::RELAYOUT, false);
     }
 
     text_layout_system(cx);
+    transform_system(cx);
+    clipping_system(cx);
 }
 
 fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {

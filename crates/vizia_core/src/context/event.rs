@@ -1047,26 +1047,31 @@ impl<'a> EventContext<'a> {
     /// Sets the transform of the current view.
     pub fn set_transform(&mut self, transform: impl Into<Vec<Transform>>) {
         self.style.transform.insert(self.current, transform.into());
+        self.style.needs_retransform(self.current, &self.tree);
     }
 
     /// Sets the transform origin of the current view.
     pub fn set_transform_origin(&mut self, transform_origin: Translate) {
         self.style.transform_origin.insert(self.current, transform_origin);
+        self.style.needs_retransform(self.current, &self.tree);
     }
 
     /// Sets the translation of the current view.
     pub fn set_translate(&mut self, translate: impl Into<Translate>) {
         self.style.translate.insert(self.current, translate.into());
+        self.style.needs_retransform(self.current, &self.tree);
     }
 
     /// Sets the rotation of the current view.
     pub fn set_rotate(&mut self, angle: impl Into<Angle>) {
         self.style.rotate.insert(self.current, angle.into());
+        self.style.needs_retransform(self.current, &self.tree);
     }
 
     /// Sets the scale of the current view.
     pub fn set_scale(&mut self, scale: impl Into<Scale>) {
         self.style.scale.insert(self.current, scale.into());
+        self.style.needs_retransform(self.current, &self.tree);
     }
 
     // FILTER

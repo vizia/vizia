@@ -10,22 +10,35 @@ use vizia_storage::{LayoutChildIterator, LayoutTreeIterator};
 
 use crate::{cache::CachedData, prelude::*};
 
+// Builds skia paragraphs from view text properties.
 pub(crate) fn text_system(cx: &mut Context) {
-    let iterator = LayoutTreeIterator::full(&cx.tree);
-    for entity in iterator {
+    if cx.style.text.is_empty() || cx.style.text_construction.is_empty() {
+        return;
+    }
+
+    let iter = LayoutTreeIterator::full(&cx.tree);
+    for entity in iter {
         if !cx.style.text_construction.contains(entity) {
             continue;
         }
 
         if cx.style.text.contains(entity)
-            && cx.style.display.get(entity).copied().unwrap_or_default() != Display::None
+            && !cx.style.text_span.get(entity).copied().unwrap_or_default()
         {
             if let Some(paragraph) =
                 build_paragraph(entity, &mut cx.style, &cx.tree, cx.text_context.font_collection())
             {
                 cx.text_context.text_paragraphs.insert(entity, paragraph);
-                cx.style.needs_relayout();
-                cx.style.needs_text_layout(entity);
+
+                // Layout system will determine the size of views based on text if size is auto, while
+                // text layout will determine the size/position of text based on view size.
+                if cx.style.width.get(entity).copied().unwrap_or(Stretch(1.0)).is_auto()
+                    || cx.style.height.get(entity).copied().unwrap_or(Stretch(1.0)).is_auto()
+                {
+                    cx.style.needs_relayout();
+                } else {
+                    cx.style.needs_text_layout(entity);
+                }
             }
         }
     }
@@ -34,8 +47,14 @@ pub(crate) fn text_system(cx: &mut Context) {
 }
 
 pub(crate) fn text_layout_system(cx: &mut Context) {
-    let iterator = LayoutTreeIterator::full(&cx.tree);
+    if cx.style.text_layout.is_empty() {
+        return;
+    }
+
     let mut redraw_entities = Vec::new();
+
+    let iterator = LayoutTreeIterator::full(&cx.tree);
+
     for entity in iterator {
         if !cx.style.text_layout.contains(entity) {
             continue;
@@ -66,8 +85,8 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                 .copied()
                 .unwrap_or(bounds.shrink_sides(padding_left, 0.0, padding_right, 0.0));
 
-            if !cx.style.width.get(entity).copied().unwrap_or_default().is_auto()
-                && !cx.style.height.get(entity).copied().unwrap_or_default().is_auto()
+            if !cx.style.width.get(entity).copied().unwrap_or(Stretch(1.0)).is_auto()
+                && !cx.style.height.get(entity).copied().unwrap_or(Stretch(1.0)).is_auto()
             {
                 if cx.style.text_overflow.get(entity).copied().unwrap_or_default()
                     == TextOverflow::Clip
@@ -80,14 +99,17 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                 }
             }
 
+            // Determine the bounds of text spans.
             layout_span(&cx.style, &mut cx.cache, &cx.tree, entity, paragraph, bounds);
 
             redraw_entities.push(entity);
         }
     }
+
     for entity in redraw_entities {
         cx.needs_redraw(entity);
     }
+
     cx.style.text_layout.clear();
 }
 
