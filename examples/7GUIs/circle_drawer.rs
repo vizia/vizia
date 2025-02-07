@@ -1,6 +1,11 @@
+#![allow(dead_code)]
 use vizia::prelude::*;
 use vizia::vg::{Paint, PaintStyle, Path, Point};
-use vizia_winit::application::{Application, ApplicationError};
+
+#[cfg(feature = "baseview")]
+fn main() {
+    panic!("This example is not supported on baseview");
+}
 
 const STYLE: &str = r#"
 
@@ -291,6 +296,7 @@ impl CircleDrawer {
                 }
             });
 
+            #[cfg(not(feature = "baseview"))]
             Binding::new(cx, CircleDrawerData::dialog_open, |cx, is_open| {
                 if is_open.get(cx) {
                     Window::popup(cx, true, |cx| {
@@ -363,6 +369,7 @@ impl View for CircleDrawer {
     }
 }
 
+#[cfg(not(feature = "baseview"))]
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx: &mut Context| {
         CircleDrawer::new(cx);
