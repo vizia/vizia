@@ -99,7 +99,12 @@ pub(crate) fn transform_system(cx: &mut Context) {
                 })
                 .unwrap_or(bounds);
 
-            let root_bounds = BoundingBox::from_min_max(-f32::MAX, -f32::MAX, f32::MAX, f32::MAX);
+            let root_bounds = BoundingBox::from_min_max(
+                -f32::MAX / 2.0,
+                -f32::MAX / 2.0,
+                f32::MAX / 2.0,
+                f32::MAX / 2.0,
+            );
 
             let clip_bounds = match (overflowx, overflowy) {
                 (Overflow::Visible, Overflow::Visible) => root_bounds,
