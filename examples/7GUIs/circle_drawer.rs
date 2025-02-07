@@ -3,18 +3,10 @@ use vizia::vg::{Paint, PaintStyle, Path, Point};
 use vizia_winit::application::{Application, ApplicationError};
 
 const STYLE: &str = r#"
-    :root {
-        child-space: 10px;
-    }
-
-    .header {
-        left: 1s;
-        right: 1s;
-        col-between: 5px;
-    }
 
     circle-drawer {
-        row-between: 10px;
+        padding: 12px;
+        gap: 12px;
     }
 
     circle-drawer-canvas {
@@ -22,23 +14,9 @@ const STYLE: &str = r#"
         border-width: 2px;
     }
 
-    .dialog-box {
-        child-space: 1s;
-        width: 460px;
-        height: 100px;
-        space: 1s;
-        background-color: rgba(255, 255, 255, 0.7);
-        border: 1px black;
-        border-radius: 10%;
-    }
-
-    .dialog-box vstack {
-        child-space: 1s;
-        row-between: 15px;
-    }
-
-    .dialog-box vstack slider {
-        width: 400px;
+    popup {
+        min-width: 0px;
+        border-width: 0px;
     }
 "#;
 
@@ -231,7 +209,7 @@ struct CircleDrawerCanvas;
 impl CircleDrawerCanvas {
     fn new(cx: &mut Context, lens: impl Lens<Target = CircleData>) -> Handle<Self> {
         Self {}
-            .build(cx, |cx| {})
+            .build(cx, |_| {})
             .bind(lens, |mut handle, _| handle.needs_redraw())
             .overflow(Overflow::Hidden)
     }
@@ -270,7 +248,7 @@ impl View for CircleDrawerCanvas {
 
         let circle_data = CircleDrawerData::circles_data.get(cx);
         for (idx, Circle { x, y, r }) in circle_data.circles.iter().copied().enumerate() {
-            let mut path = Path::circle(
+            let path = Path::circle(
                 Point::new(cx.logical_to_physical(x), cx.logical_to_physical(y)),
                 r,
                 None,
@@ -307,7 +285,6 @@ impl CircleDrawer {
                     })
                     .left(CircleDrawerData::menu_posx)
                     .top(CircleDrawerData::menu_posy)
-                    .max_width(Auto)
                     .size(Auto)
                     .on_blur(|cx| cx.emit(CircleDrawerEvent::ToggleRightMenu))
                     .lock_focus_to_within();
@@ -316,7 +293,7 @@ impl CircleDrawer {
 
             Binding::new(cx, CircleDrawerData::dialog_open, |cx, is_open| {
                 if is_open.get(cx) {
-                    Popup::new(cx, |cx| {
+                    Window::popup(cx, true, |cx| {
                         let selected = CircleDrawerData::circles_data
                             .then(CircleData::selected)
                             .get(cx)
@@ -344,18 +321,17 @@ impl CircleDrawer {
                                     .map(|c| c.r),
                             )
                             .range(4.0..150.0)
-                            .on_change(|cx, value| cx.emit(CircleDrawerEvent::ChangeRadius(value)));
+                            .on_change(|cx, value| cx.emit(CircleDrawerEvent::ChangeRadius(value)))
+                            .width(Percentage(80.0));
                         })
-                        .size(Auto);
+                        .alignment(Alignment::TopCenter)
+                        .gap(Pixels(12.0))
+                        .padding(Pixels(12.0));
                     })
-                    .class("dialog-box")
-                    .on_blur(|cx| cx.emit(CircleDrawerEvent::ToggleDialog))
-                    .top(Stretch(1.0))
-                    .alignment(Alignment::Center)
-                    .bottom(Stretch(0.01))
-                    .max_width(Auto)
-                    .left(Stretch(1.0))
-                    .right(Stretch(1.0));
+                    .title("Adjust diameter..")
+                    .inner_size((300, 50))
+                    .position((500, 100))
+                    .on_close(|cx| cx.emit(CircleDrawerEvent::ToggleDialog));
                 }
             });
 
@@ -372,11 +348,9 @@ impl CircleDrawer {
                     )
                     .on_press(|cx| cx.emit(CircleDrawerEvent::Redo));
             })
-            .class("header")
             .alignment(Alignment::Center)
-            .bottom(Percentage(95.0))
-            .max_height(Auto)
-            .height(Percentage(5.0));
+            .gap(Pixels(12.0))
+            .height(Auto);
 
             CircleDrawerCanvas::new(cx, CircleDrawerData::circles_data);
         })
