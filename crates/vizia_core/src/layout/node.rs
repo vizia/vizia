@@ -392,4 +392,42 @@ impl Node for Entity {
             t => t,
         })
     }
+
+    fn grid_columns(&self, store: &Self::Store) -> Option<Vec<Units>> {
+        store.grid_columns.get(*self).cloned().map(|cols| {
+            cols.into_iter()
+                .map(|col| match col {
+                    Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
+                    t => t,
+                })
+                .collect()
+        })
+    }
+
+    fn grid_rows(&self, store: &Self::Store) -> Option<Vec<Units>> {
+        store.grid_rows.get(*self).cloned().map(|rows| {
+            rows.into_iter()
+                .map(|row| match row {
+                    Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
+                    t => t,
+                })
+                .collect()
+        })
+    }
+
+    fn column_start(&self, store: &Self::Store) -> Option<usize> {
+        store.column_start.get(*self).copied()
+    }
+
+    fn column_span(&self, store: &Self::Store) -> Option<usize> {
+        store.column_span.get(*self).copied()
+    }
+
+    fn row_start(&self, store: &Self::Store) -> Option<usize> {
+        store.row_start.get(*self).copied()
+    }
+
+    fn row_span(&self, store: &Self::Store) -> Option<usize> {
+        store.row_span.get(*self).copied()
+    }
 }

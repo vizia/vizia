@@ -347,3 +347,7 @@ path = "examples/views/svg.rs"
 [[example]]
 name = "debug"
 path = "examples/debug.rs"
+
+[[example]]
+name = "grid"
+path = "examples/grid.rs"

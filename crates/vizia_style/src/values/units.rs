@@ -1,4 +1,7 @@
-use crate::{macros::impl_parse, AutoKeyword, LengthPixels, Parse, Percentage, Stretch};
+use crate::{
+    macros::impl_parse, AutoKeyword, CustomParseError, LengthPixels, Parse, Percentage, Stretch,
+};
+use cssparser::*;
 pub use morphorm::Units;
 
 impl_parse! {
@@ -9,6 +12,17 @@ impl_parse! {
         Stretch,
         Percentage,
         LengthPixels,
+    }
+}
+
+impl<'i> Parse<'i> for Vec<Units> {
+    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+        let mut values = Vec::default();
+        while let Ok(val) = input.try_parse(Units::parse) {
+            values.push(val);
+        }
+
+        Ok(values)
     }
 }
 

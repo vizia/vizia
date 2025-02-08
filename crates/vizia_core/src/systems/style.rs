@@ -354,6 +354,33 @@ fn link_style_data(
         should_redraw = true;
     }
 
+    // Grid
+    if style.grid_columns.link(entity, matched_rules) {
+        should_relayout = true;
+    }
+
+    if style.grid_rows.link(entity, matched_rules) {
+        should_relayout = true;
+    }
+
+    if style.column_start.link(entity, matched_rules) {
+        should_relayout = true;
+    }
+
+    if style.column_span.link(entity, matched_rules) {
+        should_relayout = true;
+    }
+
+    if style.row_start.link(entity, matched_rules) {
+        should_relayout = true;
+    }
+
+    if style.row_span.link(entity, matched_rules) {
+        should_relayout = true;
+    }
+
+    // Position
+
     if style.left.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
