@@ -422,6 +422,80 @@ pub trait LayoutModifiers: internal::Modifiable {
 
         self
     }
+
+    modifier!(
+        /// Sets the grid columns for a grid layout.
+        grid_columns,
+        Vec<Units>,
+        SystemFlags::RELAYOUT
+    );
+
+    modifier!(
+        /// Sets the grid rows for a grid layout.
+        grid_rows,
+        Vec<Units>,
+        SystemFlags::RELAYOUT
+    );
+
+    fn column_start(mut self, value: impl Res<usize>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            value.set_or_bind(cx, entity, move |cx, v| {
+                let value = v.get(cx);
+                cx.style.column_start.insert(cx.current, value);
+
+                cx.needs_relayout();
+            });
+        });
+
+        self
+    }
+
+    fn column_span(mut self, value: impl Res<usize>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            value.set_or_bind(cx, entity, move |cx, v| {
+                let value = v.get(cx);
+                cx.style.column_span.insert(cx.current, value);
+
+                cx.needs_relayout();
+            });
+        });
+
+        self
+    }
+
+    fn row_start(mut self, value: impl Res<usize>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            value.set_or_bind(cx, entity, move |cx, v| {
+                let value = v.get(cx);
+                cx.style.row_start.insert(cx.current, value);
+
+                cx.needs_relayout();
+            });
+        });
+
+        self
+    }
+
+    fn row_span(mut self, value: impl Res<usize>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            value.set_or_bind(cx, entity, move |cx, v| {
+                let value = v.get(cx);
+                cx.style.row_span.insert(cx.current, value);
+
+                cx.needs_relayout();
+            });
+        });
+
+        self
+    }
 }
 
 impl<V: View> LayoutModifiers for Handle<'_, V> {}

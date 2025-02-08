@@ -349,6 +349,15 @@ pub struct Style {
 
     pub(crate) alignment: StyleSet<Alignment>,
 
+    // Grid
+    pub(crate) grid_columns: StyleSet<Vec<Units>>,
+    pub(crate) grid_rows: StyleSet<Vec<Units>>,
+
+    pub(crate) column_start: StyleSet<usize>,
+    pub(crate) column_span: StyleSet<usize>,
+    pub(crate) row_start: StyleSet<usize>,
+    pub(crate) row_span: StyleSet<usize>,
+
     // Spacing
     pub(crate) left: AnimatableSet<Units>,
     pub(crate) right: AnimatableSet<Units>,
@@ -1257,6 +1266,31 @@ impl Style {
                 self.alignment.insert_rule(rule_id, alignment);
             }
 
+            // Grid
+            Property::GridColumns(columns) => {
+                self.grid_columns.insert_rule(rule_id, columns);
+            }
+
+            Property::GridRows(rows) => {
+                self.grid_rows.insert_rule(rule_id, rows);
+            }
+
+            Property::ColumnStart(start) => {
+                self.column_start.insert_rule(rule_id, start);
+            }
+
+            Property::ColumnSpan(span) => {
+                self.column_span.insert_rule(rule_id, span);
+            }
+
+            Property::RowStart(start) => {
+                self.row_start.insert_rule(rule_id, start);
+            }
+
+            Property::RowSpan(span) => {
+                self.row_span.insert_rule(rule_id, span);
+            }
+
             // Space
             Property::Space(space) => {
                 self.left.insert_rule(rule_id, space);
@@ -1812,6 +1846,14 @@ impl Style {
 
         self.alignment.remove(entity);
 
+        // Grid
+        self.grid_columns.remove(entity);
+        self.grid_rows.remove(entity);
+        self.column_start.remove(entity);
+        self.column_span.remove(entity);
+        self.row_start.remove(entity);
+        self.row_span.remove(entity);
+
         // Space
         self.left.remove(entity);
         self.right.remove(entity);
@@ -1947,6 +1989,12 @@ impl Style {
         self.layout_type.clear_rules();
         self.position_type.clear_rules();
         self.alignment.clear_rules();
+
+        // Grid
+        self.grid_columns.clear_rules();
+        self.grid_rows.clear_rules();
+        self.column_start.clear_rules();
+        self.column_span.clear_rules();
 
         // Space
         self.left.clear_rules();

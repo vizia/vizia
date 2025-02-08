@@ -28,6 +28,14 @@ define_property! {
 
         "alignment": Alignment(Alignment),
 
+        // Grid
+        "grid-columns": GridColumns(Vec<Units>),
+        "grid-rows": GridRows(Vec<Units>),
+        "column-start": ColumnStart(usize),
+        "column-span": ColumnSpan(usize),
+        "row-start": RowStart(usize),
+        "row-span": RowSpan(usize),
+
         // Position and Size
         "space": Space(Units),
         "left": Left(Units),

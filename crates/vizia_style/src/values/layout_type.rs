@@ -8,7 +8,7 @@ impl_parse! {
         ident {
             "row" => LayoutType::Row,
             "column" => LayoutType::Column,
-            // "grid" => LayoutType::Grid,
+            "grid" => LayoutType::Grid,
         }
     }
 }
