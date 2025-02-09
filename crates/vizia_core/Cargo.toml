@@ -24,7 +24,7 @@ vizia_style.workspace = true
 accesskit = "0.18"
 
 skia-safe = { version = "0.84", features = ["gl", "textlayout", "svg"] }
-morphorm = "0.7.0"
+morphorm = {git = "https://github.com/vizia/morphorm", branch = "absolute_auto"}
 bitflags = "2.8"
 fluent-bundle = "0.15"
 fluent-langneg = "0.13"

@@ -28,6 +28,8 @@ pub enum ListEvent {
     FocusPrev,
     /// Deselects all items from the list
     ClearSelection,
+
+    Scroll(f32, f32),
 }
 
 /// A view for creating a list of items from a binding to an iteratable list.
@@ -41,6 +43,15 @@ pub struct List {
     selection_follows_focus: bool,
     horizontal: bool,
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
+    /// Callback called when the scrollview is scrolled.
+    #[lens(ignore)]
+    on_scroll: Option<Box<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>>,
+    scroll_x: f32,
+    scroll_y: f32,
+    /// Whether the horizontal scrollbar should be visible.
+    pub show_horizontal_scrollbar: bool,
+    /// Whether the vertical scrollbar should be visible.
+    pub show_vertical_scrollbar: bool,
 }
 
 impl List {
@@ -107,6 +118,11 @@ impl List {
             selection_follows_focus: false,
             horizontal: false,
             on_select: None,
+            on_scroll: None,
+            scroll_x: 0.0,
+            scroll_y: 0.0,
+            show_horizontal_scrollbar: true,
+            show_vertical_scrollbar: true,
         }
         .build(cx, move |cx| {
             Keymap::from(vec![
@@ -177,7 +193,12 @@ impl List {
                         });
                     }
                 });
-            });
+            })
+            .show_horizontal_scrollbar(Self::show_horizontal_scrollbar)
+            .show_vertical_scrollbar(Self::show_vertical_scrollbar)
+            .scroll_x(Self::scroll_x)
+            .scroll_y(Self::scroll_y)
+            .on_scroll(|cx, x, y| cx.emit(ListEvent::Scroll(x, y)));
         })
         .toggle_class("selectable", List::selectable.map(|s| *s != Selectable::None))
         .toggle_class("horizontal", List::horizontal)
@@ -274,6 +295,14 @@ impl View for List {
                     cx.emit(ListEvent::SelectFocused);
                 }
             }
+
+            ListEvent::Scroll(x, y) => {
+                self.scroll_x = x;
+                self.scroll_y = y;
+                if let Some(callback) = &self.on_scroll {
+                    (callback)(cx, x, y);
+                }
+            }
         })
     }
 }
@@ -325,6 +354,46 @@ impl Handle<'_, List> {
         self.bind(flag, |handle, horizontal| {
             let s = horizontal.get(&handle).into();
             handle.modify(|list: &mut List| list.horizontal = s);
+        })
+    }
+
+    /// Sets a callback which will be called when a scrollview is scrolled, either with the mouse wheel, touchpad, or using the scroll bars.
+    pub fn on_scroll(
+        self,
+        callback: impl Fn(&mut EventContext, f32, f32) + 'static + Send + Sync,
+    ) -> Self {
+        self.modify(|list: &mut List| list.on_scroll = Some(Box::new(callback)))
+    }
+
+    /// Set the horizontal scroll position of the [ScrollView]. Accepts a value or lens to an 'f32' between 0 and 1.
+    pub fn scroll_x(self, scrollx: impl Res<f32>) -> Self {
+        self.bind(scrollx, |handle, scrollx| {
+            let sx = scrollx.get(&handle);
+            handle.modify(|list| list.scroll_x = sx);
+        })
+    }
+
+    /// Set the vertical scroll position of the [ScrollView]. Accepts a value or lens to an 'f32' between 0 and 1.
+    pub fn scroll_y(self, scrollx: impl Res<f32>) -> Self {
+        self.bind(scrollx, |handle, scrolly| {
+            let sy = scrolly.get(&handle);
+            handle.modify(|list| list.scroll_y = sy);
+        })
+    }
+
+    /// Sets whether the horizontal scrollbar should be visible.
+    pub fn show_horizontal_scrollbar(self, flag: impl Res<bool>) -> Self {
+        self.bind(flag, |handle, show_scrollbar| {
+            let s = show_scrollbar.get(&handle);
+            handle.modify(|list| list.show_horizontal_scrollbar = s);
+        })
+    }
+
+    /// Sets whether the vertical scrollbar should be visible.
+    pub fn show_vertical_scrollbar(self, flag: impl Res<bool>) -> Self {
+        self.bind(flag, |handle, show_scrollbar| {
+            let s = show_scrollbar.get(&handle);
+            handle.modify(|list| list.show_vertical_scrollbar = s);
         })
     }
 }

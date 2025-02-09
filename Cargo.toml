@@ -29,6 +29,7 @@ vizia_baseview = { workspace = true, optional = true }
 chrono = "0.4"
 log = "0.4"
 fern = "0.7"
+fake = "3.1"
 
 [workspace]
 members = [ "crates/*", "examples/todo", "examples/widget_gallery", "examples/gallery"]
@@ -86,6 +87,10 @@ path = "examples/7GUIs/temperature_converter.rs"
 [[example]]
 name = "virtual_list"
 path = "examples/views/virtual_list.rs"
+
+[[example]]
+name = "virtual_table"
+path = "examples/views/virtual_table.rs"
 
 [[example]]
 name = "l10n"

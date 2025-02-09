@@ -12,7 +12,7 @@ cssparser = "0.35"
 cssparser-color = "0.3"
 skia-safe = { version = "0.84", features = ["gl", "textlayout", "svg"] }
 selectors = "0.27"
-morphorm = "0.7.0"
+morphorm = {git = "https://github.com/vizia/morphorm", branch = "absolute_auto"}
 bitflags = "2.8"
 precomputed-hash = "0.1"
 fxhash = "0.2"
