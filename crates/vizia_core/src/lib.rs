@@ -6,7 +6,7 @@
 // To allow enum names with the same prefix
 #![allow(clippy::enum_variant_names)]
 #![allow(clippy::only_used_in_recursion)]
-// #![warn(missing_docs)]
+#![warn(missing_docs)]
 
 extern crate self as vizia;
 

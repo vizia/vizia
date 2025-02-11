@@ -437,6 +437,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         SystemFlags::RELAYOUT
     );
 
+    /// Sets the grid column start for a grid layout.
     fn column_start(mut self, value: impl Res<usize>) -> Self {
         let entity = self.entity();
         let current = self.current();
@@ -452,6 +453,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets the grid column span for a grid layout.
     fn column_span(mut self, value: impl Res<usize>) -> Self {
         let entity = self.entity();
         let current = self.current();
@@ -467,6 +469,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets the grid row start for a grid layout.
     fn row_start(mut self, value: impl Res<usize>) -> Self {
         let entity = self.entity();
         let current = self.current();
@@ -482,6 +485,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets the grid row span for a grid layout.
     fn row_span(mut self, value: impl Res<usize>) -> Self {
         let entity = self.entity();
         let current = self.current();

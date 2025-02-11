@@ -499,6 +499,7 @@ impl DrawContext<'_> {
         self.style.background_size.get(self.current).cloned().unwrap_or_default()
     }
 
+    /// Returns a cached path if it exists, or constructs a path, for the current view.
     pub fn path(&mut self) -> Path {
         let border_width = self.border_width();
         if self.cache.path.get(self.current).is_none() {

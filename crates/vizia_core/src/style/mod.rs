@@ -29,8 +29,8 @@
 //! Rules defined in css can apply to many views but are overridden by inline properties on a view.
 //!
 //! ### Adding Stylesheets
-//! To add a css string to an application, use [`add_theme()`](crate::context::Context::add_theme()) on [`Context`].
-//! This can be used with the `include_str!()` macro to embed an external stylesheet file into the application binary when compiled.
+//! To add a css string to an application, use [`add_stylesheet()`](crate::context::Context::add_stylesheet()) on [`Context`].
+//! This can be used with the `include_style!()` macro to load an external stylesheet file in debug, or embed an external stylesheet file into the application binary when compiled in release.
 //! Alternatively a constant string literal can be used to embed the CSS in the application.
 //!
 //! ```

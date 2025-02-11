@@ -16,10 +16,14 @@ use super::{MapId, StoreId};
 /// The `view()` method takes a reference to the struct type as input and outputs a reference to the field.
 /// This provides a way to specify a binding to a specific field of some application data.
 pub trait Lens: 'static + Copy + Debug {
+    /// The type of the source data.
     type Source;
+    /// The type of the target data.
     type Target;
 
+    /// View the target data from the source.
     fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>>;
+    /// Get the store id of the lens.
     fn id(&self) -> StoreId {
         StoreId::Source(TypeId::of::<Self>())
     }
@@ -45,6 +49,7 @@ impl<T: Clone> Clone for LensValue<'_, T> {
 impl<T: Copy> Copy for LensValue<'_, T> {}
 
 impl<T: Clone> LensValue<'_, T> {
+    /// Convert the value to an owned value.
     pub fn into_owned(self) -> T {
         match self {
             LensValue::Borrowed(t) => t.clone(),
@@ -107,6 +112,7 @@ pub trait LensExt: Lens {
         Then::new(self, other)
     }
 
+    /// Used to construct a lens to some data contained within an array.
     fn idx<T>(self, index: usize) -> Index<Self, T>
     where
         T: 'static,
@@ -151,14 +157,17 @@ pub trait LensExt: Lens {
 // Implement LensExt for all types which implement Lens.
 impl<T: Lens> LensExt for T {}
 
-pub struct MapState<T, O> {
+/// The state of a map lens.
+pub(crate) struct MapState<T, O> {
     closure: Rc<dyn Fn(&T) -> O>,
 }
 
-pub struct MapRefState<T, O> {
+/// The state of a map ref lens.
+pub(crate) struct MapRefState<T, O> {
     closure: Rc<dyn Fn(&T) -> &O>,
 }
 
+/// A lens which maps a value to another value.
 pub struct Map<L: Lens, O> {
     id: MapId,
     lens: L,
@@ -198,6 +207,7 @@ impl<L: Lens, O: 'static> Debug for Map<L, O> {
     }
 }
 
+/// A lens which maps a reference value to another reference value.
 pub struct MapRef<L: Lens, O> {
     id: MapId,
     lens: L,
@@ -247,6 +257,7 @@ pub struct Then<A, B> {
 }
 
 impl<A, B> Then<A, B> {
+    /// Create a new `Then` lens.
     pub fn new(a: A, b: B) -> Self
     where
         A: Lens,
@@ -298,6 +309,7 @@ impl<A: Lens, B: Lens> Debug for Then<A, B> {
 
 impl<T: Copy, U: Copy> Copy for Then<T, U> {}
 
+/// A lens to a specific index of an array.
 pub struct Index<L, T> {
     lens: L,
     index: usize,
@@ -305,10 +317,12 @@ pub struct Index<L, T> {
 }
 
 impl<L, T> Index<L, T> {
+    /// Create a new `Index` lens.
     pub fn new(lens: L, index: usize) -> Self {
         Self { lens, index, pt: PhantomData }
     }
 
+    /// Get the index the lens.
     pub fn idx(&self) -> usize {
         self.index
     }
@@ -348,6 +362,7 @@ where
     }
 }
 
+/// A lens to static data.
 pub struct StaticLens<T: 'static> {
     data: &'static T,
 }
@@ -378,6 +393,7 @@ impl<T> Lens for StaticLens<T> {
 }
 
 impl<T> StaticLens<T> {
+    /// Create a new `StaticLens`.
     pub fn new(data: &'static T) -> Self {
         StaticLens { data }
     }

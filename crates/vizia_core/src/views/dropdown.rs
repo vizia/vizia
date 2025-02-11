@@ -119,10 +119,15 @@ use crate::prelude::*;
 /// ```
 #[derive(Lens)]
 pub struct Dropdown {
+    /// Whether the dropdown is open.
     pub is_open: PopupData,
+    /// The placement of the dropdown popup.
     pub placement: Placement,
+    /// Whether the dropdown popup should show an arrow.
     pub show_arrow: bool,
+    /// The size of the arrow.
     pub arrow_size: Length,
+    /// Whether the dropdown popup should reposition to always be visible.
     pub should_reposition: bool,
 }
 

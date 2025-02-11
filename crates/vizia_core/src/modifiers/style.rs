@@ -429,6 +429,8 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     // Border Properties
+
+    /// Sets the border width of the view.
     fn border_width<U: Into<LengthOrPercentage>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();

@@ -327,6 +327,7 @@ impl View for ArcTrack {
 }
 
 impl Handle<'_, ArcTrack> {
+    /// Sets the value of the knob.
     pub fn value<L: Lens<Target = f32>>(self, lens: L) -> Self {
         let entity = self.entity;
         Binding::new(self.cx, lens, move |cx, value| {
@@ -343,10 +344,13 @@ impl Handle<'_, ArcTrack> {
     }
 }
 
+/// The mode of the knob.
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub enum KnobMode {
+    /// The knob is discrete and has a number of steps.
     Discrete(usize),
     #[default]
+    /// The knob is continuous.
     Continuous,
 }
 
@@ -543,6 +547,7 @@ impl View for TickKnob {
 }
 
 impl Handle<'_, TickKnob> {
+    /// Sets the value of the knob.
     pub fn value<L: Lens<Target = f32>>(self, lens: L) -> Self {
         let entity = self.entity;
         Binding::new(self.cx, lens, move |cx, value| {
