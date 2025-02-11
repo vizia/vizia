@@ -1,7 +1,114 @@
-use crate::prelude::*;
+use morphorm::Node;
+
+use crate::{layout::node::SubLayout, prelude::*};
+
+macro_rules! process_auto_animations {
+    ($cx:expr, $property:expr, $height:expr) => {
+        if let Some(animations) = $property.get_active_animations() {
+            let mut entities = vec![];
+
+            for animation in animations {
+                if animation.keyframes.iter().any(|keyframe| keyframe.value == Units::Auto) {
+                    for entity in animation.entities.iter() {
+                        entities.push((*entity, animation.clone()));
+                    }
+                }
+            }
+
+            for (entity, mut animation) in entities {
+                $property.stop_animation(entity, animation.id);
+                $property.insert(entity, Units::Auto);
+
+                let size = entity.layout(
+                    &mut $cx.cache,
+                    &$cx.tree,
+                    &$cx.style,
+                    &mut SubLayout {
+                        text_context: &mut $cx.text_context,
+                        resource_manager: &$cx.resource_manager,
+                    },
+                );
+
+                $property.remove(entity);
+                animation.keyframes.iter_mut().for_each(|keyframe| {
+                    if keyframe.value == Units::Auto {
+                        let parent = $cx.tree.get_parent(entity).unwrap_or(Entity::root());
+                        let parent_layout_type =
+                            $cx.style.layout_type.get(parent).copied().unwrap_or_default();
+                        let value = if (parent_layout_type == LayoutType::Row) == $height {
+                            size.cross
+                        } else {
+                            size.main
+                        };
+                        keyframe.value = Units::Pixels(value);
+                    }
+                });
+
+                let id = $cx.style.animation_manager.create();
+                $property.insert_animation(id, animation.clone());
+                $property.play_animation(
+                    entity,
+                    id,
+                    animation.start_time,
+                    animation.duration,
+                    animation.delay,
+                );
+            }
+        }
+    };
+}
 
 pub(crate) fn animation_system(cx: &mut Context) -> bool {
     cx.style.play_pending_animations();
+
+    process_auto_animations!(cx, cx.style.max_height, true);
+    process_auto_animations!(cx, cx.style.max_width, false);
+    process_auto_animations!(cx, cx.style.height, true);
+    process_auto_animations!(cx, cx.style.width, false);
+
+    // if let Some(animations) = cx.style.max_height.get_active_animations() {
+    //     let mut entities = vec![];
+
+    //     for animation in animations {
+    //         if animation.keyframes.iter().any(|keyframe| keyframe.value == Units::Auto) {
+    //             for entity in animation.entities.iter() {
+    //                 entities.push((*entity, animation.clone()));
+    //             }
+    //         }
+    //     }
+
+    //     for (entity, mut animation) in entities {
+    //         cx.style.max_height.stop_animation(entity, animation.id);
+    //         cx.style.max_height.insert(entity, Units::Auto);
+
+    //         let size = entity.layout(
+    //             &mut cx.cache,
+    //             &cx.tree,
+    //             &cx.style,
+    //             &mut SubLayout {
+    //                 text_context: &mut cx.text_context,
+    //                 resource_manager: &cx.resource_manager,
+    //             },
+    //         );
+
+    //         cx.style.max_height.remove(entity);
+    //         animation.keyframes.iter_mut().for_each(|keyframe| {
+    //             if keyframe.value == Units::Auto {
+    //                 keyframe.value = Units::Pixels(size.main);
+    //             }
+    //         });
+
+    //         let id = cx.style.animation_manager.create();
+    //         cx.style.max_height.insert_animation(id, animation.clone());
+    //         cx.style.max_height.play_animation(
+    //             entity,
+    //             id,
+    //             animation.start_time,
+    //             animation.duration,
+    //             animation.delay,
+    //         );
+    //     }
+    // }
 
     // Tick all animations
 

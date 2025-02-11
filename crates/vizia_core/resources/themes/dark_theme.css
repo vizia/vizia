@@ -1004,3 +1004,12 @@ xypad .thumb {
 xypad:disabled {
     background-color: #323232;
 }
+
+collapsible {
+    background-color: #404040;
+    shadow: 0px 2px 2px #00000038;
+}
+
+collapsible > .header > .expand-icon {
+    fill: #979797;
+}

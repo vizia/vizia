@@ -1,7 +1,7 @@
 /* GENERAL */
 
 :root {
-    background-color: #ffffff;
+    background-color: rgb(238, 238, 238);
     color: #181818;
     font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",
         "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji",
@@ -1091,4 +1091,13 @@ xypad {
 
 xypad .thumb {
     border-color: #000000ff;
+}
+
+collapsible {
+    background-color: white;
+    shadow: 0px 2px 2px #4f4f4f38;
+}
+
+collapsible > .header > .expand-icon {
+    fill: #979797;
 }
