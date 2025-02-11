@@ -177,6 +177,7 @@ where
         }
     }
 
+    /// Inherit inline data from a parent entity.
     pub fn inherit_inline(&mut self, entity: Entity, parent: Entity) -> bool {
         let entity_index = entity.index();
         let parent_index = parent.index();
@@ -224,6 +225,7 @@ where
         false
     }
 
+    /// Inherit shared data from a parent entity.
     pub fn inherit_shared(&mut self, entity: Entity, parent: Entity) -> bool {
         let entity_index = entity.index();
         let parent_index = parent.index();
@@ -307,6 +309,7 @@ where
         }
     }
 
+    /// Play an animation for a given entity.
     pub(crate) fn play_animation(
         &mut self,
         entity: Entity,
@@ -364,6 +367,7 @@ where
             // Safe to unwrap because already checked that the animation exists
             let mut anim_state = self.animations.get(animation).cloned().unwrap();
             anim_state.duration = duration;
+            anim_state.id = animation;
             anim_state.delay = delay;
             anim_state.dt = delay.as_secs_f32() / duration.as_secs_f32();
             anim_state.output = Some(
@@ -383,6 +387,26 @@ where
         }
     }
 
+    /// Stop an animation for a given entity.
+    pub(crate) fn stop_animation(&mut self, entity: Entity, animation: Animation) {
+        let entity_index = entity.index();
+
+        if entity_index < self.inline_data.sparse.len() {
+            let active_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
+            if active_anim_index < self.active_animations.len() {
+                let anim_state = &mut self.active_animations[active_anim_index];
+                if anim_state.id == animation {
+                    println!("Stopping animation: {:?}", animation);
+                    // anim_state.active = false;
+                    // anim_state.t = 1.0;
+                    anim_state.entities.remove(&entity);
+                }
+            }
+            self.inline_data.sparse[entity_index].anim_index = u32::MAX;
+        }
+    }
+
+    /// Tick the animation for the given time and return a list of entities which have been animated.
     pub fn tick(&mut self, time: Instant) -> Vec<Entity> {
         self.remove_innactive_animations();
 
@@ -443,6 +467,7 @@ where
     //     false
     // }
 
+    /// Remove any inactive animations from the active animations list.
     pub fn remove_innactive_animations(&mut self) {
         // Create a list of finished animations
         let inactive: Vec<AnimationState<T>> = self
@@ -469,6 +494,7 @@ where
         }
     }
 
+    /// Returns true if there are any active animations.
     pub fn has_animations(&self) -> bool {
         for state in self.active_animations.iter() {
             if state.t < 1.0 {
@@ -479,6 +505,7 @@ where
         false
     }
 
+    /// Returns true if the given entity is linked to an active animation.
     pub fn has_active_animation(&self, entity: Entity, animation: Animation) -> bool {
         let entity_index = entity.index();
         if entity_index < self.inline_data.sparse.len() {
@@ -548,6 +575,11 @@ where
         }
 
         None
+    }
+
+    /// Returns a reference to the active animations.
+    pub(crate) fn get_active_animations(&mut self) -> Option<&Vec<AnimationState<T>>> {
+        Some(&self.active_animations)
     }
 
     /// Get the animated, inline, or shared data value from the storage.
@@ -707,6 +739,7 @@ where
         false
     }
 
+    /// Clear all rules and animations from the storage.
     pub fn clear_rules(&mut self) {
         // Remove transitions
         for index in self.shared_data.sparse.iter() {

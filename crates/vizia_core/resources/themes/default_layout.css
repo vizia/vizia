@@ -849,3 +849,52 @@ xypad .thumb {
     size: 10px;
     alignment: center;
 }
+
+collapsible {
+    height: auto;
+}
+
+collapsible > .header {
+    gap: 1s;
+    min-gap: 16px;
+    height: 48px;
+    alignment: left;
+    padding-left: 24px;
+    padding-right: 24px;
+    transition: height 300ms;
+}
+
+collapsible.open > .header {
+    height: 64px;
+    transition: height 300ms;
+}
+
+collapsible > .header > .expand-icon {
+    size: 20px;
+    rotate: 0deg;
+    transition: rotate 300ms;
+}
+
+collapsible.open > .header > .expand-icon {
+    rotate: 180deg;
+    transition: rotate 300ms;
+}
+
+collapsible .content {
+    height: auto;
+    max-height: 0px;
+    overflow: hidden;
+    transition: max-height 300ms;
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-top: 0px;
+    padding-bottom: 16px;
+    gap: 16px;
+}
+
+collapsible.open .content {
+    width: 1s;
+    height: auto;
+    max-height: auto;
+    transition: max-height 300ms;
+}

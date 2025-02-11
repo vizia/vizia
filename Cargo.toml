@@ -351,3 +351,7 @@ path = "examples/debug.rs"
 [[example]]
 name = "grid"
 path = "examples/grid.rs"
+
+[[example]]
+name = "collapsible"
+path = "examples/views/collapsible.rs"

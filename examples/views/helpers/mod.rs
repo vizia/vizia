@@ -8,10 +8,9 @@ pub const CENTER_LAYOUT: &str = r#"
     .container {
         width: 1s;
         height: 1s;
-        alignment: center;
-        horizontal-gap: 20px;
-        vertical-gap: 20px;
-        padding: 100px;
+        padding: 20px;
+        gap: 20px;
+        alignment: top-center;
     }
 "#;
 
@@ -87,8 +86,7 @@ impl ExamplePage {
             .width(Stretch(1.0))
             .padding(Pixels(10.0))
             .alignment(Alignment::Right)
-            .horizontal_gap(Pixels(20.0))
-            .background_color(Color::rosybrown());
+            .horizontal_gap(Pixels(20.0));
 
             VStack::new(cx, |cx| {
                 (content)(cx);
