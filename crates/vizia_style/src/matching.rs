@@ -206,7 +206,7 @@ mod test {
                     crate::PseudoClass::Disabled => todo!(),
                     crate::PseudoClass::ReadOnly => todo!(),
                     crate::PseudoClass::ReadWrite => todo!(),
-                    crate::PseudoClass::PlaceHolderShown => todo!(),
+                    crate::PseudoClass::PlaceholderShown => todo!(),
                     crate::PseudoClass::Default => todo!(),
                     crate::PseudoClass::Checked => todo!(),
                     crate::PseudoClass::Indeterminate => todo!(),

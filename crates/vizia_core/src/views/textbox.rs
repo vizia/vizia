@@ -72,6 +72,7 @@ pub struct Textbox<L: Lens> {
     on_cancel: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
     validate: Option<Box<dyn Fn(&L::Target) -> bool>>,
     placeholder: String,
+    show_placeholder: bool,
     show_caret: bool,
     caret_timer: Timer,
     selection: Selection,
@@ -157,6 +158,7 @@ where
             on_cancel: None,
             validate: None,
             placeholder: String::from(""),
+            show_placeholder: true,
             show_caret: true,
             caret_timer,
             selection: Selection::new(0, 0),
@@ -174,23 +176,6 @@ where
                     _ => {}
                 });
             });
-
-            Binding::new(cx, Self::placeholder, move |cx, placeholder| {
-                let placeholder_string = placeholder.get(cx);
-                if !placeholder_string.is_empty() {
-                    Label::new(cx, &placeholder_string)
-                        .size(Stretch(1.0))
-                        .space(Pixels(0.0))
-                        .hoverable(false)
-                        .position_type(PositionType::Absolute)
-                        .hidden(true)
-                        .class("placeholder")
-                        .bind(lens, |handle, lens| {
-                            let flag = lens.get(&handle).to_string_local(handle.cx).is_empty();
-                            handle.display(flag);
-                        });
-                }
-            });
         })
         .toggle_class("multiline", kind == TextboxKind::MultiLineWrapped)
         .text_wrap(kind == TextboxKind::MultiLineWrapped)
@@ -199,12 +184,26 @@ where
         .text_value(lens)
         .toggle_class("caret", Self::show_caret)
         .text(lens)
+        .placeholder_shown(Self::show_placeholder)
+        .bind(lens, |handle, lens| {
+            let flag = lens.get(&handle).to_string_local(handle.cx).is_empty();
+            handle.modify(|textbox| textbox.show_placeholder = flag).bind(
+                Self::placeholder,
+                move |handle, placeholder| {
+                    let value = placeholder.get(&handle).to_string_local(handle.cx);
+                    if flag {
+                        handle.text(value);
+                    }
+                },
+            );
+        })
     }
 
     fn insert_text(&mut self, cx: &mut EventContext, txt: &str) {
         if let Some(text) = cx.style.text.get_mut(cx.current) {
             text.edit(self.selection.range(), txt);
             self.selection = Selection::caret(self.selection.min() + txt.len());
+            self.show_placeholder = text.is_empty();
             cx.style.needs_text_update(cx.current);
         }
     }
@@ -212,6 +211,9 @@ where
     fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
         if self.selection.is_caret() {
             if movement == Movement::Grapheme(Direction::Upstream) {
+                if self.selection.active == 0 {
+                    return;
+                }
                 if let Some(text) = cx.style.text.get_mut(cx.current) {
                     let del_offset = offset_for_delete_backwards(&self.selection, text);
                     let del_range = del_offset..self.selection.active;
@@ -238,6 +240,22 @@ where
 
             text.edit(del_range, "");
 
+            cx.style.needs_text_update(cx.current);
+        }
+        if let Some(text) = cx.style.text.get_mut(cx.current) {
+            self.show_placeholder = text.is_empty();
+            if self.show_placeholder {
+                *text = self.placeholder.clone();
+                self.selection = Selection::caret(0);
+            }
+        }
+    }
+
+    fn reset_text(&mut self, cx: &mut EventContext) {
+        if let Some(text) = cx.style.text.get_mut(cx.current) {
+            text.clear();
+            self.selection = Selection::caret(0);
+            self.show_placeholder = true;
             cx.style.needs_text_update(cx.current);
         }
     }
@@ -1074,6 +1092,10 @@ where
         // Textbox Events
         event.map(|text_event, _| match text_event {
             TextEvent::InsertText(text) => {
+                if self.show_placeholder {
+                    self.reset_text(cx);
+                }
+
                 self.insert_text(cx, text);
 
                 let text = self.clone_text(cx);
@@ -1125,7 +1147,7 @@ where
             }
 
             TextEvent::MoveCursor(movement, selection) => {
-                if self.edit {
+                if self.edit && !self.show_placeholder {
                     self.move_cursor(cx, *movement, *selection);
                 }
             }
@@ -1143,7 +1165,12 @@ where
                     let text = self.lens.get(cx);
                     let text = text.to_string_local(cx);
 
-                    self.select_all(cx);
+                    if text.is_empty() {
+                        self.show_placeholder = true;
+                        self.selection = Selection::caret(0);
+                    } else {
+                        self.select_all(cx);
+                    }
 
                     if let Ok(value) = &text.parse::<L::Target>() {
                         if let Some(validate) = &self.validate {
@@ -1178,6 +1205,14 @@ where
                 } else {
                     cx.set_valid(false);
                 }
+                self.show_placeholder = text.is_empty();
+                if self.show_placeholder {
+                    cx.style.text.insert(cx.current, self.placeholder.clone());
+                } else {
+                    cx.style.text.insert(cx.current, text);
+                }
+
+                cx.style.needs_text_update(cx.current);
             }
 
             TextEvent::Blur => {
@@ -1214,11 +1249,15 @@ where
             }
 
             TextEvent::Hit(posx, posy, selection) => {
-                self.hit(cx, *posx, *posy, *selection);
+                if !self.show_placeholder {
+                    self.hit(cx, *posx, *posy, *selection);
+                }
             }
 
             TextEvent::Drag(posx, posy) => {
-                self.drag(cx, *posx, *posy);
+                if !self.show_placeholder {
+                    self.drag(cx, *posx, *posy);
+                }
             }
 
             TextEvent::Scroll(_x, _y) => {

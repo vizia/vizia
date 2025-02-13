@@ -114,6 +114,7 @@ impl<'i> selectors::parser::Parser<'i> for SelectorParser<'_, 'i> {
             "optional" => Optional,
             "user-valid" => UserValid,
             "user-invalid" => UserInvalid,
+            "placeholder-shown" => PlaceholderShown,
 
             _ => Custom(name.to_string())
 

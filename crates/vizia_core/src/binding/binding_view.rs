@@ -156,6 +156,7 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
     fn update(&mut self, cx: &mut Context) {
         cx.remove_children(cx.current());
 
+        // Remove all maps that are associated with this binding.
         MAP_MANAGER.with_borrow_mut(|manager| {
             MAPS.with_borrow_mut(|maps| {
                 maps.retain(|id, (e, _)| {

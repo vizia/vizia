@@ -196,7 +196,7 @@ impl Element for Node<'_, '_> {
                 }
                 PseudoClass::ReadOnly => psudeo_class_flag.contains(PseudoClassFlags::READ_ONLY),
                 PseudoClass::ReadWrite => psudeo_class_flag.contains(PseudoClassFlags::READ_WRITE),
-                PseudoClass::PlaceHolderShown => {
+                PseudoClass::PlaceholderShown => {
                     psudeo_class_flag.contains(PseudoClassFlags::PLACEHOLDER_SHOWN)
                 }
                 PseudoClass::Default => psudeo_class_flag.contains(PseudoClassFlags::DEFAULT),
