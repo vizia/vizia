@@ -385,6 +385,7 @@ list list-item {
     min-width: auto;
     width: 1s;
     height: 30px;
+    min-height: auto;
     alignment: left;
 }
 

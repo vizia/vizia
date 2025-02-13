@@ -343,15 +343,11 @@ impl CircleDrawer {
 
             HStack::new(cx, |cx| {
                 Button::new(cx, |cx| Label::new(cx, "Undo"))
-                    .disabled(
-                        CircleDrawerData::undo_redo.then(UndoRedo::undo_list).map(|v| v.is_empty()),
-                    )
+                    .disabled(CircleDrawerData::undo_redo.map(|v| v.undo_list.is_empty()))
                     .on_press(|cx| cx.emit(CircleDrawerEvent::Undo));
 
                 Button::new(cx, |cx| Label::new(cx, "Redo"))
-                    .disabled(
-                        CircleDrawerData::undo_redo.then(UndoRedo::redo_list).map(|v| v.is_empty()),
-                    )
+                    .disabled(CircleDrawerData::undo_redo.map(|v| v.redo_list.is_empty()))
                     .on_press(|cx| cx.emit(CircleDrawerEvent::Redo));
             })
             .alignment(Alignment::Center)

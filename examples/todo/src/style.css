@@ -1,0 +1,88 @@
+:root {
+    alignment: top-center;
+    padding: 96px;
+}
+
+.todo-app {
+    height: auto;
+    min-width: auto;
+    shadow: 0px 2px 2px #3e3e3e1a;
+}
+
+.todo-header_title {
+    width: 1s;
+    font-size: 48;
+    font-weight: bold;
+    color: #842222;
+    alignment: center;
+    padding: 16px;
+}
+
+.todo-header_text {
+    width: 1s;
+    font-size: 24;
+    color: #464646;
+    height: 48px;
+    border-width: 0px;
+    corner-radius: 0px;
+    padding-left: 24px;
+}
+
+.todo-header_text:placeholder-shown {
+    color: #b3b3b3;
+}
+
+.todo-item {
+    height: 48px;
+    background-color: white;
+    alignment: left;
+    gap: 16px;
+    padding: 16px;
+}
+
+.todo-item .todo-item_button {
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.todo-item:hover .todo-item_button {
+    opacity: 1;
+    transition: opacity 0.3s;
+}
+
+.todo-item .todo-item_button:focus-visible {
+    opacity: 1;
+}
+
+.todo-item .todo-item_text {
+    width: 1s;
+    font-size: 16px;
+    color: black;
+    text-decoration: none;
+}
+
+.todo-item.done .todo-item_text {
+    text-decoration-line: line-through;
+}
+
+.todo-footer {
+    height: 48px;
+    min-width: auto;
+    background-color: white;
+    alignment: left;
+    gap: 1s;
+    min-gap: 16px;
+    padding: 16px;
+}
+
+.todo-footer_text {
+    width: 100px;
+}
+
+.todo-list {
+    height: auto;
+}
+
+.todo-list scrollview {
+    height: auto;
+}

@@ -196,6 +196,24 @@ pub trait StyleModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets whether the view is showing a placeholder.
+    fn placeholder_shown<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            state.set_or_bind(cx, entity, move |cx, val| {
+                let val = val.get(cx).into();
+                if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
+                    pseudo_classes.set(PseudoClassFlags::PLACEHOLDER_SHOWN, val);
+                }
+
+                cx.needs_restyle(cx.current);
+            });
+        });
+
+        self
+    }
+
     modifier!(
         /// Sets the view to be disabled.
         ///
