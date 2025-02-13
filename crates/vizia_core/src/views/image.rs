@@ -9,8 +9,11 @@ impl Image {
     /// Creates a new [Image] view.
     pub fn new<T: ToString>(cx: &mut Context, img: impl Res<T>) -> Handle<'_, Self> {
         // TODO: Make this reactive
-        let img = BackgroundImage::Url(Url { url: img.get(cx).to_string().into() });
-        Self {}.build(cx, |_| {}).background_image(img)
+
+        Self {}.build(cx, |_| {}).bind(img, |handle, img| {
+            let img = BackgroundImage::Url(Url { url: img.get(&handle).to_string().into() });
+            handle.background_image(img);
+        })
     }
 }
 

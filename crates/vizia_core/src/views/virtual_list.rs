@@ -166,6 +166,7 @@ impl VirtualList {
                             }
                         })
                     })
+                    .class("list-item")
                     .height(Pixels(num_items as f32 * item_height));
                 })
             })

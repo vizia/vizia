@@ -1,0 +1,12 @@
+[package]
+name = "gallery"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+vizia.workspace = true
+tokio = { version = "1.43.0", features = ["rt-multi-thread"] }
+bytes = "*"
+image = "*"
+serde = {version = "*", features = ["derive"]}
+reqwest = {version = "*", features = ["json"]}
