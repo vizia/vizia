@@ -1129,6 +1129,9 @@ impl DrawContext<'_> {
                                                 (image_width as f32, image_height as f32)
                                             };
 
+                                            let posx = bounds.width() - width;
+                                            let posy = bounds.height() - height;
+
                                             let matrix = Matrix::rect_to_rect(
                                                 Rect::new(
                                                     0.0,
@@ -1137,8 +1140,8 @@ impl DrawContext<'_> {
                                                     image.height() as f32,
                                                 ),
                                                 Rect::new(
-                                                    bounds.left(),
-                                                    bounds.top(),
+                                                    bounds.left() + posx,
+                                                    bounds.top() + posy,
                                                     bounds.left() + width,
                                                     bounds.top() + height,
                                                 ),

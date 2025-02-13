@@ -4,6 +4,7 @@ use std::collections::{BinaryHeap, VecDeque};
 use std::error::Error;
 use std::rc::Rc;
 
+use hashbrown::hash_map::Entry;
 use hashbrown::{HashMap, HashSet};
 use vizia_storage::{LayoutTreeIterator, TreeIterator};
 
@@ -11,7 +12,7 @@ use crate::animation::{AnimId, Interpolator};
 use crate::cache::CachedData;
 use crate::events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler};
 use crate::prelude::*;
-use crate::resource::ResourceManager;
+use crate::resource::{ImageOrSvg, ResourceManager, StoredImage};
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use vizia_input::MouseState;
 
@@ -457,6 +458,36 @@ impl<'a> EventContext<'a> {
             }
 
             self.models.insert(Entity::root(), models);
+        }
+    }
+
+    pub fn add_image_encoded(&mut self, path: &str, data: &[u8], policy: ImageRetentionPolicy) {
+        let id = if let Some(image_id) = self.resource_manager.image_ids.get(path) {
+            *image_id
+        } else {
+            let id = self.resource_manager.image_id_manager.create();
+            self.resource_manager.image_ids.insert(path.to_owned(), id);
+            id
+        };
+
+        if let Some(image) = skia_safe::Image::from_encoded(skia_safe::Data::new_copy(data)) {
+            match self.resource_manager.images.entry(id) {
+                Entry::Occupied(mut occ) => {
+                    occ.get_mut().image = ImageOrSvg::Image(image);
+                    occ.get_mut().dirty = true;
+                    occ.get_mut().retention_policy = policy;
+                }
+                Entry::Vacant(vac) => {
+                    vac.insert(StoredImage {
+                        image: ImageOrSvg::Image(image),
+                        retention_policy: policy,
+                        used: true,
+                        dirty: false,
+                        observers: HashSet::new(),
+                    });
+                }
+            }
+            self.style.needs_relayout();
         }
     }
 
