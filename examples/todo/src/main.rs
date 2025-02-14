@@ -113,7 +113,7 @@ fn main() -> Result<(), ApplicationError> {
                 .on_submit(|cx, title, blur| {
                     if blur {
                         cx.emit(TodoEvent::AddTodo(title));
-                        cx.emit(TextEvent::EndEdit);
+                        cx.emit(TextEvent::Clear);
                     }
                 });
             Divider::new(cx);

@@ -92,63 +92,6 @@ name = "l10n"
 path = "examples/l10n.rs"
 
 [[example]]
-name = "inline"
-path = "examples/style/inline.rs"
-
-[[example]]
-name = "outline"
-path = "examples/style/outline.rs"
-
-[[example]]
-name = "blend_mode"
-path = "examples/style/blend_mode.rs"
-
-[[example]]
-name = "transform"
-path = "examples/style/transform.rs"
-
-[[example]]
-name = "transform_origin"
-path = "examples/style/transform_origin.rs"
-
-[[example]]
-name = "gradient"
-path = "examples/style/gradient.rs"
-
-[[example]]
-name = "shadow"
-path = "examples/style/shadow.rs"
-
-[[example]]
-name = "text"
-path = "examples/style/text.rs"
-
-[[example]]
-name = "text_stroke"
-path = "examples/style/text_stroke.rs"
-
-[[example]]
-name = "filter"
-path = "examples/style/filter.rs"
-
-[[example]]
-name = "clipping"
-path = "examples/style/clipping.rs"
-
-[[example]]
-name = "transition"
-path = "examples/style/transition.rs"
-
-[[example]]
-name = "zorder"
-path = "examples/style/zorder.rs"
-
-[[example]]
-name = "background_size"
-path = "examples/style/background_size.rs"
-
-
-[[example]]
 name = "animation"
 path = "examples/animation.rs"
 
@@ -169,22 +112,12 @@ name = "number_input"
 path = "examples/number_input.rs"
 
 [[example]]
-name = "proxy"
-path = "examples/proxy.rs"
-
-[[example]]
-name = "text_layout"
-path = "examples/text_layout.rs"
-
-[[example]]
 name = "window_modifiers"
 path = "examples/window_modifiers.rs"
-
 
 [[example]]
 name = "datepicker"
 path = "examples/views/datepicker.rs"
-
 
 [[example]]
 name = "picklist"
@@ -225,10 +158,6 @@ path = "examples/views/checkbox.rs"
 [[example]]
 name = "dropdown"
 path = "examples/views/dropdown.rs"
-
-[[example]]
-name = "background_image"
-path = "examples/style/background_image.rs"
 
 [[example]]
 name = "knob"
@@ -315,10 +244,6 @@ name = "custom_view"
 path = "examples/custom_view.rs"
 
 [[example]]
-name = "lens_map"
-path = "examples/lens_map.rs"
-
-[[example]]
 name = "timers"
 path = "examples/timers.rs"
 
@@ -345,12 +270,8 @@ name = "svg"
 path = "examples/views/svg.rs"
 
 [[example]]
-name = "debug"
-path = "examples/debug.rs"
-
-[[example]]
 name = "grid"
-path = "examples/grid.rs"
+path = "examples/views/grid.rs"
 
 [[example]]
 name = "collapsible"
