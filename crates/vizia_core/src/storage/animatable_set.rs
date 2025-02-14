@@ -396,9 +396,6 @@ where
             if active_anim_index < self.active_animations.len() {
                 let anim_state = &mut self.active_animations[active_anim_index];
                 if anim_state.id == animation {
-                    println!("Stopping animation: {:?}", animation);
-                    // anim_state.active = false;
-                    // anim_state.t = 1.0;
                     anim_state.entities.remove(&entity);
                 }
             }

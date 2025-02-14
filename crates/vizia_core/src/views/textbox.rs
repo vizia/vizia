@@ -1128,7 +1128,7 @@ where
             }
 
             TextEvent::Clear => {
-                // self.reset_text(cx);
+                self.reset_text(cx);
                 // self.scroll(cx, 0.0, 0.0); // ensure_visible
                 cx.needs_relayout();
                 cx.needs_redraw();

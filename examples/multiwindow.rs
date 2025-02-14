@@ -62,7 +62,8 @@ fn main() -> Result<(), ApplicationError> {
                 })
                 .title("Set color...")
                 .inner_size((400, 200))
-                .position((500, 100));
+                .parent_anchor(Anchor::TopRight)
+                .anchor_target(AnchorTarget::Window);
             }
         });
 

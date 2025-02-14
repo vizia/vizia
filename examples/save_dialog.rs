@@ -5,41 +5,6 @@ fn main() {
     panic!("This example is not supported on baseview");
 }
 
-#[cfg(not(feature = "baseview"))]
-const STYLE: &str = r#"
-
-    .modal {
-        space: 1s;
-        padding: 8px;
-        alignment: center;
-        background-color: white;
-        corner-radius: 3px;
-        border-width: 1px;
-        border-color: #999999;
-        outer-shadow: 0 3 10 #00000055;
-        overflow: visible;
-        padding: 10px;
-        height: auto;
-    }
-
-    .modal>vstack>label {
-        width: auto;
-        height: auto;
-        space: 5px;
-        padding: 1s;
-    }
-
-    .modal button {
-        corner-radius: 3px;
-        padding: 1s;
-    }
-
-    .modal hstack {
-        horizontal-gap: 20px;
-        size: auto;
-    }
-"#;
-
 #[derive(Lens)]
 pub struct AppData {
     is_saved: bool,
@@ -85,7 +50,6 @@ pub enum AppEvent {
 #[cfg(not(feature = "baseview"))]
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
         AppData { is_saved: false, show_dialog: false }.build(cx);
 
         HStack::new(cx, |cx| {
@@ -93,8 +57,9 @@ fn main() -> Result<(), ApplicationError> {
                 .on_press(|cx| cx.emit(WindowEvent::WindowClose));
             Button::new(cx, |cx| Label::new(cx, "Save")).on_press(|cx| cx.emit(AppEvent::Save));
         })
-        .horizontal_gap(Pixels(10.0))
-        .space(Pixels(20.0));
+        .gap(Pixels(10.0))
+        .padding(Pixels(50.0))
+        .alignment(Alignment::TopCenter);
 
         Binding::new(cx, AppData::show_dialog, |cx, show_dialog| {
             if show_dialog.get(cx) {
@@ -121,8 +86,8 @@ fn main() -> Result<(), ApplicationError> {
                 })
                 .on_close(|cx| cx.emit(AppEvent::CloseModal))
                 .title("Save work?")
-                .inner_size((400, 200))
-                .position((200, 200));
+                .inner_size((400, 100))
+                .anchor(Anchor::Center);
             }
         });
 

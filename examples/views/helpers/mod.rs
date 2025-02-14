@@ -55,7 +55,7 @@ pub struct ExamplePage;
 
 impl ExamplePage {
     pub fn vertical(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
-        setup_logging().expect("Failed to init logging");
+        //setup_logging().expect("Failed to init logging");
 
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
 
@@ -97,7 +97,7 @@ impl ExamplePage {
     }
 
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
-        setup_logging().expect("Failed to init logging");
+        //setup_logging().expect("Failed to init logging");
 
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
 

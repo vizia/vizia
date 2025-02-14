@@ -24,7 +24,11 @@ fn main() -> Result<(), ApplicationError> {
 
         let anim_id = cx.add_animation(animation);
 
-        Element::new(cx).background_color(Color::red()).size(Pixels(100.0)).id("elem");
+        Element::new(cx)
+            .background_color(Color::red())
+            .size(Pixels(100.0))
+            .position_type(PositionType::Absolute)
+            .id("elem");
 
         Button::new(cx, |cx| Label::new(cx, "Play 1")).on_press(|cx| {
             cx.play_animation_for("slidein", "elem", Duration::from_secs(2), Duration::default())

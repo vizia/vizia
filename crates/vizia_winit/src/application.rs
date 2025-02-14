@@ -259,7 +259,7 @@ impl Application {
 
                     let offset = window_description.offset.unwrap_or_default();
                     let offset: PhysicalPosition<i32> = PhysicalPosition::from_logical(
-                        LogicalPosition::new(offset.x as i32, offset.y as i32),
+                        LogicalPosition::new(offset.x, offset.y),
                         window.scale_factor(),
                     );
 

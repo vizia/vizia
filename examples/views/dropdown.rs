@@ -5,18 +5,20 @@ use vizia::prelude::*;
 #[derive(Lens)]
 pub struct AppData {
     list: Vec<String>,
+    selected: usize,
     choice: String,
 }
 
 pub enum AppEvent {
-    SetChoice(String),
+    SetSelected(usize),
 }
 
 impl Model for AppData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::SetChoice(choice) => {
-                self.choice = choice.clone();
+            AppEvent::SetSelected(selected) => {
+                self.selected = *selected;
+                self.choice = self.list[*selected].clone();
             }
         })
     }
@@ -26,6 +28,7 @@ fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData {
             list: vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()],
+            selected: 0,
             choice: "Red".to_string(),
         }
         .build(cx);
@@ -39,21 +42,16 @@ fn main() -> Result<(), ApplicationError> {
                 },
                 move |cx| {
                     List::new(cx, AppData::list, |cx, _, item| {
-                        Label::new(cx, item)
-                            .cursor(CursorIcon::Hand)
-                            .bind(AppData::choice, move |handle, selected| {
-                                if item.get(&handle) == selected.get(&handle) {
-                                    handle.checked(true);
-                                }
-                            })
-                            .on_press(move |cx| {
-                                cx.emit(AppEvent::SetChoice(item.get(cx)));
-                                cx.emit(PopupEvent::Close);
-                            });
+                        Label::new(cx, item).hoverable(false);
+                    })
+                    .selectable(Selectable::Single)
+                    .selected(AppData::selected.map(|s| vec![*s]))
+                    .on_select(|cx, selected| {
+                        cx.emit(AppEvent::SetSelected(selected));
+                        cx.emit(PopupEvent::Close);
                     });
                 },
             )
-            .top(Pixels(40.0))
             .width(Pixels(100.0));
         });
     })
