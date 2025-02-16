@@ -482,13 +482,13 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                     cx.cache.get_width(entity),
                     cx.cache.get_height(entity)
                 );
-                for rule in result.into_iter() {
-                    for selectors in cx.style.rules.iter() {
-                        if *selectors.0 == rule.0 {
-                            debug!("{:?}", selectors.1.selector);
-                        }
-                    }
-                }
+                // for rule in result.into_iter() {
+                //     for selectors in cx.style.rules.iter() {
+                //         if *selectors.0 == rule.0 {
+                //             debug!("{:?}", selectors.1.selector);
+                //         }
+                //     }
+                // }
             }
 
             #[cfg(debug_assertions)]

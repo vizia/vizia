@@ -61,7 +61,6 @@
 //! ```
 
 use hashbrown::{HashMap, HashSet};
-use indexmap::IndexMap;
 use log::warn;
 use std::fmt::Debug;
 use std::ops::{Deref, DerefMut, Range};
@@ -194,6 +193,7 @@ impl DerefMut for Bloom {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct StyleRule {
     pub(crate) selector: Selector<Selectors>,
     /// The ancestor hashes associated with the selector.
@@ -218,8 +218,10 @@ pub struct Style {
     // List of animations to be started on the next frame
     pub(crate) pending_animations: Vec<(Entity, Animation, Duration, Duration)>,
 
-    // List of rules
-    pub(crate) rules: IndexMap<Rule, StyleRule>,
+    // Map entity to stylesheet hashes
+    pub(crate) styles: SparseSet<Vec<u64>>,
+    // Map stylesheet hash to list of rules
+    pub(crate) stylesheets: HashMap<u64, Vec<(Rule, StyleRule)>>,
 
     pub(crate) default_font: Vec<FamilyOwned>,
 
@@ -424,7 +426,7 @@ impl Style {
 
     pub(crate) fn remove_rules(&mut self) {
         self.rule_manager.reset();
-        self.rules.clear();
+        self.stylesheets.clear();
     }
 
     pub(crate) fn get_animation(&self, name: &str) -> Option<&Animation> {
@@ -872,7 +874,13 @@ impl Style {
             | self.fill.has_active_animation(entity, animation)
     }
 
-    pub(crate) fn parse_theme(&mut self, stylesheet: &str) {
+    pub(crate) fn parse_theme(&mut self, stylesheet_hash: &u64, stylesheet: &str) {
+        if self.stylesheets.contains_key(stylesheet_hash) {
+            return;
+        } else {
+            self.stylesheets.insert(*stylesheet_hash, Vec::new());
+        }
+
         if let Ok(stylesheet) = StyleSheet::parse(stylesheet, ParserOptions::new()) {
             let rules = stylesheet.rules.0;
 
@@ -898,7 +906,11 @@ impl Style {
                                 }
                             }
 
-                            self.rules.insert(rule_id, StyleRule::new(selector.clone()));
+                            if let Some(stylesheet_rules) =
+                                self.stylesheets.get_mut(stylesheet_hash)
+                            {
+                                stylesheet_rules.push((rule_id, StyleRule::new(selector.clone())));
+                            }
                         }
                     }
 
@@ -1741,6 +1753,8 @@ impl Style {
         self.pseudo_classes.remove(entity);
         self.disabled.remove(entity);
         self.abilities.remove(entity);
+
+        self.styles.remove(entity);
 
         self.name.remove(entity);
         self.role.remove(entity);

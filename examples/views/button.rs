@@ -33,6 +33,7 @@ fn main() -> Result<(), ApplicationError> {
             .horizontal_gap(Pixels(10.0));
         });
     })
+    .ignore_default_theme()
     .title("Button")
     .inner_size((700, 200))
     .run()

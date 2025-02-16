@@ -355,3 +355,7 @@ path = "examples/grid.rs"
 [[example]]
 name = "collapsible"
 path = "examples/views/collapsible.rs"
+
+[[example]]
+name = "scoped_styles"
+path = "examples/scoped_styles.rs"

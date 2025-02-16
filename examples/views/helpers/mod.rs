@@ -23,7 +23,11 @@ pub struct ControlsData {
 
 impl Default for ControlsData {
     fn default() -> Self {
-        Self { disabled: false, theme_options: vec!["System", "Dark", "Light"], selected_theme: 0 }
+        Self {
+            disabled: false,
+            theme_options: vec!["System", "Dark", "Light", "None"],
+            selected_theme: 1,
+        }
     }
 }
 
@@ -44,6 +48,7 @@ impl Model for ControlsData {
                     0 /* system */ => AppTheme::System,
                     1 /* Dark */ => AppTheme::BuiltIn(ThemeMode::DarkMode),
                     2 /* Light */ => AppTheme::BuiltIn(ThemeMode::LightMode),
+                    3 /* None */ => AppTheme::None,
                     _ => unreachable!(),
                 }));
             }
@@ -57,11 +62,11 @@ impl ExamplePage {
     pub fn vertical(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
         setup_logging().expect("Failed to init logging");
 
-        cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
-
         Self.build(cx, |cx| {
+            cx.add_stylesheet("center", CENTER_LAYOUT).expect("Failed to add stylesheet");
+
             ControlsData::default().build(cx);
-            cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System)); // set system theme
+            cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::BuiltIn(ThemeMode::DarkMode))); // set system theme
 
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
@@ -99,11 +104,11 @@ impl ExamplePage {
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
         setup_logging().expect("Failed to init logging");
 
-        cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
+        cx.add_stylesheet("center", CENTER_LAYOUT).expect("Failed to add stylesheet");
 
         Self.build(cx, |cx| {
             ControlsData::default().build(cx);
-            cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System)); // set system theme
+            cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::BuiltIn(ThemeMode::DarkMode))); // set system theme
 
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {

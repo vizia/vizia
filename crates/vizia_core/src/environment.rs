@@ -6,7 +6,7 @@ use vizia_derive::Lens;
 use web_time::Duration;
 
 /// And enum which represents the current built-in theme mode.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Data, Clone, Copy, PartialEq, Eq)]
 pub enum ThemeMode {
     /// The built-in vizia dark theme.
     DarkMode,
@@ -18,8 +18,9 @@ pub enum ThemeMode {
 use crate::{context::EventContext, events::Event};
 
 /// Represents the theme used by the application.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Data, Clone, PartialEq, Eq)]
 pub enum AppTheme {
+    None,
     /// System theme, if we choose this as our theme vizia
     /// will follow system theme in supported platforms.
     System,
@@ -29,7 +30,7 @@ pub enum AppTheme {
 }
 
 /// Represents the theme used by the application.
-#[derive(Lens)]
+#[derive(Debug, Lens, Data, Clone, PartialEq, Eq)]
 pub struct Theme {
     /// The current application theme
     pub app_theme: AppTheme,
@@ -45,10 +46,11 @@ impl Default for Theme {
 
 impl Theme {
     /// Returns the current theme of the application.
-    pub fn get_current_theme(&self) -> ThemeMode {
+    pub fn get_current_theme(&self) -> Option<ThemeMode> {
         match self.app_theme {
-            AppTheme::System => self.sys_theme.unwrap_or_default(),
-            AppTheme::BuiltIn(theme) => theme,
+            AppTheme::None => None,
+            AppTheme::System => self.sys_theme,
+            AppTheme::BuiltIn(theme) => Some(theme),
         }
     }
 }
@@ -81,12 +83,9 @@ pub enum EnvironmentEvent {
     /// Set the locale used for the whole application.
     SetLocale(LanguageIdentifier),
     /// Set the default theme mode.
-    // TODO: add SetSysTheme event when the winit `set_theme` fixed.
     SetThemeMode(AppTheme),
     /// Reset the locale to use the system provided locale.
     UseSystemLocale,
-    /// Alternate between dark and light theme modes.
-    ToggleThemeMode,
 }
 
 impl Model for Environment {
@@ -99,7 +98,6 @@ impl Model for Environment {
             EnvironmentEvent::SetThemeMode(theme) => {
                 theme.clone_into(&mut self.theme.app_theme);
 
-                cx.set_theme_mode(self.theme.get_current_theme());
                 cx.reload_styles().unwrap();
             }
 
@@ -107,27 +105,11 @@ impl Model for Environment {
                 self.locale =
                     sys_locale::get_locale().map(|l| l.parse().unwrap()).unwrap_or_default();
             }
-
-            EnvironmentEvent::ToggleThemeMode => {
-                let theme_mode = match self.theme.get_current_theme() {
-                    ThemeMode::DarkMode => ThemeMode::LightMode,
-                    ThemeMode::LightMode => ThemeMode::DarkMode,
-                };
-
-                self.theme.app_theme = AppTheme::BuiltIn(theme_mode);
-
-                cx.set_theme_mode(theme_mode);
-                cx.reload_styles().unwrap();
-            }
         });
 
         event.map(|event, _| match event {
             WindowEvent::ThemeChanged(theme) => {
                 self.theme.sys_theme = Some(*theme);
-                if self.theme.app_theme == AppTheme::System {
-                    cx.set_theme_mode(*theme);
-                    cx.reload_styles().unwrap();
-                }
             }
             _ => (),
         })

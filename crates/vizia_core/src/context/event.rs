@@ -21,7 +21,7 @@ use crate::text::TextContext;
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
-use super::{LocalizationContext, ModelData, DARK_THEME, LIGHT_THEME};
+use super::{LocalizationContext, ModelData};
 
 type Views = HashMap<Entity, Box<dyn ViewHandler>>;
 type Models = HashMap<Entity, HashMap<TypeId, Box<dyn ModelData>>>;
@@ -698,21 +698,6 @@ impl<'a> EventContext<'a> {
         self.data::<Environment>().unwrap()
     }
 
-    /// Sets the current [theme mode](ThemeMode).
-    pub fn set_theme_mode(&mut self, theme_mode: ThemeMode) {
-        if !self.ignore_default_theme {
-            match theme_mode {
-                ThemeMode::LightMode => {
-                    self.resource_manager.themes[2] = String::from(LIGHT_THEME);
-                }
-
-                ThemeMode::DarkMode => {
-                    self.resource_manager.themes[2] = String::from(DARK_THEME);
-                }
-            }
-        }
-    }
-
     /// Marks the current view as needing to be redrawn.
     pub fn needs_redraw(&mut self) {
         let parent_window = self.tree.get_parent_window(self.current).unwrap_or(Entity::root());
@@ -744,32 +729,17 @@ impl<'a> EventContext<'a> {
 
     /// Reloads the stylesheets linked to the application.
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
-        if self.resource_manager.themes.is_empty() && self.resource_manager.styles.is_empty() {
-            return Ok(());
-        }
-
         self.style.remove_rules();
 
         self.style.clear_style_rules();
 
-        let mut overall_theme = String::new();
-
-        // Reload built-in themes
-        for theme in self.resource_manager.themes.iter() {
-            overall_theme += theme;
+        for (_, stylesheet) in self.resource_manager.stylesheets.iter() {
+            self.style.parse_theme(&stylesheet.hash, &stylesheet.css);
         }
-
-        for style_string in self.resource_manager.styles.iter().flat_map(|style| style.get_style())
-        {
-            overall_theme += &style_string;
-        }
-
-        self.style.parse_theme(&overall_theme);
 
         for entity in self.tree.into_iter() {
             self.style.needs_restyle(entity);
             self.style.needs_relayout();
-            //self.style.needs_redraw(entity);
             self.style.needs_text_update(entity);
         }
 

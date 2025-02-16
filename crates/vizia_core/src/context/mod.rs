@@ -41,6 +41,7 @@ use crate::{
     binding::{Store, StoreId},
     events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler},
     model::ModelData,
+    resource::StoredStylesheet,
 };
 
 use crate::{
@@ -431,6 +432,34 @@ impl Context {
                 image.observers.remove(entity);
             }
 
+            if let Some(hashes) = self.style.styles.remove(*entity) {
+                for hash in hashes.iter() {
+                    for stored_stylesheet in self.resource_manager.stylesheets.values_mut() {
+                        if stored_stylesheet.hash == *hash {
+                            stored_stylesheet.observers.remove(entity);
+                        }
+                    }
+                }
+            }
+
+            for (name, hash) in self
+                .resource_manager
+                .stylesheets
+                .iter()
+                .filter_map(|(name, ss)| {
+                    if ss.observers.is_empty() {
+                        Some((name.clone(), ss.hash))
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>()
+            {
+                println!("Remove stylesheet: {} {}", name, hash);
+                self.resource_manager.stylesheets.shift_remove(&name);
+                self.style.stylesheets.remove(&hash);
+            }
+
             if let Some(identifier) = self.style.ids.get(*entity) {
                 self.entity_identifiers.remove(identifier);
             }
@@ -576,33 +605,101 @@ impl Context {
             .collect();
     }
 
-    /// Add a style string to the application.
-    pub(crate) fn add_theme(&mut self, theme: &str) {
-        self.resource_manager.themes.push(theme.to_owned());
+    pub fn add_stylesheet(
+        &mut self,
+        name: &str,
+        stylesheet: impl IntoCssStr,
+    ) -> Result<(), std::io::Error> {
+        //self.resource_manager.styles.push(Box::new(style));
 
-        EventContext::new(self).reload_styles().expect("Failed to reload styles");
-    }
+        let stylesheet = stylesheet.get_style()?;
 
-    pub fn add_stylesheet(&mut self, style: impl IntoCssStr) -> Result<(), std::io::Error> {
-        self.resource_manager.styles.push(Box::new(style));
+        // Hash the style string to check if it already exists in the application.
+        let hash = fxhash::hash64(&stylesheet);
 
-        EventContext::new(self).reload_styles().expect("Failed to reload styles");
+        if self.resource_manager.stylesheets.get(name).map(|ss| ss.hash == hash) == Some(true) {
+            return Ok(());
+        }
+
+        let current_hash = self
+            .resource_manager
+            .stylesheets
+            .get(name)
+            .map(|stored_stylesheet| stored_stylesheet.hash);
+
+        let current = if self.tree.is_ignored(self.current) {
+            self.tree.get_layout_parent(self.current).unwrap_or(Entity::root())
+        } else {
+            self.current
+        };
+
+        // let current = self.current;
+
+        if let Some(current_hash) = current_hash {
+            self.style.stylesheets.remove(&current_hash);
+        }
+
+        if let Some(hashes) = self.style.styles.get_mut(current) {
+            if let Some(current_hash) = current_hash {
+                if let Some(i) = hashes.iter().position(|x| *x == current_hash) {
+                    hashes[i] = hash;
+                }
+            } else {
+                hashes.push(hash);
+            }
+        } else {
+            self.style.styles.insert(current, vec![hash]);
+        }
+
+        // if self.resource_manager.stylesheets.contains_key(&hash) {
+        //     return Ok(());
+        // }
+
+        self.style.parse_theme(&hash, &stylesheet);
+
+        // Insert the style into the application if it doesn't already exist.
+        if let Some(stored_stylesheet) = self.resource_manager.stylesheets.get_mut(name) {
+            stored_stylesheet.observers.insert(current);
+            stored_stylesheet.hash = hash;
+        } else {
+            let mut s = HashSet::new();
+            s.insert(current);
+            self.resource_manager
+                .stylesheets
+                .insert(name.to_string(), StoredStylesheet { css: stylesheet, observers: s, hash });
+        }
+
+        println!("added stylesheet: {} {} {}", current, name, hash);
+
+        self.needs_restyle(current);
+
+        //EventContext::new(self).reload_styles().expect("Failed to reload styles");
 
         Ok(())
     }
 
-    /// Remove all user themes from the application.
-    pub fn remove_user_themes(&mut self) {
-        self.resource_manager.themes.clear();
+    pub fn reset_theme(&mut self) {
+        self.add_stylesheet("layout", DEFAULT_LAYOUT);
+        self.add_stylesheet("markdown", MARKDOWN);
 
-        self.add_theme(DEFAULT_LAYOUT);
-        self.add_theme(MARKDOWN);
-        if !self.ignore_default_theme {
-            let environment = self.data::<Environment>().expect("Failed to get environment");
-            match environment.theme.get_current_theme() {
-                ThemeMode::LightMode => self.add_theme(LIGHT_THEME),
-                ThemeMode::DarkMode => self.add_theme(DARK_THEME),
+        let environment = self.data::<Environment>().expect("Failed to get environment");
+        match environment.theme.get_current_theme() {
+            None => {
+                self.add_stylesheet("theme", "");
             }
+            Some(ThemeMode::LightMode) => {
+                self.add_stylesheet("theme", LIGHT_THEME);
+            }
+            Some(ThemeMode::DarkMode) => {
+                self.add_stylesheet("theme", DARK_THEME);
+            }
+        }
+
+        for entity in self.tree.into_iter() {
+            self.style.needs_restyle(entity);
+            self.style.needs_relayout();
+            //self.style.needs_redraw(entity);
+            self.style.needs_text_update(entity);
         }
     }
 

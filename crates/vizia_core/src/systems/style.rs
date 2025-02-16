@@ -13,7 +13,6 @@ use vizia_style::{
         bloom::BloomFilter,
         context::{MatchingForInvalidation, NeedsSelectorFlags, SelectorCaches},
         matching::ElementSelectorFlags,
-        parser::{Component, NthType},
         OpaqueElement, SelectorImpl,
     },
     Element, MatchingContext, MatchingMode, PseudoClass, QuirksMode, SelectorIdent, Selectors,
@@ -768,7 +767,23 @@ pub(crate) fn compute_matched_rules(
 
     let node = Node { entity, store, tree };
 
-    for (rule_id, rule) in store.rules.iter() {
+    let parent_iter = LayoutParentIterator::new(tree, entity);
+    let mut anscestors = parent_iter.collect::<Vec<_>>();
+    anscestors.reverse();
+
+    let mut scoped_rules: Vec<&(Rule, StyleRule)> = Vec::new();
+
+    for anscestor in anscestors.iter() {
+        if let Some(hashes) = store.styles.get(*anscestor) {
+            for hash in hashes.iter() {
+                if let Some(rules) = store.stylesheets.get(hash) {
+                    scoped_rules.extend(rules.iter());
+                }
+            }
+        }
+    }
+
+    for (rule_id, rule) in scoped_rules {
         let matches = matches_selector(&rule.selector, 0, Some(&rule.hashes), &node, &mut context);
 
         if matches {
@@ -816,18 +831,18 @@ fn has_same_selector(style: &Style, entity1: Entity, entity2: Entity) -> bool {
     true
 }
 
-fn has_nth_child_rule(style: &Style, rules: &[(Rule, u32)]) -> bool {
-    for (rule, _) in rules {
-        let Some(style_rule) = style.rules.get(rule) else { continue };
-        for component in style_rule.selector.iter() {
-            let Component::Nth(n) = component else { continue };
-            if let NthType::Child | NthType::LastChild | NthType::OnlyChild = n.ty {
-                return true;
-            }
-        }
-    }
-    false
-}
+// fn has_nth_child_rule(style: &Style, rules: &[(Rule, u32)]) -> bool {
+//     for (rule, _) in rules {
+//         let Some(style_rule) = style.rules.get(rule) else { continue };
+//         for component in style_rule.selector.iter() {
+//             let Component::Nth(n) = component else { continue };
+//             if let NthType::Child | NthType::LastChild | NthType::OnlyChild = n.ty {
+//                 return true;
+//             }
+//         }
+//     }
+//     false
+// }
 
 pub(crate) fn compute_element_hash(
     entity: Entity,
@@ -918,14 +933,15 @@ impl MatchedRules {
 
         let mut matched_index = None;
 
-        if !tree.is_first_child(entity) && !tree.is_last_child(entity) {
-            if let Some(cache) = rule_cache.get(&parent) {
-                matched_index = cache.iter().position(|entry| {
-                    has_same_selector(style, entry.entity, entity)
-                        && !has_nth_child_rule(style, &entry.rules)
-                });
-            }
-        }
+        // Scoped styling breaks this optimization.
+        // if !tree.is_first_child(entity) && !tree.is_last_child(entity) {
+        //     if let Some(cache) = rule_cache.get(&parent) {
+        //         matched_index = cache.iter().position(|entry| {
+        //             has_same_selector(style, entry.entity, entity)
+        //                 && !has_nth_child_rule(style, &entry.rules)
+        //         });
+        //     }
+        // }
 
         if matched_index.is_none() {
             let rules = compute_matched_rules(entity, style, tree, filter);

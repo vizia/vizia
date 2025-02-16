@@ -3,11 +3,11 @@
 mod image_id;
 
 pub use image_id::ImageId;
+use indexmap::IndexMap;
 use vizia_id::{GenerationalId, IdManager};
 
 use crate::context::ResourceContext;
 use crate::entity::Entity;
-use crate::prelude::IntoCssStr;
 // use crate::view::Canvas;
 use fluent_bundle::{FluentBundle, FluentResource};
 use hashbrown::{HashMap, HashSet};
@@ -26,6 +26,12 @@ pub(crate) struct StoredImage {
     pub observers: HashSet<Entity>,
 }
 
+pub(crate) struct StoredStylesheet {
+    pub css: String,
+    pub observers: HashSet<Entity>,
+    pub hash: u64,
+}
+
 /// An image should be stored in the resource manager.
 #[derive(Copy, Clone, PartialEq)]
 pub enum ImageRetentionPolicy {
@@ -40,8 +46,7 @@ pub enum ImageRetentionPolicy {
 #[doc(hidden)]
 #[derive(Default)]
 pub struct ResourceManager {
-    pub themes: Vec<String>, // Themes are the string content stylesheets
-    pub styles: Vec<Box<dyn IntoCssStr>>,
+    pub stylesheets: IndexMap<String, StoredStylesheet>,
 
     pub(crate) image_id_manager: IdManager<ImageId>,
     pub(crate) images: HashMap<ImageId, StoredImage>,
@@ -111,12 +116,11 @@ impl ResourceManager {
         );
 
         ResourceManager {
-            themes: Vec::new(),
-
             image_id_manager,
             images,
             image_ids: HashMap::new(),
-            styles: Vec::new(),
+
+            stylesheets: IndexMap::new(),
 
             translations: HashMap::from([(
                 LanguageIdentifier::default(),
@@ -125,6 +129,17 @@ impl ResourceManager {
 
             language: locale,
             image_loader: default_image_loader,
+        }
+    }
+
+    pub(crate) fn remove(&mut self, entity: Entity) {
+        for image in self.images.values_mut() {
+            // no need to drop them here. garbage collection happens after draw (policy based)
+            image.observers.remove(&entity);
+        }
+
+        for stylesheet in self.stylesheets.values_mut() {
+            stylesheet.observers.remove(&entity);
         }
     }
 
