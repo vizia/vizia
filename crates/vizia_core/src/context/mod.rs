@@ -617,10 +617,6 @@ impl Context {
         // Hash the style string to check if it already exists in the application.
         let hash = fxhash::hash64(&stylesheet);
 
-        if self.resource_manager.stylesheets.get(name).map(|ss| ss.hash == hash) == Some(true) {
-            return Ok(());
-        }
-
         let current_hash = self
             .resource_manager
             .stylesheets
@@ -636,7 +632,9 @@ impl Context {
         // let current = self.current;
 
         if let Some(current_hash) = current_hash {
-            self.style.stylesheets.remove(&current_hash);
+            if current_hash != hash {
+                self.style.stylesheets.remove(&current_hash);
+            }
         }
 
         if let Some(hashes) = self.style.styles.get_mut(current) {
@@ -649,6 +647,12 @@ impl Context {
             }
         } else {
             self.style.styles.insert(current, vec![hash]);
+        }
+
+        println!("added stylesheet: {} {} {}", current, name, hash);
+
+        if self.resource_manager.stylesheets.get(name).map(|ss| ss.hash == hash) == Some(true) {
+            return Ok(());
         }
 
         // if self.resource_manager.stylesheets.contains_key(&hash) {
@@ -668,8 +672,6 @@ impl Context {
                 .stylesheets
                 .insert(name.to_string(), StoredStylesheet { css: stylesheet, observers: s, hash });
         }
-
-        println!("added stylesheet: {} {} {}", current, name, hash);
 
         self.needs_restyle(current);
 

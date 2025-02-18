@@ -1,5 +1,27 @@
 use crate::prelude::*;
 
+const STYLE: &str = r#"
+    button {
+        height: 32px;
+        width: auto;
+        alignment: center;
+        cursor: hand;
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    button > * {
+        width: auto;
+        alignment: center;
+        horizontal-gap: 4px;
+    }
+
+    button svg {
+        size: 20px;
+    }
+
+"#;
+
 /// A simple push button with a contained view.
 ///
 /// # Examples
@@ -92,6 +114,7 @@ impl Button {
     {
         Self { action: None }
             .build(cx, move |cx| {
+                cx.add_stylesheet("button_layout", STYLE);
                 (content)(cx).hoverable(false);
             })
             .role(Role::Button)

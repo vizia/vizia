@@ -74,7 +74,7 @@ badge > svg {
 
 /* BUTTON */
 
-button,
+/* button,
 toggle-button {
     height: 32px;
     width: auto;
@@ -94,7 +94,7 @@ toggle-button > * {
 button svg,
 toggle-button svg {
     size: 20px;
-}
+} */
 
 /* BUTTON GROUP */
 
