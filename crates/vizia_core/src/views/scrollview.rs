@@ -154,14 +154,15 @@ impl View for ScrollView {
                 }
 
                 ScrollEvent::SetX(f) => {
-                    self.scroll_x = *f;
+                    self.scroll_x = f.clamp(0.0, 1.0);
+
                     if let Some(callback) = &self.on_scroll {
                         (callback)(cx, self.scroll_x, self.scroll_y);
                     }
                 }
 
                 ScrollEvent::SetY(f) => {
-                    self.scroll_y = *f;
+                    self.scroll_y = f.clamp(0.0, 1.0);
                     if let Some(callback) = &self.on_scroll {
                         (callback)(cx, self.scroll_x, self.scroll_y);
                     }
@@ -188,12 +189,17 @@ impl View for ScrollView {
                         self.inner_width = *w;
                         self.inner_height = *h;
 
-                        self.scroll_y = ((top * scale_factor)
-                            / (self.inner_height - self.container_height))
-                            .clamp(0.0, 1.0);
-                        self.scroll_x = ((left * scale_factor)
-                            / (self.inner_width - self.container_width))
-                            .clamp(0.0, 1.0);
+                        if self.container_width != self.inner_width {
+                            self.scroll_x = ((left * scale_factor)
+                                / (self.inner_width - self.container_width))
+                                .clamp(0.0, 1.0);
+                        }
+
+                        if self.container_height != self.inner_height {
+                            self.scroll_y = ((top * scale_factor)
+                                / (self.inner_height - self.container_height))
+                                .clamp(0.0, 1.0);
+                        }
 
                         if let Some(callback) = &self.on_scroll {
                             (callback)(cx, self.scroll_x, self.scroll_y);
@@ -204,6 +210,7 @@ impl View for ScrollView {
 
                     self.inner_width = *w;
                     self.inner_height = *h;
+
                     self.reset();
                 }
             }
@@ -306,7 +313,7 @@ impl Handle<'_, ScrollView> {
     pub fn scroll_x(self, scrollx: impl Res<f32>) -> Self {
         self.bind(scrollx, |handle, scrollx| {
             let sx = scrollx.get(&handle);
-            handle.modify(|scrollview| scrollview.scroll_x = sx);
+            handle.modify(|scrollview| scrollview.scroll_x = sx.clamp(0.0, 1.0));
         })
     }
 
@@ -314,7 +321,7 @@ impl Handle<'_, ScrollView> {
     pub fn scroll_y(self, scrollx: impl Res<f32>) -> Self {
         self.bind(scrollx, |handle, scrolly| {
             let sy = scrolly.get(&handle);
-            handle.modify(|scrollview| scrollview.scroll_y = sy);
+            handle.modify(|scrollview| scrollview.scroll_y = sy.clamp(0.0, 1.0));
         })
     }
 

@@ -437,12 +437,12 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                     } else if let Some(binding_name) =
                         cx.bindings.get(&entity).map(|binding| format!("{:?}", binding))
                     {
-                        println!(
-                            "{}{} binding observing {}",
-                            indents(entity),
-                            entity,
-                            binding_name,
-                        );
+                        // println!(
+                        //     "{}{} binding observing {}",
+                        //     indents(entity),
+                        //     entity,
+                        //     binding_name,
+                        // );
                     } else {
                         println!(
                             "{}{} {}",

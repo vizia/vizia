@@ -1100,3 +1100,19 @@ collapsible {
 collapsible > .header > .expand-icon {
     fill: #979797;
 }
+
+virtual-table.selectable .table-row {
+    background-color: transparent;
+}
+
+virtual-table.selectable .table-row.focused {
+    background-color: #a3a3a3;
+}
+
+virtual-table.selectable .table-row:hover {
+    background-color: #7b7bff;
+}
+
+virtual-table.selectable .table-row:checked {
+    background-color: #51afef;
+}

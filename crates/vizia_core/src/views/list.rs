@@ -316,6 +316,7 @@ impl Handle<'_, List> {
         self.bind(selected, |handle, s| {
             let ss = s.get(&handle).deref().to_vec();
             handle.modify(|list| {
+                list.selected.clear();
                 for idx in ss {
                     list.selected.insert(idx);
                     list.focused = Some(idx);
@@ -416,10 +417,10 @@ impl ListItem {
             .role(Role::ListItem)
             .checked(List::selected.map(move |selected| selected.contains(&index)))
             //.toggle_class("focused", List::focused.map(move |focused| *focused == Some(index)))
-            .focused_with_visibility(
-                List::focused.map(move |f| *f == Some(index)),
-                List::focus_visible,
-            )
+            // .focused_with_visibility(
+            //     List::focused.map(move |f| *f == Some(index)),
+            //     List::focus_visible,
+            // )
             .on_press(move |cx| cx.emit(ListEvent::Select(index)))
     }
 }
