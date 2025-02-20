@@ -414,6 +414,8 @@ pub(crate) fn draw_bounds(
 
     let mut dirty_bounds: BoundingBox = tr.into();
 
+    dirty_bounds = dirty_bounds.expand(1.0);
+
     //
     if style.overflowx.get(entity).copied().unwrap_or_default() == Overflow::Visible
         || style.overflowy.get(entity).copied().unwrap_or_default() == Overflow::Visible

@@ -201,6 +201,10 @@ where
 
     fn insert_text(&mut self, cx: &mut EventContext, txt: &str) {
         if let Some(text) = cx.style.text.get_mut(cx.current) {
+            if self.show_placeholder && !txt.is_empty() {
+                text.clear();
+                self.show_placeholder = false;
+            }
             text.edit(self.selection.range(), txt);
             self.selection = Selection::caret(self.selection.min() + txt.len());
             self.show_placeholder = text.is_empty();
@@ -242,6 +246,7 @@ where
 
             cx.style.needs_text_update(cx.current);
         }
+
         if let Some(text) = cx.style.text.get_mut(cx.current) {
             self.show_placeholder = text.is_empty();
             if self.show_placeholder {
@@ -256,6 +261,7 @@ where
             text.clear();
             self.selection = Selection::caret(0);
             self.show_placeholder = true;
+            *text = self.placeholder.clone();
             cx.style.needs_text_update(cx.current);
         }
     }
@@ -411,6 +417,10 @@ where
     }
 
     fn clone_text(&self, cx: &mut EventContext) -> String {
+        if self.show_placeholder {
+            return String::new();
+        }
+
         if let Some(text) = cx.style.text.get(cx.current) {
             text.clone()
         } else {

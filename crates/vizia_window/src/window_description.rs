@@ -68,25 +68,25 @@ pub enum AnchorTarget {
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct WindowPosition {
     /// The x coordinate of the position.
-    pub x: u32,
+    pub x: i32,
     /// The y coordinate of the position.
-    pub y: u32,
+    pub y: i32,
 }
 
 impl WindowPosition {
     /// Creates a new window position.
-    pub fn new(x: u32, y: u32) -> Self {
+    pub fn new(x: i32, y: i32) -> Self {
         WindowPosition { x, y }
     }
 }
 
-impl From<(u32, u32)> for WindowPosition {
-    fn from(s: (u32, u32)) -> Self {
+impl From<(i32, i32)> for WindowPosition {
+    fn from(s: (i32, i32)) -> Self {
         WindowPosition::new(s.0, s.1)
     }
 }
 
-impl From<WindowPosition> for (u32, u32) {
+impl From<WindowPosition> for (i32, i32) {
     fn from(s: WindowPosition) -> Self {
         (s.x, s.y)
     }
