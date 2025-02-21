@@ -11,6 +11,7 @@ pub enum VirtualTableEvent {
     Scroll(f32),
     ResizeColumn(usize, f32),
     SortColumn(usize),
+    Select(usize),
 }
 
 #[derive(Lens)]
@@ -164,6 +165,9 @@ impl VirtualTable {
                 // )
                 .on_press(move |cx| cx.emit(ListEvent::Select(index)))
             })
+            .selectable(Self::selectable)
+            .selected(Self::selected.map(|selected| selected.iter().copied().collect::<Vec<_>>()))
+            .on_select(|cx, index| cx.emit(VirtualTableEvent::Select(index)))
             .scroll_x(Self::scroll_x)
             .on_scroll(|cx, x, _| cx.emit(VirtualTableEvent::Scroll(x)));
 
@@ -214,95 +218,101 @@ impl View for VirtualTable {
                     callback(cx, *index, self.sort_direction);
                 }
             }
+
+            VirtualTableEvent::Select(index) => {
+                if let Some(callback) = &self.on_select {
+                    callback(cx, *index);
+                }
+            }
         });
 
-        event.take(|list_event, _| match list_event {
-            ListEvent::Select(index) => {
-                println!("Select {}", index);
-                cx.focus();
-                match self.selectable {
-                    Selectable::Single => {
-                        if self.selected.contains(&index) {
-                            self.selected.clear();
-                            self.focused = None;
-                        } else {
-                            self.selected.clear();
-                            self.selected.insert(index);
-                            self.focused = Some(index);
-                            self.focus_visible = false;
-                            if let Some(on_select) = &self.on_select {
-                                on_select(cx, index);
-                            }
-                        }
-                    }
+        // event.take(|list_event, _| match list_event {
+        //     ListEvent::Select(index) => {
+        //         println!("Select {}", index);
+        //         cx.focus();
+        //         match self.selectable {
+        //             Selectable::Single => {
+        //                 if self.selected.contains(&index) {
+        //                     self.selected.clear();
+        //                     self.focused = None;
+        //                 } else {
+        //                     self.selected.clear();
+        //                     self.selected.insert(index);
+        //                     self.focused = Some(index);
+        //                     self.focus_visible = false;
+        //                     if let Some(on_select) = &self.on_select {
+        //                         on_select(cx, index);
+        //                     }
+        //                 }
+        //             }
 
-                    Selectable::Multi => {
-                        if self.selected.contains(&index) {
-                            self.selected.remove(&index);
-                            self.focused = None;
-                        } else {
-                            self.selected.insert(index);
-                            self.focused = Some(index);
-                            self.focus_visible = false;
-                            if let Some(on_select) = &self.on_select {
-                                on_select(cx, index);
-                            }
-                        }
-                    }
+        //             Selectable::Multi => {
+        //                 if self.selected.contains(&index) {
+        //                     self.selected.remove(&index);
+        //                     self.focused = None;
+        //                 } else {
+        //                     self.selected.insert(index);
+        //                     self.focused = Some(index);
+        //                     self.focus_visible = false;
+        //                     if let Some(on_select) = &self.on_select {
+        //                         on_select(cx, index);
+        //                     }
+        //                 }
+        //             }
 
-                    Selectable::None => {}
-                }
-            }
+        //             Selectable::None => {}
+        //         }
+        //     }
 
-            ListEvent::SelectFocused => {
-                if let Some(focused) = &self.focused {
-                    cx.emit(ListEvent::Select(*focused))
-                }
-            }
+        //     ListEvent::SelectFocused => {
+        //         if let Some(focused) = &self.focused {
+        //             cx.emit(ListEvent::Select(*focused))
+        //         }
+        //     }
 
-            ListEvent::ClearSelection => {
-                self.selected.clear();
-            }
+        //     ListEvent::ClearSelection => {
+        //         self.selected.clear();
+        //     }
 
-            ListEvent::FocusNext => {
-                println!("Focus Next");
-                if let Some(focused) = &mut self.focused {
-                    *focused = focused.saturating_add(1);
+        //     ListEvent::FocusNext => {
+        //         println!("Focus Next");
+        //         if let Some(focused) = &mut self.focused {
+        //             *focused = focused.saturating_add(1);
 
-                    if *focused >= self.num_rows {
-                        *focused = 0;
-                    }
-                } else {
-                    self.focused = Some(0);
-                }
+        //             if *focused >= self.num_rows {
+        //                 *focused = 0;
+        //             }
+        //         } else {
+        //             self.focused = Some(0);
+        //         }
 
-                self.focus_visible = true;
+        //         self.focus_visible = true;
 
-                if self.selection_follows_focus {
-                    cx.emit(ListEvent::SelectFocused);
-                }
-            }
+        //         if self.selection_follows_focus {
+        //             cx.emit(ListEvent::SelectFocused);
+        //         }
+        //     }
 
-            ListEvent::FocusPrev => {
-                if let Some(focused) = &mut self.focused {
-                    if *focused == 0 {
-                        *focused = self.num_rows;
-                    }
+        //     ListEvent::FocusPrev => {
+        //         if let Some(focused) = &mut self.focused {
+        //             if *focused == 0 {
+        //                 *focused = self.num_rows;
+        //             }
 
-                    *focused = focused.saturating_sub(1);
-                } else {
-                    self.focused = Some(self.num_rows.saturating_sub(1));
-                }
+        //             *focused = focused.saturating_sub(1);
+        //         } else {
+        //             self.focused = Some(self.num_rows.saturating_sub(1));
+        //         }
 
-                self.focus_visible = true;
+        //         self.focus_visible = true;
 
-                if self.selection_follows_focus {
-                    cx.emit(ListEvent::SelectFocused);
-                }
-            }
+        //         if self.selection_follows_focus {
+        //             cx.emit(ListEvent::SelectFocused);
+        //         }
+        //     }
 
-            _ => {}
-        });
+        //     _ => {}
+        // });
     }
 }
 

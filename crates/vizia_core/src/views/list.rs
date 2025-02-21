@@ -3,7 +3,7 @@ use std::{collections::BTreeSet, ops::Deref, rc::Rc};
 use crate::prelude::*;
 
 /// Represents how items can be selected in a list.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Data)]
 pub enum Selectable {
     #[default]
     /// Items in the list cannot be selected.
@@ -188,7 +188,7 @@ impl List {
                         let ll = list_index.clone();
                         let item = list.map_ref(move |list| ll(list, index));
                         let content = content.clone();
-                        ListItem::new(cx, index, item, move |cx, index, item| {
+                        ListItem::new(cx, index, item, List::selected, move |cx, index, item| {
                             content(cx, index, item);
                         });
                     }
@@ -408,6 +408,7 @@ impl ListItem {
         cx: &mut Context,
         index: usize,
         item: MapRef<L, T>,
+        selected: impl Lens<Target = BTreeSet<usize>>,
         item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
     ) -> Handle<Self> {
         Self {}
@@ -415,7 +416,7 @@ impl ListItem {
                 item_content(cx, index, item);
             })
             .role(Role::ListItem)
-            .checked(List::selected.map(move |selected| selected.contains(&index)))
+            .checked(selected.map(move |selected| selected.contains(&index)))
             //.toggle_class("focused", List::focused.map(move |focused| *focused == Some(index)))
             // .focused_with_visibility(
             //     List::focused.map(move |f| *f == Some(index)),

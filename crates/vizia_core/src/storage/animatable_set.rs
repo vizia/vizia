@@ -405,6 +405,8 @@ where
 
     /// Tick the animation for the given time and return a list of entities which have been animated.
     pub fn tick(&mut self, time: Instant) -> Vec<Entity> {
+        self.remove_innactive_animations();
+
         let entities = if self.has_animations() {
             for state in self.active_animations.iter_mut() {
                 // If the animation is already finished then skip
@@ -447,8 +449,6 @@ where
         } else {
             Vec::new()
         };
-
-        self.remove_innactive_animations();
 
         entities
     }

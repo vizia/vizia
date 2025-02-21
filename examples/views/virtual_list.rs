@@ -15,8 +15,9 @@ fn main() -> Result<(), ApplicationError> {
 
         ExamplePage::new(cx, |cx| {
             VirtualList::new(cx, AppData::list, 40.0, |cx, index, item| {
-                Label::new(cx, item).toggle_class("dark", index % 2 == 0)
+                Label::new(cx, item).toggle_class("dark", index % 2 == 0).hoverable(false)
             })
+            .selectable(Selectable::Single)
             .size(Pixels(300.0));
         });
     })

@@ -487,15 +487,23 @@ list label.dark {
     background-color: #00000015;
 }
 
-list.selectable list-item.focused {
+list.selectable list-item,
+virtual-list.selectable list-item {
+    background-color: transparent;
+}
+
+list.selectable list-item.focused,
+virtual-list.selectable list-item.focused {
     background-color: #a3a3a3;
 }
 
-list.selectable list-item:hover {
+list.selectable list-item:hover,
+virtual-list.selectable list-item:hover {
     background-color: #7b7bff;
 }
 
-list.selectable list-item:checked {
+list.selectable list-item:checked,
+virtual-list.selectable list-item:checked {
     background-color: #51afef;
 }
 
