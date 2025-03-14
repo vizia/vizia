@@ -186,16 +186,30 @@ where
         .text(lens)
         .placeholder_shown(Self::show_placeholder)
         .bind(lens, |handle, lens| {
-            let flag = lens.get(&handle).to_string_local(handle.cx).is_empty();
-            handle.modify(|textbox| textbox.show_placeholder = flag).bind(
-                Self::placeholder,
-                move |handle, placeholder| {
-                    let value = placeholder.get(&handle).to_string_local(handle.cx);
-                    if flag {
-                        handle.text(value);
-                    }
-                },
-            );
+            let mut text = lens.get(&handle).to_string_local(handle.cx);
+            let flag = text.is_empty();
+            if flag {
+                text = Self::placeholder.get(&handle).to_string_local(handle.cx);
+            }
+            handle
+                .modify(|textbox| {
+                    textbox.show_placeholder = flag;
+                })
+                .text(text);
+        })
+        .bind(Self::show_placeholder, |handle, show_placeholder| {
+            let flag = show_placeholder.get(&handle);
+            if flag {
+                let placeholder = Self::placeholder.get(&handle).to_string_local(handle.cx);
+                handle.text(placeholder);
+            }
+        })
+        .bind(Self::placeholder, |handle, placeholder| {
+            let placeholder = placeholder.get(&handle).to_string_local(handle.cx);
+            let flag = Self::show_placeholder.get(&handle);
+            if flag {
+                handle.text(placeholder);
+            }
         })
     }
 
@@ -213,6 +227,10 @@ where
     }
 
     fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
+        if self.show_placeholder {
+            return;
+        }
+
         if self.selection.is_caret() {
             if movement == Movement::Grapheme(Direction::Upstream) {
                 if self.selection.active == 0 {
@@ -249,10 +267,6 @@ where
 
         if let Some(text) = cx.style.text.get_mut(cx.current) {
             self.show_placeholder = text.is_empty();
-            if self.show_placeholder {
-                *text = self.placeholder.clone();
-                self.selection = Selection::caret(0);
-            }
         }
     }
 
@@ -278,6 +292,9 @@ where
     }
 
     fn select_all(&mut self, cx: &mut EventContext) {
+        if self.show_placeholder {
+            return;
+        }
         if let Some(text) = cx.style.text.get(cx.current) {
             self.selection.anchor = 0;
             self.selection.active = text.len();
@@ -286,11 +303,17 @@ where
     }
 
     fn select_word(&mut self, cx: &mut EventContext) {
+        if self.show_placeholder {
+            return;
+        }
         self.move_cursor(cx, Movement::Word(Direction::Upstream), false);
         self.move_cursor(cx, Movement::Word(Direction::Downstream), true);
     }
 
     fn select_paragraph(&mut self, cx: &mut EventContext) {
+        if self.show_placeholder {
+            return;
+        }
         self.move_cursor(cx, Movement::ParagraphStart, false);
         self.move_cursor(cx, Movement::ParagraphEnd, true);
     }
@@ -1215,14 +1238,15 @@ where
                 } else {
                     cx.set_valid(false);
                 }
-                self.show_placeholder = text.is_empty();
-                if self.show_placeholder {
-                    cx.style.text.insert(cx.current, self.placeholder.clone());
-                } else {
-                    cx.style.text.insert(cx.current, text);
-                }
 
-                cx.style.needs_text_update(cx.current);
+                // self.show_placeholder = text.is_empty();
+                // if self.show_placeholder {
+                //     cx.style.text.insert(cx.current, self.placeholder.clone());
+                // } else {
+                //     cx.style.text.insert(cx.current, text);
+                // }
+
+                // cx.style.needs_text_update(cx.current);
             }
 
             TextEvent::Blur => {
