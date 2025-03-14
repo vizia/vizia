@@ -578,11 +578,6 @@ submenu divider {
     background-color: #d2d2d2;
 }
 
-menu-divider .line {
-    height: 1px;
-    background-color: #d2d2d2;
-}
-
 /* NOTIFICATION */
 
 notification {

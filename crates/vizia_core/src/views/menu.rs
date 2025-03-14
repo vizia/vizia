@@ -285,19 +285,3 @@ impl View for MenuButton {
         });
     }
 }
-
-pub struct MenuDivider {}
-
-impl MenuDivider {
-    pub fn new(cx: &mut Context) -> Handle<Self> {
-        Self {}.build(cx, |cx| {
-            Divider::horizontal(cx);
-        })
-    }
-}
-
-impl View for MenuDivider {
-    fn element(&self) -> Option<&'static str> {
-        Some("menu-divider")
-    }
-}
