@@ -404,7 +404,7 @@ datepicker {
 
 /* DIVIDER */
 
-divider {
+divider > .divider-line {
     background-color: #d2d2d2;
 }
 
