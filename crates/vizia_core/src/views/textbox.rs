@@ -1,9 +1,12 @@
+use std::cell::RefCell;
+use std::sync::Arc;
+
 // use crate::accessibility::IntoNode;
 use crate::prelude::*;
 
 use crate::text::{
-    apply_movement, offset_for_delete_backwards, Direction, EditableText, Movement, Selection,
-    VerticalMovement,
+    apply_movement, enforce_text_bounds, ensure_visible, offset_for_delete_backwards, Direction,
+    EditableText, Movement, Selection, VerticalMovement,
 };
 // use crate::views::scrollview::SCROLL_SENSITIVITY;
 use accesskit::{ActionData, ActionRequest};
@@ -65,7 +68,7 @@ pub struct Textbox<L: Lens> {
     #[lens(ignore)]
     kind: TextboxKind,
     edit: bool,
-    transform: (f32, f32),
+    transform: Arc<RefCell<(f32, f32)>>,
     on_edit: Option<Box<dyn Fn(&mut EventContext, String) + Send + Sync>>,
     on_submit: Option<Box<dyn Fn(&mut EventContext, L::Target, bool) + Send + Sync>>,
     on_blur: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
@@ -151,7 +154,7 @@ where
             lens,
             kind,
             edit: false,
-            transform: (0.0, 0.0),
+            transform: Arc::new(RefCell::new((0.0, 0.0))),
             on_edit: None,
             on_submit: None,
             on_blur: None,
@@ -379,6 +382,8 @@ where
     fn hit(&mut self, cx: &mut EventContext, x: f32, y: f32, selection: bool) {
         if let Some(text) = cx.style.text.get(cx.current) {
             if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+                let x = x - self.transform.borrow().0;
+                let y = y - self.transform.borrow().1;
                 let gp = paragraph
                     .get_glyph_position_at_coordinate(self.coordinates_global_to_text(cx, x, y));
                 let num_graphemes = text.graphemes(true).count();
@@ -406,6 +411,8 @@ where
     fn drag(&mut self, cx: &mut EventContext, x: f32, y: f32) {
         if let Some(text) = cx.style.text.get(cx.current) {
             if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+                let x = x - self.transform.borrow().0;
+                let y = y - self.transform.borrow().1;
                 let gp = paragraph
                     .get_glyph_position_at_coordinate(self.coordinates_global_to_text(cx, x, y));
                 let num_graphemes = text.graphemes(true).count();
@@ -571,6 +578,11 @@ where
                     _ => 0.0,
                 };
 
+                let padding_right = match cx.padding_right() {
+                    Units::Pixels(val) => val,
+                    _ => 0.0,
+                };
+
                 let x = (bounds.x + padding_left + cursor_rect.rect.left).round();
                 let y = (bounds.y + padding_top + cursor_rect.rect.top + top).round();
 
@@ -583,6 +595,26 @@ where
                 paint.set_color(cx.caret_color());
 
                 canvas.draw_rect(Rect::new(x, y, x2, y2), &paint);
+
+                let mut transform = self.transform.borrow_mut();
+
+                let text_bounds = cx.text_context.text_bounds.get(cx.current).unwrap();
+
+                let mut bounds = cx.bounds();
+                bounds =
+                    bounds.shrink_sides(padding_left, padding_top, padding_right, padding_bottom);
+
+                let (tx, ty) =
+                    enforce_text_bounds(text_bounds, &bounds, (transform.0, transform.1));
+
+                let caret_box = BoundingBox::from_min_max(x, y, x2, y2);
+
+                let (new_tx, new_ty) = ensure_visible(&caret_box, &bounds, (tx, ty));
+
+                if new_tx != transform.0 || new_ty != transform.1 {
+                    *transform = (new_tx, new_ty);
+                    cx.needs_redraw();
+                }
             }
         }
     }
@@ -1363,14 +1395,15 @@ where
         cx.draw_background(canvas);
         cx.draw_border(canvas);
         cx.draw_outline(canvas);
-        // canvas.save();
-        // canvas.translate(self.transform.0, self.transform.1);
+        canvas.save();
+        let transform = self.transform.borrow().clone();
+        canvas.translate((transform.0, transform.1));
         // cx.draw_text_and_selection(canvas);
         cx.draw_text(canvas);
         if self.edit {
             self.draw_selection(cx, canvas);
             self.draw_text_caret(cx, canvas);
         }
-        // canvas.restore();
+        canvas.restore();
     }
 }
