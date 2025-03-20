@@ -414,7 +414,12 @@ pub(crate) fn draw_bounds(
 
     let mut dirty_bounds: BoundingBox = tr.into();
 
-    dirty_bounds = dirty_bounds.expand(1.0);
+    dirty_bounds = BoundingBox::from_min_max(
+        dirty_bounds.left().floor(),
+        dirty_bounds.top().floor(),
+        dirty_bounds.right().ceil(),
+        dirty_bounds.bottom().ceil(),
+    );
 
     //
     if style.overflowx.get(entity).copied().unwrap_or_default() == Overflow::Visible
@@ -432,6 +437,13 @@ pub(crate) fn draw_bounds(
         .get_layout_parent(entity)
         .unwrap_or(tree.get_parent_window(entity).unwrap_or(Entity::root()));
     if let Some(clip_bounds) = cache.clip_path.get(parent) {
+        let clip_bounds = &BoundingBox::from_min_max(
+            clip_bounds.left().floor(),
+            clip_bounds.top().floor(),
+            clip_bounds.right().ceil(),
+            clip_bounds.bottom().ceil(),
+        );
+
         if z_index != 0 {
             dirty_bounds
         } else {
