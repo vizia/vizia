@@ -276,3 +276,7 @@ path = "examples/views/grid.rs"
 [[example]]
 name = "collapsible"
 path = "examples/views/collapsible.rs"
+
+[[example]]
+name = "divider"
+path = "examples/views/divider.rs"

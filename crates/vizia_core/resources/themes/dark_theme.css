@@ -364,7 +364,7 @@ datepicker {
 
 /* DIVIDER */
 
-divider {
+divider > .divider-line {
     background-color: #565656;
 }
 
@@ -500,17 +500,6 @@ submenu:disabled {
 
 submenu > popup {
     padding: 8px;
-}
-
-menu-divider {
-    height: 9px;
-    width: 1s;
-    alignment: center;
-}
-
-menu-divider .line {
-    height: 1px;
-    background-color: #565656;
 }
 
 /* NOTIFICATION */

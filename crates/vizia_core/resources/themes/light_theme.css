@@ -404,7 +404,7 @@ datepicker {
 
 /* DIVIDER */
 
-divider {
+divider > .divider-line {
     background-color: #d2d2d2;
 }
 
@@ -575,11 +575,6 @@ submenu > popup {
 submenu divider {
     top: 4px;
     bottom: 4px;
-    background-color: #d2d2d2;
-}
-
-menu-divider .line {
-    height: 1px;
     background-color: #d2d2d2;
 }
 

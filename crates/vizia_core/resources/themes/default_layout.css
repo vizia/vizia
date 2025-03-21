@@ -210,26 +210,32 @@ datepicker {
 divider {
     width: 1s;
     height: 1px;
+    alignment: center;
+    padding: 2px;
 }
 
-divider.horizontal {
-    width: 1s;
-    height: 1px;
-}
-
-divider.vertical {
-    height: 1s;
-    width: 1px;
-}
-
+divider.horizontal,
 vstack > divider {
     width: 1s;
+    height: auto;
+}
+
+divider.horizontal > .divider-line,
+vstack > divider > .divider-line {
+    width: 1s;
     height: 1px;
 }
 
+divider.vertical,
 hstack > divider {
-    width: 1px;
     height: 1s;
+    width: auto;
+}
+
+divider.vertical > .divider-line,
+hstack > divider > .divider-line {
+    height: 1s;
+    width: 1px;
 }
 
 /* DROPDOWN */
@@ -491,8 +497,8 @@ submenu > .arrow {
 }
 
 submenu divider {
-    height: 1px;
-    width: 1s;
+    padding-top: 4px;
+    padding-bottom: 4px;
 }
 
 /* PICKLIST */

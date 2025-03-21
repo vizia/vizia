@@ -1,9 +1,12 @@
+use std::cell::RefCell;
+use std::sync::Arc;
+
 // use crate::accessibility::IntoNode;
 use crate::prelude::*;
 
 use crate::text::{
-    apply_movement, offset_for_delete_backwards, Direction, EditableText, Movement, Selection,
-    VerticalMovement,
+    apply_movement, enforce_text_bounds, ensure_visible, offset_for_delete_backwards, Direction,
+    EditableText, Movement, Selection, VerticalMovement,
 };
 // use crate::views::scrollview::SCROLL_SENSITIVITY;
 use accesskit::{ActionData, ActionRequest};
@@ -65,7 +68,7 @@ pub struct Textbox<L: Lens> {
     #[lens(ignore)]
     kind: TextboxKind,
     edit: bool,
-    transform: (f32, f32),
+    transform: Arc<RefCell<(f32, f32)>>,
     on_edit: Option<Box<dyn Fn(&mut EventContext, String) + Send + Sync>>,
     on_submit: Option<Box<dyn Fn(&mut EventContext, L::Target, bool) + Send + Sync>>,
     on_blur: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
@@ -151,7 +154,7 @@ where
             lens,
             kind,
             edit: false,
-            transform: (0.0, 0.0),
+            transform: Arc::new(RefCell::new((0.0, 0.0))),
             on_edit: None,
             on_submit: None,
             on_blur: None,
@@ -186,16 +189,30 @@ where
         .text(lens)
         .placeholder_shown(Self::show_placeholder)
         .bind(lens, |handle, lens| {
-            let flag = lens.get(&handle).to_string_local(handle.cx).is_empty();
-            handle.modify(|textbox| textbox.show_placeholder = flag).bind(
-                Self::placeholder,
-                move |handle, placeholder| {
-                    let value = placeholder.get(&handle).to_string_local(handle.cx);
-                    if flag {
-                        handle.text(value);
-                    }
-                },
-            );
+            let mut text = lens.get(&handle).to_string_local(handle.cx);
+            let flag = text.is_empty();
+            if flag {
+                text = Self::placeholder.get(&handle).to_string_local(handle.cx);
+            }
+            handle
+                .modify(|textbox| {
+                    textbox.show_placeholder = flag;
+                })
+                .text(text);
+        })
+        .bind(Self::show_placeholder, |handle, show_placeholder| {
+            let flag = show_placeholder.get(&handle);
+            if flag {
+                let placeholder = Self::placeholder.get(&handle).to_string_local(handle.cx);
+                handle.text(placeholder);
+            }
+        })
+        .bind(Self::placeholder, |handle, placeholder| {
+            let placeholder = placeholder.get(&handle).to_string_local(handle.cx);
+            let flag = Self::show_placeholder.get(&handle);
+            if flag {
+                handle.text(placeholder);
+            }
         })
     }
 
@@ -213,6 +230,10 @@ where
     }
 
     fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
+        if self.show_placeholder {
+            return;
+        }
+
         if self.selection.is_caret() {
             if movement == Movement::Grapheme(Direction::Upstream) {
                 if self.selection.active == 0 {
@@ -249,10 +270,6 @@ where
 
         if let Some(text) = cx.style.text.get_mut(cx.current) {
             self.show_placeholder = text.is_empty();
-            if self.show_placeholder {
-                *text = self.placeholder.clone();
-                self.selection = Selection::caret(0);
-            }
         }
     }
 
@@ -278,6 +295,9 @@ where
     }
 
     fn select_all(&mut self, cx: &mut EventContext) {
+        if self.show_placeholder {
+            return;
+        }
         if let Some(text) = cx.style.text.get(cx.current) {
             self.selection.anchor = 0;
             self.selection.active = text.len();
@@ -286,11 +306,17 @@ where
     }
 
     fn select_word(&mut self, cx: &mut EventContext) {
+        if self.show_placeholder {
+            return;
+        }
         self.move_cursor(cx, Movement::Word(Direction::Upstream), false);
         self.move_cursor(cx, Movement::Word(Direction::Downstream), true);
     }
 
     fn select_paragraph(&mut self, cx: &mut EventContext) {
+        if self.show_placeholder {
+            return;
+        }
         self.move_cursor(cx, Movement::ParagraphStart, false);
         self.move_cursor(cx, Movement::ParagraphEnd, true);
     }
@@ -356,6 +382,8 @@ where
     fn hit(&mut self, cx: &mut EventContext, x: f32, y: f32, selection: bool) {
         if let Some(text) = cx.style.text.get(cx.current) {
             if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+                let x = x - self.transform.borrow().0;
+                let y = y - self.transform.borrow().1;
                 let gp = paragraph
                     .get_glyph_position_at_coordinate(self.coordinates_global_to_text(cx, x, y));
                 let num_graphemes = text.graphemes(true).count();
@@ -383,6 +411,8 @@ where
     fn drag(&mut self, cx: &mut EventContext, x: f32, y: f32) {
         if let Some(text) = cx.style.text.get(cx.current) {
             if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+                let x = x - self.transform.borrow().0;
+                let y = y - self.transform.borrow().1;
                 let gp = paragraph
                     .get_glyph_position_at_coordinate(self.coordinates_global_to_text(cx, x, y));
                 let num_graphemes = text.graphemes(true).count();
@@ -548,6 +578,11 @@ where
                     _ => 0.0,
                 };
 
+                let padding_right = match cx.padding_right() {
+                    Units::Pixels(val) => val,
+                    _ => 0.0,
+                };
+
                 let x = (bounds.x + padding_left + cursor_rect.rect.left).round();
                 let y = (bounds.y + padding_top + cursor_rect.rect.top + top).round();
 
@@ -560,6 +595,26 @@ where
                 paint.set_color(cx.caret_color());
 
                 canvas.draw_rect(Rect::new(x, y, x2, y2), &paint);
+
+                let mut transform = self.transform.borrow_mut();
+
+                let text_bounds = cx.text_context.text_bounds.get(cx.current).unwrap();
+
+                let mut bounds = cx.bounds();
+                bounds =
+                    bounds.shrink_sides(padding_left, padding_top, padding_right, padding_bottom);
+
+                let (tx, ty) =
+                    enforce_text_bounds(text_bounds, &bounds, (transform.0, transform.1));
+
+                let caret_box = BoundingBox::from_min_max(x, y, x2, y2);
+
+                let (new_tx, new_ty) = ensure_visible(&caret_box, &bounds, (tx, ty));
+
+                if new_tx != transform.0 || new_ty != transform.1 {
+                    *transform = (new_tx, new_ty);
+                    cx.needs_redraw();
+                }
             }
         }
     }
@@ -1215,14 +1270,15 @@ where
                 } else {
                     cx.set_valid(false);
                 }
-                self.show_placeholder = text.is_empty();
-                if self.show_placeholder {
-                    cx.style.text.insert(cx.current, self.placeholder.clone());
-                } else {
-                    cx.style.text.insert(cx.current, text);
-                }
 
-                cx.style.needs_text_update(cx.current);
+                // self.show_placeholder = text.is_empty();
+                // if self.show_placeholder {
+                //     cx.style.text.insert(cx.current, self.placeholder.clone());
+                // } else {
+                //     cx.style.text.insert(cx.current, text);
+                // }
+
+                // cx.style.needs_text_update(cx.current);
             }
 
             TextEvent::Blur => {
@@ -1339,14 +1395,15 @@ where
         cx.draw_background(canvas);
         cx.draw_border(canvas);
         cx.draw_outline(canvas);
-        // canvas.save();
-        // canvas.translate(self.transform.0, self.transform.1);
+        canvas.save();
+        let transform = self.transform.borrow().clone();
+        canvas.translate((transform.0, transform.1));
         // cx.draw_text_and_selection(canvas);
         cx.draw_text(canvas);
         if self.edit {
             self.draw_selection(cx, canvas);
             self.draw_text_caret(cx, canvas);
         }
-        // canvas.restore();
+        canvas.restore();
     }
 }

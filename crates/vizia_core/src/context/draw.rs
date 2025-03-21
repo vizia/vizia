@@ -200,7 +200,7 @@ impl DrawContext<'_> {
         };
 
         let mut clip_path = self.build_path(clip_bounds, (0.0, 0.0));
-        clip_path.offset(bounds.top_left());
+        clip_path.offset(clip_bounds.top_left());
 
         Some(clip_path)
     }

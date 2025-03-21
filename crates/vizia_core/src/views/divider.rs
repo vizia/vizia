@@ -6,7 +6,9 @@ pub struct Divider {}
 impl Divider {
     /// Creates a dividing line. Orientation is determined by context.
     pub fn new(cx: &mut Context) -> Handle<Self> {
-        Self {}.build(cx, |_| {})
+        Self {}.build(cx, |cx| {
+            Element::new(cx).class("divider-line");
+        })
     }
 
     /// Creates a horizontal dividing line.

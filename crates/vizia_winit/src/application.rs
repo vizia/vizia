@@ -515,7 +515,47 @@ impl ApplicationHandler<UserEvent> for Application {
                 }
             }
 
-            winit::event::WindowEvent::Moved(_position) => {}
+            winit::event::WindowEvent::Moved(position) => {
+                let window_entity = window.entity;
+                self.cx.emit_window_event(
+                    window_entity,
+                    WindowEvent::WindowMoved(WindowPosition { x: position.x, y: position.y }),
+                );
+
+                #[cfg(target_os = "windows")]
+                {
+                    self.event_manager.flush_events(self.cx.context(), |_| {});
+
+                    self.cx.process_style_updates();
+
+                    if self.cx.process_animations() {
+                        window.window().request_redraw();
+                    }
+
+                    self.cx.process_visual_updates();
+
+                    // #[cfg(feature = "accesskit")]
+
+                    // self.cx.process_tree_updates(|tree_updates| {
+                    //     for update in tree_updates.iter_mut() {
+                    //         self.accesskit_adapter
+                    //             .unwrap()
+                    //             .update_if_active(|| update.take().unwrap());
+                    //     }
+                    // });
+
+                    // for update in self.cx.0.tree_updates.iter_mut() {
+                    //     self.accesskit_adapter
+                    //         .as_mut()
+                    //         .unwrap()
+                    //         .update_if_active(|| update.take().unwrap());
+                    // }
+
+                    // self.cx.0.tree_updates.clear();
+
+                    window.window().request_redraw();
+                }
+            }
 
             winit::event::WindowEvent::CloseRequested | winit::event::WindowEvent::Destroyed => {
                 let window_entity = window.entity;

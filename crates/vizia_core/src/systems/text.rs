@@ -59,12 +59,8 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                 .unwrap_or_default()
                 .to_px(bounds.width(), 0.0)
                 * cx.style.scale_factor();
-            let text_bounds = cx
-                .text_context
-                .text_bounds
-                .get(entity)
-                .copied()
-                .unwrap_or(bounds.shrink_sides(padding_left, 0.0, padding_right, 0.0));
+
+            let text_bounds = bounds.shrink_sides(padding_left, 0.0, padding_right, 0.0);
 
             if !cx.style.width.get(entity).copied().unwrap_or_default().is_auto()
                 && !cx.style.height.get(entity).copied().unwrap_or_default().is_auto()
@@ -75,8 +71,14 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                     paragraph.layout(f32::MAX);
                     paragraph
                         .layout(text_bounds.width().max(paragraph.min_intrinsic_width() + 1.0));
+                    let mut text_bounds = text_bounds;
+                    text_bounds.w = paragraph.max_intrinsic_width();
+                    cx.text_context.text_bounds.insert(entity, text_bounds);
                 } else {
                     paragraph.layout(text_bounds.width());
+                    let mut text_bounds = bounds;
+                    text_bounds.w = paragraph.max_intrinsic_width();
+                    cx.text_context.text_bounds.insert(entity, text_bounds);
                 }
             }
 
