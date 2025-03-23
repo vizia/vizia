@@ -25,6 +25,7 @@ use winit::{
     event::ElementState,
     event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy},
     keyboard::{NativeKeyCode, PhysicalKey},
+    platform::windows::WindowAttributesExtWindows,
     window::{CursorIcon, CustomCursor, WindowAttributes, WindowId, WindowLevel},
 };
 
@@ -925,6 +926,12 @@ impl WindowModifiers for Application {
         self
     }
 
+    fn undecorated_shadow(mut self, flag: bool) -> Self {
+        self.window_description.undecorated_shadow = flag;
+
+        self
+    }
+
     fn always_on_top(mut self, flag: bool) -> Self {
         self.window_description.always_on_top = flag;
         self
@@ -993,6 +1000,7 @@ fn apply_window_description(description: &WindowDescription) -> WindowAttributes
         })
         .with_transparent(description.transparent)
         .with_decorations(description.decorations)
+        .with_undecorated_shadow(description.undecorated_shadow)
         .with_window_icon(description.icon.as_ref().map(|icon| {
             winit::window::Icon::from_rgba(
                 icon.clone(),

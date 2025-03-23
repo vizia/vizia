@@ -163,6 +163,7 @@ pub trait WindowModifiers {
     /// .run();
     /// ```
     fn decorations(self, flag: bool) -> Self;
+    fn undecorated_shadow(self, flag: bool) -> Self;
     /// Sets whether the window should be on top of other windows. Accepts a boolean value, or lens to a boolean value.
     ///
     /// # Example

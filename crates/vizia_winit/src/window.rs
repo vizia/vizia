@@ -717,6 +717,15 @@ impl WindowModifiers for Handle<'_, Window> {
         self
     }
 
+    fn undecorated_shadow(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.undecorated_shadow = flag
+        }
+
+        self
+    }
+
     fn always_on_top(mut self, flag: bool) -> Self {
         let entity = self.entity();
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
