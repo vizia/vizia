@@ -163,6 +163,18 @@ pub trait WindowModifiers {
     /// .run();
     /// ```
     fn decorations(self, flag: bool) -> Self;
+    /// Sets whether the undecorated window displays a shadow effect. Accepts a boolean value, or lens to a boolean value.
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
+    /// Application::new(|cx| {
+    ///     // Content here
+    /// })
+    /// .undecorated_shadow(true)
+    /// .run();
+    /// ```
     fn undecorated_shadow(self, flag: bool) -> Self;
     /// Sets whether the window should be on top of other windows. Accepts a boolean value, or lens to a boolean value.
     ///
