@@ -74,6 +74,8 @@ pub enum WindowEvent {
     WindowFocused(bool),
     /// Emitted when a character is typed.
     CharInput(char),
+    /// Emitted when an input method (IME) commits a string.
+    ImeCommit(String),
     /// Emitted when a keyboard key is pressed.
     KeyDown(Code, Option<Key>),
     /// Emitted when a keyboard key is released.

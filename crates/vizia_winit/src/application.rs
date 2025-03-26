@@ -581,7 +581,21 @@ impl ApplicationHandler<UserEvent> for Application {
 
                 window.window().request_redraw();
             }
-            winit::event::WindowEvent::Ime(_) => {}
+            winit::event::WindowEvent::Ime(ime) => match ime {
+                winit::event::Ime::Enabled => {
+                    println!("IME enabled");
+                }
+                winit::event::Ime::Preedit(text, cursor) => {
+                    println!("Preedit: {:?}, Cursor: {:?}", text, cursor);
+                }
+                winit::event::Ime::Commit(text) => {
+                    println!("Commit: {:?}", text);
+                    self.cx.emit_window_event(window.entity, WindowEvent::ImeCommit(text));
+                }
+                winit::event::Ime::Disabled => {
+                    println!("IME disabled");
+                }
+            },
             winit::event::WindowEvent::CursorMoved { device_id: _, position } => {
                 self.cx.emit_window_event(
                     window.entity,

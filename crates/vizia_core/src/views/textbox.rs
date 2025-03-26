@@ -879,6 +879,14 @@ where
                 }
             }
 
+            WindowEvent::ImeCommit(text) => {
+                if !cx.modifiers.ctrl() && !cx.modifiers.logo() && self.edit && !cx.is_read_only() {
+                    println!("Textbox got IME Commit: {}", text);
+                    self.reset_caret_timer(cx);
+                    cx.emit(TextEvent::InsertText(text.to_string()));
+                }
+            }
+
             WindowEvent::KeyDown(code, _) => match code {
                 Code::Enter => {
                     if matches!(self.kind, TextboxKind::SingleLine) {
