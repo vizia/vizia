@@ -133,7 +133,7 @@ where
 
                     // Active track
                     Element::new(cx).class("active").bind(lens, move |handle, value| {
-                        let val = value.get(&handle);
+                        let val = value.get(&handle).clamp(range.start, range.end);
 
                         let normal_val = (val - range.start) / (range.end - range.start);
                         let min = thumb_size / size;
@@ -167,7 +167,7 @@ where
                             }
                         })
                         .bind(lens, move |handle, value| {
-                            let val = value.get(&handle);
+                            let val = value.get(&handle).clamp(range.start, range.end);
                             let normal_val = (val - range.start) / (range.end - range.start);
                             let px = normal_val * (1.0 - (thumb_size / size));
                             if orientation == Orientation::Horizontal {
@@ -221,7 +221,9 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
             },
 
             SliderEventInternal::SetRange(range) => {
-                self.internal.range = range.clone();
+                let mut range = range.clone();
+                range.end = range.end.max(range.start);
+                self.internal.range = range;
             }
 
             SliderEventInternal::SetKeyboardFraction(keyboard_fraction) => {
