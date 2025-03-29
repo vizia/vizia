@@ -113,13 +113,11 @@ impl BackendContext {
     }
 
     /// Calls the draw system.
-    pub fn draw(
-        &mut self,
+    pub fn draw<'a>(
+        &'a mut self,
         window_entity: Entity,
-        surface: &mut Surface,
-        dirty_surface: &mut Surface,
-    ) -> bool {
-        draw_system(&mut self.0, window_entity, surface, dirty_surface)
+    ) -> Option<impl 'a + FnMut(&mut Surface) -> BoundingBox> {
+        draw_system(&mut self.0, window_entity)
     }
 
     /// Set the current entity. This is useful in user code when you're performing black magic and

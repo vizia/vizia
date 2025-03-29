@@ -93,8 +93,10 @@ pub mod prelude {
     pub use vizia_id::GenerationalId;
     pub use vizia_input::{Code, Key, KeyChord, Modifiers, MouseButton, MouseButtonState};
     pub use vizia_storage::{Tree, TreeExt};
-    pub use vizia_window::{Anchor, AnchorTarget, WindowButtons, WindowPosition, WindowSize};
 
+    pub use vizia_window::{
+        Anchor, AnchorTarget, GraphicsBackend, WindowButtons, WindowPosition, WindowSize,
+    };
     pub use super::style::*;
 
     pub use morphorm::Units::*;

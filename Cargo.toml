@@ -10,7 +10,7 @@ rust-version = "1.82"
 exclude = ["assets/", "examples/"]
 
 [features]
-default = ["winit", "clipboard", "x11", "wayland", "markdown", "accesskit"]
+default = ["winit", "clipboard", "x11", "wayland", "markdown", "accesskit", "gl"]
 clipboard = ["vizia_core/clipboard", "vizia_winit?/clipboard"]
 winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]
@@ -19,6 +19,11 @@ wayland = ["vizia_winit?/wayland", "vizia_core/wayland"]
 accesskit = ["vizia_winit?/accesskit"]
 markdown = ["vizia_core/markdown"]
 rayon = ["vizia_core/rayon"]
+
+gl = ["vizia_winit/gl"]
+dx12 = ["vizia_winit/dx12"]
+metal = ["vizia_winit/metal"]
+vulkan = ["vizia_winit/vulkan"]
 
 [dependencies]
 vizia_core.workspace = true

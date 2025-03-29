@@ -1,3 +1,8 @@
+#[cfg(not(any(feature = "gl", feature = "dx12", feature = "metal", feature = "vulkan")))]
+compile_error!("At least one backend feature must be enabled: (gl, dx12, metal, vulkan)");
+
+mod draw_surface;
+
 pub mod application;
 mod convert;
 pub mod window;

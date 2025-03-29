@@ -1,8 +1,6 @@
 use crate::{animation::Interpolator, cache::CachedData, prelude::*};
 use morphorm::Node;
-use skia_safe::{
-    canvas::SaveLayerRec, ClipOp, ImageFilter, Matrix, Paint, Rect, SamplingOptions, Surface,
-};
+use skia_safe::{canvas::SaveLayerRec, ClipOp, ImageFilter, Matrix, Paint, Rect, Surface};
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use vizia_storage::{DrawChildIterator, LayoutTreeIterator};
@@ -142,18 +140,16 @@ pub(crate) fn transform_system(cx: &mut Context) {
     }
 }
 
-pub(crate) fn draw_system(
-    cx: &mut Context,
+pub(crate) fn draw_system<'a>(
+    cx: &'a mut Context,
     window_entity: Entity,
-    surface: &mut Surface,
-    dirty_surface: &mut Surface,
-) -> bool {
+) -> Option<impl 'a + FnMut(&mut Surface) -> BoundingBox> {
     if cx.windows.is_empty() {
-        return false;
+        return None;
     }
 
     if !cx.entity_manager.is_alive(window_entity) {
-        return false;
+        return None;
     }
 
     transform_system(cx);
@@ -163,9 +159,9 @@ pub(crate) fn draw_system(
     let mut dirty_rect = std::mem::take(&mut window.dirty_rect);
     let redraw_list = std::mem::take(&mut window.redraw_list);
 
-    // if redraw_list.is_empty() {
-    //     return false;
-    // }
+    if redraw_list.is_empty() {
+        return None;
+    }
 
     for &entity in &redraw_list {
         // Skip binding views
@@ -202,69 +198,62 @@ pub(crate) fn draw_system(
         }
     }
 
-    // if dirty_rect.is_none() {
-    //     return true;
-    // }
+    let dirty_rect = dirty_rect.filter(|dr| !dr.is_empty())?;
 
-    let canvas = dirty_surface.canvas();
+    Some(move |surface: &mut Surface| {
+        let canvas = surface.canvas();
 
-    canvas.save();
-
-    if let Some(rect) = dirty_rect.map(Rect::from) {
-        canvas.clip_rect(rect, ClipOp::Intersect, false);
-        canvas.clear(Color::transparent());
-    }
-
-    cx.resource_manager.mark_images_unused();
-
-    let mut queue = BinaryHeap::new();
-    queue.push(ZEntity { index: 0, entity: window_entity, visible: true });
-
-    while let Some(zentity) = queue.pop() {
         canvas.save();
-        draw_entity(
-            &mut DrawContext {
-                current: zentity.entity,
-                style: &cx.style,
-                cache: &mut cx.cache,
-                tree: &cx.tree,
-                models: &cx.models,
-                views: &mut cx.views,
-                resource_manager: &cx.resource_manager,
-                text_context: &mut cx.text_context,
-                modifiers: &cx.modifiers,
-                mouse: &cx.mouse,
-                windows: &mut cx.windows,
-            },
-            &dirty_rect,
-            canvas,
-            zentity.index,
-            &mut queue,
-            zentity.visible,
-        );
+
+        canvas.clip_rect(Rect::from(dirty_rect), ClipOp::Intersect, false);
+        canvas.clear(Color::transparent());
+
+        cx.resource_manager.mark_images_unused();
+
+        let mut queue = BinaryHeap::new();
+        queue.push(ZEntity { index: 0, entity: window_entity, visible: true });
+
+        while let Some(zentity) = queue.pop() {
+            canvas.save();
+            draw_entity(
+                &mut DrawContext {
+                    current: zentity.entity,
+                    style: &cx.style,
+                    cache: &mut cx.cache,
+                    tree: &cx.tree,
+                    models: &cx.models,
+                    views: &mut cx.views,
+                    resource_manager: &cx.resource_manager,
+                    text_context: &mut cx.text_context,
+                    modifiers: &cx.modifiers,
+                    mouse: &cx.mouse,
+                    windows: &mut cx.windows,
+                },
+                &dirty_rect,
+                canvas,
+                zentity.index,
+                &mut queue,
+                zentity.visible,
+            );
+            canvas.restore();
+        }
+
         canvas.restore();
-    }
 
-    canvas.restore();
+        // Debug draw dirty rect
+        // let mut paint = Paint::default();
+        // paint.set_style(skia_safe::PaintStyle::Stroke);
+        // paint.set_color(random_color());
+        // paint.set_stroke_width(1.0);
+        // surface.canvas().draw_rect(clip_rect, &paint);
 
-    surface.canvas().clear(Color::transparent());
-    dirty_surface.draw(surface.canvas(), (0, 0), SamplingOptions::default(), None);
-
-    // Debug draw dirty rect
-    // if let Some(rect) = dirty_rect.map(Rect::from) {
-    //     let mut paint = Paint::default();
-    //     paint.set_style(skia_safe::PaintStyle::Stroke);
-    //     paint.set_color(Color::red());
-    //     paint.set_stroke_width(1.0);
-    //     surface.canvas().draw_rect(rect, &paint);
-    // }
-
-    true
+        dirty_rect
+    })
 }
 
 fn draw_entity(
     cx: &mut DrawContext,
-    dirty_rect: &Option<BoundingBox>,
+    dirty_rect: &BoundingBox,
     canvas: &Canvas,
     current_z: i32,
     queue: &mut BinaryHeap<ZEntity>,
@@ -330,13 +319,11 @@ fn draw_entity(
 
     // Draw the view
     if is_visible {
-        if let Some(dirty_rect) = dirty_rect {
-            let bounds = draw_bounds(cx.style, cx.cache, cx.tree, current);
-            if bounds.intersects(dirty_rect) {
-                if let Some(view) = cx.views.remove(&current) {
-                    view.draw(cx, canvas);
-                    cx.views.insert(current, view);
-                }
+        let bounds = draw_bounds(cx.style, cx.cache, cx.tree, current);
+        if bounds.intersects(dirty_rect) {
+            if let Some(view) = cx.views.remove(&current) {
+                view.draw(cx, canvas);
+                cx.views.insert(current, view);
             }
         }
     }

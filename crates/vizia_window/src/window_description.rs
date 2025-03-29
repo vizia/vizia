@@ -101,6 +101,47 @@ bitflags::bitflags! {
     }
 }
 
+/// The preferred backend for rendering graphics.
+///
+#[derive(Clone, Copy, Eq, PartialEq, Debug, Default)]
+pub enum GraphicsBackend {
+    #[default]
+    Gl,
+    Dx12,
+    Metal,
+    Vulkan,
+}
+
+impl GraphicsBackend {
+    /// Returns the string representation of the backend.
+    ///
+    /// The string returned from this function can be used with `from_str` to
+    /// reconstruct a `GraphicsdBackend` instance.
+    ///
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            GraphicsBackend::Gl => "gl",
+            GraphicsBackend::Dx12 => "dx12",
+            GraphicsBackend::Metal => "metal",
+            GraphicsBackend::Vulkan => "vulkan",
+        }
+    }
+}
+
+impl std::str::FromStr for GraphicsBackend {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "gl" => Ok(GraphicsBackend::Gl),
+            "dx12" => Ok(GraphicsBackend::Dx12),
+            "metal" => Ok(GraphicsBackend::Metal),
+            "vulkan" => Ok(GraphicsBackend::Vulkan),
+            _ => Err("GraphicsBackend parse error"),
+        }
+    }
+}
+
 /// Passed to the window to set initial window properties.
 #[derive(Clone, Debug)]
 pub struct WindowDescription {
@@ -124,6 +165,7 @@ pub struct WindowDescription {
     pub always_on_top: bool,
     pub vsync: bool,
     pub enabled_window_buttons: WindowButtons,
+    pub graphics_backend: Option<GraphicsBackend>,
 
     // Change this to resource id when the resource manager is working
     pub icon: Option<Vec<u8>>,
@@ -153,6 +195,7 @@ impl Default for WindowDescription {
             always_on_top: false,
             vsync: true,
             enabled_window_buttons: WindowButtons::all(),
+            graphics_backend: None,
 
             icon: None,
             icon_width: 0,
