@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::sync::Arc;
+use std::rc::Rc;
 
 // use crate::accessibility::IntoNode;
 use crate::prelude::*;
@@ -68,7 +68,7 @@ pub struct Textbox<L: Lens> {
     #[lens(ignore)]
     kind: TextboxKind,
     edit: bool,
-    transform: Arc<RefCell<(f32, f32)>>,
+    transform: Rc<RefCell<(f32, f32)>>,
     on_edit: Option<Box<dyn Fn(&mut EventContext, String) + Send + Sync>>,
     on_submit: Option<Box<dyn Fn(&mut EventContext, L::Target, bool) + Send + Sync>>,
     on_blur: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
@@ -154,7 +154,7 @@ where
             lens,
             kind,
             edit: false,
-            transform: Arc::new(RefCell::new((0.0, 0.0))),
+            transform: Rc::new(RefCell::new((0.0, 0.0))),
             on_edit: None,
             on_submit: None,
             on_blur: None,
@@ -1396,7 +1396,7 @@ where
         cx.draw_border(canvas);
         cx.draw_outline(canvas);
         canvas.save();
-        let transform = self.transform.borrow().clone();
+        let transform = *self.transform.borrow();
         canvas.translate((transform.0, transform.1));
         // cx.draw_text_and_selection(canvas);
         cx.draw_text(canvas);
