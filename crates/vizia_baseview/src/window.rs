@@ -10,7 +10,7 @@ use skia_safe::gpu::gl::FramebufferInfo;
 use skia_safe::gpu::{
     self, backend_render_targets, ganesh::context_options, ContextOptions, SurfaceOrigin,
 };
-use skia_safe::{ColorType, Surface};
+use skia_safe::{ColorSpace, ColorType, PixelGeometry, Surface, SurfaceProps, SurfacePropsFlags};
 
 use crate::proxy::BaseviewProxy;
 use vizia_core::backend::*;
@@ -78,7 +78,6 @@ impl ViziaWindow {
             .unwrap();
 
         // Assume scale for now until there is an event with a new one.
-        // Assume scale for now until there is an event with a new one.
         // Scaling is a combination of the window's scale factor (which is usually determined by the
         // operating system, or explicitly overridden by a hosting application) and a custom user
         // scale factor.
@@ -86,7 +85,7 @@ impl ViziaWindow {
             WindowScalePolicy::ScaleFactor(scale) => (false, scale),
             // NOTE: This is not correct, but we should get a `Resized` event to correct this
             //       immediately after the window is created
-            WindowScalePolicy::SystemScaleFactor => (true, 1.0),
+            WindowScalePolicy::SystemScaleFactor => (true, 1.25),
         };
         let dpi_factor = window_scale_factor * win_desc.user_scale_factor;
 
@@ -95,7 +94,7 @@ impl ViziaWindow {
 
         cx.0.windows.insert(
             Entity::root(),
-            WindowState { window_description: win_desc, ..Default::default() },
+            WindowState { window_description: win_desc.clone(), ..Default::default() },
         );
 
         cx.context().remove_user_themes();
@@ -110,6 +109,7 @@ impl ViziaWindow {
             window_scale_factor,
             surface,
             dirty_surface,
+            win_desc,
         );
         unsafe { context.make_not_current() };
 
@@ -206,16 +206,10 @@ impl WindowHandler for ViziaWindow {
     fn on_frame(&mut self, window: &mut Window) {
         self.application.on_frame_update(window);
 
-        let context = window.gl_context().expect("Window was created without OpenGL support");
-        unsafe { context.make_current() };
-
-        self.application.render();
-        context.swap_buffers();
-
-        unsafe { context.make_not_current() };
+        self.application.render(window);
     }
 
-    fn on_event(&mut self, _window: &mut Window<'_>, event: Event) -> EventStatus {
+    fn on_event(&mut self, window: &mut Window<'_>, event: Event) -> EventStatus {
         let mut should_quit = false;
 
         self.application.handle_event(event, &mut should_quit);
@@ -223,7 +217,7 @@ impl WindowHandler for ViziaWindow {
         self.application.handle_idle(&self.on_idle);
 
         if should_quit {
-            // TODO: Request close.
+            window.close();
         }
 
         EventStatus::Ignored
@@ -241,13 +235,21 @@ pub fn create_surface(
 ) -> Surface {
     let backend_render_target = backend_render_targets::make_gl(size, None, 8, fb_info);
 
+    let surface_props = SurfaceProps::new_with_text_properties(
+        SurfacePropsFlags::default(),
+        PixelGeometry::default(),
+        0.5,
+        0.0,
+    );
+
     gpu::surfaces::wrap_backend_render_target(
         gr_context,
         &backend_render_target,
         SurfaceOrigin::BottomLeft,
         ColorType::RGBA8888,
-        None,
-        None,
+        ColorSpace::new_srgb(),
+        Some(surface_props).as_ref(),
+        // None,
     )
     .expect("Could not create skia surface")
 }
