@@ -173,6 +173,8 @@ pub(crate) struct ApplicationRunner {
     // current_window_size: WindowSize,
     pub surface: skia_safe::Surface,
     pub dirty_surface: skia_safe::Surface,
+    window_description: WindowDescription,
+    is_initialized: bool,
 }
 
 impl ApplicationRunner {
@@ -183,6 +185,7 @@ impl ApplicationRunner {
         window_scale_factor: f64,
         surface: skia_safe::Surface,
         dirty_surface: skia_safe::Surface,
+        window_description: WindowDescription,
     ) -> Self {
         ApplicationRunner {
             should_redraw: true,
@@ -195,6 +198,8 @@ impl ApplicationRunner {
             cx,
             surface,
             dirty_surface,
+            window_description,
+            is_initialized: false,
         }
     }
 
@@ -217,6 +222,23 @@ impl ApplicationRunner {
             }
             _ => {}
         });
+
+        // We need to resize the window to make sure that the new size is applied. This is a workaround
+        // for the fact that baseview does not resize the window when the scale factor changes.
+        if !self.is_initialized {
+            // Resizing the window doesn't apply unless the size has actually changed.
+            // So we resize the window slightly larger and then back again to force a resize event.
+            window.resize(baseview::Size {
+                width: self.window_description.inner_size.width as f64 + 1.0,
+                height: self.window_description.inner_size.height as f64 + 1.0,
+            });
+
+            window.resize(baseview::Size {
+                width: self.window_description.inner_size.width as f64,
+                height: self.window_description.inner_size.height as f64,
+            });
+            self.is_initialized = true;
+        }
 
         // if *cx.window_size() != self.current_window_size
         //     || cx.user_scale_factor() != self.current_user_scale_factor
@@ -301,10 +323,16 @@ impl ApplicationRunner {
         }
     }
 
-    pub fn render(&mut self) {
-        self.cx.draw(Entity::root(), &mut self.surface, &mut self.dirty_surface);
-        self.gr_context.flush_and_submit();
-        self.should_redraw = false;
+    pub fn render(&mut self, window: &mut Window) {
+        if self.should_redraw {
+            let context = window.gl_context().expect("Window was created without OpenGL support");
+            unsafe { context.make_current() };
+            self.cx.draw(Entity::root(), &mut self.surface, &mut self.dirty_surface);
+            self.gr_context.flush_and_submit();
+            self.should_redraw = false;
+            context.swap_buffers();
+            unsafe { context.make_not_current() };
+        }
     }
 
     pub fn handle_event(&mut self, event: baseview::Event, should_quit: &mut bool) {
