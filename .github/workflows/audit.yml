@@ -24,12 +24,6 @@ jobs:
           version: latest
       - run: rustup update
       - run: cargo audit --version
-      # RUSTSEC-2020-0097: xcb - Soundness issue with base::Error
-      # RUSTSEC-2021-0019: xcb - Multiple soundness issues
-      # RUSTSEC-2021-0119: nix - Out-of-bounds write in nix::unistd::getgrouplist - waiting for new winit release
-      # RUSTSEC-2020-0159: chrono - Dev Dependency
-      # RUSTSEC-2020-0071: time - Dev Dependency
-      # RUSTSEC-2022-0048: xml-rs is Unmaintained
       # RUSTSEC-2024-0320: yaml-rust is unmaintained
-      - run: cargo audit --deny warnings --ignore RUSTSEC-2024-0320 
-      # --ignore RUSTSEC-2020-0097 --ignore RUSTSEC-2021-0019 --ignore RUSTSEC-2021-0119 --ignore RUSTSEC-2020-0159 --ignore RUSTSEC-2020-0071 --ignore RUSTSEC-2022-0048
+      # RUSTSEC-2024-0436: paste is unmaintained
+      - run: cargo audit --deny warnings --ignore RUSTSEC-2024-0320 --ignore RUSTSEC-2024-0436
