@@ -7,23 +7,20 @@ use vizia_storage::{DrawChildIterator, LayoutParentIterator};
 
 // Determines the hovered entity based on the mouse cursor position.
 pub fn hover_system(cx: &mut Context, window_entity: Entity) {
+    println!("hover_system");
     cx.current = window_entity;
 
-    if let Some(pseudo_classes) = cx.style.pseudo_classes.get(window_entity) {
-        if !pseudo_classes.contains(PseudoClassFlags::OVER) {
-            return;
-        }
-    }
+    // if let Some(pseudo_classes) = cx.style.pseudo_classes.get(window_entity) {
+    //     if !pseudo_classes.contains(PseudoClassFlags::OVER) {
+    //         return;
+    //     }
+    // }
 
     let mut queue = BinaryHeap::new();
     let pointer_events: bool =
         cx.style.pointer_events.get(window_entity).copied().unwrap_or_default().into();
     queue.push(ZEntity { index: 0, pointer_events, entity: window_entity });
     let mut hovered = window_entity;
-    let transform = Matrix::new_identity();
-    // let clip_bounds = cx.cache.get_bounds(window_entity);
-    let clip_bounds: BoundingBox =
-        BoundingBox { x: -f32::MAX / 2.0, y: -f32::MAX / 2.0, w: f32::MAX, h: f32::MAX };
     while !queue.is_empty() {
         let zentity = queue.pop().unwrap();
         cx.with_current(zentity.entity, |cx| {
@@ -33,8 +30,6 @@ pub fn hover_system(cx: &mut Context, window_entity: Entity) {
                 zentity.pointer_events,
                 &mut queue,
                 &mut hovered,
-                transform,
-                &clip_bounds,
             );
         });
     }
@@ -91,9 +86,8 @@ fn hover_entity(
     parent_pointer_events: bool,
     queue: &mut BinaryHeap<ZEntity>,
     hovered: &mut Entity,
-    parent_transform: Matrix,
-    clip_bounds: &BoundingBox,
 ) {
+    println!("hover_entity: {}", cx.current);
     // Skip if non-hoverable (will skip any descendants)
     let hoverable = cx
         .style
@@ -141,18 +135,28 @@ fn hover_entity(
         return;
     }
 
-    let mut transform = parent_transform;
+    // let mut transform = parent_transform;
 
-    transform = cx.transform() * transform;
+    let mut transform = cx.transform();
 
-    let t = transform.invert().unwrap();
-    let t = t.map_point((cursor_x, cursor_y));
-    let tx = t.x;
-    let ty = t.y;
-    let clipping = clip_bounds.intersection(&cx.clip_region());
+    let bounds_rect: skia_safe::Rect = bounds.into();
+    let transformed_bounds: BoundingBox = transform.map_rect(&bounds_rect).0.into();
 
-    let b = bounds.intersection(&clipping);
-    // let b = bounds;
+    // let t = transform.invert().unwrap();
+    // let t = t.map_point((cursor_x, cursor_y));
+    let tx = cursor_x;
+    let ty = cursor_y;
+    let clipping = cx.clip_region();
+
+    let b = transformed_bounds.intersection(&clipping);
+    println!(
+        "entity: {} clip bounds: {:?} bounds: {:?} cursor: {} {}",
+        cx.current(),
+        cx.clip_region(),
+        b,
+        tx,
+        ty
+    );
 
     if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
         pseudo_classes.set(PseudoClassFlags::HOVER, false);
@@ -195,7 +199,7 @@ fn hover_entity(
     let child_iter = DrawChildIterator::new(cx.tree, cx.current);
     for child in child_iter {
         cx.current = child;
-        hover_entity(cx, current_z, pointer_events, queue, hovered, transform, &clipping);
+        hover_entity(cx, current_z, pointer_events, queue, hovered);
     }
 }
 

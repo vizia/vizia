@@ -7,7 +7,7 @@ use std::rc::Rc;
 use hashbrown::{HashMap, HashSet};
 use vizia_storage::{LayoutTreeIterator, TreeIterator};
 
-use crate::animation::{AnimId, Interpolator};
+use crate::animation::AnimId;
 use crate::cache::CachedData;
 use crate::events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler};
 use crate::prelude::*;
@@ -289,113 +289,18 @@ impl<'a> EventContext<'a> {
     }
 
     /// Returns the clip bounds of the current view.
-    pub fn clip_region(&self) -> BoundingBox {
-        let bounds = self.bounds();
-        let overflowx = self.style.overflowx.get(self.current).copied().unwrap_or_default();
-        let overflowy = self.style.overflowy.get(self.current).copied().unwrap_or_default();
-
-        // let root_bounds = self.cache.get_bounds(Entity::root());
-
-        let scale = self.scale_factor();
-
-        let clip_bounds = self
-            .style
+    pub fn clip_region(&mut self) -> BoundingBox {
+        let parent = self.tree.get_layout_parent(self.current).unwrap_or(Entity::root());
+        self.cache
             .clip_path
-            .get(self.current)
-            .map(|clip| match clip {
-                ClipPath::Auto => bounds,
-                ClipPath::Shape(rect) => bounds.shrink_sides(
-                    rect.3.to_pixels(bounds.w, scale),
-                    rect.0.to_pixels(bounds.h, scale),
-                    rect.1.to_pixels(bounds.w, scale),
-                    rect.2.to_pixels(bounds.h, scale),
-                ),
-            })
-            .unwrap_or(bounds);
-
-        let root_bounds: BoundingBox =
-            BoundingBox { x: -f32::MAX / 2.0, y: -f32::MAX / 2.0, w: f32::MAX, h: f32::MAX };
-
-        match (overflowx, overflowy) {
-            (Overflow::Visible, Overflow::Visible) => root_bounds,
-            (Overflow::Hidden, Overflow::Visible) => {
-                let left = clip_bounds.left();
-                let right = clip_bounds.right();
-                let top = root_bounds.top();
-                let bottom = root_bounds.bottom();
-                BoundingBox::from_min_max(left, top, right, bottom)
-            }
-            (Overflow::Visible, Overflow::Hidden) => {
-                let left = root_bounds.left();
-                let right = root_bounds.right();
-                let top = clip_bounds.top();
-                let bottom = clip_bounds.bottom();
-                BoundingBox::from_min_max(left, top, right, bottom)
-            }
-            (Overflow::Hidden, Overflow::Hidden) => clip_bounds,
-        }
+            .get(parent)
+            .map(|clip_path| Into::<BoundingBox>::into(clip_path.bounds().clone()))
+            .unwrap_or_default()
     }
 
     /// Returns the 2D transform of the current view.
     pub fn transform(&self) -> Matrix {
-        let bounds = self.bounds();
-        let scale_factor = self.scale_factor();
-
-        // Apply transform origin.
-        let mut origin = self
-            .style
-            .transform_origin
-            .get(self.current)
-            .map(|transform_origin| {
-                let mut origin = Matrix::translate(bounds.top_left());
-                let offset = transform_origin.as_transform(bounds, scale_factor);
-                origin = offset * origin;
-                origin
-            })
-            .unwrap_or(Matrix::translate(bounds.center()));
-        // transform = origin * transform;
-        let mut transform = origin;
-        origin = origin.invert().unwrap();
-
-        // Apply translation.
-        if let Some(translate) = self.style.translate.get(self.current) {
-            transform = transform * translate.as_transform(bounds, scale_factor);
-        }
-
-        // Apply rotation.
-        if let Some(rotate) = self.style.rotate.get(self.current) {
-            transform = transform * rotate.as_transform(bounds, scale_factor);
-        }
-
-        // Apply scaling.
-        if let Some(scale) = self.style.scale.get(self.current) {
-            transform = transform * scale.as_transform(bounds, scale_factor);
-        }
-
-        // Apply transform functions.
-        if let Some(transforms) = self.style.transform.get(self.current) {
-            // Check if the transform is currently animating
-            // Get the animation state
-            // Manually interpolate the value to get the overall transform for the current frame
-            if let Some(animation_state) = self.style.transform.get_active_animation(self.current) {
-                if let Some(start) = animation_state.keyframes.first() {
-                    if let Some(end) = animation_state.keyframes.last() {
-                        let start_transform = start.value.as_transform(bounds, scale_factor);
-                        let end_transform = end.value.as_transform(bounds, scale_factor);
-                        let t = animation_state.t;
-                        let animated_transform =
-                            Matrix::interpolate(&start_transform, &end_transform, t);
-                        transform = transform * animated_transform;
-                    }
-                }
-            } else {
-                transform = transform * transforms.as_transform(bounds, scale_factor);
-            }
-        }
-
-        transform = transform * origin;
-
-        transform
+        self.cache.transform.get(self.current).copied().unwrap_or_default()
     }
 
     /// Trigger an animation with the given id to play on the current view.
