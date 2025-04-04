@@ -383,10 +383,6 @@ where
     ///
     /// [`update_preedit`]: Textbox::update_preedit
     fn move_cursor(&mut self, cx: &mut EventContext, movement: Movement, selection: bool) {
-        if self.preedit_backup.is_some() {
-            return;
-        }
-
         if let Some(text) = cx.style.text.get_mut(cx.current) {
             if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
                 let new_selection =
