@@ -142,7 +142,7 @@ impl ViziaWindow {
                 win_desc.inner_size.height as f64 * win_desc.user_scale_factor,
             ),
             scale: scale_policy,
-            gl_config: Some(GlConfig { vsync: false, ..GlConfig::default() }),
+            gl_config: Some(GlConfig { vsync: true, ..GlConfig::default() }),
         };
 
         Window::open_parented(
@@ -182,7 +182,7 @@ impl ViziaWindow {
                 win_desc.inner_size.height as f64 * win_desc.user_scale_factor,
             ),
             scale: scale_policy,
-            gl_config: Some(GlConfig { vsync: false, ..GlConfig::default() }),
+            gl_config: Some(GlConfig { vsync: true, ..GlConfig::default() }),
         };
 
         Window::open_blocking(
