@@ -9,6 +9,7 @@ use crate::{
 use accesskit_winit::Adapter;
 use hashbrown::HashMap;
 use std::{error::Error, fmt::Display, sync::Arc};
+use vizia_input::ImeState;
 
 // #[cfg(feature = "accesskit")]
 // use accesskit::{Action, NodeBuilder, NodeId, TreeUpdate};
@@ -620,7 +621,27 @@ impl ApplicationHandler<UserEvent> for Application {
 
                 window.window().request_redraw();
             }
-            winit::event::WindowEvent::Ime(_) => {}
+            winit::event::WindowEvent::Ime(ime) => match ime {
+                winit::event::Ime::Enabled => {
+                    self.cx.0.set_ime_state(ImeState::StartComposition);
+                    self.cx.emit_window_event(window.entity, WindowEvent::ImeActivate(true));
+                }
+                winit::event::Ime::Preedit(text, cursor) => {
+                    self.cx.0.set_ime_state(ImeState::Composing {
+                        preedit: Some(text.clone()),
+                        cursor_pos: cursor,
+                    });
+                    self.cx.emit_window_event(window.entity, WindowEvent::ImePreedit(text, cursor));
+                }
+                winit::event::Ime::Commit(text) => {
+                    self.cx.0.set_ime_state(ImeState::EndComposition);
+                    self.cx.emit_window_event(window.entity, WindowEvent::ImeCommit(text));
+                }
+                winit::event::Ime::Disabled => {
+                    self.cx.0.set_ime_state(ImeState::Inactive);
+                    self.cx.emit_window_event(window.entity, WindowEvent::ImeActivate(false));
+                }
+            },
             winit::event::WindowEvent::CursorMoved { device_id: _, position } => {
                 self.cx.emit_window_event(
                     window.entity,

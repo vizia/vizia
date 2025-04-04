@@ -552,6 +552,12 @@ impl View for Window {
                 });
             }
 
+            WindowEvent::SetImeCursorArea(position, size) => {
+                let position = PhysicalPosition::new(position.0 as i32, position.1 as i32);
+                let size = PhysicalSize::new(size.0 as u32, size.1 as u32);
+                self.window().set_ime_cursor_area(position, size);
+            }
+
             _ => {}
         })
     }

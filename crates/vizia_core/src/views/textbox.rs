@@ -6,7 +6,7 @@ use crate::prelude::*;
 
 use crate::text::{
     apply_movement, enforce_text_bounds, ensure_visible, offset_for_delete_backwards, Direction,
-    EditableText, Movement, Selection, VerticalMovement,
+    EditableText, Movement, PreeditBackup, Selection, VerticalMovement,
 };
 // use crate::views::scrollview::SCROLL_SENSITIVITY;
 use accesskit::{ActionData, ActionRequest};
@@ -18,6 +18,10 @@ use unicode_segmentation::UnicodeSegmentation;
 pub enum TextEvent {
     /// Insert a string of text into the textbox.
     InsertText(String),
+    /// Update the preedit text of the textbox (for IME input).
+    UpdatePreedit(String, Option<(usize, usize)>),
+    /// Clear the preedit text of the textbox.
+    ClearPreedit,
     /// Reset the text of the textbox to the bound data.
     Clear,
     /// Delete a section of text, determined by the `Movement`.
@@ -79,6 +83,7 @@ pub struct Textbox<L: Lens> {
     show_caret: bool,
     caret_timer: Timer,
     selection: Selection,
+    preedit_backup: Option<PreeditBackup>,
 }
 
 // Determines whether the enter key submits the text or inserts a new line.
@@ -165,6 +170,7 @@ where
             show_caret: true,
             caret_timer,
             selection: Selection::new(0, 0),
+            preedit_backup: None,
         }
         .build(cx, move |cx| {
             cx.add_listener(move |textbox: &mut Self, cx, event| {
@@ -222,15 +228,105 @@ where
                 text.clear();
                 self.show_placeholder = false;
             }
+
             text.edit(self.selection.range(), txt);
+
             self.selection = Selection::caret(self.selection.min() + txt.len());
+
             self.show_placeholder = text.is_empty();
             cx.style.needs_text_update(cx.current);
         }
     }
 
+    fn update_preedit(
+        &mut self,
+        cx: &mut EventContext,
+        preedit_txt: &str,
+        cursor: Option<(usize, usize)>,
+    ) {
+        if preedit_txt.is_empty() || cursor.is_none() {
+            return;
+        }
+
+        if let Some(text) = cx.style.text.get_mut(cx.current) {
+            if self.show_placeholder {
+                text.clear();
+                self.show_placeholder = false;
+            }
+
+            if !self.selection.is_caret() {
+                let start = self.selection.min();
+                let end = self.selection.max();
+
+                if end > start && end <= text.len() {
+                    text.replace_range(start..end, "");
+                }
+                self.selection = Selection::caret(start);
+            }
+
+            let preedit_backup = self
+                .preedit_backup
+                .get_or_insert_with(|| PreeditBackup::new(String::new(), self.selection));
+
+            let original_selection = preedit_backup.original_selection;
+            let prev_preedit_text = &preedit_backup.prev_preedit;
+
+            if prev_preedit_text == preedit_txt {
+                // Move the cursor only
+                let new_selection = Selection::caret(original_selection.min() + cursor.unwrap().0);
+                self.selection = new_selection;
+            } else {
+                // Bytes index
+                let start = original_selection.min();
+                let end = start + prev_preedit_text.chars().map(|c| c.len_utf8()).sum::<usize>();
+
+                // Delete old preedit text
+                if end > start && end <= text.len() {
+                    text.replace_range(start..end, "");
+                }
+
+                text.insert_str(start, preedit_txt);
+
+                if let Some((cursor_index, _)) = cursor {
+                    let new_caret = original_selection.min() + cursor_index;
+                    self.selection = Selection::caret(new_caret);
+                } else {
+                    // If there is no valid cursor, the default behavior is to move to the end of the text.
+                    let new_caret = original_selection.min() + preedit_txt.chars().count();
+                    self.selection = Selection::caret(new_caret);
+                }
+
+                self.preedit_backup.as_mut().unwrap().set_prev_preedit(preedit_txt.to_string());
+            }
+
+            cx.style.needs_text_update(cx.current);
+        }
+    }
+
+    fn clear_preedit(&mut self, cx: &mut EventContext) {
+        if let Some(text) = cx.style.text.get_mut(cx.current) {
+            if let Some(preedit_backup) = self.preedit_backup.as_ref() {
+                let original_selection = preedit_backup.original_selection;
+                let prev_preedit_text = preedit_backup.prev_preedit.clone();
+
+                let start = original_selection.min();
+                let end = start + prev_preedit_text.chars().map(|c| c.len_utf8()).sum::<usize>();
+
+                text.replace_range(start..end, "");
+
+                self.selection = original_selection;
+
+                self.preedit_backup = None;
+            }
+        }
+    }
+
     fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
         if self.show_placeholder {
+            return;
+        }
+
+        if self.preedit_backup.is_some() {
             return;
         }
 
@@ -283,7 +379,14 @@ where
         }
     }
 
+    /// When IME is enabled, the cursor movement logic will be controlled by [`update_preedit`].
+    ///
+    /// [`update_preedit`]: Textbox::update_preedit
     fn move_cursor(&mut self, cx: &mut EventContext, movement: Movement, selection: bool) {
+        if self.preedit_backup.is_some() {
+            return;
+        }
+
         if let Some(text) = cx.style.text.get_mut(cx.current) {
             if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
                 let new_selection =
@@ -464,6 +567,17 @@ where
             self.show_caret = true;
             cx.start_timer(self.caret_timer);
         }
+    }
+
+    fn reset_ime_position(&mut self, cx: &mut EventContext) {
+        // TODO: Make the position of IME follow the cursor.
+        cx.event_queue.push_back(
+            Event::new(WindowEvent::SetImeCursorArea(
+                (cx.bounds().x as u32, cx.bounds().y as u32),
+                ((cx.bounds().width()) as u32, cx.bounds().height() as u32),
+            ))
+            .target(cx.current),
+        );
     }
 
     fn draw_selection(&self, cx: &mut DrawContext, canvas: &Canvas) {
@@ -934,6 +1048,23 @@ where
                 }
             }
 
+            WindowEvent::ImeCommit(text) => {
+                if !cx.modifiers.ctrl() && !cx.modifiers.logo() && self.edit && !cx.is_read_only() {
+                    self.reset_caret_timer(cx);
+                    cx.emit(TextEvent::ClearPreedit);
+                    cx.emit(TextEvent::InsertText(text.to_string()));
+
+                    self.reset_ime_position(cx);
+                }
+            }
+
+            WindowEvent::ImePreedit(text, cursor) => {
+                if !cx.modifiers.ctrl() && !cx.modifiers.logo() && self.edit && !cx.is_read_only() {
+                    self.reset_caret_timer(cx);
+                    cx.emit(TextEvent::UpdatePreedit(text.to_string(), *cursor));
+                }
+            }
+
             WindowEvent::KeyDown(code, _) => match code {
                 Code::Enter => {
                     if matches!(self.kind, TextboxKind::SingleLine) {
@@ -1157,6 +1288,10 @@ where
         // Textbox Events
         event.map(|text_event, _| match text_event {
             TextEvent::InsertText(text) => {
+                if self.preedit_backup.is_some() {
+                    return;
+                }
+
                 if self.show_placeholder {
                     self.reset_text(cx);
                 }
@@ -1180,6 +1315,14 @@ where
                         (callback)(cx, text);
                     }
                 }
+            }
+
+            TextEvent::UpdatePreedit(preedit, cursor) => {
+                self.update_preedit(cx, preedit, *cursor);
+            }
+
+            TextEvent::ClearPreedit => {
+                self.clear_preedit(cx);
             }
 
             TextEvent::Clear => {
@@ -1212,7 +1355,7 @@ where
             }
 
             TextEvent::MoveCursor(movement, selection) => {
-                if self.edit && !self.show_placeholder {
+                if self.edit && !self.show_placeholder && self.preedit_backup.is_none() {
                     self.move_cursor(cx, *movement, *selection);
                 }
             }
@@ -1226,6 +1369,7 @@ where
                     cx.capture();
                     cx.set_checked(true);
                     self.reset_caret_timer(cx);
+                    self.reset_ime_position(cx);
 
                     let text = self.lens.get(cx);
                     let text = text.to_string_local(cx);
