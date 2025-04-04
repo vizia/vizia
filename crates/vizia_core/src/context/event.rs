@@ -647,6 +647,22 @@ impl<'a> EventContext<'a> {
         self.style.needs_restyle(self.current);
     }
 
+    pub fn needs_retransform(&mut self) {
+        self.style.needs_retransform(self.current);
+        let iter = LayoutTreeIterator::subtree(&self.tree, self.current);
+        for descendant in iter {
+            self.style.needs_retransform(descendant);
+        }
+    }
+
+    pub fn needs_reclip(&mut self) {
+        self.style.needs_reclip(self.current);
+        let iter = LayoutTreeIterator::subtree(&self.tree, self.current);
+        for descendant in iter {
+            self.style.needs_reclip(descendant);
+        }
+    }
+
     /// Reloads the stylesheets linked to the application.
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
         if self.resource_manager.themes.is_empty() && self.resource_manager.styles.is_empty() {
