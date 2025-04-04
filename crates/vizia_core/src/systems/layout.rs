@@ -86,6 +86,7 @@ pub(crate) fn layout_system(cx: &mut Context) {
                 {
                     cx.needs_redraw();
                     cx.style.needs_text_layout(entity);
+                    cx.needs_retransform();
                 }
 
                 // TODO: Use geo changed to determine whether an entity needs to be redrawn.

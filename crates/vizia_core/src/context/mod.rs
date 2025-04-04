@@ -306,6 +306,22 @@ impl Context {
         // self.style.needs_restyle();
     }
 
+    pub fn needs_retransform(&mut self, entity: Entity) {
+        self.style.needs_retransform(entity);
+        let iter = LayoutTreeIterator::subtree(&self.tree, entity);
+        for descendant in iter {
+            self.style.needs_retransform(descendant);
+        }
+    }
+
+    pub fn needs_reclip(&mut self, entity: Entity) {
+        self.style.needs_reclip(entity);
+        let iter = LayoutTreeIterator::subtree(&self.tree, entity);
+        for descendant in iter {
+            self.style.needs_reclip(descendant);
+        }
+    }
+
     /// Mark the application as needing to rerun layout computations
     pub fn needs_relayout(&mut self) {
         self.style.needs_relayout();
