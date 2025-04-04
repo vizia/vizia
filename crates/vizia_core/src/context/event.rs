@@ -13,7 +13,7 @@ use crate::events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler};
 use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
-use vizia_input::MouseState;
+use vizia_input::{ImeState, MouseState};
 
 use skia_safe::Matrix;
 
@@ -76,6 +76,7 @@ pub struct EventContext<'a> {
     pub(crate) text_context: &'a mut TextContext,
     pub(crate) modifiers: &'a Modifiers,
     pub(crate) mouse: &'a MouseState<Entity>,
+    pub(crate) ime_state: &'a mut ImeState,
     pub(crate) event_queue: &'a mut VecDeque<Event>,
     pub(crate) event_schedule: &'a mut BinaryHeap<TimedEvent>,
     pub(crate) next_event_id: &'a mut usize,
@@ -129,6 +130,7 @@ impl<'a> EventContext<'a> {
             text_context: &mut cx.text_context,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
+            ime_state: &mut cx.ime_state,
             event_queue: &mut cx.event_queue,
             event_schedule: &mut cx.event_schedule,
             next_event_id: &mut cx.next_event_id,
@@ -163,6 +165,7 @@ impl<'a> EventContext<'a> {
             text_context: &mut cx.text_context,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
+            ime_state: &mut cx.ime_state,
             event_queue: &mut cx.event_queue,
             event_schedule: &mut cx.event_schedule,
             next_event_id: &mut cx.next_event_id,
