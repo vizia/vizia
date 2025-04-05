@@ -137,7 +137,7 @@ fn hover_entity(
     let transform = cx.transform();
 
     let bounds_rect: skia_safe::Rect = bounds.into();
-    let transformed_bounds: BoundingBox = transform.map_rect(&bounds_rect).0.into();
+    let transformed_bounds: BoundingBox = transform.map_rect(bounds_rect).0.into();
 
     let tx = cursor_x;
     let ty = cursor_y;

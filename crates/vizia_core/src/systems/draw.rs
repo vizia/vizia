@@ -20,8 +20,6 @@ pub(crate) fn draw_system(
         return false;
     }
 
-    // transform_system(cx);
-
     let window = cx.windows.get_mut(&window_entity).unwrap();
 
     let mut dirty_rect = std::mem::take(&mut window.dirty_rect);
@@ -300,10 +298,8 @@ pub(crate) fn draw_bounds(
     let parent = tree
         .get_layout_parent(entity)
         .unwrap_or(tree.get_parent_window(entity).unwrap_or(Entity::root()));
-    if let Some(clip_bounds) = cache
-        .clip_path
-        .get(parent)
-        .map(|clip_path| Into::<BoundingBox>::into(clip_path.bounds().clone()))
+    if let Some(clip_bounds) =
+        cache.clip_path.get(parent).map(|clip_path| Into::<BoundingBox>::into(*clip_path.bounds()))
     {
         let clip_bounds = &BoundingBox::from_min_max(
             clip_bounds.left().floor(),

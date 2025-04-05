@@ -289,12 +289,12 @@ impl<'a> EventContext<'a> {
     }
 
     /// Returns the clip bounds of the current view.
-    pub fn clip_region(&mut self) -> BoundingBox {
+    pub fn clip_region(&self) -> BoundingBox {
         let parent = self.tree.get_layout_parent(self.current).unwrap_or(Entity::root());
         self.cache
             .clip_path
             .get(parent)
-            .map(|clip_path| Into::<BoundingBox>::into(clip_path.bounds().clone()))
+            .map(|clip_path| Into::<BoundingBox>::into(*clip_path.bounds()))
             .unwrap_or_default()
     }
 
@@ -678,7 +678,7 @@ impl<'a> EventContext<'a> {
 
     pub fn needs_retransform(&mut self) {
         self.style.needs_retransform(self.current);
-        let iter = LayoutTreeIterator::subtree(&self.tree, self.current);
+        let iter = LayoutTreeIterator::subtree(self.tree, self.current);
         for descendant in iter {
             self.style.needs_retransform(descendant);
         }
@@ -686,7 +686,7 @@ impl<'a> EventContext<'a> {
 
     pub fn needs_reclip(&mut self) {
         self.style.needs_reclip(self.current);
-        let iter = LayoutTreeIterator::subtree(&self.tree, self.current);
+        let iter = LayoutTreeIterator::subtree(self.tree, self.current);
         for descendant in iter {
             self.style.needs_reclip(descendant);
         }

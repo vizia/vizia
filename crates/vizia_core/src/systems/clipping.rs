@@ -5,6 +5,7 @@ use vizia_storage::LayoutTreeIterator;
 
 use crate::prelude::*;
 
+/// Computes the clipping path for each entity in the layout tree.
 pub(crate) fn clipping_system(cx: &mut Context) {
     if cx.style.reclip.is_empty() {
         return;

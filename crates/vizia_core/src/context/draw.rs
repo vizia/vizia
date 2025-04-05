@@ -163,7 +163,7 @@ impl DrawContext<'_> {
     }
 
     /// Returns the clip path of the current view.
-    pub fn clip_path(&mut self) -> Option<skia_safe::Path> {
+    pub fn clip_path(&self) -> Option<skia_safe::Path> {
         let parent = self.tree.get_layout_parent(self.current).unwrap_or(Entity::root());
         self.cache.clip_path.get(parent).cloned()
     }
