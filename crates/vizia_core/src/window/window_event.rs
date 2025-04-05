@@ -76,6 +76,14 @@ pub enum WindowEvent {
     WindowFocused(bool),
     /// Emitted when a character is typed.
     CharInput(char),
+    /// Emitted when the input method (IME) is activated or deactivated.
+    ImeActivate(bool),
+    /// Emitted when an input method (IME) commits a string.
+    ImeCommit(String),
+    /// Emitted when an input method (IME) changes the preedit string.
+    ImePreedit(String, Option<(usize, usize)>),
+    /// Emitted when the input method (IME) area needs to be updated.
+    SetImeCursorArea((u32, u32), (u32, u32)),
     /// Emitted when a keyboard key is pressed.
     KeyDown(Code, Option<Key>),
     /// Emitted when a keyboard key is released.

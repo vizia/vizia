@@ -1,8 +1,10 @@
 mod chord;
+mod ime;
 mod modifiers;
 mod mouse;
 
 pub use chord::*;
+pub use ime::*;
 pub use modifiers::*;
 pub use mouse::*;
 

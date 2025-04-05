@@ -514,6 +514,10 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             }
 
             if *code == Code::Tab {
+                if cx.ime_state.is_composing() {
+                    return;
+                }
+
                 let lock_focus_to = cx.tree.lock_focus_within(cx.focused);
                 if cx.modifiers.shift() {
                     let prev_focused = if let Some(prev_focused) =
@@ -613,6 +617,18 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             }
         }
         WindowEvent::CharInput(_) => {
+            meta.target = cx.focused;
+        }
+        WindowEvent::ImeActivate(_) => {
+            meta.target = cx.focused;
+        }
+        WindowEvent::ImeCommit(_) => {
+            meta.target = cx.focused;
+        }
+        WindowEvent::ImePreedit(_, _) => {
+            meta.target = cx.focused;
+        }
+        WindowEvent::SetImeCursorArea(_, _) => {
             meta.target = cx.focused;
         }
         WindowEvent::WindowFocused(is_focused) => {

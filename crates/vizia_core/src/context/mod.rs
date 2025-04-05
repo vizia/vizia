@@ -52,7 +52,7 @@ use crate::{cache::CachedData, resource::ImageOrSvg};
 use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::text::TextContext;
-use vizia_input::MouseState;
+use vizia_input::{ImeState, MouseState};
 use vizia_storage::{ChildIterator, LayoutTreeIterator};
 
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
@@ -137,6 +137,7 @@ pub struct Context {
 
     pub ignore_default_theme: bool,
     pub window_has_focus: bool,
+    pub ime_state: ImeState,
 
     pub(crate) drop_data: Option<DropData>,
 }
@@ -222,6 +223,8 @@ impl Context {
 
             ignore_default_theme: false,
             window_has_focus: true,
+
+            ime_state: Default::default(),
 
             drop_data: None,
         };
@@ -889,6 +892,10 @@ impl Context {
         }
 
         self.style.needs_restyle(self.current);
+    }
+
+    pub fn set_ime_state(&mut self, new_state: ImeState) {
+        self.ime_state = new_state;
     }
 }
 
