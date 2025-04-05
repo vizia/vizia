@@ -2,6 +2,7 @@ use vizia_storage::LayoutTreeIterator;
 
 use crate::{animation::Interpolator, prelude::*};
 
+/// Applies transforms to the layout tree.
 pub(crate) fn transform_system(cx: &mut Context) {
     if cx.style.retransform.is_empty() {
         return;
@@ -81,7 +82,6 @@ pub(crate) fn transform_system(cx: &mut Context) {
                 let new_transform = parent_transform * transform;
 
                 if *tx != new_transform {
-                    //cx.needs_reclip(entity);
                     cx.style.needs_reclip(entity);
                     let iter = LayoutTreeIterator::subtree(&cx.tree, entity);
                     for descendant in iter {
