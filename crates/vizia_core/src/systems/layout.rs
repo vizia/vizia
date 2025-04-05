@@ -4,7 +4,7 @@ use vizia_storage::LayoutTreeIterator;
 use crate::layout::node::SubLayout;
 use crate::prelude::*;
 
-use super::{text_layout_system, text_system};
+use super::{clipping_system, text_layout_system, text_system, transform_system};
 
 /// Determines the size and position of views.
 /// TODO: Currently relayout is done on an entire tree rather than incrementally.
@@ -86,6 +86,7 @@ pub(crate) fn layout_system(cx: &mut Context) {
                 {
                     cx.needs_redraw();
                     cx.style.needs_text_layout(entity);
+                    cx.needs_retransform();
                 }
 
                 // TODO: Use geo changed to determine whether an entity needs to be redrawn.
@@ -119,6 +120,8 @@ pub(crate) fn layout_system(cx: &mut Context) {
     }
 
     text_layout_system(cx);
+    transform_system(cx);
+    clipping_system(cx);
 }
 
 fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {
