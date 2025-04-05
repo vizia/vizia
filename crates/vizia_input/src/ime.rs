@@ -1,15 +1,10 @@
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub enum ImeState {
+    #[default]
     Inactive,
     StartComposition,
     Composing { preedit: Option<String>, cursor_pos: Option<(usize, usize)> },
     EndComposition,
-}
-
-impl Default for ImeState {
-    fn default() -> Self {
-        ImeState::Inactive
-    }
 }
 
 impl ImeState {
