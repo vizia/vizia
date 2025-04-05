@@ -2,12 +2,10 @@ use std::{cmp::Ordering, collections::BinaryHeap};
 
 use crate::prelude::*;
 use log::debug;
-use skia_safe::Matrix;
 use vizia_storage::{DrawChildIterator, LayoutParentIterator};
 
 // Determines the hovered entity based on the mouse cursor position.
 pub fn hover_system(cx: &mut Context, window_entity: Entity) {
-    println!("hover_system");
     cx.current = window_entity;
 
     // if let Some(pseudo_classes) = cx.style.pseudo_classes.get(window_entity) {
@@ -87,7 +85,6 @@ fn hover_entity(
     queue: &mut BinaryHeap<ZEntity>,
     hovered: &mut Entity,
 ) {
-    println!("hover_entity: {}", cx.current);
     // Skip if non-hoverable (will skip any descendants)
     let hoverable = cx
         .style
@@ -137,26 +134,16 @@ fn hover_entity(
 
     // let mut transform = parent_transform;
 
-    let mut transform = cx.transform();
+    let transform = cx.transform();
 
     let bounds_rect: skia_safe::Rect = bounds.into();
     let transformed_bounds: BoundingBox = transform.map_rect(&bounds_rect).0.into();
 
-    // let t = transform.invert().unwrap();
-    // let t = t.map_point((cursor_x, cursor_y));
     let tx = cursor_x;
     let ty = cursor_y;
     let clipping = cx.clip_region();
 
     let b = transformed_bounds.intersection(&clipping);
-    println!(
-        "entity: {} clip bounds: {:?} bounds: {:?} cursor: {} {}",
-        cx.current(),
-        cx.clip_region(),
-        b,
-        tx,
-        ty
-    );
 
     if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
         pseudo_classes.set(PseudoClassFlags::HOVER, false);

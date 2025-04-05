@@ -1736,6 +1736,7 @@ impl Style {
         self.restyle.0.insert(entity).unwrap();
         self.reaccess.0.insert(entity).unwrap();
         self.retransform.0.insert(entity).unwrap();
+        self.reclip.0.insert(entity).unwrap();
     }
 
     // Remove style data for the given entity.
