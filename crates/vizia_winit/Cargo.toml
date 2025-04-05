@@ -21,7 +21,7 @@ vizia_id.workspace = true
 vizia_window.workspace = true
 
 accesskit = {version = "0.17", optional = true}
-winit = { version = "0.30" }
+winit = { version = "0.30", default-features = false}
 skia-safe = { version = "0.81", features = ["gl", "textlayout", "svg"] }
 glutin = { version = "0.32" }
 copypasta = {version = "0.10", optional = true, default-features = false }

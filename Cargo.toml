@@ -22,7 +22,7 @@ rayon = ["vizia_core/rayon"]
 
 [dependencies]
 vizia_core.workspace = true
-vizia_winit = { workspace = true, optional = true }
+vizia_winit = { workspace = true, optional = true, default-features = false}
 vizia_baseview = { workspace = true, optional = true }
 
 [dev-dependencies]
