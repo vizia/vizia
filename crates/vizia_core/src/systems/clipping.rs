@@ -3,7 +3,7 @@ use std::f32::consts::SQRT_2;
 use skia_safe::{path::ArcSize, rrect::Corner, Path, PathDirection, Point, RRect, Rect};
 use vizia_storage::LayoutTreeIterator;
 
-use crate::{animation::Interpolator, prelude::*};
+use crate::prelude::*;
 
 pub(crate) fn clipping_system(cx: &mut Context) {
     if cx.style.reclip.is_empty() {
@@ -94,7 +94,6 @@ pub(crate) fn clipping_system(cx: &mut Context) {
 }
 
 fn build_clip_path(cx: &Context, entity: Entity, clip_bounds: BoundingBox) -> skia_safe::Path {
-    println!("entity: {} clip bounds: {:?}", entity, clip_bounds);
     let outset = (0.0, 0.0);
     let bounds = cx.cache.bounds.get(entity).copied().unwrap_or_default();
     let scale = cx.style.scale_factor();
