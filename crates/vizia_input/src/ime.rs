@@ -3,7 +3,10 @@ pub enum ImeState {
     #[default]
     Inactive,
     StartComposition,
-    Composing { preedit: Option<String>, cursor_pos: Option<(usize, usize)> },
+    Composing {
+        preedit: Option<String>,
+        cursor_pos: Option<(usize, usize)>,
+    },
     EndComposition,
 }
 
