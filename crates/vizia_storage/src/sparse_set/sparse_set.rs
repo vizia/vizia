@@ -48,14 +48,19 @@ where
 
     /// Returns the index of the data associated with the key if it exists
     pub fn dense_idx<K: GenerationalId>(&self, key: K) -> Option<I> {
-        if let Some(dense_index) = self.sparse.get(key.index()) {
-            if let Some(entry) = self.dense.get(dense_index.index()) {
-                if entry.key.index() == key.index() {
-                    return Some(*dense_index);
-                }
-            }
+        if key.is_null() {
+            return None;
         }
-        None
+
+        self.sparse.get(key.index()).copied().and_then(
+            |idx| {
+                if idx.is_null() {
+                    None
+                } else {
+                    Some(idx)
+                }
+            },
+        )
     }
 
     /// Returns true if the sparse set contains data for the given key
@@ -98,6 +103,10 @@ where
 
     /// Removes the data for a given key from the sparse set
     pub fn remove<K: GenerationalId>(&mut self, key: K) -> Option<V> {
+        if self.is_inherited(key) {
+            return None;
+        }
+
         if self.contains(key) {
             let sparse_idx = key.index();
             let dense_idx = self.sparse[sparse_idx];
