@@ -19,74 +19,77 @@ pub(crate) fn clipping_system(cx: &mut Context) {
         }
 
         let bounds = cx.cache.bounds.get(entity).copied().unwrap();
-        if let Some(parent) = cx.tree.get_layout_parent(entity) {
-            let overflowx = cx.style.overflowx.get(entity).copied().unwrap_or_default();
-            let overflowy = cx.style.overflowy.get(entity).copied().unwrap_or_default();
 
-            let scale = cx.style.scale_factor();
+        if entity == Entity::root() {
+            let clip_path = build_clip_path(cx, Entity::root(), bounds);
+            cx.cache.clip_path.insert(entity, clip_path);
+            continue;
+        }
 
-            let clip_bounds = cx
-                .style
-                .clip_path
-                .get(entity)
-                .map(|clip| match clip {
-                    ClipPath::Auto => bounds,
-                    ClipPath::Shape(rect) => bounds.shrink_sides(
-                        rect.3.to_pixels(bounds.w, scale),
-                        rect.0.to_pixels(bounds.h, scale),
-                        rect.1.to_pixels(bounds.w, scale),
-                        rect.2.to_pixels(bounds.h, scale),
-                    ),
-                })
-                .unwrap_or(bounds);
+        let parent = cx.tree.get_layout_parent(entity).unwrap_or(Entity::root());
 
-            let root_bounds = cx.cache.bounds.get(Entity::root()).copied().unwrap();
+        let overflowx = cx.style.overflowx.get(entity).copied().unwrap_or_default();
+        let overflowy = cx.style.overflowy.get(entity).copied().unwrap_or_default();
 
-            let clip_bounds = match (overflowx, overflowy) {
-                (Overflow::Visible, Overflow::Visible) => root_bounds,
-                (Overflow::Hidden, Overflow::Visible) => {
-                    let left = clip_bounds.left();
-                    let right = clip_bounds.right();
-                    let top = root_bounds.top();
-                    let bottom = root_bounds.bottom();
-                    BoundingBox::from_min_max(left, top, right, bottom)
-                }
-                (Overflow::Visible, Overflow::Hidden) => {
-                    let left = root_bounds.left();
-                    let right = root_bounds.right();
-                    let top = clip_bounds.top();
-                    let bottom = clip_bounds.bottom();
-                    BoundingBox::from_min_max(left, top, right, bottom)
-                }
-                (Overflow::Hidden, Overflow::Hidden) => clip_bounds,
-            };
+        let scale = cx.style.scale_factor();
 
-            let transform = cx
-                .cache
-                .transform
-                .get(entity)
-                .copied()
-                .unwrap_or(skia_safe::Matrix::new_identity());
+        let clip_bounds = cx
+            .style
+            .clip_path
+            .get(entity)
+            .map(|clip| match clip {
+                ClipPath::Auto => bounds,
+                ClipPath::Shape(rect) => bounds.shrink_sides(
+                    rect.3.to_pixels(bounds.w, scale),
+                    rect.0.to_pixels(bounds.h, scale),
+                    rect.1.to_pixels(bounds.w, scale),
+                    rect.2.to_pixels(bounds.h, scale),
+                ),
+            })
+            .unwrap_or(bounds);
 
-            let rect: skia_safe::Rect = clip_bounds.into();
-            let clip_bounds: BoundingBox = transform.map_rect(rect).0.into();
+        let root_bounds = cx.cache.bounds.get(Entity::root()).copied().unwrap();
 
-            let clip_path = build_clip_path(cx, entity, clip_bounds);
+        let clip_bounds = match (overflowx, overflowy) {
+            (Overflow::Visible, Overflow::Visible) => root_bounds,
+            (Overflow::Hidden, Overflow::Visible) => {
+                let left = clip_bounds.left();
+                let right = clip_bounds.right();
+                let top = root_bounds.top();
+                let bottom = root_bounds.bottom();
+                BoundingBox::from_min_max(left, top, right, bottom)
+            }
+            (Overflow::Visible, Overflow::Hidden) => {
+                let left = root_bounds.left();
+                let right = root_bounds.right();
+                let top = clip_bounds.top();
+                let bottom = clip_bounds.bottom();
+                BoundingBox::from_min_max(left, top, right, bottom)
+            }
+            (Overflow::Hidden, Overflow::Hidden) => clip_bounds,
+        };
 
-            let parent_clip_path = cx
-                .cache
-                .clip_path
-                .get(parent)
-                .cloned()
-                .unwrap_or(build_clip_path(cx, Entity::root(), root_bounds));
-            if let Some(path_intersection) =
-                clip_path.op(&parent_clip_path, skia_safe::PathOp::Intersect)
-            {
-                if let Some(stored_clip_path) = cx.cache.clip_path.get_mut(entity) {
-                    *stored_clip_path = path_intersection;
-                } else {
-                    cx.cache.clip_path.insert(entity, path_intersection);
-                }
+        let transform =
+            cx.cache.transform.get(entity).copied().unwrap_or(skia_safe::Matrix::new_identity());
+
+        let rect: skia_safe::Rect = clip_bounds.into();
+        let clip_bounds: BoundingBox = transform.map_rect(rect).0.into();
+
+        let clip_path = build_clip_path(cx, entity, clip_bounds);
+
+        let parent_clip_path = cx.cache.clip_path.get(parent).cloned().unwrap_or(build_clip_path(
+            cx,
+            Entity::root(),
+            root_bounds,
+        ));
+
+        if let Some(path_intersection) =
+            clip_path.op(&parent_clip_path, skia_safe::PathOp::Intersect)
+        {
+            if let Some(stored_clip_path) = cx.cache.clip_path.get_mut(entity) {
+                *stored_clip_path = path_intersection;
+            } else {
+                cx.cache.clip_path.insert(entity, path_intersection);
             }
         }
     }
