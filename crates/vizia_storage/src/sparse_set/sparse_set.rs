@@ -114,6 +114,56 @@ where
             None
         }
     }
+
+    pub fn inherit<K: GenerationalId>(&mut self, key: K, other: K) -> bool {
+        if key == other {
+            return false;
+        }
+
+        if key.is_null() || other.is_null() {
+            panic!("Key is null");
+        }
+
+        if self.contains(other) {
+            // If the key already has data, remove it
+            if self.contains(key) {
+                self.remove(key);
+            }
+
+            let sparse_idx = key.index();
+
+            if sparse_idx >= self.sparse.len() {
+                self.sparse.resize(sparse_idx + 1, I::null());
+            }
+
+            let dense_idx = self.sparse[sparse_idx];
+            let other_dense_idx = self.sparse[other.index()];
+
+            // Check if the key is already inherited from another key
+            if dense_idx == other_dense_idx {
+                return false;
+            }
+
+            // Update the sparse set to inherit the key
+            self.sparse[sparse_idx] = other_dense_idx;
+
+            return true;
+        }
+
+        false
+    }
+
+    /// Returns true if the key is inherited from another key
+    pub fn is_inherited<K: GenerationalId>(&self, key: K) -> bool {
+        if self.contains(key) {
+            let sparse_idx = key.index();
+            let dense_idx = self.sparse[sparse_idx];
+            let entry = &self.dense[dense_idx.index()];
+            return entry.key != dense_idx;
+        }
+
+        false
+    }
 }
 
 /// Deref to a slice.

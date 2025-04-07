@@ -298,9 +298,9 @@ pub(crate) fn draw_bounds(
     let parent = tree
         .get_layout_parent(entity)
         .unwrap_or(tree.get_parent_window(entity).unwrap_or(Entity::root()));
-    if let Some(clip_bounds) =
-        cache.clip_path.get(parent).map(|clip_path| Into::<BoundingBox>::into(*clip_path.bounds()))
-    {
+    if let Some(clip_path) = cache.clip_path.get(parent).cloned().flatten() {
+        let clip_bounds = Into::<BoundingBox>::into(*clip_path.bounds());
+
         let clip_bounds = &BoundingBox::from_min_max(
             clip_bounds.left().floor(),
             clip_bounds.top().floor(),

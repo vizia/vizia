@@ -164,7 +164,7 @@ impl DrawContext<'_> {
 
     /// Returns the clip path of the current view.
     pub fn clip_path(&self) -> Option<skia_safe::Path> {
-        self.cache.clip_path.get(self.current).cloned()
+        self.cache.clip_path.get(self.current).cloned().flatten()
     }
 
     /// Returns the 2D transform of the current view.
