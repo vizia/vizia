@@ -293,6 +293,8 @@ impl<'a> EventContext<'a> {
         self.cache
             .clip_path
             .get(self.current)
+            .cloned()
+            .flatten()
             .map(|clip_path| Into::<BoundingBox>::into(*clip_path.bounds()))
             .unwrap_or_default()
     }

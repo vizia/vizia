@@ -16,7 +16,7 @@ pub struct CachedData {
     pub(crate) relative_bounds: SparseSet<BoundingBox>,
     pub(crate) geo_changed: SparseSet<GeoChanged>,
     pub(crate) transform: SparseSet<Matrix>,
-    pub(crate) clip_path: SparseSet<Path>,
+    pub(crate) clip_path: SparseSet<Option<Path>>,
     pub(crate) path: SparseSet<Path>,
 }
 

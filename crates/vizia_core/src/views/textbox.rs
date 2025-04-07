@@ -1590,8 +1590,9 @@ where
         canvas.translate((transform.0, transform.1));
         // cx.draw_text_and_selection(canvas);
         cx.draw_text(canvas);
-        self.enforce_text_bounds(cx);
+
         if self.edit {
+            // self.enforce_text_bounds(cx);
             self.draw_selection(cx, canvas);
             self.draw_text_caret(cx, canvas);
         }

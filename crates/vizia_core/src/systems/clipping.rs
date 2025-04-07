@@ -22,7 +22,7 @@ pub(crate) fn clipping_system(cx: &mut Context) {
 
         if entity == Entity::root() {
             let clip_path = build_clip_path(cx, Entity::root(), bounds);
-            cx.cache.clip_path.insert(entity, clip_path);
+            cx.cache.clip_path.insert(entity, Some(clip_path));
             continue;
         }
 
@@ -33,63 +33,80 @@ pub(crate) fn clipping_system(cx: &mut Context) {
 
         let scale = cx.style.scale_factor();
 
-        let clip_bounds = cx
-            .style
-            .clip_path
-            .get(entity)
-            .map(|clip| match clip {
-                ClipPath::Auto => bounds,
-                ClipPath::Shape(rect) => bounds.shrink_sides(
+        let transform =
+            cx.cache.transform.get(entity).copied().unwrap_or(skia_safe::Matrix::new_identity());
+
+        let clip_path = cx.style.clip_path.get(entity).map(|clip| match clip {
+            ClipPath::Auto => {
+                let rect: skia_safe::Rect = bounds.into();
+                let clip_bounds: BoundingBox = transform.map_rect(rect).0.into();
+                build_clip_path(cx, entity, clip_bounds)
+            }
+            ClipPath::Shape(rect) => {
+                let clip_bounds = bounds.shrink_sides(
                     rect.3.to_pixels(bounds.w, scale),
                     rect.0.to_pixels(bounds.h, scale),
                     rect.1.to_pixels(bounds.w, scale),
                     rect.2.to_pixels(bounds.h, scale),
-                ),
-            })
-            .unwrap_or(bounds);
+                );
+
+                let rect: skia_safe::Rect = clip_bounds.into();
+                let clip_bounds: BoundingBox = transform.map_rect(rect).0.into();
+                build_clip_path(cx, entity, clip_bounds)
+            }
+        });
 
         let root_bounds = cx.cache.bounds.get(Entity::root()).copied().unwrap();
 
-        let clip_bounds = match (overflowx, overflowy) {
-            (Overflow::Visible, Overflow::Visible) => root_bounds,
+        let clip_path = match (overflowx, overflowy) {
+            (Overflow::Visible, Overflow::Visible) => None,
             (Overflow::Hidden, Overflow::Visible) => {
-                let left = clip_bounds.left();
-                let right = clip_bounds.right();
+                let left = bounds.left();
+                let right = bounds.right();
                 let top = root_bounds.top();
                 let bottom = root_bounds.bottom();
-                BoundingBox::from_min_max(left, top, right, bottom)
+                let clip_bounds = BoundingBox::from_min_max(left, top, right, bottom);
+                let rect: skia_safe::Rect = clip_bounds.into();
+                let clip_bounds: BoundingBox = transform.map_rect(rect).0.into();
+                Some(build_clip_path(cx, entity, clip_bounds))
             }
             (Overflow::Visible, Overflow::Hidden) => {
                 let left = root_bounds.left();
                 let right = root_bounds.right();
-                let top = clip_bounds.top();
-                let bottom = clip_bounds.bottom();
-                BoundingBox::from_min_max(left, top, right, bottom)
+                let top = bounds.top();
+                let bottom = bounds.bottom();
+                let clip_bounds = BoundingBox::from_min_max(left, top, right, bottom);
+                let rect: skia_safe::Rect = clip_bounds.into();
+                let clip_bounds: BoundingBox = transform.map_rect(rect).0.into();
+                Some(build_clip_path(cx, entity, clip_bounds))
             }
-            (Overflow::Hidden, Overflow::Hidden) => clip_bounds,
+            (Overflow::Hidden, Overflow::Hidden) => {
+                if clip_path.is_some() {
+                    clip_path
+                } else {
+                    let rect: skia_safe::Rect = bounds.into();
+                    let clip_bounds: BoundingBox = transform.map_rect(rect).0.into();
+                    Some(build_clip_path(cx, entity, clip_bounds))
+                }
+            }
         };
 
-        let transform =
-            cx.cache.transform.get(entity).copied().unwrap_or(skia_safe::Matrix::new_identity());
+        let parent_clip_path = cx.cache.clip_path.get(parent).unwrap_or(&None);
 
-        let rect: skia_safe::Rect = clip_bounds.into();
-        let clip_bounds: BoundingBox = transform.map_rect(rect).0.into();
-
-        let clip_path = build_clip_path(cx, entity, clip_bounds);
-
-        let parent_clip_path = cx.cache.clip_path.get(parent).cloned().unwrap_or(build_clip_path(
-            cx,
-            Entity::root(),
-            root_bounds,
-        ));
-
-        if let Some(path_intersection) =
-            clip_path.op(&parent_clip_path, skia_safe::PathOp::Intersect)
-        {
-            if let Some(stored_clip_path) = cx.cache.clip_path.get_mut(entity) {
-                *stored_clip_path = path_intersection;
-            } else {
+        match (clip_path, parent_clip_path) {
+            (Some(clip_path), Some(parent_clip_path)) => {
+                let path_intersection =
+                    clip_path.op(parent_clip_path, skia_safe::PathOp::Intersect);
                 cx.cache.clip_path.insert(entity, path_intersection);
+            }
+            (Some(clip_path), None) => {
+                cx.cache.clip_path.insert(entity, Some(clip_path));
+            }
+            (None, Some(_)) => {
+                // cx.cache.clip_path.inherit(entity, parent);
+            }
+            (None, None) => {
+                cx.cache.clip_path.insert(entity, None);
             }
         }
     }
