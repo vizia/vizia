@@ -104,6 +104,8 @@ where
     /// Removes the data for a given key from the sparse set
     pub fn remove<K: GenerationalId>(&mut self, key: K) -> Option<V> {
         if self.is_inherited(key) {
+            let sparse_idx = key.index();
+            self.sparse[sparse_idx] = I::null();
             return None;
         }
 
