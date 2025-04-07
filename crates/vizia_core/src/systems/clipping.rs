@@ -103,7 +103,7 @@ pub(crate) fn clipping_system(cx: &mut Context) {
                 cx.cache.clip_path.insert(entity, Some(clip_path));
             }
             (None, Some(_)) => {
-                // cx.cache.clip_path.inherit(entity, parent);
+                cx.cache.clip_path.inherit(entity, parent);
             }
             (None, None) => {
                 cx.cache.clip_path.insert(entity, None);
