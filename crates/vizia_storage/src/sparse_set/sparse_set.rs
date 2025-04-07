@@ -86,6 +86,10 @@ where
             panic!("Key is null");
         }
 
+        if self.is_inherited(key) {
+            self.remove(key);
+        }
+
         if let Some(stored_value) = self.get_mut(key) {
             *stored_value = value;
             return;
@@ -112,6 +116,7 @@ where
         if self.contains(key) {
             let sparse_idx = key.index();
             let dense_idx = self.sparse[sparse_idx];
+            let last_dense_idx = I::new(self.dense.len() - 1);
             let r = self.dense.swap_remove(dense_idx.index()).value;
             if dense_idx.index() < self.dense.len() {
                 // Reset the sparse index to null for all entries that point to the removed entry
@@ -123,6 +128,13 @@ where
 
                 let swapped_entry = &self.dense[dense_idx.index()];
                 self.sparse[swapped_entry.key.index()] = dense_idx;
+
+                // Update any inherited keys to point to the new dense index
+                for i in self.sparse.iter_mut() {
+                    if *i == last_dense_idx {
+                        *i = dense_idx;
+                    }
+                }
             }
 
             self.sparse[sparse_idx] = I::null();
