@@ -230,6 +230,8 @@ impl Context {
 
         result.style.needs_restyle(Entity::root());
         result.style.needs_relayout();
+        result.style.needs_retransform(Entity::root());
+        result.style.needs_reclip(Entity::root());
         result.needs_redraw(Entity::root());
 
         // Build the environment model at the root.
