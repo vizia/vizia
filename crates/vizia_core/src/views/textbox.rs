@@ -1282,6 +1282,7 @@ where
             TextEvent::EndEdit => {
                 self.deselect();
                 self.edit = false;
+                *self.transform.borrow_mut() = (0.0, 0.0);
                 cx.set_checked(false);
                 cx.release();
                 cx.stop_timer(self.caret_timer);
@@ -1431,11 +1432,13 @@ where
         // cx.draw_text_and_selection(canvas);
         cx.draw_text(canvas);
 
+        self.enforce_text_bounds(cx);
+
         if self.edit {
-            // self.enforce_text_bounds(cx);
             self.draw_selection(cx, canvas);
             self.draw_text_caret(cx, canvas);
         }
+
         canvas.restore();
     }
 }
