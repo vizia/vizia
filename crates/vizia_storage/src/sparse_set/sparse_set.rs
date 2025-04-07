@@ -112,6 +112,13 @@ where
             let dense_idx = self.sparse[sparse_idx];
             let r = self.dense.swap_remove(dense_idx.index()).value;
             if dense_idx.index() < self.dense.len() {
+                // Reset the sparse index to null for all entries that point to the removed entry
+                for i in self.sparse.iter_mut() {
+                    if *i == dense_idx {
+                        *i = I::null();
+                    }
+                }
+
                 let swapped_entry = &self.dense[dense_idx.index()];
                 self.sparse[swapped_entry.key.index()] = dense_idx;
             }
@@ -168,7 +175,9 @@ where
             let sparse_idx = key.index();
             let dense_idx = self.sparse[sparse_idx];
             let entry = &self.dense[dense_idx.index()];
-            return entry.key != dense_idx;
+            if !entry.key.is_null() && !dense_idx.is_null() {
+                return entry.key != I::new(sparse_idx);
+            }
         }
 
         false
