@@ -643,6 +643,40 @@ where
         }
     }
 
+    fn enforce_text_bounds(&self, cx: &mut DrawContext) {
+        let text_bounds = cx.text_context.text_bounds.get(cx.current).unwrap();
+        let mut transform = self.transform.borrow_mut();
+        let mut bounds = cx.bounds();
+
+        let padding_top = match cx.padding_top() {
+            Units::Pixels(val) => val,
+            _ => 0.0,
+        };
+
+        let padding_bottom = match cx.padding_bottom() {
+            Units::Pixels(val) => val,
+            _ => 0.0,
+        };
+
+        let padding_left = match cx.padding_left() {
+            Units::Pixels(val) => val,
+            _ => 0.0,
+        };
+
+        let padding_right = match cx.padding_right() {
+            Units::Pixels(val) => val,
+            _ => 0.0,
+        };
+
+        bounds = bounds.shrink_sides(padding_left, padding_top, padding_right, padding_bottom);
+
+        let (tx, ty) = enforce_text_bounds(text_bounds, &bounds, (transform.0, transform.1));
+        if tx != transform.0 || ty != transform.1 {
+            *transform = (tx, ty);
+            cx.needs_redraw();
+        }
+    }
+
     /// Draw text caret for the current view.
     pub fn draw_text_caret(&self, cx: &mut DrawContext, canvas: &Canvas) {
         if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
@@ -710,18 +744,14 @@ where
 
                 let mut transform = self.transform.borrow_mut();
 
-                let text_bounds = cx.text_context.text_bounds.get(cx.current).unwrap();
-
                 let mut bounds = cx.bounds();
                 bounds =
                     bounds.shrink_sides(padding_left, padding_top, padding_right, padding_bottom);
 
-                let (tx, ty) =
-                    enforce_text_bounds(text_bounds, &bounds, (transform.0, transform.1));
-
                 let caret_box = BoundingBox::from_min_max(x, y, x2, y2);
 
-                let (new_tx, new_ty) = ensure_visible(&caret_box, &bounds, (tx, ty));
+                let (new_tx, new_ty) =
+                    ensure_visible(&caret_box, &bounds, (transform.0, transform.1));
 
                 if new_tx != transform.0 || new_ty != transform.1 {
                     *transform = (new_tx, new_ty);
@@ -1560,6 +1590,7 @@ where
         canvas.translate((transform.0, transform.1));
         // cx.draw_text_and_selection(canvas);
         cx.draw_text(canvas);
+        self.enforce_text_bounds(cx);
         if self.edit {
             self.draw_selection(cx, canvas);
             self.draw_text_caret(cx, canvas);
