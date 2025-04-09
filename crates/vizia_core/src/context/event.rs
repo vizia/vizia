@@ -275,23 +275,17 @@ impl<'a> EventContext<'a> {
     }
 
     /// Trigger an animation with the given id to play on the current view.
-    pub fn play_animation(&mut self, anim_id: impl AnimId, duration: Duration, delay: Duration) {
+    pub fn play_animation(&mut self, anim_id: impl AnimId, animation: Animation) {
         if let Some(animation_id) = anim_id.get(self) {
-            self.style.enqueue_animation(self.current, animation_id, duration, delay);
+            self.style.enqueue_animation(self.current, animation_id, animation);
         }
     }
 
     /// Trigger an animation with the given id to play on a target view.
-    pub fn play_animation_for(
-        &mut self,
-        anim_id: impl AnimId,
-        target: &str,
-        duration: Duration,
-        delay: Duration,
-    ) {
+    pub fn play_animation_for(&mut self, anim_id: impl AnimId, target: &str, animation: Animation) {
         if let Some(target_entity) = self.resolve_entity_identifier(target) {
             if let Some(animation_id) = anim_id.get(self) {
-                self.style.enqueue_animation(target_entity, animation_id, duration, delay)
+                self.style.enqueue_animation(target_entity, animation_id, animation)
             }
         }
     }

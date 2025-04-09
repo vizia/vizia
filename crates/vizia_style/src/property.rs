@@ -1,11 +1,15 @@
+use std::time::Duration;
+
 use crate::{
-    define_property, Alignment, Angle, BackgroundImage, BackgroundSize, BlendMode, Border,
+    define_property, Alignment, Angle, Animation, AnimationDirection, AnimationFillMode,
+    AnimationIterationCount, AnimationName, BackgroundImage, BackgroundSize, BlendMode, Border,
     BorderStyle, BorderWidth, ClipPath, Color, CornerRadius, CornerShape, CursorIcon,
-    CustomParseError, CustomProperty, Display, Filter, FontFamily, FontSize, FontSlant,
-    FontVariation, FontWeight, FontWidth, LayoutType, Length, LengthOrPercentage, LineClamp,
-    Opacity, Outline, Overflow, Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow,
-    TextAlign, TextDecoration, TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke,
-    TextStrokeStyle, Transform, Transition, Translate, Units, UnparsedProperty, Visibility,
+    CustomParseError, CustomProperty, Display, EasingFunction, Filter, FontFamily, FontSize,
+    FontSlant, FontVariation, FontWeight, FontWidth, LayoutType, Length, LengthOrPercentage,
+    LineClamp, Opacity, Outline, Overflow, Parse, PointerEvents, Position, PositionType, Rect,
+    Scale, Shadow, TextAlign, TextDecoration, TextDecorationLine, TextDecorationStyle,
+    TextOverflow, TextStroke, TextStrokeStyle, Transform, Transition, Translate, Units,
+    UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -199,6 +203,17 @@ define_property! {
         // Cursor
         "cursor": Cursor(CursorIcon),
         "pointer-events": PointerEvents(PointerEvents),
+
+        // Animation
+        "animation-name": AnimationName(AnimationName<'i>),
+        "animation-duration": AnimationDuration(Duration),
+        "animation-delay": AnimationDelay(Duration),
+        "animation-fill-mode": AnimationFillMode(AnimationFillMode),
+        "animation-direction": AnimationDirection(AnimationDirection),
+        "animation-iteration-count": AnimationIterationCount(AnimationIterationCount),
+        "animation-timing-function": AnimationTimingFunction(EasingFunction),
+        "animation": Animation(Animation<'i>),
+
     }
 }
 

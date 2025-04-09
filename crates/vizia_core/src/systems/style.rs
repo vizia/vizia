@@ -737,6 +737,43 @@ fn link_style_data(
         should_redraw = true;
     }
 
+    if style.animation_delay.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.animation_duration.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.animation_fill_mode.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.animation_direction.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.animation_iteration_count.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.animation_timing_function.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.animation_name.link(entity, matched_rules) {
+        // Get the animation name
+        if let Some(name) = style.animation_name.get(entity) {
+            // Get the animation id from the animation name.
+            if let Some(animation_id) = style.animations.get(name) {
+                let animation = style.get_animation_for_entity(entity);
+                style.enqueue_animation(entity, *animation_id, animation);
+            }
+        }
+
+        should_redraw = true;
+    }
+
     //
     if should_relayout {
         style.system_flags.set(SystemFlags::RELAYOUT, true);
