@@ -2,24 +2,99 @@ use crate::prelude::*;
 
 use vizia_style::{BorderWidth, Property};
 
+use super::TimingFunction;
+
 /// A builder for constructing animations.
-pub struct AnimationBuilder<'a> {
-    pub(crate) keyframes: Vec<KeyframeBuilder<'a>>,
+#[derive(Clone, Copy)]
+pub struct Animation {
+    pub(crate) duration: Duration,
+    pub(crate) delay: Duration,
+    pub(crate) fill_mode: AnimationFillMode,
+    pub(crate) iteration_count: AnimationIterationCount,
+    pub(crate) direction: AnimationDirection,
+    pub(crate) easing_function: TimingFunction,
 }
 
-impl Default for AnimationBuilder<'_> {
+impl Default for Animation {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl AnimationBuilder<'_> {
+impl Animation {
     /// Creates a new [AnimationBuilder].
+    pub fn new() -> Self {
+        Self {
+            duration: Duration::new(0, 0),
+            delay: Duration::new(0, 0),
+            fill_mode: AnimationFillMode::None,
+            iteration_count: AnimationIterationCount::Count(1),
+            direction: AnimationDirection::Normal,
+            easing_function: TimingFunction::linear(),
+        }
+    }
+
+    /// Sets the duration of the animation.
+    pub fn duration(mut self, duration: Duration) -> Self {
+        self.duration = duration;
+
+        self
+    }
+
+    /// Sets the delay of the animation.
+    pub fn delay(mut self, delay: Duration) -> Self {
+        self.delay = delay;
+
+        self
+    }
+
+    /// Sets the fill mode of the animation.
+    pub fn fill_mode(mut self, fill_mode: AnimationFillMode) -> Self {
+        self.fill_mode = fill_mode;
+
+        self
+    }
+
+    /// Sets the iteration count of the animation.
+    pub fn iteration_count(mut self, iteration_count: AnimationIterationCount) -> Self {
+        self.iteration_count = iteration_count;
+
+        self
+    }
+
+    /// Sets the direction of the animation.
+    pub fn direction(mut self, direction: AnimationDirection) -> Self {
+        self.direction = direction;
+
+        self
+    }
+
+    /// Sets the easing function of the animation.
+    pub fn easing_function(mut self, easing_function: TimingFunction) -> Self {
+        self.easing_function = easing_function;
+
+        self
+    }
+}
+
+#[derive(Clone)]
+pub struct Keyframes<'a> {
+    pub(crate) keyframes: Vec<KeyframeBuilder<'a>>,
+}
+
+impl Default for Keyframes<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Keyframes<'_> {
+    /// Creates a new [KeyframesBuilder].
     pub fn new() -> Self {
         Self { keyframes: Vec::new() }
     }
 
-    /// Adds a new keyframe to the animation.
+    /// Adds a new keyframe to the keyframes.
     pub fn keyframe(
         mut self,
         time: f32,
@@ -33,6 +108,7 @@ impl AnimationBuilder<'_> {
 }
 
 /// A builder for constructing keyframes.
+#[derive(Clone)]
 pub struct KeyframeBuilder<'a> {
     pub(crate) time: f32,
     pub(crate) properties: Vec<Property<'a>>,

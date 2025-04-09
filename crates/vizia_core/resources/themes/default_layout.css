@@ -835,7 +835,7 @@ textbox:disabled {
 
 tooltip {
     size: auto;
-    max-width: 160px;
+    opacity: 0;
 }
 
 /* VIRTUAL LIST */

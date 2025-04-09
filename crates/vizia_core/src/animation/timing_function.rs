@@ -1,5 +1,5 @@
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct TimingFunction {
+pub struct TimingFunction {
     x1: f32,
     x2: f32,
     y1: f32,

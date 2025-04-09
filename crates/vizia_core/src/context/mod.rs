@@ -38,6 +38,7 @@ pub use proxy::*;
 pub use resource::*;
 
 use crate::{
+    animation::Keyframes,
     binding::{Store, StoreId},
     events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler},
     model::ModelData,
@@ -606,8 +607,8 @@ impl Context {
         }
     }
 
-    pub fn add_animation(&mut self, animation: AnimationBuilder) -> Animation {
-        self.style.add_animation(animation)
+    pub fn add_animation_keyframes(&mut self, animation: Keyframes) -> AnimationId {
+        self.style.add_animation_keyframes(animation)
     }
 
     pub fn set_image_loader<F: 'static + Fn(&mut ResourceContext, &str)>(&mut self, loader: F) {
