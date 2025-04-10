@@ -25,10 +25,8 @@ use std::{
 use vizia_id::IdManager;
 use vizia_window::WindowDescription;
 
-#[cfg(all(feature = "clipboard", feature = "x11"))]
-use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
-use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
+use copypasta::{nop_clipboard::NopClipboardContext, ClipboardContext, ClipboardProvider};
 use hashbrown::{hash_map::Entry, HashMap, HashSet};
 
 pub use access::*;
@@ -207,14 +205,11 @@ impl Context {
 
             #[cfg(feature = "clipboard")]
             clipboard: {
-                #[cfg(feature = "x11")]
                 if let Ok(context) = ClipboardContext::new() {
                     Box::new(context)
                 } else {
                     Box::new(NopClipboardContext::new().unwrap())
                 }
-                #[cfg(not(feature = "x11"))]
-                Box::new(NopClipboardContext::new().unwrap())
             },
             click_time: Instant::now(),
             clicks: 0,
