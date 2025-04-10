@@ -43,7 +43,7 @@ repository = "https://github.com/vizia/vizia"
 [workspace.dependencies]
 vizia = { version = "0.2.0", path = "." }
 vizia_core = { version = "0.2.0", path = "crates/vizia_core" }
-vizia_winit = { version = "0.2.0", path = "crates/vizia_winit" }
+vizia_winit = { version = "0.2.0", path = "crates/vizia_winit", default-features = false }
 vizia_baseview = { version = "0.2.0", path = "crates/vizia_baseview" }
 vizia_derive = { version = "0.2.0", path = "crates/vizia_derive" }
 vizia_id = { version = "0.2.0", path = "crates/vizia_id" }
