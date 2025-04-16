@@ -21,7 +21,7 @@ vizia_id.workspace = true
 vizia_input.workspace = true
 vizia_window.workspace = true
 vizia_style.workspace = true
-accesskit = "0.17"
+accesskit = "0.18"
 
 skia-safe = { version = "0.84", features = ["gl", "textlayout", "svg"] }
 morphorm = "0.7.0"
