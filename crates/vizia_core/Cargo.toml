@@ -23,7 +23,7 @@ vizia_window.workspace = true
 vizia_style.workspace = true
 accesskit = "0.17"
 
-skia-safe = { version = "0.81", features = ["gl", "textlayout", "svg"] }
+skia-safe = { version = "0.84", features = ["gl", "textlayout", "svg"] }
 # morphorm = {path = "../../../morphorm"}
 morphorm = {git = "https://github.com/vizia/morphorm", branch = "alternate"}
 bitflags = "2.8"
@@ -46,7 +46,7 @@ rayon = {version = "1.10", optional = true}
 dashmap = { version = "6.1", features = ["inline"], optional = true}
 
 [target."cfg(target_os = \"linux\")".dependencies.skia-safe]
-version = "0.81"
+version = "0.84"
 features = ["gl", "textlayout", "svg", "x11", "wayland"]
 
 [lib]
