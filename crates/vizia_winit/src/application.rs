@@ -401,10 +401,13 @@ impl ApplicationHandler<UserEvent> for Application {
             #[cfg(feature = "accesskit")]
             {
                 self.accesskit_adapter = Some(Adapter::with_event_loop_proxy(
+                    event_loop,
                     &main_window,
                     self.event_loop_proxy.clone(),
                 ));
             }
+
+            main_window.set_visible(self.window_description.visible);
 
             // set current system theme if available
             if let Some(theme) = main_window.theme() {
@@ -1046,7 +1049,7 @@ fn apply_window_description(description: &WindowDescription) -> WindowAttributes
         .with_resizable(description.resizable)
         .with_maximized(description.maximized)
         // Accesskit requires that the window start invisible until accesskit is initialized.
-        //.with_visible(false)
+        .with_visible(false)
         .with_window_level(if description.always_on_top {
             WindowLevel::AlwaysOnTop
         } else {

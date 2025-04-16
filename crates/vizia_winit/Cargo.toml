@@ -20,12 +20,12 @@ vizia_core.workspace = true
 vizia_id.workspace = true
 vizia_window.workspace = true
 
-accesskit = {version = "0.17", optional = true}
+accesskit = {version = "0.18", optional = true}
 winit = { version = "0.30", default-features = false}
 skia-safe = { version = "0.84", features = ["gl", "textlayout", "svg"] }
 glutin = { version = "0.32", default-features = false, features = ["egl", "wgl", "glx"]}
 copypasta = {version = "0.10", optional = true, default-features = false }
-accesskit_winit = { version = "0.23", optional = true}
+accesskit_winit = { version = "0.26", optional = true}
 glutin-winit = { version = "0.5", default-features = false, features = ["egl", "wgl", "glx"]}
 gl-rs = { package = "gl", version = "0.14.0" }
 hashbrown = "0.15"

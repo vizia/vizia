@@ -80,7 +80,6 @@ impl WinState {
 
             // The current version of winit spawns new windows with unspecified position/size.
             // As a workaround, we'll hide the window during creation and reveal it afterward.
-            let visible = window_attributes.visible;
             let window_attributes = window_attributes.with_visible(false);
 
             let (window, config) = build_window(event_loop, window_attributes);
@@ -91,7 +90,6 @@ impl WinState {
             // our window. The visible property won't work in this case as it prevents drawing.
             // Instead we use the "cloak" attribute, which hides the window without that issue.
             set_cloak(&window, true);
-            window.set_visible(visible);
 
             (window, config)
         };
@@ -104,7 +102,6 @@ impl WinState {
         };
 
         window.set_ime_allowed(true);
-        window.set_visible(true);
 
         let raw_window_handle = window.window_handle().unwrap().as_raw();
 
