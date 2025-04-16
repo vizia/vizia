@@ -8,10 +8,10 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-cssparser = "0.34"
-cssparser-color = "0.2"
+cssparser = "0.35"
+cssparser-color = "0.3"
 skia-safe = { version = "0.84", features = ["gl", "textlayout", "svg"] }
-selectors = "0.26"
+selectors = "0.27"
 morphorm = "0.7.0"
 bitflags = "2.8"
 precomputed-hash = "0.1"

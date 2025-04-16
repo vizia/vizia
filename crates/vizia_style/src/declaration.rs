@@ -49,6 +49,7 @@ impl<'i> DeclarationParser<'i> for PropertyDeclarationParser<'_, 'i> {
         &mut self,
         name: CowRcStr<'i>,
         input: &mut Parser<'i, 't>,
+        _state: &ParserState,
     ) -> Result<Self::Declaration, ParseError<'i, Self::Error>> {
         parse_declaration(name, input, self.declarations, self.important_declarations, self.options)
     }
