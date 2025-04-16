@@ -34,23 +34,23 @@ fern = "0.7"
 members = [ "crates/*", "examples/todo", "examples/widget_gallery"]
 
 [workspace.package]
-version = "0.2.0"
+version = "0.3.0"
 authors = ["George Atkinson"]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/vizia/vizia"
 
 [workspace.dependencies]
-vizia = { version = "0.2.0", path = "." }
-vizia_core = { version = "0.2.0", path = "crates/vizia_core" }
-vizia_winit = { version = "0.2.0", path = "crates/vizia_winit", default-features = false }
-vizia_baseview = { version = "0.2.0", path = "crates/vizia_baseview" }
-vizia_derive = { version = "0.2.0", path = "crates/vizia_derive" }
-vizia_id = { version = "0.2.0", path = "crates/vizia_id" }
-vizia_input = { version = "0.2.0", path = "crates/vizia_input" }
-vizia_storage = { version = "0.2.0", path = "crates/vizia_storage" }
-vizia_style = { version = "0.2.0", path = "crates/vizia_style" }
-vizia_window = { version = "0.2.0", path = "crates/vizia_window" }
+vizia = { version = "0.3.0", path = "." }
+vizia_core = { version = "0.3.0", path = "crates/vizia_core" }
+vizia_winit = { version = "0.3.0", path = "crates/vizia_winit", default-features = false }
+vizia_baseview = { version = "0.3.0", path = "crates/vizia_baseview" }
+vizia_derive = { version = "0.3.0", path = "crates/vizia_derive" }
+vizia_id = { version = "0.3.0", path = "crates/vizia_id" }
+vizia_input = { version = "0.3.0", path = "crates/vizia_input" }
+vizia_storage = { version = "0.3.0", path = "crates/vizia_storage" }
+vizia_style = { version = "0.3.0", path = "crates/vizia_style" }
+vizia_window = { version = "0.3.0", path = "crates/vizia_window" }
 
 [workspace.lints.rust]
 # future_incompatible = "allow"
