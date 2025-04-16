@@ -240,6 +240,7 @@ impl<'i> cssparser::DeclarationParser<'i> for NestedRuleParser<'_, 'i> {
         &mut self,
         name: CowRcStr<'i>,
         input: &mut cssparser::Parser<'i, 't>,
+        _state: &cssparser::ParserState,
     ) -> Result<Self::Declaration, cssparser::ParseError<'i, Self::Error>> {
         parse_declaration(
             name,
