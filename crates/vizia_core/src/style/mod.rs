@@ -70,14 +70,15 @@ use vizia_style::selectors::parser::{AncestorHashes, Selector};
 use crate::prelude::*;
 
 pub use vizia_style::{
-    Alignment, Angle, BackgroundImage, BackgroundSize, BorderStyleKeyword, ClipPath, Color,
-    CornerShape, CssRule, CursorIcon, Display, Filter, FontFamily, FontSize, FontSlant,
-    FontVariation, FontWeight, FontWeightKeyword, FontWidth, GenericFontFamily, Gradient,
-    HorizontalPosition, HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue,
-    LineClamp, LineDirection, LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position,
-    PositionType, Scale, Shadow, TextAlign, TextDecorationLine, TextDecorationStyle, TextOverflow,
-    TextStroke, TextStrokeStyle, Transform, Transition, Translate, VerticalPosition,
-    VerticalPositionKeyword, Visibility, RGBA,
+    Alignment, Angle, AnimationDirection, AnimationFillMode, AnimationIterationCount,
+    BackgroundImage, BackgroundSize, BorderStyleKeyword, ClipPath, Color, CornerShape, CssRule,
+    CursorIcon, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
+    FontWeightKeyword, FontWidth, GenericFontFamily, Gradient, HorizontalPosition,
+    HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue, LineClamp, LineDirection,
+    LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position, PositionType, Scale,
+    Shadow, TextAlign, TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke,
+    TextStrokeStyle, Transform, Transition, Translate, VerticalPosition, VerticalPositionKeyword,
+    Visibility, RGBA,
 };
 
 use vizia_style::{
@@ -93,7 +94,9 @@ pub(crate) use pseudoclass::*;
 mod transform;
 pub(crate) use transform::*;
 
-use crate::animation::{AnimationState, Interpolator, Keyframe, TimingFunction};
+use crate::animation::{
+    Animation, AnimationId, AnimationState, Interpolator, Keyframe, Keyframes, TimingFunction,
+};
 use crate::storage::animatable_set::AnimatableSet;
 use crate::storage::style_set::StyleSet;
 use bitflags::bitflags;
@@ -213,10 +216,10 @@ pub struct Style {
     pub(crate) rule_manager: IdManager<Rule>,
 
     // Creates and destroys animation ids
-    pub(crate) animation_manager: IdManager<Animation>,
-    pub(crate) animations: HashMap<String, Animation>,
+    pub(crate) animation_manager: IdManager<AnimationId>,
+    pub(crate) animations: HashMap<String, AnimationId>,
     // List of animations to be started on the next frame
-    pub(crate) pending_animations: Vec<(Entity, Animation, Duration, Duration)>,
+    pub(crate) pending_animations: Vec<(Entity, AnimationId, Animation)>,
 
     // List of rules
     pub(crate) rules: IndexMap<Rule, StyleRule>,
@@ -239,6 +242,15 @@ pub struct Style {
     pub(crate) hidden: SparseSet<bool>,
     pub(crate) text_value: SparseSet<String>,
     pub(crate) numeric_value: SparseSet<f64>,
+
+    // Animation Properties
+    pub(crate) animation_name: StyleSet<String>,
+    pub(crate) animation_duration: StyleSet<Duration>,
+    pub(crate) animation_delay: StyleSet<Duration>,
+    pub(crate) animation_timing_function: StyleSet<TimingFunction>,
+    pub(crate) animation_iteration_count: StyleSet<AnimationIterationCount>,
+    pub(crate) animation_direction: StyleSet<AnimationDirection>,
+    pub(crate) animation_fill_mode: StyleSet<AnimationFillMode>,
 
     // Visibility
     pub(crate) visibility: StyleSet<Visibility>,
@@ -427,23 +439,23 @@ impl Style {
         self.rules.clear();
     }
 
-    pub(crate) fn get_animation(&self, name: &str) -> Option<&Animation> {
+    pub(crate) fn get_animation(&self, name: &str) -> Option<&AnimationId> {
         self.animations.get(name)
     }
 
     pub(crate) fn add_keyframe(
         &mut self,
-        animation_id: Animation,
+        animation_id: AnimationId,
         time: f32,
         properties: &[Property],
     ) {
         fn insert_keyframe<T: 'static + Interpolator + Debug + Clone + PartialEq + Default>(
             storage: &mut AnimatableSet<T>,
-            animation_id: Animation,
+            animation_id: AnimationId,
             time: f32,
             value: T,
         ) {
-            let keyframe = Keyframe { time, value, timing_function: TimingFunction::linear() };
+            let keyframe = Keyframe { time, value, timing_function: None };
 
             if let Some(anim_state) = storage.get_animation_mut(animation_id) {
                 anim_state.keyframes.push(keyframe)
@@ -720,7 +732,7 @@ impl Style {
         }
     }
 
-    pub(crate) fn add_animation(&mut self, animation: AnimationBuilder) -> Animation {
+    pub(crate) fn add_animation_keyframes(&mut self, animation: Keyframes) -> AnimationId {
         let animation_id = self.animation_manager.create();
         for keyframe in animation.keyframes.iter() {
             self.add_keyframe(animation_id, keyframe.time, &keyframe.properties);
@@ -729,14 +741,39 @@ impl Style {
         animation_id
     }
 
+    pub(crate) fn get_animation_for_entity(&self, entity: Entity) -> Animation {
+        let animation_duration =
+            self.animation_duration.get(entity).copied().unwrap_or(Duration::ZERO);
+        let animation_delay = self.animation_delay.get(entity).copied().unwrap_or(Duration::ZERO);
+        let animation_timing_function =
+            self.animation_timing_function.get(entity).copied().unwrap_or(TimingFunction::linear());
+        let animation_iteration_count = self
+            .animation_iteration_count
+            .get(entity)
+            .copied()
+            .unwrap_or(AnimationIterationCount::Count(1));
+        let animation_direction =
+            self.animation_direction.get(entity).copied().unwrap_or(AnimationDirection::Normal);
+        let animation_fill_mode =
+            self.animation_fill_mode.get(entity).copied().unwrap_or(AnimationFillMode::None);
+
+        Animation {
+            duration: animation_duration,
+            delay: animation_delay,
+            easing_function: animation_timing_function,
+            iteration_count: animation_iteration_count,
+            direction: animation_direction,
+            fill_mode: animation_fill_mode,
+        }
+    }
+
     pub(crate) fn enqueue_animation(
         &mut self,
         entity: Entity,
+        animation_id: AnimationId,
         animation: Animation,
-        duration: Duration,
-        delay: Duration,
     ) {
-        self.pending_animations.push((entity, animation, duration, delay));
+        self.pending_animations.push((entity, animation_id, animation));
     }
 
     pub(crate) fn play_pending_animations(&mut self) {
@@ -744,85 +781,82 @@ impl Style {
 
         let pending_animations = self.pending_animations.drain(..).collect::<Vec<_>>();
 
-        for (entity, animation, duration, delay) in pending_animations {
-            self.play_animation(entity, animation, start_time + delay, duration, delay)
+        for (entity, animation_id, animation) in pending_animations {
+            self.play_animation(entity, animation_id, animation, start_time)
         }
     }
 
     pub(crate) fn play_animation(
         &mut self,
         entity: Entity,
+        animation_id: AnimationId,
         animation: Animation,
         start_time: Instant,
-        duration: Duration,
-        delay: Duration,
     ) {
-        self.display.play_animation(entity, animation, start_time, duration, delay);
-        self.opacity.play_animation(entity, animation, start_time, duration, delay);
-        self.clip_path.play_animation(entity, animation, start_time, duration, delay);
+        self.display.play_animation(entity, animation_id, animation, start_time);
+        self.opacity.play_animation(entity, animation_id, animation, start_time);
+        self.clip_path.play_animation(entity, animation_id, animation, start_time);
 
-        self.transform.play_animation(entity, animation, start_time, duration, delay);
-        self.transform_origin.play_animation(entity, animation, start_time, duration, delay);
-        self.translate.play_animation(entity, animation, start_time, duration, delay);
-        self.rotate.play_animation(entity, animation, start_time, duration, delay);
-        self.scale.play_animation(entity, animation, start_time, duration, delay);
+        self.transform.play_animation(entity, animation_id, animation, start_time);
+        self.transform_origin.play_animation(entity, animation_id, animation, start_time);
+        self.translate.play_animation(entity, animation_id, animation, start_time);
+        self.rotate.play_animation(entity, animation_id, animation, start_time);
+        self.scale.play_animation(entity, animation_id, animation, start_time);
 
-        self.border_width.play_animation(entity, animation, start_time, duration, delay);
-        self.border_color.play_animation(entity, animation, start_time, duration, delay);
+        self.border_width.play_animation(entity, animation_id, animation, start_time);
+        self.border_color.play_animation(entity, animation_id, animation, start_time);
 
-        self.corner_top_left_radius.play_animation(entity, animation, start_time, duration, delay);
-        self.corner_top_right_radius.play_animation(entity, animation, start_time, duration, delay);
-        self.corner_bottom_left_radius
-            .play_animation(entity, animation, start_time, duration, delay);
-        self.corner_bottom_right_radius
-            .play_animation(entity, animation, start_time, duration, delay);
+        self.corner_top_left_radius.play_animation(entity, animation_id, animation, start_time);
+        self.corner_top_right_radius.play_animation(entity, animation_id, animation, start_time);
+        self.corner_bottom_left_radius.play_animation(entity, animation_id, animation, start_time);
+        self.corner_bottom_right_radius.play_animation(entity, animation_id, animation, start_time);
 
-        self.outline_width.play_animation(entity, animation, start_time, duration, delay);
-        self.outline_color.play_animation(entity, animation, start_time, duration, delay);
-        self.outline_offset.play_animation(entity, animation, start_time, duration, delay);
+        self.outline_width.play_animation(entity, animation_id, animation, start_time);
+        self.outline_color.play_animation(entity, animation_id, animation, start_time);
+        self.outline_offset.play_animation(entity, animation_id, animation, start_time);
 
-        self.background_color.play_animation(entity, animation, start_time, duration, delay);
-        self.background_image.play_animation(entity, animation, start_time, duration, delay);
-        self.background_size.play_animation(entity, animation, start_time, duration, delay);
+        self.background_color.play_animation(entity, animation_id, animation, start_time);
+        self.background_image.play_animation(entity, animation_id, animation, start_time);
+        self.background_size.play_animation(entity, animation_id, animation, start_time);
 
-        self.shadow.play_animation(entity, animation, start_time, duration, delay);
+        self.shadow.play_animation(entity, animation_id, animation, start_time);
 
-        self.font_color.play_animation(entity, animation, start_time, duration, delay);
-        self.font_size.play_animation(entity, animation, start_time, duration, delay);
-        self.caret_color.play_animation(entity, animation, start_time, duration, delay);
-        self.selection_color.play_animation(entity, animation, start_time, duration, delay);
+        self.font_color.play_animation(entity, animation_id, animation, start_time);
+        self.font_size.play_animation(entity, animation_id, animation, start_time);
+        self.caret_color.play_animation(entity, animation_id, animation, start_time);
+        self.selection_color.play_animation(entity, animation_id, animation, start_time);
 
-        self.left.play_animation(entity, animation, start_time, duration, delay);
-        self.right.play_animation(entity, animation, start_time, duration, delay);
-        self.top.play_animation(entity, animation, start_time, duration, delay);
-        self.bottom.play_animation(entity, animation, start_time, duration, delay);
+        self.left.play_animation(entity, animation_id, animation, start_time);
+        self.right.play_animation(entity, animation_id, animation, start_time);
+        self.top.play_animation(entity, animation_id, animation, start_time);
+        self.bottom.play_animation(entity, animation_id, animation, start_time);
 
-        self.padding_left.play_animation(entity, animation, start_time, duration, delay);
-        self.padding_right.play_animation(entity, animation, start_time, duration, delay);
-        self.padding_top.play_animation(entity, animation, start_time, duration, delay);
-        self.padding_bottom.play_animation(entity, animation, start_time, duration, delay);
-        self.horizontal_gap.play_animation(entity, animation, start_time, duration, delay);
-        self.vertical_gap.play_animation(entity, animation, start_time, duration, delay);
+        self.padding_left.play_animation(entity, animation_id, animation, start_time);
+        self.padding_right.play_animation(entity, animation_id, animation, start_time);
+        self.padding_top.play_animation(entity, animation_id, animation, start_time);
+        self.padding_bottom.play_animation(entity, animation_id, animation, start_time);
+        self.horizontal_gap.play_animation(entity, animation_id, animation, start_time);
+        self.vertical_gap.play_animation(entity, animation_id, animation, start_time);
 
-        self.width.play_animation(entity, animation, start_time, duration, delay);
-        self.height.play_animation(entity, animation, start_time, duration, delay);
+        self.width.play_animation(entity, animation_id, animation, start_time);
+        self.height.play_animation(entity, animation_id, animation, start_time);
 
-        self.min_width.play_animation(entity, animation, start_time, duration, delay);
-        self.max_width.play_animation(entity, animation, start_time, duration, delay);
-        self.min_height.play_animation(entity, animation, start_time, duration, delay);
-        self.max_height.play_animation(entity, animation, start_time, duration, delay);
+        self.min_width.play_animation(entity, animation_id, animation, start_time);
+        self.max_width.play_animation(entity, animation_id, animation, start_time);
+        self.min_height.play_animation(entity, animation_id, animation, start_time);
+        self.max_height.play_animation(entity, animation_id, animation, start_time);
 
-        self.min_horizontal_gap.play_animation(entity, animation, start_time, duration, delay);
-        self.max_horizontal_gap.play_animation(entity, animation, start_time, duration, delay);
-        self.min_vertical_gap.play_animation(entity, animation, start_time, duration, delay);
-        self.max_vertical_gap.play_animation(entity, animation, start_time, duration, delay);
+        self.min_horizontal_gap.play_animation(entity, animation_id, animation, start_time);
+        self.max_horizontal_gap.play_animation(entity, animation_id, animation, start_time);
+        self.min_vertical_gap.play_animation(entity, animation_id, animation, start_time);
+        self.max_vertical_gap.play_animation(entity, animation_id, animation, start_time);
 
-        self.underline_color.play_animation(entity, animation, start_time, duration, delay);
+        self.underline_color.play_animation(entity, animation_id, animation, start_time);
 
-        self.fill.play_animation(entity, animation, start_time, duration, delay);
+        self.fill.play_animation(entity, animation_id, animation, start_time);
     }
 
-    pub(crate) fn is_animating(&self, entity: Entity, animation: Animation) -> bool {
+    pub(crate) fn is_animating(&self, entity: Entity, animation: AnimationId) -> bool {
         self.display.has_active_animation(entity, animation)
             | self.opacity.has_active_animation(entity, animation)
             | self.clip_path.has_active_animation(entity, animation)
@@ -1696,6 +1730,66 @@ impl Style {
             Property::Fill(fill) => {
                 self.fill.insert_rule(rule_id, fill);
             }
+
+            // Animation
+            Property::AnimationDelay(animation_delay) => {
+                self.animation_delay.insert_rule(rule_id, animation_delay);
+            }
+
+            Property::AnimationDuration(animation_duration) => {
+                self.animation_duration.insert_rule(rule_id, animation_duration);
+            }
+
+            Property::AnimationFillMode(animation_fill_mode) => {
+                self.animation_fill_mode.insert_rule(rule_id, animation_fill_mode);
+            }
+
+            Property::AnimationName(animation_name) => {
+                self.animation_name.insert_rule(rule_id, animation_name.to_string());
+            }
+
+            Property::AnimationIterationCount(animation_iteration_count) => {
+                self.animation_iteration_count.insert_rule(rule_id, animation_iteration_count);
+            }
+
+            Property::AnimationDirection(animation_direction) => {
+                self.animation_direction.insert_rule(rule_id, animation_direction);
+            }
+
+            Property::AnimationTimingFunction(animation_timing_function) => {
+                let timing_function = match animation_timing_function {
+                    EasingFunction::Linear => TimingFunction::linear(),
+                    EasingFunction::Ease => TimingFunction::ease(),
+                    EasingFunction::EaseIn => TimingFunction::ease_in(),
+                    EasingFunction::EaseOut => TimingFunction::ease_out(),
+                    EasingFunction::EaseInOut => TimingFunction::ease_in_out(),
+                    EasingFunction::CubicBezier(x1, y1, x2, y2) => {
+                        TimingFunction::new(x1, y1, x2, y2)
+                    }
+                };
+                self.animation_timing_function.insert_rule(rule_id, timing_function);
+            }
+
+            Property::Animation(animation) => {
+                self.animation_delay.insert_rule(rule_id, animation.delay);
+                self.animation_duration.insert_rule(rule_id, animation.duration);
+                self.animation_fill_mode.insert_rule(rule_id, animation.fill_mode);
+                self.animation_name.insert_rule(rule_id, animation.name.to_string());
+                self.animation_iteration_count.insert_rule(rule_id, animation.iteration_count);
+                self.animation_direction.insert_rule(rule_id, animation.direction);
+                let timing_function = match animation.timing_function {
+                    EasingFunction::Linear => TimingFunction::linear(),
+                    EasingFunction::Ease => TimingFunction::ease(),
+                    EasingFunction::EaseIn => TimingFunction::ease_in(),
+                    EasingFunction::EaseOut => TimingFunction::ease_out(),
+                    EasingFunction::EaseInOut => TimingFunction::ease_in_out(),
+                    EasingFunction::CubicBezier(x1, y1, x2, y2) => {
+                        TimingFunction::new(x1, y1, x2, y2)
+                    }
+                };
+                self.animation_timing_function.insert_rule(rule_id, timing_function);
+            }
+
             _ => {}
         }
     }
@@ -1705,19 +1799,16 @@ impl Style {
         &self,
         transition: &Transition,
     ) -> AnimationState<T> {
-        let timing_function = transition
-            .timing_function
-            .map(|easing| match easing {
-                EasingFunction::Linear => TimingFunction::linear(),
-                EasingFunction::Ease => TimingFunction::ease(),
-                EasingFunction::EaseIn => TimingFunction::ease_in(),
-                EasingFunction::EaseOut => TimingFunction::ease_out(),
-                EasingFunction::EaseInOut => TimingFunction::ease_in_out(),
-                EasingFunction::CubicBezier(x1, y1, x2, y2) => TimingFunction::new(x1, y1, x2, y2),
-            })
-            .unwrap_or_default();
+        let timing_function = transition.timing_function.map(|easing| match easing {
+            EasingFunction::Linear => TimingFunction::linear(),
+            EasingFunction::Ease => TimingFunction::ease(),
+            EasingFunction::EaseIn => TimingFunction::ease_in(),
+            EasingFunction::EaseOut => TimingFunction::ease_out(),
+            EasingFunction::EaseInOut => TimingFunction::ease_in_out(),
+            EasingFunction::CubicBezier(x1, y1, x2, y2) => TimingFunction::new(x1, y1, x2, y2),
+        });
 
-        AnimationState::new(Animation::null())
+        AnimationState::new(AnimationId::null())
             .with_duration(transition.duration)
             .with_delay(transition.delay.unwrap_or_default())
             .with_keyframe(Keyframe { time: 0.0, value: Default::default(), timing_function })
@@ -1750,6 +1841,15 @@ impl Style {
         self.hidden.remove(entity);
         self.text_value.remove(entity);
         self.numeric_value.remove(entity);
+
+        // Animation
+        self.animation_name.remove(entity);
+        self.animation_delay.remove(entity);
+        self.animation_duration.remove(entity);
+        self.animation_fill_mode.remove(entity);
+        self.animation_iteration_count.remove(entity);
+        self.animation_direction.remove(entity);
+        self.animation_timing_function.remove(entity);
 
         // Display
         self.display.remove(entity);
@@ -1923,6 +2023,15 @@ impl Style {
     // Remove all shared style data.
     pub(crate) fn clear_style_rules(&mut self) {
         self.disabled.clear_rules();
+
+        // Animation
+        self.animation_name.clear_rules();
+        self.animation_delay.clear_rules();
+        self.animation_duration.clear_rules();
+        self.animation_fill_mode.clear_rules();
+        self.animation_iteration_count.clear_rules();
+        self.animation_direction.clear_rules();
+        self.animation_timing_function.clear_rules();
         // Display
         self.display.clear_rules();
         // Visibility
