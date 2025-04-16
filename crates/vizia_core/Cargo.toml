@@ -38,7 +38,7 @@ log = "0.4"
 indexmap = "2.7"
 qfilter = "0.2"
 web-time = "1.1"
-comrak = { version = "0.35", default-features = false, optional = true }
+comrak = { version = "0.38", default-features = false, optional = true }
 open = "5.3"
 fxhash = "0.2"
 rayon = {version = "1.10", optional = true}
