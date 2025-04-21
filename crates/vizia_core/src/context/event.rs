@@ -199,6 +199,35 @@ impl<'a> EventContext<'a> {
         self.entity_identifiers.get(id).cloned()
     }
 
+    /// Returns the descendant [Entity] id, of the current view, with the given element name if it exists.
+    pub fn get_entity_by_element_id(&self, element: &str) -> Option<Entity> {
+        let descendants = LayoutTreeIterator::subtree(self.tree, self.current);
+        for descendant in descendants {
+            if let Some(id) = self.views.get(&descendant).and_then(|view| view.element()) {
+                if id == element {
+                    return Some(descendant);
+                }
+            }
+        }
+
+        None
+    }
+
+    /// Returns the descendant [Entity] ids, of the current view, with the given class name.
+    pub fn get_entities_by_class(&self, class: &str) -> Vec<Entity> {
+        let mut entities = Vec::new();
+        let descendants = LayoutTreeIterator::subtree(self.tree, self.current);
+        for descendant in descendants {
+            if let Some(class_list) = self.style.classes.get(descendant) {
+                if class_list.contains(class) {
+                    entities.push(descendant);
+                }
+            }
+        }
+
+        entities
+    }
+
     /// Returns the [Entity] id of the current view.
     pub fn current(&self) -> Entity {
         self.current

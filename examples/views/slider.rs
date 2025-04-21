@@ -51,7 +51,7 @@ fn main() -> Result<(), ApplicationError> {
                 Slider::new(cx, AppData::value)
                     .range(-50.0..50.0)
                     .on_change(move |cx, val| cx.emit(AppEvent::SetValue(val)))
-                    .class("vertical");
+                    .orientation(Orientation::Vertical);
                 Label::new(cx, AppData::value.map(|val| format!("{:.2}", val)))
                     .alignment(Alignment::Center)
                     .width(Pixels(50.0));
