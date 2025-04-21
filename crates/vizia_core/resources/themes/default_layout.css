@@ -589,14 +589,30 @@ scrollbar.vertical .thumb {
 /* SLIDER */
 
 slider {
-    height: 5px;
+    height: 16px;
     width: 1s;
+    alignment: left;
     corner-radius: 50%;
 }
 
 slider.vertical {
     height: 1s;
-    width: 5px;
+    width: 16px;
+    alignment: bottom-center;
+}
+
+slider .track {
+    width: 1s;
+    height: 4px;
+    corner-radius: 50%;
+    alignment: left;
+}
+
+slider.vertical .track {
+    width: 4px;
+    height: 1s;
+    corner-radius: 50%;
+    alignment: bottom-center;
 }
 
 slider .thumb {

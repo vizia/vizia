@@ -735,8 +735,7 @@ scrollview.v-scroll > scrollbar.vertical:active > .thumb {
 /* SLIDER */
 
 slider {
-    background-color: #51afef20;
-    corner-radius: 3px;
+    corner-radius: 2px;
 }
 
 slider:focus-visible {
@@ -746,9 +745,14 @@ slider:focus-visible {
     corner-radius: 4px;
 }
 
+slider .track {
+    background-color: #51afef20;
+    corner-radius: 2px;
+}
+
 slider .active {
     background-color: #51afef80;
-    corner-radius: 3px;
+    corner-radius: 2px;
 }
 
 slider .thumb {
