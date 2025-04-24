@@ -230,6 +230,9 @@ impl Context {
         result.style.needs_relayout();
         result.needs_redraw(Entity::root());
 
+        // Set the default DPI factor to 1.0.
+        result.style.dpi_factor = 1.0;
+
         // Build the environment model at the root.
         Environment::new(&mut result).build(&mut result);
 
