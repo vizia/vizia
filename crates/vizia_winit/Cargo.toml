@@ -29,6 +29,7 @@ accesskit_winit = { version = "0.26", optional = true}
 glutin-winit = { version = "0.5", default-features = false, features = ["egl", "wgl", "glx"]}
 gl-rs = { package = "gl", version = "0.14.0" }
 hashbrown = "0.15"
+log = "0.4"
 
 [target."cfg(target_os = \"linux\")".dependencies.skia-safe]
 version = "0.84"

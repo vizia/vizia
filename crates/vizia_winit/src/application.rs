@@ -8,6 +8,7 @@ use crate::{
 #[cfg(feature = "accesskit")]
 use accesskit_winit::Adapter;
 use hashbrown::HashMap;
+use log::warn;
 use std::{error::Error, fmt::Display, sync::Arc};
 use vizia_input::ImeState;
 
@@ -209,11 +210,11 @@ impl Application {
                         .get_parent_window(window_entity)
                         .and_then(|parent_window| self.window_ids.get(&parent_window))
                         .and_then(|id| self.windows.get(id))
-                        .map(|win_state| {
-                            (
-                                win_state.window.outer_position().unwrap(),
-                                win_state.window.inner_size(),
-                            )
+                        .and_then(|WinState { window, .. }| {
+                            let position = window
+                                .outer_position()
+                                .inspect_err(|e| warn!("can't get window position: {e:?}"));
+                            Some((position.ok()?, window.inner_size()))
                         }),
                     AnchorTarget::Mouse => self
                         .cx
@@ -222,8 +223,13 @@ impl Application {
                         .get_parent_window(window_entity)
                         .and_then(|parent_window| self.window_ids.get(&parent_window))
                         .and_then(|id| self.windows.get(id))
-                        .map(|win_state| {
-                            let pos = win_state.window.outer_position().unwrap();
+                        .and_then(|WinState { window, .. }| {
+                            window
+                                .outer_position()
+                                .inspect_err(|e| warn!("can't get window position: {e:?}"))
+                                .ok()
+                        })
+                        .map(|pos| {
                             (
                                 PhysicalPosition::new(
                                     pos.x + self.cx.0.mouse.cursor_x as i32,
