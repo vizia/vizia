@@ -282,6 +282,14 @@ impl Context {
             if let Some(window_state) = self.windows.get_mut(&parent_window) {
                 window_state.redraw_list.insert(entity);
             }
+
+            // If a child window needs redrawing, add itself to the redraw list.
+            // This ensures that the entire window is redrawn: https://github.com/vizia/vizia/issues/580
+            if self.tree.is_window(entity) {
+                if let Some(window_state) = self.windows.get_mut(&entity) {
+                    window_state.redraw_list.insert(entity);
+                }
+            }
         }
     }
 
