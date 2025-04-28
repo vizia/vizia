@@ -1,7 +1,7 @@
 use crate::window_modifiers::WindowModifiers;
 use glutin::context::GlProfile;
 use vizia_core::context::TreeProps;
-use vizia_window::AnchorTarget;
+use vizia_window::{AnchorTarget, WindowDescription};
 #[cfg(target_os = "windows")]
 use winit::platform::windows::WindowExtWindows;
 #[cfg(target_os = "windows")]
@@ -375,10 +375,16 @@ impl Window {
         .build(cx, |cx| {
             cx.windows.insert(
                 cx.current(),
-                WindowState { content: Some(Arc::new(content)), ..Default::default() },
+                WindowState {
+                    content: Some(Arc::new(content)),
+                    window_description: WindowDescription::new(),
+                    ..Default::default()
+                },
             );
             cx.tree.set_window(cx.current(), true);
         })
+        .position_type(PositionType::Absolute)
+        .anchor_target(AnchorTarget::Window)
     }
 
     pub fn popup(
@@ -405,11 +411,13 @@ impl Window {
                     owner: Some(parent_window),
                     is_modal: true,
                     content: Some(Arc::new(content)),
+                    window_description: WindowDescription::new(),
                     ..Default::default()
                 },
             );
             cx.tree.set_window(cx.current(), true);
         })
+        .position_type(PositionType::Absolute)
         .anchor_target(AnchorTarget::Window)
         .lock_focus_to_within()
     }
