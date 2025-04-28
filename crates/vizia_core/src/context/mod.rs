@@ -275,17 +275,15 @@ impl Context {
     /// Mark the application as needing to rerun the draw method
     pub fn needs_redraw(&mut self, entity: Entity) {
         if self.entity_manager.is_alive(entity) {
-            let parent_window = self.tree.get_parent_window(entity).unwrap_or(Entity::root());
-            if let Some(window_state) = self.windows.get_mut(&parent_window) {
-                window_state.redraw_list.insert(entity);
-            }
-
             // If a child window needs redrawing, add itself to the redraw list.
             // This ensures that the entire window is redrawn: https://github.com/vizia/vizia/issues/580
-            if self.tree.is_window(entity) {
-                if let Some(window_state) = self.windows.get_mut(&entity) {
-                    window_state.redraw_list.insert(entity);
-                }
+            let window = if self.tree.is_window(entity) {
+                entity
+            } else {
+                self.tree.get_parent_window(entity).unwrap_or(Entity::root())
+            };
+            if let Some(window_state) = self.windows.get_mut(&window) {
+                window_state.redraw_list.insert(entity);
             }
         }
     }
