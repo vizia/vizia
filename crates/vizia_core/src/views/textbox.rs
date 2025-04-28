@@ -84,6 +84,7 @@ pub struct Textbox<L: Lens> {
     caret_timer: Timer,
     selection: Selection,
     preedit_backup: Option<PreeditBackup>,
+    text_overflow: Option<TextOverflow>,
 }
 
 // Determines whether the enter key submits the text or inserts a new line.
@@ -171,6 +172,7 @@ where
             caret_timer,
             selection: Selection::new(0, 0),
             preedit_backup: None,
+            text_overflow: None,
         }
         .build(cx, move |cx| {
             cx.add_listener(move |textbox: &mut Self, cx, event| {
@@ -1367,6 +1369,9 @@ where
                     self.reset_caret_timer(cx);
                     self.reset_ime_position(cx);
 
+                    self.text_overflow = cx.style.text_overflow.get_inline(cx.current).copied();
+                    cx.style.text_overflow.remove(cx.current);
+
                     let text = self.lens.get(cx);
                     let text = text.to_string_local(cx);
 
@@ -1387,6 +1392,8 @@ where
                         cx.set_valid(false);
                     }
                 }
+
+                cx.style.needs_text_update(cx.current);
             }
 
             TextEvent::EndEdit => {
@@ -1398,6 +1405,12 @@ where
 
                 let text = self.lens.get(cx);
                 let text = text.to_string_local(cx);
+
+                if let Some(text_overflow) = self.text_overflow {
+                    cx.style.text_overflow.insert(cx.current, text_overflow);
+                } else {
+                    cx.style.text_overflow.remove(cx.current);
+                }
 
                 self.select_all(cx);
 
@@ -1418,7 +1431,14 @@ where
                 //     cx.style.text.insert(cx.current, text);
                 // }
 
-                // cx.style.needs_text_update(cx.current);
+                // Reset transform to 0,0
+                let mut transform = self.transform.borrow_mut();
+                *transform = (0.0, 0.0);
+
+                // Reset cursor position
+                self.selection = Selection::caret(0);
+
+                cx.style.needs_text_update(cx.current);
             }
 
             TextEvent::Blur => {
