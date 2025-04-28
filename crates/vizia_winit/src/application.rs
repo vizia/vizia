@@ -452,6 +452,8 @@ impl ApplicationHandler<UserEvent> for Application {
                     window.scale_factor() as f32,
                 );
 
+                window.set_visible(window_state.window_description.visible);
+
                 self.cx.0.with_current(window_entity, |cx| {
                     if let Some(content) = &window_state.content {
                         (content)(cx)
@@ -837,6 +839,8 @@ impl ApplicationHandler<UserEvent> for Application {
                         &window_state.window_description,
                         window.scale_factor() as f32,
                     );
+
+                    window.set_visible(window_state.window_description.visible);
 
                     self.cx.0.with_current(*window_entity, |cx| {
                         if let Some(content) = &window_state.content {

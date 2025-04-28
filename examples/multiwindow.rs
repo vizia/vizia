@@ -62,8 +62,7 @@ fn main() -> Result<(), ApplicationError> {
                 })
                 .title("Set color...")
                 .inner_size((400, 200))
-                .parent_anchor(Anchor::TopRight)
-                .anchor_target(AnchorTarget::Window);
+                .anchor(Anchor::Center);
             }
         });
 
@@ -71,6 +70,7 @@ fn main() -> Result<(), ApplicationError> {
             Button::new(cx, |cx| Label::new(cx, "Show Window"))
                 .on_press(|cx| cx.emit(AppEvent::ShowWindow));
         })
+        .size(Auto)
         .padding(Pixels(20.0))
         .background_color(AppData::color);
     })
