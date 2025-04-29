@@ -103,14 +103,14 @@ fn main() -> Result<(), ApplicationError> {
                     .border_width(Pixels(1.0))
                     .text_wrap(true)
                     .width(Pixels(200.0))
-                    .child_space(Pixels(10.0));
+                    .padding(Pixels(10.0));
 
                 Label::new(cx, "Here is some short text\n that wraps the line")
                     .border_color(Color::black())
                     .border_width(Pixels(1.0))
                     //.text_wrap(true)
                     .width(Auto)
-                    .child_space(Pixels(10.0))
+                    .padding(Pixels(10.0))
                     .font_family(AppData::font.map(|fam| vec![FamilyOwned::Named(fam.clone())]))
                     .font_size(AppData::font_size)
                     .letter_spacing(AppData::letter_spacing)
@@ -129,8 +129,8 @@ fn main() -> Result<(), ApplicationError> {
                     .word_spacing(AppData::word_spacing)
                     .line_height(AppData::line_height);
             })
-            .row_between(Pixels(8.0))
-            .child_space(Stretch(1.0));
+            .gap(Pixels(8.0))
+            .alignment(Alignment::Center);
 
             Divider::new(cx);
 
@@ -144,46 +144,43 @@ fn main() -> Result<(), ApplicationError> {
 
                     Slider::new(cx, AppData::font_size)
                         .range(0.0..40.0)
-                        .on_changing(|cx, val| cx.emit(AppEvent::SetFontSize(val)));
+                        .on_change(|cx, val| cx.emit(AppEvent::SetFontSize(val)));
 
                     Textbox::new(cx, AppData::font_size.map(|ls| format!("{:.1}px", *ls))).width(Pixels(100.0))
                         .on_submit(|cx, val, _| cx.emit(AppEvent::SetFontSize(val.strip_suffix("px").unwrap().parse::<f32>().unwrap())))
                         .width(Pixels(100.0));
                 })
                 .height(Auto)
-                .col_between(Pixels(8.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0));
+                .gap(Pixels(8.0))
+                .alignment(Alignment::Left);
 
                 HStack::new(cx, |cx|{
 
                     Slider::new(cx, AppData::letter_spacing.map(|lh| lh.to_px().unwrap()))
                         .range(-20.0..20.0)
-                        .on_changing(|cx, val| cx.emit(AppEvent::SetLetterSpacing(val)));
+                        .on_change(|cx, val| cx.emit(AppEvent::SetLetterSpacing(val)));
 
                     Textbox::new(cx, AppData::letter_spacing.map(|ls| format!("{:.1}px", ls.to_px().unwrap()))).width(Pixels(100.0))
                         .on_submit(|cx, val, _| cx.emit(AppEvent::SetLetterSpacing(val.strip_suffix("px").unwrap().parse::<f32>().unwrap())))
                         .width(Pixels(100.0));
                 })
                 .height(Auto)
-                .col_between(Pixels(8.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0));
+                .gap(Pixels(8.0))
+                .alignment(Alignment::Left);
 
                 HStack::new(cx, |cx|{
 
                     Slider::new(cx, AppData::word_spacing.map(|lh| lh.to_px().unwrap()))
                         .range(0.0..20.0)
-                        .on_changing(|cx, val| cx.emit(AppEvent::SetWordSpacing(val)));
+                        .on_change(|cx, val| cx.emit(AppEvent::SetWordSpacing(val)));
 
                     Textbox::new(cx, AppData::word_spacing.map(|ls| format!("{:.1}px", ls.to_px().unwrap()))).width(Pixels(100.0))
                         .on_submit(|cx, val, _| cx.emit(AppEvent::SetWordSpacing(val.strip_suffix("px").unwrap().parse::<f32>().unwrap())))
                         .width(Pixels(100.0));
                 })
                 .height(Auto)
-                .col_between(Pixels(8.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0));
+                .gap(Pixels(8.0))
+                .alignment(Alignment::Left);
 
                 HStack::new(cx, |cx|{
                     Slider::new(cx, AppData::line_height.map(|lh| match lh {
@@ -202,7 +199,7 @@ fn main() -> Result<(), ApplicationError> {
                             LengthOrPercentage::Percentage(_) => 0.0..200.0,
                         }
                     }))
-                    .on_changing(|cx, val| cx.emit(AppEvent::SetLineHeight(val)));
+                    .on_change(|cx, val| cx.emit(AppEvent::SetLineHeight(val)));
 
                     Dropdown::new(
                         cx,
@@ -222,11 +219,10 @@ fn main() -> Result<(), ApplicationError> {
                             }).width(Stretch(1.0));
                         },
                         move |cx| {
-                            ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
+                            ScrollView::new(cx, move |cx| {
                                 List::new(cx, AppData::list, move |cx, index, item| {
                                     Label::new(cx, item)
-                                        .child_top(Stretch(1.0))
-                                        .child_bottom(Stretch(1.0))
+                                        .alignment(Alignment::Left)
                                         .checked(AppData::selected.map(move |selected| *selected == index))
                                         .navigable(true)
                                         .on_press(move |cx| {
@@ -235,19 +231,19 @@ fn main() -> Result<(), ApplicationError> {
                                         });
                                 });
                             })
+                            .show_vertical_scrollbar(true)
                             .height(Auto);
                         },
                     )
                     .width(Pixels(100.0));
                 })
                 .height(Auto)
-                .col_between(Pixels(8.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0));
+                .gap(Pixels(8.0))
+                .alignment(Alignment::Left);
             })
             .width(Pixels(250.0))
-            .row_between(Pixels(8.0))
-            .child_space(Pixels(8.0));
+            .gap(Pixels(8.0))
+            .padding(Pixels(8.0));
         });
     }).run()
 }
