@@ -628,6 +628,13 @@ pub trait StyleModifiers: internal::Modifiable {
         SystemFlags::REDRAW
     );
 
+    modifier!(
+        /// Overrides the fill color of SVG images.
+        fill,
+        Color,
+        SystemFlags::REDRAW
+    );
+
     // Cursor Icon
     modifier!(
         /// Sets the mouse cursor used when the view is hovered.
