@@ -177,6 +177,10 @@ pub(crate) fn draw_system(
             continue;
         }
 
+        if !cx.entity_manager.is_alive(entity) {
+            continue;
+        }
+
         if entity.visible(&cx.style) {
             let draw_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
 
@@ -422,7 +426,8 @@ pub(crate) fn draw_bounds(
     tree: &Tree<Entity>,
     entity: Entity,
 ) -> BoundingBox {
-    let mut layout_bounds = cache.bounds.get(entity).copied().unwrap();
+    let mut layout_bounds =
+        cache.bounds.get(entity).copied().expect(&format!("No bounds found for entity {}", entity));
 
     if let Some(shadows) = style.shadow.get(entity) {
         for shadow in shadows.iter().filter(|shadow| !shadow.inset) {

@@ -213,3 +213,62 @@ impl std::fmt::Debug for dyn BindingHandler {
         self.debug(f)
     }
 }
+
+pub struct SignalBinding {
+    signal: NodeId,
+    entity: Entity,
+    content: Option<Box<dyn Fn(&mut Context)>>,
+}
+
+impl SignalBinding {
+    pub fn new<F, T>(cx: &mut Context, signal: Signal<T>, content: F) -> Handle<Self>
+    where
+        F: 'static + Fn(&mut Context),
+    {
+        let id = cx.entity_manager.create();
+        let current = cx.current();
+        cx.tree.add(id, current).expect("Failed to add to tree");
+        cx.cache.add(id);
+        cx.style.add(id);
+        cx.tree.set_ignored(id, true);
+
+        signal.observe(cx.data.get_store_mut(), id);
+
+        let binding = Self { signal: signal.id(), entity: id, content: Some(Box::new(content)) };
+
+        // Insert binding into context
+        cx.bindings.insert(id, Box::new(binding));
+
+        // Initial update will collect dependencies
+        cx.with_current(id, |cx| {
+            if let Some(mut binding) = cx.bindings.remove(&id) {
+                binding.update(cx);
+                cx.bindings.insert(id, binding);
+            }
+        });
+
+        Handle { current: id, entity: id, p: Default::default(), cx }.ignore()
+    }
+}
+
+impl BindingHandler for SignalBinding {
+    fn update(&mut self, cx: &mut Context) {
+        // Clear previous content
+        cx.remove_children(cx.current());
+
+        if let Some(builder) = &self.content {
+            (builder)(cx);
+        }
+    }
+
+    fn remove(&self, cx: &mut Context) {
+        cx.data.get_store_mut().observers.get_mut(&self.signal).map(|observers| {
+            // Remove this binding from the observers
+            observers.retain(|&observer| observer != self.entity);
+        });
+    }
+
+    fn debug(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "AutoTrackingBinding")
+    }
+}
