@@ -39,6 +39,7 @@ pub use resource::*;
 
 use crate::{
     binding::{Store, StoreId},
+    entity,
     events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler},
     model::ModelData,
 };
@@ -98,6 +99,7 @@ pub struct Context {
     pub(crate) models: Models,
     pub(crate) stores: Stores,
     pub(crate) bindings: Bindings,
+    pub data: RecoilRoot,
     pub(crate) event_queue: VecDeque<Event>,
     pub(crate) event_schedule: BinaryHeap<TimedEvent>,
     pub(crate) next_event_id: usize,
@@ -163,6 +165,7 @@ impl Context {
             models: HashMap::default(),
             stores: HashMap::default(),
             bindings: HashMap::default(),
+            data: RecoilRoot::new(),
             style: Style::default(),
             cache,
             windows: HashMap::new(),
@@ -243,6 +246,21 @@ impl Context {
         result.style.role.insert(Entity::root(), Role::Window);
 
         result
+    }
+
+    pub fn state<T: 'static + Clone>(&mut self, value: T) -> Signal<T> {
+        let recoil_store = &mut self.data;
+        let entity = self.current;
+        recoil_store.state(entity, value)
+    }
+
+    pub fn derived<T: 'static + Clone>(
+        &mut self,
+        compute: impl 'static + Fn(&crate::recoil::Store) -> T,
+    ) -> Signal<T> {
+        let recoil_store = &mut self.data;
+        let entity = self.current;
+        recoil_store.derived(entity, compute)
     }
 
     /// The "current" entity, generally the entity which is currently being built or the entity
@@ -505,6 +523,8 @@ impl Context {
             if self.windows.contains_key(entity) {
                 self.windows.remove(entity);
             }
+
+            self.data.get_store_mut().entity_destroyed(*entity);
 
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
@@ -910,6 +930,7 @@ pub struct LocalizationContext<'a> {
     pub(crate) models: &'a Models,
     pub(crate) views: &'a Views,
     pub(crate) tree: &'a Tree<Entity>,
+    pub(crate) data: &'a RecoilRoot,
 }
 
 impl<'a> LocalizationContext<'a> {
@@ -920,6 +941,7 @@ impl<'a> LocalizationContext<'a> {
             models: &cx.models,
             views: &cx.views,
             tree: &cx.tree,
+            data: &cx.data,
         }
     }
 
@@ -930,6 +952,7 @@ impl<'a> LocalizationContext<'a> {
             models: cx.models,
             views: cx.views,
             tree: cx.tree,
+            data: cx.data,
         }
     }
 

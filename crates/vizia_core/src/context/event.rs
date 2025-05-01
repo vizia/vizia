@@ -69,6 +69,7 @@ pub struct EventContext<'a> {
     pub cache: &'a mut CachedData,
     pub(crate) tree: &'a Tree<Entity>,
     pub(crate) models: &'a mut Models,
+    pub data: &'a mut RecoilRoot,
     pub(crate) views: &'a mut Views,
     pub(crate) listeners:
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
@@ -123,6 +124,7 @@ impl<'a> EventContext<'a> {
             cache: &mut cx.cache,
             tree: &cx.tree,
             models: &mut cx.models,
+            data: &mut cx.data,
             views: &mut cx.views,
             listeners: &mut cx.listeners,
             resource_manager: &mut cx.resource_manager,
@@ -157,6 +159,7 @@ impl<'a> EventContext<'a> {
             cache: &mut cx.cache,
             tree: &cx.tree,
             models: &mut cx.models,
+            data: &mut cx.data,
             views: &mut cx.views,
             listeners: &mut cx.listeners,
             resource_manager: &mut cx.resource_manager,

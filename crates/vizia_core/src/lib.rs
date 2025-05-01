@@ -37,6 +37,7 @@ pub mod view;
 pub mod views;
 pub mod window;
 
+pub mod recoil;
 mod storage;
 
 /// Contains types and functions used for custom drawing within views. This is a re-export of [skia-safe](https://github.com/rust-skia/rust-skia).
@@ -61,6 +62,7 @@ pub mod prelude {
         Binding, Data, Index, Lens, LensExt, LensValue, Map, MapRef, Res, ResGet, StaticLens, Then,
         UnwrapLens, Wrapper,
     };
+    pub use super::recoil::*;
 
     pub use super::impl_res_simple;
 
