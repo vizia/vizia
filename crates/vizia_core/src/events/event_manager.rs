@@ -8,6 +8,7 @@ use crate::tree::{focus_backward, focus_forward, is_navigatable};
 #[cfg(debug_assertions)]
 use log::debug;
 use std::any::Any;
+use std::collections::HashSet;
 use vizia_storage::LayoutParentIterator;
 #[cfg(debug_assertions)]
 use vizia_storage::ParentIterator;
@@ -160,6 +161,25 @@ impl EventManager {
             }
 
             binding_system(cx);
+
+            let mut all_observers = HashSet::new();
+            // Update observers
+            let store = cx.data.get_store_mut();
+            for (node, observers) in store.observers.iter_mut() {
+                if store.node_needs_update.get(node).copied().unwrap_or_default() {
+                    store.node_needs_update.insert(*node, false);
+                    all_observers.extend(observers.iter().copied());
+                }
+            }
+
+            for observer in all_observers {
+                if let Some(mut binding) = cx.bindings.remove(&observer) {
+                    cx.with_current(observer, |cx| {
+                        binding.update(cx);
+                    });
+                    cx.bindings.insert(observer, binding);
+                }
+            }
 
             // Return true if there are new events in the queue.
             !cx.event_queue.is_empty()
