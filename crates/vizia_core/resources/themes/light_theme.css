@@ -7,7 +7,7 @@
         "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji",
         "Segoe UI Emoji";
     font-variation-settings: "wght" 400;
-    font-size: 14;
+    font-size: 14px;
 }
 
 *:focus-visible {
@@ -478,7 +478,7 @@ label.describing {
 }
 
 label.field-label {
-    font-size: 12;
+    font-size: 12px;
 }
 
 /* LIST */
@@ -520,7 +520,7 @@ menubutton:disabled {
 
 menubutton .shortcut {
     color: #424242;
-    font-size: 12;
+    font-size: 12px;
 }
 
 menubutton svg {

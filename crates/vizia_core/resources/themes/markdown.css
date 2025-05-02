@@ -6,7 +6,7 @@ markdown {
     font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",
         "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji",
         "Segoe UI Emoji";
-    font-size: 16;
+    font-size: 16px;
     padding: 20px;
 }
 
@@ -23,28 +23,28 @@ markdown .h6 {
 }
 
 markdown .h1 {
-    font-size: 32;
+    font-size: 32px;
 }
 
 markdown .h2 {
     padding-bottom: 4px;
-    font-size: 24;
+    font-size: 24px;
 }
 
 markdown .h3 {
-    font-size: 20;
+    font-size: 20px;
 }
 
 markdown .h4 {
-    font-size: 16;
+    font-size: 16px;
 }
 
 markdown .h5 {
-    font-size: 14;
+    font-size: 14px;
 }
 
 markdown .h6 {
-    font-size: 13.5;
+    font-size: 13.5px;
     color: #636c76;
 }
 

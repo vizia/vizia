@@ -596,7 +596,7 @@ impl Style {
                 }
 
                 Property::FontSize(value) => {
-                    insert_keyframe(&mut self.font_size, animation_id, time, *value);
+                    insert_keyframe(&mut self.font_size, animation_id, time, value.clone());
                 }
 
                 Property::CaretColor(value) => {
