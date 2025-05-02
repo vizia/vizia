@@ -462,7 +462,7 @@ menubutton:disabled {
 
 menubutton .shortcut {
     color: #c4c4c4;
-    font-size: 12;
+    font-size: 12px;
 }
 
 menubutton svg {

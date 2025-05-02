@@ -63,7 +63,7 @@ badge {
 }
 
 badge > label {
-    font-size: 12;
+    font-size: 12px;
     alignment: center;
     size: 1s;
 }

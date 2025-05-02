@@ -339,7 +339,7 @@ impl<T: Interpolator + Clone + Default> Interpolator for Option<T> {
 
 impl Interpolator for FontSize {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        FontSize(f32::interpolate(&start.0, &end.0, t))
+        FontSize(Length::interpolate(&start.0, &end.0, t))
     }
 }
 
