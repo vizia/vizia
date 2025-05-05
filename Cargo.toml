@@ -280,3 +280,7 @@ path = "examples/views/collapsible.rs"
 [[example]]
 name = "divider"
 path = "examples/views/divider.rs"
+
+[[example]]
+name = "text_props"
+path = "examples/text_props.rs"
