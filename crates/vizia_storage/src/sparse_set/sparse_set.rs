@@ -48,14 +48,19 @@ where
 
     /// Returns the index of the data associated with the key if it exists
     pub fn dense_idx<K: GenerationalId>(&self, key: K) -> Option<I> {
-        if let Some(dense_index) = self.sparse.get(key.index()) {
-            if let Some(entry) = self.dense.get(dense_index.index()) {
-                if entry.key.index() == key.index() {
-                    return Some(*dense_index);
-                }
-            }
+        if key.is_null() {
+            return None;
         }
-        None
+
+        self.sparse.get(key.index()).copied().and_then(
+            |idx| {
+                if idx.is_null() {
+                    None
+                } else {
+                    Some(idx)
+                }
+            },
+        )
     }
 
     /// Returns true if the sparse set contains data for the given key
@@ -81,6 +86,10 @@ where
             panic!("Key is null");
         }
 
+        if self.is_inherited(key) {
+            self.remove(key);
+        }
+
         if let Some(stored_value) = self.get_mut(key) {
             *stored_value = value;
             return;
@@ -98,13 +107,34 @@ where
 
     /// Removes the data for a given key from the sparse set
     pub fn remove<K: GenerationalId>(&mut self, key: K) -> Option<V> {
+        if self.is_inherited(key) {
+            let sparse_idx = key.index();
+            self.sparse[sparse_idx] = I::null();
+            return None;
+        }
+
         if self.contains(key) {
             let sparse_idx = key.index();
             let dense_idx = self.sparse[sparse_idx];
+            let last_dense_idx = I::new(self.dense.len() - 1);
             let r = self.dense.swap_remove(dense_idx.index()).value;
             if dense_idx.index() < self.dense.len() {
+                // Reset the sparse index to null for all entries that point to the removed entry
+                for i in self.sparse.iter_mut() {
+                    if *i == dense_idx {
+                        *i = I::null();
+                    }
+                }
+
                 let swapped_entry = &self.dense[dense_idx.index()];
                 self.sparse[swapped_entry.key.index()] = dense_idx;
+
+                // Update any inherited keys to point to the new dense index
+                for i in self.sparse.iter_mut() {
+                    if *i == last_dense_idx {
+                        *i = dense_idx;
+                    }
+                }
             }
 
             self.sparse[sparse_idx] = I::null();
@@ -113,6 +143,58 @@ where
         } else {
             None
         }
+    }
+
+    pub fn inherit<K: GenerationalId>(&mut self, key: K, other: K) -> bool {
+        if key == other {
+            return false;
+        }
+
+        if key.is_null() || other.is_null() {
+            panic!("Key is null");
+        }
+
+        if self.contains(other) {
+            // If the key already has data, remove it
+            if self.contains(key) {
+                self.remove(key);
+            }
+
+            let sparse_idx = key.index();
+
+            if sparse_idx >= self.sparse.len() {
+                self.sparse.resize(sparse_idx + 1, I::null());
+            }
+
+            let dense_idx = self.sparse[sparse_idx];
+            let other_dense_idx = self.sparse[other.index()];
+
+            // Check if the key is already inherited from another key
+            if dense_idx == other_dense_idx {
+                return false;
+            }
+
+            // Update the sparse set to inherit the key
+            self.sparse[sparse_idx] = other_dense_idx;
+
+            return true;
+        }
+
+        false
+    }
+
+    /// Returns true if the key is inherited from another key
+    pub fn is_inherited<K: GenerationalId>(&self, key: K) -> bool {
+        if self.contains(key) {
+            let sparse_idx = key.index();
+            let dense_idx = self.sparse[sparse_idx];
+            let entry = &self.dense[dense_idx.index()];
+            if !entry.key.is_null() && !dense_idx.is_null() {
+                return entry.key != I::new(sparse_idx);
+            }
+        }
+
+        false
     }
 }
 
