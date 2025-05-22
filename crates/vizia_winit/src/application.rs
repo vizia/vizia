@@ -564,8 +564,6 @@ impl ApplicationHandler<UserEvent> for Application {
                     // }
 
                     // self.cx.0.tree_updates.clear();
-
-                    window.window().request_redraw();
                 }
             }
 
@@ -619,7 +617,6 @@ impl ApplicationHandler<UserEvent> for Application {
                 };
 
                 self.cx.emit_window_event(window.entity, event);
-                window.window().request_redraw();
             }
             winit::event::WindowEvent::ModifiersChanged(modifiers) => {
                 self.cx.modifiers().set(Modifiers::SHIFT, modifiers.state().shift_key());
@@ -629,8 +626,6 @@ impl ApplicationHandler<UserEvent> for Application {
                 self.cx.modifiers().set(Modifiers::CTRL, modifiers.state().control_key());
 
                 self.cx.modifiers().set(Modifiers::SUPER, modifiers.state().super_key());
-
-                window.window().request_redraw();
             }
             winit::event::WindowEvent::Ime(ime) => match ime {
                 winit::event::Ime::Enabled => {
@@ -658,15 +653,12 @@ impl ApplicationHandler<UserEvent> for Application {
                     window.entity,
                     WindowEvent::MouseMove(position.x as f32, position.y as f32),
                 );
-                window.window().request_redraw();
             }
             winit::event::WindowEvent::CursorEntered { device_id: _ } => {
                 self.cx.emit_window_event(window.entity, WindowEvent::MouseEnter);
-                window.window().request_redraw();
             }
             winit::event::WindowEvent::CursorLeft { device_id: _ } => {
                 self.cx.emit_window_event(window.entity, WindowEvent::MouseLeave);
-                window.window().request_redraw();
             }
             winit::event::WindowEvent::MouseWheel { device_id: _, delta, phase: _ } => {
                 let out_event = match delta {
@@ -682,7 +674,6 @@ impl ApplicationHandler<UserEvent> for Application {
                 };
 
                 self.cx.emit_window_event(window.entity, out_event);
-                window.window().request_redraw();
             }
             winit::event::WindowEvent::MouseInput { device_id: _, state, button } => {
                 let button = match button {
@@ -700,7 +691,6 @@ impl ApplicationHandler<UserEvent> for Application {
                 };
 
                 self.cx.emit_window_event(window.entity, event);
-                window.window().request_redraw();
             }
 
             winit::event::WindowEvent::ScaleFactorChanged {
