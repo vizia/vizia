@@ -20,11 +20,9 @@ impl AppData {
         let runtime = tokio::runtime::Runtime::new().unwrap();
 
         let mut c = cx.get_proxy();
-        runtime.block_on(async move {
-            tokio::spawn(async move {
-                let images = list().await;
-                let _ = c.emit(AppEvent::ImagesListed(images));
-            });
+        runtime.spawn(async move {
+            let images = list().await;
+            let _ = c.emit(AppEvent::ImagesListed(images));
         });
 
         Self { images: Vec::default(), thumbnails: HashMap::default(), original: None, runtime }
@@ -49,11 +47,9 @@ impl Model for AppData {
                 }
                 if let Some(image) = self.thumbnails.get(&id).cloned() {
                     let mut c = cx.get_proxy();
-                    self.runtime.block_on(async move {
-                        tokio::spawn(async move {
-                            let image = download(image.0.url, Size::Thumbnail).await;
-                            let _ = c.emit(AppEvent::ImageDownloaded(id, image));
-                        });
+                    self.runtime.spawn(async move {
+                        let image = download(image.0.url, Size::Thumbnail).await;
+                        let _ = c.emit(AppEvent::ImageDownloaded(id, image));
                     });
                 }
             }
@@ -90,7 +86,11 @@ impl Model for AppData {
                 }
             }
 
-            _ => {}
+            AppEvent::HideOriginal => {
+                self.original = None;
+            }
+
+            _ => (),
         });
     }
 }
@@ -101,6 +101,7 @@ enum AppEvent {
     ImageDownloaded(Id, Result<Bytes, reqwest::Error>),
     OriginalDownloaded(Id, Result<Bytes, reqwest::Error>),
     ShowOriginal(Id),
+    HideOriginal,
 }
 
 fn main() -> Result<(), ApplicationError> {
@@ -136,6 +137,11 @@ fn main() -> Result<(), ApplicationError> {
                 });
             }
         });
+
+        Element::new(cx)
+            .on_press(|cx| cx.emit(AppEvent::HideOriginal))
+            .display(AppData::original.map(|o| o.is_some()))
+            .class("background");
 
         Image::new(
             cx,

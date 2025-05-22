@@ -27,6 +27,7 @@ image.original {
     background-size: 400px 500px;
     scale: 1.2;
     opacity: 0;
+    z-index: 1;
 }
 
 image.original.show {
@@ -39,4 +40,9 @@ image.original.show {
 
 .list-item {
     gap: 10px;
+}
+
+.background {
+    backdrop-filter: blur(4px);
+    position-type: absolute;
 }

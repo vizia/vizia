@@ -202,6 +202,64 @@ pub(crate) fn draw_system(
         }
     }
 
+    let iter = LayoutTreeIterator::full(&cx.tree);
+    for entity in iter {
+        if cx.tree.is_ignored(entity) {
+            continue;
+        }
+
+        if cx.tree.is_window(entity) && entity != window_entity {
+            continue;
+        }
+
+        // Check if the entity has a backdrop filter style.
+        if cx.style.backdrop_filter.get(entity).is_some() {
+            if entity.visible(&cx.style) {
+                // Entity is VISIBLE and has a backdrop filter.
+                let bf_current_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
+
+                // Update cache for visible entity
+                if let Some(dr) = cx.cache.draw_bounds.get_mut(entity) {
+                    *dr = bf_current_bounds;
+                } else {
+                    cx.cache.draw_bounds.insert(entity, bf_current_bounds);
+                }
+
+                if bf_current_bounds.w > 0.0 && bf_current_bounds.h > 0.0 {
+                    // Ensure bounds are valid
+                    // Condition to update dirty_rect:
+                    // 1. dirty_rect is None (then set it to bf_current_bounds).
+                    // 2. dirty_rect is Some, and bf_current_bounds intersects with it (then union).
+                    if dirty_rect
+                        .is_none_or(|current_dr_val| bf_current_bounds.intersects(&current_dr_val))
+                    {
+                        dirty_rect = Some(dirty_rect.map_or(bf_current_bounds, |current_dr_val| {
+                            current_dr_val.union(&bf_current_bounds)
+                        }));
+                    }
+                }
+            } else {
+                // Entity is INVISIBLE but has (or had) a backdrop filter style.
+                // Its *previous* bounds need to be added to dirty_rect.
+                if let Some(previous_draw_bounds) = cx.cache.draw_bounds.get(entity).copied() {
+                    if previous_draw_bounds.w > 0.0 && previous_draw_bounds.h > 0.0 {
+                        // Ensure previous bounds were valid
+                        // Union previous_draw_bounds into dirty_rect.
+                        // If dirty_rect is None, it becomes Some(previous_draw_bounds).
+                        // If dirty_rect is Some, it's unioned with previous_draw_bounds.
+                        dirty_rect =
+                            Some(dirty_rect.map_or(previous_draw_bounds, |current_dr_val| {
+                                current_dr_val.union(&previous_draw_bounds)
+                            }));
+                    }
+                }
+
+                // Remove from cache as it's no longer visible with these bounds.
+                cx.cache.draw_bounds.remove(entity);
+            }
+        }
+    }
+
     // if dirty_rect.is_none() {
     //     return true;
     // }
@@ -247,7 +305,7 @@ pub(crate) fn draw_system(
 
     canvas.restore();
 
-    surface.canvas().clear(Color::transparent());
+    // surface.canvas().clear(Color::transparent());
     dirty_surface.draw(surface.canvas(), (0, 0), SamplingOptions::default(), None);
 
     // Debug draw dirty rect
