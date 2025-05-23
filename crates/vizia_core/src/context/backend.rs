@@ -150,6 +150,10 @@ impl BackendContext {
         let logical_height = self.0.style.physical_to_logical(physical_height);
         self.0.style.width.insert(window_entity, Units::Pixels(logical_width));
         self.0.style.height.insert(window_entity, Units::Pixels(logical_height));
+
+        self.0.style.needs_relayout();
+        self.0.style.needs_retransform(window_entity);
+        self.0.style.needs_reclip(window_entity);
     }
 
     /// Temporarily sets the current entity, calls the provided closure, and then resets the current entity back to previous.
