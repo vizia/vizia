@@ -12,7 +12,6 @@ pub use vizia_baseview::{
 
 pub use vizia_core::*;
 
-#[doc(hidden)]
 pub mod prelude {
     pub use vizia_core::prelude::*;
 
