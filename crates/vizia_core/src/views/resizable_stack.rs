@@ -71,8 +71,16 @@ impl ResizableStack {
     }
 }
 
+/// Events emitted by the `ResizableStack` view to indicate changes in dragging state.
 pub enum ResizableStackEvent {
+    /// Emitted when the user starts dragging the resizable edge of the stack.
+    /// This event is triggered when the user presses down on the resize handle.
+    /// It enables dragging behavior and locks the cursor.
     StartDrag,
+
+    /// Emitted when the user stops dragging the resizable edge of the stack.
+    /// This event is triggered when the user releases the mouse button after dragging.
+    /// It disables dragging behavior and unlocks the cursor.
     StopDrag,
 }
 
