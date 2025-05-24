@@ -56,7 +56,7 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        cx.add_stylesheet(STYLE);
+        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
         AppData { width: Pixels(200.0), height: Pixels(200.0) }.build(cx);
 
@@ -71,7 +71,7 @@ fn main() -> Result<(), ApplicationError> {
                     AppData::width,
                     ResizeStackDirection::Right,
                     |cx, w| cx.emit(AppEvent::SetWidth(Pixels(w))),
-                    |cx| {},
+                    |_cx| {},
                 );
             },
         );
