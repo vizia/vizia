@@ -19,15 +19,23 @@ bitflags! {
     }
 }
 
+fn to_finite_number(value: f32) -> f32 {
+    if value.is_finite() {
+        value
+    } else {
+        0.0
+    }
+}
+
 impl Cache for CachedData {
     type Node = Entity;
 
     fn set_bounds(&mut self, node: &Self::Node, posx: f32, posy: f32, width: f32, height: f32) {
         if let Some(bounds) = self.relative_bounds.get_mut(*node) {
-            bounds.x = posx.round();
-            bounds.y = posy.round();
-            bounds.w = width;
-            bounds.h = height;
+            bounds.x = to_finite_number(posx.round());
+            bounds.y = to_finite_number(posy.round());
+            bounds.w = to_finite_number(width);
+            bounds.h = to_finite_number(height);
         }
     }
 

@@ -407,7 +407,7 @@ where
     pub fn tick(&mut self, time: Instant) -> Vec<Entity> {
         self.remove_innactive_animations();
 
-        if self.has_animations() {
+        let entities = if self.has_animations() {
             for state in self.active_animations.iter_mut() {
                 // If the animation is already finished then skip
                 if state.t == 1.0 {
@@ -448,7 +448,9 @@ where
                 .collect::<Vec<Entity>>()
         } else {
             Vec::new()
-        }
+        };
+
+        entities
     }
 
     // Returns true if the given entity is linked to an active animation
