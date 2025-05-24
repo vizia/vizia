@@ -8,7 +8,7 @@ pub enum ResizeStackDirection {
 }
 
 /// A view that can be resized by clicking and dragging from the right or bottom edge.
-/// 
+///
 /// The `ResizableStack` struct allows users to create a resizable container in a user interface.
 /// It supports resizing in either a horizontal (right) or vertical (bottom) direction, as specified
 /// by the `direction` field. The resizing behavior is controlled via the `on_drag` callback, which
