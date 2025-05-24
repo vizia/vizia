@@ -1,5 +1,6 @@
 use crate::prelude::*;
 
+/// A direction for resizing a resizable stack, either horizontally (right) or vertically (bottom).
 #[derive(PartialEq, Clone, Copy)]
 pub enum ResizeStackDirection {
     Right,
@@ -18,6 +19,11 @@ pub struct ResizableStack {
 }
 
 impl ResizableStack {
+    /// Creates a new `ResizableStack` view.
+    /// The `size` parameter is a lens to the size of the stack, which will be updated when the stack is resized.
+    /// The `direction` parameter specifies whether the stack is resized horizontally (right) or vertically (bottom).
+    /// The `on_drag` callback is called with the new size when the stack is being resized.
+    /// The `content` closure is called to build the content of the stack.
     pub fn new<F>(
         cx: &mut Context,
         size: impl Lens<Target = Units>,
@@ -28,34 +34,24 @@ impl ResizableStack {
     where
         F: FnOnce(&mut Context),
     {
-        let handle =
-            Self { is_dragging: false, on_drag: Box::new(on_drag), direction }.build(cx, |cx| {
-                if direction == ResizeStackDirection::Right {
-                    Element::new(cx)
-                        .width(Pixels(6.0))
-                        .left(Stretch(1.0))
-                        .right(Pixels(-4.0))
-                        .position_type(PositionType::Absolute)
-                        .z_index(10)
-                        .class("resize_handle")
-                        .toggle_class("drag_handle", ResizableStack::is_dragging)
-                        .cursor(CursorIcon::EwResize)
-                        .on_press_down(|cx| cx.emit(ResizableStackEvent::StartDrag));
-                } else {
-                    Element::new(cx)
-                        .height(Pixels(6.0))
-                        .top(Stretch(1.0))
-                        .bottom(Pixels(-4.0))
-                        .position_type(PositionType::Absolute)
-                        .z_index(10)
-                        .class("resize_handle")
-                        .toggle_class("drag_handle", ResizableStack::is_dragging)
-                        .cursor(CursorIcon::NsResize)
-                        .on_press_down(|cx| cx.emit(ResizableStackEvent::StartDrag));
-                }
+        let handle = Self { is_dragging: false, on_drag: Box::new(on_drag), direction }
+            .build(cx, |cx| {
+                Element::new(cx)
+                    .position_type(PositionType::Absolute)
+                    .z_index(10)
+                    .class("resize-handle")
+                    .on_press_down(|cx| cx.emit(ResizableStackEvent::StartDrag));
 
                 (content)(cx);
-            });
+            })
+            .toggle_class(
+                "horizontal",
+                ResizableStack::direction.map(|d| *d == ResizeStackDirection::Bottom),
+            )
+            .toggle_class(
+                "vertical",
+                ResizableStack::direction.map(|d| *d == ResizeStackDirection::Right),
+            );
 
         if direction == ResizeStackDirection::Right {
             handle.width(size)
@@ -79,6 +75,7 @@ impl View for ResizableStack {
         event.map(|resizable_stack_event, event| match resizable_stack_event {
             ResizableStackEvent::StartDrag => {
                 self.is_dragging = true;
+                cx.set_active(true);
                 cx.capture();
                 cx.lock_cursor_icon();
 
@@ -93,6 +90,7 @@ impl View for ResizableStack {
 
             ResizableStackEvent::StopDrag => {
                 self.is_dragging = false;
+                cx.set_active(false);
                 cx.release();
                 cx.unlock_cursor_icon();
 

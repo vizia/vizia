@@ -542,6 +542,31 @@ rating {
     layout-type: row;
 }
 
+/* RESIZABLE STACK */
+resizable-stack > .resize-handle {
+    opacity: 0;
+    width: 4px;
+    height: 1s;
+    left: 1s;
+    top: 0px;
+    translate: 50% 0%;
+    cursor: ew-resize;
+}
+
+resizable-stack.horizontal > .resize-handle {
+    width: 1s;
+    height: 4px;
+    top: 1s;
+    left: 0px;
+    translate: 0% 50%;
+    cursor: ns-resize;
+}
+
+resizable-stack:active > .resize-handle,
+resizable-stack > .resize-handle:hover {
+    opacity: 1;
+}
+
 /* SCROLLVIEW */
 
 scrollview {
