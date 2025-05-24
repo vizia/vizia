@@ -7,14 +7,24 @@ pub enum ResizeStackDirection {
     Bottom,
 }
 
-// A view which can be resized by clicking and dragging from the right/bottom edge of the view.
+/// A view that can be resized by clicking and dragging from the right or bottom edge.
+/// 
+/// The `ResizableStack` struct allows users to create a resizable container in a user interface.
+/// It supports resizing in either a horizontal (right) or vertical (bottom) direction, as specified
+/// by the `direction` field. The resizing behavior is controlled via the `on_drag` callback, which
+/// is triggered during a drag operation.
 #[derive(Lens)]
 pub struct ResizableStack {
-    // State which tracks whether the edge of the view is being dragged.
+    /// Tracks whether the edge of the view is currently being dragged.
     is_dragging: bool,
-    // Callback which is triggered when the view is being dragged.
+
+    /// A callback function that is triggered when the view is being dragged.
+    /// The callback receives a mutable reference to the event context and the new size
+    /// of the stack as a floating-point value.
     on_drag: Box<dyn Fn(&mut EventContext, f32)>,
 
+    /// Specifies the direction in which the stack can be resized.
+    /// This can be either `Right` for horizontal resizing or `Bottom` for vertical resizing.
     direction: ResizeStackDirection,
 }
 
