@@ -16,13 +16,13 @@ const STYLE: &str = r#"
         max-height: 500px;
     }
 
-    resizable-stack > .resize-handle {
+    resizable-stack > resize-handle {
         background-color: #73a3cd;
         opacity: 0;
     }
 
-    resizable-stack:active > .resize-handle,
-    resizable-stack > .resize-handle:hover {
+    resizable-stack:active > resize-handle,
+    resizable-stack > resize-handle:hover {
         opacity: 1;
         transition: opacity 200ms 200ms ease-in-out;
     }
@@ -39,6 +39,8 @@ pub struct AppData {
 pub enum AppEvent {
     SetWidth(Units),
     SetHeight(Units),
+    ResetWidth,
+    ResetHeight,
 }
 
 impl Model for AppData {
@@ -49,6 +51,12 @@ impl Model for AppData {
             }
             AppEvent::SetHeight(height) => {
                 self.height = *height;
+            }
+            AppEvent::ResetWidth => {
+                self.width = Pixels(200.0);
+            }
+            AppEvent::ResetHeight => {
+                self.height = Pixels(200.0);
             }
         });
     }
@@ -72,9 +80,15 @@ fn main() -> Result<(), ApplicationError> {
                     ResizeStackDirection::Right,
                     |cx, w| cx.emit(AppEvent::SetWidth(Pixels(w))),
                     |_cx| {},
-                );
+                )
+                .on_reset(|cx| {
+                    cx.emit(AppEvent::ResetWidth);
+                });
             },
-        );
+        )
+        .on_reset(|cx| {
+            cx.emit(AppEvent::ResetHeight);
+        });
     })
     .title("Resizable Stack")
     .inner_size((800, 600))
