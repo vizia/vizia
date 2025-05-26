@@ -23,9 +23,17 @@ pub struct ResizableStack {
     /// of the stack as a floating-point value.
     on_drag: Box<dyn Fn(&mut EventContext, f32)>,
 
+    /// An optional callback function that is called when the stack is reset.
+    /// This callback is triggered when the user double-clicks the resize handle,
+    /// allowing the stack to return to its default size.
+    on_reset: Option<Box<dyn Fn(&mut EventContext)>>,
+
     /// Specifies the direction in which the stack can be resized.
     /// This can be either `Right` for horizontal resizing or `Bottom` for vertical resizing.
     direction: ResizeStackDirection,
+
+    /// The offset of the mouse cursor when dragging starts.
+    offset: f32,
 }
 
 impl ResizableStack {
@@ -44,24 +52,25 @@ impl ResizableStack {
     where
         F: FnOnce(&mut Context),
     {
-        let handle = Self { is_dragging: false, on_drag: Box::new(on_drag), direction }
-            .build(cx, |cx| {
-                Element::new(cx)
-                    .position_type(PositionType::Absolute)
-                    .z_index(10)
-                    .class("resize-handle")
-                    .on_press_down(|cx| cx.emit(ResizableStackEvent::StartDrag));
-
-                (content)(cx);
-            })
-            .toggle_class(
-                "horizontal",
-                ResizableStack::direction.map(|d| *d == ResizeStackDirection::Bottom),
-            )
-            .toggle_class(
-                "vertical",
-                ResizableStack::direction.map(|d| *d == ResizeStackDirection::Right),
-            );
+        let handle = Self {
+            is_dragging: false,
+            on_drag: Box::new(on_drag),
+            on_reset: None,
+            direction,
+            offset: 0.0,
+        }
+        .build(cx, |cx| {
+            ResizeHandle::new(cx);
+            (content)(cx);
+        })
+        .toggle_class(
+            "horizontal",
+            ResizableStack::direction.map(|d| *d == ResizeStackDirection::Bottom),
+        )
+        .toggle_class(
+            "vertical",
+            ResizableStack::direction.map(|d| *d == ResizeStackDirection::Right),
+        );
 
         if direction == ResizeStackDirection::Right {
             handle.width(size)
@@ -76,12 +85,18 @@ pub enum ResizableStackEvent {
     /// Emitted when the user starts dragging the resizable edge of the stack.
     /// This event is triggered when the user presses down on the resize handle.
     /// It enables dragging behavior and locks the cursor.
-    StartDrag,
+    StartDrag {
+        offset_x: f32, // The x-offset of the mouse cursor when dragging starts.
+        offset_y: f32, // The y-offset of the mouse cursor when dragging starts.
+    },
 
     /// Emitted when the user stops dragging the resizable edge of the stack.
     /// This event is triggered when the user releases the mouse button after dragging.
     /// It disables dragging behavior and unlocks the cursor.
     StopDrag,
+
+    /// Emitted when the user double-clicks the resize handle.
+    Reset,
 }
 
 impl View for ResizableStack {
@@ -91,7 +106,7 @@ impl View for ResizableStack {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|resizable_stack_event, event| match resizable_stack_event {
-            ResizableStackEvent::StartDrag => {
+            ResizableStackEvent::StartDrag { offset_x, offset_y } => {
                 self.is_dragging = true;
                 cx.set_active(true);
                 cx.capture();
@@ -104,6 +119,12 @@ impl View for ResizableStack {
 
                 // Prevent propagation in case the resizable stack is within another resizable stack
                 event.consume();
+
+                if self.direction == ResizeStackDirection::Right {
+                    self.offset = *offset_x;
+                } else {
+                    self.offset = *offset_y;
+                }
             }
 
             ResizableStackEvent::StopDrag => {
@@ -119,6 +140,24 @@ impl View for ResizableStack {
 
                 event.consume()
             }
+
+            ResizableStackEvent::Reset => {
+                self.is_dragging = false;
+                cx.set_active(false);
+                cx.release();
+                cx.unlock_cursor_icon();
+
+                // Re-enable pointer events
+                cx.with_current(Entity::root(), |cx| {
+                    cx.set_pointer_events(true);
+                });
+
+                if let Some(on_reset) = &self.on_reset {
+                    on_reset(cx);
+                }
+
+                event.consume()
+            }
         });
 
         event.map(|window_event, _| match window_event {
@@ -127,10 +166,10 @@ impl View for ResizableStack {
                 if self.is_dragging {
                     let new_size = if self.direction == ResizeStackDirection::Right {
                         let posx = cx.bounds().x;
-                        (*x - posx) / dpi
+                        (*x - posx - self.offset) / dpi
                     } else {
                         let posy = cx.bounds().y;
-                        (*y - posy) / dpi
+                        (*y - posy - self.offset) / dpi
                     };
 
                     if new_size.is_finite() && new_size > 5.0 {
@@ -141,6 +180,48 @@ impl View for ResizableStack {
 
             WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                 cx.emit(ResizableStackEvent::StopDrag);
+            }
+
+            _ => {}
+        });
+    }
+}
+
+impl Handle<'_, ResizableStack> {
+    /// Sets a callback to be called when the stack is reset, i.e. when the resize handle is double-clicked.
+    pub fn on_reset<F>(self, on_reset: F) -> Self
+    where
+        F: Fn(&mut EventContext) + 'static,
+    {
+        self.modify(|this| {
+            this.on_reset = Some(Box::new(on_reset));
+        })
+    }
+}
+
+pub struct ResizeHandle;
+
+impl ResizeHandle {
+    pub fn new(cx: &mut Context) -> Handle<Self> {
+        Self.build(cx, |_cx| {}).position_type(PositionType::Absolute).z_index(10)
+    }
+}
+
+impl View for ResizeHandle {
+    fn element(&self) -> Option<&'static str> {
+        Some("resize-handle")
+    }
+
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|window_event, _| match window_event {
+            WindowEvent::PressDown { mouse } if *mouse => {
+                let offset_x = cx.mouse.cursor_x - cx.bounds().right();
+                let offset_y = cx.mouse.cursor_y - cx.bounds().bottom();
+                cx.emit(ResizableStackEvent::StartDrag { offset_x, offset_y });
+            }
+
+            WindowEvent::MouseDoubleClick(button) if *button == MouseButton::Left => {
+                cx.emit(ResizableStackEvent::Reset);
             }
 
             _ => {}
