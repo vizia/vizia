@@ -543,7 +543,7 @@ rating {
 }
 
 /* RESIZABLE STACK */
-resizable-stack > .resize-handle {
+resizable-stack > resize-handle {
     opacity: 0;
     width: 4px;
     height: 1s;
@@ -553,7 +553,7 @@ resizable-stack > .resize-handle {
     cursor: ew-resize;
 }
 
-resizable-stack.horizontal > .resize-handle {
+resizable-stack.horizontal > resize-handle {
     width: 1s;
     height: 4px;
     top: 1s;
@@ -562,8 +562,8 @@ resizable-stack.horizontal > .resize-handle {
     cursor: ns-resize;
 }
 
-resizable-stack:active > .resize-handle,
-resizable-stack > .resize-handle:hover {
+resizable-stack:active > resize-handle,
+resizable-stack > resize-handle:hover {
     opacity: 1;
 }
 
