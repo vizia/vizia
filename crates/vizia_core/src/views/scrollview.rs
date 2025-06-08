@@ -84,7 +84,7 @@ impl ScrollView {
                 }
             });
 
-            Binding::new(cx, ScrollView::show_vertical_scrollbar, |cx, show_scrollbar| {
+            Binding::new(cx, ScrollView::show_horizontal_scrollbar, |cx, show_scrollbar| {
                 if show_scrollbar.get(cx) {
                     Scrollbar::new(
                         cx,
