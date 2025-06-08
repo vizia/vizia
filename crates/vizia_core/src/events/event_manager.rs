@@ -437,12 +437,12 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                     } else if let Some(binding_name) =
                         cx.bindings.get(&entity).map(|binding| format!("{:?}", binding))
                     {
-                        println!(
-                            "{}{} binding observing {}",
-                            indents(entity),
-                            entity,
-                            binding_name,
-                        );
+                        // println!(
+                        //     "{}{} binding observing {}",
+                        //     indents(entity),
+                        //     entity,
+                        //     binding_name,
+                        // );
                     } else {
                         println!(
                             "{}{} {}",
@@ -633,11 +633,11 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
         }
         WindowEvent::WindowFocused(is_focused) => {
             if *is_focused {
-                cx.set_focus_pseudo_classes(cx.focused, true, true);
+                cx.set_focus_pseudo_classes(cx.focused, true, false);
                 cx.needs_restyle(cx.focused);
                 cx.needs_redraw(cx.focused);
             } else {
-                cx.set_focus_pseudo_classes(cx.focused, false, true);
+                cx.set_focus_pseudo_classes(cx.focused, false, false);
                 cx.needs_restyle(cx.focused);
 
                 cx.event_queue.push_back(

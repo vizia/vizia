@@ -52,7 +52,7 @@ impl Model for ModalModel {
                 }
             }
             WindowEvent::FocusOut => self.tooltip_visible = (false, false),
-            WindowEvent::FocusVisibility(vis) if !(*vis) => self.tooltip_visible = (false, false),
+            //WindowEvent::FocusVisibility(vis) if !(*vis) => self.tooltip_visible = (false, false),
             WindowEvent::KeyDown(code, _) if *code == Code::Escape => {
                 self.tooltip_visible = (false, false)
             }
