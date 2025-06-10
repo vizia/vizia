@@ -37,14 +37,17 @@ pub enum ListEvent {
 pub struct List {
     /// The number of items in the list.
     num_items: usize,
-
+    /// The set of selected items in the list.
     selected: BTreeSet<usize>,
     /// Whether the list items are selectable.
     selectable: Selectable,
-
+    /// The index of the currently focused item in the list.
     focused: Option<usize>,
+    /// Whether the selection should follow the focus.
     selection_follows_focus: bool,
+    /// The orientation of the list, either vertical or horizontal.
     orientation: Orientation,
+    /// Whether the scrollview should scroll to the cursor when the scrollbar is pressed.
     scroll_to_cursor: bool,
     /// Callback called when a list item is selected.
     #[lens(ignore)]
@@ -57,9 +60,9 @@ pub struct List {
     /// The vertical scroll position of the list.
     scroll_y: f32,
     /// Whether the horizontal scrollbar should be visible.
-    pub show_horizontal_scrollbar: bool,
+    show_horizontal_scrollbar: bool,
     /// Whether the vertical scrollbar should be visible.
-    pub show_vertical_scrollbar: bool,
+    show_vertical_scrollbar: bool,
 }
 
 impl List {
