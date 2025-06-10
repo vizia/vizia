@@ -451,7 +451,7 @@ impl ListItem {
         item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
     ) -> Handle<Self> {
         let is_focused =
-            focused.map(move |focused| focused.as_ref().map_or(false, |f| *f == index)).get(cx);
+            focused.map(move |focused| focused.as_ref().is_some_and(|f| *f == index)).get(cx);
         Self {}
             .build(cx, move |cx| {
                 item_content(cx, index, item);
@@ -459,11 +459,11 @@ impl ListItem {
             .role(Role::ListItem)
             .toggle_class(
                 "focused",
-                focused.map(move |focused| focused.as_ref().map_or(false, |f| *f == index)),
+                focused.map(move |focused| focused.as_ref().is_some_and(|f| *f == index)),
             )
             .checked(selected.map(move |selected| selected.contains(&index)))
             .bind(
-                focused.map(move |focused| focused.as_ref().map_or(false, |f| *f == index)),
+                focused.map(move |focused| focused.as_ref().is_some_and(|f| *f == index)),
                 move |handle, focused| {
                     if focused.get(&handle) != is_focused {
                         handle.cx.emit(ScrollEvent::ScrollToView(handle.entity()));

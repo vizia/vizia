@@ -88,13 +88,17 @@ impl VirtualList {
         let current_range_size = end_index.saturating_sub(start_index);
 
         if current_range_size < desired_range_size {
-            // Try to extend backwards if we're at the end of the list
-            if end_index == self.num_items {
-                start_index = start_index.saturating_sub(desired_range_size - current_range_size);
-            }
-            // Try to extend forwards if we have room
-            else if end_index < self.num_items {
-                end_index = (start_index + desired_range_size).min(self.num_items);
+            match end_index == self.num_items {
+                // Try to extend backwards if we're at the end of the list
+                true => {
+                    start_index =
+                        start_index.saturating_sub(desired_range_size - current_range_size);
+                }
+                // Try to extend forwards if we have room
+                false if end_index < self.num_items => {
+                    end_index = (start_index + desired_range_size).min(self.num_items);
+                }
+                _ => {}
             }
         }
 
