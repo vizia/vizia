@@ -143,6 +143,11 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     relayout_entities.extend(cx.style.padding_top.tick(time));
     relayout_entities.extend(cx.style.padding_bottom.tick(time));
 
+    // Tick animations on custom color properties
+    for store in cx.style.custom_color_props.values_mut() {
+        redraw_entities.extend(store.tick(time));
+    }
+
     if !relayout_entities.is_empty() {
         cx.style.system_flags.set(SystemFlags::RELAYOUT, true);
     }

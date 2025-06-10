@@ -64,10 +64,12 @@ use hashbrown::{HashMap, HashSet};
 use indexmap::IndexMap;
 use log::warn;
 use std::fmt::Debug;
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::ops::{Deref, DerefMut, Range};
 use vizia_style::selectors::parser::{AncestorHashes, Selector};
 
 use crate::prelude::*;
+use crate::storage::animatable_var_set::AnimatableVarSet;
 
 pub use vizia_style::{
     Alignment, Angle, BackgroundImage, BackgroundSize, BorderStyleKeyword, ClipPath, Color,
@@ -82,6 +84,7 @@ pub use vizia_style::{
 
 use vizia_style::{
     BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, Selectors, StyleSheet,
+    TokenOrValue,
 };
 
 mod rule;
@@ -298,7 +301,7 @@ pub struct Style {
     pub(crate) outline_offset: AnimatableSet<LengthOrPercentage>,
 
     // Background
-    pub(crate) background_color: AnimatableSet<Color>,
+    pub(crate) background_color: AnimatableVarSet<Color>,
     pub(crate) background_image: AnimatableSet<Vec<ImageOrGradient>>,
     pub(crate) background_size: AnimatableSet<Vec<BackgroundSize>>,
 
@@ -407,6 +410,8 @@ pub struct Style {
 
     /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
     pub(crate) dpi_factor: f64,
+
+    pub(crate) custom_color_props: HashMap<u64, AnimatableVarSet<Color>>,
 }
 
 impl Style {
@@ -442,6 +447,22 @@ impl Style {
     ) {
         fn insert_keyframe<T: 'static + Interpolator + Debug + Clone + PartialEq + Default>(
             storage: &mut AnimatableSet<T>,
+            animation_id: Animation,
+            time: f32,
+            value: T,
+        ) {
+            let keyframe = Keyframe { time, value, timing_function: TimingFunction::linear() };
+
+            if let Some(anim_state) = storage.get_animation_mut(animation_id) {
+                anim_state.keyframes.push(keyframe)
+            } else {
+                let anim_state = AnimationState::new(animation_id).with_keyframe(keyframe);
+                storage.insert_animation(animation_id, anim_state);
+            }
+        }
+
+        fn insert_keyframe2<T: 'static + Interpolator + Debug + Clone + PartialEq + Default>(
+            storage: &mut AnimatableVarSet<T>,
             animation_id: Animation,
             time: f32,
             value: T,
@@ -565,7 +586,7 @@ impl Style {
 
                 // BACKGROUND
                 Property::BackgroundColor(value) => {
-                    insert_keyframe(&mut self.background_color, animation_id, time, *value);
+                    insert_keyframe2(&mut self.background_color, animation_id, time, *value);
                 }
 
                 Property::BackgroundImage(images) => {
@@ -823,6 +844,11 @@ impl Style {
         self.underline_color.play_animation(entity, animation, start_time, duration, delay);
 
         self.fill.play_animation(entity, animation, start_time, duration, delay);
+
+        // Play animations on custom color properties
+        for store in self.custom_color_props.values_mut() {
+            store.play_animation(entity, animation, start_time, duration, delay);
+        }
     }
 
     pub(crate) fn is_animating(&self, entity: Entity, animation: Animation) -> bool {
@@ -1217,6 +1243,25 @@ impl Style {
             "fill" => {
                 self.fill.insert_animation(animation, self.add_transition(transition));
                 self.fill.insert_transition(rule_id, animation);
+            }
+
+            property_name if property_name.starts_with("--") => {
+                // Handle custom property transitions
+                let mut s = DefaultHasher::new();
+                property_name.hash(&mut s);
+                let variable_name_hash = s.finish();
+                // Call add_transition before getting mutable borrow to avoid borrow checker issues
+                let animation_state = self.add_transition(transition);
+
+                if let Some(store) = self.custom_color_props.get_mut(&variable_name_hash) {
+                    store.insert_animation(animation, animation_state.clone());
+                    store.insert_transition(rule_id, animation);
+                } else {
+                    let mut store = AnimatableVarSet::default();
+                    store.insert_animation(animation, animation_state);
+                    store.insert_transition(rule_id, animation);
+                    self.custom_color_props.insert(variable_name_hash, store);
+                }
             }
 
             _ => {}
@@ -1668,15 +1713,6 @@ impl Style {
                 self.pointer_events.insert_rule(rule_id, pointer_events);
             }
 
-            // Unparsed. TODO: Log the error.
-            Property::Unparsed(unparsed) => {
-                warn!("Unparsed: {}", unparsed.name);
-            }
-
-            // TODO: Custom property support
-            Property::Custom(custom) => {
-                warn!("Custom Property: {}", custom.name);
-            }
             Property::TextOverflow(text_overflow) => {
                 self.text_overflow.insert_rule(rule_id, text_overflow);
             }
@@ -1698,6 +1734,59 @@ impl Style {
             }
             Property::Fill(fill) => {
                 self.fill.insert_rule(rule_id, fill);
+            }
+
+            // Unparsed. TODO: Log the error.
+            Property::Unparsed(unparsed) => {
+                match unparsed.name.as_ref() {
+                    "background-color" => {
+                        // Store in background-color storage somehow that this is a variable
+                        // so a system can link it to an ancestor custom prop.
+                        if let Some(first_token) = unparsed.value.0.first() {
+                            if let TokenOrValue::Var(var) = first_token {
+                                let mut s = DefaultHasher::new();
+                                var.name.hash(&mut s);
+                                let variable_name_hash = s.finish();
+                                self.background_color
+                                    .insert_variable_rule(rule_id, variable_name_hash)
+                            }
+                        }
+                    }
+
+                    n => warn!("Unparsed {} {:?}", n, unparsed.value),
+                }
+            }
+
+            Property::Custom(custom) => {
+                let mut s = DefaultHasher::new();
+                custom.name.hash(&mut s);
+                let variable_name_hash = s.finish();
+                // Parse custom properties and store them
+                for token in custom.value.0.iter() {
+                    // Try parsing colors
+                    if let TokenOrValue::Color(color) = token {
+                        if let Some(store) = self.custom_color_props.get_mut(&variable_name_hash) {
+                            store.insert_rule(rule_id, color.clone());
+                        } else {
+                            let mut store = AnimatableVarSet::default();
+                            store.insert_rule(rule_id, color.clone());
+                            self.custom_color_props.insert(variable_name_hash, store);
+                        }
+                    }
+
+                    if let TokenOrValue::Var(var) = token {
+                        let mut s = DefaultHasher::new();
+                        var.name.hash(&mut s);
+                        let name_hash = s.finish();
+                        if let Some(store) = self.custom_color_props.get_mut(&variable_name_hash) {
+                            store.insert_variable_rule(rule_id, name_hash);
+                        } else {
+                            let mut store = AnimatableVarSet::default();
+                            store.insert_variable_rule(rule_id, name_hash);
+                            self.custom_color_props.insert(variable_name_hash, store);
+                        }
+                    }
+                }
             }
             _ => {}
         }
@@ -1896,6 +1985,11 @@ impl Style {
         self.text_span.remove(entity);
 
         self.fill.remove(entity);
+
+        // Remove per-entity data from custom property stores
+        for store in self.custom_color_props.values_mut() {
+            store.remove(entity);
+        }
     }
 
     pub(crate) fn needs_restyle(&mut self, entity: Entity) {
@@ -2069,5 +2163,12 @@ impl Style {
         self.name.clear_rules();
 
         self.fill.clear_rules();
+
+        // Clear all custom property rule data on stylesheet reload
+        for store in self.custom_color_props.values_mut() {
+            store.clear_rules();
+        }
+        self.custom_color_props
+            .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
     }
 }

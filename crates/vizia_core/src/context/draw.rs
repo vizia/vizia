@@ -348,10 +348,16 @@ impl DrawContext<'_> {
         self.style.alignment.get(self.current).copied().unwrap_or_default()
     }
 
-    get_color_property!(
-        /// Returns the background color of the current view.
-        background_color
-    );
+    /// Returns the background color of the current view.
+    pub fn background_color(&self) -> Color {
+        if let Some(col) =
+            self.style.background_color.get_resolved(self.current, &self.style.custom_color_props)
+        {
+            Color::rgba(col.r(), col.g(), col.b(), col.a())
+        } else {
+            Color::rgba(0, 0, 0, 0)
+        }
+    }
 
     get_color_property!(
         /// Returns the border color of the current view.
