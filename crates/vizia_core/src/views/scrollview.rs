@@ -17,6 +17,8 @@ pub enum ScrollEvent {
     ScrollY(f32),
     /// Sets the size for the inner scroll-content view which holds the content
     ChildGeo(f32, f32),
+
+    ScrollToView(Entity),
 }
 
 /// A container a view which allows the user to scroll any overflowed content.
@@ -188,12 +190,21 @@ impl View for ScrollView {
                         self.inner_width = *w;
                         self.inner_height = *h;
 
-                        self.scroll_y = ((top * scale_factor)
-                            / (self.inner_height - self.container_height))
-                            .clamp(0.0, 1.0);
-                        self.scroll_x = ((left * scale_factor)
-                            / (self.inner_width - self.container_width))
-                            .clamp(0.0, 1.0);
+                        if self.inner_width != self.container_width {
+                            self.scroll_x = ((left * scale_factor)
+                                / (self.inner_width - self.container_width))
+                                .clamp(0.0, 1.0);
+                        } else {
+                            self.scroll_x = 0.0;
+                        }
+
+                        if self.inner_height != self.container_height {
+                            self.scroll_y = ((top * scale_factor)
+                                / (self.inner_height - self.container_height))
+                                .clamp(0.0, 1.0);
+                        } else {
+                            self.scroll_y = 0.0;
+                        }
 
                         if let Some(callback) = &self.on_scroll {
                             (callback)(cx, self.scroll_x, self.scroll_y);
@@ -205,6 +216,45 @@ impl View for ScrollView {
                     self.inner_width = *w;
                     self.inner_height = *h;
                     self.reset();
+                }
+
+                ScrollEvent::ScrollToView(entity) => {
+                    let view_bounds = cx.cache.get_bounds(*entity);
+
+                    let content_bounds = cx.bounds();
+
+                    let dx = content_bounds.right() - view_bounds.right();
+                    let dy = content_bounds.bottom() - view_bounds.bottom();
+
+                    // Calculate the scroll position to bring the child into view.
+                    if dx < 0.0 {
+                        let sx = (-dx / (self.inner_width - self.container_width)).clamp(0.0, 1.0);
+                        self.scroll_x = (self.scroll_x + sx).clamp(0.0, 1.0);
+                    }
+
+                    if dy < 0.0 {
+                        let sy =
+                            (-dy / (self.inner_height - self.container_height)).clamp(0.0, 1.0);
+                        self.scroll_y = (self.scroll_y + sy).clamp(0.0, 1.0);
+                    }
+
+                    let dx = view_bounds.left() - content_bounds.left();
+                    let dy = view_bounds.top() - content_bounds.top();
+
+                    if dx < 0.0 {
+                        let sx = (-dx / (self.inner_width - self.container_width)).clamp(0.0, 1.0);
+                        self.scroll_x = (self.scroll_x - sx).clamp(0.0, 1.0);
+                    }
+
+                    if dy < 0.0 {
+                        let sy =
+                            (-dy / (self.inner_height - self.container_height)).clamp(0.0, 1.0);
+                        self.scroll_y = (self.scroll_y - sy).clamp(0.0, 1.0);
+                    }
+
+                    if let Some(callback) = &self.on_scroll {
+                        (callback)(cx, self.scroll_x, self.scroll_y);
+                    }
                 }
             }
 
@@ -236,12 +286,22 @@ impl View for ScrollView {
                         self.container_width = bounds.width();
                         self.container_height = bounds.height();
 
-                        self.scroll_y = ((top * scale_factor)
-                            / (self.inner_height - self.container_height))
-                            .clamp(0.0, 1.0);
-                        self.scroll_x = ((left * scale_factor)
-                            / (self.inner_width - self.container_width))
-                            .clamp(0.0, 1.0);
+                        if self.inner_width != self.container_width {
+                            self.scroll_x = ((left * scale_factor)
+                                / (self.inner_width - self.container_width))
+                                .clamp(0.0, 1.0);
+                        } else {
+                            self.scroll_x = 0.0;
+                        }
+
+                        if self.inner_height != self.container_height {
+                            self.scroll_y = ((top * scale_factor)
+                                / (self.inner_height - self.container_height))
+                                .clamp(0.0, 1.0);
+                        } else {
+                            self.scroll_y = 0.0;
+                        }
+
                         if let Some(callback) = &self.on_scroll {
                             (callback)(cx, self.scroll_x, self.scroll_y);
                         }
@@ -294,12 +354,15 @@ impl Handle<'_, ScrollView> {
         self,
         callback: impl Fn(&mut EventContext, f32, f32) + 'static + Send + Sync,
     ) -> Self {
-        self.modify(|scrollview: &mut ScrollView| scrollview.on_scroll = Some(Arc::new(callback)))
+        self.modify(|scrollview| scrollview.on_scroll = Some(Arc::new(callback)))
     }
 
     /// Sets whether the scrollbar should move to the cursor when pressed.
-    pub fn scroll_to_cursor(self, scroll_to_cursor: bool) -> Self {
-        self.modify(|scrollview: &mut ScrollView| scrollview.scroll_to_cursor = scroll_to_cursor)
+    pub fn scroll_to_cursor(self, scroll_to_cursor: impl Res<bool>) -> Self {
+        self.bind(scroll_to_cursor, |handle, scroll_to_cursor| {
+            let scroll_to_cursor = scroll_to_cursor.get(&handle);
+            handle.modify(|scrollview| scrollview.scroll_to_cursor = scroll_to_cursor);
+        })
     }
 
     /// Set the horizontal scroll position of the [ScrollView]. Accepts a value or lens to an 'f32' between 0 and 1.
