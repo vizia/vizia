@@ -78,8 +78,8 @@ impl VirtualList {
         let visible_end = visible_start + visible_items_height;
 
         // The indices of the first and last item of the visible area.
-        let mut start_index = (visible_start / item_height).floor() as usize;
-        let mut end_index = (visible_end / item_height).ceil() as usize;
+        let mut start_index = (visible_start / item_height).trunc() as usize;
+        let mut end_index = 1 + (visible_end / item_height).trunc() as usize;
 
         // Ensure we always have (num_visible_items + 1) items when possible
         let desired_range_size = (num_visible_items as usize) + 1;
