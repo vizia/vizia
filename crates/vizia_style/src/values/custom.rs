@@ -1,7 +1,8 @@
-use cssparser::*;
-use cssparser_color::Color;
+use cssparser::{color::parse_hash_color, *};
 
 use crate::{CustomParseError, DashedIdent, Parse};
+
+use super::Color;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct CustomProperty<'i> {
@@ -137,15 +138,17 @@ impl<'i> TokenList<'i> {
                         last_is_whitespace = false;
                     }
                 }
-                // Ok(&cssparser::Token::Hash(ref h)) | Ok(&cssparser::Token::IDHash(ref h)) => {
-                //     if let Ok(color) = Color::parse_hash(h.as_bytes()) {
-                //         tokens.push(TokenOrValue::Color(color));
-                //     } else {
-                //         tokens.push(Token::Hash(h.clone()).into());
-                //     }
-                //     last_is_delim = false;
-                //     last_is_whitespace = false;
-                // }
+                Ok(&cssparser::Token::Hash(ref h)) | Ok(&cssparser::Token::IDHash(ref h)) => {
+                    if let Ok(csscolor) = parse_hash_color(h.as_bytes())
+                        .map(|(r, g, b, a)| Color::rgba(r, g, b, (a * 255.0) as u8))
+                    {
+                        tokens.push(TokenOrValue::Color(csscolor.into()));
+                    } else {
+                        tokens.push(Token::Hash(h.clone()).into());
+                    }
+                    last_is_delim = false;
+                    last_is_whitespace = false;
+                }
                 Ok(&cssparser::Token::UnquotedUrl(_)) => {
                     input.reset(&state);
                     //tokens.push(TokenOrValue::Url(Url::parse(input)?));
