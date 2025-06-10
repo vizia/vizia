@@ -8,19 +8,34 @@ use crate::prelude::*;
 /// A view for creating a list of items from a binding to an iteratable list. Rather than creating a view for each item, items are recycled in the list.
 #[derive(Lens)]
 pub struct VirtualList {
+    /// Whether the scrollbar should scroll to the cursor when pressed.
     scroll_to_cursor: bool,
+    /// Callback that is called when the list is scrolled.
     on_scroll: Option<Box<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>>,
+    /// The number of items in the list.
     num_items: usize,
+    /// The height of each item in the list.
     item_height: f32,
+    /// The range of visible items in the list.
     visible_range: Range<usize>,
+    /// The horizontal scroll position of the list.
     scroll_x: f32,
+    /// The vertical scroll position of the list.
     scroll_y: f32,
+    /// Whether the horizontal scrollbar should be visible.
     show_horizontal_scrollbar: bool,
+    /// Whether the vertical scrollbar should be visible.
     show_vertical_scrollbar: bool,
+    /// The set of selected items in the list.
     selected: BTreeSet<usize>,
+    /// The selectable state of the list.
     selectable: Selectable,
+    /// The index of the currently focused item in the list.
     focused: Option<usize>,
+    /// Whether the selection should follow the focus.
     selection_follows_focus: bool,
+    /// Callback that is called when an item is selected.
+    #[lens(ignore)]
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
 }
 
@@ -209,7 +224,7 @@ impl VirtualList {
             .scroll_x(Self::scroll_x)
             .scroll_y(Self::scroll_y)
             .on_scroll(|cx, x, y| {
-                if y.is_finite() {
+                if y.is_finite() && x.is_finite() {
                     cx.emit(ListEvent::Scroll(x, y));
                 }
             });

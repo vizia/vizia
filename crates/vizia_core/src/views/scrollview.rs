@@ -28,11 +28,9 @@ pub struct ScrollView {
     pub scroll_x: f32,
     /// Progress of scroll position between 0 and 1 for the y axis
     pub scroll_y: f32,
-
     /// Callback called when the scrollview is scrolled.
     #[lens(ignore)]
     pub on_scroll: Option<Arc<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>>,
-
     /// Width of the inner VStack which holds the content (typically bigger than container_width)
     pub inner_width: f32,
     /// Height of the inner VStack which holds the content (typically bigger than container_height)
