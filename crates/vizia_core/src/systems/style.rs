@@ -4,7 +4,7 @@ use dashmap::{DashMap, ReadOnlyView};
 use hashbrown::HashMap;
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
-use vizia_storage::{LayoutParentIterator, TreeBreadthIterator};
+use vizia_storage::{LayoutParentIterator, LayoutTreeIterator, TreeBreadthIterator};
 use vizia_style::{
     matches_selector,
     precomputed_hash::PrecomputedHash,
@@ -313,6 +313,8 @@ fn link_style_data(
     let mut should_relayout = false;
     let mut should_redraw = false;
     let mut should_reflow = false;
+    let mut should_retransform = false;
+    let mut should_reclip = false;
 
     // Display
     if style.display.link(entity, matched_rules) {
@@ -330,14 +332,17 @@ fn link_style_data(
     }
 
     if style.overflowx.link(entity, matched_rules) {
+        should_reclip = true;
         should_redraw = true;
     }
 
     if style.overflowy.link(entity, matched_rules) {
+        should_reclip = true;
         should_redraw = true;
     }
 
     if style.clip_path.link(entity, matched_rules) {
+        should_reclip = true;
         should_redraw = true;
     }
 
@@ -704,22 +709,27 @@ fn link_style_data(
 
     // Transform
     if style.transform.link(entity, matched_rules) {
+        should_retransform = true;
         should_redraw = true;
     }
 
     if style.transform_origin.link(entity, matched_rules) {
+        should_retransform = true;
         should_redraw = true;
     }
 
     if style.translate.link(entity, matched_rules) {
+        should_retransform = true;
         should_redraw = true;
     }
 
     if style.rotate.link(entity, matched_rules) {
+        should_retransform = true;
         should_redraw = true;
     }
 
     if style.scale.link(entity, matched_rules) {
+        should_retransform = true;
         should_redraw = true;
     }
 
@@ -734,6 +744,22 @@ fn link_style_data(
 
     if should_redraw {
         redraw_entities.push(entity);
+    }
+
+    if should_retransform {
+        style.needs_retransform(entity);
+        let iter = LayoutTreeIterator::subtree(tree, entity);
+        for descendant in iter {
+            style.needs_retransform(descendant);
+        }
+    }
+
+    if should_reclip {
+        style.needs_reclip(entity);
+        let iter = LayoutTreeIterator::subtree(tree, entity);
+        for descendant in iter {
+            style.needs_reclip(descendant);
+        }
     }
 
     if should_reflow {

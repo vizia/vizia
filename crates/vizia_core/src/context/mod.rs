@@ -228,6 +228,8 @@ impl Context {
 
         result.style.needs_restyle(Entity::root());
         result.style.needs_relayout();
+        result.style.needs_retransform(Entity::root());
+        result.style.needs_reclip(Entity::root());
         result.needs_redraw(Entity::root());
 
         // Set the default DPI factor to 1.0.
@@ -304,6 +306,22 @@ impl Context {
             self.style.restyle.insert(descendant).unwrap();
         }
         // self.style.needs_restyle();
+    }
+
+    pub fn needs_retransform(&mut self, entity: Entity) {
+        self.style.needs_retransform(entity);
+        let iter = LayoutTreeIterator::subtree(&self.tree, entity);
+        for descendant in iter {
+            self.style.needs_retransform(descendant);
+        }
+    }
+
+    pub fn needs_reclip(&mut self, entity: Entity) {
+        self.style.needs_reclip(entity);
+        let iter = LayoutTreeIterator::subtree(&self.tree, entity);
+        for descendant in iter {
+            self.style.needs_reclip(descendant);
+        }
     }
 
     /// Mark the application as needing to rerun layout computations
