@@ -531,8 +531,10 @@ impl<V: View> ActionModifiers<V> for Handle<'_, V> {
                         if tooltip_visible.1 {
                             cx.play_animation(
                                 "tooltip_fade",
-                                Duration::from_millis(100),
-                                Duration::from_millis(500),
+                                Animation::new()
+                                    .duration(Duration::from_millis(100))
+                                    .delay(Duration::from_millis(500))
+                                    .fill_mode(AnimationFillMode::Forwards),
                             )
                         }
                     });
