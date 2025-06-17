@@ -1003,6 +1003,7 @@ impl DrawContext<'_> {
 
                                 let mut paint = Paint::default();
                                 paint.set_shader(shader);
+                                paint.set_anti_alias(true);
 
                                 canvas.draw_path(&path, &paint);
                             }
@@ -1055,6 +1056,8 @@ impl DrawContext<'_> {
 
                                 let mut paint = Paint::default();
                                 paint.set_shader(shader);
+                                paint.set_anti_alias(true);
+
                                 canvas.draw_path(&path, &paint);
                             }
 
