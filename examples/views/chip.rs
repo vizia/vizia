@@ -31,7 +31,7 @@ fn main() -> Result<(), ApplicationError> {
             List::new(cx, AppData::chips, |cx, index, item| {
                 Chip::new(cx, item).on_close(move |cx| cx.emit(AppEvent::CloseChip(index)));
             })
-            .horizontal(true)
+            .orientation(Orientation::Horizontal)
             .horizontal_gap(Pixels(4.0));
         });
     })
