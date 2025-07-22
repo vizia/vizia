@@ -1,3 +1,5 @@
+#![allow(clippy::uninlined_format_args)]
+
 mod values;
 pub use values::*;
 
