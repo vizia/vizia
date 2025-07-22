@@ -454,6 +454,7 @@ dropdown > popup > submenu label {
 submenu > popup {
     height: auto;
     width: auto;
+    min-width: auto;
     padding: 8px;
 }
 
