@@ -1,5 +1,7 @@
 //! # Vizia
 
+#![allow(clippy::uninlined_format_args)]
+
 extern crate self as vizia;
 
 #[cfg(all(not(feature = "baseview"), feature = "winit"))]

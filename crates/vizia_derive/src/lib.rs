@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![allow(clippy::uninlined_format_args)]
 
 // Adapted from Druid
 
