@@ -710,14 +710,18 @@ where
 
                 let mut transform = self.transform.borrow_mut();
 
-                let text_bounds = cx.text_context.text_bounds.get(cx.current).unwrap();
+                let mut text_bounds = cx.text_context.text_bounds.get(cx.current).copied().unwrap();
 
                 let mut bounds = cx.bounds();
+
+                text_bounds.x += bounds.x;
+                text_bounds.y += bounds.y;
+
                 bounds =
                     bounds.shrink_sides(padding_left, padding_top, padding_right, padding_bottom);
 
                 let (tx, ty) =
-                    enforce_text_bounds(text_bounds, &bounds, (transform.0, transform.1));
+                    enforce_text_bounds(&text_bounds, &bounds, (transform.0, transform.1));
 
                 let caret_box = BoundingBox::from_min_max(x, y, x2, y2);
 

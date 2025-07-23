@@ -60,7 +60,8 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                 .to_px(bounds.width(), 0.0)
                 * cx.style.scale_factor();
 
-            let text_bounds = bounds.shrink_sides(padding_left, 0.0, padding_right, 0.0);
+            let text_bounds =
+                BoundingBox { x: padding_left, y: 0.0, w: bounds.w - padding_right, h: bounds.h };
 
             if !cx.style.width.get(entity).copied().unwrap_or_default().is_auto()
                 && !cx.style.height.get(entity).copied().unwrap_or_default().is_auto()
