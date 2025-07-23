@@ -148,19 +148,6 @@ impl Node for Entity {
                 child_space_y += val;
             }
 
-            let border_width = store
-                .border_width
-                .get(*self)
-                .cloned()
-                .unwrap_or_default()
-                .to_pixels(0.0, store.scale_factor());
-
-            child_space_x += 2.0 * border_width;
-            child_space_y += 2.0 * border_width;
-
-            p_left += border_width;
-            p_top += border_width;
-
             let text_width = match (
                 store.text_wrap.get(*self).copied().unwrap_or(true),
                 store.text_overflow.get(*self).copied(),
