@@ -1,6 +1,7 @@
 pub mod alignment;
 pub mod alpha;
 pub mod angle;
+pub mod animation;
 pub mod backdrop_filter;
 pub mod background_size;
 pub mod basic;
@@ -60,6 +61,7 @@ pub mod visibility;
 pub use alignment::*;
 pub use alpha::*;
 pub use angle::*;
+pub use animation::*;
 pub use backdrop_filter::*;
 pub use background_size::*;
 pub use basic::*;
