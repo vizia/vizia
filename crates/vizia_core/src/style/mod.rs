@@ -125,11 +125,12 @@ impl Default for Abilities {
 
 bitflags! {
     pub(crate) struct SystemFlags: u8 {
-        /// Layout system flag.
         const RELAYOUT = 1;
         const RESTYLE = 1 << 1;
         const REFLOW = 1 << 2;
         const REDRAW = 1 << 3;
+        const RETRANSFORM = 1 << 4;
+        const RECLIP = 1 << 5;
     }
 }
 
@@ -398,6 +399,8 @@ pub struct Style {
     pub(crate) text_construction: Bloom,
     pub(crate) text_layout: Bloom,
     pub(crate) reaccess: Bloom,
+    pub(crate) retransform: Bloom,
+    pub(crate) reclip: Bloom,
 
     pub(crate) text_range: SparseSet<Range<usize>>,
     pub(crate) text_span: SparseSet<bool>,
@@ -1732,6 +1735,8 @@ impl Style {
         self.system_flags = SystemFlags::RELAYOUT;
         self.restyle.0.insert(entity).unwrap();
         self.reaccess.0.insert(entity).unwrap();
+        self.retransform.0.insert(entity).unwrap();
+        self.reclip.0.insert(entity).unwrap();
     }
 
     // Remove style data for the given entity.
@@ -1912,6 +1917,14 @@ impl Style {
 
     pub(crate) fn needs_text_layout(&mut self, entity: Entity) {
         self.text_layout.0.insert(entity).unwrap();
+    }
+
+    pub(crate) fn needs_retransform(&mut self, entity: Entity) {
+        self.retransform.0.insert(entity).unwrap();
+    }
+
+    pub(crate) fn needs_reclip(&mut self, entity: Entity) {
+        self.reclip.0.insert(entity).unwrap();
     }
 
     // pub fn should_redraw<F: FnOnce()>(&mut self, f: F) {
