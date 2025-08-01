@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, views::combo_box_derived_lenses::p};
 use indexmap::IndexMap;
 
 /// A keymap that associates key chords with actions.
@@ -173,9 +173,9 @@ where
     T: 'static + Clone + PartialEq + Send + Sync,
 {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|keymap_event, _| match keymap_event {
-            KeymapEvent::InsertAction(chord, entry) => self.insert(*chord, entry.clone()),
-            KeymapEvent::RemoveAction(chord, action) => self.remove(chord, action),
+        event.take(|keymap_event, _| match keymap_event {
+            KeymapEvent::InsertAction(chord, entry) => self.insert(chord, entry.clone()),
+            KeymapEvent::RemoveAction(chord, action) => self.remove(&chord, &action),
         });
         event.map(|window_event, _| match window_event {
             WindowEvent::KeyDown(code, _) => {
