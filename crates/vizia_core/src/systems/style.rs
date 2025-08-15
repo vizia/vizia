@@ -302,6 +302,40 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context, redraw_entities: &mut 
     }
 }
 
+fn link_variable_data(
+    style: &mut Style,
+    entity: Entity,
+    redraw_entities: &mut Vec<Entity>,
+    matched_rules: &[(Rule, u32)],
+) {
+    let keys: Vec<_> = style.custom_color_props.keys().cloned().collect();
+    for name_hash in keys {
+        if let Some(mut prop) = style.custom_color_props.remove(&name_hash) {
+            if prop.link(entity, matched_rules, &style.custom_color_props) {
+                redraw_entities.push(entity);
+            }
+
+            style.custom_color_props.insert(name_hash, prop);
+        }
+    }
+}
+
+fn inherit_variable_data(
+    style: &mut Style,
+    tree: &Tree<Entity>,
+    redraw_entities: &mut Vec<Entity>,
+) {
+    for entity in tree.into_iter() {
+        if let Some(parent) = tree.get_layout_parent(entity) {
+            for prop in style.custom_color_props.values_mut() {
+                if prop.inherit_shared(entity, parent) {
+                    redraw_entities.push(entity);
+                }
+            }
+        }
+    }
+}
+
 fn link_style_data(
     style: &mut Style,
     cache: &mut CachedData,
@@ -531,7 +565,7 @@ fn link_style_data(
     }
 
     // Background
-    if style.background_color.link(entity, matched_rules) {
+    if style.background_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
     }
 
@@ -986,6 +1020,14 @@ pub(crate) fn style_system(cx: &mut Context) {
     };
 
     //  Apply matched rules to entities
+    for entity in entities.iter() {
+        if let Some(matched_rules) = matched_rules.get(&entity) {
+            link_variable_data(&mut cx.style, *entity, &mut redraw_entities, matched_rules);
+        }
+    }
+
+    inherit_variable_data(&mut cx.style, &cx.tree, &mut redraw_entities);
+
     for entity in entities {
         if let Some(matched_rules) = matched_rules.get(&entity) {
             link_style_data(
@@ -998,6 +1040,7 @@ pub(crate) fn style_system(cx: &mut Context) {
             );
         }
     }
+
     cx.style.restyle.clear();
 
     shared_inheritance_system(cx, &mut redraw_entities);
