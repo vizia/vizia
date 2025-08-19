@@ -49,9 +49,12 @@ macro_rules! process_auto_animations {
                 $property.play_animation(
                     entity,
                     id,
+                    Animation {
+                        duration: animation.duration,
+                        delay: animation.delay,
+                        ..Default::default()
+                    },
                     animation.start_time,
-                    animation.duration,
-                    animation.delay,
                 );
             }
         }

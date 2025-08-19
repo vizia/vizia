@@ -1,4 +1,4 @@
-use vizia::prelude::*;
+use vizia::{animation::Keyframes, prelude::*};
 
 const STYLE: &str = r#"
     @keyframes slidein {
@@ -12,29 +12,42 @@ const STYLE: &str = r#"
             left: 200px;
         }
     }
+
+    #elem2 {
+        animation: slidein 2s ease-in-out 1s forwards reverse infinite;
+    }
 "#;
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        let animation = AnimationBuilder::new()
-            .keyframe(0.0, |key| key.scale("1"))
-            .keyframe(1.0, |key| key.scale("2.5"));
+        let keyframes = Keyframes::new()
+            .keyframe(0.0, |key| key.background_color(Color::red()))
+            .keyframe(0.5, |key| key.background_color(Color::green()))
+            .keyframe(1.0, |key| key.background_color(Color::blue()));
 
-        let anim_id = cx.add_animation(animation);
+        let anim_id = cx.add_animation_keyframes(keyframes);
 
-        Element::new(cx)
-            .background_color(Color::red())
-            .size(Pixels(100.0))
-            .position_type(PositionType::Absolute)
-            .id("elem");
+        let anim = Animation::new().duration(Duration::from_secs(2)).delay(Duration::from_secs(1));
 
-        Button::new(cx, |cx| Label::new(cx, "Play 1")).on_press(|cx| {
-            cx.play_animation_for("slidein", "elem", Duration::from_secs(2), Duration::default())
-        });
-        Button::new(cx, |cx| Label::new(cx, "Play 2")).on_press(move |cx| {
-            cx.play_animation_for(anim_id, "elem", Duration::from_secs(2), Duration::default())
+        VStack::new(cx, |cx| {
+            Element::new(cx)
+                .background_color(Color::yellow())
+                .size(Pixels(200.0))
+                .position_type(PositionType::Absolute)
+                .id("elem");
+
+            Button::new(cx, |cx| Label::new(cx, "Play 1")).on_press(|cx| {
+                cx.play_animation_for(
+                    "slidein",
+                    "elem",
+                    Animation::new().duration(Duration::from_secs(2)),
+                );
+            });
+
+            Button::new(cx, |cx| Label::new(cx, "Play 2"))
+                .on_press(move |cx| cx.play_animation_for(anim_id, "elem", anim));
         });
     })
     .run()
