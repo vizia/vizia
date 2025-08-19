@@ -35,6 +35,7 @@ mod textbox;
 mod toggle_button;
 mod tooltip;
 mod virtual_list;
+mod virtual_table;
 mod xypad;
 
 pub use crate::binding::Binding;
@@ -74,6 +75,7 @@ pub use textbox::*;
 pub use toggle_button::*;
 pub use tooltip::*;
 pub use virtual_list::*;
+pub use virtual_table::*;
 pub use xypad::*;
 
 use crate::prelude::*;

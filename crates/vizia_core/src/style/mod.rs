@@ -348,6 +348,7 @@ pub struct Style {
     pub(crate) position_type: StyleSet<PositionType>,
 
     pub(crate) alignment: StyleSet<Alignment>,
+    pub(crate) absolute_auto: StyleSet<bool>,
 
     // Grid
     pub(crate) grid_columns: StyleSet<Vec<Units>>,
@@ -1846,6 +1847,8 @@ impl Style {
 
         self.alignment.remove(entity);
 
+        self.absolute_auto.remove(entity);
+
         // Grid
         self.grid_columns.remove(entity);
         self.grid_rows.remove(entity);
@@ -1989,6 +1992,7 @@ impl Style {
         self.layout_type.clear_rules();
         self.position_type.clear_rules();
         self.alignment.clear_rules();
+        self.absolute_auto.clear_rules();
 
         // Grid
         self.grid_columns.clear_rules();

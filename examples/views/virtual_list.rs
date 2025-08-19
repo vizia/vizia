@@ -11,12 +11,13 @@ impl Model for AppData {}
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { list: (1..100u32).collect() }.build(cx);
+        AppData { list: (1..1000u32).collect() }.build(cx);
 
         ExamplePage::new(cx, |cx| {
             VirtualList::new(cx, AppData::list, 40.0, |cx, index, item| {
-                Label::new(cx, item).toggle_class("dark", index % 2 == 0)
+                Label::new(cx, item).toggle_class("dark", index % 2 == 0).hoverable(false)
             })
+            .selectable(Selectable::Single)
             .size(Pixels(300.0));
         });
     })
