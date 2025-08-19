@@ -3,7 +3,7 @@ use std::{collections::BTreeSet, ops::Deref, rc::Rc};
 use crate::prelude::*;
 
 /// Represents how items can be selected in a list.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Data)]
 pub enum Selectable {
     #[default]
     /// Items in the list cannot be selected.
@@ -28,19 +28,41 @@ pub enum ListEvent {
     FocusPrev,
     /// Deselects all items from the list
     ClearSelection,
+    /// Scrolls the list to the given x and y position.
+    Scroll(f32, f32),
 }
 
 /// A view for creating a list of items from a binding to an iteratable list.
 #[derive(Lens)]
 pub struct List {
-    list_len: usize,
+    /// The number of items in the list.
+    num_items: usize,
+    /// The set of selected items in the list.
     selected: BTreeSet<usize>,
+    /// Whether the list items are selectable.
     selectable: Selectable,
+    /// The index of the currently focused item in the list.
     focused: Option<usize>,
-    focus_visible: bool,
+    /// Whether the selection should follow the focus.
     selection_follows_focus: bool,
-    horizontal: bool,
+    /// The orientation of the list, either vertical or horizontal.
+    orientation: Orientation,
+    /// Whether the scrollview should scroll to the cursor when the scrollbar is pressed.
+    scroll_to_cursor: bool,
+    /// Callback called when a list item is selected.
+    #[lens(ignore)]
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
+    /// Callback called when the scrollview is scrolled.
+    #[lens(ignore)]
+    on_scroll: Option<Box<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>>,
+    /// The horizontal scroll position of the list.
+    scroll_x: f32,
+    /// The vertical scroll position of the list.
+    scroll_y: f32,
+    /// Whether the horizontal scrollbar should be visible.
+    show_horizontal_scrollbar: bool,
+    /// Whether the vertical scrollbar should be visible.
+    show_vertical_scrollbar: bool,
 }
 
 impl List {
@@ -99,14 +121,19 @@ impl List {
         let content = Rc::new(item_content);
         let num_items = list.map(list_len);
         Self {
-            list_len: num_items.get(cx),
+            num_items: num_items.get(cx),
             selected: BTreeSet::default(),
             selectable: Selectable::None,
             focused: None,
-            focus_visible: false,
             selection_follows_focus: false,
-            horizontal: false,
+            orientation: Orientation::Vertical,
+            scroll_to_cursor: false,
             on_select: None,
+            on_scroll: None,
+            scroll_x: 0.0,
+            scroll_y: 0.0,
+            show_horizontal_scrollbar: true,
+            show_vertical_scrollbar: true,
         }
         .build(cx, move |cx| {
             Keymap::from(vec![
@@ -129,8 +156,8 @@ impl List {
             ])
             .build(cx);
 
-            Binding::new(cx, List::horizontal, |cx, horizontal| {
-                if horizontal.get(cx) {
+            Binding::new(cx, List::orientation, |cx, orientation| {
+                if orientation.get(cx) == Orientation::Horizontal {
                     cx.emit(KeymapEvent::RemoveAction(
                         KeyChord::new(Modifiers::empty(), Code::ArrowDown),
                         "Focus Next",
@@ -172,15 +199,35 @@ impl List {
                         let ll = list_index.clone();
                         let item = list.map_ref(move |list| ll(list, index));
                         let content = content.clone();
-                        ListItem::new(cx, index, item, move |cx, index, item| {
-                            content(cx, index, item);
-                        });
+                        ListItem::new(
+                            cx,
+                            index,
+                            item,
+                            List::selected,
+                            List::focused,
+                            move |cx, index, item| {
+                                content(cx, index, item);
+                            },
+                        );
                     }
                 });
+            })
+            .show_horizontal_scrollbar(Self::show_horizontal_scrollbar)
+            .show_vertical_scrollbar(Self::show_vertical_scrollbar)
+            .scroll_to_cursor(Self::scroll_to_cursor)
+            .scroll_x(Self::scroll_x)
+            .scroll_y(Self::scroll_y)
+            .on_scroll(|cx, x, y| {
+                if y.is_finite() {
+                    cx.emit(ListEvent::Scroll(x, y));
+                }
             });
         })
         .toggle_class("selectable", List::selectable.map(|s| *s != Selectable::None))
-        .toggle_class("horizontal", List::horizontal)
+        .toggle_class(
+            "horizontal",
+            Self::orientation.map(|orientation| *orientation == Orientation::Horizontal),
+        )
         .navigable(true)
         .role(Role::List)
     }
@@ -192,7 +239,7 @@ impl View for List {
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.take(|list_event, _| match list_event {
+        event.take(|list_event, meta| match list_event {
             ListEvent::Select(index) => {
                 cx.focus();
                 match self.selectable {
@@ -204,7 +251,6 @@ impl View for List {
                             self.selected.clear();
                             self.selected.insert(index);
                             self.focused = Some(index);
-                            self.focus_visible = false;
                             if let Some(on_select) = &self.on_select {
                                 on_select(cx, index);
                             }
@@ -218,7 +264,6 @@ impl View for List {
                         } else {
                             self.selected.insert(index);
                             self.focused = Some(index);
-                            self.focus_visible = false;
                             if let Some(on_select) = &self.on_select {
                                 on_select(cx, index);
                             }
@@ -227,52 +272,66 @@ impl View for List {
 
                     Selectable::None => {}
                 }
+
+                meta.consume();
             }
 
             ListEvent::SelectFocused => {
                 if let Some(focused) = &self.focused {
                     cx.emit(ListEvent::Select(*focused))
                 }
+                meta.consume();
             }
 
             ListEvent::ClearSelection => {
                 self.selected.clear();
+                meta.consume();
             }
 
             ListEvent::FocusNext => {
                 if let Some(focused) = &mut self.focused {
-                    *focused = focused.saturating_add(1);
-
-                    if *focused >= self.list_len {
-                        *focused = 0;
+                    if *focused < self.num_items.saturating_sub(1) {
+                        *focused = focused.saturating_add(1);
+                        if self.selection_follows_focus {
+                            cx.emit(ListEvent::SelectFocused);
+                        }
                     }
                 } else {
                     self.focused = Some(0);
+                    if self.selection_follows_focus {
+                        cx.emit(ListEvent::SelectFocused);
+                    }
                 }
 
-                self.focus_visible = true;
-
-                if self.selection_follows_focus {
-                    cx.emit(ListEvent::SelectFocused);
-                }
+                meta.consume();
             }
 
             ListEvent::FocusPrev => {
                 if let Some(focused) = &mut self.focused {
-                    if *focused == 0 {
-                        *focused = self.list_len;
+                    if *focused > 0 {
+                        *focused = focused.saturating_sub(1);
+                        if self.selection_follows_focus {
+                            cx.emit(ListEvent::SelectFocused);
+                        }
                     }
-
-                    *focused = focused.saturating_sub(1);
                 } else {
-                    self.focused = Some(self.list_len.saturating_sub(1));
+                    self.focused = Some(self.num_items.saturating_sub(1));
+                    if self.selection_follows_focus {
+                        cx.emit(ListEvent::SelectFocused);
+                    }
                 }
 
-                self.focus_visible = true;
+                meta.consume();
+            }
 
-                if self.selection_follows_focus {
-                    cx.emit(ListEvent::SelectFocused);
+            ListEvent::Scroll(x, y) => {
+                self.scroll_x = x;
+                self.scroll_y = y;
+                if let Some(callback) = &self.on_scroll {
+                    (callback)(cx, x, y);
                 }
+
+                meta.consume();
             }
         })
     }
@@ -287,6 +346,7 @@ impl Handle<'_, List> {
         self.bind(selected, |handle, s| {
             let ss = s.get(&handle).deref().to_vec();
             handle.modify(|list| {
+                list.selected.clear();
                 for idx in ss {
                     list.selected.insert(idx);
                     list.focused = Some(idx);
@@ -319,12 +379,60 @@ impl Handle<'_, List> {
         })
     }
 
-    // todo: replace with orientation
     /// Sets the orientation of the list.
-    pub fn horizontal<U: Into<bool>>(self, flag: impl Res<U>) -> Self {
-        self.bind(flag, |handle, horizontal| {
-            let s = horizontal.get(&handle).into();
-            handle.modify(|list: &mut List| list.horizontal = s);
+    pub fn orientation<U: Into<Orientation>>(self, orientation: impl Res<U>) -> Self {
+        self.bind(orientation, |handle, orientation| {
+            let orientation = orientation.get(&handle).into();
+            handle.modify(|list: &mut List| {
+                list.orientation = orientation;
+            });
+        })
+    }
+
+    /// Sets whether the scrollbar should move to the cursor when pressed.
+    pub fn scroll_to_cursor(self, flag: bool) -> Self {
+        self.modify(|list| {
+            list.scroll_to_cursor = flag;
+        })
+    }
+
+    /// Sets a callback which will be called when a scrollview is scrolled, either with the mouse wheel, touchpad, or using the scroll bars.
+    pub fn on_scroll(
+        self,
+        callback: impl Fn(&mut EventContext, f32, f32) + 'static + Send + Sync,
+    ) -> Self {
+        self.modify(|list: &mut List| list.on_scroll = Some(Box::new(callback)))
+    }
+
+    /// Set the horizontal scroll position of the [ScrollView]. Accepts a value or lens to an 'f32' between 0 and 1.
+    pub fn scroll_x(self, scrollx: impl Res<f32>) -> Self {
+        self.bind(scrollx, |handle, scrollx| {
+            let sx = scrollx.get(&handle);
+            handle.modify(|list| list.scroll_x = sx);
+        })
+    }
+
+    /// Set the vertical scroll position of the [ScrollView]. Accepts a value or lens to an 'f32' between 0 and 1.
+    pub fn scroll_y(self, scrollx: impl Res<f32>) -> Self {
+        self.bind(scrollx, |handle, scrolly| {
+            let sy = scrolly.get(&handle);
+            handle.modify(|list| list.scroll_y = sy);
+        })
+    }
+
+    /// Sets whether the horizontal scrollbar should be visible.
+    pub fn show_horizontal_scrollbar(self, flag: impl Res<bool>) -> Self {
+        self.bind(flag, |handle, show_scrollbar| {
+            let s = show_scrollbar.get(&handle);
+            handle.modify(|list| list.show_horizontal_scrollbar = s);
+        })
+    }
+
+    /// Sets whether the vertical scrollbar should be visible.
+    pub fn show_vertical_scrollbar(self, flag: impl Res<bool>) -> Self {
+        self.bind(flag, |handle, show_scrollbar| {
+            let s = show_scrollbar.get(&handle);
+            handle.modify(|list| list.show_vertical_scrollbar = s);
         })
     }
 }
@@ -338,18 +446,29 @@ impl ListItem {
         cx: &mut Context,
         index: usize,
         item: MapRef<L, T>,
+        selected: impl Lens<Target = BTreeSet<usize>>,
+        focused: impl Lens<Target = Option<usize>>,
         item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
     ) -> Handle<Self> {
+        let is_focused =
+            focused.map(move |focused| focused.as_ref().is_some_and(|f| *f == index)).get(cx);
         Self {}
             .build(cx, move |cx| {
                 item_content(cx, index, item);
             })
             .role(Role::ListItem)
-            .checked(List::selected.map(move |selected| selected.contains(&index)))
-            //.toggle_class("focused", List::focused.map(move |focused| *focused == Some(index)))
-            .focused_with_visibility(
-                List::focused.map(move |f| *f == Some(index)),
-                List::focus_visible,
+            .toggle_class(
+                "focused",
+                focused.map(move |focused| focused.as_ref().is_some_and(|f| *f == index)),
+            )
+            .checked(selected.map(move |selected| selected.contains(&index)))
+            .bind(
+                focused.map(move |focused| focused.as_ref().is_some_and(|f| *f == index)),
+                move |handle, focused| {
+                    if focused.get(&handle) != is_focused {
+                        handle.cx.emit(ScrollEvent::ScrollToView(handle.entity()));
+                    }
+                },
             )
             .on_press(move |cx| cx.emit(ListEvent::Select(index)))
     }
