@@ -507,9 +507,9 @@ impl ApplicationRunner {
                         self.window_scale_factor = window_info.scale();
                     }
 
-                    //let user_scale_factor = self.cx.user_scale_factor();
-
-                    //self.cx.set_scale_factor(self.window_scale_factor * user_scale_factor);
+                    self.cx.set_scale_factor(
+                        self.window_scale_factor * self.window_description.user_scale_factor,
+                    );
 
                     let physical_size =
                         (window_info.physical_size().width, window_info.physical_size().height);
