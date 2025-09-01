@@ -1,4 +1,5 @@
 #![allow(clippy::uninlined_format_args)]
+#![allow(mismatched_lifetime_syntaxes)]
 
 pub mod application;
 mod convert;
