@@ -7,6 +7,7 @@
 #![allow(clippy::enum_variant_names)]
 #![allow(clippy::only_used_in_recursion)]
 #![allow(clippy::uninlined_format_args)]
+#![allow(mismatched_lifetime_syntaxes)]
 // #![warn(missing_docs)]
 
 extern crate self as vizia;

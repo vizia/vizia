@@ -6,7 +6,7 @@ pub struct CustomView<L: Lens<Target = Color>> {
 }
 
 impl<L: Lens<Target = Color>> CustomView<L> {
-    pub fn new(cx: &mut Context, color: L) -> Handle<Self> {
+    pub fn new(cx: &mut Context, color: L) -> Handle<'_, Self> {
         Self { color }
             .build(cx, |cx| {
                 Label::new(cx, "This is a custom view!");

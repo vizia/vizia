@@ -212,7 +212,7 @@ impl Model for CircleDrawerData {
 struct CircleDrawerCanvas;
 
 impl CircleDrawerCanvas {
-    fn new(cx: &mut Context, lens: impl Lens<Target = CircleData>) -> Handle<Self> {
+    fn new(cx: &mut Context, lens: impl Lens<Target = CircleData>) -> Handle<'_, Self> {
         Self {}
             .build(cx, |_| {})
             .bind(lens, |mut handle, _| handle.needs_redraw())
@@ -274,7 +274,7 @@ impl View for CircleDrawerCanvas {
 struct CircleDrawer;
 
 impl CircleDrawer {
-    fn new(cx: &mut Context) -> Handle<Self> {
+    fn new(cx: &mut Context) -> Handle<'_, Self> {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
         CircleDrawerData::default().build(cx);

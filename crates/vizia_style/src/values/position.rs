@@ -67,13 +67,13 @@ impl<'i> Parse<'i> for Position {
         } else if let Ok(y) = input.try_parse(VerticalPosition::parse) {
             // Try parsing a horizontal position next.
             if let Ok(x) = input.try_parse(HorizontalPosition::parse) {
-                return Ok(Position { x, y });
+                Ok(Position { x, y })
             } else {
-                return Ok(Position { x: HorizontalPosition::Center, y: VerticalPosition::Center });
+                Ok(Position { x: HorizontalPosition::Center, y: VerticalPosition::Center })
             }
         } else {
             // Return default or return an error?
-            return Ok(Position { x: HorizontalPosition::Center, y: VerticalPosition::Center });
+            Ok(Position { x: HorizontalPosition::Center, y: VerticalPosition::Center })
         }
     }
 }
