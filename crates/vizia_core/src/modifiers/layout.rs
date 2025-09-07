@@ -496,6 +496,13 @@ pub trait LayoutModifiers: internal::Modifiable {
 
         self
     }
+
+    modifier!(
+        /// S
+        absolute_auto,
+        bool,
+        SystemFlags::RELAYOUT
+    );
 }
 
 impl<V: View> LayoutModifiers for Handle<'_, V> {}

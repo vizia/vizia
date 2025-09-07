@@ -353,21 +353,24 @@ fn draw_entity(
             paint.set_blend_mode(blend_mode.into());
 
             let rect: Rect = cx.bounds().into();
-            let mut filter = ImageFilter::crop(rect, None, None).unwrap();
+            if let Some(mut filter) = ImageFilter::crop(rect, None, None) {
+                let slr = if let Some(backdrop_filter) = backdrop_filter {
+                    match backdrop_filter {
+                        Filter::Blur(radius) => {
+                            let sigma = radius.to_px().unwrap() * cx.scale_factor() / 2.0;
 
-            let slr = if let Some(backdrop_filter) = backdrop_filter {
-                match backdrop_filter {
-                    Filter::Blur(radius) => {
-                        let sigma = radius.to_px().unwrap() * cx.scale_factor() / 2.0;
-                        filter = filter.blur(None, (sigma, sigma), None).unwrap();
-                        SaveLayerRec::default().paint(&paint).backdrop(&filter)
+                            filter = filter.blur(None, (sigma, sigma), None).unwrap();
+                            SaveLayerRec::default().paint(&paint).backdrop(&filter)
+                        }
                     }
-                }
-            } else {
-                SaveLayerRec::default().paint(&paint)
-            };
+                } else {
+                    SaveLayerRec::default().paint(&paint)
+                };
 
-            Some(canvas.save_layer(&slr))
+                Some(canvas.save_layer(&slr))
+            } else {
+                None
+            }
         } else {
             None
         };
