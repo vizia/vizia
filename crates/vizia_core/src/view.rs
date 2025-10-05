@@ -125,7 +125,7 @@ pub trait View: 'static + Sized {
             cx.style.element.insert(id, fxhash::hash32(element));
         }
 
-        cx.views.insert(id, Box::new(self));
+        // cx.views.insert(id, Box::new(self));
 
         let parent_id = cx.tree.get_layout_parent(id).unwrap();
         let parent_node_id = parent_id.accesskit_id();
@@ -153,11 +153,19 @@ pub trait View: 'static + Sized {
         cx.models.insert(id, HashMap::default());
         cx.stores.insert(id, HashMap::default());
 
-        let handle = Handle { current: id, entity: id, p: Default::default(), cx };
+        let mut handle = Handle { current: id, entity: id, p: Default::default(), cx };
 
         handle.cx.with_current(handle.entity, content);
 
+        let s = handle.cx.with_current(handle.entity, |cx| self.on_build(cx));
+
+        handle.cx.views.insert(id, Box::new(s));
+
         handle
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        self
     }
 
     /// Specifies a name for the view type which can be used as an element selector in css.

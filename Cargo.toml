@@ -71,6 +71,11 @@ vizia_window = { version = "0.3.0", path = "crates/vizia_window" }
 name = "counter"
 path = "examples/7GUIs/counter.rs"
 
+
+[[example]]
+name = "counter_signal"
+path = "examples/7GUIs/counter_signal.rs"
+
 [[example]]
 name = "crud"
 path = "examples/7GUIs/crud.rs"
