@@ -64,10 +64,12 @@ use hashbrown::{HashMap, HashSet};
 use indexmap::IndexMap;
 use log::warn;
 use std::fmt::Debug;
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::ops::{Deref, DerefMut, Range};
 use vizia_style::selectors::parser::{AncestorHashes, Selector};
 
 use crate::prelude::*;
+use crate::storage::animatable_set_test::AnimatableSet2;
 
 pub use vizia_style::{
     Alignment, Angle, BackgroundImage, BackgroundSize, BorderStyleKeyword, ClipPath, Color,
@@ -82,6 +84,7 @@ pub use vizia_style::{
 
 use vizia_style::{
     BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, Selectors, StyleSheet,
+    TokenOrValue,
 };
 
 mod rule;
@@ -297,7 +300,7 @@ pub struct Style {
     pub(crate) outline_offset: AnimatableSet<LengthOrPercentage>,
 
     // Background
-    pub(crate) background_color: AnimatableSet<Color>,
+    pub(crate) background_color: AnimatableSet2<Color>,
     pub(crate) background_image: AnimatableSet<Vec<ImageOrGradient>>,
     pub(crate) background_size: AnimatableSet<Vec<BackgroundSize>>,
 
@@ -404,6 +407,8 @@ pub struct Style {
 
     /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
     pub(crate) dpi_factor: f64,
+
+    pub(crate) custom_color_props: HashMap<u64, AnimatableSet2<Color>>,
 }
 
 impl Style {
@@ -562,7 +567,7 @@ impl Style {
 
                 // BACKGROUND
                 Property::BackgroundColor(value) => {
-                    insert_keyframe(&mut self.background_color, animation_id, time, *value);
+                    //insert_keyframe(&mut self.background_color, animation_id, time, *value);
                 }
 
                 Property::BackgroundImage(images) => {
@@ -1665,15 +1670,6 @@ impl Style {
                 self.pointer_events.insert_rule(rule_id, pointer_events);
             }
 
-            // Unparsed. TODO: Log the error.
-            Property::Unparsed(unparsed) => {
-                warn!("Unparsed: {}", unparsed.name);
-            }
-
-            // TODO: Custom property support
-            Property::Custom(custom) => {
-                warn!("Custom Property: {}", custom.name);
-            }
             Property::TextOverflow(text_overflow) => {
                 self.text_overflow.insert_rule(rule_id, text_overflow);
             }
@@ -1695,6 +1691,56 @@ impl Style {
             }
             Property::Fill(fill) => {
                 self.fill.insert_rule(rule_id, fill);
+            }
+
+            // Unparsed. TODO: Log the error.
+            Property::Unparsed(unparsed) => {
+                match unparsed.name.as_ref() {
+                    "background-color" => {
+                        // Store in background-color storage somehow that this is a variable
+                        // so a system can link it to an ancestor custom prop.
+                        if let TokenOrValue::Var(var) = unparsed.value.0.first().unwrap() {
+                            let mut s = DefaultHasher::new();
+                            var.name.hash(&mut s);
+                            let variable_name_hash = s.finish();
+                            self.background_color.insert_variable_rule(rule_id, variable_name_hash)
+                        }
+                    }
+
+                    n => println!("Unparsed {} {:?}", n, unparsed.value),
+                }
+            }
+
+            Property::Custom(custom) => {
+                let mut s = DefaultHasher::new();
+                custom.name.hash(&mut s);
+                let variable_name_hash = s.finish();
+                // Parse custom properties and store them
+                for token in custom.value.0.iter() {
+                    // Try parsing colors
+                    if let TokenOrValue::Color(color) = token {
+                        if let Some(store) = self.custom_color_props.get_mut(&variable_name_hash) {
+                            store.insert_rule(rule_id, color.clone());
+                        } else {
+                            let mut store = AnimatableSet2::default();
+                            store.insert_rule(rule_id, color.clone());
+                            self.custom_color_props.insert(variable_name_hash, store);
+                        }
+                    }
+
+                    if let TokenOrValue::Var(var) = token {
+                        let mut s = DefaultHasher::new();
+                        var.name.hash(&mut s);
+                        let name_hash = s.finish();
+                        if let Some(store) = self.custom_color_props.get_mut(&variable_name_hash) {
+                            store.insert_variable_rule(rule_id, name_hash);
+                        } else {
+                            let mut store = AnimatableSet2::default();
+                            store.insert_variable_rule(rule_id, name_hash);
+                            self.custom_color_props.insert(variable_name_hash, store);
+                        }
+                    }
+                }
             }
             _ => {}
         }
