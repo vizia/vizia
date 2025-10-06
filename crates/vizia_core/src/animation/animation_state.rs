@@ -1,5 +1,6 @@
 use crate::animation::Interpolator;
 use hashbrown::HashSet;
+use vizia_style::{AnimationDirection, AnimationFillMode, AnimationIterationCount};
 
 use crate::prelude::*;
 
@@ -10,14 +11,14 @@ use super::TimingFunction;
 pub(crate) struct Keyframe<T: Interpolator> {
     pub time: f32,
     pub value: T,
-    pub timing_function: TimingFunction,
+    pub timing_function: Option<TimingFunction>,
 }
 
 /// Represents an animation of a property with type `T`.
 #[derive(Clone, Debug)]
 pub(crate) struct AnimationState<T: Interpolator> {
     /// ID of the animation description.
-    pub id: Animation,
+    pub id: AnimationId,
     /// The start time of the animation.
     pub start_time: Instant,
     /// The duration of the animation.
@@ -29,7 +30,15 @@ pub(crate) struct AnimationState<T: Interpolator> {
     /// The output of value of the animation.
     pub output: Option<T>,
     /// Whether the animation should persist after finishing.
-    pub persistent: bool,
+    pub fill_mode: AnimationFillMode,
+    /// The number of times the animation should repeat.
+    pub iteration_count: AnimationIterationCount,
+    /// The current iteration of the animation.
+    pub current_iteration: u32,
+    /// The easing function to use for the animation.
+    pub easing_function: TimingFunction,
+    /// The direction of the animation.
+    pub direction: AnimationDirection,
     /// How far through the animation between 0.0 and 1.0.
     pub t: f32,
 
@@ -51,7 +60,7 @@ where
     T: Interpolator,
 {
     /// Create a new animation state with the given [Animation] id.
-    pub(crate) fn new(id: Animation) -> Self {
+    pub(crate) fn new(id: AnimationId) -> Self {
         AnimationState {
             id,
             start_time: Instant::now(),
@@ -59,7 +68,11 @@ where
             delay: Duration::new(0, 0),
             keyframes: Vec::new(),
             output: None,
-            persistent: false,
+            fill_mode: AnimationFillMode::None,
+            iteration_count: AnimationIterationCount::Count(1),
+            current_iteration: 0,
+            easing_function: TimingFunction::linear(),
+            direction: AnimationDirection::Normal,
             t: 0.0,
             dt: 0.0,
             active: false,
@@ -98,6 +111,15 @@ where
         self.entities.insert(entity);
     }
 
+    pub(crate) fn should_persist(&self) -> bool {
+        match self.fill_mode {
+            AnimationFillMode::None => false,
+            AnimationFillMode::Forwards => true,
+            AnimationFillMode::Backwards => false,
+            AnimationFillMode::Both => true,
+        }
+    }
+
     pub(crate) fn is_transition(&self) -> bool {
         !(self.from_rule == usize::MAX && self.to_rule == usize::MAX)
     }
@@ -109,13 +131,17 @@ where
 {
     fn default() -> Self {
         AnimationState {
-            id: Animation::null(),
+            id: AnimationId::null(),
             start_time: Instant::now(),
             duration: Duration::new(0, 0),
             delay: Duration::new(0, 0),
             keyframes: Vec::new(),
             output: None,
-            persistent: true,
+            fill_mode: AnimationFillMode::None,
+            iteration_count: AnimationIterationCount::Count(1),
+            current_iteration: 0,
+            easing_function: TimingFunction::linear(),
+            direction: AnimationDirection::Normal,
             t: 0.0,
             dt: 0.0,
             active: false,
