@@ -6,7 +6,19 @@ This proposal outlines a migration from the current lens-based state management 
 
 ## Current State: Lens-Based System
 
-The current Vizia framework uses a lens-based system for state management, as demonstrated in the counter example:
+The current Vizia framework uses a lens-based system for state management. Lenses provide a functional programming approach to accessing and updating nested data structures. They work by creating composable "accessors" that can focus on specific parts of a data structure, allowing views to bind to particular fields without needing to know about the entire data model.
+
+### How Lenses Work
+
+In the lens system:
+
+1. **Data Structure Definition**: State is defined as a struct with fields that need to be accessed by views
+2. **Lens Derivation**: The `#[derive(Lens)]` macro automatically generates lens accessors for each field
+3. **Data Trait**: Types must implement the `Data` trait for change detection and efficient updates
+4. **Model Implementation**: A `Model` trait implementation handles state mutations through event processing
+5. **View Binding**: Views bind to specific parts of the state using lens composition (e.g., `AppData::count`)
+
+This approach provides type-safe access to nested data but requires significant boilerplate and indirection, some of which is hidden behind derive macros. Here's how it looks in practice:
 
 ```rust
 #[derive(Lens)]
@@ -54,9 +66,54 @@ fn main() -> Result<(), ApplicationError> {
 }
 ```
 
+In this example:
+- `AppData` defines the state structure and derives `Lens` to generate field accessors
+- `AppEvent` enum defines possible state mutations
+- The `Model` implementation processes events and updates state accordingly
+- Views bind to `AppData::count` using the generated lens
+- State changes flow through the event system: user interaction → event emission → model update → view re-render
+
+### Challenges with Multiple State Dependencies
+
+One significant limitation of the lens system becomes apparent when views need to depend on multiple pieces of state. Consider a more complex example:
+
+```rust
+#[derive(Lens, Data, Clone)]
+pub struct AppData {
+    user_name: String,
+    is_logged_in: bool,
+    message_count: i32,
+    theme: Theme,
+}
+```
+
+If you want to create a view that displays different content based on both `is_logged_in` and `message_count`, you face several challenges:
+
+1. **No Direct Multi-Binding**: You cannot easily bind to multiple lenses simultaneously
+2. **Complex Derived State**: Creating computed values requires manual state management
+3. **Verbose Workarounds**: You must either:
+   - Bind to the entire `AppData` struct (losing granular updates)
+   - Create complex lens compositions or nested binding views
+   - Manually manage state dependencies in the view
+
+This results in complex, hard-to-maintain code.
+
 ## Proposed State: Signal-Based System
 
-The new signals-based approach would simplify state management significantly:
+The new signals-based approach represents a paradigm shift towards reactive programming for state management. Signals are reactive primitives that automatically track dependencies and propagate changes through the system. They provide a direct, imperative way to manage state while maintaining the benefits of reactive updates.
+
+### How Signals Work
+
+In the signals system:
+
+1. **Direct State Creation**: State is created directly using `cx.state(initial_value)` without requiring struct definitions or trait derivations
+2. **Automatic Change Detection**: Signals internally track when their values change, eliminating the need for manual comparison logic
+3. **Dependency Tracking**: The system automatically tracks which views and derived computations depend on which signals
+4. **Direct Mutation**: State can be updated directly using `signal.update(cx, |value| *value += 1)` or `signal.set(cx, new_value)`
+5. **Derived State**: Computed values are created with `cx.derived(closure)` and automatically recompute when dependencies change
+6. **Reactive Binding**: Views can bind directly to signals, and the framework ensures they update only when necessary
+
+This approach eliminates boilerplate while providing fine-grained reactivity and automatic dependency management. Here's how it looks in practice:
 
 ```rust
 fn main() -> Result<(), ApplicationError> {
@@ -70,6 +127,11 @@ fn main() -> Result<(), ApplicationError> {
 
 struct Counter {
     count: Signal<i32>,
+}
+
+pub enum CounterEvent {
+    Increment,
+    Decrement,
 }
 
 impl Counter {
@@ -86,10 +148,10 @@ impl View for Counter {
     fn on_build(self, cx: &mut Context) -> Self {
         HStack::new(cx, move |cx| {
             Button::new(cx, |cx| Label::new(cx, "Increment"))
-                .on_press(move |cx| self.count.update(cx, |v| *v += 1));
+                .on_press(|cx| cx.emit(CounterEvent::Increment));
 
             Button::new(cx, |cx| Label::new(cx, "Decrement"))
-                .on_press(move |cx| self.count.update(cx, |v| *v -= 1));
+                .on_press(|cx| cx.emit(CounterEvent::Decrement));
 
             Label::new(cx, self.count);
 
@@ -103,8 +165,65 @@ impl View for Counter {
 
         self
     }
+
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            CounterEvent::Increment => {
+                self.count.update(cx, |count| *count += 1);
+            }
+            CounterEvent::Decrement => {
+                self.count.update(cx, |count| *count -= 1);
+            }
+        });
+    }
 }
 ```
+
+In this example:
+- `Counter` stores a single `Signal<i32>` created with `cx.state(0)`
+- User interactions still emit events (`CounterEvent::Increment`/`Decrement`) for consistency with the existing event system
+- State updates happen in the `event` handler via `self.count.update(cx, |count| *count += 1)` - no Model trait needed
+- Views bind directly to signals: `Label::new(cx, self.count)`
+- Derived state (`doubled`) automatically tracks dependencies and recomputes only when `count` changes
+- The reactive system works automatically: user interaction → event emission → signal update → affected views re-render
+
+### Alternative: Direct Signal Updates (Optional)
+
+While the example above shows signals working with the existing event system, signals also support direct updates without events. This provides flexibility in how developers choose to structure their applications:
+
+```rust
+impl View for Counter {
+    fn on_build(self, cx: &mut Context) -> Self {
+        HStack::new(cx, move |cx| {
+            // Direct signal updates - no events needed
+            Button::new(cx, |cx| Label::new(cx, "Increment"))
+                .on_press(move |cx| self.count.update(cx, |v| *v += 1));
+
+            Button::new(cx, |cx| Label::new(cx, "Decrement"))
+                .on_press(move |cx| self.count.update(cx, |v| *v -= 1));
+
+            Label::new(cx, self.count);
+
+            // Derived state works the same way
+            let doubled = cx.derived(move |s| *self.count.get(s) * 2);
+            Label::new(cx, doubled);
+        })
+        .alignment(Alignment::Center)
+        .gap(Pixels(50.0));
+
+        self
+    }
+
+    // No event method needed for direct updates
+}
+```
+
+**When to use each approach:**
+
+- **Event-based updates**: Best for complex applications, cross-component communication, when you need centralized state logic, or when following established patterns
+- **Direct updates**: Ideal for simple local state, rapid prototyping, or when the overhead of events isn't justified
+
+Both approaches can coexist in the same application, allowing developers to choose the most appropriate pattern for each use case.
 
 ## Key Differences and Improvements
 
@@ -114,12 +233,11 @@ impl View for Counter {
 - Requires deriving `Lens` trait
 - Requires deriving `Data` trait for change detection
 - Complex data access through lens composition
-- Requires `Model` trait implementation for state updates
 
 **Signals (Proposed):**
 - Direct state creation with `cx.state(initial_value)`
-- Direct updates with `signal.update(cx, |value| *value += 1)`
-- No need for lens derivation, data derivation, or model implementations
+- Direct updates with `signal.update(cx, |value| *value += 1)` in event handlers
+- No need for lens derivation or data derivation
 - Simple, direct state access and mutation
 - Built-in change detection and reactivity
 
@@ -133,9 +251,60 @@ let doubled = cx.derived(move |s| *self.count.get(s) * 2);
 let is_even = cx.derived(move |s| *self.count.get(s) % 2 == 0);
 ```
 
-This is much more ergonomic than manually managing derived state with lenses.
+This replaces the need for multi- binding and is much more ergonomic than manually managing derived state with lenses.
 
-### 3. Application-Level State Management (Future Enhancement)
+### 3. Multi-State Dependencies Made Simple
+
+Signals excel when views need to depend on multiple pieces of state. Using the same complex example from the lens section:
+
+```rust
+struct UserDashboard {
+    user_name: Signal<String>,
+    is_logged_in: Signal<bool>,
+    message_count: Signal<i32>,
+    theme: Signal<Theme>,
+}
+
+impl UserDashboard {
+    fn new(cx: &mut Context) -> Handle<'_, Self> {
+        Self {
+            user_name: cx.state(String::new()),
+            is_logged_in: cx.state(false),
+            message_count: cx.state(0),
+            theme: cx.state(Theme::default()),
+        }.build(cx, |cx| {})
+    }
+}
+
+impl View for UserDashboard {
+    fn on_build(self, cx: &mut Context) -> Self {
+        // Easy multi-signal derived state
+        let welcome_message = cx.derived(move |s| {
+            if *self.is_logged_in.get(s) {
+                format!(
+                    "Welcome {}! You have {} messages", 
+                    self.user_name.get(s), 
+                    self.message_count.get(s)
+                )
+            } else {
+                "Please log in".to_string()
+            }
+        });
+
+        // Only recomputes when any dependency changes
+        Label::new(cx, welcome_message);
+
+        self
+    }
+}
+```
+
+Benefits:
+- **Natural Composition**: Multiple signals combine easily in derived state
+- **Automatic Dependency Tracking**: The system knows which signals the derived state depends on
+- **Efficient Updates**: Only recomputes when any dependency actually changes
+
+### 4. Application-Level State Management (Future Enhancement)
 
 As part of the signals migration, we anticipate converting the `Application` struct to a trait, similar to the `View` trait pattern. This would enable application-level state management:
 
@@ -185,7 +354,7 @@ The current closure-based application setup would be maintained initially for ba
 - No need for `#[derive(Lens)]`
 - No need for `#[derive(Data)]` 
 - No `Model` trait implementation required
-- Direct state manipulation
+- Direct state manipulation 
 - Simplified data access patterns
 
 ### 2. **Better Performance**
