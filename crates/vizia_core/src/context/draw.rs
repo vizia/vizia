@@ -61,6 +61,7 @@ pub struct DrawContext<'a> {
     pub(crate) cache: &'a mut CachedData,
     pub(crate) tree: &'a Tree<Entity>,
     pub(crate) models: &'a HashMap<Entity, HashMap<TypeId, Box<dyn ModelData>>>,
+    pub data: &'a mut RecoilRoot,
     pub(crate) views: &'a mut HashMap<Entity, Box<dyn ViewHandler>>,
     pub(crate) resource_manager: &'a ResourceManager,
     pub(crate) text_context: &'a mut TextContext,
@@ -1272,6 +1273,10 @@ impl DataContext for DrawContext<'_> {
         }
 
         None
+    }
+
+    fn store(&self) -> &crate::recoil::Store {
+        self.data.get_store()
     }
 }
 

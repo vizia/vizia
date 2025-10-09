@@ -42,6 +42,10 @@ impl<V> DataContext for Handle<'_, V> {
     fn localization_context(&self) -> Option<LocalizationContext<'_>> {
         Some(LocalizationContext::from_context(self.cx))
     }
+
+    fn store(&self) -> &crate::recoil::Store {
+        self.cx.data.get_store()
+    }
 }
 
 impl<V> Handle<'_, V> {

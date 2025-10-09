@@ -1,5 +1,5 @@
 use crate::binding::{Binding, Data, Res, ResGet};
-use crate::context::EventContext;
+use crate::context::{DataContext, EventContext, LocalizationContext};
 use crate::entity::Entity;
 use crate::prelude::ToStringLocalized;
 
@@ -338,8 +338,8 @@ impl<T: 'static> Signal<T> {
     }
 
     // Read-only operation, but records dependency
-    pub fn get<'a>(&self, store: &'a Store) -> &'a T {
-        store.get::<T>(&self.id).unwrap()
+    pub fn get<'a>(&self, store: &'a impl DataContext) -> &'a T {
+        store.store().get::<T>(&self.id).unwrap()
     }
 
     fn get_mut<'a>(&self, store: &'a mut Store) -> &'a mut T {
@@ -347,8 +347,8 @@ impl<T: 'static> Signal<T> {
     }
 
     // Mutations require mutable store access
-    pub fn set(&self, store: &mut Store, value: T) {
-        store.set(&self.id, value);
+    pub fn set(&self, store: &mut EventContext, value: T) {
+        store.data.get_store_mut().set(&self.id, value);
     }
 
     // Update takes a function that works with references
@@ -399,7 +399,8 @@ impl RecoilRoot {
 impl<T: Clone + ToStringLocalized> ToStringLocalized for Signal<T> {
     fn to_string_local(&self, cx: &impl crate::prelude::DataContext) -> String {
         if let Some(lc) = cx.localization_context() {
-            return self.get(lc.data.get_store()).to_string_local(cx);
+            // return self.get(lc.data.get_store()).to_string_local(cx);
+            return lc.data.get_store().get::<T>(&self.id).unwrap().to_string_local(cx);
         }
 
         String::new()
@@ -412,7 +413,9 @@ impl<T: Clone> ResGet<T> for Signal<T> {
         cx: &'a impl crate::prelude::DataContext,
     ) -> Option<crate::prelude::LensValue<'a, T>> {
         if let Some(lc) = cx.localization_context() {
-            return Some(crate::binding::LensValue::Borrowed(self.get(lc.data.get_store())));
+            return Some(crate::binding::LensValue::Borrowed(
+                lc.data.get_store().get(&self.id).unwrap(),
+            ));
         }
 
         panic!("No localization context available for Signal.");
@@ -446,5 +449,21 @@ impl<T: Clone> Res<T> for Signal<T> {
 impl<T: Clone> Data for Signal<T> {
     fn same(&self, other: &Self) -> bool {
         self.id == other.id
+    }
+}
+
+impl<T: std::fmt::Debug> std::fmt::Debug for Signal<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Signal({:?})", self.id)
+    }
+}
+
+impl DataContext for Store {
+    fn data<T: 'static>(&self) -> Option<&T> {
+        None
+    }
+
+    fn store(&self) -> &crate::recoil::Store {
+        self
     }
 }

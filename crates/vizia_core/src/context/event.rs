@@ -1417,6 +1417,10 @@ impl DataContext for EventContext<'_> {
     fn localization_context(&self) -> Option<LocalizationContext<'_>> {
         Some(LocalizationContext::from_event_context(self))
     }
+
+    fn store(&self) -> &crate::recoil::Store {
+        self.data.get_store()
+    }
 }
 
 impl EmitContext for EventContext<'_> {

@@ -976,6 +976,8 @@ pub trait DataContext {
     fn localization_context(&self) -> Option<LocalizationContext<'_>> {
         None
     }
+
+    fn store(&self) -> &crate::recoil::Store;
 }
 
 /// A trait for any Context-like object that lets you emit events.
@@ -1120,6 +1122,10 @@ impl DataContext for Context {
     fn localization_context(&self) -> Option<LocalizationContext<'_>> {
         Some(LocalizationContext::from_context(self))
     }
+
+    fn store(&self) -> &crate::recoil::Store {
+        self.data.get_store()
+    }
 }
 
 impl DataContext for LocalizationContext<'_> {
@@ -1146,6 +1152,10 @@ impl DataContext for LocalizationContext<'_> {
         }
 
         None
+    }
+
+    fn store(&self) -> &crate::recoil::Store {
+        self.data.get_store()
     }
 }
 

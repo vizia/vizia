@@ -291,6 +291,7 @@ pub(crate) fn draw_system(
                 cache: &mut cx.cache,
                 tree: &cx.tree,
                 models: &cx.models,
+                data: &mut cx.data,
                 views: &mut cx.views,
                 resource_manager: &cx.resource_manager,
                 text_context: &mut cx.text_context,
