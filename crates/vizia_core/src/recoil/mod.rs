@@ -361,6 +361,74 @@ impl<T: 'static> Signal<T> {
     pub fn observe(&self, store: &mut Store, entity: Entity) {
         store.observers.entry(self.id).or_default().insert(entity);
     }
+
+    /// Map the signal to a transformed value using the binding system.
+    /// This creates a reactive binding that updates when the source signal changes.
+    pub fn map<U: Clone + 'static, F>(&self, f: F) -> MappedSignal<T, U, F>
+    where
+        T: Clone,
+        F: Fn(&T) -> U + Clone + 'static,
+    {
+        MappedSignal::new(*self, f)
+    }
+}
+
+// Create a mapped signal type that works with the binding system
+#[derive(Clone)]
+pub struct MappedSignal<T: 'static, U, F> {
+    source: Signal<T>,
+    func: F,
+    phantom: PhantomData<U>,
+}
+
+impl<T: Clone + 'static, U: Clone + 'static, F: Fn(&T) -> U + Clone + 'static>
+    MappedSignal<T, U, F>
+{
+    pub fn new(source: Signal<T>, func: F) -> Self {
+        Self { source, func, phantom: PhantomData }
+    }
+}
+
+impl<T: Clone + 'static, U: Clone + 'static, F: Fn(&T) -> U + Clone + 'static> ResGet<U>
+    for MappedSignal<T, U, F>
+{
+    fn get_ref<'a>(
+        &'a self,
+        cx: &'a impl crate::prelude::DataContext,
+    ) -> Option<crate::prelude::LensValue<'a, U>> {
+        let source_value = self.source.get(cx);
+        let mapped_value = (self.func)(&source_value);
+        Some(crate::binding::LensValue::Owned(mapped_value))
+    }
+
+    fn get(&self, cx: &impl crate::prelude::DataContext) -> U {
+        let source_value = self.source.get(cx);
+        (self.func)(&source_value)
+    }
+}
+
+impl<T: Clone + 'static, U: Clone + 'static, F: Fn(&T) -> U + Clone + 'static> Res<U>
+    for MappedSignal<T, U, F>
+{
+    fn set_or_bind<Func>(
+        self,
+        cx: &mut crate::prelude::Context,
+        entity: crate::prelude::Entity,
+        closure: Func,
+    ) where
+        Self: Sized,
+        Func: 'static + Fn(&mut crate::prelude::Context, Self),
+    {
+        // Set up observation of the source signal
+        self.source.observe(cx.data.get_store_mut(), entity);
+
+        Binding::new(cx, self.source.clone(), move |cx| {
+            let mapped = MappedSignal::new(self.source, self.func.clone());
+            cx.with_current(entity, |cx| {
+                closure(cx, mapped);
+            });
+        });
+    }
 }
 
 // Root container
