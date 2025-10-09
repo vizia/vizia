@@ -289,3 +289,11 @@ path = "examples/views/divider.rs"
 [[example]]
 name = "resizable_stack"
 path = "examples/views/resizable_stack.rs"
+
+[[example]]
+name = "app_state"
+path = "examples/app_state.rs"
+
+[[example]]
+name = "signal_map_demo"
+path = "examples/signal_map_demo.rs"

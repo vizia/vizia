@@ -2,6 +2,7 @@
 #![allow(mismatched_lifetime_syntaxes)]
 
 pub mod application;
+mod application_trait;
 mod convert;
 pub mod window;
 pub mod window_modifiers;

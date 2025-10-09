@@ -14,6 +14,7 @@ extern crate self as vizia;
 
 pub(crate) mod accessibility;
 pub mod animation;
+
 pub mod binding;
 #[doc(hidden)]
 pub(crate) mod cache;
@@ -60,6 +61,7 @@ pub mod backend {
 /// Members which we recommend you wildcard-import.
 #[doc(hidden)]
 pub mod prelude {
+
     pub use super::binding::{
         Binding, Data, Index, Lens, LensExt, LensValue, Map, MapRef, Res, ResGet, StaticLens, Then,
         UnwrapLens, Wrapper,
