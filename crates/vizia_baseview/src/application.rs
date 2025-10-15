@@ -164,13 +164,12 @@ pub(crate) struct ApplicationRunner {
     /// mouse coordinates to physical window coordinates. For any other use within VIZIA itself this
     /// always needs to be multiplied by `user_scale_factor`.
     window_scale_factor: f64,
-    // /// The scale factor applied on top of the `window_scale` to convert the window's logical size
-    // /// to a physical size. If this is different from `*cx.user_scale_factor` after handling the
-    // /// events then the window will be resized.
-    // current_user_scale_factor: f64,
-    // /// The window's current logical size, before `user_scale_factor` has been applied. Needed to
-    // /// resize the window when changing the scale factor.
-    // current_window_size: WindowSize,
+    /// The scale factor applied on top of the `window_scale` to convert the window's logical size
+    /// to a physical size.
+    current_user_scale_factor: f64,
+    /// The window's current logical size, before `user_scale_factor` has been applied. Needed to
+    /// resize the window when changing the scale factor.
+    current_window_size: WindowSize,
     pub surface: skia_safe::Surface,
     pub dirty_surface: skia_safe::Surface,
     window_description: WindowDescription,
@@ -193,8 +192,11 @@ impl ApplicationRunner {
             event_manager: EventManager::new(),
             use_system_scaling,
             window_scale_factor,
-            //current_user_scale_factor: cx.user_scale_factor(),
-            //current_window_size: *cx.window_size(),
+            current_user_scale_factor: window_description.user_scale_factor,
+            current_window_size: WindowSize {
+                width: window_description.inner_size.width,
+                height: window_description.inner_size.height,
+            },
             cx,
             surface,
             dirty_surface,
@@ -219,6 +221,27 @@ impl ApplicationRunner {
                 if !window.has_focus() {
                     window.focus();
                 }
+            }
+
+            WindowEvent::SetSize(size) => {
+                let new_logical_width = size.width as f32 / self.window_scale_factor as f32;
+                let new_logical_height = size.height as f32 / self.window_scale_factor as f32;
+                window.resize(baseview::Size {
+                    width: new_logical_width as f64,
+                    height: new_logical_height as f64,
+                });
+            }
+
+            WindowEvent::SetUserScale(factor) => {
+                self.current_user_scale_factor = *factor as f64;
+                let new_logical_width =
+                    self.current_window_size.width as f32 * self.current_user_scale_factor as f32;
+                let new_logical_height =
+                    self.current_window_size.height as f32 * self.current_user_scale_factor as f32;
+                window.resize(baseview::Size {
+                    width: new_logical_width as f64,
+                    height: new_logical_height as f64,
+                });
             }
             _ => {}
         });
@@ -490,26 +513,11 @@ impl ApplicationRunner {
                         ))
                         .unwrap();
 
-                    // // We keep track of the current size before applying the user scale factor while
-                    // // baseview's logical size includes that factor so we need to compensate for it
-                    // self.current_window_size = *self.cx.window_size();
-                    // self.current_window_size.width = (window_info.logical_size().width
-                    //     / self.cx.user_scale_factor())
-                    // .round() as u32;
-                    // self.current_window_size.height = (window_info.logical_size().height
-                    //     / self.cx.user_scale_factor())
-                    // .round() as u32;
-                    // *self.cx.window_size() = self.current_window_size;
-
                     // Only use new DPI settings when `WindowScalePolicy::SystemScaleFactor` was
                     // used
                     if self.use_system_scaling {
                         self.window_scale_factor = window_info.scale();
                     }
-
-                    self.cx.set_scale_factor(
-                        self.window_scale_factor * self.window_description.user_scale_factor,
-                    );
 
                     let physical_size =
                         (window_info.physical_size().width, window_info.physical_size().height);
@@ -521,6 +529,22 @@ impl ApplicationRunner {
                     );
 
                     self.cx.needs_refresh(Entity::root());
+
+                    self.cx.send_event(Event::new(WindowEvent::WindowResized(WindowSize {
+                        width: physical_size.0,
+                        height: physical_size.1,
+                    })));
+
+                    self.cx.set_scale_factor(
+                        self.window_scale_factor * self.current_user_scale_factor,
+                    );
+
+                    self.current_window_size = WindowSize {
+                        width: (window_info.logical_size().width / self.current_user_scale_factor)
+                            as u32,
+                        height: (window_info.logical_size().height / self.current_user_scale_factor)
+                            as u32,
+                    };
                 }
                 baseview::WindowEvent::WillClose => {
                     self.cx.send_event(Event::new(WindowEvent::WindowClose));

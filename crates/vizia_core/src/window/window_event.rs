@@ -34,6 +34,8 @@ pub enum WindowEvent {
     WindowClose,
     /// Emitted when the window is moved.
     WindowMoved(WindowPosition),
+    /// Emitted when the window is resized.
+    WindowResized(WindowSize),
     /// Emitted when a file is dragged and then dropped onto the window.
     Drop(DropData),
     /// Emitted when a mouse button is double clicked.
@@ -100,6 +102,8 @@ pub enum WindowEvent {
     SetTitle(String),
     /// Sets the size of the window.
     SetSize(WindowSize),
+    /// Sets the scale factor of the window.
+    SetUserScale(f32),
     /// Sets the position of the window.
     SetPosition(WindowPosition),
     /// Sets the maximum size of the window.
