@@ -1,69 +1,79 @@
-use vizia_core::context::Context;
+use vizia_core::{application::App, model::Model};
 
 use crate::application::{Application, ApplicationError};
 
-/// Trait for defining application-level state and UI structure.
+/// A trait for creating Winit-based applications from `App` implementations.
 ///
-/// This provides a more structured approach to application setup compared to
-/// the closure-based `Application::new()` method, while enabling application-level
-/// state management with signals.
+/// This trait is automatically implemented for any type that implements both
+/// [`App`] and [`Model`], providing a bridge between your application logic
+/// and the Winit window system.
 ///
-/// # Examples
+/// # Usage
 ///
-/// ```
+/// 1. Create a struct with `Signal<T>` fields for reactive state
+/// 2. Implement `App` trait with `new()`, `on_build()`, and optionally `event()`
+/// 3. Call `YourApp::create()` to get an `Application` that can be configured and run
+///
+/// # Example
+///
+/// ```rust
 /// use vizia::prelude::*;
 ///
-/// struct MyApp {
-///     user_settings: Signal<UserSettings>,
-///     theme: Signal<Theme>,
+/// #[derive(Debug, Clone)]
+/// enum CounterEvent { Increment, Decrement }
+///
+/// struct CounterApp {
+///     count: Signal<i32>,
 /// }
 ///
-/// impl App for MyApp {
+/// impl App for CounterApp {
 ///     fn new(cx: &mut Context) -> Self {
-///         Self {
-///             user_settings: cx.state(UserSettings::default()),
-///             theme: cx.state(Theme::default()),
-///         }
+///         Self { count: cx.state(0) }
 ///     }
 ///
 ///     fn on_build(self, cx: &mut Context) -> Self {
 ///         VStack::new(cx, |cx| {
-///             HeaderView::new(cx, self.theme);
-///             MainView::new(cx, self.user_settings);
+///             Label::new(cx, self.count.map(|c| format!("Count: {}", c)));
+///             
+///             HStack::new(cx, |cx| {
+///                 Button::new(cx, |cx| Label::new(cx, "-"))
+///                     .on_press(|cx| cx.emit(CounterEvent::Decrement));
+///                 Button::new(cx, |cx| Label::new(cx, "+"))
+///                     .on_press(|cx| cx.emit(CounterEvent::Increment));
+///             });
 ///         });
-///
 ///         self
+///     }
+///
+///     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+///         event.map(|counter_event, _| match counter_event {
+///             CounterEvent::Increment => self.count.update(cx, |c| *c += 1),
+///             CounterEvent::Decrement => self.count.update(cx, |c| *c -= 1),
+///         });
 ///     }
 /// }
 ///
 /// fn main() -> Result<(), ApplicationError> {
-///     MyApp::run()
-///         .title("My Application")
-///         .inner_size((800, 600))
+///     CounterApp::create()
+///         .title("Counter")
+///         .inner_size((300, 200))
 ///         .run()
 /// }
 /// ```
-pub trait App: Sized + 'static {
-    /// Initialize application-level state.
-    fn new(cx: &mut Context) -> Self;
-
-    /// Build the application's UI structure.
+pub trait WinitApp: Sized + 'static {
+    /// Creates a new Winit application from an `App` implementation.
     ///
-    /// This method receives the application instance and should construct
-    /// the main UI hierarchy. The application instance is returned to
-    /// maintain ownership.
-    fn on_build(self, cx: &mut Context) -> Self;
+    /// Returns an `Application` that can be configured with window settings
+    /// like title, size, etc., then run with `.run()`.
+    fn create() -> Application;
+}
 
-    /// Optional cleanup method called when the application is shutting down.
-    ///
-    /// Override this to perform any necessary cleanup of application-level
-    /// state or resources.
-    fn on_exit(&mut self, _cx: &mut Context) {}
-
-    fn build() -> Application {
+impl<T: App + Model> WinitApp for T {
+    fn create() -> Application {
         Application::new(|cx| {
-            let app = Self::new(cx);
-            app.on_build(cx);
+            let mut app = T::new(cx);
+            app = app.view(cx);
+            app.build(cx);
         })
     }
 }

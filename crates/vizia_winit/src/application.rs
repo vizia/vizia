@@ -44,7 +44,7 @@ use winit::{
 // use raw_window_handle::{HasRawDisplayHandle, RawDisplayHandle};
 use vizia_window::{Anchor, AnchorTarget, WindowPosition};
 
-pub use super::application_trait::App;
+pub use super::application_trait::WinitApp;
 
 #[derive(Debug)]
 pub enum UserEvent {

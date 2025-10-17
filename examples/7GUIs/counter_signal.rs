@@ -29,7 +29,7 @@ impl View for Counter {
         Some("counter")
     }
 
-    fn on_build(self, cx: &mut Context) -> Self {
+    fn view(self, cx: &mut Context) -> Self {
         HStack::new(cx, move |cx| {
             Button::new(cx, |cx| Label::new(cx, "Increment"))
                 .on_press(|cx| cx.emit(CounterEvent::Increment));

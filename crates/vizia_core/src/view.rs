@@ -157,14 +157,14 @@ pub trait View: 'static + Sized {
 
         handle.cx.with_current(handle.entity, content);
 
-        let s = handle.cx.with_current(handle.entity, |cx| self.on_build(cx));
+        let s = handle.cx.with_current(handle.entity, |cx| self.view(cx));
 
         handle.cx.views.insert(id, Box::new(s));
 
         handle
     }
 
-    fn on_build(self, cx: &mut Context) -> Self {
+    fn view(self, cx: &mut Context) -> Self {
         self
     }
 

@@ -1,6 +1,14 @@
 use vizia::prelude::*;
 
-// Simple counter application using the App trait
+// Application events
+#[derive(Debug, Clone)]
+pub enum CounterEvent {
+    Increment,
+    Decrement,
+    Reset,
+}
+
+// Counter application using the App trait with application-level events
 struct CounterApp {
     count: Signal<i32>,
 }
@@ -10,32 +18,30 @@ impl App for CounterApp {
         Self { count: cx.state(0) }
     }
 
-    fn on_build(self, cx: &mut Context) -> Self {
+    fn view(self, cx: &mut Context) -> Self {
         VStack::new(cx, |cx| {
             Label::new(cx, "Counter App").font_size(24.0).font_weight(FontWeightKeyword::Bold);
 
             // Display the current count
             Label::new(cx, self.count.map(|count| format!("Count: {}", count))).font_size(32.0);
 
-            // Counter controls
+            // Counter controls - emit events instead of directly updating
             HStack::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "Decrement")).on_press(move |cx| {
-                    self.count.update(cx, |count| *count -= 1);
-                });
+                Button::new(cx, |cx| Label::new(cx, "Decrement"))
+                    .on_press(|cx| cx.emit(CounterEvent::Decrement));
 
-                Button::new(cx, |cx| Label::new(cx, "Reset")).on_press(move |cx| {
-                    self.count.set(cx, 0);
-                });
+                Button::new(cx, |cx| Label::new(cx, "Reset"))
+                    .on_press(|cx| cx.emit(CounterEvent::Reset));
 
-                Button::new(cx, |cx| Label::new(cx, "Increment")).on_press(move |cx| {
-                    self.count.update(cx, |count| *count += 1);
-                });
+                Button::new(cx, |cx| Label::new(cx, "Increment"))
+                    .on_press(|cx| cx.emit(CounterEvent::Increment));
             })
             .gap(Pixels(10.0));
 
             // Show derived state - whether count is even or odd
+            let count_signal = self.count; // Copy the signal for use in derived computation
             let parity = cx.derived(move |s| {
-                let count = self.count.get(s);
+                let count = count_signal.get(s);
                 if *count % 2 == 0 { "Even" } else { "Odd" }.to_string()
             });
 
@@ -48,31 +54,22 @@ impl App for CounterApp {
 
         self
     }
+
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|counter_event, _| match counter_event {
+            CounterEvent::Increment => {
+                self.count.update(cx, |count| *count += 1);
+            }
+            CounterEvent::Decrement => {
+                self.count.update(cx, |count| *count -= 1);
+            }
+            CounterEvent::Reset => {
+                self.count.set(cx, 0);
+            }
+        });
+    }
 }
 
 fn main() -> Result<(), ApplicationError> {
-    CounterApp::build().title("Simple Counter - App Trait Demo").inner_size((400, 300)).run()
-}
-
-// Show that the old approach still works for comparison
-#[allow(dead_code)]
-fn old_style_counter() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
-        let count = cx.state(0);
-
-        VStack::new(cx, |cx| {
-            Label::new(cx, "Old Style Counter");
-            Label::new(cx, count);
-
-            HStack::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "-"))
-                    .on_press(move |cx| count.update(cx, |c| *c -= 1));
-
-                Button::new(cx, |cx| Label::new(cx, "+"))
-                    .on_press(move |cx| count.update(cx, |c| *c += 1));
-            });
-        });
-    })
-    .title("Old Style Counter")
-    .run()
+    CounterApp::create().title("Counter").inner_size((400, 350)).run()
 }
