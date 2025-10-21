@@ -279,6 +279,11 @@ impl<'a> EventContext<'a> {
         self.style.dpi_factor as f32
     }
 
+    pub fn set_scale_factor(&mut self, scale: f32) {
+        self.style.dpi_factor = scale as f64;
+        self.style.needs_relayout();
+    }
+
     /// Converts logical points to physical pixels.
     pub fn logical_to_physical(&self, logical: f32) -> f32 {
         self.style.logical_to_physical(logical)

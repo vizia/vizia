@@ -85,7 +85,7 @@ impl ViziaWindow {
             WindowScalePolicy::ScaleFactor(scale) => (false, scale),
             // NOTE: This is not correct, but we should get a `Resized` event to correct this
             //       immediately after the window is created
-            WindowScalePolicy::SystemScaleFactor => (true, 1.25),
+            WindowScalePolicy::SystemScaleFactor => (true, 1.0),
         };
         let dpi_factor = window_scale_factor * win_desc.user_scale_factor;
 
