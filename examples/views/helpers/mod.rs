@@ -80,7 +80,7 @@ impl ExamplePage {
                 .bottom(Stretch(1.0))
                 .size(Auto);
 
-                theme_selection_dropdown(cx);
+                // theme_selection_dropdown(cx);
             })
             .height(Auto)
             .width(Stretch(1.0))

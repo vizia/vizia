@@ -22,7 +22,7 @@ pub enum CollapsibleEvent {
 /// ```
 #[derive(Lens)]
 pub struct Collapsible {
-    is_open: bool,
+    is_open: Signal<bool>,
 }
 
 impl Collapsible {
@@ -32,7 +32,8 @@ impl Collapsible {
         header: impl Fn(&mut Context),
         content: impl Fn(&mut Context),
     ) -> Handle<Self> {
-        Self { is_open: false }
+        let is_open = cx.state(false);
+        Self { is_open }
             .build(cx, |cx| {
                 // Header
                 HStack::new(cx, |cx| {
@@ -50,7 +51,7 @@ impl Collapsible {
                 })
                 .class("content");
             })
-            .toggle_class("open", Collapsible::is_open)
+            .toggle_class("open", is_open)
     }
 }
 
@@ -59,10 +60,10 @@ impl View for Collapsible {
         Some("collapsible")
     }
 
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|collapsible_event, _| match collapsible_event {
             CollapsibleEvent::ToggleOpen => {
-                self.is_open = !self.is_open;
+                self.is_open.update(cx, |is_open| *is_open = !*is_open);
             }
         });
     }
@@ -73,7 +74,9 @@ impl Handle<'_, Collapsible> {
     pub fn open(self, open: impl Res<bool>) -> Self {
         self.bind(open, |handle, open| {
             let open = open.get(&handle);
-            handle.modify(|collapsible| collapsible.is_open = open);
+            handle.modify2(|collapsible, cx| {
+                collapsible.is_open.set(cx, open);
+            });
         })
     }
 }

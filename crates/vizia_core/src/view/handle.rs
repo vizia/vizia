@@ -115,6 +115,25 @@ impl<V> Handle<'_, V> {
         self
     }
 
+    pub fn modify2<F>(mut self, f: F) -> Self
+    where
+        F: FnOnce(&mut V, &mut EventContext),
+        V: 'static,
+    {
+        if let Some(mut view_handler) = self.cx.views.remove(&self.entity) {
+            if let Some(view) = view_handler.downcast_mut::<V>() {
+                (f)(view, &mut EventContext::new(self.cx));
+            }
+
+            self.cx.views.insert(self.entity, view_handler);
+        }
+
+        // Send an event to force the modification to happen within the same event loop.
+        self.context().emit(WindowEvent::Redraw);
+
+        self
+    }
+
     /// Callback which is run when the view is built/rebuilt.
     pub fn on_build<F>(self, callback: F) -> Self
     where
