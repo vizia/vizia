@@ -26,7 +26,10 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { collapsed: cx.state(false) }.build(cx);
+
+        let collapsed = cx.state(false);
+
+        AppData { collapsed }.build(cx);
 
         ExamplePage::vertical(cx, |cx| {
             // Create a new button that toggles the collapsed state.
@@ -34,7 +37,6 @@ fn main() -> Result<(), ApplicationError> {
                 .on_press(|cx| cx.emit(AppEvent::ToggleCollapse));
 
             VStack::new(cx, |cx| {
-                let collapsed = AppData::collapsed.get(cx);
 
                 // Create a new collapsible view with a header and content.
                 Collapsible::new(

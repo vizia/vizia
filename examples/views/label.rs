@@ -1,42 +1,39 @@
 mod helpers;
 use helpers::*;
 use vizia::prelude::*;
-#[derive(Lens)]
+
 pub struct AppData {
-    text: String,
-    value: f32,
-    checked: bool,
+    checked: Signal<bool>,
 }
 #[derive(Debug)]
 pub enum AppEvent {
     Toggle,
 }
 impl Model for AppData {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::Toggle => {
-                self.checked ^= true;
+                self.checked.update(cx, |checked| *checked = !*checked);
             }
         });
     }
 }
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData {
-            text: String::from("As well as model data which implements ToString:"),
-            value: std::f32::consts::PI,
-            checked: false,
-        }
-        .build(cx);
+        let text = cx.state(String::from("As well as model data which implements ToString:"));
+        let value = cx.state(std::f32::consts::PI);
+        let checked = cx.state(false);
+
+        AppData { checked }.build(cx);
 
         ExamplePage::vertical(cx, |cx| {
             Label::new(cx, "A label can display a static string of unicode 😂")
                 .background_color(Color::gray())
                 .padding(Pixels(20.0));
 
-            Label::new(cx, AppData::text);
+            Label::new(cx, text);
 
-            Label::new(cx, AppData::value);
+            Label::new(cx, value);
 
             Label::new(cx, "Text which is too long for the label will be wrapped.")
                 .text_wrap(true)
@@ -48,7 +45,7 @@ fn main() -> Result<(), ApplicationError> {
                 .font_slant(FontSlant::Italic);
 
             HStack::new(cx, |cx| {
-                Checkbox::new(cx, AppData::checked)
+                Checkbox::new(cx, checked)
                     .on_toggle(|cx| cx.emit(AppEvent::Toggle))
                     .id("checkbox_1")
                     .top(Units::Pixels(2.0))

@@ -1,16 +1,18 @@
 mod helpers;
 use helpers::*;
 use vizia::prelude::*;
-#[derive(Clone, Lens)]
+#[derive(Clone)]
 struct AppData {
-    chip: String,
-    chips: Vec<String>,
+    chip: Signal<String>,
+    chips: Signal<Vec<String>>,
 }
 impl Model for AppData {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::CloseChip(index) => {
-                self.chips.remove(*index);
+                self.chips.update(cx, |chips| {
+                    chips.remove(*index);
+                });
             }
         })
     }
@@ -20,19 +22,18 @@ enum AppEvent {
 }
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData {
-            chip: "Chip".to_string(),
-            chips: vec!["red".to_string(), "green".to_string(), "blue".to_string()],
-        }
-        .build(cx);
+        let chip = cx.state("Chip".to_string());
+        let chips = cx.state(vec!["red".to_string(), "green".to_string(), "blue".to_string()]);
+
+        AppData { chip, chips }.build(cx);
 
         ExamplePage::vertical(cx, |cx| {
-            Chip::new(cx, AppData::chip);
-            List::new(cx, AppData::chips, |cx, index, item| {
-                Chip::new(cx, item).on_close(move |cx| cx.emit(AppEvent::CloseChip(index)));
-            })
-            .orientation(Orientation::Horizontal)
-            .horizontal_gap(Pixels(4.0));
+            Chip::new(cx, chip);
+            // List::new(cx, chips, |cx, index, item| {
+            //     Chip::new(cx, item).on_close(move |cx| cx.emit(AppEvent::CloseChip(index)));
+            // })
+            // .orientation(Orientation::Horizontal)
+            // .horizontal_gap(Pixels(4.0));
         });
     })
     .title("Chip")
