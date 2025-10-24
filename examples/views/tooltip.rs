@@ -25,6 +25,7 @@ fn main() -> Result<(), ApplicationError> {
                         .padding(Pixels(4.0))
                         .size(Auto)
                         .placement(Placement::TopStart)
+                        .arrow_size(Pixels(16.0))
                     })
                     .class("test");
 
