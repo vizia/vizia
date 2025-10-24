@@ -7,9 +7,11 @@ pub struct ToggleButton {
 
 impl ToggleButton {
     /// Create a new [ToggleButton] view.
+    /// `checked` is a [Signal] representing the toggle state of the button.
+    /// `content` is a closure that creates the content of the button.
     pub fn new<V: View>(
         cx: &mut Context,
-        lens: impl Lens<Target = bool>,
+        checked: Signal<bool>,
         content: impl Fn(&mut Context) -> Handle<V> + 'static,
     ) -> Handle<Self> {
         Self { on_toggle: None }
@@ -19,7 +21,7 @@ impl ToggleButton {
             .role(Role::Button)
             .navigable(true)
             .checkable(true) // To let the accesskit know button is toggleable
-            .checked(lens)
+            .checked(checked)
     }
 }
 
