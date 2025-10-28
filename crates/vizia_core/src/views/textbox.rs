@@ -66,21 +66,19 @@ pub enum TextEvent {
 /// as determined by the `ToString` and `FromStr` traits. The value type is used for validation and returned by
 /// the `on_submit` callback, which is triggered when the textbox is submitted with the enter key or when the textbox
 /// loses keyboard focus.
-#[derive(Lens)]
-pub struct Textbox<L: Lens> {
-    lens: L,
-    #[lens(ignore)]
+pub struct Textbox<L: 'static> {
+    lens: Signal<L>,
     kind: TextboxKind,
     edit: bool,
     transform: Rc<RefCell<(f32, f32)>>,
     on_edit: Option<Box<dyn Fn(&mut EventContext, String) + Send + Sync>>,
-    on_submit: Option<Box<dyn Fn(&mut EventContext, L::Target, bool) + Send + Sync>>,
+    on_submit: Option<Box<dyn Fn(&mut EventContext, L, bool) + Send + Sync>>,
     on_blur: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
     on_cancel: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
-    validate: Option<Box<dyn Fn(&L::Target) -> bool>>,
-    placeholder: String,
-    show_placeholder: bool,
-    show_caret: bool,
+    validate: Option<Box<dyn Fn(&L) -> bool>>,
+    placeholder: Signal<String>,
+    show_placeholder: Signal<bool>,
+    show_caret: Signal<bool>,
     caret_timer: Timer,
     selection: Selection,
     preedit_backup: Option<PreeditBackup>,
@@ -97,7 +95,7 @@ enum TextboxKind {
 
 impl<L> Textbox<L>
 where
-    L: Lens<Target: Data + Clone + ToStringLocalized + std::str::FromStr>,
+    L: 'static + Clone + ToStringLocalized + std::str::FromStr,
 {
     /// Creates a new single-line textbox.
     ///
@@ -118,7 +116,7 @@ where
     /// #
     /// Textbox::new(cx, AppData::text);
     /// ```
-    pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
+    pub fn new(cx: &mut Context, lens: Signal<L>) -> Handle<Self> {
         Self::new_core(cx, lens, TextboxKind::SingleLine)
     }
 
@@ -145,7 +143,7 @@ where
     /// #
     /// Textbox::new_multiline(cx, AppData::text, true);
     /// ```
-    pub fn new_multiline(cx: &mut Context, lens: L, wrap: bool) -> Handle<Self> {
+    pub fn new_multiline(cx: &mut Context, lens: Signal<L>, wrap: bool) -> Handle<Self> {
         Self::new_core(
             cx,
             lens,
@@ -153,8 +151,12 @@ where
         )
     }
 
-    fn new_core(cx: &mut Context, lens: L, kind: TextboxKind) -> Handle<Self> {
+    fn new_core(cx: &mut Context, lens: Signal<L>, kind: TextboxKind) -> Handle<Self> {
         let caret_timer = cx.environment().caret_timer;
+
+        let show_placeholder = cx.state(true);
+        let show_caret = cx.state(true);
+        let placeholder = cx.state(String::from(""));
 
         Self {
             lens,
@@ -166,9 +168,9 @@ where
             on_blur: None,
             on_cancel: None,
             validate: None,
-            placeholder: String::from(""),
-            show_placeholder: true,
-            show_caret: true,
+            placeholder,
+            show_placeholder,
+            show_caret,
             caret_timer,
             selection: Selection::new(0, 0),
             preedit_backup: None,
@@ -193,31 +195,31 @@ where
         .navigable(true)
         .role(Role::TextInput)
         .text_value(lens)
-        .toggle_class("caret", Self::show_caret)
+        .toggle_class("caret", show_caret)
         .text(lens)
-        .placeholder_shown(Self::show_placeholder)
-        .bind(lens, |handle, lens| {
+        .placeholder_shown(show_placeholder)
+        .bind(lens, move |handle, lens| {
             let mut text = lens.get(&handle).to_string_local(handle.cx);
             let flag = text.is_empty();
             if flag {
-                text = Self::placeholder.get(&handle).to_string_local(handle.cx);
+                text = placeholder.get(&handle).to_string_local(handle.cx);
             }
             handle
-                .modify(|textbox| {
-                    textbox.show_placeholder = flag;
+                .modify2(|textbox, cx| {
+                    textbox.show_placeholder.set(cx, flag);
                 })
                 .text(text);
         })
-        .bind(Self::show_placeholder, |handle, show_placeholder| {
-            let flag = show_placeholder.get(&handle);
+        .bind(show_placeholder, move |handle, show_placeholder| {
+            let flag = *show_placeholder.get(&handle);
             if flag {
-                let placeholder = Self::placeholder.get(&handle).to_string_local(handle.cx);
+                let placeholder = placeholder.get(&handle).to_string_local(handle.cx);
                 handle.text(placeholder);
             }
         })
-        .bind(Self::placeholder, |handle, placeholder| {
+        .bind(placeholder, move |handle, placeholder| {
             let placeholder = placeholder.get(&handle).to_string_local(handle.cx);
-            let flag = Self::show_placeholder.get(&handle);
+            let flag = *show_placeholder.get(&handle);
             if flag {
                 handle.text(placeholder);
             }
@@ -225,21 +227,31 @@ where
     }
 
     fn insert_text(&mut self, cx: &mut EventContext, txt: &str) {
+        let show_placeholder = *self.show_placeholder.get(cx);
+
+        // Store the new placeholder state before mutating
+        let mut new_placeholder_state = None;
+
         if let Some(text) = cx.style.text.get_mut(cx.current) {
-            if self.show_placeholder && !txt.is_empty() {
+            if show_placeholder && !txt.is_empty() {
                 text.clear();
-                self.show_placeholder = false;
             }
 
             text.edit(self.selection.range(), txt);
 
             self.selection = Selection::caret(self.selection.min() + txt.len());
 
-            self.show_placeholder = text.is_empty();
+            let is_empty = text.is_empty();
+            new_placeholder_state = Some(is_empty);
+
             cx.style.needs_text_update(cx.current);
         }
-    }
 
+        // Set the placeholder state after the mutable borrow is dropped
+        if let Some(state) = new_placeholder_state {
+            self.show_placeholder.set(cx, state);
+        }
+    }
     fn update_preedit(
         &mut self,
         cx: &mut EventContext,
@@ -250,12 +262,18 @@ where
             return;
         }
 
-        if let Some(text) = cx.style.text.get_mut(cx.current) {
-            if self.show_placeholder {
-                text.clear();
-                self.show_placeholder = false;
-            }
+        let show_placeholder = *self.show_placeholder.get(cx);
 
+        // Handle placeholder clearing separately to avoid overlapping borrows
+        if show_placeholder {
+            if let Some(text) = cx.style.text.get_mut(cx.current) {
+                text.clear();
+            }
+            self.show_placeholder.set(cx, false);
+        }
+
+        // Now we can safely work with text again
+        if let Some(text) = cx.style.text.get_mut(cx.current) {
             if !self.selection.is_caret() {
                 let start = self.selection.min();
                 let end = self.selection.max();
@@ -324,7 +342,7 @@ where
     }
 
     fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
-        if self.show_placeholder {
+        if *self.show_placeholder.get(cx) {
             return;
         }
 
@@ -366,17 +384,20 @@ where
             cx.style.needs_text_update(cx.current);
         }
 
-        if let Some(text) = cx.style.text.get_mut(cx.current) {
-            self.show_placeholder = text.is_empty();
+        if let Some(text) = cx.style.text.get(cx.current) {
+            self.show_placeholder.set(cx, text.is_empty());
         }
     }
 
     fn reset_text(&mut self, cx: &mut EventContext) {
-        if let Some(text) = cx.style.text.get_mut(cx.current) {
-            text.clear();
+        if cx.style.text.get_mut(cx.current).is_some() {
+            self.show_placeholder.set(cx, true);
             self.selection = Selection::caret(0);
-            self.show_placeholder = true;
-            *text = self.placeholder.clone();
+            let placeholder = self.placeholder.get(cx).clone();
+            if let Some(text) = cx.style.text.get_mut(cx.current) {
+                text.clear();
+                *text = placeholder;
+            }
             cx.style.needs_text_update(cx.current);
         }
     }
@@ -396,7 +417,7 @@ where
     }
 
     fn select_all(&mut self, cx: &mut EventContext) {
-        if self.show_placeholder {
+        if *self.show_placeholder.get(cx) {
             return;
         }
         if let Some(text) = cx.style.text.get(cx.current) {
@@ -407,7 +428,7 @@ where
     }
 
     fn select_word(&mut self, cx: &mut EventContext) {
-        if self.show_placeholder {
+        if *self.show_placeholder.get(cx) {
             return;
         }
         self.move_cursor(cx, Movement::Word(Direction::Upstream), false);
@@ -415,7 +436,7 @@ where
     }
 
     fn select_paragraph(&mut self, cx: &mut EventContext) {
-        if self.show_placeholder {
+        if *self.show_placeholder.get(cx) {
             return;
         }
         self.move_cursor(cx, Movement::ParagraphStart, false);
@@ -548,7 +569,7 @@ where
     }
 
     fn clone_text(&self, cx: &mut EventContext) -> String {
-        if self.show_placeholder {
+        if *self.show_placeholder.get(cx) {
             return String::new();
         }
 
@@ -562,7 +583,7 @@ where
     fn reset_caret_timer(&mut self, cx: &mut EventContext) {
         cx.stop_timer(self.caret_timer);
         if !cx.is_read_only() {
-            self.show_caret = true;
+            self.show_caret.set(cx, true);
             cx.start_timer(self.caret_timer);
         }
     }
@@ -736,7 +757,10 @@ where
     }
 }
 
-impl<L: Lens> Handle<'_, Textbox<L>> {
+impl<L> Handle<'_, Textbox<L>>
+where
+    L: 'static + Clone + ToStringLocalized + std::str::FromStr,
+{
     /// Sets the callback triggered when a textbox is edited, i.e. text is inserted/deleted.
     ///
     /// Callback provides the current text of the textbox.
@@ -753,7 +777,7 @@ impl<L: Lens> Handle<'_, Textbox<L>> {
     /// Callback provides the text of the textbox and a flag to indicate if the submit was due to a key press or a loss of focus.
     pub fn on_submit<F>(self, callback: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext, L::Target, bool) + Send + Sync,
+        F: 'static + Fn(&mut EventContext, L, bool) + Send + Sync,
     {
         self.modify(|textbox: &mut Textbox<L>| textbox.on_submit = Some(Box::new(callback)))
     }
@@ -779,7 +803,7 @@ impl<L: Lens> Handle<'_, Textbox<L>> {
     /// If a textbox is modified with the validate modifier then the `on_submit` will not be called if the text is invalid.
     pub fn validate<F>(self, is_valid: F) -> Self
     where
-        F: 'static + Fn(&L::Target) -> bool + Send + Sync,
+        F: 'static + Fn(&L) -> bool + Send + Sync,
     {
         self.modify(|textbox| textbox.validate = Some(Box::new(is_valid)))
     }
@@ -800,7 +824,7 @@ impl<L: Lens> Handle<'_, Textbox<L>> {
 
 impl<L> View for Textbox<L>
 where
-    L: Lens<Target: Data + ToStringLocalized + std::str::FromStr>,
+    L: 'static + Clone + ToStringLocalized + std::str::FromStr,
 {
     fn element(&self) -> Option<&'static str> {
         Some("textbox")
@@ -1294,7 +1318,7 @@ where
                     return;
                 }
 
-                if self.show_placeholder {
+                if *self.show_placeholder.get(cx) {
                     self.reset_text(cx);
                 }
 
@@ -1302,7 +1326,7 @@ where
 
                 let text = self.clone_text(cx);
 
-                if let Ok(value) = &text.parse::<L::Target>() {
+                if let Ok(value) = &text.parse::<L>() {
                     if let Some(validate) = &self.validate {
                         cx.set_valid(validate(value));
                     } else {
@@ -1340,7 +1364,7 @@ where
 
                     let text = self.clone_text(cx);
 
-                    if let Ok(value) = &text.parse::<L::Target>() {
+                    if let Ok(value) = &text.parse::<L>() {
                         if let Some(validate) = &self.validate {
                             cx.set_valid(validate(value));
                         } else {
@@ -1357,12 +1381,14 @@ where
             }
 
             TextEvent::MoveCursor(movement, selection) => {
-                if self.edit && !self.show_placeholder && self.preedit_backup.is_none() {
+                if self.edit && !*self.show_placeholder.get(cx) && self.preedit_backup.is_none() {
                     self.move_cursor(cx, *movement, *selection);
                 }
             }
 
-            TextEvent::SetPlaceholder(text) => self.placeholder.clone_from(text),
+            TextEvent::SetPlaceholder(text) => {
+                self.placeholder.update(cx, |placeholder| placeholder.clone_from(text))
+            }
 
             TextEvent::StartEdit => {
                 if !cx.is_disabled() && !self.edit {
@@ -1380,13 +1406,13 @@ where
                     let text = text.to_string_local(cx);
 
                     if text.is_empty() {
-                        self.show_placeholder = true;
+                        self.show_placeholder.set(cx, true);
                         self.selection = Selection::caret(0);
                     } else {
                         self.select_all(cx);
                     }
 
-                    if let Ok(value) = &text.parse::<L::Target>() {
+                    if let Ok(value) = &text.parse::<L>() {
                         if let Some(validate) = &self.validate {
                             cx.set_valid(validate(value));
                         } else {
@@ -1418,7 +1444,7 @@ where
 
                 self.select_all(cx);
 
-                if let Ok(value) = &text.parse::<L::Target>() {
+                if let Ok(value) = &text.parse::<L>() {
                     if let Some(validate) = &self.validate {
                         cx.set_valid(validate(value));
                     } else {
@@ -1459,7 +1485,7 @@ where
                 if let Some(callback) = &self.on_submit {
                     if cx.is_valid() {
                         let text = self.clone_text(cx);
-                        if let Ok(value) = text.parse::<L::Target>() {
+                        if let Ok(value) = text.parse::<L>() {
                             (callback)(cx, value, *reason);
                         }
                     }
@@ -1479,13 +1505,13 @@ where
             }
 
             TextEvent::Hit(posx, posy, selection) => {
-                if !self.show_placeholder {
+                if !self.show_placeholder.get(cx) {
                     self.hit(cx, *posx, *posy, *selection);
                 }
             }
 
             TextEvent::Drag(posx, posy) => {
-                if !self.show_placeholder {
+                if !self.show_placeholder.get(cx) {
                     self.drag(cx, *posx, *posy);
                 }
             }
@@ -1529,7 +1555,7 @@ where
 
                             let text = self.clone_text(cx);
 
-                            if let Ok(value) = &text.parse::<L::Target>() {
+                            if let Ok(value) = &text.parse::<L>() {
                                 if let Some(validate) = &self.validate {
                                     cx.set_valid(validate(value));
                                 } else {
@@ -1548,7 +1574,7 @@ where
             }
 
             TextEvent::ToggleCaret => {
-                self.show_caret ^= true;
+                self.show_caret.update(cx, |v| *v ^= true);
             }
         });
     }
