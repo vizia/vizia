@@ -1,3 +1,4 @@
+// The types used within vizia_core and vizia_style
 pub use skia_safe::canvas::SaveLayerRec;
 pub use skia_safe::gradient_shader::GradientShaderColors;
 pub use skia_safe::path::ArcSize;
