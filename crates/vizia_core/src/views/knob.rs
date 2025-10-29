@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(unused_variables)]
-use crate::vg;
 use morphorm::Units;
 
 use crate::prelude::*;
@@ -278,20 +277,21 @@ impl View for ArcTrack {
         let span = self.span.to_px(radius, 0.0);
 
         // Draw the track arc
-        let path = vg::Path::new();
+        let path = vizia_render::Path::new();
         // path.arc(centerx, centery, radius - span / 2.0, end, start, Solidity::Solid);
-        let oval = vg::Rect::new(bounds.left(), bounds.top(), bounds.right(), bounds.bottom());
+        let oval =
+            vizia_render::Rect::new(bounds.left(), bounds.top(), bounds.right(), bounds.bottom());
 
-        let mut paint = vg::Paint::default();
+        let mut paint = vizia_render::Paint::default();
         paint.set_color(background_color);
         paint.set_stroke_width(span);
-        paint.set_stroke_cap(vg::PaintCap::Round);
-        paint.set_style(vg::PaintStyle::Stroke);
+        paint.set_stroke_cap(vizia_render::PaintCap::Round);
+        paint.set_style(vizia_render::PaintStyle::Stroke);
         // canvas.draw_path(&path, &paint);
         canvas.draw_arc(oval, start, end - start, true, &paint);
 
         // Draw the active arc
-        let mut path = vg::Path::new();
+        let mut path = vizia_render::Path::new();
 
         let value = match self.mode {
             KnobMode::Continuous => self.normalized_value,
@@ -316,11 +316,11 @@ impl View for ArcTrack {
             path.arc_to(oval.with_inset((span / 2.0, span / 2.0)), start, current - start, false);
         }
 
-        let mut paint = vg::Paint::default();
+        let mut paint = vizia_render::Paint::default();
         paint.set_color(foreground_color);
         paint.set_stroke_width(span);
-        paint.set_stroke_cap(vg::PaintCap::Round);
-        paint.set_style(vg::PaintStyle::Stroke);
+        paint.set_stroke_cap(vizia_render::PaintCap::Round);
+        paint.set_style(vizia_render::PaintStyle::Stroke);
         paint.set_anti_alias(true);
         canvas.draw_path(&path, &paint);
     }
@@ -413,7 +413,7 @@ impl View for Ticks {
         let tick_len = self.tick_len.to_px(radius, 0.0);
         let line_width = self.tick_width.to_px(radius, 0.0);
         // Draw ticks
-        let mut path = vg::Path::new();
+        let mut path = vizia_render::Path::new();
         match self.mode {
             // can't really make ticks for a continuous knob
             KnobMode::Continuous => return,
@@ -432,11 +432,11 @@ impl View for Ticks {
                 }
             }
         }
-        let mut paint = vg::Paint::default();
+        let mut paint = vizia_render::Paint::default();
         paint.set_color(foreground_color);
         paint.set_stroke_width(line_width);
-        paint.set_stroke_cap(vg::PaintCap::Round);
-        paint.set_style(vg::PaintStyle::Stroke);
+        paint.set_stroke_cap(vizia_render::PaintCap::Round);
+        paint.set_style(vizia_render::PaintStyle::Stroke);
         canvas.draw_path(&path, &paint);
     }
 }
@@ -502,17 +502,17 @@ impl View for TickKnob {
         let tick_width = self.tick_width.to_px(radius, 0.0);
         let tick_len = self.tick_len.to_px(radius, 0.0);
         // Draw the circle
-        let mut path = vg::Path::new();
+        let mut path = vizia_render::Path::new();
         path.add_circle((centerx, centery), radius, None);
         // path.arc(centerx, centery, radius - span / 2.0, end, start, Solidity::Solid);
-        let mut paint = vg::Paint::default();
+        let mut paint = vizia_render::Paint::default();
         paint.set_color(background_color);
         paint.set_stroke_width(tick_width);
-        paint.set_stroke_cap(vg::PaintCap::Round);
-        paint.set_style(vg::PaintStyle::Stroke);
+        paint.set_stroke_cap(vizia_render::PaintCap::Round);
+        paint.set_style(vizia_render::PaintStyle::Stroke);
         canvas.draw_path(&path, &paint);
         // Draw the tick
-        let mut path = vg::Path::new();
+        let mut path = vizia_render::Path::new();
         let angle = match self.mode {
             KnobMode::Continuous => start + (end - start) * self.normalized_value,
             // snapping
@@ -533,11 +533,11 @@ impl View for TickKnob {
             centerx + angle.cos() * (radius - tick_width / 2.0),
             centery + angle.sin() * (radius - tick_width / 2.0),
         ));
-        let mut paint = vg::Paint::default();
+        let mut paint = vizia_render::Paint::default();
         paint.set_color(foreground_color);
         paint.set_stroke_width(tick_width);
-        paint.set_stroke_cap(vg::PaintCap::Round);
-        paint.set_style(vg::PaintStyle::Stroke);
+        paint.set_stroke_cap(vizia_render::PaintCap::Round);
+        paint.set_style(vizia_render::PaintStyle::Stroke);
         canvas.draw_path(&path, &paint);
     }
 }

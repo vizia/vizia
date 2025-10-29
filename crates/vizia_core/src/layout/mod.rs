@@ -32,9 +32,4 @@ pub(crate) mod node;
 
 pub use morphorm::{LayoutType, PositionType, Units};
 
-/// Represents an axis-aligned bounding box.
-pub mod bounds;
-
-pub use bounds::*;
-
 pub use cache::GeoChanged;

@@ -5,7 +5,7 @@ use vizia_style::{
     Opacity, PercentageOrNumber, Rect, Scale, Shadow, Transform, Translate, RGBA,
 };
 
-use skia_safe::Matrix;
+use vizia_render::Matrix;
 
 use crate::style::ImageOrGradient;
 

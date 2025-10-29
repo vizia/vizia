@@ -14,8 +14,8 @@ use hashbrown::{HashMap, HashSet};
 use unic_langid::LanguageIdentifier;
 
 pub(crate) enum ImageOrSvg {
-    Svg(skia_safe::svg::Dom),
-    Image(skia_safe::Image),
+    Svg(vizia_render::Dom),
+    Image(vizia_render::Image),
 }
 
 pub(crate) struct StoredImage {
@@ -95,8 +95,8 @@ impl ResourceManager {
             ImageId::root(),
             StoredImage {
                 image: ImageOrSvg::Image(
-                    skia_safe::Image::from_encoded(unsafe {
-                        skia_safe::Data::new_bytes(include_bytes!(
+                    vizia_render::Image::from_encoded(unsafe {
+                        vizia_render::Data::new_bytes(include_bytes!(
                             "../../resources/images/broken_image.png"
                         ))
                     })

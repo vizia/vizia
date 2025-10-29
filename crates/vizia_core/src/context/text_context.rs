@@ -1,8 +1,8 @@
-use skia_safe::textlayout::{Paragraph, TypefaceFontProvider};
-use skia_safe::{textlayout::FontCollection, FontMgr};
+use vizia_render::text::{FontCollection, FontMgr, Paragraph, TypefaceFontProvider};
 use vizia_storage::SparseSet;
 
-use crate::{entity::Entity, layout::BoundingBox};
+use crate::entity::Entity;
+use vizia_render::layout::BoundingBox;
 
 pub struct TextContext {
     pub font_collection: FontCollection,

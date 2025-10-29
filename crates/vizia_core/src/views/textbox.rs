@@ -4,15 +4,16 @@ use std::rc::Rc;
 // use crate::accessibility::IntoNode;
 use crate::prelude::*;
 
-use crate::text::{
+use vizia_render::text::{
     apply_movement, enforce_text_bounds, ensure_visible, offset_for_delete_backwards, Direction,
     EditableText, Movement, PreeditBackup, Selection, VerticalMovement,
 };
 // use crate::views::scrollview::SCROLL_SENSITIVITY;
 use accesskit::{ActionData, ActionRequest};
-use skia_safe::textlayout::{RectHeightStyle, RectWidthStyle};
-use skia_safe::{Paint, PaintStyle, Rect};
 use unicode_segmentation::UnicodeSegmentation;
+use vizia_render::layout::BoundingBox;
+use vizia_render::text::{RectHeightStyle, RectWidthStyle};
+use vizia_render::{Paint, PaintStyle, Rect};
 
 /// Events for modifying a textbox.
 pub enum TextEvent {

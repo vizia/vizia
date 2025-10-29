@@ -7,13 +7,9 @@ mod draw;
 mod event;
 mod proxy;
 mod resource;
+pub(crate) mod text_context;
 
 use log::debug;
-use skia_safe::{
-    svg,
-    textlayout::{FontCollection, TypefaceFontProvider},
-    FontMgr,
-};
 use std::cell::RefCell;
 use std::collections::{BinaryHeap, VecDeque};
 use std::rc::Rc;
@@ -23,6 +19,8 @@ use std::{
     sync::Arc,
 };
 use vizia_id::IdManager;
+use vizia_render::layout::BoundingBox;
+use vizia_render::text::{FontCollection, FontMgr, TypefaceFontProvider};
 use vizia_window::WindowDescription;
 
 #[cfg(feature = "clipboard")]
@@ -34,6 +32,7 @@ pub use draw::*;
 pub use event::*;
 pub use proxy::*;
 pub use resource::*;
+pub(crate) use text_context::TextContext;
 
 use crate::{
     binding::{Store, StoreId},
@@ -50,7 +49,6 @@ use crate::{cache::CachedData, resource::ImageOrSvg};
 
 use crate::prelude::*;
 use crate::resource::ResourceManager;
-use crate::text::TextContext;
 use vizia_input::{ImeState, MouseState};
 use vizia_storage::{ChildIterator, LayoutTreeIterator};
 
@@ -651,7 +649,7 @@ impl Context {
     /// `duration` - An optional duration for the timer. Pass `None` for a continuos timer.
     /// `callback` - A callback which is called on when the timer is started, ticks, and stops. Disambiguated by the `TimerAction` parameter of the callback.
     ///
-    /// Returns a `Timer` id which can be used to start and stop the timer.  
+    /// Returns a `Timer` id which can be used to start and stop the timer.
     ///
     /// # Example
     /// Creates a timer which calls the provided callback every second for 5 seconds:
@@ -664,7 +662,7 @@ impl Context {
     ///         TimerAction::Start => {
     ///             debug!("Start timer");
     ///         }
-    ///     
+    ///
     ///         TimerAction::Tick(delta) => {
     ///             debug!("Tick timer: {:?}", delta);
     ///         }
@@ -813,7 +811,7 @@ impl Context {
         };
 
         if let Some(image) =
-            skia_safe::Image::from_encoded(unsafe { skia_safe::Data::new_bytes(data) })
+            vizia_render::Image::from_encoded(unsafe { vizia_render::Data::new_bytes(data) })
         {
             match self.resource_manager.images.entry(id) {
                 Entry::Occupied(mut occ) => {
@@ -844,7 +842,8 @@ impl Context {
             id
         };
 
-        if let Ok(svg) = svg::Dom::from_bytes(data, self.text_context.default_font_manager.clone())
+        if let Ok(svg) =
+            vizia_render::Dom::from_bytes(data, self.text_context.default_font_manager.clone())
         {
             match self.resource_manager.images.entry(id) {
                 Entry::Occupied(mut occ) => {
@@ -925,7 +924,11 @@ impl Context {
 
 pub(crate) enum InternalEvent {
     Redraw,
-    LoadImage { path: String, image: Mutex<Option<skia_safe::Image>>, policy: ImageRetentionPolicy },
+    LoadImage {
+        path: String,
+        image: Mutex<Option<vizia_render::Image>>,
+        policy: ImageRetentionPolicy,
+    },
 }
 
 pub struct LocalizationContext<'a> {
@@ -1069,7 +1072,7 @@ pub trait EmitContext {
     /// # use instant::{Instant, Duration};
     /// # let cx = &mut Context::default();
     /// # enum AppEvent {Increment}
-    /// cx.schedule_emit_custom(    
+    /// cx.schedule_emit_custom(
     ///     Event::new(AppEvent::Increment)
     ///         .target(Entity::root())
     ///         .origin(cx.current())

@@ -4,6 +4,7 @@ use std::{
     any::{Any, TypeId},
     marker::PhantomData,
 };
+use vizia_render::layout::BoundingBox;
 
 /// A handle to a view which has been built into the tree.
 pub struct Handle<'a, V> {

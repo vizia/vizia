@@ -48,7 +48,7 @@ impl<'a> ResourceContext<'a> {
     pub fn load_image(
         &mut self,
         path: String,
-        image: skia_safe::Image,
+        image: vizia_render::Image,
         policy: ImageRetentionPolicy,
     ) {
         let id = if let Some(image_id) = self.resource_manager.image_ids.get(&path) {

@@ -82,7 +82,7 @@ impl ContextProxy {
         data: &[u8],
         policy: ImageRetentionPolicy,
     ) -> Result<(), ProxyEmitError> {
-        if let Some(image) = skia_safe::Image::from_encoded(skia_safe::Data::new_copy(data)) {
+        if let Some(image) = vizia_render::Image::from_encoded(vizia_render::Data::new_copy(data)) {
             self.emit(InternalEvent::LoadImage { path, image: Mutex::new(Some(image)), policy })?
         }
 

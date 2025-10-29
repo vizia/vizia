@@ -32,7 +32,6 @@ pub mod modifiers;
 pub mod resource;
 pub mod style;
 pub(crate) mod systems;
-pub(crate) mod text;
 #[doc(hidden)]
 pub mod tree;
 /// Helper utilities
@@ -44,11 +43,6 @@ pub mod window;
 pub mod recoil;
 mod storage;
 
-/// Contains types and functions used for custom drawing within views. This is a re-export of [skia-safe](https://github.com/rust-skia/rust-skia).
-pub mod vg {
-    pub use skia_safe::*;
-}
-
 /// A collection of built-in SVG icons.
 pub mod icons;
 
@@ -59,9 +53,22 @@ pub mod backend {
     pub use vizia_window::WindowDescription;
 }
 
+/// Types which are used for rendering. These are mostly re-exports from skia_safe.
+pub mod render {
+    pub use vizia_render::layout::BoundingBox;
+    pub use vizia_render::surface::Surface;
+    pub use vizia_render::Paint;
+    pub use vizia_render::PaintStyle;
+    pub use vizia_render::Path;
+    pub use vizia_render::Point;
+    pub use vizia_render::RRect;
+    pub use vizia_render::Rect;
+}
+
 /// Members which we recommend you wildcard-import.
 #[doc(hidden)]
 pub mod prelude {
+    pub use vizia_render::canvas::Canvas;
 
     pub use crate::application::App;
 
@@ -85,7 +92,8 @@ pub mod prelude {
     pub use super::events::{Event, Propagation, Timer, TimerAction};
     pub use super::include_style;
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
-    pub use super::layout::{BoundingBox, GeoChanged};
+    // pub use super::layout::BoundingBox;
+    pub use super::layout::GeoChanged;
     pub use super::localization::{Localized, ToStringLocalized};
     pub use super::modifiers::{
         AbilityModifiers, AccessibilityModifiers, ActionModifiers, LayoutModifiers,
@@ -97,7 +105,6 @@ pub mod prelude {
     pub use super::views::*;
     pub use super::window::{DropData, WindowEvent};
     pub use accesskit::{Action, Live, Role};
-    pub use skia_safe::Canvas;
     pub use vizia_derive::{Data, Lens};
     pub use vizia_id::GenerationalId;
     pub use vizia_input::{Code, Key, KeyChord, Modifiers, MouseButton, MouseButtonState};

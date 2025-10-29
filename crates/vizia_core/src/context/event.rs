@@ -16,9 +16,10 @@ use crate::resource::{ImageOrSvg, ResourceManager, StoredImage};
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use vizia_input::MouseState;
 
-use skia_safe::Matrix;
+use vizia_render::layout::BoundingBox;
+use vizia_render::Matrix;
 
-use crate::text::TextContext;
+use super::TextContext;
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
@@ -473,7 +474,7 @@ impl<'a> EventContext<'a> {
             id
         };
 
-        if let Some(image) = skia_safe::Image::from_encoded(skia_safe::Data::new_copy(data)) {
+        if let Some(image) = vizia_render::Image::from_encoded(vizia_render::Data::new_copy(data)) {
             match self.resource_manager.images.entry(id) {
                 Entry::Occupied(mut occ) => {
                     occ.get_mut().image = ImageOrSvg::Image(image);
@@ -1024,7 +1025,7 @@ impl<'a> EventContext<'a> {
         self.style.live.insert(self.current, live);
     }
 
-    /// Sets the view, by id name, which labels the current view for accessibility.  
+    /// Sets the view, by id name, which labels the current view for accessibility.
     pub fn labelled_by(&mut self, id: &str) {
         if let Some(entity) = self.resolve_entity_identifier(id) {
             self.style.labelled_by.insert(self.current, entity);
@@ -1244,7 +1245,7 @@ impl<'a> EventContext<'a> {
     /// `duration` - An optional duration for the timer. Pass `None` for a continuos timer.
     /// `callback` - A callback which is called on when the timer is started, ticks, and stops. Disambiguated by the `TimerAction` parameter of the callback.
     ///
-    /// Returns a `Timer` id which can be used to start and stop the timer.  
+    /// Returns a `Timer` id which can be used to start and stop the timer.
     ///
     /// # Example
     /// Creates a timer which calls the provided callback every second for 5 seconds:
@@ -1257,7 +1258,7 @@ impl<'a> EventContext<'a> {
     ///         TimerAction::Start => {
     ///             debug!("Start timer");
     ///         }
-    ///     
+    ///
     ///         TimerAction::Tick(delta) => {
     ///             debug!("Tick timer: {:?}", delta);
     ///         }

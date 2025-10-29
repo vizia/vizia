@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use vizia::prelude::*;
-use vizia::vg::{Paint, PaintStyle, Path, Point};
+use vizia::render::{Paint, PaintStyle, Path, Point};
 
 #[cfg(feature = "baseview")]
 fn main() {

@@ -1,5 +1,5 @@
 use vizia::prelude::*;
-use vizia::vg;
+use vizia::render;
 
 pub struct CustomView<L: Lens<Target = Color>> {
     color: L,
@@ -20,10 +20,10 @@ impl<L: Lens<Target = Color>> View for CustomView<L> {
     fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
         let col = self.color.get(cx);
         let bounds = cx.bounds();
-        let rect: vg::Rect = bounds.into();
-        let mut path = vg::Path::new();
+        let rect: render::Rect = bounds.into();
+        let mut path = render::Path::new();
         path.add_rect(rect, None);
-        let mut paint = vg::Paint::default();
+        let mut paint = render::Paint::default();
         paint.set_color(col);
         canvas.draw_path(&path, &paint);
     }

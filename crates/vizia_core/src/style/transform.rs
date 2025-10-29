@@ -1,7 +1,7 @@
-use skia_safe::Matrix;
+use vizia_render::Matrix;
 use vizia_style::{Angle, Scale, Transform, Translate};
 
-use crate::layout::BoundingBox;
+use vizia_render::layout::BoundingBox;
 
 /// Trait for converting a transform definition into a `Matrix`.
 pub(crate) trait IntoTransform {

@@ -1,10 +1,11 @@
 use crate::{animation::Interpolator, cache::CachedData, prelude::*};
 use morphorm::Node;
-use skia_safe::{
-    canvas::SaveLayerRec, ClipOp, ImageFilter, Matrix, Paint, Rect, SamplingOptions, Surface,
-};
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
+use vizia_render::canvas::ImageFilter;
+use vizia_render::layout::BoundingBox;
+use vizia_render::surface::Surface;
+use vizia_render::{canvas::SaveLayerRec, ClipOp, Matrix, Paint, Rect, SamplingOptions};
 use vizia_storage::{DrawChildIterator, LayoutTreeIterator};
 use vizia_style::BlendMode;
 
@@ -24,12 +25,12 @@ pub(crate) fn transform_system(cx: &mut Context) {
                     .transform_origin
                     .get(entity)
                     .map(|transform_origin| {
-                        let mut origin = skia_safe::Matrix::translate(bounds.top_left());
+                        let mut origin = vizia_render::Matrix::translate(bounds.top_left());
                         let offset = transform_origin.as_transform(bounds, scale_factor);
                         origin = offset * origin;
                         origin
                     })
-                    .unwrap_or(skia_safe::Matrix::translate(bounds.center()));
+                    .unwrap_or(vizia_render::Matrix::translate(bounds.center()));
                 // transform = origin * transform;
                 let mut transform = origin;
                 origin = origin.invert().unwrap();
@@ -61,7 +62,7 @@ pub(crate) fn transform_system(cx: &mut Context) {
                                     start.value.as_transform(bounds, scale_factor);
                                 let end_transform = end.value.as_transform(bounds, scale_factor);
                                 let t = animation_state.t;
-                                let animated_transform = skia_safe::Matrix::interpolate(
+                                let animated_transform = vizia_render::Matrix::interpolate(
                                     &start_transform,
                                     &end_transform,
                                     t,
@@ -128,7 +129,7 @@ pub(crate) fn transform_system(cx: &mut Context) {
             let transform =
                 cx.cache.transform.get(entity).copied().unwrap_or(Matrix::new_identity());
 
-            let rect: skia_safe::Rect = clip_bounds.into();
+            let rect: vizia_render::Rect = clip_bounds.into();
             let clip_bounds: BoundingBox = transform.map_rect(rect).0.into();
 
             let parent_clip_bounds = cx.cache.clip_path.get(parent).copied().unwrap_or(root_bounds);

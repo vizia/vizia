@@ -1,8 +1,7 @@
 use crate::context::TreeProps;
 use crate::prelude::*;
 use bitflags::bitflags;
-
-use crate::vg;
+use vizia_render::layout::BoundingBox;
 
 /// A model which can be used by views which contain a popup.
 #[derive(Debug, Default, Data, Lens, Clone)]
@@ -544,7 +543,7 @@ impl View for Arrow {
     }
     fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
         let bounds = cx.bounds();
-        let mut path = vg::Path::new();
+        let mut path = vizia_render::Path::new();
         match Popup::placement.get(cx) {
             Placement::Bottom | Placement::BottomStart | Placement::BottomEnd => {
                 path.move_to(bounds.bottom_left());
@@ -579,7 +578,7 @@ impl View for Arrow {
         path.close();
 
         let bg = cx.background_color();
-        let mut paint = vg::Paint::default();
+        let mut paint = vizia_render::Paint::default();
         paint.set_color(bg);
         canvas.draw_path(&path, &paint);
     }

@@ -51,6 +51,7 @@ vizia_input = { version = "0.3.0", path = "crates/vizia_input" }
 vizia_storage = { version = "0.3.0", path = "crates/vizia_storage" }
 vizia_style = { version = "0.3.0", path = "crates/vizia_style" }
 vizia_window = { version = "0.3.0", path = "crates/vizia_window" }
+vizia_render = { version = "0.3.0", path = "crates/vizia_render" }
 
 [workspace.lints.rust]
 # future_incompatible = "allow"

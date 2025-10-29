@@ -1,0 +1,28 @@
+[package]
+name = "vizia_render"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[features]
+clipboard = ["copypasta"]
+# x11 = ["copypasta?/x11"]
+# wayland = ["copypasta?/wayland"]
+# markdown = ["comrak"]
+# rayon = ["dep:rayon", "dep:dashmap", "hashbrown/rayon"]
+
+[dependencies]
+skia-safe = { version = "0.84", features = ["gl", "textlayout", "svg"] }
+morphorm = "0.7.0"
+log = "0.4"
+copypasta = {version = "0.10", optional = true, default-features = false }
+unicode-segmentation = "1.12"
+
+[target."cfg(target_os = \"linux\")".dependencies.skia-safe]
+version = "0.84"
+features = ["gl", "textlayout", "svg", "x11", "wayland"]
+
+[lints]
+workspace = true

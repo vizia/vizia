@@ -1,5 +1,6 @@
 use crate::context::TreeProps;
 use crate::prelude::*;
+use vizia_render::layout::BoundingBox;
 
 /// A view which represents a bar that can be dragged to manipulate a scrollview.
 pub struct Scrollbar<L1> {

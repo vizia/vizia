@@ -1,24 +1,22 @@
-use skia_safe::canvas::SaveLayerRec;
-use skia_safe::gradient_shader::GradientShaderColors;
-use skia_safe::path::ArcSize;
-use skia_safe::rrect::Corner;
-use skia_safe::wrapper::PointerWrapper;
-use skia_safe::{
-    BlurStyle, ClipOp, MaskFilter, Matrix, Paint, PaintStyle, Path, PathDirection, PathEffect,
-    Point, RRect, Rect, SamplingOptions, Shader, TileMode,
-};
 use std::any::{Any, TypeId};
 use std::f32::consts::SQRT_2;
+use vizia_render::canvas::Canvas;
+use vizia_render::layout::BoundingBox;
+use vizia_render::{
+    ArcSize, BlurStyle, ClipOp, Corner, GradientShaderColors, MaskFilter, Matrix, Paint,
+    PaintStyle, Path, PathDirection, PathEffect, Point, PointerWrapper, RRect, Rect,
+    SamplingOptions, SaveLayerRec, Shader, TileMode,
+};
 use vizia_style::LengthPercentageOrAuto;
 
 use hashbrown::HashMap;
 
+use super::TextContext;
 use crate::animation::Interpolator;
 use crate::cache::CachedData;
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::{ImageOrSvg, ResourceManager};
-use crate::text::TextContext;
 use vizia_input::MouseState;
 
 use super::ModelData;
@@ -157,7 +155,7 @@ impl DrawContext<'_> {
     }
 
     /// Returns the clip path of the current view.
-    pub fn clip_path(&self) -> Option<skia_safe::Path> {
+    pub fn clip_path(&self) -> Option<Path> {
         let bounds = self.bounds();
         let overflowx = self.style.overflowx.get(self.current).copied().unwrap_or_default();
         let overflowy = self.style.overflowy.get(self.current).copied().unwrap_or_default();
@@ -725,7 +723,7 @@ impl DrawContext<'_> {
             let path = self.path();
 
             let mut paint = Paint::default();
-            paint.set_color(skia_safe::Color::from_argb(
+            paint.set_color(vizia_render::Color::from_argb(
                 background_color.a(),
                 background_color.r(),
                 background_color.g(),
@@ -760,7 +758,7 @@ impl DrawContext<'_> {
 
                 BorderStyleKeyword::Dotted => {
                     paint.set_path_effect(PathEffect::dash(&[0.0, border_width * 2.0], 0.0));
-                    paint.set_stroke_cap(skia_safe::PaintCap::Round);
+                    paint.set_stroke_cap(vizia_render::PaintCap::Round);
                 }
 
                 _ => {}
@@ -854,7 +852,7 @@ impl DrawContext<'_> {
                 shadow_path.offset((shadow_x_offset, shadow_y_offset));
 
                 if shadow.inset {
-                    shadow_path = path.op(&shadow_path, skia_safe::PathOp::Difference).unwrap();
+                    shadow_path = path.op(&shadow_path, vizia_render::PathOp::Difference).unwrap();
                 }
 
                 canvas.save();
@@ -972,7 +970,7 @@ impl DrawContext<'_> {
                                         } else {
                                             index as f32 / (num_stops - 1) as f32
                                         };
-                                        (pos, skia_safe::Color::from(stop.color))
+                                        (pos, vizia_render::Color::from(stop.color))
                                     })
                                     .collect::<Vec<_>>();
 
@@ -990,7 +988,7 @@ impl DrawContext<'_> {
                                     }
                                 }
 
-                                let (offsets, colors): (Vec<f32>, Vec<skia_safe::Color>) =
+                                let (offsets, colors): (Vec<f32>, Vec<vizia_render::Color>) =
                                     stops.into_iter().unzip();
 
                                 let shader = Shader::linear_gradient(
@@ -1024,7 +1022,7 @@ impl DrawContext<'_> {
                                             index as f32 / (num_stops - 1) as f32
                                         };
 
-                                        (pos, skia_safe::Color::from(stop.color))
+                                        (pos, vizia_render::Color::from(stop.color))
                                     })
                                     .collect::<Vec<_>>();
 
@@ -1042,7 +1040,7 @@ impl DrawContext<'_> {
                                     }
                                 }
 
-                                let (offsets, colors): (Vec<f32>, Vec<skia_safe::Color>) =
+                                let (offsets, colors): (Vec<f32>, Vec<vizia_render::Color>) =
                                     stops.into_iter().unzip();
 
                                 let shader = Shader::radial_gradient(
@@ -1189,7 +1187,8 @@ impl DrawContext<'_> {
                                                 let mut paint = Paint::default();
 
                                                 paint.set_anti_alias(true);
-                                                paint.set_blend_mode(skia_safe::BlendMode::SrcIn);
+                                                paint
+                                                    .set_blend_mode(vizia_render::BlendMode::SrcIn);
                                                 paint.set_color(color);
                                                 canvas.draw_paint(&paint);
                                             }

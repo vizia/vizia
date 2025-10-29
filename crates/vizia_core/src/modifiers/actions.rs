@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use std::any::TypeId;
+use vizia_render::layout::BoundingBox;
 
 #[derive(Lens)]
 pub(crate) struct ModalModel {
