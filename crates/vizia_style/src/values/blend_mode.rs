@@ -25,26 +25,26 @@ define_enum! {
     }
 }
 
-impl From<BlendMode> for skia_safe::BlendMode {
+impl From<BlendMode> for vizia_render::BlendMode {
     fn from(value: BlendMode) -> Self {
         match value {
-            BlendMode::Plus => skia_safe::BlendMode::Plus,
-            BlendMode::Normal => skia_safe::BlendMode::SrcOver,
-            BlendMode::Multiply => skia_safe::BlendMode::Multiply,
-            BlendMode::Screen => skia_safe::BlendMode::Screen,
-            BlendMode::Overlay => skia_safe::BlendMode::Overlay,
-            BlendMode::Darken => skia_safe::BlendMode::Darken,
-            BlendMode::Lighten => skia_safe::BlendMode::Lighten,
-            BlendMode::ColorDodge => skia_safe::BlendMode::ColorDodge,
-            BlendMode::ColorBurn => skia_safe::BlendMode::ColorBurn,
-            BlendMode::HardLight => skia_safe::BlendMode::HardLight,
-            BlendMode::SoftLight => skia_safe::BlendMode::SoftLight,
-            BlendMode::Difference => skia_safe::BlendMode::Difference,
-            BlendMode::Exclusion => skia_safe::BlendMode::Exclusion,
-            BlendMode::Hue => skia_safe::BlendMode::Hue,
-            BlendMode::Saturation => skia_safe::BlendMode::Saturation,
-            BlendMode::Color => skia_safe::BlendMode::Color,
-            BlendMode::Luminosity => skia_safe::BlendMode::Luminosity,
+            BlendMode::Plus => vizia_render::BlendMode::Plus,
+            BlendMode::Normal => vizia_render::BlendMode::SrcOver,
+            BlendMode::Multiply => vizia_render::BlendMode::Multiply,
+            BlendMode::Screen => vizia_render::BlendMode::Screen,
+            BlendMode::Overlay => vizia_render::BlendMode::Overlay,
+            BlendMode::Darken => vizia_render::BlendMode::Darken,
+            BlendMode::Lighten => vizia_render::BlendMode::Lighten,
+            BlendMode::ColorDodge => vizia_render::BlendMode::ColorDodge,
+            BlendMode::ColorBurn => vizia_render::BlendMode::ColorBurn,
+            BlendMode::HardLight => vizia_render::BlendMode::HardLight,
+            BlendMode::SoftLight => vizia_render::BlendMode::SoftLight,
+            BlendMode::Difference => vizia_render::BlendMode::Difference,
+            BlendMode::Exclusion => vizia_render::BlendMode::Exclusion,
+            BlendMode::Hue => vizia_render::BlendMode::Hue,
+            BlendMode::Saturation => vizia_render::BlendMode::Saturation,
+            BlendMode::Color => vizia_render::BlendMode::Color,
+            BlendMode::Luminosity => vizia_render::BlendMode::Luminosity,
         }
     }
 }

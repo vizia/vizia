@@ -113,20 +113,20 @@ impl<'i> Parse<'i> for TextDecorationLine {
     }
 }
 
-impl From<TextDecorationLine> for skia_safe::textlayout::TextDecoration {
+impl From<TextDecorationLine> for vizia_render::text::TextDecoration {
     fn from(value: TextDecorationLine) -> Self {
-        let mut decoration = skia_safe::textlayout::TextDecoration::empty();
+        let mut decoration = vizia_render::text::TextDecoration::empty();
 
         decoration.set(
-            skia_safe::textlayout::TextDecoration::UNDERLINE,
+            vizia_render::text::TextDecoration::UNDERLINE,
             value.contains(TextDecorationLine::Underline),
         );
         decoration.set(
-            skia_safe::textlayout::TextDecoration::OVERLINE,
+            vizia_render::text::TextDecoration::OVERLINE,
             value.contains(TextDecorationLine::Overline),
         );
         decoration.set(
-            skia_safe::textlayout::TextDecoration::LINE_THROUGH,
+            vizia_render::text::TextDecoration::LINE_THROUGH,
             value.contains(TextDecorationLine::Strikethrough),
         );
 
@@ -151,14 +151,14 @@ define_enum! {
     }
 }
 
-impl From<TextDecorationStyle> for skia_safe::textlayout::TextDecorationStyle {
+impl From<TextDecorationStyle> for vizia_render::text::TextDecorationStyle {
     fn from(value: TextDecorationStyle) -> Self {
         match value {
-            TextDecorationStyle::Solid => skia_safe::textlayout::TextDecorationStyle::Solid,
-            TextDecorationStyle::Dashed => skia_safe::textlayout::TextDecorationStyle::Dashed,
-            TextDecorationStyle::Dotted => skia_safe::textlayout::TextDecorationStyle::Dotted,
-            TextDecorationStyle::Double => skia_safe::textlayout::TextDecorationStyle::Double,
-            TextDecorationStyle::Wavy => skia_safe::textlayout::TextDecorationStyle::Wavy,
+            TextDecorationStyle::Solid => vizia_render::text::TextDecorationStyle::Solid,
+            TextDecorationStyle::Dashed => vizia_render::text::TextDecorationStyle::Dashed,
+            TextDecorationStyle::Dotted => vizia_render::text::TextDecorationStyle::Dotted,
+            TextDecorationStyle::Double => vizia_render::text::TextDecorationStyle::Double,
+            TextDecorationStyle::Wavy => vizia_render::text::TextDecorationStyle::Wavy,
         }
     }
 }

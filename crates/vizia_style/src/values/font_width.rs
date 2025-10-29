@@ -1,4 +1,4 @@
-use skia_safe::font_style::Width;
+use vizia_render::text::Width;
 
 use crate::{CustomParseError, Ident, Parse, Percentage};
 

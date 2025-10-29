@@ -1,4 +1,4 @@
-use skia_safe::font_style::Slant;
+use vizia_render::text::Slant;
 
 use crate::{macros::define_enum, Parse};
 

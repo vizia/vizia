@@ -1,5 +1,6 @@
 use cssparser::*;
-use skia_safe::{font_arguments::variation_position::Coordinate, FourByteTag};
+use vizia_render::text::variation_position::Coordinate;
+use vizia_render::FourByteTag;
 
 use crate::{CustomParseError, Parse};
 

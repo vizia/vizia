@@ -797,15 +797,15 @@ fn hue(mut h: f32, m1: f32, m2: f32) -> f32 {
     m1
 }
 
-impl From<Color> for skia_safe::Color {
-    fn from(src: Color) -> skia_safe::Color {
-        skia_safe::Color::from_argb(src.a(), src.r(), src.g(), src.b())
+impl From<Color> for vizia_render::Color {
+    fn from(src: Color) -> vizia_render::Color {
+        vizia_render::Color::from_argb(src.a(), src.r(), src.g(), src.b())
     }
 }
 
-impl From<Color> for skia_safe::Color4f {
+impl From<Color> for vizia_render::Color4f {
     fn from(src: Color) -> Self {
-        skia_safe::Color4f {
+        vizia_render::Color4f {
             r: src.r() as f32 / 255.0,
             g: src.g() as f32 / 255.0,
             b: src.b() as f32 / 255.0,
@@ -814,9 +814,9 @@ impl From<Color> for skia_safe::Color4f {
     }
 }
 
-impl From<RGBA> for skia_safe::Color {
-    fn from(src: RGBA) -> skia_safe::Color {
-        skia_safe::Color::from_argb(src.a(), src.r(), src.g(), src.b())
+impl From<RGBA> for vizia_render::Color {
+    fn from(src: RGBA) -> vizia_render::Color {
+        vizia_render::Color::from_argb(src.a(), src.r(), src.g(), src.b())
     }
 }
 

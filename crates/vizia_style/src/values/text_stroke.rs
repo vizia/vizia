@@ -37,11 +37,11 @@ impl_parse! {
     }
 }
 
-impl From<TextStrokeStyle> for skia_safe::PaintStyle {
+impl From<TextStrokeStyle> for vizia_render::PaintStyle {
     fn from(value: TextStrokeStyle) -> Self {
         match value {
-            TextStrokeStyle::Stroke => skia_safe::PaintStyle::Stroke,
-            TextStrokeStyle::StrokeAndFill => skia_safe::PaintStyle::StrokeAndFill,
+            TextStrokeStyle::Stroke => vizia_render::PaintStyle::Stroke,
+            TextStrokeStyle::StrokeAndFill => vizia_render::PaintStyle::StrokeAndFill,
         }
     }
 }

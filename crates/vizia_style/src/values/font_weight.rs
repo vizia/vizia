@@ -1,5 +1,5 @@
 use cssparser::*;
-use skia_safe::font_style::Weight;
+use vizia_render::text::Weight;
 
 use crate::{macros::impl_parse, FontWeightKeyword, Parse};
 

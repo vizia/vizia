@@ -7,6 +7,8 @@ pub use skia_safe::BlendMode;
 pub use skia_safe::BlurStyle;
 pub use skia_safe::ClipOp;
 pub use skia_safe::Color;
+pub use skia_safe::Color4f;
+pub use skia_safe::FourByteTag;
 pub use skia_safe::MaskFilter;
 pub use skia_safe::Matrix;
 pub use skia_safe::Paint;

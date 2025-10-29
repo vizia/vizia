@@ -16,11 +16,16 @@ pub use backspace::*;
 pub mod preedit_backup;
 pub use preedit_backup::*;
 
+pub use skia_safe::font::*;
+pub use skia_safe::font_arguments::*;
+pub use skia_safe::font_metrics::*;
+pub use skia_safe::font_parameters::*;
+pub use skia_safe::font_style::*;
+pub use skia_safe::textlayout::*;
+pub use skia_safe::textlayout::{
+    FontCollection, Paragraph, ParagraphBuilder, ParagraphStyle, RectHeightStyle, RectWidthStyle,
+    TextDecoration, TextDecorationStyle, TextStyle, TypefaceFontProvider,
+};
 pub use skia_safe::{
-    font_arguments::VariationPosition,
-    textlayout::{
-        FontCollection, Paragraph, ParagraphBuilder, ParagraphStyle, RectHeightStyle,
-        RectWidthStyle, TextStyle, TypefaceFontProvider,
-    },
-    BlendMode, FontArguments, FontMgr, FontStyle, Paint,
+    font_arguments::VariationPosition, BlendMode, FontArguments, FontMgr, FontStyle, Paint,
 };
