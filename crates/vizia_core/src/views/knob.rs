@@ -132,10 +132,10 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         let move_virtual_slider = |self_ref: &mut Self, cx: &mut EventContext, new_normal: f32| {
-            self_ref.continuous_normal = new_normal.clamp(0.0, 1.0);
+            self_ref.continuous_normal = new_normal;
 
             if let Some(callback) = &self_ref.on_changing {
-                (callback)(cx, self_ref.continuous_normal);
+                (callback)(cx, self_ref.continuous_normal.clamp(0.0, 1.0));
             }
         };
 
