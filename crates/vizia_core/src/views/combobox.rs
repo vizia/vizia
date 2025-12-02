@@ -3,16 +3,15 @@ use std::marker::PhantomData;
 use crate::prelude::*;
 
 /// A ComboBox view which combines a textbox with a picklist, allowing users to filter to only the options matching a query.
-#[derive(Lens)]
 pub struct ComboBox<
     L1: Lens<Target = Vec<T>>,
     L2: Lens<Target = usize>,
     T: 'static + Data + ToString,
 > {
     // Text to filter the list.
-    filter_text: String,
+    filter_text: Signal<String>,
     // Text to display when the combobox is unfocused.
-    placeholder: String,
+    placeholder: Signal<String>,
     // Callback triggered when an item is selected.
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
     // Lens to a list of values.
@@ -20,7 +19,7 @@ pub struct ComboBox<
     // Lens to the selected value.
     selected: L2,
     // Whether the popup list is visible.
-    is_open: bool,
+    is_open: Signal<bool>,
 
     p: PhantomData<T>,
 }
@@ -38,19 +37,23 @@ where
 {
     /// Creates a new [ComboBox] view.
     pub fn new(cx: &mut Context, list_lens: L1, selected: L2) -> Handle<Self> {
+        let filter_text = cx.state(String::from(""));
+        let placeholder = cx.state(String::from("One"));
+        let is_open = cx.state(false);
+
         Self {
-            filter_text: String::from(""),
+            filter_text,
             on_select: None,
             list_lens,
             selected,
             p: PhantomData,
-            is_open: false,
-            placeholder: String::from("One"),
+            is_open,
+            placeholder,
         }
         .build(cx, |cx| {
             // Add listener to defocus when mouse is pressed outside the combobox.
             cx.add_listener(move |popup: &mut Self, cx, event| {
-                let flag: bool = popup.is_open;
+                let flag: bool = *popup.is_open.get(cx);
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
                         if flag && meta.origin != cx.current() {
@@ -72,7 +75,7 @@ where
                 });
             });
 
-            Textbox::new(cx, Self::filter_text)
+            Textbox::new(cx, filter_text)
                 .on_edit(|cx, txt| cx.emit(ComboBoxEvent::SetFilterText(txt)))
                 // Prevent the textbox from losing focus on blur. We control that with the listener instead.
                 .on_blur(|_| {})
@@ -80,14 +83,14 @@ where
                 .on_cancel(|_| {})
                 .width(Stretch(1.0))
                 .height(Pixels(32.0))
-                .placeholder(Self::placeholder)
+                .placeholder(placeholder)
                 .class("title");
 
-            Binding::new(cx, Self::is_open, move |cx, is_open| {
-                if is_open.get(cx) {
+            Binding::new(cx, is_open, move |cx| {
+                if *is_open.get(cx) {
                     Popup::new(cx, move |cx: &mut Context| {
                         // Binding to the filter text.
-                        Binding::new(cx, Self::filter_text, move |cx, filter_text| {
+                        Binding::new(cx, filter_text, move |cx| {
                             let f = filter_text.get(cx);
                             List::new_filtered(
                                 cx,
