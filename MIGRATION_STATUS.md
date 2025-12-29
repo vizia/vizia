@@ -12,7 +12,7 @@ This document tracks the progress of migrating from Lens-based state management 
 
 | Category | Migrated/Compatible | Remaining | Progress |
 |----------|---------------------|-----------|----------|
-| Core Views | 18 (8 migrated + 10 already compatible) | ~14 | ~56% |
+| Core Views | 19 (9 migrated + 10 already compatible) | ~13 | ~59% |
 | Examples | ~12 | ~38 | ~24% |
 | Infrastructure | Complete | - | 100% |
 
@@ -40,6 +40,7 @@ This document tracks the progress of migrating from Lens-based state management 
 | Tooltip | `crates/vizia_core/src/views/tooltip.rs` | 28c1f4cc | |
 | Switch | `crates/vizia_core/src/views/switch.rs` | - | Uses `impl Res<bool>` |
 | RadioButton | `crates/vizia_core/src/views/radio.rs` | - | Uses `impl Res<bool>` |
+| Rating | `crates/vizia_core/src/views/rating.rs` | - | Uses `Signal<u32>` + `impl Res<u32>` |
 
 ---
 
@@ -72,7 +73,6 @@ These store lenses as fields and/or use `lens.map()` internally:
 |------|------|---------|
 | Slider | `crates/vizia_core/src/views/slider.rs` | Stores `L: Lens` as field |
 | Knob | `crates/vizia_core/src/views/knob.rs` | Stores lens, multiple lens methods |
-| Rating | `crates/vizia_core/src/views/rating.rs` | Uses `lens.map()`, `#[derive(Lens)]` |
 | Spinbox | `crates/vizia_core/src/views/spinbox.rs` | Complex lens target |
 | Scrollbar | `crates/vizia_core/src/views/scrollbar.rs` | Range control |
 | XYPad | `crates/vizia_core/src/views/xypad.rs` | 2D lens target |

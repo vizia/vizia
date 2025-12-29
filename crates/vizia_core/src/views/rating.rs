@@ -1,9 +1,8 @@
 use crate::{icons::ICON_STAR_FILLED, prelude::*};
 
 /// A view which represents a rating as a number of filled stars.
-#[derive(Lens)]
 pub struct Rating {
-    rating: u32,
+    rating: Signal<u32>,
     max_rating: u32,
     on_change: Option<Box<dyn Fn(&mut EventContext, u32)>>,
 }
@@ -17,27 +16,31 @@ pub(crate) enum RatingEvent {
 
 impl Rating {
     /// Creates a new [Rating] view.
-    pub fn new(cx: &mut Context, max_rating: u32, lens: impl Lens<Target = u32>) -> Handle<Self> {
-        Self { rating: lens.get(cx), max_rating, on_change: None }
+    pub fn new<L: Res<u32>>(cx: &mut Context, max_rating: u32, value: L) -> Handle<Self> {
+        let initial = value.get(cx);
+        let rating = cx.state(initial);
+
+        Self { rating, max_rating, on_change: None }
             .build(cx, |cx| {
                 for i in 1..max_rating + 1 {
                     Svg::new(cx, ICON_STAR_FILLED)
-                        // .navigable(true)
                         .checkable(true)
                         .numeric_value(1)
                         .role(Role::RadioButton)
-                        .checked(lens.map(move |val| *val >= i))
-                        .toggle_class("foo", Rating::rating.map(move |val| *val >= i))
+                        .bind(rating, move |handle, val| {
+                            let v = *val.get(&handle);
+                            handle.checked(v >= i);
+                        })
                         .on_hover(move |ex| ex.emit(RatingEvent::SetRating(i)))
                         .on_press(|ex| ex.emit(RatingEvent::EmitRating));
                 }
             })
-            .numeric_value(Self::rating)
+            .numeric_value(rating)
             .navigable(true)
             .role(Role::RadioGroup)
-            .bind(lens, |handle, lens| {
-                let val = lens.get(&handle);
-                handle.modify(|rating| rating.rating = val);
+            .bind(value, move |handle, v| {
+                let val = v.get(&handle);
+                handle.modify2(|rating, cx| rating.rating.set(cx, val));
             })
     }
 }
@@ -49,20 +52,21 @@ impl View for Rating {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|rating_event, _| match rating_event {
-            RatingEvent::SetRating(val) => self.rating = *val,
+            RatingEvent::SetRating(val) => self.rating.set(cx, *val),
             RatingEvent::EmitRating => {
                 if let Some(callback) = &self.on_change {
-                    (callback)(cx, self.rating)
+                    (callback)(cx, *self.rating.get(cx))
                 }
             }
             RatingEvent::Increment => {
-                self.rating += 1;
-                self.rating %= self.max_rating + 1;
+                let current = *self.rating.get(cx);
+                self.rating.set(cx, (current + 1) % (self.max_rating + 1));
                 cx.emit(RatingEvent::EmitRating);
             }
             RatingEvent::Decrement => {
-                self.rating =
-                    if self.rating == 0 { self.max_rating } else { self.rating.saturating_sub(1) };
+                let current = *self.rating.get(cx);
+                let new_val = if current == 0 { self.max_rating } else { current.saturating_sub(1) };
+                self.rating.set(cx, new_val);
                 cx.emit(RatingEvent::EmitRating);
             }
         });
