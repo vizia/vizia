@@ -45,6 +45,7 @@ When in doubt:
 2. Inspect the commit history and messages that introduced the relevant code.
 3. Check `SIGNALS_PROPOSAL.md` for architectural direction and conceptual guardrails.  [oai_citation:1‡SIGNALS_PROPOSAL.md](sediment://file_00000000da4871f89a0fa89fe1449fc2)
 
+THERE IS ALSO A VIZIA-BOOK (md book - for the original lens-based (main) branch) in `~/vizia-book/` for more reference
 ---
 
 ## 3. Git Usage Requirements
