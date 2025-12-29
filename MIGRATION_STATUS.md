@@ -12,8 +12,8 @@ This document tracks the progress of migrating from Lens-based state management 
 
 | Category | Migrated/Compatible | Remaining | Progress |
 |----------|---------------------|-----------|----------|
-| Core Views | 19 (9 migrated + 10 already compatible) | ~13 | ~59% |
-| Examples | ~13 | ~37 | ~26% |
+| Core Views | 20 (10 migrated + 10 already compatible) | ~12 | ~63% |
+| Examples | ~18 | ~32 | ~36% |
 | Infrastructure | Complete | - | 100% |
 
 ---
@@ -41,6 +41,7 @@ This document tracks the progress of migrating from Lens-based state management 
 | Switch | `crates/vizia_core/src/views/switch.rs` | - | Uses `impl Res<bool>` |
 | RadioButton | `crates/vizia_core/src/views/radio.rs` | - | Uses `impl Res<bool>` |
 | Rating | `crates/vizia_core/src/views/rating.rs` | - | Uses `Signal<u32>` + `impl Res<u32>` |
+| Slider | `crates/vizia_core/src/views/slider.rs` | - | Full Signal architecture |
 
 ---
 
@@ -71,7 +72,6 @@ These store lenses as fields and/or use `lens.map()` internally:
 
 | View | File | Blocker |
 |------|------|---------|
-| Slider | `crates/vizia_core/src/views/slider.rs` | Stores `L: Lens` as field |
 | Knob | `crates/vizia_core/src/views/knob.rs` | Stores lens, multiple lens methods |
 | Spinbox | `crates/vizia_core/src/views/spinbox.rs` | Complex lens target |
 | Scrollbar | `crates/vizia_core/src/views/scrollbar.rs` | Range control |
@@ -112,6 +112,11 @@ These store lenses as fields and/or use `lens.map()` internally:
 | Label | `examples/views/label.rs` | Updated to signals |
 | Textbox | `examples/views/textbox.rs` | Updated to signals |
 | Toggle Button | `examples/views/toggle_button.rs` | Updated to signals |
+| Slider | `examples/views/slider.rs` | Updated to signals |
+| Timer | `examples/7GUIs/timer.rs` | Updated to signals |
+| Custom View | `examples/custom_view.rs` | Updated to signals |
+| Multiwindow | `examples/multiwindow.rs` | Updated to signals |
+| Popup Window | `examples/popup_window.rs` | Updated to signals |
 | Tooltip | `examples/views/tooltip.rs` | Updated to signals |
 
 ---

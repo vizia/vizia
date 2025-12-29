@@ -5,53 +5,30 @@ fn main() {
     panic!("This example is not supported on baseview");
 }
 
-#[derive(Lens)]
-struct AppData {
-    color: Color,
-    show_window: bool,
-}
-
-impl Model for AppData {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::ShowWindow => self.show_window = true,
-            AppEvent::WindowClosed => self.show_window = false,
-            AppEvent::SetRed(val) => {
-                self.color = Color::rgb((*val * 255.0) as u8, self.color.g(), self.color.b())
-            }
-            AppEvent::SetGreen(val) => {
-                self.color = Color::rgb(self.color.r(), (*val * 255.0) as u8, self.color.b())
-            }
-            AppEvent::SetBlue(val) => {
-                self.color = Color::rgb(self.color.r(), self.color.g(), (*val * 255.0) as u8)
-            }
-        })
-    }
-}
-
-pub enum AppEvent {
+enum AppEvent {
     ShowWindow,
     WindowClosed,
-    SetRed(f32),
-    SetGreen(f32),
-    SetBlue(f32),
 }
 
 #[cfg(not(feature = "baseview"))]
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { color: Color::white(), show_window: false }.build(cx);
+        // Color component signals
+        let red = cx.state(1.0f32);
+        let green = cx.state(1.0f32);
+        let blue = cx.state(1.0f32);
+        let show_window = cx.state(false);
 
-        Binding::new(cx, AppData::show_window, |cx, show_subwindow| {
-            if show_subwindow.get(cx) {
-                Window::new(cx, |cx| {
-                    VStack::new(cx, |cx: &mut Context| {
-                        Slider::new(cx, AppData::color.map(|c| c.r() as f32 / 255.0))
-                            .on_change(|cx, val| cx.emit(AppEvent::SetRed(val)));
-                        Slider::new(cx, AppData::color.map(|c| c.g() as f32 / 255.0))
-                            .on_change(|cx, val| cx.emit(AppEvent::SetGreen(val)));
-                        Slider::new(cx, AppData::color.map(|c| c.b() as f32 / 255.0))
-                            .on_change(|cx, val| cx.emit(AppEvent::SetBlue(val)));
+        Binding::new(cx, show_window, move |cx| {
+            if *show_window.get(cx) {
+                Window::new(cx, move |cx| {
+                    VStack::new(cx, move |cx: &mut Context| {
+                        Slider::new(cx, red)
+                            .on_change(move |cx, val| red.set(cx, val));
+                        Slider::new(cx, green)
+                            .on_change(move |cx, val| green.set(cx, val));
+                        Slider::new(cx, blue)
+                            .on_change(move |cx, val| blue.set(cx, val));
                     })
                     .padding(Pixels(20.0))
                     .alignment(Alignment::Center)
@@ -66,13 +43,21 @@ fn main() -> Result<(), ApplicationError> {
             }
         });
 
-        HStack::new(cx, |cx| {
+        // Derive color from RGB signals
+        let color = cx.derived(move |cx| {
+            let r = (*red.get(cx) * 255.0) as u8;
+            let g = (*green.get(cx) * 255.0) as u8;
+            let b = (*blue.get(cx) * 255.0) as u8;
+            Color::rgb(r, g, b)
+        });
+
+        HStack::new(cx, move |cx| {
             Button::new(cx, |cx| Label::new(cx, "Show Window"))
-                .on_press(|cx| cx.emit(AppEvent::ShowWindow));
+                .on_press(move |cx| show_window.set(cx, true));
         })
         .size(Auto)
         .padding(Pixels(20.0))
-        .background_color(AppData::color);
+        .background_color(color);
     })
     .title("Main")
     .run()

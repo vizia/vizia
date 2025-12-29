@@ -2,57 +2,45 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-#[derive(Debug, Lens)]
-pub struct AppData {
-    value: f32,
-}
-
-pub enum AppEvent {
-    SetValue(f32),
-}
-
-impl Model for AppData {
-    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::SetValue(val) => {
-                self.value = *val;
-            }
-        });
-    }
-}
-
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { value: 0.0 }.build(cx);
+        let value = cx.state(0.0f32);
 
         ExamplePage::new(cx, |cx| {
+            // Normalized slider (0..1) displaying -50..50 range
             HStack::new(cx, |cx| {
-                Slider::new(cx, AppData::value.map(|val| (val + 50.0) / 100.0))
+                let normalized = cx.state(0.5f32);
+                Slider::new(cx, normalized)
                     .range(0.0..1.0)
-                    .on_change(move |cx, val| cx.emit(AppEvent::SetValue(-50.0 + (val * 100.0))));
-                Label::new(cx, AppData::value.map(|val| format!("{:.2}", (val + 50.0) / 100.0)))
+                    .on_change(move |cx, val| {
+                        normalized.set(cx, val);
+                        value.set(cx, -50.0 + (val * 100.0));
+                    });
+                Label::new(cx, normalized.map(|val| format!("{:.2}", val)))
                     .width(Pixels(50.0));
             })
             .alignment(Alignment::Center)
             .height(Auto)
             .horizontal_gap(Pixels(8.0));
 
+            // Direct range slider
             HStack::new(cx, |cx| {
-                Slider::new(cx, AppData::value)
+                Slider::new(cx, value)
                     .range(-50.0..50.0)
-                    .on_change(move |cx, val| cx.emit(AppEvent::SetValue(val)));
-                Label::new(cx, AppData::value.map(|val| format!("{:.2}", val))).width(Pixels(50.0));
+                    .on_change(move |cx, val| value.set(cx, val));
+                Label::new(cx, value.map(|val| format!("{:.2}", val))).width(Pixels(50.0));
             })
             .alignment(Alignment::Center)
             .height(Auto)
             .horizontal_gap(Pixels(8.0));
 
+            // Vertical slider
             VStack::new(cx, |cx| {
-                Slider::new(cx, AppData::value)
+                Slider::new(cx, value)
                     .range(-50.0..50.0)
-                    .on_change(move |cx, val| cx.emit(AppEvent::SetValue(val)))
+                    .on_change(move |cx, val| value.set(cx, val))
                     .orientation(Orientation::Vertical);
-                Label::new(cx, AppData::value.map(|val| format!("{:.2}", val)))
+                Label::new(cx, value.map(|val| format!("{:.2}", val)))
                     .alignment(Alignment::Center)
                     .width(Pixels(50.0));
             })

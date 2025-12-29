@@ -2,6 +2,9 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
+// TODO: XYPad needs to be migrated to Signal architecture
+// For now this example uses signals for sliders but XYPad still uses Lens
+
 #[derive(Debug, Lens)]
 pub struct AppData {
     pub xy_data: (f32, f32),
@@ -10,8 +13,6 @@ pub struct AppData {
 #[derive(Debug)]
 pub enum AppEvent {
     XYPadChange(f32, f32),
-    XSliderChange(f32),
-    YSliderChange(f32),
 }
 
 impl Model for AppData {
@@ -19,12 +20,6 @@ impl Model for AppData {
         event.map(|app_event, _| match app_event {
             AppEvent::XYPadChange(value_x, value_y) => {
                 self.xy_data = (*value_x, *value_y);
-            }
-            AppEvent::XSliderChange(value_x) => {
-                self.xy_data.0 = *value_x;
-            }
-            AppEvent::YSliderChange(value_y) => {
-                self.xy_data.1 = *value_y;
             }
         });
     }
@@ -34,28 +29,44 @@ fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { xy_data: (0.25, 0.25) }.build(cx);
 
+        let x_value = cx.state(0.25f32);
+        let y_value = cx.state(0.25f32);
+
         ExamplePage::vertical(cx, |cx| {
             Label::new(cx, "2-dimensional XY Pad");
-            VStack::new(cx, |cx| {
-                HStack::new(cx, |cx| {
-                    Slider::new(cx, AppData::xy_data.map(|data| data.1))
+            VStack::new(cx, move |cx| {
+                HStack::new(cx, move |cx| {
+                    Slider::new(cx, y_value)
                         .width(Pixels(10.0))
                         .height(Pixels(100.0))
                         .range(0.0..1.0)
-                        .on_change(move |cx, val| cx.emit(AppEvent::YSliderChange(val)));
-                    // XY pad
+                        .orientation(Orientation::Vertical)
+                        .on_change(move |cx, val| {
+                            y_value.set(cx, val);
+                            let x = *x_value.get(cx);
+                            cx.emit(AppEvent::XYPadChange(x, val));
+                        });
+                    // XY pad (still uses Lens - TODO: migrate XYPad)
                     XYPad::new(cx, AppData::xy_data.map(|data| (data.0, data.1))).on_change(
-                        |ex, value_x, value_y| ex.emit(AppEvent::XYPadChange(value_x, value_y)),
+                        move |ex, value_x, value_y| {
+                            x_value.set(ex, value_x);
+                            y_value.set(ex, value_y);
+                            ex.emit(AppEvent::XYPadChange(value_x, value_y));
+                        },
                     );
                 })
                 .size(Auto)
                 .horizontal_gap(Pixels(5.0))
                 .alignment(Alignment::Center);
-                Slider::new(cx, AppData::xy_data.map(|data| data.0))
+                Slider::new(cx, x_value)
                     .width(Pixels(100.0))
                     .height(Pixels(10.0))
                     .range(0.0..1.0)
-                    .on_change(move |cx, val| cx.emit(AppEvent::XSliderChange(val)));
+                    .on_change(move |cx, val| {
+                        x_value.set(cx, val);
+                        let y = *y_value.get(cx);
+                        cx.emit(AppEvent::XYPadChange(val, y));
+                    });
             })
             .alignment(Alignment::Center);
         });

@@ -5,53 +5,29 @@ fn main() {
     panic!("This example is not supported on baseview");
 }
 
-#[derive(Lens)]
-struct AppData {
-    color: Color,
-    show_popup: bool,
-}
-
-impl Model for AppData {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::ShowPopup => self.show_popup = true,
-            AppEvent::PopupClosed => self.show_popup = false,
-            AppEvent::SetRed(val) => {
-                self.color = Color::rgb((*val * 255.0) as u8, self.color.g(), self.color.b())
-            }
-            AppEvent::SetGreen(val) => {
-                self.color = Color::rgb(self.color.r(), (*val * 255.0) as u8, self.color.b())
-            }
-            AppEvent::SetBlue(val) => {
-                self.color = Color::rgb(self.color.r(), self.color.g(), (*val * 255.0) as u8)
-            }
-        })
-    }
-}
-
-pub enum AppEvent {
-    ShowPopup,
+enum AppEvent {
     PopupClosed,
-    SetRed(f32),
-    SetGreen(f32),
-    SetBlue(f32),
 }
 
 #[cfg(not(feature = "baseview"))]
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { color: Color::white(), show_popup: false }.build(cx);
+        // Color component signals
+        let red = cx.state(1.0f32);
+        let green = cx.state(1.0f32);
+        let blue = cx.state(1.0f32);
+        let show_popup = cx.state(false);
 
-        Binding::new(cx, AppData::show_popup, |cx, show_subwindow| {
-            if show_subwindow.get(cx) {
-                Window::popup(cx, false, |cx| {
-                    VStack::new(cx, |cx: &mut Context| {
-                        Slider::new(cx, AppData::color.map(|c| c.r() as f32 / 255.0))
-                            .on_change(|cx, val| cx.emit(AppEvent::SetRed(val)));
-                        Slider::new(cx, AppData::color.map(|c| c.g() as f32 / 255.0))
-                            .on_change(|cx, val| cx.emit(AppEvent::SetGreen(val)));
-                        Slider::new(cx, AppData::color.map(|c| c.b() as f32 / 255.0))
-                            .on_change(|cx, val| cx.emit(AppEvent::SetBlue(val)));
+        Binding::new(cx, show_popup, move |cx| {
+            if *show_popup.get(cx) {
+                Window::popup(cx, false, move |cx| {
+                    VStack::new(cx, move |cx: &mut Context| {
+                        Slider::new(cx, red)
+                            .on_change(move |cx, val| red.set(cx, val));
+                        Slider::new(cx, green)
+                            .on_change(move |cx, val| green.set(cx, val));
+                        Slider::new(cx, blue)
+                            .on_change(move |cx, val| blue.set(cx, val));
                     })
                     .padding(Pixels(20.0))
                     .alignment(Alignment::Center)
@@ -66,12 +42,20 @@ fn main() -> Result<(), ApplicationError> {
             }
         });
 
-        HStack::new(cx, |cx| {
+        // Derive color from RGB signals
+        let color = cx.derived(move |cx| {
+            let r = (*red.get(cx) * 255.0) as u8;
+            let g = (*green.get(cx) * 255.0) as u8;
+            let b = (*blue.get(cx) * 255.0) as u8;
+            Color::rgb(r, g, b)
+        });
+
+        HStack::new(cx, move |cx| {
             Button::new(cx, |cx| Label::new(cx, "Show Popup"))
-                .on_press(|cx| cx.emit(AppEvent::ShowPopup));
+                .on_press(move |cx| show_popup.set(cx, true));
         })
         .padding(Pixels(20.0))
-        .background_color(AppData::color);
+        .background_color(color);
     })
     .title("Main")
     .position((100, 100))
