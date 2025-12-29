@@ -2,52 +2,34 @@ use crate::prelude::*;
 
 /// A simple progress bar that can be used to show the progress of something.
 ///
-/// The input lens need to be a lens to an [f32] with range of `0.0..1.0`.
+/// The input value should be in the range of `0.0..1.0`.
 ///
 /// # Example
 ///
-/// ### Vertical ProgressBar bound to the input lens
+/// ### Vertical ProgressBar bound to a signal
 /// ```
 /// # use vizia_core::prelude::*;
-/// # use vizia_derive::*;
 /// # let mut cx = &mut Context::default();
-/// # #[derive(Lens, Default)]
-/// # pub struct AppData {
-/// #     progress: f32,
-/// # }
-/// # impl Model for AppData {}
-/// # AppData::default().build(cx);
-/// ProgressBar::vertical(cx, AppData::progress);
+/// # let progress = cx.state(0.5f32);
+/// ProgressBar::vertical(cx, progress);
 /// ```
 ///
-/// ### Horizontal ProgressBar bound to the input lens
+/// ### Horizontal ProgressBar bound to a signal
 /// ```
 /// # use vizia_core::prelude::*;
-/// # use vizia_derive::*;
 /// # let mut cx = &mut Context::default();
-/// # #[derive(Lens, Default)]
-/// # pub struct AppData {
-/// #     progress: f32,
-/// # }
-/// # impl Model for AppData {}
-/// # AppData::default().build(cx);
-/// ProgressBar::horizontal(cx, AppData::progress);
+/// # let progress = cx.state(0.5f32);
+/// ProgressBar::horizontal(cx, progress);
 /// ```
 ///
 /// ### A Horizontal ProgressBar with a label beside it to show the progress
 /// ```
 /// # use vizia_core::prelude::*;
-/// # use vizia_derive::*;
 /// # let mut cx = &mut Context::default();
-/// # #[derive(Lens, Default)]
-/// # pub struct AppData {
-/// #     progress: f32,
-/// # }
-/// # impl Model for AppData {}
-/// # AppData::default().build(cx);
+/// # let progress = cx.state(0.5f32);
 /// HStack::new(cx, |cx| {
-///     ProgressBar::horizontal(cx, AppData::progress);
-///     Label::new(cx, AppData::progress.map(|v| format!("{:.0}%", v * 100.0)));
+///     ProgressBar::horizontal(cx, progress);
+///     Label::new(cx, progress.map(|v| format!("{:.0}%", v * 100.0)));
 /// });
 /// ```
 pub struct ProgressBar;
@@ -59,51 +41,44 @@ impl View for ProgressBar {
 }
 
 impl ProgressBar {
-    /// Creates a new progress bar bound to the value targeted by the lens.
+    /// Creates a new progress bar bound to the given value.
     ///
     /// # Example
     ///
     /// ```
     /// # use vizia_core::prelude::*;
-    /// # use vizia_derive::*;
     /// # let mut cx = &mut Context::default();
-    /// # #[derive(Lens, Default)]
-    /// # pub struct AppData {
-    /// #     value: f32,
-    /// # }
-    /// # impl Model for AppData {}
-    /// # AppData::default().build(cx);
-    /// ProgressBar::new(cx, AppData::value, Orientation::Horizontal);
+    /// # let progress = cx.state(0.5f32);
+    /// ProgressBar::new(cx, progress, Orientation::Horizontal);
     /// ```
-    pub fn new<L>(cx: &mut Context, lens: L, orientation: Orientation) -> Handle<Self>
-    where
-        L: Lens<Target = f32>,
-    {
+    pub fn new<L: Res<f32>>(cx: &mut Context, value: L, orientation: Orientation) -> Handle<Self> {
         match orientation {
-            Orientation::Horizontal => Self::horizontal(cx, lens),
-            Orientation::Vertical => Self::vertical(cx, lens),
+            Orientation::Horizontal => Self::horizontal(cx, value),
+            Orientation::Vertical => Self::vertical(cx, value),
         }
     }
 
-    /// Creates a new horizontal progress bar bound to the value targeted by the lens.
-    pub fn horizontal<L>(cx: &mut Context, lens: L) -> Handle<Self>
-    where
-        L: Lens<Target = f32>,
-    {
+    /// Creates a new horizontal progress bar bound to the given value.
+    pub fn horizontal<L: Res<f32>>(cx: &mut Context, value: L) -> Handle<Self> {
         Self.build(cx, |cx| {
-            let progress = lens.map(|v| Units::Percentage(v * 100.0));
-            Element::new(cx).width(progress).class("progressbar-bar");
+            Element::new(cx)
+                .bind(value, |handle, val| {
+                    let v = val.get(&handle);
+                    handle.width(Units::Percentage(v * 100.0));
+                })
+                .class("progressbar-bar");
         })
     }
 
-    /// Creates a new vertical progress bar bound to the value targeted by the lens.
-    pub fn vertical<L>(cx: &mut Context, lens: L) -> Handle<Self>
-    where
-        L: Lens<Target = f32>,
-    {
+    /// Creates a new vertical progress bar bound to the given value.
+    pub fn vertical<L: Res<f32>>(cx: &mut Context, value: L) -> Handle<Self> {
         Self.build(cx, |cx| {
-            let progress = lens.map(|v| Units::Percentage(v * 100.0));
-            Element::new(cx).top(Stretch(1.0)).height(progress).class("progressbar-bar");
+            Element::new(cx)
+                .bind(value, |handle, val| {
+                    let v = val.get(&handle);
+                    handle.top(Stretch(1.0)).height(Units::Percentage(v * 100.0));
+                })
+                .class("progressbar-bar");
         })
     }
 }

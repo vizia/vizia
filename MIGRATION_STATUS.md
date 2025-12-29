@@ -12,7 +12,7 @@ This document tracks the progress of migrating from Lens-based state management 
 
 | Category | Migrated/Compatible | Remaining | Progress |
 |----------|---------------------|-----------|----------|
-| Core Views | 17 (8 migrated + 9 already compatible) | ~15 | ~53% |
+| Core Views | 18 (8 migrated + 10 already compatible) | ~14 | ~56% |
 | Examples | ~12 | ~38 | ~24% |
 | Infrastructure | Complete | - | 100% |
 
@@ -58,6 +58,7 @@ These views already use `impl Res<T>` or closures, making them compatible with b
 | Dropdown | `crates/vizia_core/src/views/dropdown.rs` | Closures, internal popup state |
 | Divider | `crates/vizia_core/src/views/divider.rs` | No state |
 | Element | `crates/vizia_core/src/views/element.rs` | No state |
+| Progressbar | `crates/vizia_core/src/views/progressbar.rs` | Uses `impl Res<f32>` |
 
 ---
 
@@ -71,7 +72,6 @@ These store lenses as fields and/or use `lens.map()` internally:
 |------|------|---------|
 | Slider | `crates/vizia_core/src/views/slider.rs` | Stores `L: Lens` as field |
 | Knob | `crates/vizia_core/src/views/knob.rs` | Stores lens, multiple lens methods |
-| Progressbar | `crates/vizia_core/src/views/progressbar.rs` | Uses `lens.map()` for percentage |
 | Rating | `crates/vizia_core/src/views/rating.rs` | Uses `lens.map()`, `#[derive(Lens)]` |
 | Spinbox | `crates/vizia_core/src/views/spinbox.rs` | Complex lens target |
 | Scrollbar | `crates/vizia_core/src/views/scrollbar.rs` | Range control |
