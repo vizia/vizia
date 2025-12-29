@@ -12,8 +12,8 @@ This document tracks the progress of migrating from Lens-based state management 
 
 | Category | Migrated/Compatible | Remaining | Progress |
 |----------|---------------------|-----------|----------|
-| Core Views | 20 (10 migrated + 10 already compatible) | ~12 | ~63% |
-| Examples | ~18 | ~32 | ~36% |
+| Core Views | 21 (11 migrated + 10 already compatible) | ~11 | ~66% |
+| Examples | ~20 | ~30 | ~40% |
 | Infrastructure | Complete | - | 100% |
 
 ---
@@ -42,6 +42,7 @@ This document tracks the progress of migrating from Lens-based state management 
 | RadioButton | `crates/vizia_core/src/views/radio.rs` | - | Uses `impl Res<bool>` |
 | Rating | `crates/vizia_core/src/views/rating.rs` | - | Uses `Signal<u32>` + `impl Res<u32>` |
 | Slider | `crates/vizia_core/src/views/slider.rs` | - | Full Signal architecture |
+| Knob | `crates/vizia_core/src/views/knob.rs` | - | Full Signal architecture |
 
 ---
 
@@ -72,7 +73,6 @@ These store lenses as fields and/or use `lens.map()` internally:
 
 | View | File | Blocker |
 |------|------|---------|
-| Knob | `crates/vizia_core/src/views/knob.rs` | Stores lens, multiple lens methods |
 | Spinbox | `crates/vizia_core/src/views/spinbox.rs` | Complex lens target |
 | Scrollbar | `crates/vizia_core/src/views/scrollbar.rs` | Range control |
 | XYPad | `crates/vizia_core/src/views/xypad.rs` | 2D lens target |
@@ -117,6 +117,7 @@ These store lenses as fields and/or use `lens.map()` internally:
 | Custom View | `examples/custom_view.rs` | Updated to signals |
 | Multiwindow | `examples/multiwindow.rs` | Updated to signals |
 | Popup Window | `examples/popup_window.rs` | Updated to signals |
+| Knob | `examples/views/knob.rs` | Updated to signals |
 | Tooltip | `examples/views/tooltip.rs` | Updated to signals |
 
 ---

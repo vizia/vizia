@@ -11,11 +11,11 @@ static DEFAULT_WHEEL_SCALAR: f32 = 0.005;
 static DEFAULT_ARROW_SCALAR: f32 = 0.1;
 static DEFAULT_MODIFIER_SCALAR: f32 = 0.04;
 
-use std::{default, f32::consts::PI};
+use std::f32::consts::PI;
 
 /// A circular view which represents a value.
-pub struct Knob<L> {
-    lens: L,
+pub struct Knob {
+    value: Signal<f32>,
     default_normal: f32,
 
     is_dragging: bool,
@@ -30,21 +30,22 @@ pub struct Knob<L> {
     on_changing: Option<Box<dyn Fn(&mut EventContext, f32)>>,
 }
 
-impl<L: Lens<Target = f32>> Knob<L> {
+impl Knob {
     /// Create a new [Knob] view.
     pub fn new(
         cx: &mut Context,
-        normalized_default: impl Res<f32>,
-        lens: L,
+        normalized_default: f32,
+        value: Signal<f32>,
         centered: bool,
     ) -> Handle<Self> {
+        let initial = *value.get(cx);
         Self {
-            lens,
-            default_normal: normalized_default.get(cx),
+            value,
+            default_normal: normalized_default,
 
             is_dragging: false,
             prev_drag_y: 0.0,
-            continuous_normal: lens.get(cx),
+            continuous_normal: initial,
 
             drag_scalar: DEFAULT_DRAG_SCALAR,
             wheel_scalar: DEFAULT_WHEEL_SCALAR,
@@ -64,36 +65,40 @@ impl<L: Lens<Target = f32>> Knob<L> {
                     60.,
                     KnobMode::Continuous,
                 )
-                .value(lens)
+                .value(value)
                 .class("knob-track");
 
                 HStack::new(cx, |cx| {
                     Element::new(cx).class("knob-tick");
                 })
-                .rotate(lens.map(|v| Angle::Deg(*v * 300.0 - 150.0)))
+                .bind(value, |handle, v| {
+                    let val = *v.get(&handle);
+                    handle.rotate(Angle::Deg(val * 300.0 - 150.0));
+                })
                 .class("knob-head");
             });
         })
         .navigable(true)
     }
 
-    /// Create a custom [Knob] view.
+    /// Create a custom [Knob] view with custom content.
     pub fn custom<F, V: View>(
         cx: &mut Context,
         default_normal: f32,
-        lens: L,
+        value: Signal<f32>,
         content: F,
     ) -> Handle<'_, Self>
     where
-        F: 'static + Fn(&mut Context, L) -> Handle<V>,
+        F: 'static + Fn(&mut Context, Signal<f32>) -> Handle<V>,
     {
+        let initial = *value.get(cx);
         Self {
-            lens,
+            value,
             default_normal,
 
             is_dragging: false,
             prev_drag_y: 0.0,
-            continuous_normal: lens.get(cx),
+            continuous_normal: initial,
 
             drag_scalar: DEFAULT_DRAG_SCALAR,
             wheel_scalar: DEFAULT_WHEEL_SCALAR,
@@ -104,29 +109,23 @@ impl<L: Lens<Target = f32>> Knob<L> {
         }
         .build(cx, move |cx| {
             ZStack::new(cx, move |cx| {
-                (content)(cx, lens).width(Percentage(100.0)).height(Percentage(100.0));
+                (content)(cx, value).width(Percentage(100.0)).height(Percentage(100.0));
             });
         })
     }
 }
 
-impl<L: Lens<Target = f32>> Handle<'_, Knob<L>> {
+impl Handle<'_, Knob> {
     /// Sets the callback triggered when the knob value is changed.
     pub fn on_change<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, f32),
     {
-        if let Some(view) = self.cx.views.get_mut(&self.entity) {
-            if let Some(knob) = view.downcast_mut::<Knob<L>>() {
-                knob.on_changing = Some(Box::new(callback));
-            }
-        }
-
-        self
+        self.modify(|knob| knob.on_changing = Some(Box::new(callback)))
     }
 }
 
-impl<L: Lens<Target = f32>> View for Knob<L> {
+impl View for Knob {
     fn element(&self) -> Option<&'static str> {
         Some("knob")
     }
@@ -148,13 +147,13 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
                 cx.capture();
                 cx.focus_with_visibility(false);
 
-                self.continuous_normal = self.lens.get(cx);
+                self.continuous_normal = *self.value.get(cx);
             }
 
             WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                 self.is_dragging = false;
 
-                self.continuous_normal = self.lens.get(cx);
+                self.continuous_normal = *self.value.get(cx);
 
                 cx.release();
             }
@@ -192,12 +191,12 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
             }
 
             WindowEvent::KeyDown(Code::ArrowUp | Code::ArrowRight, _) => {
-                self.continuous_normal = self.lens.get(cx);
+                self.continuous_normal = *self.value.get(cx);
                 move_virtual_slider(self, cx, self.continuous_normal + self.arrow_scalar);
             }
 
             WindowEvent::KeyDown(Code::ArrowDown | Code::ArrowLeft, _) => {
-                self.continuous_normal = self.lens.get(cx);
+                self.continuous_normal = *self.value.get(cx);
                 move_virtual_slider(self, cx, self.continuous_normal - self.arrow_scalar);
             }
 
@@ -327,13 +326,13 @@ impl View for ArcTrack {
 }
 
 impl Handle<'_, ArcTrack> {
-    pub fn value<L: Lens<Target = f32>>(self, lens: L) -> Self {
+    pub fn value(self, value: Signal<f32>) -> Self {
         let entity = self.entity;
-        Binding::new(self.cx, lens, move |cx, value| {
-            let value = value.get(cx);
+        Binding::new(self.cx, value, move |cx| {
+            let val = *value.get(cx);
             if let Some(view) = cx.views.get_mut(&entity) {
-                if let Some(knob) = view.downcast_mut::<ArcTrack>() {
-                    knob.normalized_value = value;
+                if let Some(arc_track) = view.downcast_mut::<ArcTrack>() {
+                    arc_track.normalized_value = val;
                     cx.needs_redraw(entity);
                 }
             }
@@ -543,13 +542,13 @@ impl View for TickKnob {
 }
 
 impl Handle<'_, TickKnob> {
-    pub fn value<L: Lens<Target = f32>>(self, lens: L) -> Self {
+    pub fn value(self, value: Signal<f32>) -> Self {
         let entity = self.entity;
-        Binding::new(self.cx, lens, move |cx, value| {
-            let value = value.get(cx);
+        Binding::new(self.cx, value, move |cx| {
+            let val = *value.get(cx);
             if let Some(view) = cx.views.get_mut(&entity) {
-                if let Some(knob) = view.downcast_mut::<TickKnob>() {
-                    knob.normalized_value = value;
+                if let Some(tick_knob) = view.downcast_mut::<TickKnob>() {
+                    tick_knob.normalized_value = val;
                     cx.needs_redraw(entity);
                 }
             }
