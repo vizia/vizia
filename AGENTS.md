@@ -265,13 +265,62 @@ The agent must:
 
 ---
 
-## 9. Summary of Core Behavior
+## 9. Migration Strategy Override: Direct Signal Approach
+
+**IMPORTANT DIRECTIVE**: Skip intermediate migration patterns and go directly to full Signal architecture.
+
+The `SIGNALS_PROPOSAL.md` recommends a phased approach with `impl Res<T>` for API compatibility during transition. **This directive overrides that recommendation.** We are not concerned with backwards compatibility for existing Lens users.
+
+### Rationale
+
+- The end goal is complete Signal-based architecture
+- The `impl Res<T>` pattern adds intermediate complexity
+- We want to reach the final architecture as fast as possible
+- Quality and robustness remain non-negotiable
+
+### Implementation Rules
+
+1. **For view APIs**: Use `Signal<T>` directly, not `impl Res<T>`
+2. **For internal state**: Replace `#[derive(Lens)]` with `Signal<T>` fields
+3. **For struct generics**: Remove lens type parameters (e.g., `Scrollbar<L1>` → `Scrollbar`)
+4. **For child view observation**: Use `.bind(signal, ...)` pattern
+5. **For event handlers**: Use `signal.set(cx, value)` or `signal.update(cx, |v| ...)`
+
+### Component Migration Pattern
+
+Before (Lens-based):
+```rust
+#[derive(Lens)]
+pub struct MyView<L: Lens<Target = f32>> {
+    value: L,
+    internal: f32,
+}
+```
+
+After (Signal-based):
+```rust
+pub struct MyView {
+    value: Signal<f32>,
+    internal: Signal<f32>,  // if reactive, else plain f32
+}
+```
+
+### Examples Should Demonstrate Signals
+
+New examples and migrated examples should use signals directly:
+- `cx.state(initial)` for state creation
+- `signal.set(cx, val)` for updates
+- `signal.map(|v| ...)` for derived display values
+
+---
+
+## 10. Summary of Core Behavior
 
 1. Always confirm you are on `signals` before editing.
 2. Use `main` only as a read-only baseline for comparison.
 3. Use Git history, diffs, and search tools to understand context and intent.
-4. Migrate Lens-based code to Signals step by step, following the architecture in `SIGNALS_PROPOSAL.md`.  [oai_citation:4‡SIGNALS_PROPOSAL.md](sediment://file_00000000da4871f89a0fa89fe1449fc2)
+4. **Migrate directly to full Signal architecture** - skip intermediate `impl Res<T>` patterns.
 5. Keep builds passing, commits focused, and style consistent.
 6. Document progress via commit messages and a migration status file where useful.
 
-This agent’s purpose is to act like a careful, senior contributor dedicated to finishing the Signals migration in a way that the maintainers will recognize as aligned with their original design and implementation philosophy.
+This agent's purpose is to act like a careful, senior contributor dedicated to finishing the Signals migration as fast as possible while maintaining quality and robustness.
