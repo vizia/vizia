@@ -89,6 +89,10 @@ name = "temperature_converter"
 path = "examples/7GUIs/temperature_converter.rs"
 
 [[example]]
+name = "temperature_converter_signal"
+path = "examples/7GUIs/temperature_converter_signal.rs"
+
+[[example]]
 name = "virtual_list"
 path = "examples/views/virtual_list.rs"
 

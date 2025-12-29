@@ -13,7 +13,7 @@ This document tracks the progress of migrating from Lens-based state management 
 | Category | Migrated/Compatible | Remaining | Progress |
 |----------|---------------------|-----------|----------|
 | Core Views | 19 (9 migrated + 10 already compatible) | ~13 | ~59% |
-| Examples | ~12 | ~38 | ~24% |
+| Examples | ~13 | ~37 | ~26% |
 | Infrastructure | Complete | - | 100% |
 
 ---
@@ -103,6 +103,7 @@ These store lenses as fields and/or use `lens.map()` internally:
 | Example | File | Notes |
 |---------|------|-------|
 | Counter (Signal variant) | `examples/7GUIs/counter_signal.rs` | New signal-based counter |
+| Temperature Converter (Signal) | `examples/7GUIs/temperature_converter_signal.rs` | Two-signal sync pattern |
 | App State | `examples/app_state.rs` | App trait demonstration |
 | Signal Map Demo | `examples/signal_map_demo.rs` | Signal mapping patterns |
 | Checkbox | `examples/views/checkbox.rs` | Updated to signals |
