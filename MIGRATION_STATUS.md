@@ -12,7 +12,7 @@ This document tracks the progress of migrating from Lens-based state management 
 
 | Category | Migrated | Remaining | Progress |
 |----------|----------|-----------|----------|
-| Core Views | 6 | ~20 | ~23% |
+| Core Views | 8 | ~18 | ~31% |
 | Examples | ~10 | ~40 | ~20% |
 | Infrastructure | Complete | - | 100% |
 
@@ -38,29 +38,22 @@ This document tracks the progress of migrating from Lens-based state management 
 | Textbox | `crates/vizia_core/src/views/textbox.rs` | 7b87d38d | Now requires `Signal<L>` |
 | ToggleButton | `crates/vizia_core/src/views/toggle_button.rs` | 8614d7dd | |
 | Tooltip | `crates/vizia_core/src/views/tooltip.rs` | 28c1f4cc | |
+| Switch | `crates/vizia_core/src/views/switch.rs` | - | Uses `impl Res<bool>` |
+| RadioButton | `crates/vizia_core/src/views/radio.rs` | - | Uses `impl Res<bool>` |
 
 ---
 
 ## Core Views - Pending Migration
 
-### High Priority (Simple State)
-
-These views have simple boolean or numeric state that maps directly to `Signal<T>`:
-
-| View | File | State Type | Notes |
-|------|------|------------|-------|
-| Switch | `crates/vizia_core/src/views/switch.rs` | `Lens<bool>` | Similar to Checkbox |
-| Radio | `crates/vizia_core/src/views/radio.rs` | `Lens<T: PartialEq>` | Selection state |
-| Progressbar | `crates/vizia_core/src/views/progressbar.rs` | `Lens<f32>` | Progress value |
-| Rating | `crates/vizia_core/src/views/rating.rs` | `Lens<u32>` | Rating value |
-
 ### Medium Priority (Numeric/Range State)
 
-These have range-based or numeric state:
+These use `lens.map()` internally and require architectural changes to support signals:
 
 | View | File | State Type | Notes |
 |------|------|------------|-------|
-| Slider | `crates/vizia_core/src/views/slider.rs` | `Lens<f32>` | Range value |
+| Progressbar | `crates/vizia_core/src/views/progressbar.rs` | `Lens<f32>` | Uses lens.map() |
+| Rating | `crates/vizia_core/src/views/rating.rs` | `Lens<u32>` | Uses lens.map(), internal Lens |
+| Slider | `crates/vizia_core/src/views/slider.rs` | `Lens<f32>` | Stores lens, uses lens.map() |
 | Knob | `crates/vizia_core/src/views/knob.rs` | `Lens<f32>` | Rotary control |
 | Spinbox | `crates/vizia_core/src/views/spinbox.rs` | `Lens<T: Num>` | Numeric input |
 | Scrollbar | `crates/vizia_core/src/views/scrollbar.rs` | `Lens<f32>` | Scroll position |

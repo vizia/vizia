@@ -8,49 +8,32 @@ use crate::prelude::*;
 ///
 /// ## Basic Switch
 ///
-/// The Switch must bound to some boolean data.
+/// The Switch must be bound to a boolean signal.
 ///
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # #[derive(Lens)]
-/// # struct AppData {
-/// #     value: bool,
-/// # }
-/// #
-/// # impl Model for AppData {}
-/// #
 /// # let cx = &mut Context::default();
+/// # let value = cx.state(false);
 /// #
-/// # AppData { value: false }.build(cx);
-/// #
-/// Switch::new(cx, AppData::value);
+/// Switch::new(cx, value);
 /// ```
 ///
 /// ## Switch with an action
 ///
-/// A Switch can be used to trigger a callback when toggled. Usually this is emitting an
-/// event responsible for changing the data the Switch is bound to.
+/// A Switch can be used to trigger a callback when toggled. Usually this callback
+/// updates the signal the Switch is bound to.
 ///
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # #[derive(Lens)]
-/// # struct AppData {
-/// #     value: bool,
-/// # }
-/// #
-/// # impl Model for AppData {}
-/// #
-/// # enum AppEvent {
-/// #     ToggleValue,
-/// # }
-/// #
 /// # let cx = &mut Context::default();
+/// # let value = cx.state(false);
 /// #
-/// # AppData { value: false }.build(cx);
-/// #
-/// Switch::new(cx, AppData::value).on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
+/// Switch::new(cx, value)
+///     .on_toggle(move |cx| {
+///         value.update(cx, |v| *v = !*v);
+///     });
 /// ```
 ///
 /// ## Switch with a label
@@ -63,19 +46,11 @@ use crate::prelude::*;
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # #[derive(Lens)]
-/// # struct AppData {
-/// #     value: bool,
-/// # }
-/// #
-/// # impl Model for AppData {}
-/// #
 /// # let cx = &mut Context::default();
-/// #
-/// # AppData { value: false }.build(cx);
+/// # let value = cx.state(false);
 /// #
 /// HStack::new(cx, |cx| {
-///     Switch::new(cx, AppData::value);
+///     Switch::new(cx, value);
 ///     Label::new(cx, "Press me");
 /// });
 /// ```
@@ -91,20 +66,12 @@ impl Switch {
     /// ```
     /// # use vizia_core::prelude::*;
     /// #
-    /// # #[derive(Lens)]
-    /// # struct AppData {
-    /// #     value: bool,
-    /// # }
-    /// #
-    /// # impl Model for AppData {}
-    /// #
     /// # let cx = &mut Context::default();
+    /// # let checked_signal = cx.state(false);
     /// #
-    /// # AppData { value: false }.build(cx);
-    /// #
-    /// Switch::new(cx, AppData::value);
+    /// Switch::new(cx, checked_signal);
     /// ```
-    pub fn new(cx: &mut Context, checked: impl Lens<Target = bool>) -> Handle<Self> {
+    pub fn new<L: Res<bool>>(cx: &mut Context, checked: L) -> Handle<Self> {
         Self { on_toggle: None }
             .build(cx, |cx| {
                 Element::new(cx)
@@ -129,23 +96,13 @@ impl Handle<'_, Switch> {
     /// ```
     /// # use vizia_core::prelude::*;
     /// #
-    /// # #[derive(Lens)]
-    /// # struct AppData {
-    /// #     value: bool,
-    /// # }
-    /// #
-    /// # impl Model for AppData {}
-    /// #
-    /// # enum AppEvent {
-    /// #     ToggleValue,
-    /// # }
-    /// #
     /// # let cx = &mut Context::default();
+    /// # let checked_signal = cx.state(false);
     /// #
-    /// # AppData { value: false }.build(cx);
-    /// #
-    /// Switch::new(cx, AppData::value)
-    ///     .on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
+    /// Switch::new(cx, checked_signal)
+    ///     .on_toggle(move |cx| {
+    ///         checked_signal.update(cx, |value| *value = !*value);
+    ///     });
     /// ```
     pub fn on_toggle<F>(self, callback: F) -> Self
     where
