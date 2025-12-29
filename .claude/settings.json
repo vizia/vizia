@@ -22,7 +22,7 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/auto-commit-and-continue.sh",
-            "timeout": 5
+            "timeout": 10
           }
         ]
       }
