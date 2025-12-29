@@ -132,11 +132,13 @@ impl Datepicker {
                 .width(Pixels(140.0))
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
                 .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementMonth));
+                // TODO: Migrate to Signal once Datepicker uses signals for state management.
+                // Textbox::new now requires Signal<L>, but Datepicker uses Lenses.
+                // Using Label for now - year editing via textbox temporarily disabled.
                 Spinbox::custom(cx, |cx| {
-                    Textbox::new(cx, Datepicker::view_date.map(|date| date.year()))
+                    Label::new(cx, Datepicker::view_date.map(|date| date.year()))
                         .width(Stretch(1.0))
-                        .padding(Pixels(1.0))
-                        .on_edit(|ex, v| ex.emit(DatepickerEvent::SelectYear(v)))
+                        .text_align(TextAlign::Center)
                 })
                 .width(Pixels(100.0))
                 .icons(SpinboxIcons::PlusMinus)

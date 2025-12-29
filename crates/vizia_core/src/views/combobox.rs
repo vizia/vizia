@@ -91,7 +91,7 @@ where
                     Popup::new(cx, move |cx: &mut Context| {
                         // Binding to the filter text.
                         Binding::new(cx, filter_text, move |cx| {
-                            let f = filter_text.get(cx);
+                            let f = filter_text.get(cx).clone();
                             List::new_filtered(
                                 cx,
                                 list_lens,
@@ -123,7 +123,7 @@ where
         })
         .bind(selected, move |handle, selected| {
             let selected_item = list_lens.idx(selected.get(&handle)).get(&handle);
-            handle.modify(|combobox| combobox.placeholder = selected_item.to_string());
+            handle.modify2(|combobox, cx| combobox.placeholder.set(cx, selected_item.to_string()));
         })
     }
 }
@@ -143,7 +143,7 @@ where
             ComboBoxEvent::SetOption(index) => {
                 // Set the placeholder text to the selected item.
                 let selected_item = self.list_lens.idx(*index).get(cx);
-                self.placeholder = selected_item.to_string();
+                self.placeholder.set(cx, selected_item.to_string());
 
                 // Call the on_select callback.
                 if let Some(callback) = &self.on_select {
@@ -151,10 +151,10 @@ where
                 }
 
                 // Close the popup.
-                self.is_open = false;
+                self.is_open.set(cx, false);
 
                 // Reset the filter text.
-                self.filter_text = String::new();
+                self.filter_text.set(cx, String::new());
 
                 // Set the textbox to non-edit state.
                 // TODO: Add a modifier to textbox and bind to some state in combobox.
@@ -166,18 +166,18 @@ where
             }
 
             ComboBoxEvent::SetFilterText(text) => {
-                self.placeholder.clone_from(text);
-                self.filter_text.clone_from(text);
+                self.placeholder.set(cx, text.clone());
+                self.filter_text.set(cx, text.clone());
 
                 // Reopen the popup in case it was closed with the ESC key.
-                self.is_open = true;
+                self.is_open.set(cx, true);
             }
         });
 
         event.map(|textbox_event, _| match textbox_event {
             // User pressed on the textbox or focused it.
             TextEvent::StartEdit => {
-                self.is_open = true;
+                self.is_open.set(cx, true);
             }
 
             TextEvent::Submit(enter) => {
@@ -232,8 +232,8 @@ where
                 }
 
                 Code::Escape => {
-                    if self.is_open {
-                        self.is_open = false;
+                    if *self.is_open.get(cx) {
+                        self.is_open.set(cx, false);
                     } else {
                         cx.emit(TextEvent::Submit(false));
                     }
