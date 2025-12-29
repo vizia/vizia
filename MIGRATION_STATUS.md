@@ -10,10 +10,10 @@ This document tracks the progress of migrating from Lens-based state management 
 
 ## Migration Progress Summary
 
-| Category | Migrated | Remaining | Progress |
-|----------|----------|-----------|----------|
-| Core Views | 8 | ~18 | ~31% |
-| Examples | ~10 | ~40 | ~20% |
+| Category | Migrated/Compatible | Remaining | Progress |
+|----------|---------------------|-----------|----------|
+| Core Views | 17 (8 migrated + 9 already compatible) | ~15 | ~53% |
+| Examples | ~12 | ~38 | ~24% |
 | Infrastructure | Complete | - | 100% |
 
 ---
@@ -43,42 +43,58 @@ This document tracks the progress of migrating from Lens-based state management 
 
 ---
 
+## Core Views - Already Compatible
+
+These views already use `impl Res<T>` or closures, making them compatible with both Lens and Signal:
+
+| View | File | Notes |
+|------|------|-------|
+| Label | `crates/vizia_core/src/views/label.rs` | Uses `impl Res<T>` |
+| Badge | `crates/vizia_core/src/views/badge.rs` | Closures + `impl Res<U>` |
+| Avatar | `crates/vizia_core/src/views/avatar.rs` | Closures + `impl Res<U>` |
+| Button | `crates/vizia_core/src/views/button.rs` | Closures + `impl Res<U>` |
+| Chip | `crates/vizia_core/src/views/chip.rs` | Uses `impl Res<T>` |
+| Image | `crates/vizia_core/src/views/image.rs` | Uses `impl Res<T>` |
+| Dropdown | `crates/vizia_core/src/views/dropdown.rs` | Closures, internal popup state |
+| Divider | `crates/vizia_core/src/views/divider.rs` | No state |
+| Element | `crates/vizia_core/src/views/element.rs` | No state |
+
+---
+
 ## Core Views - Pending Migration
 
-### Medium Priority (Numeric/Range State)
+### Numeric/Range Controls (Architectural Changes Needed)
 
-These use `lens.map()` internally and require architectural changes to support signals:
+These store lenses as fields and/or use `lens.map()` internally:
 
-| View | File | State Type | Notes |
-|------|------|------------|-------|
-| Progressbar | `crates/vizia_core/src/views/progressbar.rs` | `Lens<f32>` | Uses lens.map() |
-| Rating | `crates/vizia_core/src/views/rating.rs` | `Lens<u32>` | Uses lens.map(), internal Lens |
-| Slider | `crates/vizia_core/src/views/slider.rs` | `Lens<f32>` | Stores lens, uses lens.map() |
-| Knob | `crates/vizia_core/src/views/knob.rs` | `Lens<f32>` | Rotary control |
-| Spinbox | `crates/vizia_core/src/views/spinbox.rs` | `Lens<T: Num>` | Numeric input |
-| Scrollbar | `crates/vizia_core/src/views/scrollbar.rs` | `Lens<f32>` | Scroll position |
-| XYPad | `crates/vizia_core/src/views/xypad.rs` | `Lens<(f32,f32)>` | 2D position |
+| View | File | Blocker |
+|------|------|---------|
+| Slider | `crates/vizia_core/src/views/slider.rs` | Stores `L: Lens` as field |
+| Knob | `crates/vizia_core/src/views/knob.rs` | Stores lens, multiple lens methods |
+| Progressbar | `crates/vizia_core/src/views/progressbar.rs` | Uses `lens.map()` for percentage |
+| Rating | `crates/vizia_core/src/views/rating.rs` | Uses `lens.map()`, `#[derive(Lens)]` |
+| Spinbox | `crates/vizia_core/src/views/spinbox.rs` | Complex lens target |
+| Scrollbar | `crates/vizia_core/src/views/scrollbar.rs` | Range control |
+| XYPad | `crates/vizia_core/src/views/xypad.rs` | 2D lens target |
 
-### Lower Priority (Complex State)
+### List/Collection Views
 
-These have more complex state or dependencies:
+| View | File | Blocker |
+|------|------|---------|
+| List | `crates/vizia_core/src/views/list.rs` | Lens for selected/focused |
+| VirtualList | `crates/vizia_core/src/views/virtual_list.rs` | Internal lens generation |
+| TabView | `crates/vizia_core/src/views/tabview.rs` | Complex lens target |
+| Picklist | `crates/vizia_core/src/views/picklist.rs` | Selection lens |
+| ResizableStack | `crates/vizia_core/src/views/resizable_stack.rs` | Size lens |
 
-| View | File | State Type | Notes |
-|------|------|------------|-------|
-| Dropdown | `crates/vizia_core/src/views/dropdown.rs` | `Lens<T>` | Selection + open state |
-| Picklist | `crates/vizia_core/src/views/picklist.rs` | `Lens<T>` | List selection |
-| Datepicker | `crates/vizia_core/src/views/datepicker.rs` | `Lens<Date>` | **Blocked**: See Known Issues |
-| TabView | `crates/vizia_core/src/views/tabview.rs` | `Lens<usize>` | Tab index |
-| List | `crates/vizia_core/src/views/list.rs` | `Lens<Vec<T>>` | List data |
-| VirtualList | `crates/vizia_core/src/views/virtual_list.rs` | `Lens<Vec<T>>` | Virtualized list |
-| ScrollView | `crates/vizia_core/src/views/scrollview.rs` | Internal | Scroll position |
-| ResizableStack | `crates/vizia_core/src/views/resizable_stack.rs` | `Lens<Vec<f32>>` | Resize state |
-| Menu | `crates/vizia_core/src/views/menu.rs` | Internal | Menu state |
-| Popup | `crates/vizia_core/src/views/popup.rs` | Internal | Popup visibility |
-| Label | `crates/vizia_core/src/views/label.rs` | `Lens<impl ToString>` | Text content |
-| Badge | `crates/vizia_core/src/views/badge.rs` | `Lens<impl ToString>` | Badge content |
-| Chip | `crates/vizia_core/src/views/chip.rs` | Multiple | Chip state |
-| Element | `crates/vizia_core/src/views/element.rs` | Generic | Base element |
+### Other
+
+| View | File | Blocker |
+|------|------|---------|
+| Datepicker | `crates/vizia_core/src/views/datepicker.rs` | **Blocked**: See Known Issues |
+| ScrollView | `crates/vizia_core/src/views/scrollview.rs` | Internal state |
+| Menu | `crates/vizia_core/src/views/menu.rs` | Internal state |
+| Popup | `crates/vizia_core/src/views/popup.rs` | Internal visibility |
 
 ---
 
