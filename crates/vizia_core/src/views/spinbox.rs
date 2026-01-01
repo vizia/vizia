@@ -10,10 +10,9 @@ pub(crate) enum SpinboxEvent {
 }
 
 /// A view which represents a value which can be incremented or decremented.
-#[derive(Lens)]
 pub struct Spinbox {
-    orientation: Orientation,
-    icons: SpinboxIcons,
+    orientation: Signal<Orientation>,
+    icons: Signal<SpinboxIcons>,
 
     on_decrement: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
     on_increment: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
@@ -28,15 +27,13 @@ pub enum SpinboxIcons {
     Chevrons,
 }
 
-impl_res_simple!(SpinboxIcons);
-
 impl Spinbox {
     /// Creates a new [Spinbox] view.
-    pub fn new<L>(cx: &mut Context, lens: L) -> Handle<Spinbox>
+    pub fn new<T>(cx: &mut Context, value: Signal<T>) -> Handle<Spinbox>
     where
-        L: Lens<Target: Data + ToStringLocalized>,
+        T: ToStringLocalized + Clone,
     {
-        Self::custom(cx, move |cx| Label::new(cx, lens))
+        Self::custom(cx, move |cx| Label::new(cx, value))
     }
 
     /// Creates a custom [Spinbox] view with the given content to represent the value.
@@ -45,84 +42,83 @@ impl Spinbox {
         F: Fn(&mut Context) -> Handle<V>,
         V: 'static + View,
     {
-        Self {
-            orientation: Orientation::Horizontal,
-            icons: SpinboxIcons::Chevrons,
-            on_decrement: None,
-            on_increment: None,
-        }
-        .build(cx, move |cx| {
-            Binding::new(cx, Spinbox::orientation, move |cx, spinbox_kind| {
-                match spinbox_kind.get(cx) {
-                    Orientation::Horizontal => {
-                        Button::new(cx, |cx| {
-                            Svg::new(
-                                cx,
-                                Spinbox::icons.map(|icons| match icons {
-                                    SpinboxIcons::PlusMinus => ICON_MINUS,
-                                    SpinboxIcons::Chevrons => ICON_CHEVRON_LEFT,
-                                }),
-                            )
-                        })
-                        .on_press(|ex| ex.emit(SpinboxEvent::Decrement))
-                        .navigable(true)
-                        .class("spinbox-button");
-                    }
+        let orientation = cx.state(Orientation::Horizontal);
+        let icons = cx.state(SpinboxIcons::Chevrons);
 
-                    Orientation::Vertical => {
-                        Button::new(cx, |cx| {
-                            Svg::new(
-                                cx,
-                                Spinbox::icons.map(|icons| match icons {
-                                    SpinboxIcons::PlusMinus => ICON_PLUS,
-                                    SpinboxIcons::Chevrons => ICON_CHEVRON_UP,
-                                }),
-                            )
-                        })
-                        .on_press(|ex| ex.emit(SpinboxEvent::Increment))
-                        .navigable(true)
-                        .class("spinbox-button");
-                    }
-                }
-            });
-            (content)(cx).class("spinbox-value");
-            Binding::new(cx, Spinbox::orientation, move |cx, spinbox_kind| {
-                match spinbox_kind.get(cx) {
-                    Orientation::Horizontal => {
-                        Button::new(cx, |cx| {
-                            Svg::new(
-                                cx,
-                                Spinbox::icons.map(|icons| match icons {
-                                    SpinboxIcons::PlusMinus => ICON_PLUS,
-                                    SpinboxIcons::Chevrons => ICON_CHEVRON_RIGHT,
-                                }),
-                            )
-                        })
-                        .on_press(|ex| ex.emit(SpinboxEvent::Increment))
-                        .navigable(true)
-                        .class("spinbox-button");
-                    }
+        let is_horizontal = cx.derived({
+            let orientation = orientation;
+            move |store| *orientation.get(store) == Orientation::Horizontal
+        });
+        let is_vertical = cx.derived({
+            let orientation = orientation;
+            move |store| *orientation.get(store) == Orientation::Vertical
+        });
+        let navigable = cx.state(true);
 
-                    Orientation::Vertical => {
-                        Button::new(cx, |cx| {
-                            Svg::new(
-                                cx,
-                                Spinbox::icons.map(|icons| match icons {
-                                    SpinboxIcons::PlusMinus => ICON_MINUS,
-                                    SpinboxIcons::Chevrons => ICON_CHEVRON_DOWN,
-                                }),
-                            )
-                        })
-                        .on_press(|ex| ex.emit(SpinboxEvent::Decrement))
-                        .navigable(true)
-                        .class("spinbox-button");
+        Self { orientation, icons, on_decrement: None, on_increment: None }
+            .build(cx, move |cx| {
+                // First button (decrement for horizontal, increment for vertical)
+                Button::new(cx, move |cx| {
+                    // Create derived signal for the icon based on both orientation and icons
+                    let icon_signal = cx.derived(move |s| {
+                        let orient = *orientation.get(s);
+                        let ico = *icons.get(s);
+                        match orient {
+                            Orientation::Horizontal => match ico {
+                                SpinboxIcons::PlusMinus => ICON_MINUS,
+                                SpinboxIcons::Chevrons => ICON_CHEVRON_LEFT,
+                            },
+                            Orientation::Vertical => match ico {
+                                SpinboxIcons::PlusMinus => ICON_PLUS,
+                                SpinboxIcons::Chevrons => ICON_CHEVRON_UP,
+                            },
+                        }
+                    });
+                    Svg::new(cx, icon_signal)
+                })
+                .on_press(move |ex| {
+                    let orient = *orientation.get(ex);
+                    match orient {
+                        Orientation::Horizontal => ex.emit(SpinboxEvent::Decrement),
+                        Orientation::Vertical => ex.emit(SpinboxEvent::Increment),
                     }
-                }
-            });
-        })
-        .toggle_class("horizontal", Spinbox::orientation.map(|o| o == &Orientation::Horizontal))
-        .toggle_class("vertical", Spinbox::orientation.map(|o| o == &Orientation::Vertical))
-        .navigable(true)
+                })
+                .navigable(navigable)
+                .class("spinbox-button");
+
+                (content)(cx).class("spinbox-value");
+
+                // Second button (increment for horizontal, decrement for vertical)
+                Button::new(cx, move |cx| {
+                    let icon_signal = cx.derived(move |s| {
+                        let orient = *orientation.get(s);
+                        let ico = *icons.get(s);
+                        match orient {
+                            Orientation::Horizontal => match ico {
+                                SpinboxIcons::PlusMinus => ICON_PLUS,
+                                SpinboxIcons::Chevrons => ICON_CHEVRON_RIGHT,
+                            },
+                            Orientation::Vertical => match ico {
+                                SpinboxIcons::PlusMinus => ICON_MINUS,
+                                SpinboxIcons::Chevrons => ICON_CHEVRON_DOWN,
+                            },
+                        }
+                    });
+                    Svg::new(cx, icon_signal)
+                })
+                .on_press(move |ex| {
+                    let orient = *orientation.get(ex);
+                    match orient {
+                        Orientation::Horizontal => ex.emit(SpinboxEvent::Increment),
+                        Orientation::Vertical => ex.emit(SpinboxEvent::Decrement),
+                    }
+                })
+                .navigable(navigable)
+                .class("spinbox-button");
+            })
+            .toggle_class("horizontal", is_horizontal)
+            .toggle_class("vertical", is_vertical)
+            .navigable(navigable)
     }
 }
 
@@ -144,18 +140,18 @@ impl Handle<'_, Spinbox> {
     }
 
     /// Sets the orientation of the [Spinbox].
-    pub fn orientation(self, orientation: impl Res<Orientation>) -> Self {
+    pub fn orientation(self, orientation: Signal<Orientation>) -> Self {
         self.bind(orientation, move |handle, orientation| {
-            let orientation = orientation.get(&handle);
-            handle.modify(move |spinbox| spinbox.orientation = orientation);
+            let orientation = *orientation.get(&handle);
+            handle.modify2(move |spinbox, cx| spinbox.orientation.set(cx, orientation));
         })
     }
 
     /// Set the icons which should be used for the increment and decrement buttons of the [Spinbox]
-    pub fn icons(self, icons: impl Res<SpinboxIcons>) -> Self {
+    pub fn icons(self, icons: Signal<SpinboxIcons>) -> Self {
         self.bind(icons, move |handle, icons| {
-            let icons = icons.get(&handle);
-            handle.modify(move |spinbox| spinbox.icons = icons);
+            let icons = *icons.get(&handle);
+            handle.modify2(move |spinbox, cx| spinbox.icons.set(cx, icons));
         })
     }
 }

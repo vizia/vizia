@@ -3,7 +3,7 @@ use helpers::*;
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
+    let (app, (title, size)) = Application::new_with_state(|cx| {
         ExamplePage::new(cx, |cx| {
             HStack::new(cx, |cx| {
                 Divider::new(cx);
@@ -16,8 +16,8 @@ fn main() -> Result<(), ApplicationError> {
                 Divider::vertical(cx);
             });
         });
-    })
-    .title("Divider")
-    .inner_size((350, 300))
-    .run()
+        (cx.state("Divider"), cx.state((350, 300)))
+    });
+
+    app.title(title).inner_size(size).run()
 }

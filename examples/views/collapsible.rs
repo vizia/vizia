@@ -2,96 +2,84 @@ use vizia::prelude::*;
 mod helpers;
 use helpers::*;
 
-// Define the data model for the application.
-#[derive(Lens)]
-pub struct AppData {
-    collapsed: Signal<bool>,
-}
-
-// Define the events for the application.
-pub enum AppEvent {
-    ToggleCollapse,
-}
-
-impl Model for AppData {
-    /// Handles events for the application
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::ToggleCollapse => {
-                self.collapsed.update(cx, |collapsed| *collapsed = !*collapsed);
-            }
-        })
-    }
-}
-
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
-
+    let (app, title) = Application::new_with_state(|cx| {
         let collapsed = cx.state(false);
+        let auto = cx.state(Auto);
+        let gap_8 = cx.state(Pixels(8.0));
+        let padding_right_8 = cx.state(Pixels(8.0));
+        let align_right = cx.state(Alignment::Right);
+        let align_top_center = cx.state(Alignment::TopCenter);
+        let not_hoverable = cx.state(false);
 
-        AppData { collapsed }.build(cx);
+        let content_long =
+            "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10";
+        let content_short = "Line 1\nLine 2\nLine 3\nLine 4\nLine 5";
+        let text_variant = cx.state(ButtonVariant::Text);
 
         ExamplePage::vertical(cx, |cx| {
-            // Create a new button that toggles the collapsed state.
-            Button::new(cx, |cx| Label::new(cx, "Toggle collapsed"))
-                .on_press(|cx| cx.emit(AppEvent::ToggleCollapse));
+            Button::new(cx, |cx| Label::static_text(cx, "Toggle collapsed"))
+                .on_press(move |cx| collapsed.update(cx, |collapsed| *collapsed = !*collapsed));
 
             VStack::new(cx, |cx| {
-
-                // Create a new collapsible view with a header and content.
+                // First collapsible
                 Collapsible::new(
                     cx,
                     |cx| {
-                        Label::new(cx, "Click me to collapse the content").hoverable(false);
+                        Label::static_text(cx, "Click me to collapse the content")
+                            .hoverable(not_hoverable);
                     },
                     |cx| {
-                        Label::new(cx, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10").hoverable(false);
+                        Label::static_text(cx, content_long).hoverable(not_hoverable);
                     },
                 )
                 .open(collapsed);
 
                 Divider::new(cx);
 
-                // Create a new collapsible view with a header and content.
+                // Second collapsible
                 Collapsible::new(
                     cx,
                     |cx| {
-                        Label::new(cx, "Click me to collapse the content").hoverable(false);
+                        Label::static_text(cx, "Click me to collapse the content")
+                            .hoverable(not_hoverable);
                     },
                     |cx| {
-                        Label::new(cx, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5").hoverable(false);
+                        Label::static_text(cx, content_short).hoverable(not_hoverable);
                     },
                 )
                 .open(collapsed);
 
                 Divider::new(cx);
 
-                // Create a new collapsible view with a header and content.
+                // Third collapsible with buttons
                 Collapsible::new(
                     cx,
                     |cx| {
-                        Label::new(cx, "Click me to collapse the content").hoverable(false);
+                        Label::static_text(cx, "Click me to collapse the content")
+                            .hoverable(not_hoverable);
                     },
                     |cx| {
-                        Label::new(cx, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5").hoverable(false);
+                        Label::static_text(cx, content_short).hoverable(not_hoverable);
                         Divider::new(cx);
-                        HStack::new(cx, |cx|{
-                            Button::new(cx, |cx| Label::new(cx, "CANCEL")).variant(ButtonVariant::Text);
-                            Button::new(cx, |cx| Label::new(cx, "SAVE")).variant(ButtonVariant::Text);
+                        HStack::new(cx, |cx| {
+                            Button::new(cx, |cx| Label::static_text(cx, "CANCEL"))
+                                .variant(text_variant);
+                            Button::new(cx, |cx| Label::static_text(cx, "SAVE"))
+                                .variant(text_variant);
                         })
-                        .height(Auto)
-                        .gap(Pixels(8.0))
-                        .padding_right(Pixels(8.0))
-                        .alignment(Alignment::Right);
+                        .height(auto)
+                        .gap(gap_8)
+                        .padding_right(padding_right_8)
+                        .alignment(align_right);
                     },
                 )
                 .open(collapsed);
             })
-            .alignment(Alignment::TopCenter);
+            .alignment(align_top_center);
         });
+        cx.state("Collapsible")
+    });
 
-
-    })
-    .title("Collapsible")
-    .run()
+    app.title(title).run()
 }

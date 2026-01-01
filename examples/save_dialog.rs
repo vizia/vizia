@@ -5,97 +5,96 @@ fn main() {
     panic!("This example is not supported on baseview");
 }
 
-#[derive(Lens)]
-pub struct AppData {
-    is_saved: bool,
-    show_dialog: bool,
+struct SaveDialog {
+    is_saved: Signal<bool>,
+    show_dialog: Signal<bool>,
 }
 
-impl Model for AppData {
+impl View for SaveDialog {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| {
             // Intercept WindowClose event to show a dialog if not 'saved'.
             if let WindowEvent::WindowClose = window_event {
-                if !self.is_saved {
-                    self.show_dialog = true;
+                if !*self.is_saved.get(cx) {
+                    self.show_dialog.set(cx, true);
                     meta.consume();
                 }
-            }
-        });
-
-        event.map(|app_event, _| match app_event {
-            AppEvent::CloseModal => {
-                self.show_dialog = false;
-            }
-
-            AppEvent::Save => {
-                self.is_saved = true;
-            }
-
-            AppEvent::SaveAndClose => {
-                self.is_saved = true;
-                self.show_dialog = false;
-                cx.emit(WindowEvent::WindowClose);
             }
         });
     }
 }
 
-pub enum AppEvent {
-    CloseModal,
-    Save,
-    SaveAndClose,
-}
-
 #[cfg(not(feature = "baseview"))]
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { is_saved: false, show_dialog: false }.build(cx);
+        let main_window = cx.parent_window();
+        let is_saved = cx.state(false);
+        let show_dialog = cx.state(false);
+        let gap_10 = cx.state(Pixels(10.0));
+        let padding_50 = cx.state(Pixels(50.0));
+        let align_top_center = cx.state(Alignment::TopCenter);
+        let stretch_one = cx.state(Stretch(1.0));
+        let align_center = cx.state(Alignment::Center);
+        let button_width = cx.state(Pixels(120.0));
+        let auto = cx.state(Auto);
+        let gap_20 = cx.state(Pixels(20.0));
+        let position_absolute = cx.state(PositionType::Absolute);
+        let backdrop_blur = cx.state(Filter::Blur(Pixels(2.0).into()));
 
-        HStack::new(cx, |cx| {
-            Button::new(cx, |cx| Label::new(cx, "Close"))
-                .on_press(|cx| cx.emit(WindowEvent::WindowClose));
-            Button::new(cx, |cx| Label::new(cx, "Save")).on_press(|cx| cx.emit(AppEvent::Save));
-        })
-        .gap(Pixels(10.0))
-        .padding(Pixels(50.0))
-        .alignment(Alignment::TopCenter);
+        SaveDialog { is_saved, show_dialog }.build(cx, |cx| {
+            HStack::new(cx, |cx| {
+                Button::new(cx, |cx| Label::static_text(cx, "Close"))
+                    .on_press(|cx| cx.emit(WindowEvent::WindowClose));
+                Button::new(cx, |cx| Label::static_text(cx, "Save"))
+                    .on_press(move |cx| is_saved.set(cx, true));
+            })
+            .gap(gap_10)
+            .padding(padding_50)
+            .alignment(align_top_center);
 
-        Binding::new(cx, AppData::show_dialog, |cx, show_dialog| {
-            if show_dialog.get(cx) {
-                Window::popup(cx, true, |cx| {
-                    VStack::new(cx, |cx| {
-                        Label::new(cx, "Save before close?")
-                            .width(Stretch(1.0))
-                            .alignment(Alignment::Center);
-                        HStack::new(cx, |cx| {
-                            Button::new(cx, |cx| Label::new(cx, "Save & Close"))
-                                .on_press(|cx| cx.emit(AppEvent::SaveAndClose))
-                                .width(Pixels(120.0))
-                                .class("accent");
+            Binding::new(cx, show_dialog, move |cx| {
+                if *show_dialog.get(cx) {
+                    let popup_title = cx.state("Save work?");
+                    let popup_size = cx.state((400, 100));
+                    let popup_anchor = cx.state(Anchor::Center);
+                    Window::popup(cx, true, move |cx| {
+                        VStack::new(cx, move |cx| {
+                            Label::static_text(cx, "Save before close?")
+                                .width(stretch_one)
+                                .alignment(align_center);
+                            HStack::new(cx, move |cx| {
+                                Button::new(cx, |cx| Label::static_text(cx, "Save & Close"))
+                                    .on_press(move |cx| {
+                                        is_saved.set(cx, true);
+                                        show_dialog.set(cx, false);
+                                        cx.emit_to(main_window, WindowEvent::WindowClose);
+                                    })
+                                    .width(button_width)
+                                    .class("accent");
 
-                            Button::new(cx, |cx| Label::new(cx, "Cancel"))
-                                .on_press(|cx| cx.emit(AppEvent::CloseModal))
-                                .width(Pixels(120.0));
+                                Button::new(cx, |cx| Label::static_text(cx, "Cancel"))
+                                    .on_press(move |cx| show_dialog.set(cx, false))
+                                    .width(button_width);
+                            })
+                            .horizontal_gap(gap_10)
+                            .size(auto);
                         })
-                        .horizontal_gap(Pixels(10.0))
-                        .size(Auto);
+                        .alignment(align_center)
+                        .vertical_gap(gap_20);
                     })
-                    .alignment(Alignment::Center)
-                    .vertical_gap(Pixels(20.0));
-                })
-                .on_close(|cx| cx.emit(AppEvent::CloseModal))
-                .title("Save work?")
-                .inner_size((400, 100))
-                .anchor(Anchor::Center);
-            }
-        });
+                    .on_close(move |cx| show_dialog.set(cx, false))
+                    .title(popup_title)
+                    .inner_size(popup_size)
+                    .anchor(popup_anchor);
+                }
+            });
 
-        Element::new(cx)
-            .size(Stretch(1.0))
-            .position_type(PositionType::Absolute)
-            .backdrop_filter(Filter::Blur(Pixels(2.0).into()))
-            .display(AppData::show_dialog);
+            Element::new(cx)
+                .size(stretch_one)
+                .position_type(position_absolute)
+                .backdrop_filter(backdrop_blur)
+                .display(show_dialog);
+        });
     })
     .run()
 }

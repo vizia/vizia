@@ -17,6 +17,9 @@ const STYLE: &str = r#"
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
+        let red = cx.state(Color::red());
+        let size_100 = cx.state(Pixels(100.0));
+        let position_absolute = cx.state(PositionType::Absolute);
 
         let animation = AnimationBuilder::new()
             .keyframe(0.0, |key| key.scale("1"))
@@ -25,15 +28,15 @@ fn main() -> Result<(), ApplicationError> {
         let anim_id = cx.add_animation(animation);
 
         Element::new(cx)
-            .background_color(Color::red())
-            .size(Pixels(100.0))
-            .position_type(PositionType::Absolute)
+            .background_color(red)
+            .size(size_100)
+            .position_type(position_absolute)
             .id("elem");
 
-        Button::new(cx, |cx| Label::new(cx, "Play 1")).on_press(|cx| {
+        Button::new(cx, |cx| Label::static_text(cx, "Play 1")).on_press(|cx| {
             cx.play_animation_for("slidein", "elem", Duration::from_secs(2), Duration::default())
         });
-        Button::new(cx, |cx| Label::new(cx, "Play 2")).on_press(move |cx| {
+        Button::new(cx, |cx| Label::static_text(cx, "Play 2")).on_press(move |cx| {
             cx.play_animation_for(anim_id, "elem", Duration::from_secs(2), Duration::default())
         });
     })

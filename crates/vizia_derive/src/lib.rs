@@ -19,7 +19,6 @@
 
 mod attr;
 mod data;
-mod lens;
 
 use proc_macro::TokenStream;
 use syn::parse_macro_input;
@@ -28,10 +27,4 @@ use syn::parse_macro_input;
 pub fn derive_data(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as syn::DeriveInput);
     data::derive_data_impl(input).unwrap_or_else(|err| err.to_compile_error()).into()
-}
-
-#[proc_macro_derive(Lens, attributes(lens))]
-pub fn derive_lens(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as syn::DeriveInput);
-    lens::derive_lens_impl(input).unwrap_or_else(|err| err.to_compile_error()).into()
 }

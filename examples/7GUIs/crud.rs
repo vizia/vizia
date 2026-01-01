@@ -22,7 +22,7 @@ const STYLE: &str = r#"
         padding: 1s;
     }
 
-    list label {
+    .crud-list label {
         width: 1s;
         height: 32px;
         padding-left: 5px;
@@ -30,11 +30,11 @@ const STYLE: &str = r#"
         padding-bottom: 1s;
     }
 
-    list label:checked {
+    .crud-list label:checked {
         background-color: #5050AA40;
     }
 
-    list {
+    .crud-list {
         border-color: #d2d2d2;
         border-width: 1px;
         width: 1s;
@@ -42,64 +42,172 @@ const STYLE: &str = r#"
     }
 "#;
 
-#[derive(Lens)]
-pub struct AppData {
-    filter_prefix: String,
-    list: Vec<(String, String)>,
-    selected: Option<usize>,
-    name: String,
-    surname: String,
-}
-
-pub enum AppEvent {
+enum CrudEvent {
     SetSelected(usize),
-    SetName(String),
-    SetSurname(String),
     Create,
     Update,
     Delete,
 }
 
-impl Model for AppData {
+struct CrudApp {
+    filter_prefix: Signal<String>,
+    list: Signal<Vec<(String, String)>>,
+    selected: Signal<Option<usize>>,
+    name: Signal<String>,
+    surname: Signal<String>,
+}
+
+impl CrudApp {
+    fn new(cx: &mut Context) -> Handle<'_, Self> {
+        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
+
+        let filter_prefix = cx.state(String::new());
+        let list = cx.state(vec![("John".to_string(), "Smith".to_string())]);
+        let selected = cx.state(None::<usize>);
+        let name = cx.state(String::new());
+        let surname = cx.state(String::new());
+        let navigable = cx.state(true);
+        let label_width = cx.state(Pixels(80.0));
+        let stretch_one = cx.state(Stretch(1.0));
+        let padding_zero = cx.state(Pixels(0.0));
+        let gap_10 = cx.state(Pixels(10.0));
+        let padding_10 = cx.state(Pixels(10.0));
+
+        Self { filter_prefix, list, selected, name, surname }.build(cx, move |cx| {
+            VStack::new(cx, move |cx| {
+                HStack::new(cx, move |cx| {
+                    VStack::new(cx, move |cx| {
+                        HStack::new(cx, move |cx| {
+                            Label::static_text(cx, "Filter prefix:");
+                            Textbox::new(cx, filter_prefix).on_edit(move |cx, text| {
+                                filter_prefix.set(cx, text);
+                            });
+                        });
+
+                        // Custom list using Binding to rebuild on data changes
+                        VStack::new(cx, move |cx| {
+                            Binding::new(cx, list, move |cx| {
+                                let items = list.get(cx).clone();
+                                let filter = filter_prefix.get(cx).to_lowercase();
+                                for (index, (first, last)) in items.iter().enumerate() {
+                                    let display = format!("{}, {}", last, first);
+                                    if filter.is_empty() || last.to_lowercase().starts_with(&filter)
+                                    {
+                                        let display_signal = cx.state(display);
+                                        let is_selected = cx.derived({
+                                            let selected = selected;
+                                            move |s| *selected.get(s) == Some(index)
+                                        });
+                                        Label::new(cx, display_signal)
+                                            .on_press(move |cx| {
+                                                cx.emit(CrudEvent::SetSelected(index));
+                                            })
+                                            .navigable(navigable)
+                                            .checked(is_selected);
+                                    }
+                                }
+                            });
+                        })
+                        .class("crud-list");
+                    });
+
+                    VStack::new(cx, move |cx| {
+                        HStack::new(cx, move |cx| {
+                            Label::static_text(cx, "Name:").width(label_width);
+                            Textbox::new(cx, name).on_edit(move |cx, text| {
+                                name.set(cx, text);
+                            });
+                        });
+
+                        HStack::new(cx, move |cx| {
+                            Label::static_text(cx, "Surname:").width(label_width);
+                            Textbox::new(cx, surname).on_edit(move |cx, text| {
+                                surname.set(cx, text);
+                            });
+                        });
+                    });
+                })
+                .height(stretch_one)
+                .padding_top(padding_zero)
+                .padding_bottom(padding_zero);
+
+                HStack::new(cx, move |cx| {
+                    Button::new(cx, |cx| Label::static_text(cx, "Create"))
+                        .on_press(move |cx| cx.emit(CrudEvent::Create));
+                    Button::new(cx, |cx| Label::static_text(cx, "Update"))
+                        .on_press(move |cx| cx.emit(CrudEvent::Update));
+                    Button::new(cx, |cx| Label::static_text(cx, "Delete"))
+                        .on_press(move |cx| cx.emit(CrudEvent::Delete));
+                })
+                .horizontal_gap(gap_10);
+            })
+            .padding(padding_10);
+        })
+    }
+}
+
+impl View for CrudApp {
+    fn element(&self) -> Option<&'static str> {
+        Some("crud-app")
+    }
+
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::SetSelected(index) => {
-                self.selected = Some(*index);
-                self.name = self.list[*index].0.clone();
-                self.surname = self.list[*index].1.clone();
-            }
-
-            AppEvent::SetName(name) => {
-                self.name = name.clone();
-            }
-
-            AppEvent::SetSurname(surname) => {
-                self.surname = surname.clone();
-            }
-
-            AppEvent::Create => {
-                if !self.name.is_empty() && !self.surname.is_empty() {
-                    self.list.push((self.name.clone(), self.surname.clone()));
-                    self.selected = Some(self.list.len() - 1);
+        event.map(|crud_event, _| match crud_event {
+            CrudEvent::SetSelected(index) => {
+                self.selected.set(cx, Some(*index));
+                let items = self.list.get(cx);
+                let name_surname = if *index < items.len() {
+                    Some((items[*index].0.clone(), items[*index].1.clone()))
+                } else {
+                    None
+                };
+                if let Some((first, last)) = name_surname {
+                    self.name.set(cx, first);
+                    self.surname.set(cx, last);
                 }
             }
 
-            AppEvent::Update => {
-                if let Some(selected) = self.selected {
-                    self.list[selected].0 = self.name.clone();
-                    self.list[selected].1 = self.surname.clone();
+            CrudEvent::Create => {
+                let name_val = self.name.get(cx).clone();
+                let surname_val = self.surname.get(cx).clone();
+                if !name_val.is_empty() && !surname_val.is_empty() {
+                    self.list.update(cx, |items| {
+                        items.push((name_val, surname_val));
+                    });
+                    let new_index = self.list.get(cx).len() - 1;
+                    self.selected.set(cx, Some(new_index));
                 }
             }
 
-            AppEvent::Delete => {
-                if let Some(selected) = self.selected {
-                    self.list.remove(selected);
-                    if self.list.is_empty() {
-                        self.selected = None;
-                        self.name = String::new();
-                        self.surname = String::new();
+            CrudEvent::Update => {
+                if let Some(sel) = *self.selected.get(cx) {
+                    let name_val = self.name.get(cx).clone();
+                    let surname_val = self.surname.get(cx).clone();
+                    self.list.update(cx, |items| {
+                        if let Some(item) = items.get_mut(sel) {
+                            item.0 = name_val;
+                            item.1 = surname_val;
+                        }
+                    });
+                }
+            }
+
+            CrudEvent::Delete => {
+                if let Some(sel) = *self.selected.get(cx) {
+                    self.list.update(cx, |items| {
+                        if sel < items.len() {
+                            items.remove(sel);
+                        }
+                    });
+
+                    let list_len = self.list.get(cx).len();
+                    if list_len == 0 {
+                        self.selected.set(cx, None);
+                        self.name.set(cx, String::new());
+                        self.surname.set(cx, String::new());
                     } else {
-                        cx.emit(AppEvent::SetSelected(selected.saturating_sub(1)));
+                        let new_sel = sel.saturating_sub(1).min(list_len - 1);
+                        cx.emit(CrudEvent::SetSelected(new_sel));
                     }
                 }
             }
@@ -108,74 +216,10 @@ impl Model for AppData {
 }
 
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
-        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
+    let (app, (title, size)) = Application::new_with_state(|cx| {
+        CrudApp::new(cx);
+        (cx.state("CRUD"), cx.state((450, 200)))
+    });
 
-        AppData {
-            filter_prefix: "".to_string(),
-            list: vec![("John".to_string(), "Smith".to_string())],
-            selected: None,
-            name: "".to_string(),
-            surname: "".to_string(),
-        }
-        .build(cx);
-
-        VStack::new(cx, |cx| {
-            HStack::new(cx, |cx| {
-                VStack::new(cx, |cx| {
-                    HStack::new(cx, |cx| {
-                        Label::new(cx, "Filter prefix:");
-                        Textbox::new(cx, AppData::filter_prefix);
-                    });
-
-                    List::new(cx, AppData::list, |cx, index, item| {
-                        Label::new(
-                            cx,
-                            item.map(|(name, surname)| format!("{}, {}", surname, name)),
-                        )
-                        .on_press(move |cx| {
-                            cx.emit(AppEvent::SetSelected(index));
-                        })
-                        .navigable(true)
-                        .checked(AppData::selected.map(move |selected| *selected == Some(index)));
-                    });
-                });
-
-                VStack::new(cx, |cx| {
-                    HStack::new(cx, |cx| {
-                        Label::new(cx, "Name:").width(Pixels(80.0));
-
-                        Textbox::new(cx, AppData::name).on_edit(move |cx, text| {
-                            cx.emit(AppEvent::SetName(text.clone()));
-                        });
-                    });
-
-                    HStack::new(cx, |cx| {
-                        Label::new(cx, "Surname:").width(Pixels(80.0));
-
-                        Textbox::new(cx, AppData::surname).on_edit(move |cx, text| {
-                            cx.emit(AppEvent::SetSurname(text.clone()));
-                        });
-                    });
-                });
-            })
-            .height(Stretch(1.0))
-            .padding_top(Pixels(0.0))
-            .padding_bottom(Pixels(0.0));
-
-            HStack::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "Create"))
-                    .on_press(|cx| cx.emit(AppEvent::Create));
-                Button::new(cx, |cx| Label::new(cx, "Update"))
-                    .on_press(|cx| cx.emit(AppEvent::Update));
-                Button::new(cx, |cx| Label::new(cx, "Delete"))
-                    .on_press(|cx| cx.emit(AppEvent::Delete));
-            })
-            .horizontal_gap(Pixels(10.0));
-        })
-        .padding(Pixels(10.0));
-    })
-    .title("CRUD")
-    .inner_size((450, 200))
-    .run()
+    app.title(title).inner_size(size).run()
 }

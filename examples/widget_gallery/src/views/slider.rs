@@ -15,8 +15,7 @@ pub fn slider(cx: &mut Context) {
         DemoRegion::new(
             cx,
             move |cx| {
-                Slider::new(cx, value)
-                    .on_change(move |cx, val| value.set(cx, val));
+                Slider::new(cx, value).on_change(move |cx, val| value.set(cx, val));
             },
             r#"let value = cx.state(0.5f32);
 Slider::new(cx, value)

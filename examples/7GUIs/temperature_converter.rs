@@ -1,58 +1,43 @@
 use vizia::prelude::*;
 
-#[derive(Lens)]
-pub struct AppData {
-    temperature: f32,
+fn celsius_to_fahrenheit(temp: f32) -> f32 {
+    temp * (9. / 5.) + 32.
 }
 
-pub enum AppEvent {
-    SetTemperature(f32),
-}
-
-impl Model for AppData {
-    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::SetTemperature(temp) => self.temperature = *temp,
-        });
-    }
-}
-
-fn input_box<L: Lens<Target = f32>>(
-    cx: &mut Context,
-    lens: L,
-    convert: impl Fn(f32) -> f32 + Send + Sync + 'static,
-) {
-    Textbox::new(cx, lens.map(|num| format!("{:.0}", num)))
-        .on_edit(move |ex, text| {
-            if let Ok(val) = text.parse() {
-                ex.emit(AppEvent::SetTemperature(convert(val)));
-            }
-        })
-        .width(Stretch(1.0));
-}
-
-fn celcius_to_fahrenheit(temp: &f32) -> f32 {
-    *temp * (9. / 5.) + 32.
-}
-
-fn fahrenheit_to_celcius(temp: f32) -> f32 {
+fn fahrenheit_to_celsius(temp: f32) -> f32 {
     (temp - 32.) * (5. / 9.)
 }
 
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
-        AppData { temperature: 5.0 }.build(cx);
+    let (app, (title, size)) = Application::new_with_state(|cx| {
+        // Two writable signals that stay in sync
+        let celsius = cx.state(5.0f32);
+        let fahrenheit = cx.state(celsius_to_fahrenheit(5.0));
+        let stretch_one = cx.state(Stretch(1.0));
+        let align_center = cx.state(Alignment::Center);
+        let gap_10 = cx.state(Pixels(10.0));
 
         HStack::new(cx, |cx| {
-            input_box(cx, AppData::temperature, |val| val);
-            Label::new(cx, "Celsius");
-            input_box(cx, AppData::temperature.map(celcius_to_fahrenheit), fahrenheit_to_celcius);
-            Label::new(cx, "Fahrenheit");
+            // Celsius input - updates fahrenheit when edited
+            Textbox::new(cx, celsius)
+                .on_submit(move |cx, val, _| {
+                    fahrenheit.set(cx, celsius_to_fahrenheit(val));
+                })
+                .width(stretch_one);
+            Label::static_text(cx, "Celsius");
+
+            // Fahrenheit input - updates celsius when edited
+            Textbox::new(cx, fahrenheit)
+                .on_submit(move |cx, val, _| {
+                    celsius.set(cx, fahrenheit_to_celsius(val));
+                })
+                .width(stretch_one);
+            Label::static_text(cx, "Fahrenheit");
         })
-        .alignment(Alignment::Center)
-        .horizontal_gap(Pixels(10.0));
-    })
-    .title("Temperature Converter")
-    .inner_size((450, 100))
-    .run()
+        .alignment(align_center)
+        .horizontal_gap(gap_10);
+        (cx.state("Temperature Converter"), cx.state((450, 100)))
+    });
+
+    app.title(title).inner_size(size).run()
 }

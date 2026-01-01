@@ -12,32 +12,26 @@ use crate::prelude::*;
 /// # use vizia_core::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
+/// # let text = cx.state("Text");
 /// #
-/// Label::new(cx, "Text");
+/// Label::new(cx, text);
 /// ```
 ///
 /// ## Label bound to data
 ///
-/// A label can be bound to data using a lens which automatically updates the text whenever the underlying data changes.
+/// A label can be bound to data using a signal which automatically updates the text whenever the underlying data changes.
 ///
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
-/// #[derive(Lens)]
-/// struct AppData {
-///     text: String,
-/// }
-///
-/// impl Model for AppData {}
-///
-/// AppData {
-///     text: String::from("Text"),
-/// }
-/// .build(cx);
-///
-/// Label::new(cx, AppData::text);
+/// let count = cx.state(0i32);
+/// let text = cx.derived({
+///     let count = count;
+///     move |s| format!("Count: {}", count.get(s))
+/// });
+/// Label::new(cx, text);
 /// ```
 ///
 /// ## Label with text wrapping
@@ -49,11 +43,12 @@ use crate::prelude::*;
 /// #
 /// # let mut cx = &mut Context::default();
 /// #
-/// Label::new(
-///     cx,
+/// let text = cx.state(
 ///     "This is a really long text to showcase the text wrapping support of a label.",
-/// )
-/// .width(Pixels(100.0));
+/// );
+/// let width_100 = cx.state(Pixels(100.0));
+/// Label::new(cx, text)
+///     .width(width_100);
 /// ```
 ///
 /// ## Label without text wrapping
@@ -65,12 +60,14 @@ use crate::prelude::*;
 /// #
 /// # let mut cx = &mut Context::default();
 /// #
-/// Label::new(
-///     cx,
+/// let text = cx.state(
 ///     "This is a really long text to showcase disabled text wrapping of a label.",
-/// )
-/// .width(Pixels(100.0))
-/// .text_wrap(false);
+/// );
+/// let width_100 = cx.state(Pixels(100.0));
+/// let no_wrap = cx.state(false);
+/// Label::new(cx, text)
+///     .width(width_100)
+///     .text_wrap(no_wrap);
 /// ```
 ///
 /// ## Label for a button
@@ -81,7 +78,8 @@ use crate::prelude::*;
 /// # use vizia_core::prelude::*;
 /// # let cx = &mut Context::default();
 /// #
-/// Button::new(cx, |_| {}, |cx| Label::new(cx, "Text"));
+/// let text = cx.state("Text");
+/// Button::new(cx, |cx| Label::new(cx, text));
 /// ```
 pub struct Label {
     describing: Option<String>,
@@ -96,30 +94,50 @@ impl Label {
     /// # use vizia_core::prelude::*;
     /// #
     /// # let cx = &mut Context::default();
+    /// # let text = cx.state("Text");
     /// #
-    /// Label::new(cx, "Text");
+    /// Label::new(cx, text);
     /// ```
-    pub fn new<T>(cx: &mut Context, text: impl Res<T> + Clone) -> Handle<Self>
+    pub fn new<T>(cx: &mut Context, text: Signal<T>) -> Handle<Self>
     where
-        T: ToStringLocalized,
+        T: ToStringLocalized + Clone,
     {
-        Self { describing: None }.build(cx, |_| {}).text(text.clone()).role(Role::Label).name(text)
+        Self { describing: None }.build(cx, |_| {}).text(text).role(Role::Label).name(text)
+    }
+
+    /// Creates a label with static text (non-reactive).
+    ///
+    /// This is a convenience method for labels that display constant text.
+    /// Equivalent to `Label::new(cx, cx.state(text))`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// #
+    /// # let cx = &mut Context::default();
+    /// #
+    /// Label::static_text(cx, "Hello World");
+    /// ```
+    pub fn static_text<'a>(cx: &'a mut Context, text: &'static str) -> Handle<'a, Self> {
+        let signal = cx.state(text);
+        Self::new(cx, signal)
     }
 
     /// Creates a new rich [Label] view.
     pub fn rich<T>(
         cx: &mut Context,
-        text: impl Res<T> + Clone,
+        text: Signal<T>,
         children: impl Fn(&mut Context),
     ) -> Handle<Self>
     where
-        T: ToStringLocalized,
+        T: ToStringLocalized + Clone,
     {
         Self { describing: None }
             .build(cx, |cx| {
                 children(cx);
             })
-            .text(text.clone())
+            .text(text)
             .role(Role::Label)
             .name(text)
     }
@@ -133,30 +151,23 @@ impl Handle<'_, Label> {
     /// ```
     /// # use vizia_core::prelude::*;
     /// #
-    /// # #[derive(Lens)]
-    /// # struct AppData {
-    /// #     value: bool,
-    /// # }
-    /// #
-    /// # impl Model for AppData {}
-    /// #
-    /// # enum AppEvent {
-    /// #     ToggleValue,
-    /// # }
-    /// #
     /// # let cx = &mut Context::default();
-    /// #
-    /// # AppData { value: false }.build(cx);
-    /// #
-    /// Checkbox::new(cx, AppData::value).on_toggle(|cx| cx.emit(AppEvent::ToggleValue)).id("checkbox_identifier");
-    /// Label::new(cx, "hello").describing("checkbox_identifier");
+    /// # let text = cx.state("hello");
+    /// # let value = cx.state(false);
+    /// Checkbox::new(cx, value)
+    ///     .on_toggle(move |cx| value.update(cx, |v| *v = !*v))
+    ///     .id("checkbox_identifier");
+    /// Label::new(cx, text).describing("checkbox_identifier");
     /// ```
-    pub fn describing(self, entity_identifier: impl Into<String>) -> Self {
+    pub fn describing(mut self, entity_identifier: impl Into<String>) -> Self {
         let identifier = entity_identifier.into();
         if let Some(id) = self.cx.resolve_entity_identifier(&identifier) {
             self.cx.style.labelled_by.insert(id, self.entity);
         }
-        self.modify(|label| label.describing = Some(identifier)).class("describing").hidden(true)
+        let hidden = self.context().state(true);
+        self.modify(|label| label.describing = Some(identifier))
+            .class("describing")
+            .hidden(hidden)
     }
 }
 
@@ -197,19 +208,22 @@ pub struct TextSpan {}
 
 impl TextSpan {
     /// Create a new [TextSpan] view.
-    pub fn new<'a>(
+    pub fn new<'a, T>(
         cx: &'a mut Context,
-        text: &str,
+        text: Signal<T>,
         children: impl Fn(&mut Context),
-    ) -> Handle<'a, Self> {
+    ) -> Handle<'a, Self>
+    where
+        T: ToStringLocalized + Clone,
+    {
         Self {}
             .build(cx, |cx| {
                 cx.style.text_span.insert(cx.current(), true);
+                cx.style.display.insert(cx.current(), Display::None);
+                cx.style.pointer_events.insert(cx.current(), PointerEvents::None);
                 children(cx);
             })
             .text(text)
-            .display(Display::None)
-            .pointer_events(PointerEvents::None)
     }
 }
 

@@ -2,32 +2,21 @@ use vizia::{icons::ICON_CHEVRON_DOWN, prelude::*};
 
 use crate::DemoRegion;
 
-#[derive(Lens)]
-pub struct DropdownData {
-    list: Vec<String>,
-    selected: usize,
-}
-
-pub enum DropdownEvent {
-    SetSelected(usize),
-}
-
-impl Model for DropdownData {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            DropdownEvent::SetSelected(selected) => {
-                self.selected = *selected;
-            }
-        })
-    }
-}
-
 pub fn dropdown(cx: &mut Context) {
-    DropdownData {
-        list: vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()],
-        selected: 0,
-    }
-    .build(cx);
+    let list = cx.state(vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()]);
+    let selected = cx.state(0usize);
+    let width_100 = cx.state(Pixels(100.0));
+    let stretch_one = cx.state(Stretch(1.0));
+    let icon_size = cx.state(Pixels(16.0));
+    let selected_indices = cx.derived({
+        let selected = selected;
+        move |s| vec![*selected.get(s)]
+    });
+    let selected_label = cx.derived({
+        let list = list;
+        let selected = selected;
+        move |s| list.get(s).get(*selected.get(s)).cloned().unwrap_or_default()
+    });
 
     VStack::new(cx, |cx| {
         Markdown::new(cx, "# Dropdown");
@@ -43,51 +32,59 @@ pub fn dropdown(cx: &mut Context) {
                     cx,
                     move |cx| {
                         Button::new(cx, |cx| {
-                            Label::new(cx, "").bind(DropdownData::list, move |handle, list| {
-                                handle.bind(DropdownData::selected, move |handle, sel| {
-                                    let selected_index = sel.get(&handle);
-                                    handle.text(list.idx(selected_index));
-                                });
-                            })
+                            Label::new(cx, selected_label);
                         })
                         .on_press(|cx| cx.emit(PopupEvent::Switch));
                     },
                     move |cx| {
-                        List::new(cx, DropdownData::list, |cx, _, item| {
+                        List::new(cx, list, |cx, _, item| {
                             Label::new(cx, item).hoverable(false);
                         })
                         .selectable(Selectable::Single)
-                        .selected(DropdownData::selected.map(|s| vec![*s]))
-                        .on_select(|cx, index| {
-                            cx.emit(DropdownEvent::SetSelected(index));
+                        .selected(selected_indices)
+                        .on_select(move |cx, index| {
+                            selected.set(cx, index);
                             cx.emit(PopupEvent::Close);
                         })
                         .focused(true);
                     },
                 )
-                .width(Pixels(100.0));
+                .width(width_100);
             },
-            r#"Dropdown::new(
-        cx,
-        move |cx| Label::new(cx, AppData::choice),
-        move |cx| {
-            List::new(cx, AppData::list, |cx, _, item| {
-                Label::new(cx, item)
-                    .cursor(CursorIcon::Hand)
-                    .bind(AppData::choice, move |handle, selected| {
-                        if item.get(&handle) == selected.get(&handle) {
-                            handle.checked(true);
-                        }
-                    })
-                    .on_press(move |cx| {
-                        cx.emit(AppEvent::SetChoice(item.get(cx)));
-                        cx.emit(PopupEvent::Close);
-                    });
-            });
-        },
-    )
-    .top(Pixels(40.0))
-    .width(Pixels(100.0));"#,
+            r#"let list = cx.state(vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()]);
+let selected = cx.state(0usize);
+let width_100 = cx.state(Pixels(100.0));
+let selected_indices = cx.derived({
+    let selected = selected;
+    move |s| vec![*selected.get(s)]
+});
+let selected_label = cx.derived({
+    let list = list;
+    let selected = selected;
+    move |s| list.get(s).get(*selected.get(s)).cloned().unwrap_or_default()
+});
+Dropdown::new(
+    cx,
+    move |cx| {
+        Button::new(cx, |cx| {
+            Label::new(cx, selected_label);
+        })
+        .on_press(|cx| cx.emit(PopupEvent::Switch));
+    },
+    move |cx| {
+        List::new(cx, list, |cx, _, item| {
+            Label::new(cx, item).hoverable(false);
+        })
+        .selectable(Selectable::Single)
+        .selected(selected_indices)
+        .on_select(|cx, index| {
+            selected.set(cx, index);
+            cx.emit(PopupEvent::Close);
+        })
+        .focused(true);
+    },
+)
+.width(width_100);"#,
         );
 
         DemoRegion::new(
@@ -97,53 +94,71 @@ pub fn dropdown(cx: &mut Context) {
                     cx,
                     move |cx| {
                         ButtonGroup::new(cx, |cx| {
-                            Button::new(cx, |cx| Label::new(cx, "Reply")).width(Stretch(1.0));
+                            Button::new(cx, |cx| Label::static_text(cx, "Reply"))
+                                .width(stretch_one);
 
                             Button::new(cx, |cx| {
                                 Svg::new(cx, ICON_CHEVRON_DOWN)
                                     .class("icon")
-                                    .size(Pixels(16.0))
+                                    .size(icon_size)
                                     .hoverable(false)
                             })
                             .on_press(|cx| cx.emit(PopupEvent::Switch));
                         });
                     },
                     move |cx| {
-                        List::new(cx, DropdownData::list, |cx, _, item| {
+                        List::new(cx, list, |cx, _, item| {
                             Label::new(cx, item).hoverable(false);
                         })
                         .selectable(Selectable::Single)
-                        .selected(DropdownData::selected.map(|s| vec![*s]))
-                        .on_select(|cx, index| {
-                            cx.emit(DropdownEvent::SetSelected(index));
+                        .selected(selected_indices)
+                        .on_select(move |cx, index| {
+                            selected.set(cx, index);
                             cx.emit(PopupEvent::Close);
                         })
                         .focused(true);
                     },
                 )
-                .width(Pixels(100.0));
+                .width(width_100);
             },
-            r#"Dropdown::new(
-        cx,
-        move |cx| Label::new(cx, AppData::choice),
-        move |cx| {
-            List::new(cx, AppData::list, |cx, _, item| {
-                Label::new(cx, item)
-                    .cursor(CursorIcon::Hand)
-                    .bind(AppData::choice, move |handle, selected| {
-                        if item.get(&handle) == selected.get(&handle) {
-                            handle.checked(true);
-                        }
-                    })
-                    .on_press(move |cx| {
-                        cx.emit(AppEvent::SetChoice(item.get(cx)));
-                        cx.emit(PopupEvent::Close);
-                    });
-            });
-        },
-    )
-    .top(Pixels(40.0))
-    .width(Pixels(100.0));"#,
+            r#"let list = cx.state(vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()]);
+let selected = cx.state(0usize);
+let width_100 = cx.state(Pixels(100.0));
+let stretch_one = cx.state(Stretch(1.0));
+let icon_size = cx.state(Pixels(16.0));
+let selected_indices = cx.derived({
+    let selected = selected;
+    move |s| vec![*selected.get(s)]
+});
+Dropdown::new(
+    cx,
+    move |cx| {
+        ButtonGroup::new(cx, |cx| {
+            Button::new(cx, |cx| Label::static_text(cx, "Reply")).width(stretch_one);
+
+            Button::new(cx, |cx| {
+                Svg::new(cx, ICON_CHEVRON_DOWN)
+                    .class("icon")
+                    .size(icon_size)
+                    .hoverable(false)
+            })
+            .on_press(|cx| cx.emit(PopupEvent::Switch));
+        });
+    },
+    move |cx| {
+        List::new(cx, list, |cx, _, item| {
+            Label::new(cx, item).hoverable(false);
+        })
+        .selectable(Selectable::Single)
+        .selected(selected_indices)
+        .on_select(|cx, index| {
+            selected.set(cx, index);
+            cx.emit(PopupEvent::Close);
+        })
+        .focused(true);
+    },
+)
+.width(width_100);"#,
         );
     })
     .class("panel");

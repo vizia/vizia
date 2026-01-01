@@ -1,45 +1,27 @@
 use vizia::prelude::*;
 
-#[derive(Lens)]
-pub struct AppData {
-    count: i32,
-}
-
-pub enum AppEvent {
-    Increment,
-    Decrement,
-}
-
-impl Model for AppData {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::Increment => {
-                self.count += 1;
-            }
-            AppEvent::Decrement => {
-                self.count -= 1;
-            }
-        });
-    }
-}
-
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
-        AppData { count: 0 }.build(cx);
+    let (app, (title, size)) = Application::new_with_state(|cx| {
+        let count = cx.state(0i32);
+        let title = cx.state("Counter".to_string());
+        let size = cx.state((400, 100));
+        let align_center = cx.state(Alignment::Center);
+        let gap_50 = cx.state(Pixels(50.0));
 
         HStack::new(cx, move |cx| {
-            Button::new(cx, |cx| Label::new(cx, "Increment"))
-                .on_press(|cx| cx.emit(AppEvent::Increment));
+            Button::new(cx, |cx| Label::static_text(cx, "Increment"))
+                .on_press(move |cx| count.update(cx, |value| *value += 1));
 
-            Button::new(cx, |cx| Label::new(cx, "Decrement"))
-                .on_press(|cx| cx.emit(AppEvent::Decrement));
+            Button::new(cx, |cx| Label::static_text(cx, "Decrement"))
+                .on_press(move |cx| count.update(cx, |value| *value -= 1));
 
-            Label::new(cx, AppData::count);
+            Label::new(cx, count);
         })
-        .alignment(Alignment::Center)
-        .gap(Pixels(50.0));
-    })
-    .title("Counter")
-    .inner_size((400, 100))
-    .run()
+        .alignment(align_center)
+        .gap(gap_50);
+
+        (title, size)
+    });
+
+    app.title(title).inner_size(size).run()
 }

@@ -13,6 +13,7 @@ pub struct Markdown {}
 impl Markdown {
     /// Create a new [Markdown] view.
     pub fn new<'a>(cx: &'a mut Context, document: &str) -> Handle<'a, Self> {
+        let auto = cx.state(Auto);
         Self {}
             .build(cx, |cx| {
                 // The returned nodes are created in the supplied Arena, and are bound by its lifetime.
@@ -29,7 +30,7 @@ impl Markdown {
                     parse_node(cx, node, 0);
                 }
             })
-            .height(Auto)
+            .height(auto)
     }
 }
 
@@ -46,7 +47,8 @@ fn parse_node<'a>(
 ) {
     match &node.data.borrow().value {
         NodeValue::Paragraph => {
-            Label::rich(cx, "", |cx| {
+            let empty = cx.state("");
+            Label::rich(cx, empty, |cx| {
                 for child in node.children() {
                     parse_node(cx, child, list_level);
                 }
@@ -55,7 +57,8 @@ fn parse_node<'a>(
         }
 
         NodeValue::Heading(heading) => {
-            Label::rich(cx, "", |cx| {
+            let empty = cx.state("");
+            Label::rich(cx, empty, |cx| {
                 for child in node.children() {
                     parse_node(cx, child, list_level);
                 }
@@ -72,11 +75,13 @@ fn parse_node<'a>(
         }
 
         NodeValue::Text(text) => {
+            let text = cx.state(text.clone());
             TextSpan::new(cx, text, |_| {}).class("span");
         }
 
         NodeValue::Emph => {
-            TextSpan::new(cx, "", |cx| {
+            let empty = cx.state("");
+            TextSpan::new(cx, empty, |cx| {
                 for child in node.children() {
                     parse_node(cx, child, list_level);
                 }
@@ -85,7 +90,8 @@ fn parse_node<'a>(
         }
 
         NodeValue::Strong => {
-            TextSpan::new(cx, "", |cx| {
+            let empty = cx.state("");
+            TextSpan::new(cx, empty, |cx| {
                 for child in node.children() {
                     parse_node(cx, child, list_level);
                 }
@@ -94,7 +100,8 @@ fn parse_node<'a>(
         }
 
         NodeValue::Strikethrough => {
-            TextSpan::new(cx, "", |cx| {
+            let empty = cx.state("");
+            TextSpan::new(cx, empty, |cx| {
                 for child in node.children() {
                     parse_node(cx, child, list_level);
                 }
@@ -103,53 +110,65 @@ fn parse_node<'a>(
         }
 
         NodeValue::List(_list) => {
+            let auto = cx.state(Auto);
+            let indent = cx.state(Pixels(20.0));
             VStack::new(cx, |cx| {
                 for child in node.children() {
                     parse_node(cx, child, list_level);
                 }
             })
-            .height(Auto)
-            .left(Pixels(20.0));
+            .height(auto)
+            .left(indent);
         }
 
         NodeValue::Item(_list) => {
+            let auto = cx.state(Auto);
             HStack::new(cx, |cx| {
-                Label::new(cx, "\u{2022} ").width(Auto);
+                let bullet = cx.state("\u{2022} ");
+                Label::new(cx, bullet).width(auto);
                 VStack::new(cx, |cx| {
                     for child in node.children() {
                         parse_node(cx, child, list_level + 1);
                     }
                 })
-                .height(Auto);
+                .height(auto);
             })
             .class("li")
-            .height(Auto);
+            .height(auto);
         }
 
         NodeValue::Code(code) => {
-            TextSpan::new(cx, &code.literal.to_owned(), |_| {}).class("code");
+            let code = cx.state(code.literal.to_owned());
+            TextSpan::new(cx, code, |_| {}).class("code");
         }
 
         NodeValue::CodeBlock(code_block) => {
             let mut code = code_block.literal.to_owned();
             code.pop().unwrap();
+            let show_vertical_scrollbar = cx.state(false);
+            let auto = cx.state(Auto);
+            let stretch_one = cx.state(Stretch(1.0));
             ScrollView::new(cx, |cx| {
-                Label::new(cx, code).class("code");
+                let code_signal = cx.state(code);
+                Label::new(cx, code_signal).class("code");
             })
-            .show_vertical_scrollbar(false)
-            .height(Auto)
-            .width(Stretch(1.0));
+            .show_vertical_scrollbar(show_vertical_scrollbar)
+            .height(auto)
+            .width(stretch_one);
         }
 
         NodeValue::Link(link) => {
             let url = link.url.clone();
-            TextSpan::new(cx, "", |cx| {
+            let empty = cx.state("");
+            let cursor_hand = cx.state(CursorIcon::Hand);
+            let pointer_auto = cx.state(PointerEvents::Auto);
+            TextSpan::new(cx, empty, |cx| {
                 for child in node.children() {
                     parse_node(cx, child, list_level);
                 }
             })
-            .cursor(CursorIcon::Hand)
-            .pointer_events(PointerEvents::Auto)
+            .cursor(cursor_hand)
+            .pointer_events(pointer_auto)
             .on_press(move |_| {
                 open::that(url.as_str()).unwrap();
             })
@@ -157,7 +176,8 @@ fn parse_node<'a>(
         }
 
         NodeValue::SoftBreak => {
-            TextSpan::new(cx, "\n", |cx| {
+            let newline = cx.state("\n");
+            TextSpan::new(cx, newline, |cx| {
                 for child in node.children() {
                     parse_node(cx, child, list_level);
                 }
@@ -165,37 +185,44 @@ fn parse_node<'a>(
         }
 
         NodeValue::Table(_table) => {
+            let stretch_one = cx.state(Stretch(1.0));
+            let auto = cx.state(Auto);
             VStack::new(cx, |cx| {
                 for child in node.children() {
                     parse_node(cx, child, list_level);
                 }
             })
             .class("table")
-            .width(Stretch(1.0))
-            .height(Auto);
+            .width(stretch_one)
+            .height(auto);
         }
 
         NodeValue::TableRow(headers) => {
+            let table_headers = cx.state(*headers);
+            let stretch_one = cx.state(Stretch(1.0));
+            let auto = cx.state(Auto);
             HStack::new(cx, |cx| {
                 for child in node.children() {
                     parse_node(cx, child, list_level);
                 }
             })
             .class("table-row")
-            .toggle_class("table-headers", *headers)
-            .width(Stretch(1.0))
-            .height(Auto);
+            .toggle_class("table-headers", table_headers)
+            .width(stretch_one)
+            .height(auto);
             Divider::horizontal(cx);
         }
 
         NodeValue::TableCell => {
-            Label::rich(cx, "", |cx| {
+            let stretch_one = cx.state(Stretch(1.0));
+            let empty = cx.state("");
+            Label::rich(cx, empty, |cx| {
                 for child in node.children() {
                     parse_node(cx, child, list_level);
                 }
             })
             .class("table-cell")
-            .width(Stretch(1.0));
+            .width(stretch_one);
         }
 
         _ => {}

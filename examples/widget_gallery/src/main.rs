@@ -34,13 +34,27 @@ pub fn setup_logging() -> Result<(), ApplicationError> {
     Ok(())
 }
 
-fn theme_selection_dropdown(cx: &mut Context) {
-    PickList::new(cx, AppData::theme_options, AppData::selected_theme, true)
-        .on_select(|cx, index| cx.emit(AppEvent::SetThemeMode(index)))
-        .width(Pixels(100.0))
+fn theme_selection_dropdown(
+    cx: &mut Context,
+    theme_options: Signal<Vec<&'static str>>,
+    selected_theme: Signal<usize>,
+) {
+    let width_100 = cx.state(Pixels(100.0));
+
+    PickList::new(cx, theme_options, selected_theme, true)
+        .on_select(move |cx, index| {
+            selected_theme.set(cx, index);
+            cx.emit(EnvironmentEvent::SetThemeMode(match index {
+                0 /* system */ => AppTheme::System,
+                1 /* Dark */ => AppTheme::BuiltIn(ThemeMode::DarkMode),
+                2 /* Light */ => AppTheme::BuiltIn(ThemeMode::LightMode),
+                _ => unreachable!(),
+            }));
+        })
+        .width(width_100)
         .tooltip(|cx| {
             Tooltip::new(cx, |cx| {
-                Label::new(cx, "Select Theme Mode");
+                Label::static_text(cx, "Select Theme Mode");
             })
         });
 }
@@ -48,8 +62,15 @@ fn theme_selection_dropdown(cx: &mut Context) {
 fn main() -> Result<(), ApplicationError> {
     setup_logging()?;
 
-    Application::new(|cx: &mut Context| {
-        AppData::new().build(cx);
+    let (app, (title, size, min_size)) = Application::new_with_state(|cx: &mut Context| {
+        let app_data = AppData::new(cx);
+        let title = cx.state("Widget Gallery".to_string());
+        let size = cx.state((1400, 600));
+        let min_size = cx.state(Some((900, 300)));
+        let header_padding = cx.state(Pixels(8.0));
+        let header_gap = cx.state(Pixels(20.0));
+        let align_right = cx.state(Alignment::Right);
+        let auto = cx.state(Auto);
 
         cx.add_stylesheet(include_style!("src/style.css")).expect("Failed to add stylesheet");
 
@@ -57,16 +78,16 @@ fn main() -> Result<(), ApplicationError> {
             // Header
             HStack::new(cx, |cx| {
                 // toggle_disabled_switch(cx);
-                theme_selection_dropdown(cx);
+                theme_selection_dropdown(cx, app_data.theme_options, app_data.selected_theme);
             })
-            .padding(Pixels(8.0))
-            .alignment(Alignment::Right)
-            .horizontal_gap(Pixels(20.0))
-            .height(Auto);
+            .padding(header_padding)
+            .alignment(align_right)
+            .horizontal_gap(header_gap)
+            .height(auto);
 
             Divider::new(cx);
 
-            TabView::new(cx, AppData::tabs, |cx, item| match item.get(cx) {
+            TabView::new(cx, app_data.tabs, |cx, item| match item.get(cx) {
                 "Avatar" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).class("tab-name").hoverable(false);
@@ -492,9 +513,8 @@ fn main() -> Result<(), ApplicationError> {
             .class("widgets")
             .vertical();
         });
-    })
-    .title("Widget Gallery")
-    .inner_size((1400, 600))
-    .min_inner_size(Some((900, 300)))
-    .run()
+        (title, size, min_size)
+    });
+
+    app.title(title).inner_size(size).min_inner_size(min_size).run()
 }

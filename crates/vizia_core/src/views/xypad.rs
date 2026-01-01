@@ -1,35 +1,75 @@
 use crate::prelude::*;
 
 /// A view which allows the user to manipulate 2 floating point values simultaneously on a two dimensional pane.
+///
+/// # Examples
+///
+/// ## Basic XYPad
+/// ```
+/// # use vizia_core::prelude::*;
+/// # let mut cx = &mut Context::default();
+/// # let xy = cx.state((0.5f32, 0.5f32));
+/// XYPad::new(cx, xy)
+///     .on_change(move |cx, x, y| {
+///         xy.set(cx, (x, y));
+///     });
+/// ```
 pub struct XYPad {
+    value: Signal<(f32, f32)>,
     is_dragging: bool,
-
     on_change: Option<Box<dyn Fn(&mut EventContext, f32, f32)>>,
 }
 
 impl XYPad {
-    /// creates a new [XYPad] view.
-    pub fn new<L: Lens<Target = (f32, f32)>>(cx: &mut Context, lens: L) -> Handle<Self> {
-        Self { is_dragging: false, on_change: None }
-            .build(cx, |cx| {
+    /// Creates a new [XYPad] view bound to the given signal.
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::default();
+    /// # let xy = cx.state((0.5f32, 0.5f32));
+    /// XYPad::new(cx, xy)
+    ///     .on_change(move |cx, x, y| {
+    ///         xy.set(cx, (x, y));
+    ///     });
+    /// ```
+    pub fn new(cx: &mut Context, value: Signal<(f32, f32)>) -> Handle<Self> {
+        let position_absolute = cx.state(PositionType::Absolute);
+        let thumb_size = cx.state(Pixels(10.0));
+        let pad_size = cx.state(Pixels(200.0));
+        let thumb_translate = cx.state(Translate::new(
+            Length::Value(LengthValue::Px(-6.0)),
+            Length::Value(LengthValue::Px(-6.0)),
+        ));
+        let thumb_radius = cx.state(Percentage(50.0));
+        let thumb_border = cx.state(Pixels(2.0));
+        let pad_border = cx.state(Pixels(1.0));
+        let false_signal = cx.state(false);
+        let overflow_hidden = cx.state(Overflow::Hidden);
+        let left = cx.derived({
+            let value = value;
+            move |store| Percentage(value.get(store).0 * 100.0)
+        });
+        let top = cx.derived({
+            let value = value;
+            move |store| Percentage((1.0 - value.get(store).1) * 100.0)
+        });
+        Self { value, is_dragging: false, on_change: None }
+            .build(cx, move |cx| {
                 // Thumb
                 Element::new(cx)
-                    .position_type(PositionType::Absolute)
-                    .left(lens.map(|(x, _)| Percentage(*x * 100.0)))
-                    .top(lens.map(|(_, y)| Percentage((1.0 - *y) * 100.0)))
-                    .translate(Translate::new(
-                        Length::Value(LengthValue::Px(-6.0)),
-                        Length::Value(LengthValue::Px(-6.0)),
-                    ))
-                    .size(Pixels(10.0))
-                    .corner_radius(Percentage(50.0))
-                    .border_width(Pixels(2.0))
-                    .hoverable(false)
+                    .position_type(position_absolute)
+                    .left(left)
+                    .top(top)
+                    .translate(thumb_translate)
+                    .size(thumb_size)
+                    .corner_radius(thumb_radius)
+                    .border_width(thumb_border)
+                    .hoverable(false_signal)
                     .class("thumb");
             })
-            .overflow(Overflow::Hidden)
-            .border_width(Pixels(1.0))
-            .size(Pixels(200.0))
+            .overflow(overflow_hidden)
+            .border_width(pad_border)
+            .size(pad_size)
     }
 }
 
@@ -47,7 +87,7 @@ impl View for XYPad {
                 let current = cx.current();
                 cx.capture();
                 let mouse = cx.mouse();
-                if meta.target == current {
+                if meta.target == current || meta.target.is_descendant_of(cx.tree, current) {
                     let mut dx = (mouse.left.pos_down.0 - cx.cache.get_posx(current))
                         / cx.cache.get_width(current);
                     let mut dy = (mouse.left.pos_down.1 - cx.cache.get_posy(current))
@@ -97,5 +137,18 @@ impl Handle<'_, XYPad> {
     /// Set the callback which will be triggered when the XYPad is manipulated.
     pub fn on_change<F: Fn(&mut EventContext, f32, f32) + 'static>(self, callback: F) -> Self {
         self.modify(|xypad| xypad.on_change = Some(Box::new(callback)))
+    }
+
+    /// Enables two-way binding: XYPad changes automatically update the bound signal.
+    ///
+    /// This is a convenience method equivalent to:
+    /// ```ignore
+    /// .on_change(move |cx, x, y| signal.set(cx, (x, y)))
+    /// ```
+    pub fn two_way(self) -> Self {
+        self.modify(|xypad| {
+            let signal = xypad.value;
+            xypad.on_change = Some(Box::new(move |cx, x, y| signal.set(cx, (x, y))));
+        })
     }
 }

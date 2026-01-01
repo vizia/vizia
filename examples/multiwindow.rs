@@ -5,41 +5,38 @@ fn main() {
     panic!("This example is not supported on baseview");
 }
 
-enum AppEvent {
-    ShowWindow,
-    WindowClosed,
-}
-
 #[cfg(not(feature = "baseview"))]
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
+    let (app, title) = Application::new_with_state(|cx| {
         // Color component signals
         let red = cx.state(1.0f32);
         let green = cx.state(1.0f32);
         let blue = cx.state(1.0f32);
         let show_window = cx.state(false);
+        let padding_20 = cx.state(Pixels(20.0));
+        let align_center = cx.state(Alignment::Center);
+        let gap_12 = cx.state(Pixels(12.0));
+        let auto = cx.state(Auto);
+        let window_title = cx.state("Set color...");
+        let window_size = cx.state((400, 200));
+        let window_anchor = cx.state(Anchor::Center);
 
         Binding::new(cx, show_window, move |cx| {
             if *show_window.get(cx) {
                 Window::new(cx, move |cx| {
                     VStack::new(cx, move |cx: &mut Context| {
-                        Slider::new(cx, red)
-                            .on_change(move |cx, val| red.set(cx, val));
-                        Slider::new(cx, green)
-                            .on_change(move |cx, val| green.set(cx, val));
-                        Slider::new(cx, blue)
-                            .on_change(move |cx, val| blue.set(cx, val));
+                        Slider::new(cx, red).two_way();
+                        Slider::new(cx, green).two_way();
+                        Slider::new(cx, blue).two_way();
                     })
-                    .padding(Pixels(20.0))
-                    .alignment(Alignment::Center)
-                    .vertical_gap(Pixels(12.0));
+                    .padding(padding_20)
+                    .alignment(align_center)
+                    .vertical_gap(gap_12);
                 })
-                .on_close(|cx| {
-                    cx.emit(AppEvent::WindowClosed);
-                })
-                .title("Set color...")
-                .inner_size((400, 200))
-                .anchor(Anchor::Center);
+                .on_close(move |cx| show_window.set(cx, false))
+                .title(window_title)
+                .inner_size(window_size)
+                .anchor(window_anchor);
             }
         });
 
@@ -52,13 +49,14 @@ fn main() -> Result<(), ApplicationError> {
         });
 
         HStack::new(cx, move |cx| {
-            Button::new(cx, |cx| Label::new(cx, "Show Window"))
+            Button::new(cx, |cx| Label::static_text(cx, "Show Window"))
                 .on_press(move |cx| show_window.set(cx, true));
         })
-        .size(Auto)
-        .padding(Pixels(20.0))
+        .size(auto)
+        .padding(padding_20)
         .background_color(color);
-    })
-    .title("Main")
-    .run()
+        cx.state("Main")
+    });
+
+    app.title(title).run()
 }

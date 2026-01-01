@@ -17,22 +17,28 @@
 //! # use vizia_winit::application::Application;
 //! # let cx = &mut Context::default();
 //! pub struct AppData {
-//!     count: i32,
+//!     count: Signal<i32>,
 //! }
-//!
-//! impl Model for AppData {}
 //!
 //! pub enum AppEvent {
 //!     Increment,
-//!     Decrement,    
+//!     Decrement,
+//! }
+//!
+//! impl Model for AppData {
+//!     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+//!         event.map(|app_event, _| match app_event {
+//!             AppEvent::Increment => self.count.update(cx, |value| *value += 1),
+//!             AppEvent::Decrement => self.count.update(cx, |value| *value -= 1),
+//!         });
+//!     }
 //! }
 //!
 //! Application::new(|cx|{
-//!     AppData {
-//!         count: 0,
-//!     }.build(cx);
+//!     let count = cx.state(0i32);
+//!     AppData { count }.build(cx);
 //!
-//!     Label::new(cx, "Increment")
+//!     Label::static_text(cx, "Increment")
 //!         .on_press(|cx| cx.emit(AppEvent::Increment));
 //! })
 //! .run();
@@ -46,7 +52,7 @@
 //! # use vizia_winit::application::Application;
 //!
 //! pub struct AppData {
-//!     count: i32,
+//!     count: Signal<i32>,
 //! }
 //!
 //! pub enum AppEvent {
@@ -55,16 +61,16 @@
 //! }
 //!
 //! impl Model for AppData {
-//!     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+//!     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
 //!         // `event.map()` will attempt to cast the event message to the desired type and
 //!         // pass a reference to the message type to the closure passed to the `map()` method.
 //!         event.map(|app_event, _| match app_event {
 //!             AppEvent::Increment => {
-//!                 self.count += 1;
+//!                 self.count.update(cx, |value| *value += 1);
 //!             }
 //!
 //!             AppEvent::Decrement => {
-//!                 self.count -= 1;
+//!                 self.count.update(cx, |value| *value -= 1);
 //!             }
 //!         });
 //!     
@@ -73,11 +79,11 @@
 //!         // removing it from the event and thus preventing it from propagating further.
 //!         event.take(|app_event, meta| match app_event {
 //!             AppEvent::Increment => {
-//!                 self.count += 1;
+//!                 self.count.update(cx, |value| *value += 1);
 //!             }
 //!
 //!             AppEvent::Decrement => {
-//!                 self.count -= 1;
+//!                 self.count.update(cx, |value| *value -= 1);
 //!             }
 //!         });
 //!     }

@@ -1,68 +1,83 @@
-use std::ops::Deref;
-
 use crate::{icons::ICON_PLUS, prelude::*};
 
 pub enum TabEvent {
     SetSelected(usize),
 }
 
-#[derive(Lens)]
 pub struct TabView {
-    selected_index: usize,
-    is_vertical: bool,
-
-    #[lens(ignore)]
+    selected_index: Signal<usize>,
+    is_vertical: Signal<bool>,
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
 }
 
 impl TabView {
-    pub fn new<L, T, F>(cx: &mut Context, lens: L, content: F) -> Handle<Self>
+    pub fn new<T, F>(cx: &mut Context, list: Signal<Vec<T>>, content: F) -> Handle<Self>
     where
-        L: Lens<Target: std::ops::Deref<Target = [T]>>,
         T: Clone + 'static,
-        F: 'static + Clone + Fn(&mut Context, Index<L, T>) -> TabPair,
+        F: 'static + Clone + Fn(&mut Context, Signal<T>) -> TabPair,
     {
-        Self { selected_index: 0, is_vertical: false, on_select: None }
+        let selected_index = cx.state(0usize);
+        let is_vertical = cx.state(false);
+        let overflow_hidden = cx.state(Overflow::Hidden);
+        let header_z = cx.state(1);
+        let selected_item = cx.derived({
+            let list = list;
+            let selected_index = selected_index;
+            move |s| {
+                let items = list.get(s);
+                items.get(*selected_index.get(s)).cloned()
+            }
+        });
+
+        Self { selected_index, is_vertical, on_select: None }
             .build(cx, move |cx| {
                 let content2 = content.clone();
                 // Tab headers
                 ScrollView::new(cx, move |cx| {
-                    //VStack::new(cx, move |cx| {
-                    Binding::new(cx, lens.map(|list| list.len()), move |cx, list_length| {
-                        let list_length = list_length.get(cx);
-                        for index in 0..list_length {
-                            let l = lens.idx(index);
-                            let builder = (content2)(cx, l).header;
+                    Binding::new(cx, list, move |cx| {
+                        let list_len = list.get(cx).len();
+                        if list_len > 0 {
+                            let mut event_cx = EventContext::new(cx);
+                            selected_index.update(&mut event_cx, |idx| {
+                                if *idx >= list_len {
+                                    *idx = list_len.saturating_sub(1);
+                                }
+                            });
+                        }
+
+                        let items = list.get(cx).clone();
+                        for (index, item) in items.into_iter().enumerate() {
+                            let item_signal = cx.state(item);
+                            let builder = (content2)(cx, item_signal).header;
+                            let is_selected = cx.derived({
+                                let selected_index = selected_index;
+                                move |store| *selected_index.get(store) == index
+                            });
                             TabHeader::new(cx, index, builder)
-                                .bind(TabView::selected_index, move |handle, selected_index| {
-                                    let selected_index = selected_index.get(handle.cx);
-                                    handle.checked(selected_index == index);
-                                })
-                                .toggle_class("vertical", TabView::is_vertical);
+                                .checked(is_selected)
+                                .toggle_class("vertical", is_vertical);
                         }
                     })
-                    //})
-                    //.toggle_class("vertical", TabView::is_vertical)
-                    //.class("tabview-tabheader-wrapper");
                 })
                 .class("tabview-header")
-                .z_index(1)
-                .toggle_class("vertical", TabView::is_vertical);
+                .z_index(header_z)
+                .toggle_class("vertical", is_vertical);
 
-                Divider::new(cx).toggle_class("vertical", TabView::is_vertical);
+                Divider::new(cx).toggle_class("vertical", is_vertical);
 
                 // Tab content
-                VStack::new(cx, |cx| {
-                    Binding::new(cx, TabView::selected_index, move |cx, selected| {
-                        let selected = selected.get(cx);
-                        let l = lens.idx(selected);
-                        ((content)(cx, l).content)(cx);
+                VStack::new(cx, move |cx| {
+                    Binding::new(cx, selected_item, move |cx| {
+                        if let Some(item) = selected_item.get(cx).clone() {
+                            let item_signal = cx.state(item);
+                            ((content)(cx, item_signal).content)(cx);
+                        }
                     });
                 })
-                .overflow(Overflow::Hidden)
+                .overflow(overflow_hidden)
                 .class("tabview-content-wrapper");
             })
-            .toggle_class("vertical", TabView::is_vertical)
+            .toggle_class("vertical", is_vertical)
     }
 }
 
@@ -74,9 +89,9 @@ impl View for TabView {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|tab_event, meta| match tab_event {
             TabEvent::SetSelected(index) => {
-                self.selected_index = *index;
+                self.selected_index.set(cx, *index);
                 if let Some(callback) = &self.on_select {
-                    (callback)(cx, self.selected_index);
+                    (callback)(cx, *index);
                 }
                 meta.consume();
             }
@@ -86,21 +101,18 @@ impl View for TabView {
 
 impl Handle<'_, TabView> {
     pub fn vertical(self) -> Self {
-        self.modify(|tabview: &mut TabView| tabview.is_vertical = true)
+        self.modify2(|tabview: &mut TabView, cx| tabview.is_vertical.set(cx, true))
     }
 
     pub fn on_select(self, callback: impl Fn(&mut EventContext, usize) + 'static) -> Self {
         self.modify(|tabview: &mut TabView| tabview.on_select = Some(Box::new(callback)))
     }
 
-    pub fn with_selected<U: Into<usize>>(mut self, selected: impl Res<U>) -> Self {
-        let entity = self.entity();
-        selected.set_or_bind(self.context(), entity, |cx, selected| {
-            let index = selected.get(cx).into();
-            cx.emit(TabEvent::SetSelected(index));
-        });
-
-        self
+    pub fn with_selected(self, selected: Signal<usize>) -> Self {
+        self.bind(selected, |handle, selected| {
+            let index = *selected.get(&handle);
+            handle.cx.emit(TabEvent::SetSelected(index));
+        })
     }
 }
 
@@ -151,26 +163,31 @@ impl View for TabHeader {
 pub struct TabBar {}
 
 impl TabBar {
-    pub fn new<L: Lens, T: 'static>(
+    pub fn new<T: Clone + 'static>(
         cx: &mut Context,
-        list: L,
-        item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
-    ) -> Handle<Self>
-    where
-        L::Target: Deref<Target = [T]> + Data,
-    {
+        list: Signal<Vec<T>>,
+        item_content: impl 'static + Fn(&mut Context, usize, Signal<T>),
+    ) -> Handle<Self> {
+        let align_left = cx.state(Alignment::Left);
+        let layout_row = cx.state(LayoutType::Row);
+        let selectable = cx.state(Selectable::Single);
         Self {}
-            .build(cx, |cx| {
+            .build(cx, move |cx| {
                 List::new(cx, list, item_content)
-                    .selectable(Selectable::Single)
-                    .layout_type(LayoutType::Row);
-                Button::new(cx, |cx| Svg::new(cx, ICON_PLUS).size(Stretch(1.0)))
-                    .variant(ButtonVariant::Text)
-                    .padding(Pixels(0.0))
-                    .size(Pixels(16.0));
+                    .selectable(selectable)
+                    .layout_type(layout_row);
+                let text_variant = cx.state(ButtonVariant::Text);
+                let plus_icon = cx.state(ICON_PLUS);
+                let icon_stretch = cx.state(Stretch(1.0));
+                let zero_padding = cx.state(Pixels(0.0));
+                let button_size = cx.state(Pixels(16.0));
+                Button::new(cx, move |cx| Svg::new(cx, plus_icon).size(icon_stretch))
+                    .variant(text_variant)
+                    .padding(zero_padding)
+                    .size(button_size);
             })
-            .alignment(Alignment::Left)
-            .layout_type(LayoutType::Row)
+            .alignment(align_left)
+            .layout_type(layout_row)
     }
 }
 

@@ -19,11 +19,9 @@ use quote::{quote, quote_spanned};
 use syn::{parenthesized, Error, ExprPath, Lit, LitStr};
 
 const BASE_DATA_ATTR_PATH: &str = "data";
-const BASE_LENS_ATTR_PATH: &str = "lens";
 const IGNORE_ATTR_PATH: &str = "ignore";
 const DATA_SAME_FN_ATTR_PATH: &str = "same_fn";
 const DATA_EQ_ATTR_PATH: &str = "eq";
-const LENS_NAME_OVERRIDE_ATTR_PATH: &str = "name";
 
 /// The fields for a struct or an enum variant.
 pub struct Fields<Attrs> {
@@ -81,13 +79,6 @@ impl PartialEq for DataAttr {
     }
 }
 
-#[derive(Debug)]
-pub struct LensAttrs {
-    /// `true` if this field should be ignored.
-    pub ignore: bool,
-    pub lens_name_override: Option<Ident>,
-}
-
 impl Fields<DataAttr> {
     pub fn parse_ast(fields: &syn::Fields) -> Result<Self, Error> {
         let kind = match fields {
@@ -99,23 +90,6 @@ impl Fields<DataAttr> {
             .iter()
             .enumerate()
             .map(|(i, field)| Field::<DataAttr>::parse_ast(field, i))
-            .collect::<Result<Vec<_>, _>>()?;
-
-        Ok(Fields { kind, fields })
-    }
-}
-
-impl Fields<LensAttrs> {
-    pub fn parse_ast(fields: &syn::Fields) -> Result<Self, Error> {
-        let kind = match fields {
-            syn::Fields::Named(_) => FieldKind::Named,
-            syn::Fields::Unnamed(_) | syn::Fields::Unit => FieldKind::Unnamed,
-        };
-
-        let fields = fields
-            .iter()
-            .enumerate()
-            .map(|(i, field)| Field::<LensAttrs>::parse_ast(field, i))
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(Fields { kind, fields })
@@ -190,56 +164,6 @@ impl Field<DataAttr> {
     }
 }
 
-impl Field<LensAttrs> {
-    pub fn parse_ast(field: &syn::Field, index: usize) -> Result<Self, Error> {
-        let ident = match field.ident.as_ref() {
-            Some(ident) => FieldIdent::Named(ident.to_string().trim_start_matches("r#").to_owned()),
-            None => FieldIdent::Unnamed(index),
-        };
-
-        let ty = field.ty.clone();
-
-        let vis = field.vis.clone();
-
-        let mut ignore = false;
-        let mut lens_name_override = None;
-
-        for attr in field.attrs.iter() {
-            if attr.path().is_ident(BASE_LENS_ATTR_PATH) {
-                attr.parse_nested_meta(|meta| {
-                    if meta.path.is_ident(IGNORE_ATTR_PATH) {
-                        if ignore {
-                            return Err(Error::new(meta.input.span(), "Duplicate attribute"));
-                        }
-
-                        ignore = true;
-                        return Ok(());
-                    }
-
-                    if meta.path.is_ident(LENS_NAME_OVERRIDE_ATTR_PATH) {
-                        if lens_name_override.is_some() {
-                            return Err(Error::new(meta.input.span(), "Duplicate attribute"));
-                        }
-
-                        let content;
-                        parenthesized!(content in meta.input);
-                        let lit: LitStr = content.parse()?;
-                        let ident = parse_lit_into_ident(&Lit::Str(lit))?;
-                        lens_name_override = Some(ident);
-                        return Ok(());
-                    }
-
-                    Err(Error::new(
-                        meta.input.span(),
-                        "Expected attribute list of the form #[lens(one, two)]",
-                    ))
-                })?;
-            }
-        }
-        Ok(Field { ident, ty, vis, attrs: LensAttrs { ignore, lens_name_override } })
-    }
-}
-
 impl<Attrs> Field<Attrs> {
     pub fn ident_tokens(&self) -> TokenTree {
         match self.ident {
@@ -265,14 +189,4 @@ fn parse_lit_into_expr_path(lit: &syn::Lit) -> Result<ExprPath, Error> {
 
     let tokens = syn::parse_str(&string.value())?;
     syn::parse2(tokens)
-}
-
-fn parse_lit_into_ident(lit: &syn::Lit) -> Result<Ident, Error> {
-    let ident = if let syn::Lit::Str(lit) = lit {
-        Ident::new(&lit.value(), lit.span())
-    } else {
-        return Err(Error::new(lit.span(), "expected str, found... something else"));
-    };
-
-    Ok(ident)
 }

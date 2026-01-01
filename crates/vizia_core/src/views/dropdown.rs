@@ -13,36 +13,34 @@ use crate::prelude::*;
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # #[derive(Lens)]
-/// # struct AppData {
-/// #     value: u8,
-/// # }
-/// #
-/// # impl Model for AppData {}
-/// #
-/// # enum AppEvent {
-/// #     SetValue(u8),
-/// # }
-/// #
 /// # let cx = &mut Context::default();
 /// #
-/// # AppData { value: 0 }.build(cx);
-/// #
+/// let value = cx.state(0u8);
+/// let width_100 = cx.state(Pixels(100.0));
+/// let stretch_one = cx.state(Stretch(1.0));
+///
 /// Dropdown::new(
 ///     cx,
-///     |cx| Label::new(cx, AppData::value),
-///     |cx| {
-///         for i in 0..5 {
-///             Label::new(cx, i)
+///     move |cx| {
+///         let label = cx.derived({
+///             let value = value;
+///             move |s| format!("Value: {}", value.get(s))
+///         });
+///         Label::new(cx, label)
+///     },
+///     move |cx| {
+///         for i in 0..5u8 {
+///             let option = cx.state(i);
+///             Label::new(cx, option)
 ///                 .on_press(move |cx| {
-///                     cx.emit(AppEvent::SetValue(i));
+///                     value.set(cx, i);
 ///                     cx.emit(PopupEvent::Close); // close the popup
 ///                 })
-///                 .width(Stretch(1.0));
+///                 .width(stretch_one);
 ///         }
 ///     },
 /// )
-/// .width(Pixels(100.0));
+/// .width(width_100);
 /// ```
 ///
 /// The line marked "close the popup" is not required for anything other than closing the popup -
@@ -57,73 +55,57 @@ use crate::prelude::*;
 /// ```
 /// # use vizia_core::prelude::*;
 /// # let cx = &mut Context::default();
-///
-/// #[derive(Lens, Clone, PartialEq, Eq)]
-/// struct AppData {
-///     values: [bool; 6],
-///     filter: String,
-/// }
-///
-/// # impl Data for AppData {
-/// #     fn same(&self, other: &Self) -> bool {
-/// #         self == other
-/// #     }
-/// # }
-/// #
-/// # #[derive(Debug)]
-/// # enum AppEvent {
-/// #     SetFilter(String),
-/// #     SetValue(usize, bool),
-/// # }
-/// #
-/// # impl Model for AppData {
-/// #     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-/// #         event.map(|msg, _| {
-/// #             match msg {
-/// #                 AppEvent::SetFilter(s) => self.filter = s.clone(),
-/// #                 AppEvent::SetValue(i, b) => self.values[*i] = *b,
-/// #             }
-/// #         });
-/// #     }
-/// # }
 /// #
 /// # const LABELS: [&str; 6] = ["Bees", "Butterflies", "Dragonflies", "Crickets", "Moths", "Ladybugs"];
 /// #
-/// # AppData {
-/// #     values: [true, false, true, false, true, false],
-/// #     filter: "".to_owned(),
-/// # }.build(cx);
+/// let filter = cx.state(String::new());
+/// let values = cx.state([true, false, true, false, true, false]);
+/// let width_100 = cx.state(Pixels(100.0));
+/// let height_30 = cx.state(Pixels(30.0));
+/// let gap_4 = cx.state(Pixels(4.0));
+/// let stretch_one = cx.state(Stretch(1.0));
 ///
-/// Dropdown::new(cx, |cx| {
-///     Textbox::new(cx, AppData::filter).on_edit(|cx, text| {
-///         cx.emit(AppEvent::SetFilter(text));
-///     })
-///     .width(Pixels(100.0))
-///     .height(Pixels(30.0))
-/// }, |cx| {
-///     Binding::new(cx, AppData::root, |cx, lens| {
-///         let current = lens.get(cx);
-///         for i in 0..6 {
-///             if LABELS[i].to_lowercase().contains(&current.filter.to_lowercase()) {
+/// let view_state = cx.derived({
+///     let filter = filter;
+///     let values = values;
+///     move |s| (filter.get(s).to_lowercase(), *values.get(s))
+/// });
+///
+/// Dropdown::new(cx, move |cx| {
+///     Textbox::new(cx, filter)
+///         .two_way()
+///         .width(width_100)
+///         .height(height_30);
+/// }, move |cx| {
+///     Binding::new(cx, view_state, move |cx| {
+///         let (filter_text, _) = view_state.get(cx).clone();
+///         for i in 0..LABELS.len() {
+///             if LABELS[i].to_lowercase().contains(&filter_text) {
 ///                 HStack::new(cx, move |cx| {
-///                     Checkbox::new(cx, AppData::values.map(move |x| x[i]))
+///                     let checked = cx.derived({
+///                         let values = values;
+///                         move |s| values.get(s)[i]
+///                     });
+///                     Checkbox::new(cx, checked)
 ///                         .on_toggle(move |cx| {
-///                             cx.emit(AppEvent::SetValue(i, !current.values[i]));
+///                             values.update(cx, |vals| vals[i] = !vals[i]);
 ///                         });
-///                     Label::new(cx, LABELS[i]);
-///                 });
+///                     let label = cx.state(LABELS[i]);
+///                     Label::new(cx, label);
+///                 })
+///                 .width(stretch_one)
+///                 .horizontal_gap(gap_4);
 ///             }
 ///         }
 ///     });
-/// }).width(Pixels(100.0));
+/// }).width(width_100);
 /// ```
-#[derive(Lens)]
 pub struct Dropdown {
-    pub is_open: PopupData,
-    pub placement: Placement,
-    pub show_arrow: bool,
-    pub arrow_size: Length,
-    pub should_reposition: bool,
+    pub is_open: Signal<bool>,
+    pub placement: Signal<Placement>,
+    pub show_arrow: Signal<bool>,
+    pub arrow_size: Signal<Length>,
+    pub should_reposition: Signal<bool>,
 }
 
 impl Dropdown {
@@ -136,36 +118,38 @@ impl Dropdown {
     /// #
     /// # let cx = &mut Context::default();
     /// #
-    /// Dropdown::new(cx, |cx| Label::new(cx, "Text"), |_| {});
+    /// let text = cx.state("Text");
+    /// Dropdown::new(cx, |cx| Label::new(cx, text), |_| {});
     /// ```
     pub fn new<F, L>(cx: &mut Context, trigger: L, content: F) -> Handle<Self>
     where
         L: 'static + Fn(&mut Context),
         F: 'static + Fn(&mut Context),
     {
-        Self {
-            is_open: PopupData::default(),
-            placement: Placement::Bottom,
-            show_arrow: true,
-            arrow_size: Length::Value(LengthValue::Px(4.0)),
-            should_reposition: true,
-        }
-        .build(cx, move |cx| {
-            (trigger)(cx);
+        let is_open = cx.state(false);
+        let placement = cx.state(Placement::Bottom);
+        let show_arrow = cx.state(true);
+        let arrow_size = cx.state(Length::Value(LengthValue::Px(4.0)));
+        let should_reposition = cx.state(true);
+        Self { is_open, placement, show_arrow, arrow_size, should_reposition }.build(
+            cx,
+            move |cx| {
+                (trigger)(cx);
 
-            Binding::new(cx, Self::is_open, move |cx, is_open| {
-                if is_open.get(cx).into() {
-                    Popup::new(cx, |cx| {
-                        (content)(cx);
-                    })
-                    .on_blur(|cx| cx.emit(PopupEvent::Close))
-                    .placement(Dropdown::placement)
-                    .show_arrow(Dropdown::show_arrow)
-                    .arrow_size(Dropdown::arrow_size)
-                    .should_reposition(Dropdown::should_reposition);
-                }
-            })
-        })
+                Binding::new(cx, is_open, move |cx| {
+                    if *is_open.get(cx) {
+                        Popup::new(cx, |cx| {
+                            (content)(cx);
+                        })
+                        .on_blur(|cx| cx.emit(PopupEvent::Close))
+                        .placement(placement)
+                        .show_arrow(show_arrow)
+                        .arrow_size(arrow_size)
+                        .should_reposition(should_reposition);
+                    }
+                })
+            },
+        )
     }
 }
 
@@ -175,34 +159,57 @@ impl View for Dropdown {
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        self.is_open.event(cx, event);
+        event.map(|popup_event, meta| match popup_event {
+            PopupEvent::Open => {
+                self.is_open.set(cx, true);
+                meta.consume();
+            }
+
+            PopupEvent::Close => {
+                self.is_open.set(cx, false);
+                meta.consume();
+            }
+
+            PopupEvent::Switch => {
+                let is_open = *self.is_open.get(cx);
+                self.is_open.set(cx, !is_open);
+                meta.consume();
+            }
+        });
     }
 }
 
 impl Handle<'_, Dropdown> {
     /// Sets the position where the tooltip should appear relative to its parent element.
     /// Defaults to `Placement::Bottom`.
-    pub fn placement(self, placement: impl Res<Placement>) -> Self {
+    pub fn placement(self, placement: Signal<Placement>) -> Self {
         self.bind(placement, |handle, placement| {
-            let placement = placement.get(&handle);
-            handle.modify(|dropdown| {
-                dropdown.placement = placement;
-            });
+            let placement = *placement.get(&handle);
+            handle.modify2(|dropdown, cx| dropdown.placement.set(cx, placement));
         })
     }
 
     /// Sets whether the popup should include an arrow. Defaults to true.
-    pub fn show_arrow(self, show_arrow: bool) -> Self {
-        self.modify(|dropdown| dropdown.show_arrow = show_arrow)
+    pub fn show_arrow(self, show_arrow: Signal<bool>) -> Self {
+        self.bind(show_arrow, |handle, show_arrow| {
+            let show_arrow = *show_arrow.get(&handle);
+            handle.modify2(|dropdown, cx| dropdown.show_arrow.set(cx, show_arrow));
+        })
     }
 
     /// Sets the size of the popup arrow, or gap if the arrow is hidden.
-    pub fn arrow_size(self, size: impl Into<Length>) -> Self {
-        self.modify(|dropdown| dropdown.arrow_size = size.into())
+    pub fn arrow_size(self, size: Signal<Length>) -> Self {
+        self.bind(size, |handle, size| {
+            let size = size.get(&handle).clone();
+            handle.modify2(|dropdown, cx| dropdown.arrow_size.set(cx, size));
+        })
     }
 
     /// Set to whether the popup should reposition to always be visible.
-    pub fn should_reposition(self, flag: bool) -> Self {
-        self.modify(|dropdown| dropdown.should_reposition = flag)
+    pub fn should_reposition(self, flag: Signal<bool>) -> Self {
+        self.bind(flag, |handle, flag| {
+            let flag = *flag.get(&handle);
+            handle.modify2(|dropdown, cx| dropdown.should_reposition.set(cx, flag));
+        })
     }
 }

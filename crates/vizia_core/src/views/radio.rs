@@ -51,7 +51,8 @@ use crate::prelude::*;
 /// #
 /// HStack::new(cx, |cx| {
 ///     RadioButton::new(cx, checked_signal);
-///     Label::new(cx, "Press me");
+///     let label = cx.state("Press me");
+///     Label::new(cx, label);
 /// });
 /// ```
 pub struct RadioButton {
@@ -60,14 +61,16 @@ pub struct RadioButton {
 
 impl RadioButton {
     /// Creates a new [RadioButton] view.
-    pub fn new<L: Res<bool>>(cx: &mut Context, checked: L) -> Handle<Self> {
+    pub fn new(cx: &mut Context, checked: Signal<bool>) -> Handle<Self> {
+        let false_signal = cx.state(false);
+        let true_signal = cx.state(true);
         Self { on_select: None }
             .build(cx, |cx| {
-                Element::new(cx).class("inner").hoverable(false);
+                Element::new(cx).class("inner").hoverable(false_signal);
             })
             .checked(checked)
-            .navigable(true)
-            .checkable(true)
+            .navigable(true_signal)
+            .checkable(true_signal)
             .role(Role::RadioButton)
     }
 }

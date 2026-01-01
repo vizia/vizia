@@ -29,19 +29,24 @@ use crate::prelude::*;
 /// # use vizia_core::prelude::*;
 /// # let mut cx = &mut Context::default();
 /// # let value = cx.state(0.5f32);
+/// let value_label = cx.derived({
+///     let value = value;
+///     move |store| format!("{:.2}", *value.get(store))
+/// });
 /// HStack::new(cx, |cx|{
 ///     Slider::new(cx, value)
 ///         .on_change(move |cx, val| {
 ///             value.set(cx, val);
 ///         });
-///     Label::new(cx, value.map(|val| format!("{:.2}", val)));
+///     Label::new(cx, value_label);
 /// });
 /// ```
 pub struct Slider {
     value: Signal<f32>,
     is_dragging: bool,
-    orientation: Orientation,
-    range: Range<f32>,
+    orientation: Signal<Orientation>,
+    range: Signal<Range<f32>>,
+    range_cache: Range<f32>, // Cached for accessibility (AccessContext doesn't impl DataContext)
     step: f32,
     keyboard_fraction: f32,
     on_change: Option<Box<dyn Fn(&mut EventContext, f32)>>,
@@ -60,11 +65,91 @@ impl Slider {
     ///     });
     /// ```
     pub fn new(cx: &mut Context, value: Signal<f32>) -> Handle<Self> {
+        let range = cx.state(0.0f32..1.0f32);
+        let orientation = cx.state(Orientation::Horizontal);
+
+        // Create a derived signal that normalizes the value to 0..1 based on range
+        let normalized = cx.derived(move |s| {
+            let v = *value.get(s);
+            let r = range.get(s);
+            let min = r.start;
+            let max = r.end;
+            if (max - min).abs() < f32::EPSILON {
+                0.0
+            } else {
+                ((v - min) / (max - min)).clamp(0.0, 1.0)
+            }
+        });
+        let thumb_translate = cx.derived({
+            let normalized = normalized;
+            let orientation = orientation;
+            move |store| {
+                let v = *normalized.get(store);
+                match *orientation.get(store) {
+                    Orientation::Horizontal => {
+                        Translate::new(Percentage(100.0 * (1.0 - v)), Pixels(0.0))
+                    }
+                    Orientation::Vertical => {
+                        Translate::new(Pixels(0.0), Percentage(-100.0 * (1.0 - v)))
+                    }
+                }
+            }
+        });
+        let active_height = cx.derived({
+            let normalized = normalized;
+            let orientation = orientation;
+            move |store| {
+                let v = *normalized.get(store);
+                match *orientation.get(store) {
+                    Orientation::Horizontal => Units::Stretch(1.0),
+                    Orientation::Vertical => Units::Percentage(v * 100.0),
+                }
+            }
+        });
+        let active_width = cx.derived({
+            let normalized = normalized;
+            let orientation = orientation;
+            move |store| {
+                let v = *normalized.get(store);
+                match *orientation.get(store) {
+                    Orientation::Horizontal => Units::Percentage(v * 100.0),
+                    Orientation::Vertical => Units::Stretch(1.0),
+                }
+            }
+        });
+        let active_layout = cx.derived({
+            let orientation = orientation;
+            move |store| match *orientation.get(store) {
+                Orientation::Horizontal => LayoutType::Row,
+                Orientation::Vertical => LayoutType::Column,
+            }
+        });
+        let active_alignment = cx.derived({
+            let orientation = orientation;
+            move |store| match *orientation.get(store) {
+                Orientation::Horizontal => Alignment::Right,
+                Orientation::Vertical => Alignment::TopCenter,
+            }
+        });
+        let numeric_value = cx.derived({
+            let value = value;
+            move |store| (*value.get(store) as f64 * 100.0).round() / 100.0
+        });
+        let text_value = cx.derived({
+            let value = value;
+            move |store| {
+                let v = (*value.get(store) as f64 * 100.0).round() / 100.0;
+                format!("{}", v)
+            }
+        });
+        let navigable = cx.state(true);
+
         Self {
             value,
             is_dragging: false,
-            orientation: Orientation::Horizontal,
-            range: 0.0..1.0,
+            orientation,
+            range,
+            range_cache: 0.0..1.0,
             step: 0.01,
             keyboard_fraction: 0.1,
             on_change: None,
@@ -75,33 +160,20 @@ impl Slider {
                 // Active track
                 VStack::new(cx, |cx| {
                     // Thumb
-                    Element::new(cx).class("thumb").bind(value, move |handle, val| {
-                        let v = *val.get(&handle);
-                        // We'll get range from parent via event, for now use 0..1
-                        let normal_val = v.clamp(0.0, 1.0);
-                        handle.translate((Percentage(100.0 * (1.0 - normal_val)), Pixels(0.0)));
-                    });
+                    Element::new(cx).class("thumb").translate(thumb_translate);
                 })
                 .class("active")
-                .bind(value, move |handle, val| {
-                    let v = *val.get(&handle);
-                    let normal_val = v.clamp(0.0, 1.0);
-                    handle
-                        .height(Stretch(1.0))
-                        .width(Percentage(normal_val * 100.0))
-                        .layout_type(LayoutType::Row)
-                        .alignment(Alignment::Right);
-                });
+                .height(active_height)
+                .width(active_width)
+                .layout_type(active_layout)
+                .alignment(active_alignment);
             })
             .class("track");
         })
         .role(Role::Slider)
-        .numeric_value(value.map(|val| (*val as f64 * 100.0).round() / 100.0))
-        .text_value(value.map(|val| {
-            let v = (*val as f64 * 100.0).round() / 100.0;
-            format!("{}", v)
-        }))
-        .navigable(true)
+        .numeric_value(numeric_value)
+        .text_value(text_value)
+        .navigable(navigable)
     }
 }
 
@@ -112,8 +184,8 @@ impl View for Slider {
 
     fn accessibility(&self, _cx: &mut AccessContext, node: &mut AccessNode) {
         node.set_numeric_value_step(self.step as f64);
-        node.set_min_numeric_value(self.range.start as f64);
-        node.set_max_numeric_value(self.range.end as f64);
+        node.set_min_numeric_value(self.range_cache.start as f64);
+        node.set_max_numeric_value(self.range_cache.end as f64);
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
@@ -127,30 +199,24 @@ impl View for Slider {
                         cx.set_pointer_events(false);
                     });
 
-                    let thumb = cx.get_entities_by_class("thumb").first().copied().unwrap();
-                    let thumb_size = match self.orientation {
-                        Orientation::Horizontal => cx.cache.get_width(thumb),
-                        Orientation::Vertical => cx.cache.get_height(thumb),
-                    };
-                    let min = self.range.start;
-                    let max = self.range.end;
+                    let range = self.range.get(cx);
+                    let min = range.start;
+                    let max = range.end;
                     let step = self.step;
 
                     let current = cx.current();
-                    let width = cx.cache.get_width(current);
-                    let height = cx.cache.get_height(current);
+                    let width = cx.cache.get_width(current).max(1.0);
+                    let height = cx.cache.get_height(current).max(1.0);
                     let posx = cx.cache.get_posx(current);
                     let posy = cx.cache.get_posy(current);
 
-                    let mut dx = match self.orientation {
+                    let mut dx = match *self.orientation.get(cx) {
                         Orientation::Horizontal => {
-                            (cx.mouse.left.pos_down.0 - posx - thumb_size / 2.0)
-                                / (width - thumb_size)
+                            (cx.mouse.left.pos_down.0 - posx) / width
                         }
 
                         Orientation::Vertical => {
-                            (height - (cx.mouse.left.pos_down.1 - posy) - thumb_size / 2.0)
-                                / (height - thumb_size)
+                            (height - (cx.mouse.left.pos_down.1 - posy)) / height
                         }
                     };
 
@@ -180,29 +246,24 @@ impl View for Slider {
 
             WindowEvent::MouseMove(x, y) => {
                 if self.is_dragging {
-                    let thumb = cx.get_entities_by_class("thumb").first().copied().unwrap();
-                    let thumb_size = match self.orientation {
-                        Orientation::Horizontal => cx.cache.get_width(thumb),
-                        Orientation::Vertical => cx.cache.get_height(thumb),
-                    };
-
-                    let min = self.range.start;
-                    let max = self.range.end;
+                    let range = self.range.get(cx);
+                    let min = range.start;
+                    let max = range.end;
                     let step = self.step;
 
                     let current = cx.current();
-                    let width = cx.cache.get_width(current);
-                    let height = cx.cache.get_height(current);
+                    let width = cx.cache.get_width(current).max(1.0);
+                    let height = cx.cache.get_height(current).max(1.0);
                     let posx = cx.cache.get_posx(current);
                     let posy = cx.cache.get_posy(current);
 
-                    let mut dx = match self.orientation {
+                    let mut dx = match *self.orientation.get(cx) {
                         Orientation::Horizontal => {
-                            (*x - posx - thumb_size / 2.0) / (width - thumb_size)
+                            (*x - posx) / width
                         }
 
                         Orientation::Vertical => {
-                            (height - (*y - posy) - thumb_size / 2.0) / (height - thumb_size)
+                            (height - (*y - posy)) / height
                         }
                     };
 
@@ -220,8 +281,9 @@ impl View for Slider {
             }
 
             WindowEvent::KeyDown(Code::ArrowUp | Code::ArrowRight, _) => {
-                let min = self.range.start;
-                let max = self.range.end;
+                let range = self.range.get(cx);
+                let min = range.start;
+                let max = range.end;
                 let step = self.step;
                 let mut val = *self.value.get(cx) + step;
                 val = val.clamp(min, max);
@@ -231,8 +293,9 @@ impl View for Slider {
             }
 
             WindowEvent::KeyDown(Code::ArrowDown | Code::ArrowLeft, _) => {
-                let min = self.range.start;
-                let max = self.range.end;
+                let range = self.range.get(cx);
+                let min = range.start;
+                let max = range.end;
                 let step = self.step;
                 let mut val = *self.value.get(cx) - step;
                 val = val.clamp(min, max);
@@ -243,8 +306,9 @@ impl View for Slider {
 
             WindowEvent::ActionRequest(action) => match action.action {
                 Action::Increment => {
-                    let min = self.range.start;
-                    let max = self.range.end;
+                    let range = self.range.get(cx);
+                    let min = range.start;
+                    let max = range.end;
                     let step = self.step;
                     let mut val = *self.value.get(cx) + step;
                     val = step * (val / step).ceil();
@@ -255,8 +319,9 @@ impl View for Slider {
                 }
 
                 Action::Decrement => {
-                    let min = self.range.start;
-                    let max = self.range.end;
+                    let range = self.range.get(cx);
+                    let min = range.start;
+                    let max = range.end;
                     let step = self.step;
                     let mut val = *self.value.get(cx) - step;
                     val = step * (val / step).ceil();
@@ -268,8 +333,9 @@ impl View for Slider {
 
                 Action::SetValue => {
                     if let Some(ActionData::NumericValue(val)) = action.data {
-                        let min = self.range.start;
-                        let max = self.range.end;
+                        let range = self.range.get(cx);
+                        let min = range.start;
+                        let max = range.end;
                         let mut v = val as f32;
                         v = v.clamp(min, max);
                         if let Some(callback) = &self.on_change {
@@ -308,6 +374,27 @@ impl Handle<'_, Slider> {
         self.modify(|slider| slider.on_change = Some(Box::new(callback)))
     }
 
+    /// Enables two-way binding: slider changes automatically update the bound signal.
+    ///
+    /// This is a convenience method equivalent to:
+    /// ```ignore
+    /// .on_change(move |cx, val| signal.set(cx, val))
+    /// ```
+    ///
+    /// # Example
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::default();
+    /// let value = cx.state(0.5f32);
+    /// Slider::new(cx, value).two_way();
+    /// ```
+    pub fn two_way(self) -> Self {
+        self.modify(|slider| {
+            let signal = slider.value;
+            slider.on_change = Some(Box::new(move |cx, val| signal.set(cx, val)));
+        })
+    }
+
     /// Sets the range of the slider.
     ///
     /// If the bound data is outside of the range then the slider will clip to min/max of the range.
@@ -323,8 +410,9 @@ impl Handle<'_, Slider> {
     ///     });
     /// ```
     pub fn range(self, range: Range<f32>) -> Self {
-        self.modify(|slider| {
-            slider.range = range;
+        self.modify2(|slider, cx| {
+            slider.range.set(cx, range.clone());
+            slider.range_cache = range;
         })
     }
 
@@ -340,11 +428,18 @@ impl Handle<'_, Slider> {
     ///         value.set(cx, val);
     ///     });
     /// ```
-    pub fn orientation(self, orientation: Orientation) -> Self {
-        self.modify(|slider| {
-            slider.orientation = orientation;
+    pub fn orientation(mut self, orientation: Signal<Orientation>) -> Self {
+        let is_vertical = self.context().derived({
+            let orientation = orientation;
+            move |store| *orientation.get(store) == Orientation::Vertical
+        });
+        self.bind(orientation, |handle, orientation| {
+            let orientation = *orientation.get(&handle);
+            handle.modify2(|slider, cx| {
+                slider.orientation.set(cx, orientation);
+            });
         })
-        .toggle_class("vertical", orientation == Orientation::Vertical)
+        .toggle_class("vertical", is_vertical)
     }
 
     /// Set the step value for the slider.

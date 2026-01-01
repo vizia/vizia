@@ -1,10 +1,11 @@
 use crate::prelude::*;
 use std::any::TypeId;
 
-#[derive(Lens)]
+/// Internal model for tooltip/menu visibility state.
+/// Uses Signal fields for reactive state management.
 pub(crate) struct ModalModel {
-    pub tooltip_visible: (bool, bool),
-    pub menu_visible: bool,
+    pub tooltip_visible: Signal<(bool, bool)>,
+    pub menu_visible: Signal<bool>,
 }
 
 /// An event used to modify the modal properties of a view, such as an attached tooltip.
@@ -20,43 +21,45 @@ pub enum ModalEvent {
 }
 
 impl Model for ModalModel {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|modal_event, _| match modal_event {
             ModalEvent::ShowTooltip => {
-                self.tooltip_visible = (true, true);
+                self.tooltip_visible.set(cx, (true, true));
             }
 
             ModalEvent::HideTooltip => {
-                self.tooltip_visible = (false, true);
+                self.tooltip_visible.set(cx, (false, true));
             }
 
             ModalEvent::ShowMenu => {
-                self.menu_visible = true;
+                self.menu_visible.set(cx, true);
             }
 
             ModalEvent::HideMenu => {
-                self.menu_visible = false;
+                self.menu_visible.set(cx, false);
             }
         });
 
         event.map(|window_event, _| match window_event {
             WindowEvent::MouseOver => {
-                if !self.tooltip_visible.0 {
-                    self.tooltip_visible = (true, true);
+                if !self.tooltip_visible.get(cx).0 {
+                    self.tooltip_visible.set(cx, (true, true));
                 }
             }
-            WindowEvent::MouseOut => self.tooltip_visible = (false, true),
+            WindowEvent::MouseOut => self.tooltip_visible.set(cx, (false, true)),
             WindowEvent::FocusIn => {
-                if !self.tooltip_visible.0 {
-                    self.tooltip_visible = (true, false);
+                if !self.tooltip_visible.get(cx).0 {
+                    self.tooltip_visible.set(cx, (true, false));
                 }
             }
-            WindowEvent::FocusOut => self.tooltip_visible = (false, false),
-            WindowEvent::FocusVisibility(vis) if !(*vis) => self.tooltip_visible = (false, false),
-            WindowEvent::KeyDown(code, _) if *code == Code::Escape => {
-                self.tooltip_visible = (false, false)
+            WindowEvent::FocusOut => self.tooltip_visible.set(cx, (false, false)),
+            WindowEvent::FocusVisibility(vis) if !(*vis) => {
+                self.tooltip_visible.set(cx, (false, false))
             }
-            WindowEvent::PressDown { mouse: _ } => self.tooltip_visible = (false, true),
+            WindowEvent::KeyDown(code, _) if *code == Code::Escape => {
+                self.tooltip_visible.set(cx, (false, false))
+            }
+            WindowEvent::PressDown { mouse: _ } => self.tooltip_visible.set(cx, (false, true)),
             _ => {}
         });
     }
@@ -509,26 +512,40 @@ fn build_action_model(cx: &mut Context, entity: Entity) {
     }
 }
 
-fn build_modal_model(cx: &mut Context, entity: Entity) {
-    if cx.models.get(&entity).and_then(|models| models.get(&TypeId::of::<ModalModel>())).is_none() {
-        cx.with_current(entity, |cx| {
-            ModalModel { tooltip_visible: (false, true), menu_visible: false }.build(cx);
-        });
+/// Build ModalModel if it doesn't exist, and return its signals.
+fn build_modal_model(cx: &mut Context, entity: Entity) -> (Signal<(bool, bool)>, Signal<bool>) {
+    // Check if model already exists
+    if let Some(models) = cx.models.get(&entity) {
+        if let Some(model) = models.get(&TypeId::of::<ModalModel>()) {
+            if let Some(modal) = model.downcast_ref::<ModalModel>() {
+                return (modal.tooltip_visible, modal.menu_visible);
+            }
+        }
     }
+
+    // Create new model with signals
+    let tooltip_visible = cx.state((false, true));
+    let menu_visible = cx.state(false);
+
+    cx.with_current(entity, |cx| {
+        ModalModel { tooltip_visible, menu_visible }.build(cx);
+    });
+
+    (tooltip_visible, menu_visible)
 }
 
 impl<V: View> ActionModifiers<V> for Handle<'_, V> {
     fn tooltip<C: Fn(&mut Context) -> Handle<'_, Tooltip> + 'static>(self, content: C) -> Self {
         let entity = self.entity();
 
-        build_modal_model(self.cx, entity);
+        let (tooltip_visible, _) = build_modal_model(self.cx, entity);
 
         self.cx.with_current(entity, move |cx| {
-            Binding::new(cx, ModalModel::tooltip_visible, move |cx, tooltip_visible| {
-                let tooltip_visible = tooltip_visible.get(cx);
-                if tooltip_visible.0 {
+            Binding::new(cx, tooltip_visible, move |cx| {
+                let vis = *tooltip_visible.get(cx);
+                if vis.0 {
                     (content)(cx).on_build(|cx| {
-                        if tooltip_visible.1 {
+                        if vis.1 {
                             cx.play_animation(
                                 "tooltip_fade",
                                 Duration::from_millis(100),
@@ -546,17 +563,17 @@ impl<V: View> ActionModifiers<V> for Handle<'_, V> {
     fn menu<C: FnOnce(&mut Context) -> Handle<'_, T>, T: View>(self, content: C) -> Self {
         let entity = self.entity();
 
-        build_modal_model(self.cx, entity);
+        let (_, menu_visible) = build_modal_model(self.cx, entity);
 
         self.cx.with_current(entity, |cx| {
-            (content)(cx).bind(ModalModel::menu_visible, |mut handle, vis| {
-                let is_visible = vis.get(&handle);
-                handle = handle.toggle_class("vis", is_visible);
-
-                if is_visible {
-                    handle.context().emit(WindowEvent::GeometryChanged(GeoChanged::empty()));
-                }
-            });
+            (content)(cx)
+                .toggle_class("vis", menu_visible)
+                .bind(menu_visible, |mut handle, vis| {
+                    let is_visible = *vis.get(&handle);
+                    if is_visible {
+                        handle.context().emit(WindowEvent::GeometryChanged(GeoChanged::empty()));
+                    }
+                });
         });
 
         self
@@ -566,7 +583,8 @@ impl<V: View> ActionModifiers<V> for Handle<'_, V> {
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        self = self.hoverable(true);
+        let true_signal = self.context().state(true);
+        self = self.hoverable(true_signal);
 
         if let Some(view) = self
             .cx

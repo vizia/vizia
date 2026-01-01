@@ -6,6 +6,12 @@ use vizia::{
 use crate::components::DemoRegion;
 
 pub fn tooltip(cx: &mut Context) {
+    let width_140 = cx.state(Pixels(140.0));
+    let height_60 = cx.state(Pixels(60.0));
+    let gap_8 = cx.state(Pixels(8.0));
+    let auto = cx.state(Auto);
+    let align_left = cx.state(Alignment::Left);
+
     VStack::new(cx, |cx|{
 
         Markdown::new(cx, "# Tooltip
@@ -19,11 +25,11 @@ A tooltip displays supplemental information near its target view. Tooltips are t
             |cx| {
                 Button::new(cx, |cx |Svg::new(cx, ICON_TRASH))
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
-                        Label::new(cx, "Delete");
+                        Label::static_text(cx, "Delete");
                     }));
             }, r#"IconButton::new(cx, ICON_TRASH)
     .tooltip(|cx| Tooltip::new(cx, |cx|{
-        Label::new(cx, "Delete");
+        Label::static_text(cx, "Delete");
     }));"#
         );
 
@@ -36,12 +42,12 @@ A tooltip displays supplemental information near its target view. Tooltips are t
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         HStack::new(cx, |cx|{
                             Svg::new(cx, ICON_INFO_CIRCLE);
-                            Label::new(cx, "Delete");
-                        }).size(Auto).alignment(Alignment::Left);
+                            Label::static_text(cx, "Delete");
+                        }).size(auto).alignment(align_left);
                     }));
             }, r#"IconButton::new(cx, ICON_TRASH)
     .tooltip(|cx| Tooltip::new(cx, |cx|{
-        Label::new(cx, "Delete");
+        Label::static_text(cx, "Delete");
     }));"#
         );
 
@@ -50,134 +56,135 @@ A tooltip displays supplemental information near its target view. Tooltips are t
         DemoRegion::new(
             cx,
             |cx| {
+                let text_variant = cx.state(ButtonVariant::Text);
 
                 VStack::new(cx, |cx|{
                     Button::new(cx, |cx|{
-                        Label::new(cx, "TOP-START")
+                        Label::static_text(cx, "TOP-START")
                     })
-                    .variant(ButtonVariant::Text)
-                    .width(Pixels(140.0))
-                    .height(Pixels(60.0))
+                    .variant(text_variant)
+                    .width(width_140)
+                    .height(height_60)
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
-                        Label::new(cx, "Tooltip");
+                        Label::static_text(cx, "Tooltip");
                     }).placement(Placement::TopStart));
 
                     Button::new(cx, |cx|{
-                        Label::new(cx, "LEFT-START")
+                        Label::static_text(cx, "LEFT-START")
                     })
-                    .variant(ButtonVariant::Text)
-                    .width(Pixels(140.0))
-                    .height(Pixels(60.0))
+                    .variant(text_variant)
+                    .width(width_140)
+                    .height(height_60)
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
-                        Label::new(cx, "Tooltip");
+                        Label::static_text(cx, "Tooltip");
                     }).placement(Placement::LeftStart));
 
                     Button::new(cx, |cx|{
-                        Label::new(cx, "RIGHT-START")
+                        Label::static_text(cx, "RIGHT-START")
                     })
-                    .variant(ButtonVariant::Text)
-                    .width(Pixels(140.0))
-                    .height(Pixels(60.0))
+                    .variant(text_variant)
+                    .width(width_140)
+                    .height(height_60)
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
-                        Label::new(cx, "Tooltip");
+                        Label::static_text(cx, "Tooltip");
                     }).placement(Placement::RightStart));
 
                     Button::new(cx, |cx|{
-                        Label::new(cx, "BOTTOM-START")
+                        Label::static_text(cx, "BOTTOM-START")
                     })
-                    .variant(ButtonVariant::Text)
-                    .width(Pixels(140.0))
-                    .height(Pixels(60.0))
+                    .variant(text_variant)
+                    .width(width_140)
+                    .height(height_60)
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
-                        Label::new(cx, "Tooltip");
+                        Label::static_text(cx, "Tooltip");
                     }).placement(Placement::BottomStart));
-                }).vertical_gap(Pixels(8.0)).size(Auto);
+                }).vertical_gap(gap_8).size(auto);
 
                 VStack::new(cx, |cx|{
                     Button::new(cx, |cx|{
-                        Label::new(cx, "TOP")
+                        Label::static_text(cx, "TOP")
                     })
-                    .variant(ButtonVariant::Text)
-                    .width(Pixels(140.0))
-                    .height(Pixels(60.0))
+                    .variant(text_variant)
+                    .width(width_140)
+                    .height(height_60)
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
-                        Label::new(cx, "Tooltip");
+                        Label::static_text(cx, "Tooltip");
                     }).placement(Placement::Top));
 
                     Button::new(cx, |cx|{
-                        Label::new(cx, "LEFT")
+                        Label::static_text(cx, "LEFT")
                     })
-                    .variant(ButtonVariant::Text)
-                    .width(Pixels(140.0))
-                    .height(Pixels(60.0))
+                    .variant(text_variant)
+                    .width(width_140)
+                    .height(height_60)
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
-                        Label::new(cx, "Tooltip");
+                        Label::static_text(cx, "Tooltip");
                     }).placement(Placement::Left));
 
                     Button::new(cx, |cx|{
-                        Label::new(cx, "RIGHT")
+                        Label::static_text(cx, "RIGHT")
                     })
-                    .variant(ButtonVariant::Text)
-                    .width(Pixels(140.0))
-                    .height(Pixels(60.0))
+                    .variant(text_variant)
+                    .width(width_140)
+                    .height(height_60)
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
-                        Label::new(cx, "Tooltip");
+                        Label::static_text(cx, "Tooltip");
                     }).placement(Placement::Right));
 
                     Button::new(cx, |cx|{
-                        Label::new(cx, "BOTTOM")
+                        Label::static_text(cx, "BOTTOM")
                     })
-                    .variant(ButtonVariant::Text)
-                    .width(Pixels(140.0))
-                    .height(Pixels(60.0))
+                    .variant(text_variant)
+                    .width(width_140)
+                    .height(height_60)
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
-                        Label::new(cx, "Tooltip");
+                        Label::static_text(cx, "Tooltip");
                     }).placement(Placement::Bottom));
-                }).vertical_gap(Pixels(8.0)).size(Auto);
+                }).vertical_gap(gap_8).size(auto);
 
                 VStack::new(cx, |cx|{
                     Button::new(cx, |cx|{
-                        Label::new(cx, "TOP-END")
+                        Label::static_text(cx, "TOP-END")
                     })
-                    .variant(ButtonVariant::Text)
-                    .width(Pixels(140.0))
-                    .height(Pixels(60.0))
+                    .variant(text_variant)
+                    .width(width_140)
+                    .height(height_60)
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
-                        Label::new(cx, "Tooltip");
+                        Label::static_text(cx, "Tooltip");
                     }).placement(Placement::TopEnd));
 
                     Button::new(cx, |cx|{
-                        Label::new(cx, "LEFT-END")
+                        Label::static_text(cx, "LEFT-END")
                     })
-                    .variant(ButtonVariant::Text)
-                    .width(Pixels(140.0))
-                    .height(Pixels(60.0))
+                    .variant(text_variant)
+                    .width(width_140)
+                    .height(height_60)
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
-                        Label::new(cx, "Tooltip");
+                        Label::static_text(cx, "Tooltip");
                     }).placement(Placement::LeftEnd));
 
                     Button::new(cx, |cx: &mut Context|{
-                        Label::new(cx, "RIGHT-END")
+                        Label::static_text(cx, "RIGHT-END")
                     })
-                    .variant(ButtonVariant::Text)
-                    .width(Pixels(140.0))
-                    .height(Pixels(60.0))
+                    .variant(text_variant)
+                    .width(width_140)
+                    .height(height_60)
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
-                        Label::new(cx, "Tooltip");
+                        Label::static_text(cx, "Tooltip");
                     }).placement(Placement::RightEnd));
 
                     Button::new(cx, |cx|{
-                        Label::new(cx, "BOTTOM-END")
+                        Label::static_text(cx, "BOTTOM-END")
                     })
-                    .variant(ButtonVariant::Text)
-                    .width(Pixels(140.0))
-                    .height(Pixels(60.0))
+                    .variant(text_variant)
+                    .width(width_140)
+                    .height(height_60)
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
-                        Label::new(cx, "Tooltip");
+                        Label::static_text(cx, "Tooltip");
                     }).placement(Placement::BottomEnd));
-                }).vertical_gap(Pixels(8.0)).size(Auto);
+                }).vertical_gap(gap_8).size(auto);
             }, r#"IconButton::new(cx, ICON_TRASH).tooltip(|cx| Tooltip::new(cx, |cx|{
-    Label::new(cx, "Delete");
+    Label::static_text(cx, "Delete");
 }));"#
         );
 

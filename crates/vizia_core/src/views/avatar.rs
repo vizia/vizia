@@ -49,7 +49,7 @@ impl View for Avatar {
 }
 
 impl Handle<'_, Avatar> {
-    /// Selects the geometric variant of the Avatar. Accepts a value of, or lens to, an [AvatarVariant].
+    /// Selects the geometric variant of the Avatar. Accepts a `Signal<AvatarVariant>`.
     ///
     /// ```
     /// # use vizia_core::prelude::*;
@@ -57,34 +57,25 @@ impl Handle<'_, Avatar> {
     /// Avatar::new(cx, |cx|{
     ///     Svg::new(cx, ICON_USER);
     /// })
-    /// .variant(AvatarVariant::Rounded);
+    /// .variant(cx.state(AvatarVariant::Rounded));
     /// ```
-    pub fn variant<U: Into<AvatarVariant>>(self, variant: impl Res<U>) -> Self {
-        self.bind(variant, |handle, val| {
-            let var: AvatarVariant = val.get(&handle).into();
-            match var {
-                AvatarVariant::Circle => {
-                    handle
-                        .toggle_class("circle", true)
-                        .toggle_class("square", false)
-                        .toggle_class("rounded", false);
-                }
+    pub fn variant(mut self, variant: Signal<AvatarVariant>) -> Self {
+        let is_circle = self.context().derived({
+            let variant = variant;
+            move |store| *variant.get(store) == AvatarVariant::Circle
+        });
+        let is_square = self.context().derived({
+            let variant = variant;
+            move |store| *variant.get(store) == AvatarVariant::Square
+        });
+        let is_rounded = self.context().derived({
+            let variant = variant;
+            move |store| *variant.get(store) == AvatarVariant::Rounded
+        });
 
-                AvatarVariant::Square => {
-                    handle
-                        .toggle_class("circle", false)
-                        .toggle_class("square", true)
-                        .toggle_class("rounded", false);
-                }
-
-                AvatarVariant::Rounded => {
-                    handle
-                        .toggle_class("circle", false)
-                        .toggle_class("square", false)
-                        .toggle_class("rounded", true);
-                }
-            }
-        })
+        self.toggle_class("circle", is_circle)
+            .toggle_class("square", is_square)
+            .toggle_class("rounded", is_rounded)
     }
 
     /// Adds a badge to the Avatar.
@@ -104,7 +95,12 @@ impl Handle<'_, Avatar> {
         let entity = self.entity();
 
         self.context().with_current(entity, |cx| {
-            (content)(cx).placement(BadgePlacement::default());
+            let mut badge = (content)(cx);
+            let badge_entity = badge.entity();
+            let placement = badge
+                .context()
+                .with_current(badge_entity, |cx| cx.state(BadgePlacement::default()));
+            badge.placement(placement);
         });
 
         self
@@ -120,7 +116,10 @@ impl AvatarGroup {
     where
         F: FnOnce(&mut Context),
     {
-        Self {}.build(cx, content).size(Auto).gap(Pixels(-20.0)).layout_type(LayoutType::Row)
+        let auto = cx.state(Auto);
+        let overlap_gap = cx.state(Pixels(-20.0));
+        let layout_row = cx.state(LayoutType::Row);
+        Self {}.build(cx, content).size(auto).gap(overlap_gap).layout_type(layout_row)
     }
 }
 

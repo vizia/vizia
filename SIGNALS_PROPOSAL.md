@@ -115,6 +115,8 @@ In the signals system:
 
 This approach eliminates boilerplate while providing fine-grained reactivity and automatic dependency management. Here's how it looks in practice:
 
+Note: For static string labels in the current signal API, prefer `Label::static_text(cx, "...")`. See `MIGRATION_STATUS.md` for rationale and the static vs reactive usage guidelines.
+
 ```rust
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
@@ -147,9 +149,11 @@ impl View for Counter {
 
     fn on_build(self, cx: &mut Context) -> Self {
         HStack::new(cx, move |cx| {
+            // Button::new(cx, |cx| Label::static_text(cx, "Increment"))
             Button::new(cx, |cx| Label::new(cx, "Increment"))
                 .on_press(|cx| cx.emit(CounterEvent::Increment));
 
+            // Button::new(cx, |cx| Label::static_text(cx, "Decrement"))
             Button::new(cx, |cx| Label::new(cx, "Decrement"))
                 .on_press(|cx| cx.emit(CounterEvent::Decrement));
 
@@ -196,9 +200,11 @@ impl View for Counter {
     fn on_build(self, cx: &mut Context) -> Self {
         HStack::new(cx, move |cx| {
             // Direct signal updates - no events needed
+            // Button::new(cx, |cx| Label::static_text(cx, "Increment"))
             Button::new(cx, |cx| Label::new(cx, "Increment"))
                 .on_press(move |cx| self.count.update(cx, |v| *v += 1));
 
+            // Button::new(cx, |cx| Label::static_text(cx, "Decrement"))
             Button::new(cx, |cx| Label::new(cx, "Decrement"))
                 .on_press(move |cx| self.count.update(cx, |v| *v -= 1));
 

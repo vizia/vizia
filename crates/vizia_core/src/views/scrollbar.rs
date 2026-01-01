@@ -2,8 +2,8 @@ use crate::context::TreeProps;
 use crate::prelude::*;
 
 /// A view which represents a bar that can be dragged to manipulate a scrollview.
-pub struct Scrollbar<L1> {
-    value: L1,
+pub struct Scrollbar {
+    value: Signal<f32>,
     orientation: Orientation,
 
     reference_points: Option<(f32, f32)>,
@@ -14,22 +14,50 @@ pub struct Scrollbar<L1> {
     scroll_to_cursor: bool,
 }
 
+#[allow(dead_code)]
 enum ScrollBarEvent {
     SetScrollToCursor(bool),
 }
 
-impl<L1: Lens<Target = f32>> Scrollbar<L1> {
+impl Scrollbar {
     /// Create a new [Scrollbar] view.
-    pub fn new<F, L2: Lens<Target = f32>>(
+    pub fn new<F>(
         cx: &mut Context,
-        value: L1,
-        ratio: L2,
+        value: Signal<f32>,
+        ratio: Signal<f32>,
         orientation: Orientation,
         callback: F,
     ) -> Handle<Self>
     where
         F: 'static + Fn(&mut EventContext, f32),
     {
+        let focusable = cx.state(true);
+        let position_absolute = cx.state(PositionType::Absolute);
+        let pointer_events = cx.state(PointerEvents::Auto);
+        let left = cx.derived({
+            let value = value;
+            move |store| Units::Stretch(*value.get(store))
+        });
+        let right = cx.derived({
+            let value = value;
+            move |store| Units::Stretch(1.0 - *value.get(store))
+        });
+        let top = cx.derived({
+            let value = value;
+            move |store| Units::Stretch(*value.get(store))
+        });
+        let bottom = cx.derived({
+            let value = value;
+            move |store| Units::Stretch(1.0 - *value.get(store))
+        });
+        let width = cx.derived({
+            let ratio = ratio;
+            move |store| Units::Percentage(*ratio.get(store) * 100.0)
+        });
+        let height = cx.derived({
+            let ratio = ratio;
+            move |store| Units::Percentage(*ratio.get(store) * 100.0)
+        });
         Self {
             value,
             orientation,
@@ -39,30 +67,14 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
             dragging: false,
         }
         .build(cx, move |cx| {
-            Element::new(cx)
-                .class("thumb")
-                .focusable(true)
-                .bind(value, move |handle, value| {
-                    let value = value.get(&handle);
-                    match orientation {
-                        Orientation::Horizontal => {
-                            handle.left(Units::Stretch(value)).right(Units::Stretch(1.0 - value))
-                        }
-                        Orientation::Vertical => {
-                            handle.top(Units::Stretch(value)).bottom(Units::Stretch(1.0 - value))
-                        }
-                    };
-                })
-                .bind(ratio, move |handle, ratio| {
-                    let ratio = ratio.get(&handle);
-                    match orientation {
-                        Orientation::Horizontal => handle.width(Units::Percentage(ratio * 100.0)),
-                        Orientation::Vertical => handle.height(Units::Percentage(ratio * 100.0)),
-                    };
-                })
-                .position_type(PositionType::Absolute);
+            let thumb =
+                Element::new(cx).class("thumb").focusable(focusable).position_type(position_absolute);
+            let _thumb = match orientation {
+                Orientation::Horizontal => thumb.left(left).right(right).width(width),
+                Orientation::Vertical => thumb.top(top).bottom(bottom).height(height),
+            };
         })
-        .pointer_events(PointerEvents::Auto)
+        .pointer_events(pointer_events)
         .class(match orientation {
             Orientation::Horizontal => "horizontal",
             Orientation::Vertical => "vertical",
@@ -104,7 +116,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
     }
 }
 
-impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
+impl View for Scrollbar {
     fn element(&self) -> Option<&'static str> {
         Some("scrollbar")
     }
@@ -124,7 +136,7 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
             match window_event {
                 WindowEvent::MouseDown(MouseButton::Left) => {
                     if meta.target != cx.current() {
-                        self.reference_points = Some((pos, self.value.get(cx)));
+                        self.reference_points = Some((pos, *self.value.get(cx)));
                         cx.capture();
                         cx.set_active(true);
                         self.dragging = true;
@@ -161,7 +173,6 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                         }
                     } else {
                         let (_, jump) = self.container_and_thumb_size(cx);
-                        // let (tx, ty, tw, th) = self.thumb_bounds(cx);
                         let t = self.thumb_bounds(cx);
                         let physical_delta = match &self.orientation {
                             Orientation::Horizontal => {
@@ -184,7 +195,7 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                             }
                         };
                         let changed =
-                            self.compute_new_value(cx, physical_delta, self.value.get(cx));
+                            self.compute_new_value(cx, physical_delta, *self.value.get(cx));
                         self.change(cx, changed);
                     }
                 }
@@ -240,15 +251,12 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
     }
 }
 
-impl<L1: 'static + Lens<Target = f32>> Handle<'_, Scrollbar<L1>> {
+impl Handle<'_, Scrollbar> {
     /// Sets whether the scrollbar should move to the cursor when pressed.
-    pub fn scroll_to_cursor(mut self, scroll_to_cursor: impl Res<bool>) -> Self {
-        let entity = self.entity();
-        scroll_to_cursor.set_or_bind(self.context(), entity, |cx, val| {
-            let v = val.get(cx);
-            cx.emit(ScrollBarEvent::SetScrollToCursor(v));
-        });
-
-        self
+    pub fn scroll_to_cursor(self, scroll_to_cursor: Signal<bool>) -> Self {
+        self.bind(scroll_to_cursor, |handle, scroll_to_cursor| {
+            let scroll_to_cursor = *scroll_to_cursor.get(&handle);
+            handle.modify(|scrollbar| scrollbar.scroll_to_cursor = scroll_to_cursor);
+        })
     }
 }

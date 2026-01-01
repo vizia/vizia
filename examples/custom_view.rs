@@ -9,7 +9,7 @@ impl CustomView {
     pub fn new(cx: &mut Context, color: Signal<Color>) -> Handle<'_, Self> {
         Self { color }
             .build(cx, |cx| {
-                Label::new(cx, "This is a custom view!");
+                Label::static_text(cx, "This is a custom view!");
             })
             // Redraw when signal changes
             .bind(color, |mut handle, _| handle.needs_redraw())
@@ -33,15 +33,18 @@ fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         let color = cx.state(Color::red());
         let red_value = cx.state(1.0f32);
+        let size_200 = cx.state(Pixels(200.0));
+        let width_200 = cx.state(Pixels(200.0));
+        let space_20 = cx.state(Pixels(20.0));
 
-        CustomView::new(cx, color).size(Pixels(200.0));
+        CustomView::new(cx, color).size(size_200);
         Slider::new(cx, red_value)
             .on_change(move |cx, val| {
                 red_value.set(cx, val);
                 color.set(cx, Color::rgb((val * 255.0) as u8, 0, 0));
             })
-            .width(Pixels(200.0))
-            .space(Pixels(20.0));
+            .width(width_200)
+            .space(space_20);
     })
     .run()
 }

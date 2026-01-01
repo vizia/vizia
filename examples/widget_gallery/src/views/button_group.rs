@@ -19,15 +19,15 @@ Buttons can be grouped by wrapping them in a ButtonGroup view.
             cx,
             |cx| {
                 ButtonGroup::new(cx, |cx| {
-                    Button::new(cx, |cx| Label::new(cx, "One"));
-                    Button::new(cx, |cx| Label::new(cx, "Two"));
-                    Button::new(cx, |cx| Label::new(cx, "Three"));
+                    Button::new(cx, |cx| Label::static_text(cx, "One"));
+                    Button::new(cx, |cx| Label::static_text(cx, "Two"));
+                    Button::new(cx, |cx| Label::static_text(cx, "Three"));
                 });
             },
             r#"ButtonGroup::new(cx, |cx|{
-    Button::new(cx, |cx| Label::new(cx, "One"));
-    Button::new(cx, |cx| Label::new(cx, "Two"));
-    Button::new(cx, |cx| Label::new(cx, "Three"));
+    Button::new(cx, |cx| Label::static_text(cx, "One"));
+    Button::new(cx, |cx| Label::static_text(cx, "Two"));
+    Button::new(cx, |cx| Label::static_text(cx, "Three"));
 });"#,
         );
 
@@ -36,20 +36,22 @@ Buttons can be grouped by wrapping them in a ButtonGroup view.
         DemoRegion::new(
             cx,
             |cx| {
+                let vertical = cx.state(true);
                 ButtonGroup::new(cx, |cx| {
-                    Button::new(cx, |cx| Label::new(cx, "One"));
-                    Button::new(cx, |cx| Label::new(cx, "Two"));
-                    Button::new(cx, |cx| Label::new(cx, "Three"));
+                    Button::new(cx, |cx| Label::static_text(cx, "One"));
+                    Button::new(cx, |cx| Label::static_text(cx, "Two"));
+                    Button::new(cx, |cx| Label::static_text(cx, "Three"));
                 })
-                .vertical(true);
+                .vertical(vertical);
             },
-            r#"ButtonGroup::new(cx, |cx|{
-    Button::new(cx, |cx| Label::new(cx, "One"));
-    Button::new(cx, |cx| Label::new(cx, "Two"));
-    Button::new(cx, |cx| Label::new(cx, "Three"));
+            r#"let vertical = cx.state(true);
+
+ButtonGroup::new(cx, |cx|{
+    Button::new(cx, |cx| Label::static_text(cx, "One"));
+    Button::new(cx, |cx| Label::static_text(cx, "Two"));
+    Button::new(cx, |cx| Label::static_text(cx, "Three"));
 })
-.width(Pixels(100.0))
-.vertical(true);"#,
+.vertical(vertical);"#,
         );
     })
     .class("panel");

@@ -11,7 +11,7 @@ pub fn image(cx: &mut Context) {
         DemoRegion::new(
             cx,
             |cx| {
-                Label::new(cx, "Coming soon...");
+                Label::static_text(cx, "Coming soon...");
             },
             r#""#,
         );

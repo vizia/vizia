@@ -3,13 +3,22 @@ use chrono::{Datelike, NaiveDate, Weekday};
 use crate::prelude::*;
 
 /// A control used to select a date.
-#[derive(Lens)]
+///
+/// # Examples
+///
+/// ```
+/// # use vizia_core::prelude::*;
+/// # use chrono::NaiveDate;
+/// # let mut cx = &mut Context::default();
+/// # let date = cx.state(NaiveDate::from_ymd_opt(2025, 1, 15).unwrap());
+/// Datepicker::new(cx, date)
+///     .on_select(move |cx, selected| {
+///         date.set(cx, selected);
+///     });
+/// ```
 pub struct Datepicker {
-    view_date: NaiveDate,
-    months: Vec<Localized>,
-    selected_month: usize,
-
-    #[lens(ignore)]
+    view_date: Signal<NaiveDate>,
+    selected_month: Signal<usize>,
     on_select: Option<Box<dyn Fn(&mut EventContext, NaiveDate)>>,
 }
 
@@ -38,7 +47,6 @@ pub(crate) enum DatepickerEvent {
 
     IncrementYear,
     DecrementYear,
-    SelectYear(String),
 
     SelectDate(NaiveDate),
 }
@@ -109,39 +117,54 @@ impl Datepicker {
     }
 
     /// Create a new [Datepicker] view.
-    pub fn new<L, D>(cx: &mut Context, lens: L) -> Handle<Self>
-    where
-        L: Lens<Target = D>,
-        D: Datelike + Data,
-    {
-        let view_date = lens.get(cx);
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// # use chrono::NaiveDate;
+    /// # let mut cx = &mut Context::default();
+    /// # let date = cx.state(NaiveDate::from_ymd_opt(2025, 1, 15).unwrap());
+    /// Datepicker::new(cx, date)
+    ///     .on_select(move |cx, selected| {
+    ///         date.set(cx, selected);
+    ///     });
+    /// ```
+    pub fn new(cx: &mut Context, selected_date: Signal<NaiveDate>) -> Handle<Self> {
+        let initial_date = *selected_date.get(cx);
 
-        Self {
-            months: MONTHS.iter().map(|m| Localized::new(m)).collect::<Vec<_>>(),
-            selected_month: view_date.month() as usize - 1,
-            view_date: NaiveDate::from_ymd_opt(view_date.year(), view_date.month(), 1).unwrap(),
-            on_select: None,
-        }
-        .build(cx, move |cx| {
+        let months = cx.state(MONTHS.iter().map(|m| Localized::new(m)).collect::<Vec<_>>());
+        let selected_month = cx.state(initial_date.month() as usize - 1);
+        let view_date = cx
+            .state(NaiveDate::from_ymd_opt(initial_date.year(), initial_date.month(), 1).unwrap());
+        let stretch_one = cx.state(Stretch(1.0));
+        let width_140 = cx.state(Pixels(140.0));
+        let width_100 = cx.state(Pixels(100.0));
+        let text_center = cx.state(TextAlign::Center);
+        let plus_minus = cx.state(SpinboxIcons::PlusMinus);
+        let calendar_width = cx.state(Pixels(32.0 * 7.0));
+        let calendar_height = cx.state(Pixels(32.0 * 6.0));
+
+        // Derived signal for year display
+        let year_text = cx.derived({
+            let view_date = view_date;
+            move |s| view_date.get(s).year().to_string()
+        });
+
+        Self { view_date, selected_month, on_select: None }.build(cx, move |cx| {
             HStack::new(cx, |cx| {
-                Spinbox::custom(cx, |cx| {
-                    PickList::new(cx, Datepicker::months, Datepicker::selected_month, false)
+                Spinbox::custom(cx, move |cx| {
+                    PickList::new(cx, months, selected_month, false)
                         .on_select(|ex, index| ex.emit(DatepickerEvent::SelectMonth(index)))
-                        .width(Stretch(1.0))
+                        .width(stretch_one)
                 })
-                .width(Pixels(140.0))
+                .width(width_140)
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
                 .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementMonth));
-                // TODO: Migrate to Signal once Datepicker uses signals for state management.
-                // Textbox::new now requires Signal<L>, but Datepicker uses Lenses.
-                // Using Label for now - year editing via textbox temporarily disabled.
-                Spinbox::custom(cx, |cx| {
-                    Label::new(cx, Datepicker::view_date.map(|date| date.year()))
-                        .width(Stretch(1.0))
-                        .text_align(TextAlign::Center)
+
+                Spinbox::custom(cx, move |cx| {
+                    Label::new(cx, year_text).width(stretch_one).text_align(text_center)
                 })
-                .width(Pixels(100.0))
-                .icons(SpinboxIcons::PlusMinus)
+                .width(width_100)
+                .icons(plus_minus)
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementYear))
                 .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementYear));
             })
@@ -153,8 +176,9 @@ impl Datepicker {
                 // Days of the week
                 HStack::new(cx, |cx| {
                     for h in DAYS_HEADER {
-                        Label::new(cx, Localized::new(h).map(|day| day[0..2].to_string()))
-                            .class("datepicker-calendar-header");
+                        let day_label =
+                            Localized::new(h).map(|day| day[0..2].to_string()).signal(cx);
+                        Label::new(cx, day_label).class("datepicker-calendar-header");
                     }
                 })
                 .class("datepicker-calendar-headers");
@@ -162,56 +186,78 @@ impl Datepicker {
                 // Numbered days in a grid
                 VStack::new(cx, move |cx| {
                     for y in 0..6 {
-                        HStack::new(cx, |cx| {
+                        HStack::new(cx, move |cx| {
                             for x in 0..7 {
-                                Label::new(cx, "").bind(
-                                    Datepicker::view_date,
-                                    move |handle, view_date| {
-                                        let view_date = view_date.get(&handle);
+                                let day_number = cx.derived({
+                                    let view_date = view_date;
+                                    move |store| {
+                                        let vd_val = *view_date.get(store);
+                                        let (day_number, _) = Self::get_day_number(y, x, &vd_val);
+                                        day_number
+                                    }
+                                });
+                                let is_disabled = cx.derived({
+                                    let view_date = view_date;
+                                    move |store| {
+                                        let vd_val = *view_date.get(store);
+                                        let (_, disabled) = Self::get_day_number(y, x, &vd_val);
+                                        disabled
+                                    }
+                                });
+                                let day_text = cx.derived({
+                                    let day_number = day_number;
+                                    move |store| day_number.get(store).to_string()
+                                });
+                                let is_selected = cx.derived({
+                                    let view_date = view_date;
+                                    let selected_date = selected_date;
+                                    let day_number = day_number;
+                                    let is_disabled = is_disabled;
+                                    move |store| {
+                                        if *is_disabled.get(store) {
+                                            false
+                                        } else {
+                                            let sd_val = *selected_date.get(store);
+                                            let vd_val = *view_date.get(store);
+                                            let day_number = *day_number.get(store);
+                                            sd_val.day() == day_number
+                                                && sd_val.month() == vd_val.month()
+                                                && sd_val.year() == vd_val.year()
+                                        }
+                                    }
+                                });
+                                let navigable = cx.derived({
+                                    let is_disabled = is_disabled;
+                                    move |store| !*is_disabled.get(store)
+                                });
 
-                                        let (day_number, disabled) =
-                                            Self::get_day_number(y, x, &view_date);
-
-                                        handle.bind(lens, move |handle, selected_date| {
-                                            let selected_date = selected_date.get(&handle);
-
-                                            handle
-                                                .text(&day_number.to_string())
-                                                .class("datepicker-calendar-day")
-                                                .navigable(!disabled)
-                                                .toggle_class(
-                                                    "datepicker-calendar-day-disabled",
-                                                    disabled,
-                                                )
-                                                .on_press(move |ex| {
-                                                    if !disabled {
-                                                        ex.emit(DatepickerEvent::SelectDate(
-                                                            NaiveDate::from_ymd_opt(
-                                                                view_date.year(),
-                                                                view_date.month(),
-                                                                day_number,
-                                                            )
-                                                            .unwrap(),
-                                                        ))
-                                                    }
-                                                })
-                                                .checked(
-                                                    !disabled
-                                                        && selected_date.day() == day_number
-                                                        && selected_date.month()
-                                                            == view_date.month()
-                                                        && selected_date.year() == view_date.year(),
-                                                );
-                                        });
-                                    },
-                                );
+                                Label::new(cx, day_text)
+                                    .class("datepicker-calendar-day")
+                                    .navigable(navigable)
+                                    .toggle_class("datepicker-calendar-day-disabled", is_disabled)
+                                    .checked(is_selected)
+                                    .on_press(move |ex| {
+                                        if *is_disabled.get(ex) {
+                                            return;
+                                        }
+                                        let day_number = *day_number.get(ex);
+                                        let vd_val = *view_date.get(ex);
+                                        ex.emit(DatepickerEvent::SelectDate(
+                                            NaiveDate::from_ymd_opt(
+                                                vd_val.year(),
+                                                vd_val.month(),
+                                                day_number,
+                                            )
+                                            .unwrap(),
+                                        ))
+                                    });
                             }
                         });
                     }
                 })
                 // This shouldn't be needed but apparently grid size isn't propagated up the tree during layout
-                .width(Pixels(32.0 * 7.0))
-                .height(Pixels(32.0 * 6.0));
+                .width(calendar_width)
+                .height(calendar_height);
             })
             .class("datepicker-calendar");
         })
@@ -226,74 +272,52 @@ impl View for Datepicker {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|e, _| match e {
             DatepickerEvent::IncrementMonth => {
-                if self.view_date.month() == 12 {
-                    self.view_date =
-                        NaiveDate::from_ymd_opt(self.view_date.year() + 1, 1, self.view_date.day())
-                            .unwrap();
+                let current = *self.view_date.get(cx);
+                let new_date = if current.month() == 12 {
+                    NaiveDate::from_ymd_opt(current.year() + 1, 1, current.day()).unwrap()
                 } else {
-                    self.view_date = NaiveDate::from_ymd_opt(
-                        self.view_date.year(),
-                        self.view_date.month() + 1,
-                        self.view_date.day(),
-                    )
-                    .unwrap();
-                }
-                self.selected_month = self.view_date.month() as usize - 1;
+                    NaiveDate::from_ymd_opt(current.year(), current.month() + 1, current.day())
+                        .unwrap()
+                };
+                self.view_date.set(cx, new_date);
+                self.selected_month.set(cx, new_date.month() as usize - 1);
             }
 
             DatepickerEvent::DecrementMonth => {
-                if self.view_date.month() == 1 {
-                    self.view_date = NaiveDate::from_ymd_opt(
-                        self.view_date.year() - 1,
-                        12,
-                        self.view_date.day(),
-                    )
-                    .unwrap();
+                let current = *self.view_date.get(cx);
+                let new_date = if current.month() == 1 {
+                    NaiveDate::from_ymd_opt(current.year() - 1, 12, current.day()).unwrap()
                 } else {
-                    self.view_date = NaiveDate::from_ymd_opt(
-                        self.view_date.year(),
-                        self.view_date.month() - 1,
-                        self.view_date.day(),
-                    )
-                    .unwrap();
-                }
-                self.selected_month = self.view_date.month() as usize - 1;
+                    NaiveDate::from_ymd_opt(current.year(), current.month() - 1, current.day())
+                        .unwrap()
+                };
+                self.view_date.set(cx, new_date);
+                self.selected_month.set(cx, new_date.month() as usize - 1);
             }
 
             DatepickerEvent::SelectMonth(month) => {
-                self.view_date = NaiveDate::from_ymd_opt(
-                    self.view_date.year(),
-                    *month as u32 + 1,
-                    self.view_date.day(),
-                )
-                .unwrap();
-                self.selected_month = *month;
+                let current = *self.view_date.get(cx);
+                let new_date =
+                    NaiveDate::from_ymd_opt(current.year(), *month as u32 + 1, current.day())
+                        .unwrap();
+                self.view_date.set(cx, new_date);
+                self.selected_month.set(cx, *month);
             }
 
             DatepickerEvent::IncrementYear => {
-                self.view_date = NaiveDate::from_ymd_opt(
-                    self.view_date.year() + 1,
-                    self.view_date.month(),
-                    self.view_date.day(),
-                )
-                .unwrap();
+                let current = *self.view_date.get(cx);
+                let new_date =
+                    NaiveDate::from_ymd_opt(current.year() + 1, current.month(), current.day())
+                        .unwrap();
+                self.view_date.set(cx, new_date);
             }
 
             DatepickerEvent::DecrementYear => {
-                self.view_date = NaiveDate::from_ymd_opt(
-                    self.view_date.year() - 1,
-                    self.view_date.month(),
-                    self.view_date.day(),
-                )
-                .unwrap();
-            }
-
-            DatepickerEvent::SelectYear(year) => {
-                if let Ok(year) = year.parse::<i32>() {
-                    self.view_date =
-                        NaiveDate::from_ymd_opt(year, self.view_date.month(), self.view_date.day())
-                            .unwrap();
-                }
+                let current = *self.view_date.get(cx);
+                let new_date =
+                    NaiveDate::from_ymd_opt(current.year() - 1, current.month(), current.day())
+                        .unwrap();
+                self.view_date.set(cx, new_date);
             }
 
             DatepickerEvent::SelectDate(date) => {

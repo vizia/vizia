@@ -3,79 +3,67 @@ use helpers::*;
 use vizia::icons::{ICON_EYE, ICON_EYE_OFF};
 use vizia::prelude::*;
 
-#[derive(Debug, Lens)]
-pub struct AppData {
-    pub option1: Signal<bool>,
-    pub option2: Signal<bool>,
-}
-
-#[derive(Debug)]
-pub enum AppEvent {
-    ToggleOptions,
-}
-
-impl Model for AppData {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::ToggleOptions => {
-                self.option1.set(cx, !self.option1.get(cx));
-                self.option2.set(cx, !self.option2.get(cx));
-            }
-        });
-    }
-}
-
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
-        AppData { option1: cx.state(true), option2: cx.state(false) }.build(cx);
+    let (app, (title, size)) = Application::new_with_state(|cx| {
+        let option1 = cx.state(true);
+        let option2 = cx.state(false);
+        let auto = cx.state(Auto);
+        let gap_5 = cx.state(Pixels(5.0));
+        let gap_10 = cx.state(Pixels(10.0));
+        let align_center = cx.state(Alignment::Center);
+        let icon_off = cx.state(ICON_EYE_OFF);
+        let icon_on = cx.state(ICON_EYE);
 
         ExamplePage::vertical(cx, |cx| {
-            Label::new(cx, "Checkbox with label").class("h2");
+            Label::static_text(cx, "Checkbox with label").class("h2");
 
             VStack::new(cx, |cx| {
-                // Checkboxes with label
                 HStack::new(cx, |cx| {
-                    Checkbox::new(cx, AppData::option1.get(cx))
-                        .on_toggle(|cx| cx.emit(AppEvent::ToggleOptions))
+                    Checkbox::new(cx, option1)
+                        .on_toggle(move |cx| {
+                            option1.set(cx, !option1.get(cx));
+                            option2.set(cx, !option2.get(cx));
+                        })
                         .id("checkbox_1");
-                    Label::new(cx, "Checkbox 1").describing("checkbox_1");
+                    Label::static_text(cx, "Checkbox 1").describing("checkbox_1");
                 })
-                .size(Auto)
-                .horizontal_gap(Pixels(5.0))
-                .alignment(Alignment::Center);
+                .size(auto)
+                .horizontal_gap(gap_5)
+                .alignment(align_center);
 
                 HStack::new(cx, |cx| {
-                    Checkbox::new(cx, AppData::option2.get(cx))
-                        .on_toggle(|cx| cx.emit(AppEvent::ToggleOptions))
+                    Checkbox::new(cx, option2)
+                        .on_toggle(move |cx| {
+                            option1.set(cx, !option1.get(cx));
+                            option2.set(cx, !option2.get(cx));
+                        })
                         .id("checkbox_2");
-                    Label::new(cx, "Checkbox 2").describing("checkbox_2");
+                    Label::static_text(cx, "Checkbox 2").describing("checkbox_2");
                 })
-                .size(Auto)
-                .horizontal_gap(Pixels(5.0))
-                .alignment(Alignment::Center);
+                .size(auto)
+                .horizontal_gap(gap_5)
+                .alignment(align_center);
             })
-            .vertical_gap(Pixels(10.0))
-            .size(Auto);
+            .vertical_gap(gap_10)
+            .size(auto);
 
-            Label::new(cx, "Checkbox with custom icon and label").class("h2");
+            Label::static_text(cx, "Checkbox with custom icon and label").class("h2");
 
             HStack::new(cx, |cx| {
-                Checkbox::with_icons(
-                    cx,
-                    AppData::option1.get(cx),
-                    Some(ICON_EYE_OFF),
-                    Some(ICON_EYE),
-                )
-                .on_toggle(|cx| cx.emit(AppEvent::ToggleOptions))
-                .id("checkbox_3");
-                Label::new(cx, "Checkbox 3").describing("checkbox_3");
+                Checkbox::with_icons(cx, option1, Some(icon_off), Some(icon_on))
+                    .on_toggle(move |cx| {
+                        option1.set(cx, !option1.get(cx));
+                        option2.set(cx, !option2.get(cx));
+                    })
+                    .id("checkbox_3");
+                Label::static_text(cx, "Checkbox 3").describing("checkbox_3");
             })
-            .size(Auto)
-            .horizontal_gap(Pixels(5.0))
-            .alignment(Alignment::Center);
+            .size(auto)
+            .horizontal_gap(gap_5)
+            .alignment(align_center);
         });
-    })
-    .title("Checkbox")
-    .inner_size((300, 320))
-    .run()
+        (cx.state("Checkbox"), cx.state((300, 320)))
+    });
+
+    app.title(title).inner_size(size).run()
 }

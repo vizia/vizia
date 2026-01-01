@@ -3,7 +3,7 @@ use crate::window::set_cloak;
 use crate::{
     convert::{winit_key_code_to_code, winit_key_to_key},
     window::{WinState, Window},
-    window_modifiers::WindowModifiers,
+    window_modifiers::{apply_title_affixes, WindowModifiers},
 };
 #[cfg(feature = "accesskit")]
 use accesskit_winit::Adapter;
@@ -130,6 +130,16 @@ impl Application {
     where
         F: 'static + FnOnce(&mut Context),
     {
+        let (app, _) = Self::new_with_state(|cx| {
+            content(cx);
+        });
+        app
+    }
+
+    pub fn new_with_state<F, T>(content: F) -> (Self, T)
+    where
+        F: 'static + FnOnce(&mut Context) -> T,
+    {
         let context = Context::new();
 
         let event_loop =
@@ -141,25 +151,28 @@ impl Application {
 
         cx.renegotiate_language();
         cx.0.remove_user_themes();
-        (content)(cx.context());
+        let result = (content)(cx.context());
 
         let proxy = event_loop.create_proxy();
 
-        Self {
-            cx,
-            event_manager: EventManager::new(),
-            event_loop: Some(event_loop),
-            on_idle: None,
-            window_description: WindowDescription::new(),
-            control_flow: ControlFlow::Wait,
-            event_loop_proxy: proxy,
-            windows: HashMap::new(),
-            window_ids: HashMap::new(),
-            #[cfg(feature = "accesskit")]
-            accesskit_adapter: None,
-            #[cfg(feature = "accesskit")]
-            adapter_initialized: false,
-        }
+        (
+            Self {
+                cx,
+                event_manager: EventManager::new(),
+                event_loop: Some(event_loop),
+                on_idle: None,
+                window_description: WindowDescription::new(),
+                control_flow: ControlFlow::Wait,
+                event_loop_proxy: proxy,
+                windows: HashMap::new(),
+                window_ids: HashMap::new(),
+                #[cfg(feature = "accesskit")]
+                accesskit_adapter: None,
+                #[cfg(feature = "accesskit")]
+                adapter_initialized: false,
+            },
+            result,
+        )
     }
 
     fn create_window(
@@ -655,6 +668,31 @@ impl ApplicationHandler<UserEvent> for Application {
                     window.entity,
                     WindowEvent::MouseMove(position.x as f32, position.y as f32),
                 );
+
+                // Process input immediately so drag-driven visuals update without waiting for idle.
+                self.event_manager.flush_events(self.cx.context(), |_| {});
+
+                self.cx.process_style_updates();
+
+                if self.cx.process_animations() {
+                    for window in self.windows.values() {
+                        window.window().request_redraw();
+                    }
+                }
+
+                self.cx.process_visual_updates();
+
+                if self
+                    .cx
+                    .0
+                    .windows
+                    .iter()
+                    .any(|(_, window_state)| !window_state.redraw_list.is_empty())
+                {
+                    for window in self.windows.values() {
+                        window.window().request_redraw();
+                    }
+                }
             }
             winit::event::WindowEvent::CursorEntered { device_id: _ } => {
                 self.cx.emit_window_event(window.entity, WindowEvent::MouseEnter);
@@ -867,113 +905,139 @@ impl ApplicationHandler<UserEvent> for Application {
 }
 
 impl WindowModifiers for Application {
-    fn title<T: ToString>(mut self, title: impl Res<T>) -> Self {
-        self.window_description.title = title.get(&self.cx.0).to_string();
+    fn title<T: ToString>(mut self, title: Signal<T>) -> Self {
+        self.window_description.title = apply_title_affixes(&title.get(&self.cx.0).to_string());
 
-        title.set_or_bind(&mut self.cx.0, Entity::root(), |cx, title| {
-            cx.emit(WindowEvent::SetTitle(title.get(cx).to_string()));
+        Binding::new(&mut self.cx.0, title, move |cx| {
+            cx.with_current(Entity::root(), |cx| {
+                cx.emit(WindowEvent::SetTitle(apply_title_affixes(
+                    &title.get(cx).to_string(),
+                )));
+            });
         });
 
         self
     }
 
-    fn inner_size<S: Into<WindowSize>>(mut self, size: impl Res<S>) -> Self {
-        self.window_description.inner_size = size.get(&self.cx.0).into();
+    fn inner_size<S: Into<WindowSize> + Clone>(mut self, size: Signal<S>) -> Self {
+        self.window_description.inner_size = size.get(&self.cx.0).clone().into();
 
-        size.set_or_bind(&mut self.cx.0, Entity::root(), |cx, size| {
-            cx.emit(WindowEvent::SetSize(size.get(cx).into()));
+        Binding::new(&mut self.cx.0, size, move |cx| {
+            cx.with_current(Entity::root(), |cx| {
+                cx.emit(WindowEvent::SetSize(size.get(cx).clone().into()));
+            });
         });
 
         self
     }
 
-    fn min_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
-        self.window_description.min_inner_size = size.get(&self.cx.0).map(|s| s.into());
+    fn min_inner_size<S: Into<WindowSize> + Clone>(mut self, size: Signal<Option<S>>) -> Self {
+        self.window_description.min_inner_size =
+            size.get(&self.cx.0).as_ref().map(|s| s.clone().into());
 
-        size.set_or_bind(&mut self.cx.0, Entity::root(), |cx, size| {
-            cx.emit(WindowEvent::SetMinSize(size.get(cx).map(|s| s.into())));
+        Binding::new(&mut self.cx.0, size, move |cx| {
+            cx.with_current(Entity::root(), |cx| {
+                cx.emit(WindowEvent::SetMinSize(
+                    size.get(cx).as_ref().map(|s| s.clone().into()),
+                ));
+            });
         });
 
         self
     }
 
-    fn max_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
-        self.window_description.max_inner_size = size.get(&self.cx.0).map(|s| s.into());
+    fn max_inner_size<S: Into<WindowSize> + Clone>(mut self, size: Signal<Option<S>>) -> Self {
+        self.window_description.max_inner_size =
+            size.get(&self.cx.0).as_ref().map(|s| s.clone().into());
 
-        size.set_or_bind(&mut self.cx.0, Entity::root(), |cx, size| {
-            cx.emit(WindowEvent::SetMaxSize(size.get(cx).map(|s| s.into())));
+        Binding::new(&mut self.cx.0, size, move |cx| {
+            cx.with_current(Entity::root(), |cx| {
+                cx.emit(WindowEvent::SetMaxSize(
+                    size.get(cx).as_ref().map(|s| s.clone().into()),
+                ));
+            });
         });
         self
     }
 
-    fn position<P: Into<WindowPosition>>(mut self, position: impl Res<P>) -> Self {
-        self.window_description.position = Some(position.get(&self.cx.0).into());
+    fn position<P: Into<WindowPosition> + Clone>(mut self, position: Signal<P>) -> Self {
+        self.window_description.position = Some(position.get(&self.cx.0).clone().into());
 
-        position.set_or_bind(&mut self.cx.0, Entity::root(), |cx, size| {
-            cx.emit(WindowEvent::SetPosition(size.get(cx).into()));
-        });
-
-        self
-    }
-
-    fn offset<P: Into<WindowPosition>>(mut self, offset: impl Res<P>) -> Self {
-        self.window_description.offset = Some(offset.get(&self.cx.0).into());
-
-        self
-    }
-
-    fn anchor<P: Into<Anchor>>(mut self, anchor: impl Res<P>) -> Self {
-        self.window_description.anchor = Some(anchor.get(&self.cx.0).into());
-
-        self
-    }
-
-    fn anchor_target<P: Into<AnchorTarget>>(mut self, anchor_target: impl Res<P>) -> Self {
-        self.window_description.anchor_target = Some(anchor_target.get(&self.cx.0).into());
-
-        self
-    }
-
-    fn parent_anchor<P: Into<Anchor>>(mut self, parent_anchor: impl Res<P>) -> Self {
-        self.window_description.parent_anchor = Some(parent_anchor.get(&self.cx.0).into());
-
-        self
-    }
-
-    fn resizable(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.resizable = flag.get(&self.cx.0);
-
-        flag.set_or_bind(&mut self.cx.0, Entity::root(), |cx, flag| {
-            cx.emit(WindowEvent::SetResizable(flag.get(cx)));
+        Binding::new(&mut self.cx.0, position, move |cx| {
+            cx.with_current(Entity::root(), |cx| {
+                cx.emit(WindowEvent::SetPosition(position.get(cx).clone().into()));
+            });
         });
 
         self
     }
 
-    fn minimized(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.minimized = flag.get(&self.cx.0);
-
-        flag.set_or_bind(&mut self.cx.0, Entity::root(), |cx, flag| {
-            cx.emit(WindowEvent::SetMinimized(flag.get(cx)));
-        });
-        self
-    }
-
-    fn maximized(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.maximized = flag.get(&self.cx.0);
-
-        flag.set_or_bind(&mut self.cx.0, Entity::root(), |cx, flag| {
-            cx.emit(WindowEvent::SetMaximized(flag.get(cx)));
-        });
+    fn offset<P: Into<WindowPosition> + Clone>(mut self, offset: Signal<P>) -> Self {
+        self.window_description.offset = Some(offset.get(&self.cx.0).clone().into());
 
         self
     }
 
-    fn visible(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.visible = flag.get(&self.cx.0);
+    fn anchor<P: Into<Anchor> + Clone>(mut self, anchor: Signal<P>) -> Self {
+        self.window_description.anchor = Some(anchor.get(&self.cx.0).clone().into());
 
-        flag.set_or_bind(&mut self.cx.0, Entity::root(), |cx, flag| {
-            cx.emit(WindowEvent::SetVisible(flag.get(cx)));
+        self
+    }
+
+    fn anchor_target<P: Into<AnchorTarget> + Clone>(mut self, anchor_target: Signal<P>) -> Self {
+        self.window_description.anchor_target = Some(anchor_target.get(&self.cx.0).clone().into());
+
+        self
+    }
+
+    fn parent_anchor<P: Into<Anchor> + Clone>(mut self, parent_anchor: Signal<P>) -> Self {
+        self.window_description.parent_anchor = Some(parent_anchor.get(&self.cx.0).clone().into());
+
+        self
+    }
+
+    fn resizable(mut self, flag: Signal<bool>) -> Self {
+        self.window_description.resizable = *flag.get(&self.cx.0);
+
+        Binding::new(&mut self.cx.0, flag, move |cx| {
+            cx.with_current(Entity::root(), |cx| {
+                cx.emit(WindowEvent::SetResizable(*flag.get(cx)));
+            });
+        });
+
+        self
+    }
+
+    fn minimized(mut self, flag: Signal<bool>) -> Self {
+        self.window_description.minimized = *flag.get(&self.cx.0);
+
+        Binding::new(&mut self.cx.0, flag, move |cx| {
+            cx.with_current(Entity::root(), |cx| {
+                cx.emit(WindowEvent::SetMinimized(*flag.get(cx)));
+            });
+        });
+        self
+    }
+
+    fn maximized(mut self, flag: Signal<bool>) -> Self {
+        self.window_description.maximized = *flag.get(&self.cx.0);
+
+        Binding::new(&mut self.cx.0, flag, move |cx| {
+            cx.with_current(Entity::root(), |cx| {
+                cx.emit(WindowEvent::SetMaximized(*flag.get(cx)));
+            });
+        });
+
+        self
+    }
+
+    fn visible(mut self, flag: Signal<bool>) -> Self {
+        self.window_description.visible = *flag.get(&self.cx.0);
+
+        Binding::new(&mut self.cx.0, flag, move |cx| {
+            cx.with_current(Entity::root(), |cx| {
+                cx.emit(WindowEvent::SetVisible(*flag.get(cx)));
+            });
         });
 
         self
@@ -1027,8 +1091,9 @@ impl WindowModifiers for Application {
 
 fn apply_window_description(description: &WindowDescription) -> WindowAttributes {
     let mut window_attributes = winit::window::Window::default_attributes();
+    let title = apply_title_affixes(&description.title);
 
-    window_attributes = window_attributes.with_title(&description.title).with_inner_size(
+    window_attributes = window_attributes.with_title(title).with_inner_size(
         LogicalSize::new(description.inner_size.width, description.inner_size.height),
     );
 

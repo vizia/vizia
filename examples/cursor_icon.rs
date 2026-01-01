@@ -158,64 +158,66 @@ const STYLE: &str = r#"
 "#;
 
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
+    let (app, (title, size)) = Application::new_with_state(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
+        let align_center = cx.state(Alignment::Center);
+        let gap_10 = cx.state(Pixels(10.0));
 
         HStack::new(cx, |cx| {
             VStack::new(cx, |cx| {
-                Label::new(cx, "Default").class("default");
-                Label::new(cx, "Crosshair").class("crosshair");
-                Label::new(cx, "Hand").class("hand");
-                Label::new(cx, "Arrow").class("arrow");
-                Label::new(cx, "Move").class("move");
-                Label::new(cx, "Text").class("text");
-                Label::new(cx, "Wait").class("wait");
-                Label::new(cx, "Help").class("help");
-                Label::new(cx, "Progress").class("progress");
-                Label::new(cx, "NotAllowed").class("not-allowed");
-                Label::new(cx, "ContextMenu").class("context-menu");
-                Label::new(cx, "Cell").class("cell");
+                Label::static_text(cx, "Default").class("default");
+                Label::static_text(cx, "Crosshair").class("crosshair");
+                Label::static_text(cx, "Hand").class("hand");
+                Label::static_text(cx, "Arrow").class("arrow");
+                Label::static_text(cx, "Move").class("move");
+                Label::static_text(cx, "Text").class("text");
+                Label::static_text(cx, "Wait").class("wait");
+                Label::static_text(cx, "Help").class("help");
+                Label::static_text(cx, "Progress").class("progress");
+                Label::static_text(cx, "NotAllowed").class("not-allowed");
+                Label::static_text(cx, "ContextMenu").class("context-menu");
+                Label::static_text(cx, "Cell").class("cell");
             })
-            .alignment(Alignment::Center)
-            .vertical_gap(Pixels(10.0));
+            .alignment(align_center)
+            .vertical_gap(gap_10);
 
             VStack::new(cx, |cx| {
-                Label::new(cx, "VerticalText").class("vertical-text");
-                Label::new(cx, "Alias").class("alias");
-                Label::new(cx, "Copy").class("copy");
-                Label::new(cx, "NoDrop").class("no-drop");
-                Label::new(cx, "Grab").class("grab");
-                Label::new(cx, "Grabbing").class("grabbing");
-                Label::new(cx, "AllScroll").class("all-scroll");
-                Label::new(cx, "ZoomIn").class("zoom-in");
-                Label::new(cx, "ZoomOut").class("zoom-out");
-                Label::new(cx, "EResize").class("e-resize");
-                Label::new(cx, "NResize").class("n-resize");
-                Label::new(cx, "NeResize").class("ne-resize");
+                Label::static_text(cx, "VerticalText").class("vertical-text");
+                Label::static_text(cx, "Alias").class("alias");
+                Label::static_text(cx, "Copy").class("copy");
+                Label::static_text(cx, "NoDrop").class("no-drop");
+                Label::static_text(cx, "Grab").class("grab");
+                Label::static_text(cx, "Grabbing").class("grabbing");
+                Label::static_text(cx, "AllScroll").class("all-scroll");
+                Label::static_text(cx, "ZoomIn").class("zoom-in");
+                Label::static_text(cx, "ZoomOut").class("zoom-out");
+                Label::static_text(cx, "EResize").class("e-resize");
+                Label::static_text(cx, "NResize").class("n-resize");
+                Label::static_text(cx, "NeResize").class("ne-resize");
             })
-            .alignment(Alignment::Center)
-            .vertical_gap(Pixels(10.0));
+            .alignment(align_center)
+            .vertical_gap(gap_10);
 
             VStack::new(cx, |cx| {
-                Label::new(cx, "NwResize").class("nw-resize");
-                Label::new(cx, "SResize").class("s-resize");
-                Label::new(cx, "SeResize").class("se-resize");
-                Label::new(cx, "SwResize").class("sw-resize");
-                Label::new(cx, "WResize").class("w-resize");
-                Label::new(cx, "EwResize").class("ew-resize");
-                Label::new(cx, "NsResize").class("ns-resize");
-                Label::new(cx, "NeswResize").class("nesw-resize");
-                Label::new(cx, "NwseResize").class("nwse-resize");
-                Label::new(cx, "ColResize").class("col-resize");
-                Label::new(cx, "RowResize").class("row-resize");
-                Label::new(cx, "None").class("none");
+                Label::static_text(cx, "NwResize").class("nw-resize");
+                Label::static_text(cx, "SResize").class("s-resize");
+                Label::static_text(cx, "SeResize").class("se-resize");
+                Label::static_text(cx, "SwResize").class("sw-resize");
+                Label::static_text(cx, "WResize").class("w-resize");
+                Label::static_text(cx, "EwResize").class("ew-resize");
+                Label::static_text(cx, "NsResize").class("ns-resize");
+                Label::static_text(cx, "NeswResize").class("nesw-resize");
+                Label::static_text(cx, "NwseResize").class("nwse-resize");
+                Label::static_text(cx, "ColResize").class("col-resize");
+                Label::static_text(cx, "RowResize").class("row-resize");
+                Label::static_text(cx, "None").class("none");
             })
-            .alignment(Alignment::Center)
-            .vertical_gap(Pixels(10.0));
+            .alignment(align_center)
+            .vertical_gap(gap_10);
         })
-        .alignment(Alignment::Center);
-    })
-    .title("Cursor Icon")
-    .inner_size((800, 600))
-    .run()
+        .alignment(align_center);
+        (cx.state("Cursor Icon"), cx.state((800, 600)))
+    });
+
+    app.title(title).inner_size(size).run()
 }

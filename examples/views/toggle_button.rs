@@ -4,61 +4,28 @@ use helpers::*;
 use vizia::icons::{ICON_BOLD, ICON_ITALIC, ICON_UNDERLINE};
 use vizia::prelude::*;
 
-pub struct AppData {
-    bold: Signal<bool>,
-    italic: Signal<bool>,
-    underline: Signal<bool>,
-}
-
-pub enum AppEvent {
-    ToggleBold,
-    ToggleItalic,
-    ToggleUnderline,
-}
-
-impl Model for AppData {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::ToggleBold => {
-                self.bold.update(cx, |bold| *bold = !*bold);
-            }
-
-            AppEvent::ToggleItalic => {
-                self.italic.update(cx, |italic| *italic = !*italic);
-            }
-
-            AppEvent::ToggleUnderline => {
-                self.underline.update(cx, |underline| *underline = !*underline);
-            }
-        })
-    }
-}
-
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
+    let (app, (title, size)) = Application::new_with_state(|cx| {
         let bold = cx.state(false);
         let italic = cx.state(false);
         let underline = cx.state(false);
-
-        AppData { bold, italic, underline }.build(cx);
+        let icon_bold = cx.state(ICON_BOLD);
+        let icon_italic = cx.state(ICON_ITALIC);
+        let icon_underline = cx.state(ICON_UNDERLINE);
 
         ExamplePage::vertical(cx, |cx| {
-            ToggleButton::new(cx, bold, |cx| Label::new(cx, "Bold"))
-                .on_toggle(|cx| cx.emit(AppEvent::ToggleBold));
+            ToggleButton::new(cx, bold, |cx| Label::static_text(cx, "Bold")).two_way();
 
             ButtonGroup::new(cx, |cx| {
-                ToggleButton::new(cx, bold, |cx| Svg::new(cx, ICON_BOLD))
-                    .on_toggle(|cx| cx.emit(AppEvent::ToggleBold));
+                ToggleButton::new(cx, bold, move |cx| Svg::new(cx, icon_bold)).two_way();
 
-                ToggleButton::new(cx, italic, |cx| Svg::new(cx, ICON_ITALIC))
-                    .on_toggle(|cx| cx.emit(AppEvent::ToggleItalic));
+                ToggleButton::new(cx, italic, move |cx| Svg::new(cx, icon_italic)).two_way();
 
-                ToggleButton::new(cx, underline, |cx| Svg::new(cx, ICON_UNDERLINE))
-                    .on_toggle(|cx| cx.emit(AppEvent::ToggleUnderline));
+                ToggleButton::new(cx, underline, move |cx| Svg::new(cx, icon_underline)).two_way();
             });
         });
-    })
-    .title("ToggleButton")
-    .inner_size((700, 200))
-    .run()
+        (cx.state("ToggleButton"), cx.state((700, 200)))
+    });
+
+    app.title(title).inner_size(size).run()
 }

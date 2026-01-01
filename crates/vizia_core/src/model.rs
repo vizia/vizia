@@ -1,6 +1,6 @@
 //! Models are used to store application data and can be bound to by views to visually display the data.
 
-use crate::{events::ViewHandler, prelude::*};
+use crate::prelude::*;
 use hashbrown::HashMap;
 use std::any::{Any, TypeId};
 
@@ -12,7 +12,7 @@ use std::any::{Any, TypeId};
 /// # use vizia_core::prelude::*;
 /// #
 /// pub struct AppData {
-///     count: i32,
+///     count: Signal<i32>,
 /// }
 ///
 /// enum AppEvent {
@@ -24,11 +24,11 @@ use std::any::{Any, TypeId};
 ///     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
 ///         event.map(|app_event, _| match app_event {
 ///             AppEvent::Increment => {
-///                 self.count += 1;
+///                 self.count.update(cx, |value| *value += 1);
 ///             }
 ///
 ///             AppEvent::Decrement => {
-///                 self.count -= 1;
+///                 self.count.update(cx, |value| *value -= 1);
 ///             }
 ///         });
 ///     }
@@ -43,16 +43,10 @@ pub trait Model: 'static + Sized {
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
     /// #
-    /// # #[derive(Default, Lens)]
-    /// # pub struct AppData {
-    /// #     count: i32,
-    /// # }
-    /// #
-    /// # impl Model for AppData {}
-    /// #
     /// fn main() {
     ///     Application::new(|cx|{
-    ///         AppData::default().build(cx);
+    ///         let count = cx.state(0i32);
+    ///         AppData { count }.build(cx);
     ///     }).run();  
     /// }
     /// ```
@@ -78,12 +72,10 @@ pub trait Model: 'static + Sized {
     ///
     /// ```
     /// # use vizia_core::prelude::*;
-    /// # use vizia_derive::*;
     /// # use vizia_winit::application::Application;
     /// #
-    /// # #[derive(Default, Lens)]
     /// # pub struct AppData {
-    /// #     count: i32,
+    /// #     count: Signal<i32>,
     /// # }
     /// #
     /// # enum AppEvent {
@@ -95,11 +87,11 @@ pub trait Model: 'static + Sized {
     ///     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
     ///         event.map(|app_event, _| match app_event {
     ///             AppEvent::Increment => {
-    ///                 self.count += 1;
+    ///                 self.count.update(cx, |value| *value += 1);
     ///             }
     ///
     ///             AppEvent::Decrement => {
-    ///                 self.count -= 1;
+    ///                 self.count.update(cx, |value| *value -= 1);
     ///             }
     ///         });
     ///     }
@@ -146,18 +138,3 @@ impl<T: Model> ModelData for T {
 }
 
 impl Model for () {}
-
-#[derive(Copy, Clone)]
-pub(crate) enum ModelOrView<'a> {
-    Model(&'a dyn ModelData),
-    View(&'a dyn ViewHandler),
-}
-
-impl<'a> ModelOrView<'a> {
-    pub fn downcast_ref<T: 'static>(self) -> Option<&'a T> {
-        match self {
-            ModelOrView::Model(m) => m.downcast_ref(),
-            ModelOrView::View(v) => v.downcast_ref(),
-        }
-    }
-}

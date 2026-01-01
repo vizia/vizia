@@ -27,9 +27,13 @@ use crate::prelude::*;
 /// # use vizia_core::prelude::*;
 /// # let mut cx = &mut Context::default();
 /// # let progress = cx.state(0.5f32);
+/// let progress_text = cx.derived({
+///     let progress = progress;
+///     move |store| format!("{:.0}%", *progress.get(store) * 100.0)
+/// });
 /// HStack::new(cx, |cx| {
 ///     ProgressBar::horizontal(cx, progress);
-///     Label::new(cx, progress.map(|v| format!("{:.0}%", v * 100.0)));
+///     Label::new(cx, progress_text);
 /// });
 /// ```
 pub struct ProgressBar;
@@ -51,7 +55,7 @@ impl ProgressBar {
     /// # let progress = cx.state(0.5f32);
     /// ProgressBar::new(cx, progress, Orientation::Horizontal);
     /// ```
-    pub fn new<L: Res<f32>>(cx: &mut Context, value: L, orientation: Orientation) -> Handle<Self> {
+    pub fn new(cx: &mut Context, value: Signal<f32>, orientation: Orientation) -> Handle<Self> {
         match orientation {
             Orientation::Horizontal => Self::horizontal(cx, value),
             Orientation::Vertical => Self::vertical(cx, value),
@@ -59,24 +63,32 @@ impl ProgressBar {
     }
 
     /// Creates a new horizontal progress bar bound to the given value.
-    pub fn horizontal<L: Res<f32>>(cx: &mut Context, value: L) -> Handle<Self> {
+    pub fn horizontal(cx: &mut Context, value: Signal<f32>) -> Handle<Self> {
         Self.build(cx, |cx| {
+            let bar_width = cx.state(Units::Percentage(0.0));
             Element::new(cx)
-                .bind(value, |handle, val| {
-                    let v = val.get(&handle);
-                    handle.width(Units::Percentage(v * 100.0));
+                .width(bar_width)
+                .bind(value, move |handle, val| {
+                    let v = *val.get(&handle);
+                    let mut event_cx = EventContext::new(handle.cx);
+                    bar_width.set(&mut event_cx, Units::Percentage(v * 100.0));
                 })
                 .class("progressbar-bar");
         })
     }
 
     /// Creates a new vertical progress bar bound to the given value.
-    pub fn vertical<L: Res<f32>>(cx: &mut Context, value: L) -> Handle<Self> {
+    pub fn vertical(cx: &mut Context, value: Signal<f32>) -> Handle<Self> {
         Self.build(cx, |cx| {
+            let bar_top = cx.state(Stretch(1.0));
+            let bar_height = cx.state(Units::Percentage(0.0));
             Element::new(cx)
-                .bind(value, |handle, val| {
-                    let v = val.get(&handle);
-                    handle.top(Stretch(1.0)).height(Units::Percentage(v * 100.0));
+                .top(bar_top)
+                .height(bar_height)
+                .bind(value, move |handle, val| {
+                    let v = *val.get(&handle);
+                    let mut event_cx = EventContext::new(handle.cx);
+                    bar_height.set(&mut event_cx, Units::Percentage(v * 100.0));
                 })
                 .class("progressbar-bar");
         })

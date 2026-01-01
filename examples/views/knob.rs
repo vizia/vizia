@@ -3,7 +3,7 @@ use helpers::*;
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
+    let (app, (title, size)) = Application::new_with_state(|cx| {
         let value = cx.state(0.2f32);
 
         ExamplePage::new(cx, move |cx| {
@@ -11,8 +11,8 @@ fn main() -> Result<(), ApplicationError> {
                 value.set(cx, val);
             });
         });
-    })
-    .title("Knob")
-    .inner_size((300, 300))
-    .run()
+        (cx.state("Knob"), cx.state((300, 300)))
+    });
+
+    app.title(title).inner_size(size).run()
 }

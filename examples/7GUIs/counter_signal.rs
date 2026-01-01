@@ -1,12 +1,12 @@
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
+    let (app, (title, size)) = Application::new_with_state(|cx| {
         Counter::new(cx);
-    })
-    .title("Counter")
-    .inner_size((400, 100))
-    .run()
+        (cx.state("Counter"), cx.state((400, 100)))
+    });
+
+    app.title(title).inner_size(size).run()
 }
 
 struct Counter {
@@ -20,7 +20,7 @@ pub enum CounterEvent {
 
 impl Counter {
     fn new(cx: &mut Context) -> Handle<'_, Self> {
-        Self { count: cx.state(0) }.build(cx, |cx| {})
+        Self { count: cx.state(0) }.build(cx, |_cx| {})
     }
 }
 
@@ -30,11 +30,13 @@ impl View for Counter {
     }
 
     fn view(self, cx: &mut Context) -> Self {
+        let align_center = cx.state(Alignment::Center);
+        let gap_50 = cx.state(Pixels(50.0));
         HStack::new(cx, move |cx| {
-            Button::new(cx, |cx| Label::new(cx, "Increment"))
+            Button::new(cx, |cx| Label::static_text(cx, "Increment"))
                 .on_press(|cx| cx.emit(CounterEvent::Increment));
 
-            Button::new(cx, |cx| Label::new(cx, "Decrement"))
+            Button::new(cx, |cx| Label::static_text(cx, "Decrement"))
                 .on_press(|cx| cx.emit(CounterEvent::Decrement));
 
             Label::new(cx, self.count);
@@ -44,8 +46,8 @@ impl View for Counter {
 
             Label::new(cx, doubled);
         })
-        .alignment(Alignment::Center)
-        .gap(Pixels(50.0));
+        .alignment(align_center)
+        .gap(gap_50);
 
         self
     }

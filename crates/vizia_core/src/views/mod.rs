@@ -18,6 +18,7 @@ mod label;
 mod list;
 mod markdown;
 mod menu;
+mod number_input;
 mod picklist;
 mod popup;
 mod progressbar;
@@ -57,6 +58,7 @@ pub use list::*;
 #[cfg(feature = "markdown")]
 pub use markdown::*;
 pub use menu::*;
+pub use number_input::*;
 pub use picklist::*;
 pub use popup::*;
 pub use progressbar::*;
@@ -87,8 +89,6 @@ pub enum Orientation {
     /// A vertical orientation.
     Vertical,
 }
-
-impl_res_simple!(Orientation);
 
 /// Describes the placement of a view relative to its parent element.
 #[derive(Debug, Clone, Copy, Data, PartialEq, Eq)]
@@ -122,5 +122,3 @@ pub enum Placement {
     /// The view should follow the cursor.
     Cursor,
 }
-
-impl_res_simple!(Placement);

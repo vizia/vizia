@@ -2,46 +2,56 @@ use crate::{icons::ICON_STAR_FILLED, prelude::*};
 
 /// A view which represents a rating as a number of filled stars.
 pub struct Rating {
-    rating: Signal<u32>,
+    value: Signal<u32>,
+    preview: Signal<u32>,
     max_rating: u32,
     on_change: Option<Box<dyn Fn(&mut EventContext, u32)>>,
 }
 
 pub(crate) enum RatingEvent {
-    SetRating(u32),
-    EmitRating,
+    SetPreview(u32),
+    ClearPreview,
+    SetValue(u32),
     Increment,
     Decrement,
 }
 
 impl Rating {
     /// Creates a new [Rating] view.
-    pub fn new<L: Res<u32>>(cx: &mut Context, max_rating: u32, value: L) -> Handle<Self> {
-        let initial = value.get(cx);
-        let rating = cx.state(initial);
+    pub fn new(cx: &mut Context, max_rating: u32, value: Signal<u32>) -> Handle<Self> {
+        // Preview is used for hover state.
+        let preview = cx.state(0u32);
 
-        Self { rating, max_rating, on_change: None }
+        let star_icon = cx.state(ICON_STAR_FILLED);
+        let true_signal = cx.state(true);
+        let numeric_one = cx.state(1);
+
+        Self { value, preview, max_rating, on_change: None }
             .build(cx, |cx| {
                 for i in 1..max_rating + 1 {
-                    Svg::new(cx, ICON_STAR_FILLED)
-                        .checkable(true)
-                        .numeric_value(1)
+                    let is_checked = cx.derived({
+                        let value = value;
+                        move |store| *value.get(store) >= i
+                    });
+                    let is_previewed = cx.derived({
+                        let preview = preview;
+                        move |store| *preview.get(store) >= i
+                    });
+                    Svg::new(cx, star_icon)
+                        .hoverable(true_signal)
+                        .checkable(true_signal)
+                        .numeric_value(numeric_one)
                         .role(Role::RadioButton)
-                        .bind(rating, move |handle, val| {
-                            let v = *val.get(&handle);
-                            handle.checked(v >= i);
-                        })
-                        .on_hover(move |ex| ex.emit(RatingEvent::SetRating(i)))
-                        .on_press(|ex| ex.emit(RatingEvent::EmitRating));
+                        .checked(is_checked)
+                        .toggle_class("foo", is_previewed)
+                        .on_hover(move |ex| ex.emit(RatingEvent::SetPreview(i)))
+                        .on_press_down(move |ex| ex.emit(RatingEvent::SetValue(i)));
                 }
             })
-            .numeric_value(rating)
-            .navigable(true)
+            .on_hover_out(|ex| ex.emit(RatingEvent::ClearPreview))
+            .numeric_value(value)
+            .navigable(true_signal)
             .role(Role::RadioGroup)
-            .bind(value, move |handle, v| {
-                let val = v.get(&handle);
-                handle.modify2(|rating, cx| rating.rating.set(cx, val));
-            })
     }
 }
 
@@ -52,22 +62,28 @@ impl View for Rating {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|rating_event, _| match rating_event {
-            RatingEvent::SetRating(val) => self.rating.set(cx, *val),
-            RatingEvent::EmitRating => {
+            RatingEvent::SetPreview(val) => self.preview.set(cx, *val),
+            RatingEvent::ClearPreview => self.preview.set(cx, 0),
+            RatingEvent::SetValue(val) => {
+                let val = (*val).min(self.max_rating);
+                self.value.set(cx, val);
                 if let Some(callback) = &self.on_change {
-                    (callback)(cx, *self.rating.get(cx))
+                    (callback)(cx, *self.value.get(cx))
                 }
             }
             RatingEvent::Increment => {
-                let current = *self.rating.get(cx);
-                self.rating.set(cx, (current + 1) % (self.max_rating + 1));
-                cx.emit(RatingEvent::EmitRating);
+                let current = *self.value.get(cx);
+                self.value.set(cx, (current + 1).min(self.max_rating));
+                if let Some(callback) = &self.on_change {
+                    (callback)(cx, *self.value.get(cx))
+                }
             }
             RatingEvent::Decrement => {
-                let current = *self.rating.get(cx);
-                let new_val = if current == 0 { self.max_rating } else { current.saturating_sub(1) };
-                self.rating.set(cx, new_val);
-                cx.emit(RatingEvent::EmitRating);
+                let current = *self.value.get(cx);
+                self.value.set(cx, current.saturating_sub(1));
+                if let Some(callback) = &self.on_change {
+                    (callback)(cx, *self.value.get(cx))
+                }
             }
         });
 

@@ -12,9 +12,13 @@ pub fn badge(cx: &mut Context) {
         DemoRegion::new(
             cx,
             |cx| {
-                Badge::new(cx, |cx| Label::new(cx, "5"));
+                Badge::new(cx, |cx| {
+                    Label::static_text(cx, "5");
+                });
             },
-            r#"Badge::new(cx, |cx| Label::new(cx, "5"));"#,
+            r#"Badge::new(cx, |cx| {
+    Label::static_text(cx, "5");
+});"#,
         );
     })
     .class("panel");

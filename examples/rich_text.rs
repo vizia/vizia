@@ -2,19 +2,25 @@ use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        Label::rich(cx, "", |cx| {
-            TextSpan::new(cx, "Hello", |_| {})
-                .pointer_events(PointerEvents::Auto)
-                .cursor(CursorIcon::Hand)
+        let text = cx.state("");
+        let pointer_auto = cx.state(PointerEvents::Auto);
+        let cursor_hand = cx.state(CursorIcon::Hand);
+        let hello = cx.state("Hello");
+        let rich = cx.state(" Rich");
+        let text_ex = cx.state(" Text!");
+        Label::rich(cx, text, |cx| {
+            TextSpan::new(cx, hello, |_| {})
+                .pointer_events(pointer_auto)
+                .cursor(cursor_hand)
                 .class("span");
-            TextSpan::new(cx, " Rich", |_| {})
-                .pointer_events(PointerEvents::Auto)
-                .cursor(CursorIcon::Hand)
+            TextSpan::new(cx, rich, |_| {})
+                .pointer_events(pointer_auto)
+                .cursor(cursor_hand)
                 .class("span");
 
-            TextSpan::new(cx, " Text!", |_| {})
-                .pointer_events(PointerEvents::Auto)
-                .cursor(CursorIcon::Hand)
+            TextSpan::new(cx, text_ex, |_| {})
+                .pointer_events(pointer_auto)
+                .cursor(cursor_hand)
                 .class("span");
         })
         .class("testy");

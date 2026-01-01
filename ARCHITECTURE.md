@@ -7,7 +7,7 @@ This document aims to explain the archtecture and structure of vizia codebase.
 Vizia is split into a number of internal sub-crates for specific purposes:
 - `vizia_baseview` - Windowing backend utilising [Baseview], used primarily for audio plugins as it allows for parented windows.
 - `vizia_core` - The main crate where most of the user-facing types and traits live.
-- `vizia_derive` - Derive macros such as `Lens` and `Data`.
+- `vizia_derive` - Derive macros such as `Data` and other helpers.
 - `vizia_id` - A utility crate for providing generational IDs.
 - `vizia_input` - Types which are specific to user input such as mouse state, keyboard modifiers, and keymaps.
 - `vizia_storage` - Storage types used by core. This includes a sparse set and a tree, as well as various iterators for tree traversal.
@@ -35,7 +35,7 @@ The `Application` struct is the entry point of a Vizia application. The `Applica
 
 ```rust
 Application::new(|cx|{
-    Label::new(cx, "Hello Vizia");
+    Label::static_text(cx, "Hello Vizia");
 }).run();
 ```
 When the `run()` method is called, a Winit window is created with an opengl context and a skia `Canvas`, and then added to the `Context`. The event loop is then started. 
@@ -64,7 +64,6 @@ The properties of a view are not stored in the tree itself but instead in separa
 ### Systems
 A series of systems are used to update the state of the application on each update cycle:
 - Event Manager - Routes events in the event queue to Models and Views and calls the view/model `event()` method.
-- Binding System - Queries model data for changes and rebuilds binding views.
 - Style System - Links entities to shared style data (from CSS) and applies any style property inheritance.
 - Image System - Loads any unloaded images and removes any unused images.
 - Animation System - Applies any animations to style properties.
@@ -76,7 +75,7 @@ A series of systems are used to update the state of the application on each upda
 The cache contains computed data from systems. For example, the `Style` may contain the desired size and position of a view, but after the layout system the `Cache` contains the computed bounds of the view which can then be used by the drawing system.
 
 ### Handle
-A `Handle` is a wrapper around an `Entity` and a mutable reference to the `Context` and is returned by the `build()` method on the `View` trait, i.e. it is returned when a view is built, e.g. `Label::new(cx, "Hello Vizia")`.
+A `Handle` is a wrapper around an `Entity` and a mutable reference to the `Context` and is returned by the `build()` method on the `View` trait, i.e. it is returned when a view is built, e.g. `Label::static_text(cx, "Hello Vizia")`.
 
 ### Modifiers
 The `Handle` implements a number of `Modifiers`, which are traits which provide methods for setting the properties of a view at built time. For example, the `StyleModifiers` trait provides methods for setting the style properties of a view such as its `background_color()`.
@@ -88,6 +87,5 @@ The `Model` trait describes application data which can be bound to views.
 An `Event` contains a message, which is a type erased piece of data, as well as some metadata describing the origin and target of the event and how it should propagate through the tree when routed by the event manager.
 
 During each cycle of the event loop, when a Winit window events is received it is translated to vizia `WindowEvent` and added to an event queue in the `Context`. At the end of each cycle a `MainEventsCleared` event is received, which is where vizia processes changes to the application.
-
 
 

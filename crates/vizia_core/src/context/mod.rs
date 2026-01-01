@@ -36,16 +36,12 @@ pub use proxy::*;
 pub use resource::*;
 
 use crate::{
-    binding::{Store, StoreId},
-    entity,
+    binding::BindingHandler,
     events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler},
     model::ModelData,
 };
 
-use crate::{
-    binding::{BindingHandler, MapId},
-    resource::StoredImage,
-};
+use crate::resource::StoredImage;
 use crate::{cache::CachedData, resource::ImageOrSvg};
 
 use crate::prelude::*;
@@ -61,15 +57,10 @@ static MARKDOWN: &str = include_str!("../../resources/themes/markdown.css");
 
 type Views = HashMap<Entity, Box<dyn ViewHandler>>;
 type Models = HashMap<Entity, HashMap<TypeId, Box<dyn ModelData>>>;
-type Stores = HashMap<Entity, HashMap<StoreId, Box<dyn Store>>>;
 type Bindings = HashMap<Entity, Box<dyn BindingHandler>>;
 
 thread_local! {
-    /// ID manager for lens map functions.
-    pub static MAP_MANAGER: RefCell<IdManager<MapId>> = RefCell::new(IdManager::new());
-    /// Store of mapping functions used for lens maps.
-    pub static MAPS: RefCell<HashMap<MapId, (Entity, Box<dyn Any>)>> = RefCell::new(HashMap::new());
-    /// The 'current' entity which is used for storing lens map mapping functions as per above.
+    /// The 'current' entity used for tracking context during binding updates.
     pub static CURRENT: RefCell<Entity> = RefCell::new(Entity::root());
 }
 
@@ -95,7 +86,6 @@ pub struct Context {
     pub(crate) current: Entity,
     pub(crate) views: Views,
     pub(crate) models: Models,
-    pub(crate) stores: Stores,
     pub(crate) bindings: Bindings,
     pub data: RecoilRoot,
     pub(crate) event_queue: VecDeque<Event>,
@@ -161,7 +151,6 @@ impl Context {
             current: Entity::root(),
             views: HashMap::default(),
             models: HashMap::default(),
-            stores: HashMap::default(),
             bindings: HashMap::default(),
             data: RecoilRoot::new(),
             style: Style::default(),
@@ -476,21 +465,6 @@ impl Context {
                 self.captured = Entity::null();
             }
 
-            // Remove any map lenses associated with the entity.
-
-            MAP_MANAGER.with_borrow_mut(|manager| {
-                MAPS.with_borrow_mut(|maps| {
-                    maps.retain(|id, (e, _)| {
-                        if e == entity {
-                            manager.destroy(*id);
-                            false
-                        } else {
-                            true
-                        }
-                    });
-                });
-            });
-
             if let Some(parent) = self.tree.get_layout_parent(*entity) {
                 self.style.needs_access_update(parent);
             }
@@ -534,7 +508,6 @@ impl Context {
             self.cache.remove(*entity);
             self.style.remove(*entity);
             self.models.remove(entity);
-            self.stores.remove(entity);
             self.views.remove(entity);
             self.text_context.text_bounds.remove(*entity);
             self.text_context.text_paragraphs.remove(*entity);
@@ -720,14 +693,21 @@ impl Context {
 
     /// Modifies the state of an existing timer with the provided `Timer` id.
     pub fn modify_timer(&mut self, timer: Timer, timer_function: impl Fn(&mut TimerState)) {
-        while let Some(next_timer_state) = self.running_timers.peek() {
-            if next_timer_state.id == timer {
-                let mut timer_state = self.running_timers.pop().unwrap();
+        if !self.running_timers.is_empty() {
+            let mut running = std::mem::take(&mut self.running_timers).into_vec();
+            let mut found = false;
 
-                (timer_function)(&mut timer_state);
+            for timer_state in &mut running {
+                if timer_state.id == timer {
+                    (timer_function)(timer_state);
+                    found = true;
+                    break;
+                }
+            }
 
-                self.running_timers.push(timer_state);
+            self.running_timers = BinaryHeap::from(running);
 
+            if found {
                 return;
             }
         }
@@ -776,7 +756,8 @@ impl Context {
             if next_timer_state.time <= now {
                 let mut timer_state = self.running_timers.pop().unwrap();
 
-                if timer_state.end_time().unwrap_or_else(|| now + Duration::from_secs(1)) >= now {
+                let should_tick = timer_state.end_time().is_none_or(|end| timer_state.time <= end);
+                if should_tick {
                     if !timer_state.ticking {
                         (timer_state.callback)(
                             &mut EventContext::new_with_current(self, timer_state.entity),
@@ -961,13 +942,23 @@ impl<'a> LocalizationContext<'a> {
     }
 
     pub(crate) fn environment(&self) -> &Environment {
+        // Environment is always at Entity::root(), so look it up directly
+        // rather than iterating through parents (which may not reach root during binding setup)
+        if let Some(models) = self.models.get(&Entity::root()) {
+            if let Some(model) = models.get(&std::any::TypeId::of::<Environment>()) {
+                if let Some(env) = model.downcast_ref::<Environment>() {
+                    return env;
+                }
+            }
+        }
+        // Fallback to parent iteration
         self.data::<Environment>().unwrap()
     }
 }
 
 /// A trait for any Context-like object that lets you access stored model data.
 ///
-/// This lets e.g Lens::get be generic over any of these types.
+/// This lets e.g. `Signal::get` be generic over any of these types.
 pub trait DataContext {
     /// Get model/view data from the context. Returns `None` if the data does not exist.
     fn data<T: 'static>(&self) -> Option<&T>;

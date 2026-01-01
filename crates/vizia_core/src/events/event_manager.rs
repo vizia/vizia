@@ -3,7 +3,7 @@ use crate::events::EventMeta;
 use crate::prelude::*;
 #[cfg(debug_assertions)]
 use crate::systems::compute_matched_rules;
-use crate::systems::{binding_system, hover_system};
+use crate::systems::hover_system;
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
 #[cfg(debug_assertions)]
 use log::debug;
@@ -160,8 +160,6 @@ impl EventManager {
                 });
             }
 
-            binding_system(cx);
-
             let mut all_observers = HashSet::new();
             // Update observers
             let store = cx.data.get_store_mut();
@@ -173,6 +171,10 @@ impl EventManager {
             }
 
             for observer in all_observers {
+                if !cx.entity_manager.is_alive(observer) {
+                    cx.bindings.remove(&observer);
+                    continue;
+                }
                 if let Some(mut binding) = cx.bindings.remove(&observer) {
                     cx.with_current(observer, |cx| {
                         binding.update(cx);
@@ -401,14 +403,6 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                         }
                     }
 
-                    if let Some(stores) = cx.stores.get(&entity) {
-                        if !stores.is_empty() {
-                            debug!("Stores for {}", entity);
-                            for (_, store) in stores.iter() {
-                                debug!("S: [{}] - Observers {:?}", store.name(), store.observers())
-                            }
-                        }
-                    }
                 }
             }
 

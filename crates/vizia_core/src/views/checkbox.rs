@@ -55,7 +55,8 @@ use crate::prelude::*;
 /// HStack::new(cx, |cx| {
 ///     Checkbox::new(cx, checked_signal)
 ///         .id("check1");
-///     Label::new(cx, "Press me")
+///     let label = cx.state("Press me");
+///     Label::new(cx, label)
 ///         .describing("check1");
 /// });
 /// ```
@@ -77,6 +78,7 @@ use crate::prelude::*;
 ///     });
 /// ```
 pub struct Checkbox {
+    value: Signal<bool>,
     on_toggle: Option<Box<dyn Fn(&mut EventContext)>>,
 }
 
@@ -94,17 +96,19 @@ impl Checkbox {
     /// Checkbox::new(cx, checked_signal);
     /// ```
     pub fn new(cx: &mut Context, checked: Signal<bool>) -> Handle<Self> {
-        Self { on_toggle: None }
+        let icon_check = cx.state(ICON_CHECK);
+        let navigable = cx.state(true);
+        Self { value: checked, on_toggle: None }
             .build(cx, move |cx| {
                 Binding::new(cx, checked, move |cx| {
                     if *checked.get(cx) {
-                        Svg::new(cx, ICON_CHECK);
+                        Svg::new(cx, icon_check);
                     }
                 })
             })
             .checked(checked)
             .role(Role::CheckBox)
-            .navigable(true)
+            .navigable(navigable)
     }
 
     /// Creates a new checkbox with custom icons for both checked and unchecked states.
@@ -123,17 +127,16 @@ impl Checkbox {
     pub fn with_icons<T>(
         cx: &mut Context,
         checked: Signal<bool>,
-        icon_default: Option<impl Res<T> + 'static + Clone>,
-        icon_checked: Option<impl Res<T> + 'static + Clone>,
+        icon_default: Option<Signal<T>>,
+        icon_checked: Option<Signal<T>>,
     ) -> Handle<Self>
     where
-        T: AsRef<[u8]> + Clone + 'static,
+        T: AsRef<[u8]> + 'static,
     {
-        Self { on_toggle: None }
+        let navigable = cx.state(true);
+        Self { value: checked, on_toggle: None }
             .build(cx, move |cx| {
                 Binding::new(cx, checked, move |cx| {
-                    let icon_default = icon_default.clone();
-                    let icon_checked = icon_checked.clone();
                     if *checked.get(cx) {
                         if let Some(icon) = icon_checked {
                             Svg::new(cx, icon);
@@ -145,7 +148,7 @@ impl Checkbox {
             })
             .checked(checked)
             .role(Role::CheckBox)
-            .navigable(true)
+            .navigable(navigable)
     }
 
     /// Creates a new checkbox in an intermediate state.
@@ -154,21 +157,30 @@ impl Checkbox {
         checked: Signal<bool>,
         intermediate: Signal<bool>,
     ) -> Handle<Self> {
-        Self { on_toggle: None }
+        let dash = cx.state("-");
+        let icon_check = cx.state(ICON_CHECK);
+        let navigable = cx.state(true);
+        let is_intermediate = cx.derived({
+            let checked = checked;
+            let intermediate = intermediate;
+            move |store| !*checked.get(store) && *intermediate.get(store)
+        });
+        Self { value: checked, on_toggle: None }
             .build(cx, |cx| {
                 Binding::new(cx, checked, move |cx| {
                     Binding::new(cx, intermediate, move |cx| {
                         if *checked.get(cx) {
-                            Svg::new(cx, ICON_CHECK);
+                            Svg::new(cx, icon_check);
                         } else if *intermediate.get(cx) {
-                            Label::new(cx, "-");
+                            Label::new(cx, dash);
                         }
                     })
                 })
             })
             .checked(checked)
+            .toggle_class("intermediate", is_intermediate)
             .role(Role::CheckBox)
-            .navigable(true)
+            .navigable(navigable)
     }
 }
 
@@ -193,6 +205,19 @@ impl Handle<'_, Checkbox> {
         F: 'static + Fn(&mut EventContext),
     {
         self.modify(|checkbox| checkbox.on_toggle = Some(Box::new(callback)))
+    }
+
+    /// Enables two-way binding: toggling the checkbox automatically updates the bound signal.
+    ///
+    /// This is a convenience method equivalent to:
+    /// ```ignore
+    /// .on_toggle(move |cx| signal.update(cx, |v| *v = !*v))
+    /// ```
+    pub fn two_way(self) -> Self {
+        self.modify(|checkbox| {
+            let signal = checkbox.value;
+            checkbox.on_toggle = Some(Box::new(move |cx| signal.update(cx, |v| *v = !*v)));
+        })
     }
 }
 

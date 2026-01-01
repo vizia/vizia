@@ -11,24 +11,56 @@ const STYLE: &str = r#"
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to load stylesheet");
+        let col0 = cx.state(0);
+        let col1 = cx.state(1);
+        let row0 = cx.state(0);
+        let row1 = cx.state(1);
+        let red = cx.state(Color::red());
+        let blue = cx.state(Color::blue());
+        let green = cx.state(Color::green());
+        let yellow = cx.state(Color::yellow());
 
         Grid::new(
             cx,
             vec![Pixels(200.0), Pixels(200.0)],
             vec![Pixels(150.0), Pixels(100.0)],
             |cx| {
-                Element::new(cx).column_start(0).row_start(0).background_color(Color::red());
-                Element::new(cx).column_start(1).row_start(0).background_color(Color::blue());
-                Element::new(cx).column_start(0).row_start(1).background_color(Color::green());
-                Element::new(cx).column_start(1).row_start(1).background_color(Color::yellow());
+                Element::new(cx)
+                    .column_start(col0)
+                    .row_start(row0)
+                    .background_color(red);
+                Element::new(cx)
+                    .column_start(col1)
+                    .row_start(row0)
+                    .background_color(blue);
+                Element::new(cx)
+                    .column_start(col0)
+                    .row_start(row1)
+                    .background_color(green);
+                Element::new(cx)
+                    .column_start(col1)
+                    .row_start(row1)
+                    .background_color(yellow);
             },
         );
 
         VStack::new(cx, |cx| {
-            Element::new(cx).column_start(0).row_start(0).background_color(Color::red());
-            Element::new(cx).column_start(1).row_start(0).background_color(Color::blue());
-            Element::new(cx).column_start(0).row_start(1).background_color(Color::green());
-            Element::new(cx).column_start(1).row_start(1).background_color(Color::yellow());
+            Element::new(cx)
+                .column_start(col0)
+                .row_start(row0)
+                .background_color(red);
+            Element::new(cx)
+                .column_start(col1)
+                .row_start(row0)
+                .background_color(blue);
+            Element::new(cx)
+                .column_start(col0)
+                .row_start(row1)
+                .background_color(green);
+            Element::new(cx)
+                .column_start(col1)
+                .row_start(row1)
+                .background_color(yellow);
         })
         .class("grid-test");
     })

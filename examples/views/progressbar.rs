@@ -1,51 +1,47 @@
 mod helpers;
 use helpers::*;
+use std::cell::Cell;
 use vizia::prelude::*;
 
-#[derive(Lens)]
-pub struct AppData {
-    progress: f32,
-    timer: Timer,
-}
-
-#[derive(Debug)]
-pub enum AppEvent {
-    Tick,
-}
-
-impl Model for AppData {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::Tick => {
-                self.progress = cx
-                    .query_timer(self.timer, |timer_state| timer_state.progress().unwrap())
-                    .unwrap();
-                if self.progress >= 1.0 {
-                    cx.start_timer(self.timer);
-                }
-            }
-        });
-    }
-}
-
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx: &mut Context| {
-        let timer =
-            cx.add_timer(Duration::from_millis(100), Some(Duration::from_secs(5)), |cx, action| {
-                if matches!(action, TimerAction::Tick(_)) {
-                    cx.emit(AppEvent::Tick)
-                }
-            });
+    let (app, (title, size)) = Application::new_with_state(|cx: &mut Context| {
+        let progress = cx.state(0.0f32);
+        let bar_width = cx.state(Pixels(300.0));
+        let interval = Duration::from_millis(100);
+        let duration = Duration::from_secs(5);
 
+        // Use Cell to allow the callback to access the timer handle
+        let timer_handle: std::rc::Rc<Cell<Option<Timer>>> = std::rc::Rc::new(Cell::new(None));
+        let timer_handle_clone = timer_handle.clone();
+
+        let timer = cx.add_timer(
+            interval,
+            Some(duration),
+            move |cx, action| match action {
+                TimerAction::Tick(delta) => {
+                    let step = (interval + delta).as_secs_f32() / duration.as_secs_f32();
+                    progress.update(cx, |value| {
+                        *value = (*value + step).clamp(0.0, 1.0);
+                    });
+                }
+                TimerAction::Stop => {
+                    progress.set(cx, 0.0);
+                    if let Some(t) = timer_handle_clone.get() {
+                        cx.start_timer(t);
+                    }
+                }
+                _ => {}
+            },
+        );
+
+        timer_handle.set(Some(timer));
         cx.start_timer(timer);
 
-        AppData { progress: 0.0, timer }.build(cx);
-
-        ExamplePage::vertical(cx, |cx| {
-            ProgressBar::horizontal(cx, AppData::progress).width(Pixels(300.0));
+        ExamplePage::vertical(cx, move |cx| {
+            ProgressBar::horizontal(cx, progress).width(bar_width);
         });
-    })
-    .title("ProgressBar")
-    .inner_size((750, 550))
-    .run()
+        (cx.state("ProgressBar"), cx.state((750, 550)))
+    });
+
+    app.title(title).inner_size(size).run()
 }

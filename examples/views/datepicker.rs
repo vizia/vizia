@@ -1,36 +1,17 @@
 mod helpers;
-use chrono::{NaiveDate, Utc};
+use chrono::Utc;
 use helpers::*;
 use vizia::prelude::*;
 
-#[derive(Clone, Lens)]
-struct AppState {
-    date: NaiveDate,
-}
-
-pub enum AppEvent {
-    SetDate(NaiveDate),
-}
-
-impl Model for AppState {
-    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::SetDate(date) => {
-                self.date = *date;
-            }
-        });
-    }
-}
-
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
-        AppState { date: Utc::now().date_naive() }.build(cx);
+    let (app, title) = Application::new_with_state(|cx| {
+        let date = cx.state(Utc::now().date_naive());
 
         ExamplePage::new(cx, |cx| {
-            Datepicker::new(cx, AppState::date)
-                .on_select(|cx, date| cx.emit(AppEvent::SetDate(date)));
+            Datepicker::new(cx, date).on_select(move |cx, selected| date.set(cx, selected));
         });
-    })
-    .title("Datepicker")
-    .run()
+        cx.state("Datepicker")
+    });
+
+    app.title(title).run()
 }

@@ -29,15 +29,18 @@ impl View for Divider {
 }
 
 impl Handle<'_, Divider> {
-    /// Set the orientation of the divider. Accepts a value or a lens to an [Orientation].
-    pub fn orientation(self, orientation: impl Res<Orientation>) -> Self {
-        self.bind(orientation, move |handle, orientation| {
-            let orientation = orientation.get(&handle);
-            if orientation == Orientation::Horizontal {
-                handle.toggle_class("horizontal", true).toggle_class("vertical", false);
-            } else {
-                handle.toggle_class("horizontal", false).toggle_class("vertical", true);
-            }
-        })
+    /// Set the orientation of the divider. Accepts a signal to an [Orientation].
+    pub fn orientation(mut self, orientation: Signal<Orientation>) -> Self {
+        let is_horizontal = self.context().derived({
+            let orientation = orientation;
+            move |store| *orientation.get(store) == Orientation::Horizontal
+        });
+        let is_vertical = self.context().derived({
+            let orientation = orientation;
+            move |store| *orientation.get(store) == Orientation::Vertical
+        });
+
+        self.toggle_class("horizontal", is_horizontal)
+            .toggle_class("vertical", is_vertical)
     }
 }

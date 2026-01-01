@@ -1,13 +1,8 @@
 use vizia::icons::ICON_CODE;
 use vizia::prelude::*;
 
-#[derive(Lens)]
 pub struct DemoRegion {
-    open: bool,
-}
-
-pub enum DemoRegionEvent {
-    Toggle,
+    open: Signal<bool>,
 }
 
 impl DemoRegion {
@@ -17,7 +12,9 @@ impl DemoRegion {
         code: &'static str,
     ) -> Handle<'a, Self> {
         let code = code.to_string();
-        Self { open: false }
+        let open = cx.state(false);
+        let auto = cx.state(Auto);
+        Self { open }
             .build(cx, move |cx| {
                 HStack::new(cx, |cx| {
                     (content)(cx);
@@ -25,11 +22,11 @@ impl DemoRegion {
                 .class("region");
                 Divider::horizontal(cx);
                 HStack::new(cx, |cx| {
-                    ToggleButton::new(cx, DemoRegion::open, |cx| Svg::new(cx, ICON_CODE))
-                        .on_press(|ex| ex.emit(DemoRegionEvent::Toggle))
+                    ToggleButton::new(cx, open, |cx| Svg::new(cx, ICON_CODE))
+                        .on_press(move |ex| open.update(ex, |state| *state = !*state))
                         .tooltip(|cx| {
                             Tooltip::new(cx, |cx| {
-                                Label::new(cx, "Toggle Code");
+                                Label::static_text(cx, "Toggle Code");
                             })
                         });
                 })
@@ -37,15 +34,16 @@ impl DemoRegion {
                 // Element::new(cx).class("divider");
                 HStack::new(cx, move |cx| {
                     ScrollView::new(cx, move |cx| {
-                        Label::new(cx, code).class("code");
+                        let code_signal = cx.state(code);
+                        Label::new(cx, code_signal).class("code");
                     })
-                    .height(Auto);
+                    .height(auto);
                 })
                 .class("code")
-                .height(Auto)
-                .display(DemoRegion::open);
+                .height(auto)
+                .display(open);
             })
-            .toggle_class("open", DemoRegion::open)
+            .toggle_class("open", open)
     }
 }
 
@@ -54,9 +52,5 @@ impl View for DemoRegion {
         Some("demo-region")
     }
 
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-        event.map(|e, _| match e {
-            DemoRegionEvent::Toggle => self.open ^= true,
-        })
-    }
+    fn event(&mut self, _cx: &mut EventContext, _event: &mut Event) {}
 }

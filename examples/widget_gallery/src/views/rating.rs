@@ -2,25 +2,8 @@ use vizia::prelude::*;
 
 use crate::DemoRegion;
 
-#[derive(Clone, Lens)]
-struct RatingData {
-    rating: u32,
-}
-
-impl Model for RatingData {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            RatingEvent::SetRating(val) => self.rating = *val,
-        })
-    }
-}
-
-enum RatingEvent {
-    SetRating(u32),
-}
-
 pub fn rating(cx: &mut Context) {
-    RatingData { rating: 3 }.build(cx);
+    let rating_signal = cx.state(3u32);
 
     VStack::new(cx, |cx| {
         Markdown::new(cx, "# Rating");
@@ -31,12 +14,15 @@ pub fn rating(cx: &mut Context) {
 
         DemoRegion::new(
             cx,
-            |cx| {
-                Rating::new(cx, 5, RatingData::rating)
-                    .on_change(|ex, rating| ex.emit(RatingEvent::SetRating(rating)));
+            move |cx| {
+                Rating::new(cx, 5, rating_signal).on_change(move |cx, value| {
+                    rating_signal.set(cx, value);
+                });
             },
-            r#"Rating::new(cx, 5, RatingData::rating)
-    .on_change(|ex, rating| ex.emit(RatingEvent::SetRating(rating)));"#,
+            r#"let rating_signal = cx.state(3u32);
+Rating::new(cx, 5, rating_signal).on_change(move |cx, value| {
+    rating_signal.set(cx, value);
+});"#,
         );
     })
     .class("panel");

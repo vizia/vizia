@@ -10,55 +10,89 @@ impl App for MapDemo {
         Self { number: cx.state(5) }
     }
 
-    fn on_build(self, cx: &mut Context) -> Self {
+    fn view(self, cx: &mut Context) -> Self {
+        let font_24 = cx.state(24.0);
+        let font_18 = cx.state(18.0);
+        let weight_bold = cx.state(FontWeightKeyword::Bold);
+        let gap_10 = cx.state(Pixels(10.0));
+        let gap_15 = cx.state(Pixels(15.0));
+        let align_center = cx.state(Alignment::Center);
+
         VStack::new(cx, |cx| {
-            Label::new(cx, "Signal Map Demo").font_size(24.0).font_weight(FontWeightKeyword::Bold);
+            Label::static_text(cx, "Signal Map Demo")
+                .font_size(font_24)
+                .font_weight(weight_bold);
 
             // Original value
-            Label::new(cx, self.number.map(|n| format!("Original: {}", n))).font_size(18.0);
+            let original = cx.derived({
+                let number = self.number;
+                move |store| format!("Original: {}", number.get(store))
+            });
+            Label::new(cx, original).font_size(font_18);
 
             // Squared value using map
-            Label::new(cx, self.number.map(|n| format!("Squared: {}", n * n))).font_size(18.0);
+            let squared = cx.derived({
+                let number = self.number;
+                move |store| {
+                    let n = number.get(store);
+                    format!("Squared: {}", n * n)
+                }
+            });
+            Label::new(cx, squared).font_size(font_18);
 
             // Even/odd using map
-            Label::new(
-                cx,
-                self.number.map(|n| {
+            let parity = cx.derived({
+                let number = self.number;
+                move |store| {
+                    let n = number.get(store);
                     if n % 2 == 0 {
-                        format!("{} is even", n)
+                        format!("{n} is even")
                     } else {
-                        format!("{} is odd", n)
+                        format!("{n} is odd")
                     }
-                }),
-            )
-            .font_size(18.0);
+                }
+            });
+            Label::new(cx, parity).font_size(font_18);
 
             // Double using map
-            Label::new(cx, self.number.map(|n| format!("Double: {}", n * 2))).font_size(18.0);
+            let doubled = cx.derived({
+                let number = self.number;
+                move |store| format!("Double: {}", number.get(store) * 2)
+            });
+            Label::new(cx, doubled).font_size(font_18);
 
             // Controls
             HStack::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "Decrement")).on_press(move |cx| {
+                Button::new(cx, |cx| Label::static_text(cx, "Decrement")).on_press(move |cx| {
                     self.number.update(cx, |n| *n -= 1);
                 });
 
-                Button::new(cx, |cx| Label::new(cx, "Increment")).on_press(move |cx| {
+                Button::new(cx, |cx| Label::static_text(cx, "Increment")).on_press(move |cx| {
                     self.number.update(cx, |n| *n += 1);
                 });
 
-                Button::new(cx, |cx| Label::new(cx, "Reset to 5")).on_press(move |cx| {
+                Button::new(cx, |cx| Label::static_text(cx, "Reset to 5")).on_press(move |cx| {
                     self.number.set(cx, 5);
                 });
             })
-            .gap(Pixels(10.0));
+            .gap(gap_10);
         })
-        .alignment(Alignment::Center)
-        .gap(Pixels(15.0));
+        .alignment(align_center)
+        .gap(gap_15);
 
         self
     }
 }
 
 fn main() -> Result<(), ApplicationError> {
-    MapDemo::build().title("Signal Map Demo").inner_size((400, 350)).run()
+    let (app, (title, size)) = Application::new_with_state(|cx| {
+        let title = cx.state("Signal Map Demo".to_string());
+        let size = cx.state((400, 350));
+
+        MapDemo::new(cx).view(cx);
+
+        (title, size)
+    });
+
+    app.title(title).inner_size(size).run()
 }

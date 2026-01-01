@@ -3,71 +3,58 @@ use helpers::*;
 use vizia::icons::ICON_SEARCH;
 use vizia::prelude::*;
 
-#[derive(Lens)]
-pub struct AppData {
-    editable_text: Signal<String>,
-    multiline_text: Signal<String>,
-    non_editable_text: Signal<String>,
-    non_editable_multiline_text: Signal<String>,
-}
-
-impl Model for AppData {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::SetEditableText(text) => self.editable_text.set(cx, text.clone()),
-            AppEvent::SetMultilineText(text) => self.multiline_text.set(cx, text.clone()),
-        });
-    }
-}
-
-pub enum AppEvent {
-    SetEditableText(String),
-    SetMultilineText(String),
-}
-
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
+    let (app, title) = Application::new_with_state(|cx| {
         let editable_text = cx.state("Editable text".to_string());
         let multiline_text =
             cx.state("This is some text which is editable and spans multiple lines".to_string());
         let non_editable_text = cx.state("This text can be selected but not edited".to_string());
         let non_editable_multiline_text = cx
             .state("This text can be selected but not edited and spans multiple lines".to_string());
-
-        AppData { editable_text, multiline_text, non_editable_text, non_editable_multiline_text }
-            .build(cx);
+        let width_300 = cx.state(Pixels(300.0));
+        let stretch_one = cx.state(Stretch(1.0));
+        let auto = cx.state(Auto);
+        let type_placeholder = cx.state("Type something...");
+        let search_placeholder = cx.state("Search");
+        let icon_search = cx.state(ICON_SEARCH);
+        let gray = cx.state(Color::gray());
+        let position_absolute = cx.state(PositionType::Absolute);
+        let read_only = cx.state(true);
 
         ExamplePage::vertical(cx, |cx| {
             Textbox::new(cx, editable_text)
-                .width(Pixels(300.0))
-                .placeholder("Type something...")
-                .on_edit(|cx, text| cx.emit(AppEvent::SetEditableText(text)));
+                .width(width_300)
+                .placeholder(type_placeholder)
+                .on_edit(move |cx, text| editable_text.set(cx, text));
 
             HStack::new(cx, |cx| {
                 Textbox::new(cx, editable_text)
                     .class("icon-before")
-                    .width(Stretch(1.0))
-                    .placeholder("Search")
-                    .on_edit(|cx, text| cx.emit(AppEvent::SetEditableText(text)));
-                Svg::new(cx, ICON_SEARCH)
-                    .color(Color::gray())
-                    .position_type(PositionType::Absolute)
-                    .top(Stretch(1.0))
-                    .bottom(Stretch(1.0));
+                    .width(stretch_one)
+                    .placeholder(search_placeholder)
+                    .on_edit(move |cx, text| editable_text.set(cx, text));
+                Svg::new(cx, icon_search)
+                    .color(gray)
+                    .position_type(position_absolute)
+                    .top(stretch_one)
+                    .bottom(stretch_one);
             })
-            .height(Auto)
-            .width(Pixels(300.0));
+            .height(auto)
+            .width(width_300);
 
             Textbox::new_multiline(cx, multiline_text, true)
-                .width(Pixels(300.0))
-                .on_edit(|cx, text| cx.emit(AppEvent::SetMultilineText(text)));
+                .width(width_300)
+                .on_edit(move |cx, text| multiline_text.set(cx, text));
 
-            Textbox::new(cx, non_editable_text).width(Auto).read_only(true);
+            Textbox::new(cx, non_editable_text)
+                .width(auto)
+                .read_only(read_only);
             Textbox::new_multiline(cx, non_editable_multiline_text, true)
-                .width(Pixels(300.0))
-                .read_only(true);
+                .width(width_300)
+                .read_only(read_only);
         });
-    })
-    .title("Textbox")
-    .run()
+        cx.state("Textbox")
+    });
+
+    app.title(title).run()
 }

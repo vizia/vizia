@@ -7,7 +7,8 @@
 //! # use vizia_core::prelude::*;
 //! # use vizia_winit::application::Application;
 //! Application::new(|cx|{
-//!     Label::new(cx, "Hello World");
+//!     let text = cx.state("Hello World");
+//!     Label::new(cx, text);
 //! })
 //! .run();
 //! ```
@@ -15,7 +16,7 @@
 use crate::accessibility::IntoNode;
 use crate::prelude::*;
 use crate::systems::get_access_node;
-use std::any::{Any, TypeId};
+use std::any::Any;
 mod handle;
 pub use handle::Handle;
 use hashbrown::HashMap;
@@ -103,8 +104,10 @@ pub trait View: 'static + Sized {
     /// impl CustomView {
     ///     pub fn new(cx: &mut Context) -> Handle<Self> {
     ///         Self{}.build(cx, |cx|{
-    ///             Label::new(cx, "Hello");
-    ///             Label::new(cx, "World");
+    ///             let hello = cx.state("Hello");
+    ///             let world = cx.state("World");
+    ///             Label::new(cx, hello);
+    ///             Label::new(cx, world);
     ///         })
     ///     }
     /// }
@@ -151,9 +154,8 @@ pub trait View: 'static + Sized {
         }
 
         cx.models.insert(id, HashMap::default());
-        cx.stores.insert(id, HashMap::default());
 
-        let mut handle = Handle { current: id, entity: id, p: Default::default(), cx };
+        let handle = Handle { current: id, entity: id, p: Default::default(), cx };
 
         handle.cx.with_current(handle.entity, content);
 
@@ -164,7 +166,7 @@ pub trait View: 'static + Sized {
         handle
     }
 
-    fn view(self, cx: &mut Context) -> Self {
+    fn view(self, _cx: &mut Context) -> Self {
         self
     }
 
@@ -309,9 +311,5 @@ where
 
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
-    }
-
-    fn id(&self) -> std::any::TypeId {
-        TypeId::of::<T>()
     }
 }

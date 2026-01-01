@@ -2,39 +2,13 @@ use vizia::prelude::*;
 
 use crate::DemoRegion;
 
-#[derive(Lens)]
-struct PicklistData {
-    options: Vec<&'static str>,
-    selected_option_1: usize,
-    selected_option_2: usize,
-}
-
-pub enum PicklistEvent {
-    SetOption1(usize),
-    SetOption2(usize),
-}
-
-impl Model for PicklistData {
-    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
-        event.map(|picklist_event, _| match picklist_event {
-            PicklistEvent::SetOption1(index) => {
-                self.selected_option_1 = *index;
-            }
-
-            PicklistEvent::SetOption2(index) => {
-                self.selected_option_2 = *index;
-            }
-        });
-    }
-}
-
 pub fn picklist(cx: &mut Context) {
-    PicklistData {
-        options: vec!["Red", "Green", "Blue", "Yellow", "Cyan", "Magenta"],
-        selected_option_1: 0,
-        selected_option_2: 200,
-    }
-    .build(cx);
+    let options = cx.state(vec!["Red", "Green", "Blue", "Yellow", "Cyan", "Magenta"]);
+    let selected_option_1 = cx.state(0usize);
+    let selected_option_2 = cx.state(200usize);
+    let width_150 = cx.state(Pixels(150.0));
+    let gap_2 = cx.state(Pixels(2.0));
+    let auto = cx.state(Auto);
 
     VStack::new(cx, |cx| {
         Markdown::new(cx, "# Picklist
@@ -49,17 +23,20 @@ A view which allows the user to select an option from a list.
             cx,
             |cx| {
                 VStack::new(cx, |cx| {
-                    Label::new(cx, "Color:").class("field-label");
-                    PickList::new(cx, PicklistData::options, PicklistData::selected_option_1, true)
-                        .on_select(|cx, index| cx.emit(PicklistEvent::SetOption1(index)))
-                        .width(Pixels(150.0));
+                    Label::static_text(cx, "Color:").class("field-label");
+                    PickList::new(cx, options, selected_option_1, true)
+                        .on_select(move |cx, index| selected_option_1.set(cx, index))
+                        .width(width_150);
                 })
-                .gap(Pixels(2.0))
-                .size(Auto);
+                .gap(gap_2)
+                .size(auto);
             },
-            r#"PickList::new(cx, PicklistData::options, PicklistData::selected_option, true)
-    .on_select(|cx, index| cx.emit(PicklistEvent::SetOption(index)))
-    .width(Pixels(140.0));"#,
+r#"let options = cx.state(vec!["Red", "Green", "Blue", "Yellow", "Cyan", "Magenta"]);
+let selected_option = cx.state(0usize);
+let width_150 = cx.state(Pixels(150.0));
+PickList::new(cx, options, selected_option, true)
+    .on_select(|cx, index| selected_option.set(cx, index))
+    .width(width_150);"#,
         );
 
         Markdown::new(cx, "### Placeholder
@@ -70,18 +47,24 @@ The placeholder text prompts a user to select an option from the picker menu whe
             cx,
             |cx| {
                 VStack::new(cx, |cx| {
-                    Label::new(cx, "Color:").class("field-label");
-                    PickList::new(cx, PicklistData::options, PicklistData::selected_option_2, true)
-                        .placeholder(String::from("Select a color..."))
-                        .on_select(|cx, index| cx.emit(PicklistEvent::SetOption2(index)))
-                        .width(Pixels(150.0));
+                    Label::static_text(cx, "Color:").class("field-label");
+                    let placeholder = cx.state("Select a color...");
+                    PickList::new(cx, options, selected_option_2, true)
+                        .placeholder(placeholder)
+                        .on_select(move |cx, index| selected_option_2.set(cx, index))
+                        .width(width_150);
                 })
-                .gap(Pixels(2.0))
-                .size(Auto);
+                .gap(gap_2)
+                .size(auto);
             },
-            r#"PickList::new(cx, PicklistData::options, PicklistData::selected_option, true)
-    .on_select(|cx, index| cx.emit(PicklistEvent::SetOption(index)))
-    .width(Pixels(140.0));"#,
+r#"let options = cx.state(vec!["Red", "Green", "Blue", "Yellow", "Cyan", "Magenta"]);
+let selected_option = cx.state(200usize);
+let placeholder = cx.state("Select a color...");
+let width_150 = cx.state(Pixels(150.0));
+PickList::new(cx, options, selected_option, true)
+    .placeholder(placeholder)
+    .on_select(|cx, index| selected_option.set(cx, index))
+    .width(width_150);"#,
         );
 
         Markdown::new(cx, "## Keyboard interactions");

@@ -63,7 +63,7 @@ pub async fn download(url: String, size: Size) -> Result<Bytes, reqwest::Error> 
 
 pub const LIMIT: usize = 99;
 
-#[derive(Data, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize)]
 pub struct Id(pub u32);
 
 #[derive(Debug, Clone, Copy)]

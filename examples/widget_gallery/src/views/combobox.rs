@@ -2,36 +2,13 @@ use vizia::prelude::*;
 
 use crate::components::DemoRegion;
 
-#[derive(Clone, Lens)]
-struct ComboBoxState {
-    options: Vec<&'static str>,
-    selected_option: usize,
-}
-
-pub enum ComboBoxEvent {
-    SetOption(usize),
-}
-
-impl Model for ComboBoxState {
-    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            ComboBoxEvent::SetOption(index) => {
-                self.selected_option = *index;
-            }
-        });
-    }
-}
-
 pub fn combobox(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        ComboBoxState {
-            options: vec![
-                "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
-            ],
-
-            selected_option: 0,
-        }
-        .build(cx);
+        let options = cx.state(vec![
+            "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+        ]);
+        let selected_option = cx.state(0usize);
+        let width_100 = cx.state(Pixels(100.0));
 
         Markdown::new(cx, "# Combobox");
 
@@ -42,13 +19,15 @@ pub fn combobox(cx: &mut Context) {
         DemoRegion::new(
             cx,
             |cx| {
-                ComboBox::new(cx, ComboBoxState::options, ComboBoxState::selected_option)
-                    .on_select(|cx, index| cx.emit(ComboBoxEvent::SetOption(index)))
-                    .width(Pixels(100.0));
+                ComboBox::new(cx, options, selected_option).width(width_100);
             },
-            r#"ComboBox::new(cx, ComboBoxState::options, ComboBoxState::selected_option)
-    .on_select(|cx, index| cx.emit(ComboBoxEvent::SetOption(index)))
-    .width(Pixels(100.0));"#,
+            r#"let options = cx.state(vec![
+    "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+]);
+let selected_option = cx.state(0usize);
+let width_100 = cx.state(Pixels(100.0));
+ComboBox::new(cx, options, selected_option)
+    .width(width_100);"#,
         );
     })
     .class("panel");

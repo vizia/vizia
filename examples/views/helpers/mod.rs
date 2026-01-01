@@ -14,146 +14,126 @@ pub const CENTER_LAYOUT: &str = r#"
     }
 "#;
 
-#[derive(Lens)]
-pub struct ControlsData {
-    pub disabled: bool,
-    pub theme_options: Vec<&'static str>,
-    pub selected_theme: usize,
+pub struct ExamplePage {
+    theme_options: Signal<Vec<&'static str>>,
+    selected_theme: Signal<usize>,
 }
-
-impl Default for ControlsData {
-    fn default() -> Self {
-        Self { disabled: false, theme_options: vec!["System", "Dark", "Light"], selected_theme: 0 }
-    }
-}
-
-pub enum ControlsEvent {
-    ToggleDisabled,
-    SetThemeMode(usize),
-}
-
-impl Model for ControlsData {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            ControlsEvent::ToggleDisabled => {
-                self.disabled ^= true;
-            }
-            ControlsEvent::SetThemeMode(theme_mode) => {
-                self.selected_theme = *theme_mode;
-                cx.emit(EnvironmentEvent::SetThemeMode(match theme_mode {
-                    0 /* system */ => AppTheme::System,
-                    1 /* Dark */ => AppTheme::BuiltIn(ThemeMode::DarkMode),
-                    2 /* Light */ => AppTheme::BuiltIn(ThemeMode::LightMode),
-                    _ => unreachable!(),
-                }));
-            }
-        });
-    }
-}
-
-pub struct ExamplePage;
 
 impl ExamplePage {
     pub fn vertical(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<'_, Self> {
-        //setup_logging().expect("Failed to init logging");
-
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
 
-        Self.build(cx, |cx| {
-            ControlsData::default().build(cx);
-            cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System)); // set system theme
+        let disabled = cx.state(false);
+        let theme_options = cx.state(vec!["System", "Dark", "Light"]);
+        let selected_theme = cx.state(0usize);
+        let align_left = cx.state(Alignment::Left);
+        let align_right = cx.state(Alignment::Right);
+        let stretch_one = cx.state(Stretch(1.0));
+        let auto = cx.state(Auto);
+        let gap_5 = cx.state(Pixels(5.0));
+        let gap_20 = cx.state(Pixels(20.0));
+        let padding_10 = cx.state(Pixels(10.0));
+        let picklist_width = cx.state(Pixels(100.0));
 
-            HStack::new(cx, |cx| {
+        cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System));
+
+        Self { theme_options, selected_theme }.build(cx, move |cx| {
+            HStack::new(cx, move |cx| {
                 HStack::new(cx, |cx| {
-                    Switch::new(cx, ControlsData::disabled)
-                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
-                    // .tooltip(|cx| {
-                    //     Tooltip::new(cx, |cx| {
-                    //         Label::new(cx, "Toggle disabled");
-                    //     })
-                    // });
-                    Label::new(cx, "Toggle Disabled");
+                    Switch::new(cx, disabled).two_way();
+                    Label::static_text(cx, "Toggle Disabled");
                 })
-                .alignment(Alignment::Left)
-                .horizontal_gap(Pixels(5.0))
-                .top(Stretch(1.0))
-                .bottom(Stretch(1.0))
-                .size(Auto);
+                .alignment(align_left)
+                .horizontal_gap(gap_5)
+                .top(stretch_one)
+                .bottom(stretch_one)
+                .size(auto);
 
-                // theme_selection_dropdown(cx);
+                PickList::new(cx, theme_options, selected_theme, true)
+                    .on_select(move |cx, index| {
+                        selected_theme.set(cx, index);
+                        cx.emit(EnvironmentEvent::SetThemeMode(match index {
+                            0 => AppTheme::System,
+                            1 => AppTheme::BuiltIn(ThemeMode::DarkMode),
+                            2 => AppTheme::BuiltIn(ThemeMode::LightMode),
+                            _ => AppTheme::System,
+                        }));
+                    })
+                    .width(picklist_width);
             })
-            .height(Auto)
-            .width(Stretch(1.0))
-            .padding(Pixels(10.0))
-            .alignment(Alignment::Right)
-            .horizontal_gap(Pixels(20.0));
+            .height(auto)
+            .width(stretch_one)
+            .padding(padding_10)
+            .alignment(align_right)
+            .horizontal_gap(gap_20);
 
             VStack::new(cx, |cx| {
                 (content)(cx);
             })
-            .disabled(ControlsData::disabled)
+            .disabled(disabled)
             .class("container");
         })
     }
 
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<'_, Self> {
-        //setup_logging().expect("Failed to init logging");
-
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
 
-        Self.build(cx, |cx| {
-            ControlsData::default().build(cx);
-            cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System)); // set system theme
+        let disabled = cx.state(false);
+        let theme_options = cx.state(vec!["System", "Dark", "Light"]);
+        let selected_theme = cx.state(0usize);
+        let align_center = cx.state(Alignment::Center);
+        let align_right = cx.state(Alignment::Right);
+        let stretch_one = cx.state(Stretch(1.0));
+        let auto = cx.state(Auto);
+        let gap_5 = cx.state(Pixels(5.0));
+        let gap_20 = cx.state(Pixels(20.0));
+        let padding_10 = cx.state(Pixels(10.0));
+        let picklist_width = cx.state(Pixels(100.0));
+
+        cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System));
+
+        Self { theme_options, selected_theme }.build(cx, move |cx| {
+            HStack::new(cx, move |cx| {
+                HStack::new(cx, |cx| {
+                    Switch::new(cx, disabled).two_way();
+                    Label::static_text(cx, "Toggle Disabled");
+                })
+                .alignment(align_center)
+                .horizontal_gap(gap_5)
+                .top(stretch_one)
+                .bottom(stretch_one)
+                .size(auto);
+
+                PickList::new(cx, theme_options, selected_theme, true)
+                    .on_select(move |cx, index| {
+                        selected_theme.set(cx, index);
+                        cx.emit(EnvironmentEvent::SetThemeMode(match index {
+                            0 => AppTheme::System,
+                            1 => AppTheme::BuiltIn(ThemeMode::DarkMode),
+                            2 => AppTheme::BuiltIn(ThemeMode::LightMode),
+                            _ => AppTheme::System,
+                        }));
+                    })
+                    .width(picklist_width);
+            })
+            .height(auto)
+            .width(stretch_one)
+            .padding(padding_10)
+            .alignment(align_right)
+            .horizontal_gap(gap_20);
 
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
-                    Switch::new(cx, ControlsData::disabled)
-                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
-                    // .tooltip(|cx| {
-                    //     Tooltip::new(cx, |cx| {
-                    //         Label::new(cx, "Toggle disabled");
-                    //     })
-                    // });
-                    Label::new(cx, "Toggle Disabled");
-                })
-                .alignment(Alignment::Center)
-                .horizontal_gap(Pixels(5.0))
-                .top(Stretch(1.0))
-                .bottom(Stretch(1.0))
-                .size(Auto);
-
-                theme_selection_dropdown(cx);
-            })
-            .height(Auto)
-            .width(Stretch(1.0))
-            .padding(Pixels(10.0))
-            .alignment(Alignment::Right)
-            .horizontal_gap(Pixels(20.0));
-
-            HStack::new(cx, |cx| {
-                let _e = HStack::new(cx, |cx| {
                     (content)(cx);
                 })
-                .disabled(ControlsData::disabled)
-                .class("container")
-                .entity();
+                .disabled(disabled)
+                .class("container");
             });
         })
     }
 }
 
 impl View for ExamplePage {}
-
-fn theme_selection_dropdown(cx: &mut Context) {
-    PickList::new(cx, ControlsData::theme_options, ControlsData::selected_theme, true)
-        .on_select(|cx, index| cx.emit(ControlsEvent::SetThemeMode(index)))
-        .width(Pixels(100.0));
-    // .tooltip(|cx| {
-    //     Tooltip::new(cx, |cx| {
-    //         Label::new(cx, "Select Theme Mode");
-    //     })
-    // });
-}
 
 pub fn setup_logging() -> Result<(), Box<dyn Error>> {
     #[cfg(debug_assertions)]
@@ -162,18 +142,14 @@ pub fn setup_logging() -> Result<(), Box<dyn Error>> {
     const MAIN_LOG_LEVEL: LevelFilter = LevelFilter::Info;
 
     fern::Dispatch::new()
-        // Perform allocation-free log formatting
         .format(move |out, message, record| {
             out.finish(format_args!("[{}][{}] {}", record.target(), record.level(), message))
         })
-        // Add blanket level filter
         .level(MAIN_LOG_LEVEL)
         .level_for("cosmic_text::buffer", LevelFilter::Warn)
         .level_for("selectors::matching", LevelFilter::Warn)
         .level_for("cosmic_text::font::system::std", LevelFilter::Warn)
-        // Output to stdout
         .chain(std::io::stdout())
-        // Apply globally
         .apply()?;
 
     Ok(())

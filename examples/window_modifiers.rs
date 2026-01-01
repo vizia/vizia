@@ -5,38 +5,26 @@ fn main() {
     panic!("This example is not supported on baseview");
 }
 
-pub enum AppEvent {
-    SetTitle(String),
-}
-
-#[derive(Lens)]
-pub struct AppData {
-    title: String,
-}
-
-impl Model for AppData {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::SetTitle(title) => self.title = title.clone(),
-        })
-    }
-}
-
 #[cfg(not(feature = "baseview"))]
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
-        AppData { title: "Window Modifiers".to_string() }.build(cx);
+    let (app, (title, size)) = Application::new_with_state(|cx| {
+        let title = cx.state("Window Modifiers".to_string());
+        let size = cx.state((400, 100));
+        let stretch_one = cx.state(Stretch(1.0));
+        let padding_8 = cx.state(Pixels(8.0));
+        let gap_8 = cx.state(Pixels(8.0));
 
         VStack::new(cx, |cx| {
-            Label::new(cx, "Window title:");
-            Textbox::new(cx, AppData::title)
-                .on_edit(|ex, txt| ex.emit(AppEvent::SetTitle(txt)))
-                .width(Stretch(1.0));
+            Label::static_text(cx, "Window title:");
+            Textbox::new(cx, title)
+                .on_edit(move |cx, txt| title.set(cx, txt))
+                .width(stretch_one);
         })
-        .padding(Pixels(8.0))
-        .gap(Pixels(8.0));
-    })
-    .title(AppData::title)
-    .inner_size((400, 100))
-    .run()
+        .padding(padding_8)
+        .gap(gap_8);
+
+        (title, size)
+    });
+
+    app.title(title).inner_size(size).run()
 }

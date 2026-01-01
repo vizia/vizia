@@ -1,5 +1,5 @@
-use crate::binding::{Binding, Data, Res, ResGet};
-use crate::context::{DataContext, EventContext, LocalizationContext};
+use crate::binding::Data;
+use crate::context::{DataContext, EventContext};
 use crate::entity::Entity;
 use crate::prelude::ToStringLocalized;
 
@@ -30,22 +30,26 @@ struct TrackingContext {
 pub struct DependencyTracker<'a> {
     store: &'a Store,
     prev_selector: Option<NodeId>,
+    finished: bool,
 }
 
 impl<'a> DependencyTracker<'a> {
     pub fn new(store: &'a Store, selector_id: NodeId) -> Self {
         let prev_selector = store.begin_tracking(selector_id);
-        Self { store, prev_selector }
+        Self { store, prev_selector, finished: false }
     }
 
-    pub fn dependencies(self) -> HashSet<NodeId> {
+    pub fn dependencies(mut self) -> HashSet<NodeId> {
+        self.finished = true;
         self.store.end_tracking(self.prev_selector)
     }
 }
 
 impl<'a> Drop for DependencyTracker<'a> {
     fn drop(&mut self) {
-        self.store.end_tracking(self.prev_selector);
+        if !self.finished {
+            self.store.end_tracking(self.prev_selector);
+        }
     }
 }
 
@@ -70,10 +74,19 @@ pub struct Store {
     // Only place where interior mutability is truly needed
     tracking: RefCell<TrackingContext>,
 
+    // Prevent recursive dependent updates by queueing
+    updating_dependents: bool,
+    pending_updates: Vec<NodeId>,
+    pending_set: HashSet<NodeId>,
+
     id_counter: usize,
 }
 
 impl Store {
+    pub(crate) fn has_value(&self, id: &NodeId) -> bool {
+        self.values.contains_key(id)
+    }
+
     fn new() -> Self {
         Self {
             values: HashMap::new(),
@@ -87,6 +100,9 @@ impl Store {
                 current_selector: None,
                 dependencies: HashSet::new(),
             }),
+            updating_dependents: false,
+            pending_updates: Vec::new(),
+            pending_set: HashSet::new(),
             id_counter: 0,
         }
     }
@@ -159,35 +175,50 @@ impl Store {
 
     // Fix update_dependents to handle both selectors and effects
     fn update_dependents(&mut self, id: &NodeId) {
-        self.node_needs_update.insert(*id, true);
-        println!("Updating dependents for ID: {:?}", id);
-        let initial_capacity = self.dependents.get(id).map_or(0, |deps| deps.len());
-        let mut queue = Vec::with_capacity(initial_capacity);
-        let mut visited = HashSet::with_capacity(initial_capacity * 2);
-
-        // Start with direct dependents
-        if let Some(deps) = self.dependents.get(id) {
-            for dep_id in deps {
-                queue.push(*dep_id);
-                visited.insert(*dep_id);
-            }
+        if self.pending_set.insert(*id) {
+            self.pending_updates.push(*id);
         }
 
-        // Process queue iteratively
-        while let Some(dependent_id) = queue.pop() {
-            // It's a selector - recompute it as before
-            self.recompute_selector(&dependent_id);
+        if self.updating_dependents {
+            return;
+        }
 
-            // Add subsequent dependents
-            if let Some(next_deps) = self.dependents.get(&dependent_id) {
-                for next_dep in next_deps {
-                    if !visited.contains(next_dep) {
-                        queue.push(*next_dep);
-                        visited.insert(*next_dep);
+        self.updating_dependents = true;
+
+        while let Some(source_id) = self.pending_updates.pop() {
+            self.pending_set.remove(&source_id);
+            self.node_needs_update.insert(source_id, true);
+
+            let initial_capacity = self.dependents.get(&source_id).map_or(0, |deps| deps.len());
+            let mut queue = Vec::with_capacity(initial_capacity);
+            let mut visited = HashSet::with_capacity(initial_capacity * 2);
+
+            // Start with direct dependents
+            if let Some(deps) = self.dependents.get(&source_id) {
+                for dep_id in deps {
+                    if visited.insert(*dep_id) {
+                        queue.push(*dep_id);
+                    }
+                }
+            }
+
+            // Process queue iteratively
+            while let Some(dependent_id) = queue.pop() {
+                // It's a selector - recompute it as before
+                self.recompute_selector(&dependent_id);
+
+                // Add subsequent dependents
+                if let Some(next_deps) = self.dependents.get(&dependent_id) {
+                    for next_dep in next_deps {
+                        if visited.insert(*next_dep) {
+                            queue.push(*next_dep);
+                        }
                     }
                 }
             }
         }
+
+        self.updating_dependents = false;
     }
 
     // Simplify dependency update logic
@@ -339,7 +370,32 @@ impl<T: 'static> Signal<T> {
 
     // Read-only operation, but records dependency
     pub fn get<'a>(&self, store: &'a impl DataContext) -> &'a T {
-        store.store().get::<T>(&self.id).unwrap()
+        let store_ref = store.store();
+        if let Some(value) = store_ref.get::<T>(&self.id) {
+            return value;
+        }
+
+        let has_value = store_ref.values.contains_key(&self.id);
+        let owner = store_ref
+            .entity_signals
+            .iter()
+            .find_map(|(entity, ids)| ids.contains(&self.id).then_some(*entity));
+
+        if has_value {
+            panic!(
+                "Signal({:?}) type mismatch. Requested {}, but stored value has a different type. Owner: {:?}.",
+                self.id,
+                std::any::type_name::<T>(),
+                owner
+            );
+        }
+
+        panic!(
+            "Signal({:?}) missing value for {}. Owner: {:?}.",
+            self.id,
+            std::any::type_name::<T>(),
+            owner
+        );
     }
 
     fn get_mut<'a>(&self, store: &'a mut Store) -> &'a mut T {
@@ -362,73 +418,6 @@ impl<T: 'static> Signal<T> {
         store.observers.entry(self.id).or_default().insert(entity);
     }
 
-    /// Map the signal to a transformed value using the binding system.
-    /// This creates a reactive binding that updates when the source signal changes.
-    pub fn map<U: Clone + 'static, F>(&self, f: F) -> MappedSignal<T, U, F>
-    where
-        T: Clone,
-        F: Fn(&T) -> U + Clone + 'static,
-    {
-        MappedSignal::new(*self, f)
-    }
-}
-
-// Create a mapped signal type that works with the binding system
-#[derive(Clone)]
-pub struct MappedSignal<T: 'static, U, F> {
-    source: Signal<T>,
-    func: F,
-    phantom: PhantomData<U>,
-}
-
-impl<T: Clone + 'static, U: Clone + 'static, F: Fn(&T) -> U + Clone + 'static>
-    MappedSignal<T, U, F>
-{
-    pub fn new(source: Signal<T>, func: F) -> Self {
-        Self { source, func, phantom: PhantomData }
-    }
-}
-
-impl<T: Clone + 'static, U: Clone + 'static, F: Fn(&T) -> U + Clone + 'static> ResGet<U>
-    for MappedSignal<T, U, F>
-{
-    fn get_ref<'a>(
-        &'a self,
-        cx: &'a impl crate::prelude::DataContext,
-    ) -> Option<crate::prelude::LensValue<'a, U>> {
-        let source_value = self.source.get(cx);
-        let mapped_value = (self.func)(&source_value);
-        Some(crate::binding::LensValue::Owned(mapped_value))
-    }
-
-    fn get(&self, cx: &impl crate::prelude::DataContext) -> U {
-        let source_value = self.source.get(cx);
-        (self.func)(&source_value)
-    }
-}
-
-impl<T: Clone + 'static, U: Clone + 'static, F: Fn(&T) -> U + Clone + 'static> Res<U>
-    for MappedSignal<T, U, F>
-{
-    fn set_or_bind<Func>(
-        self,
-        cx: &mut crate::prelude::Context,
-        entity: crate::prelude::Entity,
-        closure: Func,
-    ) where
-        Self: Sized,
-        Func: 'static + Fn(&mut crate::prelude::Context, Self),
-    {
-        // Set up observation of the source signal
-        self.source.observe(cx.data.get_store_mut(), entity);
-
-        Binding::new(cx, self.source.clone(), move |cx| {
-            let mapped = MappedSignal::new(self.source, self.func.clone());
-            cx.with_current(entity, |cx| {
-                closure(cx, mapped);
-            });
-        });
-    }
 }
 
 // Root container
@@ -472,45 +461,6 @@ impl<T: Clone + ToStringLocalized> ToStringLocalized for Signal<T> {
         }
 
         String::new()
-    }
-}
-
-impl<T: Clone> ResGet<T> for Signal<T> {
-    fn get_ref<'a>(
-        &'a self,
-        cx: &'a impl crate::prelude::DataContext,
-    ) -> Option<crate::prelude::LensValue<'a, T>> {
-        if let Some(lc) = cx.localization_context() {
-            return Some(crate::binding::LensValue::Borrowed(
-                lc.data.get_store().get(&self.id).unwrap(),
-            ));
-        }
-
-        panic!("No localization context available for Signal.");
-    }
-
-    fn get(&self, cx: &impl crate::prelude::DataContext) -> T {
-        self.get_ref(cx).unwrap().into_owned()
-    }
-}
-
-impl<T: Clone> Res<T> for Signal<T> {
-    fn set_or_bind<F>(
-        self,
-        cx: &mut crate::prelude::Context,
-        entity: crate::prelude::Entity,
-        closure: F,
-    ) where
-        Self: Sized,
-        F: 'static + Fn(&mut crate::prelude::Context, Self),
-    {
-        println!("Setting or binding signal: {} {:?}", entity, self.id);
-
-        Binding::new(cx, self.clone(), move |cx| {
-            cx.with_current(entity, |cx| {
-                closure(cx, self.clone());
-            });
-        });
     }
 }
 

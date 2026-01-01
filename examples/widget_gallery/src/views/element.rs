@@ -3,6 +3,8 @@ use vizia::prelude::*;
 use crate::DemoRegion;
 
 pub fn element(cx: &mut Context) {
+    let size_100 = cx.state(Pixels(100.0));
+
     VStack::new(cx, |cx| {
         Markdown::new(cx, "# Element");
 
@@ -13,10 +15,11 @@ pub fn element(cx: &mut Context) {
         DemoRegion::new(
             cx,
             |cx| {
-                Element::new(cx).size(Pixels(100.0)).background_color(Color::red());
+                Element::new(cx).size(size_100).background_color(Color::red());
             },
-            r#"Element::new(cx)
-    .size(Pixels(100.0))
+            r#"let size_100 = cx.state(Pixels(100.0));
+Element::new(cx)
+    .size(size_100)
     .background_color(Color::red());"#,
         );
     })

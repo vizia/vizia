@@ -62,20 +62,20 @@ pub enum TextEvent {
 
 /// The `Textbox` view provides an input control for editing a value as a string.
 ///
-/// The textbox takes a lens to some value, which must be a type which can convert to and from a `String`,
+/// The textbox takes a signal to some value, which must be a type which can convert to and from a `String`,
 /// as determined by the `ToString` and `FromStr` traits. The value type is used for validation and returned by
 /// the `on_submit` callback, which is triggered when the textbox is submitted with the enter key or when the textbox
 /// loses keyboard focus.
 pub struct Textbox<L: 'static> {
-    lens: Signal<L>,
+    value: Signal<L>,
     kind: TextboxKind,
     edit: bool,
     transform: Rc<RefCell<(f32, f32)>>,
     on_edit: Option<Box<dyn Fn(&mut EventContext, String) + Send + Sync>>,
-    on_submit: Option<Box<dyn Fn(&mut EventContext, L, bool) + Send + Sync>>,
+    pub(crate) on_submit: Option<Box<dyn Fn(&mut EventContext, L, bool) + Send + Sync>>,
     on_blur: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
     on_cancel: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
-    validate: Option<Box<dyn Fn(&L) -> bool>>,
+    pub(crate) validate: Option<Box<dyn Fn(&L) -> bool + Send + Sync>>,
     placeholder: Signal<String>,
     show_placeholder: Signal<bool>,
     show_caret: Signal<bool>,
@@ -103,21 +103,13 @@ where
     /// ```rust
     /// # use vizia_core::prelude::*;
     /// #
-    /// # #[derive(Lens)]
-    /// # struct AppData {
-    /// #     text: String,
-    /// # }
-    /// #
-    /// # impl Model for AppData {}
-    /// #
     /// # let cx = &mut Context::default();
     /// #
-    /// # AppData { text: String::from("Hello World") }.build(cx);
-    /// #
-    /// Textbox::new(cx, AppData::text);
+    /// # let text = cx.state(String::from("Hello World"));
+    /// Textbox::new(cx, text);
     /// ```
-    pub fn new(cx: &mut Context, lens: Signal<L>) -> Handle<Self> {
-        Self::new_core(cx, lens, TextboxKind::SingleLine)
+    pub fn new(cx: &mut Context, value: Signal<L>) -> Handle<Self> {
+        Self::new_core(cx, value, TextboxKind::SingleLine)
     }
 
     /// Creates a new multi-line textbox.
@@ -130,36 +122,31 @@ where
     /// ```rust
     /// # use vizia_core::prelude::*;
     /// #
-    /// # #[derive(Lens)]
-    /// # struct AppData {
-    /// #     text: String,
-    /// # }
-    /// #
-    /// # impl Model for AppData {}
-    /// #
     /// # let cx = &mut Context::default();
     /// #
-    /// # AppData { text: String::from("Hello World") }.build(cx);
-    /// #
-    /// Textbox::new_multiline(cx, AppData::text, true);
+    /// # let text = cx.state(String::from("Hello World"));
+    /// Textbox::new_multiline(cx, text, true);
     /// ```
-    pub fn new_multiline(cx: &mut Context, lens: Signal<L>, wrap: bool) -> Handle<Self> {
+    pub fn new_multiline(cx: &mut Context, value: Signal<L>, wrap: bool) -> Handle<Self> {
         Self::new_core(
             cx,
-            lens,
+            value,
             if wrap { TextboxKind::MultiLineWrapped } else { TextboxKind::MultiLineUnwrapped },
         )
     }
 
-    fn new_core(cx: &mut Context, lens: Signal<L>, kind: TextboxKind) -> Handle<Self> {
+    fn new_core(cx: &mut Context, value: Signal<L>, kind: TextboxKind) -> Handle<Self> {
         let caret_timer = cx.environment().caret_timer;
 
         let show_placeholder = cx.state(true);
         let show_caret = cx.state(true);
         let placeholder = cx.state(String::from(""));
+        let display_text = cx.state(String::new());
+        let is_multiline = cx.state(kind == TextboxKind::MultiLineWrapped);
+        let navigable = cx.state(true);
 
         Self {
-            lens,
+            value,
             kind,
             edit: false,
             transform: Rc::new(RefCell::new((0.0, 0.0))),
@@ -190,38 +177,39 @@ where
                 });
             });
         })
-        .toggle_class("multiline", kind == TextboxKind::MultiLineWrapped)
-        .text_wrap(kind == TextboxKind::MultiLineWrapped)
-        .navigable(true)
+        .toggle_class("multiline", is_multiline)
+        .text_wrap(is_multiline)
+        .navigable(navigable)
         .role(Role::TextInput)
-        .text_value(lens)
+        .text_value(value)
         .toggle_class("caret", show_caret)
-        .text(lens)
+        .text(display_text)
         .placeholder_shown(show_placeholder)
-        .bind(lens, move |handle, lens| {
-            let mut text = lens.get(&handle).to_string_local(handle.cx);
+        .bind(value, move |handle, value| {
+            let mut text = value.get(&handle).to_string_local(handle.cx);
             let flag = text.is_empty();
             if flag {
                 text = placeholder.get(&handle).to_string_local(handle.cx);
             }
-            handle
-                .modify2(|textbox, cx| {
-                    textbox.show_placeholder.set(cx, flag);
-                })
-                .text(text);
+            handle.modify2(|textbox, cx| {
+                textbox.show_placeholder.set(cx, flag);
+                display_text.set(cx, text);
+            });
         })
         .bind(show_placeholder, move |handle, show_placeholder| {
             let flag = *show_placeholder.get(&handle);
             if flag {
                 let placeholder = placeholder.get(&handle).to_string_local(handle.cx);
-                handle.text(placeholder);
+                let mut event_cx = EventContext::new(handle.cx);
+                display_text.set(&mut event_cx, placeholder);
             }
         })
         .bind(placeholder, move |handle, placeholder| {
             let placeholder = placeholder.get(&handle).to_string_local(handle.cx);
             let flag = *show_placeholder.get(&handle);
             if flag {
-                handle.text(placeholder);
+                let mut event_cx = EventContext::new(handle.cx);
+                display_text.set(&mut event_cx, placeholder);
             }
         })
     }
@@ -805,20 +793,37 @@ where
     where
         F: 'static + Fn(&L) -> bool + Send + Sync,
     {
-        self.modify(|textbox| textbox.validate = Some(Box::new(is_valid)))
+        self.modify(|textbox| {
+            textbox.validate = Some(Box::new(is_valid));
+        })
+    }
+
+    /// Enables two-way binding: submitted values automatically update the bound signal.
+    ///
+    /// This is equivalent to calling `.on_submit(move |cx, val, _| signal.set(cx, val))`.
+    pub fn two_way(self) -> Self
+    where
+        L: Send + Sync,
+    {
+        self.modify(|textbox| {
+            let signal = textbox.value;
+            textbox.on_submit = Some(Box::new(move |cx, val, _| {
+                signal.set(cx, val);
+            }));
+        })
     }
 
     /// Sets the placeholder text that appears when the textbox has no value.
-    pub fn placeholder<P: ToStringLocalized>(self, text: impl Res<P>) -> Self {
-        text.set_or_bind(self.cx, self.entity, move |cx, val| {
-            let txt = val.get(cx).to_string_local(cx);
+    pub fn placeholder<P: ToStringLocalized>(self, text: Signal<P>) -> Self {
+        self.bind(text, |mut handle, text| {
+            let txt = text.get(&handle).to_string_local(&handle);
+            let entity = handle.entity();
+            let cx = handle.context();
             cx.emit(TextEvent::SetPlaceholder(txt.clone()));
-            cx.style.name.insert(cx.current, txt);
+            cx.style.name.insert(entity, txt);
             cx.needs_relayout();
-            cx.needs_redraw(self.entity);
-        });
-
-        self
+            cx.needs_redraw(entity);
+        })
     }
 }
 
@@ -1402,7 +1407,7 @@ where
                     self.text_overflow = cx.style.text_overflow.get_inline(cx.current).copied();
                     cx.style.text_overflow.remove(cx.current);
 
-                    let text = self.lens.get(cx);
+                    let text = self.value.get(cx);
                     let text = text.to_string_local(cx);
 
                     if text.is_empty() {
@@ -1433,7 +1438,7 @@ where
                 cx.release();
                 cx.stop_timer(self.caret_timer);
 
-                let text = self.lens.get(cx);
+                let text = self.value.get(cx);
                 let text = text.to_string_local(cx);
 
                 if let Some(text_overflow) = self.text_overflow {

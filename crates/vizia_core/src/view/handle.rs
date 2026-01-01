@@ -71,7 +71,12 @@ impl<V> Handle<'_, V> {
     /// Marks the view as being ignored.
     pub(crate) fn ignore(self) -> Self {
         self.cx.tree.set_ignored(self.entity, true);
-        self.focusable(false)
+        if let Some(abilities) = self.cx.style.abilities.get_mut(self.entity) {
+            abilities.set(Abilities::FOCUSABLE, false);
+            abilities.set(Abilities::NAVIGABLE, false);
+        }
+        self.cx.needs_restyle(self.entity);
+        self
     }
 
     /// Stop the user from tabbing out of a subtree, which is useful for modal dialogs.
@@ -146,19 +151,21 @@ impl<V> Handle<'_, V> {
         self
     }
 
-    /// Creates a binding to the given lens and provides a closure which can be used to mutate the view through a handle.
-    pub fn bind<R, T, F>(self, res: R, closure: F) -> Self
+    /// Creates a binding to the given signal and provides a closure which can be used to mutate the view through a handle.
+    pub fn bind<T, F>(self, signal: Signal<T>, closure: F) -> Self
     where
-        R: Res<T>,
-        F: 'static + Fn(Handle<'_, V>, R),
+        T: 'static,
+        F: 'static + Fn(Handle<'_, V>, Signal<T>),
     {
         let entity = self.entity();
         let current = self.current();
         self.cx.with_current(current, |cx| {
-            res.set_or_bind(cx, entity, move |cx, r| {
-                let new_handle = Handle { entity, current: cx.current, p: Default::default(), cx };
-                // new_handle.cx.set_current(new_handle.entity);
-                (closure)(new_handle, r);
+            Binding::new(cx, signal, move |cx| {
+                cx.with_current(entity, |cx| {
+                    let new_handle =
+                        Handle { entity, current: cx.current, p: Default::default(), cx };
+                    (closure)(new_handle, signal);
+                });
             });
         });
         self

@@ -2,16 +2,11 @@ use vizia::prelude::*;
 
 use crate::DemoRegion;
 
-#[derive(Lens)]
-pub struct ListData {
-    list: Vec<u32>,
-}
-
-impl Model for ListData {}
-
 pub fn list(cx: &mut Context) {
-    let list: Vec<u32> = (1..14u32).collect();
-    ListData { list }.build(cx);
+    let list = cx.state((1..14u32).collect::<Vec<_>>());
+    let stretch_one = cx.state(Stretch(1.0));
+    let height_30 = cx.state(Pixels(30.0));
+    let size_300 = cx.state(Pixels(300.0));
 
     VStack::new(cx, |cx| {
         Markdown::new(cx, "# List");
@@ -23,22 +18,26 @@ pub fn list(cx: &mut Context) {
         DemoRegion::new(
             cx,
             |cx| {
-                List::new(cx, ListData::list, |cx, index, item| {
+                List::new(cx, list, |cx, index, item| {
                     Label::new(cx, item)
                         .toggle_class("dark", index % 2 == 0)
-                        .width(Stretch(1.0))
-                        .height(Pixels(30.0))
+                        .width(stretch_one)
+                        .height(height_30)
                         .hoverable(false);
                 })
-                .size(Pixels(300.0));
+                .size(size_300);
             },
-            r#"List::new(cx, ListData::list, |cx, index, item| {
+            r#"let list = cx.state((1..14u32).collect::<Vec<_>>());
+let stretch_one = cx.state(Stretch(1.0));
+let height_30 = cx.state(Pixels(30.0));
+let size_300 = cx.state(Pixels(300.0));
+List::new(cx, list, |cx, index, item| {
     Label::new(cx, item)
         .toggle_class("dark", index % 2 == 0)
-        .width(Stretch(1.0))
-        .height(Pixels(30.0));
+        .width(stretch_one)
+        .height(height_30);
 })
-.width(Pixels(300.0));"#,
+.size(size_300);"#,
         );
     })
     .class("panel");

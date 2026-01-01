@@ -16,13 +16,14 @@ use crate::vg;
 /// #
 /// # let cx = &mut Context::default();
 /// #
-/// Button::new(cx, |cx| Label::new(cx, "Text"))
+/// let text = cx.state("Text");
+/// let tooltip_text = cx.state("Tooltip Text");
+/// Button::new(cx, |cx| Label::new(cx, text))
 ///     .tooltip(|cx|{
 ///         Tooltip::new(cx, |cx|{
-///             Label::new(cx, "Tooltip Text");
+///             Label::new(cx, tooltip_text);
 ///         })
 ///     })
-
 pub struct Tooltip {
     placement: Signal<Placement>,
     shift: Signal<Placement>,
@@ -45,10 +46,12 @@ impl Tooltip {
     /// #
     /// # let cx = &mut Context::default();
     /// #
-    /// Button::new(cx, |cx| Label::new(cx, "Text"))
+    /// let text = cx.state("Text");
+    /// let tooltip_text = cx.state("Tooltip Text");
+    /// Button::new(cx, |cx| Label::new(cx, text))
     ///     .tooltip(|cx|{
     ///         Tooltip::new(cx, |cx|{
-    ///             Label::new(cx, "Tooltip Text");
+    ///             Label::new(cx, tooltip_text);
     ///         })
     ///     })
     /// ```
@@ -57,6 +60,10 @@ impl Tooltip {
         let shift = cx.state(Placement::Top);
         let show_arrow = cx.state(true);
         let arrow_size = cx.state(Length::Value(LengthValue::Px(8.0)));
+        let zero_space = cx.state(Pixels(0.0));
+        let false_signal = cx.state(false);
+        let position_absolute = cx.state(PositionType::Absolute);
+        let tooltip_z = cx.state(110);
 
         Self { placement, shift, show_arrow, arrow_size }
             .build(cx, move |cx| {
@@ -67,10 +74,10 @@ impl Tooltip {
                 });
                 (content)(cx);
             })
-            .z_index(110)
-            .hoverable(false)
-            .position_type(PositionType::Absolute)
-            .space(Pixels(0.0))
+            .z_index(tooltip_z)
+            .hoverable(false_signal)
+            .position_type(position_absolute)
+            .space(zero_space)
             .on_build(|ex| {
                 ex.add_listener(move |tooltip: &mut Tooltip, ex, event| {
                     event.map(|window_event, _| match window_event {
@@ -298,9 +305,9 @@ impl View for Tooltip {
 impl Handle<'_, Tooltip> {
     /// Sets the position where the tooltip should appear relative to its parent element.
     /// Defaults to `Placement::Bottom`.
-    pub fn placement<U: Into<Placement>>(self, placement: impl Res<U>) -> Self {
+    pub fn placement(self, placement: Signal<Placement>) -> Self {
         self.bind(placement, |handle, val| {
-            let placement = val.get(&handle).into();
+            let placement = *val.get(&handle);
             handle.modify2(|tooltip, cx| {
                 tooltip.placement.set(cx, placement);
                 tooltip.shift.set(cx, placement);
@@ -309,17 +316,17 @@ impl Handle<'_, Tooltip> {
     }
 
     /// Sets whether the tooltip should include an arrow. Defaults to true.
-    pub fn arrow<U: Into<bool>>(self, show_arrow: impl Res<U>) -> Self {
+    pub fn arrow(self, show_arrow: Signal<bool>) -> Self {
         self.bind(show_arrow, |handle, val| {
-            let show_arrow = val.get(&handle).into();
+            let show_arrow = *val.get(&handle);
             handle.modify2(|tooltip, cx| tooltip.show_arrow.set(cx, show_arrow));
         })
     }
 
     /// Sets the size of the tooltip arrow if enabled.
-    pub fn arrow_size<U: Into<Length>>(self, size: impl Res<U>) -> Self {
+    pub fn arrow_size(self, size: Signal<Length>) -> Self {
         self.bind(size, |handle, val| {
-            let size = val.get(&handle).into();
+            let size = val.get(&handle).clone();
             handle.modify2(|tooltip, cx| tooltip.arrow_size.set(cx, size));
         })
     }
@@ -336,53 +343,79 @@ impl Arrow {
         shift: Signal<Placement>,
         arrow_size: Signal<Length>,
     ) -> Handle<Self> {
-        Self { shift }.build(cx, |_| {}).bind(shift, move |mut handle, placement| {
-            let (t, b) = match placement.get(&handle) {
-                Placement::TopStart | Placement::Top | Placement::TopEnd => {
-                    (Percentage(100.0), Stretch(1.0))
-                }
-                Placement::BottomStart | Placement::Bottom | Placement::BottomEnd => {
-                    (Stretch(1.0), Percentage(100.0))
-                }
-                _ => (Stretch(1.0), Stretch(1.0)),
-            };
-
-            let (l, r) = match placement.get(&handle) {
-                Placement::LeftStart | Placement::Left | Placement::LeftEnd => {
-                    (Percentage(100.0), Stretch(1.0))
-                }
-                Placement::RightStart | Placement::Right | Placement::RightEnd => {
-                    (Stretch(1.0), Percentage(100.0))
-                }
-                Placement::TopStart | Placement::BottomStart => {
-                    // TODO: Use border radius
-                    (Pixels(8.0), Stretch(1.0))
-                }
-                Placement::TopEnd | Placement::BottomEnd => {
-                    // TODO: Use border radius
-                    (Stretch(1.0), Pixels(8.0))
-                }
-                _ => (Stretch(1.0), Stretch(1.0)),
-            };
-
-            handle = handle.top(t).bottom(b).left(l).right(r).position_type(PositionType::Absolute);
-
-            handle.bind(arrow_size, move |handle, arrow_size| {
-                let arrow_size = arrow_size.get(&handle).to_px().unwrap_or(8.0);
-                let (w, h) = match placement.get(&handle) {
+        let position_absolute = cx.state(PositionType::Absolute);
+        let top = cx.derived({
+            let shift = shift;
+            move |store| match *shift.get(store) {
+                Placement::TopStart | Placement::Top | Placement::TopEnd => Percentage(100.0),
+                _ => Stretch(1.0),
+            }
+        });
+        let bottom = cx.derived({
+            let shift = shift;
+            move |store| match *shift.get(store) {
+                Placement::BottomStart | Placement::Bottom | Placement::BottomEnd => Percentage(100.0),
+                _ => Stretch(1.0),
+            }
+        });
+        let left = cx.derived({
+            let shift = shift;
+            move |store| match *shift.get(store) {
+                Placement::LeftStart | Placement::Left | Placement::LeftEnd => Percentage(100.0),
+                Placement::TopStart | Placement::BottomStart => Pixels(8.0),
+                _ => Stretch(1.0),
+            }
+        });
+        let right = cx.derived({
+            let shift = shift;
+            move |store| match *shift.get(store) {
+                Placement::RightStart | Placement::Right | Placement::RightEnd => Percentage(100.0),
+                Placement::TopEnd | Placement::BottomEnd => Pixels(8.0),
+                _ => Stretch(1.0),
+            }
+        });
+        let width = cx.derived({
+            let shift = shift;
+            let arrow_size = arrow_size;
+            move |store| {
+                let arrow_size = arrow_size.get(store).to_px().unwrap_or(8.0);
+                match *shift.get(store) {
                     Placement::Top
                     | Placement::Bottom
                     | Placement::TopStart
                     | Placement::BottomStart
                     | Placement::TopEnd
-                    | Placement::BottomEnd => (Pixels(arrow_size * 2.0), Pixels(arrow_size)),
+                    | Placement::BottomEnd => Pixels(arrow_size * 2.0),
+                    _ => Pixels(arrow_size),
+                }
+            }
+        });
+        let height = cx.derived({
+            let shift = shift;
+            let arrow_size = arrow_size;
+            move |store| {
+                let arrow_size = arrow_size.get(store).to_px().unwrap_or(8.0);
+                match *shift.get(store) {
+                    Placement::Top
+                    | Placement::Bottom
+                    | Placement::TopStart
+                    | Placement::BottomStart
+                    | Placement::TopEnd
+                    | Placement::BottomEnd => Pixels(arrow_size),
+                    _ => Pixels(arrow_size * 2.0),
+                }
+            }
+        });
 
-                    _ => (Pixels(arrow_size), Pixels(arrow_size * 2.0)),
-                };
-
-                handle.width(w).height(h);
-            });
-        })
+        Self { shift }
+            .build(cx, |_| {})
+            .position_type(position_absolute)
+            .top(top)
+            .bottom(bottom)
+            .left(left)
+            .right(right)
+            .width(width)
+            .height(height)
     }
 }
 

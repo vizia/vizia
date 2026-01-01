@@ -2,9 +2,8 @@ use crate::{icons::ICON_X, prelude::*};
 use std::sync::Arc;
 
 /// A visual indicator such as a tag.
-#[derive(Lens)]
 pub struct Chip {
-    on_close: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
+    on_close: Signal<Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>>,
 }
 
 impl Chip {
@@ -16,29 +15,59 @@ impl Chip {
     /// #
     /// # let cx = &mut Context::default();
     /// #
-    /// Chip::new(cx, "Chip");
+    /// Chip::new(cx, cx.state("Chip"));
     /// ```
-    pub fn new<T>(cx: &mut Context, text: impl Res<T> + Clone) -> Handle<Self>
+    pub fn new<T>(cx: &mut Context, text: Signal<T>) -> Handle<Self>
     where
-        T: ToStringLocalized,
+        T: ToStringLocalized + Clone,
     {
-        Self { on_close: None }
+        let on_close: Signal<Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>> = cx.state(None);
+        let has_close = cx.derived({
+            let on_close = on_close;
+            move |store| on_close.get(store).is_some()
+        });
+        let layout_row = cx.state(LayoutType::Row);
+        let stretch_one = cx.state(Stretch(1.0));
+        let align_left = cx.state(Alignment::Left);
+        let align_center = cx.state(Alignment::Center);
+
+        Self { on_close }
             .build(cx, move |cx| {
-                Label::new(cx, text).height(Stretch(1.0)).alignment(Alignment::Left);
-                Binding::new(cx, Chip::on_close.map(|on_close| on_close.is_some()), |cx, val| {
-                    if val.get(cx) {
-                        let on_close = Chip::on_close.get(cx).unwrap();
-                        Button::new(cx, |cx| Svg::new(cx, ICON_X))
+                Label::new(cx, text).height(stretch_one).alignment(align_left);
+                let close_icon = cx.state(ICON_X);
+                let close_size = cx.state(Pixels(16.0));
+                Binding::new(cx, on_close, move |cx| {
+                    if let Some(callback) = on_close.get(cx).as_ref() {
+                        let callback = callback.clone();
+                        Button::new(cx, |cx| Svg::new(cx, close_icon))
                             .class("close-icon")
-                            .height(Pixels(16.0))
-                            .width(Pixels(16.0))
-                            .alignment(Alignment::Center)
-                            .on_press(move |cx| (on_close)(cx));
+                            .height(close_size)
+                            .width(close_size)
+                            .alignment(align_center)
+                            .on_press(move |cx| (callback)(cx));
                     }
                 });
             })
-            .toggle_class("close", Chip::on_close.map(|on_close| on_close.is_some()))
-            .layout_type(LayoutType::Row)
+            .toggle_class("close", has_close)
+            .layout_type(layout_row)
+    }
+
+    /// Creates a chip with static text (non-reactive).
+    ///
+    /// This is a convenience method for chips that display constant text.
+    /// Equivalent to `Chip::new(cx, cx.state(text))`.
+    ///
+    /// # Example
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// #
+    /// # let cx = &mut Context::default();
+    /// #
+    /// Chip::static_text(cx, "Tag");
+    /// ```
+    pub fn static_text<'a>(cx: &'a mut Context, text: &'static str) -> Handle<'a, Self> {
+        let signal = cx.state(text);
+        Self::new(cx, signal)
     }
 }
 
@@ -57,18 +86,15 @@ pub enum ChipVariant {
     Outline,
 }
 
-impl_res_simple!(ChipVariant);
-
 impl Handle<'_, Chip> {
     /// Set the callback triggered when the close button of the chip is pressed.
     /// The chip close button is not displayed by default. Setting this callback causes the close button to be displayed.
     pub fn on_close(self, callback: impl 'static + Fn(&mut EventContext) + Send + Sync) -> Self {
-        self.modify(|chip: &mut Chip| {
-            chip.on_close = Some(Arc::new(callback));
-        })
+        let callback = Arc::new(callback);
+        self.modify2(|chip, cx| chip.on_close.set(cx, Some(callback)))
     }
 
-    /// Selects the style variant to be used by the chip. Accepts a value of, or lens to, a [ChipVariant].
+    /// Selects the style variant to be used by the chip. Accepts a `Signal<ChipVariant>`.
     ///
     /// # Example
     /// ```
@@ -77,22 +103,15 @@ impl Handle<'_, Chip> {
     /// #
     /// # let cx = &mut Context::default();
     /// #
-    /// Chip::new(cx, "Chip")
-    ///     .variant(ChipVariant::Filled);
+    /// Chip::new(cx, cx.state("Chip"))
+    ///     .variant(cx.state(ChipVariant::Filled));
     /// ```
-    pub fn variant<U: Into<ChipVariant>>(self, variant: impl Res<U>) -> Self {
-        self.bind(variant, |handle, variant| {
-            let variant = variant.get(&handle).into();
+    pub fn variant(mut self, variant: Signal<ChipVariant>) -> Self {
+        let is_outline = self.context().derived({
+            let variant = variant;
+            move |store| *variant.get(store) == ChipVariant::Outline
+        });
 
-            match variant {
-                ChipVariant::Filled => {
-                    handle.toggle_class("outline", false);
-                }
-
-                ChipVariant::Outline => {
-                    handle.toggle_class("outline", true);
-                }
-            }
-        })
+        self.toggle_class("outline", is_outline)
     }
 }

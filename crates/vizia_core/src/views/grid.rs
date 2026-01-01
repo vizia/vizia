@@ -16,11 +16,14 @@ impl Grid {
     where
         F: FnOnce(&mut Context),
     {
+        let layout_grid = cx.state(LayoutType::Grid);
+        let grid_columns = cx.state(grid_columns);
+        let grid_rows = cx.state(grid_rows);
         Self {}
             .build(cx, |cx| {
                 (content)(cx);
             })
-            .layout_type(LayoutType::Grid)
+            .layout_type(layout_grid)
             .grid_columns(grid_columns)
             .grid_rows(grid_rows)
             .role(Role::GenericContainer)

@@ -39,6 +39,11 @@ impl Knob {
         centered: bool,
     ) -> Handle<Self> {
         let initial = *value.get(cx);
+        let head_angle = cx.derived({
+            let value = value;
+            move |store| Angle::Deg(value.get(store) * 300.0 - 150.0)
+        });
+        let navigable = cx.state(true);
         Self {
             value,
             default_normal: normalized_default,
@@ -71,14 +76,11 @@ impl Knob {
                 HStack::new(cx, |cx| {
                     Element::new(cx).class("knob-tick");
                 })
-                .bind(value, |handle, v| {
-                    let val = *v.get(&handle);
-                    handle.rotate(Angle::Deg(val * 300.0 - 150.0));
-                })
+                .rotate(head_angle)
                 .class("knob-head");
             });
         })
-        .navigable(true)
+        .navigable(navigable)
     }
 
     /// Create a custom [Knob] view with custom content.
@@ -109,7 +111,8 @@ impl Knob {
         }
         .build(cx, move |cx| {
             ZStack::new(cx, move |cx| {
-                (content)(cx, value).width(Percentage(100.0)).height(Percentage(100.0));
+                let full = cx.state(Percentage(100.0));
+                (content)(cx, value).width(full).height(full);
             });
         })
     }
@@ -122,6 +125,19 @@ impl Handle<'_, Knob> {
         F: 'static + Fn(&mut EventContext, f32),
     {
         self.modify(|knob| knob.on_changing = Some(Box::new(callback)))
+    }
+
+    /// Enables two-way binding: knob changes automatically update the bound signal.
+    ///
+    /// This is a convenience method equivalent to:
+    /// ```ignore
+    /// .on_change(move |cx, val| signal.set(cx, val))
+    /// ```
+    pub fn two_way(self) -> Self {
+        self.modify(|knob| {
+            let signal = knob.value;
+            knob.on_changing = Some(Box::new(move |cx, val| signal.set(cx, val)));
+        })
     }
 }
 
@@ -211,7 +227,7 @@ pub struct ArcTrack {
     angle_end: f32,
     radius: Units,
     span: Units,
-    normalized_value: f32,
+    normalized_value: Signal<f32>,
 
     center: bool,
     mode: KnobMode,
@@ -228,20 +244,9 @@ impl ArcTrack {
         angle_end: f32,
         mode: KnobMode,
     ) -> Handle<Self> {
-        Self {
-            // angle_start: -150.0,
-            // angle_end: 150.0,
-            angle_start,
-            angle_end,
-            radius,
-            span,
-
-            normalized_value: 0.5,
-
-            center,
-            mode,
-        }
-        .build(cx, |_| {})
+        let normalized_value = cx.state(0.5f32);
+        Self { angle_start, angle_end, radius, span, normalized_value, center, mode }
+            .build(cx, |_| {})
     }
 }
 
@@ -292,11 +297,12 @@ impl View for ArcTrack {
         // Draw the active arc
         let mut path = vg::Path::new();
 
+        let norm_val = *self.normalized_value.get(cx);
         let value = match self.mode {
-            KnobMode::Continuous => self.normalized_value,
+            KnobMode::Continuous => norm_val,
             // snapping
             KnobMode::Discrete(steps) => {
-                (self.normalized_value * (steps - 1) as f32).floor() / (steps - 1) as f32
+                (norm_val * (steps - 1) as f32).floor() / (steps - 1) as f32
             }
         };
 
@@ -327,18 +333,12 @@ impl View for ArcTrack {
 
 impl Handle<'_, ArcTrack> {
     pub fn value(self, value: Signal<f32>) -> Self {
-        let entity = self.entity;
-        Binding::new(self.cx, value, move |cx| {
-            let val = *value.get(cx);
-            if let Some(view) = cx.views.get_mut(&entity) {
-                if let Some(arc_track) = view.downcast_mut::<ArcTrack>() {
-                    arc_track.normalized_value = val;
-                    cx.needs_redraw(entity);
-                }
-            }
-        });
-
-        self
+        self.bind(value, |handle, val| {
+            let v = *val.get(&handle);
+            handle.modify2(|arc_track, cx| {
+                arc_track.normalized_value.set(cx, v);
+            });
+        })
     }
 }
 
@@ -447,7 +447,7 @@ pub struct TickKnob {
     radius: Units,
     tick_width: Units,
     tick_len: Units,
-    normalized_value: f32,
+    normalized_value: Signal<f32>,
     mode: KnobMode,
 }
 impl TickKnob {
@@ -458,18 +458,16 @@ impl TickKnob {
         tick_width: Units,
         tick_len: Units,
         arc_len: f32,
-        // steps: u32,
         mode: KnobMode,
     ) -> Handle<Self> {
+        let normalized_value = cx.state(0.5f32);
         Self {
-            // angle_start: -150.0,
-            // angle_end: 150.0,
             angle_start: -arc_len / 2.0,
             angle_end: arc_len / 2.0,
             radius,
             tick_width,
             tick_len,
-            normalized_value: 0.5,
+            normalized_value,
             mode,
         }
         .build(cx, |_| {})
@@ -512,13 +510,12 @@ impl View for TickKnob {
         canvas.draw_path(&path, &paint);
         // Draw the tick
         let mut path = vg::Path::new();
+        let norm_val = *self.normalized_value.get(cx);
         let angle = match self.mode {
-            KnobMode::Continuous => start + (end - start) * self.normalized_value,
+            KnobMode::Continuous => start + (end - start) * norm_val,
             // snapping
             KnobMode::Discrete(steps) => {
-                start
-                    + (end - start) * (self.normalized_value * (steps - 1) as f32).floor()
-                        / (steps - 1) as f32
+                start + (end - start) * (norm_val * (steps - 1) as f32).floor() / (steps - 1) as f32
             }
         };
         path.move_to(
@@ -543,16 +540,11 @@ impl View for TickKnob {
 
 impl Handle<'_, TickKnob> {
     pub fn value(self, value: Signal<f32>) -> Self {
-        let entity = self.entity;
-        Binding::new(self.cx, value, move |cx| {
-            let val = *value.get(cx);
-            if let Some(view) = cx.views.get_mut(&entity) {
-                if let Some(tick_knob) = view.downcast_mut::<TickKnob>() {
-                    tick_knob.normalized_value = val;
-                    cx.needs_redraw(entity);
-                }
-            }
-        });
-        self
+        self.bind(value, |handle, val| {
+            let v = *val.get(&handle);
+            handle.modify2(|tick_knob, cx| {
+                tick_knob.normalized_value.set(cx, v);
+            });
+        })
     }
 }

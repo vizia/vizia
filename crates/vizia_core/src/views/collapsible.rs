@@ -12,15 +12,16 @@ pub enum CollapsibleEvent {
 /// Collapsible::new(
 ///     cx,
 ///     |cx| {
-///         Label::new(cx, "Click me to collapse the content").hoverable(false);
+///         let header_text = cx.state("Click me to collapse the content");
+///         Label::new(cx, header_text).hoverable(false);
 ///     },
 ///     |cx| {
-///         Label::new(cx, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5").hoverable(false);
+///         let content_text = cx.state("Line 1\nLine 2\nLine 3\nLine 4\nLine 5");
+///         Label::new(cx, content_text).hoverable(false);
 ///     },
 /// )
 /// .width(Pixels(300.0));
 /// ```
-#[derive(Lens)]
 pub struct Collapsible {
     is_open: Signal<bool>,
 }
@@ -35,10 +36,11 @@ impl Collapsible {
         let is_open = cx.state(false);
         Self { is_open }
             .build(cx, |cx| {
+                let chevron_icon = cx.state(ICON_CHEVRON_DOWN);
                 // Header
                 HStack::new(cx, |cx| {
                     header(cx);
-                    Svg::new(cx, ICON_CHEVRON_DOWN)
+                    Svg::new(cx, chevron_icon)
                         .class("expand-icon")
                         .on_press(|cx| cx.emit(CollapsibleEvent::ToggleOpen));
                 })
@@ -71,9 +73,9 @@ impl View for Collapsible {
 
 impl Handle<'_, Collapsible> {
     /// Set the open state of the collapsible view.
-    pub fn open(self, open: impl Res<bool>) -> Self {
+    pub fn open(self, open: Signal<bool>) -> Self {
         self.bind(open, |handle, open| {
-            let open = open.get(&handle);
+            let open = *open.get(&handle);
             handle.modify2(|collapsible, cx| {
                 collapsible.is_open.set(cx, open);
             });

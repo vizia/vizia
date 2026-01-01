@@ -65,13 +65,8 @@ pub mod prelude {
 
     pub use crate::application::App;
 
-    pub use super::binding::{
-        Binding, Data, Index, Lens, LensExt, LensValue, Map, MapRef, Res, ResGet, StaticLens, Then,
-        UnwrapLens, Wrapper,
-    };
+    pub use super::binding::{Binding, Data};
     pub use super::recoil::*;
-
-    pub use super::impl_res_simple;
 
     pub use crate::model::Model;
 
@@ -98,7 +93,7 @@ pub mod prelude {
     pub use super::window::{DropData, WindowEvent};
     pub use accesskit::{Action, Live, Role};
     pub use skia_safe::Canvas;
-    pub use vizia_derive::{Data, Lens};
+    pub use vizia_derive::Data;
     pub use vizia_id::GenerationalId;
     pub use vizia_input::{Code, Key, KeyChord, Modifiers, MouseButton, MouseButtonState};
     pub use vizia_storage::{Tree, TreeExt};

@@ -2,16 +2,9 @@ use vizia::prelude::*;
 
 use crate::DemoRegion;
 
-#[derive(Lens)]
-pub struct VirtualListData {
-    list: Vec<u32>,
-}
-
-impl Model for VirtualListData {}
-
 pub fn virtual_list(cx: &mut Context) {
-    let list: Vec<u32> = (1..100u32).collect();
-    VirtualListData { list }.build(cx);
+    let list = cx.state((1..100u32).collect::<Vec<_>>());
+    let size_300 = cx.state(Pixels(300.0));
 
     VStack::new(cx, |cx| {
         Markdown::new(cx, "# Virtual List");
@@ -23,15 +16,17 @@ pub fn virtual_list(cx: &mut Context) {
         DemoRegion::new(
             cx,
             |cx| {
-                VirtualList::new(cx, VirtualListData::list, 40.0, |cx, index, item| {
+                VirtualList::new(cx, list, 40.0, |cx, index, item| {
                     Label::new(cx, item).toggle_class("dark", index % 2 == 0)
                 })
-                .size(Pixels(300.0));
+                .size(size_300);
             },
-            r#"VirtualList::new(cx, VirtualListData::list, 40.0, |cx, index, item| {
+            r#"let list = cx.state((1..100u32).collect::<Vec<_>>());
+let size_300 = cx.state(Pixels(300.0));
+VirtualList::new(cx, list, 40.0, |cx, index, item| {
         Label::new(cx, item).toggle_class("dark", index % 2 == 0)
     })
-    .size(Pixels(300.0));"#,
+    .size(size_300);"#,
         );
     })
     .class("panel");

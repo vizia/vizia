@@ -2,75 +2,60 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-// TODO: XYPad needs to be migrated to Signal architecture
-// For now this example uses signals for sliders but XYPad still uses Lens
-
-#[derive(Debug, Lens)]
-pub struct AppData {
-    pub xy_data: (f32, f32),
-}
-
-#[derive(Debug)]
-pub enum AppEvent {
-    XYPadChange(f32, f32),
-}
-
-impl Model for AppData {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::XYPadChange(value_x, value_y) => {
-                self.xy_data = (*value_x, *value_y);
-            }
-        });
-    }
-}
-
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
-        AppData { xy_data: (0.25, 0.25) }.build(cx);
+    let (app, title) = Application::new_with_state(|cx| {
+        // Single signal for the XY coordinates
+        let xy = cx.state((0.25f32, 0.25f32));
+        let width_10 = cx.state(Pixels(10.0));
+        let height_100 = cx.state(Pixels(100.0));
+        let width_100 = cx.state(Pixels(100.0));
+        let height_10 = cx.state(Pixels(10.0));
+        let auto = cx.state(Auto);
+        let gap_5 = cx.state(Pixels(5.0));
+        let align_center = cx.state(Alignment::Center);
+        let vertical = cx.state(Orientation::Vertical);
 
-        let x_value = cx.state(0.25f32);
-        let y_value = cx.state(0.25f32);
+        // Derived signals for individual x and y sliders
+        let x_value = cx.derived({
+            let xy = xy;
+            move |s| xy.get(s).0
+        });
+        let y_value = cx.derived({
+            let xy = xy;
+            move |s| xy.get(s).1
+        });
 
         ExamplePage::vertical(cx, |cx| {
-            Label::new(cx, "2-dimensional XY Pad");
+            Label::static_text(cx, "2-dimensional XY Pad");
             VStack::new(cx, move |cx| {
                 HStack::new(cx, move |cx| {
                     Slider::new(cx, y_value)
-                        .width(Pixels(10.0))
-                        .height(Pixels(100.0))
+                        .width(width_10)
+                        .height(height_100)
                         .range(0.0..1.0)
-                        .orientation(Orientation::Vertical)
+                        .orientation(vertical)
                         .on_change(move |cx, val| {
-                            y_value.set(cx, val);
-                            let x = *x_value.get(cx);
-                            cx.emit(AppEvent::XYPadChange(x, val));
+                            let x = xy.get(cx).0;
+                            xy.set(cx, (x, val));
                         });
-                    // XY pad (still uses Lens - TODO: migrate XYPad)
-                    XYPad::new(cx, AppData::xy_data.map(|data| (data.0, data.1))).on_change(
-                        move |ex, value_x, value_y| {
-                            x_value.set(ex, value_x);
-                            y_value.set(ex, value_y);
-                            ex.emit(AppEvent::XYPadChange(value_x, value_y));
-                        },
-                    );
+                    XYPad::new(cx, xy).two_way();
                 })
-                .size(Auto)
-                .horizontal_gap(Pixels(5.0))
-                .alignment(Alignment::Center);
+                .size(auto)
+                .horizontal_gap(gap_5)
+                .alignment(align_center);
                 Slider::new(cx, x_value)
-                    .width(Pixels(100.0))
-                    .height(Pixels(10.0))
+                    .width(width_100)
+                    .height(height_10)
                     .range(0.0..1.0)
                     .on_change(move |cx, val| {
-                        x_value.set(cx, val);
-                        let y = *y_value.get(cx);
-                        cx.emit(AppEvent::XYPadChange(val, y));
+                        let y = xy.get(cx).1;
+                        xy.set(cx, (val, y));
                     });
             })
-            .alignment(Alignment::Center);
+            .alignment(align_center);
         });
-    })
-    .title("XY Pad")
-    .run()
+        cx.state("XY Pad")
+    });
+
+    app.title(title).run()
 }

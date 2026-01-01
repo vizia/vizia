@@ -92,6 +92,23 @@ path = "examples/7GUIs/temperature_converter.rs"
 name = "temperature_converter_signal"
 path = "examples/7GUIs/temperature_converter_signal.rs"
 
+# README examples
+[[example]]
+name = "readme_counter"
+path = "examples/readme/counter.rs"
+
+[[example]]
+name = "readme_derived_state"
+path = "examples/readme/derived_state.rs"
+
+[[example]]
+name = "readme_signal_sync"
+path = "examples/readme/signal_sync.rs"
+
+[[example]]
+name = "readme_app_trait"
+path = "examples/readme/app_trait.rs"
+
 [[example]]
 name = "virtual_list"
 path = "examples/views/virtual_list.rs"
@@ -301,3 +318,4 @@ path = "examples/app_state.rs"
 [[example]]
 name = "signal_map_demo"
 path = "examples/signal_map_demo.rs"
+

@@ -1,38 +1,7 @@
 use vizia::prelude::*;
 
-#[derive(Lens)]
-pub struct AppData {}
-
-impl Model for AppData {}
-
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
-        AppData {}.build(cx);
-
-        //         Markdown::new(
-        //             cx,
-        //             r#"
-        // # This is a heading
-
-        // ## This is a subheading
-
-        // This is **some strong text**. ~~And some more text~~.
-
-        // - List A
-        //   - List A1
-        //     - Item
-        //   - List A2
-        //     - Item with *emphasis*
-
-        // ```
-        // fn some_code() {
-
-        // }
-        // ```
-
-        // A [link](https://github.com/vizia/vizia)
-        // "#,
-        //         );
+    let (app, title) = Application::new_with_state(|cx| {
         ScrollView::new(cx, |cx| {
             Markdown::new(
                 cx,
@@ -45,7 +14,8 @@ fn main() -> Result<(), ApplicationError> {
 ",
             );
         });
-    })
-    .title("Markdown")
-    .run()
+        cx.state("Markdown")
+    });
+
+    app.title(title).run()
 }

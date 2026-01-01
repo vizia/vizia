@@ -2,6 +2,7 @@ use crate::prelude::*;
 
 /// A button which can be toggled between two states.
 pub struct ToggleButton {
+    value: Signal<bool>,
     on_toggle: Option<Box<dyn Fn(&mut EventContext)>>,
 }
 
@@ -14,13 +15,15 @@ impl ToggleButton {
         checked: Signal<bool>,
         content: impl Fn(&mut Context) -> Handle<V> + 'static,
     ) -> Handle<Self> {
-        Self { on_toggle: None }
+        let false_signal = cx.state(false);
+        let true_signal = cx.state(true);
+        Self { value: checked, on_toggle: None }
             .build(cx, |cx| {
-                (content)(cx).hoverable(false);
+                (content)(cx).hoverable(false_signal);
             })
             .role(Role::Button)
-            .navigable(true)
-            .checkable(true) // To let the accesskit know button is toggleable
+            .navigable(true_signal)
+            .checkable(true_signal) // To let the accesskit know button is toggleable
             .checked(checked)
     }
 }
@@ -71,5 +74,18 @@ impl Handle<'_, ToggleButton> {
     /// Sets the callback triggered when the [ToggleButton] is toggled.
     pub fn on_toggle(self, callback: impl Fn(&mut EventContext) + 'static) -> Self {
         self.modify(|toggle_button| toggle_button.on_toggle = Some(Box::new(callback)))
+    }
+
+    /// Enables two-way binding: toggling the button automatically updates the bound signal.
+    ///
+    /// This is a convenience method equivalent to:
+    /// ```ignore
+    /// .on_toggle(move |cx| signal.update(cx, |v| *v = !*v))
+    /// ```
+    pub fn two_way(self) -> Self {
+        self.modify(|toggle_button| {
+            let signal = toggle_button.value;
+            toggle_button.on_toggle = Some(Box::new(move |cx| signal.update(cx, |v| *v = !*v)));
+        })
     }
 }

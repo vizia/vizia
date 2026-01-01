@@ -51,10 +51,12 @@ use crate::prelude::*;
 /// #
 /// HStack::new(cx, |cx| {
 ///     Switch::new(cx, value);
-///     Label::new(cx, "Press me");
+///     let label = cx.state("Press me");
+///     Label::new(cx, label);
 /// });
 /// ```
 pub struct Switch {
+    value: Signal<bool>,
     on_toggle: Option<Box<dyn Fn(&mut EventContext)>>,
 }
 
@@ -71,20 +73,23 @@ impl Switch {
     /// #
     /// Switch::new(cx, checked_signal);
     /// ```
-    pub fn new<L: Res<bool>>(cx: &mut Context, checked: L) -> Handle<Self> {
-        Self { on_toggle: None }
+    pub fn new(cx: &mut Context, checked: Signal<bool>) -> Handle<Self> {
+        let false_signal = cx.state(false);
+        let true_signal = cx.state(true);
+        let position_absolute = cx.state(PositionType::Absolute);
+        Self { value: checked, on_toggle: None }
             .build(cx, |cx| {
                 Element::new(cx)
                     .class("switch-handle-bg")
-                    .hoverable(false)
-                    .position_type(PositionType::Absolute);
+                    .hoverable(false_signal)
+                    .position_type(position_absolute);
                 Element::new(cx)
                     .class("switch-handle")
-                    .hoverable(false)
-                    .position_type(PositionType::Absolute);
+                    .hoverable(false_signal)
+                    .position_type(position_absolute);
             })
             .checked(checked)
-            .navigable(true)
+            .navigable(true_signal)
     }
 }
 
@@ -109,6 +114,19 @@ impl Handle<'_, Switch> {
         F: 'static + Fn(&mut EventContext),
     {
         self.modify(|switch| switch.on_toggle = Some(Box::new(callback)))
+    }
+
+    /// Enables two-way binding: toggling the switch automatically updates the bound signal.
+    ///
+    /// This is a convenience method equivalent to:
+    /// ```ignore
+    /// .on_toggle(move |cx| signal.update(cx, |v| *v = !*v))
+    /// ```
+    pub fn two_way(self) -> Self {
+        self.modify(|switch| {
+            let signal = switch.value;
+            switch.on_toggle = Some(Box::new(move |cx| signal.update(cx, |v| *v = !*v)));
+        })
     }
 }
 

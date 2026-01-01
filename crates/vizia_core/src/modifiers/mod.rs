@@ -8,8 +8,10 @@
 //! # use vizia_winit::application::Application;
 //! # Application::new(|cx|{
 //! // Sets the background color of the label to red.
-//! Label::new(cx, "Hello World")
-//!     .background_color(Color::red());
+//! let text = cx.state("Hello World");
+//! let red = cx.state(Color::red());
+//! Label::new(cx, text)
+//!     .background_color(red);
 //! # }).run();
 //! ```
 //!
@@ -19,8 +21,10 @@
 //! # use vizia_winit::application::Application;
 //! # Application::new(|cx|{
 //! // Sets the width of the label to be 100 pixels.
-//! Label::new(cx, "Hello World")
-//!     .width(Pixels(100.0));
+//! let text = cx.state("Hello World");
+//! let width_100 = cx.state(Pixels(100.0));
+//! Label::new(cx, text)
+//!     .width(width_100);
 //! # }).run();
 //! ```
 //!
@@ -31,7 +35,8 @@
 //! # use vizia_winit::application::Application;
 //! # Application::new(|cx|{
 //! // Closes the window when the label is pressed.
-//! Label::new(cx, "Hello World")
+//! let text = cx.state("Hello World");
+//! Label::new(cx, text)
 //!     .on_press(|cx| cx.emit(WindowEvent::WindowClose));
 //! # }).run();
 //! ```
@@ -44,11 +49,14 @@ macro_rules! modifier {
     ) => {
         $(#[$meta])*
         #[allow(unused_variables)]
-        fn $name<U: Into<$t>>(mut self, value: impl Res<U>) -> Self {
+        fn $name<U>(mut self, value: Signal<U>) -> Self
+        where
+            U: Clone + Into<$t> + 'static,
+        {
             let entity = self.entity();
             let current = self.current();
-            value.set_or_bind(self.context(), current, move |cx, v| {
-                cx.style.$name.insert(entity, v.get(cx).into());
+            internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+                cx.style.$name.insert(entity, v.clone().into());
 
                 cx.style.system_flags |= $flags;
                 cx.set_system_flags(entity, $flags);
@@ -61,7 +69,7 @@ macro_rules! modifier {
 
 // Inside private module to hide implementation details.
 mod internal {
-    use crate::prelude::{Context, Entity, Handle};
+    use crate::prelude::{Binding, Context, Entity, Handle, Signal};
 
     // Allows a modifier trait to access to context and entity from `self`.
     pub trait Modifiable: Sized {
@@ -82,6 +90,27 @@ mod internal {
         fn current(&self) -> Entity {
             self.current
         }
+    }
+
+    pub fn bind_signal<T, F>(
+        cx: &mut Context,
+        current: Entity,
+        entity: Entity,
+        signal: Signal<T>,
+        f: F,
+    )
+    where
+        T: Clone + 'static,
+        F: 'static + Fn(&mut Context, &T),
+    {
+        cx.with_current(current, move |cx| {
+            Binding::new(cx, signal, move |cx| {
+                cx.with_current(entity, |cx| {
+                    let value = signal.get(cx).clone();
+                    f(cx, &value);
+                });
+            });
+        });
     }
 }
 

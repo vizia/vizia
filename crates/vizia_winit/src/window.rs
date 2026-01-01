@@ -1,4 +1,4 @@
-use crate::window_modifiers::WindowModifiers;
+use crate::window_modifiers::{apply_title_affixes, WindowModifiers};
 use glutin::context::GlProfile;
 use vizia_core::context::TreeProps;
 use vizia_window::{AnchorTarget, WindowDescription};
@@ -365,6 +365,8 @@ impl Window {
     }
 
     pub fn new(cx: &mut Context, content: impl 'static + Fn(&mut Context)) -> Handle<Self> {
+        let position_absolute = cx.state(PositionType::Absolute);
+        let anchor_window = cx.state(AnchorTarget::Window);
         Self {
             window: None,
             on_close: None,
@@ -383,8 +385,8 @@ impl Window {
             );
             cx.tree.set_window(cx.current(), true);
         })
-        .position_type(PositionType::Absolute)
-        .anchor_target(AnchorTarget::Window)
+        .position_type(position_absolute)
+        .anchor_target(anchor_window)
     }
 
     pub fn popup(
@@ -392,6 +394,8 @@ impl Window {
         is_modal: bool,
         content: impl 'static + Fn(&mut Context),
     ) -> Handle<Self> {
+        let position_absolute = cx.state(PositionType::Absolute);
+        let anchor_window = cx.state(AnchorTarget::Window);
         Self {
             window: None,
             on_close: None,
@@ -417,8 +421,8 @@ impl Window {
             );
             cx.tree.set_window(cx.current(), true);
         })
-        .position_type(PositionType::Absolute)
-        .anchor_target(AnchorTarget::Window)
+        .position_type(position_absolute)
+        .anchor_target(anchor_window)
         .lock_focus_to_within()
     }
 }
@@ -464,7 +468,7 @@ impl View for Window {
             }
 
             WindowEvent::SetTitle(title) => {
-                self.window().set_title(title);
+                self.window().set_title(&apply_title_affixes(title));
             }
 
             WindowEvent::SetSize(size) => {
@@ -577,9 +581,9 @@ impl WindowModifiers for Handle<'_, Window> {
         self.modify(|window| window.on_create = Some(Box::new(callback)))
     }
 
-    fn title<T: ToString>(mut self, title: impl Res<T>) -> Self {
+    fn title<T: ToString>(mut self, title: Signal<T>) -> Self {
         let entity = self.entity();
-        let title = title.get(&self).to_string();
+        let title = apply_title_affixes(&title.get(&self).to_string());
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
             win_state.window_description.title = title;
         }
@@ -587,9 +591,9 @@ impl WindowModifiers for Handle<'_, Window> {
         self
     }
 
-    fn inner_size<S: Into<WindowSize>>(mut self, size: impl Res<S>) -> Self {
+    fn inner_size<S: Into<WindowSize> + Clone>(mut self, size: Signal<S>) -> Self {
         let entity = self.entity();
-        let size = size.get(&self).into();
+        let size = size.get(&self).clone().into();
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
             win_state.window_description.inner_size = size;
         }
@@ -597,9 +601,9 @@ impl WindowModifiers for Handle<'_, Window> {
         self
     }
 
-    fn min_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
+    fn min_inner_size<S: Into<WindowSize> + Clone>(mut self, size: Signal<Option<S>>) -> Self {
         let entity = self.entity();
-        let size = size.get(&self).map(|size| size.into());
+        let size = size.get(&self).as_ref().map(|size| size.clone().into());
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
             win_state.window_description.min_inner_size = size;
         }
@@ -607,9 +611,9 @@ impl WindowModifiers for Handle<'_, Window> {
         self
     }
 
-    fn max_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
+    fn max_inner_size<S: Into<WindowSize> + Clone>(mut self, size: Signal<Option<S>>) -> Self {
         let entity = self.entity();
-        let size = size.get(&self).map(|size| size.into());
+        let size = size.get(&self).as_ref().map(|size| size.clone().into());
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
             win_state.window_description.max_inner_size = size;
         }
@@ -617,9 +621,12 @@ impl WindowModifiers for Handle<'_, Window> {
         self
     }
 
-    fn position<P: Into<vizia_window::WindowPosition>>(mut self, position: impl Res<P>) -> Self {
+    fn position<P: Into<vizia_window::WindowPosition> + Clone>(
+        mut self,
+        position: Signal<P>,
+    ) -> Self {
         let entity = self.entity();
-        let pos = Some(position.get(&self).into());
+        let pos = Some(position.get(&self).clone().into());
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
             win_state.window_description.position = pos;
         }
@@ -627,9 +634,12 @@ impl WindowModifiers for Handle<'_, Window> {
         self
     }
 
-    fn offset<P: Into<vizia_window::WindowPosition>>(mut self, offset: impl Res<P>) -> Self {
+    fn offset<P: Into<vizia_window::WindowPosition> + Clone>(
+        mut self,
+        offset: Signal<P>,
+    ) -> Self {
         let entity = self.entity();
-        let offset = Some(offset.get(&self).into());
+        let offset = Some(offset.get(&self).clone().into());
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
             win_state.window_description.offset = offset;
         }
@@ -637,9 +647,9 @@ impl WindowModifiers for Handle<'_, Window> {
         self
     }
 
-    fn anchor<P: Into<vizia_window::Anchor>>(mut self, anchor: impl Res<P>) -> Self {
+    fn anchor<P: Into<vizia_window::Anchor> + Clone>(mut self, anchor: Signal<P>) -> Self {
         let entity = self.entity();
-        let anchor = Some(anchor.get(&self).into());
+        let anchor = Some(anchor.get(&self).clone().into());
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
             win_state.window_description.anchor = anchor;
         }
@@ -647,12 +657,12 @@ impl WindowModifiers for Handle<'_, Window> {
         self
     }
 
-    fn anchor_target<P: Into<vizia_window::AnchorTarget>>(
+    fn anchor_target<P: Into<vizia_window::AnchorTarget> + Clone>(
         mut self,
-        anchor_target: impl Res<P>,
+        anchor_target: Signal<P>,
     ) -> Self {
         let entity = self.entity();
-        let anchor_target = Some(anchor_target.get(&self).into());
+        let anchor_target = Some(anchor_target.get(&self).clone().into());
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
             win_state.window_description.anchor_target = anchor_target;
         }
@@ -660,9 +670,9 @@ impl WindowModifiers for Handle<'_, Window> {
         self
     }
 
-    fn parent_anchor<P: Into<Anchor>>(mut self, parent_anchor: impl Res<P>) -> Self {
+    fn parent_anchor<P: Into<Anchor> + Clone>(mut self, parent_anchor: Signal<P>) -> Self {
         let entity = self.entity();
-        let parent_anchor = Some(parent_anchor.get(&self).into());
+        let parent_anchor = Some(parent_anchor.get(&self).clone().into());
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
             win_state.window_description.parent_anchor = parent_anchor;
         }
@@ -670,9 +680,9 @@ impl WindowModifiers for Handle<'_, Window> {
         self
     }
 
-    fn resizable(mut self, flag: impl Res<bool>) -> Self {
+    fn resizable(mut self, flag: Signal<bool>) -> Self {
         let entity = self.entity();
-        let flag = flag.get(&self);
+        let flag = *flag.get(&self);
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
             win_state.window_description.resizable = flag;
         }
@@ -680,9 +690,9 @@ impl WindowModifiers for Handle<'_, Window> {
         self
     }
 
-    fn minimized(mut self, flag: impl Res<bool>) -> Self {
+    fn minimized(mut self, flag: Signal<bool>) -> Self {
         let entity = self.entity();
-        let flag = flag.get(&self);
+        let flag = *flag.get(&self);
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
             win_state.window_description.minimized = flag;
         }
@@ -690,9 +700,9 @@ impl WindowModifiers for Handle<'_, Window> {
         self
     }
 
-    fn maximized(mut self, flag: impl Res<bool>) -> Self {
+    fn maximized(mut self, flag: Signal<bool>) -> Self {
         let entity = self.entity();
-        let flag = flag.get(&self);
+        let flag = *flag.get(&self);
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
             win_state.window_description.maximized = flag;
         }
@@ -700,9 +710,9 @@ impl WindowModifiers for Handle<'_, Window> {
         self
     }
 
-    fn visible(mut self, flag: impl Res<bool>) -> Self {
+    fn visible(mut self, flag: Signal<bool>) -> Self {
         let entity = self.entity();
-        let flag = flag.get(&self);
+        let flag = *flag.get(&self);
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
             win_state.window_description.visible = flag
         }

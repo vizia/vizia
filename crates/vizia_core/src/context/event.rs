@@ -1313,14 +1313,21 @@ impl<'a> EventContext<'a> {
 
     /// Modifies the state of an existing timer with the provided `Timer` id.
     pub fn modify_timer(&mut self, timer: Timer, timer_function: impl Fn(&mut TimerState)) {
-        while let Some(next_timer_state) = self.running_timers.peek() {
-            if next_timer_state.id == timer {
-                let mut timer_state = self.running_timers.pop().unwrap();
+        if !self.running_timers.is_empty() {
+            let mut running = std::mem::take(self.running_timers).into_vec();
+            let mut found = false;
 
-                (timer_function)(&mut timer_state);
+            for timer_state in &mut running {
+                if timer_state.id == timer {
+                    (timer_function)(timer_state);
+                    found = true;
+                    break;
+                }
+            }
 
-                self.running_timers.push(timer_state);
+            *self.running_timers = BinaryHeap::from(running);
 
+            if found {
                 return;
             }
         }
@@ -1337,15 +1344,21 @@ impl<'a> EventContext<'a> {
         timer: Timer,
         timer_function: impl Fn(&TimerState) -> T,
     ) -> Option<T> {
-        while let Some(next_timer_state) = self.running_timers.peek() {
-            if next_timer_state.id == timer {
-                let timer_state = self.running_timers.pop().unwrap();
+        if !self.running_timers.is_empty() {
+            let mut running = std::mem::take(self.running_timers).into_vec();
+            let mut result = None;
 
-                let t = (timer_function)(&timer_state);
+            for timer_state in &mut running {
+                if timer_state.id == timer {
+                    result = Some((timer_function)(timer_state));
+                    break;
+                }
+            }
 
-                self.running_timers.push(timer_state);
+            *self.running_timers = BinaryHeap::from(running);
 
-                return Some(t);
+            if result.is_some() {
+                return result;
             }
         }
 

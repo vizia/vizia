@@ -17,9 +17,11 @@ use crate::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
+/// let width_100 = cx.state(Pixels(100.0));
+/// let height_100 = cx.state(Pixels(100.0));
 /// Element::new(cx)
-///     .width(Pixels(100.0))
-///     .height(Pixels(100.0));
+///     .width(width_100)
+///     .height(height_100);
 /// ```
 ///
 /// ## Element as a rectangle
@@ -31,9 +33,11 @@ use crate::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
+/// let width_100 = cx.state(Pixels(100.0));
+/// let height_100 = cx.state(Pixels(100.0));
 /// Element::new(cx)
-///     .width(Pixels(100.0))
-///     .height(Pixels(100.0))
+///     .width(width_100)
+///     .height(height_100)
 ///     .background_color(Color::black());
 /// ```
 ///
@@ -46,9 +50,11 @@ use crate::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
+/// let width_100 = cx.state(Pixels(100.0));
+/// let height_1 = cx.state(Pixels(1.0));
 /// Element::new(cx)
-///      .width(Pixels(100.0))
-///      .height(Pixels(1.0))
+///      .width(width_100)
+///      .height(height_1)
 ///      .background_color(Color::black());
 /// ```
 ///
@@ -63,36 +69,32 @@ use crate::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
+/// let width_100 = cx.state(Pixels(100.0));
+/// let height_100 = cx.state(Pixels(100.0));
+/// let radius_50 = cx.state(Percentage(50.0));
 /// Element::new(cx)
-///     .width(Pixels(100.0))
-///     .height(Pixels(100.0))
-///     .border_radius(Percentage(50.0))
+///     .width(width_100)
+///     .height(height_100)
+///     .border_radius(radius_50)
 ///     .background_color(Color::black());
 /// ```
 ///
 /// ## Element as an image
 ///
 /// An element can be used to display an image like this 100 by 100 pixels one. The image can
-/// be set by using a stylesheet or by using a lens. The image has to be loaded manually by
+/// be set by using a stylesheet or by using a signal-driven style. The image has to be loaded manually by
 /// using the [`Context::load_image`](crate::prelude::Context::load_image) method.
 ///
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # #[derive(Lens)]
-/// # struct AppData {
-/// #     picture: String,
-/// # }
-/// #
-/// # impl Model for AppData {}
-/// #
 /// # let cx = &mut Context::default();
 /// #
-/// # AppData { picture: String::from("test.png") }.build(cx);
-/// #
+/// let width_100 = cx.state(Pixels(100.0));
+/// let height_100 = cx.state(Pixels(100.0));
 /// Element::new(cx)
-///     .width(Pixels(100.0))
-///     .height(Pixels(100.0));
+///     .width(width_100)
+///     .height(height_100);
 /// ```
 pub struct Element;
 

@@ -2,7 +2,6 @@
 use crate::prelude::*;
 
 use unic_langid::LanguageIdentifier;
-use vizia_derive::Lens;
 use web_time::Duration;
 
 /// And enum which represents the current built-in theme mode.
@@ -29,7 +28,6 @@ pub enum AppTheme {
 }
 
 /// Represents the theme used by the application.
-#[derive(Lens)]
 pub struct Theme {
     /// The current application theme
     pub app_theme: AppTheme,
@@ -54,10 +52,9 @@ impl Theme {
 }
 
 /// A model for system specific state which can be accessed by any model or view.
-#[derive(Lens)]
 pub struct Environment {
-    /// The locale used for localization.
-    pub locale: LanguageIdentifier,
+    /// The locale used for localization (signal-based for reactive updates).
+    pub locale: Signal<LanguageIdentifier>,
     /// Current application and system theme.
     pub theme: Theme,
     /// The timer used to blink the caret of a textbox.
@@ -66,7 +63,9 @@ pub struct Environment {
 
 impl Environment {
     pub(crate) fn new(cx: &mut Context) -> Self {
-        let locale = sys_locale::get_locale().and_then(|l| l.parse().ok()).unwrap_or_default();
+        let locale_value =
+            sys_locale::get_locale().and_then(|l| l.parse().ok()).unwrap_or_default();
+        let locale = cx.state(locale_value);
         let caret_timer = cx.add_timer(Duration::from_millis(530), None, |cx, action| {
             if matches!(action, TimerAction::Tick(_)) {
                 cx.emit(TextEvent::ToggleCaret);
@@ -93,7 +92,7 @@ impl Model for Environment {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.take(|event, _| match event {
             EnvironmentEvent::SetLocale(locale) => {
-                self.locale = locale;
+                self.locale.set(cx, locale);
             }
 
             EnvironmentEvent::SetThemeMode(theme) => {
@@ -104,8 +103,9 @@ impl Model for Environment {
             }
 
             EnvironmentEvent::UseSystemLocale => {
-                self.locale =
+                let locale =
                     sys_locale::get_locale().map(|l| l.parse().unwrap()).unwrap_or_default();
+                self.locale.set(cx, locale);
             }
 
             EnvironmentEvent::ToggleThemeMode => {

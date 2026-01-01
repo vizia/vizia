@@ -2,43 +2,20 @@ use vizia::prelude::*;
 
 use crate::DemoRegion;
 
-#[derive(Lens)]
-pub struct ProgressData {
-    progress: f32,
-    timer: Timer,
-}
-
-#[derive(Debug)]
-pub enum ProgressEvent {
-    Tick,
-}
-
-impl Model for ProgressData {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            ProgressEvent::Tick => {
-                self.progress = cx
-                    .query_timer(self.timer, |timer_state| timer_state.progress().unwrap())
-                    .unwrap();
-                if self.progress >= 1.0 {
-                    cx.start_timer(self.timer);
-                }
-            }
-        });
-    }
-}
-
 pub fn progressbar(cx: &mut Context) {
-    let timer =
-        cx.add_timer(Duration::from_millis(100), Some(Duration::from_secs(5)), |cx, action| {
-            if matches!(action, TimerAction::Tick(_)) {
-                cx.emit(ProgressEvent::Tick)
-            }
-        });
+    let progress = cx.state(0.0f32);
+    let width_300 = cx.state(Pixels(300.0));
+    let duration_secs = 5.0f32;
+    let timer = cx.add_timer(Duration::from_millis(100), None, move |cx, action| {
+        if let TimerAction::Tick(delta) = action {
+            let current = *progress.get(cx);
+            let increment = delta.as_secs_f32() / duration_secs;
+            let next = current + increment;
+            progress.set(cx, if next >= 1.0 { 0.0 } else { next });
+        }
+    });
 
     cx.start_timer(timer);
-
-    ProgressData { progress: 0.0, timer }.build(cx);
 
     VStack::new(cx, |cx| {
         Markdown::new(cx, "# ProgressBar");
@@ -49,10 +26,12 @@ pub fn progressbar(cx: &mut Context) {
 
         DemoRegion::new(
             cx,
-            |cx| {
-                ProgressBar::horizontal(cx, ProgressData::progress).width(Pixels(300.0));
+            move |cx| {
+                ProgressBar::horizontal(cx, progress).width(width_300);
             },
-            r#"ProgressBar::horizontal(cx, ProgressData::progress).width(Pixels(300.0));"#,
+            r#"let progress = cx.state(0.0f32);
+let width_300 = cx.state(Pixels(300.0));
+ProgressBar::horizontal(cx, progress).width(width_300);"#,
         );
     })
     .class("panel");

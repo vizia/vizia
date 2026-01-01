@@ -21,7 +21,7 @@ const STYLE: &str = r#"
 "#;
 
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx: &mut Context| {
+    let (app, (title, size)) = Application::new_with_state(|cx: &mut Context| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
         // State signals
@@ -41,29 +41,31 @@ fn main() -> Result<(), ApplicationError> {
 
         VStack::new(cx, move |cx| {
             HStack::new(cx, |cx| {
-                Label::new(cx, "Elapsed Time:");
+                Label::static_text(cx, "Elapsed Time:");
                 ProgressBar::horizontal(cx, progress);
             });
 
-            Label::new(cx, elapsed_time.map(|v| format!("{:.1}s", v)));
+            let elapsed_label = cx.derived({
+                let elapsed_time = elapsed_time;
+                move |store| format!("{:.1}s", elapsed_time.get(store))
+            });
+            Label::new(cx, elapsed_label);
 
             HStack::new(cx, move |cx| {
-                Label::new(cx, "Duration:");
-                Slider::new(cx, total_time)
-                    .range(0.0..30.0)
-                    .on_change(move |cx, v| {
-                        total_time.set(cx, v);
-                        // Restart timer if needed
-                        let elapsed = *elapsed_time.get(cx);
-                        if elapsed < v && !cx.timer_is_running(timer) {
-                            cx.start_timer(timer);
-                        } else if elapsed >= v {
-                            cx.stop_timer(timer);
-                        }
-                    });
+                Label::static_text(cx, "Duration:");
+                Slider::new(cx, total_time).range(0.0..30.0).on_change(move |cx, v| {
+                    total_time.set(cx, v);
+                    // Restart timer if needed
+                    let elapsed = *elapsed_time.get(cx);
+                    if elapsed < v && !cx.timer_is_running(timer) {
+                        cx.start_timer(timer);
+                    } else if elapsed >= v {
+                        cx.stop_timer(timer);
+                    }
+                });
             });
 
-            Button::new(cx, |cx| Label::new(cx, "Reset")).on_press(move |cx| {
+            Button::new(cx, |cx| Label::static_text(cx, "Reset")).on_press(move |cx| {
                 elapsed_time.set(cx, 0.0);
                 progress.set(cx, 0.0);
                 let total = *total_time.get(cx);
@@ -72,8 +74,8 @@ fn main() -> Result<(), ApplicationError> {
                 }
             });
         });
-    })
-    .title("Timer")
-    .inner_size((300, 150))
-    .run()
+        (cx.state("Timer"), cx.state((300, 150)))
+    });
+
+    app.title(title).inner_size(size).run()
 }

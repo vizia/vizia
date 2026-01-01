@@ -2,25 +2,9 @@ use vizia::prelude::*;
 
 use crate::DemoRegion;
 
-#[derive(Lens)]
-pub struct TextboxData {
-    text: String,
-}
-
-pub enum TextboxEvent {
-    SetText(String),
-}
-
-impl Model for TextboxData {
-    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
-        event.map(|textbox_event, _| match textbox_event {
-            TextboxEvent::SetText(text) => self.text = text.clone(),
-        });
-    }
-}
-
 pub fn textbox(cx: &mut Context) {
-    TextboxData { text: "Hello Vizia".to_string() }.build(cx);
+    let textbox_text = cx.state("Hello Vizia".to_string());
+    let width_100 = cx.state(Pixels(100.0));
 
     VStack::new(cx, |cx| {
         Markdown::new(
@@ -37,13 +21,15 @@ A textbox can be used to display a string of text which can be edited.
         DemoRegion::new(
             cx,
             |cx| {
-                Textbox::new(cx, TextboxData::text)
-                    .on_submit(|cx, text, _| cx.emit(TextboxEvent::SetText(text.clone())))
-                    .width(Pixels(100.0));
+                Textbox::new(cx, textbox_text)
+                    .on_submit(move |cx, text, _| textbox_text.set(cx, text.clone()))
+                    .width(width_100);
             },
-            r#"Textbox::new(cx, TextboxData::text)
-    .on_submit(|cx, text, _| cx.emit(TextboxEvent::SetText(text.clone())))
-    .width(Pixels(100.0));"#,
+            r#"let textbox_text = cx.state("Hello Vizia".to_string());
+let width_100 = cx.state(Pixels(100.0));
+Textbox::new(cx, textbox_text)
+    .on_submit(|cx, text, _| textbox_text.set(cx, text.clone()))
+    .width(width_100);"#,
         );
     })
     .class("panel");

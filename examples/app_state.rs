@@ -19,24 +19,38 @@ impl App for CounterApp {
     }
 
     fn view(self, cx: &mut Context) -> Self {
+        let title_size = cx.state(24.0);
+        let title_weight = cx.state(FontWeightKeyword::Bold);
+        let count_size = cx.state(32.0);
+        let gap_10 = cx.state(Pixels(10.0));
+        let parity_size = cx.state(16.0);
+        let parity_color = cx.state(Color::rgb(128, 128, 128));
+        let align_center = cx.state(Alignment::Center);
+        let gap_20 = cx.state(Pixels(20.0));
         VStack::new(cx, |cx| {
-            Label::new(cx, "Counter App").font_size(24.0).font_weight(FontWeightKeyword::Bold);
+            Label::static_text(cx, "Counter App")
+                .font_size(title_size)
+                .font_weight(title_weight);
 
             // Display the current count
-            Label::new(cx, self.count.map(|count| format!("Count: {}", count))).font_size(32.0);
+            let count_text = cx.derived({
+                let count = self.count;
+                move |store| format!("Count: {}", count.get(store))
+            });
+            Label::new(cx, count_text).font_size(count_size);
 
             // Counter controls - emit events instead of directly updating
             HStack::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "Decrement"))
+                Button::new(cx, |cx| Label::static_text(cx, "Decrement"))
                     .on_press(|cx| cx.emit(CounterEvent::Decrement));
 
-                Button::new(cx, |cx| Label::new(cx, "Reset"))
+                Button::new(cx, |cx| Label::static_text(cx, "Reset"))
                     .on_press(|cx| cx.emit(CounterEvent::Reset));
 
-                Button::new(cx, |cx| Label::new(cx, "Increment"))
+                Button::new(cx, |cx| Label::static_text(cx, "Increment"))
                     .on_press(|cx| cx.emit(CounterEvent::Increment));
             })
-            .gap(Pixels(10.0));
+            .gap(gap_10);
 
             // Show derived state - whether count is even or odd
             let count_signal = self.count; // Copy the signal for use in derived computation
@@ -45,12 +59,16 @@ impl App for CounterApp {
                 if *count % 2 == 0 { "Even" } else { "Odd" }.to_string()
             });
 
-            Label::new(cx, parity.map(|p| format!("Parity: {}", p)))
-                .font_size(16.0)
-                .color(Color::rgb(128, 128, 128));
+            let parity_text = cx.derived({
+                let parity = parity;
+                move |store| format!("Parity: {}", parity.get(store))
+            });
+            Label::new(cx, parity_text)
+                .font_size(parity_size)
+                .color(parity_color);
         })
-        .alignment(Alignment::Center)
-        .gap(Pixels(20.0));
+        .alignment(align_center)
+        .gap(gap_20);
 
         self
     }
@@ -71,5 +89,12 @@ impl App for CounterApp {
 }
 
 fn main() -> Result<(), ApplicationError> {
-    CounterApp::create().title("Counter").inner_size((400, 350)).run()
+    let (app, (title, size)) = Application::new_with_state(|cx| {
+        let mut app = CounterApp::new(cx);
+        app = app.view(cx);
+        app.build(cx);
+        (cx.state("Counter"), cx.state((400, 350)))
+    });
+
+    app.title(title).inner_size(size).run()
 }

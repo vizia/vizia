@@ -7,7 +7,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// Sets the layout type of the view.
         ///
         /// The layout type controls how a parent will position any children which have `Position::Relative`.
-        /// Accepts any value, or lens to a target, with a type which can be converted into `LayoutType`.
+        /// Accepts a `Signal<LayoutType>`.
         ///
         /// There are three variants:
         /// - `LayoutType::Row` - Parent will stack its children horizontally.
@@ -18,17 +18,9 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// ```
         /// # use vizia_core::prelude::*;
         /// # let cx = &mut Context::default();
-        /// #[derive(Lens, Model, Setter)]
-        /// pub struct AppData {
-        ///     layout_type: LayoutType,
-        /// }
+        /// let layout_row = cx.state(LayoutType::Row);
         ///
-        /// # AppData {
-        /// #   layout_type: LayoutType::Row,
-        /// # }.build(cx);
-        ///
-        /// Element::new(cx).layout_type(LayoutType::Row);  // Value of type `LayoutType`.
-        /// Element::new(cx).layout_type(AppData::layout_type); // Lens to target of type `LayoutType`.
+        /// Element::new(cx).layout_type(layout_row);
         /// ```
         layout_type,
         LayoutType,
@@ -49,7 +41,8 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// ```
         /// # use vizia_core::prelude::*;
         /// # let cx = &mut Context::default();
-        /// Element::new(cx).position_type(PositionType::Absolute);
+        /// let position_absolute = cx.state(PositionType::Absolute);
+        /// Element::new(cx).position_type(position_absolute);
         /// ```
         position_type,
         PositionType,
@@ -70,7 +63,8 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// ```
         /// # use vizia_core::prelude::*;
         /// # let cx = &mut Context::default();
-        /// Element::new(cx).left(Units::Pixels(100.0));
+        /// let left_100 = cx.state(Units::Pixels(100.0));
+        /// Element::new(cx).left(left_100);
         /// ```
         left,
         Units,
@@ -91,7 +85,8 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// ```
         /// # use vizia_core::prelude::*;
         /// # let cx = &mut Context::default();
-        /// Element::new(cx).right(Units::Pixels(100.0));
+        /// let right_100 = cx.state(Units::Pixels(100.0));
+        /// Element::new(cx).right(right_100);
         /// ```
         right,
         Units,
@@ -112,7 +107,8 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// ```
         /// # use vizia_core::prelude::*;
         /// # let cx = &mut Context::default();
-        /// Element::new(cx).top(Units::Pixels(100.0));
+        /// let top_100 = cx.state(Units::Pixels(100.0));
+        /// Element::new(cx).top(top_100);
         /// ```
         top,
         Units,
@@ -133,7 +129,8 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// ```
         /// # use vizia_core::prelude::*;
         /// # let cx = &mut Context::default();
-        /// Element::new(cx).bottom(Units::Pixels(100.0));
+        /// let bottom_100 = cx.state(Units::Pixels(100.0));
+        /// Element::new(cx).bottom(bottom_100);
         /// ```
         bottom,
         Units,
@@ -141,19 +138,20 @@ pub trait LayoutModifiers: internal::Modifiable {
     );
 
     /// Sets the space for all sides of the view.
-    fn space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn space<U>(mut self, value: Signal<U>) -> Self
+    where
+        U: Clone + Into<Units> + 'static,
+    {
         let entity = self.entity();
         let current = self.current();
-        self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, |cx, v| {
-                let value = v.get(cx).into();
-                cx.style.left.insert(cx.current, value);
-                cx.style.right.insert(cx.current, value);
-                cx.style.top.insert(cx.current, value);
-                cx.style.bottom.insert(cx.current, value);
+        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+            let value = v.clone().into();
+            cx.style.left.insert(cx.current, value);
+            cx.style.right.insert(cx.current, value);
+            cx.style.top.insert(cx.current, value);
+            cx.style.bottom.insert(cx.current, value);
 
-                cx.style.needs_relayout();
-            });
+            cx.style.needs_relayout();
         });
 
         self
@@ -174,17 +172,18 @@ pub trait LayoutModifiers: internal::Modifiable {
     );
 
     /// Sets the width and height of the view.
-    fn size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn size<U>(mut self, value: Signal<U>) -> Self
+    where
+        U: Clone + Into<Units> + 'static,
+    {
         let entity = self.entity();
         let current = self.current();
-        self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
-                cx.style.width.insert(cx.current, value);
-                cx.style.height.insert(cx.current, value);
+        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+            let value = v.clone().into();
+            cx.style.width.insert(cx.current, value);
+            cx.style.height.insert(cx.current, value);
 
-                cx.style.needs_relayout();
-            });
+            cx.style.needs_relayout();
         });
 
         self
@@ -236,19 +235,20 @@ pub trait LayoutModifiers: internal::Modifiable {
     /// Sets the space between the vew and its children.
     ///
     /// The child_space works by overriding the `Auto` space properties of its children.
-    fn padding<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn padding<U>(mut self, value: Signal<U>) -> Self
+    where
+        U: Clone + Into<Units> + 'static,
+    {
         let entity = self.entity();
         let current = self.current();
-        self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
-                cx.style.padding_left.insert(cx.current, value);
-                cx.style.padding_right.insert(cx.current, value);
-                cx.style.padding_top.insert(cx.current, value);
-                cx.style.padding_bottom.insert(cx.current, value);
+        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+            let value = v.clone().into();
+            cx.style.padding_left.insert(cx.current, value);
+            cx.style.padding_right.insert(cx.current, value);
+            cx.style.padding_top.insert(cx.current, value);
+            cx.style.padding_bottom.insert(cx.current, value);
 
-                cx.style.needs_relayout();
-            });
+            cx.style.needs_relayout();
         });
 
         self
@@ -269,17 +269,18 @@ pub trait LayoutModifiers: internal::Modifiable {
     );
 
     /// Sets the space between the views children in both the horizontal and vertical directions.
-    fn gap<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn gap<U>(mut self, value: Signal<U>) -> Self
+    where
+        U: Clone + Into<Units> + 'static,
+    {
         let entity = self.entity();
         let current = self.current();
-        self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
-                cx.style.horizontal_gap.insert(cx.current, value);
-                cx.style.vertical_gap.insert(cx.current, value);
+        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+            let value = v.clone().into();
+            cx.style.horizontal_gap.insert(cx.current, value);
+            cx.style.vertical_gap.insert(cx.current, value);
 
-                cx.style.needs_relayout();
-            });
+            cx.style.needs_relayout();
         });
 
         self
@@ -314,17 +315,18 @@ pub trait LayoutModifiers: internal::Modifiable {
     );
 
     /// Sets the minimum width and minimum height of the view.
-    fn min_size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn min_size<U>(mut self, value: Signal<U>) -> Self
+    where
+        U: Clone + Into<Units> + 'static,
+    {
         let entity = self.entity();
         let current = self.current();
-        self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
-                cx.style.min_width.insert(cx.current, value);
-                cx.style.min_height.insert(cx.current, value);
+        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+            let value = v.clone().into();
+            cx.style.min_width.insert(cx.current, value);
+            cx.style.min_height.insert(cx.current, value);
 
-                cx.needs_relayout();
-            });
+            cx.needs_relayout();
         });
 
         self
@@ -345,17 +347,18 @@ pub trait LayoutModifiers: internal::Modifiable {
     );
 
     /// Sets the maximum width and maximum height of the view.
-    fn max_size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn max_size<U>(mut self, value: Signal<U>) -> Self
+    where
+        U: Clone + Into<Units> + 'static,
+    {
         let entity = self.entity();
         let current = self.current();
-        self.context().with_current(entity, |cx| {
-            value.set_or_bind(cx, current, move |cx, v| {
-                let value = v.get(cx).into();
-                cx.style.max_width.insert(cx.current, value);
-                cx.style.max_height.insert(cx.current, value);
+        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+            let value = v.clone().into();
+            cx.style.max_width.insert(cx.current, value);
+            cx.style.max_height.insert(cx.current, value);
 
-                cx.needs_relayout();
-            });
+            cx.needs_relayout();
         });
 
         self
@@ -376,17 +379,18 @@ pub trait LayoutModifiers: internal::Modifiable {
     );
 
     /// Sets the minimum horizontal and minimum vertical space between the children of the view.
-    fn min_gap<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn min_gap<U>(mut self, value: Signal<U>) -> Self
+    where
+        U: Clone + Into<Units> + 'static,
+    {
         let entity = self.entity();
         let current = self.current();
-        self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
-                cx.style.min_horizontal_gap.insert(cx.current, value);
-                cx.style.min_vertical_gap.insert(cx.current, value);
+        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+            let value = v.clone().into();
+            cx.style.min_horizontal_gap.insert(cx.current, value);
+            cx.style.min_vertical_gap.insert(cx.current, value);
 
-                cx.needs_relayout();
-            });
+            cx.needs_relayout();
         });
 
         self
@@ -407,17 +411,18 @@ pub trait LayoutModifiers: internal::Modifiable {
     );
 
     /// Sets the maximum horizontal and maximum vertical space between the children of the view.
-    fn max_gap<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn max_gap<U>(mut self, value: Signal<U>) -> Self
+    where
+        U: Clone + Into<Units> + 'static,
+    {
         let entity = self.entity();
         let current = self.current();
-        self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
-                cx.style.max_horizontal_gap.insert(cx.current, value);
-                cx.style.max_vertical_gap.insert(cx.current, value);
+        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+            let value = v.clone().into();
+            cx.style.max_horizontal_gap.insert(cx.current, value);
+            cx.style.max_vertical_gap.insert(cx.current, value);
 
-                cx.needs_relayout();
-            });
+            cx.needs_relayout();
         });
 
         self
@@ -437,61 +442,45 @@ pub trait LayoutModifiers: internal::Modifiable {
         SystemFlags::RELAYOUT
     );
 
-    fn column_start(mut self, value: impl Res<usize>) -> Self {
+    fn column_start(mut self, value: Signal<usize>) -> Self {
         let entity = self.entity();
         let current = self.current();
-        self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx);
-                cx.style.column_start.insert(cx.current, value);
-
-                cx.needs_relayout();
-            });
+        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+            cx.style.column_start.insert(cx.current, *v);
+            cx.needs_relayout();
         });
 
         self
     }
 
-    fn column_span(mut self, value: impl Res<usize>) -> Self {
+    fn column_span(mut self, value: Signal<usize>) -> Self {
         let entity = self.entity();
         let current = self.current();
-        self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx);
-                cx.style.column_span.insert(cx.current, value);
-
-                cx.needs_relayout();
-            });
+        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+            cx.style.column_span.insert(cx.current, *v);
+            cx.needs_relayout();
         });
 
         self
     }
 
-    fn row_start(mut self, value: impl Res<usize>) -> Self {
+    fn row_start(mut self, value: Signal<usize>) -> Self {
         let entity = self.entity();
         let current = self.current();
-        self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx);
-                cx.style.row_start.insert(cx.current, value);
-
-                cx.needs_relayout();
-            });
+        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+            cx.style.row_start.insert(cx.current, *v);
+            cx.needs_relayout();
         });
 
         self
     }
 
-    fn row_span(mut self, value: impl Res<usize>) -> Self {
+    fn row_span(mut self, value: Signal<usize>) -> Self {
         let entity = self.entity();
         let current = self.current();
-        self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx);
-                cx.style.row_span.insert(cx.current, value);
-
-                cx.needs_relayout();
-            });
+        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+            cx.style.row_span.insert(cx.current, *v);
+            cx.needs_relayout();
         });
 
         self

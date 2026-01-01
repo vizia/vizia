@@ -1,6 +1,6 @@
 use vizia_core::{application::App, model::Model};
 
-use crate::application::{Application, ApplicationError};
+use crate::application::Application;
 
 /// A trait for creating Winit-based applications from `App` implementations.
 ///
@@ -33,12 +33,18 @@ use crate::application::{Application, ApplicationError};
 ///
 ///     fn on_build(self, cx: &mut Context) -> Self {
 ///         VStack::new(cx, |cx| {
-///             Label::new(cx, self.count.map(|c| format!("Count: {}", c)));
+///             let count_text = cx.derived({
+///                 let count = self.count;
+///                 move |store| format!("Count: {}", *count.get(store))
+///             });
+///             Label::new(cx, count_text);
 ///             
 ///             HStack::new(cx, |cx| {
-///                 Button::new(cx, |cx| Label::new(cx, "-"))
+///                 let decrement = cx.state("-");
+///                 let increment = cx.state("+");
+///                 Button::new(cx, |cx| Label::new(cx, decrement))
 ///                     .on_press(|cx| cx.emit(CounterEvent::Decrement));
-///                 Button::new(cx, |cx| Label::new(cx, "+"))
+///                 Button::new(cx, |cx| Label::new(cx, increment))
 ///                     .on_press(|cx| cx.emit(CounterEvent::Increment));
 ///             });
 ///         });

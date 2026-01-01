@@ -4,39 +4,10 @@ use crate::DemoRegion;
 
 use vizia::icons::{ICON_BOLD, ICON_ITALIC, ICON_UNDERLINE};
 
-#[derive(Lens)]
-pub struct ToggleData {
-    bold: bool,
-    italic: bool,
-    underline: bool,
-}
-
-pub enum ToggleEvent {
-    Bold,
-    Italic,
-    Underline,
-}
-
-impl Model for ToggleData {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            ToggleEvent::Bold => {
-                self.bold ^= true;
-            }
-
-            ToggleEvent::Italic => {
-                self.italic ^= true;
-            }
-
-            ToggleEvent::Underline => {
-                self.underline ^= true;
-            }
-        })
-    }
-}
-
 pub fn toggle_button(cx: &mut Context) {
-    ToggleData { bold: false, italic: false, underline: false }.build(cx);
+    let bold = cx.state(false);
+    let italic = cx.state(false);
+    let underline = cx.state(false);
 
     VStack::new(cx, |cx| {
         Markdown::new(cx, "# ToggleButton");
@@ -48,11 +19,10 @@ pub fn toggle_button(cx: &mut Context) {
         DemoRegion::new(
             cx,
             |cx| {
-                ToggleButton::new(cx, ToggleData::bold, |cx| Label::new(cx, "Bold"))
-                    .on_toggle(|cx| cx.emit(ToggleEvent::Bold));
+                ToggleButton::new(cx, bold, |cx| Label::static_text(cx, "Bold")).two_way();
             },
-            r#"ToggleButton::new(cx, ToggleData::bold, |cx| Label::new(cx, "Bold"))
-    .on_toggle(|cx| cx.emit(ToggleEvent::ToggleBold));"#,
+            r#"let bold = cx.state(false);
+ToggleButton::new(cx, bold, |cx| Label::static_text(cx, "Bold")).two_way();"#,
         );
 
         Markdown::new(cx, "### Toggle button group");
@@ -61,27 +31,22 @@ pub fn toggle_button(cx: &mut Context) {
             cx,
             |cx| {
                 ButtonGroup::new(cx, |cx| {
-                    ToggleButton::new(cx, ToggleData::bold, |cx| Svg::new(cx, ICON_BOLD))
-                        .on_toggle(|cx| cx.emit(ToggleEvent::Bold));
+                    ToggleButton::new(cx, bold, |cx| Svg::new(cx, ICON_BOLD)).two_way();
 
-                    ToggleButton::new(cx, ToggleData::italic, |cx| Svg::new(cx, ICON_ITALIC))
-                        .on_toggle(|cx| cx.emit(ToggleEvent::Italic));
+                    ToggleButton::new(cx, italic, |cx| Svg::new(cx, ICON_ITALIC)).two_way();
 
-                    ToggleButton::new(cx, ToggleData::underline, |cx| Svg::new(cx, ICON_UNDERLINE))
-                        .on_toggle(|cx| cx.emit(ToggleEvent::Underline));
+                    ToggleButton::new(cx, underline, |cx| Svg::new(cx, ICON_UNDERLINE)).two_way();
                 });
             },
-            r#"ButtonGroup::new(cx, |cx| {
-    ToggleButton::new(cx, ToggleData::bold, |cx| Svg::new(cx, ICON_BOLD))
-        .on_toggle(|cx| cx.emit(ToggleEvent::ToggleBold));
+            r#"let bold = cx.state(false);
+let italic = cx.state(false);
+let underline = cx.state(false);
+ButtonGroup::new(cx, |cx| {
+    ToggleButton::new(cx, bold, |cx| Svg::new(cx, ICON_BOLD)).two_way();
 
-    ToggleButton::new(cx, ToggleData::italic, |cx| Svg::new(cx, ICON_ITALIC))
-        .on_toggle(|cx| cx.emit(ToggleEvent::ToggleItalic));
+    ToggleButton::new(cx, italic, |cx| Svg::new(cx, ICON_ITALIC)).two_way();
 
-    ToggleButton::new(cx, ToggleData::underline, |cx| {
-        Svg::new(cx, ICON_UNDERLINE)
-    })
-    .on_toggle(|cx| cx.emit(ToggleEvent::ToggleUnderline));
+    ToggleButton::new(cx, underline, |cx| Svg::new(cx, ICON_UNDERLINE)).two_way();
 });"#,
         );
     })

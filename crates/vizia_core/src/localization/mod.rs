@@ -34,7 +34,8 @@
 //! ```ignore
 //! # use vizia_core::prelude::*;
 //! # let mut cx = &mut Context::default();
-//! Label::new(cx, Localized::new("hello-world"));
+//! let text = Localized::new("hello-world").signal(cx);
+//! Label::new(cx, text);
 //! ```
 //! The markup in the loaded fluent (.ftl) files defines the translations for a particular key. The translation used depends on the application locale, which can be queried from [`Environment`].
 //! ```ftl
@@ -56,17 +57,16 @@
 //! ```ignore
 //! # use vizia_core::prelude::*;
 //! # let mut cx = &mut Context::default();
-//! Label::new(cx, Localized::new("welcome").arg_const("user", "Jane"));
+//! let text = Localized::new("welcome").arg_const("user", "Jane").signal(cx);
+//! Label::new(cx, text);
 //! ```
-//! While the `arg(...)` method allows a keyed lens to be used, binding the fluent variable to a piece of application data, and updating when that data changes.
+//! While the `arg(...)` method allows a keyed signal to be used, binding the fluent variable to a piece of application data, and updating when that data changes.
 //! ```ignore
 //! # use vizia_core::prelude::*;
 //! # let mut cx = &mut Context::default();
-//! # #[derive(Lens)]
-//! # pub struct AppData {
-//! #   user: String,
-//! # }
-//! Label::new(cx, Localized::new("welcome").arg("user", AppData::user));
+//! let user = cx.state(String::from("Jane"));
+//! let text = Localized::new("welcome").arg("user", user).signal(cx);
+//! Label::new(cx, text);
 //! ```
 use crate::context::LocalizationContext;
 use crate::prelude::*;
@@ -74,7 +74,6 @@ use fluent_bundle::FluentArgs;
 use fluent_bundle::FluentValue;
 use hashbrown::HashMap;
 use std::rc::Rc;
-use std::sync::Arc;
 
 pub(crate) trait FluentStore {
     fn get_val(&self, cx: &LocalizationContext) -> FluentValue<'static>;
@@ -82,37 +81,30 @@ pub(crate) trait FluentStore {
     fn bind(&self, cx: &mut Context, closure: Box<dyn Fn(&mut Context)>);
 }
 
-#[derive(Copy, Clone, Debug)]
-pub(crate) struct LensState<L> {
-    lens: L,
+#[derive(Clone, Debug)]
+pub(crate) struct SignalState<T: 'static> {
+    signal: Signal<T>,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub(crate) struct ValState<T> {
     val: T,
 }
 
-impl<L> FluentStore for LensState<L>
+impl<T> FluentStore for SignalState<T>
 where
-    L: Lens<Target: Into<FluentValue<'static>> + Data>,
+    T: 'static + Clone + Into<FluentValue<'static>>,
 {
     fn get_val(&self, cx: &LocalizationContext) -> FluentValue<'static> {
-        self.lens
-            .view(
-                cx.data()
-                    .expect("Failed to get data from context. Has it been built into the tree?"),
-            )
-            .unwrap()
-            .into_owned()
-            .into()
+        self.signal.get(cx).clone().into()
     }
 
     fn make_clone(&self) -> Box<dyn FluentStore> {
-        Box::new(*self)
+        Box::new(self.clone())
     }
 
     fn bind(&self, cx: &mut Context, closure: Box<dyn Fn(&mut Context)>) {
-        Binding::new(cx, self.lens, move |cx, _| closure(cx));
+        Binding::new(cx, self.signal, move |cx| closure(cx));
     }
 }
 
@@ -175,7 +167,8 @@ impl Localized {
     /// # use vizia_derive::*;
     /// # use vizia_winit::application::Application;
     /// Application::new(|cx|{
-    ///     Label::new(cx, Localized::new("key"));
+    ///     let text = Localized::new("key").signal(cx);
+    ///     Label::new(cx, text);
     /// })
     /// .run();
     pub fn new(key: &str) -> Self {
@@ -191,32 +184,24 @@ impl Localized {
 
     /// Add a variable argument binding to the Localized type.
     ///
-    /// Takes a key name and a lens to the value for the argument.
+    /// Takes a key name and a signal to the value for the argument.
     ///
     /// # Example
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_derive::*;
     /// # use vizia_winit::application::Application;
-    /// # #[derive(Lens)]
-    /// # struct AppData {
-    /// #   value: i32,
-    /// # }
-    /// # impl Model for AppData {}
     /// Application::new(|cx|{
-    ///     
-    ///     AppData {
-    ///         value: 5,
-    ///     }.build(cx);
-    ///
-    ///     Label::new(cx, Localized::new("key").arg("value", AppData::value));
+    ///     let value = cx.state(5);
+    ///     let text = Localized::new("key").arg("value", value).signal(cx);
+    ///     Label::new(cx, text);
     /// })
     /// .run();
-    pub fn arg<L>(mut self, key: &str, lens: L) -> Self
+    pub fn arg<T>(mut self, key: &str, signal: Signal<T>) -> Self
     where
-        L: Lens<Target: Into<FluentValue<'static>> + Data>,
+        T: 'static + Clone + Into<FluentValue<'static>>,
     {
-        self.args.insert(key.to_owned(), Box::new(LensState { lens }));
+        self.args.insert(key.to_owned(), Box::new(SignalState { signal }));
         self
     }
 
@@ -230,75 +215,45 @@ impl Localized {
     /// # use vizia_winit::application::Application;
     /// Application::new(|cx|{
     ///
-    ///     Label::new(cx, Localized::new("key").arg_const("value", 32));
+    ///     let text = Localized::new("key").arg_const("value", 32).signal(cx);
+    ///     Label::new(cx, text);
     /// })
     /// .run();
     pub fn arg_const<T: Into<FluentValue<'static>> + Data>(mut self, key: &str, val: T) -> Self {
         self.args.insert(key.to_owned(), Box::new(ValState { val }));
         self
     }
-}
 
-impl ResGet<String> for Localized {
-    fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, String>> {
-        Some(LensValue::Owned(self.get(cx)))
-    }
+    /// Converts this localized value into a signal and keeps it updated when locale or args change.
+    pub fn signal(self, cx: &mut Context) -> Signal<Localized> {
+        let owner = cx.current();
+        let localized = self.clone();
+        let signal = cx.state(localized.clone());
+        let signal_copy = signal;
+        let locale_signal = cx.environment().locale;
 
-    fn get(&self, cx: &impl DataContext) -> String {
-        let cx = cx.localization_context().expect("Failed to get context");
-        let locale = &cx.environment().locale;
-        let bundle = cx.resource_manager.current_translation(locale);
-        let message = if let Some(msg) = bundle.get_message(&self.key) {
-            msg
-        } else {
-            return (self.map)(&self.key);
-        };
-
-        let value = if let Some(value) = message.value() {
-            value
-        } else {
-            return (self.map)(&self.key);
-        };
-
-        let mut err = vec![];
-        let args = self.get_args(&cx);
-        let res = bundle.format_pattern(value, Some(&args), &mut err);
-
-        if err.is_empty() {
-            (self.map)(&res)
-        } else {
-            format!("{} {{ERROR: {:?}}}", res, err)
-        }
-    }
-}
-
-impl Res<String> for Localized {
-    fn set_or_bind<F>(self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Localized),
-    {
-        let self2 = self.clone();
-        let closure = Arc::new(closure);
-        Binding::new(cx, Environment::locale, move |cx, _| {
-            cx.with_current(entity, |cx| {
-                let lenses = self2.args.values().map(|x| x.make_clone()).collect::<Vec<_>>();
-                let self3 = self2.clone();
-                let closure = closure.clone();
-                bind_recursive(cx, &lenses, move |cx| {
-                    closure(cx, self3.clone());
+        Binding::new(cx, locale_signal, move |cx| {
+            cx.with_current(owner, |cx| {
+                let stores = localized.args.values().map(|x| x.make_clone()).collect::<Vec<_>>();
+                let localized_inner = localized.clone();
+                bind_recursive(cx, &stores, move |cx| {
+                    let mut event_cx = EventContext::new(cx);
+                    signal_copy.set(&mut event_cx, localized_inner.clone());
                 });
             });
         });
+
+        signal
     }
 }
 
-fn bind_recursive<F>(cx: &mut Context, lenses: &[Box<dyn FluentStore>], closure: F)
+fn bind_recursive<F>(cx: &mut Context, stores: &[Box<dyn FluentStore>], closure: F)
 where
     F: 'static + Clone + Fn(&mut Context),
 {
-    if let Some((lens, rest)) = lenses.split_last() {
+    if let Some((store, rest)) = stores.split_last() {
         let rest = rest.iter().map(|x| x.make_clone()).collect::<Vec<_>>();
-        lens.bind(
+        store.bind(
             cx,
             Box::new(move |cx| {
                 bind_recursive(cx, &rest, closure.clone());
@@ -325,8 +280,8 @@ impl ToStringLocalized for Localized {
     fn to_string_local(&self, cx: &impl DataContext) -> String {
         let cx = cx.localization_context().expect("Failed to get context");
 
-        let locale = &cx.environment().locale;
-        let bundle = cx.resource_manager.current_translation(locale);
+        let locale = cx.environment().locale.get(&cx);
+        let bundle = cx.resource_manager.current_translation(&locale);
         let message = if let Some(msg) = bundle.get_message(&self.key) {
             msg
         } else {

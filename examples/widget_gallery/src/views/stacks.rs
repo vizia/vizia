@@ -3,6 +3,10 @@ use vizia::prelude::*;
 use crate::DemoRegion;
 
 pub fn hstack(cx: &mut Context) {
+    let size_100 = cx.state(Pixels(100.0));
+    let auto = cx.state(Auto);
+    let align_center = cx.state(Alignment::Center);
+
     VStack::new(cx, |cx| {
         Markdown::new(
             cx,
@@ -19,26 +23,33 @@ The hstack container can be used to layout views in a row.
             cx,
             |cx| {
                 HStack::new(cx, |cx| {
-                    Element::new(cx).size(Pixels(100.0)).background_color(Color::red());
-                    Element::new(cx).size(Pixels(100.0)).background_color(Color::green());
-                    Element::new(cx).size(Pixels(100.0)).background_color(Color::blue());
+                    Element::new(cx).size(size_100).background_color(Color::red());
+                    Element::new(cx).size(size_100).background_color(Color::green());
+                    Element::new(cx).size(size_100).background_color(Color::blue());
                 })
-                .height(Auto)
-                .alignment(Alignment::Center);
+                .height(auto)
+                .alignment(align_center);
             },
-            r#"HStack::new(cx, |cx| {
-        Element::new(cx).size(Pixels(100.0)).background_color(Color::red());
-        Element::new(cx).size(Pixels(100.0)).background_color(Color::green());
-        Element::new(cx).size(Pixels(100.0)).background_color(Color::blue());
+            r#"let size_100 = cx.state(Pixels(100.0));
+let auto = cx.state(Auto);
+let align_center = cx.state(Alignment::Center);
+HStack::new(cx, |cx| {
+        Element::new(cx).size(size_100).background_color(Color::red());
+        Element::new(cx).size(size_100).background_color(Color::green());
+        Element::new(cx).size(size_100).background_color(Color::blue());
     })
-    .height(Auto)
-    .alignment(Alignment::Center);"#,
+    .height(auto)
+    .alignment(align_center);"#,
         );
     })
     .class("panel");
 }
 
 pub fn vstack(cx: &mut Context) {
+    let size_100 = cx.state(Pixels(100.0));
+    let auto = cx.state(Auto);
+    let align_center = cx.state(Alignment::Center);
+
     VStack::new(cx, |cx| {
         Markdown::new(
             cx,
@@ -55,26 +66,35 @@ The vstack container can be used to layout views in a column.
             cx,
             |cx| {
                 VStack::new(cx, |cx| {
-                    Element::new(cx).size(Pixels(100.0)).background_color(Color::red());
-                    Element::new(cx).size(Pixels(100.0)).background_color(Color::green());
-                    Element::new(cx).size(Pixels(100.0)).background_color(Color::blue());
+                    Element::new(cx).size(size_100).background_color(Color::red());
+                    Element::new(cx).size(size_100).background_color(Color::green());
+                    Element::new(cx).size(size_100).background_color(Color::blue());
                 })
-                .height(Auto)
-                .alignment(Alignment::Center);
+                .height(auto)
+                .alignment(align_center);
             },
-            r#"VStack::new(cx, |cx| {
-        Element::new(cx).size(Pixels(100.0)).background_color(Color::red());
-        Element::new(cx).size(Pixels(100.0)).background_color(Color::green());
-        Element::new(cx).size(Pixels(100.0)).background_color(Color::blue());
+            r#"let size_100 = cx.state(Pixels(100.0));
+let auto = cx.state(Auto);
+let align_center = cx.state(Alignment::Center);
+VStack::new(cx, |cx| {
+        Element::new(cx).size(size_100).background_color(Color::red());
+        Element::new(cx).size(size_100).background_color(Color::green());
+        Element::new(cx).size(size_100).background_color(Color::blue());
     })
-    .height(Auto)
-    .alignment(Alignment::Center);"#,
+    .height(auto)
+    .alignment(align_center);"#,
         );
     })
     .class("panel");
 }
 
 pub fn zstack(cx: &mut Context) {
+    let size_100 = cx.state(Pixels(100.0));
+    let size_140 = cx.state(Pixels(140.0));
+    let space_20 = cx.state(Pixels(20.0));
+    let space_40 = cx.state(Pixels(40.0));
+    let align_center = cx.state(Alignment::Center);
+
     VStack::new(cx, |cx| {
         Markdown::new(
             cx,
@@ -91,32 +111,37 @@ The zstack container can be used to layout views in a vertical stack.
             cx,
             |cx| {
                 ZStack::new(cx, |cx| {
-                    Element::new(cx).size(Pixels(100.0)).background_color(Color::red());
+                    Element::new(cx).size(size_100).background_color(Color::red());
                     Element::new(cx)
-                        .size(Pixels(100.0))
-                        .space(Pixels(20.0))
+                        .size(size_100)
+                        .space(space_20)
                         .background_color(Color::green());
                     Element::new(cx)
-                        .size(Pixels(100.0))
-                        .space(Pixels(40.0))
+                        .size(size_100)
+                        .space(space_40)
                         .background_color(Color::blue());
                 })
-                .size(Pixels(140.0))
-                .alignment(Alignment::Center);
+                .size(size_140)
+                .alignment(align_center);
             },
-            r#"ZStack::new(cx, |cx| {
-        Element::new(cx).size(Pixels(100.0)).background_color(Color::red());
+            r#"let size_100 = cx.state(Pixels(100.0));
+let size_140 = cx.state(Pixels(140.0));
+let space_20 = cx.state(Pixels(20.0));
+let space_40 = cx.state(Pixels(40.0));
+let align_center = cx.state(Alignment::Center);
+ZStack::new(cx, |cx| {
+        Element::new(cx).size(size_100).background_color(Color::red());
         Element::new(cx)
-            .size(Pixels(100.0))
-            .space(Pixels(20.0))
+            .size(size_100)
+            .space(space_20)
             .background_color(Color::green());
         Element::new(cx)
-            .size(Pixels(100.0))
-            .space(Pixels(40.0))
+            .size(size_100)
+            .space(space_40)
             .background_color(Color::blue());
     })
-    .height(Auto)
-    .alignment(Alignment::Center);"#,
+    .size(size_140)
+    .alignment(align_center);"#,
         );
     })
     .class("panel");

@@ -16,69 +16,54 @@ const STYLE: &str = r#"
     }
 "#;
 
-#[derive(Lens)]
-pub struct AppData {
-    options: Vec<&'static str>,
-    selected_option: usize,
-    start_date: NaiveDate,
-    end_date: NaiveDate,
-}
-
-pub enum AppEvent {
-    SetChoice(usize),
-    SetStartDate(NaiveDate),
-    SetEndDate(NaiveDate),
-}
-
-impl Model for AppData {
-    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::SetChoice(choice) => self.selected_option = *choice,
-            AppEvent::SetStartDate(date) => self.start_date = *date,
-            AppEvent::SetEndDate(date) => self.end_date = *date,
-        });
-    }
-}
-
-fn input_box<L: Lens<Target = NaiveDate>>(
-    cx: &mut Context,
-    date_lens: L,
-    message: impl Fn(NaiveDate) -> AppEvent + Send + Sync + 'static,
-) {
-    Textbox::new(cx, date_lens.map(|date| format!("{}", date.format("%Y:%m:%d"))))
-        .validate(|text| NaiveDate::parse_from_str(text, "%Y:%m:%d").is_ok())
-        .on_submit(move |ex, text, _| {
-            if let Ok(val) = NaiveDate::parse_from_str(&text, "%Y:%m:%d") {
-                ex.emit(message(val));
-            }
-        })
-        .class("input");
-}
-
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
+    let (app, (title, size)) = Application::new_with_state(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        AppData {
-            options: vec!["one-way flight", "return flight"],
-            selected_option: 0,
-            start_date: NaiveDate::from_ymd_opt(2022, 2, 12).unwrap(),
-            end_date: NaiveDate::from_ymd_opt(2022, 2, 26).unwrap(),
-        }
-        .build(cx);
+        let options = cx.state(vec!["one-way flight", "return flight"]);
+        let selected_option = cx.state(0usize);
+        let start_date = cx.state(NaiveDate::from_ymd_opt(2022, 2, 12).unwrap());
+        let end_date = cx.state(NaiveDate::from_ymd_opt(2022, 2, 26).unwrap());
+        let title = cx.state("Flight Booker".to_string());
+        let size = cx.state((250, 250));
 
-        VStack::new(cx, |cx| {
-            PickList::new(cx, AppData::options, AppData::selected_option, true)
-                .on_select(|cx, index| cx.emit(AppEvent::SetChoice(index)));
+        // Derived signals for formatted dates
+        let start_text = cx.derived({
+            let start_date = start_date;
+            move |s| start_date.get(s).format("%Y:%m:%d").to_string()
+        });
+        let end_text = cx.derived({
+            let end_date = end_date;
+            move |s| end_date.get(s).format("%Y:%m:%d").to_string()
+        });
 
-            input_box(cx, AppData::start_date, AppEvent::SetStartDate);
-            input_box(cx, AppData::end_date, AppEvent::SetEndDate);
+        VStack::new(cx, move |cx| {
+            PickList::new(cx, options, selected_option, true)
+                .on_select(move |cx, index| selected_option.set(cx, index));
 
-            Button::new(cx, |cx| Label::new(cx, "Book"));
+            Textbox::new(cx, start_text)
+                .validate(|text| NaiveDate::parse_from_str(text, "%Y:%m:%d").is_ok())
+                .on_submit(move |cx, text, _| {
+                    if let Ok(val) = NaiveDate::parse_from_str(&text, "%Y:%m:%d") {
+                        start_date.set(cx, val);
+                    }
+                })
+                .class("input");
+
+            Textbox::new(cx, end_text)
+                .validate(|text| NaiveDate::parse_from_str(text, "%Y:%m:%d").is_ok())
+                .on_submit(move |cx, text, _| {
+                    if let Ok(val) = NaiveDate::parse_from_str(&text, "%Y:%m:%d") {
+                        end_date.set(cx, val);
+                    }
+                })
+                .class("input");
+
+            Button::new(cx, |cx| Label::static_text(cx, "Book"));
         })
         .class("container");
-    })
-    .title("Flight Booker")
-    .inner_size((250, 250))
-    .run()
+        (title, size)
+    });
+
+    app.title(title).inner_size(size).run()
 }

@@ -18,7 +18,8 @@ use crate::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
-/// Button::new(cx, |cx| Label::new(cx, "Text"))
+/// let text = cx.state("Text");
+/// Button::new(cx, |cx| Label::new(cx, text))
 ///     .on_press(|ex| ex.emit(AppEvent::Action))
 /// ```
 ///
@@ -33,7 +34,8 @@ use crate::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
-/// Button::new(cx, |cx| Label::new(cx, "Text"));
+/// let text = cx.state("Text");
+/// Button::new(cx, |cx| Label::new(cx, text));
 /// ```
 ///
 /// ## Button containing multiple views
@@ -46,15 +48,14 @@ use crate::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
-/// Button::new(
-///     cx,
-///     |cx| {
-///         HStack::new(cx, |cx| {
-///             Label::new(cx, "Hello");
-///             Label::new(cx, "World");
-///         })
-///     },
-/// );
+/// let hello = cx.state("Hello");
+/// let world = cx.state("World");
+/// Button::new(cx, |cx| {
+///     HStack::new(cx, |cx| {
+///         Label::new(cx, hello);
+///         Label::new(cx, world);
+///     })
+/// });
 /// ```
 ///
 /// # Button Variants
@@ -66,9 +67,11 @@ use crate::prelude::*;
 /// # use vizia_core::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
+/// # let accent = cx.state(ButtonVariant::Accent);
 /// #
-/// Button::new(cx, |cx| Label::new(cx, "Text"))
-///     .variant(ButtonVariant::Accent);
+/// let text = cx.state("Text");
+/// Button::new(cx, |cx| Label::new(cx, text))
+///     .variant(accent);
 /// ```
 pub struct Button {
     pub(crate) action: Option<Box<dyn Fn(&mut EventContext)>>,
@@ -83,19 +86,22 @@ impl Button {
     /// #
     /// # let cx = &mut Context::default();
     /// #
-    /// Button::new(cx, |cx| Label::new(cx, "Press Me"));
+    /// let text = cx.state("Press Me");
+    /// Button::new(cx, |cx| Label::new(cx, text));
     /// ```
     pub fn new<C, V>(cx: &mut Context, content: C) -> Handle<Self>
     where
         C: FnOnce(&mut Context) -> Handle<V>,
         V: View,
     {
+        let false_signal = cx.state(false);
+        let true_signal = cx.state(true);
         Self { action: None }
             .build(cx, move |cx| {
-                (content)(cx).hoverable(false);
+                (content)(cx).hoverable(false_signal);
             })
             .role(Role::Button)
-            .navigable(true)
+            .navigable(true_signal)
     }
 }
 
@@ -159,46 +165,31 @@ pub trait ButtonModifiers {
     /// #
     /// # let cx = &mut Context::default();
     /// #
-    /// Button::new(cx, |cx| Label::new(cx, "Text"))
-    ///     .variant(ButtonVariant::Accent);
+    /// let text = cx.state("Text");
+    /// Button::new(cx, |cx| Label::new(cx, text))
+    ///     .variant(cx.state(ButtonVariant::Accent));
     /// ```
-    fn variant<U: Into<ButtonVariant>>(self, variant: impl Res<U>) -> Self;
+    fn variant(self, variant: Signal<ButtonVariant>) -> Self;
 }
 
 impl ButtonModifiers for Handle<'_, Button> {
-    fn variant<U: Into<ButtonVariant>>(self, variant: impl Res<U>) -> Self {
-        self.bind(variant, |handle, val| {
-            let var: ButtonVariant = val.get(&handle).into();
-            match var {
-                ButtonVariant::Normal => {
-                    handle
-                        .toggle_class("accent", false)
-                        .toggle_class("outline", false)
-                        .toggle_class("text", false);
-                }
+    fn variant(mut self, variant: Signal<ButtonVariant>) -> Self {
+        let is_accent = self.context().derived({
+            let variant = variant;
+            move |store| *variant.get(store) == ButtonVariant::Accent
+        });
+        let is_outline = self.context().derived({
+            let variant = variant;
+            move |store| *variant.get(store) == ButtonVariant::Outline
+        });
+        let is_text = self.context().derived({
+            let variant = variant;
+            move |store| *variant.get(store) == ButtonVariant::Text
+        });
 
-                ButtonVariant::Accent => {
-                    handle
-                        .toggle_class("accent", true)
-                        .toggle_class("outline", false)
-                        .toggle_class("text", false);
-                }
-
-                ButtonVariant::Outline => {
-                    handle
-                        .toggle_class("accent", false)
-                        .toggle_class("outline", true)
-                        .toggle_class("text", false);
-                }
-
-                ButtonVariant::Text => {
-                    handle
-                        .toggle_class("accent", false)
-                        .toggle_class("outline", false)
-                        .toggle_class("text", true);
-                }
-            }
-        })
+        self.toggle_class("accent", is_accent)
+            .toggle_class("outline", is_outline)
+            .toggle_class("text", is_text)
     }
 }
 
@@ -214,10 +205,14 @@ impl ButtonGroup {
     ///
     /// # let cx = &mut Context::default();
     ///
+    /// let one = cx.state("ONE");
+    /// let two = cx.state("TWO");
+    /// let three = cx.state("THREE");
+    ///
     /// ButtonGroup::new(cx, |cx| {
-    ///     Button::new(cx, |cx| Label::new(cx, "ONE"));
-    ///     Button::new(cx, |cx| Label::new(cx, "TWO"));
-    ///     Button::new(cx, |cx| Label::new(cx, "THREE"));
+    ///     Button::new(cx, |cx| Label::new(cx, one));
+    ///     Button::new(cx, |cx| Label::new(cx, two));
+    ///     Button::new(cx, |cx| Label::new(cx, three));
     /// });
     /// ```
     pub fn new<C>(cx: &mut Context, content: C) -> Handle<Self>
@@ -238,44 +233,28 @@ impl View for ButtonGroup {
 
 impl Handle<'_, ButtonGroup> {
     /// Sets whether the button group is in vertical orientation.
-    pub fn vertical(self, is_vertical: impl Res<bool>) -> Self {
+    pub fn vertical(self, is_vertical: Signal<bool>) -> Self {
         self.toggle_class("vertical", is_vertical)
     }
 }
 
 impl ButtonModifiers for Handle<'_, ButtonGroup> {
-    fn variant<U: Into<ButtonVariant>>(self, variant: impl Res<U>) -> Self {
-        self.bind(variant, |handle, val| {
-            let var: ButtonVariant = val.get(&handle).into();
-            match var {
-                ButtonVariant::Normal => {
-                    handle
-                        .toggle_class("accent", false)
-                        .toggle_class("outline", false)
-                        .toggle_class("text", false);
-                }
+    fn variant(mut self, variant: Signal<ButtonVariant>) -> Self {
+        let is_accent = self.context().derived({
+            let variant = variant;
+            move |store| *variant.get(store) == ButtonVariant::Accent
+        });
+        let is_outline = self.context().derived({
+            let variant = variant;
+            move |store| *variant.get(store) == ButtonVariant::Outline
+        });
+        let is_text = self.context().derived({
+            let variant = variant;
+            move |store| *variant.get(store) == ButtonVariant::Text
+        });
 
-                ButtonVariant::Accent => {
-                    handle
-                        .toggle_class("accent", true)
-                        .toggle_class("outline", false)
-                        .toggle_class("text", false);
-                }
-
-                ButtonVariant::Outline => {
-                    handle
-                        .toggle_class("accent", false)
-                        .toggle_class("outline", true)
-                        .toggle_class("text", false);
-                }
-
-                ButtonVariant::Text => {
-                    handle
-                        .toggle_class("accent", false)
-                        .toggle_class("outline", false)
-                        .toggle_class("text", true);
-                }
-            }
-        })
+        self.toggle_class("accent", is_accent)
+            .toggle_class("outline", is_outline)
+            .toggle_class("text", is_text)
     }
 }

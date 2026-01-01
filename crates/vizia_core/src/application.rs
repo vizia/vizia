@@ -58,7 +58,7 @@ pub trait App: Sized + 'static {
 
     /// Handle application-level events.
     /// This method can be overridden to respond to events at the application level.
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, _cx: &mut EventContext, _event: &mut Event) {
         // Default implementation does nothing
     }
 }

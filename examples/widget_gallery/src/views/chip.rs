@@ -18,9 +18,9 @@ A chip can be used to inform the user of the status of specific data.
         DemoRegion::new(
             cx,
             |cx| {
-                Chip::new(cx, "Chip");
+                Chip::static_text(cx, "Chip");
             },
-            r#"Chip::new(cx, "Chip");"#,
+            r#"Chip::static_text(cx, "Chip");"#,
         );
 
         Markdown::new(cx, "### Chip variants");
@@ -28,13 +28,17 @@ A chip can be used to inform the user of the status of specific data.
         DemoRegion::new(
             cx,
             |cx| {
-                Chip::new(cx, "Filled (Default)").variant(ChipVariant::Filled);
-                Chip::new(cx, "Outline").variant(ChipVariant::Outline);
+                let filled_variant = cx.state(ChipVariant::Filled);
+                let outline_variant = cx.state(ChipVariant::Outline);
+
+                Chip::static_text(cx, "Filled (Default)").variant(filled_variant);
+                Chip::static_text(cx, "Outline").variant(outline_variant);
             },
-            r#"Chip::new(cx, "Filled (Default)")
-    .variant(ChipVariant::Filled);
-Chip::new(cx, "Outline")
-    .variant(ChipVariant::Outline);"#,
+            r#"let filled_variant = cx.state(ChipVariant::Filled);
+let outline_variant = cx.state(ChipVariant::Outline);
+
+Chip::static_text(cx, "Filled (Default)").variant(filled_variant);
+Chip::static_text(cx, "Outline").variant(outline_variant);"#,
         );
 
         Markdown::new(cx, "### Chip actions");
@@ -42,21 +46,25 @@ Chip::new(cx, "Outline")
         DemoRegion::new(
             cx,
             |cx| {
-                Chip::new(cx, "Clickable").on_press(|_| {});
-                Chip::new(cx, "Closable").on_close(|_| {});
-                Chip::new(cx, "Clickable & Closable")
-                    .variant(ChipVariant::Outline)
+                let outline_variant = cx.state(ChipVariant::Outline);
+
+                Chip::static_text(cx, "Clickable").on_press(|_| {});
+                Chip::static_text(cx, "Closable").on_close(|_| {});
+                Chip::static_text(cx, "Clickable & Closable")
+                    .variant(outline_variant)
                     .on_press(|_| {})
                     .on_close(|_| {});
             },
-            r#"Chip::new(cx, "Clickable")
+            r#"let outline_variant = cx.state(ChipVariant::Outline);
+
+Chip::static_text(cx, "Clickable")
     .on_press(|cx| {});
-Chip::new(cx, "Closable")
-    .on_close(|cx| {...});
-Chip::new(cx, "Clickable & Closable")
-    .variant(ChipVariant::Outline)
-    .on_press(|cx| {...})
-    .on_close(|cx| {...});"#,
+Chip::static_text(cx, "Closable")
+    .on_close(|cx| {});
+Chip::static_text(cx, "Clickable & Closable")
+    .variant(outline_variant)
+    .on_press(|cx| {})
+    .on_close(|cx| {});"#,
         );
     })
     .class("panel");

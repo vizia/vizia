@@ -13,7 +13,23 @@ pub enum ResizeStackDirection {
 /// It supports resizing in either a horizontal (right) or vertical (bottom) direction, as specified
 /// by the `direction` field. The resizing behavior is controlled via the `on_drag` callback, which
 /// is triggered during a drag operation.
-#[derive(Lens)]
+///
+/// # Examples
+///
+/// ```
+/// # use vizia_core::prelude::*;
+/// # let mut cx = &mut Context::default();
+/// # let width = cx.state(Pixels(200.0));
+/// ResizableStack::new(
+///     cx,
+///     width,
+///     ResizeStackDirection::Right,
+///     move |cx, w| width.set(cx, Pixels(w)),
+///     |cx| {
+///         Label::new(cx, cx.state("Drag the edge to resize"));
+///     },
+/// );
+/// ```
 pub struct ResizableStack {
     /// Tracks whether the edge of the view is currently being dragged.
     is_dragging: bool,
@@ -38,13 +54,29 @@ pub struct ResizableStack {
 
 impl ResizableStack {
     /// Creates a new `ResizableStack` view.
-    /// The `size` parameter is a lens to the size of the stack, which will be updated when the stack is resized.
+    ///
+    /// The `size` parameter is a signal to the size of the stack, which will be updated when the stack is resized.
     /// The `direction` parameter specifies whether the stack is resized horizontally (right) or vertically (bottom).
     /// The `on_drag` callback is called with the new size when the stack is being resized.
     /// The `content` closure is called to build the content of the stack.
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::default();
+    /// # let width = cx.state(Pixels(200.0));
+    /// ResizableStack::new(
+    ///     cx,
+    ///     width,
+    ///     ResizeStackDirection::Right,
+    ///     move |cx, w| width.set(cx, Pixels(w)),
+    ///     |cx| {
+    ///         Label::new(cx, cx.state("Drag the edge to resize"));
+    ///     },
+    /// );
+    /// ```
     pub fn new<F>(
         cx: &mut Context,
-        size: impl Lens<Target = Units>,
+        size: Signal<Units>,
         direction: ResizeStackDirection,
         on_drag: impl Fn(&mut EventContext, f32) + 'static,
         content: F,
@@ -52,6 +84,8 @@ impl ResizableStack {
     where
         F: FnOnce(&mut Context),
     {
+        let is_horizontal = cx.state(direction == ResizeStackDirection::Bottom);
+        let is_vertical = cx.state(direction == ResizeStackDirection::Right);
         let handle = Self {
             is_dragging: false,
             on_drag: Box::new(on_drag),
@@ -63,14 +97,8 @@ impl ResizableStack {
             ResizeHandle::new(cx);
             (content)(cx);
         })
-        .toggle_class(
-            "horizontal",
-            ResizableStack::direction.map(|d| *d == ResizeStackDirection::Bottom),
-        )
-        .toggle_class(
-            "vertical",
-            ResizableStack::direction.map(|d| *d == ResizeStackDirection::Right),
-        );
+        .toggle_class("horizontal", is_horizontal)
+        .toggle_class("vertical", is_vertical);
 
         if direction == ResizeStackDirection::Right {
             handle.width(size)
@@ -203,7 +231,10 @@ pub struct ResizeHandle;
 
 impl ResizeHandle {
     pub fn new(cx: &mut Context) -> Handle<Self> {
-        Self.build(cx, |_cx| {}).position_type(PositionType::Absolute).z_index(10)
+        let handle = Self.build(cx, |_cx| {});
+        let position_absolute = handle.cx.state(PositionType::Absolute);
+        let z_index = handle.cx.state(10);
+        handle.position_type(position_absolute).z_index(z_index)
     }
 }
 
@@ -215,6 +246,11 @@ impl View for ResizeHandle {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _| match window_event {
             WindowEvent::PressDown { mouse } if *mouse => {
+                let offset_x = cx.mouse.cursor_x - cx.bounds().right();
+                let offset_y = cx.mouse.cursor_y - cx.bounds().bottom();
+                cx.emit(ResizableStackEvent::StartDrag { offset_x, offset_y });
+            }
+            WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                 let offset_x = cx.mouse.cursor_x - cx.bounds().right();
                 let offset_y = cx.mouse.cursor_y - cx.bounds().bottom();
                 cx.emit(ResizableStackEvent::StartDrag { offset_x, offset_y });

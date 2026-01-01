@@ -3,14 +3,18 @@ use vizia::prelude::*;
 const COLORS: [Color; 3] = [Color::red(), Color::green(), Color::blue()];
 
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
+    let (app, title) = Application::new_with_state(|cx| {
+        let size_100 = cx.state(Pixels(100.0));
+        let align_center = cx.state(Alignment::Center);
         VStack::new(cx, |cx| {
             for color in COLORS {
-                Element::new(cx).size(Pixels(100.0)).background_color(color);
+                let color_signal = cx.state(color);
+                Element::new(cx).size(size_100).background_color(color_signal);
             }
         })
-        .alignment(Alignment::Center);
-    })
-    .title("VStack")
-    .run()
+        .alignment(align_center);
+        cx.state("VStack")
+    });
+
+    app.title(title).run()
 }

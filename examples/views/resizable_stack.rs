@@ -26,71 +26,38 @@ const STYLE: &str = r#"
         opacity: 1;
         transition: opacity 200ms 200ms ease-in-out;
     }
-
-    
 "#;
 
-#[derive(Lens)]
-pub struct AppData {
-    width: Units,
-    height: Units,
-}
-
-pub enum AppEvent {
-    SetWidth(Units),
-    SetHeight(Units),
-    ResetWidth,
-    ResetHeight,
-}
-
-impl Model for AppData {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::SetWidth(width) => {
-                self.width = *width;
-            }
-            AppEvent::SetHeight(height) => {
-                self.height = *height;
-            }
-            AppEvent::ResetWidth => {
-                self.width = Pixels(200.0);
-            }
-            AppEvent::ResetHeight => {
-                self.height = Pixels(200.0);
-            }
-        });
-    }
-}
-
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
+    let (app, (title, size)) = Application::new_with_state(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        AppData { width: Pixels(200.0), height: Pixels(200.0) }.build(cx);
+        let width = cx.state(Pixels(200.0));
+        let height = cx.state(Pixels(200.0));
 
         ResizableStack::new(
             cx,
-            AppData::height,
+            height,
             ResizeStackDirection::Bottom,
-            |cx, h| cx.emit(AppEvent::SetHeight(Pixels(h))),
-            |cx| {
+            move |cx, h| height.set(cx, Pixels(h)),
+            move |cx| {
                 ResizableStack::new(
                     cx,
-                    AppData::width,
+                    width,
                     ResizeStackDirection::Right,
-                    |cx, w| cx.emit(AppEvent::SetWidth(Pixels(w))),
+                    move |cx, w| width.set(cx, Pixels(w)),
                     |_cx| {},
                 )
-                .on_reset(|cx| {
-                    cx.emit(AppEvent::ResetWidth);
+                .on_reset(move |cx| {
+                    width.set(cx, Pixels(200.0));
                 });
             },
         )
-        .on_reset(|cx| {
-            cx.emit(AppEvent::ResetHeight);
+        .on_reset(move |cx| {
+            height.set(cx, Pixels(200.0));
         });
-    })
-    .title("Resizable Stack")
-    .inner_size((800, 600))
-    .run()
+        (cx.state("Resizable Stack"), cx.state((800, 600)))
+    });
+
+    app.title(title).inner_size(size).run()
 }

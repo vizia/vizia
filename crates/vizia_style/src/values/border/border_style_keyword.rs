@@ -2,6 +2,7 @@ use crate::{define_enum, Parse};
 
 define_enum! {
     /// The keyword of a single border style.
+    #[derive(Default)]
     pub enum BorderStyleKeyword {
         /// Specifies no border.
         "none": None,
@@ -12,6 +13,7 @@ define_enum! {
         /// Specifies a dashed border.
         "dashed": Dashed,
         /// Specifies a solid border.
+        #[default]
         "solid": Solid,
         // /// Specifies a double border.
         // "double": Double,
@@ -23,11 +25,5 @@ define_enum! {
         // "inset": Inset,
         // /// Specifies a 3D outset border.
         // "outset": Outset,
-    }
-}
-
-impl Default for BorderStyleKeyword {
-    fn default() -> Self {
-        Self::Solid
     }
 }
