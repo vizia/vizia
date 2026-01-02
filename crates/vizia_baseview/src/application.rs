@@ -320,6 +320,8 @@ impl ApplicationRunner {
         if self.cx.0.windows.iter().any(|(_, window_state)| !window_state.redraw_list.is_empty()) {
             self.should_redraw = true;
         }
+
+        self.cx.process_timers();
     }
 
     pub fn render(&mut self, window: &mut Window) {
