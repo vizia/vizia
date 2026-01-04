@@ -66,19 +66,13 @@ impl CrudApp {
         let selected = cx.state(None::<usize>);
         let name = cx.state(String::new());
         let surname = cx.state(String::new());
-        let navigable = cx.state(true);
-        let label_width = cx.state(Pixels(80.0));
-        let stretch_one = cx.state(Stretch(1.0));
-        let padding_zero = cx.state(Pixels(0.0));
-        let gap_10 = cx.state(Pixels(10.0));
-        let padding_10 = cx.state(Pixels(10.0));
 
         Self { filter_prefix, list, selected, name, surname }.build(cx, move |cx| {
             VStack::new(cx, move |cx| {
                 HStack::new(cx, move |cx| {
                     VStack::new(cx, move |cx| {
                         HStack::new(cx, move |cx| {
-                            Label::static_text(cx, "Filter prefix:");
+                            Label::new(cx, "Filter prefix:");
                             Textbox::new(cx, filter_prefix).on_edit(move |cx, text| {
                                 filter_prefix.set(cx, text);
                             });
@@ -102,7 +96,7 @@ impl CrudApp {
                                             .on_press(move |cx| {
                                                 cx.emit(CrudEvent::SetSelected(index));
                                             })
-                                            .navigable(navigable)
+                                            .navigable(true)
                                             .checked(is_selected);
                                     }
                                 }
@@ -113,35 +107,35 @@ impl CrudApp {
 
                     VStack::new(cx, move |cx| {
                         HStack::new(cx, move |cx| {
-                            Label::static_text(cx, "Name:").width(label_width);
+                            Label::new(cx, "Name:").width(Pixels(80.0));
                             Textbox::new(cx, name).on_edit(move |cx, text| {
                                 name.set(cx, text);
                             });
                         });
 
                         HStack::new(cx, move |cx| {
-                            Label::static_text(cx, "Surname:").width(label_width);
+                            Label::new(cx, "Surname:").width(Pixels(80.0));
                             Textbox::new(cx, surname).on_edit(move |cx, text| {
                                 surname.set(cx, text);
                             });
                         });
                     });
                 })
-                .height(stretch_one)
-                .padding_top(padding_zero)
-                .padding_bottom(padding_zero);
+                .height(Stretch(1.0))
+                .padding_top(Pixels(0.0))
+                .padding_bottom(Pixels(0.0));
 
                 HStack::new(cx, move |cx| {
-                    Button::new(cx, |cx| Label::static_text(cx, "Create"))
+                    Button::new(cx, |cx| Label::new(cx, "Create"))
                         .on_press(move |cx| cx.emit(CrudEvent::Create));
-                    Button::new(cx, |cx| Label::static_text(cx, "Update"))
+                    Button::new(cx, |cx| Label::new(cx, "Update"))
                         .on_press(move |cx| cx.emit(CrudEvent::Update));
-                    Button::new(cx, |cx| Label::static_text(cx, "Delete"))
+                    Button::new(cx, |cx| Label::new(cx, "Delete"))
                         .on_press(move |cx| cx.emit(CrudEvent::Delete));
                 })
-                .horizontal_gap(gap_10);
+                .horizontal_gap(Pixels(10.0));
             })
-            .padding(padding_10);
+            .padding(Pixels(10.0));
         })
     }
 }
@@ -216,10 +210,22 @@ impl View for CrudApp {
 }
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
-        CrudApp::new(cx);
-        (cx.state("CRUD"), cx.state((450, 200)))
-    });
+    CrudApplication::run()
+}
 
-    app.title(title).inner_size(size).run()
+struct CrudApplication;
+
+impl App for CrudApplication {
+    fn new(_cx: &mut Context) -> Self {
+        Self
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        CrudApp::new(cx);
+        self
+    }
+
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("CRUD").inner_size((450, 200)))
+    }
 }

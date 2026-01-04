@@ -5,27 +5,44 @@ use vizia::icons::{ICON_BOLD, ICON_ITALIC, ICON_UNDERLINE};
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
-        let bold = cx.state(false);
-        let italic = cx.state(false);
-        let underline = cx.state(false);
-        let icon_bold = cx.state(ICON_BOLD);
-        let icon_italic = cx.state(ICON_ITALIC);
-        let icon_underline = cx.state(ICON_UNDERLINE);
+    ToggleButtonApp::run()
+}
+
+struct ToggleButtonApp {
+    bold: Signal<bool>,
+    italic: Signal<bool>,
+    underline: Signal<bool>,
+}
+
+impl App for ToggleButtonApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            bold: cx.state(false),
+            italic: cx.state(false),
+            underline: cx.state(false),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let bold = self.bold;
+        let italic = self.italic;
+        let underline = self.underline;
 
         ExamplePage::vertical(cx, |cx| {
-            ToggleButton::new(cx, bold, |cx| Label::static_text(cx, "Bold")).two_way();
+            ToggleButton::new(cx, bold, |cx| Label::new(cx, "Bold")).two_way();
 
             ButtonGroup::new(cx, |cx| {
-                ToggleButton::new(cx, bold, move |cx| Svg::new(cx, icon_bold)).two_way();
+                ToggleButton::new(cx, bold, |cx| Svg::new(cx, ICON_BOLD)).two_way();
 
-                ToggleButton::new(cx, italic, move |cx| Svg::new(cx, icon_italic)).two_way();
+                ToggleButton::new(cx, italic, |cx| Svg::new(cx, ICON_ITALIC)).two_way();
 
-                ToggleButton::new(cx, underline, move |cx| Svg::new(cx, icon_underline)).two_way();
+                ToggleButton::new(cx, underline, |cx| Svg::new(cx, ICON_UNDERLINE)).two_way();
             });
         });
-        (cx.state("ToggleButton"), cx.state((700, 200)))
-    });
+        self
+    }
 
-    app.title(title).inner_size(size).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("ToggleButton").inner_size((700, 200)))
+    }
 }

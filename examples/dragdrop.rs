@@ -7,18 +7,50 @@ const STYLE: &str = r#"
 "#;
 
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
+    DragDropApp::run()
+}
+
+struct DragDropApp {
+    size_50: Signal<Units>,
+    size_100: Signal<Units>,
+    height_100: Signal<Units>,
+    auto: Signal<Units>,
+    gap_20: Signal<Units>,
+    align_center: Signal<Alignment>,
+    red: Signal<Color>,
+    green: Signal<Color>,
+    blue: Signal<Color>,
+    gray: Signal<Color>,
+}
+
+impl App for DragDropApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            size_50: cx.state(Pixels(50.0)),
+            size_100: cx.state(Pixels(100.0)),
+            height_100: cx.state(Pixels(100.0)),
+            auto: cx.state(Auto),
+            gap_20: cx.state(Pixels(20.0)),
+            align_center: cx.state(Alignment::Center),
+            red: cx.state(Color::red()),
+            green: cx.state(Color::green()),
+            blue: cx.state(Color::blue()),
+            gray: cx.state(Color::gray()),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
-        let size_50 = cx.state(Pixels(50.0));
-        let size_100 = cx.state(Pixels(100.0));
-        let height_100 = cx.state(Pixels(100.0));
-        let auto = cx.state(Auto);
-        let gap_20 = cx.state(Pixels(20.0));
-        let align_center = cx.state(Alignment::Center);
-        let red = cx.state(Color::red());
-        let green = cx.state(Color::green());
-        let blue = cx.state(Color::blue());
-        let gray = cx.state(Color::gray());
+        let size_50 = self.size_50;
+        let size_100 = self.size_100;
+        let height_100 = self.height_100;
+        let auto = self.auto;
+        let gap_20 = self.gap_20;
+        let align_center = self.align_center;
+        let red = self.red;
+        let green = self.green;
+        let blue = self.blue;
+        let gray = self.gray;
 
         HStack::new(cx, |cx| {
             Element::new(cx).size(size_50).background_color(red).on_drag(|ex| {
@@ -58,6 +90,10 @@ fn main() -> Result<(), ApplicationError> {
                     ex.emit(WindowEvent::SetCursor(CursorIcon::Default));
                 }
             });
-    })
-    .run()
+        self
+    }
+
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Drag & Drop"))
+    }
 }

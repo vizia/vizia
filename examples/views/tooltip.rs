@@ -11,233 +11,213 @@ const STYLE: &str = r#"
 "#;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
+    TooltipApp::run()
+}
+
+struct TooltipApp;
+
+impl App for TooltipApp {
+    fn new(_cx: &mut Context) -> Self {
+        Self
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
-        let auto = cx.state(Auto);
-        let gap_8 = cx.state(Pixels(8.0));
-        let padding_4 = cx.state(Pixels(4.0));
-        let arrow_size = cx.state(Length::Value(LengthValue::Px(16.0)));
-        let text_top_start = cx.state("Top Start");
-        let text_top = cx.state("Top");
-        let text_top_end = cx.state("Top End");
-        let text_left_start = cx.state("LeftStart");
-        let text_left = cx.state("Left");
-        let text_left_end = cx.state("LeftEnd");
-        let text_right_start = cx.state("RightStart");
-        let text_right = cx.state("Right");
-        let text_right_end = cx.state("RightEnd");
-        let text_bottom_start = cx.state("BottomStart");
-        let text_bottom = cx.state("Bottom");
-        let text_bottom_end = cx.state("BottomEnd");
-        let text_over = cx.state("Over");
-        let text_cursor = cx.state("Cursor");
-        let placement_top_start = cx.state(Placement::TopStart);
-        let placement_top = cx.state(Placement::Top);
-        let placement_top_end = cx.state(Placement::TopEnd);
-        let placement_left_start = cx.state(Placement::LeftStart);
-        let placement_left = cx.state(Placement::Left);
-        let placement_left_end = cx.state(Placement::LeftEnd);
-        let placement_right_start = cx.state(Placement::RightStart);
-        let placement_right = cx.state(Placement::Right);
-        let placement_right_end = cx.state(Placement::RightEnd);
-        let placement_bottom_start = cx.state(Placement::BottomStart);
-        let placement_bottom = cx.state(Placement::Bottom);
-        let placement_bottom_end = cx.state(Placement::BottomEnd);
-        let placement_over = cx.state(Placement::Over);
-        let placement_cursor = cx.state(Placement::Cursor);
 
         ExamplePage::vertical(cx, |cx| {
             HStack::new(cx, |cx| {
                 Element::new(cx)
-                    .text(text_top_start)
-                    .tooltip(move |cx| {
+                    .text("Top Start")
+                    .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::static_text(cx, "This is a tooltip").padding(padding_4);
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .padding(padding_4)
-                        .size(auto)
-                        .placement(placement_top_start)
-                        .arrow_size(arrow_size)
+                        .padding(Pixels(4.0))
+                        .size(Auto)
+                        .placement(Placement::TopStart)
+                        .arrow_size(Length::Value(LengthValue::Px(16.0)))
                     })
                     .class("test");
 
                 Element::new(cx)
-                    .text(text_top)
-                    .tooltip(move |cx| {
+                    .text("Top")
+                    .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::static_text(cx, "This is a tooltip").padding(padding_4);
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .padding(padding_4)
-                        .size(auto)
-                        .placement(placement_top)
+                        .padding(Pixels(4.0))
+                        .size(Auto)
+                        .placement(Placement::Top)
                     })
                     .class("test");
 
                 Element::new(cx)
-                    .text(text_top_end)
-                    .tooltip(move |cx| {
+                    .text("Top End")
+                    .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::static_text(cx, "This is a tooltip").padding(padding_4);
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .padding(padding_4)
-                        .size(auto)
-                        .placement(placement_top_end)
+                        .padding(Pixels(4.0))
+                        .size(Auto)
+                        .placement(Placement::TopEnd)
                     })
                     .class("test");
             })
-            .size(auto)
-            .horizontal_gap(gap_8);
+            .size(Auto)
+            .horizontal_gap(Pixels(8.0));
 
             HStack::new(cx, |cx| {
                 Element::new(cx)
-                    .text(text_left_start)
-                    .tooltip(move |cx| {
+                    .text("LeftStart")
+                    .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::static_text(cx, "This is a tooltip").padding(padding_4);
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .padding(padding_4)
-                        .size(auto)
-                        .placement(placement_left_start)
+                        .padding(Pixels(4.0))
+                        .size(Auto)
+                        .placement(Placement::LeftStart)
                     })
                     .class("test");
 
                 Element::new(cx)
-                    .text(text_left)
-                    .tooltip(move |cx| {
+                    .text("Left")
+                    .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::static_text(cx, "This is a tooltip").padding(padding_4);
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .padding(padding_4)
-                        .size(auto)
-                        .placement(placement_left)
+                        .padding(Pixels(4.0))
+                        .size(Auto)
+                        .placement(Placement::Left)
                     })
                     .class("test");
 
                 Element::new(cx)
-                    .text(text_left_end)
-                    .tooltip(move |cx| {
+                    .text("LeftEnd")
+                    .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::static_text(cx, "This is a tooltip").padding(padding_4);
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .padding(padding_4)
-                        .size(auto)
-                        .placement(placement_left_end)
+                        .padding(Pixels(4.0))
+                        .size(Auto)
+                        .placement(Placement::LeftEnd)
                     })
                     .class("test");
             })
-            .size(auto)
-            .horizontal_gap(gap_8);
+            .size(Auto)
+            .horizontal_gap(Pixels(8.0));
 
             HStack::new(cx, |cx| {
                 Element::new(cx)
-                    .text(text_right_start)
-                    .tooltip(move |cx| {
+                    .text("RightStart")
+                    .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::static_text(cx, "This is a tooltip").padding(padding_4);
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .padding(padding_4)
-                        .size(auto)
-                        .placement(placement_right_start)
+                        .padding(Pixels(4.0))
+                        .size(Auto)
+                        .placement(Placement::RightStart)
                     })
                     .class("test");
 
                 Element::new(cx)
-                    .text(text_right)
-                    .tooltip(move |cx| {
+                    .text("Right")
+                    .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::static_text(cx, "This is a tooltip").padding(padding_4);
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .padding(padding_4)
-                        .size(auto)
-                        .placement(placement_right)
+                        .padding(Pixels(4.0))
+                        .size(Auto)
+                        .placement(Placement::Right)
                     })
                     .class("test");
 
                 Element::new(cx)
-                    .text(text_right_end)
-                    .tooltip(move |cx| {
+                    .text("RightEnd")
+                    .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::static_text(cx, "This is a tooltip").padding(padding_4);
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .padding(padding_4)
-                        .size(auto)
-                        .placement(placement_right_end)
+                        .padding(Pixels(4.0))
+                        .size(Auto)
+                        .placement(Placement::RightEnd)
                     })
                     .class("test");
             })
-            .size(auto)
-            .horizontal_gap(gap_8);
+            .size(Auto)
+            .horizontal_gap(Pixels(8.0));
 
             HStack::new(cx, |cx| {
                 Element::new(cx)
-                    .text(text_bottom_start)
-                    .tooltip(move |cx| {
+                    .text("BottomStart")
+                    .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::static_text(cx, "This is a tooltip").padding(padding_4);
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .padding(padding_4)
-                        .size(auto)
-                        .placement(placement_bottom_start)
+                        .padding(Pixels(4.0))
+                        .size(Auto)
+                        .placement(Placement::BottomStart)
                     })
                     .class("test");
 
                 Element::new(cx)
-                    .text(text_bottom)
-                    .tooltip(move |cx| {
+                    .text("Bottom")
+                    .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::static_text(cx, "This is a tooltip").padding(padding_4);
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .padding(padding_4)
-                        .size(auto)
-                        .placement(placement_bottom)
+                        .padding(Pixels(4.0))
+                        .size(Auto)
+                        .placement(Placement::Bottom)
                     })
                     .class("test");
 
                 Element::new(cx)
-                    .text(text_bottom_end)
-                    .tooltip(move |cx| {
+                    .text("BottomEnd")
+                    .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::static_text(cx, "This is a tooltip").padding(padding_4);
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .padding(padding_4)
-                        .size(auto)
-                        .placement(placement_bottom_end)
+                        .padding(Pixels(4.0))
+                        .size(Auto)
+                        .placement(Placement::BottomEnd)
                     })
                     .class("test");
             })
-            .size(auto)
-            .horizontal_gap(gap_8);
+            .size(Auto)
+            .horizontal_gap(Pixels(8.0));
 
             HStack::new(cx, |cx| {
                 Element::new(cx)
-                    .text(text_over)
-                    .tooltip(move |cx| {
+                    .text("Over")
+                    .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::static_text(cx, "This is a tooltip").padding(padding_4);
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .padding(padding_4)
-                        .size(auto)
-                        .placement(placement_over)
+                        .padding(Pixels(4.0))
+                        .size(Auto)
+                        .placement(Placement::Over)
                     })
                     .class("test");
 
                 Element::new(cx)
-                    .text(text_cursor)
-                    .tooltip(move |cx| {
+                    .text("Cursor")
+                    .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::static_text(cx, "This is a tooltip").padding(padding_4);
+                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
                         })
-                        .padding(padding_4)
-                        .size(auto)
-                        .placement(placement_cursor)
+                        .padding(Pixels(4.0))
+                        .size(Auto)
+                        .placement(Placement::Cursor)
                     })
                     .class("test");
             })
-            .size(auto)
-            .horizontal_gap(gap_8);
+            .size(Auto)
+            .horizontal_gap(Pixels(8.0));
         });
-        (cx.state("Tooltip"), cx.state((800, 800)))
-    });
+        self
+    }
 
-    app.title(title).inner_size(size).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Tooltip").inner_size((800, 800)))
+    }
 }

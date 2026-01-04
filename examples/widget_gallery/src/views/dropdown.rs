@@ -94,7 +94,7 @@ Dropdown::new(
                     cx,
                     move |cx| {
                         ButtonGroup::new(cx, |cx| {
-                            Button::new(cx, |cx| Label::static_text(cx, "Reply"))
+                            Button::new(cx, |cx| Label::new(cx, "Reply"))
                                 .width(stretch_one);
 
                             Button::new(cx, |cx| {
@@ -134,7 +134,7 @@ Dropdown::new(
     cx,
     move |cx| {
         ButtonGroup::new(cx, |cx| {
-            Button::new(cx, |cx| Label::static_text(cx, "Reply")).width(stretch_one);
+            Button::new(cx, |cx| Label::new(cx, "Reply")).width(stretch_one);
 
             Button::new(cx, |cx| {
                 Svg::new(cx, ICON_CHEVRON_DOWN)

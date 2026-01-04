@@ -1,27 +1,38 @@
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
-        let count = cx.state(0i32);
-        let title = cx.state("Counter".to_string());
-        let size = cx.state((400, 100));
-        let align_center = cx.state(Alignment::Center);
-        let gap_50 = cx.state(Pixels(50.0));
+    CounterApp::run()
+}
 
+struct CounterApp {
+    count: Signal<i32>,
+}
+
+impl App for CounterApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            count: cx.state(0i32),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let count = self.count;
         HStack::new(cx, move |cx| {
-            Button::new(cx, |cx| Label::static_text(cx, "Increment"))
+            Button::new(cx, |cx| Label::new(cx, "Increment"))
                 .on_press(move |cx| count.update(cx, |value| *value += 1));
 
-            Button::new(cx, |cx| Label::static_text(cx, "Decrement"))
+            Button::new(cx, |cx| Label::new(cx, "Decrement"))
                 .on_press(move |cx| count.update(cx, |value| *value -= 1));
 
             Label::new(cx, count);
         })
-        .alignment(align_center)
-        .gap(gap_50);
+        .alignment(Alignment::Center)
+        .gap(Pixels(50.0));
+        
+        self
+    }
 
-        (title, size)
-    });
-
-    app.title(title).inner_size(size).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Counter").inner_size((400, 100)))
+    }
 }

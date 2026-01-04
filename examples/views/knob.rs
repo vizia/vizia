@@ -3,16 +3,31 @@ use helpers::*;
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
-        let value = cx.state(0.2f32);
+    KnobApp::run()
+}
 
+struct KnobApp {
+    value: Signal<f32>,
+}
+
+impl App for KnobApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            value: cx.state(0.2f32),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let value = self.value;
         ExamplePage::new(cx, move |cx| {
             Knob::new(cx, 0.5, value, false).on_change(move |cx, val| {
                 value.set(cx, val);
             });
         });
-        (cx.state("Knob"), cx.state((300, 300)))
-    });
+        self
+    }
 
-    app.title(title).inner_size(size).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Knob").inner_size((300, 300)))
+    }
 }

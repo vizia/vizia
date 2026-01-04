@@ -3,60 +3,56 @@ use helpers::*;
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, title) = Application::new_with_state(|cx| {
-        let text = cx.state(String::from("As well as model data which implements ToString:"));
-        let value = cx.state(std::f32::consts::PI);
-        let checked = cx.state(false);
-        let gray = cx.state(Color::gray());
-        let padding_20 = cx.state(Pixels(20.0));
-        let width_200 = cx.state(Pixels(200.0));
-        let wrap_true = cx.state(true);
-        let wrap_false = cx.state(false);
-        let italic = cx.state(FontSlant::Italic);
-        let top_2 = cx.state(Units::Pixels(2.0));
-        let bottom_2 = cx.state(Units::Pixels(2.0));
-        let auto = cx.state(Auto);
-        let align_center = cx.state(Alignment::Center);
-        let gap_8 = cx.state(Pixels(8.0));
+    LabelApp::run()
+}
+
+struct LabelApp {
+    checked: Signal<bool>,
+}
+
+impl App for LabelApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            checked: cx.state(false),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let checked = self.checked;
 
         ExamplePage::vertical(cx, |cx| {
-            Label::static_text(cx, "A label can display a static string of unicode 😂")
-                .background_color(gray)
-                .padding(padding_20);
+            Label::new(cx, "A label can display a static string of unicode 😂")
+                .background_color(Color::gray())
+                .padding(Pixels(20.0));
 
-            Label::new(cx, text);
+            Label::new(cx, "As well as model data which implements ToString:");
 
-            Label::new(cx, value);
+            Label::new(cx, std::f32::consts::PI);
 
-            Label::static_text(cx, "Text which is too long for the label will be wrapped.")
-                .text_wrap(wrap_true)
-                .width(width_200);
+            Label::new(cx, "Text which is too long for the label will be wrapped.")
+                .text_wrap(true)
+                .width(Pixels(200.0));
 
-            Label::static_text(cx, "Unless text wrapping is disabled.")
-                .width(width_200)
-                .text_wrap(wrap_false)
-                .font_slant(italic);
+            Label::new(cx, "Unless text wrapping is disabled.")
+                .width(Pixels(200.0))
+                .text_wrap(false)
+                .font_slant(FontSlant::Italic);
 
             HStack::new(cx, |cx| {
-                Checkbox::new(cx, checked)
-                    .two_way()
-                    .id("checkbox_1")
-                    .top(top_2)
-                    .bottom(bottom_2);
+                Checkbox::new(cx, checked).two_way().id("checkbox_1").top(Units::Pixels(2.0)).bottom(Units::Pixels(2.0));
 
-                Label::static_text(
-                    cx,
-                    "A label that is describing a form element also acts as a trigger",
-                )
-                .describing("checkbox_1");
+                Label::new(cx, "A label that is describing a form element also acts as a trigger")
+                    .describing("checkbox_1");
             })
-            .width(auto)
-            .height(auto)
-            .alignment(align_center)
-            .horizontal_gap(gap_8);
+            .width(Auto)
+            .height(Auto)
+            .alignment(Alignment::Center)
+            .horizontal_gap(Pixels(8.0));
         });
-        cx.state("Label")
-    });
+        self
+    }
 
-    app.title(title).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Label"))
+    }
 }

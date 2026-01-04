@@ -21,13 +21,30 @@ const STYLE: &str = r#"
 "#;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx: &mut Context| {
+    TimerApp::run()
+}
+
+struct TimerApp {
+    total_time: Signal<f32>,
+    elapsed_time: Signal<f32>,
+    progress: Signal<f32>,
+}
+
+impl App for TimerApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            total_time: cx.state(0.0f32),
+            elapsed_time: cx.state(0.0f32),
+            progress: cx.state(0.0f32),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        // State signals
-        let total_time = cx.state(0.0f32);
-        let elapsed_time = cx.state(0.0f32);
-        let progress = cx.state(0.0f32);
+        let total_time = self.total_time;
+        let elapsed_time = self.elapsed_time;
+        let progress = self.progress;
 
         let timer = cx.add_timer(Duration::from_millis(100), None, move |cx, _| {
             let current = *elapsed_time.get(cx);
@@ -41,7 +58,7 @@ fn main() -> Result<(), ApplicationError> {
 
         VStack::new(cx, move |cx| {
             HStack::new(cx, |cx| {
-                Label::static_text(cx, "Elapsed Time:");
+                Label::new(cx, "Elapsed Time:");
                 ProgressBar::horizontal(cx, progress);
             });
 
@@ -52,7 +69,7 @@ fn main() -> Result<(), ApplicationError> {
             Label::new(cx, elapsed_label);
 
             HStack::new(cx, move |cx| {
-                Label::static_text(cx, "Duration:");
+                Label::new(cx, "Duration:");
                 Slider::new(cx, total_time).range(0.0..30.0).on_change(move |cx, v| {
                     total_time.set(cx, v);
                     // Restart timer if needed
@@ -65,7 +82,7 @@ fn main() -> Result<(), ApplicationError> {
                 });
             });
 
-            Button::new(cx, |cx| Label::static_text(cx, "Reset")).on_press(move |cx| {
+            Button::new(cx, |cx| Label::new(cx, "Reset")).on_press(move |cx| {
                 elapsed_time.set(cx, 0.0);
                 progress.set(cx, 0.0);
                 let total = *total_time.get(cx);
@@ -74,8 +91,11 @@ fn main() -> Result<(), ApplicationError> {
                 }
             });
         });
-        (cx.state("Timer"), cx.state((300, 150)))
-    });
+        
+        self
+    }
 
-    app.title(title).inner_size(size).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Timer").inner_size((300, 150)))
+    }
 }

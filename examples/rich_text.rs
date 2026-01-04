@@ -1,13 +1,38 @@
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
-        let text = cx.state("");
-        let pointer_auto = cx.state(PointerEvents::Auto);
-        let cursor_hand = cx.state(CursorIcon::Hand);
-        let hello = cx.state("Hello");
-        let rich = cx.state(" Rich");
-        let text_ex = cx.state(" Text!");
+    RichTextApp::run()
+}
+
+struct RichTextApp {
+    text: Signal<&'static str>,
+    pointer_auto: Signal<PointerEvents>,
+    cursor_hand: Signal<CursorIcon>,
+    hello: Signal<&'static str>,
+    rich: Signal<&'static str>,
+    text_ex: Signal<&'static str>,
+}
+
+impl App for RichTextApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            text: cx.state(""),
+            pointer_auto: cx.state(PointerEvents::Auto),
+            cursor_hand: cx.state(CursorIcon::Hand),
+            hello: cx.state("Hello"),
+            rich: cx.state(" Rich"),
+            text_ex: cx.state(" Text!"),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let text = self.text;
+        let pointer_auto = self.pointer_auto;
+        let cursor_hand = self.cursor_hand;
+        let hello = self.hello;
+        let rich = self.rich;
+        let text_ex = self.text_ex;
+
         Label::rich(cx, text, |cx| {
             TextSpan::new(cx, hello, |_| {})
                 .pointer_events(pointer_auto)
@@ -24,6 +49,10 @@ fn main() -> Result<(), ApplicationError> {
                 .class("span");
         })
         .class("testy");
-    })
-    .run()
+        self
+    }
+
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Rich Text"))
+    }
 }

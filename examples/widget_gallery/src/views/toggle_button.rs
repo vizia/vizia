@@ -19,10 +19,10 @@ pub fn toggle_button(cx: &mut Context) {
         DemoRegion::new(
             cx,
             |cx| {
-                ToggleButton::new(cx, bold, |cx| Label::static_text(cx, "Bold")).two_way();
+                ToggleButton::new(cx, bold, |cx| Label::new(cx, "Bold")).two_way();
             },
             r#"let bold = cx.state(false);
-ToggleButton::new(cx, bold, |cx| Label::static_text(cx, "Bold")).two_way();"#,
+ToggleButton::new(cx, bold, |cx| Label::new(cx, "Bold")).two_way();"#,
         );
 
         Markdown::new(cx, "### Toggle button group");

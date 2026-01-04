@@ -10,25 +10,16 @@ impl App for MapDemo {
         Self { number: cx.state(5) }
     }
 
-    fn view(self, cx: &mut Context) -> Self {
-        let font_24 = cx.state(24.0);
-        let font_18 = cx.state(18.0);
-        let weight_bold = cx.state(FontWeightKeyword::Bold);
-        let gap_10 = cx.state(Pixels(10.0));
-        let gap_15 = cx.state(Pixels(15.0));
-        let align_center = cx.state(Alignment::Center);
-
+    fn on_build(self, cx: &mut Context) -> Self {
         VStack::new(cx, |cx| {
-            Label::static_text(cx, "Signal Map Demo")
-                .font_size(font_24)
-                .font_weight(weight_bold);
+            Label::new(cx, "Signal Map Demo").font_size(24.0).font_weight(FontWeightKeyword::Bold);
 
             // Original value
             let original = cx.derived({
                 let number = self.number;
                 move |store| format!("Original: {}", number.get(store))
             });
-            Label::new(cx, original).font_size(font_18);
+            Label::new(cx, original).font_size(18.0);
 
             // Squared value using map
             let squared = cx.derived({
@@ -38,7 +29,7 @@ impl App for MapDemo {
                     format!("Squared: {}", n * n)
                 }
             });
-            Label::new(cx, squared).font_size(font_18);
+            Label::new(cx, squared).font_size(18.0);
 
             // Even/odd using map
             let parity = cx.derived({
@@ -52,47 +43,42 @@ impl App for MapDemo {
                     }
                 }
             });
-            Label::new(cx, parity).font_size(font_18);
+            Label::new(cx, parity).font_size(18.0);
 
             // Double using map
             let doubled = cx.derived({
                 let number = self.number;
                 move |store| format!("Double: {}", number.get(store) * 2)
             });
-            Label::new(cx, doubled).font_size(font_18);
+            Label::new(cx, doubled).font_size(18.0);
 
             // Controls
             HStack::new(cx, |cx| {
-                Button::new(cx, |cx| Label::static_text(cx, "Decrement")).on_press(move |cx| {
+                Button::new(cx, |cx| Label::new(cx, "Decrement")).on_press(move |cx| {
                     self.number.update(cx, |n| *n -= 1);
                 });
 
-                Button::new(cx, |cx| Label::static_text(cx, "Increment")).on_press(move |cx| {
+                Button::new(cx, |cx| Label::new(cx, "Increment")).on_press(move |cx| {
                     self.number.update(cx, |n| *n += 1);
                 });
 
-                Button::new(cx, |cx| Label::static_text(cx, "Reset to 5")).on_press(move |cx| {
+                Button::new(cx, |cx| Label::new(cx, "Reset to 5")).on_press(move |cx| {
                     self.number.set(cx, 5);
                 });
             })
-            .gap(gap_10);
+            .gap(Pixels(10.0));
         })
-        .alignment(align_center)
-        .gap(gap_15);
+        .alignment(Alignment::Center)
+        .gap(Pixels(15.0));
 
         self
+    }
+
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Signal Map Demo").inner_size((400, 350)))
     }
 }
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
-        let title = cx.state("Signal Map Demo".to_string());
-        let size = cx.state((400, 350));
-
-        MapDemo::new(cx).view(cx);
-
-        (title, size)
-    });
-
-    app.title(title).inner_size(size).run()
+    MapDemo::run()
 }

@@ -96,7 +96,7 @@ The describing modifier can be used to link a label to a particular radiobutton.
                         RadioButton::new(cx, first_selected)
                             .on_select(move |cx| selected.set(cx, Options::First))
                             .id("r1");
-                        Label::static_text(cx, "First").describing("r1");
+                        Label::new(cx, "First").describing("r1");
                     })
                     .size(auto)
                     .alignment(align_center)
@@ -110,7 +110,7 @@ The describing modifier can be used to link a label to a particular radiobutton.
                         RadioButton::new(cx, second_selected)
                             .on_select(move |cx| selected.set(cx, Options::Second))
                             .id("r2");
-                        Label::static_text(cx, "Second").describing("r2");
+                        Label::new(cx, "Second").describing("r2");
                     })
                     .size(auto)
                     .alignment(align_center)
@@ -124,7 +124,7 @@ The describing modifier can be used to link a label to a particular radiobutton.
                         RadioButton::new(cx, third_selected)
                             .on_select(move |cx| selected.set(cx, Options::Third))
                             .id("r3");
-                        Label::static_text(cx, "Third").describing("r3");
+                        Label::new(cx, "Third").describing("r3");
                     })
                     .size(auto)
                     .alignment(align_center)
@@ -145,7 +145,7 @@ VStack::new(cx, |cx| {
         RadioButton::new(cx, first_selected)
             .on_select(move |cx| selected.set(cx, Options::First))
             .id("r1");
-        Label::static_text(cx, "First").describing("r1");
+        Label::new(cx, "First").describing("r1");
     });
 });"#
         );

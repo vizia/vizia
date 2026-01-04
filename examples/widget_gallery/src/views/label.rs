@@ -18,9 +18,9 @@ A label can be used to display a string of text.
         DemoRegion::new(
             cx,
             |cx| {
-                Label::static_text(cx, "Hello Vizia");
+                Label::new(cx, "Hello Vizia");
             },
-            r#"Label::static_text(cx, "Hello Vizia");"#,
+            r#"Label::new(cx, "Hello Vizia");"#,
         );
     })
     .class("panel");

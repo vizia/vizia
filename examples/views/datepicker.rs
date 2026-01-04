@@ -4,14 +4,29 @@ use helpers::*;
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, title) = Application::new_with_state(|cx| {
-        let date = cx.state(Utc::now().date_naive());
+    DatepickerApp::run()
+}
 
+struct DatepickerApp {
+    date: Signal<chrono::NaiveDate>,
+}
+
+impl App for DatepickerApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            date: cx.state(Utc::now().date_naive()),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let date = self.date;
         ExamplePage::new(cx, |cx| {
             Datepicker::new(cx, date).on_select(move |cx, selected| date.set(cx, selected));
         });
-        cx.state("Datepicker")
-    });
+        self
+    }
 
-    app.title(title).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Datepicker"))
+    }
 }

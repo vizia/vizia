@@ -3,9 +3,25 @@ use helpers::*;
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
-        let rating1 = cx.state(3u32);
-        let rating2 = cx.state(7u32);
+    RatingApp::run()
+}
+
+struct RatingApp {
+    rating1: Signal<u32>,
+    rating2: Signal<u32>,
+}
+
+impl App for RatingApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            rating1: cx.state(3u32),
+            rating2: cx.state(7u32),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let rating1 = self.rating1;
+        let rating2 = self.rating2;
 
         ExamplePage::vertical(cx, move |cx| {
             Rating::new(cx, 5, rating1).on_change(move |cx, rating| {
@@ -15,8 +31,10 @@ fn main() -> Result<(), ApplicationError> {
                 rating2.set(cx, rating);
             });
         });
-        (cx.state("Rating"), cx.state((400, 200)))
-    });
+        self
+    }
 
-    app.title(title).inner_size(size).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Rating").inner_size((400, 200)))
+    }
 }

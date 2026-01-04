@@ -2,7 +2,22 @@
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, title) = Application::new_with_state(|cx| {
+    LocalizationApp::run()
+}
+
+struct LocalizationApp {
+    name: Signal<String>,
+    emails: Signal<i32>,
+    align_center: Signal<Alignment>,
+    gap_10: Signal<Units>,
+    gap_5: Signal<Units>,
+    height_auto: Signal<Units>,
+    width_300: Signal<Units>,
+    space_10: Signal<Units>,
+}
+
+impl App for LocalizationApp {
+    fn new(cx: &mut Context) -> Self {
         // Add fluent file for the `en-US` locale (American English).
         cx.add_translation(
             "en-US".parse().unwrap(),
@@ -15,22 +30,32 @@ fn main() -> Result<(), ApplicationError> {
             include_str!("resources/translations/fr/hello.ftl").to_owned(),
         );
 
-        let name = cx.state("Audrey".to_owned());
-        let emails = cx.state(1i32);
-        let title = cx.state("Localization".to_string());
-        let align_center = cx.state(Alignment::Center);
-        let gap_10 = cx.state(Pixels(10.0));
-        let gap_5 = cx.state(Pixels(5.0));
-        let height_auto = cx.state(Auto);
-        let width_300 = cx.state(Units::Pixels(300.0));
-        let space_10 = cx.state(Pixels(10.0));
+        Self {
+            name: cx.state("Audrey".to_owned()),
+            emails: cx.state(1i32),
+            align_center: cx.state(Alignment::Center),
+            gap_10: cx.state(Pixels(10.0)),
+            gap_5: cx.state(Pixels(5.0)),
+            height_auto: cx.state(Auto),
+            width_300: cx.state(Units::Pixels(300.0)),
+            space_10: cx.state(Pixels(10.0)),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let name = self.name;
+        let emails = self.emails;
+        let align_center = self.align_center;
+        let gap_10 = self.gap_10;
+        let gap_5 = self.gap_5;
+        let height_auto = self.height_auto;
+        let width_300 = self.width_300;
+        let space_10 = self.space_10;
 
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
                 let locale_signal = cx.environment().locale;
-                let is_french = cx.derived({
-                    move |cx| *locale_signal.get(cx) == "fr"
-                });
+                let is_french = cx.derived({ move |cx| *locale_signal.get(cx) == "fr" });
                 Checkbox::new(cx, is_french).id("toggle-language").on_toggle(|cx| {
                     let current_locale = cx.environment().locale.get(cx);
                     if *current_locale != "fr" {
@@ -39,7 +64,7 @@ fn main() -> Result<(), ApplicationError> {
                         cx.emit(EnvironmentEvent::SetLocale("en-US".parse().unwrap()));
                     }
                 });
-                Label::static_text(cx, "Toggle Language").describing("toggle-language");
+                Label::new(cx, "Toggle Language").describing("toggle-language");
             })
             .alignment(align_center)
             .horizontal_gap(gap_10)
@@ -53,9 +78,7 @@ fn main() -> Result<(), ApplicationError> {
             HStack::new(cx, |cx| {
                 let enter_name = Localized::new("enter-name").signal(cx);
                 Label::new(cx, enter_name);
-                Textbox::new(cx, name)
-                    .width(width_300)
-                    .on_edit(move |cx, text| name.set(cx, text));
+                Textbox::new(cx, name).width(width_300).on_edit(move |cx, text| name.set(cx, text));
             })
             .alignment(align_center)
             .height(height_auto)
@@ -84,9 +107,13 @@ fn main() -> Result<(), ApplicationError> {
         })
         .vertical_gap(gap_10)
         .space(space_10);
+        
+        self
+    }
 
-        title
-    });
-
-    app.title(title).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| {
+            app.title("Localization")
+        })
+    }
 }

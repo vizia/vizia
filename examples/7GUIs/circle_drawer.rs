@@ -9,7 +9,7 @@ fn main() {
 
 const STYLE: &str = r#"
 
-    circle-drawer {
+    .circle-drawer {
         padding: 12px;
         gap: 12px;
     }
@@ -133,7 +133,13 @@ enum CircleDrawerEvent {
     ToggleDialog,
 }
 
-struct CircleDrawer {
+#[cfg(not(feature = "baseview"))]
+fn main() -> Result<(), ApplicationError> {
+    CircleDrawerApp::run()
+}
+
+#[cfg(not(feature = "baseview"))]
+struct CircleDrawerApp {
     circles: Signal<Vec<Circle>>,
     selected: Signal<Option<usize>>,
     undo_list: Signal<Vec<UndoRedoAction>>,
@@ -145,19 +151,48 @@ struct CircleDrawer {
     dialog_open: Signal<bool>,
 }
 
-impl CircleDrawer {
-    fn new(cx: &mut Context) -> Handle<'_, Self> {
+#[cfg(not(feature = "baseview"))]
+impl CircleDrawerApp {
+    fn update_selected(&self, cx: &mut EventContext, x: f32, y: f32) {
+        let circles_list = self.circles.get(cx);
+        let new_selected = circles_list
+            .iter()
+            .enumerate()
+            .rev()
+            .find(|(_, c)| distance(c.x, c.y, x, y) < c.r)
+            .map(|(i, _)| i);
+        self.selected.set(cx, new_selected);
+    }
+}
+
+#[cfg(not(feature = "baseview"))]
+impl App for CircleDrawerApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            circles: cx.state(Vec::<Circle>::new()),
+            selected: cx.state(None::<usize>),
+            undo_list: cx.state(Vec::<UndoRedoAction>::new()),
+            redo_list: cx.state(Vec::<UndoRedoAction>::new()),
+            radius_before: cx.state(0.0f32),
+            menu_open: cx.state(false),
+            menu_posx: cx.state(Pixels(0.0)),
+            menu_posy: cx.state(Pixels(0.0)),
+            dialog_open: cx.state(false),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        let circles = cx.state(Vec::<Circle>::new());
-        let selected = cx.state(None::<usize>);
-        let undo_list = cx.state(Vec::<UndoRedoAction>::new());
-        let redo_list = cx.state(Vec::<UndoRedoAction>::new());
-        let radius_before = cx.state(0.0f32);
-        let menu_open = cx.state(false);
-        let menu_posx = cx.state(Pixels(0.0));
-        let menu_posy = cx.state(Pixels(0.0));
-        let dialog_open = cx.state(false);
+        let circles = self.circles;
+        let selected = self.selected;
+        let undo_list = self.undo_list;
+        let redo_list = self.redo_list;
+        let menu_open = self.menu_open;
+        let menu_posx = self.menu_posx;
+        let menu_posy = self.menu_posy;
+        let dialog_open = self.dialog_open;
+
         let auto = cx.state(Auto);
         let gap_12 = cx.state(Pixels(12.0));
         let padding_12 = cx.state(Pixels(12.0));
@@ -177,27 +212,14 @@ impl CircleDrawer {
             move |store| redo_list.get(store).is_empty()
         });
 
-        Self {
-            circles,
-            selected,
-            undo_list,
-            redo_list,
-            radius_before,
-            menu_open,
-            menu_posx,
-            menu_posy,
-            dialog_open,
-        }
-        .build(cx, move |cx| {
+        VStack::new(cx, move |cx| {
             Binding::new(cx, menu_open, move |cx| {
                 if *menu_open.get(cx) {
                     Popup::new(cx, |cx| {
-                        Button::new(cx, |cx| Label::static_text(cx, "Adjust diameter..")).on_press(
-                            |cx| {
-                                cx.emit(CircleDrawerEvent::ToggleDialog);
-                                cx.emit(CircleDrawerEvent::ToggleRightMenu);
-                            },
-                        );
+                        Button::new(cx, |cx| Label::new(cx, "Adjust diameter..")).on_press(|cx| {
+                            cx.emit(CircleDrawerEvent::ToggleDialog);
+                            cx.emit(CircleDrawerEvent::ToggleRightMenu);
+                        });
                     })
                     .left(menu_posx)
                     .top(menu_posy)
@@ -246,11 +268,11 @@ impl CircleDrawer {
             });
 
             HStack::new(cx, move |cx| {
-                Button::new(cx, |cx| Label::static_text(cx, "Undo"))
+                Button::new(cx, |cx| Label::new(cx, "Undo"))
                     .disabled(undo_disabled)
                     .on_press(|cx| cx.emit(CircleDrawerEvent::Undo));
 
-                Button::new(cx, |cx| Label::static_text(cx, "Redo"))
+                Button::new(cx, |cx| Label::new(cx, "Redo"))
                     .disabled(redo_disabled)
                     .on_press(|cx| cx.emit(CircleDrawerEvent::Redo));
             })
@@ -260,23 +282,9 @@ impl CircleDrawer {
 
             CircleDrawerCanvas::new(cx, circles, selected);
         })
-    }
+        .class("circle-drawer");
 
-    fn update_selected(&self, cx: &mut EventContext, x: f32, y: f32) {
-        let circles_list = self.circles.get(cx);
-        let new_selected = circles_list
-            .iter()
-            .enumerate()
-            .rev()
-            .find(|(_, c)| distance(c.x, c.y, x, y) < c.r)
-            .map(|(i, _)| i);
-        self.selected.set(cx, new_selected);
-    }
-}
-
-impl View for CircleDrawer {
-    fn element(&self) -> Option<&'static str> {
-        Some("circle-drawer")
+        self
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
@@ -401,12 +409,10 @@ impl View for CircleDrawer {
             }
         });
     }
-}
 
-#[cfg(not(feature = "baseview"))]
-fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx: &mut Context| {
-        CircleDrawer::new(cx);
-    })
-    .run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| {
+            app.title("Circle Drawer")
+        })
+    }
 }

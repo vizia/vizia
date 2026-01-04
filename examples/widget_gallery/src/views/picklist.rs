@@ -23,7 +23,7 @@ A view which allows the user to select an option from a list.
             cx,
             |cx| {
                 VStack::new(cx, |cx| {
-                    Label::static_text(cx, "Color:").class("field-label");
+                    Label::new(cx, "Color:").class("field-label");
                     PickList::new(cx, options, selected_option_1, true)
                         .on_select(move |cx, index| selected_option_1.set(cx, index))
                         .width(width_150);
@@ -47,7 +47,7 @@ The placeholder text prompts a user to select an option from the picker menu whe
             cx,
             |cx| {
                 VStack::new(cx, |cx| {
-                    Label::static_text(cx, "Color:").class("field-label");
+                    Label::new(cx, "Color:").class("field-label");
                     let placeholder = cx.state("Select a color...");
                     PickList::new(cx, options, selected_option_2, true)
                         .placeholder(placeholder)

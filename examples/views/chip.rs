@@ -2,13 +2,24 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
-        let chips = cx.state(vec!["red".to_string(), "green".to_string(), "blue".to_string()]);
-        let orientation = cx.state(Orientation::Horizontal);
-        let gap_4 = cx.state(Pixels(4.0));
+    ChipApp::run()
+}
 
+struct ChipApp {
+    chips: Signal<Vec<String>>,
+}
+
+impl App for ChipApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            chips: cx.state(vec!["red".to_string(), "green".to_string(), "blue".to_string()]),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let chips = self.chips;
         ExamplePage::vertical(cx, |cx| {
-            Chip::static_text(cx, "Chip");
+            Chip::new(cx, "Chip");
             List::new(cx, chips, move |cx, index, item| {
                 let chips = chips;
                 Chip::new(cx, item).on_close(move |cx| {
@@ -19,11 +30,13 @@ fn main() -> Result<(), ApplicationError> {
                     });
                 });
             })
-            .orientation(orientation)
-            .horizontal_gap(gap_4);
+            .orientation(Orientation::Horizontal)
+            .horizontal_gap(Pixels(4.0));
         });
-        (cx.state("Chip"), cx.state((400, 200)))
-    });
+        self
+    }
 
-    app.title(title).inner_size(size).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Chip").inner_size((400, 200)))
+    }
 }

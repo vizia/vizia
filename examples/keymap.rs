@@ -16,9 +16,17 @@ use log::debug;
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, title) = Application::new_with_state(|cx| {
-        let title = cx.state("Keymap".to_string());
+    KeymapApp::run()
+}
 
+struct KeymapApp;
+
+impl App for KeymapApp {
+    fn new(_cx: &mut Context) -> Self {
+        Self
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
         // Build the keymap.
         Keymap::from(vec![
             (
@@ -68,10 +76,15 @@ fn main() -> Result<(), ApplicationError> {
             ),
         ])
         .build(cx);
-        title
-    });
+        
+        self
+    }
 
-    app.title(title).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| {
+            app.title("Keymap")
+        })
+    }
 }
 
 // The actions that are associated with the key chords.

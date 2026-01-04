@@ -41,7 +41,7 @@ impl ExamplePage {
             HStack::new(cx, move |cx| {
                 HStack::new(cx, |cx| {
                     Switch::new(cx, disabled).two_way();
-                    Label::static_text(cx, "Toggle Disabled");
+                    Label::new(cx, "Toggle Disabled");
                 })
                 .alignment(align_left)
                 .horizontal_gap(gap_5)
@@ -96,7 +96,7 @@ impl ExamplePage {
             HStack::new(cx, move |cx| {
                 HStack::new(cx, |cx| {
                     Switch::new(cx, disabled).two_way();
-                    Label::static_text(cx, "Toggle Disabled");
+                    Label::new(cx, "Toggle Disabled");
                 })
                 .alignment(align_center)
                 .horizontal_gap(gap_5)

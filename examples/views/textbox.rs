@@ -4,57 +4,66 @@ use vizia::icons::ICON_SEARCH;
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, title) = Application::new_with_state(|cx| {
-        let editable_text = cx.state("Editable text".to_string());
-        let multiline_text =
-            cx.state("This is some text which is editable and spans multiple lines".to_string());
-        let non_editable_text = cx.state("This text can be selected but not edited".to_string());
-        let non_editable_multiline_text = cx
-            .state("This text can be selected but not edited and spans multiple lines".to_string());
-        let width_300 = cx.state(Pixels(300.0));
-        let stretch_one = cx.state(Stretch(1.0));
-        let auto = cx.state(Auto);
-        let type_placeholder = cx.state("Type something...");
-        let search_placeholder = cx.state("Search");
-        let icon_search = cx.state(ICON_SEARCH);
-        let gray = cx.state(Color::gray());
-        let position_absolute = cx.state(PositionType::Absolute);
-        let read_only = cx.state(true);
+    TextboxApp::run()
+}
+
+struct TextboxApp {
+    editable_text: Signal<String>,
+    multiline_text: Signal<String>,
+    non_editable_text: Signal<String>,
+    non_editable_multiline_text: Signal<String>,
+}
+
+impl App for TextboxApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            editable_text: cx.state("Editable text".to_string()),
+            multiline_text: cx.state("This is some text which is editable and spans multiple lines".to_string()),
+            non_editable_text: cx.state("This text can be selected but not edited".to_string()),
+            non_editable_multiline_text: cx.state("This text can be selected but not edited and spans multiple lines".to_string()),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let editable_text = self.editable_text;
+        let multiline_text = self.multiline_text;
+        let non_editable_text = self.non_editable_text;
+        let non_editable_multiline_text = self.non_editable_multiline_text;
 
         ExamplePage::vertical(cx, |cx| {
             Textbox::new(cx, editable_text)
-                .width(width_300)
-                .placeholder(type_placeholder)
+                .width(Pixels(300.0))
+                .placeholder("Type something...")
                 .on_edit(move |cx, text| editable_text.set(cx, text));
 
             HStack::new(cx, |cx| {
                 Textbox::new(cx, editable_text)
                     .class("icon-before")
-                    .width(stretch_one)
-                    .placeholder(search_placeholder)
+                    .width(Stretch(1.0))
+                    .placeholder("Search")
                     .on_edit(move |cx, text| editable_text.set(cx, text));
-                Svg::new(cx, icon_search)
-                    .color(gray)
-                    .position_type(position_absolute)
-                    .top(stretch_one)
-                    .bottom(stretch_one);
+                Svg::new(cx, ICON_SEARCH)
+                    .color(Color::gray())
+                    .position_type(PositionType::Absolute)
+                    .top(Stretch(1.0))
+                    .bottom(Stretch(1.0));
             })
-            .height(auto)
-            .width(width_300);
+            .height(Auto)
+            .width(Pixels(300.0));
 
             Textbox::new_multiline(cx, multiline_text, true)
-                .width(width_300)
+                .width(Pixels(300.0))
                 .on_edit(move |cx, text| multiline_text.set(cx, text));
 
-            Textbox::new(cx, non_editable_text)
-                .width(auto)
-                .read_only(read_only);
+            Textbox::new(cx, non_editable_text).width(Auto).read_only(true);
             Textbox::new_multiline(cx, non_editable_multiline_text, true)
-                .width(width_300)
-                .read_only(read_only);
+                .width(Pixels(300.0))
+                .read_only(true);
         });
-        cx.state("Textbox")
-    });
+        self
+    }
 
-    app.title(title).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Textbox"))
+    }
 }

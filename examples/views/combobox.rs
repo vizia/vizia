@@ -3,30 +3,44 @@ use helpers::*;
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
-        let options = cx.state(vec![
-            "One",
-            "Two",
-            "Three",
-            "Four",
-            "Five",
-            "Six something long",
-            "Seven",
-            "Eight",
-            "Nine",
-            "Ten",
-        ]);
-        let selected_option = cx.state(0usize);
-        let combo_width = cx.state(Pixels(140.0));
-        let combo_top = cx.state(Pixels(100.0));
+    ComboboxApp::run()
+}
+
+struct ComboboxApp {
+    options: Signal<Vec<&'static str>>,
+    selected_option: Signal<usize>,
+}
+
+impl App for ComboboxApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            options: cx.state(vec![
+                "One",
+                "Two",
+                "Three",
+                "Four",
+                "Five",
+                "Six something long",
+                "Seven",
+                "Eight",
+                "Nine",
+                "Ten",
+            ]),
+            selected_option: cx.state(0usize),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let options = self.options;
+        let selected_option = self.selected_option;
 
         ExamplePage::new(cx, |cx| {
-            ComboBox::new(cx, options, selected_option)
-                .width(combo_width)
-                .top(combo_top);
+            ComboBox::new(cx, options, selected_option).width(Pixels(140.0)).top(Pixels(100.0));
         });
-        (cx.state("Combobox"), cx.state((400, 400)))
-    });
+        self
+    }
 
-    app.title(title).inner_size(size).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Combobox").inner_size((400, 400)))
+    }
 }

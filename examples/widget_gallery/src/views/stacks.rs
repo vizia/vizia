@@ -116,10 +116,7 @@ The zstack container can be used to layout views in a vertical stack.
                         .size(size_100)
                         .space(space_20)
                         .background_color(Color::green());
-                    Element::new(cx)
-                        .size(size_100)
-                        .space(space_40)
-                        .background_color(Color::blue());
+                    Element::new(cx).size(size_100).space(space_40).background_color(Color::blue());
                 })
                 .size(size_140)
                 .alignment(align_center);

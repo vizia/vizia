@@ -11,7 +11,7 @@ pub fn spinbox(cx: &mut Context) {
 
         Divider::new(cx);
 
-        Label::static_text(cx, "### Basic spinbox");
+        Label::new(cx, "### Basic spinbox");
 
         DemoRegion::new(
             cx,

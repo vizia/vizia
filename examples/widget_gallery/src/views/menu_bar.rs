@@ -19,15 +19,15 @@ pub fn menu_bar(cx: &mut Context) {
                 MenuBar::new(cx, |cx| {
                     Submenu::new(
                         cx,
-                        |cx| Label::static_text(cx, "File"),
+                        |cx| Label::new(cx, "File"),
                         |cx| {
                             MenuButton::new(
                                 cx,
                                 |_| debug!("New"),
                                 |cx| {
                                     HStack::new(cx, |cx| {
-                                        Label::static_text(cx, "New");
-                                        Label::static_text(cx, "Ctrl + N").class("shortcut");
+                                        Label::new(cx, "New");
+                                        Label::new(cx, "Ctrl + N").class("shortcut");
                                     })
                                 },
                             );
@@ -36,70 +36,62 @@ pub fn menu_bar(cx: &mut Context) {
                                 |_| debug!("Open"),
                                 |cx| {
                                     HStack::new(cx, |cx| {
-                                        Label::static_text(cx, "Open");
-                                        Label::static_text(cx, "Ctrl + O").class("shortcut");
+                                        Label::new(cx, "Open");
+                                        Label::new(cx, "Ctrl + O").class("shortcut");
                                     })
                                 },
                             );
                             Submenu::new(
                                 cx,
-                                |cx| Label::static_text(cx, "Open Recent"),
+                                |cx| Label::new(cx, "Open Recent"),
                                 |cx| {
                                     MenuButton::new(
                                         cx,
                                         |_| debug!("Doc 1"),
-                                        |cx| Label::static_text(cx, "Doc 1"),
+                                        |cx| Label::new(cx, "Doc 1"),
                                     );
                                     Submenu::new(
                                         cx,
-                                        |cx| Label::static_text(cx, "Doc 2"),
+                                        |cx| Label::new(cx, "Doc 2"),
                                         |cx| {
                                             MenuButton::new(
                                                 cx,
                                                 |_| debug!("Version 1"),
-                                                |cx| Label::static_text(cx, "Version 1"),
+                                                |cx| Label::new(cx, "Version 1"),
                                             );
                                             MenuButton::new(
                                                 cx,
                                                 |_| debug!("Version 2"),
-                                                |cx| Label::static_text(cx, "Version 2"),
+                                                |cx| Label::new(cx, "Version 2"),
                                             );
                                             MenuButton::new(
                                                 cx,
                                                 |_| debug!("Version 3"),
-                                                |cx| Label::static_text(cx, "Version 3"),
+                                                |cx| Label::new(cx, "Version 3"),
                                             );
                                         },
                                     );
                                     MenuButton::new(
                                         cx,
                                         |_| debug!("Doc 3"),
-                                        |cx| Label::static_text(cx, "Doc 3"),
+                                        |cx| Label::new(cx, "Doc 3"),
                                     );
                                 },
                             );
                             Divider::new(cx);
-                            MenuButton::new(
-                                cx,
-                                |_| debug!("Save"),
-                                |cx| Label::static_text(cx, "Save"),
-                            );
+                            MenuButton::new(cx, |_| debug!("Save"), |cx| Label::new(cx, "Save"));
                             MenuButton::new(
                                 cx,
                                 |_| debug!("Save As"),
-                                |cx| Label::static_text(cx, "Save As"),
+                                |cx| Label::new(cx, "Save As"),
                             );
                             Divider::new(cx);
-                            MenuButton::new(
-                                cx,
-                                |_| debug!("Quit"),
-                                |cx| Label::static_text(cx, "Quit"),
-                            );
+                            MenuButton::new(cx, |_| debug!("Quit"), |cx| Label::new(cx, "Quit"));
                         },
                     );
                     Submenu::new(
                         cx,
-                        |cx| Label::static_text(cx, "Edit"),
+                        |cx| Label::new(cx, "Edit"),
                         |cx| {
                             MenuButton::new(
                                 cx,
@@ -107,7 +99,7 @@ pub fn menu_bar(cx: &mut Context) {
                                 |cx| {
                                     HStack::new(cx, |cx| {
                                         Svg::new(cx, ICON_CUT).class("icon");
-                                        Label::static_text(cx, "Cut");
+                                        Label::new(cx, "Cut");
                                     })
                                 },
                             );
@@ -117,7 +109,7 @@ pub fn menu_bar(cx: &mut Context) {
                                 |cx| {
                                     HStack::new(cx, |cx| {
                                         Svg::new(cx, ICON_COPY).class("icon");
-                                        Label::static_text(cx, "Copy");
+                                        Label::new(cx, "Copy");
                                     })
                                 },
                             );
@@ -127,7 +119,7 @@ pub fn menu_bar(cx: &mut Context) {
                                 |cx| {
                                     HStack::new(cx, |cx| {
                                         Svg::new(cx, ICON_CLIPBOARD).class("icon");
-                                        Label::static_text(cx, "Paste");
+                                        Label::new(cx, "Paste");
                                     })
                                 },
                             );
@@ -135,51 +127,51 @@ pub fn menu_bar(cx: &mut Context) {
                     );
                     Submenu::new(
                         cx,
-                        |cx| Label::static_text(cx, "View"),
+                        |cx| Label::new(cx, "View"),
                         |cx| {
                             MenuButton::new(
                                 cx,
                                 |_| debug!("Zoom In"),
-                                |cx| Label::static_text(cx, "Zoom In"),
+                                |cx| Label::new(cx, "Zoom In"),
                             );
                             MenuButton::new(
                                 cx,
                                 |_| debug!("Zoom Out"),
-                                |cx| Label::static_text(cx, "Zoom Out"),
+                                |cx| Label::new(cx, "Zoom Out"),
                             );
                             Submenu::new(
                                 cx,
-                                |cx| Label::static_text(cx, "Zoom Level"),
+                                |cx| Label::new(cx, "Zoom Level"),
                                 |cx| {
                                     MenuButton::new(
                                         cx,
                                         |_| debug!("10%"),
-                                        |cx| Label::static_text(cx, "10%"),
+                                        |cx| Label::new(cx, "10%"),
                                     );
                                     MenuButton::new(
                                         cx,
                                         |_| debug!("20%"),
-                                        |cx| Label::static_text(cx, "20%"),
+                                        |cx| Label::new(cx, "20%"),
                                     );
                                     MenuButton::new(
                                         cx,
                                         |_| debug!("50%"),
-                                        |cx| Label::static_text(cx, "50%"),
+                                        |cx| Label::new(cx, "50%"),
                                     );
                                     MenuButton::new(
                                         cx,
                                         |_| debug!("100%"),
-                                        |cx| Label::static_text(cx, "100%"),
+                                        |cx| Label::new(cx, "100%"),
                                     );
                                     MenuButton::new(
                                         cx,
                                         |_| debug!("150%"),
-                                        |cx| Label::static_text(cx, "150%"),
+                                        |cx| Label::new(cx, "150%"),
                                     );
                                     MenuButton::new(
                                         cx,
                                         |_| debug!("200%"),
-                                        |cx| Label::static_text(cx, "200%"),
+                                        |cx| Label::new(cx, "200%"),
                                     );
                                 },
                             );
@@ -187,18 +179,14 @@ pub fn menu_bar(cx: &mut Context) {
                     );
                     Submenu::new(
                         cx,
-                        |cx| Label::static_text(cx, "Help"),
+                        |cx| Label::new(cx, "Help"),
                         |cx| {
                             MenuButton::new(
                                 cx,
                                 |_| debug!("Show License"),
-                                |cx| Label::static_text(cx, "Show License"),
+                                |cx| Label::new(cx, "Show License"),
                             );
-                            MenuButton::new(
-                                cx,
-                                |_| debug!("About"),
-                                |cx| Label::static_text(cx, "About"),
-                            );
+                            MenuButton::new(cx, |_| debug!("About"), |cx| Label::new(cx, "About"));
                         },
                     );
                 });
@@ -206,15 +194,15 @@ pub fn menu_bar(cx: &mut Context) {
             r#"MenuBar::new(cx, |cx| {
     Submenu::new(
         cx,
-        |cx| Label::static_text(cx, "File"),
+        |cx| Label::new(cx, "File"),
         |cx| {
             MenuButton::new(
                 cx,
                 |_| debug!("New"),
                 |cx| {
                     HStack::new(cx, |cx| {
-                        Label::static_text(cx, "New");
-                        Label::static_text(cx, "Ctrl + N").class("shortcut");
+                        Label::new(cx, "New");
+                        Label::new(cx, "Ctrl + N").class("shortcut");
                     })
                 },
             );
@@ -223,58 +211,58 @@ pub fn menu_bar(cx: &mut Context) {
                 |_| debug!("Open"),
                 |cx| {
                     HStack::new(cx, |cx| {
-                        Label::static_text(cx, "Open");
-                        Label::static_text(cx, "Ctrl + O").class("shortcut");
+                        Label::new(cx, "Open");
+                        Label::new(cx, "Ctrl + O").class("shortcut");
                     })
                 },
             );
             Submenu::new(
                 cx,
-                |cx| Label::static_text(cx, "Open Recent"),
+                |cx| Label::new(cx, "Open Recent"),
                 |cx| {
                     MenuButton::new(
                         cx,
                         |_| debug!("Doc 1"),
-                        |cx| Label::static_text(cx, "Doc 1"),
+                        |cx| Label::new(cx, "Doc 1"),
                     );
                     Submenu::new(
                         cx,
-                        |cx| Label::static_text(cx, "Doc 2"),
+                        |cx| Label::new(cx, "Doc 2"),
                         |cx| {
                             MenuButton::new(
                                 cx,
                                 |_| debug!("Version 1"),
-                                |cx| Label::static_text(cx, "Version 1"),
+                                |cx| Label::new(cx, "Version 1"),
                             );
                             MenuButton::new(
                                 cx,
                                 |_| debug!("Version 2"),
-                                |cx| Label::static_text(cx, "Version 2"),
+                                |cx| Label::new(cx, "Version 2"),
                             );
                             MenuButton::new(
                                 cx,
                                 |_| debug!("Version 3"),
-                                |cx| Label::static_text(cx, "Version 3"),
+                                |cx| Label::new(cx, "Version 3"),
                             );
                         },
                     );
                     MenuButton::new(
                         cx,
                         |_| debug!("Doc 3"),
-                        |cx| Label::static_text(cx, "Doc 3"),
+                        |cx| Label::new(cx, "Doc 3"),
                     );
                 },
             );
             MenuDivider::new(cx);
-            MenuButton::new(cx, |_| debug!("Save"), |cx| Label::static_text(cx, "Save"));
-            MenuButton::new(cx, |_| debug!("Save As"), |cx| Label::static_text(cx, "Save As"));
+            MenuButton::new(cx, |_| debug!("Save"), |cx| Label::new(cx, "Save"));
+            MenuButton::new(cx, |_| debug!("Save As"), |cx| Label::new(cx, "Save As"));
             MenuDivider::new(cx);
-            MenuButton::new(cx, |_| debug!("Quit"), |cx| Label::static_text(cx, "Quit"));
+            MenuButton::new(cx, |_| debug!("Quit"), |cx| Label::new(cx, "Quit"));
         },
     );
     Submenu::new(
         cx,
-        |cx| Label::static_text(cx, "Edit"),
+        |cx| Label::new(cx, "Edit"),
         |cx| {
             MenuButton::new(
                 cx,
@@ -282,7 +270,7 @@ pub fn menu_bar(cx: &mut Context) {
                 |cx| {
                     HStack::new(cx, |cx| {
                         Svg::new(cx, ICON_CUT).class("icon");
-                        Label::static_text(cx, "Cut");
+                        Label::new(cx, "Cut");
                     })
                 },
             );
@@ -292,7 +280,7 @@ pub fn menu_bar(cx: &mut Context) {
                 |cx| {
                     HStack::new(cx, |cx| {
                         Svg::new(cx, ICON_COPY).class("icon");
-                        Label::static_text(cx, "Copy");
+                        Label::new(cx, "Copy");
                     })
                 },
             );
@@ -302,7 +290,7 @@ pub fn menu_bar(cx: &mut Context) {
                 |cx| {
                     HStack::new(cx, |cx| {
                         Svg::new(cx, ICON_CLIPBOARD).class("icon");
-                        Label::static_text(cx, "Paste");
+                        Label::new(cx, "Paste");
                     })
                 },
             );
@@ -310,34 +298,34 @@ pub fn menu_bar(cx: &mut Context) {
     );
     Submenu::new(
         cx,
-        |cx| Label::static_text(cx, "View"),
+        |cx| Label::new(cx, "View"),
         |cx| {
-            MenuButton::new(cx, |_| debug!("Zoom In"), |cx| Label::static_text(cx, "Zoom In"));
-            MenuButton::new(cx, |_| debug!("Zoom Out"), |cx| Label::static_text(cx, "Zoom Out"));
+            MenuButton::new(cx, |_| debug!("Zoom In"), |cx| Label::new(cx, "Zoom In"));
+            MenuButton::new(cx, |_| debug!("Zoom Out"), |cx| Label::new(cx, "Zoom Out"));
             Submenu::new(
                 cx,
-                |cx| Label::static_text(cx, "Zoom Level"),
+                |cx| Label::new(cx, "Zoom Level"),
                 |cx| {
-                    MenuButton::new(cx, |_| debug!("10%"), |cx| Label::static_text(cx, "10%"));
-                    MenuButton::new(cx, |_| debug!("20%"), |cx| Label::static_text(cx, "20%"));
-                    MenuButton::new(cx, |_| debug!("50%"), |cx| Label::static_text(cx, "50%"));
-                    MenuButton::new(cx, |_| debug!("100%"), |cx| Label::static_text(cx, "100%"));
-                    MenuButton::new(cx, |_| debug!("150%"), |cx| Label::static_text(cx, "150%"));
-                    MenuButton::new(cx, |_| debug!("200%"), |cx| Label::static_text(cx, "200%"));
+                    MenuButton::new(cx, |_| debug!("10%"), |cx| Label::new(cx, "10%"));
+                    MenuButton::new(cx, |_| debug!("20%"), |cx| Label::new(cx, "20%"));
+                    MenuButton::new(cx, |_| debug!("50%"), |cx| Label::new(cx, "50%"));
+                    MenuButton::new(cx, |_| debug!("100%"), |cx| Label::new(cx, "100%"));
+                    MenuButton::new(cx, |_| debug!("150%"), |cx| Label::new(cx, "150%"));
+                    MenuButton::new(cx, |_| debug!("200%"), |cx| Label::new(cx, "200%"));
                 },
             );
         },
     );
     Submenu::new(
         cx,
-        |cx| Label::static_text(cx, "Help"),
+        |cx| Label::new(cx, "Help"),
         |cx| {
             MenuButton::new(
                 cx,
                 |_| debug!("Show License"),
-                |cx| Label::static_text(cx, "Show License"),
+                |cx| Label::new(cx, "Show License"),
             );
-            MenuButton::new(cx, |_| debug!("About"), |cx| Label::static_text(cx, "About"));
+            MenuButton::new(cx, |_| debug!("About"), |cx| Label::new(cx, "About"));
         },
     );
 });"#,

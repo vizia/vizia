@@ -54,25 +54,43 @@ fn theme_selection_dropdown(
         .width(width_100)
         .tooltip(|cx| {
             Tooltip::new(cx, |cx| {
-                Label::static_text(cx, "Select Theme Mode");
+                Label::new(cx, "Select Theme Mode");
             })
         });
 }
 
 fn main() -> Result<(), ApplicationError> {
     setup_logging()?;
+    WidgetGalleryApp::run()
+}
 
-    let (app, (title, size, min_size)) = Application::new_with_state(|cx: &mut Context| {
-        let app_data = AppData::new(cx);
-        let title = cx.state("Widget Gallery".to_string());
-        let size = cx.state((1400, 600));
-        let min_size = cx.state(Some((900, 300)));
-        let header_padding = cx.state(Pixels(8.0));
-        let header_gap = cx.state(Pixels(20.0));
-        let align_right = cx.state(Alignment::Right);
-        let auto = cx.state(Auto);
+struct WidgetGalleryApp {
+    app_data: AppData,
+    header_padding: Signal<Units>,
+    header_gap: Signal<Units>,
+    align_right: Signal<Alignment>,
+    auto: Signal<Units>,
+}
 
+impl App for WidgetGalleryApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            app_data: AppData::new(cx),
+            header_padding: cx.state(Pixels(8.0)),
+            header_gap: cx.state(Pixels(20.0)),
+            align_right: cx.state(Alignment::Right),
+            auto: cx.state(Auto),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
         cx.add_stylesheet(include_style!("src/style.css")).expect("Failed to add stylesheet");
+
+        let app_data = self.app_data;
+        let header_padding = self.header_padding;
+        let header_gap = self.header_gap;
+        let align_right = self.align_right;
+        let auto = self.auto;
 
         VStack::new(cx, |cx| {
             // Header
@@ -513,8 +531,14 @@ fn main() -> Result<(), ApplicationError> {
             .class("widgets")
             .vertical();
         });
-        (title, size, min_size)
-    });
+        self
+    }
 
-    app.title(title).inner_size(size).min_inner_size(min_size).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| {
+            app.title("Widget Gallery")
+               .inner_size((1400, 600))
+               .min_inner_size(Some((900, 300)))
+        })
+    }
 }

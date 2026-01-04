@@ -7,20 +7,51 @@ fn main() {
 
 #[cfg(not(feature = "baseview"))]
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, position)) = Application::new_with_state(|cx| {
-        // Color component signals
-        let red = cx.state(1.0f32);
-        let green = cx.state(1.0f32);
-        let blue = cx.state(1.0f32);
-        let show_popup = cx.state(false);
-        let title = cx.state("Main".to_string());
-        let position = cx.state((100, 100));
-        let popup_title = cx.state("Set color...".to_string());
-        let popup_size = cx.state((400, 200));
-        let popup_anchor = cx.state(Anchor::Center);
-        let padding_20 = cx.state(Pixels(20.0));
-        let gap_12 = cx.state(Pixels(12.0));
-        let align_center = cx.state(Alignment::Center);
+    PopupWindowApp::run()
+}
+
+#[cfg(not(feature = "baseview"))]
+struct PopupWindowApp {
+    red: Signal<f32>,
+    green: Signal<f32>,
+    blue: Signal<f32>,
+    show_popup: Signal<bool>,
+    popup_title: Signal<String>,
+    popup_size: Signal<(u32, u32)>,
+    popup_anchor: Signal<Anchor>,
+    padding_20: Signal<Units>,
+    gap_12: Signal<Units>,
+    align_center: Signal<Alignment>,
+}
+
+#[cfg(not(feature = "baseview"))]
+impl App for PopupWindowApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            red: cx.state(1.0f32),
+            green: cx.state(1.0f32),
+            blue: cx.state(1.0f32),
+            show_popup: cx.state(false),
+            popup_title: cx.state("Set color...".to_string()),
+            popup_size: cx.state((400, 200)),
+            popup_anchor: cx.state(Anchor::Center),
+            padding_20: cx.state(Pixels(20.0)),
+            gap_12: cx.state(Pixels(12.0)),
+            align_center: cx.state(Alignment::Center),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let red = self.red;
+        let green = self.green;
+        let blue = self.blue;
+        let show_popup = self.show_popup;
+        let popup_title = self.popup_title;
+        let popup_size = self.popup_size;
+        let popup_anchor = self.popup_anchor;
+        let padding_20 = self.padding_20;
+        let gap_12 = self.gap_12;
+        let align_center = self.align_center;
 
         Binding::new(cx, show_popup, move |cx| {
             if *show_popup.get(cx) {
@@ -50,13 +81,19 @@ fn main() -> Result<(), ApplicationError> {
         });
 
         HStack::new(cx, move |cx| {
-            Button::new(cx, |cx| Label::static_text(cx, "Show Popup"))
+            Button::new(cx, |cx| Label::new(cx, "Show Popup"))
                 .on_press(move |cx| show_popup.set(cx, true));
         })
         .padding(padding_20)
         .background_color(color);
-        (title, position)
-    });
+        
+        self
+    }
 
-    app.title(title).position(position).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| {
+            app.title("Main")
+               .position((100, 100))
+        })
+    }
 }

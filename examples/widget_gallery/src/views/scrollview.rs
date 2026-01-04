@@ -18,9 +18,7 @@ pub fn scrollview(cx: &mut Context) {
             cx,
             |cx| {
                 ScrollView::new(cx, |cx| {
-                    Label::static_text(cx, "Vertical Scroll")
-                        .height(height_1000)
-                        .width(stretch_one);
+                    Label::new(cx, "Vertical Scroll").height(height_1000).width(stretch_one);
                 })
                 .size(size_300)
                 .class("bg-default");
@@ -30,7 +28,7 @@ let stretch_one = cx.state(Stretch(1.0));
 let size_300 = cx.state(Units::Pixels(300.0));
 
 ScrollView::new(cx, |cx| {
-    Label::static_text(cx, "Vertical Scroll")
+    Label::new(cx, "Vertical Scroll")
         .height(height_1000)
         .width(stretch_one);
 })

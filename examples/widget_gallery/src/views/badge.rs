@@ -13,11 +13,11 @@ pub fn badge(cx: &mut Context) {
             cx,
             |cx| {
                 Badge::new(cx, |cx| {
-                    Label::static_text(cx, "5");
+                    Label::new(cx, "5");
                 });
             },
             r#"Badge::new(cx, |cx| {
-    Label::static_text(cx, "5");
+    Label::new(cx, "5");
 });"#,
         );
     })

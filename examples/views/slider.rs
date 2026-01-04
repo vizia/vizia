@@ -3,13 +3,22 @@ use helpers::*;
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, title) = Application::new_with_state(|cx| {
-        let value = cx.state(0.0f32);
-        let label_width = cx.state(Pixels(50.0));
-        let align_center = cx.state(Alignment::Center);
-        let auto = cx.state(Auto);
-        let gap_8 = cx.state(Pixels(8.0));
-        let vertical = cx.state(Orientation::Vertical);
+    SliderApp::run()
+}
+
+struct SliderApp {
+    value: Signal<f32>,
+}
+
+impl App for SliderApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            value: cx.state(0.0f32),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let value = self.value;
 
         ExamplePage::new(cx, |cx| {
             let value_label = cx.derived({
@@ -30,36 +39,38 @@ fn main() -> Result<(), ApplicationError> {
                 Slider::new(cx, normalized).range(0.0..1.0).on_change(move |cx, val| {
                     value.set(cx, -50.0 + (val * 100.0));
                 });
-                Label::new(cx, normalized_label).width(label_width);
+                Label::new(cx, normalized_label).width(Pixels(50.0));
             })
-            .alignment(align_center)
-            .height(auto)
-            .horizontal_gap(gap_8);
+            .alignment(Alignment::Center)
+            .height(Auto)
+            .horizontal_gap(Pixels(8.0));
 
             // Direct range slider
             HStack::new(cx, |cx| {
                 Slider::new(cx, value)
                     .range(-50.0..50.0)
                     .on_change(move |cx, val| value.set(cx, val));
-                Label::new(cx, value_label).width(label_width);
+                Label::new(cx, value_label).width(Pixels(50.0));
             })
-            .alignment(align_center)
-            .height(auto)
-            .horizontal_gap(gap_8);
+            .alignment(Alignment::Center)
+            .height(Auto)
+            .horizontal_gap(Pixels(8.0));
 
             // Vertical slider
             VStack::new(cx, |cx| {
                 Slider::new(cx, value)
                     .range(-50.0..50.0)
                     .on_change(move |cx, val| value.set(cx, val))
-                    .orientation(vertical);
-                Label::new(cx, value_label).alignment(align_center).width(label_width);
+                    .orientation(Orientation::Vertical);
+                Label::new(cx, value_label).alignment(Alignment::Center).width(Pixels(50.0));
             })
-            .alignment(align_center)
-            .vertical_gap(gap_8);
+            .alignment(Alignment::Center)
+            .vertical_gap(Pixels(8.0));
         });
-        cx.state("Slider")
-    });
+        self
+    }
 
-    app.title(title).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Slider"))
+    }
 }

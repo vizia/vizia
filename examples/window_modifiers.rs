@@ -7,24 +7,34 @@ fn main() {
 
 #[cfg(not(feature = "baseview"))]
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
-        let title = cx.state("Window Modifiers".to_string());
-        let size = cx.state((400, 100));
-        let stretch_one = cx.state(Stretch(1.0));
-        let padding_8 = cx.state(Pixels(8.0));
-        let gap_8 = cx.state(Pixels(8.0));
+    WindowModifiersApp::run()
+}
 
+#[cfg(not(feature = "baseview"))]
+struct WindowModifiersApp {
+    title: Signal<String>,
+}
+
+#[cfg(not(feature = "baseview"))]
+impl App for WindowModifiersApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            title: cx.state("Window Modifiers".to_string()),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let title = self.title;
         VStack::new(cx, |cx| {
-            Label::static_text(cx, "Window title:");
-            Textbox::new(cx, title)
-                .on_edit(move |cx, txt| title.set(cx, txt))
-                .width(stretch_one);
+            Label::new(cx, "Window title:");
+            Textbox::new(cx, title).on_edit(move |cx, txt| title.set(cx, txt)).width(Stretch(1.0));
         })
-        .padding(padding_8)
-        .gap(gap_8);
+        .padding(Pixels(8.0))
+        .gap(Pixels(8.0));
+        self
+    }
 
-        (title, size)
-    });
-
-    app.title(title).inner_size(size).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Window Modifiers").inner_size((400, 100)))
+    }
 }

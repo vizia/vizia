@@ -97,24 +97,56 @@ enum AppEvent {
 }
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
+    GalleryApp::run()
+}
+
+struct GalleryApp {
+    images: Signal<Vec<[Id; 3]>>,
+    thumbnails: Signal<HashMap<Id, (ImageData, Status)>>,
+    original: Signal<Option<Id>>,
+    runtime: Option<tokio::runtime::Runtime>,
+    thumb_width: Signal<Units>,
+    thumb_height: Signal<Units>,
+    gap_10: Signal<Units>,
+    align_center: Signal<Alignment>,
+    original_width: Signal<Units>,
+    original_height: Signal<Units>,
+    stretch_one: Signal<Stretch>,
+}
+
+impl App for GalleryApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            images: cx.state(Vec::<[Id; 3]>::default()),
+            thumbnails: cx.state(HashMap::<Id, (ImageData, Status)>::default()),
+            original: cx.state(None::<Id>),
+            runtime: Some(tokio::runtime::Runtime::new().unwrap()),
+            thumb_width: cx.state(Pixels(320.0)),
+            thumb_height: cx.state(Pixels(410.0)),
+            gap_10: cx.state(Pixels(10.0)),
+            align_center: cx.state(Alignment::Center),
+            original_width: cx.state(Pixels(400.0)),
+            original_height: cx.state(Pixels(500.0)),
+            stretch_one: cx.state(Stretch(1.0)),
+        }
+    }
+
+    fn on_build(mut self, cx: &mut Context) -> Self {
         cx.add_stylesheet(include_style!("src/style.css")).expect("Failed to add stylesheet");
 
-        let images = cx.state(Vec::<[Id; 3]>::default());
-        let thumbnails = cx.state(HashMap::<Id, (ImageData, Status)>::default());
-        let original = cx.state(None::<Id>);
-        let runtime = tokio::runtime::Runtime::new().unwrap();
-        let title = cx.state("Gallery".to_string());
-        let size = cx.state((1200, 600));
-        let thumb_width = cx.state(Pixels(320.0));
-        let thumb_height = cx.state(Pixels(410.0));
-        let gap_10 = cx.state(Pixels(10.0));
-        let align_center = cx.state(Alignment::Center);
-        let original_width = cx.state(Pixels(400.0));
-        let original_height = cx.state(Pixels(500.0));
-        let stretch_one = cx.state(Stretch(1.0));
+        let images = self.images;
+        let thumbnails = self.thumbnails;
+        let original = self.original;
+        let thumb_width = self.thumb_width;
+        let thumb_height = self.thumb_height;
+        let gap_10 = self.gap_10;
+        let align_center = self.align_center;
+        let original_width = self.original_width;
+        let original_height = self.original_height;
+        let stretch_one = self.stretch_one;
 
         let mut c = cx.get_proxy();
+        let runtime = self.runtime.take().expect("Runtime already taken");
         runtime.spawn(async move {
             let images = list().await;
             let _ = c.emit(AppEvent::ImagesListed(images));
@@ -122,10 +154,7 @@ fn main() -> Result<(), ApplicationError> {
 
         AppData { images, thumbnails, original, runtime }.build(cx);
 
-        let has_images = cx.derived({
-            let images = images;
-            move |s| !images.get(s).is_empty()
-        });
+        let has_images = cx.derived(move |s| !images.get(s).is_empty());
 
         Binding::new(cx, has_images, move |cx| {
             if *has_images.get(cx) {
@@ -161,10 +190,7 @@ fn main() -> Result<(), ApplicationError> {
             }
         });
 
-        let show_original = cx.derived({
-            let original = original;
-            move |s| original.get(s).is_some()
-        });
+        let show_original = cx.derived(move |s| original.get(s).is_some());
 
         Element::new(cx)
             .on_press(|cx| cx.emit(AppEvent::HideOriginal))
@@ -194,8 +220,10 @@ fn main() -> Result<(), ApplicationError> {
             .class("original")
             .toggle_class("show", AppData::original.map(|o| o.is_some()));
 
-        (title, size)
-    });
+        self
+    }
 
-    app.title(title).inner_size(size).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Gallery").inner_size((1200, 600)))
+    }
 }

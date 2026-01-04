@@ -39,7 +39,7 @@ An avatar can contain an icon, text, or an image.");
             });
 
             Avatar::new(cx, |cx|{
-                Label::static_text(cx, "GA");
+                Label::new(cx, "GA");
             });
 
             Avatar::new(cx, |cx|{
@@ -52,7 +52,7 @@ Avatar::new(cx, |cx|{
 });
 
 Avatar::new(cx, |cx|{
-    Label::static_text(cx, "GA");
+    Label::new(cx, "GA");
 });
 
 Avatar::new(cx, |cx|{
@@ -74,7 +74,7 @@ The `variant` modifier can be used to select between a circle (default), square,
             });
 
             Avatar::new(cx, |cx|{
-                Label::static_text(cx, "GA");
+                Label::new(cx, "GA");
             }).variant(square);
 
             Avatar::new(cx, |cx|{
@@ -89,7 +89,7 @@ Avatar::new(cx, |cx|{
 });
 
 Avatar::new(cx, |cx|{
-    Label::static_text(cx, "GA");
+    Label::new(cx, "GA");
 }).variant(square);
 
 Avatar::new(cx, |cx|{
@@ -120,7 +120,7 @@ The badge modifier can be used to add a badge to an avatar.
                 Svg::new(cx, ICON_USER);
             })
             .badge(|cx| Badge::new(cx, |cx| {
-                Label::static_text(cx, "2");
+                Label::new(cx, "2");
             }));
         }, r#"Avatar::new(cx, |cx|{
     Svg::new(cx, ICON_USER);
@@ -137,7 +137,7 @@ Avatar::new(cx, |cx|{
 Avatar::new(cx, |cx|{
     Svg::new(cx, ICON_USER);
 }).badge(|cx| Badge::new(cx, |cx| {
-    Label::static_text(cx, "2");
+    Label::new(cx, "2");
 }));"#
         );
 

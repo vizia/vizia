@@ -2,27 +2,54 @@ use log::debug;
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
-        let count = cx.state(0u32);
-        let font_80 = cx.state(80.0);
-        let stretch_one = cx.state(Stretch(1.0));
-        let align_center = cx.state(Alignment::Center);
-        let gap_8 = cx.state(Pixels(8.0));
+    TimerApp::run()
+}
+
+struct TimerApp {
+    count: Signal<u32>,
+    font_80: Signal<f32>,
+    stretch_one: Signal<Stretch>,
+    align_center: Signal<Alignment>,
+    gap_8: Signal<Units>,
+    title: Signal<&'static str>,
+    size: Signal<(u32, u32)>,
+}
+
+impl App for TimerApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            count: cx.state(0u32),
+            font_80: cx.state(80.0),
+            stretch_one: cx.state(Stretch(1.0)),
+            align_center: cx.state(Alignment::Center),
+            gap_8: cx.state(Pixels(8.0)),
+            title: cx.state("Timer"),
+            size: cx.state((300, 300)),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let count = self.count;
+        let font_80 = self.font_80;
+        let stretch_one = self.stretch_one;
+        let align_center = self.align_center;
+        let gap_8 = self.gap_8;
 
         // Main timer - ticks every 100ms
-        let timer = cx.add_timer(Duration::from_millis(100), None, move |cx, action| match action {
-            TimerAction::Start => {
-                debug!("Start timer");
-            }
+        let timer =
+            cx.add_timer(Duration::from_millis(100), None, move |cx, action| match action {
+                TimerAction::Start => {
+                    debug!("Start timer");
+                }
 
-            TimerAction::Stop => {
-                debug!("Stop timer");
-            }
+                TimerAction::Stop => {
+                    debug!("Stop timer");
+                }
 
-            TimerAction::Tick(_delta) => {
-                count.update(cx, |count| *count += 1);
-            }
-        });
+                TimerAction::Tick(_delta) => {
+                    count.update(cx, |count| *count += 1);
+                }
+            });
 
         // Stop main timer when count reaches 100
         Binding::new(cx, count, move |cx| {
@@ -45,13 +72,13 @@ fn main() -> Result<(), ApplicationError> {
         VStack::new(cx, |cx| {
             Label::new(cx, count).font_size(font_80);
 
-            Button::new(cx, |cx| Label::static_text(cx, "Start")).on_press(move |cx| {
+            Button::new(cx, |cx| Label::new(cx, "Start")).on_press(move |cx| {
                 cx.start_timer(timer);
             });
-            Button::new(cx, |cx| Label::static_text(cx, "Stop")).on_press(move |cx| {
+            Button::new(cx, |cx| Label::new(cx, "Stop")).on_press(move |cx| {
                 cx.stop_timer(timer);
             });
-            Button::new(cx, |cx| Label::static_text(cx, "Reset")).on_press(move |cx| {
+            Button::new(cx, |cx| Label::new(cx, "Reset")).on_press(move |cx| {
                 cx.start_timer(reset_timer);
             });
             let use_one_sec = cx.state(false);
@@ -78,8 +105,13 @@ fn main() -> Result<(), ApplicationError> {
         .size(stretch_one)
         .alignment(align_center)
         .gap(gap_8);
-        (cx.state("Timer"), cx.state((300, 300)))
-    });
 
-    app.title(title).inner_size(size).run()
+        self
+    }
+
+    fn window_config(&self) -> WindowConfig {
+        let title = self.title;
+        let size = self.size;
+        window(move |app| app.title(title).inner_size(size))
+    }
 }

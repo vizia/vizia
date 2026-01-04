@@ -29,11 +29,27 @@ const STYLE: &str = r#"
 "#;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
+    ResizableStackApp::run()
+}
+
+struct ResizableStackApp {
+    width: Signal<Units>,
+    height: Signal<Units>,
+}
+
+impl App for ResizableStackApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            width: cx.state(Pixels(200.0)),
+            height: cx.state(Pixels(200.0)),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        let width = cx.state(Pixels(200.0));
-        let height = cx.state(Pixels(200.0));
+        let width = self.width;
+        let height = self.height;
 
         ResizableStack::new(
             cx,
@@ -56,8 +72,10 @@ fn main() -> Result<(), ApplicationError> {
         .on_reset(move |cx| {
             height.set(cx, Pixels(200.0));
         });
-        (cx.state("Resizable Stack"), cx.state((800, 600)))
-    });
+        self
+    }
 
-    app.title(title).inner_size(size).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Resizable Stack").inner_size((800, 600)))
+    }
 }

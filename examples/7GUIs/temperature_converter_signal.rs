@@ -9,13 +9,25 @@ fn fahrenheit_to_celsius(temp: f32) -> f32 {
 }
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
-        // Two signals that stay in sync
-        let celsius = cx.state(5.0f32);
-        let fahrenheit = cx.state(celsius_to_fahrenheit(5.0));
-        let stretch_one = cx.state(Stretch(1.0));
-        let align_center = cx.state(Alignment::Center);
-        let gap_10 = cx.state(Pixels(10.0));
+    TemperatureConverterApp::run()
+}
+
+struct TemperatureConverterApp {
+    celsius: Signal<f32>,
+    fahrenheit: Signal<f32>,
+}
+
+impl App for TemperatureConverterApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            celsius: cx.state(5.0f32),
+            fahrenheit: cx.state(celsius_to_fahrenheit(5.0)),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let celsius = self.celsius;
+        let fahrenheit = self.fahrenheit;
 
         HStack::new(cx, |cx| {
             // Celsius input - updates fahrenheit when edited
@@ -23,21 +35,23 @@ fn main() -> Result<(), ApplicationError> {
                 .on_submit(move |cx, val, _| {
                     fahrenheit.set(cx, celsius_to_fahrenheit(val));
                 })
-                .width(stretch_one);
-            Label::static_text(cx, "Celsius");
+                .width(Stretch(1.0));
+            Label::new(cx, "Celsius");
 
             // Fahrenheit input - updates celsius when edited
             Textbox::new(cx, fahrenheit)
                 .on_submit(move |cx, val, _| {
                     celsius.set(cx, fahrenheit_to_celsius(val));
                 })
-                .width(stretch_one);
-            Label::static_text(cx, "Fahrenheit");
+                .width(Stretch(1.0));
+            Label::new(cx, "Fahrenheit");
         })
-        .alignment(align_center)
-        .horizontal_gap(gap_10);
-        (cx.state("Temperature Converter (Signals)"), cx.state((450, 100)))
-    });
+        .alignment(Alignment::Center)
+        .horizontal_gap(Pixels(10.0));
+        self
+    }
 
-    app.title(title).inner_size(size).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Temperature Converter (Signals)").inner_size((450, 100)))
+    }
 }

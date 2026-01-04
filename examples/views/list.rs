@@ -3,16 +3,27 @@ use helpers::*;
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, title) = Application::new_with_state(|cx| {
-        let list = cx.state((0..15u32).collect::<Vec<_>>());
-        let orientation = cx.state(Orientation::Vertical);
-        let is_horizontal = cx.derived({
-            let orientation = orientation;
-            move |s| *orientation.get(s) == Orientation::Horizontal
-        });
-        let not_hoverable = cx.state(false);
-        let selectable_single = cx.state(Selectable::Single);
-        let follows_focus = cx.state(true);
+    ListApp::run()
+}
+
+struct ListApp {
+    list: Signal<Vec<u32>>,
+    orientation: Signal<Orientation>,
+}
+
+impl App for ListApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            list: cx.state((0..15u32).collect::<Vec<_>>()),
+            orientation: cx.state(Orientation::Vertical),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let list = self.list;
+        let orientation = self.orientation;
+
+        let is_horizontal = cx.derived(move |s| *orientation.get(s) == Orientation::Horizontal);
 
         ExamplePage::new(cx, move |cx| {
             Switch::new(cx, is_horizontal).on_toggle(move |cx| {
@@ -26,20 +37,22 @@ fn main() -> Result<(), ApplicationError> {
             });
 
             List::new(cx, list, move |cx, _index, item| {
-                Label::new(cx, item).hoverable(not_hoverable);
+                Label::new(cx, item).hoverable(false);
             })
             .orientation(orientation)
-            .selectable(selectable_single);
+            .selectable(Selectable::Single);
 
             List::new(cx, list, move |cx, _index, item| {
-                Label::new(cx, item).hoverable(not_hoverable);
+                Label::new(cx, item).hoverable(false);
             })
             .orientation(orientation)
-            .selectable(selectable_single)
-            .selection_follows_focus(follows_focus);
+            .selectable(Selectable::Single)
+            .selection_follows_focus(true);
         });
-        cx.state("List")
-    });
+        self
+    }
 
-    app.title(title).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("List"))
+    }
 }

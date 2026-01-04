@@ -1,7 +1,17 @@
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, title) = Application::new_with_state(|cx| {
+    MarkdownApp::run()
+}
+
+struct MarkdownApp;
+
+impl App for MarkdownApp {
+    fn new(_cx: &mut Context) -> Self {
+        Self
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
         ScrollView::new(cx, |cx| {
             Markdown::new(
                 cx,
@@ -14,8 +24,10 @@ fn main() -> Result<(), ApplicationError> {
 ",
             );
         });
-        cx.state("Markdown")
-    });
+        self
+    }
 
-    app.title(title).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Markdown"))
+    }
 }

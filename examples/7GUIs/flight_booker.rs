@@ -17,15 +17,33 @@ const STYLE: &str = r#"
 "#;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
+    FlightBookerApp::run()
+}
+
+struct FlightBookerApp {
+    options: Signal<Vec<&'static str>>,
+    selected_option: Signal<usize>,
+    start_date: Signal<NaiveDate>,
+    end_date: Signal<NaiveDate>,
+}
+
+impl App for FlightBookerApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            options: cx.state(vec!["one-way flight", "return flight"]),
+            selected_option: cx.state(0usize),
+            start_date: cx.state(NaiveDate::from_ymd_opt(2022, 2, 12).unwrap()),
+            end_date: cx.state(NaiveDate::from_ymd_opt(2022, 2, 26).unwrap()),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        let options = cx.state(vec!["one-way flight", "return flight"]);
-        let selected_option = cx.state(0usize);
-        let start_date = cx.state(NaiveDate::from_ymd_opt(2022, 2, 12).unwrap());
-        let end_date = cx.state(NaiveDate::from_ymd_opt(2022, 2, 26).unwrap());
-        let title = cx.state("Flight Booker".to_string());
-        let size = cx.state((250, 250));
+        let options = self.options;
+        let selected_option = self.selected_option;
+        let start_date = self.start_date;
+        let end_date = self.end_date;
 
         // Derived signals for formatted dates
         let start_text = cx.derived({
@@ -59,11 +77,14 @@ fn main() -> Result<(), ApplicationError> {
                 })
                 .class("input");
 
-            Button::new(cx, |cx| Label::static_text(cx, "Book"));
+            Button::new(cx, |cx| Label::new(cx, "Book"));
         })
         .class("container");
-        (title, size)
-    });
+        
+        self
+    }
 
-    app.title(title).inner_size(size).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Flight Booker").inner_size((250, 250)))
+    }
 }

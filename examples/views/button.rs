@@ -6,34 +6,39 @@ use vizia::icons::ICON_CHECK;
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
-        let auto = cx.state(Auto);
-        let gap_10 = cx.state(Pixels(10.0));
-        let icon_check = cx.state(ICON_CHECK);
+    ButtonApp::run()
+}
+
+struct ButtonApp;
+
+impl App for ButtonApp {
+    fn new(_cx: &mut Context) -> Self {
+        Self
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
         ExamplePage::new(cx, |cx| {
             HStack::new(cx, |cx| {
-                let accent = cx.state(ButtonVariant::Accent);
-                let outline = cx.state(ButtonVariant::Outline);
-                let text = cx.state(ButtonVariant::Text);
-
-                Button::new(cx, |cx| Label::static_text(cx, "Button"))
+                Button::new(cx, |cx| Label::new(cx, "Button"))
                     .on_press(|_cx| debug!("Button Pressed!"));
-                Button::new(cx, |cx| Label::static_text(cx, "Accent Button")).variant(accent);
-                Button::new(cx, |cx| Label::static_text(cx, "Outline Button")).variant(outline);
-                Button::new(cx, |cx| Label::static_text(cx, "Text Button")).variant(text);
+                Button::new(cx, |cx| Label::new(cx, "Accent Button")).variant(ButtonVariant::Accent);
+                Button::new(cx, |cx| Label::new(cx, "Outline Button")).variant(ButtonVariant::Outline);
+                Button::new(cx, |cx| Label::new(cx, "Text Button")).variant(ButtonVariant::Text);
                 Button::new(cx, |cx| {
                     HStack::new(cx, |cx| {
-                        Svg::new(cx, icon_check).class("icon");
-                        Label::static_text(cx, "Button with Icon");
+                        Svg::new(cx, ICON_CHECK).class("icon");
+                        Label::new(cx, "Button with Icon");
                     })
                 });
-                Button::new(cx, |cx| Svg::new(cx, icon_check).class("icon"));
+                Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"));
             })
-            .size(auto)
-            .horizontal_gap(gap_10);
+            .size(Auto)
+            .horizontal_gap(Pixels(10.0));
         });
-        (cx.state("Button"), cx.state((700, 200)))
-    });
+        self
+    }
 
-    app.title(title).inner_size(size).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Button").inner_size((700, 200)))
+    }
 }

@@ -18,7 +18,7 @@ A label can be used to display a string of text.
 
         Divider::new(cx);
 
-        Label::static_text(cx, "### Basic tab view");
+        Label::new(cx, "### Basic tab view");
 
         DemoRegion::new(
             cx,

@@ -3,34 +3,49 @@ use helpers::*;
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, title) = Application::new_with_state(|cx| {
-        let option1 = cx.state(true);
-        let option2 = cx.state(false);
-        let auto = cx.state(Auto);
-        let gap_5 = cx.state(Pixels(5.0));
-        let align_center = cx.state(Alignment::Center);
+    SwitchApp::run()
+}
+
+struct SwitchApp {
+    option1: Signal<bool>,
+    option2: Signal<bool>,
+}
+
+impl App for SwitchApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            option1: cx.state(true),
+            option2: cx.state(false),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let option1 = self.option1;
+        let option2 = self.option2;
 
         ExamplePage::vertical(cx, |cx| {
-            Label::static_text(cx, "Basic Switches");
+            Label::new(cx, "Basic Switches");
 
             HStack::new(cx, |cx| {
                 Switch::new(cx, option1).two_way().id("Switch_1");
-                Label::static_text(cx, "Switch 1").describing("Switch_1");
+                Label::new(cx, "Switch 1").describing("Switch_1");
             })
-            .size(auto)
-            .horizontal_gap(gap_5)
-            .alignment(align_center);
+            .size(Auto)
+            .horizontal_gap(Pixels(5.0))
+            .alignment(Alignment::Center);
 
             HStack::new(cx, |cx| {
                 Switch::new(cx, option2).two_way().id("Switch_2");
-                Label::static_text(cx, "Switch 2").describing("Switch_2");
+                Label::new(cx, "Switch 2").describing("Switch_2");
             })
-            .size(auto)
-            .horizontal_gap(gap_5)
-            .alignment(align_center);
+            .size(Auto)
+            .horizontal_gap(Pixels(5.0))
+            .alignment(Alignment::Center);
         });
-        cx.state("Switch")
-    });
+        self
+    }
 
-    app.title(title).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Switch"))
+    }
 }

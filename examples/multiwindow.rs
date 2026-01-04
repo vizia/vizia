@@ -7,19 +7,54 @@ fn main() {
 
 #[cfg(not(feature = "baseview"))]
 fn main() -> Result<(), ApplicationError> {
-    let (app, title) = Application::new_with_state(|cx| {
-        // Color component signals
-        let red = cx.state(1.0f32);
-        let green = cx.state(1.0f32);
-        let blue = cx.state(1.0f32);
-        let show_window = cx.state(false);
-        let padding_20 = cx.state(Pixels(20.0));
-        let align_center = cx.state(Alignment::Center);
-        let gap_12 = cx.state(Pixels(12.0));
-        let auto = cx.state(Auto);
-        let window_title = cx.state("Set color...");
-        let window_size = cx.state((400, 200));
-        let window_anchor = cx.state(Anchor::Center);
+    MultiWindowApp::run()
+}
+
+#[cfg(not(feature = "baseview"))]
+struct MultiWindowApp {
+    red: Signal<f32>,
+    green: Signal<f32>,
+    blue: Signal<f32>,
+    show_window: Signal<bool>,
+    padding_20: Signal<Units>,
+    align_center: Signal<Alignment>,
+    gap_12: Signal<Units>,
+    auto: Signal<Units>,
+    window_title: Signal<&'static str>,
+    window_size: Signal<(u32, u32)>,
+    window_anchor: Signal<Anchor>,
+}
+
+#[cfg(not(feature = "baseview"))]
+impl App for MultiWindowApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            red: cx.state(1.0f32),
+            green: cx.state(1.0f32),
+            blue: cx.state(1.0f32),
+            show_window: cx.state(false),
+            padding_20: cx.state(Pixels(20.0)),
+            align_center: cx.state(Alignment::Center),
+            gap_12: cx.state(Pixels(12.0)),
+            auto: cx.state(Auto),
+            window_title: cx.state("Set color..."),
+            window_size: cx.state((400, 200)),
+            window_anchor: cx.state(Anchor::Center),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let red = self.red;
+        let green = self.green;
+        let blue = self.blue;
+        let show_window = self.show_window;
+        let padding_20 = self.padding_20;
+        let align_center = self.align_center;
+        let gap_12 = self.gap_12;
+        let auto = self.auto;
+        let window_title = self.window_title;
+        let window_size = self.window_size;
+        let window_anchor = self.window_anchor;
 
         Binding::new(cx, show_window, move |cx| {
             if *show_window.get(cx) {
@@ -49,14 +84,13 @@ fn main() -> Result<(), ApplicationError> {
         });
 
         HStack::new(cx, move |cx| {
-            Button::new(cx, |cx| Label::static_text(cx, "Show Window"))
+            Button::new(cx, |cx| Label::new(cx, "Show Window"))
                 .on_press(move |cx| show_window.set(cx, true));
         })
         .size(auto)
         .padding(padding_20)
         .background_color(color);
-        cx.state("Main")
-    });
-
-    app.title(title).run()
+        
+        self
+    }
 }

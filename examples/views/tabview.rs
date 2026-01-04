@@ -3,53 +3,62 @@ pub use helpers::*;
 use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, title) = Application::new_with_state(|cx| {
-        let tabs = cx.state(vec!["Tab1", "Tab2", "Tab3", "Tab4", "Tab5", "Tab6"]);
-        let no_hover = cx.state(false);
-        let size_200 = cx.state(Pixels(200.0));
-        let width_500 = cx.state(Pixels(500.0));
-        let height_300 = cx.state(Pixels(300.0));
-        let color_red = cx.state(Color::red());
-        let color_blue = cx.state(Color::blue());
-        let color_gray = cx.state(Color::gray());
+    TabviewApp::run()
+}
+
+struct TabviewApp {
+    tabs: Signal<Vec<&'static str>>,
+}
+
+impl App for TabviewApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            tabs: cx.state(vec!["Tab1", "Tab2", "Tab3", "Tab4", "Tab5", "Tab6"]),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let tabs = self.tabs;
 
         ExamplePage::new(cx, move |cx| {
             TabView::new(cx, tabs, move |cx, item| match *item.get(cx) {
                 "Tab1" => TabPair::new(
                     move |cx| {
-                        Label::new(cx, item).hoverable(no_hover);
+                        Label::new(cx, item).hoverable(false);
                         Element::new(cx).class("indicator");
                     },
-                    move |cx| {
-                        Element::new(cx).size(size_200).background_color(color_red);
+                    |cx| {
+                        Element::new(cx).size(Pixels(200.0)).background_color(Color::red());
                     },
                 ),
 
                 "Tab2" => TabPair::new(
                     move |cx| {
-                        Label::new(cx, item).hoverable(no_hover);
+                        Label::new(cx, item).hoverable(false);
                         Element::new(cx).class("indicator");
                     },
-                    move |cx| {
-                        Element::new(cx).size(size_200).background_color(color_blue);
+                    |cx| {
+                        Element::new(cx).size(Pixels(200.0)).background_color(Color::blue());
                     },
                 ),
 
                 _ => TabPair::new(
                     move |cx| {
-                        Label::new(cx, item).hoverable(no_hover);
+                        Label::new(cx, item).hoverable(false);
                         Element::new(cx).class("indicator");
                     },
-                    move |cx| {
-                        Element::new(cx).size(size_200).background_color(color_gray);
+                    |cx| {
+                        Element::new(cx).size(Pixels(200.0)).background_color(Color::gray());
                     },
                 ),
             })
-            .width(width_500)
-            .height(height_300);
+            .width(Pixels(500.0))
+            .height(Pixels(300.0));
         });
-        cx.state("Tabview")
-    });
+        self
+    }
 
-    app.title(title).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Tabview"))
+    }
 }

@@ -22,18 +22,36 @@ impl Display for SpinboxValues {
 }
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, title) = Application::new_with_state(|cx| {
-        let value1 = cx.state(99i64);
-        let value2 = cx.state(0usize);
-        let choices = cx.state(vec![SpinboxValues::One, SpinboxValues::Two, SpinboxValues::Three]);
-        let value3 = cx.state(0usize);
-        let spinbox_width = cx.state(Pixels(100.0));
-        let plus_minus = cx.state(SpinboxIcons::PlusMinus);
+    SpinboxApp::run()
+}
+
+struct SpinboxApp {
+    value1: Signal<i64>,
+    value2: Signal<usize>,
+    choices: Signal<Vec<SpinboxValues>>,
+    value3: Signal<usize>,
+}
+
+impl App for SpinboxApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            value1: cx.state(99i64),
+            value2: cx.state(0usize),
+            choices: cx.state(vec![SpinboxValues::One, SpinboxValues::Two, SpinboxValues::Three]),
+            value3: cx.state(0usize),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let value1 = self.value1;
+        let value2 = self.value2;
+        let choices = self.choices;
+        let value3 = self.value3;
 
         ExamplePage::new(cx, move |cx| {
             Spinbox::new(cx, value1)
-                .icons(plus_minus)
-                .width(spinbox_width)
+                .icons(SpinboxIcons::PlusMinus)
+                .width(Pixels(100.0))
                 .on_increment(move |cx| value1.update(cx, |v| *v += 1))
                 .on_decrement(move |cx| value1.update(cx, |v| *v -= 1));
 
@@ -44,8 +62,8 @@ fn main() -> Result<(), ApplicationError> {
                     }
                 })
             })
-            .icons(plus_minus)
-            .width(spinbox_width)
+            .icons(SpinboxIcons::PlusMinus)
+            .width(Pixels(100.0))
             .on_increment(move |cx| value2.update(cx, |v| *v += 1))
             .on_decrement(move |cx| value2.update(cx, |v| *v = v.saturating_sub(1)));
 
@@ -53,12 +71,14 @@ fn main() -> Result<(), ApplicationError> {
                 PickList::new(cx, choices, value3, false)
                     .on_select(move |cx, val| value3.set(cx, val))
             })
-            .width(spinbox_width)
+            .width(Pixels(100.0))
             .on_increment(move |cx| value3.update(cx, |v| *v = (*v + 1) % 3))
             .on_decrement(move |cx| value3.update(cx, |v| *v = if *v == 0 { 2 } else { *v - 1 }));
         });
-        cx.state("Spinbox")
-    });
+        self
+    }
 
-    app.title(title).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Spinbox"))
+    }
 }

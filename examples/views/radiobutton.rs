@@ -21,19 +21,27 @@ impl std::fmt::Display for Options {
 }
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, title) = Application::new_with_state(|cx| {
-        let selected = cx.state(Options::First);
-        let auto = cx.state(Auto);
-        let gap_20 = cx.state(Pixels(20.0));
-        let gap_10 = cx.state(Pixels(10.0));
-        let gap_5 = cx.state(Pixels(5.0));
-        let top_20 = cx.state(Pixels(20.0));
-        let align_center = cx.state(Alignment::Center);
+    RadiobuttonApp::run()
+}
+
+struct RadiobuttonApp {
+    selected: Signal<Options>,
+}
+
+impl App for RadiobuttonApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            selected: cx.state(Options::First),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        let selected = self.selected;
 
         // Exclusive checkboxes (radio buttons) with labels
         // Only one checkbox can be checked at a time and cannot be unchecked
-        ExamplePage::vertical(cx, |cx| {
-            Label::static_text(cx, "Basic Radiobuttons");
+        ExamplePage::vertical(cx, move |cx| {
+            Label::new(cx, "Basic Radiobuttons");
             HStack::new(cx, |cx| {
                 for i in 0..3 {
                     let current_option = index_to_option(i);
@@ -45,10 +53,10 @@ fn main() -> Result<(), ApplicationError> {
                         .on_select(move |cx| selected.set(cx, current_option));
                 }
             })
-            .size(auto)
-            .horizontal_gap(gap_20);
+            .size(Auto)
+            .horizontal_gap(Pixels(20.0));
 
-            Label::static_text(cx, "Radiobuttons with labels").top(top_20);
+            Label::new(cx, "Radiobuttons with labels").top(Pixels(20.0));
 
             VStack::new(cx, |cx| {
                 for i in 0..3 {
@@ -67,20 +75,22 @@ fn main() -> Result<(), ApplicationError> {
                             Options::Second => "Second",
                             Options::Third => "Third",
                         };
-                        Label::static_text(cx, option_label).describing(format!("button_{i}"));
+                        Label::new(cx, option_label).describing(format!("button_{i}"));
                     })
-                    .size(auto)
-                    .alignment(align_center)
-                    .horizontal_gap(gap_5);
+                    .size(Auto)
+                    .alignment(Alignment::Center)
+                    .horizontal_gap(Pixels(5.0));
                 }
             })
-            .vertical_gap(gap_10)
-            .size(auto);
+            .vertical_gap(Pixels(10.0))
+            .size(Auto);
         });
-        cx.state("Radiobutton")
-    });
+        self
+    }
 
-    app.title(title).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Radiobutton"))
+    }
 }
 
 fn index_to_option(index: usize) -> Options {

@@ -26,7 +26,7 @@ impl DemoRegion {
                         .on_press(move |ex| open.update(ex, |state| *state = !*state))
                         .tooltip(|cx| {
                             Tooltip::new(cx, |cx| {
-                                Label::static_text(cx, "Toggle Code");
+                                Label::new(cx, "Toggle Code");
                             })
                         });
                 })

@@ -26,26 +26,64 @@ impl View for SaveDialog {
 
 #[cfg(not(feature = "baseview"))]
 fn main() -> Result<(), ApplicationError> {
-    Application::new(|cx| {
+    SaveDialogApp::run()
+}
+
+#[cfg(not(feature = "baseview"))]
+struct SaveDialogApp {
+    is_saved: Signal<bool>,
+    show_dialog: Signal<bool>,
+    gap_10: Signal<Units>,
+    padding_50: Signal<Units>,
+    align_top_center: Signal<Alignment>,
+    stretch_one: Signal<Stretch>,
+    align_center: Signal<Alignment>,
+    button_width: Signal<Units>,
+    auto: Signal<Units>,
+    gap_20: Signal<Units>,
+    position_absolute: Signal<PositionType>,
+    backdrop_blur: Signal<Filter>,
+}
+
+#[cfg(not(feature = "baseview"))]
+impl App for SaveDialogApp {
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            is_saved: cx.state(false),
+            show_dialog: cx.state(false),
+            gap_10: cx.state(Pixels(10.0)),
+            padding_50: cx.state(Pixels(50.0)),
+            align_top_center: cx.state(Alignment::TopCenter),
+            stretch_one: cx.state(Stretch(1.0)),
+            align_center: cx.state(Alignment::Center),
+            button_width: cx.state(Pixels(120.0)),
+            auto: cx.state(Auto),
+            gap_20: cx.state(Pixels(20.0)),
+            position_absolute: cx.state(PositionType::Absolute),
+            backdrop_blur: cx.state(Filter::Blur(Pixels(2.0).into())),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
         let main_window = cx.parent_window();
-        let is_saved = cx.state(false);
-        let show_dialog = cx.state(false);
-        let gap_10 = cx.state(Pixels(10.0));
-        let padding_50 = cx.state(Pixels(50.0));
-        let align_top_center = cx.state(Alignment::TopCenter);
-        let stretch_one = cx.state(Stretch(1.0));
-        let align_center = cx.state(Alignment::Center);
-        let button_width = cx.state(Pixels(120.0));
-        let auto = cx.state(Auto);
-        let gap_20 = cx.state(Pixels(20.0));
-        let position_absolute = cx.state(PositionType::Absolute);
-        let backdrop_blur = cx.state(Filter::Blur(Pixels(2.0).into()));
+        let is_saved = self.is_saved;
+        let show_dialog = self.show_dialog;
+        let gap_10 = self.gap_10;
+        let padding_50 = self.padding_50;
+        let align_top_center = self.align_top_center;
+        let stretch_one = self.stretch_one;
+        let align_center = self.align_center;
+        let button_width = self.button_width;
+        let auto = self.auto;
+        let gap_20 = self.gap_20;
+        let position_absolute = self.position_absolute;
+        let backdrop_blur = self.backdrop_blur;
 
         SaveDialog { is_saved, show_dialog }.build(cx, |cx| {
             HStack::new(cx, |cx| {
-                Button::new(cx, |cx| Label::static_text(cx, "Close"))
+                Button::new(cx, |cx| Label::new(cx, "Close"))
                     .on_press(|cx| cx.emit(WindowEvent::WindowClose));
-                Button::new(cx, |cx| Label::static_text(cx, "Save"))
+                Button::new(cx, |cx| Label::new(cx, "Save"))
                     .on_press(move |cx| is_saved.set(cx, true));
             })
             .gap(gap_10)
@@ -59,11 +97,11 @@ fn main() -> Result<(), ApplicationError> {
                     let popup_anchor = cx.state(Anchor::Center);
                     Window::popup(cx, true, move |cx| {
                         VStack::new(cx, move |cx| {
-                            Label::static_text(cx, "Save before close?")
+                            Label::new(cx, "Save before close?")
                                 .width(stretch_one)
                                 .alignment(align_center);
                             HStack::new(cx, move |cx| {
-                                Button::new(cx, |cx| Label::static_text(cx, "Save & Close"))
+                                Button::new(cx, |cx| Label::new(cx, "Save & Close"))
                                     .on_press(move |cx| {
                                         is_saved.set(cx, true);
                                         show_dialog.set(cx, false);
@@ -72,7 +110,7 @@ fn main() -> Result<(), ApplicationError> {
                                     .width(button_width)
                                     .class("accent");
 
-                                Button::new(cx, |cx| Label::static_text(cx, "Cancel"))
+                                Button::new(cx, |cx| Label::new(cx, "Cancel"))
                                     .on_press(move |cx| show_dialog.set(cx, false))
                                     .width(button_width);
                             })
@@ -95,6 +133,10 @@ fn main() -> Result<(), ApplicationError> {
                 .backdrop_filter(backdrop_blur)
                 .display(show_dialog);
         });
-    })
-    .run()
+        self
+    }
+
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("Save Dialog"))
+    }
 }

@@ -29,7 +29,7 @@ A `HStack` can be used to add a label to a checkbox. The describing modifier can
         DemoRegion::new(cx, |cx|{
             HStack::new(cx, |cx| {
                 Checkbox::new(cx, check_a).two_way().id("check");
-                Label::static_text(cx, "Label").describing("check");
+                Label::new(cx, "Label").describing("check");
             })
             .size(auto)
             .alignment(align_center)
@@ -40,7 +40,7 @@ let align_center = cx.state(Alignment::Center);
 let gap_8 = cx.state(Pixels(8.0));
 HStack::new(cx, |cx| {
     Checkbox::new(cx, check_a).two_way().id("check");
-    Label::static_text(cx, "Label").describing("check");
+    Label::new(cx, "Label").describing("check");
 })
 .size(auto)
 .horizontal_gap(gap_8);"#);

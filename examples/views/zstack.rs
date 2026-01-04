@@ -3,22 +3,27 @@ use vizia::prelude::*;
 const COLORS: [Color; 3] = [Color::red(), Color::green(), Color::blue()];
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, title) = Application::new_with_state(|cx| {
-        let size_100 = cx.state(Pixels(100.0));
-        let align_center = cx.state(Alignment::Center);
+    ZStackApp::run()
+}
+
+struct ZStackApp;
+
+impl App for ZStackApp {
+    fn new(_cx: &mut Context) -> Self {
+        Self
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
         ZStack::new(cx, |cx| {
             for (i, color) in COLORS.into_iter().enumerate() {
-                let offset = cx.state(Pixels(10.0 * i as f32));
-                let color_signal = cx.state(color);
-                Element::new(cx)
-                    .size(size_100)
-                    .translate(offset)
-                    .background_color(color_signal);
+                Element::new(cx).size(Pixels(100.0)).translate(Pixels(10.0 * i as f32)).background_color(color);
             }
         })
-        .alignment(align_center);
-        cx.state("ZStack")
-    });
+        .alignment(Alignment::Center);
+        self
+    }
 
-    app.title(title).run()
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.title("ZStack"))
+    }
 }
