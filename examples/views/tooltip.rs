@@ -10,10 +10,6 @@ const STYLE: &str = r#"
     }
 "#;
 
-fn main() -> Result<(), ApplicationError> {
-    TooltipApp::run()
-}
-
 struct TooltipApp;
 
 impl App for TooltipApp {
@@ -220,4 +216,8 @@ impl App for TooltipApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Tooltip").inner_size((800, 800)))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    TooltipApp::run()
 }

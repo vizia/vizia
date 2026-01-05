@@ -2,13 +2,10 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    DropdownApp::run()
-}
-
 struct DropdownApp {
     list: Signal<Vec<String>>,
     selected: Signal<usize>,
+    selectable_single: Signal<Selectable>,
 }
 
 impl App for DropdownApp {
@@ -16,12 +13,14 @@ impl App for DropdownApp {
         Self {
             list: cx.state(vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()]),
             selected: cx.state(0usize),
+            selectable_single: cx.state(Selectable::Single),
         }
     }
 
     fn on_build(self, cx: &mut Context) -> Self {
         let list = self.list;
         let selected = self.selected;
+        let selectable_single = self.selectable_single;
 
         // Derived signal for the selected item text
         let selected_text = cx.derived(move |s| {
@@ -42,7 +41,7 @@ impl App for DropdownApp {
                     List::new(cx, list, move |cx, _, item| {
                         Label::new(cx, item).hoverable(false);
                     })
-                    .selectable(Selectable::Single)
+                    .selectable(selectable_single)
                     .selected(selected_indices)
                     .on_select(move |cx, sel| {
                         selected.set(cx, sel);
@@ -58,4 +57,8 @@ impl App for DropdownApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Dropdown").inner_size((350, 300)))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    DropdownApp::run()
 }

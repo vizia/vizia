@@ -6,11 +6,6 @@ fn main() {
 }
 
 #[cfg(not(feature = "baseview"))]
-fn main() -> Result<(), ApplicationError> {
-    WindowModifiersApp::run()
-}
-
-#[cfg(not(feature = "baseview"))]
 struct WindowModifiersApp {
     title: Signal<String>,
 }
@@ -35,6 +30,12 @@ impl App for WindowModifiersApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Window Modifiers").inner_size((400, 100)))
+        let title = self.title;
+        window(move |app| app.title(title).inner_size((400, 100)))
     }
+}
+
+#[cfg(not(feature = "baseview"))]
+fn main() -> Result<(), ApplicationError> {
+    WindowModifiersApp::run()
 }

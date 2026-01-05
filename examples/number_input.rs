@@ -9,10 +9,6 @@ const STYLE: &str = r#"
     }
 "#;
 
-fn main() -> Result<(), ApplicationError> {
-    NumberInputApp::run()
-}
-
 struct NumberInputApp {
     number: Signal<i32>,
     width_200: Signal<Units>,
@@ -20,7 +16,7 @@ struct NumberInputApp {
     height_32: Signal<Units>,
     align_center: Signal<Alignment>,
     auto: Signal<Units>,
-    stretch_one: Signal<Stretch>,
+    stretch_one: Signal<Units>,
     gap_10: Signal<Units>,
     title: Signal<&'static str>,
     size: Signal<(u32, u32)>,
@@ -54,7 +50,6 @@ impl App for NumberInputApp {
         let gap_10 = self.gap_10;
 
         HStack::new(cx, |cx| {
-            // NumberInput with max validation and two-way binding
             NumberInput::new(cx, number).max(49).two_way().width(width_200).padding_left(padding_5);
 
             Label::new(cx, number)
@@ -68,7 +63,7 @@ impl App for NumberInputApp {
         .space(stretch_one)
         .alignment(align_center)
         .horizontal_gap(gap_10);
-        
+
         self
     }
 
@@ -77,4 +72,8 @@ impl App for NumberInputApp {
         let size = self.size;
         window(move |app| app.title(title).inner_size(size))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    NumberInputApp::run()
 }

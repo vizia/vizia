@@ -2,10 +2,6 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    LabelApp::run()
-}
-
 struct LabelApp {
     checked: Signal<bool>,
 }
@@ -55,4 +51,8 @@ impl App for LabelApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Label"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    LabelApp::run()
 }

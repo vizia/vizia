@@ -3,10 +3,6 @@ use helpers::*;
 use std::cell::Cell;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    ProgressbarApp::run()
-}
-
 struct ProgressbarApp {
     progress: Signal<f32>,
 }
@@ -55,4 +51,8 @@ impl App for ProgressbarApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("ProgressBar").inner_size((750, 550)))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    ProgressbarApp::run()
 }

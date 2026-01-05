@@ -2,10 +2,6 @@ mod helpers;
 pub use helpers::*;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    TabviewApp::run()
-}
-
 struct TabviewApp {
     tabs: Signal<Vec<&'static str>>,
 }
@@ -61,4 +57,8 @@ impl App for TabviewApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Tabview"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    TabviewApp::run()
 }

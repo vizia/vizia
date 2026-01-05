@@ -14,10 +14,6 @@ const STYLE: &str = r#"
     }
 "#;
 
-fn main() -> Result<(), ApplicationError> {
-    AnimationApp::run()
-}
-
 struct AnimationApp {
     red: Signal<Color>,
     size_100: Signal<Units>,
@@ -63,4 +59,8 @@ impl App for AnimationApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Animation"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    AnimationApp::run()
 }

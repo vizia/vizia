@@ -21,10 +21,6 @@ impl Display for SpinboxValues {
     }
 }
 
-fn main() -> Result<(), ApplicationError> {
-    SpinboxApp::run()
-}
-
 struct SpinboxApp {
     value1: Signal<i64>,
     value2: Signal<usize>,
@@ -48,9 +44,11 @@ impl App for SpinboxApp {
         let choices = self.choices;
         let value3 = self.value3;
 
+        let icons = cx.state(SpinboxIcons::PlusMinus);
+
         ExamplePage::new(cx, move |cx| {
             Spinbox::new(cx, value1)
-                .icons(SpinboxIcons::PlusMinus)
+                .icons(icons)
                 .width(Pixels(100.0))
                 .on_increment(move |cx| value1.update(cx, |v| *v += 1))
                 .on_decrement(move |cx| value1.update(cx, |v| *v -= 1));
@@ -62,7 +60,7 @@ impl App for SpinboxApp {
                     }
                 })
             })
-            .icons(SpinboxIcons::PlusMinus)
+            .icons(icons)
             .width(Pixels(100.0))
             .on_increment(move |cx| value2.update(cx, |v| *v += 1))
             .on_decrement(move |cx| value2.update(cx, |v| *v = v.saturating_sub(1)));
@@ -81,4 +79,8 @@ impl App for SpinboxApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Spinbox"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    SpinboxApp::run()
 }

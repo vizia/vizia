@@ -2,10 +2,6 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    SvgApp::run()
-}
-
 struct SvgApp;
 
 impl App for SvgApp {
@@ -15,7 +11,7 @@ impl App for SvgApp {
 
     fn on_build(self, cx: &mut Context) -> Self {
         ExamplePage::new(cx, |cx| {
-            Svg::new(cx, include_bytes!("../resources/images/Ghostscript_Tiger.svg"))
+            Svg::new(cx, include_bytes!("../resources/images/Ghostscript_Tiger.svg").to_vec())
                 .size(Stretch(1.0))
                 .border_color(Color::black())
                 .border_width(Pixels(1.0));
@@ -42,4 +38,8 @@ impl App for SvgApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Svg").inner_size((400, 200)))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    SvgApp::run()
 }

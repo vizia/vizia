@@ -8,10 +8,6 @@ fn fahrenheit_to_celsius(temp: f32) -> f32 {
     (temp - 32.) * (5. / 9.)
 }
 
-fn main() -> Result<(), ApplicationError> {
-    TemperatureConverterApp::run()
-}
-
 struct TemperatureConverterApp {
     celsius: Signal<f32>,
     fahrenheit: Signal<f32>,
@@ -30,7 +26,6 @@ impl App for TemperatureConverterApp {
         let fahrenheit = self.fahrenheit;
 
         HStack::new(cx, |cx| {
-            // Celsius input - updates fahrenheit when edited
             Textbox::new(cx, celsius)
                 .on_submit(move |cx, val, _| {
                     fahrenheit.set(cx, celsius_to_fahrenheit(val));
@@ -38,7 +33,6 @@ impl App for TemperatureConverterApp {
                 .width(Stretch(1.0));
             Label::new(cx, "Celsius");
 
-            // Fahrenheit input - updates celsius when edited
             Textbox::new(cx, fahrenheit)
                 .on_submit(move |cx, val, _| {
                     celsius.set(cx, fahrenheit_to_celsius(val));
@@ -48,11 +42,15 @@ impl App for TemperatureConverterApp {
         })
         .alignment(Alignment::Center)
         .horizontal_gap(Pixels(10.0));
-        
+
         self
     }
 
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Temperature Converter").inner_size((450, 100)))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    TemperatureConverterApp::run()
 }

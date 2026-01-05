@@ -6,10 +6,6 @@ const STYLE: &str = r#"
     }
 "#;
 
-fn main() -> Result<(), ApplicationError> {
-    DragDropApp::run()
-}
-
 struct DragDropApp {
     size_50: Signal<Units>,
     size_100: Signal<Units>,
@@ -96,4 +92,8 @@ impl App for DragDropApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Drag & Drop"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    DragDropApp::run()
 }

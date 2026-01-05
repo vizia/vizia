@@ -1,9 +1,5 @@
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    MarkdownApp::run()
-}
-
 struct MarkdownApp;
 
 impl App for MarkdownApp {
@@ -30,4 +26,8 @@ impl App for MarkdownApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Markdown"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    MarkdownApp::run()
 }

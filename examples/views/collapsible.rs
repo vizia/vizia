@@ -2,10 +2,6 @@ use vizia::prelude::*;
 mod helpers;
 use helpers::*;
 
-fn main() -> Result<(), ApplicationError> {
-    CollapsibleApp::run()
-}
-
 struct CollapsibleApp {
     collapsed: Signal<bool>,
 }
@@ -86,4 +82,8 @@ impl App for CollapsibleApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Collapsible"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    CollapsibleApp::run()
 }

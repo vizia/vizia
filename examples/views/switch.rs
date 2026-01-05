@@ -2,10 +2,6 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    SwitchApp::run()
-}
-
 struct SwitchApp {
     option1: Signal<bool>,
     option2: Signal<bool>,
@@ -48,4 +44,8 @@ impl App for SwitchApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Switch"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    SwitchApp::run()
 }

@@ -20,10 +20,6 @@ impl std::fmt::Display for Options {
     }
 }
 
-fn main() -> Result<(), ApplicationError> {
-    RadiobuttonApp::run()
-}
-
 struct RadiobuttonApp {
     selected: Signal<Options>,
 }
@@ -100,4 +96,8 @@ fn index_to_option(index: usize) -> Options {
         2 => Options::Third,
         _ => unreachable!(),
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    RadiobuttonApp::run()
 }

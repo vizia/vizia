@@ -1,9 +1,5 @@
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    RichTextApp::run()
-}
-
 struct RichTextApp {
     text: Signal<&'static str>,
     pointer_auto: Signal<PointerEvents>,
@@ -55,4 +51,8 @@ impl App for RichTextApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Rich Text"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    RichTextApp::run()
 }

@@ -59,11 +59,6 @@ fn theme_selection_dropdown(
         });
 }
 
-fn main() -> Result<(), ApplicationError> {
-    setup_logging()?;
-    WidgetGalleryApp::run()
-}
-
 struct WidgetGalleryApp {
     app_data: AppData,
     header_padding: Signal<Units>,
@@ -105,7 +100,7 @@ impl App for WidgetGalleryApp {
 
             Divider::new(cx);
 
-            TabView::new(cx, app_data.tabs, |cx, item| match item.get(cx) {
+            TabView::new(cx, app_data.tabs, |cx, item| match *item.get(cx) {
                 "Avatar" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).class("tab-name").hoverable(false);
@@ -541,4 +536,9 @@ impl App for WidgetGalleryApp {
                .min_inner_size(Some((900, 300)))
         })
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    setup_logging()?;
+    WidgetGalleryApp::run()
 }

@@ -2,10 +2,6 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    DividerApp::run()
-}
-
 struct DividerApp;
 
 impl App for DividerApp {
@@ -32,4 +28,8 @@ impl App for DividerApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Divider").inner_size((350, 300)))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    DividerApp::run()
 }

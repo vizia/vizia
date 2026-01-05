@@ -3,10 +3,6 @@ use chrono::Utc;
 use helpers::*;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    DatepickerApp::run()
-}
-
 struct DatepickerApp {
     date: Signal<chrono::NaiveDate>,
 }
@@ -29,4 +25,8 @@ impl App for DatepickerApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Datepicker"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    DatepickerApp::run()
 }

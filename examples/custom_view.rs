@@ -11,7 +11,6 @@ impl CustomView {
             .build(cx, |cx| {
                 Label::new(cx, "This is a custom view!");
             })
-            // Redraw when signal changes
             .bind(color, |mut handle, _| handle.needs_redraw())
     }
 }
@@ -27,10 +26,6 @@ impl View for CustomView {
         paint.set_color(col);
         canvas.draw_path(&path, &paint);
     }
-}
-
-fn main() -> Result<(), ApplicationError> {
-    CustomViewApp::run()
 }
 
 struct CustomViewApp {
@@ -73,4 +68,8 @@ impl App for CustomViewApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Custom View"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    CustomViewApp::run()
 }

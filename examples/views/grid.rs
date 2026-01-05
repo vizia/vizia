@@ -8,10 +8,6 @@ const STYLE: &str = r#"
     }
 "#;
 
-fn main() -> Result<(), ApplicationError> {
-    GridApp::run()
-}
-
 struct GridApp;
 
 impl App for GridApp {
@@ -48,4 +44,8 @@ impl App for GridApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Grid"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    GridApp::run()
 }

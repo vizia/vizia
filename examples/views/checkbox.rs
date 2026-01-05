@@ -3,10 +3,6 @@ use helpers::*;
 use vizia::icons::{ICON_EYE, ICON_EYE_OFF};
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    CheckboxApp::run()
-}
-
 struct CheckboxApp {
     option1: Signal<bool>,
     option2: Signal<bool>,
@@ -59,8 +55,11 @@ impl App for CheckboxApp {
 
             Label::new(cx, "Checkbox with custom icon and label").class("h2");
 
+            let icon_off = cx.state(ICON_EYE_OFF);
+            let icon_on = cx.state(ICON_EYE);
+
             HStack::new(cx, |cx| {
-                Checkbox::with_icons(cx, option1, Some(ICON_EYE_OFF), Some(ICON_EYE))
+                Checkbox::with_icons(cx, option1, Some(icon_off), Some(icon_on))
                     .on_toggle(move |cx| {
                         option1.set(cx, !option1.get(cx));
                         option2.set(cx, !option2.get(cx));
@@ -78,4 +77,8 @@ impl App for CheckboxApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Checkbox").inner_size((300, 320)))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    CheckboxApp::run()
 }

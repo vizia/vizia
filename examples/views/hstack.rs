@@ -4,10 +4,6 @@ use vizia::prelude::*;
 
 const COLORS: [Color; 3] = [Color::red(), Color::green(), Color::blue()];
 
-fn main() -> Result<(), ApplicationError> {
-    HStackApp::run()
-}
-
 struct HStackApp;
 
 impl App for HStackApp {
@@ -30,4 +26,8 @@ impl App for HStackApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("HStack"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    HStackApp::run()
 }

@@ -2,23 +2,22 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    SliderApp::run()
-}
-
 struct SliderApp {
     value: Signal<f32>,
+    vertical: Signal<Orientation>,
 }
 
 impl App for SliderApp {
     fn new(cx: &mut Context) -> Self {
         Self {
             value: cx.state(0.0f32),
+            vertical: cx.state(Orientation::Vertical),
         }
     }
 
     fn on_build(self, cx: &mut Context) -> Self {
         let value = self.value;
+        let vertical = self.vertical;
 
         ExamplePage::new(cx, |cx| {
             let value_label = cx.derived({
@@ -61,7 +60,7 @@ impl App for SliderApp {
                 Slider::new(cx, value)
                     .range(-50.0..50.0)
                     .on_change(move |cx, val| value.set(cx, val))
-                    .orientation(Orientation::Vertical);
+                    .orientation(vertical);
                 Label::new(cx, value_label).alignment(Alignment::Center).width(Pixels(50.0));
             })
             .alignment(Alignment::Center)
@@ -73,4 +72,8 @@ impl App for SliderApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Slider"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    SliderApp::run()
 }

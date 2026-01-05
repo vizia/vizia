@@ -3,10 +3,6 @@ use helpers::*;
 use log::debug;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    MenuApp::run()
-}
-
 struct MenuApp;
 
 impl App for MenuApp {
@@ -84,4 +80,8 @@ impl App for MenuApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Menu"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    MenuApp::run()
 }

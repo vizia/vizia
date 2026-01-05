@@ -1,9 +1,5 @@
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    CounterApp::run()
-}
-
 struct CounterApp {
     count: Signal<i32>,
 }
@@ -28,11 +24,15 @@ impl App for CounterApp {
         })
         .alignment(Alignment::Center)
         .gap(Pixels(50.0));
-        
+
         self
     }
 
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Counter").inner_size((400, 100)))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    CounterApp::run()
 }

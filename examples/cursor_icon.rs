@@ -157,10 +157,6 @@ const STYLE: &str = r#"
     }
 "#;
 
-fn main() -> Result<(), ApplicationError> {
-    CursorIconApp::run()
-}
-
 struct CursorIconApp;
 
 impl App for CursorIconApp {
@@ -230,4 +226,8 @@ impl App for CursorIconApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Cursor Icon").inner_size((800, 600)))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    CursorIconApp::run()
 }

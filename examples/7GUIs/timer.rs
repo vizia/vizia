@@ -20,10 +20,6 @@ const STYLE: &str = r#"
     }
 "#;
 
-fn main() -> Result<(), ApplicationError> {
-    TimerApp::run()
-}
-
 struct TimerApp {
     total_time: Signal<f32>,
     elapsed_time: Signal<f32>,
@@ -72,7 +68,6 @@ impl App for TimerApp {
                 Label::new(cx, "Duration:");
                 Slider::new(cx, total_time).range(0.0..30.0).on_change(move |cx, v| {
                     total_time.set(cx, v);
-                    // Restart timer if needed
                     let elapsed = *elapsed_time.get(cx);
                     if elapsed < v && !cx.timer_is_running(timer) {
                         cx.start_timer(timer);
@@ -91,11 +86,15 @@ impl App for TimerApp {
                 }
             });
         });
-        
+
         self
     }
 
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Timer").inner_size((300, 150)))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    TimerApp::run()
 }

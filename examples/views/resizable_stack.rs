@@ -28,10 +28,6 @@ const STYLE: &str = r#"
     }
 "#;
 
-fn main() -> Result<(), ApplicationError> {
-    ResizableStackApp::run()
-}
-
 struct ResizableStackApp {
     width: Signal<Units>,
     height: Signal<Units>,
@@ -78,4 +74,8 @@ impl App for ResizableStackApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Resizable Stack").inner_size((800, 600)))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    ResizableStackApp::run()
 }

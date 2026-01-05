@@ -16,10 +16,6 @@ const STYLE: &str = r#"
     }
 "#;
 
-fn main() -> Result<(), ApplicationError> {
-    FlightBookerApp::run()
-}
-
 struct FlightBookerApp {
     options: Signal<Vec<&'static str>>,
     selected_option: Signal<usize>,
@@ -45,7 +41,6 @@ impl App for FlightBookerApp {
         let start_date = self.start_date;
         let end_date = self.end_date;
 
-        // Derived signals for formatted dates
         let start_text = cx.derived({
             let start_date = start_date;
             move |s| start_date.get(s).format("%Y:%m:%d").to_string()
@@ -80,11 +75,15 @@ impl App for FlightBookerApp {
             Button::new(cx, |cx| Label::new(cx, "Book"));
         })
         .class("container");
-        
+
         self
     }
 
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Flight Booker").inner_size((250, 250)))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    FlightBookerApp::run()
 }

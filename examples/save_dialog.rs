@@ -13,7 +13,6 @@ struct SaveDialog {
 impl View for SaveDialog {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| {
-            // Intercept WindowClose event to show a dialog if not 'saved'.
             if let WindowEvent::WindowClose = window_event {
                 if !*self.is_saved.get(cx) {
                     self.show_dialog.set(cx, true);
@@ -25,18 +24,13 @@ impl View for SaveDialog {
 }
 
 #[cfg(not(feature = "baseview"))]
-fn main() -> Result<(), ApplicationError> {
-    SaveDialogApp::run()
-}
-
-#[cfg(not(feature = "baseview"))]
 struct SaveDialogApp {
     is_saved: Signal<bool>,
     show_dialog: Signal<bool>,
     gap_10: Signal<Units>,
     padding_50: Signal<Units>,
     align_top_center: Signal<Alignment>,
-    stretch_one: Signal<Stretch>,
+    stretch_one: Signal<Units>,
     align_center: Signal<Alignment>,
     button_width: Signal<Units>,
     auto: Signal<Units>,
@@ -139,4 +133,9 @@ impl App for SaveDialogApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Save Dialog"))
     }
+}
+
+#[cfg(not(feature = "baseview"))]
+fn main() -> Result<(), ApplicationError> {
+    SaveDialogApp::run()
 }

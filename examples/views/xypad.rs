@@ -2,23 +2,22 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    XYPadApp::run()
-}
-
 struct XYPadApp {
     xy: Signal<(f32, f32)>,
+    vertical: Signal<Orientation>,
 }
 
 impl App for XYPadApp {
     fn new(cx: &mut Context) -> Self {
         Self {
             xy: cx.state((0.25f32, 0.25f32)),
+            vertical: cx.state(Orientation::Vertical),
         }
     }
 
     fn on_build(self, cx: &mut Context) -> Self {
         let xy = self.xy;
+        let vertical = self.vertical;
 
         // Derived signals for individual x and y sliders
         let x_value = cx.derived(move |s| xy.get(s).0);
@@ -32,7 +31,7 @@ impl App for XYPadApp {
                         .width(Pixels(10.0))
                         .height(Pixels(100.0))
                         .range(0.0..1.0)
-                        .orientation(Orientation::Vertical)
+                        .orientation(vertical)
                         .on_change(move |cx, val| {
                             let x = xy.get(cx).0;
                             xy.set(cx, (x, val));
@@ -59,4 +58,8 @@ impl App for XYPadApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("XY Pad"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    XYPadApp::run()
 }

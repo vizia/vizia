@@ -1,9 +1,5 @@
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    CounterApp::run()
-}
-
 struct CounterApp {
     count: Signal<i32>,
     title: Signal<&'static str>,
@@ -39,4 +35,8 @@ impl App for CounterApp {
         let size = self.size;
         window(move |app| app.title(title).inner_size(size))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    CounterApp::run()
 }

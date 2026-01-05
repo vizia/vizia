@@ -2,10 +2,6 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    KnobApp::run()
-}
-
 struct KnobApp {
     value: Signal<f32>,
 }
@@ -30,4 +26,8 @@ impl App for KnobApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Knob").inner_size((300, 300)))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    KnobApp::run()
 }

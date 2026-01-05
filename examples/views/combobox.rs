@@ -2,10 +2,6 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    ComboboxApp::run()
-}
-
 struct ComboboxApp {
     options: Signal<Vec<&'static str>>,
     selected_option: Signal<usize>,
@@ -43,4 +39,8 @@ impl App for ComboboxApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Combobox").inner_size((400, 400)))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    ComboboxApp::run()
 }

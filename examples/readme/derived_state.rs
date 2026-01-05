@@ -1,9 +1,5 @@
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    DerivedStateApp::run()
-}
-
 struct DerivedStateApp {
     number: Signal<i32>,
     title: Signal<&'static str>,
@@ -48,4 +44,8 @@ impl App for DerivedStateApp {
         let size = self.size;
         window(move |app| app.title(title).inner_size(size))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    DerivedStateApp::run()
 }

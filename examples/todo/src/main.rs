@@ -22,12 +22,6 @@ pub enum TodoEvent {
     SetFilter(TodoFilter),
 }
 
-
-
-fn main() -> Result<(), ApplicationError> {
-    TodoApp::run()
-}
-
 struct TodoApp {
     text: Signal<String>,
     filter: Signal<TodoFilter>,
@@ -77,10 +71,12 @@ impl App for TodoApp {
 
         Label::new(cx, "todos").class("todo-header_title");
 
+        let placeholder = cx.state("What needs to be done?");
+
         VStack::new(cx, move |cx| {
             Textbox::new(cx, text)
                 .class("todo-header_text")
-                .placeholder("What needs to be done?")
+                .placeholder(placeholder)
                 .on_submit(move |cx, title, blur| {
                     if blur {
                         cx.emit(TodoEvent::AddTodo(title));
@@ -165,7 +161,7 @@ impl App for TodoApp {
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|todo_event, _| match todo_event {
+        event.take(|todo_event, _| match todo_event {
             TodoEvent::AddTodo(title) => {
                 self.todos.update(cx, |todos| {
                     todos.push(Todo { title, completed: false });
@@ -212,4 +208,8 @@ impl App for TodoApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("TodoMVC"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    TodoApp::run()
 }

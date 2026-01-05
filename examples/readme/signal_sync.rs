@@ -7,10 +7,6 @@ fn fahrenheit_to_celsius(f: f32) -> f32 {
     (f - 32.0) * 5.0 / 9.0
 }
 
-fn main() -> Result<(), ApplicationError> {
-    SignalSyncApp::run()
-}
-
 struct SignalSyncApp {
     celsius: Signal<f32>,
     fahrenheit: Signal<f32>,
@@ -52,4 +48,8 @@ impl App for SignalSyncApp {
         let size = self.size;
         window(move |app| app.title(title).inner_size(size))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    SignalSyncApp::run()
 }

@@ -2,10 +2,6 @@ use vizia::prelude::*;
 
 const COLORS: [Color; 3] = [Color::red(), Color::green(), Color::blue()];
 
-fn main() -> Result<(), ApplicationError> {
-    ZStackApp::run()
-}
-
 struct ZStackApp;
 
 impl App for ZStackApp {
@@ -26,4 +22,8 @@ impl App for ZStackApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("ZStack"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    ZStackApp::run()
 }

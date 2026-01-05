@@ -6,11 +6,6 @@ fn main() {
 }
 
 #[cfg(not(feature = "baseview"))]
-fn main() -> Result<(), ApplicationError> {
-    MultiWindowApp::run()
-}
-
-#[cfg(not(feature = "baseview"))]
 struct MultiWindowApp {
     red: Signal<f32>,
     green: Signal<f32>,
@@ -75,7 +70,6 @@ impl App for MultiWindowApp {
             }
         });
 
-        // Derive color from RGB signals
         let color = cx.derived(move |cx| {
             let r = (*red.get(cx) * 255.0) as u8;
             let g = (*green.get(cx) * 255.0) as u8;
@@ -90,7 +84,12 @@ impl App for MultiWindowApp {
         .size(auto)
         .padding(padding_20)
         .background_color(color);
-        
+
         self
     }
+}
+
+#[cfg(not(feature = "baseview"))]
+fn main() -> Result<(), ApplicationError> {
+    MultiWindowApp::run()
 }

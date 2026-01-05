@@ -1,10 +1,6 @@
 #[allow(unused)]
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    StylesheetApp::run()
-}
-
 struct StylesheetApp {
     size_200: Signal<Units>,
 }
@@ -30,4 +26,8 @@ impl App for StylesheetApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Stylesheet"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    StylesheetApp::run()
 }

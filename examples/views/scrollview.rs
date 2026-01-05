@@ -2,10 +2,6 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    ScrollviewApp::run()
-}
-
 struct ScrollviewApp {
     scroll_x: Signal<f32>,
     scroll_y: Signal<f32>,
@@ -98,4 +94,8 @@ impl App for ScrollviewApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Scrollview").inner_size((1100, 800)))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    ScrollviewApp::run()
 }

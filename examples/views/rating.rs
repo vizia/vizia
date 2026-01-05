@@ -2,10 +2,6 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    RatingApp::run()
-}
-
 struct RatingApp {
     rating1: Signal<u32>,
     rating2: Signal<u32>,
@@ -37,4 +33,8 @@ impl App for RatingApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Rating").inner_size((400, 200)))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    RatingApp::run()
 }

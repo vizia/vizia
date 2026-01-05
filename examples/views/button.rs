@@ -5,10 +5,6 @@ use log::debug;
 use vizia::icons::ICON_CHECK;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    ButtonApp::run()
-}
-
 struct ButtonApp;
 
 impl App for ButtonApp {
@@ -41,4 +37,8 @@ impl App for ButtonApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Button").inner_size((700, 200)))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    ButtonApp::run()
 }

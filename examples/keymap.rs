@@ -15,8 +15,18 @@
 use log::debug;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    KeymapApp::run()
+#[derive(Debug, PartialEq, Copy, Clone)]
+enum Action {
+    OnA,
+    OnB,
+    OnC,
+    OnCtrlA,
+    OnAltA,
+    OnShiftA,
+    OnLogoA,
+    OnAltShiftX,
+    OnCtrlAltShiftY,
+    OnCtrlAltShiftLogoZ,
 }
 
 struct KeymapApp;
@@ -27,7 +37,6 @@ impl App for KeymapApp {
     }
 
     fn on_build(self, cx: &mut Context) -> Self {
-        // Build the keymap.
         Keymap::from(vec![
             (
                 KeyChord::new(Modifiers::empty(), Code::KeyA),
@@ -76,28 +85,15 @@ impl App for KeymapApp {
             ),
         ])
         .build(cx);
-        
+
         self
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| {
-            app.title("Keymap")
-        })
+        window(|app| app.title("Keymap"))
     }
 }
 
-// The actions that are associated with the key chords.
-#[derive(Debug, PartialEq, Copy, Clone)]
-enum Action {
-    OnA,
-    OnB,
-    OnC,
-    OnCtrlA,
-    OnAltA,
-    OnShiftA,
-    OnLogoA,
-    OnAltShiftX,
-    OnCtrlAltShiftY,
-    OnCtrlAltShiftLogoZ,
+fn main() -> Result<(), ApplicationError> {
+    KeymapApp::run()
 }

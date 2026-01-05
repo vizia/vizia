@@ -42,10 +42,19 @@ enum UndoRedoAction {
     RadiusChange(usize, f32),
 }
 
+enum CircleDrawerEvent {
+    AddCircle(f32, f32),
+    TrySelectCircle(f32, f32),
+    ChangeRadius(f32),
+    Undo,
+    Redo,
+    ToggleRightMenu,
+    ToggleDialog,
+}
+
 struct CircleDrawerCanvas {
     circles: Signal<Vec<Circle>>,
     selected: Signal<Option<usize>>,
-    // Cached for draw() since DrawContext doesn't impl DataContext
     circles_cache: Vec<Circle>,
     selected_cache: Option<usize>,
 }
@@ -121,21 +130,6 @@ impl View for CircleDrawerCanvas {
             canvas.draw_path(&path, &paint);
         }
     }
-}
-
-enum CircleDrawerEvent {
-    AddCircle(f32, f32),
-    TrySelectCircle(f32, f32),
-    ChangeRadius(f32),
-    Undo,
-    Redo,
-    ToggleRightMenu,
-    ToggleDialog,
-}
-
-#[cfg(not(feature = "baseview"))]
-fn main() -> Result<(), ApplicationError> {
-    CircleDrawerApp::run()
 }
 
 #[cfg(not(feature = "baseview"))]
@@ -390,10 +384,8 @@ impl App for CircleDrawerApp {
                     let radius = self.circles.get(cx)[idx].r;
 
                     if !dialog_open_val {
-                        // Dialog just opened - save current radius
                         self.radius_before.set(cx, radius);
                     } else {
-                        // Dialog closing
                         let radius_before_val = *self.radius_before.get(cx);
                         if radius_before_val != radius {
                             self.undo_list.update(cx, |list| {
@@ -411,8 +403,11 @@ impl App for CircleDrawerApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| {
-            app.title("Circle Drawer")
-        })
+        window(|app| app.title("Circle Drawer"))
     }
+}
+
+#[cfg(not(feature = "baseview"))]
+fn main() -> Result<(), ApplicationError> {
+    CircleDrawerApp::run()
 }

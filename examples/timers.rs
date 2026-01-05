@@ -1,14 +1,10 @@
 use log::debug;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    TimerApp::run()
-}
-
 struct TimerApp {
     count: Signal<u32>,
     font_80: Signal<f32>,
-    stretch_one: Signal<Stretch>,
+    stretch_one: Signal<Units>,
     align_center: Signal<Alignment>,
     gap_8: Signal<Units>,
     title: Signal<&'static str>,
@@ -35,7 +31,6 @@ impl App for TimerApp {
         let align_center = self.align_center;
         let gap_8 = self.gap_8;
 
-        // Main timer - ticks every 100ms
         let timer =
             cx.add_timer(Duration::from_millis(100), None, move |cx, action| match action {
                 TimerAction::Start => {
@@ -51,14 +46,12 @@ impl App for TimerApp {
                 }
             });
 
-        // Stop main timer when count reaches 100
         Binding::new(cx, count, move |cx| {
             if *count.get(cx) >= 100 {
                 cx.stop_timer(timer);
             }
         });
 
-        // One-shot reset timer - fires once after 2 seconds, then stops
         let reset_timer = cx.add_timer(
             Duration::from_secs(2),
             Some(Duration::from_secs(2)),
@@ -114,4 +107,8 @@ impl App for TimerApp {
         let size = self.size;
         window(move |app| app.title(title).inner_size(size))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    TimerApp::run()
 }

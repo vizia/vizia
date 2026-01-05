@@ -4,10 +4,6 @@ use log::debug;
 use vizia::prelude::*;
 use vizia_core::icons::{ICON_CLIPBOARD, ICON_COPY, ICON_CUT};
 
-fn main() -> Result<(), ApplicationError> {
-    MenuBarApp::run()
-}
-
 struct MenuBarApp;
 
 impl App for MenuBarApp {
@@ -184,4 +180,8 @@ impl App for MenuBarApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Menu Bar"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    MenuBarApp::run()
 }

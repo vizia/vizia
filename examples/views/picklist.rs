@@ -2,13 +2,10 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    PicklistApp::run()
-}
-
 struct PicklistApp {
     options: Signal<Vec<&'static str>>,
     selected_option: Signal<usize>,
+    placeholder: Signal<&'static str>,
 }
 
 impl App for PicklistApp {
@@ -29,21 +26,23 @@ impl App for PicklistApp {
                 "Twelve",
             ]),
             selected_option: cx.state(usize::MAX),
+            placeholder: cx.state("Select an option..."),
         }
     }
 
     fn on_build(self, cx: &mut Context) -> Self {
         let options = self.options;
         let selected_option = self.selected_option;
+        let placeholder = self.placeholder;
 
         ExamplePage::vertical(cx, move |cx| {
             PickList::new(cx, options, selected_option, true)
-                .placeholder("Select an option...")
+                .placeholder(placeholder)
                 .on_select(move |cx, index| selected_option.set(cx, index))
                 .width(Pixels(150.0));
 
             PickList::new(cx, options, selected_option, true)
-                .placeholder("Select an option...")
+                .placeholder(placeholder)
                 .on_select(move |cx, index| selected_option.set(cx, index))
                 .width(Pixels(100.0));
         });
@@ -53,4 +52,8 @@ impl App for PicklistApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("Picklist"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    PicklistApp::run()
 }

@@ -4,10 +4,6 @@ use helpers::*;
 use vizia::icons::{ICON_BOLD, ICON_ITALIC, ICON_UNDERLINE};
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    ToggleButtonApp::run()
-}
-
 struct ToggleButtonApp {
     bold: Signal<bool>,
     italic: Signal<bool>,
@@ -45,4 +41,8 @@ impl App for ToggleButtonApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.title("ToggleButton").inner_size((700, 200)))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    ToggleButtonApp::run()
 }

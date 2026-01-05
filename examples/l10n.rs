@@ -1,10 +1,6 @@
 #[allow(unused_imports)]
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    LocalizationApp::run()
-}
-
 struct LocalizationApp {
     name: Signal<String>,
     emails: Signal<i32>,
@@ -18,13 +14,11 @@ struct LocalizationApp {
 
 impl App for LocalizationApp {
     fn new(cx: &mut Context) -> Self {
-        // Add fluent file for the `en-US` locale (American English).
         cx.add_translation(
             "en-US".parse().unwrap(),
             include_str!("resources/translations/en-US/hello.ftl").to_owned(),
         );
 
-        // Add fluent file for the `fr` locale (French).
         cx.add_translation(
             "fr".parse().unwrap(),
             include_str!("resources/translations/fr/hello.ftl").to_owned(),
@@ -55,7 +49,7 @@ impl App for LocalizationApp {
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
                 let locale_signal = cx.environment().locale;
-                let is_french = cx.derived({ move |cx| *locale_signal.get(cx) == "fr" });
+                let is_french = cx.derived(move |cx| *locale_signal.get(cx) == "fr");
                 Checkbox::new(cx, is_french).id("toggle-language").on_toggle(|cx| {
                     let current_locale = cx.environment().locale.get(cx);
                     if *current_locale != "fr" {
@@ -70,8 +64,6 @@ impl App for LocalizationApp {
             .horizontal_gap(gap_10)
             .height(height_auto);
 
-            // Use the `Localized` type with a `Label` to provide a translation key.
-            // The key is used to look up the corresponding translation from the fluent file.
             let hello_world = Localized::new("hello-world").signal(cx);
             Label::new(cx, hello_world);
 
@@ -91,8 +83,6 @@ impl App for LocalizationApp {
                 Label::new(cx, intro);
             });
 
-            // Use the `arg` method on the `Localized` type to supply a variable argument or appropriate signal.
-            // When localization is resolved the argument will be used with the fluent file to select an appropriate translation.
             let unread_emails = emails;
             Binding::new(cx, unread_emails, move |cx| {
                 let unread = *unread_emails.get(cx);
@@ -107,13 +97,15 @@ impl App for LocalizationApp {
         })
         .vertical_gap(gap_10)
         .space(space_10);
-        
+
         self
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| {
-            app.title("Localization")
-        })
+        window(|app| app.title("Localization"))
     }
+}
+
+fn main() -> Result<(), ApplicationError> {
+    LocalizationApp::run()
 }
