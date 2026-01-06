@@ -34,6 +34,3 @@ TreeView::new(cx, tree_data.keyed_tree(|n| n.id), |cx, depth, node| {
 
 
 ---
-
-
-two.way() on custom_view example

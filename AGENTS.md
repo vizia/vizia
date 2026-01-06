@@ -1,327 +1,399 @@
-# Agents.md – VIZIA Signals Migration Assistant
+# Agents.md – VIZIA Signals Development Guide
 
-> Goal: Help complete and harden the migration from the legacy Lens-based state system to the Signals-based architecture in the `signals` branch. You should use Git history, diffs, and repository conventions to infer and respect the intentions of the original authors and contributors. Work incrementally and keep the build green.
+> Goal: Help optimize, extend, and maintain the Signals-based reactive state architecture in VIZIA. The Lens-to-Signals migration is complete. Focus is now on API polish, new features, and quality improvements.
 
-Reference: The design and intent of this migration are documented in `SIGNALS_PROPOSAL.md`.  [oai_citation:0‡SIGNALS_PROPOSAL.md](sediment://file_00000000da4871f89a0fa89fe1449fc2)
-
----
-
-## 1. Repository Context and Branch Model
-
-You are working in a dual-worktree setup:
-
-- `~/vizia` → `main` (baseline, legacy lens-oriented architecture)
-- `~/vizia-signals` → `signals` (active branch where Signals work is happening)
-
-Rules:
-
-- Treat **`main` as read-only**. It exists for:
-  - Reading code
-  - Understanding prior architecture
-  - Comparing behavior and patterns
-- Treat **`signals` as the only mutable branch** for implementing Signals-based state management.
-
-Always verify where you are with:
-
-- `git status`
-- `git branch -vv`
-- `pwd`
+Reference: Architecture documented in `ARCHITECTURE.md`. API patterns in `README.md`.
 
 ---
 
-## 2. General Behavior and Priorities
+## 1. Project State
 
-The agent must:
+The `signals` branch contains the complete Signal-based reactive architecture:
 
-- Understand existing patterns before modifying them.
-- Use Git tools and repository history for context, not just the raw code.
-- Prefer minimal, focused changes over wide, sweeping rewrites.
-- Maintain feature parity with `main` unless the migration intentionally changes the API or behavior.
-- Keep changes consistent with repository style (naming, formatting, module structure, docs style).
+- **Migration Status**: Complete (100%)
+- **Current Focus**: API optimization, new features, documentation
+- **Branch**: `signals` (active development)
 
-When in doubt:
-
-1. Inspect existing uses in the same module or neighboring modules.
-2. Inspect the commit history and messages that introduced the relevant code.
-3. Check `SIGNALS_PROPOSAL.md` for architectural direction and conceptual guardrails.  [oai_citation:1‡SIGNALS_PROPOSAL.md](sediment://file_00000000da4871f89a0fa89fe1449fc2)
-
-THERE IS ALSO A VIZIA-BOOK (md book - for the original lens-based (main) branch) in `~/vizia-book/` for more reference
----
-
-## 3. Git Usage Requirements
-
-You should aggressively use Git as a context oracle.
-
-Baseline commands:
-
-- `git status`  
-  To see current branch, staged changes, and working tree status.
-
-- `git branch -vv`  
-  To confirm tracking branches and ensure you are on `signals` when editing.
-
-- `git diff main..signals`  
-  To understand how far the Signals migration has progressed.
-
-- `git diff --name-only main..signals`  
-  To list all files that currently differ between `main` and `signals`.
-
-History and intention mining:
-
-- `git log --oneline --graph --decorate main..signals`  
-  To visualize the divergence and see which commits are specific to Signals work.
-
-- `git log --oneline -- <path>`  
-  To understand the history of a file.
-
-- `git show <commit>`  
-  To inspect historical changes and commit messages for intent.
-
-- `git blame <file>`  
-  To see when specific lines were introduced and by whom.
-
-Search:
-
-- `rg "Lens"` or `rg "Signal"`  
-- `rg "cx.state"`  
-- `rg "derived"`  
-
-Use code search to:
-
-- Find all remaining lens-based patterns.
-- Find all existing Signals-based patterns to copy and adapt.
+Key accomplishments:
+- All views migrated to Signal-based APIs
+- App trait pattern standardized across examples
+- `.two_way()` modifier for bidirectional binding
+- `.drv()` method for ergonomic derived signals
+- `Async<T, E>` for async state management
 
 ---
 
-## 4. Lens → Signals Migration Principles
+## 2. Signal API Reference
 
-The overarching goal is to replace Lens-based state with Signals-based state in a way that:
+### Core Patterns
 
-- Reduces boilerplate.
-- Preserves or improves performance.
-- Improves ergonomics for downstream users.
-- Aligns with the architecture described in `SIGNALS_PROPOSAL.md`.  [oai_citation:2‡SIGNALS_PROPOSAL.md](sediment://file_00000000da4871f89a0fa89fe1449fc2)
-
-Core patterns:
-
-1. Data definition
-
-   - Before (Lens / Data):
-     - `#[derive(Lens, Data, Clone)]`
-     - Struct fields are plain values (e.g., `i32`, `String`, custom types).
-
-   - After (Signals):
-     - Plain values become `Signal<T>` where `T` was previously the value type.
-     - Structs hold signals instead of raw values when those values are reactive.
-
-2. State creation
-
-   - Prefer using `cx.state(initial_value)` for stateful values in views or components.
-   - When multiple fields are related, group them into a single struct where appropriate, but still store them as signals or derived signals per the proposal.
-
-3. State updates
-
-   - Old pattern:
-     - Mutations typically occur inside `Model::event` via direct field updates.
-
-   - New pattern:
-     - Use `signal.update(cx, |value| { ... })` or `signal.set(cx, new_value)` to mutate state.
-     - Event-based updates should still be supported for complex flows, but direct updates (e.g., in button handlers) are permitted where simpler and localized.
-
-4. Derived state
-
-   - Use `signal.drv(cx, |v, s| ...)` for computed state that depends on one or more signals. This is the preferred API.
-   - `cx.derived(move |s| ...)` is also available but `.drv()` is more ergonomic.
-   - All multi-value dependencies should be expressed via derived signals, not by manually re-fetching separate pieces of state.
-
-5. Coexistence
-
-   - The migration is staged; lenses may still exist during transition.
-   - Do not remove Lens-based infrastructure unless:
-     - All consumers are migrated to Signals.
-     - There is a clear path to deprecate or replace it without breaking examples or existing APIs prematurely.
-
----
-
-## 5. Concrete Expectations for Code Changes
-
-When you change or refactor code, adhere to the following:
-
-- Always produce compilable code in small steps.
-- Prefer patch-like changes (localized diffs) instead of whole-file rewrites when possible.
-- Maintain consistent formatting; run `cargo fmt` before committing.
-- Keep public APIs stable unless there is a clear, documented plan to change them in line with the Signals proposal.
-
-Recommended Git flow per change set:
-
-1. Inspect the current state:
-
-   - `git status`
-   - `git diff`
-
-2. Apply a focused transformation (e.g., migrate one widget from Lens to Signals).
-
-3. Run builds/tests:
-
-   - `cargo build` (or targeted workspace members as required).
-   - Run any local tests or example builds relevant to the modified code.
-
-4. Stage and commit:
-
-   - `git add -p`
-   - `git commit -m "signals(<component>): <short description>"`
-
-5. If needed, push for external review:
-
-   - `git push` (to the appropriate remote branch).
-
----
-
-## 6. Migration Roadmap for the Agent
-
-The agent should treat migration as a staged project.
-
-### Phase A – Discovery and Mapping
-
-- Identify all remaining lens-based usage:
-  - `rg "derive(Lens"`.
-  - `rg "Lens<"`.
-  - `rg "Data,"` / `rg "derive(Data"`.
-
-- Identify existing signals usage:
-  - `rg "Signal<"`.
-  - `rg "cx.state"`.
-
-- Create or maintain a `MIGRATION_STATUS.md` (if not present) with:
-  - A list of modules/components still using Lens.
-  - A list of modules already migrated to Signals.
-  - Notes on partial migrations or edge cases.
-
-### Phase B – Component-Level Migration
-
-For each component or module:
-
-1. Inspect lens-based version in `main` and corresponding file in `signals`.
-2. Design how to express its state fully via Signals:
-   - Which fields become `Signal<T>`?
-   - What derived signals are needed?
-   - What events, if any, should still be used?
-3. Implement the refactor in the `signals` branch.
-4. Run `cargo build` (and tests/examples as relevant).
-5. Commit with a focused message.
-
-### Phase C – Global and Application-Level State
-
-- Gradually move toward the Application-level patterns contemplated in the Signals proposal:
-  - Application-level signals for global state.
-  - Passing signals down into subviews and widgets instead of deep lens chains.
-- Ensure this is done in alignment with repo direction; do not invent new architecture that contradicts the proposal or existing Signals work.
-
-### Phase D – Cleanup and Hardening
-
-- Remove dead Lens-based code paths only when all consumers are migrated.
-- Simplify any leftover compatibility shims that are no longer necessary.
-- Run linting and formatting:
-  - `cargo fmt`
-  - `cargo clippy --all-targets --all-features --fix` (if consistent with project practice).
-- Ensure examples and demos compile and function.
-
----
-
-## 7. Style and Quality Constraints
-
-The agent must:
-
-- Follow existing code style in the repository:
-  - Naming conventions.
-  - Module organization.
-  - Error handling patterns.
-  - Documentation style.
-
-- Preserve or improve performance characteristics:
-  - Avoid unnecessary allocations.
-  - Avoid redundant derived signals or overly chatty updates.
-  - Use Signals in a way that aligns with the performance considerations described in the proposal.  [oai_citation:3‡SIGNALS_PROPOSAL.md](sediment://file_00000000da4871f89a0fa89fe1449fc2)
-
-- Produce explanations and commit messages that are:
-  - Concise and informative.
-  - In imperative mood (e.g., “convert lens-based state in X to signals”).
-
----
-
-## 8. Safety and Invariants
-
-The agent must **not**:
-
-- Delete large subsystems without a clear, staged replacement.
-- Change public APIs in ways that contradict the Signals proposal or existing patterns.
-- Introduce changes that knowingly break compilation without immediately following with a fix.
-- Rewrite files wholesale unless absolutely necessary.
-
-The agent must:
-
-- Prefer refactors that can be easily reviewed and bisected.
-- Explicitly state assumptions when making non-obvious decisions.
-- Use git history and proposal content to infer the “most likely intended direction” when ambiguous.
-
----
-
-## 9. Migration Strategy Override: Direct Signal Approach
-
-**IMPORTANT DIRECTIVE**: Skip intermediate migration patterns and go directly to full Signal architecture.
-
-The `SIGNALS_PROPOSAL.md` recommends a phased approach with `impl Res<T>` for API compatibility during transition. **This directive overrides that recommendation.** We are not concerned with backwards compatibility for existing Lens users.
-
-### Rationale
-
-- The end goal is complete Signal-based architecture
-- The `impl Res<T>` pattern adds intermediate complexity
-- We want to reach the final architecture as fast as possible
-- Quality and robustness remain non-negotiable
-
-### Implementation Rules
-
-1. **For view APIs**: Use `Signal<T>` directly, not `impl Res<T>`
-2. **For internal state**: Replace `#[derive(Lens)]` with `Signal<T>` fields
-3. **For struct generics**: Remove lens type parameters (e.g., `Scrollbar<L1>` → `Scrollbar`)
-4. **For child view observation**: Use `.bind(signal, ...)` pattern
-5. **For event handlers**: Use `signal.set(cx, value)` or `signal.update(cx, |v| ...)`
-
-### Component Migration Pattern
-
-Before (Lens-based):
 ```rust
-#[derive(Lens)]
-pub struct MyView<L: Lens<Target = f32>> {
-    value: L,
-    internal: f32,
+// State creation
+let count = cx.state(0i32);
+
+// Reading (in reactive context)
+let value = count.get(store);
+let value = count.try_get(store);  // Returns Option, safe for stale signals
+
+// Writing
+count.set(cx, 42);
+count.update(cx, |v| *v += 1);
+
+// Derived state (preferred)
+let doubled = count.drv(cx, |v, _| v * 2);
+
+// Multi-signal derivation (use store param to access other signals)
+let sum = a.drv(cx, move |a_val, s| a_val + b.get(s));
+
+// Alternative: cx.derived() when no "primary" signal
+let product = cx.derived(move |s| *x.get(s) * *y.get(s));
+
+// Async state (see section 11 for full API)
+let data: Signal<Async<T, E>> = cx.async_state();
+cx.load_async(data, || fetch_data());
+```
+
+### View Binding Patterns
+
+```rust
+// Direct binding - view updates when signal changes
+Label::new(cx, text_signal);
+Slider::new(cx, value_signal).two_way();
+
+// Conditional rendering
+Binding::new(cx, condition, |cx| {
+    if *condition.get(cx) {
+        Label::new(cx, "Visible");
+    }
+});
+```
+
+### App Trait Pattern
+
+```rust
+struct MyApp {
+    count: Signal<i32>,
+}
+
+impl App for MyApp {
+    fn new(cx: &mut Context) -> Self {
+        Self { count: cx.state(0) }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        Label::new(cx, self.count.drv(cx, |v, _| format!("Count: {v}")));
+        self
+    }
+
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|e, _| match e {
+            AppEvent::Increment => self.count.update(cx, |v| *v += 1),
+        });
+    }
 }
 ```
 
-After (Signal-based):
-```rust
-pub struct MyView {
-    value: Signal<f32>,
-    internal: Signal<f32>,  // if reactive, else plain f32
-}
-```
+---
 
-### Examples Should Demonstrate Signals
+## 3. Development Priorities
 
-New examples and migrated examples should use signals directly:
-- `cx.state(initial)` for state creation
-- `signal.set(cx, val)` for updates
-- `signal.map(|v| ...)` for derived display values
+### API Optimization
+- Reduce boilerplate in common patterns
+- Improve ergonomics for derived signals
+- Ensure consistent naming and behavior across views
+- Add convenience methods where they reduce repetition
+
+### New Features
+When adding features:
+1. Follow existing patterns in `crates/vizia_core/src/recoil/`
+2. Add to both `Context` and `EventContext` where appropriate
+3. Include unit tests
+4. Update documentation (README.md, ARCHITECTURE.md)
+5. Create example if non-trivial
+
+### Code Quality
+- Run `cargo clippy` and fix warnings
+- Run `cargo fmt` before commits
+- Prefer `#[derive]` over manual impls where possible
+- Remove dead code, don't suppress warnings without reason
 
 ---
 
-## 10. Summary of Core Behavior
+## 4. Modifying Views
 
-1. Always confirm you are on `signals` before editing.
-2. Use `main` only as a read-only baseline for comparison.
-3. Use Git history, diffs, and search tools to understand context and intent.
-4. **Migrate directly to full Signal architecture** - skip intermediate `impl Res<T>` patterns.
-5. Keep builds passing, commits focused, and style consistent.
-6. Document progress via commit messages and a migration status file where useful.
+When updating view components:
 
-This agent's purpose is to act like a careful, senior contributor dedicated to finishing the Signals migration as fast as possible while maintaining quality and robustness.
+### Adding `.two_way()` Support
+```rust
+pub fn two_way(self) -> Self {
+    self.modify(|view| {
+        let signal = view.value;
+        view.on_change = Some(Box::new(move |cx, val| signal.set(cx, val)));
+    })
+}
+```
+
+Views with `.two_way()`: Slider, Knob, XYPad, Textbox, NumberInput, Checkbox, Switch, ToggleButton, Rating
+
+### Signal-Based Constructor Pattern
+```rust
+impl MyView {
+    pub fn new(cx: &mut Context, value: Signal<T>) -> Handle<Self> {
+        Self { value, on_change: None }
+            .build(cx, |cx| {
+                // Build child views, bind to signal
+            })
+    }
+}
+```
+
+---
+
+## 5. Testing and Validation
+
+Before committing:
+
+```bash
+# Check compilation
+cargo build
+
+# Run tests
+cargo test
+
+# Check for warnings
+cargo clippy --all-targets
+
+# Format code
+cargo fmt
+
+# Test specific example
+cargo run --example <name>
+```
+
+For new features:
+- Add unit tests in the module (`#[cfg(test)] mod tests`)
+- Create or update an example demonstrating usage
+- Verify example compiles and runs
+
+---
+
+## 6. Commit Conventions
+
+Format: `<type>(<scope>): <description>`
+
+Types:
+- `feat` - New feature
+- `fix` - Bug fix
+- `refactor` - Code restructuring without behavior change
+- `docs` - Documentation only
+- `test` - Adding tests
+- `chore` - Maintenance tasks
+
+Examples:
+```
+feat(async): Add Async<T,E> for async state management
+fix(slider): Correct two_way binding behavior
+refactor(views): Remove redundant Clone bounds
+docs(readme): Update Signal API quick reference
+```
+
+---
+
+## 7. File Organization
+
+```
+crates/vizia_core/src/
+├── recoil/
+│   ├── mod.rs          # Signal, Store, NodeId, exports
+│   └── async_state.rs  # Async<T,E>, AsyncSignalExt
+├── context/
+│   ├── mod.rs          # Context - state(), derived(), async_state(), load_async()
+│   └── event.rs        # EventContext - load_async(), spawn()
+├── views/              # Individual view components
+├── binding/            # Binding infrastructure
+└── modifiers/          # Handle modifier traits
+```
+
+When adding new signal features:
+1. Implementation in `recoil/` (new file if substantial)
+2. Context methods in `context/mod.rs`
+3. EventContext methods in `context/event.rs` (if needed in event handlers)
+4. Export from `recoil/mod.rs`
+5. Prelude exports via `lib.rs`
+
+---
+
+## 8. Common Patterns to Follow
+
+### Avoiding Borrow Issues in Bindings
+```rust
+// Clone data before mutable cx operations
+Binding::new(cx, signal, move |cx| {
+    let data = signal.get(cx).clone();  // Clone first
+    VStack::new(cx, |cx| {              // Now cx is free
+        Label::new(cx, &data.name);
+    });
+});
+```
+
+### Derived Signals for Display
+```rust
+// Prefer .drv() for transformations
+let display = value.drv(cx, |v, _| format!("{:.2}", v));
+Label::new(cx, display);
+```
+
+### Event-Driven Updates
+```rust
+fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+    event.map(|app_event, _| match app_event {
+        AppEvent::Action => {
+            self.signal.update(cx, |v| /* modify */);
+        }
+    });
+}
+```
+
+---
+
+## 9. What NOT to Do
+
+- Don't add `#[allow(dead_code)]` without good reason
+- Don't create new files for single small additions
+- Don't add features without documentation
+- Don't break existing examples
+- Don't add unnecessary trait bounds
+- Don't use `cx.derived()` when `.drv()` suffices
+- Don't manually implement traits that can be derived
+- Don't assume you know what files exist - always `ls` first before updating docs or making changes
+
+---
+
+## 10. Quality Checklist
+
+Before considering work complete:
+
+- [ ] Code compiles without warnings
+- [ ] Clippy passes without new warnings
+- [ ] Unit tests pass
+- [ ] Affected examples still work
+- [ ] Documentation updated if API changed
+- [ ] Commit message follows conventions
+- [ ] No dead code or unused imports
+
+---
+
+## 11. Async State API
+
+Comprehensive async data loading with `Signal<Async<T, E>>`:
+
+### States
+
+```
+Idle → Loading → Ready(T) / Error(E) / Timeout
+         ↓
+      Retrying(attempt, max, E)  [during retry]
+
+Ready(T) → Reloading(T) → Ready(T) / Stale(T, E)  [refresh pattern]
+```
+
+### Basic Usage
+
+```rust
+// Create async signal
+let users: Signal<Async<Vec<User>, String>> = cx.async_state();
+
+// Basic load (with deduplication)
+cx.load_async(users, || fetch_users());
+
+// With cancellation
+let handle = cx.load_async_cancelable(users, || fetch_users());
+handle.cancel();
+
+// Refresh - shows stale data while loading
+cx.refresh_async(users, || fetch_users());
+```
+
+### With Options
+
+```rust
+// Timeout
+cx.load_async_with(users, AsyncOptions::default()
+    .timeout(Duration::from_secs(30)), || fetch_users());
+
+// Retry with exponential backoff
+cx.load_async_with(users, AsyncOptions::default()
+    .retry(3)
+    .retry_with_delay(3, Duration::from_millis(500)), || fetch_users());
+
+// Presets
+AsyncOptions::quick()      // 5s timeout, no retry
+AsyncOptions::patient()    // 30s timeout, 3 retries
+AsyncOptions::resilient()  // 60s timeout, 5 retries
+```
+
+### State Queries
+
+```rust
+// In bindings
+let is_loading = users.drv(cx, |s, _| s.is_loading());
+let is_retrying = users.drv(cx, |s, _| s.is_retrying());
+let has_error = users.drv(cx, |s, _| s.is_error());
+
+// Direct queries
+users.is_idle(cx)      // No operation started
+users.is_loading(cx)   // Loading, Reloading, or Retrying
+users.is_ready(cx)     // Has data (Ready, Reloading, or Stale)
+users.is_error(cx)     // Error or Stale
+users.is_timeout(cx)   // Operation timed out
+users.is_retrying(cx)  // Retry in progress
+
+// Data access
+users.data(cx)         // Option<&T> - any available data
+users.fresh_data(cx)   // Option<&T> - only if Ready
+users.error(cx)        // Option<&E> - error if present
+users.retry_info(cx)   // Option<(attempt, max, &E)>
+```
+
+### TTL / Cache Freshness
+
+```rust
+// Check data age
+if let Some(age) = users.age(cx) {
+    println!("Data is {:?} old", age);
+}
+
+// Check expiration
+if users.is_expired(cx, Duration::from_secs(60)) {
+    cx.refresh_async(users, || fetch_users());
+}
+
+// Check freshness
+if users.is_fresh_within(cx, Duration::from_secs(30)) {
+    // Data is recent, skip refresh
+}
+```
+
+### UI Pattern
+
+```rust
+Binding::new(cx, users.drv(cx, |s, _| s.is_loading()), |cx| {
+    if *is_loading.get(cx) { Label::new(cx, "Loading..."); }
+});
+
+Binding::new(cx, users.drv(cx, |s, _| s.is_retrying()), |cx| {
+    if let Some((attempt, max, err)) = users.get(cx).retry_info() {
+        Label::new(cx, format!("Retry {}/{}: {}", attempt, max, err));
+    }
+});
+
+Binding::new(cx, users.drv(cx, |s, _| s.is_ready()), |cx| {
+    if let Some(data) = users.data(cx) {
+        for user in data { Label::new(cx, &user.name); }
+    }
+});
+```
+
+### Example
+
+See `examples/async_state.rs` for a complete demo with all features.
