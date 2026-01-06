@@ -1,6 +1,7 @@
 use crate::context::{InternalEvent, ResourceContext};
 use crate::events::EventMeta;
 use crate::prelude::*;
+use crate::recoil::AsyncCompletionEvent;
 #[cfg(debug_assertions)]
 use crate::systems::compute_matched_rules;
 use crate::systems::hover_system;
@@ -62,6 +63,11 @@ impl EventManager {
                             ResourceContext::new(cx).load_image(path, image, policy);
                         }
                     }
+                });
+
+                // Handle async completion events.
+                event.take(|async_event: AsyncCompletionEvent, _| {
+                    async_event.apply(&mut EventContext::new(cx));
                 });
 
                 // Send events to any global listeners.

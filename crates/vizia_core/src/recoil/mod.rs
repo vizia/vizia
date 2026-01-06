@@ -1,3 +1,10 @@
+mod async_state;
+
+pub use async_state::{
+    Async, AsyncCompletionEvent, AsyncHandle, AsyncOptions, AsyncSignalExt,
+};
+pub(crate) use async_state::run_async_load;
+
 use crate::binding::Data;
 use crate::context::{Context, DataContext, EventContext};
 use crate::entity::Entity;
@@ -79,6 +86,12 @@ pub struct Store {
     pending_updates: Vec<NodeId>,
     pending_set: HashSet<NodeId>,
 
+    // Async load tracking - maps signal NodeId to current load ID
+    async_load_ids: HashMap<NodeId, u64>,
+
+    // Async load timestamps - maps signal NodeId to when data was last loaded
+    async_load_timestamps: HashMap<NodeId, web_time::Instant>,
+
     id_counter: usize,
 }
 
@@ -103,6 +116,8 @@ impl Store {
             updating_dependents: false,
             pending_updates: Vec::new(),
             pending_set: HashSet::new(),
+            async_load_ids: HashMap::new(),
+            async_load_timestamps: HashMap::new(),
             id_counter: 0,
         }
     }
@@ -162,6 +177,36 @@ impl Store {
         self.values.insert(*id, Box::new(value));
 
         self.update_dependents(id);
+    }
+
+    /// Set a value by NodeId - used internally for async state updates.
+    pub(crate) fn set_by_id<T: 'static>(&mut self, id: &NodeId, value: T) {
+        self.set(id, value);
+    }
+
+    /// Get a value by NodeId - used internally for async state checks.
+    pub(crate) fn get_by_id<T: 'static>(&self, id: &NodeId) -> Option<&T> {
+        self.values.get(id).and_then(|boxed| boxed.downcast_ref::<T>())
+    }
+
+    /// Set the current async load ID for a signal.
+    pub(crate) fn set_async_load_id(&mut self, signal_id: &NodeId, load_id: u64) {
+        self.async_load_ids.insert(*signal_id, load_id);
+    }
+
+    /// Get the current async load ID for a signal.
+    pub(crate) fn get_async_load_id(&self, signal_id: &NodeId) -> Option<u64> {
+        self.async_load_ids.get(signal_id).copied()
+    }
+
+    /// Set the timestamp when data was loaded for a signal.
+    pub(crate) fn set_async_load_timestamp(&mut self, signal_id: &NodeId) {
+        self.async_load_timestamps.insert(*signal_id, web_time::Instant::now());
+    }
+
+    /// Get the timestamp when data was last loaded.
+    pub(crate) fn get_async_load_timestamp(&self, signal_id: &NodeId) -> Option<web_time::Instant> {
+        self.async_load_timestamps.get(signal_id).copied()
     }
 
     // Register a dependency - mutates state

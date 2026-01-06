@@ -852,6 +852,138 @@ impl<'a> EventContext<'a> {
         std::thread::spawn(move || target(&mut cxp));
     }
 
+    /// Loads data asynchronously into an async state signal.
+    ///
+    /// This spawns a background thread to run the loader function, sets the signal
+    /// to `Loading`, and then transitions to `Ready(T)` or `Error(E)` when complete.
+    ///
+    /// # Example
+    /// ```ignore
+    /// use vizia::prelude::*;
+    ///
+    /// fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+    ///     event.map(|app_event, _| match app_event {
+    ///         AppEvent::LoadUsers => {
+    ///             cx.load_async(self.users, || fetch_users_from_api());
+    ///         }
+    ///     });
+    /// }
+    /// ```
+    pub fn load_async<T, E, F>(
+        &mut self,
+        signal: crate::recoil::Signal<crate::recoil::Async<T, E>>,
+        loader: F,
+    ) where
+        T: 'static + Send + Clone,
+        E: 'static + Send + Clone,
+        F: 'static + Send + Fn() -> Result<T, E>,
+    {
+        self.load_async_with(signal, crate::recoil::AsyncOptions::default(), loader);
+    }
+
+    /// Loads data asynchronously with a cancelable handle.
+    pub fn load_async_cancelable<T, E, F>(
+        &mut self,
+        signal: crate::recoil::Signal<crate::recoil::Async<T, E>>,
+        loader: F,
+    ) -> crate::recoil::AsyncHandle
+    where
+        T: 'static + Send + Clone,
+        E: 'static + Send + Clone,
+        F: 'static + Send + Fn() -> Result<T, E>,
+    {
+        self.load_async_with_handle(signal, crate::recoil::AsyncOptions::default(), loader)
+    }
+
+    /// Loads data asynchronously with custom options.
+    pub fn load_async_with<T, E, F>(
+        &mut self,
+        signal: crate::recoil::Signal<crate::recoil::Async<T, E>>,
+        options: crate::recoil::AsyncOptions,
+        loader: F,
+    ) where
+        T: 'static + Send + Clone,
+        E: 'static + Send + Clone,
+        F: 'static + Send + Fn() -> Result<T, E>,
+    {
+        let _ = self.load_async_with_handle(signal, options, loader);
+    }
+
+    /// Loads data asynchronously with custom options and returns a cancelable handle.
+    pub fn load_async_with_handle<T, E, F>(
+        &mut self,
+        signal: crate::recoil::Signal<crate::recoil::Async<T, E>>,
+        options: crate::recoil::AsyncOptions,
+        loader: F,
+    ) -> crate::recoil::AsyncHandle
+    where
+        T: 'static + Send + Clone,
+        E: 'static + Send + Clone,
+        F: 'static + Send + Fn() -> Result<T, E>,
+    {
+        use crate::recoil::{Async, AsyncHandle};
+
+        let signal_id = signal.id();
+        let store = self.data.get_store_mut();
+
+        // Check for deduplication
+        if options.dedupe {
+            if let Some(current) = store.get_by_id::<Async<T, E>>(&signal_id) {
+                if current.is_loading() {
+                    return AsyncHandle::new_cancelled();
+                }
+            }
+        }
+
+        // Create handle for this load
+        let handle = AsyncHandle::new_internal();
+        let load_id = handle.load_id();
+
+        // Update tracker (stored separately from signal value)
+        store.set_async_load_id(&signal_id, load_id);
+
+        // Set to loading state
+        let new_state: Async<T, E> = if options.preserve_data {
+            // Stale-while-revalidate: keep existing data visible
+            let current = store.get_by_id::<Async<T, E>>(&signal_id).cloned();
+            match current {
+                Some(Async::Ready(data)) | Some(Async::Reloading(data)) | Some(Async::Stale(data, _)) => {
+                    Async::Reloading(data)
+                }
+                _ => Async::Loading,
+            }
+        } else {
+            // Fresh load: discard old data
+            Async::Loading
+        };
+        store.set_by_id(&signal_id, new_state);
+
+        // Spawn background thread
+        let handle_clone = handle.clone();
+        self.spawn(move |proxy| {
+            crate::recoil::run_async_load(signal_id, loader, options, handle_clone, proxy);
+        });
+
+        handle
+    }
+
+    /// Refreshes async data, showing stale data while loading.
+    pub fn refresh_async<T, E, F>(
+        &mut self,
+        signal: crate::recoil::Signal<crate::recoil::Async<T, E>>,
+        loader: F,
+    ) where
+        T: 'static + Send + Clone,
+        E: 'static + Send + Clone,
+        F: 'static + Send + Fn() -> Result<T, E>,
+    {
+        // Refresh: disable deduplication, preserve existing data
+        let options = crate::recoil::AsyncOptions::default()
+            .dedupe(false)
+            .preserve_data(true);
+        self.load_async_with(signal, options, loader);
+    }
+
     /// Returns a [ContextProxy] which can be moved between threads and used to send events back to the main UI thread.
     pub fn get_proxy(&self) -> ContextProxy {
         ContextProxy {

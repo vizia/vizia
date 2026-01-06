@@ -270,6 +270,11 @@ fn main() -> Result<(), ApplicationError> {
 | Derived state | `sig.drv(cx, \|v, _\| v * 2)` |
 | Bind to view | `Label::new(cx, sig)` |
 | Window props | `app.title(cx.state("Title")).inner_size(cx.state((w, h)))` |
+| Async state | `let data = cx.async_state::<T, E>()` |
+| Load async | `cx.load_async(data, \|\| fetch_data())` |
+| Cancelable load | `let h = cx.load_async_cancelable(data, \|\| ...); h.cancel()` |
+| Refresh (stale) | `cx.refresh_async(data, \|\| fetch_data())` |
+| With options | `cx.load_async_with(data, AsyncOptions::patient(), \|\| ...)` |
 
 <br />
 

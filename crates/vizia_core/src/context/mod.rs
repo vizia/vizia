@@ -250,6 +250,189 @@ impl Context {
         recoil_store.derived(entity, compute)
     }
 
+    /// Creates an async state signal initialized to `Async::Idle`.
+    ///
+    /// Use this for representing data that will be loaded asynchronously.
+    /// The signal can be transitioned through states: `Idle` -> `Loading` -> `Ready(T)` or `Error(E)`.
+    ///
+    /// # Example
+    /// ```ignore
+    /// use vizia::prelude::*;
+    ///
+    /// struct MyApp {
+    ///     users: Signal<Async<Vec<User>, String>>,
+    /// }
+    ///
+    /// impl App for MyApp {
+    ///     fn new(cx: &mut Context) -> Self {
+    ///         Self {
+    ///             users: cx.async_state(),
+    ///         }
+    ///     }
+    /// }
+    /// ```
+    pub fn async_state<T: 'static + Clone, E: 'static + Clone>(
+        &mut self,
+    ) -> Signal<crate::recoil::Async<T, E>> {
+        self.state(crate::recoil::Async::Idle)
+    }
+
+    /// Loads data asynchronously into an async state signal.
+    ///
+    /// This spawns a background thread to run the loader function, sets the signal
+    /// to `Loading`, and then transitions to `Ready(T)` or `Error(E)` when complete.
+    ///
+    /// By default, deduplication is enabled - if a load is already in progress, this
+    /// call will be skipped. Use `load_async_with` to customize this behavior.
+    ///
+    /// # Example
+    /// ```ignore
+    /// use vizia::prelude::*;
+    ///
+    /// cx.load_async(users, || fetch_users_from_api());
+    /// ```
+    pub fn load_async<T, E, F>(&mut self, signal: Signal<crate::recoil::Async<T, E>>, loader: F)
+    where
+        T: 'static + Send + Clone,
+        E: 'static + Send + Clone,
+        F: 'static + Send + Fn() -> Result<T, E>,
+    {
+        self.load_async_with(signal, crate::recoil::AsyncOptions::default(), loader);
+    }
+
+    /// Loads data asynchronously with a cancelable handle.
+    ///
+    /// Returns an `AsyncHandle` that can be used to cancel the operation.
+    ///
+    /// # Example
+    /// ```ignore
+    /// let handle = cx.load_async_cancelable(users, || fetch_users());
+    /// // Later...
+    /// handle.cancel();
+    /// ```
+    pub fn load_async_cancelable<T, E, F>(
+        &mut self,
+        signal: Signal<crate::recoil::Async<T, E>>,
+        loader: F,
+    ) -> crate::recoil::AsyncHandle
+    where
+        T: 'static + Send + Clone,
+        E: 'static + Send + Clone,
+        F: 'static + Send + Fn() -> Result<T, E>,
+    {
+        self.load_async_with_handle(signal, crate::recoil::AsyncOptions::default(), loader)
+    }
+
+    /// Loads data asynchronously with custom options.
+    ///
+    /// # Example
+    /// ```ignore
+    /// cx.load_async_with(users, AsyncOptions::patient(), || fetch_users());
+    ///
+    /// // Or with custom options:
+    /// cx.load_async_with(users, AsyncOptions::default()
+    ///     .timeout(Duration::from_secs(10))
+    ///     .retry(3), || fetch_users());
+    /// ```
+    pub fn load_async_with<T, E, F>(
+        &mut self,
+        signal: Signal<crate::recoil::Async<T, E>>,
+        options: crate::recoil::AsyncOptions,
+        loader: F,
+    ) where
+        T: 'static + Send + Clone,
+        E: 'static + Send + Clone,
+        F: 'static + Send + Fn() -> Result<T, E>,
+    {
+        let _ = self.load_async_with_handle(signal, options, loader);
+    }
+
+    /// Loads data asynchronously with custom options and returns a cancelable handle.
+    pub fn load_async_with_handle<T, E, F>(
+        &mut self,
+        signal: Signal<crate::recoil::Async<T, E>>,
+        options: crate::recoil::AsyncOptions,
+        loader: F,
+    ) -> crate::recoil::AsyncHandle
+    where
+        T: 'static + Send + Clone,
+        E: 'static + Send + Clone,
+        F: 'static + Send + Fn() -> Result<T, E>,
+    {
+        use crate::recoil::{Async, AsyncHandle};
+
+        let signal_id = signal.id();
+        let store = self.data.get_store_mut();
+
+        // Check for deduplication
+        if options.dedupe {
+            if let Some(current) = store.get_by_id::<Async<T, E>>(&signal_id) {
+                if current.is_loading() {
+                    // Already loading, return a dummy handle
+                    return AsyncHandle::new_cancelled();
+                }
+            }
+        }
+
+        // Create handle for this load
+        let handle = AsyncHandle::new_internal();
+        let load_id = handle.load_id();
+
+        // Update tracker (stored separately from signal value)
+        store.set_async_load_id(&signal_id, load_id);
+
+        // Set to loading state
+        let new_state: Async<T, E> = if options.preserve_data {
+            // Stale-while-revalidate: keep existing data visible
+            let current = store.get_by_id::<Async<T, E>>(&signal_id).cloned();
+            match current {
+                Some(Async::Ready(data)) | Some(Async::Reloading(data)) | Some(Async::Stale(data, _)) => {
+                    Async::Reloading(data)
+                }
+                _ => Async::Loading,
+            }
+        } else {
+            // Fresh load: discard old data
+            Async::Loading
+        };
+        store.set_by_id(&signal_id, new_state);
+
+        // Spawn background thread
+        let handle_clone = handle.clone();
+        self.spawn(move |proxy| {
+            crate::recoil::run_async_load(signal_id, loader, options, handle_clone, proxy);
+        });
+
+        handle
+    }
+
+    /// Refreshes async data, showing stale data while loading.
+    ///
+    /// Unlike `load_async`, this always triggers a new load even if data exists,
+    /// and preserves existing data in a `Reloading` state while loading.
+    ///
+    /// # Example
+    /// ```ignore
+    /// // Button to refresh data
+    /// Button::new(cx, |cx| Label::new(cx, "Refresh"))
+    ///     .on_press(|cx| cx.refresh_async(users, || fetch_users()));
+    /// ```
+    pub fn refresh_async<T, E, F>(
+        &mut self,
+        signal: Signal<crate::recoil::Async<T, E>>,
+        loader: F,
+    ) where
+        T: 'static + Send + Clone,
+        E: 'static + Send + Clone,
+        F: 'static + Send + Fn() -> Result<T, E>,
+    {
+        // Refresh: disable deduplication, preserve existing data
+        let options = crate::recoil::AsyncOptions::default()
+            .dedupe(false)
+            .preserve_data(true);
+        self.load_async_with(signal, options, loader);
+    }
+
     /// The "current" entity, generally the entity which is currently being built or the entity
     /// which is currently having an event dispatched to it.
     pub fn current(&self) -> Entity {

@@ -1,6 +1,6 @@
 # Vizia Lens → Signals Migration Status
 
-Last Updated: 2026-01-05
+Last Updated: 2026-01-06
 
 ## Overview
 
@@ -30,6 +30,16 @@ This document tracks the progress of migrating from Lens-based state management 
   - Works with `List::new`, `TabView::new`, `TabBar::new`, and `PickList::new`
   - Unified `Keyed` wrapper and `KeyedExt` trait in `list.rs` (shared across all list-like views)
   - Note: For PickList, keyed reuse only helps when list changes while popup is open (rare case)
+- Added comprehensive async state management (`Async<T, E>`) with:
+  - States: Idle, Loading, Ready, Reloading, Error, Stale, Timeout, Retrying
+  - Cancellation support via `AsyncHandle`
+  - Stale-while-revalidate pattern (`refresh_async`)
+  - Timeout with error state
+  - Retry with exponential backoff + UI progress feedback
+  - TTL / cache freshness (`age()`, `is_expired()`, `is_fresh_within()`)
+  - Deduplication (skip if already loading)
+  - `AsyncOptions` presets: `quick()`, `patient()`, `resilient()`
+  - Example: `examples/async_state.rs`
 
 ---
 
@@ -169,6 +179,7 @@ Signal-first documentation is updated where APIs changed in core modules, views,
 - [x] `crates/vizia_winit/src/application.rs` - `Application::new_with_state()` to return signals created during app build
 - [x] `crates/vizia_core/src/context/mod.rs` - Timer tick logic updated to allow one-shot ticks when frames are late
 - [x] `crates/vizia_core/src/context/mod.rs` + `crates/vizia_core/src/context/event.rs` - Timer heap mutation/query avoids `BinaryHeap::peek()` infinite loop
+- [x] `crates/vizia_core/src/recoil/async_state.rs` - Async state management with `Async<T, E>`, cancellation, timeout, retry, TTL
 
 ---
 
@@ -297,6 +308,7 @@ Patterns formalized during migration:
 | `cx.modify_timer(...)` toggle | Use a signal-backed flag to swap timer intervals at runtime (see `examples/timers.rs`) |
 | Signal-backed modifier updates | Drive modifier changes via internal signals inside binds (e.g., Badge placement, ProgressBar sizing) |
 | Unified `.keyed()` API | Opt-in keyed reuse for list-like views via `Keyed` wrapper + `KeyedExt` trait (List, TabView, TabBar, PickList) |
+| Async State Pattern | `Signal<Async<T, E>>` for async data loading with states, retry, timeout, TTL (see below) |
 
 ---
 
@@ -364,3 +376,40 @@ PickList::new(cx, options.keyed(|opt| opt.id), selected, true);
 ```
 
 The `Keyed` wrapper and `KeyedExt` trait are defined in `list.rs` and shared across all list-like views for API consistency.
+
+### Async State Pattern
+
+For async data loading with comprehensive state management:
+
+```rust
+// Create async signal
+let users: Signal<Async<Vec<User>, String>> = cx.async_state();
+
+// Basic load
+cx.load_async(users, || fetch_users());
+
+// With cancellation
+let handle = cx.load_async_cancelable(users, || fetch_users());
+handle.cancel();
+
+// Refresh (stale-while-revalidate)
+cx.refresh_async(users, || fetch_users());
+
+// With options (timeout, retry)
+cx.load_async_with(users, AsyncOptions::default()
+    .timeout(Duration::from_secs(30))
+    .retry(3), || fetch_users());
+
+// React to state changes
+Binding::new(cx, users.drv(cx, |s, _| s.is_loading()), |cx| { ... });
+Binding::new(cx, users.drv(cx, |s, _| s.is_retrying()), |cx| { ... });
+
+// TTL / cache freshness
+if users.is_expired(cx, Duration::from_secs(60)) {
+    cx.refresh_async(users, || fetch_users());
+}
+```
+
+**States**: `Idle` → `Loading` → `Ready(T)` / `Error(E)` / `Timeout`, with `Reloading(T)`, `Stale(T, E)`, `Retrying(attempt, max, E)` for intermediate states.
+
+**Files**: `recoil/async_state.rs`, `context/mod.rs`, `context/event.rs`

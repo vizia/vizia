@@ -127,6 +127,42 @@ let sum = cx.derived(move |s| {
 
 Derived signals recompute automatically when their dependencies change.
 
+### Async Signals
+
+Comprehensive async data loading with signals:
+
+```rust
+// Create async state
+let users: Signal<Async<Vec<User>, String>> = cx.async_state();
+
+// Basic load (with deduplication)
+cx.load_async(users, || fetch_users());
+
+// With cancellation
+let handle = cx.load_async_cancelable(users, || fetch_users());
+handle.cancel(); // Cancel if needed
+
+// Refresh (shows stale data while loading)
+cx.refresh_async(users, || fetch_users());
+
+// With options (timeout, retry)
+cx.load_async_with(users, AsyncOptions::patient(), || fetch_users());
+```
+
+**States:** `Idle`, `Loading`, `Ready(T)`, `Reloading(T)`, `Error(E)`, `Stale(T, E)`
+
+**Features:**
+- **Deduplication** - Multiple calls while loading are ignored
+- **Stale-while-revalidate** - Show old data while refreshing
+- **Cancellation** - Cancel in-flight requests
+- **Timeout** - Auto-fail after duration
+- **Retry** - Exponential backoff retries
+
+**Option Presets:**
+- `AsyncOptions::quick()` - 5s timeout, no retry
+- `AsyncOptions::patient()` - 30s timeout, 3 retries
+- `AsyncOptions::resilient()` - 60s timeout, 5 retries
+
 ### View
 
 The `View` trait describes a visual element. It has 4 methods:
