@@ -50,15 +50,14 @@ impl App for TodoApp {
         let todos_signal = self.todos;
 
         // Derived signals
-        let items_left = cx.derived(move |s| {
-            let count = todos_signal.get(s).iter().filter(|t| !t.completed).count();
+        let items_left = todos_signal.drv(cx, |v, _| {
+            let count = v.iter().filter(|t| !t.completed).count();
             format!("{} items left!", count)
         });
 
-        let filtered_indices = cx.derived(move |s| {
-            let todos_list = todos_signal.get(s);
+        let filtered_indices = todos_signal.drv(cx, move |v, s| {
             let current_filter = filter.get(s);
-            todos_list
+            v
                 .iter()
                 .enumerate()
                 .filter_map(|(i, todo)| match current_filter {
@@ -131,9 +130,9 @@ impl App for TodoApp {
             HStack::new(cx, move |cx| {
                 Label::new(cx, items_left).class("todo-footer_text");
 
-                let is_all = cx.derived(move |s| *filter.get(s) == TodoFilter::All);
-                let is_active = cx.derived(move |s| *filter.get(s) == TodoFilter::Active);
-                let is_completed = cx.derived(move |s| *filter.get(s) == TodoFilter::Completed);
+                let is_all = filter.drv(cx, |v, _| *v == TodoFilter::All);
+                let is_active = filter.drv(cx, |v, _| *v == TodoFilter::Active);
+                let is_completed = filter.drv(cx, |v, _| *v == TodoFilter::Completed);
 
                 ButtonGroup::new(cx, move |cx| {
                     ToggleButton::new(cx, is_all, move |cx| Label::new(cx, "All"))

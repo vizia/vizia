@@ -9,7 +9,7 @@ pub fn avatar_group(cx: &mut Context) {
         ImageRetentionPolicy::DropWhenNoObservers,
     );
 
-    VStack::new(cx, |cx|{
+    VStack::new(cx, move |cx|{
         Markdown::new(cx, "# Avatar
 An avatar is used to visually represent a person or entity and can contain text, an icon, or an image.
         ");
@@ -17,7 +17,9 @@ An avatar is used to visually represent a person or entity and can contain text,
         Divider::new(cx);
 
         Markdown::new(cx, "### Basic avatar group");
-        DemoRegion::new(cx, |cx|{
+        DemoRegion::new(
+            cx,
+            move |cx|{
             AvatarGroup::new(cx, |cx|{
                 Avatar::new(cx, |cx|{
                     Svg::new(cx, ICON_USER);

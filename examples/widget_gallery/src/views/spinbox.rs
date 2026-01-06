@@ -6,7 +6,7 @@ pub fn spinbox(cx: &mut Context) {
     let spinbox_value_1 = cx.state(99i64);
     let width_100 = cx.state(Pixels(100.0));
 
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(cx, "# Spinbox");
 
         Divider::new(cx);
@@ -15,7 +15,7 @@ pub fn spinbox(cx: &mut Context) {
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 Spinbox::new(cx, spinbox_value_1)
                     .width(width_100)
                     .on_increment(move |ex| spinbox_value_1.update(ex, |value| *value += 1))

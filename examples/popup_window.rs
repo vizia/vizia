@@ -52,9 +52,9 @@ impl App for PopupWindowApp {
             if *show_popup.get(cx) {
                 Window::popup(cx, false, move |cx| {
                     VStack::new(cx, move |cx: &mut Context| {
-                        Slider::new(cx, red).on_change(move |cx, val| red.set(cx, val));
-                        Slider::new(cx, green).on_change(move |cx, val| green.set(cx, val));
-                        Slider::new(cx, blue).on_change(move |cx, val| blue.set(cx, val));
+                        Slider::new(cx, red).two_way();
+                        Slider::new(cx, green).two_way();
+                        Slider::new(cx, blue).two_way();
                     })
                     .padding(padding_20)
                     .alignment(align_center)
@@ -67,10 +67,10 @@ impl App for PopupWindowApp {
             }
         });
 
-        let color = cx.derived(move |cx| {
-            let r = (*red.get(cx) * 255.0) as u8;
-            let g = (*green.get(cx) * 255.0) as u8;
-            let b = (*blue.get(cx) * 255.0) as u8;
+        let color = red.drv(cx, move |v, s| {
+            let r = (*v * 255.0) as u8;
+            let g = (*green.get(s) * 255.0) as u8;
+            let b = (*blue.get(s) * 255.0) as u8;
             Color::rgb(r, g, b)
         });
 

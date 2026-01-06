@@ -11,14 +11,6 @@ impl PreeditBackup {
         Self { prev_preedit, original_selection }
     }
 
-    #[allow(dead_code)]
-    pub fn prev_selection(&self) -> Selection {
-        let min = self.original_selection.min();
-        let len = self.prev_preedit.len();
-        let active = min + len;
-        Selection { anchor: min, active, h_pos: None }
-    }
-
     pub fn set_prev_preedit(&mut self, preedit: String) {
         self.prev_preedit = preedit;
     }

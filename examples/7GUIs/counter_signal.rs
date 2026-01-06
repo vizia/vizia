@@ -16,7 +16,7 @@ impl App for CounterApp {
 
     fn on_build(self, cx: &mut Context) -> Self {
         let count = self.count;
-        let doubled = cx.derived(move |s| *count.get(s) * 2);
+        let doubled = count.drv(cx, |v, _| *v * 2);
 
         HStack::new(cx, move |cx| {
             Button::new(cx, |cx| Label::new(cx, "Increment"))

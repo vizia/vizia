@@ -20,18 +20,9 @@ impl App for SliderApp {
         let vertical = self.vertical;
 
         ExamplePage::new(cx, |cx| {
-            let value_label = cx.derived({
-                let value = value;
-                move |store| format!("{:.2}", *value.get(store))
-            });
-            let normalized = cx.derived({
-                let value = value;
-                move |store| ((*value.get(store) + 50.0) / 100.0).clamp(0.0, 1.0)
-            });
-            let normalized_label = cx.derived({
-                let normalized = normalized;
-                move |store| format!("{:.2}", *normalized.get(store))
-            });
+            let value_label = value.drv(cx, |v, _| format!("{:.2}", v));
+            let normalized = value.drv(cx, |v, _| ((*v + 50.0) / 100.0).clamp(0.0, 1.0));
+            let normalized_label = normalized.drv(cx, |v, _| format!("{:.2}", v));
 
             // Normalized slider (0..1) displaying -50..50 range
             HStack::new(cx, |cx| {
@@ -46,9 +37,7 @@ impl App for SliderApp {
 
             // Direct range slider
             HStack::new(cx, |cx| {
-                Slider::new(cx, value)
-                    .range(-50.0..50.0)
-                    .on_change(move |cx, val| value.set(cx, val));
+                Slider::new(cx, value).range(-50.0..50.0).two_way();
                 Label::new(cx, value_label).width(Pixels(50.0));
             })
             .alignment(Alignment::Center)
@@ -59,7 +48,7 @@ impl App for SliderApp {
             VStack::new(cx, |cx| {
                 Slider::new(cx, value)
                     .range(-50.0..50.0)
-                    .on_change(move |cx, val| value.set(cx, val))
+                    .two_way()
                     .orientation(vertical);
                 Label::new(cx, value_label).alignment(Alignment::Center).width(Pixels(50.0));
             })

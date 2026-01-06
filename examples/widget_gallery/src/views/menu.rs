@@ -6,7 +6,7 @@ use crate::components::DemoRegion;
 pub fn menu(cx: &mut Context) {
     let width_100 = cx.state(Pixels(100.0));
 
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(cx, "# Menu");
 
         Divider::new(cx);
@@ -15,7 +15,7 @@ pub fn menu(cx: &mut Context) {
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 Submenu::new(
                     cx,
                     |cx| Label::new(cx, "Menu"),
@@ -24,7 +24,7 @@ pub fn menu(cx: &mut Context) {
                             cx,
                             |_| debug!("New"),
                             |cx| {
-                                HStack::new(cx, |cx| {
+                                HStack::new(cx, move |cx| {
                                     Label::new(cx, "New");
                                     Label::new(cx, "Ctrl + N").class("shortcut");
                                 })
@@ -34,7 +34,7 @@ pub fn menu(cx: &mut Context) {
                             cx,
                             |_| debug!("Open"),
                             |cx| {
-                                HStack::new(cx, |cx| {
+                                HStack::new(cx, move |cx| {
                                     Label::new(cx, "Open");
                                     Label::new(cx, "Ctrl + O").class("shortcut");
                                 })
@@ -96,7 +96,7 @@ Submenu::new(
             cx,
             |_| debug!("New"),
             |cx| {
-                HStack::new(cx, |cx| {
+                HStack::new(cx, move |cx| {
                     Label::new(cx, "New");
                     Label::new(cx, "Ctrl + N").class("shortcut");
                 })
@@ -106,7 +106,7 @@ Submenu::new(
             cx,
             |_| debug!("Open"),
             |cx| {
-                HStack::new(cx, |cx| {
+                HStack::new(cx, move |cx| {
                     Label::new(cx, "Open");
                     Label::new(cx, "Ctrl + O").class("shortcut");
                 })

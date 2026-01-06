@@ -3,7 +3,7 @@ use vizia::prelude::*;
 use crate::components::DemoRegion;
 
 pub fn chip(cx: &mut Context) {
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(
             cx,
             "# Chip
@@ -17,7 +17,7 @@ A chip can be used to inform the user of the status of specific data.
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 Chip::new(cx, "Chip");
             },
             r#"Chip::new(cx, "Chip");"#,
@@ -27,7 +27,7 @@ A chip can be used to inform the user of the status of specific data.
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 let filled_variant = cx.state(ChipVariant::Filled);
                 let outline_variant = cx.state(ChipVariant::Outline);
 
@@ -45,7 +45,7 @@ Chip::new(cx, "Outline").variant(outline_variant);"#,
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 let outline_variant = cx.state(ChipVariant::Outline);
 
                 Chip::new(cx, "Clickable").on_press(|_| {});

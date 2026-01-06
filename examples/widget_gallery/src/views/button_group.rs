@@ -3,7 +3,7 @@ use vizia::prelude::*;
 use crate::components::DemoRegion;
 
 pub fn button_group(cx: &mut Context) {
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(
             cx,
             "# Button Group
@@ -17,7 +17,7 @@ Buttons can be grouped by wrapping them in a ButtonGroup view.
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 ButtonGroup::new(cx, |cx| {
                     Button::new(cx, |cx| Label::new(cx, "One"));
                     Button::new(cx, |cx| Label::new(cx, "Two"));
@@ -35,7 +35,7 @@ Buttons can be grouped by wrapping them in a ButtonGroup view.
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 let vertical = cx.state(true);
                 ButtonGroup::new(cx, |cx| {
                     Button::new(cx, |cx| Label::new(cx, "One"));

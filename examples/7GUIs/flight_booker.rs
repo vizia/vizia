@@ -41,14 +41,8 @@ impl App for FlightBookerApp {
         let start_date = self.start_date;
         let end_date = self.end_date;
 
-        let start_text = cx.derived({
-            let start_date = start_date;
-            move |s| start_date.get(s).format("%Y:%m:%d").to_string()
-        });
-        let end_text = cx.derived({
-            let end_date = end_date;
-            move |s| end_date.get(s).format("%Y:%m:%d").to_string()
-        });
+        let start_text = start_date.drv(cx, |v, _| v.format("%Y:%m:%d").to_string());
+        let end_text = end_date.drv(cx, |v, _| v.format("%Y:%m:%d").to_string());
 
         VStack::new(cx, move |cx| {
             PickList::new(cx, options, selected_option, true)

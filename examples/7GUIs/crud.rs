@@ -88,27 +88,28 @@ impl App for CrudApp {
                     });
 
                     // Custom list using Binding to rebuild on data changes
-                    VStack::new(cx, move |cx| {
-                        Binding::new(cx, list, move |cx| {
-                            let items = list.get(cx).clone();
-                            let filter = filter_prefix.get(cx).to_lowercase();
-                            for (index, (first, last)) in items.iter().enumerate() {
-                                let display = format!("{}, {}", last, first);
-                                if filter.is_empty() || last.to_lowercase().starts_with(&filter) {
-                                    let display_signal = cx.state(display);
-                                    let is_selected = cx.derived({
-                                        let selected = selected;
-                                        move |s| *selected.get(s) == Some(index)
-                                    });
-                                    Label::new(cx, display_signal)
-                                        .on_press(move |cx| {
-                                            cx.emit(CrudEvent::SetSelected(index));
-                                        })
-                                        .navigable(true)
-                                        .checked(is_selected);
+                    ScrollView::new(cx, move |cx| {
+                        VStack::new(cx, move |cx| {
+                            Binding::new(cx, list, move |cx| {
+                                let items = list.get(cx).clone();
+                                let filter = filter_prefix.get(cx).to_lowercase();
+                                for (index, (first, last)) in items.iter().enumerate() {
+                                    let display = format!("{}, {}", last, first);
+                                    if filter.is_empty() || last.to_lowercase().starts_with(&filter) {
+                                        let display_signal = cx.state(display);
+                                        let is_selected =
+                                            selected.drv(cx, move |v, _| *v == Some(index));
+                                        Label::new(cx, display_signal)
+                                            .on_press(move |cx| {
+                                                cx.emit(CrudEvent::SetSelected(index));
+                                            })
+                                            .navigable(true)
+                                            .checked(is_selected);
+                                    }
                                 }
-                            }
-                        });
+                            });
+                        })
+                        .height(Auto);
                     })
                     .class("crud-list");
                 });

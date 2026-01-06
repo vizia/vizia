@@ -49,7 +49,7 @@ impl App for LocalizationApp {
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
                 let locale_signal = cx.environment().locale;
-                let is_french = cx.derived(move |cx| *locale_signal.get(cx) == "fr");
+                let is_french = locale_signal.drv(cx, |v, _| *v == "fr");
                 Checkbox::new(cx, is_french).id("toggle-language").on_toggle(|cx| {
                     let current_locale = cx.environment().locale.get(cx);
                     if *current_locale != "fr" {

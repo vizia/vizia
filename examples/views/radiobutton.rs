@@ -41,10 +41,7 @@ impl App for RadiobuttonApp {
             HStack::new(cx, |cx| {
                 for i in 0..3 {
                     let current_option = index_to_option(i);
-                    let is_selected = cx.derived({
-                        let selected = selected;
-                        move |store| *selected.get(store) == current_option
-                    });
+                    let is_selected = selected.drv(cx, move |v, _| *v == current_option);
                     RadioButton::new(cx, is_selected)
                         .on_select(move |cx| selected.set(cx, current_option));
                 }
@@ -58,10 +55,7 @@ impl App for RadiobuttonApp {
                 for i in 0..3 {
                     let current_option = index_to_option(i);
                     HStack::new(cx, move |cx| {
-                        let is_selected = cx.derived({
-                            let selected = selected;
-                            move |store| *selected.get(store) == current_option
-                        });
+                        let is_selected = selected.drv(cx, move |v, _| *v == current_option);
                         RadioButton::new(cx, is_selected)
                             .on_select(move |cx| selected.set(cx, current_option))
                             .id(format!("button_{i}"));

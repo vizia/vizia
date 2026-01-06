@@ -25,7 +25,7 @@ impl App for ListApp {
         let selectable_single = self.selectable_single;
         let selection_follows_focus = self.selection_follows_focus;
 
-        let is_horizontal = cx.derived(move |s| *orientation.get(s) == Orientation::Horizontal);
+        let is_horizontal = orientation.drv(cx, |v, _| *v == Orientation::Horizontal);
 
         ExamplePage::new(cx, move |cx| {
             Switch::new(cx, is_horizontal).on_toggle(move |cx| {

@@ -29,11 +29,13 @@ pub enum SpinboxIcons {
 
 impl Spinbox {
     /// Creates a new [Spinbox] view.
-    pub fn new<T>(cx: &mut Context, value: Signal<T>) -> Handle<Spinbox>
+    ///
+    /// Accepts either a plain value or a `Signal<T>` for reactive state.
+    pub fn new<T>(cx: &mut Context, value: impl Res<T> + Clone + 'static) -> Handle<Spinbox>
     where
-        T: ToStringLocalized + Clone,
+        T: ToStringLocalized + Clone + 'static,
     {
-        Self::custom(cx, move |cx| Label::new(cx, value))
+        Self::custom(cx, move |cx| Label::new(cx, value.clone()))
     }
 
     /// Creates a custom [Spinbox] view with the given content to represent the value.

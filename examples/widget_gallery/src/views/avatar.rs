@@ -12,7 +12,7 @@ pub fn avatar(cx: &mut Context) {
         ImageRetentionPolicy::DropWhenNoObservers,
     );
 
-    VStack::new(cx, |cx|{
+    VStack::new(cx, move |cx|{
         Markdown::new(cx, "# Avatar
 An avatar is used to visually represent a person or entity and can contain text, an icon, or an image.
         ");
@@ -20,7 +20,9 @@ An avatar is used to visually represent a person or entity and can contain text,
         Divider::new(cx);
 
         Markdown::new(cx, "### Basic avatar");
-        DemoRegion::new(cx, |cx|{
+        DemoRegion::new(
+            cx,
+            move |cx|{
             Avatar::new(cx, |cx|{
                 Svg::new(cx, ICON_USER);
             });
@@ -31,7 +33,9 @@ An avatar is used to visually represent a person or entity and can contain text,
         Markdown::new(cx, "### Avatar content
 An avatar can contain an icon, text, or an image.");
 
-        DemoRegion::new(cx, |cx|{
+        DemoRegion::new(
+            cx,
+            move |cx|{
             let vizia_png = cx.state("vizia.png");
 
             Avatar::new(cx, |cx|{
@@ -64,7 +68,9 @@ Avatar::new(cx, |cx|{
 The `variant` modifier can be used to select between a circle (default), square, and rounded avatar shape.
         ");
 
-        DemoRegion::new(cx, |cx|{
+        DemoRegion::new(
+            cx,
+            move |cx|{
             let square = cx.state(AvatarVariant::Square);
             let rounded = cx.state(AvatarVariant::Rounded);
             let vizia_png = cx.state("vizia.png");
@@ -100,7 +106,9 @@ Avatar::new(cx, |cx|{
 The badge modifier can be used to add a badge to an avatar.
         ");
 
-        DemoRegion::new(cx, |cx|{
+        DemoRegion::new(
+            cx,
+            move |cx|{
             Avatar::new(cx, |cx|{
                 Svg::new(cx, ICON_USER);
             })
@@ -119,9 +127,7 @@ The badge modifier can be used to add a badge to an avatar.
             Avatar::new(cx, |cx|{
                 Svg::new(cx, ICON_USER);
             })
-            .badge(|cx| Badge::new(cx, |cx| {
-                Label::new(cx, "2");
-            }));
+            .badge(|cx| Badge::new(cx, |cx| Label::new(cx, "2")));
         }, r#"Avatar::new(cx, |cx|{
     Svg::new(cx, ICON_USER);
 }).badge(|cx| Badge::new(cx, |cx| Svg::new(cx, ICON_CLOCK)).class("warning"));

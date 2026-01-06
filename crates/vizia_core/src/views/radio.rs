@@ -61,7 +61,25 @@ pub struct RadioButton {
 
 impl RadioButton {
     /// Creates a new [RadioButton] view.
-    pub fn new(cx: &mut Context, checked: Signal<bool>) -> Handle<Self> {
+    ///
+    /// Accepts either a plain boolean value or a `Signal<bool>` for reactive state.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// #
+    /// # let cx = &mut Context::default();
+    /// #
+    /// // Static (always checked)
+    /// RadioButton::new(cx, true);
+    ///
+    /// // Reactive
+    /// let checked = cx.state(false);
+    /// RadioButton::new(cx, checked);
+    /// ```
+    pub fn new(cx: &mut Context, checked: impl Res<bool> + 'static) -> Handle<Self> {
+        let checked = checked.into_signal(cx);
         let false_signal = cx.state(false);
         let true_signal = cx.state(true);
         Self { on_select: None }

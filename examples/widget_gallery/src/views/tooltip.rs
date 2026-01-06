@@ -12,7 +12,7 @@ pub fn tooltip(cx: &mut Context) {
     let auto = cx.state(Auto);
     let align_left = cx.state(Alignment::Left);
 
-    VStack::new(cx, |cx|{
+    VStack::new(cx, move |cx|{
 
         Markdown::new(cx, "# Tooltip
 A tooltip displays supplemental information near its target view. Tooltips are triggered on hover or focus of the target view and dismissed on blur or mouse-out of the target or tooltip container.        
@@ -22,7 +22,7 @@ A tooltip displays supplemental information near its target view. Tooltips are t
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 Button::new(cx, |cx |Svg::new(cx, ICON_TRASH))
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Delete");
@@ -37,10 +37,10 @@ A tooltip displays supplemental information near its target view. Tooltips are t
 
         DemoRegion::new(
             cx,
-            |cx| {
-                Button::new(cx, |cx |Svg::new(cx, ICON_TRASH))
-                    .tooltip(|cx| Tooltip::new(cx, |cx|{
-                        HStack::new(cx, |cx|{
+            move |cx| {
+                Button::new(cx, |cx| Svg::new(cx, ICON_TRASH))
+                    .tooltip(move |cx| Tooltip::new(cx, move |cx| {
+                        HStack::new(cx, move |cx| {
                             Svg::new(cx, ICON_INFO_CIRCLE);
                             Label::new(cx, "Delete");
                         }).size(auto).alignment(align_left);
@@ -55,10 +55,10 @@ A tooltip displays supplemental information near its target view. Tooltips are t
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 let text_variant = cx.state(ButtonVariant::Text);
 
-                VStack::new(cx, |cx|{
+                VStack::new(cx, move |cx|{
                     Button::new(cx, |cx|{
                         Label::new(cx, "TOP-START")
                     })
@@ -100,7 +100,7 @@ A tooltip displays supplemental information near its target view. Tooltips are t
                     }).placement(Placement::BottomStart));
                 }).vertical_gap(gap_8).size(auto);
 
-                VStack::new(cx, |cx|{
+                VStack::new(cx, move |cx|{
                     Button::new(cx, |cx|{
                         Label::new(cx, "TOP")
                     })
@@ -142,7 +142,7 @@ A tooltip displays supplemental information near its target view. Tooltips are t
                     }).placement(Placement::Bottom));
                 }).vertical_gap(gap_8).size(auto);
 
-                VStack::new(cx, |cx|{
+                VStack::new(cx, move |cx|{
                     Button::new(cx, |cx|{
                         Label::new(cx, "TOP-END")
                     })

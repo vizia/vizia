@@ -10,8 +10,18 @@ pub(crate) trait BindingHandler {
 /// A binding that rebuilds its contents when the observed signal changes.
 pub struct Binding {
     entity: Entity,
+    scope: Option<Entity>,
     signal_id: NodeId,
     content: Box<dyn Fn(&mut Context)>,
+}
+
+fn create_scope(cx: &mut Context, parent: Entity) -> Entity {
+    let id = cx.entity_manager.create();
+    cx.tree.add(id, parent).expect("Failed to add to tree");
+    cx.cache.add(id);
+    cx.style.add(id);
+    cx.tree.set_ignored(id, true);
+    id
 }
 
 impl Binding {
@@ -30,7 +40,8 @@ impl Binding {
         // Observe the signal.
         signal.observe(cx.data.get_store_mut(), id);
 
-        let binding = Binding { entity: id, signal_id: signal.id(), content: Box::new(content) };
+        let binding =
+            Binding { entity: id, scope: None, signal_id: signal.id(), content: Box::new(content) };
         cx.bindings.insert(id, Box::new(binding));
 
         // Initial update.
@@ -51,8 +62,18 @@ impl BindingHandler for Binding {
         if !cx.data.get_store().has_value(&self.signal_id) {
             return;
         }
-        cx.remove_children(cx.current());
-        (self.content)(cx);
+        if let Some(scope) = self.scope.take() {
+            if cx.entity_manager.is_alive(scope) {
+                cx.remove(scope);
+            }
+        }
+
+        let scope = create_scope(cx, self.entity);
+        self.scope = Some(scope);
+
+        cx.with_current(scope, |cx| {
+            (self.content)(cx);
+        });
     }
 
     fn remove(&self, cx: &mut Context) {

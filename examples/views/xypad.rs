@@ -20,8 +20,8 @@ impl App for XYPadApp {
         let vertical = self.vertical;
 
         // Derived signals for individual x and y sliders
-        let x_value = cx.derived(move |s| xy.get(s).0);
-        let y_value = cx.derived(move |s| xy.get(s).1);
+        let x_value = xy.drv(cx, |v, _| v.0);
+        let y_value = xy.drv(cx, |v, _| v.1);
 
         ExamplePage::vertical(cx, |cx| {
             Label::new(cx, "2-dimensional XY Pad");

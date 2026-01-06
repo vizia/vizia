@@ -501,7 +501,9 @@ impl Arrow {
         let bottom = cx.derived({
             let placement_signal = placement_signal;
             move |store| match *placement_signal.get(store) {
-                Placement::BottomStart | Placement::Bottom | Placement::BottomEnd => Percentage(100.0),
+                Placement::BottomStart | Placement::Bottom | Placement::BottomEnd => {
+                    Percentage(100.0)
+                }
                 _ => Stretch(1.0),
             }
         });

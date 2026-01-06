@@ -3,7 +3,7 @@ use vizia::prelude::*;
 use crate::DemoRegion;
 
 pub fn divider(cx: &mut Context) {
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(cx, "# Divider");
 
         Divider::new(cx);
@@ -12,7 +12,7 @@ pub fn divider(cx: &mut Context) {
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 Divider::new(cx);
             },
             r#"Divider::new(cx);"#,

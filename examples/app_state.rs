@@ -23,10 +23,7 @@ impl App for CounterApp {
             Label::new(cx, "Counter App").font_size(24.0).font_weight(FontWeightKeyword::Bold);
 
             // Display the current count
-            let count_text = cx.derived({
-                let count = self.count;
-                move |store| format!("Count: {}", count.get(store))
-            });
+            let count_text = self.count.drv(cx, |v, _| format!("Count: {v}"));
             Label::new(cx, count_text).font_size(32.0);
 
             // Counter controls - emit events instead of directly updating
@@ -43,16 +40,8 @@ impl App for CounterApp {
             .gap(Pixels(10.0));
 
             // Show derived state - whether count is even or odd
-            let count_signal = self.count; // Copy the signal for use in derived computation
-            let parity = cx.derived(move |s| {
-                let count = count_signal.get(s);
-                if *count % 2 == 0 { "Even" } else { "Odd" }.to_string()
-            });
-
-            let parity_text = cx.derived({
-                let parity = parity;
-                move |store| format!("Parity: {}", parity.get(store))
-            });
+            let parity = self.count.drv(cx, |v, _| if *v % 2 == 0 { "Even" } else { "Odd" });
+            let parity_text = parity.drv(cx, |v, _| format!("Parity: {v}"));
             Label::new(cx, parity_text).font_size(16.0).color(Color::rgb(128, 128, 128));
         })
         .alignment(Alignment::Center)

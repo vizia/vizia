@@ -5,7 +5,7 @@ use crate::DemoRegion;
 pub fn rating(cx: &mut Context) {
     let rating_signal = cx.state(3u32);
 
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(cx, "# Rating");
 
         Divider::new(cx);
@@ -15,14 +15,10 @@ pub fn rating(cx: &mut Context) {
         DemoRegion::new(
             cx,
             move |cx| {
-                Rating::new(cx, 5, rating_signal).on_change(move |cx, value| {
-                    rating_signal.set(cx, value);
-                });
+                Rating::new(cx, 5, rating_signal).two_way();
             },
             r#"let rating_signal = cx.state(3u32);
-Rating::new(cx, 5, rating_signal).on_change(move |cx, value| {
-    rating_signal.set(cx, value);
-});"#,
+Rating::new(cx, 5, rating_signal).two_way();"#,
         );
     })
     .class("panel");

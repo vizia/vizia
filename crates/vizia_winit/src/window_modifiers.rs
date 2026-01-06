@@ -1,4 +1,4 @@
-use vizia_core::{context::EventContext, prelude::Signal};
+use vizia_core::{context::EventContext, prelude::Res};
 
 pub(crate) fn apply_title_affixes(title: &str) -> String {
     let prefix = std::env::var("VIZIA_TITLE_PREFIX").ok().filter(|s| !s.is_empty());
@@ -29,7 +29,7 @@ use vizia_window::{Anchor, AnchorTarget, WindowButtons, WindowPosition, WindowSi
 pub trait WindowModifiers {
     fn on_close(self, callback: impl Fn(&mut EventContext) + 'static) -> Self;
     fn on_create(self, callback: impl Fn(&mut EventContext) + 'static) -> Self;
-    /// Sets the title of the window to the given value. Accepts a `Signal<T>` where `T: ToString`.
+    /// Sets the title of the window to the given value. Accepts a value or `Signal<T>` where `T: ToString`.
     ///
     /// # Example
     /// ```no_run
@@ -42,8 +42,8 @@ pub trait WindowModifiers {
     /// });
     /// app.title(title).run();
     /// ```
-    fn title<T: ToString>(self, title: Signal<T>) -> Self;
-    /// Sets the inner size of the window to the given value. Accepts a signal which can be converted to a [`WindowSize`].
+    fn title<T: ToString + 'static>(self, title: impl Res<T> + 'static) -> Self;
+    /// Sets the inner size of the window to the given value. Accepts a value or signal which can be converted to a [`WindowSize`].
     ///
     /// The inner size is the window area excluding the window borders.
     ///
@@ -58,8 +58,8 @@ pub trait WindowModifiers {
     /// });
     /// app.inner_size(size).run();
     /// ```
-    fn inner_size<S: Into<WindowSize> + Clone>(self, size: Signal<S>) -> Self;
-    /// Sets the minimum inner size of the window to the given value. Accepts a signal of an optional value that can be converted to a [`WindowSize`].
+    fn inner_size<S: Into<WindowSize> + Clone>(self, size: impl Res<S>) -> Self;
+    /// Sets the minimum inner size of the window to the given value. Accepts a value or signal of an optional value that can be converted to a [`WindowSize`].
     ///
     /// Setting the minimum inner size to `None` removes the minimum inner size constraint from the window.
     ///
@@ -74,8 +74,8 @@ pub trait WindowModifiers {
     /// });
     /// app.min_inner_size(min_size).run();
     /// ```
-    fn min_inner_size<S: Into<WindowSize> + Clone>(self, size: Signal<Option<S>>) -> Self;
-    /// Sets the maximum inner size of the window to the given value. Accepts a signal of an optional value that can be converted to a [`WindowSize`].
+    fn min_inner_size<S: Into<WindowSize> + Clone>(self, size: impl Res<Option<S>>) -> Self;
+    /// Sets the maximum inner size of the window to the given value. Accepts a value or signal of an optional value that can be converted to a [`WindowSize`].
     ///
     /// Setting the maximum inner size to `None` removes the maximum inner size constraint from the window.
     ///
@@ -90,8 +90,8 @@ pub trait WindowModifiers {
     /// });
     /// app.max_inner_size(max_size).run();
     /// ```
-    fn max_inner_size<S: Into<WindowSize> + Clone>(self, size: Signal<Option<S>>) -> Self;
-    /// Sets the position of the window to the given value. Accepts a signal which can be converted to a [`Position`].
+    fn max_inner_size<S: Into<WindowSize> + Clone>(self, size: impl Res<Option<S>>) -> Self;
+    /// Sets the position of the window to the given value. Accepts a value or signal which can be converted to a [`Position`].
     ///
     /// # Example
     /// ```no_run
@@ -104,17 +104,17 @@ pub trait WindowModifiers {
     /// });
     /// app.position(position).run();
     /// ```
-    fn position<P: Into<WindowPosition> + Clone>(self, position: Signal<P>) -> Self;
+    fn position<P: Into<WindowPosition> + Clone>(self, position: impl Res<P>) -> Self;
 
-    fn offset<P: Into<WindowPosition> + Clone>(self, offset: Signal<P>) -> Self;
+    fn offset<P: Into<WindowPosition> + Clone>(self, offset: impl Res<P>) -> Self;
 
-    fn anchor<P: Into<Anchor> + Clone>(self, anchor: Signal<P>) -> Self;
+    fn anchor<P: Into<Anchor> + Clone>(self, anchor: impl Res<P>) -> Self;
 
-    fn anchor_target<P: Into<AnchorTarget> + Clone>(self, anchor_target: Signal<P>) -> Self;
+    fn anchor_target<P: Into<AnchorTarget> + Clone>(self, anchor_target: impl Res<P>) -> Self;
 
-    fn parent_anchor<P: Into<Anchor> + Clone>(self, anchor: Signal<P>) -> Self;
+    fn parent_anchor<P: Into<Anchor> + Clone>(self, anchor: impl Res<P>) -> Self;
 
-    /// Sets whether the window can be resized. Accepts a `Signal<bool>`.
+    /// Sets whether the window can be resized. Accepts a value or `Signal<bool>`.
     ///
     /// # Example
     /// ```no_run
@@ -127,8 +127,8 @@ pub trait WindowModifiers {
     /// });
     /// app.resizable(resizable).run();
     /// ```
-    fn resizable(self, flag: Signal<bool>) -> Self;
-    /// Sets whether the window is minimized. Accepts a `Signal<bool>`.
+    fn resizable(self, flag: impl Res<bool>) -> Self;
+    /// Sets whether the window is minimized. Accepts a value or `Signal<bool>`.
     ///
     /// # Example
     /// ```no_run
@@ -141,8 +141,8 @@ pub trait WindowModifiers {
     /// });
     /// app.minimized(minimized).run();
     /// ```
-    fn minimized(self, flag: Signal<bool>) -> Self;
-    /// Sets whether the window is maximized. Accepts a `Signal<bool>`.
+    fn minimized(self, flag: impl Res<bool>) -> Self;
+    /// Sets whether the window is maximized. Accepts a value or `Signal<bool>`.
     ///
     /// # Example
     /// ```no_run
@@ -155,8 +155,8 @@ pub trait WindowModifiers {
     /// });
     /// app.maximized(maximized).run();
     /// ```
-    fn maximized(self, flag: Signal<bool>) -> Self;
-    /// Sets whether the window is visible. Accepts a `Signal<bool>`.
+    fn maximized(self, flag: impl Res<bool>) -> Self;
+    /// Sets whether the window is visible. Accepts a value or `Signal<bool>`.
     ///
     /// # Example
     /// ```no_run
@@ -169,7 +169,7 @@ pub trait WindowModifiers {
     /// });
     /// app.visible(visible).run();
     /// ```
-    fn visible(self, flag: Signal<bool>) -> Self;
+    fn visible(self, flag: impl Res<bool>) -> Self;
     /// Sets whether the window is transparent. Accepts a boolean value.
     ///
     /// # Example

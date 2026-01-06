@@ -9,7 +9,7 @@ pub fn toggle_button(cx: &mut Context) {
     let italic = cx.state(false);
     let underline = cx.state(false);
 
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(cx, "# ToggleButton");
 
         Divider::new(cx);
@@ -18,7 +18,7 @@ pub fn toggle_button(cx: &mut Context) {
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 ToggleButton::new(cx, bold, |cx| Label::new(cx, "Bold")).two_way();
             },
             r#"let bold = cx.state(false);
@@ -29,7 +29,7 @@ ToggleButton::new(cx, bold, |cx| Label::new(cx, "Bold")).two_way();"#,
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 ButtonGroup::new(cx, |cx| {
                     ToggleButton::new(cx, bold, |cx| Svg::new(cx, ICON_BOLD)).two_way();
 

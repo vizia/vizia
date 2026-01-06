@@ -18,10 +18,10 @@ impl App for DerivedStateApp {
     fn on_build(self, cx: &mut Context) -> Self {
         let number = self.number;
 
-        // Derived signals recompute automatically
-        let squared = cx.derived(move |s| number.get(s) * number.get(s));
-        let is_even = cx.derived(move |s| number.get(s) % 2 == 0);
-        let parity = cx.derived(move |s| if *is_even.get(s) { "even" } else { "odd" });
+        // Derived signals recompute automatically - using .drv() for concise syntax
+        let squared = number.drv(cx, |v, _| v * v);
+        let is_even = number.drv(cx, |v, _| v % 2 == 0);
+        let parity = is_even.drv(cx, |v, _| if *v { "even" } else { "odd" });
 
         VStack::new(cx, move |cx| {
             Label::new(cx, number);

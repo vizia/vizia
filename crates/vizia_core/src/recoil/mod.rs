@@ -1,5 +1,5 @@
 use crate::binding::Data;
-use crate::context::{DataContext, EventContext};
+use crate::context::{Context, DataContext, EventContext};
 use crate::entity::Entity;
 use crate::prelude::ToStringLocalized;
 
@@ -398,6 +398,14 @@ impl<T: 'static> Signal<T> {
         );
     }
 
+    /// Returns the signal's value if it exists, or `None` if the signal was destroyed.
+    ///
+    /// Use this when accessing a signal that may have been invalidated (e.g., its owning
+    /// entity was destroyed). For normal usage, prefer `get()` which panics with debug info.
+    pub fn try_get<'a>(&self, store: &'a impl DataContext) -> Option<&'a T> {
+        store.store().get::<T>(&self.id)
+    }
+
     fn get_mut<'a>(&self, store: &'a mut Store) -> &'a mut T {
         store.get_mut::<T>(&self.id).unwrap()
     }
@@ -418,6 +426,36 @@ impl<T: 'static> Signal<T> {
         store.observers.entry(self.id).or_default().insert(entity);
     }
 
+    /// Creates a derived signal by mapping this signal's value.
+    ///
+    /// This is a convenience method that reduces boilerplate when creating
+    /// derived signals. The closure receives both the value (`v`) and the store (`s`),
+    /// allowing access to other signals if needed.
+    ///
+    /// The parameter names `v` and `s` are conventions - you can use any names
+    /// that make sense for your use case (e.g., `|count, _|`, `|selected, store|`).
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// // Simple single-signal derivation:
+    /// let doubled = self.count.drv(cx, |v, _| v * 2);
+    ///
+    /// // Multi-signal derivation (access other signals via store):
+    /// let selected_text = self.selected.drv(cx, move |v, s| {
+    ///     let items = self.items.get(s);
+    ///     items.get(*v).cloned().unwrap_or_default()
+    /// });
+    /// ```
+    pub fn drv<U, F>(&self, cx: &mut Context, f: F) -> Signal<U>
+    where
+        T: Clone,
+        U: 'static + Clone,
+        F: Fn(&T, &Store) -> U + 'static,
+    {
+        let signal = *self;
+        cx.derived(move |s| f(signal.get(s), s))
+    }
 }
 
 // Root container

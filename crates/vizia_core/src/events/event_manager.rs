@@ -402,7 +402,6 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                             }
                         }
                     }
-
                 }
             }
 

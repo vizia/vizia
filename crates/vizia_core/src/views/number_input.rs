@@ -34,8 +34,25 @@ impl<T> NumberInput<T>
 where
     T: 'static + Clone + ToStringLocalized + std::str::FromStr + PartialOrd + Send + Sync,
 {
-    /// Creates a new number input bound to the given signal.
-    pub fn new(cx: &mut Context, value: Signal<T>) -> Handle<Self> {
+    /// Creates a new number input bound to the given value.
+    ///
+    /// Accepts either a plain value or a `Signal<T>` for reactive state.
+    /// Use `.two_way()` to enable automatic signal updates on submit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::default();
+    /// // Static value
+    /// NumberInput::new(cx, 42i32);
+    ///
+    /// // Reactive with two-way binding
+    /// let number = cx.state(5i32);
+    /// NumberInput::new(cx, number).two_way();
+    /// ```
+    pub fn new(cx: &mut Context, value: impl Res<T> + 'static) -> Handle<Self> {
+        let value = value.into_signal(cx);
         Self { value, min: None, max: None }
             .build(cx, move |cx| {
                 Textbox::new(cx, value);

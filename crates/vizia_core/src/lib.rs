@@ -63,9 +63,9 @@ pub mod backend {
 #[doc(hidden)]
 pub mod prelude {
 
-    pub use crate::application::App;
+    pub use crate::application::{App, WindowConfig};
 
-    pub use super::binding::{Binding, Data};
+    pub use super::binding::{Binding, Data, Res};
     pub use super::recoil::*;
 
     pub use crate::model::Model;

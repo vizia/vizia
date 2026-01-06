@@ -149,11 +149,9 @@ fn main() -> Result<(), ApplicationError> {
         let number = cx.state(5i32);
 
         // Derived signals recompute automatically
-        let squared = cx.derived(move |s| number.get(s) * number.get(s));
-        let is_even = cx.derived(move |s| number.get(s) % 2 == 0);
-        let parity = cx.derived(move |s| {
-            if *is_even.get(s) { "even" } else { "odd" }
-        });
+        let squared = number.drv(cx, |v, _| v * v);
+        let is_even = number.drv(cx, |v, _| v % 2 == 0);
+        let parity = is_even.drv(cx, |v, _| if *v { "even" } else { "odd" });
 
         VStack::new(cx, move |cx| {
             Label::new(cx, number);
@@ -232,7 +230,7 @@ impl App for Counter {
     }
 
     fn view(self, cx: &mut Context) -> Self {
-        let doubled = cx.derived(move |s| self.count.get(s) * 2);
+        let doubled = self.count.drv(cx, |v, _| v * 2);
 
         VStack::new(cx, move |cx| {
             Label::new(cx, self.count);
@@ -266,9 +264,10 @@ fn main() -> Result<(), ApplicationError> {
 |-----------|------|
 | Create state | `let sig = cx.state(initial_value)` |
 | Read value | `sig.get(store)` (in derived) |
+| Safe read | `sig.try_get(store)` (returns `Option`) |
 | Set value | `sig.set(cx, new_value)` |
 | Update value | `sig.update(cx, \|v\| *v += 1)` |
-| Derived state | `cx.derived(move \|s\| sig.get(s) * 2)` |
+| Derived state | `sig.drv(cx, \|v, _\| v * 2)` |
 | Bind to view | `Label::new(cx, sig)` |
 | Window props | `app.title(cx.state("Title")).inner_size(cx.state((w, h)))` |
 

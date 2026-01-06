@@ -48,7 +48,7 @@ use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::text::TextContext;
 use vizia_input::{ImeState, MouseState};
-use vizia_storage::{ChildIterator, LayoutTreeIterator};
+use vizia_storage::LayoutTreeIterator;
 
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
@@ -403,15 +403,6 @@ impl Context {
             .filter(|class| class.contains(PseudoClassFlags::FOCUS_VISIBLE))
             .is_some();
         self.focus_with_visibility(old_focus_visible)
-    }
-
-    /// Removes the children of the provided entity from the application.
-    pub(crate) fn remove_children(&mut self, entity: Entity) {
-        let child_iter = ChildIterator::new(&self.tree, entity);
-        let children = child_iter.collect::<Vec<_>>();
-        for child in children.into_iter() {
-            self.remove(child);
-        }
     }
 
     /// Removes the provided entity from the application.

@@ -17,7 +17,7 @@ pub fn progressbar(cx: &mut Context) {
 
     cx.start_timer(timer);
 
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(cx, "# ProgressBar");
 
         Divider::new(cx);

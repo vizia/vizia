@@ -63,11 +63,11 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     /// Sets whether a view should have the given class name.
-    fn toggle_class(mut self, name: &str, applied: Signal<bool>) -> Self {
+    fn toggle_class(mut self, name: &str, applied: impl Res<bool> + 'static) -> Self {
         let name = name.to_owned();
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, applied, move |cx, applied| {
+        internal::bind_res(self.context(), current, entity, applied, move |cx, applied| {
             if let Some(class_list) = cx.style.classes.get_mut(entity) {
                 if *applied {
                     class_list.insert(name.clone());
@@ -86,7 +86,7 @@ pub trait StyleModifiers: internal::Modifiable {
     // TODO: Should these have their own modifiers trait?
 
     /// Sets the checked state of the view.
-    fn checked(mut self, state: Signal<bool>) -> Self {
+    fn checked(mut self, state: impl Res<bool> + 'static) -> Self {
         let entity = self.entity();
         let current = self.current();
         // Setting a checked state should make it checkable
@@ -94,7 +94,7 @@ pub trait StyleModifiers: internal::Modifiable {
             abilities.set(Abilities::CHECKABLE, true);
         }
 
-        internal::bind_signal(self.context(), current, entity, state, move |cx, val| {
+        internal::bind_res(self.context(), current, entity, state, move |cx, val| {
             if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
                 pseudo_classes.set(PseudoClassFlags::CHECKED, *val);
             }
@@ -108,11 +108,11 @@ pub trait StyleModifiers: internal::Modifiable {
     ///
     /// Since only one view can have keyboard focus at a time, subsequent calls to this
     /// function on other views will cause those views to gain focus and this view to lose it.
-    fn focused(mut self, state: Signal<bool>) -> Self {
+    fn focused(mut self, state: impl Res<bool> + 'static) -> Self {
         let entity = self.entity();
         let current = self.current();
 
-        internal::bind_signal(self.context(), current, entity, state, move |cx, val| {
+        internal::bind_res(self.context(), current, entity, state, move |cx, val| {
             if *val {
                 cx.focus();
             }
@@ -124,17 +124,23 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     /// Sets the focused state of the view as well as the focus visibility.
-    fn focused_with_visibility(mut self, focus: Signal<bool>, visibility: Signal<bool>) -> Self {
+    fn focused_with_visibility(
+        mut self,
+        focus: impl Res<bool> + 'static,
+        visibility: impl Res<bool> + 'static,
+    ) -> Self {
         let entity = self.entity();
         let current = self.current();
         let cx = self.context();
+        let focus = cx.with_current(entity, |cx| focus.into_signal(cx));
+        let visibility = cx.with_current(entity, |cx| visibility.into_signal(cx));
         let combined = cx.derived({
             let focus = focus;
             let visibility = visibility;
             move |store| (*focus.get(store), *visibility.get(store))
         });
 
-        internal::bind_signal(cx, current, entity, combined, move |cx, (focus, visibility)| {
+        internal::bind_res(cx, current, entity, combined, move |cx, (focus, visibility)| {
             if *focus {
                 cx.focus_with_visibility(*visibility);
                 cx.needs_restyle(cx.current);
@@ -145,10 +151,10 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     /// Sets whether the view should be in a read-only state.
-    fn read_only(mut self, state: Signal<bool>) -> Self {
+    fn read_only(mut self, state: impl Res<bool> + 'static) -> Self {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, state, move |cx, val| {
+        internal::bind_res(self.context(), current, entity, state, move |cx, val| {
             if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
                 pseudo_classes.set(PseudoClassFlags::READ_ONLY, *val);
             }
@@ -160,10 +166,10 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     /// Sets whether the view should be in a read-write state.
-    fn read_write(mut self, state: Signal<bool>) -> Self {
+    fn read_write(mut self, state: impl Res<bool> + 'static) -> Self {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, state, move |cx, val| {
+        internal::bind_res(self.context(), current, entity, state, move |cx, val| {
             if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
                 pseudo_classes.set(PseudoClassFlags::READ_WRITE, *val);
             }
@@ -175,10 +181,10 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     /// Sets whether the view is showing a placeholder.
-    fn placeholder_shown(mut self, state: Signal<bool>) -> Self {
+    fn placeholder_shown(mut self, state: impl Res<bool> + 'static) -> Self {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, state, move |cx, val| {
+        internal::bind_res(self.context(), current, entity, state, move |cx, val| {
             if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
                 pseudo_classes.set(PseudoClassFlags::PLACEHOLDER_SHOWN, *val);
             }
@@ -229,13 +235,13 @@ pub trait StyleModifiers: internal::Modifiable {
     ///
     /// Views with a higher z-index will be rendered on top of those with a lower z-order.
     /// Views with the same z-index are rendered in tree order.
-    fn z_index<U>(mut self, value: Signal<U>) -> Self
+    fn z_index<U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: Clone + Into<i32> + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, v| {
             cx.style.z_index.insert(entity, v.clone().into());
             cx.needs_redraw(entity);
         });
@@ -244,13 +250,13 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     /// Sets the clip path for the the view.
-    fn clip_path<U>(mut self, value: Signal<U>) -> Self
+    fn clip_path<U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: Clone + Into<ClipPath> + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, v| {
             let value = v.clone().into();
             cx.style.clip_path.insert(cx.current, value);
 
@@ -261,13 +267,13 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     /// Sets the overflow behavior of the view in the horizontal and vertical directions simultaneously.
-    fn overflow<U>(mut self, value: Signal<U>) -> Self
+    fn overflow<U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: Clone + Into<Overflow> + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, v| {
             let value = v.clone().into();
             cx.style.overflowx.insert(cx.current, value);
             cx.style.overflowy.insert(cx.current, value);
@@ -297,13 +303,13 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     /// Sets the backdrop filter for the view.
-    fn backdrop_filter<U>(mut self, value: Signal<U>) -> Self
+    fn backdrop_filter<U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: Clone + Into<Filter> + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, v| {
             let value = v.clone().into();
             cx.style.backdrop_filter.insert(cx.current, value);
 
@@ -314,13 +320,13 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     /// Add a shadow to the view.
-    fn shadow<U>(mut self, value: Signal<U>) -> Self
+    fn shadow<U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: Clone + Into<Shadow> + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, v| {
             let value = v.clone().into();
             if let Some(shadows) = cx.style.shadow.get_inline_mut(cx.current) {
                 shadows.push(value);
@@ -335,13 +341,13 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     /// Set the shadows of the view.
-    fn shadows<U>(mut self, value: Signal<U>) -> Self
+    fn shadows<U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: Clone + Into<Vec<Shadow>> + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, v| {
             let value = v.clone().into();
             cx.style.shadow.insert(cx.current, value);
             cx.needs_redraw(entity);
@@ -351,13 +357,13 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     /// Set the background gradient of the view.
-    fn background_gradient<U>(mut self, value: Signal<U>) -> Self
+    fn background_gradient<U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: Clone + Into<Gradient> + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, v| {
             let value = v.clone().into();
             if let Some(background_images) = cx.style.background_image.get_inline_mut(cx.current) {
                 background_images.push(ImageOrGradient::Gradient(value));
@@ -382,18 +388,16 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     /// Set the background image of the view.
-    fn background_image<'i, U>(mut self, value: Signal<U>) -> Self
+    fn background_image<'i, U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: Clone + Into<BackgroundImage<'i>> + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, val| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, val| {
             let image = val.clone().into();
             let image = match image {
-                BackgroundImage::Gradient(gradient) => {
-                    Some(ImageOrGradient::Gradient(*gradient))
-                }
+                BackgroundImage::Gradient(gradient) => Some(ImageOrGradient::Gradient(*gradient)),
                 BackgroundImage::Url(url) => Some(ImageOrGradient::Image(url.url.to_string())),
 
                 _ => None,
@@ -410,13 +414,13 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     // Border Properties
-    fn border_width<U>(mut self, value: Signal<U>) -> Self
+    fn border_width<U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: Clone + Into<LengthOrPercentage> + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, v| {
             cx.style.border_width.insert(entity, v.clone().into());
             cx.cache.path.remove(entity);
             cx.style.system_flags |= SystemFlags::RELAYOUT | SystemFlags::REDRAW;
@@ -469,13 +473,13 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     /// Sets the corner radius for all four corners of the view.
-    fn corner_radius<U>(mut self, value: Signal<U>) -> Self
+    fn corner_radius<U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: std::fmt::Debug + Clone + Into<CornerRadius> + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, v| {
             let value = v.clone().into();
             cx.style.corner_top_left_radius.insert(cx.current, value.top_left);
             cx.style.corner_top_right_radius.insert(cx.current, value.top_right);
@@ -517,13 +521,13 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     /// Sets the corner shape for all four corners of the view.
-    fn corner_shape<U>(mut self, value: Signal<U>) -> Self
+    fn corner_shape<U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: std::fmt::Debug + Clone + Into<Rect<CornerShape>> + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, v| {
             let value = v.clone().into();
             cx.style.corner_top_left_shape.insert(cx.current, value.0);
             cx.style.corner_top_right_shape.insert(cx.current, value.1);
@@ -565,13 +569,13 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     /// Sets the corner smoothing for all four corners of the view.
-    fn corner_smoothing<U>(mut self, value: Signal<U>) -> Self
+    fn corner_smoothing<U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: std::fmt::Debug + Clone + Into<Rect<f32>> + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, v| {
             let value = v.clone().into();
             cx.style.corner_top_left_smoothing.insert(cx.current, value.0);
             cx.style.corner_top_right_smoothing.insert(cx.current, value.1);
@@ -622,13 +626,13 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     /// Sets whether the view can be become the target of pointer events.
-    fn pointer_events<U>(mut self, value: Signal<U>) -> Self
+    fn pointer_events<U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: Clone + Into<PointerEvents> + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, v| {
             let value = v.clone().into();
             cx.style.pointer_events.insert(cx.current, value);
         });
@@ -637,13 +641,13 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     /// Sets the transform of the view with a list of transform functions.
-    fn transform<U>(mut self, value: Signal<U>) -> Self
+    fn transform<U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: Clone + Into<Vec<Transform>> + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, v| {
             let value = v.clone().into();
             cx.style.transform.insert(cx.current, value);
             cx.needs_redraw(entity);
@@ -653,13 +657,13 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     /// Sets the transform origin of the the view.
-    fn transform_origin<U>(mut self, value: Signal<U>) -> Self
+    fn transform_origin<U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: Clone + Into<Position> + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, v| {
             let value = v.clone().into();
             let x = value.x.to_length_or_percentage();
             let y = value.y.to_length_or_percentage();
@@ -745,6 +749,12 @@ impl From<LinearGradientBuilder> for Gradient {
     }
 }
 
+impl Res<LinearGradientBuilder> for LinearGradientBuilder {
+    fn resolve(&self, _: &impl DataContext) -> Self {
+        self.clone()
+    }
+}
+
 /// A builder for constructing a shadow.
 #[derive(Debug, Clone)]
 pub struct ShadowBuilder {
@@ -813,5 +823,11 @@ impl ShadowBuilder {
 impl From<ShadowBuilder> for Shadow {
     fn from(value: ShadowBuilder) -> Self {
         value.build()
+    }
+}
+
+impl Res<ShadowBuilder> for ShadowBuilder {
+    fn resolve(&self, _: &impl DataContext) -> Self {
+        self.clone()
     }
 }

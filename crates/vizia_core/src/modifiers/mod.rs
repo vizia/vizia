@@ -49,13 +49,13 @@ macro_rules! modifier {
     ) => {
         $(#[$meta])*
         #[allow(unused_variables)]
-        fn $name<U>(mut self, value: Signal<U>) -> Self
+        fn $name<U>(mut self, value: impl Res<U> + 'static) -> Self
         where
             U: Clone + Into<$t> + 'static,
         {
             let entity = self.entity();
             let current = self.current();
-            internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+            internal::bind_res(self.context(), current, entity, value, move |cx, v| {
                 cx.style.$name.insert(entity, v.clone().into());
 
                 cx.style.system_flags |= $flags;
@@ -69,7 +69,7 @@ macro_rules! modifier {
 
 // Inside private module to hide implementation details.
 mod internal {
-    use crate::prelude::{Binding, Context, Entity, Handle, Signal};
+    use crate::prelude::{Context, Entity, Handle, Res};
 
     // Allows a modifier trait to access to context and entity from `self`.
     pub trait Modifiable: Sized {
@@ -92,23 +92,16 @@ mod internal {
         }
     }
 
-    pub fn bind_signal<T, F>(
-        cx: &mut Context,
-        current: Entity,
-        entity: Entity,
-        signal: Signal<T>,
-        f: F,
-    )
+    pub fn bind_res<T, F, R>(cx: &mut Context, current: Entity, entity: Entity, value: R, f: F)
     where
         T: Clone + 'static,
+        R: Res<T> + 'static,
         F: 'static + Fn(&mut Context, &T),
     {
         cx.with_current(current, move |cx| {
-            Binding::new(cx, signal, move |cx| {
-                cx.with_current(entity, |cx| {
-                    let value = signal.get(cx).clone();
-                    f(cx, &value);
-                });
+            value.set_or_bind(cx, entity, move |cx, v| {
+                let value = v.resolve(cx);
+                f(cx, &value);
             });
         });
     }

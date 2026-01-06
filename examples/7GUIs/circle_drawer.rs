@@ -197,14 +197,8 @@ impl App for CircleDrawerApp {
         let dialog_size = cx.state((300, 50));
         let dialog_pos = cx.state((500, 100));
 
-        let undo_disabled = cx.derived({
-            let undo_list = undo_list;
-            move |store| undo_list.get(store).is_empty()
-        });
-        let redo_disabled = cx.derived({
-            let redo_list = redo_list;
-            move |store| redo_list.get(store).is_empty()
-        });
+        let undo_disabled = undo_list.drv(cx, |v, _| v.is_empty());
+        let redo_disabled = redo_list.drv(cx, |v, _| v.is_empty());
 
         VStack::new(cx, move |cx| {
             Binding::new(cx, menu_open, move |cx| {

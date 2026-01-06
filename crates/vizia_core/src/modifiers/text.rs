@@ -4,13 +4,13 @@ use crate::prelude::*;
 /// Modifiers for changing the text properties of a view.
 pub trait TextModifiers: internal::Modifiable {
     /// Sets the text content of the view.
-    fn text<T>(mut self, value: Signal<T>) -> Self
+    fn text<T>(mut self, value: impl Res<T> + 'static) -> Self
     where
         T: Clone + ToStringLocalized + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, val| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, val| {
             let cx: &mut EventContext<'_> = &mut EventContext::new_with_current(cx, entity);
             let text_data = val.to_string_local(cx);
             cx.style.text.insert(entity, text_data);
@@ -61,13 +61,13 @@ pub trait TextModifiers: internal::Modifiable {
     );
 
     /// Sets the text color of the view.
-    fn color<U>(mut self, value: Signal<U>) -> Self
+    fn color<U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: Clone + Into<Color> + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, v| {
             cx.style.font_color.insert(entity, v.clone().into());
             cx.style.needs_text_update(entity);
             cx.needs_redraw(entity);
@@ -76,13 +76,13 @@ pub trait TextModifiers: internal::Modifiable {
     }
 
     /// Sets the font size of the view.
-    fn font_size<U>(mut self, value: Signal<U>) -> Self
+    fn font_size<U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: Clone + Into<FontSize> + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, v| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, v| {
             cx.style.font_size.insert(cx.current, v.clone().into());
             cx.style.needs_text_update(entity);
         });

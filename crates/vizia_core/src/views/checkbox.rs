@@ -85,17 +85,25 @@ pub struct Checkbox {
 impl Checkbox {
     /// Creates a new checkbox.
     ///
+    /// Accepts either a plain boolean value or a `Signal<bool>` for reactive state.
+    /// Use `.two_way()` to enable automatic state updates on toggle.
+    ///
     /// # Examples
     ///
     /// ```
     /// # use vizia_core::prelude::*;
     /// #
     /// # let cx = &mut Context::default();
-    /// # let checked_signal = cx.state(false);
     /// #
-    /// Checkbox::new(cx, checked_signal);
+    /// // Static (always checked)
+    /// Checkbox::new(cx, true);
+    ///
+    /// // Reactive with two-way binding
+    /// let checked = cx.state(false);
+    /// Checkbox::new(cx, checked).two_way();
     /// ```
-    pub fn new(cx: &mut Context, checked: Signal<bool>) -> Handle<Self> {
+    pub fn new(cx: &mut Context, checked: impl Res<bool> + 'static) -> Handle<Self> {
+        let checked = checked.into_signal(cx);
         let icon_check = cx.state(ICON_CHECK);
         let navigable = cx.state(true);
         Self { value: checked, on_toggle: None }
@@ -119,20 +127,21 @@ impl Checkbox {
     /// # use vizia_core::prelude::*;
     /// #
     /// # let cx = &mut Context::default();
-    /// # let checked_signal = cx.state(false);
     /// # use vizia_core::icons::ICON_X;
     /// #
-    /// Checkbox::with_icons(cx, checked_signal, None, Some(ICON_X));
+    /// let checked = cx.state(false);
+    /// Checkbox::with_icons(cx, checked, None, Some(ICON_X));
     /// ```
     pub fn with_icons<T>(
         cx: &mut Context,
-        checked: Signal<bool>,
+        checked: impl Res<bool> + 'static,
         icon_default: Option<Signal<T>>,
         icon_checked: Option<Signal<T>>,
     ) -> Handle<Self>
     where
-        T: AsRef<[u8]> + 'static,
+        T: AsRef<[u8]> + Clone + 'static,
     {
+        let checked = checked.into_signal(cx);
         let navigable = cx.state(true);
         Self { value: checked, on_toggle: None }
             .build(cx, move |cx| {

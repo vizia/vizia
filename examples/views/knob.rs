@@ -16,9 +16,7 @@ impl App for KnobApp {
     fn on_build(self, cx: &mut Context) -> Self {
         let value = self.value;
         ExamplePage::new(cx, move |cx| {
-            Knob::new(cx, 0.5, value, false).on_change(move |cx, val| {
-                value.set(cx, val);
-            });
+            Knob::new(cx, 0.5, value, false).two_way();
         });
         self
     }

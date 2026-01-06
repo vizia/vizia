@@ -8,7 +8,7 @@ pub fn list(cx: &mut Context) {
     let height_30 = cx.state(Pixels(30.0));
     let size_300 = cx.state(Pixels(300.0));
 
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(cx, "# List");
 
         Divider::new(cx);
@@ -17,8 +17,8 @@ pub fn list(cx: &mut Context) {
 
         DemoRegion::new(
             cx,
-            |cx| {
-                List::new(cx, list, |cx, index, item| {
+            move |cx| {
+                List::new(cx, list, move |cx, index, item| {
                     Label::new(cx, item)
                         .toggle_class("dark", index % 2 == 0)
                         .width(stretch_one)
@@ -31,7 +31,7 @@ pub fn list(cx: &mut Context) {
 let stretch_one = cx.state(Stretch(1.0));
 let height_30 = cx.state(Pixels(30.0));
 let size_300 = cx.state(Pixels(300.0));
-List::new(cx, list, |cx, index, item| {
+List::new(cx, list, move |cx, index, item| {
     Label::new(cx, item)
         .toggle_class("dark", index % 2 == 0)
         .width(stretch_one)

@@ -7,7 +7,7 @@ pub fn hstack(cx: &mut Context) {
     let auto = cx.state(Auto);
     let align_center = cx.state(Alignment::Center);
 
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(
             cx,
             "# HStack
@@ -21,8 +21,8 @@ The hstack container can be used to layout views in a row.
 
         DemoRegion::new(
             cx,
-            |cx| {
-                HStack::new(cx, |cx| {
+            move |cx| {
+                HStack::new(cx, move |cx| {
                     Element::new(cx).size(size_100).background_color(Color::red());
                     Element::new(cx).size(size_100).background_color(Color::green());
                     Element::new(cx).size(size_100).background_color(Color::blue());
@@ -33,7 +33,7 @@ The hstack container can be used to layout views in a row.
             r#"let size_100 = cx.state(Pixels(100.0));
 let auto = cx.state(Auto);
 let align_center = cx.state(Alignment::Center);
-HStack::new(cx, |cx| {
+HStack::new(cx, move |cx| {
         Element::new(cx).size(size_100).background_color(Color::red());
         Element::new(cx).size(size_100).background_color(Color::green());
         Element::new(cx).size(size_100).background_color(Color::blue());
@@ -50,7 +50,7 @@ pub fn vstack(cx: &mut Context) {
     let auto = cx.state(Auto);
     let align_center = cx.state(Alignment::Center);
 
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(
             cx,
             "# VStack
@@ -64,8 +64,8 @@ The vstack container can be used to layout views in a column.
 
         DemoRegion::new(
             cx,
-            |cx| {
-                VStack::new(cx, |cx| {
+            move |cx| {
+                VStack::new(cx, move |cx| {
                     Element::new(cx).size(size_100).background_color(Color::red());
                     Element::new(cx).size(size_100).background_color(Color::green());
                     Element::new(cx).size(size_100).background_color(Color::blue());
@@ -76,7 +76,7 @@ The vstack container can be used to layout views in a column.
             r#"let size_100 = cx.state(Pixels(100.0));
 let auto = cx.state(Auto);
 let align_center = cx.state(Alignment::Center);
-VStack::new(cx, |cx| {
+VStack::new(cx, move |cx| {
         Element::new(cx).size(size_100).background_color(Color::red());
         Element::new(cx).size(size_100).background_color(Color::green());
         Element::new(cx).size(size_100).background_color(Color::blue());
@@ -95,7 +95,7 @@ pub fn zstack(cx: &mut Context) {
     let space_40 = cx.state(Pixels(40.0));
     let align_center = cx.state(Alignment::Center);
 
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(
             cx,
             "# ZStack
@@ -109,7 +109,7 @@ The zstack container can be used to layout views in a vertical stack.
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 ZStack::new(cx, |cx| {
                     Element::new(cx).size(size_100).background_color(Color::red());
                     Element::new(cx)

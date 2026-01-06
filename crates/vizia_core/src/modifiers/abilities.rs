@@ -17,10 +17,10 @@ pub trait AbilityModifiers: internal::Modifiable {
     /// Label::new(cx, text)
     ///     .hoverable(false);
     /// ```
-    fn hoverable(mut self, state: Signal<bool>) -> Self {
+    fn hoverable(mut self, state: impl Res<bool> + 'static) -> Self {
         let entity = self.entity();
         let current = self.entity();
-        internal::bind_signal(self.context(), current, entity, state, move |cx, val| {
+        internal::bind_res(self.context(), current, entity, state, move |cx, val| {
             if let Some(abilities) = cx.style.abilities.get_mut(entity) {
                 abilities.set(Abilities::HOVERABLE, *val);
                 cx.needs_restyle(entity);
@@ -41,10 +41,10 @@ pub trait AbilityModifiers: internal::Modifiable {
     /// Label::new(cx, text)
     ///     .focusable(false);
     /// ```
-    fn focusable(mut self, state: Signal<bool>) -> Self {
+    fn focusable(mut self, state: impl Res<bool> + 'static) -> Self {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, state, move |cx, val| {
+        internal::bind_res(self.context(), current, entity, state, move |cx, val| {
             if let Some(abilities) = cx.style.abilities.get_mut(entity) {
                 abilities.set(Abilities::FOCUSABLE, *val);
 
@@ -71,10 +71,10 @@ pub trait AbilityModifiers: internal::Modifiable {
     /// Label::new(cx, text)
     ///     .checkable(false);
     /// ```
-    fn checkable(mut self, state: Signal<bool>) -> Self {
+    fn checkable(mut self, state: impl Res<bool> + 'static) -> Self {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, state, move |cx, val| {
+        internal::bind_res(self.context(), current, entity, state, move |cx, val| {
             if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
                 abilities.set(Abilities::CHECKABLE, *val);
 
@@ -97,10 +97,10 @@ pub trait AbilityModifiers: internal::Modifiable {
     /// Label::new(cx, text)
     ///     .checkable(false);
     /// ```
-    fn navigable(mut self, state: Signal<bool>) -> Self {
+    fn navigable(mut self, state: impl Res<bool> + 'static) -> Self {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, state, move |cx, val| {
+        internal::bind_res(self.context(), current, entity, state, move |cx, val| {
             if let Some(abilities) = cx.style.abilities.get_mut(entity) {
                 abilities.set(Abilities::NAVIGABLE, *val);
                 cx.needs_restyle(entity);

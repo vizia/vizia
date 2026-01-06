@@ -75,15 +75,8 @@ impl App for TimerApp {
                 cx.start_timer(reset_timer);
             });
             let use_one_sec = cx.state(false);
-            let interval_label = cx.derived({
-                let use_one_sec = use_one_sec;
-                move |store| {
-                    if *use_one_sec.get(store) {
-                        "Interval: 1s".to_string()
-                    } else {
-                        "Interval: 100ms".to_string()
-                    }
-                }
+            let interval_label = use_one_sec.drv(cx, |v, _| {
+                if *v { "Interval: 1s".to_string() } else { "Interval: 100ms".to_string() }
             });
             Button::new(cx, |cx| Label::new(cx, interval_label)).on_press(move |cx| {
                 let new_flag = !*use_one_sec.get(cx);

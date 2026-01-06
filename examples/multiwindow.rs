@@ -70,10 +70,10 @@ impl App for MultiWindowApp {
             }
         });
 
-        let color = cx.derived(move |cx| {
-            let r = (*red.get(cx) * 255.0) as u8;
-            let g = (*green.get(cx) * 255.0) as u8;
-            let b = (*blue.get(cx) * 255.0) as u8;
+        let color = red.drv(cx, move |v, s| {
+            let r = (*v * 255.0) as u8;
+            let g = (*green.get(s) * 255.0) as u8;
+            let b = (*blue.get(s) * 255.0) as u8;
             Color::rgb(r, g, b)
         });
 

@@ -18,7 +18,26 @@ pub(crate) enum RatingEvent {
 
 impl Rating {
     /// Creates a new [Rating] view.
-    pub fn new(cx: &mut Context, max_rating: u32, value: Signal<u32>) -> Handle<Self> {
+    ///
+    /// Accepts either a plain u32 value or a `Signal<u32>` for reactive state.
+    /// Use `.two_way()` for automatic signal synchronization.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// #
+    /// # let cx = &mut Context::default();
+    /// #
+    /// // Static (read-only display)
+    /// Rating::new(cx, 5, 3u32);
+    ///
+    /// // Reactive with two-way binding
+    /// let rating = cx.state(3u32);
+    /// Rating::new(cx, 5, rating).two_way();
+    /// ```
+    pub fn new(cx: &mut Context, max_rating: u32, value: impl Res<u32> + 'static) -> Handle<Self> {
+        let value = value.into_signal(cx);
         // Preview is used for hover state.
         let preview = cx.state(0u32);
 
@@ -112,5 +131,18 @@ impl Handle<'_, Rating> {
         F: 'static + Fn(&mut EventContext, u32),
     {
         self.modify(|rating| rating.on_change = Some(Box::new(callback)))
+    }
+
+    /// Enables two-way binding between the rating and its bound signal.
+    ///
+    /// Equivalent to:
+    /// ```ignore
+    /// .on_change(move |cx, val| signal.set(cx, val))
+    /// ```
+    pub fn two_way(self) -> Self {
+        self.modify(|rating| {
+            let signal = rating.value;
+            rating.on_change = Some(Box::new(move |cx, val| signal.set(cx, val)));
+        })
     }
 }

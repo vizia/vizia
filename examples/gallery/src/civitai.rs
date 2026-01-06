@@ -1,6 +1,5 @@
 use bytes::Bytes;
 use serde::Deserialize;
-use vizia::prelude::*;
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Status {

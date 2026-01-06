@@ -305,7 +305,8 @@ impl View for Tooltip {
 impl Handle<'_, Tooltip> {
     /// Sets the position where the tooltip should appear relative to its parent element.
     /// Defaults to `Placement::Bottom`.
-    pub fn placement(self, placement: Signal<Placement>) -> Self {
+    pub fn placement(self, placement: impl Res<Placement> + 'static) -> Self {
+        let placement = placement.into_signal(self.cx);
         self.bind(placement, |handle, val| {
             let placement = *val.get(&handle);
             handle.modify2(|tooltip, cx| {
@@ -316,7 +317,8 @@ impl Handle<'_, Tooltip> {
     }
 
     /// Sets whether the tooltip should include an arrow. Defaults to true.
-    pub fn arrow(self, show_arrow: Signal<bool>) -> Self {
+    pub fn arrow(self, show_arrow: impl Res<bool> + 'static) -> Self {
+        let show_arrow = show_arrow.into_signal(self.cx);
         self.bind(show_arrow, |handle, val| {
             let show_arrow = *val.get(&handle);
             handle.modify2(|tooltip, cx| tooltip.show_arrow.set(cx, show_arrow));
@@ -324,7 +326,8 @@ impl Handle<'_, Tooltip> {
     }
 
     /// Sets the size of the tooltip arrow if enabled.
-    pub fn arrow_size(self, size: Signal<Length>) -> Self {
+    pub fn arrow_size(self, size: impl Res<Length> + 'static) -> Self {
+        let size = size.into_signal(self.cx);
         self.bind(size, |handle, val| {
             let size = val.get(&handle).clone();
             handle.modify2(|tooltip, cx| tooltip.arrow_size.set(cx, size));
@@ -354,7 +357,9 @@ impl Arrow {
         let bottom = cx.derived({
             let shift = shift;
             move |store| match *shift.get(store) {
-                Placement::BottomStart | Placement::Bottom | Placement::BottomEnd => Percentage(100.0),
+                Placement::BottomStart | Placement::Bottom | Placement::BottomEnd => {
+                    Percentage(100.0)
+                }
                 _ => Stretch(1.0),
             }
         });

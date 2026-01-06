@@ -40,7 +40,6 @@ impl Handle<'_, Divider> {
             move |store| *orientation.get(store) == Orientation::Vertical
         });
 
-        self.toggle_class("horizontal", is_horizontal)
-            .toggle_class("vertical", is_vertical)
+        self.toggle_class("horizontal", is_horizontal).toggle_class("vertical", is_vertical)
     }
 }

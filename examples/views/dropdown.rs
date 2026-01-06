@@ -23,12 +23,11 @@ impl App for DropdownApp {
         let selectable_single = self.selectable_single;
 
         // Derived signal for the selected item text
-        let selected_text = cx.derived(move |s| {
-            let idx = *selected.get(s);
+        let selected_text = selected.drv(cx, move |v, s| {
             let items = list.get(s);
-            items.as_slice().get(idx).cloned().unwrap_or_default()
+            items.as_slice().get(*v).cloned().unwrap_or_default()
         });
-        let selected_indices = cx.derived(move |s| vec![*selected.get(s)]);
+        let selected_indices = selected.drv(cx, |v, _| vec![*v]);
 
         ExamplePage::new(cx, |cx| {
             Dropdown::new(

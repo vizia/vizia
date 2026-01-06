@@ -12,9 +12,8 @@ use crate::prelude::*;
 /// # use vizia_core::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
-/// # let text = cx.state("Text");
 /// #
-/// Label::new(cx, text);
+/// Label::new(cx, "Hello World");
 /// ```
 ///
 /// ## Label bound to data
@@ -43,12 +42,8 @@ use crate::prelude::*;
 /// #
 /// # let mut cx = &mut Context::default();
 /// #
-/// let text = cx.state(
-///     "This is a really long text to showcase the text wrapping support of a label.",
-/// );
-/// let width_100 = cx.state(Pixels(100.0));
-/// Label::new(cx, text)
-///     .width(width_100);
+/// Label::new(cx, "This is a really long text to showcase the text wrapping support of a label.")
+///     .width(Pixels(100.0));
 /// ```
 ///
 /// ## Label without text wrapping
@@ -60,14 +55,9 @@ use crate::prelude::*;
 /// #
 /// # let mut cx = &mut Context::default();
 /// #
-/// let text = cx.state(
-///     "This is a really long text to showcase disabled text wrapping of a label.",
-/// );
-/// let width_100 = cx.state(Pixels(100.0));
-/// let no_wrap = cx.state(false);
-/// Label::new(cx, text)
-///     .width(width_100)
-///     .text_wrap(no_wrap);
+/// Label::new(cx, "This is a really long text to showcase disabled text wrapping of a label.")
+///     .width(Pixels(100.0))
+///     .text_wrap(false);
 /// ```
 ///
 /// ## Label for a button
@@ -78,8 +68,7 @@ use crate::prelude::*;
 /// # use vizia_core::prelude::*;
 /// # let cx = &mut Context::default();
 /// #
-/// let text = cx.state("Text");
-/// Button::new(cx, |cx| Label::new(cx, text));
+/// Button::new(cx, |cx| Label::new(cx, "Click me"));
 /// ```
 pub struct Label {
     describing: Option<String>,
@@ -88,56 +77,45 @@ pub struct Label {
 impl Label {
     /// Creates a new [Label] view.
     ///
+    /// Accepts either a plain value or a `Signal<T>` for reactive text.
+    ///
     /// # Examples
     ///
     /// ```
     /// # use vizia_core::prelude::*;
     /// #
     /// # let cx = &mut Context::default();
-    /// # let text = cx.state("Text");
     /// #
+    /// // Static text
+    /// Label::new(cx, "Hello World");
+    ///
+    /// // Reactive text
+    /// let text = cx.state("Text");
     /// Label::new(cx, text);
     /// ```
-    pub fn new<T>(cx: &mut Context, text: Signal<T>) -> Handle<Self>
+    pub fn new<T>(cx: &mut Context, text: impl Res<T> + Clone + 'static) -> Handle<Self>
     where
-        T: ToStringLocalized + Clone,
+        T: ToStringLocalized + Clone + 'static,
     {
-        Self { describing: None }.build(cx, |_| {}).text(text).role(Role::Label).name(text)
+        Self { describing: None }.build(cx, |_| {}).text(text.clone()).role(Role::Label).name(text)
     }
 
-    /// Creates a label with static text (non-reactive).
+    /// Creates a new rich [Label] view with inline child elements.
     ///
-    /// This is a convenience method for labels that display constant text.
-    /// Equivalent to `Label::new(cx, cx.state(text))`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use vizia_core::prelude::*;
-    /// #
-    /// # let cx = &mut Context::default();
-    /// #
-    /// Label::static_text(cx, "Hello World");
-    /// ```
-    pub fn static_text<'a>(cx: &'a mut Context, text: &'static str) -> Handle<'a, Self> {
-        let signal = cx.state(text);
-        Self::new(cx, signal)
-    }
-
-    /// Creates a new rich [Label] view.
+    /// Accepts either a plain value or a `Signal<T>` for reactive text.
     pub fn rich<T>(
         cx: &mut Context,
-        text: Signal<T>,
+        text: impl Res<T> + Clone + 'static,
         children: impl Fn(&mut Context),
     ) -> Handle<Self>
     where
-        T: ToStringLocalized + Clone,
+        T: ToStringLocalized + Clone + 'static,
     {
         Self { describing: None }
             .build(cx, |cx| {
                 children(cx);
             })
-            .text(text)
+            .text(text.clone())
             .role(Role::Label)
             .name(text)
     }
@@ -165,9 +143,7 @@ impl Handle<'_, Label> {
             self.cx.style.labelled_by.insert(id, self.entity);
         }
         let hidden = self.context().state(true);
-        self.modify(|label| label.describing = Some(identifier))
-            .class("describing")
-            .hidden(hidden)
+        self.modify(|label| label.describing = Some(identifier)).class("describing").hidden(hidden)
     }
 }
 
@@ -208,13 +184,15 @@ pub struct TextSpan {}
 
 impl TextSpan {
     /// Create a new [TextSpan] view.
+    ///
+    /// Accepts either a plain value or a `Signal<T>` for reactive text.
     pub fn new<'a, T>(
         cx: &'a mut Context,
-        text: Signal<T>,
+        text: impl Res<T> + 'static,
         children: impl Fn(&mut Context),
     ) -> Handle<'a, Self>
     where
-        T: ToStringLocalized + Clone,
+        T: ToStringLocalized + Clone + 'static,
     {
         Self {}
             .build(cx, |cx| {

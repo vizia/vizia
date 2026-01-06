@@ -94,18 +94,24 @@ impl VirtualList {
             }
         }
 
-        self.visible_range.set(cx, start_index..end_index);
+        let new_range = start_index..end_index;
+        if *self.visible_range.get(cx) != new_range {
+            self.visible_range.set(cx, new_range);
+        }
     }
 }
 
 impl VirtualList {
     /// Creates a new [VirtualList] view.
+    ///
+    /// Accepts either a plain list value or a `Signal<Vec<T>>` for reactive state.
     pub fn new<V: View, T: Clone + 'static>(
         cx: &mut Context,
-        list: Signal<Vec<T>>,
+        list: impl Res<Vec<T>> + 'static,
         item_height: f32,
         item_content: impl 'static + Copy + Fn(&mut Context, usize, Signal<T>) -> Handle<V>,
     ) -> Handle<Self> {
+        let list = list.into_signal(cx);
         let scroll_to_cursor = cx.state(true);
         let scroll_x = cx.state(0.0);
         let scroll_y = cx.state(0.0);
@@ -200,9 +206,7 @@ impl VirtualList {
                                 });
                                 let item_top = cx.derived({
                                     let item_index = item_index;
-                                    move |store| {
-                                        Pixels(*item_index.get(store) as f32 * item_height)
-                                    }
+                                    move |store| Pixels(*item_index.get(store) as f32 * item_height)
                                 });
                                 let items = items.clone();
                                 Binding::new(cx, item_index, move |cx| {
@@ -216,8 +220,7 @@ impl VirtualList {
                                             selected,
                                             focused,
                                             move |cx, index, item| {
-                                                item_content(cx, index, item)
-                                                    .height(full_height);
+                                                item_content(cx, index, item).height(full_height);
                                             },
                                         )
                                         .min_width(min_width_auto)

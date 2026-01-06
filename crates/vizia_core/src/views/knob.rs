@@ -1,6 +1,3 @@
-#![allow(dead_code)]
-#![allow(unused_imports)]
-#![allow(unused_variables)]
 use crate::vg;
 use morphorm::Units;
 
@@ -32,12 +29,15 @@ pub struct Knob {
 
 impl Knob {
     /// Create a new [Knob] view.
+    ///
+    /// Accepts either a plain value or a `Signal<f32>` for reactive state.
     pub fn new(
         cx: &mut Context,
         normalized_default: f32,
-        value: Signal<f32>,
+        value: impl Res<f32> + 'static,
         centered: bool,
     ) -> Handle<Self> {
+        let value = value.into_signal(cx);
         let initial = *value.get(cx);
         let head_angle = cx.derived({
             let value = value;
@@ -87,12 +87,13 @@ impl Knob {
     pub fn custom<F, V: View>(
         cx: &mut Context,
         default_normal: f32,
-        value: Signal<f32>,
+        value: impl Res<f32> + 'static,
         content: F,
     ) -> Handle<'_, Self>
     where
         F: 'static + Fn(&mut Context, Signal<f32>) -> Handle<V>,
     {
+        let value = value.into_signal(cx);
         let initial = *value.get(cx);
         Self {
             value,
@@ -256,34 +257,21 @@ impl View for ArcTrack {
     }
 
     fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
-        let opacity = cx.opacity();
-
         let foreground_color = cx.font_color();
-
         let background_color = cx.background_color();
-
         let bounds = cx.bounds();
 
-        // Calculate arc center
-        let centerx = bounds.x + 0.5 * bounds.w;
-        let centery = bounds.y + 0.5 * bounds.h;
-
-        // Convert start and end angles to radians and rotate origin direction to be upwards instead of to the right
         let start = self.angle_start;
         let end = self.angle_end;
 
         let parent = cx.tree.get_parent(cx.current).unwrap();
-
         let parent_width = cx.cache.get_width(parent);
 
         // Convert radius and span into screen coordinates
         let radius = self.radius.to_px(parent_width / 2.0, 0.0);
-        // default value of span is 15 % of radius. Original span value was 16.667%
         let span = self.span.to_px(radius, 0.0);
 
         // Draw the track arc
-        let path = vg::Path::new();
-        // path.arc(centerx, centery, radius - span / 2.0, end, start, Solidity::Solid);
         let oval = vg::Rect::new(bounds.left(), bounds.top(), bounds.right(), bounds.bottom());
 
         let mut paint = vg::Paint::default();
@@ -391,14 +379,9 @@ impl View for Ticks {
         Some("ticks")
     }
     fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
-        let opacity = cx.opacity();
-        //let mut background_color: femtovg::Color = cx.current.get_background_color(cx).into();
-        // background_color.set_alphaf(background_color.a * opacity);
         let foreground_color = cx.background_color();
-        // let background_color = femtovg::Color::rgb(54, 54, 54);
-        //et mut foreground_color = femtovg::Color::rgb(50, 50, 200);
         let bounds = cx.bounds();
-        // Clalculate arc center
+
         let centerx = bounds.x + 0.5 * bounds.w;
         let centery = bounds.y + 0.5 * bounds.h;
         // Convert start and end angles to radians and rotate origin direction to be upwards instead of to the right
@@ -479,14 +462,10 @@ impl View for TickKnob {
         Some("tickknob")
     }
     fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
-        let opacity = cx.opacity();
-        //let mut background_color: femtovg::Color = cx.current.get_background_color(cx).into();
-        // background_color.set_alphaf(background_color.a * opacity);
         let foreground_color = cx.font_color();
         let background_color = cx.background_color();
-        //et mut foreground_color = femtovg::Color::rgb(50, 50, 200);
         let bounds = cx.bounds();
-        // Calculate arc center
+
         let centerx = bounds.x + 0.5 * bounds.w;
         let centery = bounds.y + 0.5 * bounds.h;
         // Convert start and end angles to radians and rotate origin direction to be upwards instead of to the right

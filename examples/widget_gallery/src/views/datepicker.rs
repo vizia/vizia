@@ -3,7 +3,7 @@ use chrono::Utc;
 use vizia::prelude::*;
 
 pub fn datepicker(cx: &mut Context) {
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         let date = cx.state(Utc::now().date_naive());
 
         Markdown::new(cx, "# Datepicker");

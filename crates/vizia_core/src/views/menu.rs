@@ -91,11 +91,7 @@ impl Submenu {
         // This handles nested submenus where the immediate parent is a Popup
         let submenu_hash = fxhash::hash32("submenu");
         let is_submenu_value = cx.current().parent_iter(&cx.tree).any(|ancestor| {
-            cx.style
-                .element
-                .get(ancestor)
-                .map(|element| *element == submenu_hash)
-                .unwrap_or(false)
+            cx.style.element.get(ancestor).map(|element| *element == submenu_hash).unwrap_or(false)
         });
         let is_open = cx.state(false);
         let open_on_hover = cx.state(is_submenu_value);

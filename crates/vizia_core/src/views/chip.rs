@@ -9,17 +9,23 @@ pub struct Chip {
 impl Chip {
     /// Creates a new [Chip] view with the provided text.
     ///
+    /// Accepts either a plain value or a `Signal<T>` for reactive text.
+    ///
     /// # Example
     /// ```
     /// # use vizia_core::prelude::*;
     /// #
     /// # let cx = &mut Context::default();
     /// #
+    /// // Static text
+    /// Chip::new(cx, "Tag");
+    ///
+    /// // Reactive text
     /// Chip::new(cx, cx.state("Chip"));
     /// ```
-    pub fn new<T>(cx: &mut Context, text: Signal<T>) -> Handle<Self>
+    pub fn new<T>(cx: &mut Context, text: impl Res<T> + Clone + 'static) -> Handle<Self>
     where
-        T: ToStringLocalized + Clone,
+        T: ToStringLocalized + Clone + 'static,
     {
         let on_close: Signal<Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>> = cx.state(None);
         let has_close = cx.derived({
@@ -50,24 +56,6 @@ impl Chip {
             })
             .toggle_class("close", has_close)
             .layout_type(layout_row)
-    }
-
-    /// Creates a chip with static text (non-reactive).
-    ///
-    /// This is a convenience method for chips that display constant text.
-    /// Equivalent to `Chip::new(cx, cx.state(text))`.
-    ///
-    /// # Example
-    /// ```
-    /// # use vizia_core::prelude::*;
-    /// #
-    /// # let cx = &mut Context::default();
-    /// #
-    /// Chip::static_text(cx, "Tag");
-    /// ```
-    pub fn static_text<'a>(cx: &'a mut Context, text: &'static str) -> Handle<'a, Self> {
-        let signal = cx.state(text);
-        Self::new(cx, signal)
     }
 }
 
@@ -100,10 +88,9 @@ impl Handle<'_, Chip> {
     /// ```
     /// # use vizia_core::prelude::*;
     /// #
-    /// #
     /// # let cx = &mut Context::default();
     /// #
-    /// Chip::new(cx, cx.state("Chip"))
+    /// Chip::new(cx, "Chip")
     ///     .variant(cx.state(ChipVariant::Filled));
     /// ```
     pub fn variant(mut self, variant: Signal<ChipVariant>) -> Self {

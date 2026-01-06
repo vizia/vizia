@@ -154,9 +154,12 @@ pub enum ButtonVariant {
     Text,
 }
 
+crate::impl_res_simple!(ButtonVariant);
+
 /// Modifiers for changing the appearance of buttons.
 pub trait ButtonModifiers {
     /// Selects the style variant to be used by the button or button group.
+    /// Accepts a `ButtonVariant` or `Signal<ButtonVariant>`.
     ///
     /// # Example
     /// ```
@@ -169,11 +172,12 @@ pub trait ButtonModifiers {
     /// Button::new(cx, |cx| Label::new(cx, text))
     ///     .variant(cx.state(ButtonVariant::Accent));
     /// ```
-    fn variant(self, variant: Signal<ButtonVariant>) -> Self;
+    fn variant(self, variant: impl Res<ButtonVariant> + 'static) -> Self;
 }
 
 impl ButtonModifiers for Handle<'_, Button> {
-    fn variant(mut self, variant: Signal<ButtonVariant>) -> Self {
+    fn variant(mut self, variant: impl Res<ButtonVariant> + 'static) -> Self {
+        let variant = variant.into_signal(self.context());
         let is_accent = self.context().derived({
             let variant = variant;
             move |store| *variant.get(store) == ButtonVariant::Accent
@@ -233,13 +237,14 @@ impl View for ButtonGroup {
 
 impl Handle<'_, ButtonGroup> {
     /// Sets whether the button group is in vertical orientation.
-    pub fn vertical(self, is_vertical: Signal<bool>) -> Self {
+    pub fn vertical(self, is_vertical: impl Res<bool> + 'static) -> Self {
         self.toggle_class("vertical", is_vertical)
     }
 }
 
 impl ButtonModifiers for Handle<'_, ButtonGroup> {
-    fn variant(mut self, variant: Signal<ButtonVariant>) -> Self {
+    fn variant(mut self, variant: impl Res<ButtonVariant> + 'static) -> Self {
+        let variant = variant.into_signal(self.context());
         let is_accent = self.context().derived({
             let variant = variant;
             move |store| *variant.get(store) == ButtonVariant::Accent

@@ -6,7 +6,7 @@ use vizia::{
 use crate::components::DemoRegion;
 
 pub fn button(cx: &mut Context) {
-    VStack::new(cx, |cx|{
+    VStack::new(cx, move |cx|{
 
         Markdown::new(cx, "# Button
 A button can be used to send an event when pressed. Typically they are used to trigger an action.
@@ -18,7 +18,7 @@ A button can be used to send an event when pressed. Typically they are used to t
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 Button::new(cx, |cx| Label::new(cx, "Button"));
             },
             r#"Button::new(cx, |cx| Label::new(cx, "Button"));"#
@@ -28,7 +28,7 @@ A button can be used to send an event when pressed. Typically they are used to t
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 let accent = cx.state(ButtonVariant::Accent);
                 let outline = cx.state(ButtonVariant::Outline);
                 let text = cx.state(ButtonVariant::Text);
@@ -52,9 +52,9 @@ An HStack can be used to add an icon as well as a label to a button. The icon ca
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 Button::new(cx, |cx| {
-                    HStack::new(cx, |cx| {
+                    HStack::new(cx, move |cx| {
                         Svg::new(cx, ICON_TRASH);
                         Label::new(cx, "Delete");
                     })
@@ -62,7 +62,7 @@ An HStack can be used to add an icon as well as a label to a button. The icon ca
                 .class("outline");
 
                 Button::new(cx, |cx| {
-                    HStack::new(cx, |cx| {
+                    HStack::new(cx, move |cx| {
                         Label::new(cx, "Edit");
                         Svg::new(cx, ICON_PENCIL);
                     })
@@ -70,7 +70,7 @@ An HStack can be used to add an icon as well as a label to a button. The icon ca
                 .class("accent");
             },
             r#"Button::new(cx, |cx| {
-    HStack::new(cx, |cx| {
+    HStack::new(cx, move |cx| {
         Svg::new(cx, ICON_TRASH);
         Label::new(cx, "Delete");
     })
@@ -78,7 +78,7 @@ An HStack can be used to add an icon as well as a label to a button. The icon ca
 .class("outline");
 
 Button::new(cx, |cx| {
-    HStack::new(cx, |cx| {
+    HStack::new(cx, move |cx| {
         Label::new(cx, "Edit");
         Svg::new(cx, ICON_PENCIL);
     })

@@ -5,7 +5,7 @@
 extern crate self as vizia;
 
 #[cfg(all(not(feature = "baseview"), feature = "winit"))]
-pub use vizia_winit::application::{Application, ApplicationError, WinitApp};
+pub use vizia_winit::application::{window, Application, ApplicationError, WindowConfigExt, WinitApp};
 
 #[cfg(all(not(feature = "winit"), feature = "baseview"))]
 pub use vizia_baseview::{
@@ -19,7 +19,7 @@ pub mod prelude {
 
     #[cfg(all(not(feature = "baseview"), feature = "winit"))]
     pub use vizia_winit::{
-        application::{Application, ApplicationError, WinitApp},
+        application::{window, Application, ApplicationError, WindowConfigExt, WinitApp},
         window::Window,
         window_modifiers::WindowModifiers,
         ModifyWindow,

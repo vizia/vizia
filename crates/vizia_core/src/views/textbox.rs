@@ -99,16 +99,24 @@ where
 {
     /// Creates a new single-line textbox.
     ///
+    /// Accepts either a plain value or a `Signal<L>` for reactive state.
+    /// Use `.two_way()` to enable automatic signal updates on submit.
+    ///
     /// # Example
     /// ```rust
     /// # use vizia_core::prelude::*;
     /// #
     /// # let cx = &mut Context::default();
     /// #
+    /// // Static value
+    /// Textbox::new(cx, "Hello World");
+    ///
+    /// // Reactive with two-way binding
     /// # let text = cx.state(String::from("Hello World"));
-    /// Textbox::new(cx, text);
+    /// Textbox::new(cx, text).two_way();
     /// ```
-    pub fn new(cx: &mut Context, value: Signal<L>) -> Handle<Self> {
+    pub fn new(cx: &mut Context, value: impl Res<L> + 'static) -> Handle<Self> {
+        let value = value.into_signal(cx);
         Self::new_core(cx, value, TextboxKind::SingleLine)
     }
 
@@ -124,10 +132,19 @@ where
     /// #
     /// # let cx = &mut Context::default();
     /// #
+    /// // Static value
+    /// Textbox::new_multiline(cx, "Hello World", true);
+    ///
+    /// // Reactive with two-way binding
     /// # let text = cx.state(String::from("Hello World"));
-    /// Textbox::new_multiline(cx, text, true);
+    /// Textbox::new_multiline(cx, text, true).two_way();
     /// ```
-    pub fn new_multiline(cx: &mut Context, value: Signal<L>, wrap: bool) -> Handle<Self> {
+    pub fn new_multiline(
+        cx: &mut Context,
+        value: impl Res<L> + 'static,
+        wrap: bool,
+    ) -> Handle<Self> {
+        let value = value.into_signal(cx);
         Self::new_core(
             cx,
             value,
@@ -814,7 +831,8 @@ where
     }
 
     /// Sets the placeholder text that appears when the textbox has no value.
-    pub fn placeholder<P: ToStringLocalized>(self, text: Signal<P>) -> Self {
+    pub fn placeholder<P: ToStringLocalized + Clone + 'static>(self, text: impl Res<P> + 'static) -> Self {
+        let text = text.into_signal(self.cx);
         self.bind(text, |mut handle, text| {
             let txt = text.get(&handle).to_string_local(&handle);
             let entity = handle.entity();

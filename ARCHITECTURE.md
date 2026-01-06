@@ -1,6 +1,6 @@
 # Architecture
 
-This document aims to explain the archtecture and structure of vizia codebase.
+This document explains the architecture and structure of the vizia codebase.
 
 ## Crates
 
@@ -12,80 +12,243 @@ Vizia is split into a number of internal sub-crates for specific purposes:
 - `vizia_input` - Types which are specific to user input such as mouse state, keyboard modifiers, and keymaps.
 - `vizia_storage` - Storage types used by core. This includes a sparse set and a tree, as well as various iterators for tree traversal.
 - `vizia_style` - Style property types as well as style parsing and matching.
-- `vizia_window` -  Types specific to a window such as the window description and cursor icon.
+- `vizia_window` - Types specific to a window such as the window description and cursor icon.
 - `vizia_winit` - Windowing backend utilising [Winit], which is the default windowing backend.
 
-* External Crates*
+**External Crates**
 - `skia` - 2D drawing crate.
-- `morphorm` - Provides daptive layout for a tree of nodes.
+- `morphorm` - Provides adaptive layout for a tree of nodes.
 - `fluent` - Provides localization including text translation substitution.
-- `accesskit` - Provides integration with platform accessibility APIs for use with assisstive technologies such as screen readers.
+- `accesskit` - Provides integration with platform accessibility APIs for use with assistive technologies such as screen readers.
 - `winit` - Provides window management.
 - `baseview` - An alternative crate for window management.
 - `glutin` - Provides OpenGL context management for the winit backend.
 
 ## Overview
-At the core of Vizia is a very simple ECS model. Views are assigned an entity id, which is used to get/set view properties (components), and a series of systems update these properties and draw the views to the window.
 
+At the core of Vizia is a simple ECS-like model. Views are assigned an entity id, which is used to get/set view properties (components), and a series of systems update these properties and draw the views to the window.
+
+State management uses **Signals** - reactive primitives that automatically track dependencies and update views when their values change.
 
 ## Glossary
 
 ### Application
-The `Application` struct is the entry point of a Vizia application. The `Application::new()` method creates a `Context`, which is a global store for all retained application state, and provides a closure for the user to build their application with:
+
+The `Application` struct is the entry point of a Vizia application. The `Application::new()` method creates a `Context`, which is a global store for all retained application state:
 
 ```rust
-Application::new(|cx|{
-    Label::static_text(cx, "Hello Vizia");
+Application::new(|cx| {
+    let count = cx.state(0i32);  // Create a signal
+    Label::new(cx, count);       // Bind signal to view
 }).run();
 ```
-When the `run()` method is called, a Winit window is created with an opengl context and a skia `Canvas`, and then added to the `Context`. The event loop is then started. 
+
+For structured applications, use the `App` trait:
+
+```rust
+struct MyApp {
+    count: Signal<i32>,
+}
+
+impl App for MyApp {
+    fn new(cx: &mut Context) -> Self {
+        Self { count: cx.state(0) }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        Label::new(cx, self.count);
+        self
+    }
+}
+
+fn main() {
+    MyApp::run();
+}
+```
+
+When `run()` is called, a window is created with an OpenGL context and a Skia `Canvas`, then the event loop starts.
 
 ### Context
-The `Context` is where all the retained application state lives. This includes model data, views, style properties, mouse state, the event queue etc.
+
+The `Context` is where all retained application state lives. This includes:
+- The `Store` (signal values and dependency tracking)
+- Views and their properties
+- Style data
+- Mouse/keyboard state
+- Event queue
+- Timers
+
+### Store
+
+The `Store` manages all signal state. It contains:
+- Signal values (keyed by `NodeId`)
+- Dependency graph (which signals depend on which)
+- Derived signal compute functions
+- Observer callbacks for bindings
+
+### Signal
+
+A `Signal<T>` is a reactive primitive that holds a value and tracks its dependents:
+
+```rust
+// Create state
+let count = cx.state(0i32);
+
+// Read value (in a reactive context)
+let value = count.get(store);
+
+// Safe read (returns Option)
+let value = count.try_get(store);
+
+// Update value
+count.set(cx, 42);
+count.update(cx, |v| *v += 1);
+
+// Derive new signal
+let doubled = count.drv(cx, |v, _| v * 2);
+```
+
+When a signal's value changes, all dependent bindings and derived signals automatically update.
+
+### Derived Signals
+
+Created via `signal.drv()` or `cx.derived()`, these compute values from other signals:
+
+```rust
+let count = cx.state(5i32);
+let doubled = count.drv(cx, |v, _| v * 2);
+let label = count.drv(cx, |v, _| format!("Count: {v}"));
+
+// Multi-signal derivation
+let sum = cx.derived(move |s| {
+    *a.get(s) + *b.get(s)
+});
+```
+
+Derived signals recompute automatically when their dependencies change.
 
 ### View
-The `View` trait describes a visual element in a Vizia application. It has 4 methods:
-- `build()` - Used to build the view as well as any sub-views into the context. This is typically called in the constructor of a view type. 
-- `element()` - A method which can be optionally implemented and returns an element name which can be referred to in CSS for styling based on type.
-- `event()` - A method which can be optionally implemented in order for a view to handle events.
-- `draw()` - A method which can be optionally implemented in order to customise the way the view is drawn. If not implemented, then the view will be drawn based on its style properties.
 
-A number of built-in views are provided with Vizia. For example, the `Label` view is used to display a string of text. 
+The `View` trait describes a visual element. It has 4 methods:
+- `build()` - Builds the view and sub-views into the context. Called in constructors.
+- `element()` - Returns an element name for CSS styling.
+- `event()` - Handles events sent to this view.
+- `draw()` - Custom drawing logic. If not implemented, draws based on style properties.
+
+Built-in views include `Label`, `Button`, `Slider`, `Textbox`, and many more.
+
+### Binding
+
+A `Binding` creates a reactive scope that rebuilds when a signal changes:
+
+```rust
+Binding::new(cx, some_signal, |cx| {
+    // This closure re-runs when some_signal changes
+    let value = *some_signal.get(cx);
+    if value > 10 {
+        Label::new(cx, "High");
+    }
+});
+```
+
+Views that accept signals internally create bindings for reactive updates.
 
 ### Entity
-Each view in Vizia is assigned a generational `Entity` ID when created.
+
+Each view is assigned a generational `Entity` ID when created. This ID is used to:
+- Store/retrieve view properties
+- Navigate the view tree
+- Associate signals with their owning views
 
 ### Tree
-The entity is added to a `Tree`, which describes the hierarchy of views. The `Tree` has a number of iterators which are used by systems to update all or parts of the hierarchy.
+
+The `Tree` describes the hierarchy of views. It provides iterators for traversal used by systems to update the hierarchy.
 
 ### Style
-The properties of a view are not stored in the tree itself but instead in separate stores in the `Style` struct. The entity ID is used to set/get style properties (i.e. components) which are stored in custom sparse set storage types.
 
-### Systems
-A series of systems are used to update the state of the application on each update cycle:
-- Event Manager - Routes events in the event queue to Models and Views and calls the view/model `event()` method.
-- Style System - Links entities to shared style data (from CSS) and applies any style property inheritance.
-- Image System - Loads any unloaded images and removes any unused images.
-- Animation System - Applies any animations to style properties.
-- Layout System - Determines the size and position of views.
-- Accessibility System - Constructs or updates the accessibility tree and calls the view `accessibility()` method.
-- Draw System - Draws the views to the main window and calls the view `draw()` method.
-
-### Cache
-The cache contains computed data from systems. For example, the `Style` may contain the desired size and position of a view, but after the layout system the `Cache` contains the computed bounds of the view which can then be used by the drawing system.
+View properties are stored in separate sparse-set stores in the `Style` struct, not in the tree itself. The entity ID is used to get/set style properties.
 
 ### Handle
-A `Handle` is a wrapper around an `Entity` and a mutable reference to the `Context` and is returned by the `build()` method on the `View` trait, i.e. it is returned when a view is built, e.g. `Label::static_text(cx, "Hello Vizia")`.
+
+A `Handle` wraps an `Entity` and a mutable `Context` reference. Returned when building views:
+
+```rust
+let handle = Label::new(cx, "Hello");
+handle.background_color(Color::red());
+```
 
 ### Modifiers
-The `Handle` implements a number of `Modifiers`, which are traits which provide methods for setting the properties of a view at built time. For example, the `StyleModifiers` trait provides methods for setting the style properties of a view such as its `background_color()`.
+
+Modifiers are traits on `Handle` that provide methods for setting view properties:
+
+```rust
+Label::new(cx, "Hello")
+    .background_color(Color::red())  // StyleModifiers
+    .on_press(|_| println!("clicked"))  // ActionModifiers
+    .width(Pixels(100.0));  // LayoutModifiers
+```
+
+Modifiers accept either values or signals for reactive properties:
+
+```rust
+let color = cx.state(Color::red());
+Label::new(cx, "Hello").background_color(color);  // Updates when signal changes
+```
 
 ### Model
-The `Model` trait describes application data which can be bound to views. 
+
+The `Model` trait describes data that responds to events. It complements signals for event-driven updates:
+
+```rust
+struct AppData {
+    count: Signal<i32>,
+}
+
+impl Model for AppData {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            AppEvent::Increment => self.count.update(cx, |v| *v += 1),
+        });
+    }
+}
+```
+
+Models are optional - for simple apps, direct signal updates suffice.
+
+## Systems
+
+Systems update application state each cycle:
+- **Event Manager** - Routes events to Models and Views, calls `event()` methods.
+- **Style System** - Links entities to shared style data and applies inheritance.
+- **Image System** - Loads/unloads images as needed.
+- **Animation System** - Applies animations to style properties.
+- **Layout System** - Computes size and position of views.
+- **Accessibility System** - Updates the accessibility tree.
+- **Draw System** - Draws views to the window, calls `draw()` methods.
+
+### Cache
+
+The `Cache` contains computed data from systems. For example, `Style` contains desired size/position, but after layout the `Cache` contains the computed bounds used for drawing.
 
 ## Events
-An `Event` contains a message, which is a type erased piece of data, as well as some metadata describing the origin and target of the event and how it should propagate through the tree when routed by the event manager.
 
-During each cycle of the event loop, when a Winit window events is received it is translated to vizia `WindowEvent` and added to an event queue in the `Context`. At the end of each cycle a `MainEventsCleared` event is received, which is where vizia processes changes to the application.
+An `Event` contains a type-erased message plus metadata describing origin, target, and propagation behavior.
 
+During each event loop cycle:
+1. Window events are translated to `WindowEvent` and queued
+2. On `MainEventsCleared`, vizia processes the queue
+3. Events route through the tree to Views and Models
+4. Signal changes trigger binding updates
+5. Systems run (style, layout, draw)
 
+## Data Flow
+
+```
+User Input → Events → Models/Views → Signal Updates → Bindings → View Rebuilds → Draw
+                         ↓
+                    Derived Signals
+                         ↓
+                    More Bindings
+```
+
+Signals provide fine-grained reactivity: only views bound to changed signals update, not the entire tree.

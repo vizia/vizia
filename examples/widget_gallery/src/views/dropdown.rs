@@ -8,17 +8,13 @@ pub fn dropdown(cx: &mut Context) {
     let width_100 = cx.state(Pixels(100.0));
     let stretch_one = cx.state(Stretch(1.0));
     let icon_size = cx.state(Pixels(16.0));
-    let selected_indices = cx.derived({
-        let selected = selected;
-        move |s| vec![*selected.get(s)]
-    });
-    let selected_label = cx.derived({
-        let list = list;
-        let selected = selected;
-        move |s| list.get(s).get(*selected.get(s)).cloned().unwrap_or_default()
+    let selectable_single = cx.state(Selectable::Single);
+    let selected_indices = selected.drv(cx, |v, _| vec![*v]);
+    let selected_label = selected.drv(cx, move |v, s| {
+        list.get(s).get(*v).cloned().unwrap_or_default()
     });
 
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(cx, "# Dropdown");
 
         Divider::new(cx);
@@ -27,20 +23,18 @@ pub fn dropdown(cx: &mut Context) {
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 Dropdown::new(
                     cx,
                     move |cx| {
-                        Button::new(cx, |cx| {
-                            Label::new(cx, selected_label);
-                        })
+                        Button::new(cx, |cx| Label::new(cx, selected_label))
                         .on_press(|cx| cx.emit(PopupEvent::Switch));
                     },
                     move |cx| {
-                        List::new(cx, list, |cx, _, item| {
+                        List::new(cx, list, move |cx, _, item| {
                             Label::new(cx, item).hoverable(false);
                         })
-                        .selectable(Selectable::Single)
+                        .selectable(selectable_single)
                         .selected(selected_indices)
                         .on_select(move |cx, index| {
                             selected.set(cx, index);
@@ -54,14 +48,9 @@ pub fn dropdown(cx: &mut Context) {
             r#"let list = cx.state(vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()]);
 let selected = cx.state(0usize);
 let width_100 = cx.state(Pixels(100.0));
-let selected_indices = cx.derived({
-    let selected = selected;
-    move |s| vec![*selected.get(s)]
-});
-let selected_label = cx.derived({
-    let list = list;
-    let selected = selected;
-    move |s| list.get(s).get(*selected.get(s)).cloned().unwrap_or_default()
+let selected_indices = selected.drv(cx, |v, _| vec![*v]);
+let selected_label = selected.drv(cx, move |v, s| {
+    list.get(s).get(*v).cloned().unwrap_or_default()
 });
 Dropdown::new(
     cx,
@@ -72,10 +61,10 @@ Dropdown::new(
         .on_press(|cx| cx.emit(PopupEvent::Switch));
     },
     move |cx| {
-        List::new(cx, list, |cx, _, item| {
+        List::new(cx, list, move |cx, _, item| {
             Label::new(cx, item).hoverable(false);
         })
-        .selectable(Selectable::Single)
+        .selectable(selectable_single)
         .selected(selected_indices)
         .on_select(|cx, index| {
             selected.set(cx, index);
@@ -89,7 +78,7 @@ Dropdown::new(
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 Dropdown::new(
                     cx,
                     move |cx| {
@@ -107,10 +96,10 @@ Dropdown::new(
                         });
                     },
                     move |cx| {
-                        List::new(cx, list, |cx, _, item| {
+                        List::new(cx, list, move |cx, _, item| {
                             Label::new(cx, item).hoverable(false);
                         })
-                        .selectable(Selectable::Single)
+                        .selectable(selectable_single)
                         .selected(selected_indices)
                         .on_select(move |cx, index| {
                             selected.set(cx, index);
@@ -126,10 +115,7 @@ let selected = cx.state(0usize);
 let width_100 = cx.state(Pixels(100.0));
 let stretch_one = cx.state(Stretch(1.0));
 let icon_size = cx.state(Pixels(16.0));
-let selected_indices = cx.derived({
-    let selected = selected;
-    move |s| vec![*selected.get(s)]
-});
+let selected_indices = selected.drv(cx, |v, _| vec![*v]);
 Dropdown::new(
     cx,
     move |cx| {
@@ -146,10 +132,10 @@ Dropdown::new(
         });
     },
     move |cx| {
-        List::new(cx, list, |cx, _, item| {
+        List::new(cx, list, move |cx, _, item| {
             Label::new(cx, item).hoverable(false);
         })
-        .selectable(Selectable::Single)
+        .selectable(selectable_single)
         .selected(selected_indices)
         .on_select(|cx, index| {
             selected.set(cx, index);

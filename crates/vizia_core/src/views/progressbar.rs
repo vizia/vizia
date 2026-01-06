@@ -47,15 +47,25 @@ impl View for ProgressBar {
 impl ProgressBar {
     /// Creates a new progress bar bound to the given value.
     ///
+    /// Accepts either a plain f32 value or a `Signal<f32>` for reactive state.
+    ///
     /// # Example
     ///
     /// ```
     /// # use vizia_core::prelude::*;
     /// # let mut cx = &mut Context::default();
+    /// // Static value
+    /// ProgressBar::new(cx, 0.5f32, Orientation::Horizontal);
+    ///
+    /// // Reactive
     /// # let progress = cx.state(0.5f32);
     /// ProgressBar::new(cx, progress, Orientation::Horizontal);
     /// ```
-    pub fn new(cx: &mut Context, value: Signal<f32>, orientation: Orientation) -> Handle<Self> {
+    pub fn new(
+        cx: &mut Context,
+        value: impl Res<f32> + 'static,
+        orientation: Orientation,
+    ) -> Handle<Self> {
         match orientation {
             Orientation::Horizontal => Self::horizontal(cx, value),
             Orientation::Vertical => Self::vertical(cx, value),
@@ -63,7 +73,8 @@ impl ProgressBar {
     }
 
     /// Creates a new horizontal progress bar bound to the given value.
-    pub fn horizontal(cx: &mut Context, value: Signal<f32>) -> Handle<Self> {
+    pub fn horizontal(cx: &mut Context, value: impl Res<f32> + 'static) -> Handle<Self> {
+        let value = value.into_signal(cx);
         Self.build(cx, |cx| {
             let bar_width = cx.state(Units::Percentage(0.0));
             Element::new(cx)
@@ -78,7 +89,8 @@ impl ProgressBar {
     }
 
     /// Creates a new vertical progress bar bound to the given value.
-    pub fn vertical(cx: &mut Context, value: Signal<f32>) -> Handle<Self> {
+    pub fn vertical(cx: &mut Context, value: impl Res<f32> + 'static) -> Handle<Self> {
+        let value = value.into_signal(cx);
         Self.build(cx, |cx| {
             let bar_top = cx.state(Stretch(1.0));
             let bar_height = cx.state(Units::Percentage(0.0));

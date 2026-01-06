@@ -8,13 +8,15 @@ pub struct ToggleButton {
 
 impl ToggleButton {
     /// Create a new [ToggleButton] view.
-    /// `checked` is a [Signal] representing the toggle state of the button.
+    ///
+    /// Accepts either a plain boolean value or a `Signal<bool>` for reactive state.
     /// `content` is a closure that creates the content of the button.
     pub fn new<V: View>(
         cx: &mut Context,
-        checked: Signal<bool>,
+        checked: impl Res<bool> + 'static,
         content: impl Fn(&mut Context) -> Handle<V> + 'static,
     ) -> Handle<Self> {
+        let checked = checked.into_signal(cx);
         let false_signal = cx.state(false);
         let true_signal = cx.state(true);
         Self { value: checked, on_toggle: None }

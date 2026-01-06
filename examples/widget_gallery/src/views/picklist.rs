@@ -10,7 +10,7 @@ pub fn picklist(cx: &mut Context) {
     let gap_2 = cx.state(Pixels(2.0));
     let auto = cx.state(Auto);
 
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(cx, "# Picklist
 A view which allows the user to select an option from a list.
         ");
@@ -21,8 +21,8 @@ A view which allows the user to select an option from a list.
 
         DemoRegion::new(
             cx,
-            |cx| {
-                VStack::new(cx, |cx| {
+            move |cx| {
+                VStack::new(cx, move |cx| {
                     Label::new(cx, "Color:").class("field-label");
                     PickList::new(cx, options, selected_option_1, true)
                         .on_select(move |cx, index| selected_option_1.set(cx, index))
@@ -45,8 +45,8 @@ The placeholder text prompts a user to select an option from the picker menu whe
 
         DemoRegion::new(
             cx,
-            |cx| {
-                VStack::new(cx, |cx| {
+            move |cx| {
+                VStack::new(cx, move |cx| {
                     Label::new(cx, "Color:").class("field-label");
                     let placeholder = cx.state("Select a color...");
                     PickList::new(cx, options, selected_option_2, true)

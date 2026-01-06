@@ -26,7 +26,27 @@ where
     T: 'static + Clone + ToString,
 {
     /// Creates a new [ComboBox] view.
-    pub fn new(cx: &mut Context, list: Signal<Vec<T>>, selected: Signal<usize>) -> Handle<Self> {
+    ///
+    /// Accepts either plain values or signals for reactive state.
+    /// Use `.on_select()` to handle selection changes.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::default();
+    /// let items = cx.state(vec!["One", "Two", "Three"]);
+    /// let selected = cx.state(0usize);
+    /// ComboBox::new(cx, items, selected)
+    ///     .on_select(move |cx, index| selected.set(cx, index));
+    /// ```
+    pub fn new(
+        cx: &mut Context,
+        list: impl Res<Vec<T>> + 'static,
+        selected: impl Res<usize> + 'static,
+    ) -> Handle<Self> {
+        let list = list.into_signal(cx);
+        let selected = selected.into_signal(cx);
         let filter_text = cx.state(String::from(""));
         let placeholder = cx.state(String::from("One"));
         let is_open = cx.state(false);

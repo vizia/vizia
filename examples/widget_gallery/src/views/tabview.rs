@@ -8,7 +8,7 @@ pub fn tabview(cx: &mut Context) {
     let width_300 = cx.state(Pixels(300.0));
     let height_300 = cx.state(Pixels(300.0));
 
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(
             cx,
             "# Label
@@ -22,14 +22,14 @@ A label can be used to display a string of text.
 
         DemoRegion::new(
             cx,
-            |cx| {
-                TabView::new(cx, tabs, |cx, item| match item.get(cx) {
+            move |cx| {
+                TabView::new(cx, tabs, move |cx, item| match *item.get(cx) {
                     "Tab1" => TabPair::new(
                         move |cx| {
                             Label::new(cx, item).hoverable(false);
                             Element::new(cx).class("indicator");
                         },
-                        |cx| {
+                        move |cx| {
                             Element::new(cx).size(size_200).background_color(Color::red());
                         },
                     ),
@@ -39,7 +39,7 @@ A label can be used to display a string of text.
                             Label::new(cx, item).hoverable(false);
                             Element::new(cx).class("indicator");
                         },
-                        |cx| {
+                        move |cx| {
                             Element::new(cx).size(size_200).background_color(Color::blue());
                         },
                     ),

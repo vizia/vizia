@@ -7,7 +7,7 @@ pub fn scrollview(cx: &mut Context) {
     let stretch_one = cx.state(Stretch(1.0));
     let size_300 = cx.state(Units::Pixels(300.0));
 
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(cx, "# Scrollview");
 
         Divider::new(cx);
@@ -16,8 +16,8 @@ pub fn scrollview(cx: &mut Context) {
 
         DemoRegion::new(
             cx,
-            |cx| {
-                ScrollView::new(cx, |cx| {
+            move |cx| {
+                ScrollView::new(cx, move |cx| {
                     Label::new(cx, "Vertical Scroll").height(height_1000).width(stretch_one);
                 })
                 .size(size_300)

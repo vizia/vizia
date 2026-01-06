@@ -20,12 +20,8 @@ impl App for RatingApp {
         let rating2 = self.rating2;
 
         ExamplePage::vertical(cx, move |cx| {
-            Rating::new(cx, 5, rating1).on_change(move |cx, rating| {
-                rating1.set(cx, rating);
-            });
-            Rating::new(cx, 10, rating2).on_change(move |cx, rating| {
-                rating2.set(cx, rating);
-            });
+            Rating::new(cx, 5, rating1).two_way();
+            Rating::new(cx, 10, rating2).two_way();
         });
         self
     }

@@ -76,7 +76,7 @@ impl ResizableStack {
     /// ```
     pub fn new<F>(
         cx: &mut Context,
-        size: Signal<Units>,
+        size: impl Res<Units> + 'static,
         direction: ResizeStackDirection,
         on_drag: impl Fn(&mut EventContext, f32) + 'static,
         content: F,

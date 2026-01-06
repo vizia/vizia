@@ -58,10 +58,7 @@ impl App for TimerApp {
                 ProgressBar::horizontal(cx, progress);
             });
 
-            let elapsed_label = cx.derived({
-                let elapsed_time = elapsed_time;
-                move |store| format!("{:.1}s", elapsed_time.get(store))
-            });
+            let elapsed_label = elapsed_time.drv(cx, |v, _| format!("{:.1}s", v));
             Label::new(cx, elapsed_label);
 
             HStack::new(cx, move |cx| {

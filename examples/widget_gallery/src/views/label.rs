@@ -3,7 +3,7 @@ use vizia::prelude::*;
 use crate::DemoRegion;
 
 pub fn label(cx: &mut Context) {
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(
             cx,
             "# Label
@@ -17,7 +17,7 @@ A label can be used to display a string of text.
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 Label::new(cx, "Hello Vizia");
             },
             r#"Label::new(cx, "Hello Vizia");"#,

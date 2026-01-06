@@ -12,11 +12,10 @@ pub fn knob(cx: &mut Context) {
         DemoRegion::new(
             cx,
             move |cx| {
-                Knob::new(cx, 0.5, value, false).on_change(move |cx, val| value.set(cx, val));
+                Knob::new(cx, 0.5, value, false).two_way();
             },
             r#"let value = cx.state(0.2f32);
-Knob::new(cx, 0.5, value, false)
-    .on_change(move |cx, val| value.set(cx, val));"#,
+Knob::new(cx, 0.5, value, false).two_way();"#,
         );
     })
     .class("panel");

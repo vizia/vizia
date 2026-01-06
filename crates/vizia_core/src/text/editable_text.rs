@@ -1,3 +1,4 @@
+// Text editing utilities - some methods may not be used internally but are part of the public API
 #![allow(dead_code)]
 
 use std::{borrow::Cow, ops::Range};

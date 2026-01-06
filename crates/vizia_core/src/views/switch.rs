@@ -8,40 +8,20 @@ use crate::prelude::*;
 ///
 /// ## Basic Switch
 ///
-/// The Switch must be bound to a boolean signal.
-///
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
-/// # let value = cx.state(false);
 /// #
-/// Switch::new(cx, value);
-/// ```
+/// // Static (always on)
+/// Switch::new(cx, true);
 ///
-/// ## Switch with an action
-///
-/// A Switch can be used to trigger a callback when toggled. Usually this callback
-/// updates the signal the Switch is bound to.
-///
-/// ```
-/// # use vizia_core::prelude::*;
-/// #
-/// # let cx = &mut Context::default();
-/// # let value = cx.state(false);
-/// #
-/// Switch::new(cx, value)
-///     .on_toggle(move |cx| {
-///         value.update(cx, |v| *v = !*v);
-///     });
+/// // Reactive with two-way binding
+/// let value = cx.state(false);
+/// Switch::new(cx, value).two_way();
 /// ```
 ///
 /// ## Switch with a label
-///
-/// A Switch is usually used with a label next to it describing what data the Switch
-/// is bound to or what the Switch does when pressed. This can be done, for example, by
-/// wrapping the Switch in an [`HStack`](crate::prelude::HStack) and adding a [`Label`](crate::prelude::Label)
-/// to it.
 ///
 /// ```
 /// # use vizia_core::prelude::*;
@@ -50,9 +30,8 @@ use crate::prelude::*;
 /// # let value = cx.state(false);
 /// #
 /// HStack::new(cx, |cx| {
-///     Switch::new(cx, value);
-///     let label = cx.state("Press me");
-///     Label::new(cx, label);
+///     Switch::new(cx, value).two_way();
+///     Label::new(cx, "Press me");
 /// });
 /// ```
 pub struct Switch {
@@ -63,17 +42,21 @@ pub struct Switch {
 impl Switch {
     /// Creates a new Switch.
     ///
+    /// Accepts either a plain boolean value or a `Signal<bool>` for reactive state.
+    /// Use `.two_way()` to enable automatic state updates on toggle.
+    ///
     /// # Examples
     ///
     /// ```
     /// # use vizia_core::prelude::*;
     /// #
     /// # let cx = &mut Context::default();
-    /// # let checked_signal = cx.state(false);
     /// #
-    /// Switch::new(cx, checked_signal);
+    /// let checked = cx.state(false);
+    /// Switch::new(cx, checked).two_way();
     /// ```
-    pub fn new(cx: &mut Context, checked: Signal<bool>) -> Handle<Self> {
+    pub fn new(cx: &mut Context, checked: impl Res<bool> + 'static) -> Handle<Self> {
+        let checked = checked.into_signal(cx);
         let false_signal = cx.state(false);
         let true_signal = cx.state(true);
         let position_absolute = cx.state(PositionType::Absolute);

@@ -19,6 +19,7 @@ use crate::prelude::*;
 pub struct Datepicker {
     view_date: Signal<NaiveDate>,
     selected_month: Signal<usize>,
+    year: Signal<i32>,
     on_select: Option<Box<dyn Fn(&mut EventContext, NaiveDate)>>,
 }
 
@@ -47,6 +48,7 @@ pub(crate) enum DatepickerEvent {
 
     IncrementYear,
     DecrementYear,
+    SetYear(i32),
 
     SelectDate(NaiveDate),
 }
@@ -118,17 +120,27 @@ impl Datepicker {
 
     /// Create a new [Datepicker] view.
     ///
+    /// Accepts either a plain `NaiveDate` or a `Signal<NaiveDate>` for reactive state.
+    /// Use `.on_select()` to handle date selection.
+    ///
+    /// # Examples
+    ///
     /// ```
     /// # use vizia_core::prelude::*;
     /// # use chrono::NaiveDate;
     /// # let mut cx = &mut Context::default();
+    /// // Static date (read-only display)
+    /// Datepicker::new(cx, NaiveDate::from_ymd_opt(2025, 1, 15).unwrap());
+    ///
+    /// // Reactive with callback
     /// # let date = cx.state(NaiveDate::from_ymd_opt(2025, 1, 15).unwrap());
     /// Datepicker::new(cx, date)
     ///     .on_select(move |cx, selected| {
     ///         date.set(cx, selected);
     ///     });
     /// ```
-    pub fn new(cx: &mut Context, selected_date: Signal<NaiveDate>) -> Handle<Self> {
+    pub fn new(cx: &mut Context, selected_date: impl Res<NaiveDate> + 'static) -> Handle<Self> {
+        let selected_date = selected_date.into_signal(cx);
         let initial_date = *selected_date.get(cx);
 
         let months = cx.state(MONTHS.iter().map(|m| Localized::new(m)).collect::<Vec<_>>());
@@ -138,18 +150,14 @@ impl Datepicker {
         let stretch_one = cx.state(Stretch(1.0));
         let width_140 = cx.state(Pixels(140.0));
         let width_100 = cx.state(Pixels(100.0));
-        let text_center = cx.state(TextAlign::Center);
         let plus_minus = cx.state(SpinboxIcons::PlusMinus);
         let calendar_width = cx.state(Pixels(32.0 * 7.0));
         let calendar_height = cx.state(Pixels(32.0 * 6.0));
 
-        // Derived signal for year display
-        let year_text = cx.derived({
-            let view_date = view_date;
-            move |s| view_date.get(s).year().to_string()
-        });
+        // Signal for editable year
+        let year = cx.state(initial_date.year());
 
-        Self { view_date, selected_month, on_select: None }.build(cx, move |cx| {
+        Self { view_date, selected_month, year, on_select: None }.build(cx, move |cx| {
             HStack::new(cx, |cx| {
                 Spinbox::custom(cx, move |cx| {
                     PickList::new(cx, months, selected_month, false)
@@ -161,12 +169,22 @@ impl Datepicker {
                 .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementMonth));
 
                 Spinbox::custom(cx, move |cx| {
-                    Label::new(cx, year_text).width(stretch_one).text_align(text_center)
+                    Textbox::new(cx, year).width(stretch_one).on_submit(move |ex, value, _| {
+                        ex.emit(DatepickerEvent::SetYear(value));
+                    })
                 })
                 .width(width_100)
                 .icons(plus_minus)
-                .on_increment(|ex| ex.emit(DatepickerEvent::IncrementYear))
-                .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementYear));
+                .on_increment(move |ex| {
+                    let current = *year.get(ex);
+                    year.set(ex, current + 1);
+                    ex.emit(DatepickerEvent::IncrementYear);
+                })
+                .on_decrement(move |ex| {
+                    let current = *year.get(ex);
+                    year.set(ex, current - 1);
+                    ex.emit(DatepickerEvent::DecrementYear);
+                });
             })
             .class("datepicker-header");
 
@@ -281,6 +299,7 @@ impl View for Datepicker {
                 };
                 self.view_date.set(cx, new_date);
                 self.selected_month.set(cx, new_date.month() as usize - 1);
+                self.year.set(cx, new_date.year());
             }
 
             DatepickerEvent::DecrementMonth => {
@@ -293,6 +312,7 @@ impl View for Datepicker {
                 };
                 self.view_date.set(cx, new_date);
                 self.selected_month.set(cx, new_date.month() as usize - 1);
+                self.year.set(cx, new_date.year());
             }
 
             DatepickerEvent::SelectMonth(month) => {
@@ -310,6 +330,7 @@ impl View for Datepicker {
                     NaiveDate::from_ymd_opt(current.year() + 1, current.month(), current.day())
                         .unwrap();
                 self.view_date.set(cx, new_date);
+                self.year.set(cx, new_date.year());
             }
 
             DatepickerEvent::DecrementYear => {
@@ -318,6 +339,17 @@ impl View for Datepicker {
                     NaiveDate::from_ymd_opt(current.year() - 1, current.month(), current.day())
                         .unwrap();
                 self.view_date.set(cx, new_date);
+                self.year.set(cx, new_date.year());
+            }
+
+            DatepickerEvent::SetYear(new_year) => {
+                let current = *self.view_date.get(cx);
+                if let Some(new_date) =
+                    NaiveDate::from_ymd_opt(*new_year, current.month(), current.day())
+                {
+                    self.view_date.set(cx, new_date);
+                    self.year.set(cx, new_date.year());
+                }
             }
 
             DatepickerEvent::SelectDate(date) => {

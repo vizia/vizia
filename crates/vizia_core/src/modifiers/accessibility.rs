@@ -15,13 +15,13 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     }
 
     /// Sets the accessibility name of the view.
-    fn name<U>(mut self, name: Signal<U>) -> Self
+    fn name<U>(mut self, name: impl Res<U> + 'static) -> Self
     where
         U: Clone + ToStringLocalized + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, name, move |cx, value| {
+        internal::bind_res(self.context(), current, entity, name, move |cx, value| {
             cx.style.name.insert(entity, value.to_string_local(cx));
             cx.style.needs_access_update(entity);
         });
@@ -50,10 +50,10 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     }
 
     /// Sets whether the view should be hidden from accessibility.
-    fn hidden(mut self, hidden: Signal<bool>) -> Self {
+    fn hidden(mut self, hidden: impl Res<bool> + 'static) -> Self {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, hidden, move |cx, value| {
+        internal::bind_res(self.context(), current, entity, hidden, move |cx, value| {
             cx.style.hidden.insert(cx.current, *value);
             cx.style.needs_access_update(cx.current);
         });
@@ -62,13 +62,13 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     }
 
     /// Sets the accessibility numeric value for the view.
-    fn numeric_value<U>(mut self, value: Signal<U>) -> Self
+    fn numeric_value<U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: Clone + Into<f64> + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, val| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, val| {
             let v = val.clone().into();
             cx.style.numeric_value.insert(cx.current, v);
             cx.style.needs_access_update(cx.current);
@@ -78,13 +78,13 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     }
 
     /// Sets the accessibility text value for the view.
-    fn text_value<U>(mut self, value: Signal<U>) -> Self
+    fn text_value<U>(mut self, value: impl Res<U> + 'static) -> Self
     where
         U: Clone + ToStringLocalized + 'static,
     {
         let entity = self.entity();
         let current = self.current();
-        internal::bind_signal(self.context(), current, entity, value, move |cx, val| {
+        internal::bind_res(self.context(), current, entity, value, move |cx, val| {
             cx.style.text_value.insert(cx.current, val.to_string_local(cx));
             cx.style.needs_access_update(cx.current);
         });

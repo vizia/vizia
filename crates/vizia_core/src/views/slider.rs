@@ -12,32 +12,28 @@ use crate::prelude::*;
 /// # Examples
 ///
 /// ## Basic Slider
-/// In the following example, a slider is bound to a signal. The `on_change` callback is used to
-/// update the signal when the slider thumb is moved, or if the track is clicked on.
 /// ```
 /// # use vizia_core::prelude::*;
 /// # let mut cx = &mut Context::default();
-/// # let value = cx.state(0.5f32);
-/// Slider::new(cx, value)
-///     .on_change(move |cx, val| {
-///         value.set(cx, val);
-///     });
+/// // Static value
+/// Slider::new(cx, 0.5f32);
+///
+/// // Reactive with two-way binding
+/// let value = cx.state(0.5f32);
+/// Slider::new(cx, value).two_way();
 /// ```
 ///
 /// ## Slider with Label
 /// ```
 /// # use vizia_core::prelude::*;
 /// # let mut cx = &mut Context::default();
-/// # let value = cx.state(0.5f32);
+/// let value = cx.state(0.5f32);
 /// let value_label = cx.derived({
 ///     let value = value;
 ///     move |store| format!("{:.2}", *value.get(store))
 /// });
 /// HStack::new(cx, |cx|{
-///     Slider::new(cx, value)
-///         .on_change(move |cx, val| {
-///             value.set(cx, val);
-///         });
+///     Slider::new(cx, value).two_way();
 ///     Label::new(cx, value_label);
 /// });
 /// ```
@@ -55,16 +51,16 @@ pub struct Slider {
 impl Slider {
     /// Creates a new slider bound to the given signal.
     ///
+    /// Use `.two_way()` for automatic signal synchronization.
+    ///
     /// ```
     /// # use vizia_core::prelude::*;
     /// # let mut cx = &mut Context::default();
     /// # let value = cx.state(0.5f32);
-    /// Slider::new(cx, value)
-    ///     .on_change(move |cx, val| {
-    ///         value.set(cx, val);
-    ///     });
+    /// Slider::new(cx, value).two_way();
     /// ```
-    pub fn new(cx: &mut Context, value: Signal<f32>) -> Handle<Self> {
+    pub fn new(cx: &mut Context, value: impl Res<f32> + 'static) -> Handle<Self> {
+        let value = value.into_signal(cx);
         let range = cx.state(0.0f32..1.0f32);
         let orientation = cx.state(Orientation::Horizontal);
 
@@ -211,9 +207,7 @@ impl View for Slider {
                     let posy = cx.cache.get_posy(current);
 
                     let mut dx = match *self.orientation.get(cx) {
-                        Orientation::Horizontal => {
-                            (cx.mouse.left.pos_down.0 - posx) / width
-                        }
+                        Orientation::Horizontal => (cx.mouse.left.pos_down.0 - posx) / width,
 
                         Orientation::Vertical => {
                             (height - (cx.mouse.left.pos_down.1 - posy)) / height
@@ -258,13 +252,9 @@ impl View for Slider {
                     let posy = cx.cache.get_posy(current);
 
                     let mut dx = match *self.orientation.get(cx) {
-                        Orientation::Horizontal => {
-                            (*x - posx) / width
-                        }
+                        Orientation::Horizontal => (*x - posx) / width,
 
-                        Orientation::Vertical => {
-                            (height - (*y - posy)) / height
-                        }
+                        Orientation::Vertical => (height - (*y - posy)) / height,
                     };
 
                     dx = dx.clamp(0.0, 1.0);
@@ -405,9 +395,7 @@ impl Handle<'_, Slider> {
     /// # let value = cx.state(0.5f32);
     /// Slider::new(cx, value)
     ///     .range(-20.0..50.0)
-    ///     .on_change(move |cx, val| {
-    ///         value.set(cx, val);
-    ///     });
+    ///     .two_way();
     /// ```
     pub fn range(self, range: Range<f32>) -> Self {
         self.modify2(|slider, cx| {
@@ -422,11 +410,10 @@ impl Handle<'_, Slider> {
     /// # use vizia_core::prelude::*;
     /// # let mut cx = &mut Context::default();
     /// # let value = cx.state(0.5f32);
+    /// # let orientation = cx.state(Orientation::Vertical);
     /// Slider::new(cx, value)
-    ///     .orientation(Orientation::Vertical)
-    ///     .on_change(move |cx, val| {
-    ///         value.set(cx, val);
-    ///     });
+    ///     .orientation(orientation)
+    ///     .two_way();
     /// ```
     pub fn orientation(mut self, orientation: Signal<Orientation>) -> Self {
         let is_vertical = self.context().derived({
@@ -450,9 +437,7 @@ impl Handle<'_, Slider> {
     /// # let value = cx.state(0.5f32);
     /// Slider::new(cx, value)
     ///     .step(0.1)
-    ///     .on_change(move |cx, val| {
-    ///         value.set(cx, val);
-    ///     });
+    ///     .two_way();
     /// ```
     pub fn step(self, step: f32) -> Self {
         self.modify(|slider| {
@@ -468,9 +453,7 @@ impl Handle<'_, Slider> {
     /// # let value = cx.state(0.5f32);
     /// Slider::new(cx, value)
     ///     .keyboard_fraction(0.05)
-    ///     .on_change(move |cx, val| {
-    ///         value.set(cx, val);
-    ///     });
+    ///     .two_way();
     /// ```
     pub fn keyboard_fraction(self, keyboard_fraction: f32) -> Self {
         self.modify(|slider| {

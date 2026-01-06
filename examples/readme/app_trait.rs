@@ -10,7 +10,7 @@ impl App for Counter {
     }
 
     fn on_build(self, cx: &mut Context) -> Self {
-        let doubled = cx.derived(move |s| self.count.get(s) * 2);
+        let doubled = self.count.drv(cx, |v, _| v * 2);
 
         VStack::new(cx, move |cx| {
             Label::new(cx, self.count);

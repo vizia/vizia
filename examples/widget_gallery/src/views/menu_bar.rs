@@ -6,7 +6,7 @@ use vizia::icons::{ICON_CLIPBOARD, ICON_COPY, ICON_CUT};
 use crate::DemoRegion;
 
 pub fn menu_bar(cx: &mut Context) {
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(cx, "# MenuBar");
 
         Divider::new(cx);
@@ -15,7 +15,7 @@ pub fn menu_bar(cx: &mut Context) {
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 MenuBar::new(cx, |cx| {
                     Submenu::new(
                         cx,
@@ -25,7 +25,7 @@ pub fn menu_bar(cx: &mut Context) {
                                 cx,
                                 |_| debug!("New"),
                                 |cx| {
-                                    HStack::new(cx, |cx| {
+                                    HStack::new(cx, move |cx| {
                                         Label::new(cx, "New");
                                         Label::new(cx, "Ctrl + N").class("shortcut");
                                     })
@@ -35,7 +35,7 @@ pub fn menu_bar(cx: &mut Context) {
                                 cx,
                                 |_| debug!("Open"),
                                 |cx| {
-                                    HStack::new(cx, |cx| {
+                                    HStack::new(cx, move |cx| {
                                         Label::new(cx, "Open");
                                         Label::new(cx, "Ctrl + O").class("shortcut");
                                     })
@@ -97,7 +97,7 @@ pub fn menu_bar(cx: &mut Context) {
                                 cx,
                                 |_| debug!("Cut"),
                                 |cx| {
-                                    HStack::new(cx, |cx| {
+                                    HStack::new(cx, move |cx| {
                                         Svg::new(cx, ICON_CUT).class("icon");
                                         Label::new(cx, "Cut");
                                     })
@@ -107,7 +107,7 @@ pub fn menu_bar(cx: &mut Context) {
                                 cx,
                                 |_| debug!("Copy"),
                                 |cx| {
-                                    HStack::new(cx, |cx| {
+                                    HStack::new(cx, move |cx| {
                                         Svg::new(cx, ICON_COPY).class("icon");
                                         Label::new(cx, "Copy");
                                     })
@@ -117,7 +117,7 @@ pub fn menu_bar(cx: &mut Context) {
                                 cx,
                                 |_| debug!("Paste"),
                                 |cx| {
-                                    HStack::new(cx, |cx| {
+                                    HStack::new(cx, move |cx| {
                                         Svg::new(cx, ICON_CLIPBOARD).class("icon");
                                         Label::new(cx, "Paste");
                                     })
@@ -200,7 +200,7 @@ pub fn menu_bar(cx: &mut Context) {
                 cx,
                 |_| debug!("New"),
                 |cx| {
-                    HStack::new(cx, |cx| {
+                    HStack::new(cx, move |cx| {
                         Label::new(cx, "New");
                         Label::new(cx, "Ctrl + N").class("shortcut");
                     })
@@ -210,7 +210,7 @@ pub fn menu_bar(cx: &mut Context) {
                 cx,
                 |_| debug!("Open"),
                 |cx| {
-                    HStack::new(cx, |cx| {
+                    HStack::new(cx, move |cx| {
                         Label::new(cx, "Open");
                         Label::new(cx, "Ctrl + O").class("shortcut");
                     })
@@ -268,7 +268,7 @@ pub fn menu_bar(cx: &mut Context) {
                 cx,
                 |_| debug!("Cut"),
                 |cx| {
-                    HStack::new(cx, |cx| {
+                    HStack::new(cx, move |cx| {
                         Svg::new(cx, ICON_CUT).class("icon");
                         Label::new(cx, "Cut");
                     })
@@ -278,7 +278,7 @@ pub fn menu_bar(cx: &mut Context) {
                 cx,
                 |_| debug!("Copy"),
                 |cx| {
-                    HStack::new(cx, |cx| {
+                    HStack::new(cx, move |cx| {
                         Svg::new(cx, ICON_COPY).class("icon");
                         Label::new(cx, "Copy");
                     })
@@ -288,7 +288,7 @@ pub fn menu_bar(cx: &mut Context) {
                 cx,
                 |_| debug!("Paste"),
                 |cx| {
-                    HStack::new(cx, |cx| {
+                    HStack::new(cx, move |cx| {
                         Svg::new(cx, ICON_CLIPBOARD).class("icon");
                         Label::new(cx, "Paste");
                     })

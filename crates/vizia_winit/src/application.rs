@@ -44,7 +44,7 @@ use winit::{
 // use raw_window_handle::{HasRawDisplayHandle, RawDisplayHandle};
 use vizia_window::{Anchor, AnchorTarget, WindowPosition};
 
-pub use super::application_trait::WinitApp;
+pub use super::application_trait::{window, WindowConfigExt, WinitApp};
 
 #[derive(Debug)]
 pub enum UserEvent {
@@ -136,7 +136,7 @@ impl Application {
         app
     }
 
-    pub fn new_with_state<F, T>(content: F) -> (Self, T)
+    pub(crate) fn new_with_state<F, T>(content: F) -> (Self, T)
     where
         F: 'static + FnOnce(&mut Context) -> T,
     {
@@ -905,138 +905,130 @@ impl ApplicationHandler<UserEvent> for Application {
 }
 
 impl WindowModifiers for Application {
-    fn title<T: ToString>(mut self, title: Signal<T>) -> Self {
-        self.window_description.title = apply_title_affixes(&title.get(&self.cx.0).to_string());
+    fn title<T: ToString + 'static>(mut self, title: impl Res<T> + 'static) -> Self {
+        self.window_description.title = apply_title_affixes(&title.resolve(&self.cx.0).to_string());
 
-        Binding::new(&mut self.cx.0, title, move |cx| {
+        title.set_or_bind(&mut self.cx.0, Entity::root(), move |cx, title| {
             cx.with_current(Entity::root(), |cx| {
-                cx.emit(WindowEvent::SetTitle(apply_title_affixes(
-                    &title.get(cx).to_string(),
-                )));
+                cx.emit(WindowEvent::SetTitle(apply_title_affixes(&title.resolve(cx).to_string())));
             });
         });
 
         self
     }
 
-    fn inner_size<S: Into<WindowSize> + Clone>(mut self, size: Signal<S>) -> Self {
-        self.window_description.inner_size = size.get(&self.cx.0).clone().into();
+    fn inner_size<S: Into<WindowSize> + Clone>(mut self, size: impl Res<S>) -> Self {
+        self.window_description.inner_size = size.resolve(&self.cx.0).into();
 
-        Binding::new(&mut self.cx.0, size, move |cx| {
+        size.set_or_bind(&mut self.cx.0, Entity::root(), move |cx, size| {
             cx.with_current(Entity::root(), |cx| {
-                cx.emit(WindowEvent::SetSize(size.get(cx).clone().into()));
+                cx.emit(WindowEvent::SetSize(size.resolve(cx).into()));
             });
         });
 
         self
     }
 
-    fn min_inner_size<S: Into<WindowSize> + Clone>(mut self, size: Signal<Option<S>>) -> Self {
-        self.window_description.min_inner_size =
-            size.get(&self.cx.0).as_ref().map(|s| s.clone().into());
+    fn min_inner_size<S: Into<WindowSize> + Clone>(mut self, size: impl Res<Option<S>>) -> Self {
+        self.window_description.min_inner_size = size.resolve(&self.cx.0).map(|s| s.into());
 
-        Binding::new(&mut self.cx.0, size, move |cx| {
+        size.set_or_bind(&mut self.cx.0, Entity::root(), move |cx, size| {
             cx.with_current(Entity::root(), |cx| {
-                cx.emit(WindowEvent::SetMinSize(
-                    size.get(cx).as_ref().map(|s| s.clone().into()),
-                ));
+                cx.emit(WindowEvent::SetMinSize(size.resolve(cx).map(|s| s.into())));
             });
         });
 
         self
     }
 
-    fn max_inner_size<S: Into<WindowSize> + Clone>(mut self, size: Signal<Option<S>>) -> Self {
-        self.window_description.max_inner_size =
-            size.get(&self.cx.0).as_ref().map(|s| s.clone().into());
+    fn max_inner_size<S: Into<WindowSize> + Clone>(mut self, size: impl Res<Option<S>>) -> Self {
+        self.window_description.max_inner_size = size.resolve(&self.cx.0).map(|s| s.into());
 
-        Binding::new(&mut self.cx.0, size, move |cx| {
+        size.set_or_bind(&mut self.cx.0, Entity::root(), move |cx, size| {
             cx.with_current(Entity::root(), |cx| {
-                cx.emit(WindowEvent::SetMaxSize(
-                    size.get(cx).as_ref().map(|s| s.clone().into()),
-                ));
+                cx.emit(WindowEvent::SetMaxSize(size.resolve(cx).map(|s| s.into())));
             });
         });
         self
     }
 
-    fn position<P: Into<WindowPosition> + Clone>(mut self, position: Signal<P>) -> Self {
-        self.window_description.position = Some(position.get(&self.cx.0).clone().into());
+    fn position<P: Into<WindowPosition> + Clone>(mut self, position: impl Res<P>) -> Self {
+        self.window_description.position = Some(position.resolve(&self.cx.0).into());
 
-        Binding::new(&mut self.cx.0, position, move |cx| {
+        position.set_or_bind(&mut self.cx.0, Entity::root(), move |cx, position| {
             cx.with_current(Entity::root(), |cx| {
-                cx.emit(WindowEvent::SetPosition(position.get(cx).clone().into()));
+                cx.emit(WindowEvent::SetPosition(position.resolve(cx).into()));
             });
         });
 
         self
     }
 
-    fn offset<P: Into<WindowPosition> + Clone>(mut self, offset: Signal<P>) -> Self {
-        self.window_description.offset = Some(offset.get(&self.cx.0).clone().into());
+    fn offset<P: Into<WindowPosition> + Clone>(mut self, offset: impl Res<P>) -> Self {
+        self.window_description.offset = Some(offset.resolve(&self.cx.0).into());
 
         self
     }
 
-    fn anchor<P: Into<Anchor> + Clone>(mut self, anchor: Signal<P>) -> Self {
-        self.window_description.anchor = Some(anchor.get(&self.cx.0).clone().into());
+    fn anchor<P: Into<Anchor> + Clone>(mut self, anchor: impl Res<P>) -> Self {
+        self.window_description.anchor = Some(anchor.resolve(&self.cx.0).into());
 
         self
     }
 
-    fn anchor_target<P: Into<AnchorTarget> + Clone>(mut self, anchor_target: Signal<P>) -> Self {
-        self.window_description.anchor_target = Some(anchor_target.get(&self.cx.0).clone().into());
+    fn anchor_target<P: Into<AnchorTarget> + Clone>(mut self, anchor_target: impl Res<P>) -> Self {
+        self.window_description.anchor_target = Some(anchor_target.resolve(&self.cx.0).into());
 
         self
     }
 
-    fn parent_anchor<P: Into<Anchor> + Clone>(mut self, parent_anchor: Signal<P>) -> Self {
-        self.window_description.parent_anchor = Some(parent_anchor.get(&self.cx.0).clone().into());
+    fn parent_anchor<P: Into<Anchor> + Clone>(mut self, parent_anchor: impl Res<P>) -> Self {
+        self.window_description.parent_anchor = Some(parent_anchor.resolve(&self.cx.0).into());
 
         self
     }
 
-    fn resizable(mut self, flag: Signal<bool>) -> Self {
-        self.window_description.resizable = *flag.get(&self.cx.0);
+    fn resizable(mut self, flag: impl Res<bool>) -> Self {
+        self.window_description.resizable = flag.resolve(&self.cx.0);
 
-        Binding::new(&mut self.cx.0, flag, move |cx| {
+        flag.set_or_bind(&mut self.cx.0, Entity::root(), move |cx, flag| {
             cx.with_current(Entity::root(), |cx| {
-                cx.emit(WindowEvent::SetResizable(*flag.get(cx)));
+                cx.emit(WindowEvent::SetResizable(flag.resolve(cx)));
             });
         });
 
         self
     }
 
-    fn minimized(mut self, flag: Signal<bool>) -> Self {
-        self.window_description.minimized = *flag.get(&self.cx.0);
+    fn minimized(mut self, flag: impl Res<bool>) -> Self {
+        self.window_description.minimized = flag.resolve(&self.cx.0);
 
-        Binding::new(&mut self.cx.0, flag, move |cx| {
+        flag.set_or_bind(&mut self.cx.0, Entity::root(), move |cx, flag| {
             cx.with_current(Entity::root(), |cx| {
-                cx.emit(WindowEvent::SetMinimized(*flag.get(cx)));
+                cx.emit(WindowEvent::SetMinimized(flag.resolve(cx)));
             });
         });
         self
     }
 
-    fn maximized(mut self, flag: Signal<bool>) -> Self {
-        self.window_description.maximized = *flag.get(&self.cx.0);
+    fn maximized(mut self, flag: impl Res<bool>) -> Self {
+        self.window_description.maximized = flag.resolve(&self.cx.0);
 
-        Binding::new(&mut self.cx.0, flag, move |cx| {
+        flag.set_or_bind(&mut self.cx.0, Entity::root(), move |cx, flag| {
             cx.with_current(Entity::root(), |cx| {
-                cx.emit(WindowEvent::SetMaximized(*flag.get(cx)));
+                cx.emit(WindowEvent::SetMaximized(flag.resolve(cx)));
             });
         });
 
         self
     }
 
-    fn visible(mut self, flag: Signal<bool>) -> Self {
-        self.window_description.visible = *flag.get(&self.cx.0);
+    fn visible(mut self, flag: impl Res<bool>) -> Self {
+        self.window_description.visible = flag.resolve(&self.cx.0);
 
-        Binding::new(&mut self.cx.0, flag, move |cx| {
+        flag.set_or_bind(&mut self.cx.0, Entity::root(), move |cx, flag| {
             cx.with_current(Entity::root(), |cx| {
-                cx.emit(WindowEvent::SetVisible(*flag.get(cx)));
+                cx.emit(WindowEvent::SetVisible(flag.resolve(cx)));
             });
         });
 
@@ -1093,9 +1085,10 @@ fn apply_window_description(description: &WindowDescription) -> WindowAttributes
     let mut window_attributes = winit::window::Window::default_attributes();
     let title = apply_title_affixes(&description.title);
 
-    window_attributes = window_attributes.with_title(title).with_inner_size(
-        LogicalSize::new(description.inner_size.width, description.inner_size.height),
-    );
+    window_attributes = window_attributes.with_title(title).with_inner_size(LogicalSize::new(
+        description.inner_size.width,
+        description.inner_size.height,
+    ));
 
     if let Some(min_inner_size) = description.min_inner_size {
         window_attributes = window_attributes

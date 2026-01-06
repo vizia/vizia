@@ -27,7 +27,7 @@ pub fn radiobutton(cx: &mut Context) {
     let gap_8 = cx.state(Pixels(8.0));
     let gap_4 = cx.state(Pixels(4.0));
 
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(cx, "# Radiobutton
 A radio button can be used to select an option from a set of options.        
         ");
@@ -36,19 +36,10 @@ A radio button can be used to select an option from a set of options.
 
         DemoRegion::new(
             cx,
-            |cx| {
-                let first_selected = cx.derived({
-                    let selected = selected;
-                    move |store| *selected.get(store) == Options::First
-                });
-                let second_selected = cx.derived({
-                    let selected = selected;
-                    move |store| *selected.get(store) == Options::Second
-                });
-                let third_selected = cx.derived({
-                    let selected = selected;
-                    move |store| *selected.get(store) == Options::Third
-                });
+            move |cx| {
+                let first_selected = selected.drv(cx, |v, _| *v == Options::First);
+                let second_selected = selected.drv(cx, |v, _| *v == Options::Second);
+                let third_selected = selected.drv(cx, |v, _| *v == Options::Third);
 
                 RadioButton::new(cx, first_selected)
                     .on_select(move |cx| selected.set(cx, Options::First));
@@ -59,18 +50,9 @@ A radio button can be used to select an option from a set of options.
             },
             r#"let selected = cx.state(Options::First);
 
-let first_selected = cx.derived({
-    let selected = selected;
-    move |store| *selected.get(store) == Options::First
-});
-let second_selected = cx.derived({
-    let selected = selected;
-    move |store| *selected.get(store) == Options::Second
-});
-let third_selected = cx.derived({
-    let selected = selected;
-    move |store| *selected.get(store) == Options::Third
-});
+let first_selected = selected.drv(cx, |v, _| *v == Options::First);
+let second_selected = selected.drv(cx, |v, _| *v == Options::Second);
+let third_selected = selected.drv(cx, |v, _| *v == Options::Third);
 
 RadioButton::new(cx, first_selected)
     .on_select(move |cx| selected.set(cx, Options::First));
@@ -86,13 +68,10 @@ The describing modifier can be used to link a label to a particular radiobutton.
 
         DemoRegion::new(
             cx,
-            |cx| {
-                VStack::new(cx, |cx|{
-                    HStack::new(cx, |cx| {
-                        let first_selected = cx.derived({
-                            let selected = selected;
-                            move |store| *selected.get(store) == Options::First
-                        });
+            move |cx| {
+                VStack::new(cx, move |cx|{
+                    HStack::new(cx, move |cx| {
+                        let first_selected = selected.drv(cx, |v, _| *v == Options::First);
                         RadioButton::new(cx, first_selected)
                             .on_select(move |cx| selected.set(cx, Options::First))
                             .id("r1");
@@ -102,11 +81,8 @@ The describing modifier can be used to link a label to a particular radiobutton.
                     .alignment(align_center)
                     .horizontal_gap(gap_8);
 
-                    HStack::new(cx, |cx| {
-                        let second_selected = cx.derived({
-                            let selected = selected;
-                            move |store| *selected.get(store) == Options::Second
-                        });
+                    HStack::new(cx, move |cx| {
+                        let second_selected = selected.drv(cx, |v, _| *v == Options::Second);
                         RadioButton::new(cx, second_selected)
                             .on_select(move |cx| selected.set(cx, Options::Second))
                             .id("r2");
@@ -116,11 +92,8 @@ The describing modifier can be used to link a label to a particular radiobutton.
                     .alignment(align_center)
                     .horizontal_gap(gap_8);
 
-                    HStack::new(cx, |cx| {
-                        let third_selected = cx.derived({
-                            let selected = selected;
-                            move |store| *selected.get(store) == Options::Third
-                        });
+                    HStack::new(cx, move |cx| {
+                        let third_selected = selected.drv(cx, |v, _| *v == Options::Third);
                         RadioButton::new(cx, third_selected)
                             .on_select(move |cx| selected.set(cx, Options::Third))
                             .id("r3");
@@ -136,12 +109,9 @@ The describing modifier can be used to link a label to a particular radiobutton.
             },
             r#"let selected = cx.state(Options::First);
 
-VStack::new(cx, |cx| {
-    HStack::new(cx, |cx| {
-        let first_selected = cx.derived({
-            let selected = selected;
-            move |store| *selected.get(store) == Options::First
-        });
+VStack::new(cx, move |cx| {
+    HStack::new(cx, move |cx| {
+        let first_selected = selected.drv(cx, |v, _| *v == Options::First);
         RadioButton::new(cx, first_selected)
             .on_select(move |cx| selected.set(cx, Options::First))
             .id("r1");

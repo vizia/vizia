@@ -21,18 +21,25 @@ pub struct XYPad {
 }
 
 impl XYPad {
-    /// Creates a new [XYPad] view bound to the given signal.
+    /// Creates a new [XYPad] view bound to the given value.
+    ///
+    /// Accepts either a plain tuple or a `Signal<(f32, f32)>` for reactive state.
+    /// Use `.two_way()` for automatic signal updates, or `.on_change()` for custom handling.
+    ///
+    /// # Examples
     ///
     /// ```
     /// # use vizia_core::prelude::*;
     /// # let mut cx = &mut Context::default();
+    /// // Static value
+    /// XYPad::new(cx, (0.5f32, 0.5f32));
+    ///
+    /// // Reactive with two-way binding
     /// # let xy = cx.state((0.5f32, 0.5f32));
-    /// XYPad::new(cx, xy)
-    ///     .on_change(move |cx, x, y| {
-    ///         xy.set(cx, (x, y));
-    ///     });
+    /// XYPad::new(cx, xy).two_way();
     /// ```
-    pub fn new(cx: &mut Context, value: Signal<(f32, f32)>) -> Handle<Self> {
+    pub fn new(cx: &mut Context, value: impl Res<(f32, f32)> + 'static) -> Handle<Self> {
+        let value = value.into_signal(cx);
         let position_absolute = cx.state(PositionType::Absolute);
         let thumb_size = cx.state(Pixels(10.0));
         let pad_size = cx.state(Pixels(200.0));

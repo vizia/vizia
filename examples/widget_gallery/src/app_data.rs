@@ -1,5 +1,6 @@
 use vizia::prelude::*;
 
+#[derive(Clone, Copy)]
 pub struct AppData {
     pub theme_options: Signal<Vec<&'static str>>,
     pub selected_theme: Signal<usize>,

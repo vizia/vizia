@@ -67,7 +67,7 @@ impl App for GalleryApp {
             let _ = c.emit(AppEvent::ImagesListed(images));
         });
 
-        let has_images = cx.derived(move |s| !images.get(s).is_empty());
+        let has_images = images.drv(cx, |v, _| !v.is_empty());
 
         Binding::new(cx, has_images, move |cx| {
             if *has_images.get(cx) {
@@ -75,15 +75,10 @@ impl App for GalleryApp {
                     HStack::new(cx, move |cx| {
                         let ids = *item.get(cx);
                         for id in ids {
-                            let is_loaded = cx.derived({
-                                let thumbnails = thumbnails;
-                                move |s| {
-                                    thumbnails
-                                        .get(s)
-                                        .get(&id)
-                                        .map(|(_, status)| *status == Status::Loaded)
-                                        .unwrap_or(false)
-                                }
+                            let is_loaded = thumbnails.drv(cx, move |v, _| {
+                                v.get(&id)
+                                    .map(|(_, status)| *status == Status::Loaded)
+                                    .unwrap_or(false)
                             });
                             HStack::new(cx, move |cx| {
                                 let src = cx.state(id.0.to_string());
@@ -104,7 +99,7 @@ impl App for GalleryApp {
             }
         });
 
-        let show_original = cx.derived(move |s| original.get(s).is_some());
+        let show_original = original.drv(cx, |v, _| v.is_some());
 
         Element::new(cx)
             .on_press(|cx| cx.emit(AppEvent::HideOriginal))

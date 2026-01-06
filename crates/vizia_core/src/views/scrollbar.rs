@@ -21,16 +21,20 @@ enum ScrollBarEvent {
 
 impl Scrollbar {
     /// Create a new [Scrollbar] view.
+    ///
+    /// Accepts either plain values or signals for reactive state.
     pub fn new<F>(
         cx: &mut Context,
-        value: Signal<f32>,
-        ratio: Signal<f32>,
+        value: impl Res<f32> + 'static,
+        ratio: impl Res<f32> + 'static,
         orientation: Orientation,
         callback: F,
     ) -> Handle<Self>
     where
         F: 'static + Fn(&mut EventContext, f32),
     {
+        let value = value.into_signal(cx);
+        let ratio = ratio.into_signal(cx);
         let focusable = cx.state(true);
         let position_absolute = cx.state(PositionType::Absolute);
         let pointer_events = cx.state(PointerEvents::Auto);
@@ -67,8 +71,10 @@ impl Scrollbar {
             dragging: false,
         }
         .build(cx, move |cx| {
-            let thumb =
-                Element::new(cx).class("thumb").focusable(focusable).position_type(position_absolute);
+            let thumb = Element::new(cx)
+                .class("thumb")
+                .focusable(focusable)
+                .position_type(position_absolute);
             let _thumb = match orientation {
                 Orientation::Horizontal => thumb.left(left).right(right).width(width),
                 Orientation::Vertical => thumb.top(top).bottom(bottom).height(height),

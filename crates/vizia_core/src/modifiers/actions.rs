@@ -566,14 +566,15 @@ impl<V: View> ActionModifiers<V> for Handle<'_, V> {
         let (_, menu_visible) = build_modal_model(self.cx, entity);
 
         self.cx.with_current(entity, |cx| {
-            (content)(cx)
-                .toggle_class("vis", menu_visible)
-                .bind(menu_visible, |mut handle, vis| {
+            (content)(cx).toggle_class("vis", menu_visible).bind(
+                menu_visible,
+                |mut handle, vis| {
                     let is_visible = *vis.get(&handle);
                     if is_visible {
                         handle.context().emit(WindowEvent::GeometryChanged(GeoChanged::empty()));
                     }
-                });
+                },
+            );
         });
 
         self
