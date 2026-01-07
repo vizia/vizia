@@ -27,6 +27,10 @@ struct TimerApp {
 }
 
 impl App for TimerApp {
+    fn app_name() -> &'static str {
+        "Timer"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             total_time: cx.state(0.0f32),
@@ -88,7 +92,7 @@ impl App for TimerApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Timer").inner_size((300, 150)))
+        window(|app| app.inner_size((300, 150)))
     }
 }
 

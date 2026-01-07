@@ -30,9 +30,9 @@ impl App for DerivedStateApp {
 
             HStack::new(cx, move |cx| {
                 Button::new(cx, |cx| Label::new(cx, "-"))
-                    .on_press(move |cx| number.update(cx, |n| *n -= 1));
+                    .on_press(move |cx| number.upd(cx, |n| *n -= 1));
                 Button::new(cx, |cx| Label::new(cx, "+"))
-                    .on_press(move |cx| number.update(cx, |n| *n += 1));
+                    .on_press(move |cx| number.upd(cx, |n| *n += 1));
             });
         });
 

@@ -3,6 +3,10 @@ use vizia::prelude::*;
 struct MarkdownApp;
 
 impl App for MarkdownApp {
+    fn app_name() -> &'static str {
+        "Markdown"
+    }
+
     fn new(_cx: &mut Context) -> Self {
         Self
     }
@@ -24,7 +28,7 @@ impl App for MarkdownApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Markdown"))
+        window(|app| app)
     }
 }
 

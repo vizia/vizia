@@ -5,6 +5,10 @@ use vizia::prelude::*;
 struct DividerApp;
 
 impl App for DividerApp {
+    fn app_name() -> &'static str {
+        "Divider"
+    }
+
     fn new(_cx: &mut Context) -> Self {
         Self
     }
@@ -26,7 +30,7 @@ impl App for DividerApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Divider").inner_size((350, 300)))
+        window(|app| app.inner_size((350, 300)))
     }
 }
 

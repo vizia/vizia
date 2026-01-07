@@ -7,6 +7,10 @@ struct TabviewApp {
 }
 
 impl App for TabviewApp {
+    fn app_name() -> &'static str {
+        "Tabview"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             tabs: cx.state(vec!["Tab1", "Tab2", "Tab3", "Tab4", "Tab5", "Tab6"]),
@@ -55,7 +59,7 @@ impl App for TabviewApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Tabview"))
+        window(|app| app)
     }
 }
 

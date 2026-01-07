@@ -5,6 +5,10 @@ struct CounterApp {
 }
 
 impl App for CounterApp {
+    fn app_name() -> &'static str {
+        "Counter"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             count: cx.state(0i32),
@@ -15,10 +19,10 @@ impl App for CounterApp {
         let count = self.count;
         HStack::new(cx, move |cx| {
             Button::new(cx, |cx| Label::new(cx, "Increment"))
-                .on_press(move |cx| count.update(cx, |value| *value += 1));
+                .on_press(move |cx| count.upd(cx, |value| *value += 1));
 
             Button::new(cx, |cx| Label::new(cx, "Decrement"))
-                .on_press(move |cx| count.update(cx, |value| *value -= 1));
+                .on_press(move |cx| count.upd(cx, |value| *value -= 1));
 
             Label::new(cx, count);
         })
@@ -29,7 +33,7 @@ impl App for CounterApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Counter").inner_size((400, 100)))
+        window(|app| app.inner_size((400, 100)))
     }
 }
 

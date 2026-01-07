@@ -8,6 +8,10 @@ struct ComboboxApp {
 }
 
 impl App for ComboboxApp {
+    fn app_name() -> &'static str {
+        "Combobox"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             options: cx.state(vec![
@@ -37,7 +41,7 @@ impl App for ComboboxApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Combobox").inner_size((400, 400)))
+        window(|app| app.inner_size((400, 400)))
     }
 }
 

@@ -133,7 +133,7 @@ impl Handle<'_, Label> {
     /// # let text = cx.state("hello");
     /// # let value = cx.state(false);
     /// Checkbox::new(cx, value)
-    ///     .on_toggle(move |cx| value.update(cx, |v| *v = !*v))
+    ///     .on_toggle(move |cx| value.upd(cx, |v| *v = !*v))
     ///     .id("checkbox_identifier");
     /// Label::new(cx, text).describing("checkbox_identifier");
     /// ```

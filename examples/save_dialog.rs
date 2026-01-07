@@ -41,6 +41,10 @@ struct SaveDialogApp {
 
 #[cfg(not(feature = "baseview"))]
 impl App for SaveDialogApp {
+    fn app_name() -> &'static str {
+        "Save Dialog"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             is_saved: cx.state(false),
@@ -131,7 +135,7 @@ impl App for SaveDialogApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Save Dialog"))
+        window(|app| app)
     }
 }
 

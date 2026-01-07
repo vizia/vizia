@@ -1,0 +1,1 @@
+make sure within docs or book that user knows the diff between direct events and enumed events structure, by comparing counter (direct) and counter_signal (enumed) examples 

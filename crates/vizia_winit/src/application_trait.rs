@@ -5,6 +5,7 @@ use vizia_core::{
 };
 
 use crate::application::{Application, ApplicationError};
+use crate::window_modifiers::WindowModifiers;
 
 /// Type alias for the window configuration closure.
 type WindowConfigFn = Box<dyn FnOnce(Application) -> Application>;
@@ -153,7 +154,12 @@ pub trait WinitApp: Sized + 'static {
 
 impl<T: App + Model> WinitApp for T {
     fn run() -> Result<(), ApplicationError> {
-        let (application, config) = Application::new_with_state(|cx| {
+        let app_name = T::app_name();
+
+        let (application, config) = Application::new_with_state(move |cx| {
+            // Configure persistence with app name BEFORE creating state
+            cx.configure_persistence(app_name);
+
             let mut app = T::new(cx);
             app = app.on_build(cx);
             let config = app.window_config();
@@ -161,11 +167,14 @@ impl<T: App + Model> WinitApp for T {
             config
         });
 
+        // Set default window title from app_name (can be overridden by window_config)
+        let application = application.title(app_name);
+
         // Apply window and idle configuration if provided
         let application = if let Ok(winit_config) = config.0.downcast::<WinitConfig>() {
             let mut app = application;
 
-            // Apply window configuration
+            // Apply window configuration (may override default title)
             if let Some(configure) = winit_config.window {
                 app = configure(app);
             }

@@ -114,24 +114,37 @@ Run with [`cargo run --example readme_counter`](examples/readme/counter.rs)
 ```rust
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
-        let count = cx.state(0i32);
+struct Counter {
+    count: Signal<i32>,
+}
 
+impl App for Counter {
+    fn app_name() -> &'static str { "Counter" }
+
+    fn new(cx: &mut Context) -> Self {
+        Self { count: cx.state(0) }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
         HStack::new(cx, move |cx| {
             Button::new(cx, |cx| Label::static_text(cx, "-"))
-                .on_press(move |cx| count.update(cx, |n| *n -= 1));
+                .on_press(move |cx| self.count.upd(cx, |n| *n -= 1));
 
-            Label::new(cx, count);
+            Label::new(cx, self.count);
 
             Button::new(cx, |cx| Label::static_text(cx, "+"))
-                .on_press(move |cx| count.update(cx, |n| *n += 1));
+                .on_press(move |cx| self.count.upd(cx, |n| *n += 1));
         });
+        self
+    }
 
-        (cx.state("Counter"), cx.state((200, 100)))
-    });
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.inner_size((200, 100)))
+    }
+}
 
-    app.title(title).inner_size(size).run()
+fn main() -> Result<(), ApplicationError> {
+    Counter::run()
 }
 ```
 
@@ -144,32 +157,45 @@ Run with [`cargo run --example readme_derived_state`](examples/readme/derived_st
 ```rust
 use vizia::prelude::*;
 
-fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
-        let number = cx.state(5i32);
+struct DerivedDemo {
+    number: Signal<i32>,
+}
 
+impl App for DerivedDemo {
+    fn app_name() -> &'static str { "Derived State" }
+
+    fn new(cx: &mut Context) -> Self {
+        Self { number: cx.state(5) }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
         // Derived signals recompute automatically
-        let squared = number.drv(cx, |v, _| v * v);
-        let is_even = number.drv(cx, |v, _| v % 2 == 0);
+        let squared = self.number.drv(cx, |v, _| v * v);
+        let is_even = self.number.drv(cx, |v, _| v % 2 == 0);
         let parity = is_even.drv(cx, |v, _| if *v { "even" } else { "odd" });
 
         VStack::new(cx, move |cx| {
-            Label::new(cx, number);
+            Label::new(cx, self.number);
             Label::new(cx, squared);
             Label::new(cx, parity);
 
             HStack::new(cx, move |cx| {
                 Button::new(cx, |cx| Label::static_text(cx, "-"))
-                    .on_press(move |cx| number.update(cx, |n| *n -= 1));
+                    .on_press(move |cx| self.number.upd(cx, |n| *n -= 1));
                 Button::new(cx, |cx| Label::static_text(cx, "+"))
-                    .on_press(move |cx| number.update(cx, |n| *n += 1));
+                    .on_press(move |cx| self.number.upd(cx, |n| *n += 1));
             });
         });
+        self
+    }
 
-        (cx.state("Derived State"), cx.state((300, 200)))
-    });
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.inner_size((300, 200)))
+    }
+}
 
-    app.title(title).inner_size(size).run()
+fn main() -> Result<(), ApplicationError> {
+    DerivedDemo::run()
 }
 ```
 
@@ -185,51 +211,69 @@ use vizia::prelude::*;
 fn celsius_to_fahrenheit(c: f32) -> f32 { c * 9.0 / 5.0 + 32.0 }
 fn fahrenheit_to_celsius(f: f32) -> f32 { (f - 32.0) * 5.0 / 9.0 }
 
-fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
-        let celsius = cx.state(20.0f32);
-        let fahrenheit = cx.state(celsius_to_fahrenheit(20.0));
+struct TempConverter {
+    celsius: Signal<f32>,
+    fahrenheit: Signal<f32>,
+}
 
+impl App for TempConverter {
+    fn app_name() -> &'static str { "Temperature Converter" }
+
+    fn new(cx: &mut Context) -> Self {
+        Self {
+            celsius: cx.state(20.0),
+            fahrenheit: cx.state(celsius_to_fahrenheit(20.0)),
+        }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
         HStack::new(cx, |cx| {
-            Textbox::new(cx, celsius)
+            Textbox::new(cx, self.celsius)
                 .on_submit(move |cx, val, _| {
-                    fahrenheit.set(cx, celsius_to_fahrenheit(val));
+                    self.fahrenheit.set(cx, celsius_to_fahrenheit(val));
                 });
             Label::static_text(cx, "C");
 
-            Textbox::new(cx, fahrenheit)
+            Textbox::new(cx, self.fahrenheit)
                 .on_submit(move |cx, val, _| {
-                    celsius.set(cx, fahrenheit_to_celsius(val));
+                    self.celsius.set(cx, fahrenheit_to_celsius(val));
                 });
             Label::static_text(cx, "F");
         });
+        self
+    }
 
-        (cx.state("Temperature Converter"), cx.state((400, 100)))
-    });
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.inner_size((400, 100)))
+    }
+}
 
-    app.title(title).inner_size(size).run()
+fn main() -> Result<(), ApplicationError> {
+    TempConverter::run()
 }
 ```
 
-## Custom Views with the App Trait
+## App Trait with Derived State
 
-Encapsulate state and UI in reusable components.
+Encapsulate state and UI with derived computations.
 
 Run with [`cargo run --example readme_app_trait`](examples/readme/app_trait.rs)
 
 ```rust
 use vizia::prelude::*;
 
-struct Counter {
+struct CounterWithDouble {
     count: Signal<i32>,
 }
 
-impl App for Counter {
+impl App for CounterWithDouble {
+    fn app_name() -> &'static str { "App Trait Example" }
+
     fn new(cx: &mut Context) -> Self {
         Self { count: cx.state(0) }
     }
 
-    fn view(self, cx: &mut Context) -> Self {
+    fn on_build(self, cx: &mut Context) -> Self {
         let doubled = self.count.drv(cx, |v, _| v * 2);
 
         VStack::new(cx, move |cx| {
@@ -238,23 +282,21 @@ impl App for Counter {
 
             HStack::new(cx, move |cx| {
                 Button::new(cx, |cx| Label::static_text(cx, "Decrement"))
-                    .on_press(move |cx| self.count.update(cx, |n| *n -= 1));
+                    .on_press(move |cx| self.count.upd(cx, |n| *n -= 1));
                 Button::new(cx, |cx| Label::static_text(cx, "Increment"))
-                    .on_press(move |cx| self.count.update(cx, |n| *n += 1));
+                    .on_press(move |cx| self.count.upd(cx, |n| *n += 1));
             });
         });
-
         self
+    }
+
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.inner_size((300, 150)))
     }
 }
 
 fn main() -> Result<(), ApplicationError> {
-    let (app, (title, size)) = Application::new_with_state(|cx| {
-        Counter::new(cx).view(cx);
-        (cx.state("App Trait Example"), cx.state((300, 150)))
-    });
-
-    app.title(title).inner_size(size).run()
+    CounterWithDouble::run()
 }
 ```
 
@@ -266,7 +308,7 @@ fn main() -> Result<(), ApplicationError> {
 | Read value | `sig.get(store)` (in derived) |
 | Safe read | `sig.try_get(store)` (returns `Option`) |
 | Set value | `sig.set(cx, new_value)` |
-| Update value | `sig.update(cx, \|v\| *v += 1)` |
+| Update value | `sig.upd(cx, \|v\| *v += 1)` |
 | Derived state | `sig.drv(cx, \|v, _\| v * 2)` |
 | Bind to view | `Label::new(cx, sig)` |
 | Window props | `app.title(cx.state("Title")).inner_size(cx.state((w, h)))` |
@@ -275,6 +317,11 @@ fn main() -> Result<(), ApplicationError> {
 | Cancelable load | `let h = cx.load_async_cancelable(data, \|\| ...); h.cancel()` |
 | Refresh (stale) | `cx.refresh_async(data, \|\| fetch_data())` |
 | With options | `cx.load_async_with(data, AsyncOptions::patient(), \|\| ...)` |
+| Undoable state | `let sig = cx.state_undoable(initial_value)` |
+| Undo group | `cx.with_undo("desc", \|cx\| { sig.upd(cx, ...) })` |
+| Undo/Redo | `cx.undo()` / `cx.redo()` |
+| Reactive state | `cx.can_undo_signal()` / `cx.can_redo_signal()` |
+| Persistent state | `let sig = cx.state_persistent("key", default)` |
 
 <br />
 

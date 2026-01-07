@@ -82,12 +82,12 @@ impl Handle<'_, ToggleButton> {
     ///
     /// This is a convenience method equivalent to:
     /// ```ignore
-    /// .on_toggle(move |cx| signal.update(cx, |v| *v = !*v))
+    /// .on_toggle(move |cx| signal.upd(cx, |v| *v = !*v))
     /// ```
     pub fn two_way(self) -> Self {
         self.modify(|toggle_button| {
             let signal = toggle_button.value;
-            toggle_button.on_toggle = Some(Box::new(move |cx| signal.update(cx, |v| *v = !*v)));
+            toggle_button.on_toggle = Some(Box::new(move |cx| signal.upd(cx, |v| *v = !*v)));
         })
     }
 }

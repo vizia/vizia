@@ -20,6 +20,10 @@ struct DragDropApp {
 }
 
 impl App for DragDropApp {
+    fn app_name() -> &'static str {
+        "Drag & Drop"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             size_50: cx.state(Pixels(50.0)),
@@ -90,7 +94,7 @@ impl App for DragDropApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Drag & Drop"))
+        window(|app| app)
     }
 }
 

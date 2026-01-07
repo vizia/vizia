@@ -6,6 +6,10 @@ use vizia::prelude::*;
 struct MenuApp;
 
 impl App for MenuApp {
+    fn app_name() -> &'static str {
+        "Menu"
+    }
+
     fn new(_cx: &mut Context) -> Self {
         Self
     }
@@ -78,7 +82,7 @@ impl App for MenuApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Menu"))
+        window(|app| app)
     }
 }
 

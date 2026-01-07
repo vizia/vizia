@@ -21,6 +21,10 @@ struct PopupWindowApp {
 
 #[cfg(not(feature = "baseview"))]
 impl App for PopupWindowApp {
+    fn app_name() -> &'static str {
+        "Main"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             red: cx.state(1.0f32),
@@ -85,7 +89,7 @@ impl App for PopupWindowApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Main").position((100, 100)))
+        window(|app| app.position((100, 100)))
     }
 }
 

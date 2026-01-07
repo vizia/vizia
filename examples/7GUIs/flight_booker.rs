@@ -24,6 +24,10 @@ struct FlightBookerApp {
 }
 
 impl App for FlightBookerApp {
+    fn app_name() -> &'static str {
+        "Flight Booker"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             options: cx.state(vec!["one-way flight", "return flight"]),
@@ -74,7 +78,7 @@ impl App for FlightBookerApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Flight Booker").inner_size((250, 250)))
+        window(|app| app.inner_size((250, 250)))
     }
 }
 

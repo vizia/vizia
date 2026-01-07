@@ -8,6 +8,10 @@ struct RatingApp {
 }
 
 impl App for RatingApp {
+    fn app_name() -> &'static str {
+        "Rating"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             rating1: cx.state(3u32),
@@ -27,7 +31,7 @@ impl App for RatingApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Rating").inner_size((400, 200)))
+        window(|app| app.inner_size((400, 200)))
     }
 }
 

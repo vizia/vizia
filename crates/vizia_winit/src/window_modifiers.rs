@@ -35,12 +35,20 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// let (app, title) = Application::new_with_state(|cx|{
-    ///     let title = cx.state("Vizia Application".to_string());
+    /// Application::new(|cx| {
     ///     // Content here
-    ///     title
-    /// });
-    /// app.title(title).run();
+    /// })
+    /// .title("My Application")
+    /// .run();
+    /// ```
+    ///
+    /// For reactive titles, use the App trait:
+    /// ```no_run,ignore
+    /// impl App for MyApp {
+    ///     fn window_config(&self) -> WindowConfig {
+    ///         window(|app| app.title(self.title_signal))
+    ///     }
+    /// }
     /// ```
     fn title<T: ToString + 'static>(self, title: impl Res<T> + 'static) -> Self;
     /// Sets the inner size of the window to the given value. Accepts a value or signal which can be converted to a [`WindowSize`].
@@ -51,12 +59,11 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// let (app, size) = Application::new_with_state(|cx|{
-    ///     let size = cx.state((300, 300));
+    /// Application::new(|cx| {
     ///     // Content here
-    ///     size
-    /// });
-    /// app.inner_size(size).run();
+    /// })
+    /// .inner_size((800, 600))
+    /// .run();
     /// ```
     fn inner_size<S: Into<WindowSize> + Clone>(self, size: impl Res<S>) -> Self;
     /// Sets the minimum inner size of the window to the given value. Accepts a value or signal of an optional value that can be converted to a [`WindowSize`].
@@ -67,12 +74,11 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// let (app, min_size) = Application::new_with_state(|cx|{
-    ///     let min_size = cx.state(Some((300, 300)));
+    /// Application::new(|cx| {
     ///     // Content here
-    ///     min_size
-    /// });
-    /// app.min_inner_size(min_size).run();
+    /// })
+    /// .min_inner_size(Some((300, 200)))
+    /// .run();
     /// ```
     fn min_inner_size<S: Into<WindowSize> + Clone>(self, size: impl Res<Option<S>>) -> Self;
     /// Sets the maximum inner size of the window to the given value. Accepts a value or signal of an optional value that can be converted to a [`WindowSize`].
@@ -83,26 +89,24 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// let (app, max_size) = Application::new_with_state(|cx|{
-    ///     let max_size = cx.state(Some((1000, 1000)));
+    /// Application::new(|cx| {
     ///     // Content here
-    ///     max_size
-    /// });
-    /// app.max_inner_size(max_size).run();
+    /// })
+    /// .max_inner_size(Some((1920, 1080)))
+    /// .run();
     /// ```
     fn max_inner_size<S: Into<WindowSize> + Clone>(self, size: impl Res<Option<S>>) -> Self;
-    /// Sets the position of the window to the given value. Accepts a value or signal which can be converted to a [`Position`].
+    /// Sets the position of the window to the given value. Accepts a value or signal which can be converted to a [`WindowPosition`].
     ///
     /// # Example
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// let (app, position) = Application::new_with_state(|cx|{
-    ///     let position = cx.state((100, 200));
+    /// Application::new(|cx| {
     ///     // Content here
-    ///     position
-    /// });
-    /// app.position(position).run();
+    /// })
+    /// .position((100, 200))
+    /// .run();
     /// ```
     fn position<P: Into<WindowPosition> + Clone>(self, position: impl Res<P>) -> Self;
 
@@ -120,12 +124,11 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// let (app, resizable) = Application::new_with_state(|cx|{
-    ///     let resizable = cx.state(false);
+    /// Application::new(|cx| {
     ///     // Content here
-    ///     resizable
-    /// });
-    /// app.resizable(resizable).run();
+    /// })
+    /// .resizable(false)
+    /// .run();
     /// ```
     fn resizable(self, flag: impl Res<bool>) -> Self;
     /// Sets whether the window is minimized. Accepts a value or `Signal<bool>`.
@@ -134,12 +137,11 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// let (app, minimized) = Application::new_with_state(|cx|{
-    ///     let minimized = cx.state(true);
+    /// Application::new(|cx| {
     ///     // Content here
-    ///     minimized
-    /// });
-    /// app.minimized(minimized).run();
+    /// })
+    /// .minimized(true)
+    /// .run();
     /// ```
     fn minimized(self, flag: impl Res<bool>) -> Self;
     /// Sets whether the window is maximized. Accepts a value or `Signal<bool>`.
@@ -148,12 +150,11 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// let (app, maximized) = Application::new_with_state(|cx|{
-    ///     let maximized = cx.state(true);
+    /// Application::new(|cx| {
     ///     // Content here
-    ///     maximized
-    /// });
-    /// app.maximized(maximized).run();
+    /// })
+    /// .maximized(true)
+    /// .run();
     /// ```
     fn maximized(self, flag: impl Res<bool>) -> Self;
     /// Sets whether the window is visible. Accepts a value or `Signal<bool>`.
@@ -162,12 +163,11 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// let (app, visible) = Application::new_with_state(|cx|{
-    ///     let visible = cx.state(false);
+    /// Application::new(|cx| {
     ///     // Content here
-    ///     visible
-    /// });
-    /// app.visible(visible).run();
+    /// })
+    /// .visible(false)
+    /// .run();
     /// ```
     fn visible(self, flag: impl Res<bool>) -> Self;
     /// Sets whether the window is transparent. Accepts a boolean value.

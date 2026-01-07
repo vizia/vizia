@@ -142,7 +142,7 @@ impl PickList {
                 let mut event_cx = EventContext::new(cx);
                 display_text.set(&mut event_cx, text);
                 list_len.set(&mut event_cx, len);
-                focused.update(&mut event_cx, |focused| {
+                focused.upd(&mut event_cx, |focused| {
                     if let Some(index) = *focused {
                         if index >= len {
                             *focused = if len > 0 { Some(len - 1) } else { None };
@@ -304,7 +304,7 @@ impl PickList {
                 let mut event_cx = EventContext::new(cx);
                 display_text.set(&mut event_cx, text);
                 list_len.set(&mut event_cx, len);
-                focused.update(&mut event_cx, |focused| {
+                focused.upd(&mut event_cx, |focused| {
                     if let Some(index) = *focused {
                         if index >= len {
                             *focused = if len > 0 { Some(len - 1) } else { None };
@@ -561,7 +561,7 @@ impl View for PickListList {
                     if len == 0 {
                         return;
                     }
-                    self.focused.update(cx, |focused| {
+                    self.focused.upd(cx, |focused| {
                         let next = match *focused {
                             Some(index) => (index + 1).min(len.saturating_sub(1)),
                             None => 0,
@@ -576,7 +576,7 @@ impl View for PickListList {
                     if len == 0 {
                         return;
                     }
-                    self.focused.update(cx, |focused| {
+                    self.focused.upd(cx, |focused| {
                         let next = match *focused {
                             Some(index) => index.saturating_sub(1),
                             None => len.saturating_sub(1),

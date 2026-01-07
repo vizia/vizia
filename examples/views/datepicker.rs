@@ -8,6 +8,10 @@ struct DatepickerApp {
 }
 
 impl App for DatepickerApp {
+    fn app_name() -> &'static str {
+        "Datepicker"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             date: cx.state(Utc::now().date_naive()),
@@ -23,7 +27,7 @@ impl App for DatepickerApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Datepicker"))
+        window(|app| app)
     }
 }
 

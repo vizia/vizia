@@ -68,6 +68,10 @@ struct WidgetGalleryApp {
 }
 
 impl App for WidgetGalleryApp {
+    fn app_name() -> &'static str {
+        "Widget Gallery"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             app_data: AppData::new(cx),

@@ -8,6 +8,10 @@ use vizia::prelude::*;
 struct ButtonApp;
 
 impl App for ButtonApp {
+    fn app_name() -> &'static str {
+        "Button"
+    }
+
     fn new(_cx: &mut Context) -> Self {
         Self
     }
@@ -35,7 +39,7 @@ impl App for ButtonApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Button").inner_size((700, 200)))
+        window(|app| app.inner_size((700, 200)))
     }
 }
 

@@ -10,6 +10,10 @@ struct CounterApp {
 }
 
 impl App for CounterApp {
+    fn app_name() -> &'static str {
+        "Counter"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self { count: cx.state(0) }
     }
@@ -37,16 +41,16 @@ impl App for CounterApp {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             CounterEvent::Increment => {
-                self.count.update(cx, |count| *count += 1);
+                self.count.upd(cx, |count| *count += 1);
             }
             CounterEvent::Decrement => {
-                self.count.update(cx, |count| *count -= 1);
+                self.count.upd(cx, |count| *count -= 1);
             }
         });
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Counter").inner_size((400, 100)))
+        window(|app| app.inner_size((400, 100)))
     }
 }
 

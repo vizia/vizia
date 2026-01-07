@@ -173,7 +173,7 @@ impl View for ScrollView {
         event.map(|scroll_update, meta| {
             match scroll_update {
                 ScrollEvent::ScrollX(f) => {
-                    self.scroll_x.update(cx, |scroll_x| {
+                    self.scroll_x.upd(cx, |scroll_x| {
                         *scroll_x = (*scroll_x + *f).clamp(0.0, 1.0);
                     });
 
@@ -185,7 +185,7 @@ impl View for ScrollView {
                 }
 
                 ScrollEvent::ScrollY(f) => {
-                    self.scroll_y.update(cx, |scroll_y| {
+                    self.scroll_y.upd(cx, |scroll_y| {
                         *scroll_y = (*scroll_y + *f).clamp(0.0, 1.0);
                     });
                     if let Some(callback) = &self.on_scroll {

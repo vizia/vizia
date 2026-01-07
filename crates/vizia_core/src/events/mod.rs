@@ -28,8 +28,8 @@
 //! impl Model for AppData {
 //!     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
 //!         event.map(|app_event, _| match app_event {
-//!             AppEvent::Increment => self.count.update(cx, |value| *value += 1),
-//!             AppEvent::Decrement => self.count.update(cx, |value| *value -= 1),
+//!             AppEvent::Increment => self.count.upd(cx, |value| *value += 1),
+//!             AppEvent::Decrement => self.count.upd(cx, |value| *value -= 1),
 //!         });
 //!     }
 //! }
@@ -66,11 +66,11 @@
 //!         // pass a reference to the message type to the closure passed to the `map()` method.
 //!         event.map(|app_event, _| match app_event {
 //!             AppEvent::Increment => {
-//!                 self.count.update(cx, |value| *value += 1);
+//!                 self.count.upd(cx, |value| *value += 1);
 //!             }
 //!
 //!             AppEvent::Decrement => {
-//!                 self.count.update(cx, |value| *value -= 1);
+//!                 self.count.upd(cx, |value| *value -= 1);
 //!             }
 //!         });
 //!     
@@ -79,11 +79,11 @@
 //!         // removing it from the event and thus preventing it from propagating further.
 //!         event.take(|app_event, meta| match app_event {
 //!             AppEvent::Increment => {
-//!                 self.count.update(cx, |value| *value += 1);
+//!                 self.count.upd(cx, |value| *value += 1);
 //!             }
 //!
 //!             AppEvent::Decrement => {
-//!                 self.count.update(cx, |value| *value -= 1);
+//!                 self.count.upd(cx, |value| *value -= 1);
 //!             }
 //!         });
 //!     }

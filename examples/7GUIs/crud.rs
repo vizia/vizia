@@ -58,6 +58,10 @@ struct CrudApp {
 }
 
 impl App for CrudApp {
+    fn app_name() -> &'static str {
+        "CRUD"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             filter_prefix: cx.state(String::new()),
@@ -169,7 +173,7 @@ impl App for CrudApp {
                 let name_val = self.name.get(cx).clone();
                 let surname_val = self.surname.get(cx).clone();
                 if !name_val.is_empty() && !surname_val.is_empty() {
-                    self.list.update(cx, |items| {
+                    self.list.upd(cx, |items| {
                         items.push((name_val, surname_val));
                     });
                     let new_index = self.list.get(cx).len() - 1;
@@ -181,7 +185,7 @@ impl App for CrudApp {
                 if let Some(sel) = *self.selected.get(cx) {
                     let name_val = self.name.get(cx).clone();
                     let surname_val = self.surname.get(cx).clone();
-                    self.list.update(cx, |items| {
+                    self.list.upd(cx, |items| {
                         if let Some(item) = items.get_mut(sel) {
                             item.0 = name_val;
                             item.1 = surname_val;
@@ -192,7 +196,7 @@ impl App for CrudApp {
 
             CrudEvent::Delete => {
                 if let Some(sel) = *self.selected.get(cx) {
-                    self.list.update(cx, |items| {
+                    self.list.upd(cx, |items| {
                         if sel < items.len() {
                             items.remove(sel);
                         }
@@ -213,7 +217,7 @@ impl App for CrudApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("CRUD").inner_size((450, 200)))
+        window(|app| app.inner_size((450, 200)))
     }
 }
 

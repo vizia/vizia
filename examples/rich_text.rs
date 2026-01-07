@@ -10,6 +10,10 @@ struct RichTextApp {
 }
 
 impl App for RichTextApp {
+    fn app_name() -> &'static str {
+        "Rich Text"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             text: cx.state(""),
@@ -49,7 +53,7 @@ impl App for RichTextApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Rich Text"))
+        window(|app| app)
     }
 }
 

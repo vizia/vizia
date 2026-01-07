@@ -10,6 +10,10 @@ struct ListApp {
 }
 
 impl App for ListApp {
+    fn app_name() -> &'static str {
+        "List"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             list: cx.state((0..15u32).collect::<Vec<_>>()),
@@ -29,7 +33,7 @@ impl App for ListApp {
 
         ExamplePage::new(cx, move |cx| {
             Switch::new(cx, is_horizontal).on_toggle(move |cx| {
-                orientation.update(cx, |o| {
+                orientation.upd(cx, |o| {
                     *o = if *o == Orientation::Horizontal {
                         Orientation::Vertical
                     } else {
@@ -55,7 +59,7 @@ impl App for ListApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("List"))
+        window(|app| app)
     }
 }
 

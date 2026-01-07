@@ -13,6 +13,10 @@ struct LocalizationApp {
 }
 
 impl App for LocalizationApp {
+    fn app_name() -> &'static str {
+        "Localization"
+    }
+
     fn new(cx: &mut Context) -> Self {
         cx.add_translation(
             "en-US".parse().unwrap(),
@@ -93,7 +97,7 @@ impl App for LocalizationApp {
 
             let refresh = Localized::new("refresh").signal(cx);
             Button::new(cx, |cx| Label::new(cx, refresh))
-                .on_press(move |cx| emails.update(cx, |count| *count += 1));
+                .on_press(move |cx| emails.upd(cx, |count| *count += 1));
         })
         .vertical_gap(gap_10)
         .space(space_10);
@@ -102,7 +106,7 @@ impl App for LocalizationApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Localization"))
+        window(|app| app)
     }
 }
 

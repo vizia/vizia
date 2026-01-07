@@ -1410,7 +1410,7 @@ where
             }
 
             TextEvent::SetPlaceholder(text) => {
-                self.placeholder.update(cx, |placeholder| placeholder.clone_from(text))
+                self.placeholder.upd(cx, |placeholder| placeholder.clone_from(text))
             }
 
             TextEvent::StartEdit => {
@@ -1597,7 +1597,7 @@ where
             }
 
             TextEvent::ToggleCaret => {
-                self.show_caret.update(cx, |v| *v ^= true);
+                self.show_caret.upd(cx, |v| *v ^= true);
             }
         });
     }

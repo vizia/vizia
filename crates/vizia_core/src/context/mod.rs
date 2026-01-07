@@ -241,6 +241,105 @@ impl Context {
         recoil_store.state(entity, value)
     }
 
+    /// Creates an undoable state signal.
+    ///
+    /// Changes to this signal will be tracked for undo/redo when made within an `undo_group`.
+    ///
+    /// # Example
+    /// ```ignore
+    /// let circles = cx.state_undoable(Vec::new());
+    /// ```
+    pub fn state_undoable<T: 'static + Clone + Send>(&mut self, value: T) -> Signal<T> {
+        let signal = self.state(value);
+        self.data.get_store_mut().undo_manager_mut().register_undoable::<T>(signal.id());
+        signal
+    }
+
+    /// Configures state persistence for this application.
+    ///
+    /// This must be called before using `state_persistent()`. The app name
+    /// is used to create an isolated storage directory for this app's data.
+    ///
+    /// # Example
+    /// ```ignore
+    /// // In App::new() or early in your app initialization:
+    /// cx.configure_persistence("my_app_name");
+    /// ```
+    ///
+    /// # Storage Location
+    /// - macOS: `~/Library/Application Support/{app_name}/signals/`
+    /// - Linux: `~/.local/share/{app_name}/signals/`
+    /// - Windows: `C:\Users\<User>\AppData\Local\{app_name}\signals\`
+    pub fn configure_persistence(&mut self, app_name: impl Into<String>) {
+        self.data.get_store_mut().persistence_manager_mut().configure(app_name);
+    }
+
+    /// Returns any recent persistence errors.
+    ///
+    /// Useful for debugging or showing error states in the UI.
+    pub fn persistence_errors(&self) -> &[crate::recoil::PersistenceError] {
+        self.data.get_store().persistence_manager().recent_errors()
+    }
+
+    /// Clears the persistence error history.
+    pub fn clear_persistence_errors(&mut self) {
+        self.data.get_store_mut().persistence_manager_mut().clear_errors();
+    }
+
+    /// Creates a persistent state signal that auto-saves to disk.
+    ///
+    /// **Important:** Call `cx.configure_persistence("app_name")` first!
+    ///
+    /// The signal will:
+    /// - Load its initial value from disk if a saved value exists
+    /// - Fall back to the provided default if no saved value exists
+    /// - Auto-save when its value changes (debounced 500ms)
+    /// - Flush pending saves on app exit
+    ///
+    /// # Example
+    /// ```ignore
+    /// #[derive(Serialize, Deserialize, Clone, Default)]
+    /// struct Settings {
+    ///     theme: String,
+    ///     volume: f32,
+    /// }
+    ///
+    /// // First, configure persistence with your app name
+    /// cx.configure_persistence("my_app");
+    ///
+    /// // Then create persistent signals
+    /// let settings = cx.state_persistent("settings", Settings::default());
+    /// ```
+    ///
+    /// # Security
+    /// - Files are created with restrictive permissions (0600 on Unix)
+    /// - Data is stored with version info for future migration support
+    pub fn state_persistent<T>(&mut self, key: impl Into<String>, default: T) -> Signal<T>
+    where
+        T: serde::Serialize + serde::de::DeserializeOwned + Clone + 'static,
+    {
+        let key = key.into();
+
+        // Try to load existing value from disk
+        let initial = self
+            .data
+            .get_store_mut()
+            .persistence_manager_mut()
+            .load::<T>(&key)
+            .unwrap_or(default);
+
+        // Create signal with loaded/default value
+        let signal = self.state(initial);
+
+        // Register for auto-save
+        self.data
+            .get_store_mut()
+            .persistence_manager_mut()
+            .register::<T>(signal.id(), key);
+
+        signal
+    }
+
     pub fn derived<T: 'static + Clone>(
         &mut self,
         compute: impl 'static + Fn(&crate::recoil::Store) -> T,
@@ -433,7 +532,59 @@ impl Context {
         self.load_async_with(signal, options, loader);
     }
 
-    /// The "current" entity, generally the entity which is currently being built or the entity
+    // ========================================================================
+    // Undo/Redo Methods
+    // ========================================================================
+
+    /// Returns true if there are actions that can be undone.
+    pub fn can_undo(&self) -> bool {
+        self.data.get_store().undo_manager().can_undo()
+    }
+
+    /// Returns true if there are actions that can be redone.
+    pub fn can_redo(&self) -> bool {
+        self.data.get_store().undo_manager().can_redo()
+    }
+
+    /// Returns a reactive signal that tracks whether undo is available.
+    ///
+    /// This signal automatically updates whenever the undo state changes,
+    /// eliminating the need for manual update calls.
+    ///
+    /// # Example
+    /// ```ignore
+    /// let can_undo = cx.can_undo_signal();
+    /// Button::new(cx, |cx| Label::new(cx, "Undo"))
+    ///     .disabled(can_undo.drv(cx, |v, _| !v));
+    /// ```
+    pub fn can_undo_signal(&mut self) -> Signal<bool> {
+        // Ensure the version signal exists and get its ID
+        let version_id = self.data.get_store_mut().get_or_init_undo_version_signal();
+
+        // Create a derived signal that tracks the version signal
+        self.derived(move |store| {
+            // Track the version signal to create a dependency
+            store.track(&version_id);
+            store.undo_manager().can_undo()
+        })
+    }
+
+    /// Returns a reactive signal that tracks whether redo is available.
+    ///
+    /// This signal automatically updates whenever the undo state changes.
+    pub fn can_redo_signal(&mut self) -> Signal<bool> {
+        // Ensure the version signal exists and get its ID
+        let version_id = self.data.get_store_mut().get_or_init_undo_version_signal();
+
+        // Create a derived signal that tracks the version signal
+        self.derived(move |store| {
+            // Track the version signal to create a dependency
+            store.track(&version_id);
+            store.undo_manager().can_redo()
+        })
+    }
+
+    /// "The current" entity, generally the entity which is currently being built or the entity
     /// which is currently having an event dispatched to it.
     pub fn current(&self) -> Entity {
         self.current

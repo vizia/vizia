@@ -1,0 +1,3 @@
+# Keep settings.json tracked (team-shared hooks)
+# Ignore personal local overrides
+settings.local.json

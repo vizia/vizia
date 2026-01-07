@@ -7,6 +7,10 @@ struct CollapsibleApp {
 }
 
 impl App for CollapsibleApp {
+    fn app_name() -> &'static str {
+        "Collapsible"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             collapsed: cx.state(false),
@@ -22,7 +26,7 @@ impl App for CollapsibleApp {
 
         ExamplePage::vertical(cx, |cx| {
             Button::new(cx, |cx| Label::new(cx, "Toggle collapsed"))
-                .on_press(move |cx| collapsed.update(cx, |collapsed| *collapsed = !*collapsed));
+                .on_press(move |cx| collapsed.upd(cx, |collapsed| *collapsed = !*collapsed));
 
             VStack::new(cx, |cx| {
                 // First collapsible
@@ -80,7 +84,7 @@ impl App for CollapsibleApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Collapsible"))
+        window(|app| app)
     }
 }
 

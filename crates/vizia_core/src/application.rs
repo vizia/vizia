@@ -55,7 +55,7 @@ impl Default for WindowConfig {
 ///
 ///     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
 ///         event.map(|e, _| match e {
-///             CounterEvent::Increment => self.count.update(cx, |c| *c += 1),
+///             CounterEvent::Increment => self.count.upd(cx, |c| *c += 1),
 ///         });
 ///     }
 /// }
@@ -98,6 +98,20 @@ impl Default for WindowConfig {
 /// }
 /// ```
 pub trait App: Sized + 'static {
+    /// Returns the application name used for persistence storage path.
+    ///
+    /// Override this to set a custom app name. Defaults to "vizia_app".
+    /// This is called before `new()` to configure persistence.
+    ///
+    /// ```ignore
+    /// fn app_name() -> &'static str {
+    ///     "my_awesome_app"
+    /// }
+    /// ```
+    fn app_name() -> &'static str {
+        "vizia_app"
+    }
+
     /// Initialize application-level state.
     fn new(cx: &mut Context) -> Self;
 

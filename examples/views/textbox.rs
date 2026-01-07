@@ -13,6 +13,10 @@ struct TextboxApp {
 }
 
 impl App for TextboxApp {
+    fn app_name() -> &'static str {
+        "Textbox"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             editable_text: cx.state("Editable text".to_string()),
@@ -66,7 +70,7 @@ impl App for TextboxApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Textbox"))
+        window(|app| app)
     }
 }
 

@@ -34,6 +34,10 @@ struct ResizableStackApp {
 }
 
 impl App for ResizableStackApp {
+    fn app_name() -> &'static str {
+        "Resizable Stack"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             width: cx.state(Pixels(200.0)),
@@ -72,7 +76,7 @@ impl App for ResizableStackApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Resizable Stack").inner_size((800, 600)))
+        window(|app| app.inner_size((800, 600)))
     }
 }
 

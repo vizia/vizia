@@ -8,6 +8,10 @@ struct ScrollviewApp {
 }
 
 impl App for ScrollviewApp {
+    fn app_name() -> &'static str {
+        "Scrollview"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             scroll_x: cx.state(0.0),
@@ -92,7 +96,7 @@ impl App for ScrollviewApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Scrollview").inner_size((1100, 800)))
+        window(|app| app.inner_size((1100, 800)))
     }
 }
 

@@ -8,6 +8,10 @@ struct XYPadApp {
 }
 
 impl App for XYPadApp {
+    fn app_name() -> &'static str {
+        "XY Pad"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             xy: cx.state((0.25f32, 0.25f32)),
@@ -56,7 +60,7 @@ impl App for XYPadApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("XY Pad"))
+        window(|app| app)
     }
 }
 

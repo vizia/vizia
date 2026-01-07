@@ -7,6 +7,10 @@ struct KnobApp {
 }
 
 impl App for KnobApp {
+    fn app_name() -> &'static str {
+        "Knob"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             value: cx.state(0.2f32),
@@ -22,7 +26,7 @@ impl App for KnobApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Knob").inner_size((300, 300)))
+        window(|app| app.inner_size((300, 300)))
     }
 }
 

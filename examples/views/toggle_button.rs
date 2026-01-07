@@ -11,6 +11,10 @@ struct ToggleButtonApp {
 }
 
 impl App for ToggleButtonApp {
+    fn app_name() -> &'static str {
+        "ToggleButton"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             bold: cx.state(false),
@@ -39,7 +43,7 @@ impl App for ToggleButtonApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("ToggleButton").inner_size((700, 200)))
+        window(|app| app.inner_size((700, 200)))
     }
 }
 

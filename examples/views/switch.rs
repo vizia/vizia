@@ -8,6 +8,10 @@ struct SwitchApp {
 }
 
 impl App for SwitchApp {
+    fn app_name() -> &'static str {
+        "Switch"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             option1: cx.state(true),
@@ -42,7 +46,7 @@ impl App for SwitchApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Switch"))
+        window(|app| app)
     }
 }
 

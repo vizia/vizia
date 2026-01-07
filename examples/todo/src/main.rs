@@ -29,6 +29,10 @@ struct TodoApp {
 }
 
 impl App for TodoApp {
+    fn app_name() -> &'static str {
+        "TodoMVC"
+    }
+
     fn new(cx: &mut Context) -> Self {
         cx.add_stylesheet(include_style!("src/style.css")).expect("failed to load style");
 
@@ -162,13 +166,13 @@ impl App for TodoApp {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.take(|todo_event, _| match todo_event {
             TodoEvent::AddTodo(title) => {
-                self.todos.update(cx, |todos| {
+                self.todos.upd(cx, |todos| {
                     todos.push(Todo { title, completed: false });
                 });
             }
 
             TodoEvent::RemoveTodo(index) => {
-                self.todos.update(cx, |todos| {
+                self.todos.upd(cx, |todos| {
                     if index < todos.len() {
                         todos.remove(index);
                     }
@@ -177,7 +181,7 @@ impl App for TodoApp {
 
             TodoEvent::ToggleAll => {
                 let all_completed = self.todos.get(cx).iter().all(|todo| todo.completed);
-                self.todos.update(cx, |todos| {
+                self.todos.upd(cx, |todos| {
                     for todo in todos.iter_mut() {
                         todo.completed = !all_completed;
                     }
@@ -185,7 +189,7 @@ impl App for TodoApp {
             }
 
             TodoEvent::Toggle(index) => {
-                self.todos.update(cx, |todos| {
+                self.todos.upd(cx, |todos| {
                     if index < todos.len() {
                         todos[index].completed = !todos[index].completed;
                     }
@@ -193,7 +197,7 @@ impl App for TodoApp {
             }
 
             TodoEvent::ClearCompleted => {
-                self.todos.update(cx, |todos| {
+                self.todos.upd(cx, |todos| {
                     todos.retain(|todo| !todo.completed);
                 });
             }
@@ -205,7 +209,7 @@ impl App for TodoApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("TodoMVC"))
+        window(|app| app)
     }
 }
 

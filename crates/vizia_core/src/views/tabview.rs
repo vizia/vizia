@@ -105,7 +105,7 @@ impl TabView {
                         let list_len = list.get(cx).len();
                         if list_len > 0 {
                             let mut event_cx = EventContext::new(cx);
-                            selected_index.update(&mut event_cx, |idx| {
+                            selected_index.upd(&mut event_cx, |idx| {
                                 if *idx >= list_len {
                                     *idx = list_len.saturating_sub(1);
                                 }
@@ -192,7 +192,7 @@ impl TabView {
                         let list_len = list.get(cx).len();
                         if list_len > 0 {
                             let mut event_cx = EventContext::new(cx);
-                            selected_index.update(&mut event_cx, |idx| {
+                            selected_index.upd(&mut event_cx, |idx| {
                                 if *idx >= list_len {
                                     *idx = list_len.saturating_sub(1);
                                 }

@@ -160,6 +160,10 @@ const STYLE: &str = r#"
 struct CursorIconApp;
 
 impl App for CursorIconApp {
+    fn app_name() -> &'static str {
+        "Cursor Icon"
+    }
+
     fn new(_cx: &mut Context) -> Self {
         Self
     }
@@ -224,7 +228,7 @@ impl App for CursorIconApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Cursor Icon").inner_size((800, 600)))
+        window(|app| app.inner_size((800, 600)))
     }
 }
 

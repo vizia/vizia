@@ -37,7 +37,7 @@ let value = count.try_get(store);  // Returns Option, safe for stale signals
 
 // Writing
 count.set(cx, 42);
-count.update(cx, |v| *v += 1);
+count.upd(cx, |v| *v += 1);
 
 // Derived state (preferred)
 let doubled = count.drv(cx, |v, _| v * 2);
@@ -87,7 +87,7 @@ impl App for MyApp {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|e, _| match e {
-            AppEvent::Increment => self.count.update(cx, |v| *v += 1),
+            AppEvent::Increment => self.count.upd(cx, |v| *v += 1),
         });
     }
 }
@@ -248,7 +248,7 @@ Label::new(cx, display);
 fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
     event.map(|app_event, _| match app_event {
         AppEvent::Action => {
-            self.signal.update(cx, |v| /* modify */);
+            self.signal.upd(cx, |v| /* modify */);
         }
     });
 }
@@ -397,3 +397,90 @@ Binding::new(cx, users.drv(cx, |s, _| s.is_ready()), |cx| {
 ### Example
 
 See `examples/async_state.rs` for a complete demo with all features.
+
+---
+
+## 12. Undo/Redo API
+
+Built-in undo/redo support for signals with automatic history tracking.
+
+### Basic Usage
+
+```rust
+// Create undoable state (registers for auto-snapshot)
+let circles = cx.state_undoable(Vec::<Circle>::new());
+
+// Wrap mutations in undo groups (RAII-style)
+cx.with_undo("Add Circle", |cx| {
+    circles.upd(cx, |v| v.push(circle));
+});
+
+// Multiple mutations in one group
+cx.with_undo("Batch Operation", |cx| {
+    data.upd(cx, |v| v.items.push(item1));
+    data.upd(cx, |v| v.items.push(item2));
+    data.upd(cx, |v| v.count += 2);
+});
+
+// Trigger undo/redo
+cx.undo();
+cx.redo();
+```
+
+### Reactive UI State
+
+```rust
+// Reactive signals - update automatically when history changes
+let can_undo = cx.can_undo_signal();
+let can_redo = cx.can_redo_signal();
+
+// Bind to button disabled state
+let undo_disabled = can_undo.drv(cx, |v, _| !v);
+let redo_disabled = can_redo.drv(cx, |v, _| !v);
+
+Button::new(cx, |cx| Label::new(cx, "Undo"))
+    .disabled(undo_disabled)
+    .on_press(|cx| cx.undo());
+
+Button::new(cx, |cx| Label::new(cx, "Redo"))
+    .disabled(redo_disabled)
+    .on_press(|cx| cx.redo());
+```
+
+### History Management
+
+```rust
+// Set max history size (default: 100)
+cx.set_max_undo_history(50);
+
+// Clear all history
+cx.clear_undo_history();
+
+// Check state directly (prefer reactive signals for UI)
+cx.can_undo();
+cx.can_redo();
+```
+
+### Manual Group Control
+
+For complex scenarios where RAII doesn't fit:
+
+```rust
+// Begin/end pattern
+cx.begin_undo_group("Complex Operation");
+// ... mutations ...
+cx.end_undo_group();
+```
+
+### How It Works
+
+1. `state_undoable` registers a signal for undo tracking and stores its clone function
+2. `with_undo` calls `begin_undo_group` which snapshots all registered signals before mutation
+3. When mutation completes, `end_undo_group` saves the snapshot to the undo stack
+4. `undo()` restores the previous snapshot, pushing current state to redo stack
+5. `redo()` restores from redo stack, pushing current state back to undo stack
+6. Reactive signals (`can_undo_signal`) track a version counter that increments on any history change
+
+### Example
+
+See `examples/7GUIs/circle_drawer.rs` for a complete demo with undo/redo.

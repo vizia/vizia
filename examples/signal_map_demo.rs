@@ -6,6 +6,10 @@ struct MapDemo {
 }
 
 impl App for MapDemo {
+    fn app_name() -> &'static str {
+        "Signal::drv() Demo"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self { number: cx.state(5) }
     }
@@ -39,11 +43,11 @@ impl App for MapDemo {
             // Controls
             HStack::new(cx, |cx| {
                 Button::new(cx, |cx| Label::new(cx, "Decrement")).on_press(move |cx| {
-                    self.number.update(cx, |n| *n -= 1);
+                    self.number.upd(cx, |n| *n -= 1);
                 });
 
                 Button::new(cx, |cx| Label::new(cx, "Increment")).on_press(move |cx| {
-                    self.number.update(cx, |n| *n += 1);
+                    self.number.upd(cx, |n| *n += 1);
                 });
 
                 Button::new(cx, |cx| Label::new(cx, "Reset to 5")).on_press(move |cx| {
@@ -59,7 +63,7 @@ impl App for MapDemo {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Signal::drv() Demo").inner_size((400, 350)))
+        window(|app| app.inner_size((400, 350)))
     }
 }
 

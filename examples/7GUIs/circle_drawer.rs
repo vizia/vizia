@@ -36,12 +36,6 @@ struct Circle {
     r: f32,
 }
 
-#[derive(Clone)]
-enum UndoRedoAction {
-    Circle(Circle),
-    RadiusChange(usize, f32),
-}
-
 enum CircleDrawerEvent {
     AddCircle(f32, f32),
     TrySelectCircle(f32, f32),
@@ -134,15 +128,17 @@ impl View for CircleDrawerCanvas {
 
 #[cfg(not(feature = "baseview"))]
 struct CircleDrawerApp {
+    // Using state_undoable for automatic undo/redo tracking
     circles: Signal<Vec<Circle>>,
     selected: Signal<Option<usize>>,
-    undo_list: Signal<Vec<UndoRedoAction>>,
-    redo_list: Signal<Vec<UndoRedoAction>>,
     radius_before: Signal<f32>,
     menu_open: Signal<bool>,
     menu_posx: Signal<Units>,
     menu_posy: Signal<Units>,
     dialog_open: Signal<bool>,
+    // Reactive signals for undo/redo state - auto-update
+    can_undo: Signal<bool>,
+    can_redo: Signal<bool>,
 }
 
 #[cfg(not(feature = "baseview"))]
@@ -161,17 +157,23 @@ impl CircleDrawerApp {
 
 #[cfg(not(feature = "baseview"))]
 impl App for CircleDrawerApp {
+    fn app_name() -> &'static str {
+        "Circle Drawer"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
-            circles: cx.state(Vec::<Circle>::new()),
+            // Create circles with undo support
+            circles: cx.state_undoable(Vec::<Circle>::new()),
             selected: cx.state(None::<usize>),
-            undo_list: cx.state(Vec::<UndoRedoAction>::new()),
-            redo_list: cx.state(Vec::<UndoRedoAction>::new()),
             radius_before: cx.state(0.0f32),
             menu_open: cx.state(false),
             menu_posx: cx.state(Pixels(0.0)),
             menu_posy: cx.state(Pixels(0.0)),
             dialog_open: cx.state(false),
+            // Reactive signals - auto-update when undo state changes
+            can_undo: cx.can_undo_signal(),
+            can_redo: cx.can_redo_signal(),
         }
     }
 
@@ -180,12 +182,12 @@ impl App for CircleDrawerApp {
 
         let circles = self.circles;
         let selected = self.selected;
-        let undo_list = self.undo_list;
-        let redo_list = self.redo_list;
         let menu_open = self.menu_open;
         let menu_posx = self.menu_posx;
         let menu_posy = self.menu_posy;
         let dialog_open = self.dialog_open;
+        let can_undo = self.can_undo;
+        let can_redo = self.can_redo;
 
         let auto = cx.state(Auto);
         let gap_12 = cx.state(Pixels(12.0));
@@ -197,8 +199,9 @@ impl App for CircleDrawerApp {
         let dialog_size = cx.state((300, 50));
         let dialog_pos = cx.state((500, 100));
 
-        let undo_disabled = undo_list.drv(cx, |v, _| v.is_empty());
-        let redo_disabled = redo_list.drv(cx, |v, _| v.is_empty());
+        // Derived signals for button disabled state
+        let undo_disabled = can_undo.drv(cx, |v, _| !v);
+        let redo_disabled = can_redo.drv(cx, |v, _| !v);
 
         VStack::new(cx, move |cx| {
             Binding::new(cx, menu_open, move |cx| {
@@ -280,14 +283,14 @@ impl App for CircleDrawerApp {
             CircleDrawerEvent::AddCircle(x, y) => {
                 let circle =
                     Circle { x: cx.physical_to_logical(x), y: cx.physical_to_logical(y), r: 26.0 };
-                self.circles.update(cx, |circles| {
-                    circles.push(circle);
+
+                // Use with_undo for RAII-style safety - auto-snapshots undoable signals
+                cx.with_undo("Add Circle", |cx| {
+                    self.circles.upd(cx, |circles| circles.push(circle));
                 });
+
                 self.selected.set(cx, Some(self.circles.get(cx).len() - 1));
-                self.undo_list.update(cx, |list| {
-                    list.push(UndoRedoAction::Circle(circle));
-                });
-                self.redo_list.set(cx, Vec::new());
+                // No manual update needed - can_undo/can_redo are reactive
             }
             CircleDrawerEvent::TrySelectCircle(x, y) => {
                 let dialog_open = *self.dialog_open.get(cx);
@@ -298,58 +301,17 @@ impl App for CircleDrawerApp {
             }
             CircleDrawerEvent::ChangeRadius(r) => {
                 if let Some(idx) = *self.selected.get(cx) {
-                    self.circles.update(cx, |circles| {
+                    // Don't create undo group here - we'll do it when dialog closes
+                    self.circles.upd(cx, |circles| {
                         circles[idx].r = r;
                     });
                 }
             }
             CircleDrawerEvent::Undo => {
-                if let Some(action) = self.undo_list.get(cx).last().cloned() {
-                    self.undo_list.update(cx, |list| {
-                        list.pop();
-                    });
-                    match action {
-                        UndoRedoAction::Circle(_) => {
-                            self.redo_list.update(cx, |list| list.push(action));
-                            self.circles.update(cx, |circles| {
-                                circles.pop();
-                            });
-                        }
-                        UndoRedoAction::RadiusChange(idx, r) => {
-                            let current_r = self.circles.get(cx)[idx].r;
-                            self.redo_list.update(cx, |list| {
-                                list.push(UndoRedoAction::RadiusChange(idx, current_r));
-                            });
-                            self.circles.update(cx, |circles| {
-                                circles[idx].r = r;
-                            });
-                        }
-                    }
-                }
+                cx.undo();
             }
             CircleDrawerEvent::Redo => {
-                if let Some(action) = self.redo_list.get(cx).last().cloned() {
-                    self.redo_list.update(cx, |list| {
-                        list.pop();
-                    });
-                    match action {
-                        UndoRedoAction::Circle(c) => {
-                            self.undo_list.update(cx, |list| list.push(action));
-                            self.circles.update(cx, |circles| {
-                                circles.push(c);
-                            });
-                        }
-                        UndoRedoAction::RadiusChange(idx, r) => {
-                            let current_r = self.circles.get(cx)[idx].r;
-                            self.undo_list.update(cx, |list| {
-                                list.push(UndoRedoAction::RadiusChange(idx, current_r));
-                            });
-                            self.circles.update(cx, |circles| {
-                                circles[idx].r = r;
-                            });
-                        }
-                    }
-                }
+                cx.redo();
             }
             CircleDrawerEvent::ToggleRightMenu => {
                 let menu_open_val = *self.menu_open.get(cx);
@@ -378,12 +340,18 @@ impl App for CircleDrawerApp {
                     let radius = self.circles.get(cx)[idx].r;
 
                     if !dialog_open_val {
+                        // Dialog opening - save radius for comparison
                         self.radius_before.set(cx, radius);
                     } else {
+                        // Dialog closing - create undo group if radius changed
                         let radius_before_val = *self.radius_before.get(cx);
                         if radius_before_val != radius {
-                            self.undo_list.update(cx, |list| {
-                                list.push(UndoRedoAction::RadiusChange(idx, radius_before_val));
+                            // Restore original, then use with_undo to set new value
+                            self.circles.upd(cx, |circles| {
+                                circles[idx].r = radius_before_val;
+                            });
+                            cx.with_undo("Change Radius", |cx| {
+                                self.circles.upd(cx, |circles| circles[idx].r = radius);
                             });
                         }
 
@@ -397,7 +365,7 @@ impl App for CircleDrawerApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Circle Drawer"))
+        window(|app| app)
     }
 }
 

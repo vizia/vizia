@@ -21,6 +21,10 @@ struct AnimationApp {
 }
 
 impl App for AnimationApp {
+    fn app_name() -> &'static str {
+        "Animation"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             red: cx.state(Color::red()),
@@ -57,7 +61,7 @@ impl App for AnimationApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Animation"))
+        window(|app| app)
     }
 }
 

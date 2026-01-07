@@ -5,6 +5,10 @@ const COLORS: [Color; 3] = [Color::red(), Color::green(), Color::blue()];
 struct ZStackApp;
 
 impl App for ZStackApp {
+    fn app_name() -> &'static str {
+        "ZStack"
+    }
+
     fn new(_cx: &mut Context) -> Self {
         Self
     }
@@ -20,7 +24,7 @@ impl App for ZStackApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("ZStack"))
+        window(|app| app)
     }
 }
 

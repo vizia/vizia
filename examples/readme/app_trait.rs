@@ -5,6 +5,10 @@ struct Counter {
 }
 
 impl App for Counter {
+    fn app_name() -> &'static str {
+        "App Trait Example"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self { count: cx.state(0) }
     }
@@ -18,9 +22,9 @@ impl App for Counter {
 
             HStack::new(cx, move |cx| {
                 Button::new(cx, |cx| Label::new(cx, "Decrement"))
-                    .on_press(move |cx| self.count.update(cx, |n| *n -= 1));
+                    .on_press(move |cx| self.count.upd(cx, |n| *n -= 1));
                 Button::new(cx, |cx| Label::new(cx, "Increment"))
-                    .on_press(move |cx| self.count.update(cx, |n| *n += 1));
+                    .on_press(move |cx| self.count.upd(cx, |n| *n += 1));
             });
         });
 
@@ -28,7 +32,7 @@ impl App for Counter {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("App Trait Example").inner_size((300, 150)))
+        window(|app| app.inner_size((300, 150)))
     }
 }
 

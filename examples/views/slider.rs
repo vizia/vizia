@@ -8,6 +8,10 @@ struct SliderApp {
 }
 
 impl App for SliderApp {
+    fn app_name() -> &'static str {
+        "Slider"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             value: cx.state(0.0f32),
@@ -59,7 +63,7 @@ impl App for SliderApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Slider"))
+        window(|app| app)
     }
 }
 

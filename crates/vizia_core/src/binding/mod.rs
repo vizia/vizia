@@ -18,7 +18,7 @@
 //!         });
 //!
 //!         Button::new(cx, |cx| Label::static_text(cx, "Increment"))
-//!             .on_press(move |cx| count.update(cx, |value| *value += 1));
+//!             .on_press(move |cx| count.upd(cx, |value| *value += 1));
 //!     })
 //!     .run();
 //! }

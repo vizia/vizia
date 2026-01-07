@@ -89,7 +89,7 @@ impl Handle<'_, Switch> {
     /// #
     /// Switch::new(cx, checked_signal)
     ///     .on_toggle(move |cx| {
-    ///         checked_signal.update(cx, |value| *value = !*value);
+    ///         checked_signal.upd(cx, |value| *value = !*value);
     ///     });
     /// ```
     pub fn on_toggle<F>(self, callback: F) -> Self
@@ -103,12 +103,12 @@ impl Handle<'_, Switch> {
     ///
     /// This is a convenience method equivalent to:
     /// ```ignore
-    /// .on_toggle(move |cx| signal.update(cx, |v| *v = !*v))
+    /// .on_toggle(move |cx| signal.upd(cx, |v| *v = !*v))
     /// ```
     pub fn two_way(self) -> Self {
         self.modify(|switch| {
             let signal = switch.value;
-            switch.on_toggle = Some(Box::new(move |cx| signal.update(cx, |v| *v = !*v)));
+            switch.on_toggle = Some(Box::new(move |cx| signal.upd(cx, |v| *v = !*v)));
         })
     }
 }

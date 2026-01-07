@@ -992,6 +992,94 @@ impl<'a> EventContext<'a> {
         }
     }
 
+    // ========================================================================
+    // Undo/Redo Methods
+    // ========================================================================
+
+    /// Executes a closure within an undo group.
+    ///
+    /// All undoable signal changes made within the closure are grouped together
+    /// as a single undoable action. This is the preferred API as it ensures
+    /// the group is properly ended even if the closure panics.
+    ///
+    /// # Example
+    /// ```ignore
+    /// cx.with_undo("Add Circle", |cx| {
+    ///     circles.upd(cx, |c| c.push(new_circle));
+    /// });
+    /// ```
+    pub fn with_undo<F, R>(&mut self, description: impl Into<String>, f: F) -> R
+    where
+        F: FnOnce(&mut Self) -> R,
+    {
+        self.data.get_store_mut().undo_manager_mut().begin_group(description);
+        let result = f(self);
+        let store = self.data.get_store_mut();
+        store.undo_manager_mut().end_group();
+        store.update_undo_version_signal();
+        result
+    }
+
+    /// Begins an undo group with the given description.
+    ///
+    /// Prefer using `with_undo` instead for RAII-style safety.
+    /// All undoable signal changes made after this call and before `end_undo_group()`
+    /// will be grouped together as a single undoable action.
+    pub fn begin_undo_group(&mut self, description: impl Into<String>) {
+        self.data.get_store_mut().undo_manager_mut().begin_group(description);
+    }
+
+    /// Ends the current undo group and pushes it to the undo stack.
+    pub fn end_undo_group(&mut self) {
+        let store = self.data.get_store_mut();
+        store.undo_manager_mut().end_group();
+        store.update_undo_version_signal();
+    }
+
+    /// Returns true if there are actions that can be undone.
+    pub fn can_undo(&self) -> bool {
+        self.data.get_store().undo_manager().can_undo()
+    }
+
+    /// Returns true if there are actions that can be redone.
+    pub fn can_redo(&self) -> bool {
+        self.data.get_store().undo_manager().can_redo()
+    }
+
+    /// Undoes the last action.
+    ///
+    /// Returns true if an undo was performed.
+    pub fn undo(&mut self) -> bool {
+        self.data.get_store_mut().undo()
+    }
+
+    /// Redoes the last undone action.
+    ///
+    /// Returns true if a redo was performed.
+    pub fn redo(&mut self) -> bool {
+        self.data.get_store_mut().redo()
+    }
+
+    /// Clears all undo/redo history.
+    pub fn clear_undo_history(&mut self) {
+        self.data.get_store_mut().undo_manager_mut().clear_history();
+    }
+
+    /// Sets the maximum number of undo entries to keep.
+    pub fn set_max_undo_history(&mut self, max: usize) {
+        self.data.get_store_mut().undo_manager_mut().set_max_history(max);
+    }
+
+    /// Returns the undo history as a list of action descriptions.
+    pub fn undo_history(&self) -> Vec<&str> {
+        self.data.get_store().undo_manager().undo_history()
+    }
+
+    /// Returns the redo history as a list of action descriptions.
+    pub fn redo_history(&self) -> Vec<&str> {
+        self.data.get_store().undo_manager().redo_history()
+    }
+
     pub fn modify<V: View>(&mut self, f: impl FnOnce(&mut V)) {
         if let Some(view) = self
             .views

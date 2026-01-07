@@ -8,6 +8,10 @@ struct ChipApp {
 }
 
 impl App for ChipApp {
+    fn app_name() -> &'static str {
+        "Chip"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             chips: cx.state(vec!["red".to_string(), "green".to_string(), "blue".to_string()]),
@@ -23,7 +27,7 @@ impl App for ChipApp {
             List::new(cx, chips, move |cx, index, item| {
                 let chips = chips;
                 Chip::new(cx, item).on_close(move |cx| {
-                    chips.update(cx, |chips| {
+                    chips.upd(cx, |chips| {
                         if index < chips.len() {
                             chips.remove(index);
                         }
@@ -37,7 +41,7 @@ impl App for ChipApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Chip").inner_size((400, 200)))
+        window(|app| app.inner_size((400, 200)))
     }
 }
 

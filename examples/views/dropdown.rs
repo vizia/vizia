@@ -9,6 +9,10 @@ struct DropdownApp {
 }
 
 impl App for DropdownApp {
+    fn app_name() -> &'static str {
+        "Dropdown"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             list: cx.state(vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()]),
@@ -54,7 +58,7 @@ impl App for DropdownApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Dropdown").inner_size((350, 300)))
+        window(|app| app.inner_size((350, 300)))
     }
 }
 

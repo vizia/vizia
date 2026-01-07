@@ -546,10 +546,10 @@ impl View for List {
                     Selectable::Single => {
                         let contains = self.selected.get(cx).contains(&index);
                         if contains {
-                            self.selected.update(cx, |s| s.clear());
+                            self.selected.upd(cx, |s| s.clear());
                             self.focused.set(cx, None);
                         } else {
-                            self.selected.update(cx, |s| {
+                            self.selected.upd(cx, |s| {
                                 s.clear();
                                 s.insert(index);
                             });
@@ -563,12 +563,12 @@ impl View for List {
                     Selectable::Multi => {
                         let contains = self.selected.get(cx).contains(&index);
                         if contains {
-                            self.selected.update(cx, |s| {
+                            self.selected.upd(cx, |s| {
                                 s.remove(&index);
                             });
                             self.focused.set(cx, None);
                         } else {
-                            self.selected.update(cx, |s| {
+                            self.selected.upd(cx, |s| {
                                 s.insert(index);
                             });
                             self.focused.set(cx, Some(index));
@@ -592,7 +592,7 @@ impl View for List {
             }
 
             ListEvent::ClearSelection => {
-                self.selected.update(cx, |s| s.clear());
+                self.selected.upd(cx, |s| s.clear());
                 meta.consume();
             }
 
@@ -655,7 +655,7 @@ impl Handle<'_, List> {
         self.bind(selected, |handle, s| {
             let ss = s.get(&handle).clone();
             handle.modify2(|list, cx| {
-                list.selected.update(cx, |sel| {
+                list.selected.upd(cx, |sel| {
                     sel.clear();
                     for idx in ss {
                         sel.insert(idx);

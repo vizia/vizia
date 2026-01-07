@@ -1,216 +1,404 @@
-# ✅ Core Signal System (Proposal Lines 101-114)
+# Vizia Signals Migration Results
 
+> **TL;DR**: Complete migration from Lens to Signals architecture. All 33 views migrated, Lens infrastructure removed, `Res<T>` restored for ergonomics, plus new features: async state management, undo/redo, and keyed list diffing.
 
-  | Feature                    | Proposed | Current Status                                 |
-  |----------------------------|----------|------------------------------------------------|
-  | cx.state(initial_value)    | ✅       | Implemented in recoil/mod.rs                   |
-  | signal.update(cx, |v| ...) | ✅       | Implemented                                    |
-  | signal.set(cx, value)      | ✅       | Implemented                                    |
-  | cx.derived(closure)        | ✅       | Implemented with automatic dependency tracking. Prefer `signal.drv(cx, \|v, s\| ...)` |
-  | Automatic change detection | ✅       | Built into Signal internals                    |
+---
 
+## Executive Summary
 
-# ✅ Simplified API (Lines 236-248)
+This PR replaces vizia's Lens-based state management with a Signals-based reactive architecture. The migration is **100% complete** with all views, examples, and framework internals converted.
 
+**Key outcomes:**
+- Simpler API: No `#[derive(Lens)]`, no `#[derive(Data)]`, no `Model` trait required
+- Better ergonomics: `Res<T>` allows both values and signals in view constructors/modifiers
+- New features: Async state (`Async<T,E>`), undo/redo, keyed list diffing
+- Proper lifetime management: Binding scope cleanup prevents signal leaks
 
-  | Feature                     | Proposed | Current Status                          |
-  |-----------------------------|----------|-----------------------------------------|
-  | No #[derive(Lens)]          | ✅       | Lens infrastructure fully removed       |
-  | No #[derive(Data)] required | ✅       | Only needed for complex equality checks |
-  | No Model trait required     | ✅       | Views use View::event directly          |
+---
 
+## Migration Progress
 
-# ✅ Derived State & Multi-State (Lines 250-312)
+| Category | Status | Details |
+|----------|--------|---------|
+| Core Views | ✅ 100% | 33 signal-based + 6 structural views |
+| Examples | ✅ 100% | All examples use signal APIs |
+| Framework Internals | ✅ 100% | PopupData, ModalModel, Environment, Theme |
+| Lens Infrastructure | ✅ Removed | `binding/lens.rs`, `#[derive(Lens)]`, etc. |
+| Res-based APIs | ✅ Restored | Value-or-signal modifiers, view constructors |
+| Doc Comments | ✅ Updated | Signal-first documentation |
 
-Works exactly as proposed - multiple signals compose naturally. Prefer `signal.drv(cx, |v, s| ...)` for ergonomics; `cx.derived()` also available.
+---
+
+## Owner Concerns & Solutions
+
+### Concern 1: Loss of `Res<T>` Ergonomics
+
+**Problem**: Removing `Res<T>` forced `Signal<T>` for all modifiers/constructors, making literal values noisy.
+
+**Solution**: Restored `Res<T>` as value-or-signal abstraction.
 
 ```rust
-let welcome_message = cx.derived(move |s| {
-    if *self.is_logged_in.get(s) {
-        format!("Welcome {}! You have {} messages",
-            self.user_name.get(s),
-            self.message_count.get(s))
-    } else {
-        "Please log in".to_string()
-    }
-});
+// Both work - signal auto-binds, value is static
+label.width(Pixels(100.0));      // Static value
+label.width(width_signal);        // Reactive signal
 ```
 
+**Implementation**:
+- `Res::resolve()` (renamed from `get` to avoid stdlib conflicts)
+- `Res::set_or_bind()` - values apply immediately, signals create bindings
+- `internal::bind_res()` helper in modifiers
+- `+ 'static` bounds on all `impl Res<T>` parameters
 
-# ✅ Alternative: Direct Signal Updates (Lines 194-232)
+**Files**: `binding/res.rs`, `modifiers/*.rs`, `vizia_winit/src/*.rs`
 
-Proposed: Direct signal updates without events for simple cases
-Implemented: Works exactly as proposed - both patterns supported!
+### Concern 2: Signal Lifetime Management
+
+**Problem**: Signals in `Binding` closures accumulate on repeated updates (lists), leaking memory.
+
+**Solution**: Two-pronged approach:
+
+1. **Binding Scope Cleanup**: Each `Binding` owns a disposable scope entity. On update, the scope is destroyed (cleaning all signals) and recreated.
+
+2. **Unified Keyed API**: Opt-in entity reuse for list-like views:
+```rust
+List::new(cx, items.keyed(|item| item.id), |cx, index, item| { ... });
+TabView::new(cx, tabs.keyed(|tab| tab.id), |cx, tab| { ... });
+```
+
+**Files**: `binding/binding_view.rs`, `views/list.rs`, `views/tabview.rs`, `views/picklist.rs`
+
+---
+
+## What Changed
+
+### Core Views Migrated (33 views)
+
+All view constructors now accept `impl Res<T>` (value-or-signal):
+
+| View | Notes |
+|------|-------|
+| Label | `Res<impl ToString>` for text |
+| Button | `Res<ButtonVariant>` for variants |
+| Checkbox, Switch, ToggleButton | `Res<bool>` + `.two_way()` |
+| Slider, Knob | `Res<f32>` + `.two_way()` |
+| Textbox, NumberInput | `Res<T>` + `.two_way()` |
+| Rating | `Res<u32>` + `.two_way()` |
+| XYPad | `Res<(f32, f32)>` + `.two_way()` |
+| Progressbar | `Res<f32>` |
+| List, VirtualList | `Res<Vec<T>>` + `.keyed()` opt-in |
+| TabView, TabBar | `Res<Vec<T>>` + `.keyed()` opt-in |
+| PickList, Combobox | `Res<Vec<T>>`, `Res<usize>` |
+| Datepicker | `Res<NaiveDate>` |
+| Image, Svg | `Res` for source |
+| Badge, Chip | `Res` for placement/variant |
+| Popup, Dropdown, Menu | Internal signals for state |
+| Scrollbar, ScrollView | Signal-based scroll state |
+| Divider | Signal-based orientation |
+| Spinbox | `Res<T>` |
+| ResizableStack | `Res<Units>` |
+| Collapsible | `Signal<bool>` for open state |
+| Tooltip | Internal signals |
+
+### Structural Views (6 views, no external signal params)
+
+| View | Notes |
+|------|-------|
+| Element, Spacer | Stateless |
+| VStack, HStack, ZStack | Internal layout signals |
+| Grid | Internal grid track signals |
+| Markdown | Internal parsed content signals |
+
+### Framework Internals
+
+| Model | Signal Fields |
+|-------|---------------|
+| PopupData | `Signal<bool>` for is_open |
+| ModalModel | `Signal<(bool, bool)>`, `Signal<bool>` for tooltip/menu |
+| Environment | `Signal<LanguageIdentifier>` for locale |
+| Theme | Plain struct (removed `#[derive(Lens)]`) |
+
+### Lens Infrastructure Removed
+
+| Removed | Notes |
+|---------|-------|
+| `binding/lens.rs` | Lens trait and impls |
+| `binding/store.rs` | Lens store |
+| `binding/map.rs` | Lens map |
+| `systems/binding.rs` | Binding system |
+| `vizia_derive/src/lens.rs` | `#[derive(Lens)]` proc macro |
+| Prelude exports | `Lens` removed |
+
+---
+
+## Signal API vs Original Proposal
+
+### ✅ Core Signal System (Proposal Lines 101-116)
+
+| Feature | Status |
+|---------|--------|
+| `cx.state(initial_value)` | ✅ Implemented |
+| `signal.upd(cx, \|v\| ...)` | ✅ Implemented |
+| `signal.set(cx, value)` | ✅ Implemented |
+| `cx.derived(closure)` | ✅ Implemented (prefer `signal.drv()`) |
+| Automatic dependency tracking | ✅ Built into Signal internals |
+
+### ✅ Simplified API (Proposal Lines 230-242)
+
+| Feature | Status |
+|---------|--------|
+| No `#[derive(Lens)]` | ✅ Lens infrastructure removed |
+| No `#[derive(Data)]` required | ✅ Only for complex equality checks |
+| No `Model` trait required | ✅ Views use `View::event` directly |
+
+### ✅ App Trait Pattern (Proposal Lines 307-349)
+
+```rust
+struct Counter {
+    count: Signal<i32>,
+}
+
+impl App for Counter {
+    fn app_name() -> &'static str { "Counter" }
+
+    fn new(cx: &mut Context) -> Self {
+        Self { count: cx.state(0) }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        Label::new(cx, self.count);
+        Button::new(cx, |cx| Label::new(cx, "+"))
+            .on_press(move |cx| self.count.upd(cx, |v| *v += 1));
+        self
+    }
+
+    fn window_config(&self) -> WindowConfig {
+        window(|app| app.inner_size((400, 300)))
+    }
+}
+
+fn main() -> Result<(), ApplicationError> { Counter::run() }
+```
+
+### ✅ Direct Signal Updates (Proposal Lines 190-226)
+
+Both patterns work - choose per use case:
 
 ```rust
 // Direct updates - no events needed
-Button::new(cx, |cx| Label::new(cx, "Increment"))
-    .on_press(move |cx| self.count.update(cx, |v| *v += 1));
+Button::new(cx, |cx| Label::new(cx, "+"))
+    .on_press(move |cx| count.upd(cx, |v| *v += 1));
 
 // Or with events - still works
-Button::new(cx, |cx| Label::new(cx, "Increment"))
+Button::new(cx, |cx| Label::new(cx, "+"))
     .on_press(|cx| cx.emit(CounterEvent::Increment));
 ```
 
-Both approaches coexist - developers choose the appropriate pattern for each use case.
-
-
-# ✅ Application-Level State (Lines 313-355)
-
-
-  Proposed: Application trait pattern with MyApp::run()
-  Implemented: Full `App` trait with `MyApp::run()` pattern - exactly as proposed! Plus exposed window property config:
-
-  **App trait pattern w/ static window config:**
-  ```rust
-  struct Counter {
-      count: Signal<i32>,
-  }
-
-  impl App for Counter {
-      fn new(cx: &mut Context) -> Self {
-          Self { count: cx.state(0) }
-      }
-
-      fn on_build(self, cx: &mut Context) -> Self {
-          // Build UI...
-          self
-      }
-
-      fn window_config(&self) -> WindowConfig {
-          window(|app| app.title("Counter").inner_size((800, 600)))
-      }
-  }
-
-  fn main() -> Result<(), ApplicationError> { Counter::run() }
-  ```
-
-  **App trait pattern w/ reactive window config:**
-  ```rust
-  struct Counter {
-      count: Signal<i32>,
-      title: Signal<String>,
-      size: Signal<(u32, u32)>,
-  }
-
-  impl App for Counter {
-      fn new(cx: &mut Context) -> Self {
-          Self {
-              count: cx.state(0),
-              title: cx.state(String::from("Counter: 0")),
-              size: cx.state((800, 600)),
-          }
-      }
-
-      fn on_build(self, cx: &mut Context) -> Self {
-          // Build UI...
-          self
-      }
-
-      fn window_config(&self) -> WindowConfig {
-          let title = self.title;
-          let size = self.size;
-          window(move |app| {
-              app.title(title)
-                 .inner_size(size)
-          })
-      }
-  }
-
-  fn main() -> Result<(), ApplicationError> { Counter::run() }
-  ```
-
-
-# ✅ Migration Phases (Lines 417-435)
-
-
-
-  We completed all three phases:
-
-- Phase 1: ~~Parallel implementation~~ (skipped)
-- Phase 2: ~~Gradual migration~~ (done rapidly)
-- Phase 3: ✅ Full transition - lens removed, all views migrated
-
-
-
----
-
-# ⬆️ Improvements Beyond Proposal
-
-
-  | Enhancement                   | Description                                                      |
-  |-------------------------------|------------------------------------------------------------------|
-  | Unified .keyed() API          | Opt-in keyed diffing for List/TabView/PickList performance       |
-  | Binding scope cleanup         | Automatic signal lifetime management via disposable scope entity |
-  | .two_way() convenience        | Auto-wires on_change to update bound signal                      |
-  | App::window_config()          | Reactive window properties with access to signals                |
-  | window() helper               | Creates WindowConfig closure for App trait                       |
-  | DrawContext cache pattern     | Cache signals for draw() since DrawContext isn't DataContext     |
-  | Timer integration             | cx.modify_timer() for dynamic intervals                          |
-  | Signal::try_get()             | Safe access returning Option for potentially stale signals       |
-  | Async<T, E>                   | Async state with cancel/timeout/retry/TTL/stale-while-revalidate |
-
-
-# ✅ Advantages of Signals (Lines 357-393)
-
-| Proposed Advantage          | Status | Implementation                                      |
-|-----------------------------|--------|-----------------------------------------------------|
-| Reduced Boilerplate         | ✅     | No Lens/Data derives, no Model trait required       |
-| Better Performance          | ✅     | Automatic dependency tracking, efficient updates    |
-| Intuitive Mental Model      | ✅     | Direct state access, clear ownership                |
-| Composability               | ✅     | Multiple signals combine naturally in derived()     |
-| Type Safety                 | ✅     | Strong typing preserved, clear borrowing semantics  |
-| Local State Management      | ✅     | Views have own state, no global state for simple cases |
-| Application-Level State     | ✅     | App trait with window_config() for global state     |
-
-
-# ✅ Disadvantages Addressed (Lines 395-415)
-
-| Proposed Disadvantage       | Status | How Addressed                                       |
-|-----------------------------|--------|-----------------------------------------------------|
-| Learning Curve              | ⚠️     | Mitigated by familiar View-like patterns            |
-| Memory Overhead             | ✅     | Acceptable - signals are lightweight handles        |
-| Debugging Complexity        | ✅     | Standard Rust debugging; try_get() for safe access  |
-| Migration Cost              | ✅     | Completed - all views migrated                      |
-| Runtime Dependency Tracking | ✅     | Efficient implementation in recoil::Store           |
-
-
-# ✅ Signal Mapping Ergonomics
-
-**Implemented:** `Signal::drv()` method for concise derived signal creation.
+### ✅ Derived State (Proposal Lines 244-306)
 
 ```rust
-// Instead of:
-let count = self.count;
-let doubled = cx.derived(move |s| count.get(s) * 2);
-let label = cx.derived(move |s| format!("Count: {}", count.get(s)));
+let count = cx.state(5i32);
+let doubled = count.drv(cx, |v, _| v * 2);
+let label = count.drv(cx, |v, _| format!("Count: {v}"));
 
-// You can now write:
-let doubled = self.count.drv(cx, |v| v * 2);
-let label = self.count.drv(cx, |v| format!("Count: {v}"));
+// Multi-signal derivation
+let sum = cx.derived(move |s| *a.get(s) + *b.get(s));
 ```
 
-The closure receives `&T` (the dereferenced value), not the store. This eliminates the need to capture the signal and call `.get(s)`.
+---
+
+## New Features Beyond Proposal
+
+### From Proposal Future Work (Lines 434-438)
+
+### ✅ Async State Management
+
+Comprehensive async data loading with `Signal<Async<T, E>>`:
+
+```rust
+// Create async signal
+let users: Signal<Async<Vec<User>, String>> = cx.async_state();
+
+// Basic load (with deduplication)
+cx.load_async(users, || fetch_users());
+
+// With cancellation
+let handle = cx.load_async_cancelable(users, || fetch_users());
+handle.cancel();
+
+// Refresh (stale-while-revalidate)
+cx.refresh_async(users, || fetch_users());
+
+// With timeout + retry
+cx.load_async_with(users, AsyncOptions::patient(), || fetch_users());
+
+// TTL / cache freshness
+if users.is_expired(cx, Duration::from_secs(60)) {
+    cx.refresh_async(users, || fetch_users());
+}
+```
+
+**States**: `Idle` → `Loading` → `Ready(T)` / `Error(E)` / `Timeout`
+**Intermediate**: `Reloading(T)`, `Stale(T, E)`, `Retrying(attempt, max, E)`
+
+**Presets**: `AsyncOptions::quick()` (5s), `patient()` (30s, 3 retries), `resilient()` (60s, 5 retries)
+
+**Files**: `recoil/async_state.rs`, `context/mod.rs`, `context/event.rs`
+
+### ✅ Undo/Redo Support
+
+Framework-level undo/redo with automatic snapshot management:
+
+```rust
+// Register signals for undo tracking
+let document = cx.state_undoable(Document::new());
+
+// RAII-style undo groups
+cx.with_undo("Edit Document", |cx| {
+    document.upd(cx, |d| d.apply_edit(edit));
+});
+
+// Trigger undo/redo
+cx.undo();
+cx.redo();
+
+// Reactive signals for UI
+let can_undo = cx.can_undo_signal();
+let can_redo = cx.can_redo_signal();
+
+Button::new(cx, |cx| Label::new(cx, "Undo"))
+    .disabled(can_undo.drv(cx, |v, _| !v))
+    .on_press(|cx| cx.undo());
+
+// History management
+cx.set_max_undo_history(50);
+cx.clear_undo_history();
+```
+
+**Files**: `recoil/mod.rs` (UndoManager), `context/mod.rs`, `context/event.rs`
+
+### Additional Improvements (Not in Proposal)
+
+### ✅ Unified Keyed API
+
+Opt-in keyed diffing for list-like views:
+
+```rust
+// List - reuses entities when keys match
+List::new(cx, items.keyed(|item| item.id), |cx, index, item| {
+    Label::new(cx, item.map(|i| i.name.clone()));
+});
+
+// TabView - reuses tab entities
+TabView::new(cx, tabs.keyed(|tab| tab.id), |cx, tab| {
+    TabPair::new(
+        move |cx| Label::new(cx, tab.map(|t| t.title.clone())),
+        move |cx| Label::new(cx, tab.map(|t| t.content.clone())),
+    )
+});
+```
+
+Works with: `List`, `TabView`, `TabBar`, `PickList`
+
+**Files**: `views/list.rs` (`Keyed`, `KeyedExt`), `views/tabview.rs`, `views/picklist.rs`
+
+### ✅ Two-Way Binding
+
+Auto-wire `on_change` to update bound signal:
+
+```rust
+// Before (verbose)
+Slider::new(cx, value).on_change(move |cx, val| value.set(cx, val));
+
+// After (concise)
+Slider::new(cx, value).two_way();
+```
+
+Available on: `Slider`, `Knob`, `XYPad`, `Textbox`, `NumberInput`, `Checkbox`, `Switch`, `ToggleButton`, `Rating`
+
+### Other Improvements
+
+| Feature | Description |
+|---------|-------------|
+| `Signal::try_get()` | Safe access returning `Option` for stale signals |
+| `signal.drv()` | Ergonomic derived signal creation |
+| `cx.modify_timer()` | Dynamic timer interval changes |
+| `window()` helper | Creates `WindowConfig` closure for App trait |
 
 ---
 
-# 💡 Future API Ideas (Under Consideration)
+## API Patterns & Examples
 
-## Accessibility Improvements
+### DrawContext Cache Pattern
 
-Many views already set appropriate roles (Button, Checkbox, Slider, etc. - see `crates/vizia_core/src/views/`). Potential improvements:
+`DrawContext` doesn't implement `DataContext`, so cache signal values for `draw()`:
 
-- Auto-generate `live_region` announcements for value changes in controls
-- Consider default `name()` bindings based on nearby Label associations
-- Explore auto-announcing state changes (e.g., "Checkbox checked")
+```rust
+struct MyCanvas {
+    data: Signal<Vec<Data>>,
+    data_cache: Vec<Data>,
+}
+
+impl MyCanvas {
+    fn new(cx: &mut Context, data: Signal<Vec<Data>>) -> Handle<Self> {
+        Self { data, data_cache: data.get(cx).clone() }
+            .build(cx, |_| {})
+            .bind(data, |handle, d| {
+                let cached = d.get(&handle).clone();
+                handle.modify(|c| c.data_cache = cached).needs_redraw();
+            })
+    }
+}
+
+impl View for MyCanvas {
+    fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
+        // Use self.data_cache, not self.data.get()
+    }
+}
+```
+
+### Before/After Comparison
+
+**Before (Lens)**:
+```rust
+#[derive(Lens)]
+pub struct AppData {
+    value: bool,
+}
+
+impl Model for AppData {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|e, _| match e {
+            AppEvent::Toggle => self.value = !self.value,
+        });
+    }
+}
+
+Checkbox::new(cx, AppData::value);
+```
+
+**After (Signal)**:
+```rust
+struct MyApp {
+    value: Signal<bool>,
+}
+
+impl App for MyApp {
+    fn new(cx: &mut Context) -> Self {
+        Self { value: cx.state(false) }
+    }
+
+    fn on_build(self, cx: &mut Context) -> Self {
+        Checkbox::new(cx, self.value).two_way();
+        self
+    }
+}
+```
 
 ---
 
-# 📚 API Reference Notes
+## API Reference
 
-## Event Handling Methods
-
-Three methods for handling events in `View::event()`:
+### Event Handling Methods
 
 | Method | Signature | Behavior |
 |--------|-----------|----------|
@@ -218,337 +406,130 @@ Three methods for handling events in `View::event()`:
 | `event.take()` | `fn(M, &mut EventMeta)` | Takes ownership, auto-consumes event |
 | `meta.consume()` | `fn()` | Manually stop propagation |
 
-**Usage**:
-- Use `map()` when multiple handlers might need the event, manually `consume()` when done
-- Use `take()` when this handler is the final destination
+### Res Auto-Binding
 
-```rust
-// map() - doesn't auto-consume, message borrowed
-event.map(|window_event, meta| match window_event {
-    WindowEvent::KeyDown(code, _) => {
-        // Handle key...
-        meta.consume(); // Manual consume
-    }
-    _ => {}
-});
-
-// take() - auto-consumes, message owned
-event.take(|app_event, _meta| match app_event {
-    AppEvent::Increment => count.update(cx, |v| *v += 1),
-    AppEvent::Decrement => count.update(cx, |v| *v -= 1),
-});
-```
-
-## Auto-Binding via Res<T>
-
-When a modifier accepts `impl Res<T>`, it automatically handles both values and signals:
-
+When a modifier accepts `impl Res<T>`:
 - **Plain values**: Applied immediately, no binding created
-- **Signals**: Creates internal `Binding` that updates on signal change
+- **Signals**: Creates internal `Binding` that updates on change
+
+Use `Binding::new()` only when you need to **rebuild view structure** based on signal changes.
+
+### Hot Reload
+
+Press **F5** in debug builds to reload stylesheets.
+
+---
+
+## File Reference
+
+### Core Infrastructure
+
+| File | Purpose |
+|------|---------|
+| `recoil/mod.rs` | `Signal<T>`, `Store`, dependency tracking, `UndoManager` |
+| `recoil/async_state.rs` | `Async<T, E>`, `AsyncOptions`, retry/timeout |
+| `recoil/persistence.rs` | `PersistenceManager`, auto-save/load |
+| `binding/res.rs` | `Res<T>` trait for value-or-signal |
+| `binding/binding_view.rs` | `Binding` with disposable scope |
+| `context/mod.rs` | `cx.state()`, `cx.derived()`, `cx.async_state()`, `cx.state_persistent()`, undo methods |
+| `context/event.rs` | `cx.load_async()`, `cx.undo()`, `cx.redo()`, `cx.with_undo()` |
+| `modifiers/mod.rs` | `internal::bind_res()` helper |
+| `vizia_winit/application_trait.rs` | `App` trait, `window()` helper |
+
+### Views with Notable Changes
+
+| File | Changes |
+|------|---------|
+| `views/list.rs` | `Keyed`, `KeyedExt`, `ListSource` |
+| `views/tabview.rs` | `TabSource`, keyed support |
+| `views/picklist.rs` | `PickListSource`, keyed support |
+| `views/slider.rs` | `.two_way()` |
+| `views/checkbox.rs` | `.two_way()` |
+| `views/textbox.rs` | `.two_way()` |
+
+---
+
+### ✅ State Persistence
+
+Automatic save/restore of signal state across app restarts:
 
 ```rust
-// Both work - signal auto-binds, value is static
-label.width(Pixels(100.0));      // Static
-label.width(width_signal);        // Reactive, auto-binds
+#[derive(Serialize, Deserialize, Clone, Default)]
+struct Settings {
+    theme: String,
+    volume: f32,
+}
+
+// Just use it!
+let settings = cx.state_persistent("app.settings", Settings::default());
+
+// Use like any other signal
+settings.upd(cx, |s| s.volume = 0.8);
 ```
 
-Use `Binding::new()` only when you need to **rebuild view structure** (add/remove children) based on signal changes.
+**Configuration:** Override `app_name()` to set both window title and persistence path:
+```rust
+fn app_name() -> &'static str { "My App" }
+```
 
-## Hot Reload
+**Features:**
+- **App isolation:** Data stored in `{data_local_dir}/{app_name}/signals/`
+- Loads from disk on signal creation (falls back to default if not found)
+- Auto-saves when value changes (debounced 500ms to reduce I/O)
+- Flushes pending saves on app exit
+- **Versioned format:** `{"v": 1, "data": {...}}` for future migration support
+- **Secure permissions:** Files created with 0600 on Unix
+- **Error tracking:** Call `cx.persistence_errors()` to check for issues
 
-Press **F5** in debug builds to reload stylesheets. Implementation: `crates/vizia_core/src/events/event_manager.rs:525-527`.
+**Type constraints:** `T: Serialize + DeserializeOwned + Clone + 'static`
 
----
-
-# SUMMARY
-
-  The implementation covers everything in the proposal and adds significant improvements. The `App` trait now matches the proposal exactly with `MyApp::run()` pattern, plus we added `window_config()` for reactive window properties. The restored `Res<T>` trait brings greater ergonomics and the keyed API + binding scope cleanup address performance/lifetime concerns not originally considered.
-
----
-
-# 📋 Future Work (Lines 440-445)
-
-These were explicitly listed as future possibilities in the original proposal:
-
-- ~~Async state management~~ ✅ **Implemented** - `Async<T, E>` with load/cancel/refresh/retry/timeout/TTL
-- Time-travel debugging
-- State persistence
-- Undo/redo functionality *(manual pattern demonstrated in `circle_drawer.rs`; framework support TBD)*
+**Files:** `recoil/persistence.rs`, `context/mod.rs`
 
 ---
 
-## 🔮 Time-Travel Debugging
+## Future Work
 
-Record signal state changes over time, allowing developers to step backwards/forwards through history and inspect state at any point.
+These remain as future possibilities:
 
-### API Approaches
+- **Time-travel debugging** - Record signal changes, step through history
 
-**Approach 1: Global Automatic Recording**
+### Time-Travel Debugging
+
+Record signal state changes for stepping backwards/forwards:
+
 ```rust
 Application::new(|cx| { ... })
     .enable_time_travel()
     .run();
 
-// Navigate
 cx.time_travel_back();
 cx.time_travel_forward();
 cx.time_travel_to(index);
-cx.time_travel_history();  // Vec<StateSnapshot>
-```
-*Pros*: Simple, captures everything
-*Cons*: Memory overhead, noisy with high-frequency updates (animations, mouse position)
-
-**Approach 2: Selective Recording**
-```rust
-let important = cx.state_recorded(0);   // Recorded
-let ephemeral = cx.state(0.0);          // Not recorded
-
-signal.enable_recording(cx);
-signal.disable_recording(cx);
-```
-*Pros*: Focused debugging, less memory
-*Cons*: May miss related state changes
-
-**Approach 3: Explicit Snapshots**
-```rust
-let snap = cx.snapshot();
-cx.restore(snap);
-
-cx.snapshot_named("before_submit");
-cx.restore_named("before_submit");
-```
-*Pros*: Predictable, explicit control
-*Cons*: Not true "time travel", requires forethought
-
-**Approach 4: Action Log (Redux-style)**
-```rust
-#[derive(TimeTravel)]
-enum AppAction { Increment, SetUser(User) }
-
-cx.dispatch(AppAction::Increment);  // Logged with resulting state
-cx.replay_from(action_index);
-```
-*Pros*: Shows causality ("why did this change?")
-*Cons*: More boilerplate, requires discipline
-
-### Implementation Considerations
-
-| Concern | Options |
-|---------|---------|
-| Storage | Full state copies vs deltas (deltas more memory-efficient) |
-| Side effects | Skip async/timers on replay, or re-execute? |
-| UI | DevTools panel with slider, step buttons, diff view |
-| Memory limit | Ring buffer (last N changes), or explicit clear |
-| Serialization | Save/load history for sharing bug reports |
-| Granularity | Every `set()`/`update()`, or batch per frame? |
-
-### Suggested Hybrid
-```rust
-impl App for MyApp {
-    fn debug_config(&self) -> DebugConfig {
-        DebugConfig::default()
-            .time_travel(true)
-            .max_history(1000)
-            .exclude_signals(vec![self.mouse_pos, self.animation_t])
-    }
-}
-
-let transient = cx.state_transient(0.0);  // Never recorded
-cx.checkpoint("user_logged_in");          // Named milestone
 ```
 
 ---
 
-## 💾 State Persistence
+## Examples
 
-Save and restore signal state across app restarts (localStorage equivalent for desktop apps).
-
-### API Approaches
-
-**Approach 1: Declarative Persistence**
-```rust
-let settings = cx.state_persistent("app.settings", Settings::default());
-// Auto-saves on change, auto-loads on startup
-```
-*Pros*: Zero boilerplate for simple cases
-*Cons*: Implicit I/O, unclear when saves happen
-
-**Approach 2: Explicit Save/Load**
-```rust
-let settings = cx.state(Settings::default());
-
-// Manual control
-cx.save_state("settings", &settings);
-cx.load_state("settings", &mut settings);
-
-// Or batch
-cx.save_all_persistent();
-cx.load_all_persistent();
-```
-*Pros*: Clear control flow, predictable
-*Cons*: More code, easy to forget
-
-**Approach 3: Session-based**
-```rust
-impl App for MyApp {
-    fn persist(&self) -> Vec<(&str, &dyn Persist)> {
-        vec![
-            ("window_size", &self.size),
-            ("theme", &self.theme),
-            ("recent_files", &self.recent),
-        ]
-    }
-}
-// Auto-called on close, restored on open
-```
-*Pros*: Centralized, automatic lifecycle
-*Cons*: Requires trait impl on all persisted types
-
-### Implementation Considerations
-
-| Concern | Options |
-|---------|---------|
-| Format | JSON, MessagePack, bincode, RON |
-| Location | XDG config dir, app data folder, custom path |
-| Versioning | Schema migrations when app updates |
-| Encryption | Optional for sensitive data |
-| Debouncing | Don't save on every keystroke - batch saves |
-| Errors | What if file is corrupted? Fallback to defaults? |
-
-### Suggested Hybrid
-```rust
-// Simple cases - auto-persist
-let theme = cx.state_persistent("theme", Theme::Dark);
-
-// Complex cases - manual with derive
-#[derive(Persist)]
-struct AppSettings { ... }
-
-impl App for MyApp {
-    fn on_close(&self, cx: &mut Context) {
-        cx.persist("settings", &self.settings);
-    }
-
-    fn on_open(&mut self, cx: &mut Context) {
-        if let Some(s) = cx.restore("settings") {
-            self.settings.set(cx, s);
-        }
-    }
-}
-```
+| Example | Demonstrates |
+|---------|--------------|
+| `examples/7GUIs/circle_drawer.rs` | Undo/redo with reactive buttons |
+| `examples/async_state.rs` | Async loading with retry/timeout |
+| `examples/timers.rs` | `cx.modify_timer()` for dynamic intervals |
+| `examples/window_modifiers.rs` | Reactive window title binding |
+| `examples/widget_gallery/` | All views with signal APIs |
 
 ---
 
-## ↩️ Undo/Redo Functionality
+## Summary
 
-Allow users to undo/redo state changes, common in editors, drawing apps, form workflows.
+The Signals migration is complete. All views, examples, and framework internals are converted. The implementation:
 
-> **Note**: `examples/7GUIs/circle_drawer.rs` already demonstrates manual undo/redo using the command pattern with `Signal<Vec<UndoRedoAction>>` for undo/redo stacks. The approaches below explore framework-level support to reduce boilerplate.
+1. ✅ Covers everything in the original proposal
+2. ✅ Adds `Res<T>` for value-or-signal ergonomics
+3. ✅ Solves signal lifetime issues with binding scope cleanup
+4. ✅ Adds keyed API for list performance
+5. ✅ Implements async state management (originally "future work")
+6. ✅ Implements undo/redo (originally "future work")
 
-### API Approaches
-
-**Approach 1: Global Undo Stack**
-```rust
-cx.enable_undo();
-
-// All signal changes automatically tracked
-button.on_press(|cx| {
-    cx.begin_undo_group("Change Color");
-    color.set(cx, new_color);
-    cx.end_undo_group();
-});
-
-cx.undo();  // Ctrl+Z
-cx.redo();  // Ctrl+Shift+Z
-```
-*Pros*: Works automatically once enabled
-*Cons*: May capture unwanted changes (hover states, selections)
-
-**Approach 2: Selective Undo Signals**
-```rust
-let document = cx.state_undoable(Document::new());  // Tracked
-let ui_state = cx.state(UiState::default());        // Not tracked
-
-document.set_undoable(cx, "Edit text", new_doc);
-```
-*Pros*: Precise control over what's undoable
-*Cons*: Must explicitly mark each undoable operation
-
-**Approach 3: Command Pattern**
-```rust
-trait UndoableCommand {
-    fn execute(&self, cx: &mut EventContext);
-    fn undo(&self, cx: &mut EventContext);
-    fn description(&self) -> &str;
-}
-
-struct SetColor { old: Color, new: Color, target: Signal<Color> }
-
-impl UndoableCommand for SetColor {
-    fn execute(&self, cx: &mut EventContext) { self.target.set(cx, self.new); }
-    fn undo(&self, cx: &mut EventContext) { self.target.set(cx, self.old); }
-    fn description(&self) -> &str { "Change Color" }
-}
-
-cx.execute(SetColor { ... });
-```
-*Pros*: Full control, custom undo logic, mergeable commands
-*Cons*: Significant boilerplate per action
-
-**Approach 4: Snapshot Diffing**
-```rust
-cx.begin_transaction("Draw Shape");
-// ... multiple signal changes ...
-cx.commit_transaction();  // Snapshot delta saved
-
-cx.undo();  // Restore previous snapshot
-```
-*Pros*: Groups multiple changes naturally
-*Cons*: Memory for snapshots, no partial undo within transaction
-
-### Implementation Considerations
-
-| Concern | Options |
-|---------|---------|
-| Granularity | Per-signal-change, or grouped transactions? |
-| Stack limit | Unlimited, or cap at N operations? |
-| Merge | Combine rapid similar changes (typing in textbox)? |
-| Branches | Linear stack, or tree (redo after undo + new change)? |
-| Persistence | Save undo history with document? |
-| UI | Show undo history list? Descriptions? |
-
-### Suggested Hybrid
-```rust
-// Mark signals as undoable
-let content = cx.state_undoable(String::new());
-
-// Group related changes
-cx.undo_group("Format Text", || {
-    content.set(cx, formatted);
-    style.set(cx, new_style);
-});
-
-// Keyboard shortcuts auto-wired
-// Ctrl+Z -> cx.undo()
-// Ctrl+Shift+Z / Ctrl+Y -> cx.redo()
-
-// Access history for UI
-let history = cx.undo_history();  // Vec<UndoEntry>
-for entry in history {
-    println!("{}: {}", entry.index, entry.description);
-}
-```
-
-### Relationship with Time-Travel
-
-Time-travel and undo/redo overlap but serve different purposes:
-
-| Aspect | Time-Travel | Undo/Redo |
-|--------|-------------|-----------|
-| Purpose | Debugging | User feature |
-| Scope | All signals | Selected "document" signals |
-| Granularity | Every change | Grouped actions |
-| UI | DevTools | App menu, Ctrl+Z |
-| Persistence | Optional (bug reports) | Often saved with document |
-
-Could share underlying infrastructure (state snapshots, delta storage) but expose different APIs.
+No Lens usage remains in the codebase.

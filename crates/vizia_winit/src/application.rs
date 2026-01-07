@@ -779,6 +779,9 @@ impl ApplicationHandler<UserEvent> for Application {
 
         self.event_manager.flush_events(self.cx.context(), |_| {});
 
+        // Check if debounced persistence save should be triggered
+        self.cx.0.data.get_store_mut().maybe_flush_persistence();
+
         self.cx.process_style_updates();
 
         if self.cx.process_animations() {
@@ -901,12 +904,24 @@ impl ApplicationHandler<UserEvent> for Application {
         self.cx.emit_scheduled_events();
     }
 
-    fn exiting(&mut self, _event_loop: &ActiveEventLoop) {}
+    fn exiting(&mut self, _event_loop: &ActiveEventLoop) {
+        // Flush any pending persistence saves on exit
+        self.cx.0.data.get_store_mut().flush_persistence();
+    }
 }
 
 impl WindowModifiers for Application {
     fn title<T: ToString + 'static>(mut self, title: impl Res<T> + 'static) -> Self {
-        self.window_description.title = apply_title_affixes(&title.resolve(&self.cx.0).to_string());
+        let title_string = title.resolve(&self.cx.0).to_string();
+        self.window_description.title = apply_title_affixes(&title_string);
+
+        // Auto-configure persistence with the app title (if not already configured)
+        {
+            let store = self.cx.0.data.get_store_mut();
+            if !store.persistence_manager().is_enabled() {
+                store.persistence_manager_mut().configure(&title_string);
+            }
+        }
 
         title.set_or_bind(&mut self.cx.0, Entity::root(), move |cx, title| {
             cx.with_current(Entity::root(), |cx| {

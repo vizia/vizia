@@ -6,6 +6,10 @@ struct StylesheetApp {
 }
 
 impl App for StylesheetApp {
+    fn app_name() -> &'static str {
+        "Stylesheet"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             size_200: cx.state(Pixels(200.0)),
@@ -24,7 +28,7 @@ impl App for StylesheetApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Stylesheet"))
+        window(|app| app)
     }
 }
 

@@ -9,6 +9,10 @@ struct CheckboxApp {
 }
 
 impl App for CheckboxApp {
+    fn app_name() -> &'static str {
+        "Checkbox"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             option1: cx.state(true),
@@ -75,7 +79,7 @@ impl App for CheckboxApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Checkbox").inner_size((300, 320)))
+        window(|app| app.inner_size((300, 320)))
     }
 }
 

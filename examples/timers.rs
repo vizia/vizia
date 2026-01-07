@@ -42,7 +42,7 @@ impl App for TimerApp {
                 }
 
                 TimerAction::Tick(_delta) => {
-                    count.update(cx, |count| *count += 1);
+                    count.upd(cx, |count| *count += 1);
                 }
             });
 

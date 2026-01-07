@@ -13,6 +13,10 @@ const STYLE: &str = r#"
 struct TooltipApp;
 
 impl App for TooltipApp {
+    fn app_name() -> &'static str {
+        "Tooltip"
+    }
+
     fn new(_cx: &mut Context) -> Self {
         Self
     }
@@ -214,7 +218,7 @@ impl App for TooltipApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Tooltip").inner_size((800, 800)))
+        window(|app| app.inner_size((800, 800)))
     }
 }
 

@@ -5,6 +5,10 @@ use vizia::prelude::*;
 struct SvgApp;
 
 impl App for SvgApp {
+    fn app_name() -> &'static str {
+        "Svg"
+    }
+
     fn new(_cx: &mut Context) -> Self {
         Self
     }
@@ -36,7 +40,7 @@ impl App for SvgApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Svg").inner_size((400, 200)))
+        window(|app| app.inner_size((400, 200)))
     }
 }
 

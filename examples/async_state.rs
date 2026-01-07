@@ -44,6 +44,10 @@ struct AsyncApp {
 }
 
 impl App for AsyncApp {
+    fn app_name() -> &'static str {
+        "Async State Demo"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             users: cx.async_state(),
@@ -329,7 +333,7 @@ impl App for AsyncApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Async State Demo").inner_size((550, 500)))
+        window(|app| app.inner_size((550, 500)))
     }
 }
 

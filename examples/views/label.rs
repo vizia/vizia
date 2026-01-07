@@ -7,6 +7,10 @@ struct LabelApp {
 }
 
 impl App for LabelApp {
+    fn app_name() -> &'static str {
+        "Label"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             checked: cx.state(false),
@@ -49,7 +53,7 @@ impl App for LabelApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Label"))
+        window(|app| app)
     }
 }
 

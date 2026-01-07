@@ -14,6 +14,10 @@ struct TemperatureConverterApp {
 }
 
 impl App for TemperatureConverterApp {
+    fn app_name() -> &'static str {
+        "Temperature Converter"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             celsius: cx.state(5.0f32),
@@ -47,7 +51,7 @@ impl App for TemperatureConverterApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Temperature Converter").inner_size((450, 100)))
+        window(|app| app.inner_size((450, 100)))
     }
 }
 

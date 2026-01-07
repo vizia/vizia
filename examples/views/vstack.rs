@@ -5,6 +5,10 @@ const COLORS: [Color; 3] = [Color::red(), Color::green(), Color::blue()];
 struct VStackApp;
 
 impl App for VStackApp {
+    fn app_name() -> &'static str {
+        "VStack"
+    }
+
     fn new(_cx: &mut Context) -> Self {
         Self
     }
@@ -20,7 +24,7 @@ impl App for VStackApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("VStack"))
+        window(|app| app)
     }
 }
 

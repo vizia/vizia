@@ -102,7 +102,7 @@ let value = count.try_get(store);
 
 // Update value
 count.set(cx, 42);
-count.update(cx, |v| *v += 1);
+count.upd(cx, |v| *v += 1);
 
 // Derive new signal
 let doubled = count.drv(cx, |v, _| v * 2);
@@ -162,6 +162,39 @@ cx.load_async_with(users, AsyncOptions::patient(), || fetch_users());
 - `AsyncOptions::quick()` - 5s timeout, no retry
 - `AsyncOptions::patient()` - 30s timeout, 3 retries
 - `AsyncOptions::resilient()` - 60s timeout, 5 retries
+
+### Undo/Redo
+
+Signals can be registered as undoable for automatic history tracking:
+
+```rust
+// Create undoable state
+let circles = cx.state_undoable(Vec::<Circle>::new());
+
+// Wrap mutations in undo groups
+cx.with_undo("Add Circle", |cx| {
+    circles.upd(cx, |v| v.push(circle));
+});
+
+// Undo/redo
+cx.undo();
+cx.redo();
+
+// Reactive signals for UI state
+let can_undo = cx.can_undo_signal();
+let can_redo = cx.can_redo_signal();
+
+Button::new(cx, |cx| Label::new(cx, "Undo"))
+    .disabled(can_undo.drv(cx, |v, _| !v))
+    .on_press(|cx| cx.undo());
+```
+
+**Features:**
+- **Auto-snapshot** - Values are automatically captured before mutation
+- **Grouped changes** - Multiple mutations become a single undo step
+- **Reactive state** - `can_undo_signal()`/`can_redo_signal()` update automatically
+- **Configurable history** - `cx.set_max_undo_history(n)`
+- **Clear history** - `cx.clear_undo_history()`
 
 ### View
 
@@ -243,7 +276,7 @@ struct AppData {
 impl Model for AppData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::Increment => self.count.update(cx, |v| *v += 1),
+            AppEvent::Increment => self.count.upd(cx, |v| *v += 1),
         });
     }
 }

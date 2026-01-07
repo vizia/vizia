@@ -9,6 +9,10 @@ struct PicklistApp {
 }
 
 impl App for PicklistApp {
+    fn app_name() -> &'static str {
+        "Picklist"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             options: cx.state(vec![
@@ -50,7 +54,7 @@ impl App for PicklistApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Picklist"))
+        window(|app| app)
     }
 }
 

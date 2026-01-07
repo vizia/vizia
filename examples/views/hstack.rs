@@ -7,6 +7,10 @@ const COLORS: [Color; 3] = [Color::red(), Color::green(), Color::blue()];
 struct HStackApp;
 
 impl App for HStackApp {
+    fn app_name() -> &'static str {
+        "HStack"
+    }
+
     fn new(_cx: &mut Context) -> Self {
         Self
     }
@@ -24,7 +28,7 @@ impl App for HStackApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("HStack"))
+        window(|app| app)
     }
 }
 

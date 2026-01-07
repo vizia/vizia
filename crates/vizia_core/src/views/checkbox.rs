@@ -33,7 +33,7 @@ use crate::prelude::*;
 /// #
 /// Checkbox::new(cx, checked_signal)
 ///     .on_toggle(move |cx| {
-///         checked_signal.update(cx, |value| *value = !*value);
+///         checked_signal.upd(cx, |value| *value = !*value);
 ///     });
 /// ```
 ///
@@ -74,7 +74,7 @@ use crate::prelude::*;
 /// #
 /// Checkbox::with_icons(cx, checked_signal, None, Some(ICON_X))
 ///     .on_toggle(move |cx| {
-///         checked_signal.update(cx, |value| *value = !*value);
+///         checked_signal.upd(cx, |value| *value = !*value);
 ///     });
 /// ```
 pub struct Checkbox {
@@ -206,7 +206,7 @@ impl Handle<'_, Checkbox> {
     /// #
     /// Checkbox::new(cx, checked_signal)
     ///     .on_toggle(move |cx| {
-    ///         checked_signal.update(cx, |value| *value = !*value);
+    ///         checked_signal.upd(cx, |value| *value = !*value);
     ///     });
     /// ```
     pub fn on_toggle<F>(self, callback: F) -> Self
@@ -220,12 +220,12 @@ impl Handle<'_, Checkbox> {
     ///
     /// This is a convenience method equivalent to:
     /// ```ignore
-    /// .on_toggle(move |cx| signal.update(cx, |v| *v = !*v))
+    /// .on_toggle(move |cx| signal.upd(cx, |v| *v = !*v))
     /// ```
     pub fn two_way(self) -> Self {
         self.modify(|checkbox| {
             let signal = checkbox.value;
-            checkbox.on_toggle = Some(Box::new(move |cx| signal.update(cx, |v| *v = !*v)));
+            checkbox.on_toggle = Some(Box::new(move |cx| signal.upd(cx, |v| *v = !*v)));
         })
     }
 }

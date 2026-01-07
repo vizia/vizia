@@ -31,6 +31,10 @@ struct GalleryApp {
 }
 
 impl App for GalleryApp {
+    fn app_name() -> &'static str {
+        "Gallery"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             images: cx.state(Vec::<[Id; 3]>::default()),
@@ -133,7 +137,7 @@ impl App for GalleryApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("Gallery").inner_size((1200, 600)))
+        window(|app| app.inner_size((1200, 600)))
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
@@ -154,7 +158,7 @@ impl App for GalleryApp {
             }
 
             AppEvent::ImagePoppedIn(id) => {
-                self.thumbnails.update(cx, |thumbnails| {
+                self.thumbnails.upd(cx, |thumbnails| {
                     if let Some(tn) = thumbnails.get_mut(&id) {
                         tn.1 = Status::Loading;
                     }
@@ -174,7 +178,7 @@ impl App for GalleryApp {
                     &img,
                     ImageRetentionPolicy::DropWhenNoObservers,
                 );
-                self.thumbnails.update(cx, |thumbnails| {
+                self.thumbnails.upd(cx, |thumbnails| {
                     if let Some(tn) = thumbnails.get_mut(&id) {
                         tn.1 = Status::Loaded;
                     }

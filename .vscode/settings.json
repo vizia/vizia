@@ -10,5 +10,264 @@
 	},
 	"prettier.tabWidth": 4,
 	"css.lint.unknownProperties": "ignore",
-	"rust-analyzer.showUnlinkedFileNotification": false
+	"rust-analyzer.showUnlinkedFileNotification": false,
+	"cargui.argumentCategories": [
+		{
+			"name": "Common",
+			"arguments": [
+				"--color never",
+				"--keep-going",
+				"--all-targets",
+				"--workspace"
+			]
+		},
+		{
+			"name": "Compilation Targets",
+			"arguments": [
+				"--target x86_64-unknown-linux-gnu",
+				"--target x86_64-pc-windows-gnu",
+				"--target x86_64-pc-windows-msvc",
+				"--target aarch64-apple-darwin",
+				"--target x86_64-apple-darwin",
+				"--target wasm32-unknown-unknown",
+				"--target wasm32-wasi",
+				"--target aarch64-unknown-linux-gnu"
+			]
+		},
+		{
+			"name": "Performance",
+			"arguments": [
+				"--jobs 1",
+				"--jobs 2",
+				"--jobs 4",
+				"--jobs 8",
+				"--timings"
+			]
+		},
+		{
+			"name": "Output Control",
+			"arguments": [
+				"--message-format json",
+				"--message-format short",
+				"--message-format human"
+			]
+		},
+		{
+			"name": "Build Options",
+			"arguments": [
+				"--locked",
+				"--frozen",
+				"--offline",
+				"--all-features",
+				"--no-default-features"
+			]
+		}
+	],
+	"cargui.environmentVariables": [
+		"RUST_BACKTRACE=1",
+		"RUST_LOG=info",
+		"CARGO_INCREMENTAL=1"
+	],
+	"cargui.customCommandCategories": [
+		{
+			"name": "Inspection",
+			"commands": [
+				{
+					"name": "Show Outdated Deps",
+					"command": "cargo outdated"
+				},
+				{
+					"name": "Show Crate Metadata",
+					"command": "cargo metadata --no-deps"
+				},
+				{
+					"name": "List Installed Tools",
+					"command": "cargo install --list"
+				},
+				{
+					"name": "Show All Features",
+					"command": "cargo tree --all-features"
+				}
+			]
+		},
+		{
+			"name": "Analysis",
+			"commands": [
+				{
+					"name": "Check Compile Times",
+					"command": "cargo build --timings"
+				},
+				{
+					"name": "Show Feature Tree",
+					"command": "cargo tree --format \"{p} {f}\""
+				},
+				{
+					"name": "Analyze Binary Size",
+					"command": "cargo bloat --release"
+				},
+				{
+					"name": "Generate Docs",
+					"command": "cargo doc --no-deps --open"
+				}
+			]
+		}
+	],
+	"cargui.snapshots": [
+		{
+			"name": "lib",
+			"mode": "debug",
+			"targets": [
+				"vizia"
+			],
+			"features": [],
+			"arguments": [],
+			"envVars": [],
+			"workspaceMember": "vizia",
+			"checkedWorkspaceMembers": []
+		},
+		{
+			"name": "lib",
+			"mode": "debug",
+			"targets": [
+				"vizia_baseview"
+			],
+			"features": [],
+			"arguments": [],
+			"envVars": [],
+			"workspaceMember": "vizia_baseview",
+			"checkedWorkspaceMembers": []
+		},
+		{
+			"name": "lib",
+			"mode": "debug",
+			"targets": [
+				"vizia_core"
+			],
+			"features": [],
+			"arguments": [],
+			"envVars": [],
+			"workspaceMember": "vizia_core",
+			"checkedWorkspaceMembers": []
+		},
+		{
+			"name": "lib",
+			"mode": "debug",
+			"targets": [
+				"vizia_derive"
+			],
+			"features": [],
+			"arguments": [],
+			"envVars": [],
+			"workspaceMember": "vizia_derive",
+			"checkedWorkspaceMembers": []
+		},
+		{
+			"name": "lib",
+			"mode": "debug",
+			"targets": [
+				"vizia_id"
+			],
+			"features": [],
+			"arguments": [],
+			"envVars": [],
+			"workspaceMember": "vizia_id",
+			"checkedWorkspaceMembers": []
+		},
+		{
+			"name": "lib",
+			"mode": "debug",
+			"targets": [
+				"vizia_input"
+			],
+			"features": [],
+			"arguments": [],
+			"envVars": [],
+			"workspaceMember": "vizia_input",
+			"checkedWorkspaceMembers": []
+		},
+		{
+			"name": "lib",
+			"mode": "debug",
+			"targets": [
+				"vizia_storage"
+			],
+			"features": [],
+			"arguments": [],
+			"envVars": [],
+			"workspaceMember": "vizia_storage",
+			"checkedWorkspaceMembers": []
+		},
+		{
+			"name": "lib",
+			"mode": "debug",
+			"targets": [
+				"vizia_style"
+			],
+			"features": [],
+			"arguments": [],
+			"envVars": [],
+			"workspaceMember": "vizia_style",
+			"checkedWorkspaceMembers": []
+		},
+		{
+			"name": "lib",
+			"mode": "debug",
+			"targets": [
+				"vizia_window"
+			],
+			"features": [],
+			"arguments": [],
+			"envVars": [],
+			"workspaceMember": "vizia_window",
+			"checkedWorkspaceMembers": []
+		},
+		{
+			"name": "lib",
+			"mode": "debug",
+			"targets": [
+				"vizia_winit"
+			],
+			"features": [],
+			"arguments": [],
+			"envVars": [],
+			"workspaceMember": "vizia_winit",
+			"checkedWorkspaceMembers": []
+		},
+		{
+			"name": "main",
+			"mode": "debug",
+			"targets": [
+				"todo"
+			],
+			"features": [],
+			"arguments": [],
+			"envVars": [],
+			"workspaceMember": "todo",
+			"checkedWorkspaceMembers": []
+		},
+		{
+			"name": "main",
+			"mode": "debug",
+			"targets": [
+				"widget_gallery"
+			],
+			"features": [],
+			"arguments": [],
+			"envVars": [],
+			"workspaceMember": "widget_gallery",
+			"checkedWorkspaceMembers": []
+		},
+		{
+			"name": "main",
+			"mode": "debug",
+			"targets": [
+				"gallery"
+			],
+			"features": [],
+			"arguments": [],
+			"envVars": [],
+			"workspaceMember": "gallery",
+			"checkedWorkspaceMembers": []
+		}
+	]
 }

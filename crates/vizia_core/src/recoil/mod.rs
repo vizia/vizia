@@ -1,9 +1,11 @@
 mod async_state;
+mod persistence;
 
 pub use async_state::{
     Async, AsyncCompletionEvent, AsyncHandle, AsyncOptions, AsyncSignalExt,
 };
 pub(crate) use async_state::run_async_load;
+pub use persistence::{PersistenceError, PersistenceManager};
 
 use crate::binding::Data;
 use crate::context::{Context, DataContext, EventContext};
@@ -15,6 +17,241 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::marker::PhantomData;
+
+// ============================================================================
+// Undo/Redo Infrastructure
+// ============================================================================
+
+/// A snapshot of a single signal's value for undo/redo.
+/// We store a clone function alongside the value to enable cloning.
+struct SignalSnapshot {
+    signal_id: NodeId,
+    value: Box<dyn Any>,
+    /// Function to clone the value (type-erased)
+    clone_fn: fn(&dyn Any) -> Box<dyn Any>,
+}
+
+impl SignalSnapshot {
+    /// Create a new snapshot with the given value.
+    fn new<T: 'static + Clone + Send>(signal_id: NodeId, value: &T) -> Self {
+        Self {
+            signal_id,
+            value: Box::new(value.clone()),
+            clone_fn: |any| {
+                let typed = any.downcast_ref::<T>().expect("Type mismatch in snapshot clone");
+                Box::new(typed.clone())
+            },
+        }
+    }
+
+    /// Clone this snapshot's value.
+    fn clone_value(&self) -> Box<dyn Any> {
+        (self.clone_fn)(&*self.value)
+    }
+}
+
+/// An entry in the undo/redo stack representing a group of changes.
+#[derive(Default)]
+pub struct UndoEntry {
+    /// Human-readable description of the action (e.g., "Add Circle")
+    pub description: String,
+    /// Snapshots of signal values before the change
+    snapshots: Vec<SignalSnapshot>,
+}
+
+impl std::fmt::Debug for UndoEntry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("UndoEntry")
+            .field("description", &self.description)
+            .field("snapshot_count", &self.snapshots.len())
+            .finish()
+    }
+}
+
+/// Manages undo/redo stacks for the application.
+pub struct UndoManager {
+    /// Stack of undo entries (most recent at end)
+    undo_stack: Vec<UndoEntry>,
+    /// Stack of redo entries (most recent at end)
+    redo_stack: Vec<UndoEntry>,
+    /// Set of signal IDs that are tracked for undo
+    undoable_signals: HashSet<NodeId>,
+    /// Clone functions for undoable signals (type-erased)
+    clone_fns: HashMap<NodeId, fn(&dyn Any) -> Box<dyn Any>>,
+    /// Maximum number of undo entries to keep
+    max_history: usize,
+    /// Current undo group being recorded (None if not in a group)
+    current_group: Option<UndoEntry>,
+    /// Signals modified in the current group (to avoid duplicate snapshots)
+    current_group_signals: HashSet<NodeId>,
+    /// Whether we're currently performing an undo/redo (to skip recording)
+    is_undoing: bool,
+    /// Version counter that increments on any undo state change (for reactive signals)
+    version: u64,
+    /// NodeId of the internal version signal (set by Store)
+    version_signal_id: Option<NodeId>,
+}
+
+impl Default for UndoManager {
+    fn default() -> Self {
+        Self {
+            undo_stack: Vec::new(),
+            redo_stack: Vec::new(),
+            undoable_signals: HashSet::new(),
+            clone_fns: HashMap::new(),
+            max_history: 100,
+            current_group: None,
+            current_group_signals: HashSet::new(),
+            is_undoing: false,
+            version: 0,
+            version_signal_id: None,
+        }
+    }
+}
+
+impl UndoManager {
+    /// Create a new undo manager with specified max history.
+    pub fn new(max_history: usize) -> Self {
+        Self { max_history, ..Default::default() }
+    }
+
+    /// Set the maximum number of undo entries to keep.
+    pub fn set_max_history(&mut self, max: usize) {
+        self.max_history = max;
+        // Trim if needed
+        while self.undo_stack.len() > self.max_history {
+            self.undo_stack.remove(0);
+        }
+    }
+
+    /// Get the current max history setting.
+    pub fn max_history(&self) -> usize {
+        self.max_history
+    }
+
+    /// Register a signal as undoable with its clone function.
+    pub fn register_undoable<T: 'static + Clone + Send>(&mut self, signal_id: NodeId) {
+        self.undoable_signals.insert(signal_id);
+        self.clone_fns.insert(signal_id, |any| {
+            let typed = any.downcast_ref::<T>().expect("Type mismatch in undo clone");
+            Box::new(typed.clone())
+        });
+    }
+
+    /// Clear all undo/redo history.
+    pub fn clear_history(&mut self) {
+        self.undo_stack.clear();
+        self.redo_stack.clear();
+        self.current_group = None;
+        self.current_group_signals.clear();
+        self.bump_version();
+    }
+
+    /// Set the version signal ID (called by Store during init).
+    pub fn set_version_signal_id(&mut self, id: NodeId) {
+        self.version_signal_id = Some(id);
+    }
+
+    /// Get the version signal ID.
+    pub fn version_signal_id(&self) -> Option<NodeId> {
+        self.version_signal_id
+    }
+
+    /// Get the current version.
+    pub fn version(&self) -> u64 {
+        self.version
+    }
+
+    /// Bump the version (signals state change).
+    fn bump_version(&mut self) {
+        self.version = self.version.wrapping_add(1);
+    }
+
+    /// Get the clone function for a signal.
+    pub fn get_clone_fn(&self, signal_id: &NodeId) -> Option<fn(&dyn Any) -> Box<dyn Any>> {
+        self.clone_fns.get(signal_id).copied()
+    }
+
+    /// Check if a signal is undoable.
+    pub fn is_undoable(&self, signal_id: &NodeId) -> bool {
+        self.undoable_signals.contains(signal_id)
+    }
+
+    /// Check if we can undo.
+    pub fn can_undo(&self) -> bool {
+        !self.undo_stack.is_empty()
+    }
+
+    /// Check if we can redo.
+    pub fn can_redo(&self) -> bool {
+        !self.redo_stack.is_empty()
+    }
+
+    /// Get the undo history for UI display.
+    pub fn undo_history(&self) -> Vec<&str> {
+        self.undo_stack.iter().rev().map(|e| e.description.as_str()).collect()
+    }
+
+    /// Get the redo history for UI display.
+    pub fn redo_history(&self) -> Vec<&str> {
+        self.redo_stack.iter().rev().map(|e| e.description.as_str()).collect()
+    }
+
+    /// Begin an undo group. All changes until end_group are grouped together.
+    pub fn begin_group(&mut self, description: impl Into<String>) {
+        if self.is_undoing {
+            return;
+        }
+        self.current_group = Some(UndoEntry {
+            description: description.into(),
+            snapshots: Vec::new(),
+        });
+        self.current_group_signals.clear();
+    }
+
+    /// End the current undo group and push it to the stack.
+    pub fn end_group(&mut self) {
+        if self.is_undoing {
+            return;
+        }
+        if let Some(group) = self.current_group.take() {
+            if !group.snapshots.is_empty() {
+                self.undo_stack.push(group);
+                // Clear redo stack when new changes are made
+                self.redo_stack.clear();
+                // Trim history if needed
+                while self.undo_stack.len() > self.max_history {
+                    self.undo_stack.remove(0);
+                }
+                // Bump version to notify reactive signals
+                self.bump_version();
+            }
+        }
+        self.current_group_signals.clear();
+    }
+
+    /// Snapshot a signal's current value before it changes.
+    /// Only records if the signal is undoable and we're in an undo group.
+    pub fn snapshot_before_change<T: 'static + Clone + Send>(
+        &mut self,
+        signal_id: NodeId,
+        current_value: &T,
+    ) {
+        if self.is_undoing || !self.undoable_signals.contains(&signal_id) {
+            return;
+        }
+
+        // Only snapshot once per signal per group
+        if self.current_group_signals.contains(&signal_id) {
+            return;
+        }
+
+        if let Some(ref mut group) = self.current_group {
+            group.snapshots.push(SignalSnapshot::new(signal_id, current_value));
+            self.current_group_signals.insert(signal_id);
+        }
+    }
+}
 
 // Unique identifier for state nodes
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Copy)]
@@ -92,6 +329,12 @@ pub struct Store {
     // Async load timestamps - maps signal NodeId to when data was last loaded
     async_load_timestamps: HashMap<NodeId, web_time::Instant>,
 
+    // Undo/redo manager
+    undo_manager: UndoManager,
+
+    // State persistence manager
+    persistence_manager: PersistenceManager,
+
     id_counter: usize,
 }
 
@@ -118,7 +361,186 @@ impl Store {
             pending_set: HashSet::new(),
             async_load_ids: HashMap::new(),
             async_load_timestamps: HashMap::new(),
+            undo_manager: UndoManager::default(),
+            persistence_manager: PersistenceManager::new(),
             id_counter: 0,
+        }
+    }
+
+    // ========================================================================
+    // Undo/Redo Methods
+    // ========================================================================
+
+    /// Get a reference to the undo manager.
+    pub fn undo_manager(&self) -> &UndoManager {
+        &self.undo_manager
+    }
+
+    /// Get a mutable reference to the undo manager.
+    pub fn undo_manager_mut(&mut self) -> &mut UndoManager {
+        &mut self.undo_manager
+    }
+
+    /// Perform undo - restores the previous state.
+    pub fn undo(&mut self) -> bool {
+        if !self.undo_manager.can_undo() {
+            return false;
+        }
+
+        self.undo_manager.is_undoing = true;
+
+        if let Some(entry) = self.undo_manager.undo_stack.pop() {
+            // Create redo entry with current values
+            let mut redo_entry = UndoEntry {
+                description: entry.description.clone(),
+                snapshots: Vec::with_capacity(entry.snapshots.len()),
+            };
+
+            // Restore old values and save current for redo
+            for snapshot in entry.snapshots {
+                // Save current value for redo (using the snapshot's clone_fn)
+                if self.values.contains_key(&snapshot.signal_id) {
+                    // Create a snapshot of current value using same clone_fn
+                    let current_snapshot = SignalSnapshot {
+                        signal_id: snapshot.signal_id,
+                        value: snapshot.clone_value(), // Temp - will be replaced
+                        clone_fn: snapshot.clone_fn,
+                    };
+                    // Actually get current value
+                    if let Some(current) = self.values.remove(&snapshot.signal_id) {
+                        redo_entry.snapshots.push(SignalSnapshot {
+                            signal_id: snapshot.signal_id,
+                            value: current,
+                            clone_fn: snapshot.clone_fn,
+                        });
+                    }
+                    // Put back the value we're about to replace
+                    let _ = current_snapshot;
+                }
+
+                // Restore the old value
+                self.values.insert(snapshot.signal_id, snapshot.value);
+                self.update_dependents(&snapshot.signal_id);
+            }
+
+            self.undo_manager.redo_stack.push(redo_entry);
+        }
+
+        self.undo_manager.is_undoing = false;
+
+        // Update version signal to notify reactive can_undo/can_redo
+        self.undo_manager.bump_version();
+        self.update_undo_version_signal();
+
+        true
+    }
+
+    /// Perform redo - restores the next state.
+    pub fn redo(&mut self) -> bool {
+        if !self.undo_manager.can_redo() {
+            return false;
+        }
+
+        self.undo_manager.is_undoing = true;
+
+        if let Some(entry) = self.undo_manager.redo_stack.pop() {
+            // Create undo entry with current values
+            let mut undo_entry = UndoEntry {
+                description: entry.description.clone(),
+                snapshots: Vec::with_capacity(entry.snapshots.len()),
+            };
+
+            // Restore redo values and save current for undo
+            for snapshot in entry.snapshots {
+                // Save current value for undo
+                if let Some(current) = self.values.remove(&snapshot.signal_id) {
+                    undo_entry.snapshots.push(SignalSnapshot {
+                        signal_id: snapshot.signal_id,
+                        value: current,
+                        clone_fn: snapshot.clone_fn,
+                    });
+                }
+
+                // Restore the redo value
+                self.values.insert(snapshot.signal_id, snapshot.value);
+                self.update_dependents(&snapshot.signal_id);
+            }
+
+            self.undo_manager.undo_stack.push(undo_entry);
+        }
+
+        self.undo_manager.is_undoing = false;
+
+        // Update version signal to notify reactive can_undo/can_redo
+        self.undo_manager.bump_version();
+        self.update_undo_version_signal();
+
+        true
+    }
+
+    /// Update the internal undo version signal to trigger dependent updates.
+    pub fn update_undo_version_signal(&mut self) {
+        if let Some(version_id) = self.undo_manager.version_signal_id() {
+            let version = self.undo_manager.version();
+            self.values.insert(version_id, Box::new(version));
+            self.update_dependents(&version_id);
+        }
+    }
+
+    /// Initialize the undo version signal (called once during setup).
+    pub fn init_undo_version_signal(&mut self) -> NodeId {
+        let id = self.get_next_id();
+        self.values.insert(id, Box::new(0u64));
+        self.undo_manager.set_version_signal_id(id);
+        id
+    }
+
+    /// Get the undo version signal ID, initializing if needed.
+    pub fn get_or_init_undo_version_signal(&mut self) -> NodeId {
+        if let Some(id) = self.undo_manager.version_signal_id() {
+            id
+        } else {
+            self.init_undo_version_signal()
+        }
+    }
+
+    // ========================================================================
+    // Persistence Methods
+    // ========================================================================
+
+    /// Get a reference to the persistence manager.
+    pub fn persistence_manager(&self) -> &PersistenceManager {
+        &self.persistence_manager
+    }
+
+    /// Get a mutable reference to the persistence manager.
+    pub fn persistence_manager_mut(&mut self) -> &mut PersistenceManager {
+        &mut self.persistence_manager
+    }
+
+    /// Flush any pending persistence saves to disk.
+    pub fn flush_persistence(&mut self) {
+        self.persistence_manager.flush_pending(&self.values);
+    }
+
+    /// Check if there are pending persistence saves.
+    pub fn has_pending_persistence(&self) -> bool {
+        self.persistence_manager.has_pending_saves()
+    }
+
+    /// Check if the debounce delay has passed and we should flush persistence.
+    pub fn should_flush_persistence(&self) -> bool {
+        self.persistence_manager.should_flush()
+    }
+
+    /// Flush persistence if the debounce delay has passed.
+    /// Returns true if a flush was performed.
+    pub fn maybe_flush_persistence(&mut self) -> bool {
+        if self.persistence_manager.should_flush() {
+            self.persistence_manager.flush_pending(&self.values);
+            true
+        } else {
+            false
         }
     }
 
@@ -171,12 +593,66 @@ impl Store {
         self.values.get_mut(id).and_then(|boxed| boxed.downcast_mut::<T>())
     }
 
-    // Updated set method to detect batch mode
+    // Updated set method with auto-snapshot for undoable signals and auto-persist
     fn set<T: 'static>(&mut self, id: &NodeId, value: T) {
+        // Auto-snapshot for undoable signals
+        self.auto_snapshot_if_needed(id);
+
         // Update the value
         self.values.insert(*id, Box::new(value));
 
+        // Schedule auto-persist if this signal is persistent
+        self.auto_persist_if_needed(id);
+
         self.update_dependents(id);
+    }
+
+    /// Schedule a persist save if the signal is registered for persistence.
+    fn auto_persist_if_needed(&mut self, id: &NodeId) {
+        if self.persistence_manager.is_persistent(id) {
+            self.persistence_manager.schedule_save(*id);
+        }
+    }
+
+    /// Auto-snapshot a signal if it's undoable and we're in an undo group.
+    fn auto_snapshot_if_needed(&mut self, id: &NodeId) {
+        // Check conditions
+        if self.undo_manager.is_undoing {
+            return;
+        }
+        if self.undo_manager.current_group.is_none() {
+            return;
+        }
+        if !self.undo_manager.is_undoable(id) {
+            return;
+        }
+        if self.undo_manager.current_group_signals.contains(id) {
+            return;
+        }
+
+        // Get clone function and current value
+        let clone_fn = match self.undo_manager.get_clone_fn(id) {
+            Some(f) => f,
+            None => return,
+        };
+
+        let current_value = match self.values.get(id) {
+            Some(v) => v,
+            None => return,
+        };
+
+        // Create snapshot
+        let snapshot = SignalSnapshot {
+            signal_id: *id,
+            value: clone_fn(&**current_value),
+            clone_fn,
+        };
+
+        // Add to current group
+        if let Some(ref mut group) = self.undo_manager.current_group {
+            group.snapshots.push(snapshot);
+            self.undo_manager.current_group_signals.insert(*id);
+        }
     }
 
     /// Set a value by NodeId - used internally for async state updates.
@@ -187,6 +663,12 @@ impl Store {
     /// Get a value by NodeId - used internally for async state checks.
     pub(crate) fn get_by_id<T: 'static>(&self, id: &NodeId) -> Option<&T> {
         self.values.get(id).and_then(|boxed| boxed.downcast_ref::<T>())
+    }
+
+    /// Track a signal as a dependency without getting its value.
+    /// Used for reactive signals that need to observe internal state changes.
+    pub fn track(&self, id: &NodeId) {
+        self.record_dependency(*id);
     }
 
     /// Set the current async load ID for a signal.
@@ -461,10 +943,20 @@ impl<T: 'static> Signal<T> {
     }
 
     // Update takes a function that works with references
-    pub fn update<F: FnOnce(&mut T)>(&self, store: &mut EventContext, updater: F) {
-        let old_value = self.get_mut(store.data.get_store_mut());
+    pub fn upd<F: FnOnce(&mut T)>(&self, store: &mut EventContext, updater: F) {
+        let s = store.data.get_store_mut();
+
+        // Auto-snapshot for undo before mutation
+        s.auto_snapshot_if_needed(&self.id);
+
+        // Mutate the value in place
+        let old_value = self.get_mut(s);
         updater(old_value);
-        store.data.get_store_mut().update_dependents(&self.id);
+
+        // Schedule persistence save if registered
+        s.auto_persist_if_needed(&self.id);
+
+        s.update_dependents(&self.id);
     }
 
     pub fn observe(&self, store: &mut Store, entity: Entity) {

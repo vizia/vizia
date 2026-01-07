@@ -65,7 +65,7 @@ impl View for Collapsible {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|collapsible_event, _| match collapsible_event {
             CollapsibleEvent::ToggleOpen => {
-                self.is_open.update(cx, |is_open| *is_open = !*is_open);
+                self.is_open.upd(cx, |is_open| *is_open = !*is_open);
             }
         });
     }

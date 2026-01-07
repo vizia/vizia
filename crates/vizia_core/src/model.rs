@@ -24,11 +24,11 @@ use std::any::{Any, TypeId};
 ///     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
 ///         event.map(|app_event, _| match app_event {
 ///             AppEvent::Increment => {
-///                 self.count.update(cx, |value| *value += 1);
+///                 self.count.upd(cx, |value| *value += 1);
 ///             }
 ///
 ///             AppEvent::Decrement => {
-///                 self.count.update(cx, |value| *value -= 1);
+///                 self.count.upd(cx, |value| *value -= 1);
 ///             }
 ///         });
 ///     }
@@ -87,11 +87,11 @@ pub trait Model: 'static + Sized {
     ///     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
     ///         event.map(|app_event, _| match app_event {
     ///             AppEvent::Increment => {
-    ///                 self.count.update(cx, |value| *value += 1);
+    ///                 self.count.upd(cx, |value| *value += 1);
     ///             }
     ///
     ///             AppEvent::Decrement => {
-    ///                 self.count.update(cx, |value| *value -= 1);
+    ///                 self.count.upd(cx, |value| *value -= 1);
     ///             }
     ///         });
     ///     }

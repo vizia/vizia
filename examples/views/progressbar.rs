@@ -8,6 +8,10 @@ struct ProgressbarApp {
 }
 
 impl App for ProgressbarApp {
+    fn app_name() -> &'static str {
+        "ProgressBar"
+    }
+
     fn new(cx: &mut Context) -> Self {
         Self {
             progress: cx.state(0.0f32),
@@ -26,7 +30,7 @@ impl App for ProgressbarApp {
         let timer = cx.add_timer(interval, Some(duration), move |cx, action| match action {
             TimerAction::Tick(delta) => {
                 let step = (interval + delta).as_secs_f32() / duration.as_secs_f32();
-                progress.update(cx, |value| {
+                progress.upd(cx, |value| {
                     *value = (*value + step).clamp(0.0, 1.0);
                 });
             }
@@ -49,7 +53,7 @@ impl App for ProgressbarApp {
     }
 
     fn window_config(&self) -> WindowConfig {
-        window(|app| app.title("ProgressBar").inner_size((750, 550)))
+        window(|app| app.inner_size((750, 550)))
     }
 }
 

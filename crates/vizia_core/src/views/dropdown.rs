@@ -88,7 +88,7 @@ use crate::prelude::*;
 ///                     });
 ///                     Checkbox::new(cx, checked)
 ///                         .on_toggle(move |cx| {
-///                             values.update(cx, |vals| vals[i] = !vals[i]);
+///                             values.upd(cx, |vals| vals[i] = !vals[i]);
 ///                         });
 ///                     let label = cx.state(LABELS[i]);
 ///                     Label::new(cx, label);

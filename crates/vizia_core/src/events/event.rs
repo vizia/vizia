@@ -90,11 +90,11 @@ impl Event {
     /// #     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
     /// event.map(|app_event, _| match app_event {
     ///     AppEvent::Increment => {
-    ///         self.count.update(cx, |value| *value += 1);
+    ///         self.count.upd(cx, |value| *value += 1);
     ///     }
     ///
     ///     AppEvent::Decrement => {
-    ///         self.count.update(cx, |value| *value -= 1);
+    ///         self.count.upd(cx, |value| *value -= 1);
     ///     }
     /// });
     /// #     }
@@ -131,11 +131,11 @@ impl Event {
     /// #     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
     /// event.take(|app_event, meta| match app_event {
     ///     AppEvent::Increment => {
-    ///         self.count.update(cx, |value| *value += 1);
+    ///         self.count.upd(cx, |value| *value += 1);
     ///     }
     ///
     ///     AppEvent::Decrement => {
-    ///         self.count.update(cx, |value| *value -= 1);
+    ///         self.count.upd(cx, |value| *value -= 1);
     ///     }
     /// });
     /// #     }

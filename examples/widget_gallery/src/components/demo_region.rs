@@ -23,7 +23,7 @@ impl DemoRegion {
                 Divider::horizontal(cx);
                 HStack::new(cx, |cx| {
                     ToggleButton::new(cx, open, |cx| Svg::new(cx, ICON_CODE))
-                        .on_press(move |ex| open.update(ex, |state| *state = !*state))
+                        .on_press(move |ex| open.upd(ex, |state| *state = !*state))
                         .tooltip(|cx| {
                             Tooltip::new(cx, |cx| {
                                 Label::new(cx, "Toggle Code");
