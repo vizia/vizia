@@ -133,10 +133,6 @@ impl App for SaveDialogApp {
         });
         self
     }
-
-    fn window_config(&self) -> WindowConfig {
-        window(|app| app)
-    }
 }
 
 #[cfg(not(feature = "baseview"))]

@@ -26,10 +26,6 @@ impl App for StylesheetApp {
         .size(size_200);
         self
     }
-
-    fn window_config(&self) -> WindowConfig {
-        window(|app| app)
-    }
 }
 
 fn main() -> Result<(), ApplicationError> {

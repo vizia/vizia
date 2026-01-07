@@ -17,6 +17,7 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::marker::PhantomData;
+use web_time::Instant;
 
 // ============================================================================
 // Undo/Redo Infrastructure
@@ -29,17 +30,26 @@ struct SignalSnapshot {
     value: Box<dyn Any>,
     /// Function to clone the value (type-erased)
     clone_fn: fn(&dyn Any) -> Box<dyn Any>,
+    /// Function to format the value for debug display (type-erased)
+    debug_fn: fn(&dyn Any) -> String,
 }
 
 impl SignalSnapshot {
     /// Create a new snapshot with the given value.
-    fn new<T: 'static + Clone + Send>(signal_id: NodeId, value: &T) -> Self {
+    fn new<T: 'static + Clone + Send + std::fmt::Debug>(signal_id: NodeId, value: &T) -> Self {
         Self {
             signal_id,
             value: Box::new(value.clone()),
             clone_fn: |any| {
                 let typed = any.downcast_ref::<T>().expect("Type mismatch in snapshot clone");
                 Box::new(typed.clone())
+            },
+            debug_fn: |any| {
+                if let Some(typed) = any.downcast_ref::<T>() {
+                    format!("{:?}", typed)
+                } else {
+                    "<unknown>".to_string()
+                }
             },
         }
     }
@@ -48,15 +58,31 @@ impl SignalSnapshot {
     fn clone_value(&self) -> Box<dyn Any> {
         (self.clone_fn)(&*self.value)
     }
+
+    /// Format the value for debug display.
+    fn debug_value(&self) -> String {
+        (self.debug_fn)(&*self.value)
+    }
 }
 
 /// An entry in the undo/redo stack representing a group of changes.
-#[derive(Default)]
 pub struct UndoEntry {
     /// Human-readable description of the action (e.g., "Add Circle")
     pub description: String,
     /// Snapshots of signal values before the change
     snapshots: Vec<SignalSnapshot>,
+    /// When this entry was created
+    pub timestamp: Instant,
+}
+
+impl Default for UndoEntry {
+    fn default() -> Self {
+        Self {
+            description: String::new(),
+            snapshots: Vec::new(),
+            timestamp: Instant::now(),
+        }
+    }
 }
 
 impl std::fmt::Debug for UndoEntry {
@@ -64,8 +90,39 @@ impl std::fmt::Debug for UndoEntry {
         f.debug_struct("UndoEntry")
             .field("description", &self.description)
             .field("snapshot_count", &self.snapshots.len())
+            .field("timestamp", &self.timestamp)
             .finish()
     }
+}
+
+// ============================================================================
+// Time Travel Debugging Types
+// ============================================================================
+
+/// Represents a change to a signal's value for time travel inspection.
+#[derive(Clone, Debug)]
+pub struct SignalChange {
+    /// The signal that changed
+    pub signal_id: NodeId,
+    /// The old value (debug formatted)
+    pub old_value: String,
+    /// The new value (debug formatted)
+    pub new_value: String,
+}
+
+/// An entry in the time travel history timeline.
+#[derive(Clone, Debug)]
+pub struct HistoryEntry {
+    /// Position in the timeline (0 = oldest, higher = more recent)
+    pub index: usize,
+    /// Human-readable description of the action
+    pub description: String,
+    /// When this entry was created
+    pub timestamp: Instant,
+    /// Which signals changed and their values
+    pub changes: Vec<SignalChange>,
+    /// Whether this is the "present" marker
+    pub is_present: bool,
 }
 
 /// Manages undo/redo stacks for the application.
@@ -78,6 +135,8 @@ pub struct UndoManager {
     undoable_signals: HashSet<NodeId>,
     /// Clone functions for undoable signals (type-erased)
     clone_fns: HashMap<NodeId, fn(&dyn Any) -> Box<dyn Any>>,
+    /// Debug functions for undoable signals (type-erased)
+    debug_fns: HashMap<NodeId, fn(&dyn Any) -> String>,
     /// Maximum number of undo entries to keep
     max_history: usize,
     /// Current undo group being recorded (None if not in a group)
@@ -90,6 +149,14 @@ pub struct UndoManager {
     version: u64,
     /// NodeId of the internal version signal (set by Store)
     version_signal_id: Option<NodeId>,
+
+    // Time travel state
+    /// Current position in time travel mode (None = at present)
+    ttrvl_position: Option<usize>,
+    /// Saved present state when entering time travel mode
+    ttrvl_saved_state: Option<HashMap<NodeId, Box<dyn Any>>>,
+    /// Clone functions for saved state restoration
+    ttrvl_saved_clone_fns: HashMap<NodeId, fn(&dyn Any) -> Box<dyn Any>>,
 }
 
 impl Default for UndoManager {
@@ -99,12 +166,16 @@ impl Default for UndoManager {
             redo_stack: Vec::new(),
             undoable_signals: HashSet::new(),
             clone_fns: HashMap::new(),
+            debug_fns: HashMap::new(),
             max_history: 100,
             current_group: None,
             current_group_signals: HashSet::new(),
             is_undoing: false,
             version: 0,
             version_signal_id: None,
+            ttrvl_position: None,
+            ttrvl_saved_state: None,
+            ttrvl_saved_clone_fns: HashMap::new(),
         }
     }
 }
@@ -129,13 +200,25 @@ impl UndoManager {
         self.max_history
     }
 
-    /// Register a signal as undoable with its clone function.
-    pub fn register_undoable<T: 'static + Clone + Send>(&mut self, signal_id: NodeId) {
+    /// Register a signal as undoable with its clone and debug functions.
+    pub fn register_undoable<T: 'static + Clone + Send + std::fmt::Debug>(&mut self, signal_id: NodeId) {
         self.undoable_signals.insert(signal_id);
         self.clone_fns.insert(signal_id, |any| {
             let typed = any.downcast_ref::<T>().expect("Type mismatch in undo clone");
             Box::new(typed.clone())
         });
+        self.debug_fns.insert(signal_id, |any| {
+            if let Some(typed) = any.downcast_ref::<T>() {
+                format!("{:?}", typed)
+            } else {
+                "<unknown>".to_string()
+            }
+        });
+    }
+
+    /// Get the debug function for a signal.
+    pub fn get_debug_fn(&self, signal_id: &NodeId) -> Option<fn(&dyn Any) -> String> {
+        self.debug_fns.get(signal_id).copied()
     }
 
     /// Clear all undo/redo history.
@@ -205,6 +288,7 @@ impl UndoManager {
         self.current_group = Some(UndoEntry {
             description: description.into(),
             snapshots: Vec::new(),
+            timestamp: Instant::now(),
         });
         self.current_group_signals.clear();
     }
@@ -232,7 +316,7 @@ impl UndoManager {
 
     /// Snapshot a signal's current value before it changes.
     /// Only records if the signal is undoable and we're in an undo group.
-    pub fn snapshot_before_change<T: 'static + Clone + Send>(
+    pub fn snapshot_before_change<T: 'static + Clone + Send + std::fmt::Debug>(
         &mut self,
         signal_id: NodeId,
         current_value: &T,
@@ -249,6 +333,90 @@ impl UndoManager {
         if let Some(ref mut group) = self.current_group {
             group.snapshots.push(SignalSnapshot::new(signal_id, current_value));
             self.current_group_signals.insert(signal_id);
+        }
+    }
+
+    // ========================================================================
+    // Time Travel Methods
+    // ========================================================================
+
+    /// Check if currently in time travel mode.
+    pub fn is_ttrvl(&self) -> bool {
+        self.ttrvl_position.is_some()
+    }
+
+    /// Get the current time travel position (None = at present).
+    pub fn ttrvl_position(&self) -> Option<usize> {
+        self.ttrvl_position
+    }
+
+    /// Get the total number of entries in the timeline.
+    pub fn timeline_len(&self) -> usize {
+        // undo_stack + present + redo_stack
+        self.undo_stack.len() + 1 + self.redo_stack.len()
+    }
+
+    /// Get the index that represents "present" in the timeline.
+    pub fn present_index(&self) -> usize {
+        self.undo_stack.len()
+    }
+
+    /// Build the full history timeline for time travel UI.
+    pub fn timeline(&self) -> Vec<HistoryEntry> {
+        let mut entries = Vec::with_capacity(self.timeline_len());
+
+        // Past entries (undo stack, oldest first)
+        for (i, entry) in self.undo_stack.iter().enumerate() {
+            entries.push(HistoryEntry {
+                index: i,
+                description: entry.description.clone(),
+                timestamp: entry.timestamp,
+                changes: entry.snapshots.iter().map(|s| SignalChange {
+                    signal_id: s.signal_id,
+                    old_value: s.debug_value(),
+                    new_value: String::new(), // Old value is what's stored
+                }).collect(),
+                is_present: false,
+            });
+        }
+
+        // Present marker
+        entries.push(HistoryEntry {
+            index: self.undo_stack.len(),
+            description: "Present".to_string(),
+            timestamp: Instant::now(),
+            changes: vec![],
+            is_present: true,
+        });
+
+        // Future entries (redo stack, reversed so oldest undone is first)
+        for (i, entry) in self.redo_stack.iter().rev().enumerate() {
+            entries.push(HistoryEntry {
+                index: self.undo_stack.len() + 1 + i,
+                description: entry.description.clone(),
+                timestamp: entry.timestamp,
+                changes: entry.snapshots.iter().map(|s| SignalChange {
+                    signal_id: s.signal_id,
+                    old_value: s.debug_value(),
+                    new_value: String::new(),
+                }).collect(),
+                is_present: false,
+            });
+        }
+
+        entries
+    }
+
+    /// Get the description at a specific timeline position.
+    pub fn description_at(&self, index: usize) -> String {
+        let present = self.undo_stack.len();
+        if index < present {
+            self.undo_stack.get(index).map(|e| e.description.clone()).unwrap_or_default()
+        } else if index == present {
+            "Present".to_string()
+        } else {
+            let redo_index = self.redo_stack.len().saturating_sub(index - present);
+            self.redo_stack.get(redo_index).map(|e| e.description.clone()).unwrap_or_default()
         }
     }
 }
@@ -394,28 +562,22 @@ impl Store {
             let mut redo_entry = UndoEntry {
                 description: entry.description.clone(),
                 snapshots: Vec::with_capacity(entry.snapshots.len()),
+                timestamp: entry.timestamp,
             };
 
             // Restore old values and save current for redo
             for snapshot in entry.snapshots {
                 // Save current value for redo (using the snapshot's clone_fn)
                 if self.values.contains_key(&snapshot.signal_id) {
-                    // Create a snapshot of current value using same clone_fn
-                    let current_snapshot = SignalSnapshot {
-                        signal_id: snapshot.signal_id,
-                        value: snapshot.clone_value(), // Temp - will be replaced
-                        clone_fn: snapshot.clone_fn,
-                    };
                     // Actually get current value
                     if let Some(current) = self.values.remove(&snapshot.signal_id) {
                         redo_entry.snapshots.push(SignalSnapshot {
                             signal_id: snapshot.signal_id,
                             value: current,
                             clone_fn: snapshot.clone_fn,
+                            debug_fn: snapshot.debug_fn,
                         });
                     }
-                    // Put back the value we're about to replace
-                    let _ = current_snapshot;
                 }
 
                 // Restore the old value
@@ -448,6 +610,7 @@ impl Store {
             let mut undo_entry = UndoEntry {
                 description: entry.description.clone(),
                 snapshots: Vec::with_capacity(entry.snapshots.len()),
+                timestamp: entry.timestamp,
             };
 
             // Restore redo values and save current for undo
@@ -458,6 +621,7 @@ impl Store {
                         signal_id: snapshot.signal_id,
                         value: current,
                         clone_fn: snapshot.clone_fn,
+                        debug_fn: snapshot.debug_fn,
                     });
                 }
 
@@ -542,6 +706,142 @@ impl Store {
         } else {
             false
         }
+    }
+
+    // ========================================================================
+    // Time Travel Methods
+    // ========================================================================
+
+    /// Check if currently in time travel mode.
+    pub fn is_ttrvl(&self) -> bool {
+        self.undo_manager.is_ttrvl()
+    }
+
+    /// Get the current time travel position (None = at present).
+    pub fn ttrvl_position(&self) -> Option<usize> {
+        self.undo_manager.ttrvl_position()
+    }
+
+    /// Get the timeline for time travel UI.
+    pub fn ttrvl_history(&self) -> Vec<HistoryEntry> {
+        self.undo_manager.timeline()
+    }
+
+    /// Navigate to a specific position in the timeline.
+    pub fn ttrvl_to(&mut self, target: usize) {
+        let present_index = self.undo_manager.present_index();
+        let timeline_len = self.undo_manager.timeline_len();
+
+        // Clamp target to valid range
+        let target = target.min(timeline_len.saturating_sub(1));
+
+        // If already at target, nothing to do
+        if self.undo_manager.ttrvl_position == Some(target) {
+            return;
+        }
+
+        // If going to present
+        if target == present_index {
+            self.ttrvl_exit();
+            return;
+        }
+
+        // Save present state on first navigation
+        if self.undo_manager.ttrvl_saved_state.is_none() {
+            let mut saved = HashMap::new();
+            for signal_id in &self.undo_manager.undoable_signals.clone() {
+                if let Some(value) = self.values.get(signal_id) {
+                    if let Some(clone_fn) = self.undo_manager.get_clone_fn(signal_id) {
+                        saved.insert(*signal_id, clone_fn(&**value));
+                        self.undo_manager.ttrvl_saved_clone_fns.insert(*signal_id, clone_fn);
+                    }
+                }
+            }
+            self.undo_manager.ttrvl_saved_state = Some(saved);
+        }
+
+        // Start from saved state (present)
+        if let Some(saved_state) = &self.undo_manager.ttrvl_saved_state {
+            for (signal_id, clone_fn) in &self.undo_manager.ttrvl_saved_clone_fns.clone() {
+                if let Some(value) = saved_state.get(signal_id) {
+                    self.values.insert(*signal_id, clone_fn(&**value));
+                }
+            }
+        }
+
+        // Navigate to target by applying snapshots
+        if target < present_index {
+            // Go backward from present - apply undo snapshots in reverse
+            for i in (target..present_index).rev() {
+                if let Some(entry) = self.undo_manager.undo_stack.get(i) {
+                    for snapshot in &entry.snapshots {
+                        self.values.insert(snapshot.signal_id, snapshot.clone_value());
+                    }
+                }
+            }
+        } else {
+            // Go forward from present - apply redo snapshots
+            let redo_start = target - present_index - 1;
+            for i in (0..=redo_start).rev() {
+                let redo_index = self.undo_manager.redo_stack.len().saturating_sub(1).saturating_sub(i);
+                if let Some(entry) = self.undo_manager.redo_stack.get(redo_index) {
+                    for snapshot in &entry.snapshots {
+                        self.values.insert(snapshot.signal_id, snapshot.clone_value());
+                    }
+                }
+            }
+        }
+
+        self.undo_manager.ttrvl_position = Some(target);
+
+        // Trigger updates for all undoable signals
+        let signal_ids: Vec<_> = self.undo_manager.undoable_signals.iter().copied().collect();
+        for signal_id in signal_ids {
+            self.update_dependents(&signal_id);
+        }
+
+        self.undo_manager.bump_version();
+        self.update_undo_version_signal();
+    }
+
+    /// Step backward in time travel.
+    pub fn ttrvl_back(&mut self) {
+        let current = self.undo_manager.ttrvl_position
+            .unwrap_or_else(|| self.undo_manager.present_index());
+        if current > 0 {
+            self.ttrvl_to(current - 1);
+        }
+    }
+
+    /// Step forward in time travel.
+    pub fn ttrvl_forward(&mut self) {
+        let current = self.undo_manager.ttrvl_position
+            .unwrap_or_else(|| self.undo_manager.present_index());
+        let max = self.undo_manager.timeline_len().saturating_sub(1);
+        if current < max {
+            self.ttrvl_to(current + 1);
+        }
+    }
+
+    /// Exit time travel mode and return to present.
+    pub fn ttrvl_exit(&mut self) {
+        if self.undo_manager.ttrvl_saved_state.is_none() {
+            self.undo_manager.ttrvl_position = None;
+            return;
+        }
+
+        // Restore present state
+        if let Some(saved_state) = self.undo_manager.ttrvl_saved_state.take() {
+            for (signal_id, value) in saved_state {
+                self.values.insert(signal_id, value);
+                self.update_dependents(&signal_id);
+            }
+        }
+
+        self.undo_manager.ttrvl_saved_clone_fns.clear();
+        self.undo_manager.ttrvl_position = None;
+        self.undo_manager.bump_version();
+        self.update_undo_version_signal();
     }
 
     // Get a unique ID for the next node
@@ -636,6 +936,11 @@ impl Store {
             None => return,
         };
 
+        let debug_fn = match self.undo_manager.get_debug_fn(id) {
+            Some(f) => f,
+            None => return,
+        };
+
         let current_value = match self.values.get(id) {
             Some(v) => v,
             None => return,
@@ -646,6 +951,7 @@ impl Store {
             signal_id: *id,
             value: clone_fn(&**current_value),
             clone_fn,
+            debug_fn,
         };
 
         // Add to current group

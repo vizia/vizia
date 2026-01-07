@@ -15,7 +15,15 @@ pub trait TextModifiers: internal::Modifiable {
             let text_data = val.to_string_local(cx);
             cx.style.text.insert(entity, text_data);
 
-            cx.style.needs_text_update(entity);
+            // For text spans (Display::None), mark the parent for text update
+            // since the parent owns the paragraph that needs rebuilding
+            if cx.style.text_span.get(entity).copied().unwrap_or_default() {
+                if let Some(parent) = cx.tree.get_layout_parent(entity) {
+                    cx.style.needs_text_update(parent);
+                }
+            } else {
+                cx.style.needs_text_update(entity);
+            }
             cx.needs_relayout();
             cx.needs_redraw();
         });

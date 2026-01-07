@@ -68,10 +68,6 @@ impl App for CustomViewApp {
             .space(space_20);
         self
     }
-
-    fn window_config(&self) -> WindowConfig {
-        window(|app| app)
-    }
 }
 
 fn main() -> Result<(), ApplicationError> {

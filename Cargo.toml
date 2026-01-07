@@ -81,6 +81,10 @@ name = "persistent_counter"
 path = "examples/persistent_counter.rs"
 
 [[example]]
+name = "time_travel"
+path = "examples/time_travel.rs"
+
+[[example]]
 name = "crud"
 path = "examples/7GUIs/crud.rs"
 

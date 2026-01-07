@@ -29,7 +29,7 @@ fn distance(x1: f32, y1: f32, x2: f32, y2: f32) -> f32 {
     f32::sqrt(f32::powf(x1 - x2, 2.0) + f32::powf(y1 - y2, 2.0))
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 struct Circle {
     x: f32,
     y: f32,
@@ -362,10 +362,6 @@ impl App for CircleDrawerApp {
                 }
             }
         });
-    }
-
-    fn window_config(&self) -> WindowConfig {
-        window(|app| app)
     }
 }
 

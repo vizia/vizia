@@ -51,10 +51,6 @@ impl App for LabelApp {
         });
         self
     }
-
-    fn window_config(&self) -> WindowConfig {
-        window(|app| app)
-    }
 }
 
 fn main() -> Result<(), ApplicationError> {

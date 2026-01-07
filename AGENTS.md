@@ -108,7 +108,7 @@ When adding features:
 1. Follow existing patterns in `crates/vizia_core/src/recoil/`
 2. Add to both `Context` and `EventContext` where appropriate
 3. Include unit tests
-4. Update documentation (README.md, ARCHITECTURE.md)
+4. Update all relevant documentation (any .md files documenting the codebase)
 5. Create example if non-trivial
 
 ### Code Quality
@@ -484,3 +484,101 @@ cx.end_undo_group();
 ### Example
 
 See `examples/7GUIs/circle_drawer.rs` for a complete demo with undo/redo.
+
+---
+
+## 13. Rich Text Labels
+
+Unified rich text API through `Label::new` with method chaining.
+
+### Markdown (Auto-Parsed)
+
+Markdown syntax is automatically parsed. No extra methods needed.
+
+```rust
+Label::new(cx, "Press **Cmd+S** to *save*");
+Label::new(cx, "Use `monospace` for code");
+Label::new(cx, "This is __underlined__ and ~~strikethrough~~");
+```
+
+**Markdown syntax:**
+- `**bold**` - bold
+- `*italic*` or `_italic_` - italic
+- `__underline__` - underline
+- `~~strikethrough~~` - strikethrough
+- `` `code` `` - monospace
+- `"literal"` - escape (text in quotes is not parsed)
+
+### Links & Custom Styles
+
+Use `[tag]...[/tag]` syntax with `.link()` or `.rich_style()`. Requires `.build_rich()`.
+
+```rust
+// Clickable links - opens URL or file path
+Label::new(cx, "Visit [docs]documentation[/docs] or [repo]GitHub[/repo]")
+    .link("docs", "https://docs.vizia.dev")
+    .link("repo", "https://github.com/vizia/vizia")
+    .build_rich();
+
+// Custom tag styles
+Label::new(cx, "This is [highlight]important[/highlight]")
+    .rich_style("highlight", |s| s.background_color(Color::yellow()))
+    .build_rich();
+
+// Mix markdown with custom tags
+Label::new(cx, "**Click** [link]**here**[/link] to continue")
+    .link("link", "https://vizia.dev")
+    .build_rich();
+```
+
+### Reactive Bindings
+
+Use `{name}` placeholders with `.rich_bind()`. Requires `.build_rich()`.
+
+```rust
+let count = cx.state(0i32);
+
+Label::new(cx, "Counter: {count} clicks")
+    .rich_bind("count", count)
+    .rich_style("count", |s| s.font_weight(FontWeightKeyword::Bold))
+    .build_rich();
+```
+
+### Conditionals
+
+Use `{#if name}...{/if}` with `.cond()`. Requires `.build_rich()`.
+
+```rust
+let show_warning = cx.state(true);
+
+Label::new(cx, "Status: {#if warn}**Warning!** {/if}All systems go.")
+    .cond("warn", show_warning)
+    .build_rich();
+```
+
+### Loops
+
+Use `{#each name as item}...{/each}` with `.each()`. Requires `.build_rich()`.
+
+```rust
+let items = cx.state(vec!["Apple", "Banana", "Cherry"]);
+
+Label::new(cx, "Fruits: {#each fruits as f}{f}, {/each}")
+    .each("fruits", items, |item| item.to_string())
+    .build_rich();
+```
+
+### Method Summary
+
+| Method | Purpose | Requires `.build_rich()` |
+|--------|---------|--------------------------|
+| (markdown) | Bold, italic, etc. | No |
+| `.link(tag, url)` | Clickable links | Yes |
+| `.rich_style(tag, f)` | Custom tag styles | Yes |
+| `.rich_bind(name, signal)` | Reactive placeholders | Yes |
+| `.cond(name, signal)` | Conditional rendering | Yes |
+| `.each(name, signal, f)` | Loop rendering | Yes |
+
+### Example
+
+See `examples/rich_text.rs` for a complete demo of all features.

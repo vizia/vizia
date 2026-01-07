@@ -1080,6 +1080,45 @@ impl<'a> EventContext<'a> {
         self.data.get_store().undo_manager().redo_history()
     }
 
+    // ========================================================================
+    // Time Travel Methods
+    // ========================================================================
+
+    /// Check if currently in time travel mode.
+    pub fn is_ttrvl(&self) -> bool {
+        self.data.get_store().is_ttrvl()
+    }
+
+    /// Get the current time travel position (None = at present).
+    pub fn ttrvl_position(&self) -> Option<usize> {
+        self.data.get_store().ttrvl_position()
+    }
+
+    /// Get the full history timeline for time travel.
+    pub fn ttrvl_history(&self) -> Vec<crate::recoil::HistoryEntry> {
+        self.data.get_store().ttrvl_history()
+    }
+
+    /// Navigate to a specific position in the timeline.
+    pub fn ttrvl_to(&mut self, index: usize) {
+        self.data.get_store_mut().ttrvl_to(index);
+    }
+
+    /// Step backward in time travel.
+    pub fn ttrvl_back(&mut self) {
+        self.data.get_store_mut().ttrvl_back();
+    }
+
+    /// Step forward in time travel.
+    pub fn ttrvl_forward(&mut self) {
+        self.data.get_store_mut().ttrvl_forward();
+    }
+
+    /// Exit time travel mode and return to present.
+    pub fn ttrvl_exit(&mut self) {
+        self.data.get_store_mut().ttrvl_exit();
+    }
+
     pub fn modify<V: View>(&mut self, f: impl FnOnce(&mut V)) {
         if let Some(view) = self
             .views

@@ -315,6 +315,34 @@ Slider::new(cx, value).two_way();
 
 Available on: `Slider`, `Knob`, `XYPad`, `Textbox`, `NumberInput`, `Checkbox`, `Switch`, `ToggleButton`, `Rating`
 
+### ✅ Rich Text Labels
+
+Unified rich text through `Label::new` with method chaining:
+
+```rust
+// Markdown (auto-parsed)
+Label::new(cx, "Press **Cmd+S** to *save*");
+
+// Links & styles (requires .build_rich())
+Label::new(cx, "Visit [docs]documentation[/docs]")
+    .link("docs", "https://docs.vizia.dev")
+    .build_rich();
+
+// Reactive bindings (requires .build_rich())
+Label::new(cx, "Counter: {count}")
+    .rich_bind("count", count_signal)
+    .build_rich();
+
+// Conditionals & loops
+Label::new(cx, "{#if warn}Warning!{/if}")
+    .cond("warn", show_warning)
+    .build_rich();
+```
+
+**Syntax**: `**bold**`, `*italic*`, `__underline__`, `~~strike~~`, `` `code` ``, `"escaped"`, `[tag]`, `{bind}`, `{#if}`, `{#each}`
+
+**Files**: `views/label.rs`
+
 ### Other Improvements
 
 | Feature | Description |
@@ -467,7 +495,8 @@ let settings = cx.state_persistent("app.settings", Settings::default());
 settings.upd(cx, |s| s.volume = 0.8);
 ```
 
-**Configuration:** Override `app_name()` to set both window title and persistence path:
+**Configuration:** Use `fn app_name()` in the `Impl App` to set both window title and persistence path:
+
 ```rust
 fn app_name() -> &'static str { "My App" }
 ```
@@ -487,25 +516,32 @@ fn app_name() -> &'static str { "My App" }
 
 ---
 
-## Future Work
+### ✅ Time Travel Debugging
 
-These remain as future possibilities:
-
-- **Time-travel debugging** - Record signal changes, step through history
-
-### Time-Travel Debugging
-
-Record signal state changes for stepping backwards/forwards:
+Navigate through signal history in debug builds:
 
 ```rust
-Application::new(|cx| { ... })
-    .enable_time_travel()
-    .run();
+// Add overlay to your app (debug builds only)
+#[cfg(debug_assertions)]
+{
+    TtrvlOverlay::new(cx);
+    cx.add_stylesheet(TTRVL_OVERLAY_STYLE).unwrap();
+}
 
-cx.time_travel_back();
-cx.time_travel_forward();
-cx.time_travel_to(index);
+// Programmatic API
+cx.ttrvl_to(index);    // Jump to specific point
+cx.ttrvl_back();       // Step backward
+cx.ttrvl_forward();    // Step forward
+cx.ttrvl_exit();       // Return to present
 ```
+
+**Keybinds** (debug builds only):
+- ``Cmd/Ctrl+` `` - Toggle time travel overlay
+- `Cmd/Ctrl+[` - Step backward
+- `Cmd/Ctrl+Shift+[` - Step forward
+- `Escape` - Exit time travel mode
+
+**Files**: `views/ttrvl_overlay.rs`, `events/event_manager.rs`, `recoil/mod.rs`
 
 ---
 
@@ -518,6 +554,8 @@ cx.time_travel_to(index);
 | `examples/timers.rs` | `cx.modify_timer()` for dynamic intervals |
 | `examples/window_modifiers.rs` | Reactive window title binding |
 | `examples/widget_gallery/` | All views with signal APIs |
+| `examples/rich_text.rs` | Rich text with markdown, links, bindings, conditionals, loops |
+| `examples/time_travel.rs` | Time travel debugging overlay |
 
 ---
 
@@ -531,5 +569,7 @@ The Signals migration is complete. All views, examples, and framework internals 
 4. ✅ Adds keyed API for list performance
 5. ✅ Implements async state management (originally "future work")
 6. ✅ Implements undo/redo (originally "future work")
+7. ✅ Implements time travel debugging (originally "future work")
+8. ✅ Adds unified rich text via `Label::new` with method chaining
 
 No Lens usage remains in the codebase.

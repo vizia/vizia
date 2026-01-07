@@ -165,7 +165,7 @@ impl AsRef<str> for FamilyOwned {
                 GenericFontFamily::SansSerif => "sans-serif",
                 GenericFontFamily::Cursive => todo!(),
                 GenericFontFamily::Fantasy => todo!(),
-                GenericFontFamily::Monospace => "Cascadia Mono",
+                GenericFontFamily::Monospace => "monospace",  // Generic CSS monospace
             },
             FamilyOwned::Named(family) => family.as_str(),
         }

@@ -106,3 +106,16 @@ pub(crate) use timer::TimerState;
 pub use timer::{Timer, TimerAction};
 
 pub use crate::window::WindowEvent;
+
+/// Events for time travel debugging.
+#[derive(Debug, Clone, PartialEq)]
+pub enum TtrvlEvent {
+    /// Toggle the time travel overlay visibility.
+    ToggleOverlay,
+    /// Navigate to a specific position in the timeline.
+    GoTo(usize),
+    /// Start auto-playback.
+    Play,
+    /// Stop auto-playback.
+    Pause,
+}

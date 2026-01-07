@@ -81,10 +81,6 @@ impl App for RadiobuttonApp {
         });
         self
     }
-
-    fn window_config(&self) -> WindowConfig {
-        window(|app| app)
-    }
 }
 
 fn index_to_option(index: usize) -> Options {

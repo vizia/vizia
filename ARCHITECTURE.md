@@ -222,6 +222,55 @@ Binding::new(cx, some_signal, |cx| {
 
 Views that accept signals internally create bindings for reactive updates.
 
+### Rich Text Labels
+
+Unified rich text API through `Label::new` with method chaining.
+
+**Markdown** - auto-parsed, no extra methods needed:
+```rust
+Label::new(cx, "Press **Cmd+S** to *save*");
+Label::new(cx, "Use `monospace` for code");
+```
+Syntax: `**bold**`, `*italic*`/`_italic_`, `__underline__`, `~~strikethrough~~`, `` `code` ``, `"escaped"`.
+
+**Links & styles** - use `[tag]...[/tag]` with `.link()` or `.rich_style()`, requires `.build_rich()`:
+```rust
+Label::new(cx, "Visit [docs]documentation[/docs]")
+    .link("docs", "https://docs.vizia.dev")
+    .build_rich();
+
+Label::new(cx, "This is [highlight]important[/highlight]")
+    .rich_style("highlight", |s| s.background_color(Color::yellow()))
+    .build_rich();
+```
+
+**Reactive bindings** - use `{name}` with `.rich_bind()`, requires `.build_rich()`:
+```rust
+Label::new(cx, "Counter: {count}")
+    .rich_bind("count", count_signal)
+    .build_rich();
+```
+
+**Conditionals & loops** - reactive structure:
+```rust
+Label::new(cx, "{#if warn}**Warning!**{/if} OK")
+    .cond("warn", show_warning)
+    .build_rich();
+
+Label::new(cx, "{#each items as i}{i}, {/each}")
+    .each("items", items_signal, |i| i.clone())
+    .build_rich();
+```
+
+| Method | Purpose | Requires `.build_rich()` |
+|--------|---------|--------------------------|
+| (markdown) | Bold, italic, etc. | No |
+| `.link()` | Clickable links | Yes |
+| `.rich_style()` | Custom tag styles | Yes |
+| `.rich_bind()` | Reactive placeholders | Yes |
+| `.cond()` | Conditional rendering | Yes |
+| `.each()` | Loop rendering | Yes |
+
 ### Entity
 
 Each view is assigned a generational `Entity` ID when created. This ID is used to:

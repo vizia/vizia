@@ -47,8 +47,7 @@ fn parse_node<'a>(
 ) {
     match &node.data.borrow().value {
         NodeValue::Paragraph => {
-            let empty = cx.state("");
-            Label::rich(cx, empty, |cx| {
+            Label::with_spans(cx, |cx| {
                 for child in node.children() {
                     parse_node(cx, child, list_level);
                 }
@@ -57,8 +56,7 @@ fn parse_node<'a>(
         }
 
         NodeValue::Heading(heading) => {
-            let empty = cx.state("");
-            Label::rich(cx, empty, |cx| {
+            Label::with_spans(cx, |cx| {
                 for child in node.children() {
                     parse_node(cx, child, list_level);
                 }
@@ -215,8 +213,7 @@ fn parse_node<'a>(
 
         NodeValue::TableCell => {
             let stretch_one = cx.state(Stretch(1.0));
-            let empty = cx.state("");
-            Label::rich(cx, empty, |cx| {
+            Label::with_spans(cx, |cx| {
                 for child in node.children() {
                     parse_node(cx, child, list_level);
                 }

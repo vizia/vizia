@@ -322,6 +322,127 @@ fn main() -> Result<(), ApplicationError> {
 | Undo/Redo | `cx.undo()` / `cx.redo()` |
 | Reactive state | `cx.can_undo_signal()` / `cx.can_redo_signal()` |
 | Persistent state | `let sig = cx.state_persistent("key", default)` |
+| Time travel | `cx.ttrvl_to(idx)` / `cx.ttrvl_back()` / `cx.ttrvl_forward()` |
+| Time travel UI | `` Cmd/Ctrl+` `` overlay, `Cmd/Ctrl+[` back, `+Shift` fwd (debug) |
+| Inline rich text | `Label::new(cx, "**bold** *italic*")` (auto-parsed) |
+| Clickable links | `Label::new(cx, "[docs]Docs[/docs]").link("docs", "https://...").build_rich()` |
+
+<br />
+
+## Time Travel Debugging
+
+Navigate through your application's signal history to debug state changes. Available in debug builds only.
+
+### Keybinds
+
+| Keybind | Action |
+|---------|--------|
+| `` Cmd/Ctrl+` `` | Toggle time travel overlay |
+| `Cmd/Ctrl+[` | Step backward in history |
+| `Cmd/Ctrl+Shift+[` | Step forward in history |
+| `Escape` | Exit time travel (return to present) |
+
+### Overlay
+
+The time travel overlay provides a visual timeline with:
+- Play/pause for auto-playback through history
+- Timeline scrubber to jump to any point
+- Position indicator showing current location
+- Description of each history entry
+
+To use the overlay, add it to your app (debug builds only):
+
+```rust
+#[cfg(debug_assertions)]
+{
+    TtrvlOverlay::new(cx);
+    cx.add_stylesheet(TTRVL_OVERLAY_STYLE).unwrap();
+}
+```
+
+### API
+
+```rust
+// Navigate history
+cx.ttrvl_to(index);    // Jump to specific point
+cx.ttrvl_back();       // Step backward
+cx.ttrvl_forward();    // Step forward
+cx.ttrvl_exit();       // Return to present
+
+// Query state
+cx.is_ttrvl();         // Check if in time travel mode
+cx.ttrvl_position();   // Current position (None if at present)
+```
+
+Run with [`cargo run --example time_travel`](examples/time_travel.rs)
+
+<br />
+
+## Rich Text Labels
+
+Unified rich text API through `Label::new` with method chaining.
+
+### Markdown (Auto-Parsed)
+
+Markdown syntax is automatically parsed:
+
+```rust
+Label::new(cx, "Press **Cmd+S** to *save*");
+Label::new(cx, "Use `monospace` for code");
+Label::new(cx, "This is __underlined__ and ~~strikethrough~~");
+```
+
+Syntax: `**bold**`, `*italic*`/`_italic_`, `__underline__`, `~~strikethrough~~`, `` `code` ``, `"escaped"`
+
+### Links & Custom Styles
+
+Use `[tag]...[/tag]` syntax with `.link()` or `.rich_style()`. Requires `.build_rich()`:
+
+```rust
+// Clickable links
+Label::new(cx, "Visit [docs]documentation[/docs]")
+    .link("docs", "https://docs.vizia.dev")
+    .build_rich();
+
+// Custom styles
+Label::new(cx, "This is [highlight]important[/highlight]")
+    .rich_style("highlight", |s| s.background_color(Color::yellow()))
+    .build_rich();
+```
+
+### Reactive Bindings
+
+Use `{name}` placeholders with `.rich_bind()`. Requires `.build_rich()`:
+
+```rust
+let count = cx.state(0i32);
+Label::new(cx, "Counter: {count}")
+    .rich_bind("count", count)
+    .build_rich();
+```
+
+### Conditionals & Loops
+
+```rust
+// Conditional: {#if name}...{/if}
+Label::new(cx, "{#if warn}**Warning!**{/if} OK")
+    .cond("warn", show_warning)
+    .build_rich();
+
+// Loop: {#each name as item}...{/each}
+Label::new(cx, "{#each items as i}{i}, {/each}")
+    .each("items", items_signal, |i| i.clone())
+    .build_rich();
+```
+
+| Method | Purpose | Requires `.build_rich()` |
+|--------|---------|--------------------------|
+| (markdown) | Bold, italic, etc. | No |
+| `.link(tag, url)` | Clickable links | Yes |
+| `.rich_style(tag, f)` | Custom tag styles | Yes |
+| `.rich_bind(name, signal)` | Reactive placeholders | Yes |
+| `.cond(name, signal)` | Conditional rendering | Yes |
+| `.each(name, signal, f)` | Loop rendering | Yes |
 
 <br />
 

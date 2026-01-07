@@ -249,7 +249,7 @@ impl Context {
     /// ```ignore
     /// let circles = cx.state_undoable(Vec::new());
     /// ```
-    pub fn state_undoable<T: 'static + Clone + Send>(&mut self, value: T) -> Signal<T> {
+    pub fn state_undoable<T: 'static + Clone + Send + std::fmt::Debug>(&mut self, value: T) -> Signal<T> {
         let signal = self.state(value);
         self.data.get_store_mut().undo_manager_mut().register_undoable::<T>(signal.id());
         signal

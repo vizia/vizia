@@ -38,6 +38,9 @@ mod tooltip;
 mod virtual_list;
 mod xypad;
 
+#[cfg(debug_assertions)]
+mod ttrvl_overlay;
+
 pub use crate::binding::Binding;
 pub use avatar::*;
 pub use badge::*;
@@ -77,6 +80,9 @@ pub use toggle_button::*;
 pub use tooltip::*;
 pub use virtual_list::*;
 pub use xypad::*;
+
+#[cfg(debug_assertions)]
+pub use ttrvl_overlay::*;
 
 use crate::prelude::*;
 

@@ -532,6 +532,38 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 EventContext::new(cx).reload_styles().unwrap();
             }
 
+            // Time travel debug keybinds (debug builds only)
+            #[cfg(debug_assertions)]
+            {
+                // Use Ctrl on Linux/Windows, Command on macOS
+                let ttrvl_mod = cx.modifiers.ctrl() || cx.modifiers.logo();
+
+                // Ctrl/Cmd+[ - step backward in time travel
+                if *code == Code::BracketLeft && ttrvl_mod && !cx.modifiers.shift() {
+                    cx.data.get_store_mut().ttrvl_back();
+                }
+
+                // Ctrl/Cmd+Shift+[ - step forward in time travel
+                if *code == Code::BracketLeft && ttrvl_mod && cx.modifiers.shift() {
+                    cx.data.get_store_mut().ttrvl_forward();
+                }
+
+                // Backtick (`) - toggle time travel overlay
+                if *code == Code::Backquote && ttrvl_mod {
+                    // Emit to root with Subtree propagation so overlay receives it
+                    cx.event_queue.push_back(
+                        Event::new(crate::events::TtrvlEvent::ToggleOverlay)
+                            .target(Entity::root())
+                            .propagate(Propagation::Subtree)
+                    );
+                }
+
+                // Escape - exit time travel (only if in time travel mode)
+                if *code == Code::Escape && cx.data.get_store().is_ttrvl() {
+                    cx.data.get_store_mut().ttrvl_exit();
+                }
+            }
+
             if *code == Code::Tab {
                 if cx.ime_state.is_composing() {
                     return;
