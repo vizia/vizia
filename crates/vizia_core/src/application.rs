@@ -98,18 +98,46 @@ impl Default for WindowConfig {
 /// }
 /// ```
 pub trait App: Sized + 'static {
-    /// Returns the application name used for persistence storage path.
+    /// Returns the application name used for window title and persistence storage.
     ///
-    /// Override this to set a custom app name. Defaults to "vizia_app".
-    /// This is called before `new()` to configure persistence.
+    /// The default implementation derives the name from the struct name:
+    /// - `MyAwesomeApp` → "My Awesome"
+    /// - `CounterApp` → "Counter"
+    /// - `CRUDApp` → "CRUD" (all-uppercase preserved)
+    /// - `TimeTravelDemo` → "Time Travel Demo"
     ///
+    /// Override this to set a custom app name:
     /// ```ignore
     /// fn app_name() -> &'static str {
-    ///     "my_awesome_app"
+    ///     "My Custom App"
     /// }
     /// ```
     fn app_name() -> &'static str {
-        "vizia_app"
+        // Get the type name (e.g., "my_crate::MyAwesomeApp")
+        let full_name = std::any::type_name::<Self>();
+
+        // Extract just the struct name (after last "::")
+        let struct_name = full_name.rsplit("::").next().unwrap_or(full_name);
+
+        // Remove "App" suffix if present
+        let name = struct_name.strip_suffix("App").unwrap_or(struct_name);
+
+        // If all uppercase (like "CRUD"), use as-is
+        if name.chars().all(|c| c.is_uppercase() || !c.is_alphabetic()) {
+            return Box::leak(name.to_string().into_boxed_str());
+        }
+
+        // Add spaces between camelCase words
+        let mut result = String::with_capacity(name.len() + 10);
+        for (i, ch) in name.chars().enumerate() {
+            if i > 0 && ch.is_uppercase() {
+                result.push(' ');
+            }
+            result.push(ch);
+        }
+
+        // Leak the string to get a &'static str (one-time allocation per app)
+        Box::leak(result.into_boxed_str())
     }
 
     /// Initialize application-level state.

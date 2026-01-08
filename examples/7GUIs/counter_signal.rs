@@ -10,10 +10,6 @@ struct CounterApp {
 }
 
 impl App for CounterApp {
-    fn app_name() -> &'static str {
-        "Counter"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self { count: cx.state(0) }
     }

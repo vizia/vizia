@@ -11,10 +11,6 @@ const STYLE: &str = r#"
 struct GridApp;
 
 impl App for GridApp {
-    fn app_name() -> &'static str {
-        "Grid"
-    }
-
     fn new(_cx: &mut Context) -> Self {
         Self
     }

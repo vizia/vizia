@@ -27,10 +27,6 @@ struct TimerApp {
 }
 
 impl App for TimerApp {
-    fn app_name() -> &'static str {
-        "Timer"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             total_time: cx.state(0.0f32),

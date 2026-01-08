@@ -29,10 +29,6 @@ struct SpinboxApp {
 }
 
 impl App for SpinboxApp {
-    fn app_name() -> &'static str {
-        "Spinbox"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             value1: cx.state(99i64),

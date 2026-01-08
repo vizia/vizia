@@ -119,7 +119,7 @@ struct Counter {
 }
 
 impl App for Counter {
-    fn app_name() -> &'static str { "Counter" }
+    // app_name() auto-derives from struct: "Counter"
 
     fn new(cx: &mut Context) -> Self {
         Self { count: cx.state(0) }
@@ -304,6 +304,8 @@ fn main() -> Result<(), ApplicationError> {
 
 | Operation | Code |
 |-----------|------|
+| App name (auto) | `MyAppName` → "My App Name", `CRUDApp` → "CRUD" |
+| App name (custom) | `fn app_name() -> &'static str { "Custom" }` |
 | Create state | `let sig = cx.state(initial_value)` |
 | Read value | `sig.get(store)` (in derived) |
 | Safe read | `sig.try_get(store)` (returns `Option`) |

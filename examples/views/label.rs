@@ -7,10 +7,6 @@ struct LabelApp {
 }
 
 impl App for LabelApp {
-    fn app_name() -> &'static str {
-        "Label"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             checked: cx.state(false),

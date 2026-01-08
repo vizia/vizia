@@ -18,10 +18,6 @@ struct PersistentCounterApp {
 }
 
 impl App for PersistentCounterApp {
-    fn app_name() -> &'static str {
-        "Persistent Counter"
-    }
-
     fn new(cx: &mut Context) -> Self {
         // This counter persists across app restarts!
         // The value is saved to disk (debounced 500ms) and loaded on startup.

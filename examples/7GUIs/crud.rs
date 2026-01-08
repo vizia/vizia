@@ -42,14 +42,14 @@ const STYLE: &str = r#"
     }
 "#;
 
-enum CrudEvent {
+enum CRUDEvent {
     SetSelected(usize),
     Create,
     Update,
     Delete,
 }
 
-struct CrudApp {
+struct CRUDApp {
     filter_prefix: Signal<String>,
     list: Signal<Vec<(String, String)>>,
     selected: Signal<Option<usize>>,
@@ -57,11 +57,7 @@ struct CrudApp {
     surname: Signal<String>,
 }
 
-impl App for CrudApp {
-    fn app_name() -> &'static str {
-        "CRUD"
-    }
-
+impl App for CRUDApp {
     fn new(cx: &mut Context) -> Self {
         Self {
             filter_prefix: cx.state(String::new()),
@@ -105,7 +101,7 @@ impl App for CrudApp {
                                             selected.drv(cx, move |v, _| *v == Some(index));
                                         Label::new(cx, display_signal)
                                             .on_press(move |cx| {
-                                                cx.emit(CrudEvent::SetSelected(index));
+                                                cx.emit(CRUDEvent::SetSelected(index));
                                             })
                                             .navigable(true)
                                             .checked(is_selected);
@@ -140,11 +136,11 @@ impl App for CrudApp {
 
             HStack::new(cx, move |cx| {
                 Button::new(cx, |cx| Label::new(cx, "Create"))
-                    .on_press(move |cx| cx.emit(CrudEvent::Create));
+                    .on_press(move |cx| cx.emit(CRUDEvent::Create));
                 Button::new(cx, |cx| Label::new(cx, "Update"))
-                    .on_press(move |cx| cx.emit(CrudEvent::Update));
+                    .on_press(move |cx| cx.emit(CRUDEvent::Update));
                 Button::new(cx, |cx| Label::new(cx, "Delete"))
-                    .on_press(move |cx| cx.emit(CrudEvent::Delete));
+                    .on_press(move |cx| cx.emit(CRUDEvent::Delete));
             })
             .horizontal_gap(Pixels(10.0));
         })
@@ -155,7 +151,7 @@ impl App for CrudApp {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|crud_event, _| match crud_event {
-            CrudEvent::SetSelected(index) => {
+            CRUDEvent::SetSelected(index) => {
                 self.selected.set(cx, Some(*index));
                 let items = self.list.get(cx);
                 let name_surname = if *index < items.len() {
@@ -169,7 +165,7 @@ impl App for CrudApp {
                 }
             }
 
-            CrudEvent::Create => {
+            CRUDEvent::Create => {
                 let name_val = self.name.get(cx).clone();
                 let surname_val = self.surname.get(cx).clone();
                 if !name_val.is_empty() && !surname_val.is_empty() {
@@ -181,7 +177,7 @@ impl App for CrudApp {
                 }
             }
 
-            CrudEvent::Update => {
+            CRUDEvent::Update => {
                 if let Some(sel) = *self.selected.get(cx) {
                     let name_val = self.name.get(cx).clone();
                     let surname_val = self.surname.get(cx).clone();
@@ -194,7 +190,7 @@ impl App for CrudApp {
                 }
             }
 
-            CrudEvent::Delete => {
+            CRUDEvent::Delete => {
                 if let Some(sel) = *self.selected.get(cx) {
                     self.list.upd(cx, |items| {
                         if sel < items.len() {
@@ -209,7 +205,7 @@ impl App for CrudApp {
                         self.surname.set(cx, String::new());
                     } else {
                         let new_sel = sel.saturating_sub(1).min(list_len - 1);
-                        cx.emit(CrudEvent::SetSelected(new_sel));
+                        cx.emit(CRUDEvent::SetSelected(new_sel));
                     }
                 }
             }
@@ -222,5 +218,5 @@ impl App for CrudApp {
 }
 
 fn main() -> Result<(), ApplicationError> {
-    CrudApp::run()
+    CRUDApp::run()
 }

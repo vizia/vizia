@@ -8,10 +8,6 @@ struct ComboboxApp {
 }
 
 impl App for ComboboxApp {
-    fn app_name() -> &'static str {
-        "Combobox"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             options: cx.state(vec![

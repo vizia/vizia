@@ -14,10 +14,6 @@ struct TemperatureConverterApp {
 }
 
 impl App for TemperatureConverterApp {
-    fn app_name() -> &'static str {
-        "Temperature Converter"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             celsius: cx.state(5.0f32),

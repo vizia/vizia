@@ -9,10 +9,6 @@ struct VirtualListApp {
 }
 
 impl App for VirtualListApp {
-    fn app_name() -> &'static str {
-        "Virtual List"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             list: cx.state((1..100u32).collect::<Vec<_>>()),

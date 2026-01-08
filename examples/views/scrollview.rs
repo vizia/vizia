@@ -8,10 +8,6 @@ struct ScrollviewApp {
 }
 
 impl App for ScrollviewApp {
-    fn app_name() -> &'static str {
-        "Scrollview"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             scroll_x: cx.state(0.0),

@@ -19,10 +19,6 @@ struct RichTextApp {
 }
 
 impl App for RichTextApp {
-    fn app_name() -> &'static str {
-        "Rich Text"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             count: cx.state(0),

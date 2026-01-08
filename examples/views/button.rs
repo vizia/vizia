@@ -8,10 +8,6 @@ use vizia::prelude::*;
 struct ButtonApp;
 
 impl App for ButtonApp {
-    fn app_name() -> &'static str {
-        "Button"
-    }
-
     fn new(_cx: &mut Context) -> Self {
         Self
     }

@@ -160,10 +160,6 @@ const STYLE: &str = r#"
 struct CursorIconApp;
 
 impl App for CursorIconApp {
-    fn app_name() -> &'static str {
-        "Cursor Icon"
-    }
-
     fn new(_cx: &mut Context) -> Self {
         Self
     }

@@ -9,10 +9,6 @@ struct PicklistApp {
 }
 
 impl App for PicklistApp {
-    fn app_name() -> &'static str {
-        "Picklist"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             options: cx.state(vec![

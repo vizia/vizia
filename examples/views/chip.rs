@@ -8,10 +8,6 @@ struct ChipApp {
 }
 
 impl App for ChipApp {
-    fn app_name() -> &'static str {
-        "Chip"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             chips: cx.state(vec!["red".to_string(), "green".to_string(), "blue".to_string()]),

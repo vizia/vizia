@@ -1,1 +1,3 @@
-make sure within docs or book that user knows the diff between direct events and enumed events structure, by comparing counter (direct) and counter_signal (enumed) examples 
+make sure within docs or book that user knows the diff between direct events and enumed events structure, by comparing counter (direct) and counter_signal (enumed) examples
+
+ANOW method: app_name, new, on_build, window_config -- easy acronym to remember standard app trait pattern

@@ -3,10 +3,6 @@ use vizia::prelude::*;
 struct MarkdownApp;
 
 impl App for MarkdownApp {
-    fn app_name() -> &'static str {
-        "Markdown"
-    }
-
     fn new(_cx: &mut Context) -> Self {
         Self
     }

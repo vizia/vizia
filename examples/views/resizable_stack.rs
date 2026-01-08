@@ -34,10 +34,6 @@ struct ResizableStackApp {
 }
 
 impl App for ResizableStackApp {
-    fn app_name() -> &'static str {
-        "Resizable Stack"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             width: cx.state(Pixels(200.0)),

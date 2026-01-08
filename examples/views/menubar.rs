@@ -7,10 +7,6 @@ use vizia_core::icons::{ICON_CLIPBOARD, ICON_COPY, ICON_CUT};
 struct MenuBarApp;
 
 impl App for MenuBarApp {
-    fn app_name() -> &'static str {
-        "Menu Bar"
-    }
-
     fn new(_cx: &mut Context) -> Self {
         Self
     }

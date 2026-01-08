@@ -7,10 +7,6 @@ struct KnobApp {
 }
 
 impl App for KnobApp {
-    fn app_name() -> &'static str {
-        "Knob"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             value: cx.state(0.2f32),

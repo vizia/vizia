@@ -5,10 +5,6 @@ use vizia::prelude::*;
 struct DividerApp;
 
 impl App for DividerApp {
-    fn app_name() -> &'static str {
-        "Divider"
-    }
-
     fn new(_cx: &mut Context) -> Self {
         Self
     }

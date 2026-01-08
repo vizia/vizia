@@ -157,10 +157,6 @@ impl CircleDrawerApp {
 
 #[cfg(not(feature = "baseview"))]
 impl App for CircleDrawerApp {
-    fn app_name() -> &'static str {
-        "Circle Drawer"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             // Create circles with undo support

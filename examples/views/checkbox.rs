@@ -9,10 +9,6 @@ struct CheckboxApp {
 }
 
 impl App for CheckboxApp {
-    fn app_name() -> &'static str {
-        "Checkbox"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             option1: cx.state(true),

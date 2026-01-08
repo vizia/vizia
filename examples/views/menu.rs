@@ -6,10 +6,6 @@ use vizia::prelude::*;
 struct MenuApp;
 
 impl App for MenuApp {
-    fn app_name() -> &'static str {
-        "Menu"
-    }
-
     fn new(_cx: &mut Context) -> Self {
         Self
     }

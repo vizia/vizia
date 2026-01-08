@@ -24,10 +24,6 @@ struct FlightBookerApp {
 }
 
 impl App for FlightBookerApp {
-    fn app_name() -> &'static str {
-        "Flight Booker"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             options: cx.state(vec!["one-way flight", "return flight"]),

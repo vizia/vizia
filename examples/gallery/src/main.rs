@@ -31,10 +31,6 @@ struct GalleryApp {
 }
 
 impl App for GalleryApp {
-    fn app_name() -> &'static str {
-        "Gallery"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             images: cx.state(Vec::<[Id; 3]>::default()),

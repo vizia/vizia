@@ -71,11 +71,17 @@ Binding::new(cx, condition, |cx| {
 ### App Trait Pattern
 
 ```rust
-struct MyApp {
+struct MyAwesomeApp {
     count: Signal<i32>,
 }
 
-impl App for MyApp {
+impl App for MyAwesomeApp {
+    // app_name() auto-derives from struct name:
+    // MyAwesomeApp → "My Awesome"
+    // CounterApp → "Counter"
+    // CRUDApp → "CRUD" (all-uppercase preserved)
+    // Override only if you need a custom name.
+
     fn new(cx: &mut Context) -> Self {
         Self { count: cx.state(0) }
     }

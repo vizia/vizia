@@ -37,10 +37,6 @@ struct CustomViewApp {
 }
 
 impl App for CustomViewApp {
-    fn app_name() -> &'static str {
-        "Custom View"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             color: cx.state(Color::red()),

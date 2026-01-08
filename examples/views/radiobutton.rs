@@ -25,10 +25,6 @@ struct RadiobuttonApp {
 }
 
 impl App for RadiobuttonApp {
-    fn app_name() -> &'static str {
-        "Radiobutton"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             selected: cx.state(Options::First),

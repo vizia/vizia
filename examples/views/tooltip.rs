@@ -13,10 +13,6 @@ const STYLE: &str = r#"
 struct TooltipApp;
 
 impl App for TooltipApp {
-    fn app_name() -> &'static str {
-        "Tooltip"
-    }
-
     fn new(_cx: &mut Context) -> Self {
         Self
     }

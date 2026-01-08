@@ -13,10 +13,6 @@ struct LocalizationApp {
 }
 
 impl App for LocalizationApp {
-    fn app_name() -> &'static str {
-        "Localization"
-    }
-
     fn new(cx: &mut Context) -> Self {
         cx.add_translation(
             "en-US".parse().unwrap(),

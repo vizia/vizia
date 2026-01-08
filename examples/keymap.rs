@@ -32,10 +32,6 @@ enum Action {
 struct KeymapApp;
 
 impl App for KeymapApp {
-    fn app_name() -> &'static str {
-        "Keymap"
-    }
-
     fn new(_cx: &mut Context) -> Self {
         Self
     }

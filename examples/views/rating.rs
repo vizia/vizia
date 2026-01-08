@@ -8,10 +8,6 @@ struct RatingApp {
 }
 
 impl App for RatingApp {
-    fn app_name() -> &'static str {
-        "Rating"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             rating1: cx.state(3u32),

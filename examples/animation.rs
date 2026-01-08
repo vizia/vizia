@@ -21,10 +21,6 @@ struct AnimationApp {
 }
 
 impl App for AnimationApp {
-    fn app_name() -> &'static str {
-        "Animation"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             red: cx.state(Color::red()),

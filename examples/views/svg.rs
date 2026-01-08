@@ -5,10 +5,6 @@ use vizia::prelude::*;
 struct SvgApp;
 
 impl App for SvgApp {
-    fn app_name() -> &'static str {
-        "Svg"
-    }
-
     fn new(_cx: &mut Context) -> Self {
         Self
     }

@@ -7,10 +7,6 @@ struct CollapsibleApp {
 }
 
 impl App for CollapsibleApp {
-    fn app_name() -> &'static str {
-        "Collapsible"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             collapsed: cx.state(false),

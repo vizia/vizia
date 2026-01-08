@@ -10,10 +10,6 @@ struct ListApp {
 }
 
 impl App for ListApp {
-    fn app_name() -> &'static str {
-        "List"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             list: cx.state((0..15u32).collect::<Vec<_>>()),

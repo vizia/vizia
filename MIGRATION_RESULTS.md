@@ -158,7 +158,7 @@ struct Counter {
 }
 
 impl App for Counter {
-    fn app_name() -> &'static str { "Counter" }
+    // app_name() auto-derives: "Counter"
 
     fn new(cx: &mut Context) -> Self {
         Self { count: cx.state(0) }
@@ -495,10 +495,10 @@ let settings = cx.state_persistent("app.settings", Settings::default());
 settings.upd(cx, |s| s.volume = 0.8);
 ```
 
-**Configuration:** Use `fn app_name()` in the `Impl App` to set both window title and persistence path:
+**Configuration:** `app_name()` is auto-derived from the struct name (e.g., `MyApp` → "My", `CRUDApp` → "CRUD"). Override only for custom names:
 
 ```rust
-fn app_name() -> &'static str { "My App" }
+fn app_name() -> &'static str { "Custom Name" }
 ```
 
 **Features:**

@@ -8,10 +8,6 @@ struct SwitchApp {
 }
 
 impl App for SwitchApp {
-    fn app_name() -> &'static str {
-        "Switch"
-    }
-
     fn new(cx: &mut Context) -> Self {
         Self {
             option1: cx.state(true),
