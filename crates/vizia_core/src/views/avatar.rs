@@ -60,18 +60,12 @@ impl Handle<'_, Avatar> {
     /// .variant(cx.state(AvatarVariant::Rounded));
     /// ```
     pub fn variant(mut self, variant: Signal<AvatarVariant>) -> Self {
-        let is_circle = self.context().derived({
-            let variant = variant;
-            move |store| *variant.get(store) == AvatarVariant::Circle
-        });
-        let is_square = self.context().derived({
-            let variant = variant;
-            move |store| *variant.get(store) == AvatarVariant::Square
-        });
-        let is_rounded = self.context().derived({
-            let variant = variant;
-            move |store| *variant.get(store) == AvatarVariant::Rounded
-        });
+        let is_circle =
+            self.context().derived(move |store| *variant.get(store) == AvatarVariant::Circle);
+        let is_square =
+            self.context().derived(move |store| *variant.get(store) == AvatarVariant::Square);
+        let is_rounded =
+            self.context().derived(move |store| *variant.get(store) == AvatarVariant::Rounded);
 
         self.toggle_class("circle", is_circle)
             .toggle_class("square", is_square)

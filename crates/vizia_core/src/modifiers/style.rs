@@ -134,11 +134,8 @@ pub trait StyleModifiers: internal::Modifiable {
         let cx = self.context();
         let focus = cx.with_current(entity, |cx| focus.into_signal(cx));
         let visibility = cx.with_current(entity, |cx| visibility.into_signal(cx));
-        let combined = cx.derived({
-            let focus = focus;
-            let visibility = visibility;
-            move |store| (*focus.get(store), *visibility.get(store))
-        });
+        let combined =
+            cx.derived(move |store| (*focus.get(store), *visibility.get(store)));
 
         internal::bind_res(cx, current, entity, combined, move |cx, (focus, visibility)| {
             if *focus {

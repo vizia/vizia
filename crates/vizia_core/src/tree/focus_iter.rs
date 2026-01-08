@@ -90,5 +90,5 @@ pub(crate) fn focus_backward(
         },
     );
     iter.next_back();
-    iter.filter(|node| is_navigatable(tree, style, *node, lock_focus_to)).next_back()
+    iter.rfind(|node| is_navigatable(tree, style, *node, lock_focus_to))
 }

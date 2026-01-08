@@ -577,10 +577,9 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                         prev_focused
                     } else {
                         TreeIterator::full(&cx.tree)
-                            .filter(|node| {
+                            .rfind(|node| {
                                 is_navigatable(&cx.tree, &cx.style, *node, lock_focus_to)
                             })
-                            .next_back()
                             .unwrap_or(Entity::root())
                     };
 

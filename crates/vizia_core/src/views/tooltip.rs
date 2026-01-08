@@ -69,7 +69,7 @@ impl Tooltip {
             .build(cx, move |cx| {
                 Binding::new(cx, show_arrow, move |cx| {
                     if *show_arrow.get(cx) {
-                        Arrow::new(cx, shift.clone(), arrow_size.clone());
+                        Arrow::new(cx, shift, arrow_size);
                     }
                 });
                 (content)(cx);

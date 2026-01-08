@@ -1167,13 +1167,13 @@ pub struct Signal<T: 'static> {
     ty: PhantomData<T>,
 }
 
+impl<T: 'static> Copy for Signal<T> {}
+
 impl<T: 'static> Clone for Signal<T> {
     fn clone(&self) -> Self {
-        Self { id: self.id, ty: PhantomData }
+        *self
     }
 }
-
-impl<T: 'static> Copy for Signal<T> {}
 
 impl<T: 'static> Signal<T> {
     fn new(store: &mut Store, entity: Entity, default: T) -> Self {
@@ -1304,6 +1304,12 @@ impl<T: 'static> Signal<T> {
 // Root container
 pub struct RecoilRoot {
     store: Store,
+}
+
+impl Default for RecoilRoot {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl RecoilRoot {

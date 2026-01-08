@@ -178,18 +178,12 @@ pub trait ButtonModifiers {
 impl ButtonModifiers for Handle<'_, Button> {
     fn variant(mut self, variant: impl Res<ButtonVariant> + 'static) -> Self {
         let variant = variant.into_signal(self.context());
-        let is_accent = self.context().derived({
-            let variant = variant;
-            move |store| *variant.get(store) == ButtonVariant::Accent
-        });
-        let is_outline = self.context().derived({
-            let variant = variant;
-            move |store| *variant.get(store) == ButtonVariant::Outline
-        });
-        let is_text = self.context().derived({
-            let variant = variant;
-            move |store| *variant.get(store) == ButtonVariant::Text
-        });
+        let is_accent =
+            self.context().derived(move |store| *variant.get(store) == ButtonVariant::Accent);
+        let is_outline =
+            self.context().derived(move |store| *variant.get(store) == ButtonVariant::Outline);
+        let is_text =
+            self.context().derived(move |store| *variant.get(store) == ButtonVariant::Text);
 
         self.toggle_class("accent", is_accent)
             .toggle_class("outline", is_outline)
@@ -245,18 +239,12 @@ impl Handle<'_, ButtonGroup> {
 impl ButtonModifiers for Handle<'_, ButtonGroup> {
     fn variant(mut self, variant: impl Res<ButtonVariant> + 'static) -> Self {
         let variant = variant.into_signal(self.context());
-        let is_accent = self.context().derived({
-            let variant = variant;
-            move |store| *variant.get(store) == ButtonVariant::Accent
-        });
-        let is_outline = self.context().derived({
-            let variant = variant;
-            move |store| *variant.get(store) == ButtonVariant::Outline
-        });
-        let is_text = self.context().derived({
-            let variant = variant;
-            move |store| *variant.get(store) == ButtonVariant::Text
-        });
+        let is_accent =
+            self.context().derived(move |store| *variant.get(store) == ButtonVariant::Accent);
+        let is_outline =
+            self.context().derived(move |store| *variant.get(store) == ButtonVariant::Outline);
+        let is_text =
+            self.context().derived(move |store| *variant.get(store) == ButtonVariant::Text);
 
         self.toggle_class("accent", is_accent)
             .toggle_class("outline", is_outline)

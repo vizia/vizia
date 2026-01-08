@@ -360,8 +360,8 @@ pub struct Window {
 }
 
 impl Window {
-    fn window(&self) -> &winit::window::Window {
-        self.window.as_ref().unwrap()
+    fn window(&self) -> Option<&winit::window::Window> {
+        self.window.as_ref().map(|w| w.as_ref())
     }
 
     pub fn new(cx: &mut Context, content: impl 'static + Fn(&mut Context)) -> Handle<Self> {
@@ -440,76 +440,101 @@ impl View for Window {
             }
 
             WindowEvent::GrabCursor(flag) => {
-                let grab_mode = if *flag { CursorGrabMode::Locked } else { CursorGrabMode::None };
-                self.window().set_cursor_grab(grab_mode).expect("Failed to set cursor grab");
+                if let Some(window) = self.window() {
+                    let grab_mode = if *flag { CursorGrabMode::Locked } else { CursorGrabMode::None };
+                    window.set_cursor_grab(grab_mode).expect("Failed to set cursor grab");
+                }
             }
 
             WindowEvent::SetCursorPosition(x, y) => {
-                self.window()
-                    .set_cursor_position(winit::dpi::Position::Physical(PhysicalPosition::new(
-                        *x as i32, *y as i32,
-                    )))
-                    .expect("Failed to set cursor position");
+                if let Some(window) = self.window() {
+                    window
+                        .set_cursor_position(winit::dpi::Position::Physical(PhysicalPosition::new(
+                            *x as i32, *y as i32,
+                        )))
+                        .expect("Failed to set cursor position");
+                }
             }
 
             WindowEvent::SetCursor(cursor) => {
-                let Some(icon) = cursor_icon_to_cursor_icon(*cursor) else {
-                    self.window().set_cursor_visible(false);
-                    return;
-                };
+                if let Some(window) = self.window() {
+                    let Some(icon) = cursor_icon_to_cursor_icon(*cursor) else {
+                        window.set_cursor_visible(false);
+                        return;
+                    };
 
-                if let Some(custom_icon) = self.custom_cursors.get(&icon) {
-                    self.window().set_cursor(custom_icon.clone());
-                } else {
-                    self.window().set_cursor(icon);
+                    if let Some(custom_icon) = self.custom_cursors.get(&icon) {
+                        window.set_cursor(custom_icon.clone());
+                    } else {
+                        window.set_cursor(icon);
+                    }
+
+                    window.set_cursor_visible(true);
                 }
-
-                self.window().set_cursor_visible(true);
             }
 
             WindowEvent::SetTitle(title) => {
-                self.window().set_title(&apply_title_affixes(title));
+                if let Some(window) = self.window() {
+                    window.set_title(&apply_title_affixes(title));
+                }
             }
 
             WindowEvent::SetSize(size) => {
-                let _ = self.window().request_inner_size(LogicalSize::new(size.width, size.height));
+                if let Some(window) = self.window() {
+                    let _ = window.request_inner_size(LogicalSize::new(size.width, size.height));
+                }
             }
 
             WindowEvent::SetMinSize(size) => {
-                self.window()
-                    .set_min_inner_size(size.map(|size| LogicalSize::new(size.width, size.height)));
+                if let Some(window) = self.window() {
+                    window
+                        .set_min_inner_size(size.map(|size| LogicalSize::new(size.width, size.height)));
+                }
             }
 
             WindowEvent::SetMaxSize(size) => {
-                self.window()
-                    .set_max_inner_size(size.map(|size| LogicalSize::new(size.width, size.height)));
+                if let Some(window) = self.window() {
+                    window
+                        .set_max_inner_size(size.map(|size| LogicalSize::new(size.width, size.height)));
+                }
             }
 
             WindowEvent::SetPosition(pos) => {
-                self.window().set_outer_position(LogicalPosition::new(pos.x, pos.y));
+                if let Some(window) = self.window() {
+                    window.set_outer_position(LogicalPosition::new(pos.x, pos.y));
+                }
                 meta.consume();
             }
 
             WindowEvent::SetResizable(flag) => {
-                self.window().set_resizable(*flag);
+                if let Some(window) = self.window() {
+                    window.set_resizable(*flag);
+                }
             }
 
             WindowEvent::SetMinimized(flag) => {
-                self.window().set_minimized(*flag);
+                if let Some(window) = self.window() {
+                    window.set_minimized(*flag);
+                }
             }
 
             WindowEvent::SetMaximized(flag) => {
-                self.window().set_maximized(*flag);
+                if let Some(window) = self.window() {
+                    window.set_maximized(*flag);
+                }
             }
 
             WindowEvent::SetVisible(flag) => {
-                self.window().set_visible(*flag);
-
+                if let Some(window) = self.window() {
+                    window.set_visible(*flag);
+                }
                 meta.consume();
             }
 
             WindowEvent::SetDecorations(flag) => {
-                self.window().set_decorations(*flag);
+                if let Some(window) = self.window() {
+                    window.set_decorations(*flag);
+                }
             }
 
             WindowEvent::ReloadStyles => {
@@ -537,34 +562,44 @@ impl View for Window {
             }
 
             WindowEvent::Redraw => {
-                self.window().request_redraw();
+                if let Some(window) = self.window() {
+                    window.request_redraw();
+                }
             }
 
             #[allow(unused_variables)]
             WindowEvent::SetEnabled(flag) => {
-                #[cfg(target_os = "windows")]
-                self.window().set_enable(*flag);
+                if let Some(window) = self.window() {
+                    #[cfg(target_os = "windows")]
+                    window.set_enable(*flag);
 
-                self.window().focus_window();
+                    window.focus_window();
+                }
             }
 
             WindowEvent::DragWindow => {
-                self.window().drag_window().expect("Failed to init drag window");
+                if let Some(window) = self.window() {
+                    window.drag_window().expect("Failed to init drag window");
+                }
                 meta.consume();
             }
 
             WindowEvent::SetAlwaysOnTop(flag) => {
-                self.window().set_window_level(if *flag {
-                    WindowLevel::AlwaysOnTop
-                } else {
-                    WindowLevel::Normal
-                });
+                if let Some(window) = self.window() {
+                    window.set_window_level(if *flag {
+                        WindowLevel::AlwaysOnTop
+                    } else {
+                        WindowLevel::Normal
+                    });
+                }
             }
 
             WindowEvent::SetImeCursorArea(position, size) => {
-                let position = PhysicalPosition::new(position.0 as i32, position.1 as i32);
-                let size = PhysicalSize::new(size.0, size.1);
-                self.window().set_ime_cursor_area(position, size);
+                if let Some(window) = self.window() {
+                    let position = PhysicalPosition::new(position.0 as i32, position.1 as i32);
+                    let size = PhysicalSize::new(size.0, size.1);
+                    window.set_ime_cursor_area(position, size);
+                }
             }
 
             _ => {}
