@@ -50,7 +50,7 @@ impl App for AsyncApp {
 
     fn new(cx: &mut Context) -> Self {
         Self {
-            users: cx.async_state(),
+            users: cx.state_async(),
             cancel_handle: None,
         }
     }

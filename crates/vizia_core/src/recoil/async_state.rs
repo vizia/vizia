@@ -11,7 +11,7 @@
 //!
 //! ```ignore
 //! // Basic usage
-//! let users: Signal<Async<Vec<User>, String>> = cx.async_state();
+//! let users: Signal<Async<Vec<User>, String>> = cx.state_async();
 //! cx.load_async(users, || fetch_users());
 //!
 //! // With cancellation

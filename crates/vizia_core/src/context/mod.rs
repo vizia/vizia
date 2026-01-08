@@ -376,12 +376,12 @@ impl Context {
     /// impl App for MyApp {
     ///     fn new(cx: &mut Context) -> Self {
     ///         Self {
-    ///             users: cx.async_state(),
+    ///             users: cx.state_async(),
     ///         }
     ///     }
     /// }
     /// ```
-    pub fn async_state<T: 'static + Clone, E: 'static + Clone>(
+    pub fn state_async<T: 'static + Clone, E: 'static + Clone>(
         &mut self,
     ) -> Signal<crate::recoil::Async<T, E>> {
         self.state(crate::recoil::Async::Idle)
