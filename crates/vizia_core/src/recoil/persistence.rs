@@ -152,7 +152,7 @@ impl PersistenceManager {
 
     /// Configures persistence with the given app name.
     ///
-    /// This must be called before using `persists()`.
+    /// This must be called before using `state_persists()`.
     /// The app name is used to create an isolated storage directory.
     ///
     /// # Example

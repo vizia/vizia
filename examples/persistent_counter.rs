@@ -1,6 +1,6 @@
 //! Persistent Counter Example
 //!
-//! Demonstrates `cx.persists()` - the counter value survives app restarts.
+//! Demonstrates `cx.state_persists()` - the counter value survives app restarts.
 //! Data is saved to the platform's app data directory (e.g., ~/Library/Application Support/Persistent_Counter/signals/).
 //!
 //! Run with: cargo run --example persistent_counter
@@ -21,7 +21,7 @@ impl App for PersistentCounterApp {
     fn new(cx: &mut Context) -> Self {
         // This counter persists across app restarts!
         // The value is saved to disk (debounced 500ms) and loaded on startup.
-        Self { count: cx.persists("counter", 0) }
+        Self { count: cx.state_persists("counter", 0) }
     }
 
     fn on_build(self, cx: &mut Context) -> Self {

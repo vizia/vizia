@@ -323,7 +323,7 @@ fn main() -> Result<(), ApplicationError> {
 | Undo group | `cx.with_undo("desc", \|cx\| { sig.upd(cx, ...) })` |
 | Undo/Redo | `cx.undo()` / `cx.redo()` |
 | Reactive state | `cx.can_undo_signal()` / `cx.can_redo_signal()` |
-| Persistent state | `let sig = cx.persists("key", default)` |
+| Persistent state | `let sig = cx.state_persists("key", default)` |
 | Time travel | `cx.ttrvl_to(idx)` / `cx.ttrvl_back()` / `cx.ttrvl_forward()` |
 | Time travel UI | `` Cmd/Ctrl+` `` overlay, `Cmd/Ctrl+[` back, `+Shift` fwd (debug) |
 | Inline rich text | `Label::new(cx, "**bold** *italic*")` (auto-parsed) |

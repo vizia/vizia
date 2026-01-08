@@ -301,7 +301,7 @@ impl Context {
     /// The signal will use the default value on error, but you can check for
     /// issues after creation:
     /// ```ignore
-    /// let settings = cx.persists("settings", Settings::default());
+    /// let settings = cx.state_persists("settings", Settings::default());
     /// if !cx.persistence_errors().is_empty() {
     ///     // Handle load errors (corrupted file, version mismatch, etc.)
     /// }
@@ -319,13 +319,13 @@ impl Context {
     /// cx.configure_persistence("my_app");
     ///
     /// // Then create persistent signals
-    /// let settings = cx.persists("settings", Settings::default());
+    /// let settings = cx.state_persists("settings", Settings::default());
     /// ```
     ///
     /// # Security
     /// - Files are created with restrictive permissions (0600 on Unix)
     /// - Data is stored with version info for future migration support
-    pub fn persists<T>(&mut self, key: impl Into<String>, default: T) -> Signal<T>
+    pub fn state_persists<T>(&mut self, key: impl Into<String>, default: T) -> Signal<T>
     where
         T: serde::Serialize + serde::de::DeserializeOwned + Clone + 'static,
     {
