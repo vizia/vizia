@@ -103,7 +103,7 @@ struct VersionedData<T> {
 /// Before using persistent signals, configure the app name:
 /// ```ignore
 /// cx.configure_persistence("my_app_name");
-/// let settings = cx.state_persistent("settings", Settings::default());
+/// let settings = cx.persists("settings", Settings::default());
 /// ```
 pub struct PersistenceManager {
     /// Application name (used in storage path).
@@ -152,7 +152,7 @@ impl PersistenceManager {
 
     /// Configures persistence with the given app name.
     ///
-    /// This must be called before using `state_persistent()`.
+    /// This must be called before using `persists()`.
     /// The app name is used to create an isolated storage directory.
     ///
     /// # Example
