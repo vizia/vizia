@@ -462,9 +462,10 @@ impl List {
                 Binding::new(cx, list, move |cx| {
                     let binding_entity = cx.tree.get_parent(cx.current()).unwrap_or(Entity::root());
                     let items = list.get(cx).clone();
-                    let mut event_cx = EventContext::new(cx);
-                    num_items.set(&mut event_cx, items.len());
-                    drop(event_cx);
+                    {
+                        let mut event_cx = EventContext::new(cx);
+                        num_items.set(&mut event_cx, items.len());
+                    }
 
                     let mut old_map = {
                         let mut map_ref = keyed_items.borrow_mut();

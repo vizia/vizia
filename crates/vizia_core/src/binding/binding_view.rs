@@ -26,6 +26,7 @@ fn create_scope(cx: &mut Context, parent: Entity) -> Entity {
 
 impl Binding {
     /// Create a new binding that rebuilds when `signal` changes.
+    #[allow(clippy::new_ret_no_self)]
     pub fn new<T>(cx: &mut Context, signal: Signal<T>, content: impl 'static + Fn(&mut Context))
     where
         T: 'static,
@@ -77,9 +78,9 @@ impl BindingHandler for Binding {
     }
 
     fn remove(&self, cx: &mut Context) {
-        cx.data.get_store_mut().observers.get_mut(&self.signal_id).map(|observers| {
+        if let Some(observers) = cx.data.get_store_mut().observers.get_mut(&self.signal_id) {
             observers.retain(|&observer| observer != self.entity);
-        });
+        }
     }
 
     fn debug(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {

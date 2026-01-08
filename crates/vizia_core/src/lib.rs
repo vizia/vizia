@@ -8,6 +8,8 @@
 #![allow(clippy::only_used_in_recursion)]
 #![allow(clippy::uninlined_format_args)]
 #![allow(mismatched_lifetime_syntaxes)]
+// Allow `let x = x;` pattern for clarity in closure captures
+#![allow(clippy::redundant_locals)]
 // #![warn(missing_docs)]
 
 extern crate self as vizia;

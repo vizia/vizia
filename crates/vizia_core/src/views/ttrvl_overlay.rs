@@ -3,8 +3,6 @@
 //! This overlay provides visual controls for navigating through signal history.
 //! It is only available in debug builds.
 
-#![cfg(debug_assertions)]
-
 use crate::events::TtrvlEvent;
 use crate::icons::{ICON_PLAYER_PAUSE, ICON_PLAYER_PLAY, ICON_X};
 use crate::modifiers::*;

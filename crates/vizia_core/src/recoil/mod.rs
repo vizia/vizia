@@ -600,10 +600,10 @@ impl Store {
     // Register a dependency - mutates state
     fn register_dependency(&mut self, selector_id: &NodeId, dependency_id: &NodeId) {
         // Record that selector depends on dependency
-        self.dependencies.entry(*selector_id).or_insert_with(HashSet::new).insert(*dependency_id);
+        self.dependencies.entry(*selector_id).or_default().insert(*dependency_id);
 
         // Record that dependency has selector as dependent
-        self.dependents.entry(*dependency_id).or_insert_with(HashSet::new).insert(*selector_id);
+        self.dependents.entry(*dependency_id).or_default().insert(*selector_id);
     }
 
     // Fix update_dependents to handle both selectors and effects
@@ -658,8 +658,7 @@ impl Store {
     fn recompute_selector(&mut self, id: &NodeId) {
         self.node_needs_update.insert(*id, true);
         if let Some(compute_fn) = &self.compute_fns.get(id) {
-            let old_deps =
-                self.dependencies.get(id).map(|deps| deps.clone()).unwrap_or_else(HashSet::new);
+            let old_deps = self.dependencies.get(id).cloned().unwrap_or_default();
 
             let tracker = DependencyTracker::new(self, *id);
             let result_any = compute_fn(self);
@@ -823,7 +822,7 @@ impl<T: 'static> Signal<T> {
 
         store.set(&id, default);
 
-        Self { id, ty: PhantomData::default() }
+        Self { id, ty: PhantomData }
     }
 
     fn derived(store: &mut Store, entity: Entity, compute: impl 'static + Fn(&Store) -> T) -> Self {

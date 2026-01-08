@@ -428,7 +428,7 @@ pub(crate) fn draw_bounds(
     entity: Entity,
 ) -> BoundingBox {
     let mut layout_bounds =
-        cache.bounds.get(entity).copied().expect(&format!("No bounds found for entity {}", entity));
+        cache.bounds.get(entity).copied().unwrap_or_else(|| panic!("No bounds found for entity {}", entity));
 
     if let Some(shadows) = style.shadow.get(entity) {
         for shadow in shadows.iter().filter(|shadow| !shadow.inset) {

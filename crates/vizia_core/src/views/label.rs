@@ -157,6 +157,7 @@ impl Label {
 
     /// Internal method for building Labels with programmatic child TextSpans.
     /// Used by the Markdown view for rendering parsed markdown content.
+    #[allow(dead_code)]
     pub(crate) fn with_spans(cx: &mut Context, children: impl Fn(&mut Context)) -> Handle<Self> {
         let empty = cx.state(String::new());
         Self { describing: None, raw_text: None }
@@ -648,7 +649,7 @@ impl Handle<'_, Label> {
     {
         // Derive a Signal<Vec<String>>
         let vec_signal = signal.drv(self.cx, move |v, _| {
-            v.iter().map(|item| item_fn(item)).collect()
+            v.iter().map(&item_fn).collect()
         });
 
         let mut config = self.get_rich_config();

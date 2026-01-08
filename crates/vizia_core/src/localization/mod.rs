@@ -281,7 +281,7 @@ impl ToStringLocalized for Localized {
         let cx = cx.localization_context().expect("Failed to get context");
 
         let locale = cx.environment().locale.get(&cx);
-        let bundle = cx.resource_manager.current_translation(&locale);
+        let bundle = cx.resource_manager.current_translation(locale);
         let message = if let Some(msg) = bundle.get_message(&self.key) {
             msg
         } else {

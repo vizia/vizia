@@ -54,9 +54,10 @@ fn next_load_id() -> u64 {
 /// - `Stale(T, E)` - Has old data but last refresh failed
 /// - `Timeout` - Operation timed out
 /// - `Retrying(attempt, max_attempts, last_error)` - Retry in progress after failure
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum Async<T, E = String> {
     /// Initial state before any operation has started.
+    #[default]
     Idle,
     /// First load in progress, no prior data available.
     Loading,
@@ -74,11 +75,6 @@ pub enum Async<T, E = String> {
     Retrying(u32, u32, E),
 }
 
-impl<T, E> Default for Async<T, E> {
-    fn default() -> Self {
-        Async::Idle
-    }
-}
 
 impl<T, E> Async<T, E> {
     /// Returns `true` if the state is `Idle`.
