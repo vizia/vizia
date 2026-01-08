@@ -241,20 +241,6 @@ impl Context {
         recoil_store.state(entity, value)
     }
 
-    /// Creates an undoable state signal.
-    ///
-    /// Changes to this signal will be tracked for undo/redo when made within an `undo_group`.
-    ///
-    /// # Example
-    /// ```ignore
-    /// let circles = cx.state_undoable(Vec::new());
-    /// ```
-    pub fn state_undoable<T: 'static + Clone + Send + std::fmt::Debug>(&mut self, value: T) -> Signal<T> {
-        let signal = self.state(value);
-        self.data.get_store_mut().undo_manager_mut().register_undoable::<T>(signal.id());
-        signal
-    }
-
     /// Configures state persistence for this application.
     ///
     /// This must be called before using `state_persistent()`. The app name
@@ -286,71 +272,6 @@ impl Context {
         self.data.get_store_mut().persistence_manager_mut().clear_errors();
     }
 
-    /// Creates a persistent state signal that auto-saves to disk.
-    ///
-    /// **Important:** Call `cx.configure_persistence("app_name")` first!
-    ///
-    /// The signal will:
-    /// - Load its initial value from disk if a saved value exists
-    /// - Fall back to the provided default if no saved value exists or on load error
-    /// - Auto-save when its value changes (debounced 500ms)
-    /// - Flush pending saves on app exit
-    ///
-    /// # Error Handling
-    /// Load errors are recorded and accessible via `cx.persistence_errors()`.
-    /// The signal will use the default value on error, but you can check for
-    /// issues after creation:
-    /// ```ignore
-    /// let settings = cx.state_persists("settings", Settings::default());
-    /// if !cx.persistence_errors().is_empty() {
-    ///     // Handle load errors (corrupted file, version mismatch, etc.)
-    /// }
-    /// ```
-    ///
-    /// # Example
-    /// ```ignore
-    /// #[derive(Serialize, Deserialize, Clone, Default)]
-    /// struct Settings {
-    ///     theme: String,
-    ///     volume: f32,
-    /// }
-    ///
-    /// // First, configure persistence with your app name
-    /// cx.configure_persistence("my_app");
-    ///
-    /// // Then create persistent signals
-    /// let settings = cx.state_persists("settings", Settings::default());
-    /// ```
-    ///
-    /// # Security
-    /// - Files are created with restrictive permissions (0600 on Unix)
-    /// - Data is stored with version info for future migration support
-    pub fn state_persists<T>(&mut self, key: impl Into<String>, default: T) -> Signal<T>
-    where
-        T: serde::Serialize + serde::de::DeserializeOwned + Clone + 'static,
-    {
-        let key = key.into();
-
-        // Try to load existing value from disk
-        let initial = self
-            .data
-            .get_store_mut()
-            .persistence_manager_mut()
-            .load::<T>(&key)
-            .unwrap_or(default);
-
-        // Create signal with loaded/default value
-        let signal = self.state(initial);
-
-        // Register for auto-save
-        self.data
-            .get_store_mut()
-            .persistence_manager_mut()
-            .register::<T>(signal.id(), key);
-
-        signal
-    }
-
     pub fn derived<T: 'static + Clone>(
         &mut self,
         compute: impl 'static + Fn(&crate::recoil::Store) -> T,
@@ -358,33 +279,6 @@ impl Context {
         let recoil_store = &mut self.data;
         let entity = self.current;
         recoil_store.derived(entity, compute)
-    }
-
-    /// Creates an async state signal initialized to `Async::Idle`.
-    ///
-    /// Use this for representing data that will be loaded asynchronously.
-    /// The signal can be transitioned through states: `Idle` -> `Loading` -> `Ready(T)` or `Error(E)`.
-    ///
-    /// # Example
-    /// ```ignore
-    /// use vizia::prelude::*;
-    ///
-    /// struct MyApp {
-    ///     users: Signal<Async<Vec<User>, String>>,
-    /// }
-    ///
-    /// impl App for MyApp {
-    ///     fn new(cx: &mut Context) -> Self {
-    ///         Self {
-    ///             users: cx.state_async(),
-    ///         }
-    ///     }
-    /// }
-    /// ```
-    pub fn state_async<T: 'static + Clone, E: 'static + Clone>(
-        &mut self,
-    ) -> Signal<crate::recoil::Async<T, E>> {
-        self.state(crate::recoil::Async::Idle)
     }
 
     /// Loads data asynchronously into an async state signal.

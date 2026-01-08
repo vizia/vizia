@@ -128,7 +128,7 @@ impl View for CircleDrawerCanvas {
 
 #[cfg(not(feature = "baseview"))]
 struct CircleDrawerApp {
-    // Using state_undoable for automatic undo/redo tracking
+    // Using .u() for automatic undo/redo tracking
     circles: Signal<Vec<Circle>>,
     selected: Signal<Option<usize>>,
     radius_before: Signal<f32>,
@@ -160,7 +160,7 @@ impl App for CircleDrawerApp {
     fn new(cx: &mut Context) -> Self {
         Self {
             // Create circles with undo support
-            circles: cx.state_undoable(Vec::<Circle>::new()),
+            circles: cx.state(Vec::<Circle>::new()).u(cx),
             selected: cx.state(None::<usize>),
             radius_before: cx.state(0.0f32),
             menu_open: cx.state(false),

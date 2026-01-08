@@ -314,16 +314,16 @@ fn main() -> Result<(), ApplicationError> {
 | Derived state | `sig.drv(cx, \|v, _\| v * 2)` |
 | Bind to view | `Label::new(cx, sig)` |
 | Window props | `app.title(cx.state("Title")).inner_size(cx.state((w, h)))` |
-| Async state | `let data = cx.state_async::<T, E>()` |
+| Async state | `let data = cx.state(Async::Idle)` |
 | Load async | `cx.load_async(data, \|\| fetch_data())` |
 | Cancelable load | `let h = cx.load_async_cancelable(data, \|\| ...); h.cancel()` |
 | Refresh (stale) | `cx.refresh_async(data, \|\| fetch_data())` |
 | With options | `cx.load_async_with(data, AsyncOptions::patient(), \|\| ...)` |
-| Undoable state | `let sig = cx.state_undoable(initial_value)` |
+| Undoable state | `cx.state(val).u(cx)` |
 | Undo group | `cx.with_undo("desc", \|cx\| { sig.upd(cx, ...) })` |
 | Undo/Redo | `cx.undo()` / `cx.redo()` |
 | Reactive state | `cx.can_undo_signal()` / `cx.can_redo_signal()` |
-| Persistent state | `let sig = cx.state_persists("key", default)` |
+| Persistent state | `cx.state(default).p(cx, "key")` |
 | Time travel | `cx.ttrvl_to(idx)` / `cx.ttrvl_back()` / `cx.ttrvl_forward()` |
 | Time travel UI | `` Cmd/Ctrl+` `` overlay, `Cmd/Ctrl+[` back, `+Shift` fwd (debug) |
 | Inline rich text | `Label::new(cx, "**bold** *italic*")` (auto-parsed) |

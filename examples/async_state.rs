@@ -37,6 +37,14 @@ pub enum AppEvent {
     CancelLoad,
 }
 
+fn fake_users() -> Vec<User> {
+    vec![
+        User { id: 1, name: "Alice".to_string(), email: "alice@example.com".to_string() },
+        User { id: 2, name: "Bob".to_string(), email: "bob@example.com".to_string() },
+        User { id: 3, name: "Charlie".to_string(), email: "charlie@example.com".to_string() },
+    ]
+}
+
 // Application using async state
 struct AsyncApp {
     users: Signal<Async<Vec<User>, String>>,
@@ -49,20 +57,14 @@ impl App for AsyncApp {
     }
 
     fn new(cx: &mut Context) -> Self {
-        Self {
-            users: cx.state_async(),
-            cancel_handle: None,
-        }
+        Self { users: cx.state(Async::Idle), cancel_handle: None }
     }
 
     fn on_build(self, cx: &mut Context) -> Self {
         VStack::new(cx, |cx| {
-            Label::new(cx, "Async State Demo")
-                .font_size(24.0)
-                .font_weight(FontWeightKeyword::Bold);
+            Label::new(cx, "Async State Demo").font_size(24.0).font_weight(FontWeightKeyword::Bold);
 
-            Label::new(cx, "Comprehensive async data loading")
-                .color(Color::rgb(128, 128, 128));
+            Label::new(cx, "Comprehensive async data loading").color(Color::rgb(128, 128, 128));
 
             // Control buttons
             HStack::new(cx, |cx| {
@@ -101,8 +103,7 @@ impl App for AsyncApp {
             Binding::new(cx, is_idle, move |cx| {
                 if *is_idle.get(cx) {
                     VStack::new(cx, |cx| {
-                        Label::new(cx, "Ready to load")
-                            .color(Color::rgb(128, 128, 128));
+                        Label::new(cx, "Ready to load").color(Color::rgb(128, 128, 128));
                         Label::new(cx, "Click 'Load' to fetch users")
                             .font_size(12.0)
                             .color(Color::rgb(160, 160, 160));
@@ -140,7 +141,8 @@ impl App for AsyncApp {
                     // Extract retry info and clone to avoid borrow issues
                     let retry_data = users.get(cx).retry_info().map(|(a, m, e)| (a, m, e.clone()));
                     if let Some((attempt, max, err)) = retry_data {
-                        let status_text = cx.state(format!("Retrying... (attempt {} of {})", attempt, max));
+                        let status_text =
+                            cx.state(format!("Retrying... (attempt {} of {})", attempt, max));
                         let error_text = cx.state(format!("Last error: {}", err));
                         VStack::new(cx, |cx| {
                             Label::new(cx, status_text)
@@ -169,13 +171,13 @@ impl App for AsyncApp {
                                 cx.state(format!("Loaded {} users:", users_data.len()))
                             };
 
-                            Label::new(cx, status)
-                                .font_weight(FontWeightKeyword::Bold)
-                                .color(if is_stale_now {
+                            Label::new(cx, status).font_weight(FontWeightKeyword::Bold).color(
+                                if is_stale_now {
                                     Color::rgb(200, 150, 50)
                                 } else {
                                     Color::rgb(0, 128, 0)
-                                });
+                                },
+                            );
 
                             for user in users_data.iter() {
                                 let id_text = cx.state(format!("#{}", user.id));
@@ -223,8 +225,7 @@ impl App for AsyncApp {
                         Label::new(cx, "Timeout!")
                             .font_weight(FontWeightKeyword::Bold)
                             .color(Color::rgb(200, 100, 0));
-                        Label::new(cx, "Request took too long")
-                            .color(Color::rgb(150, 100, 50));
+                        Label::new(cx, "Request took too long").color(Color::rgb(150, 100, 50));
                         Label::new(cx, "Click 'Load' to retry")
                             .font_size(12.0)
                             .color(Color::rgb(128, 128, 128));
@@ -234,9 +235,7 @@ impl App for AsyncApp {
 
             // Info panel
             VStack::new(cx, |cx| {
-                Label::new(cx, "Features:")
-                    .font_weight(FontWeightKeyword::Bold)
-                    .font_size(12.0);
+                Label::new(cx, "Features:").font_weight(FontWeightKeyword::Bold).font_size(12.0);
                 Label::new(cx, "- Load: Basic loading (2s delay)")
                     .font_size(11.0)
                     .color(Color::rgb(100, 100, 100));
@@ -335,26 +334,6 @@ impl App for AsyncApp {
     fn window_config(&self) -> WindowConfig {
         window(|app| app.inner_size((550, 500)))
     }
-}
-
-fn fake_users() -> Vec<User> {
-    vec![
-        User {
-            id: 1,
-            name: "Alice".to_string(),
-            email: "alice@example.com".to_string(),
-        },
-        User {
-            id: 2,
-            name: "Bob".to_string(),
-            email: "bob@example.com".to_string(),
-        },
-        User {
-            id: 3,
-            name: "Charlie".to_string(),
-            email: "charlie@example.com".to_string(),
-        },
-    ]
 }
 
 fn main() -> Result<(), ApplicationError> {

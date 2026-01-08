@@ -939,6 +939,71 @@ impl<T: 'static> Signal<T> {
         let signal = *self;
         cx.derived(move |s| f(signal.get(s), s))
     }
+
+    /// Make this signal participate in undo/redo.
+    ///
+    /// Short form of `.undoable()`. Chain after `cx.state()`:
+    /// ```ignore
+    /// let count = cx.state(0).u(cx);
+    /// ```
+    pub fn u(self, cx: &mut Context) -> Self
+    where
+        T: Clone + Send + std::fmt::Debug,
+    {
+        cx.data.get_store_mut().undo_manager_mut().register_undoable::<T>(self.id);
+        self
+    }
+
+    /// Make this signal participate in undo/redo.
+    ///
+    /// Chain after `cx.state()`:
+    /// ```ignore
+    /// let count = cx.state(0).undoable(cx);
+    /// ```
+    pub fn undoable(self, cx: &mut Context) -> Self
+    where
+        T: Clone + Send + std::fmt::Debug,
+    {
+        self.u(cx)
+    }
+
+    /// Make this signal persist to disk.
+    ///
+    /// Loads existing value from disk if available, and auto-saves on changes.
+    /// Short form of `.persists()`. Chain after `cx.state()`:
+    /// ```ignore
+    /// let settings = cx.state(Settings::default()).p(cx, "settings");
+    /// ```
+    pub fn p(self, cx: &mut Context, key: impl Into<String>) -> Self
+    where
+        T: Clone + serde::Serialize + serde::de::DeserializeOwned,
+    {
+        let key = key.into();
+
+        // Load from disk and set if exists
+        if let Some(loaded) = cx.data.get_store_mut().persistence_manager_mut().load::<T>(&key) {
+            cx.data.get_store_mut().set(&self.id, loaded);
+        }
+
+        // Register for auto-save
+        cx.data.get_store_mut().persistence_manager_mut().register::<T>(self.id, key);
+
+        self
+    }
+
+    /// Make this signal persist to disk.
+    ///
+    /// Loads existing value from disk if available, and auto-saves on changes.
+    /// Chain after `cx.state()`:
+    /// ```ignore
+    /// let settings = cx.state(Settings::default()).persists(cx, "settings");
+    /// ```
+    pub fn persists(self, cx: &mut Context, key: impl Into<String>) -> Self
+    where
+        T: Clone + serde::Serialize + serde::de::DeserializeOwned,
+    {
+        self.p(cx, key)
+    }
 }
 
 // Root container

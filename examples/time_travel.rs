@@ -24,9 +24,9 @@ impl App for TimeTravelApp {
 
     fn new(cx: &mut Context) -> Self {
         Self {
-            // Use state_undoable so changes are tracked for time travel
-            count: cx.state_undoable(0),
-            items: cx.state_undoable(Vec::new()),
+            // Use .u() so changes are tracked for time travel
+            count: cx.state(0).u(cx),
+            items: cx.state(Vec::new()).u(cx),
         }
     }
 
