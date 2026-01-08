@@ -3,7 +3,17 @@ use crate::{
     events::Event,
     model::Model,
 };
-use std::any::Any;
+use std::any::{Any, TypeId};
+use std::collections::HashMap;
+use std::sync::{Mutex, OnceLock};
+
+/// Global cache for auto-derived app names to avoid repeated allocations.
+/// Uses TypeId as key since each App implementation has a unique type.
+static APP_NAME_CACHE: OnceLock<Mutex<HashMap<TypeId, &'static str>>> = OnceLock::new();
+
+fn get_app_name_cache() -> &'static Mutex<HashMap<TypeId, &'static str>> {
+    APP_NAME_CACHE.get_or_init(|| Mutex::new(HashMap::new()))
+}
 
 /// Opaque window configuration returned by [`App::window_config`].
 ///
@@ -113,31 +123,46 @@ pub trait App: Sized + 'static {
     /// }
     /// ```
     fn app_name() -> &'static str {
-        // Get the type name (e.g., "my_crate::MyAwesomeApp")
+        let type_id = TypeId::of::<Self>();
+
+        // Check cache first
+        {
+            let cache = get_app_name_cache().lock().unwrap();
+            if let Some(&name) = cache.get(&type_id) {
+                return name;
+            }
+        }
+
+        // Compute the name
         let full_name = std::any::type_name::<Self>();
-
-        // Extract just the struct name (after last "::")
         let struct_name = full_name.rsplit("::").next().unwrap_or(full_name);
-
-        // Remove "App" suffix if present
         let name = struct_name.strip_suffix("App").unwrap_or(struct_name);
 
-        // If all uppercase (like "CRUD"), use as-is
-        if name.chars().all(|c| c.is_uppercase() || !c.is_alphabetic()) {
-            return Box::leak(name.to_string().into_boxed_str());
-        }
-
-        // Add spaces between camelCase words
-        let mut result = String::with_capacity(name.len() + 10);
-        for (i, ch) in name.chars().enumerate() {
-            if i > 0 && ch.is_uppercase() {
-                result.push(' ');
+        let result = if name.chars().all(|c| c.is_uppercase() || !c.is_alphabetic()) {
+            // All uppercase (like "CRUD"), use as-is
+            name.to_string()
+        } else {
+            // Add spaces between camelCase words
+            let mut spaced = String::with_capacity(name.len() + 10);
+            for (i, ch) in name.chars().enumerate() {
+                if i > 0 && ch.is_uppercase() {
+                    spaced.push(' ');
+                }
+                spaced.push(ch);
             }
-            result.push(ch);
+            spaced
+        };
+
+        // Leak once and cache (one allocation per unique App type)
+        let leaked: &'static str = Box::leak(result.into_boxed_str());
+
+        // Store in cache
+        {
+            let mut cache = get_app_name_cache().lock().unwrap();
+            cache.insert(type_id, leaked);
         }
 
-        // Leak the string to get a &'static str (one-time allocation per app)
-        Box::leak(result.into_boxed_str())
+        leaked
     }
 
     /// Initialize application-level state.

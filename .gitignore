@@ -1,3 +1,7 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
 # Allow contributors to configure their own vscode tasks.
 .vscode/tasks.json
 

@@ -1,11 +1,14 @@
 mod async_state;
 mod persistence;
+mod undo;
 
 pub use async_state::{
     Async, AsyncCompletionEvent, AsyncHandle, AsyncOptions, AsyncSignalExt,
 };
 pub(crate) use async_state::run_async_load;
 pub use persistence::{PersistenceError, PersistenceManager};
+pub use undo::{HistoryEntry, SignalChange, UndoEntry, UndoManager};
+use undo::SignalSnapshot;
 
 use crate::binding::Data;
 use crate::context::{Context, DataContext, EventContext};
@@ -17,409 +20,6 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::marker::PhantomData;
-use web_time::Instant;
-
-// ============================================================================
-// Undo/Redo Infrastructure
-// ============================================================================
-
-/// A snapshot of a single signal's value for undo/redo.
-/// We store a clone function alongside the value to enable cloning.
-struct SignalSnapshot {
-    signal_id: NodeId,
-    value: Box<dyn Any>,
-    /// Function to clone the value (type-erased)
-    clone_fn: fn(&dyn Any) -> Box<dyn Any>,
-    /// Function to format the value for debug display (type-erased)
-    debug_fn: fn(&dyn Any) -> String,
-}
-
-impl SignalSnapshot {
-    /// Create a new snapshot with the given value.
-    fn new<T: 'static + Clone + Send + std::fmt::Debug>(signal_id: NodeId, value: &T) -> Self {
-        Self {
-            signal_id,
-            value: Box::new(value.clone()),
-            clone_fn: |any| {
-                let typed = any.downcast_ref::<T>().expect("Type mismatch in snapshot clone");
-                Box::new(typed.clone())
-            },
-            debug_fn: |any| {
-                if let Some(typed) = any.downcast_ref::<T>() {
-                    format!("{:?}", typed)
-                } else {
-                    "<unknown>".to_string()
-                }
-            },
-        }
-    }
-
-    /// Clone this snapshot's value.
-    fn clone_value(&self) -> Box<dyn Any> {
-        (self.clone_fn)(&*self.value)
-    }
-
-    /// Format the value for debug display.
-    fn debug_value(&self) -> String {
-        (self.debug_fn)(&*self.value)
-    }
-}
-
-/// An entry in the undo/redo stack representing a group of changes.
-pub struct UndoEntry {
-    /// Human-readable description of the action (e.g., "Add Circle")
-    pub description: String,
-    /// Snapshots of signal values before the change
-    snapshots: Vec<SignalSnapshot>,
-    /// When this entry was created
-    pub timestamp: Instant,
-}
-
-impl Default for UndoEntry {
-    fn default() -> Self {
-        Self {
-            description: String::new(),
-            snapshots: Vec::new(),
-            timestamp: Instant::now(),
-        }
-    }
-}
-
-impl std::fmt::Debug for UndoEntry {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("UndoEntry")
-            .field("description", &self.description)
-            .field("snapshot_count", &self.snapshots.len())
-            .field("timestamp", &self.timestamp)
-            .finish()
-    }
-}
-
-// ============================================================================
-// Time Travel Debugging Types
-// ============================================================================
-
-/// Represents a change to a signal's value for time travel inspection.
-#[derive(Clone, Debug)]
-pub struct SignalChange {
-    /// The signal that changed
-    pub signal_id: NodeId,
-    /// The old value (debug formatted)
-    pub old_value: String,
-    /// The new value (debug formatted)
-    pub new_value: String,
-}
-
-/// An entry in the time travel history timeline.
-#[derive(Clone, Debug)]
-pub struct HistoryEntry {
-    /// Position in the timeline (0 = oldest, higher = more recent)
-    pub index: usize,
-    /// Human-readable description of the action
-    pub description: String,
-    /// When this entry was created
-    pub timestamp: Instant,
-    /// Which signals changed and their values
-    pub changes: Vec<SignalChange>,
-    /// Whether this is the "present" marker
-    pub is_present: bool,
-}
-
-/// Manages undo/redo stacks for the application.
-pub struct UndoManager {
-    /// Stack of undo entries (most recent at end)
-    undo_stack: Vec<UndoEntry>,
-    /// Stack of redo entries (most recent at end)
-    redo_stack: Vec<UndoEntry>,
-    /// Set of signal IDs that are tracked for undo
-    undoable_signals: HashSet<NodeId>,
-    /// Clone functions for undoable signals (type-erased)
-    clone_fns: HashMap<NodeId, fn(&dyn Any) -> Box<dyn Any>>,
-    /// Debug functions for undoable signals (type-erased)
-    debug_fns: HashMap<NodeId, fn(&dyn Any) -> String>,
-    /// Maximum number of undo entries to keep
-    max_history: usize,
-    /// Current undo group being recorded (None if not in a group)
-    current_group: Option<UndoEntry>,
-    /// Signals modified in the current group (to avoid duplicate snapshots)
-    current_group_signals: HashSet<NodeId>,
-    /// Whether we're currently performing an undo/redo (to skip recording)
-    is_undoing: bool,
-    /// Version counter that increments on any undo state change (for reactive signals)
-    version: u64,
-    /// NodeId of the internal version signal (set by Store)
-    version_signal_id: Option<NodeId>,
-
-    // Time travel state
-    /// Current position in time travel mode (None = at present)
-    ttrvl_position: Option<usize>,
-    /// Saved present state when entering time travel mode
-    ttrvl_saved_state: Option<HashMap<NodeId, Box<dyn Any>>>,
-    /// Clone functions for saved state restoration
-    ttrvl_saved_clone_fns: HashMap<NodeId, fn(&dyn Any) -> Box<dyn Any>>,
-}
-
-impl Default for UndoManager {
-    fn default() -> Self {
-        Self {
-            undo_stack: Vec::new(),
-            redo_stack: Vec::new(),
-            undoable_signals: HashSet::new(),
-            clone_fns: HashMap::new(),
-            debug_fns: HashMap::new(),
-            max_history: 100,
-            current_group: None,
-            current_group_signals: HashSet::new(),
-            is_undoing: false,
-            version: 0,
-            version_signal_id: None,
-            ttrvl_position: None,
-            ttrvl_saved_state: None,
-            ttrvl_saved_clone_fns: HashMap::new(),
-        }
-    }
-}
-
-impl UndoManager {
-    /// Create a new undo manager with specified max history.
-    pub fn new(max_history: usize) -> Self {
-        Self { max_history, ..Default::default() }
-    }
-
-    /// Set the maximum number of undo entries to keep.
-    pub fn set_max_history(&mut self, max: usize) {
-        self.max_history = max;
-        // Trim if needed
-        while self.undo_stack.len() > self.max_history {
-            self.undo_stack.remove(0);
-        }
-    }
-
-    /// Get the current max history setting.
-    pub fn max_history(&self) -> usize {
-        self.max_history
-    }
-
-    /// Register a signal as undoable with its clone and debug functions.
-    pub fn register_undoable<T: 'static + Clone + Send + std::fmt::Debug>(&mut self, signal_id: NodeId) {
-        self.undoable_signals.insert(signal_id);
-        self.clone_fns.insert(signal_id, |any| {
-            let typed = any.downcast_ref::<T>().expect("Type mismatch in undo clone");
-            Box::new(typed.clone())
-        });
-        self.debug_fns.insert(signal_id, |any| {
-            if let Some(typed) = any.downcast_ref::<T>() {
-                format!("{:?}", typed)
-            } else {
-                "<unknown>".to_string()
-            }
-        });
-    }
-
-    /// Get the debug function for a signal.
-    pub fn get_debug_fn(&self, signal_id: &NodeId) -> Option<fn(&dyn Any) -> String> {
-        self.debug_fns.get(signal_id).copied()
-    }
-
-    /// Clear all undo/redo history.
-    pub fn clear_history(&mut self) {
-        self.undo_stack.clear();
-        self.redo_stack.clear();
-        self.current_group = None;
-        self.current_group_signals.clear();
-        self.bump_version();
-    }
-
-    /// Set the version signal ID (called by Store during init).
-    pub fn set_version_signal_id(&mut self, id: NodeId) {
-        self.version_signal_id = Some(id);
-    }
-
-    /// Get the version signal ID.
-    pub fn version_signal_id(&self) -> Option<NodeId> {
-        self.version_signal_id
-    }
-
-    /// Get the current version.
-    pub fn version(&self) -> u64 {
-        self.version
-    }
-
-    /// Bump the version (signals state change).
-    fn bump_version(&mut self) {
-        self.version = self.version.wrapping_add(1);
-    }
-
-    /// Get the clone function for a signal.
-    pub fn get_clone_fn(&self, signal_id: &NodeId) -> Option<fn(&dyn Any) -> Box<dyn Any>> {
-        self.clone_fns.get(signal_id).copied()
-    }
-
-    /// Check if a signal is undoable.
-    pub fn is_undoable(&self, signal_id: &NodeId) -> bool {
-        self.undoable_signals.contains(signal_id)
-    }
-
-    /// Check if we can undo.
-    pub fn can_undo(&self) -> bool {
-        !self.undo_stack.is_empty()
-    }
-
-    /// Check if we can redo.
-    pub fn can_redo(&self) -> bool {
-        !self.redo_stack.is_empty()
-    }
-
-    /// Get the undo history for UI display.
-    pub fn undo_history(&self) -> Vec<&str> {
-        self.undo_stack.iter().rev().map(|e| e.description.as_str()).collect()
-    }
-
-    /// Get the redo history for UI display.
-    pub fn redo_history(&self) -> Vec<&str> {
-        self.redo_stack.iter().rev().map(|e| e.description.as_str()).collect()
-    }
-
-    /// Begin an undo group. All changes until end_group are grouped together.
-    pub fn begin_group(&mut self, description: impl Into<String>) {
-        if self.is_undoing {
-            return;
-        }
-        self.current_group = Some(UndoEntry {
-            description: description.into(),
-            snapshots: Vec::new(),
-            timestamp: Instant::now(),
-        });
-        self.current_group_signals.clear();
-    }
-
-    /// End the current undo group and push it to the stack.
-    pub fn end_group(&mut self) {
-        if self.is_undoing {
-            return;
-        }
-        if let Some(group) = self.current_group.take() {
-            if !group.snapshots.is_empty() {
-                self.undo_stack.push(group);
-                // Clear redo stack when new changes are made
-                self.redo_stack.clear();
-                // Trim history if needed
-                while self.undo_stack.len() > self.max_history {
-                    self.undo_stack.remove(0);
-                }
-                // Bump version to notify reactive signals
-                self.bump_version();
-            }
-        }
-        self.current_group_signals.clear();
-    }
-
-    /// Snapshot a signal's current value before it changes.
-    /// Only records if the signal is undoable and we're in an undo group.
-    pub fn snapshot_before_change<T: 'static + Clone + Send + std::fmt::Debug>(
-        &mut self,
-        signal_id: NodeId,
-        current_value: &T,
-    ) {
-        if self.is_undoing || !self.undoable_signals.contains(&signal_id) {
-            return;
-        }
-
-        // Only snapshot once per signal per group
-        if self.current_group_signals.contains(&signal_id) {
-            return;
-        }
-
-        if let Some(ref mut group) = self.current_group {
-            group.snapshots.push(SignalSnapshot::new(signal_id, current_value));
-            self.current_group_signals.insert(signal_id);
-        }
-    }
-
-    // ========================================================================
-    // Time Travel Methods
-    // ========================================================================
-
-    /// Check if currently in time travel mode.
-    pub fn is_ttrvl(&self) -> bool {
-        self.ttrvl_position.is_some()
-    }
-
-    /// Get the current time travel position (None = at present).
-    pub fn ttrvl_position(&self) -> Option<usize> {
-        self.ttrvl_position
-    }
-
-    /// Get the total number of entries in the timeline.
-    pub fn timeline_len(&self) -> usize {
-        // undo_stack + present + redo_stack
-        self.undo_stack.len() + 1 + self.redo_stack.len()
-    }
-
-    /// Get the index that represents "present" in the timeline.
-    pub fn present_index(&self) -> usize {
-        self.undo_stack.len()
-    }
-
-    /// Build the full history timeline for time travel UI.
-    pub fn timeline(&self) -> Vec<HistoryEntry> {
-        let mut entries = Vec::with_capacity(self.timeline_len());
-
-        // Past entries (undo stack, oldest first)
-        for (i, entry) in self.undo_stack.iter().enumerate() {
-            entries.push(HistoryEntry {
-                index: i,
-                description: entry.description.clone(),
-                timestamp: entry.timestamp,
-                changes: entry.snapshots.iter().map(|s| SignalChange {
-                    signal_id: s.signal_id,
-                    old_value: s.debug_value(),
-                    new_value: String::new(), // Old value is what's stored
-                }).collect(),
-                is_present: false,
-            });
-        }
-
-        // Present marker
-        entries.push(HistoryEntry {
-            index: self.undo_stack.len(),
-            description: "Present".to_string(),
-            timestamp: Instant::now(),
-            changes: vec![],
-            is_present: true,
-        });
-
-        // Future entries (redo stack, reversed so oldest undone is first)
-        for (i, entry) in self.redo_stack.iter().rev().enumerate() {
-            entries.push(HistoryEntry {
-                index: self.undo_stack.len() + 1 + i,
-                description: entry.description.clone(),
-                timestamp: entry.timestamp,
-                changes: entry.snapshots.iter().map(|s| SignalChange {
-                    signal_id: s.signal_id,
-                    old_value: s.debug_value(),
-                    new_value: String::new(),
-                }).collect(),
-                is_present: false,
-            });
-        }
-
-        entries
-    }
-
-    /// Get the description at a specific timeline position.
-    pub fn description_at(&self, index: usize) -> String {
-        let present = self.undo_stack.len();
-        if index < present {
-            self.undo_stack.get(index).map(|e| e.description.clone()).unwrap_or_default()
-        } else if index == present {
-            "Present".to_string()
-        } else {
-            let redo_index = self.redo_stack.len().saturating_sub(index - present);
-            self.redo_stack.get(redo_index).map(|e| e.description.clone()).unwrap_or_default()
-        }
-    }
-}
 
 // Unique identifier for state nodes
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Copy)]
@@ -1161,7 +761,48 @@ impl Store {
     }
 }
 
-// Signal represents a piece of state
+/// A reactive state primitive that stores a value of type `T`.
+///
+/// Signals are the core building block of Vizia's reactive system. They hold
+/// values that can be read and updated, automatically triggering UI updates
+/// when changed.
+///
+/// # Type Requirements
+///
+/// Signal values must implement `Clone` for several operations:
+///
+/// - **Reading via `.get()`**: Returns a reference, but derived signals
+///   and bindings may need to clone the value for computations.
+/// - **Updates via `.set()` / `.upd()`**: The value is cloned when storing.
+/// - **Undo/redo**: Snapshots clone the value to preserve history.
+/// - **Persistence**: Values are cloned for serialization.
+///
+/// This `Clone` bound is a deliberate design choice that enables:
+/// - Simple, predictable ownership semantics
+/// - Efficient derived signal caching
+/// - Zero-copy reads in most cases (references are returned)
+///
+/// For large data structures, consider:
+/// - Using `Arc<T>` to share data cheaply
+/// - Storing indices/IDs and keeping data in a separate collection
+/// - Using derived signals to project smaller views of the data
+///
+/// # Example
+///
+/// ```ignore
+/// // Create a signal
+/// let count = cx.state(0i32);
+///
+/// // Read the value
+/// let value = count.get(store);
+///
+/// // Update the value
+/// count.set(cx, 42);
+/// count.upd(cx, |v| *v += 1);
+///
+/// // Create a derived signal
+/// let doubled = count.drv(cx, |v, _| v * 2);
+/// ```
 pub struct Signal<T: 'static> {
     id: NodeId,
     ty: PhantomData<T>,
@@ -1370,5 +1011,153 @@ impl DataContext for Store {
 
     fn store(&self) -> &crate::recoil::Store {
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use vizia_id::GenerationalId;
+
+    #[test]
+    fn test_signal_create_and_get() {
+        let mut root = RecoilRoot::new();
+        let signal = root.state(Entity::root(), 42i32);
+
+        assert_eq!(*signal.get(root.get_store()), 42);
+    }
+
+    #[test]
+    fn test_signal_set() {
+        let mut root = RecoilRoot::new();
+        let signal = root.state(Entity::root(), 10i32);
+
+        root.get_store_mut().set(&signal.id(), 20i32);
+        assert_eq!(*signal.get(root.get_store()), 20);
+    }
+
+    #[test]
+    fn test_signal_update() {
+        let mut root = RecoilRoot::new();
+        let signal = root.state(Entity::root(), 5i32);
+
+        // Use get_mut to update in place
+        *signal.get_mut(root.get_store_mut()) += 10;
+        assert_eq!(*signal.get(root.get_store()), 15);
+    }
+
+    #[test]
+    fn test_derived_signal() {
+        let mut root = RecoilRoot::new();
+        let base = root.state(Entity::root(), 3i32);
+        let doubled = root.derived(Entity::root(), move |s| {
+            *base.get(s) * 2
+        });
+
+        assert_eq!(*doubled.get(root.get_store()), 6);
+
+        root.get_store_mut().set(&base.id(), 5i32);
+        assert_eq!(*doubled.get(root.get_store()), 10);
+    }
+
+    #[test]
+    fn test_derived_chain() {
+        let mut root = RecoilRoot::new();
+        let a = root.state(Entity::root(), 2i32);
+        let b = root.derived(Entity::root(), move |s| *a.get(s) + 1);
+        let c = root.derived(Entity::root(), move |s| *b.get(s) * 2);
+
+        assert_eq!(*a.get(root.get_store()), 2);
+        assert_eq!(*b.get(root.get_store()), 3);
+        assert_eq!(*c.get(root.get_store()), 6);
+
+        root.get_store_mut().set(&a.id(), 10i32);
+        assert_eq!(*b.get(root.get_store()), 11);
+        assert_eq!(*c.get(root.get_store()), 22);
+    }
+
+    #[test]
+    fn test_signal_try_get() {
+        let mut root = RecoilRoot::new();
+        let signal = root.state(Entity::root(), 42i32);
+
+        assert_eq!(signal.try_get(root.get_store()), Some(&42));
+    }
+
+    #[test]
+    fn test_node_id_equality() {
+        let id1 = NodeId::new(1);
+        let id2 = NodeId::new(1);
+        let id3 = NodeId::new(2);
+
+        assert_eq!(id1, id2);
+        assert_ne!(id1, id3);
+    }
+
+    #[test]
+    fn test_signal_copy() {
+        let mut root = RecoilRoot::new();
+        let signal1 = root.state(Entity::root(), 42i32);
+        let signal2 = signal1; // Copy
+
+        assert_eq!(signal1.id(), signal2.id());
+        assert_eq!(*signal1.get(root.get_store()), *signal2.get(root.get_store()));
+    }
+
+    #[test]
+    fn test_undo_manager_basic() {
+        let manager = UndoManager::new(10);
+        assert!(!manager.can_undo());
+        assert!(!manager.can_redo());
+    }
+
+    #[test]
+    fn test_undo_manager_max_history() {
+        let mut manager = UndoManager::new(5);
+        assert_eq!(manager.max_history(), 5);
+
+        manager.set_max_history(10);
+        assert_eq!(manager.max_history(), 10);
+    }
+
+    #[test]
+    fn test_recoil_root_default() {
+        let root = RecoilRoot::default();
+        assert!(root.get_store().undo_manager().undo_history().is_empty());
+    }
+
+    #[test]
+    fn test_multiple_signals() {
+        let mut root = RecoilRoot::new();
+        let sig_a = root.state(Entity::root(), 1i32);
+        let sig_b = root.state(Entity::root(), 2i32);
+        let sig_c = root.state(Entity::root(), 3i32);
+
+        assert_eq!(*sig_a.get(root.get_store()), 1);
+        assert_eq!(*sig_b.get(root.get_store()), 2);
+        assert_eq!(*sig_c.get(root.get_store()), 3);
+
+        root.get_store_mut().set(&sig_b.id(), 20i32);
+        assert_eq!(*sig_a.get(root.get_store()), 1);
+        assert_eq!(*sig_b.get(root.get_store()), 20);
+        assert_eq!(*sig_c.get(root.get_store()), 3);
+    }
+
+    #[test]
+    fn test_derived_with_multiple_deps() {
+        let mut root = RecoilRoot::new();
+        let x = root.state(Entity::root(), 2i32);
+        let y = root.state(Entity::root(), 3i32);
+        let sum = root.derived(Entity::root(), move |s| {
+            *x.get(s) + *y.get(s)
+        });
+
+        assert_eq!(*sum.get(root.get_store()), 5);
+
+        root.get_store_mut().set(&x.id(), 10i32);
+        assert_eq!(*sum.get(root.get_store()), 13);
+
+        root.get_store_mut().set(&y.id(), 7i32);
+        assert_eq!(*sum.get(root.get_store()), 17);
     }
 }

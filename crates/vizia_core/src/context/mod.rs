@@ -292,9 +292,20 @@ impl Context {
     ///
     /// The signal will:
     /// - Load its initial value from disk if a saved value exists
-    /// - Fall back to the provided default if no saved value exists
+    /// - Fall back to the provided default if no saved value exists or on load error
     /// - Auto-save when its value changes (debounced 500ms)
     /// - Flush pending saves on app exit
+    ///
+    /// # Error Handling
+    /// Load errors are recorded and accessible via `cx.persistence_errors()`.
+    /// The signal will use the default value on error, but you can check for
+    /// issues after creation:
+    /// ```ignore
+    /// let settings = cx.state_persistent("settings", Settings::default());
+    /// if !cx.persistence_errors().is_empty() {
+    ///     // Handle load errors (corrupted file, version mismatch, etc.)
+    /// }
+    /// ```
     ///
     /// # Example
     /// ```ignore
