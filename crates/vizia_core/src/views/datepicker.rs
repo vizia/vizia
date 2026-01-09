@@ -147,12 +147,6 @@ impl Datepicker {
         let selected_month = cx.state(initial_date.month() as usize - 1);
         let view_date = cx
             .state(NaiveDate::from_ymd_opt(initial_date.year(), initial_date.month(), 1).unwrap());
-        let stretch_one = cx.state(Stretch(1.0));
-        let width_140 = cx.state(Pixels(140.0));
-        let width_100 = cx.state(Pixels(100.0));
-        let plus_minus = cx.state(SpinboxIcons::PlusMinus);
-        let calendar_width = cx.state(Pixels(32.0 * 7.0));
-        let calendar_height = cx.state(Pixels(32.0 * 6.0));
 
         // Signal for editable year
         let year = cx.state(initial_date.year());
@@ -162,19 +156,22 @@ impl Datepicker {
                 Spinbox::custom(cx, move |cx| {
                     PickList::new(cx, months, selected_month, false)
                         .on_select(|ex, index| ex.emit(DatepickerEvent::SelectMonth(index)))
-                        .width(stretch_one)
+                        .width(Stretch(1.0))
                 })
-                .width(width_140)
+                .width(Pixels(140.0))
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
                 .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementMonth));
 
                 Spinbox::custom(cx, move |cx| {
-                    Textbox::new(cx, year).width(stretch_one).on_submit(move |ex, value, _| {
-                        ex.emit(DatepickerEvent::SetYear(value));
-                    })
+                    Textbox::new(cx, year)
+                        .width(Stretch(1.0))
+                        .padding(Pixels(1.0))
+                        .on_submit(move |ex, value, _| {
+                            ex.emit(DatepickerEvent::SetYear(value));
+                        })
                 })
-                .width(width_100)
-                .icons(plus_minus)
+                .width(Pixels(100.0))
+                .icons(SpinboxIcons::PlusMinus)
                 .on_increment(move |ex| {
                     let current = *year.get(ex);
                     year.set(ex, current + 1);
@@ -274,8 +271,8 @@ impl Datepicker {
                     }
                 })
                 // This shouldn't be needed but apparently grid size isn't propagated up the tree during layout
-                .width(calendar_width)
-                .height(calendar_height);
+                .width(Pixels(32.0 * 7.0))
+                .height(Pixels(32.0 * 6.0));
             })
             .class("datepicker-calendar");
         })

@@ -27,6 +27,8 @@ pub enum SpinboxIcons {
     Chevrons,
 }
 
+crate::impl_res_simple!(SpinboxIcons);
+
 impl Spinbox {
     /// Creates a new [Spinbox] view.
     ///
@@ -150,7 +152,8 @@ impl Handle<'_, Spinbox> {
     }
 
     /// Set the icons which should be used for the increment and decrement buttons of the [Spinbox]
-    pub fn icons(self, icons: Signal<SpinboxIcons>) -> Self {
+    pub fn icons(mut self, icons: impl Res<SpinboxIcons> + 'static) -> Self {
+        let icons = icons.into_signal(self.context());
         self.bind(icons, move |handle, icons| {
             let icons = *icons.get(&handle);
             handle.modify2(move |spinbox, cx| spinbox.icons.set(cx, icons));

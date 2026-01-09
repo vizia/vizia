@@ -243,8 +243,8 @@ impl Context {
 
     /// Configures state persistence for this application.
     ///
-    /// This must be called before using `state_persistent()`. The app name
-    /// is used to create an isolated storage directory for this app's data.
+    /// This must be called before using `.p()` / `.persists()` on signals.
+    /// The app name is used to create an isolated storage directory for this app's data.
     ///
     /// # Example
     /// ```ignore

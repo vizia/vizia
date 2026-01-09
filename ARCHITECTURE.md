@@ -133,7 +133,7 @@ Comprehensive async data loading with signals:
 
 ```rust
 // Create async state
-let users: Signal<Async<Vec<User>, String>> = cx.async_state();
+let users: Signal<Async<Vec<User>, String>> = cx.state(Async::Idle);
 
 // Basic load (with deduplication)
 cx.load_async(users, || fetch_users());
@@ -169,7 +169,7 @@ Signals can be registered as undoable for automatic history tracking:
 
 ```rust
 // Create undoable state
-let circles = cx.state_undoable(Vec::<Circle>::new());
+let circles = cx.state(Vec::<Circle>::new()).u(cx);
 
 // Wrap mutations in undo groups
 cx.with_undo("Add Circle", |cx| {

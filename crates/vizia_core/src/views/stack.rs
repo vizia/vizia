@@ -34,12 +34,11 @@ impl HStack {
     where
         F: FnOnce(&mut Context),
     {
-        let layout_row = cx.state(LayoutType::Row);
         Self {}
             .build(cx, |cx| {
                 (content)(cx);
             })
-            .layout_type(layout_row)
+            .layout_type(LayoutType::Row)
             .role(Role::GenericContainer)
     }
 }
