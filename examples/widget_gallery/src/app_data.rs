@@ -4,7 +4,7 @@ use vizia::prelude::*;
 pub struct AppData {
     pub theme_options: Vec<&'static str>,
     pub selected_theme: usize,
-    pub disabled: bool,
+    // pub disabled: bool,
     pub tabs: Vec<&'static str>,
 }
 
@@ -33,7 +33,7 @@ impl AppData {
         AppData {
             theme_options: vec!["System", "Dark", "Light"],
             selected_theme: 0,
-            disabled: false,
+            // disabled: false,
             tabs: vec![
                 "Avatar",
                 "Avatar Group",
