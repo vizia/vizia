@@ -5,12 +5,14 @@ fn main() {
     panic!("This example is not supported on baseview");
 }
 
+#[cfg(all(feature = "winit", not(feature = "baseview")))]
 #[derive(Lens)]
 struct AppData {
     color: Color,
     show_popup: bool,
 }
 
+#[cfg(all(feature = "winit", not(feature = "baseview")))]
 impl Model for AppData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
@@ -29,6 +31,7 @@ impl Model for AppData {
     }
 }
 
+#[cfg(all(feature = "winit", not(feature = "baseview")))]
 pub enum AppEvent {
     ShowPopup,
     PopupClosed,
@@ -37,7 +40,7 @@ pub enum AppEvent {
     SetBlue(f32),
 }
 
-#[cfg(not(feature = "baseview"))]
+#[cfg(all(feature = "winit", not(feature = "baseview")))]
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         AppData { color: Color::white(), show_popup: false }.build(cx);
