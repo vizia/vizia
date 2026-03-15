@@ -544,7 +544,7 @@ impl View for Arrow {
     }
     fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
         let bounds = cx.bounds();
-        let mut path = vg::Path::new();
+        let mut path = vg::PathBuilder::new();
         match Popup::placement.get(cx) {
             Placement::Bottom | Placement::BottomStart | Placement::BottomEnd => {
                 path.move_to(bounds.bottom_left());
@@ -581,6 +581,7 @@ impl View for Arrow {
         let bg = cx.background_color();
         let mut paint = vg::Paint::default();
         paint.set_color(bg);
+        let path = path.detach();
         canvas.draw_path(&path, &paint);
     }
 }

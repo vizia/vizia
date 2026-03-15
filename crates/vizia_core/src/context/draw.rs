@@ -1,11 +1,10 @@
 use skia_safe::canvas::SaveLayerRec;
-use skia_safe::gradient_shader::GradientShaderColors;
-use skia_safe::path::ArcSize;
+use skia_safe::path_builder::ArcSize;
 use skia_safe::rrect::Corner;
 use skia_safe::wrapper::PointerWrapper;
 use skia_safe::{
-    BlurStyle, ClipOp, MaskFilter, Matrix, Paint, PaintStyle, Path, PathDirection, PathEffect,
-    Point, RRect, Rect, SamplingOptions, Shader, TileMode,
+    BlurStyle, ClipOp, MaskFilter, Matrix, Paint, PaintStyle, Path, PathBuilder, PathDirection,
+    PathEffect, Point, RRect, Rect, SamplingOptions, TileMode,
 };
 use std::any::{Any, TypeId};
 use std::f32::consts::SQRT_2;
@@ -199,8 +198,8 @@ impl DrawContext<'_> {
             (Overflow::Hidden, Overflow::Hidden) => clip_bounds,
         };
 
-        let mut clip_path = self.build_path(clip_bounds, (0.0, 0.0));
-        clip_path.offset(clip_bounds.top_left());
+        let clip_path =
+            self.build_path(clip_bounds, (0.0, 0.0)).make_offset(clip_bounds.top_left());
 
         Some(clip_path)
     }
@@ -513,11 +512,7 @@ impl DrawContext<'_> {
             );
         }
         let bounds = self.bounds();
-        let mut path = self.cache.path.get(self.current).unwrap().clone();
-
-        path.offset(bounds.top_left());
-
-        path
+        self.cache.path.get(self.current).unwrap().make_offset(bounds.top_left())
     }
 
     /// Get the vector path of the current view.
@@ -559,7 +554,7 @@ impl DrawContext<'_> {
         let height = rr.height();
 
         //TODO: Cache the path and regenerate if the bounds change
-        let mut path = Path::new();
+        let mut path = PathBuilder::new();
 
         if width == height
             && corner_bottom_left_radius == width / 2.0
@@ -567,7 +562,7 @@ impl DrawContext<'_> {
             && corner_top_left_radius == height / 2.0
             && corner_top_right_radius == height / 2.0
         {
-            path.add_circle((width / 2.0, bounds.h / 2.0), width / 2.0, PathDirection::CW);
+            path.add_circle((width / 2.0, bounds.h / 2.0), width / 2.0, Some(PathDirection::CW));
         } else if corner_top_left_radius == corner_top_right_radius
             && corner_top_right_radius == corner_bottom_right_radius
             && corner_bottom_right_radius == corner_bottom_left_radius
@@ -580,7 +575,7 @@ impl DrawContext<'_> {
             && corner_top_right_shape == corner_bottom_right_shape
             && corner_bottom_right_shape == corner_bottom_left_shape
         {
-            path.add_rrect(rr, None);
+            path.add_rrect(rr, None, None);
         } else {
             let top_right = rr.radii(Corner::UpperRight).x;
 
@@ -599,13 +594,7 @@ impl DrawContext<'_> {
                         (width - (p - a - b), 0.0),
                         (width - (p - a - b - c), d),
                     )
-                    .r_arc_to_rotated(
-                        (radius, radius),
-                        0.0,
-                        ArcSize::Small,
-                        PathDirection::CW,
-                        (l, l),
-                    )
+                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (l, l))
                     .cubic_to(
                         (width, p - a - b),
                         (width, p - a),
@@ -636,13 +625,7 @@ impl DrawContext<'_> {
                         (width, height - (p - a - b)),
                         (width - d, height - (p - a - b - c)),
                     )
-                    .r_arc_to_rotated(
-                        (radius, radius),
-                        0.0,
-                        ArcSize::Small,
-                        PathDirection::CW,
-                        (-l, l),
-                    )
+                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (-l, l))
                     .cubic_to(
                         (width - (p - a - b), height),
                         (width - (p - a), height),
@@ -667,13 +650,7 @@ impl DrawContext<'_> {
                         (p - a - b, height),
                         (p - a - b - c, height - d),
                     )
-                    .r_arc_to_rotated(
-                        (radius, radius),
-                        0.0,
-                        ArcSize::Small,
-                        PathDirection::CW,
-                        (-l, -l),
-                    )
+                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (-l, -l))
                     .cubic_to(
                         (0.0, height - (p - a - b)),
                         (0.0, height - (p - a)),
@@ -694,13 +671,7 @@ impl DrawContext<'_> {
                 path.line_to((0.0, f32::min(height / 2.0, p)));
                 if corner_top_left_shape == CornerShape::Round {
                     path.cubic_to((0.0, p - a), (0.0, p - a - b), (d, p - a - b - c))
-                        .r_arc_to_rotated(
-                            (radius, radius),
-                            0.0,
-                            ArcSize::Small,
-                            PathDirection::CW,
-                            (l, -l),
-                        )
+                        .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (l, -l))
                         .cubic_to((p - a - b, 0.0), (p - a, 0.0), (f32::min(width / 2.0, p), 0.0));
                 } else {
                     path.line_to((f32::min(width / 2.0, p), 0.0));
@@ -714,7 +685,7 @@ impl DrawContext<'_> {
             path.offset((x, y));
         }
 
-        path
+        path.detach()
     }
 
     /// Draw background color or background image (including gradients) for the current view.
@@ -786,7 +757,7 @@ impl DrawContext<'_> {
                 (half_outline_width + outline_offset, half_outline_width + outline_offset),
             );
 
-            outline_path.offset(self.bounds().top_left());
+            outline_path = outline_path.make_offset(self.bounds().top_left());
 
             let mut outline_paint = Paint::default();
             outline_paint.set_color(outline_color);
@@ -806,9 +777,7 @@ impl DrawContext<'_> {
 
             let bounds = self.bounds();
 
-            let mut path = self.build_path(bounds, (0.0, 0.0));
-
-            path.offset(bounds.top_left());
+            let path = self.build_path(bounds, (0.0, 0.0)).make_offset(bounds.top_left());
 
             for shadow in shadows.iter().rev() {
                 let shadow_color = shadow.color.unwrap_or_default();
@@ -838,7 +807,7 @@ impl DrawContext<'_> {
                 shadow_paint.set_style(PaintStyle::Fill);
 
                 let mut shadow_path = self.build_path(bounds, (outset, outset));
-                shadow_path.offset(bounds.top_left());
+                shadow_path = shadow_path.make_offset(bounds.top_left());
 
                 shadow_paint.set_color(shadow_color);
 
@@ -850,7 +819,7 @@ impl DrawContext<'_> {
                     ));
                 }
 
-                shadow_path.offset((shadow_x_offset, shadow_y_offset));
+                shadow_path = shadow_path.make_offset((shadow_x_offset, shadow_y_offset));
 
                 if shadow.inset {
                     shadow_path = path.op(&shadow_path, skia_safe::PathOp::Difference).unwrap();
@@ -991,13 +960,23 @@ impl DrawContext<'_> {
 
                                 let (offsets, colors): (Vec<f32>, Vec<skia_safe::Color>) =
                                     stops.into_iter().unzip();
+                                let colors4f: Vec<skia_safe::Color4f> =
+                                    colors.iter().copied().map(Into::into).collect();
 
-                                let shader = Shader::linear_gradient(
+                                let gradient_colors =
+                                    skia_safe::gradient_shader::GradientColors::new(
+                                        &colors4f,
+                                        Some(&offsets[..]),
+                                        TileMode::Clamp,
+                                        None,
+                                    );
+                                let gradient = skia_safe::gradient_shader::Gradient::new(
+                                    gradient_colors,
+                                    skia_safe::gradient_shader::Interpolation::default(),
+                                );
+                                let shader = skia_safe::shaders::linear_gradient(
                                     (Point::from(start), Point::from(end)),
-                                    GradientShaderColors::Colors(&colors[..]),
-                                    Some(&offsets[..]),
-                                    TileMode::Clamp,
-                                    None,
+                                    &gradient,
                                     None,
                                 );
 
@@ -1043,14 +1022,23 @@ impl DrawContext<'_> {
 
                                 let (offsets, colors): (Vec<f32>, Vec<skia_safe::Color>) =
                                     stops.into_iter().unzip();
+                                let colors4f: Vec<skia_safe::Color4f> =
+                                    colors.iter().copied().map(Into::into).collect();
 
-                                let shader = Shader::radial_gradient(
-                                    Point::from(bounds.center()),
-                                    bounds.w.max(bounds.h),
-                                    GradientShaderColors::Colors(&colors[..]),
-                                    Some(&offsets[..]),
-                                    TileMode::Clamp,
-                                    None,
+                                let gradient_colors =
+                                    skia_safe::gradient_shader::GradientColors::new(
+                                        &colors4f,
+                                        Some(&offsets[..]),
+                                        TileMode::Clamp,
+                                        None,
+                                    );
+                                let gradient = skia_safe::gradient_shader::Gradient::new(
+                                    gradient_colors,
+                                    skia_safe::gradient_shader::Interpolation::default(),
+                                );
+                                let shader = skia_safe::shaders::radial_gradient(
+                                    (Point::from(bounds.center()), bounds.w.max(bounds.h)),
+                                    &gradient,
                                     None,
                                 );
 
@@ -1135,7 +1123,7 @@ impl DrawContext<'_> {
                                             let posx = bounds.width() - width;
                                             let posy = bounds.height() - height;
 
-                                            let matrix = Matrix::rect_to_rect(
+                                            let matrix = Matrix::rect_2_rect(
                                                 Rect::new(
                                                     0.0,
                                                     0.0,
@@ -1149,7 +1137,8 @@ impl DrawContext<'_> {
                                                     bounds.top() + height,
                                                 ),
                                                 None,
-                                            );
+                                            )
+                                            .unwrap_or_else(Matrix::new_identity);
 
                                             let mut paint = Paint::default();
                                             paint.set_anti_alias(true);

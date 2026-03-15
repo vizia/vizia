@@ -85,7 +85,7 @@ rayon = "1.10"
 reqwest = { version = "0.12", features = ["json"] }
 selectors = "0.27"
 serde = { version = "1.0", features = ["derive"] }
-skia-safe = { version = "0.84", features = ["gl", "textlayout", "svg"] }
+skia-safe = { version = "0.93.1", features = ["gl", "textlayout", "svg"] }
 syn = "2.0"
 sys-locale = "0.3"
 tokio = { version = "1.43.0", features = ["rt-multi-thread"] }
