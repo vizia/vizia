@@ -3,10 +3,11 @@ name = "vizia"
 description = "A declarative desktop GUI framework"
 autoexamples = false
 version.workspace = true
+authors.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-rust-version = "1.82"
+rust-version.workspace = true
 exclude = ["assets/", "examples/"]
 
 [features]
@@ -26,9 +27,9 @@ vizia_winit = { workspace = true, optional = true, default-features = false}
 vizia_baseview = { workspace = true, optional = true }
 
 [dev-dependencies]
-chrono = "0.4"
-log = "0.4"
-fern = "0.7"
+chrono.workspace = true
+log.workspace = true
+fern.workspace = true
 
 [workspace]
 members = [ "crates/*", "examples/todo", "examples/widget_gallery", "examples/gallery"]
@@ -39,6 +40,7 @@ authors = ["George Atkinson"]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/vizia/vizia"
+rust-version = "1.82"
 
 [workspace.dependencies]
 vizia = { version = "0.3.0", path = "." }
@@ -51,6 +53,47 @@ vizia_input = { version = "0.3.0", path = "crates/vizia_input" }
 vizia_storage = { version = "0.3.0", path = "crates/vizia_storage" }
 vizia_style = { version = "0.3.0", path = "crates/vizia_style" }
 vizia_window = { version = "0.3.0", path = "crates/vizia_window" }
+accesskit = "0.18"
+accesskit_winit = "0.26"
+baseview = { git = "https://github.com/vizia/baseview.git", rev = "bd7774294ebd6a4ea497e9c02655a4abd0408137", features = ["opengl"] }
+bitflags = "2.8"
+bytes = "1.11.1"
+chrono = "0.4"
+comrak = { version = "0.38", default-features = false }
+copypasta = { version = "0.10", default-features = false }
+cssparser = "0.35"
+cssparser-color = "0.3"
+dashmap = { version = "6.1", features = ["inline"] }
+fern = "0.7"
+fluent-bundle = "0.15"
+fluent-langneg = "0.13"
+fxhash = "0.2"
+gl-rs = { package = "gl", version = "0.14" }
+glutin = { version = "0.32", default-features = false, features = ["egl", "wgl", "glx"] }
+glutin-winit = { version = "0.5", default-features = false, features = ["egl", "wgl", "glx"] }
+hashbrown = "0.15"
+indexmap = "2.7"
+keyboard-types = { version = "0.7", default-features = false }
+log = "0.4"
+morphorm = "0.7.0"
+open = "5.3"
+proc-macro2 = "1.0"
+qfilter = "0.2"
+quote = "1.0"
+raw-window-handle = "0.5"
+rayon = "1.10"
+reqwest = { version = "0.12", features = ["json"] }
+selectors = "0.27"
+serde = { version = "1.0", features = ["derive"] }
+skia-safe = { version = "0.84", features = ["gl", "textlayout", "svg"] }
+syn = "2.0"
+sys-locale = "0.3"
+tokio = { version = "1.43.0", features = ["rt-multi-thread"] }
+unic-langid = { version = "0.9", features = ["macros"] }
+unicode-segmentation = "1.12"
+web-time = "1.1"
+windows-sys = { version = "0.59", default-features = false, features = ["Win32_Graphics_Dwm"] }
+winit = { version = "0.30", default-features = false }
 
 [workspace.lints.rust]
 # future_incompatible = "allow"

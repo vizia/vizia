@@ -6,20 +6,21 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
+rust-version.workspace = true
 
 [dependencies]
 vizia_core.workspace = true
 vizia_input.workspace = true
 vizia_id.workspace = true
 
-baseview = { git = "https://github.com/vizia/baseview.git", rev = "bd7774294ebd6a4ea497e9c02655a4abd0408137", features = ["opengl"] }
-raw-window-handle = "0.5"
-gl-rs = { package = "gl", version = "0.14" }
-skia-safe = { version = "0.84", features = ["gl", "textlayout", "svg"] }
+baseview.workspace = true
+raw-window-handle.workspace = true
+gl-rs.workspace = true
+skia-safe.workspace = true
 
 [target."cfg(target_os = \"linux\")".dependencies.skia-safe]
-version = "0.84"
-features = ["gl", "textlayout", "svg", "x11", "wayland"]
+workspace = true
+features = ["x11", "wayland"]
 
 [lints]
 workspace = true
