@@ -6,6 +6,7 @@ authors.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
+rust-version.workspace = true
 
 [features]
 default = ["accesskit"]
@@ -20,23 +21,23 @@ vizia_core.workspace = true
 vizia_id.workspace = true
 vizia_window.workspace = true
 
-accesskit = {version = "0.18", optional = true}
-winit = { version = "0.30", default-features = false}
-skia-safe = { version = "0.84", features = ["gl", "textlayout", "svg"] }
-glutin = { version = "0.32", default-features = false, features = ["egl", "wgl", "glx"]}
-copypasta = {version = "0.10", optional = true, default-features = false }
-accesskit_winit = { version = "0.26", optional = true}
-glutin-winit = { version = "0.5", default-features = false, features = ["egl", "wgl", "glx"]}
-gl-rs = { package = "gl", version = "0.14.0" }
-hashbrown = "0.15"
-log = "0.4"
+accesskit = { workspace = true, optional = true }
+winit.workspace = true
+skia-safe.workspace = true
+glutin.workspace = true
+copypasta = { workspace = true, optional = true }
+accesskit_winit = { workspace = true, optional = true }
+glutin-winit.workspace = true
+gl-rs.workspace = true
+hashbrown.workspace = true
+log.workspace = true
 
 [target."cfg(target_os = \"linux\")".dependencies.skia-safe]
-version = "0.84"
-features = ["gl", "textlayout", "svg", "x11", "wayland"]
+workspace = true
+features = ["x11", "wayland"]
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows-sys = { version = "0.59", default-features = false, features = [ "Win32_Graphics_Dwm" ] }
+windows-sys.workspace = true
 
 [lints]
 workspace = true

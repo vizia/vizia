@@ -6,20 +6,21 @@ authors.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
+rust-version.workspace = true
 
 [dependencies]
-cssparser = "0.35"
-cssparser-color = "0.3"
-skia-safe = { version = "0.84", features = ["gl", "textlayout", "svg"] }
-selectors = "0.27"
-morphorm = "0.7.0"
-bitflags = "2.8"
+cssparser.workspace = true
+cssparser-color.workspace = true
+skia-safe.workspace = true
+selectors.workspace = true
+morphorm.workspace = true
+bitflags.workspace = true
 precomputed-hash = "0.1"
-fxhash = "0.2"
+fxhash.workspace = true
 
 [target."cfg(target_os = \"linux\")".dependencies.skia-safe]
-version = "0.84"
-features = ["gl", "textlayout", "svg", "x11", "wayland"]
+workspace = true
+features = ["x11", "wayland"]
 
 [lints]
 workspace = true

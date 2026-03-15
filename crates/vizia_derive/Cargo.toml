@@ -6,14 +6,15 @@ authors.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
+rust-version.workspace = true
 
 [lib]
 proc-macro = true
 
 [dependencies]
-syn = "2.0"
-quote = "1.0"
-proc-macro2 = "1.0"
+syn.workspace = true
+quote.workspace = true
+proc-macro2.workspace = true
 
 [lints]
 workspace = true
