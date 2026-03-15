@@ -21,8 +21,7 @@ impl<L: Lens<Target = Color>> View for CustomView<L> {
         let col = self.color.get(cx);
         let bounds = cx.bounds();
         let rect: vg::Rect = bounds.into();
-        let mut path = vg::Path::new();
-        path.add_rect(rect, None);
+        let path = vg::Path::rect(rect, None);
         let mut paint = vg::Paint::default();
         paint.set_color(col);
         canvas.draw_path(&path, &paint);

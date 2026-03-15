@@ -291,7 +291,7 @@ impl View for ArcTrack {
         canvas.draw_arc(oval, start, end - start, true, &paint);
 
         // Draw the active arc
-        let mut path = vg::Path::new();
+        let mut path = vg::PathBuilder::new();
 
         let value = match self.mode {
             KnobMode::Continuous => self.normalized_value,
@@ -322,6 +322,7 @@ impl View for ArcTrack {
         paint.set_stroke_cap(vg::PaintCap::Round);
         paint.set_style(vg::PaintStyle::Stroke);
         paint.set_anti_alias(true);
+        let path = path.detach();
         canvas.draw_path(&path, &paint);
     }
 }
@@ -413,7 +414,7 @@ impl View for Ticks {
         let tick_len = self.tick_len.to_px(radius, 0.0);
         let line_width = self.tick_width.to_px(radius, 0.0);
         // Draw ticks
-        let mut path = vg::Path::new();
+        let mut path = vg::PathBuilder::new();
         match self.mode {
             // can't really make ticks for a continuous knob
             KnobMode::Continuous => return,
@@ -437,6 +438,7 @@ impl View for Ticks {
         paint.set_stroke_width(line_width);
         paint.set_stroke_cap(vg::PaintCap::Round);
         paint.set_style(vg::PaintStyle::Stroke);
+        let path = path.detach();
         canvas.draw_path(&path, &paint);
     }
 }
@@ -502,7 +504,7 @@ impl View for TickKnob {
         let tick_width = self.tick_width.to_px(radius, 0.0);
         let tick_len = self.tick_len.to_px(radius, 0.0);
         // Draw the circle
-        let mut path = vg::Path::new();
+        let mut path = vg::PathBuilder::new();
         path.add_circle((centerx, centery), radius, None);
         // path.arc(centerx, centery, radius - span / 2.0, end, start, Solidity::Solid);
         let mut paint = vg::Paint::default();
@@ -510,9 +512,10 @@ impl View for TickKnob {
         paint.set_stroke_width(tick_width);
         paint.set_stroke_cap(vg::PaintCap::Round);
         paint.set_style(vg::PaintStyle::Stroke);
+        let path = path.detach();
         canvas.draw_path(&path, &paint);
         // Draw the tick
-        let mut path = vg::Path::new();
+        let mut path = vg::PathBuilder::new();
         let angle = match self.mode {
             KnobMode::Continuous => start + (end - start) * self.normalized_value,
             // snapping
@@ -538,6 +541,7 @@ impl View for TickKnob {
         paint.set_stroke_width(tick_width);
         paint.set_stroke_cap(vg::PaintCap::Round);
         paint.set_style(vg::PaintStyle::Stroke);
+        let path = path.detach();
         canvas.draw_path(&path, &paint);
     }
 }
