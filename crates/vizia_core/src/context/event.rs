@@ -590,8 +590,7 @@ impl<'a> EventContext<'a> {
             prev_focused
         } else {
             TreeIterator::full(self.tree)
-                .filter(|node| is_navigatable(self.tree, self.style, *node, lock_focus_to))
-                .next_back()
+                .rfind(|node| is_navigatable(self.tree, self.style, *node, lock_focus_to))
                 .unwrap_or(Entity::root())
         };
 

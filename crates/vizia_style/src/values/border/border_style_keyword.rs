@@ -26,6 +26,7 @@ define_enum! {
     }
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for BorderStyleKeyword {
     fn default() -> Self {
         Self::Solid

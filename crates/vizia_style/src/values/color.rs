@@ -2,9 +2,10 @@ use crate::{macros::impl_parse, Parse};
 use cssparser::{Parser, ParserInput};
 
 /// A color value.
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub enum Color {
     /// The 'currentcolor' keyword.
+    #[default]
     CurrentColor,
     /// A RGBA color value.
     RGBA(RGBA),
@@ -81,12 +82,6 @@ impl From<cssparser_color::Color> for Color {
             cssparser_color::Color::Rgba(rgba) => Color::RGBA(rgba.into()),
             _ => Color::CurrentColor,
         }
-    }
-}
-
-impl Default for Color {
-    fn default() -> Self {
-        Self::CurrentColor
     }
 }
 

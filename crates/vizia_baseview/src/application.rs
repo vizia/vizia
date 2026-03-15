@@ -211,16 +211,15 @@ impl ApplicationRunner {
         }
 
         // Events
-        self.event_manager.flush_events(self.cx.context(), |window_event| match window_event {
+        self.event_manager.flush_events(self.cx.context(), |window_event| {
             // For some reason calling window.close() crashes baseview on macos
             // WindowEvent::WindowClose => *should_close = true,
-            WindowEvent::FocusIn => {
+            if let WindowEvent::FocusIn = window_event {
                 #[cfg(not(target_os = "linux"))] // not implemented for linux yet
                 if !window.has_focus() {
                     window.focus();
                 }
             }
-            _ => {}
         });
 
         // We need to resize the window to make sure that the new size is applied. This is a workaround

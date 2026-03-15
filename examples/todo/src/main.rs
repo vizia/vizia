@@ -50,6 +50,12 @@ impl TodoApp {
     }
 }
 
+impl Default for TodoApp {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub enum TodoEvent {
     AddTodo(String),
     RemoveTodo(usize),
