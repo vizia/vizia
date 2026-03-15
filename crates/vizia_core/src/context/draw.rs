@@ -681,11 +681,10 @@ impl DrawContext<'_> {
             }
 
             path.close();
-
-            path.offset((x, y));
         }
 
-        path.detach()
+        let path = path.detach();
+        path.make_offset((x, y))
     }
 
     /// Draw background color or background image (including gradients) for the current view.
