@@ -394,7 +394,7 @@ pub struct Style {
 
     pub(crate) system_flags: SystemFlags,
 
-    pub(crate) restyle: Bloom,
+    pub(crate) restyle: HashSet<Entity>,
     pub(crate) text_construction: Bloom,
     pub(crate) text_layout: Bloom,
     pub(crate) reaccess: Bloom,
@@ -1730,7 +1730,7 @@ impl Style {
         self.classes.insert(entity, HashSet::new());
         self.abilities.insert(entity, Abilities::default());
         self.system_flags = SystemFlags::RELAYOUT;
-        self.restyle.0.insert(entity).unwrap();
+        self.restyle.insert(entity);
         self.reaccess.0.insert(entity).unwrap();
     }
 
@@ -1894,7 +1894,10 @@ impl Style {
     }
 
     pub(crate) fn needs_restyle(&mut self, entity: Entity) {
-        self.restyle.0.insert(entity).unwrap();
+        if entity == Entity::null() || self.restyle.contains(&entity) {
+            return;
+        }
+        self.restyle.insert(entity);
     }
 
     pub(crate) fn needs_relayout(&mut self) {

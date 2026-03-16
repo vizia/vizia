@@ -971,7 +971,7 @@ pub(crate) fn style_system(cx: &mut Context) {
     }
 
     let entities = TreeBreadthIterator::full(&cx.tree)
-        .filter(|e| cx.style.restyle.contains(*e))
+        .filter(|e| cx.style.restyle.contains(e))
         .collect::<Vec<_>>();
 
     let matched_rules = {

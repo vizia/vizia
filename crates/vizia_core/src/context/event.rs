@@ -788,7 +788,11 @@ impl<'a> EventContext<'a> {
 
     /// Marks the current view as needing to be restyled.
     pub fn needs_restyle(&mut self) {
-        self.style.restyle.insert(self.current).unwrap();
+        if self.current == Entity::null() || self.style.restyle.contains(&self.current) {
+            return;
+        }
+
+        self.style.restyle.insert(self.current);
         let iter = if let Some(parent) = self.tree.get_layout_parent(self.current) {
             LayoutTreeIterator::subtree(self.tree, parent)
         } else {
@@ -796,7 +800,7 @@ impl<'a> EventContext<'a> {
         };
 
         for descendant in iter {
-            self.style.restyle.insert(descendant).unwrap();
+            self.style.restyle.insert(descendant);
         }
         self.style.needs_restyle(self.current);
     }
