@@ -1,6 +1,8 @@
 use std::f32::consts::SQRT_2;
 
-use skia_safe::{path::ArcSize, rrect::Corner, Path, PathDirection, Point, RRect, Rect};
+use skia_safe::{
+    path_builder::ArcSize, rrect::Corner, PathBuilder, PathDirection, Point, RRect, Rect,
+};
 use vizia_storage::LayoutTreeIterator;
 
 use crate::prelude::*;
@@ -182,7 +184,7 @@ fn build_clip_path(cx: &Context, entity: Entity, clip_bounds: BoundingBox) -> sk
     let height = rr.height();
 
     //TODO: Cache the path and regenerate if the bounds change
-    let mut path = Path::new();
+    let mut path = PathBuilder::new();
 
     if width == height
         && corner_bottom_left_radius == width / 2.0
@@ -203,7 +205,7 @@ fn build_clip_path(cx: &Context, entity: Entity, clip_bounds: BoundingBox) -> sk
         && corner_top_right_shape == corner_bottom_right_shape
         && corner_bottom_right_shape == corner_bottom_left_shape
     {
-        path.add_rrect(rr, None);
+        path.add_rrect(rr, None, None);
     } else {
         let top_right = rr.radii(Corner::UpperRight).x;
 
@@ -222,7 +224,7 @@ fn build_clip_path(cx: &Context, entity: Entity, clip_bounds: BoundingBox) -> sk
                     (width - (p - a - b), 0.0),
                     (width - (p - a - b - c), d),
                 )
-                .r_arc_to_rotated((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (l, l))
+                .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (l, l))
                 .cubic_to(
                     (width, p - a - b),
                     (width, p - a),
@@ -247,7 +249,7 @@ fn build_clip_path(cx: &Context, entity: Entity, clip_bounds: BoundingBox) -> sk
                     (width, height - (p - a - b)),
                     (width - d, height - (p - a - b - c)),
                 )
-                .r_arc_to_rotated((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (-l, l))
+                .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (-l, l))
                 .cubic_to(
                     (width - (p - a - b), height),
                     (width - (p - a), height),
@@ -268,13 +270,7 @@ fn build_clip_path(cx: &Context, entity: Entity, clip_bounds: BoundingBox) -> sk
             path.line_to((f32::min(width / 2.0, p), height));
             if corner_bottom_left_shape == CornerShape::Round {
                 path.cubic_to((p - a, height), (p - a - b, height), (p - a - b - c, height - d))
-                    .r_arc_to_rotated(
-                        (radius, radius),
-                        0.0,
-                        ArcSize::Small,
-                        PathDirection::CW,
-                        (-l, -l),
-                    )
+                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (-l, -l))
                     .cubic_to(
                         (0.0, height - (p - a - b)),
                         (0.0, height - (p - a)),
@@ -295,13 +291,7 @@ fn build_clip_path(cx: &Context, entity: Entity, clip_bounds: BoundingBox) -> sk
             path.line_to((0.0, f32::min(height / 2.0, p)));
             if corner_top_left_shape == CornerShape::Round {
                 path.cubic_to((0.0, p - a), (0.0, p - a - b), (d, p - a - b - c))
-                    .r_arc_to_rotated(
-                        (radius, radius),
-                        0.0,
-                        ArcSize::Small,
-                        PathDirection::CW,
-                        (l, -l),
-                    )
+                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (l, -l))
                     .cubic_to((p - a - b, 0.0), (p - a, 0.0), (f32::min(width / 2.0, p), 0.0));
             } else {
                 path.line_to((f32::min(width / 2.0, p), 0.0));
@@ -317,7 +307,7 @@ fn build_clip_path(cx: &Context, entity: Entity, clip_bounds: BoundingBox) -> sk
 
     path.offset(clip_bounds.top_left());
 
-    path
+    path.detach()
 }
 
 // Helper function for computing a rounded corner with variable smoothing
