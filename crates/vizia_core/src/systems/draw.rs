@@ -305,26 +305,24 @@ pub(crate) fn draw_bounds(
     let mut layout_bounds = cache.bounds.get(entity).copied().unwrap();
 
     if let Some(shadows) = style.shadow.get(entity) {
+        let original_bounds = layout_bounds;
+
         for shadow in shadows.iter().filter(|shadow| !shadow.inset) {
-            let mut shadow_bounds = layout_bounds;
-
-            let x = shadow.x_offset.to_px().unwrap() * style.scale_factor();
-            let y = shadow.y_offset.to_px().unwrap() * style.scale_factor();
-
-            shadow_bounds = shadow_bounds.offset(x, y);
+            let mut shadow_bounds = original_bounds;
 
             let scale_factor = style.scale_factor();
 
-            if let Some(blur_radius) =
-                shadow.blur_radius.as_ref().map(|br| br.clone().to_px().unwrap() * scale_factor)
-            {
-                shadow_bounds = shadow_bounds.expand(blur_radius);
+            let x = shadow.x_offset.to_px().unwrap() * scale_factor;
+            let y = shadow.y_offset.to_px().unwrap() * scale_factor;
+
+            shadow_bounds = shadow_bounds.offset(x, y);
+
+            if let Some(blur_radius) = shadow.blur_radius.as_ref().and_then(Length::to_px) {
+                shadow_bounds = shadow_bounds.expand(blur_radius * scale_factor);
             }
 
-            if let Some(spread_radius) =
-                shadow.spread_radius.as_ref().map(|sr| sr.clone().to_px().unwrap() * scale_factor)
-            {
-                shadow_bounds = shadow_bounds.expand(spread_radius * style.scale_factor());
+            if let Some(spread_radius) = shadow.spread_radius.as_ref().and_then(Length::to_px) {
+                shadow_bounds = shadow_bounds.expand(spread_radius * scale_factor);
             }
 
             layout_bounds = layout_bounds.union(&shadow_bounds);
@@ -347,21 +345,18 @@ pub(crate) fn draw_bounds(
 
     let matrix = cache.transform.get(entity).copied().unwrap_or_default();
 
-    let rect: Rect = layout_bounds.into();
-    let tr = matrix.map_rect(rect).0;
+    let (rect, _) = matrix.map_rect(Rect::from(layout_bounds));
 
-    let mut dirty_bounds: BoundingBox = tr.into();
-
-    dirty_bounds = BoundingBox::from_min_max(
-        dirty_bounds.left().floor(),
-        dirty_bounds.top().floor(),
-        dirty_bounds.right().ceil(),
-        dirty_bounds.bottom().ceil(),
+    let mut dirty_bounds = BoundingBox::from_min_max(
+        rect.left().floor(),
+        rect.top().floor(),
+        rect.right().ceil(),
+        rect.bottom().ceil(),
     );
 
-    //
-    if style.overflowx.get(entity).copied().unwrap_or_default() == Overflow::Visible
-        || style.overflowy.get(entity).copied().unwrap_or_default() == Overflow::Visible
+    // If overflow is visible we have to include all children since they may draw outside of our own bounds.
+    if matches!(style.overflowx.get(entity), Some(Overflow::Visible))
+        || matches!(style.overflowy.get(entity), Some(Overflow::Visible))
     {
         let child_iter = DrawChildIterator::new(tree, entity);
         for child in child_iter {
@@ -369,29 +364,29 @@ pub(crate) fn draw_bounds(
         }
     }
 
-    let z_index = style.z_index.get(entity).copied().unwrap_or_default();
+    // If z-index is not zero we can't be sure of the stacking context so we have to assume so and not clip.
+    if matches!(style.z_index.get(entity), Some(z_index) if *z_index != 0) {
+        return dirty_bounds;
+    }
 
     let parent = tree
         .get_layout_parent(entity)
-        .unwrap_or(tree.get_parent_window(entity).unwrap_or(Entity::root()));
-    if let Some(clip_path) = cache.clip_path.get(parent).cloned().flatten() {
-        let clip_bounds = Into::<BoundingBox>::into(*clip_path.bounds());
+        .unwrap_or_else(|| tree.get_parent_window(entity).unwrap_or(Entity::root()));
 
-        let clip_bounds = &BoundingBox::from_min_max(
-            clip_bounds.left().floor(),
-            clip_bounds.top().floor(),
-            clip_bounds.right().ceil(),
-            clip_bounds.bottom().ceil(),
-        );
+    let Some(Some(clip_path)) = cache.clip_path.get(parent) else {
+        return dirty_bounds;
+    };
 
-        if z_index != 0 {
-            dirty_bounds
-        } else {
-            dirty_bounds.intersection(clip_bounds)
-        }
-    } else {
-        dirty_bounds
-    }
+    let clip_bounds = clip_path.bounds();
+
+    let clip_bounds = BoundingBox::from_min_max(
+        clip_bounds.left().floor(),
+        clip_bounds.top().floor(),
+        clip_bounds.right().ceil(),
+        clip_bounds.bottom().ceil(),
+    );
+
+    dirty_bounds.intersection(&clip_bounds)
 }
 
 struct ZEntity {
