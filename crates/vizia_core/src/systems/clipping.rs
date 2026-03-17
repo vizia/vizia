@@ -38,12 +38,8 @@ pub(crate) fn clipping_system(cx: &mut Context) {
         let transform =
             cx.cache.transform.get(entity).copied().unwrap_or(skia_safe::Matrix::new_identity());
 
-        let clip_path = cx.style.clip_path.get(entity).map(|clip| match clip {
-            ClipPath::Auto => {
-                let rect: skia_safe::Rect = bounds.into();
-                let clip_bounds: BoundingBox = transform.map_rect(rect).0.into();
-                build_clip_path(cx, entity, clip_bounds)
-            }
+        let shape_clip_path = cx.style.clip_path.get(entity).and_then(|clip| match clip {
+            ClipPath::Auto => None,
             ClipPath::Shape(rect) => {
                 let clip_bounds = bounds.shrink_sides(
                     rect.3.to_pixels(bounds.w, scale),
@@ -52,15 +48,13 @@ pub(crate) fn clipping_system(cx: &mut Context) {
                     rect.2.to_pixels(bounds.h, scale),
                 );
 
-                let rect: skia_safe::Rect = clip_bounds.into();
-                let clip_bounds: BoundingBox = transform.map_rect(rect).0.into();
-                build_clip_path(cx, entity, clip_bounds)
+                Some(build_clip_path(cx, entity, clip_bounds))
             }
         });
 
         let root_bounds = cx.cache.bounds.get(Entity::root()).copied().unwrap();
 
-        let clip_path = match (overflowx, overflowy) {
+        let overflow_clip_path = match (overflowx, overflowy) {
             (Overflow::Visible, Overflow::Visible) => None,
             (Overflow::Hidden, Overflow::Visible) => {
                 let left = bounds.left();
@@ -68,8 +62,6 @@ pub(crate) fn clipping_system(cx: &mut Context) {
                 let top = root_bounds.top();
                 let bottom = root_bounds.bottom();
                 let clip_bounds = BoundingBox::from_min_max(left, top, right, bottom);
-                let rect: skia_safe::Rect = clip_bounds.into();
-                let clip_bounds: BoundingBox = transform.map_rect(rect).0.into();
                 Some(build_clip_path(cx, entity, clip_bounds))
             }
             (Overflow::Visible, Overflow::Hidden) => {
@@ -78,20 +70,21 @@ pub(crate) fn clipping_system(cx: &mut Context) {
                 let top = bounds.top();
                 let bottom = bounds.bottom();
                 let clip_bounds = BoundingBox::from_min_max(left, top, right, bottom);
-                let rect: skia_safe::Rect = clip_bounds.into();
-                let clip_bounds: BoundingBox = transform.map_rect(rect).0.into();
                 Some(build_clip_path(cx, entity, clip_bounds))
             }
-            (Overflow::Hidden, Overflow::Hidden) => {
-                if clip_path.is_some() {
-                    clip_path
-                } else {
-                    let rect: skia_safe::Rect = bounds.into();
-                    let clip_bounds: BoundingBox = transform.map_rect(rect).0.into();
-                    Some(build_clip_path(cx, entity, clip_bounds))
-                }
-            }
+            (Overflow::Hidden, Overflow::Hidden) => Some(build_clip_path(cx, entity, bounds)),
         };
+
+        let clip_path = match (overflow_clip_path, shape_clip_path) {
+            (Some(overflow_path), Some(shape_path)) => {
+                overflow_path.op(&shape_path, skia_safe::PathOp::Intersect)
+            }
+            (Some(overflow_path), None) => Some(overflow_path),
+            (None, Some(shape_path)) => Some(shape_path),
+            (None, None) => None,
+        };
+
+        let clip_path = clip_path.map(|clip_path| clip_path.make_transform(&transform));
 
         let parent_clip_path = cx.cache.clip_path.get(parent).unwrap_or(&None);
 
@@ -104,7 +97,10 @@ pub(crate) fn clipping_system(cx: &mut Context) {
             (Some(clip_path), None) => {
                 cx.cache.clip_path.insert(entity, Some(clip_path));
             }
-            _ => {
+            (None, Some(parent_clip_path)) => {
+                cx.cache.clip_path.insert(entity, Some(parent_clip_path.clone()));
+            }
+            (None, None) => {
                 cx.cache.clip_path.insert(entity, None);
             }
         }

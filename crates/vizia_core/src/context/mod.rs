@@ -344,6 +344,14 @@ impl Context {
         if system_flags.contains(SystemFlags::REFLOW) {
             self.style.needs_text_update(entity);
         }
+
+        if system_flags.contains(SystemFlags::RETRANSFORM) {
+            self.needs_retransform(entity);
+        }
+
+        if system_flags.contains(SystemFlags::RECLIP) {
+            self.needs_reclip(entity);
+        }
     }
 
     /// Enables or disables PseudoClasses for the focus of an entity

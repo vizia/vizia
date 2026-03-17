@@ -419,12 +419,8 @@ impl DrawContext<'_> {
     }
 
     pub fn path(&mut self) -> Path {
-        let border_width = self.border_width();
         if self.cache.path.get(self.current).is_none() {
-            self.cache.path.insert(
-                self.current,
-                self.build_path(self.bounds(), (-border_width / 2.0, -border_width / 2.0)),
-            );
+            self.cache.path.insert(self.current, self.build_path(self.bounds(), (0.0, 0.0)));
         }
         let bounds = self.bounds();
         self.cache.path.get(self.current).unwrap().make_offset(bounds.top_left())
@@ -467,6 +463,7 @@ impl DrawContext<'_> {
         let y = rr.bounds().y();
         let width = rr.width();
         let height = rr.height();
+        let mut should_offset = true;
 
         //TODO: Cache the path and regenerate if the bounds change
         let mut path = PathBuilder::new();
@@ -477,7 +474,7 @@ impl DrawContext<'_> {
             && corner_top_left_radius == height / 2.0
             && corner_top_right_radius == height / 2.0
         {
-            path.add_circle((width / 2.0, bounds.h / 2.0), width / 2.0, Some(PathDirection::CW));
+            path.add_circle((width / 2.0, height / 2.0), width / 2.0, Some(PathDirection::CW));
         } else if corner_top_left_radius == corner_top_right_radius
             && corner_top_right_radius == corner_bottom_right_radius
             && corner_bottom_right_radius == corner_bottom_left_radius
@@ -491,16 +488,13 @@ impl DrawContext<'_> {
             && corner_bottom_right_shape == corner_bottom_left_shape
         {
             path.add_rrect(rr, None, None);
+            should_offset = false;
         } else {
             let top_right = rr.radii(Corner::UpperRight).x;
 
             if top_right > 0.0 {
-                let (a, b, c, d, l, p, radius) = compute_smooth_corner(
-                    top_right,
-                    corner_top_right_smoothing,
-                    bounds.width(),
-                    bounds.height(),
-                );
+                let (a, b, c, d, l, p, radius) =
+                    compute_smooth_corner(top_right, corner_top_right_smoothing, width, height);
 
                 path.move_to((f32::max(width / 2.0, width - p), 0.0));
                 if corner_top_right_shape == CornerShape::Round {
@@ -599,7 +593,11 @@ impl DrawContext<'_> {
         }
 
         let path = path.detach();
-        path.make_offset((x, y))
+        if should_offset {
+            path.make_offset((x, y))
+        } else {
+            path
+        }
     }
 
     /// Draw background color or background image (including gradients) for the current view.
@@ -629,7 +627,10 @@ impl DrawContext<'_> {
         let border_style = self.border_style();
 
         if border_width > 0.0 && border_color.a() > 0 && border_style != BorderStyleKeyword::None {
-            let path = self.path();
+            let bounds = self.bounds();
+            let path = self
+                .build_path(bounds, (-border_width / 2.0, -border_width / 2.0))
+                .make_offset(bounds.top_left());
             let mut paint = Paint::default();
             paint.set_style(PaintStyle::Stroke);
             paint.set_color(border_color);
