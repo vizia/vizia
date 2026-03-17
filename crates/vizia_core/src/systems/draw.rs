@@ -234,8 +234,8 @@ fn draw_entity(
         };
 
     canvas.save();
-    if let Some(clip_path) = cx.clip_path() {
-        canvas.clip_path(&clip_path, ClipOp::Intersect, true);
+    if let Some(Some(clip_path)) = cx.cache.clip_path.get(current) {
+        canvas.clip_path(clip_path, ClipOp::Intersect, true);
     }
 
     if let Some(transform) = cx.cache.transform.get(current) {
@@ -251,7 +251,7 @@ fn draw_entity(
     // Draw the view
     if is_visible {
         if let Some(dirty_rect) = dirty_rect {
-            let bounds = draw_bounds(cx.style, cx.cache, cx.tree, current);
+            let bounds = cached_draw_bounds(cx, current);
             if bounds.intersects(dirty_rect) {
                 if let Some(view) = cx.views.remove(&current) {
                     view.draw(cx, canvas);
@@ -275,6 +275,16 @@ fn draw_entity(
     }
 
     cx.current = current;
+}
+
+fn cached_draw_bounds(cx: &mut DrawContext, entity: Entity) -> BoundingBox {
+    if let Some(bounds) = cx.cache.draw_bounds.get(entity).copied() {
+        return bounds;
+    }
+
+    let bounds = draw_bounds(cx.style, cx.cache, cx.tree, entity);
+    cx.cache.draw_bounds.insert(entity, bounds);
+    bounds
 }
 
 // Must be called after transform and clipping systems to be valid.
