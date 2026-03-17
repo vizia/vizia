@@ -1020,16 +1020,22 @@ impl<'a> EventContext<'a> {
     /// Sets the clip path of the current view.
     pub fn set_clip_path(&mut self, clip_path: ClipPath) {
         self.style.clip_path.insert(self.current, clip_path);
+        self.needs_reclip();
+        self.needs_redraw();
     }
 
     /// Sets the overflow type on the horizontal axis of the current view.
     pub fn set_overflowx(&mut self, overflowx: impl Into<Overflow>) {
         self.style.overflowx.insert(self.current, overflowx.into());
+        self.needs_reclip();
+        self.needs_redraw();
     }
 
     /// Sets the overflow type on the vertical axis of the current view.
     pub fn set_overflowy(&mut self, overflowy: impl Into<Overflow>) {
         self.style.overflowy.insert(self.current, overflowy.into());
+        self.needs_reclip();
+        self.needs_redraw();
     }
 
     // TRANSFORM
@@ -1037,26 +1043,36 @@ impl<'a> EventContext<'a> {
     /// Sets the transform of the current view.
     pub fn set_transform(&mut self, transform: impl Into<Vec<Transform>>) {
         self.style.transform.insert(self.current, transform.into());
+        self.needs_retransform();
+        self.needs_redraw();
     }
 
     /// Sets the transform origin of the current view.
     pub fn set_transform_origin(&mut self, transform_origin: Translate) {
         self.style.transform_origin.insert(self.current, transform_origin);
+        self.needs_retransform();
+        self.needs_redraw();
     }
 
     /// Sets the translation of the current view.
     pub fn set_translate(&mut self, translate: impl Into<Translate>) {
         self.style.translate.insert(self.current, translate.into());
+        self.needs_retransform();
+        self.needs_redraw();
     }
 
     /// Sets the rotation of the current view.
     pub fn set_rotate(&mut self, angle: impl Into<Angle>) {
         self.style.rotate.insert(self.current, angle.into());
+        self.needs_retransform();
+        self.needs_redraw();
     }
 
     /// Sets the scale of the current view.
     pub fn set_scale(&mut self, scale: impl Into<Scale>) {
         self.style.scale.insert(self.current, scale.into());
+        self.needs_retransform();
+        self.needs_redraw();
     }
 
     // FILTER

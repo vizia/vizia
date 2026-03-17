@@ -274,7 +274,7 @@ pub trait StyleModifiers: internal::Modifiable {
             value.set_or_bind(cx, entity, move |cx, v| {
                 let value = v.get(cx).into();
                 cx.style.clip_path.insert(cx.current, value);
-
+                cx.needs_reclip(entity);
                 cx.needs_redraw(entity);
             });
         });
@@ -291,7 +291,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 let value = v.get(cx).into();
                 cx.style.overflowx.insert(cx.current, value);
                 cx.style.overflowy.insert(cx.current, value);
-
+                cx.needs_reclip(entity);
                 cx.needs_redraw(entity);
             });
         });
@@ -305,7 +305,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// The overflow behavior determines whether child views can render outside the bounds of their parent.
         overflowx,
         Overflow,
-        SystemFlags::REDRAW
+        SystemFlags::RECLIP | SystemFlags::REDRAW
     );
 
     modifier!(
@@ -314,7 +314,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// The overflow behavior determines whether child views can render outside the bounds of their parent.
         overflowy,
         Overflow,
-        SystemFlags::REDRAW
+        SystemFlags::RECLIP | SystemFlags::REDRAW
     );
 
     /// Sets the backdrop filter for the view.
@@ -666,6 +666,7 @@ pub trait StyleModifiers: internal::Modifiable {
             value.set_or_bind(cx, entity, move |cx, v| {
                 let value = v.get(cx).into();
                 cx.style.transform.insert(cx.current, value);
+                cx.needs_retransform(entity);
                 cx.needs_redraw(entity);
             });
         });
@@ -683,6 +684,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 let x = value.x.to_length_or_percentage();
                 let y = value.y.to_length_or_percentage();
                 cx.style.transform_origin.insert(cx.current, Translate { x, y });
+                cx.needs_retransform(entity);
                 cx.needs_redraw(entity);
             });
         });
@@ -697,7 +699,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// Translation applies to the rendered view and does not affect layout.
         translate,
         Translate,
-        SystemFlags::REDRAW
+        SystemFlags::RETRANSFORM | SystemFlags::REDRAW
     );
 
     // Rotate
@@ -707,7 +709,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// Rotation applies to the rendered view and does not affect layout.
         rotate,
         Angle,
-        SystemFlags::REDRAW
+        SystemFlags::RETRANSFORM | SystemFlags::REDRAW
     );
 
     // Scale
@@ -717,7 +719,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// Scale applies to the rendered view and does not affect layout.
         scale,
         Scale,
-        SystemFlags::REDRAW
+        SystemFlags::RETRANSFORM | SystemFlags::REDRAW
     );
 }
 
