@@ -250,13 +250,17 @@ fn draw_entity(
 
     // Draw the view
     if is_visible {
-        if let Some(dirty_rect) = dirty_rect {
+        let should_draw = if let Some(dirty_rect) = dirty_rect {
             let bounds = cached_draw_bounds(cx, current);
-            if bounds.intersects(dirty_rect) {
-                if let Some(view) = cx.views.remove(&current) {
-                    view.draw(cx, canvas);
-                    cx.views.insert(current, view);
-                }
+            bounds.intersects(dirty_rect)
+        } else {
+            true
+        };
+
+        if should_draw {
+            if let Some(view) = cx.views.remove(&current) {
+                view.draw(cx, canvas);
+                cx.views.insert(current, view);
             }
         }
     }
