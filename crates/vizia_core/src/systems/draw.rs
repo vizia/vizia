@@ -78,26 +78,30 @@ pub(crate) fn draw_system(
         if cx.style.backdrop_filter.get(entity).is_some() {
             if entity.visible(&cx.style) {
                 // Entity is VISIBLE and has a backdrop filter.
-                let bf_current_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
+                // Skip recomputation if already processed in redraw_list.
+                if !redraw_list.contains(&entity) {
+                    let bf_current_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
 
-                // Update cache for visible entity
-                if let Some(dr) = cx.cache.draw_bounds.get_mut(entity) {
-                    *dr = bf_current_bounds;
-                } else {
-                    cx.cache.draw_bounds.insert(entity, bf_current_bounds);
-                }
+                    // Update cache for visible entity
+                    if let Some(dr) = cx.cache.draw_bounds.get_mut(entity) {
+                        *dr = bf_current_bounds;
+                    } else {
+                        cx.cache.draw_bounds.insert(entity, bf_current_bounds);
+                    }
 
-                if bf_current_bounds.w > 0.0 && bf_current_bounds.h > 0.0 {
-                    // Ensure bounds are valid
-                    // Condition to update dirty_rect:
-                    // 1. dirty_rect is None (then set it to bf_current_bounds).
-                    // 2. dirty_rect is Some, and bf_current_bounds intersects with it (then union).
-                    if dirty_rect
-                        .is_none_or(|current_dr_val| bf_current_bounds.intersects(&current_dr_val))
-                    {
-                        dirty_rect = Some(dirty_rect.map_or(bf_current_bounds, |current_dr_val| {
-                            current_dr_val.union(&bf_current_bounds)
-                        }));
+                    if bf_current_bounds.w > 0.0 && bf_current_bounds.h > 0.0 {
+                        // Ensure bounds are valid
+                        // Condition to update dirty_rect:
+                        // 1. dirty_rect is None (then set it to bf_current_bounds).
+                        // 2. dirty_rect is Some, and bf_current_bounds intersects with it (then union).
+                        if dirty_rect.is_none_or(|current_dr_val| {
+                            bf_current_bounds.intersects(&current_dr_val)
+                        }) {
+                            dirty_rect =
+                                Some(dirty_rect.map_or(bf_current_bounds, |current_dr_val| {
+                                    current_dr_val.union(&bf_current_bounds)
+                                }));
+                        }
                     }
                 }
             } else {
