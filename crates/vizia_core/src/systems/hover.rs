@@ -57,9 +57,8 @@ pub fn hover_system(cx: &mut Context, window_entity: Entity) {
             cx.cache.get_height(hovered),
         );
 
-        let cursor = cx.style.cursor.get(hovered).cloned().unwrap_or_default();
-
         if !cx.cursor_icon_locked {
+            let cursor = cx.style.cursor.get(hovered).cloned().unwrap_or_default();
             cx.emit(WindowEvent::SetCursor(cursor));
         }
 

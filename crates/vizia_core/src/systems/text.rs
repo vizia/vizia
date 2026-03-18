@@ -240,9 +240,8 @@ fn add_block(
 
             let mut text_style = TextStyle::new();
 
-            let font_color = style.font_color.get(entity).cloned().unwrap_or_default();
-
             if let Some(text_decoration_line) = style.text_decoration_line.get(entity).copied() {
+                let font_color = style.font_color.get(entity).cloned().unwrap_or_default();
                 text_style.set_decoration_type(text_decoration_line.into());
                 text_style.set_decoration_color(font_color);
             }
