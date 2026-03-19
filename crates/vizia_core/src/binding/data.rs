@@ -301,7 +301,7 @@ impl<T: std::hash::Hash + Eq + Data> Data for std::collections::HashSet<T> {
             return false;
         }
 
-        self.iter().zip(other.iter()).all(|(a, b)| a.same(b))
+        self.iter().all(|item| other.contains(item))
     }
 }
 
@@ -311,7 +311,8 @@ impl<T: std::hash::Hash + Eq + Data, V: Data> Data for std::collections::HashMap
             return false;
         }
 
-        self.iter().zip(other.iter()).all(|(a, b)| a.0.same(b.0) && a.1.same(b.1))
+        self.iter()
+            .all(|(key, value)| other.get(key).is_some_and(|other_value| value.same(other_value)))
     }
 }
 
