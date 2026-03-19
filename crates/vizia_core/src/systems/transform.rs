@@ -32,7 +32,7 @@ pub(crate) fn transform_system(cx: &mut Context) {
                         origin = offset * origin;
                         origin
                     })
-                    .unwrap_or(skia_safe::Matrix::translate(bounds.center()));
+                    .unwrap_or_else(|| skia_safe::Matrix::translate(bounds.center()));
                 // transform = origin * transform;
                 let mut transform = origin;
                 origin = origin.invert().unwrap();
