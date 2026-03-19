@@ -355,8 +355,8 @@ pub(crate) fn draw_bounds(
     );
 
     // If overflow is visible we have to include all children since they may draw outside of our own bounds.
-    if matches!(style.overflowx.get(entity), Some(Overflow::Visible))
-        || matches!(style.overflowy.get(entity), Some(Overflow::Visible))
+    if !matches!(style.overflowx.get(entity), Some(Overflow::Hidden))
+        || !matches!(style.overflowy.get(entity), Some(Overflow::Hidden))
     {
         let child_iter = DrawChildIterator::new(tree, entity);
         for child in child_iter {
