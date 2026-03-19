@@ -84,7 +84,7 @@ impl<V> Handle<'_, V> {
                         Entity::root(),
                     )
                 })
-                .unwrap_or(self.cx.focus_stack.pop().unwrap());
+                .unwrap_or_else(|| self.cx.focus_stack.pop().unwrap());
             self.cx.with_current(new_focus, |cx| cx.focus());
         }
         self

@@ -314,7 +314,7 @@ impl<'a> EventContext<'a> {
                 }
                 None
             })
-            .unwrap_or({
+            .unwrap_or_else(|| {
                 let parent_window =
                     self.tree.get_parent_window(self.current).unwrap_or(Entity::root());
                 self.cache.get_bounds(parent_window)
