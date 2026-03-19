@@ -189,7 +189,7 @@ impl Element for Node<'_, '_> {
                     psudeo_class_flag.contains(PseudoClassFlags::FOCUS_WITHIN)
                 }
                 PseudoClass::Enabled => {
-                    self.store.disabled.get(self.entity).map(|disabled| !*disabled).unwrap_or(true)
+                    self.store.disabled.get(self.entity).is_none_or(|disabled| !*disabled)
                 }
                 PseudoClass::Disabled => {
                     self.store.disabled.get(self.entity).copied().unwrap_or_default()

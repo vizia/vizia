@@ -143,12 +143,11 @@ pub(crate) fn get_access_node(
         }
     }
 
-    let focusable = cx
+    let focusable = cx //
         .style
         .abilities
         .get(entity)
-        .map(|flags| flags.contains(Abilities::NAVIGABLE))
-        .unwrap_or(false);
+        .is_some_and(|flags| flags.contains(Abilities::NAVIGABLE));
 
     if focusable {
         node_builder.add_action(Action::Focus);
@@ -192,8 +191,7 @@ pub(crate) fn get_access_node(
         .style
         .abilities
         .get(entity)
-        .map(|abilities| abilities.contains(Abilities::CHECKABLE))
-        .unwrap_or_default();
+        .is_some_and(|abilities| abilities.contains(Abilities::CHECKABLE));
 
     if checkable {
         if let Some(checked) = cx

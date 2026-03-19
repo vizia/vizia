@@ -89,8 +89,7 @@ fn hover_entity(
         .style
         .abilities
         .get(cx.current)
-        .map(|abilitites| abilitites.contains(Abilities::HOVERABLE))
-        .unwrap_or(true);
+        .is_none_or(|abilitites| abilitites.contains(Abilities::HOVERABLE));
 
     if !hoverable {
         return;

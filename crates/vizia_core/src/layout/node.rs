@@ -27,7 +27,7 @@ impl Node for Entity {
     }
 
     fn visible(&self, store: &Self::Store) -> bool {
-        store.display.get(*self).copied().map(|display| display == Display::Flex).unwrap_or(true)
+        store.display.get(*self).is_none_or(|display| *display == Display::Flex)
     }
 
     fn layout_type(&self, store: &Self::Store) -> Option<morphorm::LayoutType> {

@@ -46,7 +46,7 @@ impl<'i> Parse<'i> for Shadow {
         let blur_radius = input.try_parse(Length::parse).ok();
         let spread_radius = input.try_parse(Length::parse).ok();
         let color = input.try_parse(Color::parse).ok();
-        let inset = input.try_parse(InsetKeyword::parse).map(|_| true).unwrap_or(false);
+        let inset = input.try_parse(InsetKeyword::parse).is_ok();
 
         Ok(Shadow::new(x_offset, y_offset, blur_radius, spread_radius, color, inset))
     }

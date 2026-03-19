@@ -38,11 +38,10 @@ pub(crate) fn is_navigatable(
         return false;
     }
 
-    style
+    style //
         .abilities
         .get(node)
-        .map(|abilities| abilities.contains(Abilities::NAVIGABLE))
-        .unwrap_or(false)
+        .is_some_and(|abilities| abilities.contains(Abilities::NAVIGABLE))
 }
 
 /// Get the next entity to be focused during forward keyboard navigation.

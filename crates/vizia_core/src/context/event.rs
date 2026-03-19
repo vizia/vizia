@@ -582,8 +582,7 @@ impl<'a> EventContext<'a> {
         self.style
             .abilities
             .get(self.current)
-            .map(|abilities| abilities.contains(Abilities::DRAGGABLE))
-            .unwrap_or_default()
+            .is_some_and(|abilities| abilities.contains(Abilities::DRAGGABLE))
     }
 
     /// Returns true if the current view is disabled.
@@ -933,16 +932,16 @@ impl<'a> EventContext<'a> {
         self.style
             .pseudo_classes
             .get(self.current)
-            .map(|pseudo_classes| pseudo_classes.contains(PseudoClassFlags::VALID))
-            .unwrap_or_default()
+            .is_some_and(|pseudo_classes| pseudo_classes.contains(PseudoClassFlags::VALID))
     }
 
     pub fn is_placeholder_shown(&self) -> bool {
-        self.style
+        self.style //
             .pseudo_classes
             .get(self.current)
-            .map(|pseudo_classes| pseudo_classes.contains(PseudoClassFlags::PLACEHOLDER_SHOWN))
-            .unwrap_or_default()
+            .is_some_and(|pseudo_classes| {
+                pseudo_classes.contains(PseudoClassFlags::PLACEHOLDER_SHOWN)
+            })
     }
 
     // Accessibility Properties
