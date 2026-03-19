@@ -1,7 +1,7 @@
 use cssparser::*;
 use skia_safe::font_style::Weight;
 
-use crate::{macros::impl_parse, FontWeightKeyword, Parse};
+use crate::{FontWeightKeyword, Parse, macros::impl_parse};
 
 /// A font weight value.
 #[derive(Debug, Copy, Clone, PartialEq)]

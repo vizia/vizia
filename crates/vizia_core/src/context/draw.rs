@@ -593,11 +593,7 @@ impl DrawContext<'_> {
         }
 
         let path = path.detach();
-        if should_offset {
-            path.make_offset((x, y))
-        } else {
-            path
-        }
+        if should_offset { path.make_offset((x, y)) } else { path }
     }
 
     /// Draw background color or background image (including gradients) for the current view.

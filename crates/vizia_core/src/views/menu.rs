@@ -122,11 +122,7 @@ impl Submenu {
                             (menu)(cx);
                         })
                         .placement(Submenu::is_submenu.map(|is_submenu| {
-                            if *is_submenu {
-                                Placement::RightStart
-                            } else {
-                                Placement::BottomStart
-                            }
+                            if *is_submenu { Placement::RightStart } else { Placement::BottomStart }
                         }))
                         .arrow_size(Pixels(0.0))
                         .checked(Submenu::is_open)

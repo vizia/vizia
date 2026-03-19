@@ -1,4 +1,4 @@
-use crate::{duration::Duration, CustomParseError, EasingFunction, Ident, Parse};
+use crate::{CustomParseError, EasingFunction, Ident, Parse, duration::Duration};
 use cssparser::{ParseError, ParseErrorKind, Parser};
 
 /// Defines a transition that allows to change property values smoothly, over a given duration.

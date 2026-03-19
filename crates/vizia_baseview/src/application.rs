@@ -1,5 +1,5 @@
-use crate::window::create_surface;
 use crate::window::ViziaWindow;
+use crate::window::create_surface;
 use baseview::{Window, WindowHandle, WindowScalePolicy};
 use gl_rs as gl;
 use gl_rs::types::GLint;

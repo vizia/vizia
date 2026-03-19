@@ -1,4 +1,4 @@
-use crate::{define_enum, impl_parse, Length, Parse};
+use crate::{Length, Parse, define_enum, impl_parse};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TextStroke {

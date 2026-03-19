@@ -19,7 +19,7 @@
 use crate::attr::{DataAttr, Field, FieldKind, Fields};
 
 use quote::{quote, quote_spanned};
-use syn::{spanned::Spanned, Data, DataEnum, DataStruct};
+use syn::{Data, DataEnum, DataStruct, spanned::Spanned};
 
 pub(crate) fn derive_data_impl(
     input: syn::DeriveInput,

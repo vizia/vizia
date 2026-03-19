@@ -141,8 +141,8 @@ where
 mod test {
     use super::*;
     use vizia_id::{
-        impl_generational_id, IdManager, GENERATIONAL_ID_GENERATION_MASK,
-        GENERATIONAL_ID_INDEX_BITS, GENERATIONAL_ID_INDEX_MASK,
+        GENERATIONAL_ID_GENERATION_MASK, GENERATIONAL_ID_INDEX_BITS, GENERATIONAL_ID_INDEX_MASK,
+        IdManager, impl_generational_id,
     };
 
     #[derive(Clone, Copy, PartialEq, Eq, Hash)]

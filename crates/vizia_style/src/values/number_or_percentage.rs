@@ -1,6 +1,6 @@
 use morphorm::Units;
 
-use crate::{macros::impl_parse, Parse, Percentage};
+use crate::{Parse, Percentage, macros::impl_parse};
 
 /// A number or a percentage value.
 #[derive(Debug, Clone, Copy, PartialEq)]

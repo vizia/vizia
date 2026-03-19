@@ -1,4 +1,4 @@
-use crate::{define_enum, CustomParseError, LengthOrPercentage, Parse};
+use crate::{CustomParseError, LengthOrPercentage, Parse, define_enum};
 use bitflags::bitflags;
 use cssparser::*;
 use cssparser_color::Color;

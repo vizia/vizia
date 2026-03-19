@@ -10,9 +10,8 @@ mod resource;
 
 use log::debug;
 use skia_safe::{
-    svg,
+    FontMgr, svg,
     textlayout::{FontCollection, TypefaceFontProvider},
-    FontMgr,
 };
 use std::cell::RefCell;
 use std::collections::{BinaryHeap, VecDeque};
@@ -26,8 +25,8 @@ use vizia_id::IdManager;
 use vizia_window::WindowDescription;
 
 #[cfg(feature = "clipboard")]
-use copypasta::{nop_clipboard::NopClipboardContext, ClipboardContext, ClipboardProvider};
-use hashbrown::{hash_map::Entry, HashMap, HashSet};
+use copypasta::{ClipboardContext, ClipboardProvider, nop_clipboard::NopClipboardContext};
+use hashbrown::{HashMap, HashSet, hash_map::Entry};
 
 pub use access::*;
 pub use draw::*;
@@ -363,17 +362,17 @@ impl Context {
     ) {
         if enabled {
             debug!(
-            "Focus changed to {:?} parent: {:?}, view: {}, posx: {}, posy: {} width: {} height: {}",
-            focused,
-            self.tree.get_parent(focused),
-            self.views
-                .get(&focused)
-                .map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")),
-            self.cache.get_posx(focused),
-            self.cache.get_posy(focused),
-            self.cache.get_width(focused),
-            self.cache.get_height(focused),
-        );
+                "Focus changed to {:?} parent: {:?}, view: {}, posx: {}, posy: {} width: {} height: {}",
+                focused,
+                self.tree.get_parent(focused),
+                self.views
+                    .get(&focused)
+                    .map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")),
+                self.cache.get_posx(focused),
+                self.cache.get_posy(focused),
+                self.cache.get_width(focused),
+                self.cache.get_height(focused),
+            );
         }
 
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(focused) {

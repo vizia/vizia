@@ -1,4 +1,4 @@
-use crate::{impl_parse, Calc, Parse};
+use crate::{Calc, Parse, impl_parse};
 use cssparser::Token;
 
 /// A percentage value.

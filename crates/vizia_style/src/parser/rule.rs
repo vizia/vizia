@@ -1,10 +1,10 @@
 use crate::{
-    parse_declaration, CssRule, CssRuleList, CustomParseError, DeclarationBlock, DeclarationList,
-    KeyframeListParser, KeyframesName, KeyframesRule, Location, Parse, ParserOptions,
-    SelectorParser, Selectors, StyleRule,
+    CssRule, CssRuleList, CustomParseError, DeclarationBlock, DeclarationList, KeyframeListParser,
+    KeyframesName, KeyframesRule, Location, Parse, ParserOptions, SelectorParser, Selectors,
+    StyleRule, parse_declaration,
 };
 use cssparser::*;
-use selectors::{parser::ParseRelative, SelectorList};
+use selectors::{SelectorList, parser::ParseRelative};
 
 #[derive(PartialEq, PartialOrd)]
 enum State {

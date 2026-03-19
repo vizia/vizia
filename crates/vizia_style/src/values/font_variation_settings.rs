@@ -1,5 +1,5 @@
 use cssparser::*;
-use skia_safe::{font_arguments::variation_position::Coordinate, FourByteTag};
+use skia_safe::{FourByteTag, font_arguments::variation_position::Coordinate};
 
 use crate::{CustomParseError, Parse};
 

@@ -1,4 +1,4 @@
-use crate::{impl_parse, traits::Parse, Angle};
+use crate::{Angle, impl_parse, traits::Parse};
 
 /// A scale defining a scale value on the x and the y axis.
 #[derive(Debug, Clone, PartialEq)]

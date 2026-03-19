@@ -1,7 +1,7 @@
 use std::f32::consts::SQRT_2;
 
 use skia_safe::{
-    path_builder::ArcSize, rrect::Corner, PathBuilder, PathDirection, Point, RRect, Rect,
+    PathBuilder, PathDirection, Point, RRect, Rect, path_builder::ArcSize, rrect::Corner,
 };
 use vizia_storage::LayoutTreeIterator;
 

@@ -1,4 +1,4 @@
-use crate::{impl_parse, CustomParseError, Length, Parse};
+use crate::{CustomParseError, Length, Parse, impl_parse};
 use cssparser::{ParseError, ParseErrorKind};
 
 /// A length value in pixels.
@@ -27,7 +27,7 @@ impl_parse! {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{tests::assert_parse, LengthValue};
+    use crate::{LengthValue, tests::assert_parse};
 
     assert_parse! {
         LengthPixels, assert_length_pixels,

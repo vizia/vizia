@@ -1,10 +1,10 @@
 use skia_safe::{
+    BlendMode, FontArguments, FontStyle, Paint,
     font_arguments::VariationPosition,
     textlayout::{
         FontCollection, Paragraph, ParagraphBuilder, ParagraphStyle, RectHeightStyle,
         RectWidthStyle, TextStyle,
     },
-    BlendMode, FontArguments, FontStyle, Paint,
 };
 use vizia_storage::{LayoutChildIterator, LayoutTreeIterator};
 

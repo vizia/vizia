@@ -337,7 +337,9 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
         })
         .collect::<Vec<_>>();
     if usable_variants.is_empty() {
-        panic!("This enum has no variants which can have Lenses built. A valid variant has exactly one unnamed field. If you think this is unreasonable, please work on https://github.com/rust-lang/rfcs/pull/2593")
+        panic!(
+            "This enum has no variants which can have Lenses built. A valid variant has exactly one unnamed field. If you think this is unreasonable, please work on https://github.com/rust-lang/rfcs/pull/2593"
+        )
     }
 
     let twizzled_name = if is_camel_case(&enum_type.to_string()) {

@@ -1,4 +1,4 @@
-use crate::{impl_parse, Calc, Parse, TryAdd};
+use crate::{Calc, Parse, TryAdd, impl_parse};
 
 /// A value representing an angle expressed in degrees, gradians, radians, or turns.
 #[derive(Debug, Clone, Copy)]

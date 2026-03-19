@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 use std::ops::{BitAnd, BitOr, Deref};
 use std::rc::Rc;
 
-use crate::context::{CURRENT, MAPS, MAP_MANAGER};
+use crate::context::{CURRENT, MAP_MANAGER, MAPS};
 
 use super::{MapId, StoreId};
 

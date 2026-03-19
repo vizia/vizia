@@ -1,4 +1,4 @@
-use crate::{impl_parse, BorderStyleKeyword, Parse, Rect};
+use crate::{BorderStyleKeyword, Parse, Rect, impl_parse};
 
 /// Defines the style of every border of a rectangle.
 #[derive(Debug, Default, Clone, PartialEq)]
@@ -42,7 +42,7 @@ impl From<Rect<BorderStyleKeyword>> for BorderStyle {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{tests::assert_parse, BorderStyleKeyword::*};
+    use crate::{BorderStyleKeyword::*, tests::assert_parse};
 
     assert_parse! {
         BorderStyle, assert_border_style,

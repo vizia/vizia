@@ -1,4 +1,4 @@
-use crate::{impl_parse, traits::Parse, Percentage};
+use crate::{Percentage, impl_parse, traits::Parse};
 
 /// A value specifying the alpha channel or transparency of a color.
 #[derive(Debug, Clone, PartialEq)]

@@ -1,5 +1,5 @@
 use crate::{
-    macros::impl_parse, AutoKeyword, CustomParseError, LengthPixels, Parse, Percentage, Stretch,
+    AutoKeyword, CustomParseError, LengthPixels, Parse, Percentage, Stretch, macros::impl_parse,
 };
 use cssparser::*;
 pub use morphorm::Units;
@@ -53,7 +53,7 @@ impl From<LengthPixels> for Units {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{tests::assert_parse, LengthValue};
+    use crate::{LengthValue, tests::assert_parse};
 
     assert_parse! {
         Units, parse_units,

@@ -1,6 +1,6 @@
 use vizia_id::{
-    impl_generational_id, GenerationalId, GENERATIONAL_ID_GENERATION_MASK,
-    GENERATIONAL_ID_INDEX_BITS, GENERATIONAL_ID_INDEX_MASK,
+    GENERATIONAL_ID_GENERATION_MASK, GENERATIONAL_ID_INDEX_BITS, GENERATIONAL_ID_INDEX_MASK,
+    GenerationalId, impl_generational_id,
 };
 
 /// A rule is an id used to get/set shared style properties in State.

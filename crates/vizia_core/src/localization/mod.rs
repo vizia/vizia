@@ -264,11 +264,7 @@ impl ResGet<String> for Localized {
         let args = self.get_args(&cx);
         let res = bundle.format_pattern(value, Some(&args), &mut err);
 
-        if err.is_empty() {
-            (self.map)(&res)
-        } else {
-            format!("{} {{ERROR: {:?}}}", res, err)
-        }
+        if err.is_empty() { (self.map)(&res) } else { format!("{} {{ERROR: {:?}}}", res, err) }
     }
 }
 
@@ -345,10 +341,6 @@ impl ToStringLocalized for Localized {
         let args = self.get_args(&cx);
         let res = bundle.format_pattern(value, Some(&args), &mut err);
 
-        if err.is_empty() {
-            (self.map)(&res)
-        } else {
-            format!("{} {{ERROR: {:?}}}", res, err)
-        }
+        if err.is_empty() { (self.map)(&res) } else { format!("{} {{ERROR: {:?}}}", res, err) }
     }
 }

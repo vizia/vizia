@@ -72,11 +72,7 @@ impl TimingFunction {
             let slope = Self::calc_bezier_slope(guess, self.x1, self.x2);
             guess -= error / slope;
         }
-        if error.abs() <= 0.0000001 {
-            guess
-        } else {
-            x
-        }
+        if error.abs() <= 0.0000001 { guess } else { x }
     }
 }
 

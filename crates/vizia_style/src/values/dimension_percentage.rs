@@ -12,16 +12,16 @@ pub enum DimensionPercentage<D> {
 }
 
 impl<
-        'i,
-        D: Parse<'i>
-            + std::ops::Mul<f32, Output = D>
-            + TryAdd<D>
-            + Clone
-            + std::cmp::PartialEq<f32>
-            + std::cmp::PartialOrd<f32>
-            + std::cmp::PartialOrd<D>
-            + std::fmt::Debug,
-    > Parse<'i> for DimensionPercentage<D>
+    'i,
+    D: Parse<'i>
+        + std::ops::Mul<f32, Output = D>
+        + TryAdd<D>
+        + Clone
+        + std::cmp::PartialEq<f32>
+        + std::cmp::PartialOrd<f32>
+        + std::cmp::PartialOrd<D>
+        + std::fmt::Debug,
+> Parse<'i> for DimensionPercentage<D>
 {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         match input.try_parse(Calc::parse) {
@@ -56,9 +56,8 @@ impl<D: std::ops::Mul<f32, Output = D>> std::ops::Mul<f32> for DimensionPercenta
     }
 }
 
-impl<
-        D: TryAdd<D> + Clone + std::cmp::PartialEq<f32> + std::cmp::PartialOrd<f32> + std::fmt::Debug,
-    > std::ops::Add<DimensionPercentage<D>> for DimensionPercentage<D>
+impl<D: TryAdd<D> + Clone + std::cmp::PartialEq<f32> + std::cmp::PartialOrd<f32> + std::fmt::Debug>
+    std::ops::Add<DimensionPercentage<D>> for DimensionPercentage<D>
 {
     type Output = Self;
 
@@ -70,9 +69,8 @@ impl<
     }
 }
 
-impl<
-        D: TryAdd<D> + Clone + std::cmp::PartialEq<f32> + std::cmp::PartialOrd<f32> + std::fmt::Debug,
-    > DimensionPercentage<D>
+impl<D: TryAdd<D> + Clone + std::cmp::PartialEq<f32> + std::cmp::PartialOrd<f32> + std::fmt::Debug>
+    DimensionPercentage<D>
 {
     fn add_recursive(&self, other: &DimensionPercentage<D>) -> Option<DimensionPercentage<D>> {
         match (self, other) {

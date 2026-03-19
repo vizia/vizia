@@ -1,4 +1,4 @@
-use crate::{impl_parse, BorderWidthKeyword, Length, LengthOrPercentage, Parse};
+use crate::{BorderWidthKeyword, Length, LengthOrPercentage, Parse, impl_parse};
 
 /// A border width value either being a [`BorderWidthKeyword`] or a [`LengthOrPercentage`].
 #[derive(Debug, Clone, PartialEq)]

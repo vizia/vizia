@@ -1,5 +1,5 @@
-use crate::error::Error;
 use crate::ParserOptions;
+use crate::error::Error;
 
 use crate::rule::TopLevelRuleParser;
 use crate::{CssRuleList, CustomParseError};

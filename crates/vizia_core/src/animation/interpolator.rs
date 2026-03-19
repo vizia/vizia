@@ -2,7 +2,7 @@ use morphorm::Units;
 use vizia_style::{
     Angle, BackgroundSize, ClipPath, Color, ColorStop, Display, Filter, FontSize, Gradient, Length,
     LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LineDirection, LinearGradient,
-    Opacity, PercentageOrNumber, Rect, Scale, Shadow, Transform, Translate, RGBA,
+    Opacity, PercentageOrNumber, RGBA, Rect, Scale, Shadow, Transform, Translate,
 };
 
 use skia_safe::Matrix;
@@ -53,11 +53,7 @@ impl Interpolator for Units {
 
 impl Interpolator for Display {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        if t < 0.5 {
-            *start
-        } else {
-            *end
-        }
+        if t < 0.5 { *start } else { *end }
     }
 }
 

@@ -1,4 +1,4 @@
-use crate::{macros::impl_parse, CustomParseError, Parse};
+use crate::{CustomParseError, Parse, macros::impl_parse};
 use cssparser::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -1,6 +1,6 @@
 use cssparser::{Parser, ParserInput};
 
-use crate::{define_enum, impl_parse, Parse};
+use crate::{Parse, define_enum, impl_parse};
 
 define_enum! {
     /// Determines how overflowed content that is not displayed should be signaled to the user.

@@ -1,4 +1,4 @@
-use crate::{define_enum, Parse};
+use crate::{Parse, define_enum};
 
 define_enum! {
     /// A border width keyword corresponding to a specific pixel width.

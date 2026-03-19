@@ -1,4 +1,4 @@
-use crate::{impl_parse, BorderWidthValue, Parse, Rect};
+use crate::{BorderWidthValue, Parse, Rect, impl_parse};
 
 /// Defines the width of every border of a rectangle.
 #[derive(Debug, Default, Clone, PartialEq)]
@@ -42,7 +42,7 @@ impl From<Rect<BorderWidthValue>> for BorderWidth {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{tests::assert_parse, Length};
+    use crate::{Length, tests::assert_parse};
 
     assert_parse! {
         BorderWidth, assert_border_width,
