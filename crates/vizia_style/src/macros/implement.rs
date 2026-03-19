@@ -59,8 +59,8 @@ macro_rules! impl_parse {
                         )?
                         $(
                             $(
-                                cssparser::Token::Dimension { value, ref unit, .. } if unit.as_ref().eq_ignore_ascii_case($dimension_pattern) => {
-                                    $dimension_result_type$(::$variant)?(*value $(* $multiplier)?)
+                                &cssparser::Token::Dimension { value, ref unit, .. } if unit.as_ref().eq_ignore_ascii_case($dimension_pattern) => {
+                                    $dimension_result_type$(::$variant)?(value $(* $multiplier)?)
                                 },
                             )+
                         )?

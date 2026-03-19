@@ -6,7 +6,7 @@ impl_parse! {
 
     tokens {
         custom {
-            Token::QuotedString(ref value) => value.as_ref().to_owned(),
+            Token::QuotedString(value) => value.as_ref().to_owned(),
         }
     }
 }
