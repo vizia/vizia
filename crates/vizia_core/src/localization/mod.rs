@@ -277,15 +277,14 @@ impl Res<String> for Localized {
     where
         F: 'static + Fn(&mut Context, Localized),
     {
-        let self2 = self.clone();
         let closure = Arc::new(closure);
         Binding::new(cx, Environment::locale, move |cx, _| {
             cx.with_current(entity, |cx| {
-                let lenses = self2.args.values().map(|x| x.make_clone()).collect::<Vec<_>>();
-                let self3 = self2.clone();
+                let lenses = self.args.values().map(|x| x.make_clone()).collect::<Vec<_>>();
+                let cloned = self.clone();
                 let closure = closure.clone();
                 bind_recursive(cx, &lenses, move |cx| {
-                    closure(cx, self3.clone());
+                    closure(cx, cloned.clone());
                 });
             });
         });

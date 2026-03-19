@@ -373,10 +373,9 @@ where
 
     fn reset_text(&mut self, cx: &mut EventContext) {
         if let Some(text) = cx.style.text.get_mut(cx.current) {
-            text.clear();
             self.selection = Selection::caret(0);
             self.show_placeholder = true;
-            *text = self.placeholder.clone();
+            text.clone_from(&self.placeholder);
             cx.style.needs_text_update(cx.current);
         }
     }

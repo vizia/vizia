@@ -1188,12 +1188,10 @@ impl<'a> EventContext<'a> {
     /// Returns the font-size of the current view in physical pixels.
     pub fn font_size(&self) -> f32 {
         self.logical_to_physical(
-            self.style
+            self.style //
                 .font_size
                 .get(self.current)
-                .cloned()
-                .map(|f| f.0.to_px().unwrap())
-                .unwrap_or(16.0),
+                .map_or(16.0, |f| f.0.to_px().unwrap()),
         )
     }
 

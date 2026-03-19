@@ -108,7 +108,6 @@ fn hover_entity(
         .style
         .pointer_events
         .get(cx.current)
-        .copied()
         .map(|pointer_events| match pointer_events {
             PointerEvents::Auto => true,
             PointerEvents::None => false,

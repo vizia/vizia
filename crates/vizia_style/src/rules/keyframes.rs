@@ -13,8 +13,8 @@ pub enum KeyframesName<'i> {
 impl KeyframesName<'_> {
     pub fn as_string(&self) -> String {
         match self {
-            KeyframesName::Ident(name) => name.0.to_owned().to_string(),
-            KeyframesName::Custom(custom) => custom.to_owned().to_string(),
+            KeyframesName::Ident(name) => name.0.to_string(),
+            KeyframesName::Custom(custom) => custom.to_string(),
         }
     }
 }
