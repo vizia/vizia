@@ -1,5 +1,5 @@
 use skia_safe::textlayout::{Paragraph, TypefaceFontProvider};
-use skia_safe::{textlayout::FontCollection, FontMgr};
+use skia_safe::{FontMgr, textlayout::FontCollection};
 use vizia_storage::SparseSet;
 
 use crate::{entity::Entity, layout::BoundingBox};

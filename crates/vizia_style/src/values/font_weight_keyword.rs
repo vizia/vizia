@@ -1,4 +1,4 @@
-use crate::{macros::define_enum, Parse};
+use crate::{Parse, macros::define_enum};
 
 define_enum! {
     /// A font weight keyword corresponding to a specific font weight.

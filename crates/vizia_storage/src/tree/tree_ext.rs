@@ -39,11 +39,7 @@ where
             return false;
         }
 
-        if let Some(parent) = tree.get_parent(*self) {
-            parent == entity
-        } else {
-            false
-        }
+        if let Some(parent) = tree.get_parent(*self) { parent == entity } else { false }
     }
 
     fn is_descendant_of(&self, tree: &Tree<Self>, entity: Self) -> bool {

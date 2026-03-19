@@ -1,4 +1,4 @@
-use crate::{macros::define_enum, Parse};
+use crate::{Parse, macros::define_enum};
 
 define_enum! {
     #[derive(Default)]
@@ -13,10 +13,6 @@ define_enum! {
 
 impl From<bool> for Direction {
     fn from(boolean: bool) -> Self {
-        if boolean {
-            Direction::Ltr
-        } else {
-            Direction::Rtl
-        }
+        if boolean { Direction::Ltr } else { Direction::Rtl }
     }
 }

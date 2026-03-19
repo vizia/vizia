@@ -1,6 +1,6 @@
 use cssparser::{Parser, ParserInput};
 
-use crate::{impl_parse, traits::Parse, PercentageOrNumber};
+use crate::{PercentageOrNumber, impl_parse, traits::Parse};
 
 /// A scale defining a scale value on the x and the y axis.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -56,8 +56,8 @@ impl<T1: Into<PercentageOrNumber>, T2: Into<PercentageOrNumber>> From<(T1, T2)> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tests::assert_parse;
     use crate::PercentageOrNumber::*;
+    use crate::tests::assert_parse;
 
     assert_parse! {
         Scale, parse_scale,

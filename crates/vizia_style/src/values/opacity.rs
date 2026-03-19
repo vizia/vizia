@@ -1,6 +1,6 @@
 use cssparser::{Parser, ParserInput};
 
-use crate::{macros::impl_parse, Parse, Percentage};
+use crate::{Parse, Percentage, macros::impl_parse};
 
 /// An opacity value in the range of 0 to 1.
 #[derive(Debug, Copy, Clone, PartialEq)]

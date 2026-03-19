@@ -2,9 +2,9 @@
 pub use selectors::SelectorList;
 
 pub use selectors::{
+    Element,
     context::{MatchingContext, MatchingMode, QuirksMode},
     matching::{matches_selector, matches_selector_list},
-    Element,
 };
 
 #[cfg(test)]
@@ -16,12 +16,12 @@ mod test {
 
     use cssparser::*;
     use selectors::{
+        OpaqueElement, SelectorList,
         context::{
             MatchingContext, MatchingForInvalidation, MatchingMode, NeedsSelectorFlags, QuirksMode,
             SelectorCaches,
         },
         matching::matches_selector_list,
-        OpaqueElement, SelectorList,
     };
 
     use crate::{CustomParseError, ParserOptions, SelectorIdent, SelectorParser, Selectors};

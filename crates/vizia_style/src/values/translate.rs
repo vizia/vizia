@@ -1,4 +1,4 @@
-use crate::{impl_parse, traits::Parse, LengthOrPercentage};
+use crate::{LengthOrPercentage, impl_parse, traits::Parse};
 
 /// A translate defining a translate value on the x and the y axis.
 #[derive(Default, Debug, Clone, PartialEq)]
@@ -44,7 +44,7 @@ impl<T1: Into<LengthOrPercentage>, T2: Into<LengthOrPercentage>> From<(T1, T2)> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{tests::assert_parse, Length, LengthOrPercentage::*};
+    use crate::{Length, LengthOrPercentage::*, tests::assert_parse};
 
     assert_parse! {
         Translate, parse_translate,

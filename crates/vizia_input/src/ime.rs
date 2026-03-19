@@ -24,18 +24,10 @@ impl ImeState {
     }
 
     pub fn get_preedit_text(&self) -> Option<&str> {
-        if let ImeState::Composing { preedit, .. } = self {
-            preedit.as_deref()
-        } else {
-            None
-        }
+        if let ImeState::Composing { preedit, .. } = self { preedit.as_deref() } else { None }
     }
 
     pub fn get_cursor_pos(&self) -> Option<(usize, usize)> {
-        if let ImeState::Composing { cursor_pos, .. } = self {
-            *cursor_pos
-        } else {
-            None
-        }
+        if let ImeState::Composing { cursor_pos, .. } = self { *cursor_pos } else { None }
     }
 }

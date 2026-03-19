@@ -1,4 +1,4 @@
-use crate::{impl_parse, Parse, TryAdd};
+use crate::{Parse, TryAdd, impl_parse};
 
 /// A length value.
 #[derive(Debug, Copy, Clone, PartialEq)]

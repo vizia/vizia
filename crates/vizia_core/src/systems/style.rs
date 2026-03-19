@@ -6,17 +6,17 @@ use hashbrown::HashMap;
 use rayon::prelude::*;
 use vizia_storage::{LayoutParentIterator, LayoutTreeIterator, TreeBreadthIterator};
 use vizia_style::{
+    Element, MatchingContext, MatchingMode, PseudoClass, QuirksMode, SelectorIdent, Selectors,
     matches_selector,
     precomputed_hash::PrecomputedHash,
     selectors::{
+        OpaqueElement, SelectorImpl,
         attr::{AttrSelectorOperation, CaseSensitivity, NamespaceConstraint},
         bloom::BloomFilter,
         context::{MatchingForInvalidation, NeedsSelectorFlags, SelectorCaches},
         matching::ElementSelectorFlags,
         parser::{Component, NthType},
-        OpaqueElement, SelectorImpl,
     },
-    Element, MatchingContext, MatchingMode, PseudoClass, QuirksMode, SelectorIdent, Selectors,
 };
 
 /// A node used for style matching.
@@ -135,11 +135,7 @@ impl Element for Node<'_, '_> {
         name: &<Self::Impl as SelectorImpl>::Identifier,
         _case_sensitivity: CaseSensitivity,
     ) -> bool {
-        if let Some(id) = self.store.ids.get(self.entity) {
-            *id == name.0
-        } else {
-            false
-        }
+        if let Some(id) = self.store.ids.get(self.entity) { *id == name.0 } else { false }
     }
 
     fn has_class(
@@ -978,11 +974,7 @@ impl MatchedRules {
         let (parent, i) = self.rules.get(entity)?;
         let parent_cache = self.cache.get(parent)?;
         let entry = parent_cache.get(*i)?;
-        if entry.rules.is_empty() {
-            None
-        } else {
-            Some(&entry.rules)
-        }
+        if entry.rules.is_empty() { None } else { Some(&entry.rules) }
     }
 }
 

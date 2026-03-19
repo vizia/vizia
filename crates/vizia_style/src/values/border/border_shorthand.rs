@@ -80,7 +80,7 @@ impl<'i> Parse<'i> for Border {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{tests::assert_parse, BorderStyleKeyword, BorderWidthKeyword, Color};
+    use crate::{BorderStyleKeyword, BorderWidthKeyword, Color, tests::assert_parse};
 
     assert_parse! {
         Border, assert_border,

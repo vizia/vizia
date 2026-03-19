@@ -1,6 +1,6 @@
 use cssparser::*;
 
-use crate::{macros::impl_parse, FontSizeKeyword, Parse};
+use crate::{FontSizeKeyword, Parse, macros::impl_parse};
 
 use super::Length;
 

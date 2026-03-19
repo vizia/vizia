@@ -1,4 +1,4 @@
-use hashbrown::{hash_map::Entry, HashSet};
+use hashbrown::{HashSet, hash_map::Entry};
 
 use vizia_storage::Tree;
 

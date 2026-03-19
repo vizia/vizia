@@ -2,7 +2,7 @@ use hashbrown::{HashMap, HashSet};
 use std::any::TypeId;
 
 use crate::binding::{BasicStore, Store, StoreId};
-use crate::context::{CURRENT, MAPS, MAP_MANAGER};
+use crate::context::{CURRENT, MAP_MANAGER, MAPS};
 use crate::model::ModelOrView;
 use crate::prelude::*;
 

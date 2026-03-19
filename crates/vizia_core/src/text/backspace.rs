@@ -179,11 +179,7 @@ fn backspace_offset(text: &impl EditableText, mut cursor: usize) -> usize {
 /// are unique to backspace.
 #[allow(clippy::trivially_copy_pass_by_ref)]
 pub fn offset_for_delete_backwards(region: &Selection, text: &impl EditableText) -> usize {
-    if !region.is_caret() {
-        region.min()
-    } else {
-        backspace_offset(text, region.active)
-    }
+    if !region.is_caret() { region.min() } else { backspace_offset(text, region.active) }
 }
 
 pub fn is_variation_selector(c: char) -> bool {

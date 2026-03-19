@@ -1,4 +1,4 @@
-use crate::{macros::define_enum, Parse};
+use crate::{Parse, macros::define_enum};
 
 define_enum! {
     /// An icon of a cursor.

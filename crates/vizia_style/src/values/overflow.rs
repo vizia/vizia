@@ -1,4 +1,4 @@
-use crate::{define_enum, Parse};
+use crate::{Parse, define_enum};
 
 define_enum! {
     /// Determines how to deal with content that overflows the bounding box of the element.

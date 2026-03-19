@@ -85,7 +85,7 @@ pub mod prelude {
         LinearGradientBuilder, ShadowBuilder, StyleModifiers, TextModifiers,
     };
     pub use super::resource::{ImageId, ImageRetentionPolicy};
-    pub use super::util::{IntoCssStr, CSS};
+    pub use super::util::{CSS, IntoCssStr};
     pub use super::view::{Handle, View};
     pub use super::views::*;
     pub use super::window::{DropData, WindowEvent};
@@ -101,6 +101,6 @@ pub mod prelude {
 
     pub use morphorm::Units::*;
     pub use morphorm::{LayoutType, PositionType, Units};
-    pub use unic_langid::{langid, LanguageIdentifier};
+    pub use unic_langid::{LanguageIdentifier, langid};
     pub use web_time::{Duration, Instant};
 }

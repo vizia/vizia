@@ -3,7 +3,7 @@
 use std::cell::RefCell;
 
 use comrak::nodes::{Ast, NodeValue};
-use comrak::{parse_document, Arena, Options};
+use comrak::{Arena, Options, parse_document};
 
 use crate::prelude::*;
 

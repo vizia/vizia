@@ -19,15 +19,15 @@ pub enum Calc<V> {
 }
 
 impl<
-        'i,
-        V: Parse<'i>
-            + std::ops::Mul<f32, Output = V>
-            + std::ops::Add<V, Output = V>
-            + std::cmp::PartialOrd<V>
-            + std::convert::Into<Calc<V>>
-            + std::convert::From<Calc<V>>
-            + std::fmt::Debug,
-    > Parse<'i> for Calc<V>
+    'i,
+    V: Parse<'i>
+        + std::ops::Mul<f32, Output = V>
+        + std::ops::Add<V, Output = V>
+        + std::cmp::PartialOrd<V>
+        + std::convert::Into<Calc<V>>
+        + std::convert::From<Calc<V>>
+        + std::fmt::Debug,
+> Parse<'i> for Calc<V>
 {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         let location = input.current_source_location();
@@ -117,15 +117,15 @@ impl<
 }
 
 impl<
-        'i,
-        V: Parse<'i>
-            + std::ops::Mul<f32, Output = V>
-            + std::ops::Add<V, Output = V>
-            + std::cmp::PartialOrd<V>
-            + std::convert::Into<Calc<V>>
-            + std::convert::From<Calc<V>>
-            + std::fmt::Debug,
-    > Calc<V>
+    'i,
+    V: Parse<'i>
+        + std::ops::Mul<f32, Output = V>
+        + std::ops::Add<V, Output = V>
+        + std::cmp::PartialOrd<V>
+        + std::convert::Into<Calc<V>>
+        + std::convert::From<Calc<V>>
+        + std::fmt::Debug,
+> Calc<V>
 {
     fn parse_sum<'t>(
         input: &mut Parser<'i, 't>,
@@ -211,7 +211,7 @@ impl<
                     return Ok(match *f {
                         MathFunction::Calc(c) => c,
                         _ => Calc::Function(f),
-                    })
+                    });
                 }
                 c => return Ok(c),
             }
@@ -295,11 +295,11 @@ impl<V: std::ops::Mul<f32, Output = V>> std::ops::Mul<f32> for Calc<V> {
 }
 
 impl<
-        V: std::ops::Add<V, Output = V>
-            + std::convert::Into<Calc<V>>
-            + std::convert::From<Calc<V>>
-            + std::fmt::Debug,
-    > std::ops::Add<Calc<V>> for Calc<V>
+    V: std::ops::Add<V, Output = V>
+        + std::convert::Into<Calc<V>>
+        + std::convert::From<Calc<V>>
+        + std::fmt::Debug,
+> std::ops::Add<Calc<V>> for Calc<V>
 {
     type Output = Self;
 

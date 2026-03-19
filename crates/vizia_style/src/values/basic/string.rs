@@ -1,4 +1,4 @@
-use crate::{macros::impl_parse, Parse};
+use crate::{Parse, macros::impl_parse};
 use cssparser::Token;
 
 impl_parse! {

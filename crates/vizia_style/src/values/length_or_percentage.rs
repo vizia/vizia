@@ -1,4 +1,4 @@
-use crate::{macros::impl_parse, Length, LengthValue, Parse, Percentage};
+use crate::{Length, LengthValue, Parse, Percentage, macros::impl_parse};
 use cssparser::*;
 use morphorm::Units;
 

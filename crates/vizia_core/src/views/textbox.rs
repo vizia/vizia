@@ -5,8 +5,8 @@ use std::rc::Rc;
 use crate::prelude::*;
 
 use crate::text::{
-    apply_movement, enforce_text_bounds, ensure_visible, offset_for_delete_backwards, Direction,
-    EditableText, Movement, PreeditBackup, Selection, VerticalMovement,
+    Direction, EditableText, Movement, PreeditBackup, Selection, VerticalMovement, apply_movement,
+    enforce_text_bounds, ensure_visible, offset_for_delete_backwards,
 };
 // use crate::views::scrollview::SCROLL_SENSITIVITY;
 use accesskit::{ActionData, ActionRequest};
@@ -552,11 +552,7 @@ where
             return String::new();
         }
 
-        if let Some(text) = cx.style.text.get(cx.current) {
-            text.clone()
-        } else {
-            String::new()
-        }
+        if let Some(text) = cx.style.text.get(cx.current) { text.clone() } else { String::new() }
     }
 
     fn reset_caret_timer(&mut self, cx: &mut EventContext) {

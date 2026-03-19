@@ -75,9 +75,9 @@ pub use vizia_style::{
     FontVariation, FontWeight, FontWeightKeyword, FontWidth, GenericFontFamily, Gradient,
     HorizontalPosition, HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue,
     LineClamp, LineDirection, LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position,
-    PositionType, Scale, Shadow, TextAlign, TextDecorationLine, TextDecorationStyle, TextOverflow,
-    TextStroke, TextStrokeStyle, Transform, Transition, Translate, VerticalPosition,
-    VerticalPositionKeyword, Visibility, RGBA,
+    PositionType, RGBA, Scale, Shadow, TextAlign, TextDecorationLine, TextDecorationStyle,
+    TextOverflow, TextStroke, TextStrokeStyle, Transform, Transition, Translate, VerticalPosition,
+    VerticalPositionKeyword, Visibility,
 };
 
 use vizia_style::{

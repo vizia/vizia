@@ -1,4 +1,4 @@
-use crate::{impl_parse, Parse};
+use crate::{Parse, impl_parse};
 pub use morphorm::Alignment;
 
 impl_parse! {

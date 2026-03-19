@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use bytes::Bytes;
-use civitai::{download, list, Status};
+use civitai::{Status, download, list};
 use vizia::prelude::*;
 
 mod civitai;

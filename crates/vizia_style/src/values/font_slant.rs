@@ -1,6 +1,6 @@
 use skia_safe::font_style::Slant;
 
-use crate::{macros::define_enum, Parse};
+use crate::{Parse, macros::define_enum};
 
 define_enum! {
     #[derive(Default)]

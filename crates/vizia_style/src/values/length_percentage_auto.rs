@@ -1,5 +1,5 @@
 use crate::{
-    macros::impl_parse, AutoKeyword, Length, LengthOrPercentage, LengthValue, Parse, Percentage,
+    AutoKeyword, Length, LengthOrPercentage, LengthValue, Parse, Percentage, macros::impl_parse,
 };
 use cssparser::*;
 use morphorm::Units;

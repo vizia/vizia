@@ -1,4 +1,4 @@
-use crate::{macros::impl_parse, LengthOrPercentage, Parse, Rect};
+use crate::{LengthOrPercentage, Parse, Rect, macros::impl_parse};
 /// Defines the border radius of every corner of a rectangle.
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct CornerRadius {
@@ -107,11 +107,11 @@ impl<T1: Into<LengthOrPercentage>, T2: Into<LengthOrPercentage>, T3: Into<Length
 }
 
 impl<
-        T1: Into<LengthOrPercentage>,
-        T2: Into<LengthOrPercentage>,
-        T3: Into<LengthOrPercentage>,
-        T4: Into<LengthOrPercentage>,
-    > From<(T1, T2, T3, T4)> for CornerRadius
+    T1: Into<LengthOrPercentage>,
+    T2: Into<LengthOrPercentage>,
+    T3: Into<LengthOrPercentage>,
+    T4: Into<LengthOrPercentage>,
+> From<(T1, T2, T3, T4)> for CornerRadius
 {
     fn from(value: (T1, T2, T3, T4)) -> Self {
         let length1: LengthOrPercentage = value.0.into();
@@ -125,8 +125,8 @@ impl<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tests::assert_parse;
     use crate::Length;
+    use crate::tests::assert_parse;
 
     assert_parse! {
         CornerRadius, assert_border_radius,

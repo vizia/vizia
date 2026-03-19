@@ -22,7 +22,7 @@ use crate::text::TextContext;
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
-use super::{LocalizationContext, ModelData, DARK_THEME, LIGHT_THEME};
+use super::{DARK_THEME, LIGHT_THEME, LocalizationContext, ModelData};
 
 type Views = HashMap<Entity, Box<dyn ViewHandler>>;
 type Models = HashMap<Entity, HashMap<TypeId, Box<dyn ModelData>>>;

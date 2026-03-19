@@ -29,11 +29,11 @@ use glutin::{
 };
 
 use skia_safe::{
-    gpu::{
-        self, backend_render_targets, ganesh::context_options, gl::FramebufferInfo, ContextOptions,
-        SurfaceOrigin,
-    },
     ColorSpace, ColorType, PixelGeometry, Surface, SurfaceProps, SurfacePropsFlags,
+    gpu::{
+        self, ContextOptions, SurfaceOrigin, backend_render_targets, ganesh::context_options,
+        gl::FramebufferInfo,
+    },
 };
 
 use vizia_core::prelude::*;
@@ -293,7 +293,7 @@ fn build_window(
 pub fn set_cloak(window: &winit::window::Window, state: bool) -> bool {
     use windows_sys::Win32::{
         Foundation::{BOOL, FALSE, HWND, TRUE},
-        Graphics::Dwm::{DwmSetWindowAttribute, DWMWA_CLOAK},
+        Graphics::Dwm::{DWMWA_CLOAK, DwmSetWindowAttribute},
     };
 
     let RawWindowHandle::Win32(handle) = window.window_handle().unwrap().as_raw() else {

@@ -1,4 +1,4 @@
-use crate::{define_enum, Parse};
+use crate::{Parse, define_enum};
 
 define_enum! {
     /// Determines how overflowed content that is not displayed should be signaled to the user.

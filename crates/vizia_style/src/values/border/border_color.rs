@@ -1,4 +1,4 @@
-use crate::{macros::impl_parse, Color, Parse, Rect};
+use crate::{Color, Parse, Rect, macros::impl_parse};
 
 /// Defines the color of every border of a rectangle.
 #[derive(Debug, Default, Clone, PartialEq)]

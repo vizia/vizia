@@ -1,5 +1,5 @@
 use crate::{Angle, CustomParseError, LengthOrPercentage, Matrix, Parse, PercentageOrNumber};
-use cssparser::{match_ignore_ascii_case, ParseError, Parser, Token};
+use cssparser::{ParseError, Parser, Token, match_ignore_ascii_case};
 
 /// An individual transform function.
 #[derive(Debug, PartialEq, Clone)]
@@ -144,8 +144,8 @@ impl From<Transform> for Vec<Transform> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tests::assert_parse;
     use crate::Length;
+    use crate::tests::assert_parse;
 
     assert_parse! {
         Transform, assert_transform,

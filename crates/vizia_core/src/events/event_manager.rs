@@ -470,11 +470,11 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 let result = compute_matched_rules(cx.hovered, &cx.style, &cx.tree, &filter);
 
                 let entity = cx.hovered;
-                debug!("/* Matched rules for Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",
+                debug!(
+                    "/* Matched rules for Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",
                     entity,
                     entity.parent(&cx.tree),
-                    cx
-                        .views
+                    cx.views
                         .get(&entity)
                         .map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")),
                     cx.cache.get_posx(entity),

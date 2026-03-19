@@ -89,8 +89,8 @@ where
 mod tests {
     use super::*;
     use crate::{
-        impl_generational_id, GENERATIONAL_ID_GENERATION_MASK, GENERATIONAL_ID_INDEX_BITS,
-        GENERATIONAL_ID_INDEX_MASK,
+        GENERATIONAL_ID_GENERATION_MASK, GENERATIONAL_ID_INDEX_BITS, GENERATIONAL_ID_INDEX_MASK,
+        impl_generational_id,
     };
 
     #[derive(Copy, Clone, PartialEq)]

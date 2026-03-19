@@ -1,4 +1,4 @@
-use crate::{impl_parse, Parse};
+use crate::{Parse, impl_parse};
 
 /// A factor of the remaining free space.
 #[derive(Debug, Copy, Clone, PartialEq)]

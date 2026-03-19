@@ -16,7 +16,7 @@
 
 use proc_macro2::{Ident, Literal, Span, TokenStream, TokenTree};
 use quote::{quote, quote_spanned};
-use syn::{parenthesized, Error, ExprPath, Lit, LitStr};
+use syn::{Error, ExprPath, Lit, LitStr, parenthesized};
 
 const BASE_DATA_ATTR_PATH: &str = "data";
 const BASE_LENS_ATTR_PATH: &str = "lens";
