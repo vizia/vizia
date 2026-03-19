@@ -37,10 +37,10 @@ members = [ "crates/*", "examples/todo", "examples/widget_gallery", "examples/ga
 [workspace.package]
 version = "0.3.0"
 authors = ["George Atkinson"]
-edition = "2021"
+edition = "2024"
 license = "MIT"
 repository = "https://github.com/vizia/vizia"
-rust-version = "1.82"
+rust-version = "1.85"
 
 [workspace.dependencies]
 vizia = { version = "0.3.0", path = "." }
