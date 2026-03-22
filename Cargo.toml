@@ -47,12 +47,12 @@ vizia = { version = "0.3.0", path = "." }
 vizia_core = { version = "0.3.0", path = "crates/vizia_core" }
 vizia_winit = { version = "0.3.0", path = "crates/vizia_winit", default-features = false }
 vizia_baseview = { version = "0.3.0", path = "crates/vizia_baseview" }
-vizia_derive = { version = "0.3.0", path = "crates/vizia_derive" }
 vizia_id = { version = "0.3.0", path = "crates/vizia_id" }
 vizia_input = { version = "0.3.0", path = "crates/vizia_input" }
 vizia_storage = { version = "0.3.0", path = "crates/vizia_storage" }
 vizia_style = { version = "0.3.0", path = "crates/vizia_style" }
 vizia_window = { version = "0.3.0", path = "crates/vizia_window" }
+vizia_reactive = { version = "0.3.0", path = "crates/vizia_reactive" }
 accesskit = "0.18"
 accesskit_winit = "0.26"
 baseview = { git = "https://github.com/vizia/baseview.git", rev = "77fec022db136fb771d5775ae13d088f4f166c04", features = ["opengl"] }
@@ -77,6 +77,7 @@ keyboard-types = { version = "0.7", default-features = false }
 log = "0.4.29"
 morphorm = "0.7.0"
 open = "5.3.3"
+parking_lot = "0.12.1"
 proc-macro2 = "1.0.106"
 qfilter = "0.2.5"
 quote = "1.0.45"
@@ -335,7 +336,3 @@ path = "examples/views/divider.rs"
 [[example]]
 name = "resizable_stack"
 path = "examples/views/resizable_stack.rs"
-
-[[example]]
-name = "clipping_transformations"
-path = "examples/clipping_transformations.rs"

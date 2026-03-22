@@ -2,10 +2,9 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-#[derive(Lens)]
 pub struct AppData {
-    scroll_x: f32,
-    scroll_y: f32,
+    scroll_x: Signal<f32>,
+    scroll_y: Signal<f32>,
 }
 
 pub enum AppEvent {
@@ -16,15 +15,21 @@ pub enum AppEvent {
 impl Model for AppData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::ScrollX(val) => self.scroll_x = *val,
-            AppEvent::ScrollY(val) => self.scroll_y = *val,
+            AppEvent::ScrollX(val) => self.scroll_x.set(*val),
+            AppEvent::ScrollY(val) => self.scroll_y.set(*val),
         });
     }
 }
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { scroll_x: 0.0, scroll_y: 0.0 }.build(cx);
+        let scroll_x = Signal::new(0.0);
+        let scroll_y = Signal::new(0.0);
+        let show_horizontal_scrollbar = Signal::new(true);
+        let show_vertical_scrollbar = Signal::new(true);
+        let scroll_to_cursor = Signal::new(false);
+
+        AppData { scroll_x, scroll_y }.build(cx);
 
         ExamplePage::vertical(cx, |cx| {
             HStack::new(cx, |cx| {
@@ -55,7 +60,9 @@ fn main() -> Result<(), ApplicationError> {
                 ScrollView::new(cx, |cx| {
                     Label::new(cx, "Vertical Scroll").height(Pixels(1000.0)).width(Stretch(1.0));
                 })
-                .scroll_y(AppData::scroll_y)
+                .scroll_y(scroll_y)
+                .show_vertical_scrollbar(show_vertical_scrollbar)
+                .scroll_to_cursor(scroll_to_cursor)
                 .on_scroll(|cx, _, scroll_y| cx.emit(AppEvent::ScrollY(scroll_y)))
                 .size(Pixels(300.0))
                 .class("bg-default");
@@ -63,7 +70,9 @@ fn main() -> Result<(), ApplicationError> {
                 ScrollView::new(cx, |cx| {
                     Label::new(cx, "Horizontal Scroll").width(Pixels(1000.0)).height(Stretch(1.0));
                 })
-                .scroll_x(AppData::scroll_x)
+                .scroll_x(scroll_x)
+                .show_horizontal_scrollbar(show_horizontal_scrollbar)
+                .scroll_to_cursor(scroll_to_cursor)
                 .on_scroll(|cx, scroll_x, _| cx.emit(AppEvent::ScrollX(scroll_x)))
                 .size(Pixels(300.0))
                 .class("bg-default");
@@ -73,8 +82,11 @@ fn main() -> Result<(), ApplicationError> {
                         .width(Pixels(1000.0))
                         .height(Pixels(1000.0));
                 })
-                .scroll_x(AppData::scroll_x)
-                .scroll_y(AppData::scroll_y)
+                .scroll_x(scroll_x)
+                .scroll_y(scroll_y)
+                .show_horizontal_scrollbar(show_horizontal_scrollbar)
+                .show_vertical_scrollbar(show_vertical_scrollbar)
+                .scroll_to_cursor(scroll_to_cursor)
                 .on_scroll(|cx, scroll_x, scroll_y| {
                     cx.emit(AppEvent::ScrollX(scroll_x));
                     cx.emit(AppEvent::ScrollY(scroll_y));

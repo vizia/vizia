@@ -5,11 +5,10 @@ use crate::icons::{ICON_CHECK, ICON_CHEVRON_DOWN};
 use crate::prelude::*;
 
 /// A view which allows the user to select an item from a dropdown list.
-#[derive(Lens)]
 pub struct PickList {
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
-    placeholder: String,
-    is_open: bool,
+    placeholder: Signal<String>,
+    is_open: Signal<bool>,
 }
 
 pub(crate) enum PickListEvent {
@@ -18,32 +17,41 @@ pub(crate) enum PickListEvent {
 
 impl PickList {
     /// Creates a new [PickList] view.
-    pub fn new<L1, L2, T>(
+    pub fn new<L, S, V, T>(
         cx: &mut Context,
-        list: L1,
-        selected: L2,
+        list: L,
+        selected: S,
         show_handle: bool,
     ) -> Handle<Self>
     where
-        L1: Lens,
-        L1::Target: Deref<Target = [T]> + Data,
-        T: 'static + Data + ToStringLocalized,
-        L2: Lens<Target = usize>,
+        L: SignalMapExt<V> + Res<V> + 'static,
+        V: Deref<Target = [Signal<T>]> + Clone + 'static,
+        T: 'static + ToStringLocalized + Clone,
+        S: Res<usize> + 'static,
     {
-        Self { on_select: None, placeholder: String::new(), is_open: false }
+        let is_open = Signal::new(false);
+        let placeholder = Signal::new(String::new());
+        let selected = selected.to_signal(cx);
+        Self { on_select: None, placeholder, is_open }
             .build(cx, |cx| {
                 Button::new(cx, |cx| {
                     // A Label and an optional Icon
                     HStack::new(cx, move |cx| {
-                        Label::new(cx, PickList::placeholder)
+                        Label::new(cx, placeholder)
                             .bind(list, move |handle, list| {
                                 handle.bind(selected, move |handle, sel| {
-                                    let selected_index = sel.get(&handle);
-                                    let list_len = list.map(|list| list.len()).get(&handle);
+                                    let selected_index = sel;
+                                    let list_len = list.len();
                                     if selected_index < list_len {
-                                        handle.text(list.idx(selected_index));
+                                        let selected_text =
+                                            if let Some(item) = list.get(selected_index) {
+                                                item.get().to_string_local(&handle)
+                                            } else {
+                                                placeholder.get()
+                                            };
+                                        handle.text(selected_text);
                                     } else {
-                                        handle.text(PickList::placeholder);
+                                        handle.text(placeholder.get());
                                     }
                                 });
                             })
@@ -65,8 +73,8 @@ impl PickList {
                 .width(Stretch(1.0))
                 .on_press(|cx| cx.emit(PopupEvent::Open));
 
-                Binding::new(cx, PickList::is_open, move |cx, is_open| {
-                    if is_open.get(cx) {
+                Binding::new(cx, is_open, move |cx, is_open| {
+                    if is_open {
                         Popup::new(cx, |cx| {
                             List::new(cx, list, move |cx, _, item| {
                                 Element::new(cx).class("focus-indicator");
@@ -106,20 +114,20 @@ impl View for PickList {
 
         event.map(|popup_event, meta| match popup_event {
             PopupEvent::Open => {
-                self.is_open = true;
+                self.is_open.set(true);
 
                 meta.consume();
             }
 
             PopupEvent::Close => {
-                self.is_open = false;
+                self.is_open.set(false);
                 let e = cx.first_child();
                 cx.with_current(e, |cx| cx.focus());
                 meta.consume();
             }
 
             PopupEvent::Switch => {
-                self.is_open ^= true;
+                self.is_open.set(!self.is_open.get());
                 meta.consume();
             }
         });
@@ -130,8 +138,8 @@ impl Handle<'_, PickList> {
     /// Sets the placeholder text that appears when the textbox has no value.
     pub fn placeholder<P: ToStringLocalized>(self, placeholder: impl Res<P>) -> Self {
         self.bind(placeholder, |handle, val| {
-            let txt = val.get(&handle).to_string_local(&handle);
-            handle.modify(|picklist| picklist.placeholder = txt);
+            let txt = val.to_string_local(&handle);
+            handle.modify(|picklist| picklist.placeholder.set(txt));
         })
     }
 

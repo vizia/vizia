@@ -15,8 +15,8 @@ static DEFAULT_MODIFIER_SCALAR: f32 = 0.04;
 use std::{default, f32::consts::PI};
 
 /// A circular view which represents a value.
-pub struct Knob<L> {
-    lens: L,
+pub struct Knob<T> {
+    source: T,
     default_normal: f32,
 
     is_dragging: bool,
@@ -31,21 +31,24 @@ pub struct Knob<L> {
     on_changing: Option<Box<dyn Fn(&mut EventContext, f32)>>,
 }
 
-impl<L: Lens<Target = f32>> Knob<L> {
+impl<R: Res<f32> + Clone + 'static> Knob<R> {
     /// Create a new [Knob] view.
     pub fn new(
         cx: &mut Context,
         normalized_default: impl Res<f32>,
-        lens: L,
+        value: R,
         centered: bool,
     ) -> Handle<Self> {
+        let value_for_track = value.clone();
+        let value_for_head = value.clone();
+
         Self {
-            lens,
-            default_normal: normalized_default.get(cx),
+            source: value.clone(),
+            default_normal: normalized_default.get_value(cx),
 
             is_dragging: false,
             prev_drag_y: 0.0,
-            continuous_normal: lens.get(cx),
+            continuous_normal: value.get_value(cx),
 
             drag_scalar: DEFAULT_DRAG_SCALAR,
             wheel_scalar: DEFAULT_WHEEL_SCALAR,
@@ -65,13 +68,16 @@ impl<L: Lens<Target = f32>> Knob<L> {
                     60.,
                     KnobMode::Continuous,
                 )
-                .value(lens)
+                .value(value_for_track)
                 .class("knob-track");
 
                 HStack::new(cx, |cx| {
                     Element::new(cx).class("knob-tick");
                 })
-                .rotate(lens.map(|v| Angle::Deg(*v * 300.0 - 150.0)))
+                .bind(value_for_head, |handle, value| {
+                    let value = Res::get_value(&value, &handle);
+                    handle.rotate(Angle::Deg(value * 300.0 - 150.0));
+                })
                 .class("knob-head");
             });
         })
@@ -79,24 +85,28 @@ impl<L: Lens<Target = f32>> Knob<L> {
         .role(Role::Slider)
         .numeric_value(lens.map(|val| (*val as f64 * 100.0).round()))
     }
+}
 
+impl<R: Res<f32> + Clone + 'static> Knob<R> {
     /// Create a custom [Knob] view.
     pub fn custom<F, V: View>(
         cx: &mut Context,
         default_normal: f32,
-        lens: L,
+        value: R,
         content: F,
     ) -> Handle<'_, Self>
     where
-        F: 'static + Fn(&mut Context, L) -> Handle<V>,
+        F: 'static + Fn(&mut Context, R) -> Handle<V>,
     {
+        let value_for_content = value.clone();
+
         Self {
-            lens,
+            source: value.clone(),
             default_normal,
 
             is_dragging: false,
             prev_drag_y: 0.0,
-            continuous_normal: lens.get(cx),
+            continuous_normal: value.get_value(cx),
 
             drag_scalar: DEFAULT_DRAG_SCALAR,
             wheel_scalar: DEFAULT_WHEEL_SCALAR,
@@ -107,20 +117,22 @@ impl<L: Lens<Target = f32>> Knob<L> {
         }
         .build(cx, move |cx| {
             ZStack::new(cx, move |cx| {
-                (content)(cx, lens).width(Percentage(100.0)).height(Percentage(100.0));
+                (content)(cx, value_for_content.clone())
+                    .width(Percentage(100.0))
+                    .height(Percentage(100.0));
             });
         })
     }
 }
 
-impl<L: Lens<Target = f32>> Handle<'_, Knob<L>> {
+impl<T: Res<f32> + 'static> Handle<'_, Knob<T>> {
     /// Sets the callback triggered when the knob value is changed.
     pub fn on_change<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, f32),
     {
         if let Some(view) = self.cx.views.get_mut(&self.entity) {
-            if let Some(knob) = view.downcast_mut::<Knob<L>>() {
+            if let Some(knob) = view.downcast_mut::<Knob<T>>() {
                 knob.on_changing = Some(Box::new(callback));
             }
         }
@@ -129,7 +141,7 @@ impl<L: Lens<Target = f32>> Handle<'_, Knob<L>> {
     }
 }
 
-impl<L: Lens<Target = f32>> View for Knob<L> {
+impl<T: Res<f32> + 'static> View for Knob<T> {
     fn element(&self) -> Option<&'static str> {
         Some("knob")
     }
@@ -156,13 +168,13 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
                 cx.capture();
                 cx.focus_with_visibility(false);
 
-                self.continuous_normal = self.lens.get(cx);
+                self.continuous_normal = self.source.get_value(cx);
             }
 
             WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                 self.is_dragging = false;
 
-                self.continuous_normal = self.lens.get(cx);
+                self.continuous_normal = self.source.get_value(cx);
 
                 cx.release();
             }
@@ -200,12 +212,12 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
             }
 
             WindowEvent::KeyDown(Code::ArrowUp | Code::ArrowRight, _) => {
-                self.continuous_normal = self.lens.get(cx);
+                self.continuous_normal = self.source.get_value(cx);
                 move_virtual_slider(self, cx, self.continuous_normal + self.arrow_scalar);
             }
 
             WindowEvent::KeyDown(Code::ArrowDown | Code::ArrowLeft, _) => {
-                self.continuous_normal = self.lens.get(cx);
+                self.continuous_normal = self.source.get_value(cx);
                 move_virtual_slider(self, cx, self.continuous_normal - self.arrow_scalar);
             }
 
@@ -357,10 +369,10 @@ impl View for ArcTrack {
 }
 
 impl Handle<'_, ArcTrack> {
-    pub fn value<L: Lens<Target = f32>>(self, lens: L) -> Self {
+    pub fn value<R: Res<f32>>(self, value: R) -> Self {
         let entity = self.entity;
-        Binding::new(self.cx, lens, move |cx, value| {
-            let value = value.get(cx);
+        value.set_or_bind(self.cx, move |cx, value| {
+            let value = Res::get_value(&value, cx);
             if let Some(view) = cx.views.get_mut(&entity) {
                 if let Some(knob) = view.downcast_mut::<ArcTrack>() {
                     knob.normalized_value = value;
@@ -576,10 +588,10 @@ impl View for TickKnob {
 }
 
 impl Handle<'_, TickKnob> {
-    pub fn value<L: Lens<Target = f32>>(self, lens: L) -> Self {
+    pub fn value<R: Res<f32>>(self, value: R) -> Self {
         let entity = self.entity;
-        Binding::new(self.cx, lens, move |cx, value| {
-            let value = value.get(cx);
+        value.set_or_bind(self.cx, move |cx, value| {
+            let value = Res::get_value(&value, cx);
             if let Some(view) = cx.views.get_mut(&entity) {
                 if let Some(knob) = view.downcast_mut::<TickKnob>() {
                     knob.normalized_value = value;

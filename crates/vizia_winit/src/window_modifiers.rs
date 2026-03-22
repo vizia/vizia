@@ -5,7 +5,7 @@ use vizia_window::{Anchor, AnchorTarget, WindowButtons, WindowPosition, WindowSi
 pub trait WindowModifiers {
     fn on_close(self, callback: impl Fn(&mut EventContext) + 'static) -> Self;
     fn on_create(self, callback: impl Fn(&mut EventContext) + 'static) -> Self;
-    /// Sets the title of the window to the given value. Accepts a type, or lens to a type, which implements `ToString`.
+    /// Sets the title of the window to the given value. Accepts a value or signal of type any type that implements `ToString`.
     ///
     /// # Example
     /// ```no_run
@@ -18,7 +18,7 @@ pub trait WindowModifiers {
     /// .run();
     /// ```
     fn title<T: ToString>(self, title: impl Res<T>) -> Self;
-    /// Sets the inner size of the window to the given value. Accepts a value, or lens, which can be converted to a [`WindowSize`].
+    /// Sets the inner size of the window to the given value. Accepts a value or signal that can be converted to a [`WindowSize`].
     ///
     /// The inner size is the window area excluding the window borders.
     ///
@@ -33,7 +33,7 @@ pub trait WindowModifiers {
     /// .run();
     /// ```
     fn inner_size<S: Into<WindowSize>>(self, size: impl Res<S>) -> Self;
-    /// Sets the minimum inner size of the window to the given value. Accepts an optional value, or lens, which can be converted to a [`WindowSize`].
+    /// Sets the minimum inner size of the window to the given value. Accepts an optional value or signal that can be converted to a [`WindowSize`].
     ///
     /// Setting the minimum inner size to `None` removes the minimum inner size constraint from the window.
     ///
@@ -48,7 +48,7 @@ pub trait WindowModifiers {
     /// .run();
     /// ```
     fn min_inner_size<S: Into<WindowSize>>(self, size: impl Res<Option<S>>) -> Self;
-    /// Sets the maximum inner size of the window to the given value. Accepts an optional value, or lens, which can be converted to a [`WindowSize`].
+    /// Sets the maximum inner size of the window to the given value. Accepts an optional value or signal that can be converted to a [`WindowSize`].
     ///
     /// Setting the maximum inner size to `None` removes the maximum inner size constraint from the window.
     ///
@@ -63,7 +63,7 @@ pub trait WindowModifiers {
     /// .run();
     /// ```
     fn max_inner_size<S: Into<WindowSize>>(self, size: impl Res<Option<S>>) -> Self;
-    /// Sets the position of the window to the given value. Accepts a value, or lens, which can be converted to a [`Position`].
+    /// Sets the position of the window to the given value. Accepts a value or signal that can be converted to a [`Position`].
     ///
     /// # Example
     /// ```no_run
@@ -85,7 +85,7 @@ pub trait WindowModifiers {
 
     fn parent_anchor<P: Into<Anchor>>(self, anchor: impl Res<P>) -> Self;
 
-    /// Sets whether the window can be resized. Accepts a boolean value, or lens to a boolean value.
+    /// Sets whether the window can be resized. Accepts a boolean value or `Res<bool>` source.
     ///
     /// # Example
     /// ```no_run
@@ -98,7 +98,7 @@ pub trait WindowModifiers {
     /// .run();
     /// ```
     fn resizable(self, flag: impl Res<bool>) -> Self;
-    /// Sets whether the window is minimized. Accepts a boolean value, or lens to a boolean value.
+    /// Sets whether the window is minimized. Accepts a boolean value or `Res<bool>` source.
     ///
     /// # Example
     /// ```no_run
@@ -111,7 +111,7 @@ pub trait WindowModifiers {
     /// .run();
     /// ```
     fn minimized(self, flag: impl Res<bool>) -> Self;
-    /// Sets whether the window is maximized. Accepts a boolean value, or lens to a boolean value.
+    /// Sets whether the window is maximized. Accepts a boolean value or `Res<bool>` source.
     ///
     /// # Example
     /// ```no_run
@@ -124,7 +124,7 @@ pub trait WindowModifiers {
     /// .run();
     /// ```
     fn maximized(self, flag: impl Res<bool>) -> Self;
-    /// Sets whether the window is visible. Accepts a boolean value, or lens to a boolean value.
+    /// Sets whether the window is visible. Accepts a boolean value or `Res<bool>` source.
     ///
     /// # Example
     /// ```no_run
@@ -137,7 +137,7 @@ pub trait WindowModifiers {
     /// .run();
     /// ```
     fn visible(self, flag: impl Res<bool>) -> Self;
-    /// Sets whether the window is transparent. Accepts a boolean value, or lens to a boolean value.
+    /// Sets whether the window is transparent.
     ///
     /// # Example
     /// ```no_run
@@ -150,7 +150,7 @@ pub trait WindowModifiers {
     /// .run();
     /// ```
     fn transparent(self, flag: bool) -> Self;
-    /// Sets whether the window has decorations. Accepts a boolean value, or lens to a boolean value.
+    /// Sets whether the window has decorations.
     ///
     /// # Example
     /// ```no_run
@@ -163,7 +163,7 @@ pub trait WindowModifiers {
     /// .run();
     /// ```
     fn decorations(self, flag: bool) -> Self;
-    /// Sets whether the window should be on top of other windows. Accepts a boolean value, or lens to a boolean value.
+    /// Sets whether the window should be on top of other windows.
     ///
     /// # Example
     /// ```no_run

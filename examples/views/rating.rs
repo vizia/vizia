@@ -2,17 +2,16 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-#[derive(Clone, Lens)]
 struct AppData {
-    rating1: u32,
-    rating2: u32,
+    rating1: Signal<u32>,
+    rating2: Signal<u32>,
 }
 
 impl Model for AppData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::SetRating1(val) => self.rating1 = *val,
-            AppEvent::SetRating2(val) => self.rating2 = *val,
+            AppEvent::SetRating1(val) => self.rating1.set(*val),
+            AppEvent::SetRating2(val) => self.rating2.set(*val),
         })
     }
 }
@@ -24,12 +23,15 @@ enum AppEvent {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { rating1: 3, rating2: 7 }.build(cx);
+        let rating1 = Signal::new(3);
+        let rating2 = Signal::new(7);
+
+        AppData { rating1, rating2 }.build(cx);
 
         ExamplePage::vertical(cx, |cx| {
-            Rating::new(cx, 5, AppData::rating1)
+            Rating::new(cx, 5, rating1)
                 .on_change(|ex, rating| ex.emit(AppEvent::SetRating1(rating)));
-            Rating::new(cx, 10, AppData::rating2)
+            Rating::new(cx, 10, rating2)
                 .on_change(|ex, rating| ex.emit(AppEvent::SetRating2(rating)));
         });
     })

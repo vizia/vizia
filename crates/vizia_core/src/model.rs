@@ -1,6 +1,6 @@
 //! Models are used to store application data and can be bound to by views to visually display the data.
 
-use crate::{events::ViewHandler, prelude::*};
+use crate::prelude::*;
 use hashbrown::HashMap;
 use std::any::{Any, TypeId};
 
@@ -43,7 +43,7 @@ pub trait Model: 'static + Sized {
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
     /// #
-    /// # #[derive(Default, Lens)]
+    /// # #[derive(Default)]
     /// # pub struct AppData {
     /// #     count: i32,
     /// # }
@@ -78,10 +78,10 @@ pub trait Model: 'static + Sized {
     ///
     /// ```
     /// # use vizia_core::prelude::*;
-    /// # use vizia_derive::*;
+    ///
     /// # use vizia_winit::application::Application;
     /// #
-    /// # #[derive(Default, Lens)]
+    /// # #[derive(Default)]
     /// # pub struct AppData {
     /// #     count: i32,
     /// # }
@@ -146,18 +146,3 @@ impl<T: Model> ModelData for T {
 }
 
 impl Model for () {}
-
-#[derive(Copy, Clone)]
-pub(crate) enum ModelOrView<'a> {
-    Model(&'a dyn ModelData),
-    View(&'a dyn ViewHandler),
-}
-
-impl<'a> ModelOrView<'a> {
-    pub fn downcast_ref<T: 'static>(self) -> Option<&'a T> {
-        match self {
-            ModelOrView::Model(m) => m.downcast_ref(),
-            ModelOrView::View(v) => v.downcast_ref(),
-        }
-    }
-}

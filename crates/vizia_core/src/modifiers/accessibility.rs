@@ -19,8 +19,8 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, move |cx| {
-            name.set_or_bind(cx, entity, move |cx, name| {
-                cx.style.name.insert(entity, name.get(cx).to_string_local(cx));
+            name.set_or_bind(cx, move |cx, name| {
+                cx.style.name.insert(entity, name.get_value(cx).to_string_local(cx));
                 cx.style.needs_access_update(entity);
             });
         });
@@ -53,9 +53,9 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            hidden.set_or_bind(cx, entity, |cx, hidden| {
-                cx.style.hidden.insert(cx.current, hidden.get(cx).into());
-                cx.style.needs_access_update(cx.current);
+            hidden.set_or_bind(cx, move |cx, hidden| {
+                cx.style.hidden.insert(entity, hidden.get_value(cx).into());
+                cx.style.needs_access_update(entity);
             });
         });
 
@@ -67,11 +67,11 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, |cx, val| {
-                let v = val.get(cx).into();
+            value.set_or_bind(cx, move |cx, val| {
+                let v = val.get_value(cx).into();
 
-                cx.style.numeric_value.insert(cx.current, v);
-                cx.style.needs_access_update(cx.current);
+                cx.style.numeric_value.insert(entity, v);
+                cx.style.needs_access_update(entity);
             });
         });
 
@@ -82,10 +82,10 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     fn text_value<U: ToStringLocalized>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
-        self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, |cx, val| {
-                cx.style.text_value.insert(cx.current, val.get(cx).to_string_local(cx));
-                cx.style.needs_access_update(cx.current);
+        self.context().with_current(current, move |cx| {
+            value.set_or_bind(cx, move |cx, val| {
+                cx.style.text_value.insert(entity, val.get_value(cx).to_string_local(cx));
+                cx.style.needs_access_update(entity);
             });
         });
 

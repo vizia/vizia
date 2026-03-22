@@ -1,0 +1,9 @@
+[package]
+name = "vizia_reactive"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+smallvec = "1.15.1"
+parking_lot = { workspace = true }

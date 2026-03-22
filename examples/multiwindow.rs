@@ -6,26 +6,31 @@ fn main() {
 }
 
 #[cfg(all(feature = "winit", not(feature = "baseview")))]
-#[derive(Lens)]
 struct AppData {
-    color: Color,
-    show_window: bool,
+    color: Signal<Color>,
+    show_window: Signal<bool>,
 }
 
 #[cfg(all(feature = "winit", not(feature = "baseview")))]
 impl Model for AppData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::ShowWindow => self.show_window = true,
-            AppEvent::WindowClosed => self.show_window = false,
+            AppEvent::ShowWindow => self.show_window.set(true),
+            AppEvent::WindowClosed => self.show_window.set(false),
             AppEvent::SetRed(val) => {
-                self.color = Color::rgb((*val * 255.0) as u8, self.color.g(), self.color.b())
+                self.color.update(|color| {
+                    *color = Color::rgb((*val * 255.0) as u8, color.g(), color.b())
+                });
             }
             AppEvent::SetGreen(val) => {
-                self.color = Color::rgb(self.color.r(), (*val * 255.0) as u8, self.color.b())
+                self.color.update(|color| {
+                    *color = Color::rgb(color.r(), (*val * 255.0) as u8, color.b())
+                });
             }
             AppEvent::SetBlue(val) => {
-                self.color = Color::rgb(self.color.r(), self.color.g(), (*val * 255.0) as u8)
+                self.color.update(|color| {
+                    *color = Color::rgb(color.r(), color.g(), (*val * 255.0) as u8)
+                });
             }
         })
     }
@@ -43,18 +48,22 @@ pub enum AppEvent {
 #[cfg(all(feature = "winit", not(feature = "baseview")))]
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { color: Color::white(), show_window: false }.build(cx);
+        let color = Signal::new(Color::white());
+        let show_window = Signal::new(false);
+        let red = Memo::new(move |_| color.get().r() as f32 / 255.0);
+        let green = Memo::new(move |_| color.get().g() as f32 / 255.0);
+        let blue = Memo::new(move |_| color.get().b() as f32 / 255.0);
 
-        Binding::new(cx, AppData::show_window, |cx, show_subwindow| {
-            if show_subwindow.get(cx) {
-                Window::new(cx, |cx| {
+        AppData { color, show_window }.build(cx);
+
+        Binding::new(cx, show_window, move |cx, show_subwindow| {
+            if show_subwindow {
+                Window::new(cx, move |cx| {
                     VStack::new(cx, |cx: &mut Context| {
-                        Slider::new(cx, AppData::color.map(|c| c.r() as f32 / 255.0))
-                            .on_change(|cx, val| cx.emit(AppEvent::SetRed(val)));
-                        Slider::new(cx, AppData::color.map(|c| c.g() as f32 / 255.0))
+                        Slider::new(cx, red).on_change(|cx, val| cx.emit(AppEvent::SetRed(val)));
+                        Slider::new(cx, green)
                             .on_change(|cx, val| cx.emit(AppEvent::SetGreen(val)));
-                        Slider::new(cx, AppData::color.map(|c| c.b() as f32 / 255.0))
-                            .on_change(|cx, val| cx.emit(AppEvent::SetBlue(val)));
+                        Slider::new(cx, blue).on_change(|cx, val| cx.emit(AppEvent::SetBlue(val)));
                     })
                     .padding(Pixels(20.0))
                     .alignment(Alignment::Center)
@@ -75,7 +84,7 @@ fn main() -> Result<(), ApplicationError> {
         })
         .size(Auto)
         .padding(Pixels(20.0))
-        .background_color(AppData::color);
+        .background_color(color);
     })
     .title("Main")
     .run()

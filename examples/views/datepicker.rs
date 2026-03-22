@@ -3,9 +3,8 @@ use chrono::{NaiveDate, Utc};
 use helpers::*;
 use vizia::prelude::*;
 
-#[derive(Clone, Lens)]
 struct AppState {
-    date: NaiveDate,
+    date: Signal<NaiveDate>,
 }
 
 pub enum AppEvent {
@@ -16,7 +15,7 @@ impl Model for AppState {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::SetDate(date) => {
-                self.date = *date;
+                self.date.set(*date);
             }
         });
     }
@@ -24,11 +23,12 @@ impl Model for AppState {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppState { date: Utc::now().date_naive() }.build(cx);
+        let date = Signal::new(Utc::now().date_naive());
+
+        AppState { date }.build(cx);
 
         ExamplePage::new(cx, |cx| {
-            Datepicker::new(cx, AppState::date)
-                .on_select(|cx, date| cx.emit(AppEvent::SetDate(date)));
+            Datepicker::new(cx, date).on_select(|cx, date| cx.emit(AppEvent::SetDate(date)));
         });
     })
     .title("Datepicker")

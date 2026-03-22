@@ -3,10 +3,9 @@ use helpers::*;
 use vizia::icons::{ICON_EYE, ICON_EYE_OFF};
 use vizia::prelude::*;
 
-#[derive(Debug, Lens)]
 pub struct AppData {
-    pub option1: bool,
-    pub option2: bool,
+    pub option1: Signal<bool>,
+    pub option2: Signal<bool>,
 }
 
 #[derive(Debug)]
@@ -18,8 +17,8 @@ impl Model for AppData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::ToggleOptions => {
-                self.option1 ^= true;
-                self.option2 ^= true;
+                self.option1.update(|option1| *option1 ^= true);
+                self.option2.update(|option2| *option2 ^= true);
             }
         });
     }
@@ -27,7 +26,10 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { option1: true, option2: false }.build(cx);
+        let option1 = Signal::new(true);
+        let option2 = Signal::new(false);
+
+        AppData { option1, option2 }.build(cx);
 
         ExamplePage::vertical(cx, |cx| {
             Label::new(cx, "Checkbox with label").class("h2");
@@ -35,7 +37,7 @@ fn main() -> Result<(), ApplicationError> {
             VStack::new(cx, |cx| {
                 // Checkboxes with label
                 HStack::new(cx, |cx| {
-                    Checkbox::new(cx, AppData::option1)
+                    Checkbox::new(cx, option1)
                         .on_toggle(|cx| cx.emit(AppEvent::ToggleOptions))
                         .id("checkbox_1");
                     Label::new(cx, "Checkbox 1").describing("checkbox_1");
@@ -45,7 +47,7 @@ fn main() -> Result<(), ApplicationError> {
                 .alignment(Alignment::Center);
 
                 HStack::new(cx, |cx| {
-                    Checkbox::new(cx, AppData::option2)
+                    Checkbox::new(cx, option2)
                         .on_toggle(|cx| cx.emit(AppEvent::ToggleOptions))
                         .id("checkbox_2");
                     Label::new(cx, "Checkbox 2").describing("checkbox_2");
@@ -60,7 +62,7 @@ fn main() -> Result<(), ApplicationError> {
             Label::new(cx, "Checkbox with custom icon and label").class("h2");
 
             HStack::new(cx, |cx| {
-                Checkbox::with_icons(cx, AppData::option1, Some(ICON_EYE_OFF), Some(ICON_EYE))
+                Checkbox::with_icons(cx, option1, Some(ICON_EYE_OFF), Some(ICON_EYE))
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleOptions))
                     .id("checkbox_3");
                 Label::new(cx, "Checkbox 3").describing("checkbox_3");

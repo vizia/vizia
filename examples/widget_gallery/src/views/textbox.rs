@@ -2,9 +2,8 @@ use vizia::prelude::*;
 
 use crate::DemoRegion;
 
-#[derive(Lens)]
 pub struct TextboxData {
-    text: String,
+    text: Signal<String>,
 }
 
 pub enum TextboxEvent {
@@ -14,13 +13,14 @@ pub enum TextboxEvent {
 impl Model for TextboxData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|textbox_event, _| match textbox_event {
-            TextboxEvent::SetText(text) => self.text = text.clone(),
+            TextboxEvent::SetText(text) => self.text.set(text.clone()),
         });
     }
 }
 
 pub fn textbox(cx: &mut Context) {
-    TextboxData { text: "Hello Vizia".to_string() }.build(cx);
+    let text = Signal::new("Hello Vizia".to_string());
+    TextboxData { text }.build(cx);
 
     VStack::new(cx, |cx| {
         Markdown::new(
@@ -36,8 +36,8 @@ A textbox can be used to display a string of text which can be edited.
 
         DemoRegion::new(
             cx,
-            |cx| {
-                Textbox::new(cx, TextboxData::text)
+            move |cx| {
+                Textbox::new(cx, text)
                     .on_submit(|cx, text, _| cx.emit(TextboxEvent::SetText(text.clone())))
                     .width(Pixels(100.0));
             },

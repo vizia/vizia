@@ -68,8 +68,8 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            applied.set_or_bind(cx, entity, move |cx, applied| {
-                let applied = applied.get(cx);
+            applied.set_or_bind(cx, move |cx, applied| {
+                let applied = applied.get_value(cx);
                 if let Some(class_list) = cx.style.classes.get_mut(entity) {
                     if applied {
                         class_list.insert(name.clone());
@@ -98,8 +98,8 @@ pub trait StyleModifiers: internal::Modifiable {
         }
 
         self.context().with_current(current, move |cx| {
-            state.set_or_bind(cx, entity, move |cx, val| {
-                let val = val.get(cx).into();
+            state.set_or_bind(cx, move |cx, val| {
+                let val = val.get_value(cx).into();
                 if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
                     pseudo_classes.set(PseudoClassFlags::CHECKED, val);
                 }
@@ -119,15 +119,15 @@ pub trait StyleModifiers: internal::Modifiable {
         let current = self.current();
 
         self.context().with_current(current, |cx| {
-            state.set_or_bind(cx, entity, |cx, val| {
-                let val = val.get(cx).into();
+            state.set_or_bind(cx, move |cx, val| {
+                let val = val.get_value(cx).into();
 
                 if val {
                     cx.focus();
                     // cx.focus_with_visibility(true);
                 }
 
-                cx.needs_restyle(cx.current);
+                cx.needs_restyle(entity);
             });
         });
 
@@ -144,14 +144,14 @@ pub trait StyleModifiers: internal::Modifiable {
         let current = self.current();
 
         self.context().with_current(current, move |cx| {
-            focus.set_or_bind(cx, entity, move |cx, f| {
-                visibility.set_or_bind(cx, entity, move |cx, v| {
-                    let focus = f.get(cx).into();
-                    let visibility = v.get(cx).into();
+            focus.set_or_bind(cx, move |cx, f| {
+                visibility.set_or_bind(cx, move |cx, v| {
+                    let focus = f.get_value(cx).into();
+                    let visibility = v.get_value(cx).into();
                     if focus {
                         //cx.focus();
                         cx.focus_with_visibility(visibility);
-                        cx.needs_restyle(cx.current);
+                        cx.needs_restyle(entity);
                     }
                 });
             });
@@ -165,13 +165,13 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            state.set_or_bind(cx, entity, move |cx, val| {
-                let val = val.get(cx).into();
-                if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
+            state.set_or_bind(cx, move |cx, val| {
+                let val = val.get_value(cx).into();
+                if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
                     pseudo_classes.set(PseudoClassFlags::READ_ONLY, val);
                 }
 
-                cx.needs_restyle(cx.current);
+                cx.needs_restyle(entity);
             });
         });
 
@@ -183,13 +183,13 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            state.set_or_bind(cx, entity, move |cx, val| {
-                let val = val.get(cx).into();
-                if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
+            state.set_or_bind(cx, move |cx, val| {
+                let val = val.get_value(cx).into();
+                if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
                     pseudo_classes.set(PseudoClassFlags::READ_WRITE, val);
                 }
 
-                cx.needs_restyle(cx.current);
+                cx.needs_restyle(entity);
             });
         });
 
@@ -201,13 +201,13 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            state.set_or_bind(cx, entity, move |cx, val| {
-                let val = val.get(cx).into();
-                if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
+            state.set_or_bind(cx, move |cx, val| {
+                let val = val.get_value(cx).into();
+                if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
                     pseudo_classes.set(PseudoClassFlags::PLACEHOLDER_SHOWN, val);
                 }
 
-                cx.needs_restyle(cx.current);
+                cx.needs_restyle(entity);
             });
         });
 
@@ -256,9 +256,9 @@ pub trait StyleModifiers: internal::Modifiable {
     /// Views with the same z-index are rendered in tree order.
     fn z_index<U: Into<i32>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
-        // value.set_or_bind(self.context(), entity, |cx, v| {
+        // value.set_or_bind(self.context(), |cx, v| {
         let cx = self.context();
-        let value = value.get(cx).into();
+        let value = value.get_value(cx).into();
         cx.style.z_index.insert(entity, value);
         cx.needs_redraw(entity);
         // });
@@ -271,9 +271,9 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
-                cx.style.clip_path.insert(cx.current, value);
+            value.set_or_bind(cx, move |cx, v| {
+                let value = v.get_value(cx).into();
+                cx.style.clip_path.insert(entity, value);
                 cx.needs_reclip(entity);
                 cx.needs_redraw(entity);
             });
@@ -287,10 +287,10 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
-                cx.style.overflowx.insert(cx.current, value);
-                cx.style.overflowy.insert(cx.current, value);
+            value.set_or_bind(cx, move |cx, v| {
+                let value = v.get_value(cx).into();
+                cx.style.overflowx.insert(entity, value);
+                cx.style.overflowy.insert(entity, value);
                 cx.needs_reclip(entity);
                 cx.needs_redraw(entity);
             });
@@ -322,9 +322,9 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
-                cx.style.backdrop_filter.insert(cx.current, value);
+            value.set_or_bind(cx, move |cx, v| {
+                let value = v.get_value(cx).into();
+                cx.style.backdrop_filter.insert(entity, value);
 
                 cx.needs_redraw(entity);
             });
@@ -338,12 +338,12 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
-                if let Some(shadows) = cx.style.shadow.get_inline_mut(cx.current) {
+            value.set_or_bind(cx, move |cx, v| {
+                let value = v.get_value(cx).into();
+                if let Some(shadows) = cx.style.shadow.get_inline_mut(entity) {
                     shadows.push(value);
                 } else {
-                    cx.style.shadow.insert(cx.current, vec![value]);
+                    cx.style.shadow.insert(entity, vec![value]);
                 }
 
                 cx.needs_redraw(entity);
@@ -358,10 +358,10 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
+            value.set_or_bind(cx, move |cx, v| {
+                let value = v.get_value(cx).into();
 
-                cx.style.shadow.insert(cx.current, value);
+                cx.style.shadow.insert(entity, value);
 
                 cx.needs_redraw(entity);
             });
@@ -375,16 +375,14 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
-                if let Some(background_images) =
-                    cx.style.background_image.get_inline_mut(cx.current)
-                {
+            value.set_or_bind(cx, move |cx, v| {
+                let value = v.get_value(cx).into();
+                if let Some(background_images) = cx.style.background_image.get_inline_mut(entity) {
                     background_images.push(ImageOrGradient::Gradient(value));
                 } else {
                     cx.style
                         .background_image
-                        .insert(cx.current, vec![ImageOrGradient::Gradient(value)]);
+                        .insert(entity, vec![ImageOrGradient::Gradient(value)]);
                 }
 
                 cx.needs_redraw(entity);
@@ -407,8 +405,8 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, val| {
-                let image = val.get(cx).into();
+            value.set_or_bind(cx, move |cx, val| {
+                let image = val.get_value(cx).into();
                 let image = match image {
                     BackgroundImage::Gradient(gradient) => {
                         Some(ImageOrGradient::Gradient(*gradient))
@@ -419,7 +417,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 };
 
                 if let Some(image) = image {
-                    cx.style.background_image.insert(cx.current, vec![image]);
+                    cx.style.background_image.insert(entity, vec![image]);
                 }
 
                 cx.needs_redraw(entity);
@@ -432,9 +430,9 @@ pub trait StyleModifiers: internal::Modifiable {
     // Border Properties
     fn border_width<U: Into<LengthOrPercentage>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
-        let current = self.current();
-        value.set_or_bind(self.context(), current, move |cx, v| {
-            cx.style.border_width.insert(entity, v.get(cx).into());
+        let _current = self.current();
+        value.set_or_bind(self.context(), move |cx, v| {
+            cx.style.border_width.insert(entity, v.get_value(cx).into());
             cx.cache.path.remove(entity);
             cx.style.system_flags |= SystemFlags::RELAYOUT | SystemFlags::REDRAW;
             cx.set_system_flags(entity, SystemFlags::RELAYOUT | SystemFlags::REDRAW);
@@ -493,12 +491,12 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
-                cx.style.corner_top_left_radius.insert(cx.current, value.top_left);
-                cx.style.corner_top_right_radius.insert(cx.current, value.top_right);
-                cx.style.corner_bottom_left_radius.insert(cx.current, value.bottom_left);
-                cx.style.corner_bottom_right_radius.insert(cx.current, value.bottom_right);
+            value.set_or_bind(cx, move |cx, v| {
+                let value = v.get_value(cx).into();
+                cx.style.corner_top_left_radius.insert(entity, value.top_left);
+                cx.style.corner_top_right_radius.insert(entity, value.top_right);
+                cx.style.corner_bottom_left_radius.insert(entity, value.bottom_left);
+                cx.style.corner_bottom_right_radius.insert(entity, value.bottom_right);
 
                 cx.needs_redraw(entity);
             });
@@ -543,12 +541,12 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
-                cx.style.corner_top_left_shape.insert(cx.current, value.0);
-                cx.style.corner_top_right_shape.insert(cx.current, value.1);
-                cx.style.corner_bottom_right_shape.insert(cx.current, value.2);
-                cx.style.corner_bottom_left_shape.insert(cx.current, value.3);
+            value.set_or_bind(cx, move |cx, v| {
+                let value = v.get_value(cx).into();
+                cx.style.corner_top_left_shape.insert(entity, value.0);
+                cx.style.corner_top_right_shape.insert(entity, value.1);
+                cx.style.corner_bottom_right_shape.insert(entity, value.2);
+                cx.style.corner_bottom_left_shape.insert(entity, value.3);
 
                 cx.needs_redraw(entity);
             });
@@ -593,12 +591,12 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
-                cx.style.corner_top_left_smoothing.insert(cx.current, value.0);
-                cx.style.corner_top_right_smoothing.insert(cx.current, value.1);
-                cx.style.corner_bottom_left_smoothing.insert(cx.current, value.2);
-                cx.style.corner_bottom_right_smoothing.insert(cx.current, value.3);
+            value.set_or_bind(cx, move |cx, v| {
+                let value = v.get_value(cx).into();
+                cx.style.corner_top_left_smoothing.insert(entity, value.0);
+                cx.style.corner_top_right_smoothing.insert(entity, value.1);
+                cx.style.corner_bottom_left_smoothing.insert(entity, value.2);
+                cx.style.corner_bottom_right_smoothing.insert(entity, value.3);
 
                 cx.needs_redraw(entity);
             });
@@ -649,9 +647,9 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
-                cx.style.pointer_events.insert(cx.current, value);
+            value.set_or_bind(cx, move |cx, v| {
+                let value = v.get_value(cx).into();
+                cx.style.pointer_events.insert(entity, value);
             });
         });
 
@@ -663,9 +661,9 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
-                cx.style.transform.insert(cx.current, value);
+            value.set_or_bind(cx, move |cx, v| {
+                let value = v.get_value(cx).into();
+                cx.style.transform.insert(entity, value);
                 cx.needs_retransform(entity);
                 cx.needs_redraw(entity);
             });
@@ -679,11 +677,11 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                let value = v.get(cx).into();
+            value.set_or_bind(cx, move |cx, v| {
+                let value = v.get_value(cx).into();
                 let x = value.x.to_length_or_percentage();
                 let y = value.y.to_length_or_percentage();
-                cx.style.transform_origin.insert(cx.current, Translate { x, y });
+                cx.style.transform_origin.insert(entity, Translate { x, y });
                 cx.needs_retransform(entity);
                 cx.needs_redraw(entity);
             });
