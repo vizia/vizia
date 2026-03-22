@@ -9,7 +9,7 @@ impl ToggleButton {
     /// Create a new [ToggleButton] view.
     pub fn new<V: View>(
         cx: &mut Context,
-        lens: impl Lens<Target = bool>,
+        checked: impl Res<bool>,
         content: impl Fn(&mut Context) -> Handle<V> + 'static,
     ) -> Handle<Self> {
         Self { on_toggle: None }
@@ -19,7 +19,7 @@ impl ToggleButton {
             .role(Role::Button)
             .navigable(true)
             .checkable(true) // To let the accesskit know button is toggleable
-            .checked(lens)
+            .checked(checked)
     }
 }
 

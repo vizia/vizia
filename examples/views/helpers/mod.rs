@@ -14,16 +14,19 @@ pub const CENTER_LAYOUT: &str = r#"
     }
 "#;
 
-#[derive(Lens)]
 pub struct ControlsData {
-    pub disabled: bool,
-    pub theme_options: Vec<&'static str>,
-    pub selected_theme: usize,
+    pub disabled: Signal<bool>,
+    pub theme_options: Signal<Vec<Signal<&'static str>>>,
+    pub selected_theme: Signal<usize>,
 }
 
 impl Default for ControlsData {
     fn default() -> Self {
-        Self { disabled: false, theme_options: vec!["System", "Dark", "Light"], selected_theme: 0 }
+        Self {
+            disabled: Signal::new(false),
+            theme_options: Signal::new(["System", "Dark", "Light"].map(Signal::new).to_vec()),
+            selected_theme: Signal::new(0),
+        }
     }
 }
 
@@ -36,10 +39,10 @@ impl Model for ControlsData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             ControlsEvent::ToggleDisabled => {
-                self.disabled ^= true;
+                self.disabled.update(|disabled| *disabled ^= true);
             }
             ControlsEvent::SetThemeMode(theme_mode) => {
-                self.selected_theme = *theme_mode;
+                self.selected_theme.set(*theme_mode);
                 cx.emit(EnvironmentEvent::SetThemeMode(match theme_mode {
                     0 /* system */ => AppTheme::System,
                     1 /* Dark */ => AppTheme::BuiltIn(ThemeMode::DarkMode),
@@ -60,12 +63,16 @@ impl ExamplePage {
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
 
         Self.build(cx, |cx| {
-            ControlsData::default().build(cx);
+            let controls = ControlsData::default();
+            let disabled = controls.disabled;
+            let theme_options = controls.theme_options;
+            let selected_theme = controls.selected_theme;
+            controls.build(cx);
             cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System)); // set system theme
 
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
-                    Switch::new(cx, ControlsData::disabled)
+                    Switch::new(cx, disabled)
                         .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
                     // .tooltip(|cx| {
                     //     Tooltip::new(cx, |cx| {
@@ -80,7 +87,7 @@ impl ExamplePage {
                 .bottom(Stretch(1.0))
                 .size(Auto);
 
-                theme_selection_dropdown(cx);
+                theme_selection_dropdown(cx, theme_options, selected_theme);
             })
             .height(Auto)
             .width(Stretch(1.0))
@@ -91,7 +98,7 @@ impl ExamplePage {
             VStack::new(cx, |cx| {
                 (content)(cx);
             })
-            .disabled(ControlsData::disabled)
+            .disabled(disabled)
             .class("container");
         })
     }
@@ -102,12 +109,16 @@ impl ExamplePage {
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
 
         Self.build(cx, |cx| {
-            ControlsData::default().build(cx);
+            let controls = ControlsData::default();
+            let disabled = controls.disabled;
+            let theme_options = controls.theme_options;
+            let selected_theme = controls.selected_theme;
+            controls.build(cx);
             cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System)); // set system theme
 
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
-                    Switch::new(cx, ControlsData::disabled)
+                    Switch::new(cx, disabled)
                         .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
                     // .tooltip(|cx| {
                     //     Tooltip::new(cx, |cx| {
@@ -122,7 +133,7 @@ impl ExamplePage {
                 .bottom(Stretch(1.0))
                 .size(Auto);
 
-                theme_selection_dropdown(cx);
+                theme_selection_dropdown(cx, theme_options, selected_theme);
             })
             .height(Auto)
             .width(Stretch(1.0))
@@ -134,7 +145,7 @@ impl ExamplePage {
                 let _e = HStack::new(cx, |cx| {
                     (content)(cx);
                 })
-                .disabled(ControlsData::disabled)
+                .disabled(disabled)
                 .class("container")
                 .entity();
             });
@@ -144,8 +155,12 @@ impl ExamplePage {
 
 impl View for ExamplePage {}
 
-fn theme_selection_dropdown(cx: &mut Context) {
-    PickList::new(cx, ControlsData::theme_options, ControlsData::selected_theme, true)
+fn theme_selection_dropdown(
+    cx: &mut Context,
+    theme_options: Signal<Vec<Signal<&'static str>>>,
+    selected_theme: Signal<usize>,
+) {
+    PickList::new(cx, theme_options, selected_theme, true)
         .on_select(|cx, index| cx.emit(ControlsEvent::SetThemeMode(index)))
         .width(Pixels(100.0));
     // .tooltip(|cx| {

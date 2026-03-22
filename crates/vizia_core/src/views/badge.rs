@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 /// Enum which represents the placement of a badge on its parent.
-#[derive(Default, Debug, Clone, Copy, Data, PartialEq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub enum BadgePlacement {
     /// The badge should be placed at the top-left of the view.
     TopLeft,
@@ -25,9 +25,8 @@ pub enum BadgePlacement {
 impl_res_simple!(BadgePlacement);
 
 /// A Badge view for showing notifications, counts, or status information.
-#[derive(Lens)]
 pub struct Badge {
-    placement: Option<BadgePlacement>,
+    placement: Signal<BadgePlacement>,
 }
 
 impl Badge {
@@ -35,61 +34,54 @@ impl Badge {
     where
         F: FnOnce(&mut Context),
     {
-        Self { placement: None }.build(cx, content).bind(
-            Badge::placement,
-            |mut handle, placement| {
-                if let Some(placement) = placement.get(&handle) {
-                    let (t, b) = match placement {
-                        BadgePlacement::TopLeft | BadgePlacement::TopRight => {
-                            (Stretch(1.0), Percentage(85.35))
-                        }
-                        BadgePlacement::Top => (Stretch(1.0), Percentage(100.0)),
-                        BadgePlacement::Bottom => (Percentage(100.0), Stretch(1.0)),
-                        BadgePlacement::BottomLeft | BadgePlacement::BottomRight => {
-                            (Percentage(85.35), Stretch(1.0))
-                        }
-
-                        BadgePlacement::Left | BadgePlacement::Right => {
-                            (Stretch(1.0), Stretch(1.0))
-                        }
-                    };
-
-                    let (l, r) = match placement {
-                        BadgePlacement::TopLeft | BadgePlacement::BottomLeft => {
-                            (Stretch(1.0), Percentage(85.35))
-                        }
-                        BadgePlacement::TopRight | BadgePlacement::BottomRight => {
-                            (Percentage(85.35), Stretch(1.0))
-                        }
-                        BadgePlacement::Left => (Stretch(1.0), Percentage(100.0)),
-                        BadgePlacement::Right => (Percentage(100.0), Stretch(1.0)),
-                        BadgePlacement::Top | BadgePlacement::Bottom => {
-                            (Stretch(1.0), Stretch(1.0))
-                        }
-                    };
-
-                    handle = handle.top(t).bottom(b).left(l).right(r);
-
-                    let translate = match placement {
-                        BadgePlacement::TopLeft => (Percentage(50.0), Percentage(50.0)),
-                        BadgePlacement::Top => (Percentage(0.0), Percentage(50.0)),
-                        BadgePlacement::TopRight => (Percentage(-50.0), Percentage(50.0)),
-                        BadgePlacement::BottomLeft => (Percentage(50.0), Percentage(-50.0)),
-                        BadgePlacement::Bottom => (Percentage(0.0), Percentage(-50.0)),
-                        BadgePlacement::BottomRight => (Percentage(-50.0), Percentage(-50.0)),
-                        BadgePlacement::Left => (Percentage(50.0), Percentage(0.0)),
-                        BadgePlacement::Right => (Percentage(-50.0), Percentage(0.0)),
-                    };
-                    handle.translate(translate);
+        let placement = Signal::new(BadgePlacement::TopRight);
+        Self { placement }.build(cx, content).bind(placement, |mut handle, placement| {
+            let (t, b) = match placement {
+                BadgePlacement::TopLeft | BadgePlacement::TopRight => {
+                    (Stretch(1.0), Percentage(85.35))
                 }
-            },
-        )
+                BadgePlacement::Top => (Stretch(1.0), Percentage(100.0)),
+                BadgePlacement::Bottom => (Percentage(100.0), Stretch(1.0)),
+                BadgePlacement::BottomLeft | BadgePlacement::BottomRight => {
+                    (Percentage(85.35), Stretch(1.0))
+                }
+
+                BadgePlacement::Left | BadgePlacement::Right => (Stretch(1.0), Stretch(1.0)),
+            };
+
+            let (l, r) = match placement {
+                BadgePlacement::TopLeft | BadgePlacement::BottomLeft => {
+                    (Stretch(1.0), Percentage(85.35))
+                }
+                BadgePlacement::TopRight | BadgePlacement::BottomRight => {
+                    (Percentage(85.35), Stretch(1.0))
+                }
+                BadgePlacement::Left => (Stretch(1.0), Percentage(100.0)),
+                BadgePlacement::Right => (Percentage(100.0), Stretch(1.0)),
+                BadgePlacement::Top | BadgePlacement::Bottom => (Stretch(1.0), Stretch(1.0)),
+            };
+
+            handle = handle.top(t).bottom(b).left(l).right(r);
+
+            let translate = match placement {
+                BadgePlacement::TopLeft => (Percentage(50.0), Percentage(50.0)),
+                BadgePlacement::Top => (Percentage(0.0), Percentage(50.0)),
+                BadgePlacement::TopRight => (Percentage(-50.0), Percentage(50.0)),
+                BadgePlacement::BottomLeft => (Percentage(50.0), Percentage(-50.0)),
+                BadgePlacement::Bottom => (Percentage(0.0), Percentage(-50.0)),
+                BadgePlacement::BottomRight => (Percentage(-50.0), Percentage(-50.0)),
+                BadgePlacement::Left => (Percentage(50.0), Percentage(0.0)),
+                BadgePlacement::Right => (Percentage(-50.0), Percentage(0.0)),
+            };
+            handle.translate(translate);
+        })
     }
 
     /// Creates an empty badge.
     ///
     /// ```
     /// # use vizia_core::prelude::*;
+    /// # use vizia_core::icons::ICON_USER;
     /// # let cx = &mut Context::default();
     /// Avatar::new(cx, |cx|{
     ///     Svg::new(cx, ICON_USER);
@@ -104,11 +96,12 @@ impl Badge {
     ///
     /// ```
     /// # use vizia_core::prelude::*;
+    /// # use vizia_core::icons::ICON_USER;
     /// # let cx = &mut Context::default();
     /// Avatar::new(cx, |cx|{
     ///     Svg::new(cx, ICON_USER);
     /// })
-    /// .badge(|cx| Badge::new(|cx| Label::new("2")));
+    /// .badge(|cx| Badge::new(cx, |cx| Label::new(cx, "2")));
     /// ```
     pub fn new<F, V>(cx: &mut Context, content: F) -> Handle<Self>
     where
@@ -128,11 +121,16 @@ impl View for Badge {
 }
 
 impl Handle<'_, Badge> {
-    /// Sets the placement of a badge relative to its parent. Accepts a value of, or lens to, a [BadgePlacement].
-    pub fn placement<U: Into<BadgePlacement>>(self, placement: impl Res<U>) -> Self {
-        self.bind(placement, |handle, val| {
-            let placement = val.get(&handle).into();
-            handle.modify(|badge| badge.placement = Some(placement));
+    /// Sets the placement of a badge relative to its parent. Accepts a value or signal of type [BadgePlacement].
+    pub fn placement<U: Into<BadgePlacement> + Clone + 'static>(
+        self,
+        placement: impl Res<U> + 'static,
+    ) -> Self {
+        self.bind(placement, |handle, value| {
+            let converted: BadgePlacement = value.into();
+            handle.modify(|badge| {
+                badge.placement.set(converted);
+            });
         })
     }
 }

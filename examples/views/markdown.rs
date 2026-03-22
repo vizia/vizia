@@ -1,14 +1,7 @@
 use vizia::prelude::*;
 
-#[derive(Lens)]
-pub struct AppData {}
-
-impl Model for AppData {}
-
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData {}.build(cx);
-
         //         Markdown::new(
         //             cx,
         //             r#"

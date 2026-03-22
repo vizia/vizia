@@ -380,15 +380,6 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                             }
                         }
                     }
-
-                    if let Some(stores) = cx.stores.get(&entity) {
-                        if !stores.is_empty() {
-                            debug!("Stores for {}", entity);
-                            for (_, store) in stores.iter() {
-                                debug!("S: [{}] - Observers {:?}", store.name(), store.observers())
-                            }
-                        }
-                    }
                 }
             }
 

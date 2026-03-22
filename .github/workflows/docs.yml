@@ -55,7 +55,6 @@ jobs:
             -p vizia_core
             -p vizia_winit
             -p vizia_baseview
-            -p vizia_derive
       - name: Add a redirect index page
         run: |
           cat > target/doc/index.html <<EOF

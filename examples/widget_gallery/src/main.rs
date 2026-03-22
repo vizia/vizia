@@ -34,8 +34,12 @@ pub fn setup_logging() -> Result<(), ApplicationError> {
     Ok(())
 }
 
-fn theme_selection_dropdown(cx: &mut Context) {
-    PickList::new(cx, AppData::theme_options, AppData::selected_theme, true)
+fn theme_selection_dropdown(
+    cx: &mut Context,
+    theme_options: Signal<Vec<Signal<&'static str>>>,
+    selected_theme: Signal<usize>,
+) {
+    PickList::new(cx, theme_options, selected_theme, true)
         .on_select(|cx, index| cx.emit(AppEvent::SetThemeMode(index)))
         .width(Pixels(100.0))
         .tooltip(|cx| {
@@ -49,7 +53,11 @@ fn main() -> Result<(), ApplicationError> {
     setup_logging()?;
 
     Application::new(|cx: &mut Context| {
-        AppData::new().build(cx);
+        let app_data = AppData::new();
+        let theme_options = app_data.theme_options;
+        let selected_theme = app_data.selected_theme;
+        let tabs = app_data.tabs;
+        app_data.build(cx);
 
         cx.add_stylesheet(include_style!("src/style.css")).expect("Failed to add stylesheet");
 
@@ -57,7 +65,7 @@ fn main() -> Result<(), ApplicationError> {
             // Header
             HStack::new(cx, |cx| {
                 // toggle_disabled_switch(cx);
-                theme_selection_dropdown(cx);
+                theme_selection_dropdown(cx, theme_options, selected_theme);
             })
             .padding(Pixels(8.0))
             .alignment(Alignment::Right)
@@ -66,7 +74,7 @@ fn main() -> Result<(), ApplicationError> {
 
             Divider::new(cx);
 
-            TabView::new(cx, AppData::tabs, |cx, item| match item.get(cx) {
+            TabView::new(cx, tabs, |_cx, _, item| match item {
                 "Avatar" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).class("tab-name").hoverable(false);

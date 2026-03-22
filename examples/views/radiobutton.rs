@@ -20,9 +20,8 @@ impl std::fmt::Display for Options {
     }
 }
 
-#[derive(Lens)]
 pub struct AppData {
-    pub option: Options,
+    pub option: Signal<Options>,
 }
 
 pub enum AppEvent {
@@ -32,14 +31,16 @@ pub enum AppEvent {
 impl Model for AppData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::SetOption(option) => self.option = *option,
+            AppEvent::SetOption(option) => self.option.set(*option),
         })
     }
 }
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { option: Options::First }.build(cx);
+        let option = Signal::new(Options::First);
+
+        AppData { option }.build(cx);
 
         // Exclusive checkboxes (radio buttons) with labels
         // Only one checkbox can be checked at a time and cannot be unchecked
@@ -48,11 +49,9 @@ fn main() -> Result<(), ApplicationError> {
             HStack::new(cx, |cx| {
                 for i in 0..3 {
                     let current_option = index_to_option(i);
-                    RadioButton::new(
-                        cx,
-                        AppData::option.map(move |option| *option == current_option),
-                    )
-                    .on_select(move |cx| cx.emit(AppEvent::SetOption(current_option)));
+                    let selected = Memo::new(move |_| option.get() == current_option);
+                    RadioButton::new(cx, selected)
+                        .on_select(move |cx| cx.emit(AppEvent::SetOption(current_option)));
                 }
             })
             .size(Auto)
@@ -63,13 +62,11 @@ fn main() -> Result<(), ApplicationError> {
             VStack::new(cx, |cx| {
                 for i in 0..3 {
                     let current_option = index_to_option(i);
+                    let selected = Memo::new(move |_| option.get() == current_option);
                     HStack::new(cx, move |cx| {
-                        RadioButton::new(
-                            cx,
-                            AppData::option.map(move |option| *option == current_option),
-                        )
-                        .on_select(move |cx| cx.emit(AppEvent::SetOption(current_option)))
-                        .id(format!("button_{i}"));
+                        RadioButton::new(cx, selected)
+                            .on_select(move |cx| cx.emit(AppEvent::SetOption(current_option)))
+                            .id(format!("button_{i}"));
 
                         Label::new(cx, &current_option.to_string())
                             .describing(format!("button_{i}"));

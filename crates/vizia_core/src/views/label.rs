@@ -16,28 +16,17 @@ use crate::prelude::*;
 /// Label::new(cx, "Text");
 /// ```
 ///
-/// ## Label bound to data
+/// ## Label from a signal source
 ///
-/// A label can be bound to data using a lens which automatically updates the text whenever the underlying data changes.
+/// A label can read from any signal, which automatically updates the text whenever the underlying data changes.
 ///
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
-/// #[derive(Lens)]
-/// struct AppData {
-///     text: String,
-/// }
-///
-/// impl Model for AppData {}
-///
-/// AppData {
-///     text: String::from("Text"),
-/// }
-/// .build(cx);
-///
-/// Label::new(cx, AppData::text);
+/// let text = Signal::new(String::from("Text"));
+/// Label::new(cx, text);
 /// ```
 ///
 /// ## Label with text wrapping
@@ -81,7 +70,7 @@ use crate::prelude::*;
 /// # use vizia_core::prelude::*;
 /// # let cx = &mut Context::default();
 /// #
-/// Button::new(cx, |_| {}, |cx| Label::new(cx, "Text"));
+/// Button::new(cx, |cx| Label::new(cx, "Text"));
 /// ```
 pub struct Label {
     describing: Option<String>,
@@ -133,7 +122,7 @@ impl Handle<'_, Label> {
     /// ```
     /// # use vizia_core::prelude::*;
     /// #
-    /// # #[derive(Lens)]
+    /// #
     /// # struct AppData {
     /// #     value: bool,
     /// # }
@@ -146,9 +135,9 @@ impl Handle<'_, Label> {
     /// #
     /// # let cx = &mut Context::default();
     /// #
-    /// # AppData { value: false }.build(cx);
+    /// # let value = Signal::new(false);
     /// #
-    /// Checkbox::new(cx, AppData::value).on_toggle(|cx| cx.emit(AppEvent::ToggleValue)).id("checkbox_identifier");
+    /// Checkbox::new(cx, value).on_toggle(|cx| cx.emit(AppEvent::ToggleValue)).id("checkbox_identifier");
     /// Label::new(cx, "hello").describing("checkbox_identifier");
     /// ```
     pub fn describing(self, entity_identifier: impl Into<String>) -> Self {

@@ -11,7 +11,7 @@ impl Image {
         // TODO: Make this reactive
 
         Self {}.build(cx, |_| {}).bind(img, |handle, img| {
-            let img = BackgroundImage::Url(Url { url: img.get(&handle).to_string().into() });
+            let img = BackgroundImage::Url(Url { url: img.to_string().into() });
             handle.background_image(img);
         })
     }
@@ -33,7 +33,7 @@ impl Svg {
         T: AsRef<[u8]> + 'static,
     {
         Self {}.build(cx, |_| {}).bind(data, |mut handle, data| {
-            let svg_data = data.get(&handle);
+            let svg_data = data;
             let h = format!("{:x}", fxhash::hash64(svg_data.as_ref()));
 
             handle.context().load_svg(

@@ -3,9 +3,8 @@ mod helpers;
 use helpers::*;
 
 // Define the data model for the application.
-#[derive(Lens)]
 pub struct AppData {
-    collapsed: bool,
+    collapsed: Signal<bool>,
 }
 
 // Define the events for the application.
@@ -18,7 +17,7 @@ impl Model for AppData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::ToggleCollapse => {
-                self.collapsed = !self.collapsed;
+                self.collapsed.update(|collapsed| *collapsed = !*collapsed);
             }
         })
     }
@@ -26,7 +25,8 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { collapsed: false }.build(cx);
+        let collapsed = Signal::new(false);
+        AppData { collapsed }.build(cx);
 
         ExamplePage::vertical(cx, |cx| {
             // Create a new button that toggles the collapsed state.
@@ -45,7 +45,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10").hoverable(false);
                     },
                 )
-                .open(AppData::collapsed);
+                .open(collapsed);
 
                 Divider::new(cx);
 
@@ -59,7 +59,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5").hoverable(false);
                     },
                 )
-                .open(AppData::collapsed);
+                .open(collapsed);
 
                 Divider::new(cx);
 
@@ -82,7 +82,7 @@ fn main() -> Result<(), ApplicationError> {
                         .alignment(Alignment::Right);
                     },
                 )
-                .open(AppData::collapsed);
+                .open(collapsed);
             })
             .alignment(Alignment::TopCenter);
         });

@@ -3,19 +3,18 @@ use helpers::*;
 use vizia::icons::ICON_SEARCH;
 use vizia::prelude::*;
 
-#[derive(Lens)]
 pub struct AppData {
-    editable_text: String,
-    multiline_text: String,
-    non_editable_text: String,
-    non_editable_multiline_text: String,
+    editable_text: Signal<String>,
+    multiline_text: Signal<String>,
+    _non_editable_text: Signal<String>,
+    _non_editable_multiline_text: Signal<String>,
 }
 
 impl Model for AppData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::SetEditableText(text) => self.editable_text = text.clone(),
-            AppEvent::SetMultilineText(text) => self.multiline_text = text.clone(),
+            AppEvent::SetEditableText(text) => self.editable_text.set(text.clone()),
+            AppEvent::SetMultilineText(text) => self.multiline_text.set(text.clone()),
         });
     }
 }
@@ -27,24 +26,30 @@ pub enum AppEvent {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        let editable_text = Signal::new("".to_string());
+        let multiline_text =
+            Signal::new("This is some text which is editable and spans multiple lines".to_string());
+        let non_editable_text = Signal::new("This text can be selected but not edited".to_string());
+        let non_editable_multiline_text = Signal::new(
+            "This text can be selected but not edited and spans multiple lines".to_string(),
+        );
+
         AppData {
-            editable_text: "".to_string(),
-            multiline_text: "This is some text which is editable and spans multiple lines"
-                .to_string(),
-            non_editable_text: "This text can be selected but not edited".to_string(),
-            non_editable_multiline_text:
-                "This text can be selected but not edited and spans multiple lines".to_string(),
+            editable_text,
+            multiline_text,
+            _non_editable_text: non_editable_text,
+            _non_editable_multiline_text: non_editable_multiline_text,
         }
         .build(cx);
 
         ExamplePage::vertical(cx, |cx| {
-            Textbox::new(cx, AppData::editable_text)
+            Textbox::new(cx, editable_text)
                 .width(Pixels(300.0))
                 .placeholder("Type something...")
                 .on_edit(|cx, text| cx.emit(AppEvent::SetEditableText(text)));
 
             HStack::new(cx, |cx| {
-                Textbox::new(cx, AppData::editable_text)
+                Textbox::new(cx, editable_text)
                     .class("icon-before")
                     .width(Stretch(1.0))
                     .placeholder("Search")
@@ -58,12 +63,12 @@ fn main() -> Result<(), ApplicationError> {
             .height(Auto)
             .width(Pixels(300.0));
 
-            Textbox::new_multiline(cx, AppData::multiline_text, true)
+            Textbox::new_multiline(cx, multiline_text, true)
                 .width(Pixels(300.0))
                 .on_edit(|cx, text| cx.emit(AppEvent::SetMultilineText(text)));
 
-            Textbox::new(cx, AppData::non_editable_text).width(Auto).read_only(true);
-            Textbox::new_multiline(cx, AppData::non_editable_multiline_text, true)
+            Textbox::new(cx, non_editable_text).width(Auto).read_only(true);
+            Textbox::new_multiline(cx, non_editable_multiline_text, true)
                 .width(Pixels(300.0))
                 .read_only(true);
         });

@@ -13,7 +13,6 @@ pub enum ResizeStackDirection {
 /// It supports resizing in either a horizontal (right) or vertical (bottom) direction, as specified
 /// by the `direction` field. The resizing behavior is controlled via the `on_drag` callback, which
 /// is triggered during a drag operation.
-#[derive(Lens)]
 pub struct ResizableStack {
     /// Tracks whether the edge of the view is currently being dragged.
     is_dragging: bool,
@@ -38,13 +37,13 @@ pub struct ResizableStack {
 
 impl ResizableStack {
     /// Creates a new `ResizableStack` view.
-    /// The `size` parameter is a lens to the size of the stack, which will be updated when the stack is resized.
+    /// The `size` parameter is a `Res<Units>` source for the stack size, updated when the stack is resized.
     /// The `direction` parameter specifies whether the stack is resized horizontally (right) or vertically (bottom).
     /// The `on_drag` callback is called with the new size when the stack is being resized.
     /// The `content` closure is called to build the content of the stack.
     pub fn new<F>(
         cx: &mut Context,
-        size: impl Lens<Target = Units>,
+        size: impl Res<Units>,
         direction: ResizeStackDirection,
         on_drag: impl Fn(&mut EventContext, f32) + 'static,
         content: F,
@@ -63,14 +62,8 @@ impl ResizableStack {
             ResizeHandle::new(cx);
             (content)(cx);
         })
-        .toggle_class(
-            "horizontal",
-            ResizableStack::direction.map(|d| *d == ResizeStackDirection::Bottom),
-        )
-        .toggle_class(
-            "vertical",
-            ResizableStack::direction.map(|d| *d == ResizeStackDirection::Right),
-        );
+        .toggle_class("horizontal", direction == ResizeStackDirection::Bottom)
+        .toggle_class("vertical", direction == ResizeStackDirection::Right);
 
         if direction == ResizeStackDirection::Right {
             handle.width(size)

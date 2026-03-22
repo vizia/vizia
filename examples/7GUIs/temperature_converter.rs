@@ -1,8 +1,7 @@
 use vizia::prelude::*;
 
-#[derive(Lens)]
 pub struct AppData {
-    temperature: f32,
+    temperature: Signal<f32>,
 }
 
 pub enum AppEvent {
@@ -12,17 +11,16 @@ pub enum AppEvent {
 impl Model for AppData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::SetTemperature(temp) => self.temperature = *temp,
+            AppEvent::SetTemperature(temp) => self.temperature.set(*temp),
         });
     }
 }
 
-fn input_box<L: Lens<Target = f32>>(
-    cx: &mut Context,
-    lens: L,
-    convert: impl Fn(f32) -> f32 + Send + Sync + 'static,
-) {
-    Textbox::new(cx, lens.map(|num| format!("{:.0}", num)))
+fn input_box<R>(cx: &mut Context, value: R, convert: impl Fn(f32) -> f32 + Send + Sync + 'static)
+where
+    R: Res<String> + Clone + 'static,
+{
+    Textbox::new(cx, value)
         .on_edit(move |ex, text| {
             if let Ok(val) = text.parse() {
                 ex.emit(AppEvent::SetTemperature(convert(val)));
@@ -41,12 +39,17 @@ fn fahrenheit_to_celcius(temp: f32) -> f32 {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { temperature: 5.0 }.build(cx);
+        let temperature = Signal::new(5.0);
+        let celsius = Memo::new(move |_| format!("{:.0}", temperature.get()));
+        let fahrenheit =
+            Memo::new(move |_| format!("{:.0}", celcius_to_fahrenheit(&temperature.get())));
+
+        AppData { temperature }.build(cx);
 
         HStack::new(cx, |cx| {
-            input_box(cx, AppData::temperature, |val| val);
+            input_box(cx, celsius, |val| val);
             Label::new(cx, "Celsius");
-            input_box(cx, AppData::temperature.map(celcius_to_fahrenheit), fahrenheit_to_celcius);
+            input_box(cx, fahrenheit, fahrenheit_to_celcius);
             Label::new(cx, "Fahrenheit");
         })
         .alignment(Alignment::Center)

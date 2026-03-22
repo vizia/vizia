@@ -15,7 +15,7 @@
 use crate::accessibility::IntoNode;
 use crate::prelude::*;
 use crate::systems::get_access_node;
-use std::any::{Any, TypeId};
+use std::any::Any;
 mod handle;
 pub use handle::Handle;
 use hashbrown::HashMap;
@@ -151,7 +151,6 @@ pub trait View: 'static + Sized {
         }
 
         cx.models.insert(id, HashMap::default());
-        cx.stores.insert(id, HashMap::default());
 
         let handle = Handle { current: id, entity: id, p: Default::default(), cx };
 
@@ -301,9 +300,5 @@ where
 
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
-    }
-
-    fn id(&self) -> std::any::TypeId {
-        TypeId::of::<T>()
     }
 }

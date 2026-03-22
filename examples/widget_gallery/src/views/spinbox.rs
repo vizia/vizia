@@ -2,15 +2,14 @@ use vizia::prelude::*;
 
 use crate::DemoRegion;
 
-#[derive(Clone, Lens)]
 struct SpinboxData {
-    spinbox_value_1: i64,
+    spinbox_value_1: Signal<i64>,
     // spinbox_value_2: usize,
     // spinbox_value_3_choices: Vec<SpinboxValues>,
     // spinbox_value_3: usize,
 }
 
-// #[derive(Clone, PartialEq, Copy, Eq, Data)]
+// #[derive(Clone, PartialEq, Copy, Eq)]
 // enum SpinboxValues {
 //     One,
 //     Two,
@@ -50,11 +49,11 @@ impl Model for SpinboxData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|e, _| match e {
             SpinboxEvent::Decrement1 => {
-                self.spinbox_value_1 -= 1;
+                self.spinbox_value_1.update(|value| *value -= 1);
             }
 
             SpinboxEvent::Increment1 => {
-                self.spinbox_value_1 += 1;
+                self.spinbox_value_1.update(|value| *value += 1);
             } // SpinboxEvent::Decrement2 => {
               //     if self.spinbox_value_2 != 0 {
               //         self.spinbox_value_2 -= 1;
@@ -90,8 +89,10 @@ impl Model for SpinboxData {
 }
 
 pub fn spinbox(cx: &mut Context) {
+    let spinbox_value_1 = Signal::new(99);
+
     SpinboxData {
-        spinbox_value_1: 99,
+        spinbox_value_1,
         // spinbox_value_2: 0,
         // spinbox_value_3: 0,
         // spinbox_value_3_choices: SpinboxValues::values(),
@@ -107,8 +108,8 @@ pub fn spinbox(cx: &mut Context) {
 
         DemoRegion::new(
             cx,
-            |cx| {
-                Spinbox::new(cx, SpinboxData::spinbox_value_1)
+            move |cx| {
+                Spinbox::new(cx, spinbox_value_1)
                     .width(Pixels(100.0))
                     .on_increment(|ex| ex.emit(SpinboxEvent::Increment1))
                     .on_decrement(|ex| ex.emit(SpinboxEvent::Decrement1));
