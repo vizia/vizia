@@ -29,10 +29,9 @@ impl View for Divider {
 }
 
 impl Handle<'_, Divider> {
-    /// Set the orientation of the divider. Accepts a value or a lens to an [Orientation].
+    /// Set the orientation of the divider. Accepts a value or signal of type [Orientation].
     pub fn orientation(self, orientation: impl Res<Orientation>) -> Self {
         self.bind(orientation, move |handle, orientation| {
-            let orientation = orientation.get(&handle);
             if orientation == Orientation::Horizontal {
                 handle.toggle_class("horizontal", true).toggle_class("vertical", false);
             } else {

@@ -2,9 +2,8 @@ use vizia::prelude::*;
 
 use crate::components::DemoRegion;
 
-#[derive(Lens)]
 pub struct SwitchData {
-    flag: bool,
+    flag: Signal<bool>,
 }
 
 pub enum SwitchEvent {
@@ -15,14 +14,15 @@ impl Model for SwitchData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|checkbox_event, _| match checkbox_event {
             SwitchEvent::ToggleFlag => {
-                self.flag ^= true;
+                self.flag.update(|flag| *flag ^= true);
             }
         });
     }
 }
 
 pub fn switch(cx: &mut Context) {
-    SwitchData { flag: true }.build(cx);
+    let flag = Signal::new(true);
+    SwitchData { flag }.build(cx);
 
     VStack::new(cx, |cx| {
         Markdown::new(cx, "# Switch");
@@ -33,8 +33,8 @@ pub fn switch(cx: &mut Context) {
 
         DemoRegion::new(
             cx,
-            |cx| {
-                Switch::new(cx, SwitchData::flag).on_toggle(|cx| cx.emit(SwitchEvent::ToggleFlag));
+            move |cx| {
+                Switch::new(cx, flag).on_toggle(|cx| cx.emit(SwitchEvent::ToggleFlag));
             },
             r#"Switch::new(cx, SwitchData::flag)
     .on_toggle(|cx| cx.emit(SwitchEvent::ToggleFlag));"#,

@@ -66,20 +66,20 @@ use crate::prelude::*;
 /// Element::new(cx)
 ///     .width(Pixels(100.0))
 ///     .height(Pixels(100.0))
-///     .border_radius(Percentage(50.0))
+///     .corner_radius(Percentage(50.0))
 ///     .background_color(Color::black());
 /// ```
 ///
 /// ## Element as an image
 ///
 /// An element can be used to display an image like this 100 by 100 pixels one. The image can
-/// be set by using a stylesheet or by using a lens. The image has to be loaded manually by
+/// be set by using a stylesheet or by using a signal. The image has to be loaded manually by
 /// using the [`Context::load_image`](crate::prelude::Context::load_image) method.
 ///
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # #[derive(Lens)]
+/// #
 /// # struct AppData {
 /// #     picture: String,
 /// # }

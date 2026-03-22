@@ -42,13 +42,11 @@ const STYLE: &str = r#"
     }
 "#;
 
-#[derive(Lens)]
 pub struct AppData {
-    filter_prefix: String,
-    list: Vec<(String, String)>,
-    selected: Option<usize>,
-    name: String,
-    surname: String,
+    list: Signal<Vec<Signal<(String, String)>>>,
+    selected: Signal<Option<usize>>,
+    name: Signal<String>,
+    surname: Signal<String>,
 }
 
 pub enum AppEvent {
@@ -64,40 +62,50 @@ impl Model for AppData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::SetSelected(index) => {
-                self.selected = Some(*index);
-                self.name = self.list[*index].0.clone();
-                self.surname = self.list[*index].1.clone();
+                self.selected.set(Some(*index));
+                let (name, surname) = self.list.get()[*index].get();
+                self.name.set(name);
+                self.surname.set(surname);
             }
 
             AppEvent::SetName(name) => {
-                self.name = name.clone();
+                self.name.set(name.clone());
             }
 
             AppEvent::SetSurname(surname) => {
-                self.surname = surname.clone();
+                self.surname.set(surname.clone());
             }
 
             AppEvent::Create => {
-                if !self.name.is_empty() && !self.surname.is_empty() {
-                    self.list.push((self.name.clone(), self.surname.clone()));
-                    self.selected = Some(self.list.len() - 1);
+                let name = self.name.get();
+                let surname = self.surname.get();
+
+                if !name.is_empty() && !surname.is_empty() {
+                    self.list.update(|list| {
+                        list.push(Signal::new((name.clone(), surname.clone())));
+                    });
+                    let len = self.list.get().len();
+                    self.selected.set(Some(len - 1));
                 }
             }
 
             AppEvent::Update => {
-                if let Some(selected) = self.selected {
-                    self.list[selected].0 = self.name.clone();
-                    self.list[selected].1 = self.surname.clone();
+                if let Some(selected) = self.selected.get() {
+                    let name = self.name.get();
+                    let surname = self.surname.get();
+                    self.list.get()[selected].set((name, surname));
                 }
             }
 
             AppEvent::Delete => {
-                if let Some(selected) = self.selected {
-                    self.list.remove(selected);
-                    if self.list.is_empty() {
-                        self.selected = None;
-                        self.name = String::new();
-                        self.surname = String::new();
+                if let Some(selected) = self.selected.get() {
+                    self.list.update(|list| {
+                        list.remove(selected);
+                    });
+                    if self.list.get().is_empty() {
+                        self.selected.set(None);
+                        self.name.set(String::new());
+                        self.surname.set(String::new());
                     } else {
                         cx.emit(AppEvent::SetSelected(selected.saturating_sub(1)));
                     }
@@ -111,33 +119,35 @@ fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        AppData {
-            filter_prefix: "".to_string(),
-            list: vec![("John".to_string(), "Smith".to_string())],
-            selected: None,
-            name: "".to_string(),
-            surname: "".to_string(),
-        }
-        .build(cx);
+        let filter_prefix = Signal::new("".to_string());
+        let list = Signal::new(vec![Signal::new(("John".to_string(), "Smith".to_string()))]);
+        let selected = Signal::new(None::<usize>);
+        let name = Signal::new("".to_string());
+        let surname = Signal::new("".to_string());
+
+        AppData { list, selected, name, surname }.build(cx);
 
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
                 VStack::new(cx, |cx| {
                     HStack::new(cx, |cx| {
                         Label::new(cx, "Filter prefix:");
-                        Textbox::new(cx, AppData::filter_prefix);
+                        Textbox::new(cx, filter_prefix);
                     });
 
-                    List::new(cx, AppData::list, |cx, index, item| {
-                        Label::new(
-                            cx,
-                            item.map(|(name, surname)| format!("{}, {}", surname, name)),
-                        )
-                        .on_press(move |cx| {
-                            cx.emit(AppEvent::SetSelected(index));
-                        })
-                        .navigable(true)
-                        .checked(AppData::selected.map(move |selected| *selected == Some(index)));
+                    List::new(cx, list, move |cx, index, item| {
+                        let label_text = Memo::new(move |_| {
+                            let item = item.get();
+                            format!("{}, {}", item.1, item.0)
+                        });
+                        let is_selected = Memo::new(move |_| selected.get() == Some(index));
+
+                        Label::new(cx, label_text)
+                            .on_press(move |cx| {
+                                cx.emit(AppEvent::SetSelected(index));
+                            })
+                            .navigable(true)
+                            .checked(is_selected);
                     });
                 });
 
@@ -145,7 +155,7 @@ fn main() -> Result<(), ApplicationError> {
                     HStack::new(cx, |cx| {
                         Label::new(cx, "Name:").width(Pixels(80.0));
 
-                        Textbox::new(cx, AppData::name).on_edit(move |cx, text| {
+                        Textbox::new(cx, name).on_edit(move |cx, text| {
                             cx.emit(AppEvent::SetName(text.clone()));
                         });
                     });
@@ -153,7 +163,7 @@ fn main() -> Result<(), ApplicationError> {
                     HStack::new(cx, |cx| {
                         Label::new(cx, "Surname:").width(Pixels(80.0));
 
-                        Textbox::new(cx, AppData::surname).on_edit(move |cx, text| {
+                        Textbox::new(cx, surname).on_edit(move |cx, text| {
                             cx.emit(AppEvent::SetSurname(text.clone()));
                         });
                     });

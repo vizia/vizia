@@ -1,10 +1,9 @@
 #[allow(unused_imports)]
 use vizia::prelude::*;
 
-#[derive(Lens)]
 pub struct AppData {
-    name: String,
-    emails: i32,
+    name: Signal<String>,
+    emails: Signal<i32>,
 }
 
 pub enum AppEvent {
@@ -16,10 +15,10 @@ pub enum AppEvent {
 impl Model for AppData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::SetName(s) => self.name = s.clone(),
-            AppEvent::ReceiveEmail => self.emails += 1,
+            AppEvent::SetName(s) => self.name.set(s.clone()),
+            AppEvent::ReceiveEmail => self.emails.update(|emails| *emails += 1),
             AppEvent::ToggleLanguage => {
-                if cx.environment().locale != "fr" {
+                if cx.environment().locale.get() != "fr" {
                     cx.emit(EnvironmentEvent::SetLocale("fr".parse().unwrap()));
                 } else {
                     cx.emit(EnvironmentEvent::SetLocale("en-US".parse().unwrap()));
@@ -43,11 +42,14 @@ fn main() -> Result<(), ApplicationError> {
             include_str!("resources/translations/fr/hello.ftl").to_owned(),
         );
 
-        AppData { name: "Audrey".to_owned(), emails: 1 }.build(cx);
+        let name = Signal::new("Audrey".to_owned());
+        let emails = Signal::new(1);
+
+        AppData { name, emails }.build(cx);
 
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
-                Checkbox::new(cx, Environment::locale.map(|locale| *locale == "fr"))
+                Checkbox::new(cx, cx.environment().locale.map(|locale| *locale == "fr"))
                     .id("toggle-language")
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleLanguage));
                 Label::new(cx, "Toggle Language").describing("toggle-language");
@@ -62,7 +64,7 @@ fn main() -> Result<(), ApplicationError> {
 
             HStack::new(cx, |cx| {
                 Label::new(cx, Localized::new("enter-name"));
-                Textbox::new(cx, AppData::name).width(Units::Pixels(300.0)).on_edit(|cx, text| {
+                Textbox::new(cx, name).width(Units::Pixels(300.0)).on_edit(|cx, text| {
                     cx.emit(AppEvent::SetName(text));
                 });
             })
@@ -70,11 +72,11 @@ fn main() -> Result<(), ApplicationError> {
             .height(Auto)
             .horizontal_gap(Pixels(5.0));
 
-            Label::new(cx, Localized::new("intro").arg("name", AppData::name));
+            Label::new(cx, Localized::new("intro").arg("name", name));
 
             // Use the `arg` method on the `Localized` type to supply a variable argument or appropriate lens.
             // When localization is resolved the argument will be used with the fluent file to select an appropriate translation.
-            Label::new(cx, Localized::new("emails").arg("unread_emails", AppData::emails));
+            Label::new(cx, Localized::new("emails").arg("unread_emails", emails));
 
             Button::new(cx, |cx| Label::new(cx, Localized::new("refresh")))
                 .on_press(|cx| cx.emit(AppEvent::ReceiveEmail));

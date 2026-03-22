@@ -12,7 +12,7 @@
       alt="Documentation" />
   </a>
   <!-- CI -->
-  <a href="https://github.com/vizia/vizia/actions/workflows/build.ym">
+  <a href="https://github.com/vizia/vizia/actions/workflows/build.yml">
     <img src="https://github.com/vizia/vizia/actions/workflows/build.yml/badge.svg"
       alt="CI status" />
   </a>
@@ -71,7 +71,7 @@
 - ### __Built-in views and themes__
   Utilize over 25 ready-made views as well as two built-in themes (light and dark) to get you started. Includes 4250+ SVG icons, provided by [Tabler Icons](https://tabler-icons.io).
 - ### __Accessibility__
-  Make you applications accessible to assistive technologies such as screen readers, powered by [accesskit](https://github.com/accesskit/accesskit).
+  Make your applications accessible to assistive technologies such as screen readers, powered by [accesskit](https://github.com/accesskit/accesskit).
 - ### __Localization__
   Adapt your application to different locales, including translating text with [fluent](https://github.com/projectfluent/fluent-rs).
 - ### __Optimised rendering__
@@ -87,9 +87,8 @@ A simple counter application. Run with `cargo run --example counter`.
 use vizia::prelude::*;
 
 // Define some model data
-#[derive(Lens)]
 pub struct AppData {
-    count: i32,
+  count: Signal<i32>,
 }
 
 // Define events to mutate the data
@@ -102,7 +101,7 @@ impl Model for AppData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::Increment => {
-                self.count += 1;
+        self.count.update(|count| *count += 1);
             }
         });
     }
@@ -111,9 +110,10 @@ impl Model for AppData {
 fn main() {
     // Create an application
     Application::new(|cx| {
+      let count = RwSignal::new(0);
 
         // Build the model data into the tree
-        AppData { count: 0 }.build(cx);
+      AppData { count }.build(cx);
 
         // Declare views which make up the UI
         HStack::new(cx, |cx| {
@@ -123,7 +123,7 @@ fn main() {
               .on_press(|cx| cx.emit(AppEvent::Increment));
 
             // Declare a label which is bound to part of the model, updating when it changes
-            Label::new(cx, AppData::count).width(Pixels(50.0));
+            Label::new(cx, count).width(Pixels(50.0));
         })
         .alignment(Alignment::Center)  // Apply style and layout modifiers
         .horizontal_gap(Pixels(50.0));

@@ -59,9 +59,11 @@ pub mod backend {
 /// Members which we recommend you wildcard-import.
 #[doc(hidden)]
 pub mod prelude {
-    pub use super::binding::{
-        Binding, Data, Index, Lens, LensExt, LensValue, Map, MapRef, Res, ResGet, StaticLens, Then,
-        UnwrapLens, Wrapper,
+    pub use super::binding::{Binding, Res};
+
+    pub use vizia_reactive::{
+        Effect, Memo, ReadSignal, Signal, SignalGet, SignalMapExt, SignalRead, SignalTrack,
+        SignalUpdate, SignalWith, SignalWrite, UpdaterEffect, WriteSignal,
     };
 
     pub use super::impl_res_simple;
@@ -91,7 +93,6 @@ pub mod prelude {
     pub use super::window::{DropData, WindowEvent};
     pub use accesskit::{Action, Live, Role};
     pub use skia_safe::Canvas;
-    pub use vizia_derive::{Data, Lens};
     pub use vizia_id::GenerationalId;
     pub use vizia_input::{Code, Key, KeyChord, Modifiers, MouseButton, MouseButtonState};
     pub use vizia_storage::{Tree, TreeExt};

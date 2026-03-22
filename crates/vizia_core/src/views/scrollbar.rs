@@ -18,18 +18,21 @@ enum ScrollBarEvent {
     SetScrollToCursor(bool),
 }
 
-impl<L1: Lens<Target = f32>> Scrollbar<L1> {
+impl<R1: Res<f32> + Clone + 'static> Scrollbar<R1> {
     /// Create a new [Scrollbar] view.
-    pub fn new<F, L2: Lens<Target = f32>>(
+    pub fn new<F, R2: Res<f32> + Clone + 'static>(
         cx: &mut Context,
-        value: L1,
-        ratio: L2,
+        value: R1,
+        ratio: R2,
         orientation: Orientation,
         callback: F,
     ) -> Handle<Self>
     where
         F: 'static + Fn(&mut EventContext, f32),
     {
+        let value_for_thumb = value.clone();
+        let ratio_for_thumb = ratio.clone();
+
         Self {
             value,
             orientation,
@@ -42,8 +45,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
             Element::new(cx)
                 .class("thumb")
                 .focusable(true)
-                .bind(value, move |handle, value| {
-                    let value = value.get(&handle);
+                .bind(value_for_thumb, move |handle, value| {
                     match orientation {
                         Orientation::Horizontal => {
                             handle.left(Units::Stretch(value)).right(Units::Stretch(1.0 - value))
@@ -53,8 +55,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
                         }
                     };
                 })
-                .bind(ratio, move |handle, ratio| {
-                    let ratio = ratio.get(&handle);
+                .bind(ratio_for_thumb, move |handle, ratio| {
                     match orientation {
                         Orientation::Horizontal => handle.width(Units::Percentage(ratio * 100.0)),
                         Orientation::Vertical => handle.height(Units::Percentage(ratio * 100.0)),
@@ -68,7 +69,9 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
             Orientation::Vertical => "vertical",
         })
     }
+}
 
+impl<R1> Scrollbar<R1> {
     fn container_and_thumb_size(&self, cx: &mut EventContext) -> (f32, f32) {
         let current = cx.current();
         let child = cx.tree.get_child(current, 0).unwrap();
@@ -104,7 +107,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
     }
 }
 
-impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
+impl<R1: Res<f32> + 'static> View for Scrollbar<R1> {
     fn element(&self) -> Option<&'static str> {
         Some("scrollbar")
     }
@@ -124,7 +127,7 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
             match window_event {
                 WindowEvent::MouseDown(MouseButton::Left) => {
                     if meta.target != cx.current() {
-                        self.reference_points = Some((pos, self.value.get(cx)));
+                        self.reference_points = Some((pos, self.value.get_value(cx)));
                         cx.capture();
                         cx.set_active(true);
                         self.dragging = true;
@@ -184,7 +187,7 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                             }
                         };
                         let changed =
-                            self.compute_new_value(cx, physical_delta, self.value.get(cx));
+                            self.compute_new_value(cx, physical_delta, self.value.get_value(cx));
                         self.change(cx, changed);
                     }
                 }
@@ -240,12 +243,12 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
     }
 }
 
-impl<L1: 'static + Lens<Target = f32>> Handle<'_, Scrollbar<L1>> {
+impl<R1: 'static> Handle<'_, Scrollbar<R1>> {
     /// Sets whether the scrollbar should move to the cursor when pressed.
     pub fn scroll_to_cursor(mut self, scroll_to_cursor: impl Res<bool>) -> Self {
-        let entity = self.entity();
-        scroll_to_cursor.set_or_bind(self.context(), entity, |cx, val| {
-            let v = val.get(cx);
+        let _entity = self.entity();
+        scroll_to_cursor.set_or_bind(self.context(), |cx, val| {
+            let v = val.get_value(cx);
             cx.emit(ScrollBarEvent::SetScrollToCursor(v));
         });
 

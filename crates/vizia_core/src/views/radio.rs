@@ -8,12 +8,12 @@ use crate::prelude::*;
 ///
 /// ## Basic radio button
 ///
-/// The radio button must bound to some boolean data.
+/// The radio button takes a boolean signal (for example `Signal<bool>`).
 ///
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # #[derive(Lens)]
+/// #
 /// # struct AppData {
 /// #     value: bool,
 /// # }
@@ -22,20 +22,20 @@ use crate::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
-/// # AppData { value: false }.build(cx);
+/// # let value = Signal::new(false);
 /// #
-/// RadioButton::new(cx, AppData::value);
+/// RadioButton::new(cx, value);
 /// ```
 ///
 /// ## Radio button with an action
 ///
-/// A radio button can be used to trigger a callback when selected. Usually this is emitting an
-/// event responsible for changing the data the radio button is bound to.
+/// A radio button can be used to trigger a callback when selected. Usually this updates
+/// the underlying boolean state.
 ///
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # #[derive(Lens)]
+/// #
 /// # struct AppData {
 /// #     value: bool,
 /// # }
@@ -48,22 +48,22 @@ use crate::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
-/// # AppData { value: false }.build(cx);
+/// # let value = Signal::new(false);
 /// #
-/// RadioButton::new(cx, AppData::value).on_select(|cx| cx.emit(AppEvent::ToggleValue));
+/// RadioButton::new(cx, value).on_select(|cx| cx.emit(AppEvent::ToggleValue));
 /// ```
 ///
 /// ## Radio button with a label
 ///
-/// A radio button is usually used with a label next to it describing what data the radio button
-/// is bound to or what the radio button does when pressed. This can be done, for example, by
+/// A radio button is usually used with a label next to it describing what state the radio button
+/// controls or what the radio button does when pressed. This can be done, for example, by
 /// wrapping the radio button in an [`HStack`](crate::prelude::HStack) and adding a [`Label`](crate::prelude::Label)
 /// to it.
 ///
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # #[derive(Lens)]
+/// #
 /// # struct AppData {
 /// #     value: bool,
 /// # }
@@ -72,10 +72,10 @@ use crate::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
-/// # AppData { value: false }.build(cx);
+/// # let value = Signal::new(false);
 /// #
 /// HStack::new(cx, |cx| {
-///     RadioButton::new(cx, AppData::value);
+///     RadioButton::new(cx, value);
 ///     Label::new(cx, "Press me");
 /// });
 /// ```
@@ -85,7 +85,7 @@ pub struct RadioButton {
 
 impl RadioButton {
     /// Creates a new [RadioButton] view.
-    pub fn new(cx: &mut Context, checked: impl Lens<Target = bool>) -> Handle<Self> {
+    pub fn new(cx: &mut Context, checked: impl Res<bool>) -> Handle<Self> {
         Self { on_select: None }
             .build(cx, |cx| {
                 Element::new(cx).class("inner").hoverable(false);
@@ -136,7 +136,7 @@ impl Handle<'_, RadioButton> {
     /// ```
     /// # use vizia_core::prelude::*;
     /// #
-    /// # #[derive(Lens)]
+    /// #
     /// # struct AppData {
     /// #     value: bool,
     /// # }
@@ -149,9 +149,9 @@ impl Handle<'_, RadioButton> {
     /// #
     /// # let cx = &mut Context::default();
     /// #
-    /// # AppData { value: false }.build(cx);
+    /// # let value = Signal::new(false);
     /// #
-    /// RadioButton::new(cx, AppData::value)
+    /// RadioButton::new(cx, value)
     ///     .on_select(|cx| cx.emit(AppEvent::ToggleValue));
     /// ```
     pub fn on_select<F>(self, callback: F) -> Self

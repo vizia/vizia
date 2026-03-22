@@ -20,13 +20,11 @@ const STYLE: &str = r#"
     }
 "#;
 
-#[derive(Lens)]
 struct TimerData {
-    #[lens(ignore)]
     timer: Timer,
-    total_time: Duration,
-    elapsed_time: Duration,
-    progress: f32,
+    total_time: Signal<Duration>,
+    elapsed_time: Signal<Duration>,
+    progress: Signal<f32>,
 }
 
 enum TimerEvent {
@@ -37,11 +35,16 @@ enum TimerEvent {
 
 impl TimerData {
     fn new(timer: Timer) -> Self {
-        Self { timer, total_time: Duration::ZERO, elapsed_time: Duration::ZERO, progress: 0.0 }
+        Self {
+            timer,
+            total_time: Signal::new(Duration::ZERO),
+            elapsed_time: Signal::new(Duration::ZERO),
+            progress: Signal::new(0.0),
+        }
     }
 
     fn should_start(&self) -> bool {
-        self.total_time > self.elapsed_time
+        self.total_time.get() > self.elapsed_time.get()
     }
 }
 
@@ -49,17 +52,21 @@ impl Model for TimerData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|event, _| match event {
             TimerEvent::Tick => {
-                self.elapsed_time = self.elapsed_time.saturating_add(Duration::from_millis(100));
-                self.progress = (self.elapsed_time.as_secs_f32() / self.total_time.as_secs_f32())
-                    .clamp(0.0, 1.0);
+                self.elapsed_time.update(|elapsed| {
+                    *elapsed = elapsed.saturating_add(Duration::from_millis(100))
+                });
+                let elapsed = self.elapsed_time.get();
+                let total = self.total_time.get();
+                let progress = (elapsed.as_secs_f32() / total.as_secs_f32()).clamp(0.0, 1.0);
+                self.progress.set(progress);
 
-                if self.progress == 1.0 {
+                if progress == 1.0 {
                     cx.stop_timer(self.timer);
                 }
             }
 
             TimerEvent::SetDuration(v) => {
-                self.total_time = Duration::from_secs_f32(*v);
+                self.total_time.set(Duration::from_secs_f32(*v));
 
                 if !self.should_start() {
                     cx.stop_timer(self.timer);
@@ -69,7 +76,8 @@ impl Model for TimerData {
             }
 
             TimerEvent::Reset => {
-                self.elapsed_time = Duration::default();
+                self.elapsed_time.set(Duration::default());
+                self.progress.set(0.0);
                 if self.should_start() && !cx.timer_is_running(self.timer) {
                     cx.start_timer(self.timer);
                 }
@@ -85,19 +93,24 @@ fn main() -> Result<(), ApplicationError> {
         let timer =
             cx.add_timer(Duration::from_millis(100), None, |cx, _| cx.emit(TimerEvent::Tick));
 
-        TimerData::new(timer).build(cx);
+        let timer_data = TimerData::new(timer);
+        let progress = timer_data.progress;
+        let elapsed_time = timer_data.elapsed_time;
+        let total_time = timer_data.total_time;
+
+        timer_data.build(cx);
 
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
                 Label::new(cx, "Elapsed Time:");
-                ProgressBar::new(cx, TimerData::progress, Orientation::Horizontal);
+                ProgressBar::new(cx, progress, Orientation::Horizontal);
             });
 
-            Label::new(cx, TimerData::elapsed_time.map(|v| format!("{:.1}s", v.as_secs_f32())));
+            Label::new(cx, Memo::new(move |_| format!("{:.1}s", elapsed_time.get().as_secs_f32())));
 
             HStack::new(cx, |cx| {
                 Label::new(cx, "Duration:");
-                Slider::new(cx, TimerData::total_time.map(|v| v.as_secs_f32()))
+                Slider::new(cx, Memo::new(move |_| total_time.get().as_secs_f32()))
                     .range(0.0..30.0)
                     .on_change(|cx, v| cx.emit(TimerEvent::SetDuration(v)));
             });

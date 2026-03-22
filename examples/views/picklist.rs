@@ -2,10 +2,9 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-#[derive(Lens)]
 struct AppState {
-    options: Vec<&'static str>,
-    selected_option: usize,
+    _options: Signal<Vec<Signal<&'static str>>>,
+    selected_option: Signal<usize>,
 }
 
 pub enum AppEvent {
@@ -16,7 +15,7 @@ impl Model for AppState {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::SetOption(index) => {
-                self.selected_option = *index;
+                self.selected_option.set(*index);
             }
         });
     }
@@ -24,8 +23,8 @@ impl Model for AppState {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppState {
-            options: vec![
+        let options = Signal::new(
+            vec![
                 "One",
                 "Two",
                 "Three",
@@ -38,18 +37,22 @@ fn main() -> Result<(), ApplicationError> {
                 "Ten",
                 "Eleven",
                 "Twelve",
-            ],
-            selected_option: usize::MAX,
-        }
-        .build(cx);
+            ]
+            .into_iter()
+            .map(Signal::new)
+            .collect::<Vec<_>>(),
+        );
+        let selected_option = Signal::new(usize::MAX);
+
+        AppState { _options: options, selected_option }.build(cx);
 
         ExamplePage::vertical(cx, |cx| {
-            PickList::new(cx, AppState::options, AppState::selected_option, true)
+            PickList::new(cx, options, selected_option, true)
                 .placeholder("Select an option...")
                 .on_select(|cx, index| cx.emit(AppEvent::SetOption(index)))
                 .width(Pixels(150.0));
 
-            PickList::new(cx, AppState::options, AppState::selected_option, true)
+            PickList::new(cx, options, selected_option, true)
                 .placeholder("Select an option...")
                 .on_select(|cx, index| cx.emit(AppEvent::SetOption(index)))
                 .width(Pixels(100.0));

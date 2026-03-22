@@ -19,7 +19,7 @@ use crate::prelude::*;
 /// # let cx = &mut Context::default();
 /// #
 /// Button::new(cx, |cx| Label::new(cx, "Text"))
-///     .on_press(|ex| ex.emit(AppEvent::Action))
+///     .on_press(|ex| ex.emit(AppEvent::Action));
 /// ```
 ///
 /// ## Button without an action
@@ -168,7 +168,7 @@ pub trait ButtonModifiers {
 impl ButtonModifiers for Handle<'_, Button> {
     fn variant<U: Into<ButtonVariant>>(self, variant: impl Res<U>) -> Self {
         self.bind(variant, |handle, val| {
-            let var: ButtonVariant = val.get(&handle).into();
+            let var: ButtonVariant = val.into();
             match var {
                 ButtonVariant::Normal => {
                     handle
@@ -246,7 +246,7 @@ impl Handle<'_, ButtonGroup> {
 impl ButtonModifiers for Handle<'_, ButtonGroup> {
     fn variant<U: Into<ButtonVariant>>(self, variant: impl Res<U>) -> Self {
         self.bind(variant, |handle, val| {
-            let var: ButtonVariant = val.get(&handle).into();
+            let var: ButtonVariant = val.into();
             match var {
                 ButtonVariant::Normal => {
                     handle

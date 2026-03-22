@@ -2,14 +2,13 @@ use crate::prelude::*;
 
 /// A simple progress bar that can be used to show the progress of something.
 ///
-/// The input lens need to be a lens to an [f32] with range of `0.0..1.0`.
+/// The input source should resolve to an [f32] in the range `0.0..1.0`.
 ///
 /// # Example
 ///
-/// ### Vertical ProgressBar bound to the input lens
-/// ```
+/// ### Vertical progress bar bound to a value source
+/// ```ignore
 /// # use vizia_core::prelude::*;
-/// # use vizia_derive::*;
 /// # let mut cx = &mut Context::default();
 /// # #[derive(Lens, Default)]
 /// # pub struct AppData {
@@ -20,10 +19,9 @@ use crate::prelude::*;
 /// ProgressBar::vertical(cx, AppData::progress);
 /// ```
 ///
-/// ### Horizontal ProgressBar bound to the input lens
-/// ```
+/// ### Horizontal progress bar bound to a value source
+/// ```ignore
 /// # use vizia_core::prelude::*;
-/// # use vizia_derive::*;
 /// # let mut cx = &mut Context::default();
 /// # #[derive(Lens, Default)]
 /// # pub struct AppData {
@@ -34,10 +32,9 @@ use crate::prelude::*;
 /// ProgressBar::horizontal(cx, AppData::progress);
 /// ```
 ///
-/// ### A Horizontal ProgressBar with a label beside it to show the progress
-/// ```
+/// ### A horizontal progress bar with a label beside it
+/// ```ignore
 /// # use vizia_core::prelude::*;
-/// # use vizia_derive::*;
 /// # let mut cx = &mut Context::default();
 /// # #[derive(Lens, Default)]
 /// # pub struct AppData {
@@ -64,13 +61,12 @@ impl View for ProgressBar {
 }
 
 impl ProgressBar {
-    /// Creates a new progress bar bound to the value targeted by the lens.
+    /// Creates a new progress bar bound to the provided value source.
     ///
     /// # Example
     ///
-    /// ```
+    /// ```ignore
     /// # use vizia_core::prelude::*;
-    /// # use vizia_derive::*;
     /// # let mut cx = &mut Context::default();
     /// # #[derive(Lens, Default)]
     /// # pub struct AppData {
@@ -80,36 +76,36 @@ impl ProgressBar {
     /// # AppData::default().build(cx);
     /// ProgressBar::new(cx, AppData::value, Orientation::Horizontal);
     /// ```
-    pub fn new<L>(cx: &mut Context, lens: L, orientation: Orientation) -> Handle<Self>
+    pub fn new<L>(cx: &mut Context, signal: L, orientation: Orientation) -> Handle<Self>
     where
-        L: Lens<Target = f32>,
+        L: SignalGet<f32> + SignalMapExt<f32>,
     {
         match orientation {
-            Orientation::Horizontal => Self::horizontal(cx, lens),
-            Orientation::Vertical => Self::vertical(cx, lens),
+            Orientation::Horizontal => Self::horizontal(cx, signal),
+            Orientation::Vertical => Self::vertical(cx, signal),
         }
     }
 
-    /// Creates a new horizontal progress bar bound to the value targeted by the lens.
-    pub fn horizontal<L>(cx: &mut Context, lens: L) -> Handle<Self>
+    /// Creates a new horizontal progress bar bound to the provided value source.
+    pub fn horizontal<L>(cx: &mut Context, signal: L) -> Handle<Self>
     where
-        L: Lens<Target = f32>,
+        L: SignalGet<f32> + SignalMapExt<f32>,
     {
         Self.build(cx, |cx| {
-            let progress = lens.map(|v| Units::Percentage(v * 100.0));
+            let progress = signal.map(|v| Units::Percentage(v * 100.0));
             Element::new(cx).width(progress).class("progressbar-bar");
         })
         .role(Role::ProgressIndicator)
         .numeric_value(lens.map(|val| *val as f64))
     }
 
-    /// Creates a new vertical progress bar bound to the value targeted by the lens.
-    pub fn vertical<L>(cx: &mut Context, lens: L) -> Handle<Self>
+    /// Creates a new vertical progress bar bound to the provided value source.
+    pub fn vertical<L>(cx: &mut Context, signal: L) -> Handle<Self>
     where
-        L: Lens<Target = f32>,
+        L: SignalGet<f32> + SignalMapExt<f32>,
     {
         Self.build(cx, |cx| {
-            let progress = lens.map(|v| Units::Percentage(v * 100.0));
+            let progress = signal.map(|v| Units::Percentage(v * 100.0));
             Element::new(cx).top(Stretch(1.0)).height(progress).class("progressbar-bar");
         })
         .role(Role::ProgressIndicator)

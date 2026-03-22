@@ -8,9 +8,9 @@ pub trait TextModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, entity, move |cx, val| {
+            value.set_or_bind(cx, move |cx, val| {
                 let cx: &mut EventContext<'_> = &mut EventContext::new_with_current(cx, entity);
-                let text_data = val.get(cx).to_string_local(cx);
+                let text_data = val.get_value(cx).to_string_local(cx);
                 // cx.text_context.set_text(entity, &text_data);
                 cx.style.text.insert(entity, text_data);
 
@@ -65,8 +65,8 @@ pub trait TextModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, move |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                cx.style.font_color.insert(entity, v.get(cx).into());
+            value.set_or_bind(cx, move |cx, v| {
+                cx.style.font_color.insert(entity, v.get_value(cx).into());
                 cx.style.needs_text_update(entity);
                 cx.needs_redraw(entity);
             });
@@ -79,8 +79,8 @@ pub trait TextModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, move |cx| {
-            value.set_or_bind(cx, entity, move |cx, v| {
-                cx.style.font_size.insert(cx.current, v.get(cx).into());
+            value.set_or_bind(cx, move |cx, v| {
+                cx.style.font_size.insert(entity, v.get_value(cx).into());
                 cx.style.needs_text_update(entity);
             });
         });

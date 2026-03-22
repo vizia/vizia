@@ -5,7 +5,7 @@ use bitflags::bitflags;
 use crate::vg;
 
 /// A model which can be used by views which contain a popup.
-#[derive(Debug, Default, Data, Lens, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct PopupData {
     /// The open state of the popup.
     pub is_open: bool,
@@ -50,33 +50,32 @@ pub enum PopupEvent {
 }
 
 /// A view for displaying popup content.
-#[derive(Lens)]
 pub struct Popup {
-    placement: Placement,
-    show_arrow: bool,
-    arrow_size: Length,
-    should_reposition: bool,
+    placement: Signal<Placement>,
+    show_arrow: Signal<bool>,
+    arrow_size: Signal<Length>,
+    should_reposition: Signal<bool>,
 }
 
 impl Popup {
     /// Creates a new [Popup] view.
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
-        Self {
-            placement: Placement::Bottom,
-            show_arrow: true,
-            arrow_size: Length::Value(LengthValue::Px(0.0)),
-            should_reposition: true,
-        }
-        .build(cx, |cx| {
-            (content)(cx);
-            Binding::new(cx, Popup::show_arrow, |cx, show_arrow| {
-                if show_arrow.get(cx) {
-                    Arrow::new(cx);
-                }
-            });
-        })
-        .position_type(PositionType::Absolute)
-        .space(Pixels(0.0))
+        let placement = Signal::new(Placement::Bottom);
+        let show_arrow = Signal::new(true);
+        let arrow_size = Signal::new(Length::Value(LengthValue::Px(8.0)));
+        let should_reposition = Signal::new(true);
+
+        Self { placement, show_arrow, arrow_size, should_reposition }
+            .build(cx, |cx| {
+                (content)(cx);
+                Binding::new(cx, show_arrow, move |cx, show_arrow| {
+                    if show_arrow {
+                        Arrow::new(cx, placement, arrow_size);
+                    }
+                });
+            })
+            .position_type(PositionType::Absolute)
+            .space(Pixels(0.0))
     }
 }
 
@@ -94,9 +93,9 @@ impl View for Popup {
                 let bounds = cx.bounds();
                 let window_bounds = cx.cache.get_bounds(cx.parent_window());
                 let scale = cx.scale_factor();
-                let arrow_size = self.arrow_size.to_px().unwrap() * cx.scale_factor();
+                let arrow_size = self.arrow_size.get().to_px().unwrap() * cx.scale_factor();
 
-                let shift = if self.should_reposition {
+                let shift = if self.should_reposition.get() {
                     let mut available = AvailablePlacement::all();
 
                     let top_start_bounds = BoundingBox::from_min_max(
@@ -230,7 +229,7 @@ impl View for Popup {
                         window_bounds.contains(&right_end_bounds),
                     );
 
-                    self.placement.place(available)
+                    self.placement.get().place(available)
                 } else {
                     if let Some(first_child) = cx.tree.get_layout_first_child(cx.current) {
                         let mut child_bounds = cx.cache.get_bounds(first_child);
@@ -240,10 +239,10 @@ impl View for Popup {
                             - 8.0;
                         cx.style.max_height.insert(first_child, Pixels(child_bounds.h / scale));
                     }
-                    self.placement
+                    self.placement.get()
                 };
 
-                let arrow_size = self.arrow_size.to_px().unwrap();
+                let arrow_size = self.arrow_size.get().to_px().unwrap();
 
                 let translate = match shift {
                     Placement::Top => (
@@ -408,9 +407,8 @@ impl Handle<'_, Popup> {
     /// Defaults to `Placement::Bottom`.
     pub fn placement(self, placement: impl Res<Placement>) -> Self {
         self.bind(placement, |handle, placement| {
-            let placement = placement.get(&handle);
             handle.modify(|popup| {
-                popup.placement = placement;
+                popup.placement.set(placement);
             });
         })
     }
@@ -418,24 +416,22 @@ impl Handle<'_, Popup> {
     /// Sets whether the popup should include an arrow. Defaults to true.
     pub fn show_arrow(self, show_arrow: impl Res<bool>) -> Self {
         self.bind(show_arrow, |handle, show_arrow| {
-            let show_arrow = show_arrow.get(&handle);
-            handle.modify(|popup| popup.show_arrow = show_arrow);
+            handle.modify(|popup| popup.show_arrow.set(show_arrow));
         })
     }
 
     /// Sets the size of the popup arrow, or gap if the arrow is hidden.
     pub fn arrow_size<U: Into<Length>>(self, size: impl Res<U>) -> Self {
         self.bind(size, |handle, size| {
-            let size = size.get(&handle).into();
-            handle.modify(|popup| popup.arrow_size = size);
+            let size = size.into();
+            handle.modify(|popup| popup.arrow_size.set(size));
         })
     }
 
     /// Set to whether the popup should reposition to always be visible.
     pub fn should_reposition(self, should_reposition: impl Res<bool>) -> Self {
         self.bind(should_reposition, |handle, should_reposition| {
-            let should_reposition = should_reposition.get(&handle);
-            handle.modify(|popup| popup.should_reposition = should_reposition);
+            handle.modify(|popup| popup.should_reposition.set(should_reposition));
         })
     }
 
@@ -475,14 +471,20 @@ impl Handle<'_, Popup> {
 }
 
 /// An arrow view used by the Popup view.
-pub(crate) struct Arrow {}
+pub(crate) struct Arrow {
+    placement: Signal<Placement>,
+}
 
 impl Arrow {
-    pub(crate) fn new(cx: &mut Context) -> Handle<Self> {
-        Self {}.build(cx, |_| {}).position_type(PositionType::Absolute).bind(
-            Popup::placement,
-            |mut handle, placement| {
-                let (t, b) = match placement.get(&handle) {
+    pub(crate) fn new(
+        cx: &mut Context,
+        placement: Signal<Placement>,
+        arrow_size: Signal<Length>,
+    ) -> Handle<Self> {
+        Self { placement }.build(cx, |_| {}).position_type(PositionType::Absolute).bind(
+            placement,
+            move |mut handle, placement| {
+                let (t, b) = match placement {
                     Placement::TopStart | Placement::Top | Placement::TopEnd => {
                         (Percentage(100.0), Stretch(1.0))
                     }
@@ -492,7 +494,7 @@ impl Arrow {
                     _ => (Stretch(1.0), Stretch(1.0)),
                 };
 
-                let (l, r) = match placement.get(&handle) {
+                let (l, r) = match placement {
                     Placement::LeftStart | Placement::Left | Placement::LeftEnd => {
                         (Percentage(100.0), Stretch(1.0))
                     }
@@ -518,9 +520,9 @@ impl Arrow {
                     .position_type(PositionType::Absolute)
                     .hoverable(false);
 
-                handle.bind(Popup::arrow_size, move |handle, arrow_size| {
-                    let arrow_size = arrow_size.get(&handle).to_px().unwrap_or(8.0);
-                    let (w, h) = match placement.get(&handle) {
+                handle.bind(arrow_size, move |handle, arrow_size| {
+                    let arrow_size = arrow_size.to_px().unwrap_or(8.0);
+                    let (w, h) = match placement {
                         Placement::Top
                         | Placement::Bottom
                         | Placement::TopStart
@@ -545,7 +547,7 @@ impl View for Arrow {
     fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
         let bounds = cx.bounds();
         let mut path = vg::PathBuilder::new();
-        match Popup::placement.get(cx) {
+        match self.placement.get() {
             Placement::Bottom | Placement::BottomStart | Placement::BottomEnd => {
                 path.move_to(bounds.bottom_left());
                 path.line_to(bounds.center_top());
