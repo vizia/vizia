@@ -7,7 +7,6 @@ use parking_lot::Mutex;
 use crate::{
     Effect, UpdaterEffect,
     id::Id,
-    mapped::MappedSignal,
     memo::Memo,
     runtime::{RUNTIME, Runtime},
     signal::{ReadSignal, Signal, SignalState, SignalValue, WriteSignal},
@@ -163,18 +162,6 @@ impl Scope {
         T: PartialEq + 'static,
     {
         self.enter(|| Memo::new(f))
-    }
-
-    /// Create a mapped signal under this Scope.
-    #[cfg_attr(debug_assertions, track_caller)]
-    pub fn create_mapped_signal<T, O, S, F>(self, source: S, map: F) -> MappedSignal<T, O, S, F>
-    where
-        T: Clone + 'static,
-        O: Clone + 'static,
-        S: crate::SignalWith<T> + Copy + 'static,
-        F: Fn(&T) -> O + Clone + 'static,
-    {
-        self.enter(|| MappedSignal::new(source, map))
     }
 
     /// Create effect under this Scope
