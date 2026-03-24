@@ -42,10 +42,11 @@ fn main() -> Result<(), ApplicationError> {
                         .on_press(|cx| cx.emit(PopupEvent::Switch));
                 },
                 move |cx| {
-                    Binding::new(cx, list, move |cx, options| {
-                        let options = options.clone();
+                    Binding::new(cx, list, move |cx| {
+                        let options = list.get();
 
-                        Binding::new(cx, selected, move |cx, selected_index| {
+                        Binding::new(cx, selected, move |cx| {
+                            let selected_index = selected.get();
                             let options = options.clone();
 
                             VStack::new(cx, move |cx| {

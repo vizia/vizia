@@ -90,7 +90,8 @@ where
                 .placeholder(placeholder)
                 .class("title");
 
-            Binding::new(cx, is_open, move |cx, open| {
+            Binding::new(cx, is_open, move |cx| {
+                let open = is_open.get();
                 if open {
                     Popup::new(cx, move |cx: &mut Context| {
                         let filtered_indices = Memo::new(move |_| {
@@ -110,7 +111,8 @@ where
                                 .collect::<Vec<usize>>()
                         });
 
-                        Binding::new(cx, filtered_indices, move |cx, indices| {
+                        Binding::new(cx, filtered_indices, move |cx| {
+                            let indices = filtered_indices.get();
                             let values = list.get();
                             let options = indices
                                 .into_iter()
@@ -157,7 +159,8 @@ where
                 }
             });
 
-            Binding::new(cx, selected, move |_cx, selected_index| {
+            Binding::new(cx, selected, move |_cx| {
+                let selected_index = selected.get();
                 if let Some(selected_item) = list.get().get(selected_index).cloned() {
                     placeholder.set(selected_item.to_string());
                 }

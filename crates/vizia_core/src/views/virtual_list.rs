@@ -134,7 +134,8 @@ impl VirtualList {
         .build(cx, |cx| {
             let list_entity = cx.current();
 
-            Binding::new(cx, selectable, move |_, selectable| {
+            Binding::new(cx, selectable, move |_cx| {
+                let selectable = selectable.get();
                 selectable_class.set(selectable != Selectable::None);
             });
 
@@ -159,8 +160,8 @@ impl VirtualList {
             .build(cx);
 
             ScrollView::new(cx, move |cx| {
-                Binding::new(cx, list, move |cx, list_values| {
-                    let list_values = list_values.clone();
+                Binding::new(cx, list, move |cx| {
+                    let list_values = list.get();
                     let num_items = list_values.len();
 
                     if let Some(view) = cx.views.get_mut(&list_entity) {
@@ -172,7 +173,8 @@ impl VirtualList {
                     cx.emit(ScrollEvent::SetY(0.0));
 
                     VStack::new(cx, move |cx| {
-                        Binding::new(cx, visible_range, move |cx, visible_range| {
+                        Binding::new(cx, visible_range, move |cx| {
+                            let visible_range = visible_range.get();
                             for i in 0..visible_range.len().min(num_items) {
                                 let index = VirtualList::evaluate_index(
                                     i,
@@ -190,11 +192,13 @@ impl VirtualList {
                                 let is_focused = Signal::new(false);
                                 let is_selected = Signal::new(false);
 
-                                Binding::new(cx, focused, move |_, focused| {
+                                Binding::new(cx, focused, move |_cx| {
+                                    let focused = focused.get();
                                     is_focused.set(focused.as_ref().is_some_and(|f| *f == index));
                                 });
 
-                                Binding::new(cx, selected, move |_, selected| {
+                                Binding::new(cx, selected, move |_cx| {
+                                    let selected = selected.get();
                                     is_selected.set(selected.contains(&index));
                                 });
 

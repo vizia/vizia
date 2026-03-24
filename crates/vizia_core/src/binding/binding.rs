@@ -24,17 +24,16 @@ use crate::{binding::BindingHandler, context::SIGNAL_REBUILDS, prelude::*};
 /// }
 ///
 /// // In the view tree:
-/// Binding::new(cx, app_data.count, |cx, count| {
-///     Label::new(cx, count.to_string());
+/// Binding::new(cx, app_data.count, |cx| {
+///     Label::new(cx, app_data.count.get(cx).to_string());
 /// });
 /// ```
 pub struct Binding<T: 'static + Clone> {
     entity: Entity,
-    /// Reads the current signal value without tracking (used during rebuilds).
-    get_fn: Box<dyn Fn() -> T>,
-    content: Option<Box<dyn Fn(&mut Context, T)>>,
+    content: Option<Box<dyn Fn(&mut Context)>>,
     /// Owns the reactive scope; dropping/disposing it cleans up the `UpdaterEffect`.
     scope: Scope,
+    marker: std::marker::PhantomData<T>,
 }
 
 impl<T: 'static + Clone> Binding<T> {
@@ -42,12 +41,12 @@ impl<T: 'static + Clone> Binding<T> {
     ///
     /// * `signal` — any value implementing [`SignalGet<T>`], typically a [`Signal<T>`].
     /// * `builder` — closure called immediately and on every subsequent signal change to
-    ///   (re)build child views. Receives the current signal value by value.
+    ///   (re)build child views.
     #[allow(clippy::new_ret_no_self)]
     pub fn new<S, F>(cx: &mut Context, signal: S, builder: F)
     where
         S: SignalGet<T> + Copy + 'static,
-        F: 'static + Fn(&mut Context, T),
+        F: 'static + Fn(&mut Context),
     {
         let entity = cx.entity_manager.create();
         cx.tree.add(entity, cx.current()).expect("Failed to add to tree");
@@ -57,7 +56,7 @@ impl<T: 'static + Clone> Binding<T> {
 
         // Create an UpdaterEffect under the scope.
         // `compute` reads the signal (subscribing to it); `on_change` queues a rebuild.
-        let initial_value = scope.enter(|| {
+        scope.enter(|| {
             UpdaterEffect::new(
                 move || signal.get(),
                 move |_new_value| {
@@ -70,15 +69,15 @@ impl<T: 'static + Clone> Binding<T> {
 
         let binding = Self {
             entity,
-            get_fn: Box::new(move || signal.get_untracked()),
             content: Some(Box::new(builder)),
             scope,
+            marker: std::marker::PhantomData,
         };
 
         // Build initial content.
         if let Some(b) = &binding.content {
             cx.with_current(entity, |cx| {
-                (b)(cx, initial_value);
+                (b)(cx);
             });
         }
 
@@ -93,11 +92,9 @@ impl<T: 'static + Clone> BindingHandler for Binding<T> {
     fn update(&mut self, cx: &mut Context) {
         cx.remove_children(cx.current());
 
-        let value = (self.get_fn)();
-
         if let Some(b) = &self.content {
             cx.with_current(self.entity, |cx| {
-                (b)(cx, value);
+                (b)(cx);
             });
         }
     }

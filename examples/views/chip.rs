@@ -34,8 +34,8 @@ fn main() -> Result<(), ApplicationError> {
         ExamplePage::vertical(cx, |cx| {
             Chip::new(cx, chip);
 
-            Binding::new(cx, chips, move |cx, chips| {
-                let chips = chips.clone();
+            Binding::new(cx, chips, move |cx| {
+                let chips = chips.get();
 
                 HStack::new(cx, move |cx| {
                     for (index, item) in chips.iter().enumerate() {

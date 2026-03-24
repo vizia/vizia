@@ -60,7 +60,8 @@ impl Tooltip {
 
         Self { placement, shift, show_arrow, arrow_size }
             .build(cx, |cx| {
-                Binding::new(cx, show_arrow, move |cx, show_arrow| {
+                Binding::new(cx, show_arrow, move |cx| {
+                    let show_arrow = show_arrow.get();
                     if show_arrow {
                         Arrow::new(cx, shift, arrow_size);
                     }

@@ -50,7 +50,7 @@ impl Spinbox {
 
         Self { orientation, icons, on_decrement: None, on_increment: None }
             .build(cx, move |cx| {
-                Binding::new(cx, orientation, move |cx, spinbox_kind| match spinbox_kind {
+                Binding::new(cx, orientation, move |cx| match orientation.get() {
                     Orientation::Horizontal => {
                         Button::new(cx, |cx| {
                             Svg::new(
@@ -82,7 +82,7 @@ impl Spinbox {
                     }
                 });
                 (content)(cx).class("spinbox-value");
-                Binding::new(cx, orientation, move |cx, spinbox_kind| match spinbox_kind {
+                Binding::new(cx, orientation, move |cx| match orientation.get() {
                     Orientation::Horizontal => {
                         Button::new(cx, |cx| {
                             Svg::new(
