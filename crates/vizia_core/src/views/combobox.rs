@@ -121,9 +121,7 @@ where
                                 })
                                 .collect::<Vec<(usize, String)>>();
 
-                            let options_state = Signal::new(
-                                options.into_iter().map(Signal::new).collect::<Vec<_>>(),
-                            );
+                            let options_state = Signal::new(options);
 
                             let highlighted_row = Memo::new(move |_| {
                                 let highlighted_source = highlighted.get();
@@ -131,7 +129,7 @@ where
                                     options_state
                                         .get()
                                         .iter()
-                                        .position(|item| item.get().0 == source_index)
+                                        .position(|item| item.0 == source_index)
                                 });
 
                                 row.map(|idx| vec![idx]).unwrap_or_default()
@@ -145,10 +143,8 @@ where
                             .selected(highlighted_row)
                             .show_horizontal_scrollbar(false)
                             .on_select(move |cx, row| {
-                                if let Some((source_index, _)) =
-                                    options_state.get().get(row).map(|item| item.get())
-                                {
-                                    cx.emit(ComboBoxEvent::SetOption(source_index));
+                                if let Some((source_index, _)) = options_state.get().get(row) {
+                                    cx.emit(ComboBoxEvent::SetOption(*source_index));
                                     cx.emit(PopupEvent::Close);
                                 }
                             });

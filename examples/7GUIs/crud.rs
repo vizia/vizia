@@ -43,7 +43,7 @@ const STYLE: &str = r#"
 "#;
 
 pub struct AppData {
-    list: Signal<Vec<Signal<(String, String)>>>,
+    list: Signal<Vec<(String, String)>>,
     selected: Signal<Option<usize>>,
     name: Signal<String>,
     surname: Signal<String>,
@@ -63,7 +63,7 @@ impl Model for AppData {
         event.map(|app_event, _| match app_event {
             AppEvent::SetSelected(index) => {
                 self.selected.set(Some(*index));
-                let (name, surname) = self.list.get()[*index].get();
+                let (name, surname) = self.list.get()[*index].clone();
                 self.name.set(name);
                 self.surname.set(surname);
             }
@@ -82,7 +82,7 @@ impl Model for AppData {
 
                 if !name.is_empty() && !surname.is_empty() {
                     self.list.update(|list| {
-                        list.push(Signal::new((name.clone(), surname.clone())));
+                        list.push((name.clone(), surname.clone()));
                     });
                     let len = self.list.get().len();
                     self.selected.set(Some(len - 1));
@@ -93,7 +93,9 @@ impl Model for AppData {
                 if let Some(selected) = self.selected.get() {
                     let name = self.name.get();
                     let surname = self.surname.get();
-                    self.list.get()[selected].set((name, surname));
+                    self.list.update(|list| {
+                        list[selected] = (name, surname);
+                    });
                 }
             }
 
@@ -120,7 +122,7 @@ fn main() -> Result<(), ApplicationError> {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
         let filter_prefix = Signal::new("".to_string());
-        let list = Signal::new(vec![Signal::new(("John".to_string(), "Smith".to_string()))]);
+        let list = Signal::new(vec![("John".to_string(), "Smith".to_string())]);
         let selected = Signal::new(None::<usize>);
         let name = Signal::new("".to_string());
         let surname = Signal::new("".to_string());
