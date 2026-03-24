@@ -406,8 +406,10 @@ impl Placement {
 impl Handle<'_, Popup> {
     /// Sets the position where the popup should appear relative to its parent element.
     /// Defaults to `Placement::Bottom`.
-    pub fn placement(self, placement: impl Res<Placement>) -> Self {
-        self.bind(placement, |handle, placement| {
+    pub fn placement(self, placement: impl Res<Placement> + 'static) -> Self {
+        let placement = placement.to_signal(self.cx);
+        self.bind(placement, move |handle| {
+            let placement = placement.get();
             handle.modify(|popup| {
                 popup.placement.set(placement);
             });
@@ -415,23 +417,32 @@ impl Handle<'_, Popup> {
     }
 
     /// Sets whether the popup should include an arrow. Defaults to true.
-    pub fn show_arrow(self, show_arrow: impl Res<bool>) -> Self {
-        self.bind(show_arrow, |handle, show_arrow| {
+    pub fn show_arrow(self, show_arrow: impl Res<bool> + 'static) -> Self {
+        let show_arrow = show_arrow.to_signal(self.cx);
+        self.bind(show_arrow, move |handle| {
+            let show_arrow = show_arrow.get();
             handle.modify(|popup| popup.show_arrow.set(show_arrow));
         })
     }
 
     /// Sets the size of the popup arrow, or gap if the arrow is hidden.
-    pub fn arrow_size<U: Into<Length>>(self, size: impl Res<U>) -> Self {
-        self.bind(size, |handle, size| {
+    pub fn arrow_size<U: Into<Length> + Clone + 'static>(
+        self,
+        size: impl Res<U> + 'static,
+    ) -> Self {
+        let size = size.to_signal(self.cx);
+        self.bind(size, move |handle| {
+            let size = size.get();
             let size = size.into();
             handle.modify(|popup| popup.arrow_size.set(size));
         })
     }
 
     /// Set to whether the popup should reposition to always be visible.
-    pub fn should_reposition(self, should_reposition: impl Res<bool>) -> Self {
-        self.bind(should_reposition, |handle, should_reposition| {
+    pub fn should_reposition(self, should_reposition: impl Res<bool> + 'static) -> Self {
+        let should_reposition = should_reposition.to_signal(self.cx);
+        self.bind(should_reposition, move |handle| {
+            let should_reposition = should_reposition.get();
             handle.modify(|popup| popup.should_reposition.set(should_reposition));
         })
     }
@@ -484,7 +495,8 @@ impl Arrow {
     ) -> Handle<Self> {
         Self { placement }.build(cx, |_| {}).position_type(PositionType::Absolute).bind(
             placement,
-            move |mut handle, placement| {
+            move |mut handle| {
+                let placement = placement.get();
                 let (t, b) = match placement {
                     Placement::TopStart | Placement::Top | Placement::TopEnd => {
                         (Percentage(100.0), Stretch(1.0))
@@ -521,7 +533,8 @@ impl Arrow {
                     .position_type(PositionType::Absolute)
                     .hoverable(false);
 
-                handle.bind(arrow_size, move |handle, arrow_size| {
+                handle.bind(arrow_size, move |handle| {
+                    let arrow_size = arrow_size.get();
                     let arrow_size = arrow_size.to_px().unwrap_or(8.0);
                     let (w, h) = match placement {
                         Placement::Top

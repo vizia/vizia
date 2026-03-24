@@ -556,7 +556,8 @@ impl<V: View> ActionModifiers<V> for Handle<'_, V> {
 
         self.cx.with_current(entity, |cx| {
             let menu_visible = cx.data::<ModalModel>().unwrap().menu_visible;
-            (content)(cx).bind(menu_visible, |mut handle, is_visible| {
+            (content)(cx).bind(menu_visible, move |mut handle| {
+                let is_visible = menu_visible.get();
                 handle = handle.toggle_class("vis", is_visible);
 
                 if is_visible {

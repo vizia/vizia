@@ -405,8 +405,13 @@ where
     ///         let _ = (cx, value);
     ///     });
     /// ```
-    pub fn range<U: Into<Range<f32>>>(self, range: impl Res<U>) -> Self {
-        self.bind(range, |handle, range| {
+    pub fn range<U: Into<Range<f32>> + Clone + 'static>(
+        self,
+        range: impl Res<U> + 'static,
+    ) -> Self {
+        let range = range.to_signal(self.cx);
+        self.bind(range, move |handle| {
+            let range = range.get();
             let range = range.into();
             handle.modify(|slider| {
                 slider.range.set(range);
@@ -432,8 +437,13 @@ where
     ///         let _ = (cx, value);
     ///     });
     /// ```
-    pub fn orientation<U: Into<Orientation>>(self, orientation: impl Res<U>) -> Self {
-        self.bind(orientation, |handle, orientation| {
+    pub fn orientation<U: Into<Orientation> + Clone + 'static>(
+        self,
+        orientation: impl Res<U> + 'static,
+    ) -> Self {
+        let orientation = orientation.to_signal(self.cx);
+        self.bind(orientation, move |handle| {
+            let orientation = orientation.get();
             let orientation = orientation.into();
             handle.modify(|slider| {
                 slider.orientation.set(orientation);
@@ -459,8 +469,10 @@ where
     ///         let _ = (cx, value);
     ///     });
     /// ```
-    pub fn step<U: Into<f32>>(self, step: impl Res<U>) -> Self {
-        self.bind(step, |handle, step| {
+    pub fn step<U: Into<f32> + Clone + 'static>(self, step: impl Res<U> + 'static) -> Self {
+        let step = step.to_signal(self.cx);
+        self.bind(step, move |handle| {
+            let step = step.get();
             let step = step.into();
             handle.modify(|slider| {
                 slider.step.set(step);
@@ -486,8 +498,13 @@ where
     ///         let _ = (cx, value);
     ///     });
     /// ```
-    pub fn keyboard_fraction<U: Into<f32>>(self, keyboard_fraction: impl Res<U>) -> Self {
-        self.bind(keyboard_fraction, |handle, keyboard_fraction| {
+    pub fn keyboard_fraction<U: Into<f32> + Clone + 'static>(
+        self,
+        keyboard_fraction: impl Res<U> + 'static,
+    ) -> Self {
+        let keyboard_fraction = keyboard_fraction.to_signal(self.cx);
+        self.bind(keyboard_fraction, move |handle| {
+            let keyboard_fraction = keyboard_fraction.get();
             let keyboard_fraction = keyboard_fraction.into();
             handle.modify(|slider| {
                 slider.keyboard_fraction.set(keyboard_fraction);

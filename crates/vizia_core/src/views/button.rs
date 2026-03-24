@@ -162,12 +162,20 @@ pub trait ButtonModifiers {
     /// Button::new(cx, |cx| Label::new(cx, "Text"))
     ///     .variant(ButtonVariant::Accent);
     /// ```
-    fn variant<U: Into<ButtonVariant>>(self, variant: impl Res<U>) -> Self;
+    fn variant<U: Into<ButtonVariant> + Clone + 'static>(
+        self,
+        variant: impl Res<U> + 'static,
+    ) -> Self;
 }
 
 impl ButtonModifiers for Handle<'_, Button> {
-    fn variant<U: Into<ButtonVariant>>(self, variant: impl Res<U>) -> Self {
-        self.bind(variant, |handle, val| {
+    fn variant<U: Into<ButtonVariant> + Clone + 'static>(
+        self,
+        variant: impl Res<U> + 'static,
+    ) -> Self {
+        let variant = variant.to_signal(self.cx);
+        self.bind(variant, move |handle| {
+            let val = variant.get();
             let var: ButtonVariant = val.into();
             match var {
                 ButtonVariant::Normal => {
@@ -244,8 +252,13 @@ impl Handle<'_, ButtonGroup> {
 }
 
 impl ButtonModifiers for Handle<'_, ButtonGroup> {
-    fn variant<U: Into<ButtonVariant>>(self, variant: impl Res<U>) -> Self {
-        self.bind(variant, |handle, val| {
+    fn variant<U: Into<ButtonVariant> + Clone + 'static>(
+        self,
+        variant: impl Res<U> + 'static,
+    ) -> Self {
+        let variant = variant.to_signal(self.cx);
+        self.bind(variant, move |handle| {
+            let val = variant.get();
             let var: ButtonVariant = val.into();
             match var {
                 ButtonVariant::Normal => {

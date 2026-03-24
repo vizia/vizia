@@ -135,6 +135,7 @@ impl Datepicker {
         D: Datelike + Clone + 'static,
     {
         let selected_date = date.get_value(cx);
+        let selected_date_signal = date.to_signal(cx);
         let initial_view_date =
             NaiveDate::from_ymd_opt(selected_date.year(), selected_date.month(), 1).unwrap();
         let view_date = Signal::new(initial_view_date);
@@ -185,19 +186,20 @@ impl Datepicker {
                     for y in 0..6 {
                         HStack::new(cx, |cx| {
                             for x in 0..7 {
-                                let selected_date = date.clone();
+                                let selected_date = selected_date_signal;
                                 let view_date = cx
                                     .data::<Datepicker>()
                                     .map(|datepicker| datepicker.view_date)
                                     .unwrap();
-                                Label::new(cx, "").bind(view_date, move |handle, view_date| {
-                                    let selected_date = selected_date.clone();
+                                Label::new(cx, "").bind(view_date, move |handle| {
+                                    let view_date = view_date.get();
+                                    let selected_date = selected_date;
 
                                     let (day_number, disabled) =
                                         Self::get_day_number(y, x, &view_date);
 
-                                    handle.bind(selected_date, move |handle, selected_date| {
-                                        let selected_date = selected_date;
+                                    handle.bind(selected_date, move |handle| {
+                                        let selected_date = selected_date.get();
 
                                         handle
                                             .text(&day_number.to_string())

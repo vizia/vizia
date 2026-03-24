@@ -30,8 +30,8 @@ impl<R1: Res<f32> + Clone + 'static> Scrollbar<R1> {
     where
         F: 'static + Fn(&mut EventContext, f32),
     {
-        let value_for_thumb = value.clone();
-        let ratio_for_thumb = ratio.clone();
+        let value_for_thumb = value.clone().to_signal(cx);
+        let ratio_for_thumb = ratio.clone().to_signal(cx);
 
         Self {
             value,
@@ -45,7 +45,8 @@ impl<R1: Res<f32> + Clone + 'static> Scrollbar<R1> {
             Element::new(cx)
                 .class("thumb")
                 .focusable(true)
-                .bind(value_for_thumb, move |handle, value| {
+                .bind(value_for_thumb, move |handle| {
+                    let value = value_for_thumb.get();
                     match orientation {
                         Orientation::Horizontal => {
                             handle.left(Units::Stretch(value)).right(Units::Stretch(1.0 - value))
@@ -55,7 +56,8 @@ impl<R1: Res<f32> + Clone + 'static> Scrollbar<R1> {
                         }
                     };
                 })
-                .bind(ratio_for_thumb, move |handle, ratio| {
+                .bind(ratio_for_thumb, move |handle| {
+                    let ratio = ratio_for_thumb.get();
                     match orientation {
                         Orientation::Horizontal => handle.width(Units::Percentage(ratio * 100.0)),
                         Orientation::Vertical => handle.height(Units::Percentage(ratio * 100.0)),
