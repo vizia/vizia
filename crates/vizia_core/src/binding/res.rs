@@ -351,6 +351,12 @@ impl<T: Clone + Res<T>, const N: usize> Res<[T; N]> for [T; N] {
     }
 }
 
+impl<T: Clone + 'static> Res<Vec<T>> for &'static [T] {
+    fn get_value(&self, _: &impl DataContext) -> Vec<T> {
+        self.to_vec()
+    }
+}
+
 impl<T1: Clone, T2: Clone> Res<(T1, T2)> for (T1, T2) {
     fn get_value(&self, _cx: &impl DataContext) -> (T1, T2) {
         self.clone()
