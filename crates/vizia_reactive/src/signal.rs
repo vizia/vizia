@@ -15,6 +15,9 @@ use std::panic::Location;
 
 use parking_lot::{Mutex, MutexGuard};
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
 use crate::{
     SignalGet, SignalUpdate,
     id::Id,
@@ -247,6 +250,60 @@ impl<T, S> fmt::Debug for Signal<T, S> {
     }
 }
 
+#[cfg(feature = "serde")]
+impl<T> Serialize for Signal<T, UnsyncStorage>
+where
+    T: Serialize + 'static,
+{
+    fn serialize<Se>(&self, serializer: Se) -> Result<Se::Ok, Se::Error>
+    where
+        Se: Serializer,
+    {
+        self.with_untracked(|value| value.serialize(serializer))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, T> Deserialize<'de> for Signal<T, UnsyncStorage>
+where
+    T: Deserialize<'de> + 'static,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = T::deserialize(deserializer)?;
+        Ok(Signal::new(value))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<T> Serialize for Signal<T, SyncStorage>
+where
+    T: Serialize + Send + Sync + 'static,
+{
+    fn serialize<Se>(&self, serializer: Se) -> Result<Se::Ok, Se::Error>
+    where
+        Se: Serializer,
+    {
+        self.with_untracked(|value| value.serialize(serializer))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, T> Deserialize<'de> for Signal<T, SyncStorage>
+where
+    T: Deserialize<'de> + Send + Sync + 'static,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = T::deserialize(deserializer)?;
+        Ok(Signal::new_sync(value))
+    }
+}
+
 impl<T: Default + 'static> Default for Signal<T> {
     fn default() -> Self {
         Signal::new(T::default())
@@ -327,6 +384,60 @@ impl<T, S> PartialEq for ReadSignal<T, S> {
     }
 }
 
+#[cfg(feature = "serde")]
+impl<T> Serialize for ReadSignal<T, UnsyncStorage>
+where
+    T: Serialize + 'static,
+{
+    fn serialize<Se>(&self, serializer: Se) -> Result<Se::Ok, Se::Error>
+    where
+        Se: Serializer,
+    {
+        self.with_untracked(|value| value.serialize(serializer))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, T> Deserialize<'de> for ReadSignal<T, UnsyncStorage>
+where
+    T: Deserialize<'de> + 'static,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = T::deserialize(deserializer)?;
+        Ok(Signal::new(value).read_only())
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<T> Serialize for ReadSignal<T, SyncStorage>
+where
+    T: Serialize + Send + Sync + 'static,
+{
+    fn serialize<Se>(&self, serializer: Se) -> Result<Se::Ok, Se::Error>
+    where
+        Se: Serializer,
+    {
+        self.with_untracked(|value| value.serialize(serializer))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, T> Deserialize<'de> for ReadSignal<T, SyncStorage>
+where
+    T: Deserialize<'de> + Send + Sync + 'static,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = T::deserialize(deserializer)?;
+        Ok(Signal::new_sync(value).read_only())
+    }
+}
+
 /// A setter only Signal
 pub struct WriteSignal<T, S = UnsyncStorage> {
     pub(crate) id: Id,
@@ -353,6 +464,60 @@ impl<T, S> Eq for WriteSignal<T, S> {}
 impl<T, S> PartialEq for WriteSignal<T, S> {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<T> Serialize for WriteSignal<T, UnsyncStorage>
+where
+    T: Serialize + 'static,
+{
+    fn serialize<Se>(&self, serializer: Se) -> Result<Se::Ok, Se::Error>
+    where
+        Se: Serializer,
+    {
+        self.id().signal().unwrap().with_untracked::<_, T>(|value| value.serialize(serializer))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, T> Deserialize<'de> for WriteSignal<T, UnsyncStorage>
+where
+    T: Deserialize<'de> + 'static,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = T::deserialize(deserializer)?;
+        Ok(Signal::new(value).write_only())
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<T> Serialize for WriteSignal<T, SyncStorage>
+where
+    T: Serialize + Send + Sync + 'static,
+{
+    fn serialize<Se>(&self, serializer: Se) -> Result<Se::Ok, Se::Error>
+    where
+        Se: Serializer,
+    {
+        self.id().signal().unwrap().with_untracked::<_, T>(|value| value.serialize(serializer))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, T> Deserialize<'de> for WriteSignal<T, SyncStorage>
+where
+    T: Deserialize<'de> + Send + Sync + 'static,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = T::deserialize(deserializer)?;
+        Ok(Signal::new_sync(value).write_only())
     }
 }
 
