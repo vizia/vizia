@@ -17,7 +17,7 @@ pub struct TodoApp {
     text: Signal<String>,
     filter: Signal<TodoFilter>,
     todos: Signal<Vec<Todo>>,
-    indices: Signal<Vec<Signal<usize>>>,
+    indices: Signal<Vec<usize>>,
 }
 
 impl TodoApp {
@@ -51,7 +51,6 @@ impl TodoApp {
                 TodoFilter::Completed => todo.completed.then_some(i),
                 TodoFilter::Active => (!todo.completed).then_some(i),
             })
-            .map(Signal::new)
             .collect();
         self.indices.set(indices);
     }

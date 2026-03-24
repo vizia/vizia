@@ -140,7 +140,7 @@ impl Datepicker {
             NaiveDate::from_ymd_opt(selected_date.year(), selected_date.month(), 1).unwrap();
         let view_date = Signal::new(initial_view_date);
         let month_options =
-            Signal::new(MONTHS.iter().map(|m| Signal::new(Localized::new(m))).collect::<Vec<_>>());
+            Signal::new(MONTHS.iter().map(|m| Localized::new(m)).collect::<Vec<_>>());
         let selected_month = view_date.map(|date| date.month() as usize - 1);
 
         Self { view_date, on_select: None }.build(cx, move |cx| {
