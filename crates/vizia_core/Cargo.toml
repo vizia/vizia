@@ -14,6 +14,7 @@ x11 = ["copypasta?/x11"]
 wayland = ["copypasta?/wayland"]
 markdown = ["comrak"]
 rayon = ["dep:rayon", "dep:dashmap", "hashbrown/rayon"]
+serde = ["vizia_reactive/serde"]
 
 [dependencies]
 vizia_storage.workspace = true

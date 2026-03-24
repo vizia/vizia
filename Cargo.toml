@@ -20,6 +20,7 @@ wayland = ["vizia_winit?/wayland", "vizia_core/wayland"]
 accesskit = ["vizia_winit?/accesskit"]
 markdown = ["vizia_core/markdown"]
 rayon = ["vizia_core/rayon"]
+serde = ["vizia_core/serde"]
 
 [dependencies]
 vizia_core.workspace = true
