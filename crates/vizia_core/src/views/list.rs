@@ -227,9 +227,10 @@ impl<T: PartialEq + Clone + 'static> BindingHandler for ListItemsBinding<T> {
 }
 
 impl List {
-    /// Creates a new [List] view from a reactive list of values.
+    /// Creates a new [List] view from a reactive or static list of values.
     ///
-    /// The user provides a signal containing `Vec<T>` wrapped in a container that derefs to `[T]`.
+    /// `list` accepts any [`Res<V>`] source where `V` derefs to `[T]` — for example a
+    /// `Signal<Vec<T>>` for a reactive list, or a plain `Vec<T>` for a static list.
     /// The list creates and manages internal signals for each item automatically.
     /// Value changes to existing items update their internal signals with zero entity rebuilds.
     /// Structural changes (add/remove/reorder) are handled by diffing values and rebuilding from the first changed position.
@@ -239,7 +240,7 @@ impl List {
         item_content: impl 'static + Fn(&mut Context, usize, Signal<T>),
     ) -> Handle<Self>
     where
-        S: SignalGet<V> + Copy + 'static,
+        S: Res<V> + 'static,
         V: Deref<Target = [T]> + Clone + 'static,
         T: PartialEq + Clone + 'static,
     {
@@ -255,7 +256,7 @@ impl List {
         let show_vertical_scrollbar = Signal::new(true);
 
         Self {
-            num_items: list.get().len(),
+            num_items: 0,
             selected,
             selectable,
             focused,
@@ -317,8 +318,16 @@ impl List {
                 }
             });
 
+            let list_signal = list.to_signal(cx);
             ScrollView::new(cx, move |cx| {
-                ListItemsBinding::create(cx, list_entity, list, selected, focused, content.clone());
+                ListItemsBinding::create(
+                    cx,
+                    list_entity,
+                    list_signal,
+                    selected,
+                    focused,
+                    content.clone(),
+                );
             })
             .show_horizontal_scrollbar(show_horizontal_scrollbar)
             .show_vertical_scrollbar(show_vertical_scrollbar)
