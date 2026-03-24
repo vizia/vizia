@@ -45,7 +45,7 @@ impl<T: 'static + Clone> Binding<T> {
     #[allow(clippy::new_ret_no_self)]
     pub fn new<S, F>(cx: &mut Context, signal: S, builder: F)
     where
-        S: SignalGet<T> + Copy + 'static,
+        S: SignalGet<T> + 'static,
         F: 'static + Fn(&mut Context),
     {
         let entity = cx.entity_manager.create();

@@ -9,11 +9,9 @@ impl Image {
     /// Creates a new [Image] view.
     pub fn new<T: ToString>(cx: &mut Context, img: impl Res<T>) -> Handle<'_, Self> {
         // TODO: Make this reactive
-
-        Self {}.build(cx, |_| {}).bind(img, |handle, img| {
-            let img = BackgroundImage::Url(Url { url: img.to_string().into() });
-            handle.background_image(img);
-        })
+        let img = img.get_value(cx);
+        let img = BackgroundImage::Url(Url { url: img.to_string().into() });
+        Self {}.build(cx, |_| {}).background_image(img)
     }
 }
 
@@ -32,17 +30,11 @@ impl Svg {
     where
         T: AsRef<[u8]> + 'static,
     {
-        Self {}.build(cx, |_| {}).bind(data, |mut handle, data| {
-            let svg_data = data;
-            let h = format!("{:x}", fxhash::hash64(svg_data.as_ref()));
-
-            handle.context().load_svg(
-                &h,
-                svg_data.as_ref(),
-                ImageRetentionPolicy::DropWhenNoObservers,
-            );
-            handle.background_image(format!("'{}'", h).as_str()).hoverable(false);
-        })
+        let svg_data = data.get_value(cx);
+        let h = format!("{:x}", fxhash::hash64(svg_data.as_ref()));
+        let mut handle = Self {}.build(cx, |_| {});
+        handle.context().load_svg(&h, svg_data.as_ref(), ImageRetentionPolicy::DropWhenNoObservers);
+        handle.background_image(format!("'{}'", h).as_str()).hoverable(false)
     }
 }
 

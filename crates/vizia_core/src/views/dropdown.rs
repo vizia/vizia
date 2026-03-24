@@ -189,8 +189,10 @@ impl View for Dropdown {
 impl Handle<'_, Dropdown> {
     /// Sets the position where the tooltip should appear relative to its parent element.
     /// Defaults to `Placement::Bottom`.
-    pub fn placement(self, placement: impl Res<Placement>) -> Self {
-        self.bind(placement, |handle, placement| {
+    pub fn placement(self, placement: impl Res<Placement> + 'static) -> Self {
+        let placement = placement.to_signal(self.cx);
+        self.bind(placement, move |handle| {
+            let placement = placement.get();
             handle.modify(|dropdown| {
                 dropdown.placement.set(placement);
             });
@@ -198,8 +200,10 @@ impl Handle<'_, Dropdown> {
     }
 
     /// Sets whether the popup should include an arrow. Defaults to true.
-    pub fn show_arrow(self, show_arrow: impl Res<bool>) -> Self {
-        self.bind(show_arrow, |handle, show_arrow| {
+    pub fn show_arrow(self, show_arrow: impl Res<bool> + 'static) -> Self {
+        let show_arrow = show_arrow.to_signal(self.cx);
+        self.bind(show_arrow, move |handle| {
+            let show_arrow = show_arrow.get();
             handle.modify(|dropdown| {
                 dropdown.show_arrow.set(show_arrow);
             });
@@ -207,8 +211,13 @@ impl Handle<'_, Dropdown> {
     }
 
     /// Sets the size of the popup arrow, or gap if the arrow is hidden.
-    pub fn arrow_size<U: Into<Length>>(self, size: impl Res<U>) -> Self {
-        self.bind(size, |handle, size| {
+    pub fn arrow_size<U: Into<Length> + Clone + 'static>(
+        self,
+        size: impl Res<U> + 'static,
+    ) -> Self {
+        let size = size.to_signal(self.cx);
+        self.bind(size, move |handle| {
+            let size = size.get();
             let size = size;
             handle.modify(|dropdown| {
                 dropdown.arrow_size.set(size.into());
@@ -217,8 +226,10 @@ impl Handle<'_, Dropdown> {
     }
 
     /// Set to whether the popup should reposition to always be visible.
-    pub fn should_reposition(self, flag: impl Res<bool>) -> Self {
-        self.bind(flag, |handle, flag| {
+    pub fn should_reposition(self, flag: impl Res<bool> + 'static) -> Self {
+        let flag = flag.to_signal(self.cx);
+        self.bind(flag, move |handle| {
+            let flag = flag.get();
             handle.modify(|dropdown| {
                 dropdown.should_reposition.set(flag);
             });

@@ -11,7 +11,7 @@ impl CustomView {
             .build(cx, |cx| {
                 Label::new(cx, "This is a custom view!");
             })
-            .bind(color, |mut view, _| {
+            .bind(color, |mut view| {
                 view.needs_redraw();
             })
     }

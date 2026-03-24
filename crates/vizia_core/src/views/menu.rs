@@ -146,7 +146,8 @@ impl Submenu {
 
         if handle.data::<MenuBar>().is_some() {
             let menu_bar_open = handle.data::<MenuBar>().map(|m| m.is_open).unwrap();
-            handle.bind(menu_bar_open, |handle, is_open| {
+            handle.bind(menu_bar_open, move |handle| {
+                let is_open = menu_bar_open.get();
                 handle.modify(|menu_button| menu_button.open_on_hover = is_open);
             })
         } else {

@@ -73,8 +73,10 @@ impl View for Collapsible {
 
 impl Handle<'_, Collapsible> {
     /// Set the open state of the collapsible view.
-    pub fn open(self, open: impl Res<bool>) -> Self {
-        self.bind(open, |handle, open| {
+    pub fn open(self, open: impl Res<bool> + 'static) -> Self {
+        let open = open.to_signal(self.cx);
+        self.bind(open, move |handle| {
+            let open = open.get();
             handle.modify(|collapsible| {
                 collapsible.is_open.set(open);
             });
