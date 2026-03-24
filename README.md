@@ -110,7 +110,7 @@ impl Model for AppData {
 fn main() {
     // Create an application
     Application::new(|cx| {
-      let count = RwSignal::new(0);
+      let count = Signal::new(0);
 
         // Build the model data into the tree
       AppData { count }.build(cx);
