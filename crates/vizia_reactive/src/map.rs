@@ -1,21 +1,13 @@
-use crate::{MappedSignal, SignalGet, SignalWith};
+use crate::{Memo, SignalWith};
 
-pub trait SignalMapExt<T>: SignalGet<T> + SignalWith<T> + Copy + 'static
-where
-    T: Clone + 'static,
-{
-    fn map<U, F>(self, map: F) -> MappedSignal<T, U, Self, F>
+pub trait SignalMapExt<T: 'static>: SignalWith<T> + Copy + 'static {
+    fn map<U, F>(self, map: F) -> Memo<U>
     where
-        U: Clone + 'static,
-        F: 'static + Clone + Fn(&T) -> U,
+        U: Clone + PartialEq + 'static,
+        F: 'static + Fn(&T) -> U,
     {
-        MappedSignal::new(self, map)
+        Memo::new(move |_| self.with(|value| map(value)))
     }
 }
 
-impl<T, S> SignalMapExt<T> for S
-where
-    S: SignalGet<T> + SignalWith<T> + Copy + 'static,
-    T: Clone + 'static,
-{
-}
+impl<T: 'static, S> SignalMapExt<T> for S where S: SignalWith<T> + Copy + 'static {}

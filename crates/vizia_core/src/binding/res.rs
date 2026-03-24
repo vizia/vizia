@@ -1,7 +1,7 @@
 use crate::prelude::*;
 use vizia_reactive::{
-    DerivedSignal, MappedSignal, Memo, ReadSignal, Signal, SignalGet, SyncDerivedSignal,
-    SyncReadSignal, SyncSignal,
+    DerivedSignal, Memo, ReadSignal, Signal, SignalGet, SyncDerivedSignal, SyncReadSignal,
+    SyncSignal,
 };
 
 #[macro_export]
@@ -180,27 +180,6 @@ where
     fn set_or_bind<F>(self, cx: &mut Context, closure: F)
     where
         F: 'static + Fn(&mut Context, Self),
-    {
-        Binding::new(cx, self, move |cx, _| {
-            (closure)(cx, self);
-        });
-    }
-}
-
-impl<T, O, S, F> Res<O> for MappedSignal<T, O, S, F>
-where
-    T: Clone + 'static,
-    O: Clone + 'static,
-    S: SignalGet<T> + vizia_reactive::SignalWith<T> + Copy + 'static,
-    F: Fn(&T) -> O + Clone + 'static,
-{
-    fn get_value(&self, _: &impl DataContext) -> O {
-        SignalGet::get(self)
-    }
-
-    fn set_or_bind<G>(self, cx: &mut Context, closure: G)
-    where
-        G: 'static + Fn(&mut Context, Self),
     {
         Binding::new(cx, self, move |cx, _| {
             (closure)(cx, self);
