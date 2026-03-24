@@ -55,7 +55,6 @@ impl Theme {
 pub struct Environment {
     /// The locale used for localization.
     pub locale: Signal<LanguageIdentifier>,
-    pub locale_signal: Signal<LanguageIdentifier>,
     /// Current application and system theme.
     pub theme: Theme,
     /// The timer used to blink the caret of a textbox.
@@ -71,12 +70,7 @@ impl Environment {
                 cx.emit(TextEvent::ToggleCaret);
             }
         });
-        Self {
-            locale: Signal::new(locale.clone()),
-            locale_signal: Signal::new(locale),
-            theme: Theme::default(),
-            caret_timer,
-        }
+        Self { locale: Signal::new(locale.clone()), theme: Theme::default(), caret_timer }
     }
 }
 
@@ -98,7 +92,6 @@ impl Model for Environment {
         event.take(|event, _| match event {
             EnvironmentEvent::SetLocale(locale) => {
                 self.locale.set(locale.clone());
-                self.locale_signal.set(locale.clone());
             }
 
             EnvironmentEvent::SetThemeMode(theme) => {
@@ -111,7 +104,6 @@ impl Model for Environment {
             EnvironmentEvent::UseSystemLocale => {
                 self.locale
                     .set(sys_locale::get_locale().map(|l| l.parse().unwrap()).unwrap_or_default());
-                self.locale_signal.set(self.locale.get().clone());
             }
 
             EnvironmentEvent::ToggleThemeMode => {

@@ -26,8 +26,8 @@ impl Chip {
         Self { on_close: None, has_close }
             .build(cx, move |cx| {
                 Label::new(cx, text).height(Stretch(1.0)).alignment(Alignment::Left);
-                has_close.set_or_bind(cx, |cx, val| {
-                    if Res::get_value(&val, cx) {
+                Binding::new(cx, has_close, move |cx| {
+                    if has_close.get() {
                         let on_close =
                             cx.data::<Chip>().and_then(|chip| chip.on_close.clone()).unwrap();
                         Button::new(cx, |cx| Svg::new(cx, ICON_X))

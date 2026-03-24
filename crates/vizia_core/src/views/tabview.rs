@@ -33,12 +33,8 @@ impl TabView {
 
                         for (index, item) in list_values.iter().cloned().enumerate() {
                             let builder = (content_for_headers)(cx, index, item).header;
-                            let is_selected = Signal::new(false);
-
-                            Binding::new(cx, selected_index, move |_cx| {
-                                let selected_index = selected_index.get();
-                                is_selected.set(selected_index == index);
-                            });
+                            let is_selected =
+                                selected_index.map(move |selected_index| *selected_index == index);
 
                             TabHeader::new(cx, index, builder)
                                 .checked(is_selected)
