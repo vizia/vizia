@@ -310,6 +310,12 @@ impl<T: Default + 'static> Default for Signal<T> {
     }
 }
 
+impl<T: Default + Send + Sync + 'static> Default for Signal<T, SyncStorage> {
+    fn default() -> Self {
+        Signal::new_sync(T::default())
+    }
+}
+
 impl<T, S> Signal<T, S> {
     /// Create a Getter of this Signal
     pub fn read_only(&self) -> ReadSignal<T, S> {
@@ -381,6 +387,18 @@ impl<T, S> Eq for ReadSignal<T, S> {}
 impl<T, S> PartialEq for ReadSignal<T, S> {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
+    }
+}
+
+impl<T: Default + 'static> Default for ReadSignal<T> {
+    fn default() -> Self {
+        Signal::new(T::default()).read_only()
+    }
+}
+
+impl<T: Default + Send + Sync + 'static> Default for ReadSignal<T, SyncStorage> {
+    fn default() -> Self {
+        Signal::new_sync(T::default()).read_only()
     }
 }
 
@@ -464,6 +482,18 @@ impl<T, S> Eq for WriteSignal<T, S> {}
 impl<T, S> PartialEq for WriteSignal<T, S> {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
+    }
+}
+
+impl<T: Default + 'static> Default for WriteSignal<T> {
+    fn default() -> Self {
+        Signal::new(T::default()).write_only()
+    }
+}
+
+impl<T: Default + Send + Sync + 'static> Default for WriteSignal<T, SyncStorage> {
+    fn default() -> Self {
+        Signal::new_sync(T::default()).write_only()
     }
 }
 
