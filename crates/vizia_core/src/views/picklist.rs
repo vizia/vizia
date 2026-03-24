@@ -25,8 +25,8 @@ impl PickList {
     ) -> Handle<Self>
     where
         L: SignalGet<V> + SignalMapExt<V> + Res<V> + 'static,
-        V: Deref<Target = [Signal<T>]> + Clone + 'static,
-        T: 'static + ToStringLocalized + Clone,
+        V: Deref<Target = [T]> + Clone + 'static,
+        T: 'static + ToStringLocalized + Clone + PartialEq,
         S: Res<usize> + 'static,
     {
         let is_open = Signal::new(false);
@@ -46,7 +46,7 @@ impl PickList {
                                     if selected_index < list_len {
                                         let selected_text =
                                             if let Some(item) = list.get(selected_index) {
-                                                item.get().to_string_local(&handle)
+                                                item.to_string_local(&handle)
                                             } else {
                                                 placeholder.get()
                                             };
@@ -81,7 +81,7 @@ impl PickList {
                             List::new(cx, list, move |cx, _, item| {
                                 Element::new(cx).class("focus-indicator");
                                 Svg::new(cx, ICON_CHECK).class("checkmark").size(Pixels(16.0));
-                                Label::new(cx, item).hoverable(false);
+                                Label::new(cx, item.map(|v| v.clone())).hoverable(false);
                             })
                             .selectable(Selectable::Single)
                             .selected(selected.map(|s| vec![*s]))

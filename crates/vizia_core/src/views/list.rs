@@ -66,25 +66,27 @@ pub struct List {
 
 /// A binding handler that manages list item entities for a [List].
 ///
-/// The user provides `Vec<Signal<T>>` — each item has its own signal.
-/// Value changes propagate through the reactive system automatically (zero cost).
-/// This handler only reacts to structural changes (add/remove/reorder) by
-/// diffing signal identities and rebuilding from the first changed position.
+/// The user provides `Vec<T>` wrapped in an outer signal.
+/// This handler creates internal signals for each item and maintains them.
+/// Value changes to existing items update their internal signals (zero entity rebuilds).
+/// Structural changes (add/remove/reorder) are handled by diffing values and rebuilding from the first changed position.
 struct ListItemsBinding<T: 'static> {
     entity: Entity,
     list_entity: Entity,
-    get_fn: Box<dyn Fn() -> Vec<Signal<T>>>,
+    get_fn: Box<dyn Fn() -> Vec<T>>,
     item_content: Rc<dyn Fn(&mut Context, usize, Signal<T>)>,
     selected: Signal<BTreeSet<usize>>,
     focused: Signal<Option<usize>>,
-    /// Signal IDs from the previous update, used for identity diffing.
+    /// Internal signals for each list item.
     item_signals: Vec<Signal<T>>,
     /// Entity IDs of the ListItem views.
     item_entities: Vec<Entity>,
+    /// Previous values, used for value-based diffing.
+    prev_values: Vec<T>,
     scope: Scope,
 }
 
-impl<T: 'static> ListItemsBinding<T> {
+impl<T: PartialEq + Clone + 'static> ListItemsBinding<T> {
     fn create<S, V>(
         cx: &mut Context,
         list_entity: Entity,
@@ -94,14 +96,14 @@ impl<T: 'static> ListItemsBinding<T> {
         item_content: Rc<dyn Fn(&mut Context, usize, Signal<T>)>,
     ) where
         S: SignalGet<V> + Copy + 'static,
-        V: Deref<Target = [Signal<T>]> + Clone + 'static,
+        V: Deref<Target = [T]> + Clone + 'static,
     {
         let entity = cx.entity_manager.create();
         cx.tree.add(entity, cx.current()).expect("Failed to add to tree");
         cx.tree.set_ignored(entity, true);
 
         let scope = Scope::new();
-        let initial_signals: Vec<Signal<T>> = scope.enter(|| {
+        let initial_values: Vec<T> = scope.enter(|| {
             UpdaterEffect::new(
                 move || list.get().deref().to_vec(),
                 move |_new_value| {
@@ -121,16 +123,19 @@ impl<T: 'static> ListItemsBinding<T> {
             focused,
             item_signals: Vec::new(),
             item_entities: Vec::new(),
+            prev_values: Vec::new(),
             scope,
         };
 
         // Build initial items.
-        for (index, signal) in initial_signals.iter().copied().enumerate() {
+        for (index, value) in initial_values.iter().enumerate() {
+            let signal = Signal::new(value.clone());
             let entity = binding.create_item_entity(cx, index, signal);
             binding.item_signals.push(signal);
             binding.item_entities.push(entity);
+            binding.prev_values.push(value.clone());
         }
-        binding.update_list_metadata(cx, initial_signals.len());
+        binding.update_list_metadata(cx, initial_values.len());
 
         cx.bindings.insert(entity, Box::new(binding));
 
@@ -174,18 +179,18 @@ impl<T: 'static> ListItemsBinding<T> {
     }
 }
 
-impl<T: 'static> BindingHandler for ListItemsBinding<T> {
+impl<T: PartialEq + Clone + 'static> BindingHandler for ListItemsBinding<T> {
     fn update(&mut self, cx: &mut Context) {
-        let new_signals = (self.get_fn)();
-        let new_len = new_signals.len();
+        let new_values = (self.get_fn)();
+        let new_len = new_values.len();
 
-        // Find the first position where the signal identity differs.
+        // Find the first position where values differ.
         let first_diff = self
-            .item_signals
+            .prev_values
             .iter()
-            .zip(new_signals.iter())
+            .zip(new_values.iter())
             .position(|(old, new)| old != new)
-            .unwrap_or(self.item_signals.len().min(new_len));
+            .unwrap_or(self.prev_values.len().min(new_len));
 
         // Remove all entities from first_diff onward.
         for entity in self.item_entities.drain(first_diff..) {
@@ -193,14 +198,22 @@ impl<T: 'static> BindingHandler for ListItemsBinding<T> {
         }
         self.item_signals.truncate(first_diff);
 
-        // Rebuild from first_diff onward with the new signals.
-        for (i, signal) in new_signals[first_diff..].iter().copied().enumerate() {
+        // Update existing signals or create new items from first_diff onward.
+        for (i, value) in new_values[first_diff..].iter().enumerate() {
             let index = first_diff + i;
-            let entity = self.create_item_entity(cx, index, signal);
-            self.item_signals.push(signal);
-            self.item_entities.push(entity);
+            if index < self.item_signals.len() {
+                // Update existing signal
+                self.item_signals[index].set(value.clone());
+            } else {
+                // Create new signal and item
+                let signal = Signal::new(value.clone());
+                let entity = self.create_item_entity(cx, index, signal);
+                self.item_signals.push(signal);
+                self.item_entities.push(entity);
+            }
         }
 
+        self.prev_values = new_values;
         self.update_list_metadata(cx, new_len);
     }
 
@@ -214,11 +227,12 @@ impl<T: 'static> BindingHandler for ListItemsBinding<T> {
 }
 
 impl List {
-    /// Creates a new [List] view from a reactive list of signals.
+    /// Creates a new [List] view from a reactive list of values.
     ///
-    /// The user maintains a `Vec<Signal<T>>` wrapped in an outer signal.
-    /// Item value changes propagate through individual signals with zero entity rebuilds.
-    /// Structural changes (add/remove/reorder) are handled automatically via signal-identity diffing.
+    /// The user provides a signal containing `Vec<T>` wrapped in a container that derefs to `[T]`.
+    /// The list creates and manages internal signals for each item automatically.
+    /// Value changes to existing items update their internal signals with zero entity rebuilds.
+    /// Structural changes (add/remove/reorder) are handled by diffing values and rebuilding from the first changed position.
     pub fn new<S, V, T>(
         cx: &mut Context,
         list: S,
@@ -226,8 +240,8 @@ impl List {
     ) -> Handle<Self>
     where
         S: SignalGet<V> + Copy + 'static,
-        V: Deref<Target = [Signal<T>]> + Clone + 'static,
-        T: 'static,
+        V: Deref<Target = [T]> + Clone + 'static,
+        T: PartialEq + Clone + 'static,
     {
         let content: Rc<dyn Fn(&mut Context, usize, Signal<T>)> = Rc::new(item_content);
         let selected = Signal::new(BTreeSet::default());
