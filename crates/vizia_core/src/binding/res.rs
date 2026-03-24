@@ -71,7 +71,7 @@ impl<T: Clone + 'static> Res<T> for Signal<T> {
     where
         F: 'static + Fn(&mut Context, Self),
     {
-        Binding::new(cx, self, move |cx, _| {
+        Binding::new(cx, self, move |cx| {
             (closure)(cx, self);
         });
     }
@@ -94,7 +94,7 @@ impl<T: Clone + Send + Sync + 'static> Res<T> for SyncSignal<T> {
     where
         F: 'static + Fn(&mut Context, Self),
     {
-        Binding::new(cx, self, move |cx, _| {
+        Binding::new(cx, self, move |cx| {
             (closure)(cx, self);
         });
     }
@@ -109,7 +109,7 @@ impl<T: Clone + 'static> Res<T> for ReadSignal<T> {
     where
         F: 'static + Fn(&mut Context, Self),
     {
-        Binding::new(cx, self, move |cx, _| {
+        Binding::new(cx, self, move |cx| {
             (closure)(cx, self);
         });
     }
@@ -124,7 +124,7 @@ impl<T: Clone + Send + Sync + 'static> Res<T> for SyncReadSignal<T> {
     where
         F: 'static + Fn(&mut Context, Self),
     {
-        Binding::new(cx, self, move |cx, _| {
+        Binding::new(cx, self, move |cx| {
             (closure)(cx, self);
         });
     }
@@ -139,7 +139,7 @@ impl<T: Clone + PartialEq + 'static> Res<T> for Memo<T> {
     where
         F: 'static + Fn(&mut Context, Self),
     {
-        Binding::new(cx, self, move |cx, _| {
+        Binding::new(cx, self, move |cx| {
             (closure)(cx, self);
         });
     }
@@ -160,7 +160,7 @@ where
     where
         F: 'static + Fn(&mut Context, Self),
     {
-        Binding::new(cx, self, move |cx, _| {
+        Binding::new(cx, self, move |cx| {
             (closure)(cx, self);
         });
     }
@@ -181,7 +181,7 @@ where
     where
         F: 'static + Fn(&mut Context, Self),
     {
-        Binding::new(cx, self, move |cx, _| {
+        Binding::new(cx, self, move |cx| {
             (closure)(cx, self);
         });
     }

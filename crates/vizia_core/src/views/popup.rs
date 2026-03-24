@@ -68,7 +68,8 @@ impl Popup {
         Self { placement, show_arrow, arrow_size, should_reposition }
             .build(cx, |cx| {
                 (content)(cx);
-                Binding::new(cx, show_arrow, move |cx, show_arrow| {
+                Binding::new(cx, show_arrow, move |cx| {
+                    let show_arrow = show_arrow.get();
                     if show_arrow {
                         Arrow::new(cx, placement, arrow_size);
                     }

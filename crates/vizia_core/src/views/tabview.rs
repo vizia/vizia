@@ -28,14 +28,15 @@ impl TabView {
                 let content_for_headers = content.clone();
 
                 ScrollView::new(cx, move |cx| {
-                    Binding::new(cx, list, move |cx, list_values| {
-                        let list_values = list_values.clone();
+                    Binding::new(cx, list, move |cx| {
+                        let list_values = list.get();
 
                         for (index, item) in list_values.iter().cloned().enumerate() {
                             let builder = (content_for_headers)(cx, index, item).header;
                             let is_selected = Signal::new(false);
 
-                            Binding::new(cx, selected_index, move |_, selected_index| {
+                            Binding::new(cx, selected_index, move |_cx| {
+                                let selected_index = selected_index.get();
                                 is_selected.set(selected_index == index);
                             });
 
@@ -52,10 +53,11 @@ impl TabView {
                 Divider::new(cx).toggle_class("vertical", is_vertical);
 
                 VStack::new(cx, move |cx| {
-                    Binding::new(cx, list, move |cx, list_values| {
-                        let list_values = list_values.clone();
+                    Binding::new(cx, list, move |cx| {
+                        let list_values = list.get();
                         let content = content.clone();
-                        Binding::new(cx, selected_index, move |cx, selected| {
+                        Binding::new(cx, selected_index, move |cx| {
+                            let selected = selected_index.get();
                             if let Some(item) = list_values.get(selected).cloned() {
                                 ((content)(cx, selected, item).content)(cx);
                             }

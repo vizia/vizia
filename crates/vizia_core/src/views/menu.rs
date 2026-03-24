@@ -118,7 +118,8 @@ impl Submenu {
                 (content)(cx).hoverable(false);
                 Svg::new(cx, ICON_CHEVRON_RIGHT).class("arrow").hoverable(false);
                 // });
-                Binding::new(cx, is_open, move |cx, open| {
+                Binding::new(cx, is_open, move |cx| {
+                    let open = is_open.get();
                     if open {
                         Popup::new(cx, |cx| {
                             (menu)(cx);

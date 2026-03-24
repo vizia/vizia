@@ -89,7 +89,8 @@ use crate::prelude::*;
 ///     .width(Pixels(100.0))
 ///     .height(Pixels(30.0))
 /// }, |cx| {
-///     Binding::new(cx, AppData::root, |cx, lens| {
+///     Binding::new(cx, AppData::root, |cx| {
+///         let lens = AppData::root.get();
 ///         let current = lens.get(cx);
 ///         for i in 0..6 {
 ///             if LABELS[i].to_lowercase().contains(&current.filter.to_lowercase()) {
@@ -141,7 +142,8 @@ impl Dropdown {
             move |cx| {
                 (trigger)(cx);
 
-                Binding::new(cx, is_open, move |cx, is_open| {
+                Binding::new(cx, is_open, move |cx| {
+                    let is_open = is_open.get();
                     if is_open {
                         Popup::new(cx, |cx| {
                             (content)(cx);
