@@ -236,7 +236,7 @@ impl CircleDrawerCanvas {
     fn new(cx: &mut Context, lens: Signal<CircleData>) -> Handle<'_, Self> {
         Self { circles_data: lens }
             .build(cx, |_| {})
-            .bind(lens, |mut handle, _| handle.needs_redraw())
+            .bind(lens, |mut handle| handle.needs_redraw())
             .overflow(Overflow::Hidden)
     }
 }

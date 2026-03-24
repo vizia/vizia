@@ -39,8 +39,8 @@ impl<R: Res<f32> + Clone + 'static> Knob<R> {
         value: R,
         centered: bool,
     ) -> Handle<Self> {
-        let value_for_track = value.clone();
-        let value_for_head = value.clone();
+        let value_for_track = value.clone().to_signal(cx);
+        let value_for_head = value.clone().to_signal(cx);
 
         Self {
             source: value.clone(),
@@ -74,8 +74,8 @@ impl<R: Res<f32> + Clone + 'static> Knob<R> {
                 HStack::new(cx, |cx| {
                     Element::new(cx).class("knob-tick");
                 })
-                .bind(value_for_head, |handle, value| {
-                    let value = Res::get_value(&value, &handle);
+                .bind(value_for_head, move |handle| {
+                    let value = value_for_head.get();
                     handle.rotate(Angle::Deg(value * 300.0 - 150.0));
                 })
                 .class("knob-head");

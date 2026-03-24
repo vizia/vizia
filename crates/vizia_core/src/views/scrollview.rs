@@ -98,8 +98,8 @@ impl ScrollView {
             .position_type(PositionType::Absolute)
             .scroll_to_cursor(scroll_to_cursor);
         })
-        .bind(scroll_offset, |handle, data| {
-            let (left, top) = Res::get_value(&data, &handle);
+        .bind(scroll_offset, move |handle| {
+            let (left, top) = scroll_offset.get();
             handle.horizontal_scroll(-left.abs()).vertical_scroll(-top.abs());
         })
         .toggle_class("h-scroll", h_scroll)
@@ -381,39 +381,49 @@ impl Handle<'_, ScrollView> {
     }
 
     /// Sets whether the scrollbar should move to the cursor when pressed.
-    pub fn scroll_to_cursor(self, scroll_to_cursor: impl Res<bool>) -> Self {
-        self.bind(scroll_to_cursor, |handle, scroll_to_cursor| {
+    pub fn scroll_to_cursor(self, scroll_to_cursor: impl Res<bool> + 'static) -> Self {
+        let scroll_to_cursor = scroll_to_cursor.to_signal(self.cx);
+        self.bind(scroll_to_cursor, move |handle| {
+            let scroll_to_cursor = scroll_to_cursor.get();
             handle.modify(|scrollview| scrollview.scroll_to_cursor.set(scroll_to_cursor));
         })
     }
 
     /// Set the horizontal scroll position of the [ScrollView]. Accepts a value or signal of type an `f32` between 0 and 1.
-    pub fn scroll_x(self, scrollx: impl Res<f32>) -> Self {
-        self.bind(scrollx, |handle, scrollx| {
+    pub fn scroll_x(self, scrollx: impl Res<f32> + 'static) -> Self {
+        let scrollx = scrollx.to_signal(self.cx);
+        self.bind(scrollx, move |handle| {
+            let scrollx = scrollx.get();
             let sx = scrollx;
             handle.modify(|scrollview| scrollview.scroll_x.set(sx));
         })
     }
 
     /// Set the vertical scroll position of the [ScrollView]. Accepts a value or signal of type an `f32` between 0 and 1.
-    pub fn scroll_y(self, scrollx: impl Res<f32>) -> Self {
-        self.bind(scrollx, |handle, scrolly| {
+    pub fn scroll_y(self, scrollx: impl Res<f32> + 'static) -> Self {
+        let scrollx = scrollx.to_signal(self.cx);
+        self.bind(scrollx, move |handle| {
+            let scrolly = scrollx.get();
             let sy = scrolly;
             handle.modify(|scrollview| scrollview.scroll_y.set(sy));
         })
     }
 
     /// Sets whether the horizontal scrollbar should be visible.
-    pub fn show_horizontal_scrollbar(self, flag: impl Res<bool>) -> Self {
-        self.bind(flag, |handle, show_scrollbar| {
+    pub fn show_horizontal_scrollbar(self, flag: impl Res<bool> + 'static) -> Self {
+        let flag = flag.to_signal(self.cx);
+        self.bind(flag, move |handle| {
+            let show_scrollbar = flag.get();
             let s = show_scrollbar;
             handle.modify(|scrollview| scrollview.show_horizontal_scrollbar.set(s));
         })
     }
 
     /// Sets whether the vertical scrollbar should be visible.
-    pub fn show_vertical_scrollbar(self, flag: impl Res<bool>) -> Self {
-        self.bind(flag, |handle, show_scrollbar| {
+    pub fn show_vertical_scrollbar(self, flag: impl Res<bool> + 'static) -> Self {
+        let flag = flag.to_signal(self.cx);
+        self.bind(flag, move |handle| {
+            let show_scrollbar = flag.get();
             let s = show_scrollbar;
             handle.modify(|scrollview| scrollview.show_vertical_scrollbar.set(s));
         })

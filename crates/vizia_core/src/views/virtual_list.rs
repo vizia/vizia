@@ -368,11 +368,13 @@ impl View for VirtualList {
 
 impl Handle<'_, VirtualList> {
     /// Sets the selected items of the list from signal of type indices.
-    pub fn selected<R>(self, selected: impl Res<R>) -> Self
+    pub fn selected<R>(self, selected: impl Res<R> + 'static) -> Self
     where
-        R: Deref<Target = [usize]>,
+        R: Deref<Target = [usize]> + Clone + 'static,
     {
-        self.bind(selected, |handle, selected| {
+        let selected = selected.to_signal(self.cx);
+        self.bind(selected, move |handle| {
+            let selected = selected.get();
             let ss = selected.deref().to_vec();
             handle.modify(|list| {
                 let mut selected = BTreeSet::default();
@@ -396,16 +398,26 @@ impl Handle<'_, VirtualList> {
     }
 
     /// Set the selectable state of the [VirtualList].
-    pub fn selectable<U: Into<Selectable>>(self, selectable: impl Res<U>) -> Self {
-        self.bind(selectable, |handle, selectable| {
+    pub fn selectable<U: Into<Selectable> + Clone + 'static>(
+        self,
+        selectable: impl Res<U> + 'static,
+    ) -> Self {
+        let selectable = selectable.to_signal(self.cx);
+        self.bind(selectable, move |handle| {
+            let selectable = selectable.get();
             let s = selectable.into();
             handle.modify(|list| list.selectable.set(s));
         })
     }
 
     /// Sets whether the selection should follow the focus.
-    pub fn selection_follows_focus<U: Into<bool>>(self, flag: impl Res<U>) -> Self {
-        self.bind(flag, |handle, selection_follows_focus| {
+    pub fn selection_follows_focus<U: Into<bool> + Clone + 'static>(
+        self,
+        flag: impl Res<U> + 'static,
+    ) -> Self {
+        let flag = flag.to_signal(self.cx);
+        self.bind(flag, move |handle| {
+            let selection_follows_focus = flag.get();
             let s = selection_follows_focus.into();
             handle.modify(|list| list.selection_follows_focus = s);
         })
@@ -425,32 +437,40 @@ impl Handle<'_, VirtualList> {
     }
 
     /// Set the horizontal scroll position of the [VirtualList]. Accepts a value or signal of type an `f32` between 0 and 1.
-    pub fn scroll_x(self, scrollx: impl Res<f32>) -> Self {
-        self.bind(scrollx, |handle, scrollx| {
+    pub fn scroll_x(self, scrollx: impl Res<f32> + 'static) -> Self {
+        let scrollx = scrollx.to_signal(self.cx);
+        self.bind(scrollx, move |handle| {
+            let scrollx = scrollx.get();
             let sx = scrollx;
             handle.modify(|list| list.scroll_x.set(sx));
         })
     }
 
     /// Set the vertical scroll position of the [VirtualList]. Accepts a value or signal of type an `f32` between 0 and 1.
-    pub fn scroll_y(self, scrollx: impl Res<f32>) -> Self {
-        self.bind(scrollx, |handle, scrolly| {
+    pub fn scroll_y(self, scrollx: impl Res<f32> + 'static) -> Self {
+        let scrollx = scrollx.to_signal(self.cx);
+        self.bind(scrollx, move |handle| {
+            let scrolly = scrollx.get();
             let sy = scrolly;
             handle.modify(|list| list.scroll_y.set(sy));
         })
     }
 
     /// Sets whether the horizontal scrollbar should be visible.
-    pub fn show_horizontal_scrollbar(self, flag: impl Res<bool>) -> Self {
-        self.bind(flag, |handle, show_scrollbar| {
+    pub fn show_horizontal_scrollbar(self, flag: impl Res<bool> + 'static) -> Self {
+        let flag = flag.to_signal(self.cx);
+        self.bind(flag, move |handle| {
+            let show_scrollbar = flag.get();
             let s = show_scrollbar;
             handle.modify(|list| list.show_horizontal_scrollbar.set(s));
         })
     }
 
     /// Sets whether the vertical scrollbar should be visible.
-    pub fn show_vertical_scrollbar(self, flag: impl Res<bool>) -> Self {
-        self.bind(flag, |handle, show_scrollbar| {
+    pub fn show_vertical_scrollbar(self, flag: impl Res<bool> + 'static) -> Self {
+        let flag = flag.to_signal(self.cx);
+        self.bind(flag, move |handle| {
+            let show_scrollbar = flag.get();
             let s = show_scrollbar;
             handle.modify(|list| list.show_vertical_scrollbar.set(s));
         })

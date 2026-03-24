@@ -38,9 +38,10 @@ impl PickList {
                     // A Label and an optional Icon
                     HStack::new(cx, move |cx| {
                         Label::new(cx, placeholder)
-                            .bind(list, move |handle, list| {
-                                handle.bind(selected, move |handle, sel| {
-                                    let selected_index = sel;
+                            .bind(list, move |handle| {
+                                let list = list.get();
+                                handle.bind(selected, move |handle| {
+                                    let selected_index = selected.get();
                                     let list_len = list.len();
                                     if selected_index < list_len {
                                         let selected_text =
@@ -137,8 +138,13 @@ impl View for PickList {
 
 impl Handle<'_, PickList> {
     /// Sets the placeholder text that appears when the textbox has no value.
-    pub fn placeholder<P: ToStringLocalized>(self, placeholder: impl Res<P>) -> Self {
-        self.bind(placeholder, |handle, val| {
+    pub fn placeholder<P: ToStringLocalized + Clone + 'static>(
+        self,
+        placeholder: impl Res<P> + 'static,
+    ) -> Self {
+        let placeholder = placeholder.to_signal(self.cx);
+        self.bind(placeholder, move |handle| {
+            let val = placeholder.get();
             let txt = val.to_string_local(&handle);
             handle.modify(|picklist| picklist.placeholder.set(txt));
         })

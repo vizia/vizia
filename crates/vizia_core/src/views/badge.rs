@@ -35,7 +35,8 @@ impl Badge {
         F: FnOnce(&mut Context),
     {
         let placement = Signal::new(BadgePlacement::TopRight);
-        Self { placement }.build(cx, content).bind(placement, |mut handle, placement| {
+        Self { placement }.build(cx, content).bind(placement, move |mut handle| {
+            let placement = placement.get();
             let (t, b) = match placement {
                 BadgePlacement::TopLeft | BadgePlacement::TopRight => {
                     (Stretch(1.0), Percentage(85.35))
@@ -126,7 +127,9 @@ impl Handle<'_, Badge> {
         self,
         placement: impl Res<U> + 'static,
     ) -> Self {
-        self.bind(placement, |handle, value| {
+        let placement = placement.to_signal(self.cx);
+        self.bind(placement, move |handle| {
+            let value = placement.get();
             let converted: BadgePlacement = value.into();
             handle.modify(|badge| {
                 badge.placement.set(converted);

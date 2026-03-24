@@ -124,18 +124,18 @@ impl<V> Handle<'_, V> {
     }
 
     /// Creates a binding to the given resource and provides a closure which can be used to mutate the view through a handle.
-    pub fn bind<R, T, F>(self, res: R, closure: F) -> Self
+    pub fn bind<R, T, F>(self, signal: R, closure: F) -> Self
     where
-        R: Res<T>,
-        F: 'static + Fn(Handle<'_, V>, T),
+        R: SignalGet<T> + 'static,
+        T: Clone + 'static,
+        F: 'static + Fn(Handle<'_, V>),
     {
         let entity = self.entity();
         let current = self.current();
         self.cx.with_current(current, |cx| {
-            res.set_or_bind(cx, move |cx, r| {
-                let value = r.get_value(cx);
+            Binding::new(cx, signal, move |cx| {
                 let new_handle = Handle { entity, current: cx.current, p: Default::default(), cx };
-                (closure)(new_handle, value);
+                (closure)(new_handle);
             });
         });
         self

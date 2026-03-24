@@ -83,8 +83,13 @@ impl Handle<'_, Chip> {
     /// Chip::new(cx, "Chip")
     ///     .variant(ChipVariant::Filled);
     /// ```
-    pub fn variant<U: Into<ChipVariant>>(self, variant: impl Res<U>) -> Self {
-        self.bind(variant, |handle, variant| {
+    pub fn variant<U: Into<ChipVariant> + Clone + 'static>(
+        self,
+        variant: impl Res<U> + 'static,
+    ) -> Self {
+        let variant = variant.to_signal(self.cx);
+        self.bind(variant, move |handle| {
+            let variant = variant.get();
             let variant = variant.into();
 
             match variant {

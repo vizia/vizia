@@ -297,8 +297,13 @@ impl View for Tooltip {
 impl Handle<'_, Tooltip> {
     /// Sets the position where the tooltip should appear relative to its parent element.
     /// Defaults to `Placement::Bottom`.
-    pub fn placement<U: Into<Placement>>(self, placement: impl Res<U>) -> Self {
-        self.bind(placement, |handle, val| {
+    pub fn placement<U: Into<Placement> + Clone + 'static>(
+        self,
+        placement: impl Res<U> + 'static,
+    ) -> Self {
+        let placement = placement.to_signal(self.cx);
+        self.bind(placement, move |handle| {
+            let val = placement.get();
             let placement = val.into();
             handle.modify(|tooltip| {
                 tooltip.placement.set(placement);
@@ -308,16 +313,23 @@ impl Handle<'_, Tooltip> {
     }
 
     /// Sets whether the tooltip should include an arrow. Defaults to true.
-    pub fn arrow<U: Into<bool>>(self, show_arrow: impl Res<U>) -> Self {
-        self.bind(show_arrow, |handle, val| {
+    pub fn arrow<U: Into<bool> + Clone + 'static>(self, show_arrow: impl Res<U> + 'static) -> Self {
+        let show_arrow = show_arrow.to_signal(self.cx);
+        self.bind(show_arrow, move |handle| {
+            let val = show_arrow.get();
             let show_arrow = val.into();
             handle.modify(|tooltip| tooltip.show_arrow.set(show_arrow));
         })
     }
 
     /// Sets the size of the tooltip arrow if enabled.
-    pub fn arrow_size<U: Into<Length>>(self, size: impl Res<U>) -> Self {
-        self.bind(size, |handle, val| {
+    pub fn arrow_size<U: Into<Length> + Clone + 'static>(
+        self,
+        size: impl Res<U> + 'static,
+    ) -> Self {
+        let size = size.to_signal(self.cx);
+        self.bind(size, move |handle| {
+            let val = size.get();
             let size = val.into();
             handle.modify(|tooltip| tooltip.arrow_size.set(size));
         })
@@ -335,7 +347,8 @@ impl Arrow {
         shift: Signal<Placement>,
         arrow_size: Signal<Length>,
     ) -> Handle<Self> {
-        Self { shift }.build(cx, |_| {}).bind(shift, move |mut handle, placement| {
+        Self { shift }.build(cx, |_| {}).bind(shift, move |mut handle| {
+            let placement = shift.get();
             let (t, b) = match placement {
                 Placement::TopStart | Placement::Top | Placement::TopEnd => {
                     (Percentage(100.0), Stretch(1.0))
@@ -366,7 +379,8 @@ impl Arrow {
 
             handle = handle.top(t).bottom(b).left(l).right(r).position_type(PositionType::Absolute);
 
-            handle.bind(arrow_size, move |handle, arrow_size| {
+            handle.bind(arrow_size, move |handle| {
+                let arrow_size = arrow_size.get();
                 let arrow_size = arrow_size.to_px().unwrap_or(8.0);
                 let (w, h) = match placement {
                     Placement::Top

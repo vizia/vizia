@@ -790,8 +790,13 @@ where
     }
 
     /// Sets the placeholder text that appears when the textbox has no value.
-    pub fn placeholder<P: ToStringLocalized>(self, text: impl Res<P>) -> Self {
-        self.bind(text, |mut handle, text| {
+    pub fn placeholder<P: ToStringLocalized + Clone + 'static>(
+        self,
+        text: impl Res<P> + 'static,
+    ) -> Self {
+        let text = text.to_signal(self.cx);
+        self.bind(text, move |mut handle| {
+            let text = text.get();
             let txt = text.to_string_local(&handle);
             let entity = handle.entity().clone();
             handle = handle.modify(|textbox| textbox.placeholder.set(txt));

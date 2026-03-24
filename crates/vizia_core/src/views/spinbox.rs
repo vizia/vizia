@@ -138,15 +138,19 @@ impl Handle<'_, Spinbox> {
     }
 
     /// Sets the orientation of the [Spinbox].
-    pub fn orientation(self, orientation: impl Res<Orientation>) -> Self {
-        self.bind(orientation, move |handle, orientation| {
+    pub fn orientation(self, orientation: impl Res<Orientation> + 'static) -> Self {
+        let orientation = orientation.to_signal(self.cx);
+        self.bind(orientation, move |handle| {
+            let orientation = orientation.get();
             handle.modify(move |spinbox| spinbox.orientation.set(orientation));
         })
     }
 
     /// Set the icons which should be used for the increment and decrement buttons of the [Spinbox]
-    pub fn icons(self, icons: impl Res<SpinboxIcons>) -> Self {
-        self.bind(icons, move |handle, icons| {
+    pub fn icons(self, icons: impl Res<SpinboxIcons> + 'static) -> Self {
+        let icons = icons.to_signal(self.cx);
+        self.bind(icons, move |handle| {
+            let icons = icons.get();
             handle.modify(move |spinbox| spinbox.icons.set(icons));
         })
     }
