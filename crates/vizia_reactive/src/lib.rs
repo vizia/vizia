@@ -9,7 +9,6 @@ mod effect;
 mod id;
 mod impls;
 mod map;
-mod mapped;
 mod memo;
 mod read;
 mod runtime;
@@ -25,7 +24,6 @@ pub use derived::{
 pub use effect::{Effect, EffectTrait, SignalTracker, UpdaterEffect};
 pub use id::Id as ReactiveId;
 pub use map::SignalMapExt;
-pub use mapped::MappedSignal;
 pub use memo::Memo;
 pub use read::{ReadRef, SignalGet, SignalRead, SignalTrack, SignalWith};
 pub use runtime::Runtime;
