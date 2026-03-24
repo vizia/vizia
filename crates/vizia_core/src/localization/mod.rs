@@ -272,7 +272,7 @@ impl Res<String> for Localized {
         let current = cx.current();
         let self2 = self.clone();
         let closure = Arc::new(closure);
-        let locale_signal = cx.environment().locale_signal;
+        let locale_signal = cx.environment().locale;
         locale_signal.set_or_bind(cx, move |cx, _| {
             cx.with_current(current, |cx| {
                 let stores = self2.args.values().map(|x| x.make_clone()).collect::<Vec<_>>();
