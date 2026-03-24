@@ -56,7 +56,8 @@ fn main() -> Result<(), ApplicationError> {
 
         AppData { color, show_window }.build(cx);
 
-        Binding::new(cx, show_window, move |cx, show_subwindow| {
+        Binding::new(cx, show_window, move |cx| {
+            let show_subwindow = show_window.get();
             if show_subwindow {
                 Window::new(cx, move |cx| {
                     VStack::new(cx, |cx: &mut Context| {

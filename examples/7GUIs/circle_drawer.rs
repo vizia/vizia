@@ -317,7 +317,8 @@ impl CircleDrawer {
         .build(cx);
 
         Self.build(cx, |cx| {
-            Binding::new(cx, menu_open, move |cx, is_open| {
+            Binding::new(cx, menu_open, move |cx| {
+                let is_open = menu_open.get();
                 if is_open {
                     Popup::new(cx, |cx| {
                         Button::new(cx, |cx| Label::new(cx, "Adjust diameter..")).on_press(|cx| {
@@ -334,7 +335,8 @@ impl CircleDrawer {
             });
 
             #[cfg(not(feature = "baseview"))]
-            Binding::new(cx, dialog_open, move |cx, is_open| {
+            Binding::new(cx, dialog_open, move |cx| {
+                let is_open = dialog_open.get();
                 if is_open {
                     Window::popup(cx, true, move |cx| {
                         let selected = circles_data.map(|cd| cd.selected).get().unwrap();

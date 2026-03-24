@@ -529,23 +529,21 @@ impl<V: View> ActionModifiers<V> for Handle<'_, V> {
         build_modal_model(self.cx, entity);
 
         self.cx.with_current(entity, move |cx| {
-            Binding::new(
-                cx,
-                cx.data::<ModalModel>().unwrap().tooltip_visible,
-                move |cx, tooltip_visible| {
-                    if tooltip_visible.0 {
-                        (content)(cx).on_build(|cx| {
-                            if tooltip_visible.1 {
-                                cx.play_animation(
-                                    "tooltip_fade",
-                                    Duration::from_millis(100),
-                                    Duration::from_millis(500),
-                                )
-                            }
-                        });
-                    }
-                },
-            );
+            let tooltip_visible = cx.data::<ModalModel>().unwrap().tooltip_visible;
+            Binding::new(cx, tooltip_visible, move |cx| {
+                let tooltip_visible = tooltip_visible.get();
+                if tooltip_visible.0 {
+                    (content)(cx).on_build(|cx| {
+                        if tooltip_visible.1 {
+                            cx.play_animation(
+                                "tooltip_fade",
+                                Duration::from_millis(100),
+                                Duration::from_millis(500),
+                            )
+                        }
+                    });
+                }
+            });
         });
 
         self

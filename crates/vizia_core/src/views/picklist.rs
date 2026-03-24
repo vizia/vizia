@@ -73,7 +73,8 @@ impl PickList {
                 .width(Stretch(1.0))
                 .on_press(|cx| cx.emit(PopupEvent::Open));
 
-                Binding::new(cx, is_open, move |cx, is_open| {
+                Binding::new(cx, is_open, move |cx| {
+                    let is_open = is_open.get();
                     if is_open {
                         Popup::new(cx, |cx| {
                             List::new(cx, list, move |cx, _, item| {

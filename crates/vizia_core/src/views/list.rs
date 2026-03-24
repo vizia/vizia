@@ -278,7 +278,8 @@ impl List {
             ])
             .build(cx);
 
-            Binding::new(cx, orientation, |cx, orientation| {
+            Binding::new(cx, orientation, move |cx| {
+                let orientation = orientation.get();
                 if orientation == Orientation::Horizontal {
                     cx.emit(KeymapEvent::RemoveAction(
                         KeyChord::new(Modifiers::empty(), Code::ArrowDown),

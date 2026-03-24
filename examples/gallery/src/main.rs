@@ -133,7 +133,8 @@ fn main() -> Result<(), ApplicationError> {
             original.get().map_or(String::default(), |id| format!("original_{}", id.0))
         });
 
-        Binding::new(cx, has_images, move |cx, has_images| {
+        Binding::new(cx, has_images, move |cx| {
+            let has_images = has_images.get();
             if has_images {
                 VirtualList::new(cx, images, 420.0, move |cx, _, item| {
                     HStack::new(cx, |cx| {

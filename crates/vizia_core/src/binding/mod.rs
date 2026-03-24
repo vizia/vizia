@@ -103,8 +103,8 @@
 //!             count,
 //!         }.build(cx);
 //!
-//!         Binding::new(cx, count, |cx, value|{
-//!             Label::new(cx, value.to_string());
+//!         Binding::new(cx, count, |cx|{
+//!             Label::new(cx, count.get().to_string());
 //!         });
 //!
 //!         Button::new(cx, |cx|{

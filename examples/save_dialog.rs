@@ -63,7 +63,8 @@ fn main() -> Result<(), ApplicationError> {
         .padding(Pixels(50.0))
         .alignment(Alignment::TopCenter);
 
-        Binding::new(cx, show_dialog, |cx, show_dialog| {
+        Binding::new(cx, show_dialog, move |cx| {
+            let show_dialog = show_dialog.get();
             if show_dialog {
                 Window::popup(cx, true, |cx| {
                     VStack::new(cx, |cx| {
