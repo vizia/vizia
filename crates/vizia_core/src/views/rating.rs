@@ -16,7 +16,7 @@ pub(crate) enum RatingEvent {
 
 impl<R> Rating<R>
 where
-    R: SignalGet<u32> + SignalUpdate<u32> + SignalMapExt<u32> + Res<u32> + 'static,
+    R: SignalGet<u32> + SignalUpdate<u32> + SignalMap<u32> + Res<u32> + 'static,
 {
     /// Creates a new [Rating] view.
     pub fn new(cx: &mut Context, max_rating: u32, rating: R) -> Handle<Self> {
@@ -42,7 +42,7 @@ where
 
 impl<R> View for Rating<R>
 where
-    R: SignalGet<u32> + SignalUpdate<u32> + SignalMapExt<u32> + Res<u32> + 'static,
+    R: SignalGet<u32> + SignalUpdate<u32> + SignalMap<u32> + Res<u32> + 'static,
 {
     fn element(&self) -> Option<&'static str> {
         Some("rating")
@@ -91,7 +91,7 @@ where
 
 impl<R> Handle<'_, Rating<R>>
 where
-    R: SignalGet<u32> + SignalUpdate<u32> + SignalMapExt<u32> + Res<u32> + 'static,
+    R: SignalGet<u32> + SignalUpdate<u32> + SignalMap<u32> + Res<u32> + 'static,
 {
     /// Set the callback which is triggered when the rating changes.
     pub fn on_change<F>(self, callback: F) -> Self

@@ -24,7 +24,7 @@ impl PickList {
         show_handle: bool,
     ) -> Handle<Self>
     where
-        L: SignalGet<V> + SignalMapExt<V> + Res<V> + 'static,
+        L: SignalGet<V> + SignalMap<V> + Res<V> + 'static,
         V: Deref<Target = [T]> + Clone + 'static,
         T: 'static + ToStringLocalized + Clone + PartialEq,
         S: Res<usize> + 'static,
