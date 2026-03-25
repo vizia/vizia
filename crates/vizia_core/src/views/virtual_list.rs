@@ -5,25 +5,34 @@ use std::{
 
 use crate::prelude::*;
 
-/// A view for creating a list of items from an iterable signal. Rather than creating a view for each item, items are recycled in the list.
+/// A view for creating a list of items from a binding to an iteratable list. Rather than creating a view for each item, items are recycled in the list.
 pub struct VirtualList {
+    /// Whether the scrollbar should scroll to the cursor when pressed.
     scroll_to_cursor: Signal<bool>,
     /// Callback that is called when the list is scrolled.
     on_scroll: Option<Box<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>>,
     /// The number of items in the list.
-    num_items: usize,
+    num_items: Signal<usize>,
     /// The height of each item in the list.
     item_height: f32,
+    /// The range of visible items in the list.
     visible_range: Signal<Range<usize>>,
+    /// The horizontal scroll position of the list.
     scroll_x: Signal<f32>,
+    /// The vertical scroll position of the list.
     scroll_y: Signal<f32>,
+    /// Whether the horizontal scrollbar should be visible.
     show_horizontal_scrollbar: Signal<bool>,
+    /// Whether the vertical scrollbar should be visible.
     show_vertical_scrollbar: Signal<bool>,
+    /// The set of selected items in the list.
     selected: Signal<BTreeSet<usize>>,
+    /// The selectable state of the list.
     selectable: Signal<Selectable>,
+    /// The index of the currently focused item in the list.
     focused: Signal<Option<usize>>,
     /// Whether the selection should follow the focus.
-    selection_follows_focus: bool,
+    selection_follows_focus: Signal<bool>,
     /// Callback that is called when an item is selected.
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
 }
@@ -36,8 +45,9 @@ impl VirtualList {
         }
     }
 
-    fn recalc(&mut self, cx: &mut EventContext) {
-        if self.num_items == 0 {
+    fn recalc(&self, cx: &mut EventContext) {
+        let num_items = self.num_items.get();
+        if num_items == 0 {
             self.visible_range.set(0..0);
             return;
         }
@@ -49,7 +59,7 @@ impl VirtualList {
         }
 
         let item_height = self.item_height;
-        let total_height = item_height * (self.num_items as f32);
+        let total_height = item_height * (num_items as f32);
         let visible_height = current_height / cx.scale_factor();
 
         let mut num_visible_items = (visible_height / item_height).ceil();
@@ -68,20 +78,20 @@ impl VirtualList {
 
         // Ensure we always have (num_visible_items + 1) items when possible
         let desired_range_size = (num_visible_items as usize) + 1;
-        end_index = end_index.min(self.num_items);
+        end_index = end_index.min(num_items);
 
         let current_range_size = end_index.saturating_sub(start_index);
 
         if current_range_size < desired_range_size {
-            match end_index == self.num_items {
+            match end_index == num_items {
                 // Try to extend backwards if we're at the end of the list
                 true => {
                     start_index =
                         start_index.saturating_sub(desired_range_size - current_range_size);
                 }
                 // Try to extend forwards if we have room
-                false if end_index < self.num_items => {
-                    end_index = (start_index + desired_range_size).min(self.num_items);
+                false if end_index < num_items => {
+                    end_index = (start_index + desired_range_size).min(num_items);
                 }
                 _ => {}
             }
@@ -92,20 +102,45 @@ impl VirtualList {
 }
 
 impl VirtualList {
-    /// Creates a new [VirtualList] view from a reactive list source.
-    pub fn new<V: View, S, R, T>(
+    /// Creates a new [VirtualList] view.
+    pub fn new<V: View, S, L, T>(
         cx: &mut Context,
         list: S,
         item_height: f32,
-        item_content: impl 'static + Copy + Fn(&mut Context, usize, T) -> Handle<V>,
+        item_content: impl 'static + Copy + Fn(&mut Context, usize, Signal<T>) -> Handle<V>,
     ) -> Handle<Self>
     where
-        S: SignalGet<R> + Copy + 'static,
-        R: Deref<Target = [T]> + Clone + 'static,
-        T: Clone + 'static,
+        S: Res<L> + 'static,
+        L: Deref<Target = [T]> + Clone + 'static,
+        T: Clone + PartialEq + 'static,
     {
+        Self::new_generic(
+            cx,
+            list,
+            |list| list.len(),
+            |list, index| list[index].clone(),
+            item_height,
+            item_content,
+        )
+    }
+
+    /// Creates a new [VirtualList] view with a binding to the given source and a template for constructing the list items.
+    pub fn new_generic<V: View, S, L, T>(
+        cx: &mut Context,
+        list: S,
+        list_len: impl 'static + Fn(&L) -> usize,
+        list_index: impl 'static + Copy + Fn(&L, usize) -> T,
+        item_height: f32,
+        item_content: impl 'static + Copy + Fn(&mut Context, usize, Signal<T>) -> Handle<V>,
+    ) -> Handle<Self>
+    where
+        S: Res<L> + 'static,
+        L: Deref<Target = [T]> + Clone + 'static,
+        T: Clone + PartialEq + 'static,
+    {
+        let list = list.to_signal(cx);
+        let num_items = list.map(list_len).to_signal(cx);
         let visible_range = Signal::new(0..0);
-        let scroll_to_cursor = Signal::new(true);
         let scroll_x = Signal::new(0.0);
         let scroll_y = Signal::new(0.0);
         let show_horizontal_scrollbar = Signal::new(false);
@@ -113,12 +148,13 @@ impl VirtualList {
         let selected = Signal::new(BTreeSet::default());
         let selectable = Signal::new(Selectable::None);
         let focused = Signal::new(None);
-        let selectable_class = Signal::new(false);
+        let selection_follows_focus = Signal::new(false);
+        let scroll_to_cursor = Signal::new(true);
 
         Self {
             scroll_to_cursor,
             on_scroll: None,
-            num_items: list.get().len(),
+            num_items,
             item_height,
             visible_range,
             scroll_x,
@@ -128,17 +164,10 @@ impl VirtualList {
             selected,
             selectable,
             focused,
-            selection_follows_focus: false,
+            selection_follows_focus,
             on_select: None,
         }
         .build(cx, |cx| {
-            let list_entity = cx.current();
-
-            Binding::new(cx, selectable, move |_cx| {
-                let selectable = selectable.get();
-                selectable_class.set(selectable != Selectable::None);
-            });
-
             Keymap::from(vec![
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowDown),
@@ -160,62 +189,54 @@ impl VirtualList {
             .build(cx);
 
             ScrollView::new(cx, move |cx| {
-                Binding::new(cx, list, move |cx| {
-                    let list_values = list.get();
-                    let num_items = list_values.len();
-
-                    if let Some(view) = cx.views.get_mut(&list_entity) {
-                        if let Some(list_view) = view.downcast_mut::<VirtualList>() {
-                            list_view.num_items = num_items;
-                        }
-                    }
-
+                Binding::new(cx, num_items, move |cx| {
+                    let num_items = num_items.get();
                     cx.emit(ScrollEvent::SetY(0.0));
-
-                    VStack::new(cx, move |cx| {
-                        Binding::new(cx, visible_range, move |cx| {
-                            let visible_range = visible_range.get();
-                            for i in 0..visible_range.len().min(num_items) {
-                                let index = VirtualList::evaluate_index(
-                                    i,
-                                    visible_range.start,
-                                    visible_range.end,
-                                );
-                                let values = list_values.clone();
-
-                                if index >= values.len() {
-                                    continue;
-                                }
-
-                                let item = values[index].clone();
-
-                                let is_focused = Signal::new(false);
-                                let is_selected = Signal::new(false);
-
-                                Binding::new(cx, focused, move |_cx| {
-                                    let focused = focused.get();
-                                    is_focused.set(focused.as_ref().is_some_and(|f| *f == index));
+                    // The ScrollView contains a VStack which is sized to the total height
+                    // needed to fit all items. This ensures we have a correct scroll bar.
+                    VStack::new(cx, |cx| {
+                        // Within the VStack we create a view for each visible item.
+                        // This binding ensures the amount of views stay up to date.
+                        let num_visible_items = visible_range.map(Range::len);
+                        Binding::new(cx, num_visible_items, move |cx| {
+                            for i in 0..num_visible_items.get().min(num_items) {
+                                // Each item of the range maps to an index into the backing list.
+                                // As we scroll the index may change, representing an item going in/out of visibility.
+                                // Wrap `item_content` in a binding to said index, so it rebuilds only when necessary.
+                                let item_index = visible_range.map(move |range| {
+                                    Self::evaluate_index(i, range.start, range.end)
                                 });
+                                Binding::new(cx, item_index, move |cx| {
+                                    let index = item_index.get();
+                                    let item =
+                                        list.map(move |list| list_index(list, index)).to_signal(cx);
 
-                                Binding::new(cx, selected, move |_cx| {
-                                    let selected = selected.get();
-                                    is_selected.set(selected.contains(&index));
-                                });
-
-                                item_content(cx, index, item)
-                                    .height(Percentage(100.0))
+                                    ListItem::new(
+                                        cx,
+                                        index,
+                                        item,
+                                        selected,
+                                        focused,
+                                        move |cx, index, item| {
+                                            item_content(cx, index, item).height(Percentage(100.0));
+                                        },
+                                    )
                                     .min_width(Auto)
                                     .height(Pixels(item_height))
                                     .position_type(PositionType::Absolute)
-                                    .top(Pixels(index as f32 * item_height))
-                                    .toggle_class("focused", is_focused)
-                                    .checked(is_selected)
-                                    .on_press(move |cx| cx.emit(ListEvent::Select(index)));
+                                    .bind(
+                                        item_index,
+                                        move |handle| {
+                                            let index = item_index.get();
+                                            handle.top(Pixels(index as f32 * item_height));
+                                        },
+                                    );
+                                });
                             }
-                        });
+                        })
                     })
                     .height(Pixels(num_items as f32 * item_height));
-                });
+                })
             })
             .show_horizontal_scrollbar(show_horizontal_scrollbar)
             .show_vertical_scrollbar(show_vertical_scrollbar)
@@ -228,7 +249,7 @@ impl VirtualList {
                 }
             });
         })
-        .toggle_class("selectable", selectable_class)
+        .toggle_class("selectable", selectable.map(|s| *s != Selectable::None))
         .navigable(true)
         .role(Role::List)
     }
@@ -298,17 +319,17 @@ impl View for VirtualList {
 
             ListEvent::FocusNext => {
                 let mut focused = self.focused.get();
-
-                if let Some(current_focused) = focused.as_mut() {
-                    if *current_focused < self.num_items.saturating_sub(1) {
-                        *current_focused = current_focused.saturating_add(1);
-                        if self.selection_follows_focus {
+                let num_items = self.num_items.get();
+                if let Some(f) = &mut focused {
+                    if *f < num_items.saturating_sub(1) {
+                        *f = f.saturating_add(1);
+                        if self.selection_follows_focus.get() {
                             cx.emit(ListEvent::SelectFocused);
                         }
                     }
                 } else {
                     focused = Some(0);
-                    if self.selection_follows_focus {
+                    if self.selection_follows_focus.get() {
                         cx.emit(ListEvent::SelectFocused);
                     }
                 }
@@ -320,17 +341,17 @@ impl View for VirtualList {
 
             ListEvent::FocusPrev => {
                 let mut focused = self.focused.get();
-
-                if let Some(current_focused) = focused.as_mut() {
-                    if *current_focused > 0 {
-                        *current_focused = current_focused.saturating_sub(1);
-                        if self.selection_follows_focus {
+                let num_items = self.num_items.get();
+                if let Some(f) = &mut focused {
+                    if *f > 0 {
+                        *f = f.saturating_sub(1);
+                        if self.selection_follows_focus.get() {
                             cx.emit(ListEvent::SelectFocused);
                         }
                     }
                 } else {
-                    focused = Some(self.num_items.saturating_sub(1));
-                    if self.selection_follows_focus {
+                    focused = Some(num_items.saturating_sub(1));
+                    if self.selection_follows_focus.get() {
                         cx.emit(ListEvent::SelectFocused);
                     }
                 }
@@ -367,7 +388,7 @@ impl View for VirtualList {
 }
 
 impl Handle<'_, VirtualList> {
-    /// Sets the selected items of the list from signal of type indices.
+    /// Sets the selected items of the list from a signal of indices.
     pub fn selected<R>(self, selected: impl Res<R> + 'static) -> Self
     where
         R: Deref<Target = [usize]> + Clone + 'static,
@@ -389,7 +410,7 @@ impl Handle<'_, VirtualList> {
         })
     }
 
-    /// Sets the callback triggered when a virtual list item is selected.
+    /// Sets the callback triggered when a [ListItem] is selected.
     pub fn on_select<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, usize),
@@ -397,7 +418,7 @@ impl Handle<'_, VirtualList> {
         self.modify(|list| list.on_select = Some(Box::new(callback)))
     }
 
-    /// Set the selectable state of the [VirtualList].
+    /// Set the selectable state of the [List].
     pub fn selectable<U: Into<Selectable> + Clone + 'static>(
         self,
         selectable: impl Res<U> + 'static,
@@ -419,13 +440,15 @@ impl Handle<'_, VirtualList> {
         self.bind(flag, move |handle| {
             let selection_follows_focus = flag.get();
             let s = selection_follows_focus.into();
-            handle.modify(|list| list.selection_follows_focus = s);
+            handle.modify(|list| list.selection_follows_focus.set(s));
         })
     }
 
     /// Sets whether the scrollbar should move to the cursor when pressed.
     pub fn scroll_to_cursor(self, flag: bool) -> Self {
-        self.modify(|virtual_list: &mut VirtualList| virtual_list.scroll_to_cursor.set(flag))
+        self.modify(|virtual_list: &mut VirtualList| {
+            virtual_list.scroll_to_cursor.set(flag);
+        })
     }
 
     /// Sets a callback which will be called when a scrollview is scrolled, either with the mouse wheel, touchpad, or using the scroll bars.
@@ -436,22 +459,20 @@ impl Handle<'_, VirtualList> {
         self.modify(|list| list.on_scroll = Some(Box::new(callback)))
     }
 
-    /// Set the horizontal scroll position of the [VirtualList]. Accepts a value or signal of type an `f32` between 0 and 1.
+    /// Set the horizontal scroll position of the [ScrollView]. Accepts a value or lens to an 'f32' between 0 and 1.
     pub fn scroll_x(self, scrollx: impl Res<f32> + 'static) -> Self {
         let scrollx = scrollx.to_signal(self.cx);
         self.bind(scrollx, move |handle| {
-            let scrollx = scrollx.get();
-            let sx = scrollx;
+            let sx = scrollx.get();
             handle.modify(|list| list.scroll_x.set(sx));
         })
     }
 
-    /// Set the vertical scroll position of the [VirtualList]. Accepts a value or signal of type an `f32` between 0 and 1.
+    /// Set the vertical scroll position of the [ScrollView]. Accepts a value or lens to an 'f32' between 0 and 1.
     pub fn scroll_y(self, scrollx: impl Res<f32> + 'static) -> Self {
         let scrollx = scrollx.to_signal(self.cx);
         self.bind(scrollx, move |handle| {
-            let scrolly = scrollx.get();
-            let sy = scrolly;
+            let sy = scrollx.get();
             handle.modify(|list| list.scroll_y.set(sy));
         })
     }
@@ -460,8 +481,7 @@ impl Handle<'_, VirtualList> {
     pub fn show_horizontal_scrollbar(self, flag: impl Res<bool> + 'static) -> Self {
         let flag = flag.to_signal(self.cx);
         self.bind(flag, move |handle| {
-            let show_scrollbar = flag.get();
-            let s = show_scrollbar;
+            let s = flag.get();
             handle.modify(|list| list.show_horizontal_scrollbar.set(s));
         })
     }
@@ -470,8 +490,7 @@ impl Handle<'_, VirtualList> {
     pub fn show_vertical_scrollbar(self, flag: impl Res<bool> + 'static) -> Self {
         let flag = flag.to_signal(self.cx);
         self.bind(flag, move |handle| {
-            let show_scrollbar = flag.get();
-            let s = show_scrollbar;
+            let s = flag.get();
             handle.modify(|list| list.show_vertical_scrollbar.set(s));
         })
     }
