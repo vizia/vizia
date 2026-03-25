@@ -1149,7 +1149,7 @@ impl DrawContext<'_> {
 }
 
 impl DataContext for DrawContext<'_> {
-    fn data<T: 'static>(&self) -> Option<&T> {
+    fn try_data<T: 'static>(&self) -> Option<&T> {
         // Return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
             return Some(t);

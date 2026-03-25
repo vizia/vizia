@@ -87,7 +87,7 @@ impl Submenu {
         content: impl Fn(&mut Context) -> Handle<V> + 'static,
         menu: impl Fn(&mut Context) + 'static,
     ) -> Handle<Self> {
-        let is_submenu = cx.data::<Submenu>().is_some();
+        let is_submenu = cx.try_data::<Submenu>().is_some();
         let is_open = Signal::new(false);
         let submenu_popup_placement =
             if is_submenu { Placement::RightStart } else { Placement::BottomStart };
@@ -144,8 +144,8 @@ impl Submenu {
             .layout_type(LayoutType::Row)
             .on_press(|cx| cx.emit(MenuEvent::ToggleOpen));
 
-        if handle.data::<MenuBar>().is_some() {
-            let menu_bar_open = handle.data::<MenuBar>().map(|m| m.is_open).unwrap();
+        if handle.try_data::<MenuBar>().is_some() {
+            let menu_bar_open = handle.data::<MenuBar>().is_open;
             handle.bind(menu_bar_open, move |handle| {
                 let is_open = menu_bar_open.get();
                 handle.modify(|menu_button| menu_button.open_on_hover = is_open);
