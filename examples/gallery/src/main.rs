@@ -138,7 +138,7 @@ fn main() -> Result<(), ApplicationError> {
             if has_images {
                 VirtualList::new(cx, images, 420.0, move |cx, _, item| {
                     HStack::new(cx, |cx| {
-                        for id in item {
+                        for id in item.get() {
                             let is_loaded = Memo::new(move |_| {
                                 thumbnails
                                     .get()
