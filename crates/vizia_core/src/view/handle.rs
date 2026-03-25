@@ -14,7 +14,7 @@ pub struct Handle<'a, V> {
 }
 
 impl<V> DataContext for Handle<'_, V> {
-    fn data<T: 'static>(&self) -> Option<&T> {
+    fn try_data<T: 'static>(&self) -> Option<&T> {
         // Return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
             return Some(t);

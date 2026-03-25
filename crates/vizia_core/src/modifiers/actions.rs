@@ -529,7 +529,7 @@ impl<V: View> ActionModifiers<V> for Handle<'_, V> {
         build_modal_model(self.cx, entity);
 
         self.cx.with_current(entity, move |cx| {
-            let tooltip_visible = cx.data::<ModalModel>().unwrap().tooltip_visible;
+            let tooltip_visible = cx.data::<ModalModel>().tooltip_visible;
             Binding::new(cx, tooltip_visible, move |cx| {
                 let tooltip_visible = tooltip_visible.get();
                 if tooltip_visible.0 {
@@ -555,7 +555,7 @@ impl<V: View> ActionModifiers<V> for Handle<'_, V> {
         build_modal_model(self.cx, entity);
 
         self.cx.with_current(entity, |cx| {
-            let menu_visible = cx.data::<ModalModel>().unwrap().menu_visible;
+            let menu_visible = cx.data::<ModalModel>().menu_visible;
             (content)(cx).bind(menu_visible, move |mut handle| {
                 let is_visible = menu_visible.get();
                 handle = handle.toggle_class("vis", is_visible);
