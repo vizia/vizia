@@ -104,7 +104,7 @@ impl BackendContext {
 
     /// Returns a reference to the [`Environment`] model.
     pub fn environment(&self) -> &Environment {
-        self.0.data::<Environment>().unwrap()
+        self.0.data::<Environment>()
     }
 
     /// Returns a mutable reference to the inner context.

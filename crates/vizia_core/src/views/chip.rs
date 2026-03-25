@@ -28,8 +28,7 @@ impl Chip {
                 Label::new(cx, text).height(Stretch(1.0)).alignment(Alignment::Left);
                 Binding::new(cx, has_close, move |cx| {
                     if has_close.get() {
-                        let on_close =
-                            cx.data::<Chip>().and_then(|chip| chip.on_close.clone()).unwrap();
+                        let on_close = cx.data::<Chip>().on_close.clone().unwrap();
                         Button::new(cx, |cx| Svg::new(cx, ICON_X))
                             .class("close-icon")
                             .height(Pixels(16.0))

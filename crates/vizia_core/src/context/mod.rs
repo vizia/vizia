@@ -251,7 +251,7 @@ impl Context {
 
     /// Returns a reference to the [Environment] model.
     pub fn environment(&self) -> &Environment {
-        self.data::<Environment>().unwrap()
+        self.data::<Environment>()
     }
 
     /// Returns the entity id of the  parent window to the current view.
@@ -605,7 +605,7 @@ impl Context {
         self.add_theme(DEFAULT_LAYOUT);
         self.add_theme(MARKDOWN);
         if !self.ignore_default_theme {
-            let environment = self.data::<Environment>().expect("Failed to get environment");
+            let environment = self.data::<Environment>();
             match environment.theme.get_current_theme() {
                 ThemeMode::LightMode => self.add_theme(LIGHT_THEME),
                 ThemeMode::DarkMode => self.add_theme(DARK_THEME),
@@ -938,7 +938,7 @@ impl<'a> LocalizationContext<'a> {
     }
 
     pub(crate) fn environment(&self) -> &Environment {
-        self.data::<Environment>().unwrap()
+        self.data::<Environment>()
     }
 }
 
@@ -947,7 +947,12 @@ impl<'a> LocalizationContext<'a> {
 /// This lets resource reads be generic over any of these types.
 pub trait DataContext {
     /// Get model/view data from the context. Returns `None` if the data does not exist.
-    fn data<T: 'static>(&self) -> Option<&T>;
+    fn try_data<T: 'static>(&self) -> Option<&T>;
+
+    /// Get model/view data from the context. Panics if the data does not exist.
+    fn data<T: 'static>(&self) -> &T {
+        self.try_data::<T>().expect("data not found in context")
+    }
 
     /// Convert the current context into a [LocalizationContext].
     fn localization_context(&self) -> Option<LocalizationContext<'_>> {
@@ -1069,7 +1074,7 @@ pub trait EmitContext {
 }
 
 impl DataContext for Context {
-    fn data<T: 'static>(&self) -> Option<&T> {
+    fn try_data<T: 'static>(&self) -> Option<&T> {
         // return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
             return Some(t);
@@ -1100,7 +1105,7 @@ impl DataContext for Context {
 }
 
 impl DataContext for LocalizationContext<'_> {
-    fn data<T: 'static>(&self) -> Option<&T> {
+    fn try_data<T: 'static>(&self) -> Option<&T> {
         // return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
             return Some(t);
