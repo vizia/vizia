@@ -160,23 +160,12 @@ where
     where
         R: Clone,
     {
+        let value_text = value.clone().to_signal(cx);
         let caret_timer = cx.environment().caret_timer;
         let initial_text = value.get_value(cx).to_string_local(cx);
-        let show_placeholder = Signal::new(initial_text.is_empty());
         let show_caret = Signal::new(false);
         let placeholder = Signal::new(String::from(""));
-        let value_text = Signal::new(initial_text);
-        let show_placeholder_for_text = show_placeholder;
-        let placeholder_for_text = placeholder;
-        let value_text_for_display = value_text;
-
-        let text_or_paceholder = Memo::new(move |_| {
-            if show_placeholder_for_text.get() {
-                placeholder_for_text.get()
-            } else {
-                value_text_for_display.get()
-            }
-        });
+        let show_placeholder = Signal::new(initial_text.is_empty());
 
         Self {
             value: value.clone(),
@@ -220,8 +209,23 @@ where
         })
         .text_value(value.clone())
         .toggle_class("caret", show_caret)
-        .text(text_or_paceholder)
         .placeholder_shown(show_placeholder)
+        .bind(value_text, move |handle| {
+            handle.bind(placeholder, move |handle| {
+                let text = value_text.get();
+                let txt = text.to_string_local(&handle);
+                let handle = handle.modify(|textbox| {
+                    textbox.show_placeholder.set(txt.is_empty());
+                });
+                let placeholder_text = placeholder.get().to_string_local(&handle);
+
+                if show_placeholder.get() {
+                    handle.text(placeholder_text);
+                } else {
+                    handle.text(txt);
+                }
+            });
+        })
     }
 
     fn insert_text(&mut self, cx: &mut EventContext, txt: &str) {
