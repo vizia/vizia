@@ -1,6 +1,6 @@
 use crate::{Memo, SignalWith};
 
-pub trait SignalMapExt<T: 'static>: SignalWith<T> + Copy + 'static {
+pub trait SignalMap<T: 'static>: SignalWith<T> + Copy + 'static {
     fn map<U, F>(self, map: F) -> Memo<U>
     where
         U: Clone + PartialEq + 'static,
@@ -10,4 +10,4 @@ pub trait SignalMapExt<T: 'static>: SignalWith<T> + Copy + 'static {
     }
 }
 
-impl<T: 'static, S> SignalMapExt<T> for S where S: SignalWith<T> + Copy + 'static {}
+impl<T: 'static, S> SignalMap<T> for S where S: SignalWith<T> + Copy + 'static {}
