@@ -78,7 +78,7 @@ impl ProgressBar {
     /// ```
     pub fn new<L>(cx: &mut Context, signal: L, orientation: Orientation) -> Handle<Self>
     where
-        L: SignalGet<f32> + SignalMapExt<f32>,
+        L: SignalGet<f32> + SignalMap<f32>,
     {
         match orientation {
             Orientation::Horizontal => Self::horizontal(cx, signal),
@@ -89,7 +89,7 @@ impl ProgressBar {
     /// Creates a new horizontal progress bar bound to the provided value source.
     pub fn horizontal<L>(cx: &mut Context, signal: L) -> Handle<Self>
     where
-        L: SignalGet<f32> + SignalMapExt<f32>,
+        L: SignalGet<f32> + SignalMap<f32>,
     {
         Self.build(cx, |cx| {
             let progress = signal.map(|v| Units::Percentage(v * 100.0));
@@ -102,7 +102,7 @@ impl ProgressBar {
     /// Creates a new vertical progress bar bound to the provided value source.
     pub fn vertical<L>(cx: &mut Context, signal: L) -> Handle<Self>
     where
-        L: SignalGet<f32> + SignalMapExt<f32>,
+        L: SignalGet<f32> + SignalMap<f32>,
     {
         Self.build(cx, |cx| {
             let progress = signal.map(|v| Units::Percentage(v * 100.0));

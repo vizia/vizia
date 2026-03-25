@@ -68,7 +68,7 @@ pub struct Slider<S> {
 
 impl<S> Slider<S>
 where
-    S: SignalGet<f32> + SignalMapExt<f32> + Copy + 'static,
+    S: SignalGet<f32> + SignalMap<f32> + Copy + 'static,
 {
     /// Creates a new slider from the provided value source.
     ///

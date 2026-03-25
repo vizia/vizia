@@ -610,8 +610,8 @@ impl ListItem {
         cx: &'a mut Context,
         index: usize,
         item: Signal<T>,
-        selected: impl SignalMapExt<BTreeSet<usize>>,
-        focused: impl SignalMapExt<Option<usize>>,
+        selected: impl SignalMap<BTreeSet<usize>>,
+        focused: impl SignalMap<Option<usize>>,
         item_content: impl 'static + Fn(&mut Context, usize, Signal<T>),
     ) -> Handle<'a, Self> {
         let is_focused =

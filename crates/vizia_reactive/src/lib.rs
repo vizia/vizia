@@ -23,7 +23,7 @@ pub use derived::{
 };
 pub use effect::{Effect, EffectTrait, SignalTracker, UpdaterEffect};
 pub use id::Id as ReactiveId;
-pub use map::SignalMapExt;
+pub use map::SignalMap;
 pub use memo::Memo;
 pub use read::{ReadRef, SignalGet, SignalRead, SignalTrack, SignalWith};
 pub use runtime::Runtime;
