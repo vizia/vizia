@@ -67,7 +67,7 @@ pub mod prelude {
         SyncWriteSignal, UpdaterEffect, WriteSignal,
     };
 
-    pub use super::impl_res_simple;
+    pub use super::{impl_res_clone, impl_res_simple};
 
     pub use crate::model::Model;
 
