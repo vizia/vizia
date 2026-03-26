@@ -56,7 +56,7 @@ pub trait Model: 'static + Sized {
     ///     }).run();  
     /// }
     /// ```
-    fn build(self, cx: &mut Context) {
+    fn build(self, cx: &mut Context) -> &Self {
         let current = if cx.tree.is_ignored(cx.current) {
             cx.tree.get_layout_parent(cx.current).unwrap()
         } else {
@@ -70,6 +70,15 @@ pub trait Model: 'static + Sized {
             models.insert(TypeId::of::<Self>(), Box::new(self));
             cx.models.insert(current, models);
         }
+
+        cx.models
+            .get(&current)
+            .unwrap()
+            .get(&TypeId::of::<Self>())
+            .unwrap()
+            .as_any_ref()
+            .downcast_ref::<Self>()
+            .unwrap()
     }
 
     /// Respond to events in order to mutate the model data.
