@@ -15,13 +15,14 @@ pub struct TabView {
 impl TabView {
     pub fn new<S, V, T, F>(cx: &mut Context, list: S, content: F) -> Handle<Self>
     where
-        S: SignalGet<V> + Copy + 'static,
+        S: Res<V> + 'static,
         V: Deref<Target = [T]> + Clone + 'static,
         T: Clone + 'static,
         F: 'static + Clone + Fn(&mut Context, usize, T) -> TabPair,
     {
         let selected_index = Signal::new(0usize);
         let is_vertical = Signal::new(false);
+        let list = list.to_signal(cx);
 
         Self { selected_index, is_vertical, on_select: None }
             .build(cx, move |cx| {
