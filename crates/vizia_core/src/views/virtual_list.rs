@@ -107,7 +107,7 @@ impl VirtualList {
         cx: &mut Context,
         list: S,
         item_height: f32,
-        item_content: impl 'static + Copy + Fn(&mut Context, usize, Signal<T>) -> Handle<V>,
+        item_content: impl 'static + Copy + Fn(&mut Context, usize, Memo<T>) -> Handle<V>,
     ) -> Handle<Self>
     where
         S: Res<L> + 'static,
@@ -131,11 +131,11 @@ impl VirtualList {
         list_len: impl 'static + Fn(&L) -> usize,
         list_index: impl 'static + Copy + Fn(&L, usize) -> T,
         item_height: f32,
-        item_content: impl 'static + Copy + Fn(&mut Context, usize, Signal<T>) -> Handle<V>,
+        item_content: impl 'static + Copy + Fn(&mut Context, usize, Memo<T>) -> Handle<V>,
     ) -> Handle<Self>
     where
         S: Res<L> + 'static,
-        L: Deref<Target = [T]> + Clone + 'static,
+        L: Clone + 'static,
         T: Clone + PartialEq + 'static,
     {
         let list = list.to_signal(cx);
@@ -208,8 +208,7 @@ impl VirtualList {
                                 });
                                 Binding::new(cx, item_index, move |cx| {
                                     let index = item_index.get();
-                                    let item =
-                                        list.map(move |list| list_index(list, index)).to_signal(cx);
+                                    let item = list.map(move |list| list_index(list, index));
 
                                     ListItem::new(
                                         cx,
