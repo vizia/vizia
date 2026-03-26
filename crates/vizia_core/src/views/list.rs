@@ -606,13 +606,13 @@ pub struct ListItem {}
 
 impl ListItem {
     /// Create a new [ListItem] view.
-    pub fn new<'a, T: 'static>(
+    pub fn new<'a, T: Clone + 'static, M: SignalGet<T> + 'static>(
         cx: &'a mut Context,
         index: usize,
-        item: Signal<T>,
+        item: M,
         selected: impl SignalMap<BTreeSet<usize>>,
         focused: impl SignalMap<Option<usize>>,
-        item_content: impl 'static + Fn(&mut Context, usize, Signal<T>),
+        item_content: impl 'static + Fn(&mut Context, usize, M),
     ) -> Handle<'a, Self> {
         let is_focused =
             focused.map(move |focused| focused.as_ref().is_some_and(|f| *f == index)).get();
