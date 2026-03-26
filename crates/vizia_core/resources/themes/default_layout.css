@@ -14,7 +14,8 @@
 /* AVATAR */
 
 avatar {
-    size: 50px;
+    width: 50px;
+    height: 50px;
     alignment: center;
 }
 
@@ -31,11 +32,13 @@ avatar.rounded {
 }
 
 avatar > svg {
-    size: 24px;
+    width: 24px;
+    height: 24px;
 }
 
 avatar > image {
-    size: 100%;
+    width: 100%;
+    height: 100%;
     background-size: cover;
 }
 
@@ -57,7 +60,8 @@ avatar-group > avatar {
 
 badge {
     position-type: absolute;
-    size: 20px;
+    width: 20px;
+    height: 20px;
     corner-radius: 50%;
     alignment: center;
 }
@@ -65,11 +69,13 @@ badge {
 badge > label {
     font-size: 12px;
     alignment: center;
-    size: 1s;
+    width: 1s;
+    height: 1s;
 }
 
 badge > svg {
-    size: 1s;
+    width: 1s;
+    height: 1s;
 }
 
 /* BUTTON */
@@ -93,14 +99,16 @@ toggle-button > * {
 
 button svg,
 toggle-button svg {
-    size: 20px;
+    width: 20px;
+    height: 20px;
 }
 
 /* BUTTON GROUP */
 
 button-group {
     layout-type: row;
-    size: auto;
+    width: auto;
+    height: auto;
 }
 
 button-group.vertical {
@@ -117,12 +125,14 @@ button-group.vertical > toggle-button {
 /* CHECKBOX */
 
 checkbox {
-    size: 20px;
+    width: 20px;
+    height: 20px;
     cursor: hand;
 }
 
 checkbox > svg {
-    size: 1s;
+    width: 1s;
+    height: 1s;
 }
 
 /* CHIP */
@@ -147,7 +157,8 @@ chip > .close-icon {
 }
 
 chip > .close-icon svg {
-    size: 1s;
+    width: 1s;
+    height: 1s;
 }
 
 /* DATEPICKER */
@@ -263,7 +274,8 @@ combobox .title {
 }
 
 popup {
-    size: auto;
+    width: auto;
+    height: auto;
     min-width: 100%;
     left: 1s;
     right: 1s;
@@ -319,19 +331,22 @@ combobox vstack {
 /* ICON */
 
 svg {
-    size: auto;
+    width: auto;
+    height: auto;
 }
 
 /* IMAGE */
 
 image {
-    size: auto;
+    width: auto;
+    height: auto;
 }
 
 /* KNOB */
 
 knob {
-    size: 32px;
+    width: 32px;
+    height: 32px;
     corner-radius: 50%;
 }
 
@@ -360,7 +375,8 @@ knob {
 /* LABEL */
 
 label {
-    size: auto;
+    width: auto;
+    height: auto;
     text-wrap: false;
 }
 
@@ -371,7 +387,8 @@ label.describing {
 /* LIST */
 
 list {
-    size: 1s;
+    width: 1s;
+    height: 1s;
 }
 
 list.horizontal {
@@ -398,7 +415,8 @@ list list-item {
 /* MENU */
 
 menubar {
-    size: auto;
+    width: auto;
+    height: auto;
 }
 
 menubutton {
@@ -437,7 +455,8 @@ dropdown > popup > submenu {
 
 submenu .icon,
 menubutton .icon {
-    size: 20px;
+    width: 20px;
+    height: 20px;
 }
 
 menubutton .shortcut {
@@ -447,7 +466,7 @@ menubutton .shortcut {
 /* submenu submenu label,
 dropdown > popup > submenu label {
     alignment: center;
-    size: 1s;
+    height: 1s;
     width: 1s;
 } */
 
@@ -492,7 +511,8 @@ menu submenu > .arrow {
 }
 
 submenu > .arrow {
-    size: 20px;
+    width: 20px;
+    height: 20px;
     left: 1s;
     right: 4px;
 }
@@ -513,7 +533,8 @@ picklist {
 /* POPUP */
 
 popup {
-    size: auto;
+    width: auto;
+    height: auto;
     z-index: 100;
 }
 
@@ -527,19 +548,22 @@ progressbar {
 /* RADIOBUTTON */
 
 radiobutton {
-    size: 16px;
+    width: 16px;
+    height: 16px;
     alignment: center;
     cursor: hand;
 }
 
 radiobutton .inner {
-    size: 8px;
+    width: 8px;
+    height: 8px;
 }
 
 /* RATING */
 
 rating {
-    size: auto;
+    width: auto;
+    height: auto;
     layout-type: row;
 }
 
@@ -575,7 +599,8 @@ scrollview {
 }
 
 scrollview > scroll-content {
-    size: auto;
+    width: auto;
+    height: auto;
     min-size: 100%;
 }
 
@@ -669,12 +694,14 @@ spinbox.vertical {
 }
 
 spinbox .spinbox-button {
-    size: 24px;
+    width: 24px;
+    height: 24px;
     alignment: center;
 }
 
 spinbox .spinbox-button > svg {
-    size: 20px;
+    width: 20px;
+    height: 20px;
 }
 
 spinbox .spinbox-value {
@@ -783,7 +810,8 @@ tabbar {
 }
 
 tabbar button {
-    size: 30px;
+    width: 30px;
+    height: 30px;
 }
 
 tabbar > list > scrollview {
@@ -876,7 +904,8 @@ textbox:disabled {
 /* TOOLTIP */
 
 tooltip {
-    size: auto;
+    width: auto;
+    height: auto;
     max-width: 160px;
 }
 
@@ -895,11 +924,13 @@ virtual-list .list-item {
 /* XY PAD */
 
 xypad {
-    size: 50px;
+    width: 50px;
+    height: 50px;
 }
 
 xypad .thumb {
-    size: 10px;
+    width: 10px;
+    height: 10px;
     alignment: center;
 }
 
@@ -923,7 +954,8 @@ collapsible.open > .header {
 }
 
 collapsible > .header > .expand-icon {
-    size: 20px;
+    width: 20px;
+    height: 20px;
     rotate: 0deg;
     transition: rotate 300ms;
 }
