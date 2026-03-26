@@ -73,7 +73,8 @@ demo-region hstack.controls {
 }
 
 demo-region toggle-button svg {
-    size: 20px;
+    width: 20px;
+    height: 20px;
 }
 
 demo-region.open hstack.controls {
