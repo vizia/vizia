@@ -1975,6 +1975,15 @@ impl Style {
                             let name_hash = s.finish();
                             // Store var reference in all maps (type is unknown at parse time)
                             if let Some(store) =
+                                self.custom_color_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_variable_rule(rule_id, name_hash);
+                            } else {
+                                let mut store = AnimatableVarSet::default();
+                                store.insert_variable_rule(rule_id, name_hash);
+                                self.custom_color_props.insert(variable_name_hash, store);
+                            }
+                            if let Some(store) =
                                 self.custom_length_props.get_mut(&variable_name_hash)
                             {
                                 store.insert_variable_rule(rule_id, name_hash);
