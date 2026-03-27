@@ -323,6 +323,16 @@ fn link_variable_data(
             style.custom_length_props.insert(name_hash, prop);
         }
     }
+
+    let keys: Vec<_> = style.custom_font_size_props.keys().cloned().collect();
+    for name_hash in keys {
+        if let Some(mut prop) = style.custom_font_size_props.remove(&name_hash) {
+            if prop.link(entity, matched_rules, &style.custom_font_size_props) {
+                redraw_entities.push(entity);
+            }
+            style.custom_font_size_props.insert(name_hash, prop);
+        }
+    }
 }
 
 fn inherit_variable_data(
@@ -338,6 +348,11 @@ fn inherit_variable_data(
                 }
             }
             for prop in style.custom_length_props.values_mut() {
+                if prop.inherit_shared(entity, parent) {
+                    redraw_entities.push(entity);
+                }
+            }
+            for prop in style.custom_font_size_props.values_mut() {
                 if prop.inherit_shared(entity, parent) {
                     redraw_entities.push(entity);
                 }
@@ -598,7 +613,7 @@ fn link_style_data(
         should_reflow = true;
     }
 
-    if style.font_size.link(entity, matched_rules) {
+    if style.font_size.link(entity, matched_rules, &style.custom_font_size_props) {
         should_relayout = true;
         should_redraw = true;
         should_reflow = true;

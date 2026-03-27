@@ -326,7 +326,7 @@ pub struct Style {
     pub(crate) strikethrough_color: AnimatableVarSet<Color>,
     pub(crate) font_family: StyleSet<Vec<FamilyOwned>>,
     pub(crate) font_color: AnimatableVarSet<Color>,
-    pub(crate) font_size: AnimatableSet<FontSize>,
+    pub(crate) font_size: AnimatableVarSet<FontSize>,
     pub(crate) font_weight: StyleSet<FontWeight>,
     pub(crate) font_slant: StyleSet<FontSlant>,
     pub(crate) font_width: StyleSet<FontWidth>,
@@ -414,6 +414,7 @@ pub struct Style {
 
     pub(crate) custom_color_props: HashMap<u64, AnimatableVarSet<Color>>,
     pub(crate) custom_length_props: HashMap<u64, AnimatableVarSet<LengthOrPercentage>>,
+    pub(crate) custom_font_size_props: HashMap<u64, AnimatableVarSet<FontSize>>,
 }
 
 impl Style {
@@ -622,7 +623,7 @@ impl Style {
                 }
 
                 Property::FontSize(value) => {
-                    insert_keyframe(&mut self.font_size, animation_id, time, value.clone());
+                    insert_keyframe2(&mut self.font_size, animation_id, time, value.clone());
                 }
 
                 Property::CaretColor(value) => {
@@ -1774,6 +1775,7 @@ impl Style {
                     "underline-color" => parse_color_var!(self.underline_color),
                     "overline-color" => parse_color_var!(self.overline_color),
                     "strikethrough-color" => parse_color_var!(self.strikethrough_color),
+                    "font-size" => parse_length_var!(self.font_size),
                     "corner-radius" => parse_length_var!(
                         self.corner_top_left_radius,
                         self.corner_top_right_radius,
@@ -1823,11 +1825,22 @@ impl Style {
                                 if let Some(store) =
                                     self.custom_length_props.get_mut(&variable_name_hash)
                                 {
-                                    store.insert_rule(rule_id, lop);
+                                    store.insert_rule(rule_id, lop.clone());
                                 } else {
                                     let mut store = AnimatableVarSet::default();
-                                    store.insert_rule(rule_id, lop);
+                                    store.insert_rule(rule_id, lop.clone());
                                     self.custom_length_props.insert(variable_name_hash, store);
+                                }
+                                // Also try storing as FontSize
+                                let fs = FontSize(Length::Value(LengthValue::Px(*value)));
+                                if let Some(store) =
+                                    self.custom_font_size_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, fs);
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, fs);
+                                    self.custom_font_size_props.insert(variable_name_hash, store);
                                 }
                             }
                         }
@@ -1857,6 +1870,16 @@ impl Style {
                                     AnimatableVarSet::default();
                                 store.insert_variable_rule(rule_id, name_hash);
                                 self.custom_length_props.insert(variable_name_hash, store);
+                            }
+                            if let Some(store) =
+                                self.custom_font_size_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_variable_rule(rule_id, name_hash);
+                            } else {
+                                let mut store: AnimatableVarSet<FontSize> =
+                                    AnimatableVarSet::default();
+                                store.insert_variable_rule(rule_id, name_hash);
+                                self.custom_font_size_props.insert(variable_name_hash, store);
                             }
                         }
                         _ => {}
@@ -2068,6 +2091,9 @@ impl Style {
         for store in self.custom_length_props.values_mut() {
             store.remove(entity);
         }
+        for store in self.custom_font_size_props.values_mut() {
+            store.remove(entity);
+        }
     }
 
     pub(crate) fn needs_restyle(&mut self, entity: Entity) {
@@ -2252,6 +2278,11 @@ impl Style {
             store.clear_rules();
         }
         self.custom_length_props
+            .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
+        for store in self.custom_font_size_props.values_mut() {
+            store.clear_rules();
+        }
+        self.custom_font_size_props
             .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
     }
 }

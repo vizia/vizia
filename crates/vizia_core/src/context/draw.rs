@@ -187,14 +187,13 @@ impl DrawContext<'_> {
 
     /// Returns the font-size of the current view in physical pixels.
     pub fn font_size(&self) -> f32 {
-        self.logical_to_physical(
-            self.style
-                .font_size
-                .get(self.current)
-                .cloned()
-                .map(|f| f.0.to_px().unwrap())
-                .unwrap_or(16.0),
-        )
+        let fs = self
+            .style
+            .font_size
+            .get_resolved(self.current, &self.style.custom_font_size_props)
+            .and_then(|f| f.0.to_px())
+            .unwrap_or(16.0);
+        self.logical_to_physical(fs)
     }
 
     /// Returns the font-weight of the current view.

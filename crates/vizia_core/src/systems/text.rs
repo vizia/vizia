@@ -290,8 +290,11 @@ fn add_block(
             }
 
             // Font Size
-            let font_size =
-                style.font_size.get(entity).map_or(16.0, |f| f.0.to_px().unwrap_or(16.0));
+            let font_size = style
+                .font_size
+                .get_resolved(entity, &style.custom_font_size_props)
+                .and_then(|f| f.0.to_px())
+                .unwrap_or(16.0);
             text_style.set_font_size(font_size * style.scale_factor());
 
             // Font Style

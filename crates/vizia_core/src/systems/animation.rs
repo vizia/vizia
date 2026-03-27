@@ -151,6 +151,10 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     for store in cx.style.custom_length_props.values_mut() {
         redraw_entities.extend(store.tick(time));
     }
+    // Tick animations on custom font-size properties
+    for store in cx.style.custom_font_size_props.values_mut() {
+        reflow_entities.extend(store.tick(time));
+    }
 
     if !relayout_entities.is_empty() {
         cx.style.system_flags.set(SystemFlags::RELAYOUT, true);

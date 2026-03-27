@@ -26,6 +26,7 @@ impl DataIndex {
         Self(value)
     }
 
+    #[allow(dead_code)]
     pub fn inherited(self) -> Self {
         let value = self.0;
         Self(value | INHERITED_MASK)
@@ -178,6 +179,7 @@ where
     }
 
     /// Inherit inline data from a parent entity.
+    #[allow(dead_code)]
     pub fn inherit_inline(&mut self, entity: Entity, parent: Entity) -> bool {
         let entity_index = entity.index();
         let parent_index = parent.index();
@@ -226,6 +228,7 @@ where
     }
 
     /// Inherit shared data from a parent entity.
+    #[allow(dead_code)]
     pub fn inherit_shared(&mut self, entity: Entity, parent: Entity) -> bool {
         let entity_index = entity.index();
         let parent_index = parent.index();
