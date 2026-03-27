@@ -240,7 +240,8 @@ fn add_block(
 
             let mut text_style = TextStyle::new();
 
-            let font_color = style.font_color.get(entity).cloned().unwrap_or_default();
+            let font_color =
+                style.font_color.get_resolved(entity, &style.custom_color_props).unwrap_or_default();
 
             if let Some(text_decoration_line) = style.text_decoration_line.get(entity).copied() {
                 text_style.set_decoration_type(text_decoration_line.into());
@@ -258,8 +259,8 @@ fn add_block(
 
             let mut paint = Paint::default();
             // Font Color
-            if let Some(font_color) = style.font_color.get(entity) {
-                paint.set_color(*font_color);
+            if let Some(font_color) = style.font_color.get_resolved(entity, &style.custom_color_props) {
+                paint.set_color(font_color);
                 paint.set_anti_alias(false);
                 paint.set_blend_mode(BlendMode::SrcOver);
             }

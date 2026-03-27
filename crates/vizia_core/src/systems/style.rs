@@ -496,7 +496,7 @@ fn link_style_data(
         cache.path.remove(entity);
     }
 
-    if style.border_color.link(entity, matched_rules) {
+    if style.border_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
     }
 
@@ -542,7 +542,7 @@ fn link_style_data(
         should_redraw = true;
     }
 
-    if style.outline_color.link(entity, matched_rules) {
+    if style.outline_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
     }
 
@@ -579,7 +579,7 @@ fn link_style_data(
     }
 
     // Font
-    if style.font_color.link(entity, matched_rules) {
+    if style.font_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
         should_reflow = true;
     }
@@ -641,11 +641,11 @@ fn link_style_data(
         should_reflow = true;
     }
 
-    if style.selection_color.link(entity, matched_rules) {
+    if style.selection_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
     }
 
-    if style.caret_color.link(entity, matched_rules) {
+    if style.caret_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
     }
 
@@ -669,7 +669,7 @@ fn link_style_data(
         should_reflow = true;
     }
 
-    if style.underline_color.link(entity, matched_rules) {
+    if style.underline_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
         should_reflow = true;
     }
@@ -679,7 +679,7 @@ fn link_style_data(
         should_reflow = true;
     }
 
-    if style.overline_color.link(entity, matched_rules) {
+    if style.overline_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
         should_reflow = true;
     }
@@ -689,7 +689,7 @@ fn link_style_data(
         should_reflow = true;
     }
 
-    if style.strikethrough_color.link(entity, matched_rules) {
+    if style.strikethrough_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
         should_reflow = true;
     }
@@ -763,7 +763,7 @@ fn link_style_data(
         should_redraw = true;
     }
 
-    if style.fill.link(entity, matched_rules) {
+    if style.fill.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
     }
 

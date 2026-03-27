@@ -84,22 +84,6 @@ macro_rules! get_units_property {
     };
 }
 
-macro_rules! get_color_property {
-    (
-        $(#[$meta:meta])*
-        $name:ident
-    ) => {
-        $(#[$meta])*
-        pub fn $name(&self) -> Color {
-            if let Some(col) = self.style.$name.get(self.current) {
-                Color::rgba(col.r(), col.g(), col.b(), col.a())
-            } else {
-                Color::rgba(0, 0, 0, 0)
-            }
-        }
-    };
-}
-
 macro_rules! get_length_property {
     (
         $(#[$meta:meta])*
@@ -248,10 +232,18 @@ impl DrawContext<'_> {
         border_width
     );
 
-    get_color_property!(
-        /// Returns the outline color of the current view.
-        outline_color
-    );
+    /// Returns the outline color of the current view.
+    pub fn outline_color(&self) -> Color {
+        if let Some(col) = self
+            .style
+            .outline_color
+            .get_resolved(self.current, &self.style.custom_color_props)
+        {
+            Color::rgba(col.r(), col.g(), col.b(), col.a())
+        } else {
+            Color::rgba(0, 0, 0, 0)
+        }
+    }
 
     get_length_property!(
         /// Returns the outline width of the current view in physical pixels.
@@ -359,30 +351,62 @@ impl DrawContext<'_> {
         }
     }
 
-    get_color_property!(
-        /// Returns the border color of the current view.
-        border_color
-    );
+    /// Returns the border color of the current view.
+    pub fn border_color(&self) -> Color {
+        if let Some(col) = self
+            .style
+            .border_color
+            .get_resolved(self.current, &self.style.custom_color_props)
+        {
+            Color::rgba(col.r(), col.g(), col.b(), col.a())
+        } else {
+            Color::rgba(0, 0, 0, 0)
+        }
+    }
 
     /// Returns the border style of the current view.
     pub fn border_style(&self) -> BorderStyleKeyword {
         self.style.border_style.get(self.current).copied().unwrap_or_default()
     }
 
-    get_color_property!(
-        /// Returns the text selection color for the current view.
-        selection_color
-    );
+    /// Returns the text selection color for the current view.
+    pub fn selection_color(&self) -> Color {
+        if let Some(col) = self
+            .style
+            .selection_color
+            .get_resolved(self.current, &self.style.custom_color_props)
+        {
+            Color::rgba(col.r(), col.g(), col.b(), col.a())
+        } else {
+            Color::rgba(0, 0, 0, 0)
+        }
+    }
 
-    get_color_property!(
-        /// Returns the text caret color for the current view.
-        caret_color
-    );
+    /// Returns the text caret color for the current view.
+    pub fn caret_color(&self) -> Color {
+        if let Some(col) = self
+            .style
+            .caret_color
+            .get_resolved(self.current, &self.style.custom_color_props)
+        {
+            Color::rgba(col.r(), col.g(), col.b(), col.a())
+        } else {
+            Color::rgba(0, 0, 0, 0)
+        }
+    }
 
-    get_color_property!(
-        /// Returns the font color for the current view.
-        font_color
-    );
+    /// Returns the font color for the current view.
+    pub fn font_color(&self) -> Color {
+        if let Some(col) = self
+            .style
+            .font_color
+            .get_resolved(self.current, &self.style.custom_color_props)
+        {
+            Color::rgba(col.r(), col.g(), col.b(), col.a())
+        } else {
+            Color::rgba(0, 0, 0, 0)
+        }
+    }
 
     /// Returns whether the current view should have its text wrapped.
     pub fn text_wrap(&self) -> bool {
@@ -1089,7 +1113,9 @@ impl DrawContext<'_> {
                                             svg.render(canvas);
 
                                             if let Some(color) =
-                                                self.style.fill.get(self.current).copied()
+                                                self.style
+                                                    .fill
+                                                    .get_resolved(self.current, &self.style.custom_color_props)
                                             {
                                                 let mut paint = Paint::default();
 

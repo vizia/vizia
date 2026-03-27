@@ -274,7 +274,7 @@ pub struct Style {
 
     // Border
     pub(crate) border_width: AnimatableSet<LengthOrPercentage>,
-    pub(crate) border_color: AnimatableSet<Color>,
+    pub(crate) border_color: AnimatableVarSet<Color>,
     pub(crate) border_style: StyleSet<BorderStyleKeyword>,
 
     // Corner Shape
@@ -297,7 +297,7 @@ pub struct Style {
 
     // Outline
     pub(crate) outline_width: AnimatableSet<LengthOrPercentage>,
-    pub(crate) outline_color: AnimatableSet<Color>,
+    pub(crate) outline_color: AnimatableVarSet<Color>,
     pub(crate) outline_offset: AnimatableSet<LengthOrPercentage>,
 
     // Background
@@ -320,20 +320,20 @@ pub struct Style {
     pub(crate) underline_style: StyleSet<TextDecorationLine>,
     pub(crate) overline_style: StyleSet<TextDecorationStyle>,
     pub(crate) strikethrough_style: StyleSet<TextDecorationStyle>,
-    pub(crate) underline_color: AnimatableSet<Color>,
-    pub(crate) overline_color: AnimatableSet<Color>,
-    pub(crate) strikethrough_color: AnimatableSet<Color>,
+    pub(crate) underline_color: AnimatableVarSet<Color>,
+    pub(crate) overline_color: AnimatableVarSet<Color>,
+    pub(crate) strikethrough_color: AnimatableVarSet<Color>,
     pub(crate) font_family: StyleSet<Vec<FamilyOwned>>,
-    pub(crate) font_color: AnimatableSet<Color>,
+    pub(crate) font_color: AnimatableVarSet<Color>,
     pub(crate) font_size: AnimatableSet<FontSize>,
     pub(crate) font_weight: StyleSet<FontWeight>,
     pub(crate) font_slant: StyleSet<FontSlant>,
     pub(crate) font_width: StyleSet<FontWidth>,
     pub(crate) font_variation_settings: StyleSet<Vec<FontVariation>>,
-    pub(crate) caret_color: AnimatableSet<Color>,
-    pub(crate) selection_color: AnimatableSet<Color>,
+    pub(crate) caret_color: AnimatableVarSet<Color>,
+    pub(crate) selection_color: AnimatableVarSet<Color>,
 
-    pub(crate) fill: AnimatableSet<Color>,
+    pub(crate) fill: AnimatableVarSet<Color>,
 
     // cursor Icon
     pub(crate) cursor: StyleSet<CursorIcon>,
@@ -527,7 +527,7 @@ impl Style {
                 }
 
                 Property::BorderColor(value) => {
-                    insert_keyframe(&mut self.border_color, animation_id, time, *value);
+                    insert_keyframe2(&mut self.border_color, animation_id, time, *value);
                 }
 
                 Property::CornerTopLeftRadius(value) => {
@@ -577,7 +577,7 @@ impl Style {
                 }
 
                 Property::OutlineColor(value) => {
-                    insert_keyframe(&mut self.outline_color, animation_id, time, *value);
+                    insert_keyframe2(&mut self.outline_color, animation_id, time, *value);
                 }
 
                 Property::OutlineOffset(value) => {
@@ -616,7 +616,7 @@ impl Style {
 
                 // TEXT
                 Property::FontColor(value) => {
-                    insert_keyframe(&mut self.font_color, animation_id, time, *value);
+                    insert_keyframe2(&mut self.font_color, animation_id, time, *value);
                 }
 
                 Property::FontSize(value) => {
@@ -624,11 +624,11 @@ impl Style {
                 }
 
                 Property::CaretColor(value) => {
-                    insert_keyframe(&mut self.caret_color, animation_id, time, *value);
+                    insert_keyframe2(&mut self.caret_color, animation_id, time, *value);
                 }
 
                 Property::SelectionColor(value) => {
-                    insert_keyframe(&mut self.selection_color, animation_id, time, *value);
+                    insert_keyframe2(&mut self.selection_color, animation_id, time, *value);
                 }
 
                 // SPACE
@@ -732,11 +732,11 @@ impl Style {
                 }
 
                 Property::UnderlineColor(value) => {
-                    insert_keyframe(&mut self.underline_color, animation_id, time, *value);
+                    insert_keyframe2(&mut self.underline_color, animation_id, time, *value);
                 }
 
                 Property::Fill(value) => {
-                    insert_keyframe(&mut self.fill, animation_id, time, *value);
+                    insert_keyframe2(&mut self.fill, animation_id, time, *value);
                 }
 
                 _ => {}
@@ -1738,21 +1738,26 @@ impl Style {
 
             // Unparsed. TODO: Log the error.
             Property::Unparsed(unparsed) => {
-                match unparsed.name.as_ref() {
-                    "background-color" => {
-                        // Store in background-color storage somehow that this is a variable
-                        // so a system can link it to an ancestor custom prop.
+                macro_rules! parse_color_var {
+                    ($prop:expr) => {
                         if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
-                            {
-                                let mut s = DefaultHasher::new();
-                                var.name.hash(&mut s);
-                                let variable_name_hash = s.finish();
-                                self.background_color
-                                    .insert_variable_rule(rule_id, variable_name_hash)
-                            }
+                            let mut s = DefaultHasher::new();
+                            var.name.hash(&mut s);
+                            $prop.insert_variable_rule(rule_id, s.finish());
                         }
-                    }
-
+                    };
+                }
+                match unparsed.name.as_ref() {
+                    "background-color" => parse_color_var!(self.background_color),
+                    "border-color" => parse_color_var!(self.border_color),
+                    "outline-color" => parse_color_var!(self.outline_color),
+                    "color" => parse_color_var!(self.font_color),
+                    "caret-color" => parse_color_var!(self.caret_color),
+                    "selection-color" => parse_color_var!(self.selection_color),
+                    "fill" => parse_color_var!(self.fill),
+                    "underline-color" => parse_color_var!(self.underline_color),
+                    "overline-color" => parse_color_var!(self.overline_color),
+                    "strikethrough-color" => parse_color_var!(self.strikethrough_color),
                     n => warn!("Unparsed {} {:?}", n, unparsed.value),
                 }
             }
