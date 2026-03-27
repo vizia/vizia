@@ -177,7 +177,11 @@ impl DrawContext<'_> {
 
     /// Returns the opacity of the current view.
     pub fn opacity(&self) -> f32 {
-        self.style.opacity.get(self.current).copied().unwrap_or(Opacity(1.0)).0
+        self.style
+            .opacity
+            .get_resolved(self.current, &self.style.custom_opacity_props)
+            .unwrap_or(Opacity(1.0))
+            .0
     }
 
     /// Returns the lookup pattern to pick the default font.

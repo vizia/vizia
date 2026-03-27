@@ -249,7 +249,7 @@ pub struct Style {
     pub(crate) visibility: StyleSet<Visibility>,
 
     // Opacity
-    pub(crate) opacity: AnimatableSet<Opacity>,
+    pub(crate) opacity: AnimatableVarSet<Opacity>,
 
     // Z Order
     pub(crate) z_index: StyleSet<i32>,
@@ -416,6 +416,7 @@ pub struct Style {
     pub(crate) custom_length_props: HashMap<u64, AnimatableVarSet<LengthOrPercentage>>,
     pub(crate) custom_font_size_props: HashMap<u64, AnimatableVarSet<FontSize>>,
     pub(crate) custom_units_props: HashMap<u64, AnimatableVarSet<Units>>,
+    pub(crate) custom_opacity_props: HashMap<u64, AnimatableVarSet<Opacity>>,
 }
 
 impl Style {
@@ -489,7 +490,7 @@ impl Style {
                 }
 
                 Property::Opacity(value) => {
-                    insert_keyframe(&mut self.opacity, animation_id, time, *value);
+                    insert_keyframe2(&mut self.opacity, animation_id, time, *value);
                 }
 
                 Property::ClipPath(value) => {
@@ -859,6 +860,10 @@ impl Style {
         }
         // Play animations on custom units properties
         for store in self.custom_units_props.values_mut() {
+            store.play_animation(entity, animation, start_time, duration, delay);
+        }
+        // Play animations on custom opacity properties
+        for store in self.custom_opacity_props.values_mut() {
             store.play_animation(entity, animation, start_time, duration, delay);
         }
     }
@@ -1828,6 +1833,14 @@ impl Style {
                     "row-gap" | "vertical-gap" => parse_units_var!(self.vertical_gap),
                     "column-gap" | "horizontal-gap" => parse_units_var!(self.horizontal_gap),
                     "gap" => parse_units_var!(self.vertical_gap, self.horizontal_gap),
+                    "opacity" => {
+                        if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
+                            let mut s = DefaultHasher::new();
+                            var.name.hash(&mut s);
+                            let hash = s.finish();
+                            self.opacity.insert_variable_rule(rule_id, hash);
+                        }
+                    }
                     n => warn!("Unparsed {} {:?}", n, unparsed.value),
                 }
             }
@@ -1941,6 +1954,17 @@ impl Style {
                                 store.insert_rule(rule_id, units_val);
                                 self.custom_units_props.insert(variable_name_hash, store);
                             }
+                            // Also store as Opacity (percentage as 0..1)
+                            let opacity_val = Opacity(*unit_value);
+                            if let Some(store) =
+                                self.custom_opacity_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_rule(rule_id, opacity_val);
+                            } else {
+                                let mut store = AnimatableVarSet::default();
+                                store.insert_rule(rule_id, opacity_val);
+                                self.custom_opacity_props.insert(variable_name_hash, store);
+                            }
                         }
                         TokenOrValue::Var(var) => {
                             let mut s = DefaultHasher::new();
@@ -1976,6 +2000,29 @@ impl Style {
                                     AnimatableVarSet::default();
                                 store.insert_variable_rule(rule_id, name_hash);
                                 self.custom_units_props.insert(variable_name_hash, store);
+                            }
+                            if let Some(store) =
+                                self.custom_opacity_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_variable_rule(rule_id, name_hash);
+                            } else {
+                                let mut store: AnimatableVarSet<Opacity> =
+                                    AnimatableVarSet::default();
+                                store.insert_variable_rule(rule_id, name_hash);
+                                self.custom_opacity_props.insert(variable_name_hash, store);
+                            }
+                        }
+                        TokenOrValue::Token(CssToken::Number { value, .. }) => {
+                            // Plain number like 0.5 → Opacity
+                            let opacity_val = Opacity(*value);
+                            if let Some(store) =
+                                self.custom_opacity_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_rule(rule_id, opacity_val);
+                            } else {
+                                let mut store = AnimatableVarSet::default();
+                                store.insert_rule(rule_id, opacity_val);
+                                self.custom_opacity_props.insert(variable_name_hash, store);
                             }
                         }
                         _ => {}
@@ -2193,6 +2240,9 @@ impl Style {
         for store in self.custom_units_props.values_mut() {
             store.remove(entity);
         }
+        for store in self.custom_opacity_props.values_mut() {
+            store.remove(entity);
+        }
     }
 
     pub(crate) fn needs_restyle(&mut self, entity: Entity) {
@@ -2387,6 +2437,11 @@ impl Style {
             store.clear_rules();
         }
         self.custom_units_props
+            .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
+        for store in self.custom_opacity_props.values_mut() {
+            store.clear_rules();
+        }
+        self.custom_opacity_props
             .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
     }
 }
