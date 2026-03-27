@@ -274,7 +274,7 @@ pub struct Style {
     pub(crate) scale: AnimatableSet<Scale>,
 
     // Border
-    pub(crate) border_width: AnimatableSet<LengthOrPercentage>,
+    pub(crate) border_width: AnimatableVarSet<LengthOrPercentage>,
     pub(crate) border_color: AnimatableVarSet<Color>,
     pub(crate) border_style: StyleSet<BorderStyleKeyword>,
 
@@ -297,9 +297,9 @@ pub struct Style {
     pub(crate) corner_bottom_right_smoothing: AnimatableSet<f32>,
 
     // Outline
-    pub(crate) outline_width: AnimatableSet<LengthOrPercentage>,
+    pub(crate) outline_width: AnimatableVarSet<LengthOrPercentage>,
     pub(crate) outline_color: AnimatableVarSet<Color>,
-    pub(crate) outline_offset: AnimatableSet<LengthOrPercentage>,
+    pub(crate) outline_offset: AnimatableVarSet<LengthOrPercentage>,
 
     // Background
     pub(crate) background_color: AnimatableVarSet<Color>,
@@ -523,7 +523,7 @@ impl Style {
 
                 // BORDER
                 Property::BorderWidth(value) => {
-                    insert_keyframe(
+                    insert_keyframe2(
                         &mut self.border_width,
                         animation_id,
                         time,
@@ -573,7 +573,7 @@ impl Style {
 
                 // OUTLINE
                 Property::OutlineWidth(value) => {
-                    insert_keyframe(
+                    insert_keyframe2(
                         &mut self.outline_width,
                         animation_id,
                         time,
@@ -586,7 +586,7 @@ impl Style {
                 }
 
                 Property::OutlineOffset(value) => {
-                    insert_keyframe(&mut self.outline_offset, animation_id, time, value.clone());
+                    insert_keyframe2(&mut self.outline_offset, animation_id, time, value.clone());
                 }
 
                 // BACKGROUND
@@ -1810,6 +1810,9 @@ impl Style {
                     "corner-bottom-right-radius" => {
                         parse_length_var!(self.corner_bottom_right_radius)
                     }
+                    "border-width" => parse_length_var!(self.border_width),
+                    "outline-width" => parse_length_var!(self.outline_width),
+                    "outline-offset" => parse_length_var!(self.outline_offset),
                     "left" => parse_units_var!(self.left),
                     "right" => parse_units_var!(self.right),
                     "top" => parse_units_var!(self.top),

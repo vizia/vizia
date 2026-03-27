@@ -549,7 +549,7 @@ fn link_style_data(
     }
 
     // Border
-    if style.border_width.link(entity, matched_rules) {
+    if style.border_width.link(entity, matched_rules, &style.custom_length_props) {
         should_relayout = true;
         should_redraw = true;
         cache.path.remove(entity);
@@ -597,7 +597,7 @@ fn link_style_data(
         should_redraw = true;
     }
 
-    if style.outline_width.link(entity, matched_rules) {
+    if style.outline_width.link(entity, matched_rules, &style.custom_length_props) {
         should_redraw = true;
     }
 
@@ -605,7 +605,7 @@ fn link_style_data(
         should_redraw = true;
     }
 
-    if style.outline_offset.link(entity, matched_rules) {
+    if style.outline_offset.link(entity, matched_rules, &style.custom_length_props) {
         should_redraw = true;
     }
 
