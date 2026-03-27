@@ -339,9 +339,5 @@ name = "resizable_stack"
 path = "examples/views/resizable_stack.rs"
 
 [[example]]
-name = "clipping_transformations"
-path = "examples/clipping_transformations.rs"
-
-[[example]]
 name = "variables"
 path = "examples/variables.rs"

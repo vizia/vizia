@@ -1742,8 +1742,8 @@ impl Style {
                     "background-color" => {
                         // Store in background-color storage somehow that this is a variable
                         // so a system can link it to an ancestor custom prop.
-                        if let Some(first_token) = unparsed.value.0.first() {
-                            if let TokenOrValue::Var(var) = first_token {
+                        if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
+                            {
                                 let mut s = DefaultHasher::new();
                                 var.name.hash(&mut s);
                                 let variable_name_hash = s.finish();
@@ -1766,10 +1766,10 @@ impl Style {
                     // Try parsing colors
                     if let TokenOrValue::Color(color) = token {
                         if let Some(store) = self.custom_color_props.get_mut(&variable_name_hash) {
-                            store.insert_rule(rule_id, color.clone());
+                            store.insert_rule(rule_id, *color);
                         } else {
                             let mut store = AnimatableVarSet::default();
-                            store.insert_rule(rule_id, color.clone());
+                            store.insert_rule(rule_id, *color);
                             self.custom_color_props.insert(variable_name_hash, store);
                         }
                     }

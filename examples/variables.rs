@@ -25,7 +25,7 @@ const STYLE: &str = r#"
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        cx.add_stylesheet(STYLE);
+        cx.add_stylesheet(STYLE).expect("Failed");
 
         HStack::new(cx, |cx| {
             Label::new(cx, "text");

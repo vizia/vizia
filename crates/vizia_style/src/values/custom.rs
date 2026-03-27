@@ -143,7 +143,7 @@ impl<'i> TokenList<'i> {
                         let alpha = (a * 255.0).round().clamp(0.0, 255.0) as u8;
                         Color::rgba(r, g, b, alpha)
                     }) {
-                        tokens.push(TokenOrValue::Color(csscolor.into()));
+                        tokens.push(TokenOrValue::Color(csscolor));
                     } else {
                         tokens.push(Token::Hash(h.clone()).into());
                     }

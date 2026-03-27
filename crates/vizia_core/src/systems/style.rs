@@ -1039,7 +1039,7 @@ pub(crate) fn style_system(cx: &mut Context) {
 
     //  Apply matched rules to entities
     for entity in entities.iter() {
-        if let Some(matched_rules) = matched_rules.get(&entity) {
+        if let Some(matched_rules) = matched_rules.get(entity) {
             link_variable_data(&mut cx.style, *entity, &mut redraw_entities, matched_rules);
         }
     }
