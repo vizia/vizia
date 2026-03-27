@@ -364,38 +364,38 @@ pub struct Style {
     pub(crate) row_span: StyleSet<usize>,
 
     // Spacing
-    pub(crate) left: AnimatableSet<Units>,
-    pub(crate) right: AnimatableSet<Units>,
-    pub(crate) top: AnimatableSet<Units>,
-    pub(crate) bottom: AnimatableSet<Units>,
+    pub(crate) left: AnimatableVarSet<Units>,
+    pub(crate) right: AnimatableVarSet<Units>,
+    pub(crate) top: AnimatableVarSet<Units>,
+    pub(crate) bottom: AnimatableVarSet<Units>,
 
     // Padding
-    pub(crate) padding_left: AnimatableSet<Units>,
-    pub(crate) padding_right: AnimatableSet<Units>,
-    pub(crate) padding_top: AnimatableSet<Units>,
-    pub(crate) padding_bottom: AnimatableSet<Units>,
-    pub(crate) vertical_gap: AnimatableSet<Units>,
-    pub(crate) horizontal_gap: AnimatableSet<Units>,
+    pub(crate) padding_left: AnimatableVarSet<Units>,
+    pub(crate) padding_right: AnimatableVarSet<Units>,
+    pub(crate) padding_top: AnimatableVarSet<Units>,
+    pub(crate) padding_bottom: AnimatableVarSet<Units>,
+    pub(crate) vertical_gap: AnimatableVarSet<Units>,
+    pub(crate) horizontal_gap: AnimatableVarSet<Units>,
 
     // Scrolling
     pub(crate) vertical_scroll: AnimatableSet<f32>,
     pub(crate) horizontal_scroll: AnimatableSet<f32>,
 
     // Size
-    pub(crate) width: AnimatableSet<Units>,
-    pub(crate) height: AnimatableSet<Units>,
+    pub(crate) width: AnimatableVarSet<Units>,
+    pub(crate) height: AnimatableVarSet<Units>,
 
     // Size Constraints
-    pub(crate) min_width: AnimatableSet<Units>,
-    pub(crate) max_width: AnimatableSet<Units>,
-    pub(crate) min_height: AnimatableSet<Units>,
-    pub(crate) max_height: AnimatableSet<Units>,
+    pub(crate) min_width: AnimatableVarSet<Units>,
+    pub(crate) max_width: AnimatableVarSet<Units>,
+    pub(crate) min_height: AnimatableVarSet<Units>,
+    pub(crate) max_height: AnimatableVarSet<Units>,
 
     // Gap Constraints
-    pub(crate) min_horizontal_gap: AnimatableSet<Units>,
-    pub(crate) max_horizontal_gap: AnimatableSet<Units>,
-    pub(crate) min_vertical_gap: AnimatableSet<Units>,
-    pub(crate) max_vertical_gap: AnimatableSet<Units>,
+    pub(crate) min_horizontal_gap: AnimatableVarSet<Units>,
+    pub(crate) max_horizontal_gap: AnimatableVarSet<Units>,
+    pub(crate) min_vertical_gap: AnimatableVarSet<Units>,
+    pub(crate) max_vertical_gap: AnimatableVarSet<Units>,
 
     pub(crate) system_flags: SystemFlags,
 
@@ -415,6 +415,7 @@ pub struct Style {
     pub(crate) custom_color_props: HashMap<u64, AnimatableVarSet<Color>>,
     pub(crate) custom_length_props: HashMap<u64, AnimatableVarSet<LengthOrPercentage>>,
     pub(crate) custom_font_size_props: HashMap<u64, AnimatableVarSet<FontSize>>,
+    pub(crate) custom_units_props: HashMap<u64, AnimatableVarSet<Units>>,
 }
 
 impl Style {
@@ -636,102 +637,102 @@ impl Style {
 
                 // SPACE
                 Property::Left(value) => {
-                    insert_keyframe(&mut self.left, animation_id, time, *value);
+                    insert_keyframe2(&mut self.left, animation_id, time, *value);
                 }
 
                 Property::Right(value) => {
-                    insert_keyframe(&mut self.right, animation_id, time, *value);
+                    insert_keyframe2(&mut self.right, animation_id, time, *value);
                 }
 
                 Property::Top(value) => {
-                    insert_keyframe(&mut self.top, animation_id, time, *value);
+                    insert_keyframe2(&mut self.top, animation_id, time, *value);
                 }
 
                 Property::Bottom(value) => {
-                    insert_keyframe(&mut self.bottom, animation_id, time, *value);
+                    insert_keyframe2(&mut self.bottom, animation_id, time, *value);
                 }
 
                 // Padding
                 Property::PaddingLeft(value) => {
-                    insert_keyframe(&mut self.padding_left, animation_id, time, *value);
+                    insert_keyframe2(&mut self.padding_left, animation_id, time, *value);
                 }
 
                 Property::PaddingRight(value) => {
-                    insert_keyframe(&mut self.padding_right, animation_id, time, *value);
+                    insert_keyframe2(&mut self.padding_right, animation_id, time, *value);
                 }
 
                 Property::PaddingTop(value) => {
-                    insert_keyframe(&mut self.padding_top, animation_id, time, *value);
+                    insert_keyframe2(&mut self.padding_top, animation_id, time, *value);
                 }
 
                 Property::PaddingBottom(value) => {
-                    insert_keyframe(&mut self.padding_bottom, animation_id, time, *value);
+                    insert_keyframe2(&mut self.padding_bottom, animation_id, time, *value);
                 }
 
                 Property::HorizontalGap(value) => {
-                    insert_keyframe(&mut self.horizontal_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.horizontal_gap, animation_id, time, *value);
                 }
 
                 Property::VerticalGap(value) => {
-                    insert_keyframe(&mut self.vertical_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.vertical_gap, animation_id, time, *value);
                 }
 
                 Property::Gap(value) => {
-                    insert_keyframe(&mut self.horizontal_gap, animation_id, time, *value);
-                    insert_keyframe(&mut self.vertical_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.horizontal_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.vertical_gap, animation_id, time, *value);
                 }
 
                 // GAP CONSSTRAINTS
                 Property::MinGap(value) => {
-                    insert_keyframe(&mut self.min_horizontal_gap, animation_id, time, *value);
-                    insert_keyframe(&mut self.min_vertical_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.min_horizontal_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.min_vertical_gap, animation_id, time, *value);
                 }
 
                 Property::MaxGap(value) => {
-                    insert_keyframe(&mut self.max_horizontal_gap, animation_id, time, *value);
-                    insert_keyframe(&mut self.max_vertical_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.max_horizontal_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.max_vertical_gap, animation_id, time, *value);
                 }
 
                 Property::MinHorizontalGap(value) => {
-                    insert_keyframe(&mut self.min_horizontal_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.min_horizontal_gap, animation_id, time, *value);
                 }
 
                 Property::MaxHorizontalGap(value) => {
-                    insert_keyframe(&mut self.max_horizontal_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.max_horizontal_gap, animation_id, time, *value);
                 }
 
                 Property::MinVerticalGap(value) => {
-                    insert_keyframe(&mut self.min_vertical_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.min_vertical_gap, animation_id, time, *value);
                 }
 
                 Property::MaxVerticalGap(value) => {
-                    insert_keyframe(&mut self.max_vertical_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.max_vertical_gap, animation_id, time, *value);
                 }
 
                 // SIZE
                 Property::Width(value) => {
-                    insert_keyframe(&mut self.width, animation_id, time, *value);
+                    insert_keyframe2(&mut self.width, animation_id, time, *value);
                 }
 
                 Property::Height(value) => {
-                    insert_keyframe(&mut self.height, animation_id, time, *value);
+                    insert_keyframe2(&mut self.height, animation_id, time, *value);
                 }
 
                 // SIZE CONSTRAINTS
                 Property::MinWidth(value) => {
-                    insert_keyframe(&mut self.min_width, animation_id, time, *value);
+                    insert_keyframe2(&mut self.min_width, animation_id, time, *value);
                 }
 
                 Property::MaxWidth(value) => {
-                    insert_keyframe(&mut self.max_width, animation_id, time, *value);
+                    insert_keyframe2(&mut self.max_width, animation_id, time, *value);
                 }
 
                 Property::MinHeight(value) => {
-                    insert_keyframe(&mut self.min_height, animation_id, time, *value);
+                    insert_keyframe2(&mut self.min_height, animation_id, time, *value);
                 }
 
                 Property::MaxHeight(value) => {
-                    insert_keyframe(&mut self.max_height, animation_id, time, *value);
+                    insert_keyframe2(&mut self.max_height, animation_id, time, *value);
                 }
 
                 Property::UnderlineColor(value) => {
@@ -854,6 +855,10 @@ impl Style {
         }
         // Play animations on custom length properties
         for store in self.custom_length_props.values_mut() {
+            store.play_animation(entity, animation, start_time, duration, delay);
+        }
+        // Play animations on custom units properties
+        for store in self.custom_units_props.values_mut() {
             store.play_animation(entity, animation, start_time, duration, delay);
         }
     }
@@ -1764,6 +1769,16 @@ impl Style {
                         }
                     };
                 }
+                macro_rules! parse_units_var {
+                    ($($prop:expr),+) => {
+                        if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
+                            let mut s = DefaultHasher::new();
+                            var.name.hash(&mut s);
+                            let hash = s.finish();
+                            $($prop.insert_variable_rule(rule_id, hash);)+
+                        }
+                    };
+                }
                 match unparsed.name.as_ref() {
                     "background-color" => parse_color_var!(self.background_color),
                     "border-color" => parse_color_var!(self.border_color),
@@ -1790,6 +1805,29 @@ impl Style {
                     "corner-bottom-right-radius" => {
                         parse_length_var!(self.corner_bottom_right_radius)
                     }
+                    "left" => parse_units_var!(self.left),
+                    "right" => parse_units_var!(self.right),
+                    "top" => parse_units_var!(self.top),
+                    "bottom" => parse_units_var!(self.bottom),
+                    "width" => parse_units_var!(self.width),
+                    "height" => parse_units_var!(self.height),
+                    "min-width" => parse_units_var!(self.min_width),
+                    "max-width" => parse_units_var!(self.max_width),
+                    "min-height" => parse_units_var!(self.min_height),
+                    "max-height" => parse_units_var!(self.max_height),
+                    "padding-left" => parse_units_var!(self.padding_left),
+                    "padding-right" => parse_units_var!(self.padding_right),
+                    "padding-top" => parse_units_var!(self.padding_top),
+                    "padding-bottom" => parse_units_var!(self.padding_bottom),
+                    "padding" => parse_units_var!(
+                        self.padding_left,
+                        self.padding_right,
+                        self.padding_top,
+                        self.padding_bottom
+                    ),
+                    "row-gap" | "vertical-gap" => parse_units_var!(self.vertical_gap),
+                    "column-gap" | "horizontal-gap" => parse_units_var!(self.horizontal_gap),
+                    "gap" => parse_units_var!(self.vertical_gap, self.horizontal_gap),
                     n => warn!("Unparsed {} {:?}", n, unparsed.value),
                 }
             }
@@ -1842,6 +1880,43 @@ impl Style {
                                     store.insert_rule(rule_id, fs);
                                     self.custom_font_size_props.insert(variable_name_hash, store);
                                 }
+                                // Also store as Units::Pixels
+                                let units_val = Units::Pixels(*value);
+                                if let Some(store) =
+                                    self.custom_units_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, units_val);
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, units_val);
+                                    self.custom_units_props.insert(variable_name_hash, store);
+                                }
+                            } else if unit.as_ref().eq_ignore_ascii_case("s") {
+                                // "1s" => Units::Stretch(1.0)
+                                let units_val = Units::Stretch(*value);
+                                if let Some(store) =
+                                    self.custom_units_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, units_val);
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, units_val);
+                                    self.custom_units_props.insert(variable_name_hash, store);
+                                }
+                            }
+                        }
+                        TokenOrValue::Token(CssToken::Ident(ident))
+                            if ident.as_ref().eq_ignore_ascii_case("auto") =>
+                        {
+                            let units_val = Units::Auto;
+                            if let Some(store) =
+                                self.custom_units_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_rule(rule_id, units_val);
+                            } else {
+                                let mut store = AnimatableVarSet::default();
+                                store.insert_rule(rule_id, units_val);
+                                self.custom_units_props.insert(variable_name_hash, store);
                             }
                         }
                         TokenOrValue::Token(CssToken::Percentage { unit_value, .. }) => {
@@ -1855,12 +1930,23 @@ impl Style {
                                 store.insert_rule(rule_id, lop);
                                 self.custom_length_props.insert(variable_name_hash, store);
                             }
+                            // Also store as Units::Percentage
+                            let units_val = Units::Percentage(*unit_value * 100.0);
+                            if let Some(store) =
+                                self.custom_units_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_rule(rule_id, units_val);
+                            } else {
+                                let mut store = AnimatableVarSet::default();
+                                store.insert_rule(rule_id, units_val);
+                                self.custom_units_props.insert(variable_name_hash, store);
+                            }
                         }
                         TokenOrValue::Var(var) => {
                             let mut s = DefaultHasher::new();
                             var.name.hash(&mut s);
                             let name_hash = s.finish();
-                            // Store var reference in both maps (type is unknown at parse time)
+                            // Store var reference in all maps (type is unknown at parse time)
                             if let Some(store) =
                                 self.custom_length_props.get_mut(&variable_name_hash)
                             {
@@ -1880,6 +1966,16 @@ impl Style {
                                     AnimatableVarSet::default();
                                 store.insert_variable_rule(rule_id, name_hash);
                                 self.custom_font_size_props.insert(variable_name_hash, store);
+                            }
+                            if let Some(store) =
+                                self.custom_units_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_variable_rule(rule_id, name_hash);
+                            } else {
+                                let mut store: AnimatableVarSet<Units> =
+                                    AnimatableVarSet::default();
+                                store.insert_variable_rule(rule_id, name_hash);
+                                self.custom_units_props.insert(variable_name_hash, store);
                             }
                         }
                         _ => {}
@@ -2094,6 +2190,9 @@ impl Style {
         for store in self.custom_font_size_props.values_mut() {
             store.remove(entity);
         }
+        for store in self.custom_units_props.values_mut() {
+            store.remove(entity);
+        }
     }
 
     pub(crate) fn needs_restyle(&mut self, entity: Entity) {
@@ -2283,6 +2382,11 @@ impl Style {
             store.clear_rules();
         }
         self.custom_font_size_props
+            .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
+        for store in self.custom_units_props.values_mut() {
+            store.clear_rules();
+        }
+        self.custom_units_props
             .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
     }
 }

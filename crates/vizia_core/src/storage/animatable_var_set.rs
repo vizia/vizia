@@ -462,6 +462,27 @@ where
     //     false
     // }
 
+    /// Returns a reference to the active animations.
+    pub(crate) fn get_active_animations(&mut self) -> Option<&Vec<AnimationState<T>>> {
+        Some(&self.active_animations)
+    }
+
+    /// Stop an active animation for the given entity.
+    pub(crate) fn stop_animation(&mut self, entity: Entity, animation: Animation) {
+        let entity_index = entity.index();
+
+        if entity_index < self.inline_data.sparse.len() {
+            let active_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
+            if active_anim_index < self.active_animations.len() {
+                let anim_state = &mut self.active_animations[active_anim_index];
+                if anim_state.id == animation {
+                    anim_state.entities.remove(&entity);
+                }
+            }
+            self.inline_data.sparse[entity_index].anim_index = u32::MAX;
+        }
+    }
+
     /// Remove any inactive animations from the active animations list.
     pub fn remove_innactive_animations(&mut self) {
         // Create a list of finished animations

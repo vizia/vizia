@@ -39,49 +39,49 @@ impl Node for Entity {
     }
 
     fn left(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.left.get(*self).cloned().map(|l| match l {
+        store.left.get_resolved(*self, &store.custom_units_props).map(|l| match l {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn right(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.right.get(*self).cloned().map(|r| match r {
+        store.right.get_resolved(*self, &store.custom_units_props).map(|r| match r {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn top(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.top.get(*self).cloned().map(|t| match t {
+        store.top.get_resolved(*self, &store.custom_units_props).map(|t| match t {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn bottom(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.bottom.get(*self).cloned().map(|b| match b {
+        store.bottom.get_resolved(*self, &store.custom_units_props).map(|b| match b {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn width(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.width.get(*self).cloned().map(|w| match w {
+        store.width.get_resolved(*self, &store.custom_units_props).map(|w| match w {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn min_width(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.min_width.get(*self).cloned().map(|w| match w {
+        store.min_width.get_resolved(*self, &store.custom_units_props).map(|w| match w {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn max_width(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.max_width.get(*self).cloned().map(|w| match w {
+        store.max_width.get_resolved(*self, &store.custom_units_props).map(|w| match w {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
@@ -117,10 +117,14 @@ impl Node for Entity {
 
             paragraph.layout(f32::MAX);
 
-            let padding_left = store.padding_left.get(*self).copied().unwrap_or_default();
-            let padding_right = store.padding_right.get(*self).copied().unwrap_or_default();
-            let padding_top = store.padding_top.get(*self).copied().unwrap_or_default();
-            let padding_bottom = store.padding_bottom.get(*self).copied().unwrap_or_default();
+            let padding_left =
+                store.padding_left.get_resolved(*self, &store.custom_units_props).unwrap_or_default();
+            let padding_right =
+                store.padding_right.get_resolved(*self, &store.custom_units_props).unwrap_or_default();
+            let padding_top =
+                store.padding_top.get_resolved(*self, &store.custom_units_props).unwrap_or_default();
+            let padding_bottom =
+                store.padding_bottom.get_resolved(*self, &store.custom_units_props).unwrap_or_default();
 
             let mut child_space_x = 0.0;
             let mut child_space_y = 0.0;
@@ -242,63 +246,63 @@ impl Node for Entity {
     }
 
     fn height(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.height.get(*self).cloned().map(|h| match h {
+        store.height.get_resolved(*self, &store.custom_units_props).map(|h| match h {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn min_height(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.min_height.get(*self).cloned().map(|h| match h {
+        store.min_height.get_resolved(*self, &store.custom_units_props).map(|h| match h {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn max_height(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.max_height.get(*self).cloned().map(|h| match h {
+        store.max_height.get_resolved(*self, &store.custom_units_props).map(|h| match h {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn padding_left(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.padding_left.get(*self).cloned().map(|l| match l {
+        store.padding_left.get_resolved(*self, &store.custom_units_props).map(|l| match l {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn padding_right(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.padding_right.get(*self).cloned().map(|r| match r {
+        store.padding_right.get_resolved(*self, &store.custom_units_props).map(|r| match r {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn padding_top(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.padding_top.get(*self).cloned().map(|t| match t {
+        store.padding_top.get_resolved(*self, &store.custom_units_props).map(|t| match t {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn padding_bottom(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.padding_bottom.get(*self).cloned().map(|b| match b {
+        store.padding_bottom.get_resolved(*self, &store.custom_units_props).map(|b| match b {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn vertical_gap(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.vertical_gap.get(*self).cloned().map(|v| match v {
+        store.vertical_gap.get_resolved(*self, &store.custom_units_props).map(|v| match v {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn horizontal_gap(&self, store: &Self::Store) -> Option<morphorm::Units> {
-        store.horizontal_gap.get(*self).cloned().map(|v| match v {
+        store.horizontal_gap.get_resolved(*self, &store.custom_units_props).map(|v| match v {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
@@ -333,28 +337,28 @@ impl Node for Entity {
     }
 
     fn min_vertical_gap(&self, store: &Self::Store) -> Option<Units> {
-        store.min_vertical_gap.get(*self).cloned().map(|h| match h {
+        store.min_vertical_gap.get_resolved(*self, &store.custom_units_props).map(|h| match h {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn min_horizontal_gap(&self, store: &Self::Store) -> Option<Units> {
-        store.min_horizontal_gap.get(*self).cloned().map(|h| match h {
+        store.min_horizontal_gap.get_resolved(*self, &store.custom_units_props).map(|h| match h {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn max_vertical_gap(&self, store: &Self::Store) -> Option<Units> {
-        store.max_vertical_gap.get(*self).cloned().map(|h| match h {
+        store.max_vertical_gap.get_resolved(*self, &store.custom_units_props).map(|h| match h {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn max_horizontal_gap(&self, store: &Self::Store) -> Option<Units> {
-        store.max_horizontal_gap.get(*self).cloned().map(|h| match h {
+        store.max_horizontal_gap.get_resolved(*self, &store.custom_units_props).map(|h| match h {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })

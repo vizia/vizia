@@ -79,8 +79,18 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
             let text_bounds =
                 BoundingBox { x: padding_left, y: 0.0, w: bounds.w - padding_right, h: bounds.h };
 
-            if !cx.style.width.get(entity).copied().unwrap_or_default().is_auto()
-                && !cx.style.height.get(entity).copied().unwrap_or_default().is_auto()
+            if !cx
+                .style
+                .width
+                .get_resolved(entity, &cx.style.custom_units_props)
+                .unwrap_or_default()
+                .is_auto()
+                && !cx
+                    .style
+                    .height
+                    .get_resolved(entity, &cx.style.custom_units_props)
+                    .unwrap_or_default()
+                    .is_auto()
             {
                 if cx.style.text_overflow.get(entity).copied().unwrap_or_default()
                     == TextOverflow::Clip

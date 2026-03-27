@@ -391,6 +391,7 @@ where
     }
 
     /// Stop an animation for a given entity.
+    #[allow(dead_code)]
     pub(crate) fn stop_animation(&mut self, entity: Entity, animation: Animation) {
         let entity_index = entity.index();
 
@@ -578,6 +579,7 @@ where
     }
 
     /// Returns a reference to the active animations.
+    #[allow(dead_code)]
     pub(crate) fn get_active_animations(&mut self) -> Option<&Vec<AnimationState<T>>> {
         Some(&self.active_animations)
     }

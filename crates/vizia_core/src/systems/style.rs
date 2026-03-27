@@ -333,6 +333,16 @@ fn link_variable_data(
             style.custom_font_size_props.insert(name_hash, prop);
         }
     }
+
+    let keys: Vec<_> = style.custom_units_props.keys().cloned().collect();
+    for name_hash in keys {
+        if let Some(mut prop) = style.custom_units_props.remove(&name_hash) {
+            if prop.link(entity, matched_rules, &style.custom_units_props) {
+                redraw_entities.push(entity);
+            }
+            style.custom_units_props.insert(name_hash, prop);
+        }
+    }
 }
 
 fn inherit_variable_data(
@@ -353,6 +363,11 @@ fn inherit_variable_data(
                 }
             }
             for prop in style.custom_font_size_props.values_mut() {
+                if prop.inherit_shared(entity, parent) {
+                    redraw_entities.push(entity);
+                }
+            }
+            for prop in style.custom_units_props.values_mut() {
                 if prop.inherit_shared(entity, parent) {
                     redraw_entities.push(entity);
                 }
@@ -445,75 +460,75 @@ fn link_style_data(
 
     // Position
 
-    if style.left.link(entity, matched_rules) {
+    if style.left.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.right.link(entity, matched_rules) {
+    if style.right.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.top.link(entity, matched_rules) {
+    if style.top.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.bottom.link(entity, matched_rules) {
+    if style.bottom.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
 
     // Size
-    if style.width.link(entity, matched_rules) {
+    if style.width.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.height.link(entity, matched_rules) {
+    if style.height.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
 
     // Size Constraints
-    if style.max_width.link(entity, matched_rules) {
+    if style.max_width.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.min_width.link(entity, matched_rules) {
+    if style.min_width.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.max_height.link(entity, matched_rules) {
+    if style.max_height.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.min_height.link(entity, matched_rules) {
+    if style.min_height.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
 
     // Gap Constraints
-    if style.max_horizontal_gap.link(entity, matched_rules) {
+    if style.max_horizontal_gap.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.min_horizontal_gap.link(entity, matched_rules) {
+    if style.min_horizontal_gap.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.max_vertical_gap.link(entity, matched_rules) {
+    if style.max_vertical_gap.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.min_vertical_gap.link(entity, matched_rules) {
+    if style.min_vertical_gap.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
@@ -728,32 +743,32 @@ fn link_style_data(
         should_redraw = true;
     }
 
-    if style.padding_left.link(entity, matched_rules) {
+    if style.padding_left.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.padding_right.link(entity, matched_rules) {
+    if style.padding_right.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.padding_top.link(entity, matched_rules) {
+    if style.padding_top.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.padding_bottom.link(entity, matched_rules) {
+    if style.padding_bottom.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.vertical_gap.link(entity, matched_rules) {
+    if style.vertical_gap.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.horizontal_gap.link(entity, matched_rules) {
+    if style.horizontal_gap.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
         should_redraw = true;
     }
