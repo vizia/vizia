@@ -23,6 +23,7 @@ vizia_input.workspace = true
 vizia_window.workspace = true
 vizia_style.workspace = true
 vizia_reactive.workspace = true
+cssparser.workspace = true
 accesskit.workspace = true
 skia-safe.workspace = true
 morphorm.workspace = true

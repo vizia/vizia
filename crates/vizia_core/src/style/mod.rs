@@ -82,6 +82,7 @@ pub use vizia_style::{
     VerticalPositionKeyword, Visibility,
 };
 
+use cssparser::Token as CssToken;
 use vizia_style::{
     BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, Selectors, StyleSheet,
     TokenOrValue,
@@ -284,10 +285,10 @@ pub struct Style {
     pub(crate) corner_bottom_right_shape: StyleSet<CornerShape>,
 
     // Corner Radius
-    pub(crate) corner_top_left_radius: AnimatableSet<LengthOrPercentage>,
-    pub(crate) corner_top_right_radius: AnimatableSet<LengthOrPercentage>,
-    pub(crate) corner_bottom_left_radius: AnimatableSet<LengthOrPercentage>,
-    pub(crate) corner_bottom_right_radius: AnimatableSet<LengthOrPercentage>,
+    pub(crate) corner_top_left_radius: AnimatableVarSet<LengthOrPercentage>,
+    pub(crate) corner_top_right_radius: AnimatableVarSet<LengthOrPercentage>,
+    pub(crate) corner_bottom_left_radius: AnimatableVarSet<LengthOrPercentage>,
+    pub(crate) corner_bottom_right_radius: AnimatableVarSet<LengthOrPercentage>,
 
     // Corner Smoothing
     pub(crate) corner_top_left_smoothing: AnimatableSet<f32>,
@@ -412,6 +413,7 @@ pub struct Style {
     pub(crate) dpi_factor: f64,
 
     pub(crate) custom_color_props: HashMap<u64, AnimatableVarSet<Color>>,
+    pub(crate) custom_length_props: HashMap<u64, AnimatableVarSet<LengthOrPercentage>>,
 }
 
 impl Style {
@@ -531,7 +533,7 @@ impl Style {
                 }
 
                 Property::CornerTopLeftRadius(value) => {
-                    insert_keyframe(
+                    insert_keyframe2(
                         &mut self.corner_top_left_radius,
                         animation_id,
                         time,
@@ -540,7 +542,7 @@ impl Style {
                 }
 
                 Property::CornerTopRightRadius(value) => {
-                    insert_keyframe(
+                    insert_keyframe2(
                         &mut self.corner_top_right_radius,
                         animation_id,
                         time,
@@ -549,7 +551,7 @@ impl Style {
                 }
 
                 Property::CornerBottomLeftRadius(value) => {
-                    insert_keyframe(
+                    insert_keyframe2(
                         &mut self.corner_bottom_left_radius,
                         animation_id,
                         time,
@@ -558,7 +560,7 @@ impl Style {
                 }
 
                 Property::CornerBottomRightRadius(value) => {
-                    insert_keyframe(
+                    insert_keyframe2(
                         &mut self.corner_bottom_right_radius,
                         animation_id,
                         time,
@@ -847,6 +849,10 @@ impl Style {
 
         // Play animations on custom color properties
         for store in self.custom_color_props.values_mut() {
+            store.play_animation(entity, animation, start_time, duration, delay);
+        }
+        // Play animations on custom length properties
+        for store in self.custom_length_props.values_mut() {
             store.play_animation(entity, animation, start_time, duration, delay);
         }
     }
@@ -1747,6 +1753,16 @@ impl Style {
                         }
                     };
                 }
+                macro_rules! parse_length_var {
+                    ($($prop:expr),+) => {
+                        if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
+                            let mut s = DefaultHasher::new();
+                            var.name.hash(&mut s);
+                            let hash = s.finish();
+                            $($prop.insert_variable_rule(rule_id, hash);)+
+                        }
+                    };
+                }
                 match unparsed.name.as_ref() {
                     "background-color" => parse_color_var!(self.background_color),
                     "border-color" => parse_color_var!(self.border_color),
@@ -1758,6 +1774,20 @@ impl Style {
                     "underline-color" => parse_color_var!(self.underline_color),
                     "overline-color" => parse_color_var!(self.overline_color),
                     "strikethrough-color" => parse_color_var!(self.strikethrough_color),
+                    "corner-radius" => parse_length_var!(
+                        self.corner_top_left_radius,
+                        self.corner_top_right_radius,
+                        self.corner_bottom_left_radius,
+                        self.corner_bottom_right_radius
+                    ),
+                    "corner-top-left-radius" => parse_length_var!(self.corner_top_left_radius),
+                    "corner-top-right-radius" => parse_length_var!(self.corner_top_right_radius),
+                    "corner-bottom-left-radius" => {
+                        parse_length_var!(self.corner_bottom_left_radius)
+                    }
+                    "corner-bottom-right-radius" => {
+                        parse_length_var!(self.corner_bottom_right_radius)
+                    }
                     n => warn!("Unparsed {} {:?}", n, unparsed.value),
                 }
             }
@@ -1779,17 +1809,57 @@ impl Style {
                         }
                     }
 
-                    if let TokenOrValue::Var(var) = token {
-                        let mut s = DefaultHasher::new();
-                        var.name.hash(&mut s);
-                        let name_hash = s.finish();
-                        if let Some(store) = self.custom_color_props.get_mut(&variable_name_hash) {
-                            store.insert_variable_rule(rule_id, name_hash);
-                        } else {
-                            let mut store = AnimatableVarSet::default();
-                            store.insert_variable_rule(rule_id, name_hash);
-                            self.custom_color_props.insert(variable_name_hash, store);
+                    // Parse length/percentage tokens into custom_length_props
+                    match token {
+                        TokenOrValue::Token(CssToken::Dimension { value, unit, .. }) => {
+                            let lop = if unit.as_ref().eq_ignore_ascii_case("px") {
+                                Some(LengthOrPercentage::Length(Length::Value(LengthValue::Px(
+                                    *value,
+                                ))))
+                            } else {
+                                None
+                            };
+                            if let Some(lop) = lop {
+                                if let Some(store) =
+                                    self.custom_length_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, lop);
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, lop);
+                                    self.custom_length_props.insert(variable_name_hash, store);
+                                }
+                            }
                         }
+                        TokenOrValue::Token(CssToken::Percentage { unit_value, .. }) => {
+                            let lop = LengthOrPercentage::Percentage(*unit_value * 100.0);
+                            if let Some(store) =
+                                self.custom_length_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_rule(rule_id, lop);
+                            } else {
+                                let mut store = AnimatableVarSet::default();
+                                store.insert_rule(rule_id, lop);
+                                self.custom_length_props.insert(variable_name_hash, store);
+                            }
+                        }
+                        TokenOrValue::Var(var) => {
+                            let mut s = DefaultHasher::new();
+                            var.name.hash(&mut s);
+                            let name_hash = s.finish();
+                            // Store var reference in both maps (type is unknown at parse time)
+                            if let Some(store) =
+                                self.custom_length_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_variable_rule(rule_id, name_hash);
+                            } else {
+                                let mut store: AnimatableVarSet<LengthOrPercentage> =
+                                    AnimatableVarSet::default();
+                                store.insert_variable_rule(rule_id, name_hash);
+                                self.custom_length_props.insert(variable_name_hash, store);
+                            }
+                        }
+                        _ => {}
                     }
                 }
             }
@@ -1995,6 +2065,9 @@ impl Style {
         for store in self.custom_color_props.values_mut() {
             store.remove(entity);
         }
+        for store in self.custom_length_props.values_mut() {
+            store.remove(entity);
+        }
     }
 
     pub(crate) fn needs_restyle(&mut self, entity: Entity) {
@@ -2174,6 +2247,11 @@ impl Style {
             store.clear_rules();
         }
         self.custom_color_props
+            .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
+        for store in self.custom_length_props.values_mut() {
+            store.clear_rules();
+        }
+        self.custom_length_props
             .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
     }
 }

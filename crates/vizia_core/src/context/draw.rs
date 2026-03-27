@@ -234,10 +234,8 @@ impl DrawContext<'_> {
 
     /// Returns the outline color of the current view.
     pub fn outline_color(&self) -> Color {
-        if let Some(col) = self
-            .style
-            .outline_color
-            .get_resolved(self.current, &self.style.custom_color_props)
+        if let Some(col) =
+            self.style.outline_color.get_resolved(self.current, &self.style.custom_color_props)
         {
             Color::rgba(col.r(), col.g(), col.b(), col.a())
         } else {
@@ -255,25 +253,49 @@ impl DrawContext<'_> {
         outline_offset
     );
 
-    get_length_property!(
-        /// Returns the corner radius for the top-left corner of the current view.
-        corner_top_left_radius
-    );
+    /// Returns the corner radius for the top-left corner of the current view.
+    pub fn corner_top_left_radius(&self) -> f32 {
+        let bounds = self.bounds();
+        let scale = self.scale_factor();
+        self.style
+            .corner_top_left_radius
+            .get_resolved(self.current, &self.style.custom_length_props)
+            .map(|l| l.to_pixels(bounds.w.min(bounds.h), scale).round())
+            .unwrap_or(0.0)
+    }
 
-    get_length_property!(
-        /// Returns the corner radius for the top-right corner of the current view.
-        corner_top_right_radius
-    );
+    /// Returns the corner radius for the top-right corner of the current view.
+    pub fn corner_top_right_radius(&self) -> f32 {
+        let bounds = self.bounds();
+        let scale = self.scale_factor();
+        self.style
+            .corner_top_right_radius
+            .get_resolved(self.current, &self.style.custom_length_props)
+            .map(|l| l.to_pixels(bounds.w.min(bounds.h), scale).round())
+            .unwrap_or(0.0)
+    }
 
-    get_length_property!(
-        /// Returns the corner radius for the bottom-left corner of the current view.
-        corner_bottom_left_radius
-    );
+    /// Returns the corner radius for the bottom-left corner of the current view.
+    pub fn corner_bottom_left_radius(&self) -> f32 {
+        let bounds = self.bounds();
+        let scale = self.scale_factor();
+        self.style
+            .corner_bottom_left_radius
+            .get_resolved(self.current, &self.style.custom_length_props)
+            .map(|l| l.to_pixels(bounds.w.min(bounds.h), scale).round())
+            .unwrap_or(0.0)
+    }
 
-    get_length_property!(
-        /// Returns the corner radius for the bottom-right corner of the current view.
-        corner_bottom_right_radius
-    );
+    /// Returns the corner radius for the bottom-right corner of the current view.
+    pub fn corner_bottom_right_radius(&self) -> f32 {
+        let bounds = self.bounds();
+        let scale = self.scale_factor();
+        self.style
+            .corner_bottom_right_radius
+            .get_resolved(self.current, &self.style.custom_length_props)
+            .map(|l| l.to_pixels(bounds.w.min(bounds.h), scale).round())
+            .unwrap_or(0.0)
+    }
 
     /// Returns the corner shape for the top-left corner of the current view.
     pub fn corner_top_left_shape(&self) -> CornerShape {
@@ -353,10 +375,8 @@ impl DrawContext<'_> {
 
     /// Returns the border color of the current view.
     pub fn border_color(&self) -> Color {
-        if let Some(col) = self
-            .style
-            .border_color
-            .get_resolved(self.current, &self.style.custom_color_props)
+        if let Some(col) =
+            self.style.border_color.get_resolved(self.current, &self.style.custom_color_props)
         {
             Color::rgba(col.r(), col.g(), col.b(), col.a())
         } else {
@@ -371,10 +391,8 @@ impl DrawContext<'_> {
 
     /// Returns the text selection color for the current view.
     pub fn selection_color(&self) -> Color {
-        if let Some(col) = self
-            .style
-            .selection_color
-            .get_resolved(self.current, &self.style.custom_color_props)
+        if let Some(col) =
+            self.style.selection_color.get_resolved(self.current, &self.style.custom_color_props)
         {
             Color::rgba(col.r(), col.g(), col.b(), col.a())
         } else {
@@ -384,10 +402,8 @@ impl DrawContext<'_> {
 
     /// Returns the text caret color for the current view.
     pub fn caret_color(&self) -> Color {
-        if let Some(col) = self
-            .style
-            .caret_color
-            .get_resolved(self.current, &self.style.custom_color_props)
+        if let Some(col) =
+            self.style.caret_color.get_resolved(self.current, &self.style.custom_color_props)
         {
             Color::rgba(col.r(), col.g(), col.b(), col.a())
         } else {
@@ -397,10 +413,8 @@ impl DrawContext<'_> {
 
     /// Returns the font color for the current view.
     pub fn font_color(&self) -> Color {
-        if let Some(col) = self
-            .style
-            .font_color
-            .get_resolved(self.current, &self.style.custom_color_props)
+        if let Some(col) =
+            self.style.font_color.get_resolved(self.current, &self.style.custom_color_props)
         {
             Color::rgba(col.r(), col.g(), col.b(), col.a())
         } else {
@@ -1112,11 +1126,10 @@ impl DrawContext<'_> {
 
                                             svg.render(canvas);
 
-                                            if let Some(color) =
-                                                self.style
-                                                    .fill
-                                                    .get_resolved(self.current, &self.style.custom_color_props)
-                                            {
+                                            if let Some(color) = self.style.fill.get_resolved(
+                                                self.current,
+                                                &self.style.custom_color_props,
+                                            ) {
                                                 let mut paint = Paint::default();
 
                                                 paint.set_anti_alias(true);

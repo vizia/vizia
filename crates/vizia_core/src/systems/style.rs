@@ -310,8 +310,17 @@ fn link_variable_data(
             if prop.link(entity, matched_rules, &style.custom_color_props) {
                 redraw_entities.push(entity);
             }
-
             style.custom_color_props.insert(name_hash, prop);
+        }
+    }
+
+    let keys: Vec<_> = style.custom_length_props.keys().cloned().collect();
+    for name_hash in keys {
+        if let Some(mut prop) = style.custom_length_props.remove(&name_hash) {
+            if prop.link(entity, matched_rules, &style.custom_length_props) {
+                redraw_entities.push(entity);
+            }
+            style.custom_length_props.insert(name_hash, prop);
         }
     }
 }
@@ -324,6 +333,11 @@ fn inherit_variable_data(
     for entity in tree.into_iter() {
         if let Some(parent) = tree.get_layout_parent(entity) {
             for prop in style.custom_color_props.values_mut() {
+                if prop.inherit_shared(entity, parent) {
+                    redraw_entities.push(entity);
+                }
+            }
+            for prop in style.custom_length_props.values_mut() {
                 if prop.inherit_shared(entity, parent) {
                     redraw_entities.push(entity);
                 }
@@ -522,19 +536,19 @@ fn link_style_data(
         should_redraw = true;
     }
 
-    if style.corner_top_left_radius.link(entity, matched_rules) {
+    if style.corner_top_left_radius.link(entity, matched_rules, &style.custom_length_props) {
         should_redraw = true;
     }
 
-    if style.corner_top_right_radius.link(entity, matched_rules) {
+    if style.corner_top_right_radius.link(entity, matched_rules, &style.custom_length_props) {
         should_redraw = true;
     }
 
-    if style.corner_bottom_left_radius.link(entity, matched_rules) {
+    if style.corner_bottom_left_radius.link(entity, matched_rules, &style.custom_length_props) {
         should_redraw = true;
     }
 
-    if style.corner_bottom_right_radius.link(entity, matched_rules) {
+    if style.corner_bottom_right_radius.link(entity, matched_rules, &style.custom_length_props) {
         should_redraw = true;
     }
 
