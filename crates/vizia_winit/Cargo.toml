@@ -32,9 +32,6 @@ gl-rs.workspace = true
 hashbrown.workspace = true
 log.workspace = true
 
-[target."cfg(target_os = \"linux\")".dependencies.skia-safe]
-workspace = true
-features = ["x11", "wayland"]
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows-sys.workspace = true

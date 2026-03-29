@@ -18,9 +18,5 @@ raw-window-handle.workspace = true
 gl-rs.workspace = true
 skia-safe.workspace = true
 
-[target."cfg(target_os = \"linux\")".dependencies.skia-safe]
-workspace = true
-features = ["x11", "wayland"]
-
 [lints]
 workspace = true
