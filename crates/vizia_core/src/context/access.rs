@@ -92,9 +92,9 @@ impl AccessNode {
         self.node_builder.set_character_widths(character_widths);
     }
 
-    /// Sets the array of word lengths for a text node.
-    pub fn set_word_lengths(&mut self, word_lengths: impl Into<Box<[u8]>>) {
-        self.node_builder.set_word_lengths(word_lengths);
+    /// Sets the array of word start byte positions for a text node.
+    pub fn set_word_starts(&mut self, word_starts: impl Into<Box<[u8]>>) {
+        self.node_builder.set_word_starts(word_starts);
     }
 
     /// Sets the placeholder of a text input node.

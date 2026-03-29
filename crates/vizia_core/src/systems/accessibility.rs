@@ -50,6 +50,7 @@ pub fn accessibility_system(cx: &mut Context) {
                 cx.tree_updates.push(Some(TreeUpdate {
                     nodes,
                     tree: None,
+                    tree_id: accesskit::TreeId::ROOT,
                     focus: if cx.window_has_focus {
                         cx.focused.accesskit_id()
                     } else {
@@ -109,6 +110,7 @@ pub fn initial_accessibility_system(cx: &mut Context) -> TreeUpdate {
     TreeUpdate {
         nodes,
         tree: Some(Tree::new(Entity::root().accesskit_id())),
+        tree_id: accesskit::TreeId::ROOT,
         focus: Entity::root().accesskit_id(),
     }
 }

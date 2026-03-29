@@ -1261,7 +1261,8 @@ where
 
             WindowEvent::ActionRequest(ActionRequest {
                 action: accesskit::Action::SetTextSelection,
-                target: _,
+                target_tree: _,
+                target_node: _,
                 data: Some(ActionData::SetTextSelection(_selection)),
             }) => {
                 // TODO: Implement SetTextSelection action for screen reader support.
