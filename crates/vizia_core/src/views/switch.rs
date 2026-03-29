@@ -117,6 +117,7 @@ impl Switch {
                     .position_type(PositionType::Absolute);
             })
             .checked(checked)
+            .role(Role::Switch)
             .navigable(true)
     }
 }
@@ -170,7 +171,14 @@ impl View for Switch {
                     }
                 }
             }
-
+            WindowEvent::ActionRequest(action) => match action.action {
+                Action::Click if !cx.is_disabled() => {
+                    if let Some(callback) = &self.on_toggle {
+                        (callback)(cx);
+                    }
+                }
+                _ => {}
+            },
             _ => {}
         });
     }
