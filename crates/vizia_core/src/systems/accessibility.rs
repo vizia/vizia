@@ -160,9 +160,16 @@ pub(crate) fn get_access_node(
         node_builder.set_value(value.clone().into_boxed_str());
     }
 
-    // if let Some(name) = cx.style.name.get(entity) {
-    //     node_builder.set_name(name.clone().into_boxed_str());
-    // }
+    if let Some(name) = cx.style.name.get(entity) {
+        match cx.style.role.get(entity) {
+            Some(Role::Label | Role::TextRun) => {
+                node_builder.set_value(name.clone().into_boxed_str());
+            }
+            _ => {
+                node_builder.set_label(name.clone().into_boxed_str());
+            }
+        }
+    }
 
     if let Some(numeric_value) = cx.style.numeric_value.get(entity) {
         node_builder.set_numeric_value(*numeric_value);
