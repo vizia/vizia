@@ -18,9 +18,6 @@ bitflags.workspace = true
 precomputed-hash = "0.1"
 fxhash.workspace = true
 
-[target."cfg(target_os = \"linux\")".dependencies.skia-safe]
-workspace = true
-features = ["x11", "wayland"]
 
 [lints]
 workspace = true

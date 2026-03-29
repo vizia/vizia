@@ -44,9 +44,6 @@ fxhash.workspace = true
 rayon = { workspace = true, optional = true }
 dashmap = { workspace = true, optional = true }
 
-[target."cfg(target_os = \"linux\")".dependencies.skia-safe]
-workspace = true
-features = ["x11", "wayland"]
 
 [lib]
 doctest = false

@@ -95,6 +95,14 @@ web-time = "1.1"
 windows-sys = { version = "0.59", default-features = false, features = ["Win32_Graphics_Dwm"] }
 winit = { version = "0.30.13", default-features = false }
 
+[target."cfg(target_os = \"macos\")".dependencies.skia-safe]
+version = "0.93.1"
+features = ["textlayout", "svg", "metal", "gl"]
+
+[target."cfg(target_os = \"linux\")".dependencies.skia-safe]
+version = "0.93.1"
+features = ["textlayout", "svg", "x11", "wayland", "gl"]
+
 [workspace.lints.rust]
 # future_incompatible = "allow"
 # let_underscore = "allow"
