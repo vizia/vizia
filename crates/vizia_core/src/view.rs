@@ -146,6 +146,7 @@ pub trait View: 'static + Sized {
             cx.tree_updates.push(Some(TreeUpdate {
                 nodes: vec![(parent_node_id, parent_node), (node_id, node)],
                 tree: None,
+                tree_id: accesskit::TreeId::ROOT,
                 focus: cx.focused.accesskit_id(),
             }));
         }

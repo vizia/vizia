@@ -54,8 +54,8 @@ vizia_storage = { version = "0.3.0", path = "crates/vizia_storage" }
 vizia_style = { version = "0.3.0", path = "crates/vizia_style" }
 vizia_window = { version = "0.3.0", path = "crates/vizia_window" }
 vizia_reactive = { version = "0.3.0", path = "crates/vizia_reactive" }
-accesskit = "0.18"
-accesskit_winit = "0.26"
+accesskit = "0.24"
+accesskit_winit = "0.32"
 baseview = { git = "https://github.com/vizia/baseview.git", rev = "77fec022db136fb771d5775ae13d088f4f166c04", features = ["opengl"] }
 bitflags = "2.11.0"
 bytes = "1.11.1"
