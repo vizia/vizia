@@ -548,7 +548,7 @@ impl<V: View> ActionModifiers<V> for Handle<'_, V> {
             });
         });
 
-        self.labeled_by(format!("{entity}"))
+        self.described_by(format!("{entity}"))
     }
 
     fn menu<C: FnOnce(&mut Context) -> Handle<'_, T>, T: View>(self, content: C) -> Self {
