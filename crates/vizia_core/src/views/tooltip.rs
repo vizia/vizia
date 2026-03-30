@@ -68,6 +68,7 @@ impl Tooltip {
                 });
                 (content)(cx);
             })
+            .role(Role::Tooltip)
             .z_index(110)
             .hoverable(false)
             .position_type(PositionType::Absolute)
