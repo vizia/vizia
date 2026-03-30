@@ -195,6 +195,10 @@ pub(crate) fn get_access_node(
         node_builder.set_labelled_by(vec![labelled_by.accesskit_id()]);
     }
 
+    if let Some(described_by) = cx.style.described_by.get(entity) {
+        node_builder.set_described_by(vec![described_by.accesskit_id()]);
+    }
+
     let checkable = cx
         .style
         .abilities
