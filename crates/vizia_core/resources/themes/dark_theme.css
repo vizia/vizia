@@ -3,9 +3,9 @@
 :root {
     background-color: #202020;
     color: #f1f1f1;
-    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",
-        "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji",
-        "Segoe UI Emoji";
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", "Noto Sans",
+        Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
     font-variation-settings: "wght" 350;
 }
 
@@ -802,6 +802,12 @@ slider:disabled .thumb {
 spinbox {
     background-color: #343434;
     corner-radius: 4px;
+}
+
+spinbox:focus-within {
+    outline-width: 1px;
+    outline-color: #51afef;
+    outline-offset: 3px;
 }
 
 spinbox .spinbox-button {

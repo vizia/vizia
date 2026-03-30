@@ -444,6 +444,7 @@ impl<'a> EventContext<'a> {
             if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(entity) {
                 pseudo_classes.set(PseudoClassFlags::FOCUS_WITHIN, enabled);
             }
+            self.style.needs_restyle(entity);
         }
     }
 
