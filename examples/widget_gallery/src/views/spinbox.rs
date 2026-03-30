@@ -3,7 +3,7 @@ use vizia::prelude::*;
 use crate::DemoRegion;
 
 struct SpinboxData {
-    spinbox_value_1: Signal<i64>,
+    spinbox_value_1: Signal<f64>,
     // spinbox_value_2: usize,
     // spinbox_value_3_choices: Vec<SpinboxValues>,
     // spinbox_value_3: usize,
@@ -49,11 +49,11 @@ impl Model for SpinboxData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|e, _| match e {
             SpinboxEvent::Decrement1 => {
-                self.spinbox_value_1.update(|value| *value -= 1);
+                self.spinbox_value_1.update(|value| *value -= 1.0);
             }
 
             SpinboxEvent::Increment1 => {
-                self.spinbox_value_1.update(|value| *value += 1);
+                self.spinbox_value_1.update(|value| *value += 1.0);
             } // SpinboxEvent::Decrement2 => {
               //     if self.spinbox_value_2 != 0 {
               //         self.spinbox_value_2 -= 1;
@@ -89,7 +89,7 @@ impl Model for SpinboxData {
 }
 
 pub fn spinbox(cx: &mut Context) {
-    let spinbox_value_1 = Signal::new(99);
+    let spinbox_value_1 = Signal::new(99f64);
 
     SpinboxData {
         spinbox_value_1,

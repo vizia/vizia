@@ -372,12 +372,12 @@ impl Context {
             }
         }
 
-        for ancestor in focused.parent_iter(&self.tree) {
-            let entity = ancestor;
+        let ancestors = focused.parent_iter(&self.tree).collect::<Vec<_>>();
+        for entity in ancestors {
             if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(entity) {
                 pseudo_classes.set(PseudoClassFlags::FOCUS_WITHIN, enabled);
             }
-            // self.needs_restyle(entity);
+            self.needs_restyle(entity);
         }
     }
 
