@@ -981,6 +981,13 @@ impl<'a> EventContext<'a> {
         }
     }
 
+    /// Sets the view, by id name, which describes the current view for accessibility.
+    pub fn described_by(&mut self, id: &str) {
+        if let Some(entity) = self.resolve_entity_identifier(id) {
+            self.style.described_by.insert(self.current, entity);
+        }
+    }
+
     /// Sets whether the view should be explicitely hidden from accessibility.
     pub fn set_hidden(&mut self, hidden: bool) {
         self.style.hidden.insert(self.current, hidden)

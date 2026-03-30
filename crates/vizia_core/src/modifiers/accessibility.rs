@@ -41,6 +41,19 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets the accessibility description relationship for the view using the ID of another view.
+    fn described_by(mut self, id: impl Into<String>) -> Self {
+        let entity = self.entity();
+        let id = id.into();
+
+        if let Some(description_entity) = self.context().resolve_entity_identifier(&id) {
+            self.context().style.described_by.insert(entity, description_entity);
+            self.context().style.needs_access_update(entity);
+        }
+
+        self
+    }
+
     // /// Sets the accessibility default action for the view.
     // fn default_action_verb(mut self, action_verb: DefaultActionVerb) -> Self {
     //     let id = self.entity();
