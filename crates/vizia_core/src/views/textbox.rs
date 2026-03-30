@@ -1,15 +1,13 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-// use crate::accessibility::IntoNode;
 use crate::prelude::*;
 
 use crate::text::{
     Direction, EditableText, Movement, PreeditBackup, Selection, VerticalMovement, apply_movement,
     enforce_text_bounds, ensure_visible, offset_for_delete_backwards,
 };
-// use crate::views::scrollview::SCROLL_SENSITIVITY;
-use accesskit::{ActionData, ActionRequest};
+use accesskit::{ActionData, ActionRequest, TextDirection, TextPosition, TextSelection};
 use skia_safe::textlayout::{RectHeightStyle, RectWidthStyle};
 use skia_safe::{Paint, PaintStyle, Rect};
 use unicode_segmentation::UnicodeSegmentation;
@@ -191,7 +189,11 @@ where
         .toggle_class("multiline", kind == TextboxKind::MultiLineWrapped)
         .text_wrap(kind == TextboxKind::MultiLineWrapped)
         .navigable(true)
-        .role(Role::TextInput)
+        .role(if kind == TextboxKind::SingleLine {
+            Role::TextInput
+        } else {
+            Role::MultilineTextInput
+        })
         .text_value(lens)
         .toggle_class("caret", Self::show_caret)
         .text(lens)
@@ -237,6 +239,7 @@ where
 
             self.show_placeholder = text.is_empty();
             cx.style.needs_text_update(cx.current);
+            cx.style.needs_access_update(cx.current);
         }
     }
 
@@ -346,24 +349,30 @@ where
                     text.edit(del_range, "");
 
                     cx.style.needs_text_update(cx.current);
+                    cx.style.needs_access_update(cx.current);
                 }
             } else if let Some(text) = cx.style.text.get_mut(cx.current) {
                 if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
                     let to_delete = apply_movement(movement, self.selection, text, paragraph, true);
                     self.selection = to_delete;
                     let new_cursor_pos = self.selection.min();
+
                     text.edit(to_delete.range(), "");
                     self.selection = Selection::caret(new_cursor_pos);
+
                     cx.style.needs_text_update(cx.current);
+                    cx.style.needs_access_update(cx.current);
                 }
             }
         } else if let Some(text) = cx.style.text.get_mut(cx.current) {
             let del_range = self.selection.range();
+
             self.selection = Selection::caret(del_range.start);
 
             text.edit(del_range, "");
 
             cx.style.needs_text_update(cx.current);
+            cx.style.needs_access_update(cx.current);
         }
 
         if let Some(text) = cx.style.text.get_mut(cx.current) {
@@ -378,6 +387,7 @@ where
             self.show_placeholder = true;
             *text = self.placeholder.clone();
             cx.style.needs_text_update(cx.current);
+            cx.style.needs_access_update(cx.current);
         }
     }
 
@@ -391,6 +401,7 @@ where
                     apply_movement(movement, self.selection, text, paragraph, selection);
                 self.selection = new_selection;
                 cx.needs_redraw();
+                cx.style.needs_access_update(cx.current);
             }
         }
     }
@@ -403,6 +414,7 @@ where
             self.selection.anchor = 0;
             self.selection.active = text.len();
             cx.needs_redraw();
+            cx.style.needs_access_update(cx.current);
         }
     }
 
@@ -463,13 +475,6 @@ where
 
             top *= bounds.height() - padding_top - padding_bottom - paragraph.height();
 
-            // let total_height = cx.text_context.with_buffer(cx.current, |_, buffer| {
-            //     buffer.layout_runs().len() as f32 * buffer.metrics().line_height
-            // });
-
-            // let x = x - bounds.x - self.transform.0 - padding_left;
-            // let y = y - self.transform.1 - bounds.y - (bounds.h - total_height) * justify_y - padding_top;
-
             let x = x - bounds.x - padding_left;
             let y = y - bounds.y - padding_top - top;
 
@@ -504,6 +509,7 @@ where
                 }
 
                 cx.needs_redraw();
+                cx.style.needs_access_update(cx.current);
             }
         }
     }
@@ -530,6 +536,7 @@ where
                 self.selection.active = cursor;
 
                 cx.needs_redraw();
+                cx.style.needs_access_update(cx.current);
             }
         }
     }
@@ -784,14 +791,26 @@ impl<L: Lens> Handle<'_, Textbox<L>> {
     pub fn placeholder<P: ToStringLocalized>(self, text: impl Res<P>) -> Self {
         text.set_or_bind(self.cx, self.entity, move |cx, val| {
             let txt = val.get(cx).to_string_local(cx);
-            cx.emit(TextEvent::SetPlaceholder(txt.clone()));
-            cx.style.name.insert(cx.current, txt);
+            cx.emit(TextEvent::SetPlaceholder(txt));
             cx.needs_relayout();
             cx.needs_redraw(self.entity);
         });
 
         self
     }
+}
+
+/// Converts a byte offset (relative to line start) into a character index
+/// within the `character_lengths` array for AccessKit text positioning.
+fn byte_offset_to_char_index(character_lengths: &[u8], byte_offset: usize) -> usize {
+    let mut cumulative = 0;
+    for (i, &len) in character_lengths.iter().enumerate() {
+        cumulative += len as usize;
+        if byte_offset < cumulative {
+            return i;
+        }
+    }
+    character_lengths.len()
 }
 
 impl<L> View for Textbox<L>
@@ -803,148 +822,138 @@ where
     }
 
     fn accessibility(&self, cx: &mut AccessContext, node: &mut AccessNode) {
-        let _bounds = cx.bounds();
+        if !self.placeholder.is_empty() {
+            node.set_placeholder(self.placeholder.clone());
+        }
 
         let node_id = node.node_id();
 
-        let mut _selection = self.selection;
+        let selection = self.selection;
 
-        // let mut selection_active_line = node_id;
-        // let mut selection_anchor_line = node_id;
-        // let mut selection_active_cursor = 0;
-        // let mut selection_anchor_cursor = 0;
+        let mut selection_active_line = None;
+        let mut selection_anchor_line = None;
+        let mut selection_active_cursor = 0;
+        let mut selection_anchor_cursor = 0;
+        let mut first_line_node_id = None;
 
-        let mut _current_cursor = 0;
-        let mut _prev_line_index = usize::MAX;
+        let text = if self.show_placeholder {
+            ""
+        } else {
+            cx.style.text.get(cx.current).map(|t| t.as_str()).unwrap_or("")
+        };
+        // build_paragraph() appends a zero-width space (\u{200B}, 3 UTF-8 bytes)
+        // to every paragraph, so skia's line metrics include indices beyond the
+        // actual text. We use text.len() as the upper bound for all slicing.
+        let text_len = text.len();
 
-        if let Some(_text) = cx.style.text.get(cx.current) {
-            if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-                let line_metrics = paragraph.get_line_metrics();
-                for line in line_metrics.iter() {
-                    // We need a child node per line
-                    let mut line_node = AccessNode::new_from_parent(node_id, line.line_number);
-                    line_node.set_role(Role::TextInput);
-                    line_node.set_bounds(BoundingBox {
-                        x: line.left as f32,
-                        y: (line.baseline - line.ascent) as f32,
-                        w: line.width as f32,
-                        h: line.height as f32,
-                    });
-                    // line_node.set_text_direction(if line.ltr {
-                    //     TextDirection::RightToLeft
-                    // } else {
-                    //     TextDirection::LeftToRight
-                    // });
-
-                    let mut character_lengths = Vec::new();
-                    let mut character_positions = Vec::new();
-                    let mut character_widths = Vec::new();
-
-                    // let mut line_text = text[line.start_index..line.end_index].to_owned();
-
-                    // let word_lengths =
-                    //     line_text.unicode_words().map(|word| word.len() as u8).collect::<Vec<_>>();
-
-                    // let mut line_length = 0;
-
-                    let mut glyph_pos = line.start_index;
-
-                    for _ in line.start_index..line.end_index {
-                        if let Some(cluster_info) = paragraph.get_glyph_cluster_at(glyph_pos) {
-                            let length =
-                                cluster_info.text_range.end - cluster_info.text_range.start;
-
-                            // line_length += length as usize;
-
-                            let position = cluster_info.bounds.left();
-                            let width = cluster_info.bounds.width();
-
-                            character_lengths.push(length as u8);
-                            character_positions.push(position);
-                            character_widths.push(width);
-
-                            glyph_pos += length;
-
-                            // if glyph_pos >= line.end_index {
-                            //     break;
-                            // }
-                        }
-                    }
-
-                    // Cosmic strips the newlines but accesskit needs them so we append them back in if line originally ended with a newline
-                    // If the last glyph position is equal to the end of the buffer line then this layout run is the last one and ends in a newline.
-                    // if line.hard_break {
-                    //     line_text += "\n";
-                    //     character_lengths.push(1);
-                    //     character_positions.push(line.width as f32);
-                    //     character_widths.push(0.0);
-                    // }
-
-                    // TODO: Might need to append any spaces that were stripped during layout. This can be done by
-                    // figuring out if the start of the next line is greater than the end of the current line as long
-                    // as the lines have the same `line_i`. This will require a peekable iterator loop.
-
-                    // line_node.set_value(line_text.into_boxed_str());
-                    line_node.set_character_lengths(character_lengths.into_boxed_slice());
-                    line_node.set_character_positions(character_positions.into_boxed_slice());
-                    line_node.set_character_widths(character_widths.into_boxed_slice());
-                    // line_node.set_word_lengths(word_lengths.into_boxed_slice());
-
-                    // if line.line_i != prev_line_index {
-                    //     current_cursor = 0;
-                    // }
-
-                    // if line.line_i == cursor.line {
-                    //     if prev_line_index != line.line_i {
-                    //         if cursor.index <= line_length {
-                    //             selection_active_line = line_node.node_id();
-                    //             selection_active_cursor = cursor.index;
-                    //         }
-                    //     } else if cursor.index > current_cursor {
-                    //         selection_active_line = line_node.node_id();
-                    //         selection_active_cursor = cursor.index - current_cursor;
-                    //     }
-                    // }
-
-                    // Check if the current line contains the cursor or selection
-                    // This is a mess because a line happens due to soft and hard breaks but
-                    // the cursor and selected indices are relative to the lines caused by hard breaks only.
-                    // if selection == Selection::None {
-                    //     selection = Selection::Normal(cursor);
-                    // }
-                    // if let Selection::Normal(selection) = selection {
-                    //     if line.line_i == selection.line {
-                    //         // A previous line index different to the current means that the current line follows a hard break
-                    //         if prev_line_index != line.line_i {
-                    //             if selection.index <= line_length {
-                    //                 selection_anchor_line = line_node.node_id();
-                    //                 selection_anchor_cursor = selection.index;
-                    //             }
-                    //         } else if selection.index > current_cursor {
-                    //             selection_anchor_line = line_node.node_id();
-                    //             selection_anchor_cursor = selection.index - current_cursor;
-                    //         }
-                    //     }
-                    // }
-
-                    node.add_child(line_node);
-
-                    // current_cursor += line_length;
-                    // prev_line_index = line.line_i;
+        if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+            let line_metrics = paragraph.get_line_metrics();
+            for line in line_metrics.iter() {
+                // Skip lines that start beyond the actual text (i.e., the ZWS-only line)
+                if line.start_index >= text_len && text_len > 0 {
+                    continue;
                 }
+
+                // We need a child node per line
+                let mut line_node = AccessNode::new_from_parent(node_id, line.line_number);
+                line_node.set_role(Role::TextRun);
+                // TODO: Support bidirectional text.
+                line_node.set_text_direction(TextDirection::LeftToRight);
+                line_node.set_bounds(BoundingBox {
+                    x: line.left as f32,
+                    y: (line.baseline - line.ascent) as f32,
+                    w: line.width as f32,
+                    h: line.height as f32,
+                });
+
+                // Only iterate over glyphs within the actual text range
+                let glyph_end = line.end_index.min(text_len);
+                let estimated_chars = glyph_end - line.start_index;
+                let mut character_lengths: Vec<u8> = Vec::with_capacity(estimated_chars);
+                let mut character_positions: Vec<f32> = Vec::with_capacity(estimated_chars);
+                let mut character_widths: Vec<f32> = Vec::with_capacity(estimated_chars);
+                let mut glyph_pos = line.start_index;
+
+                while glyph_pos < glyph_end {
+                    if let Some(cluster_info) = paragraph.get_glyph_cluster_at(glyph_pos) {
+                        let length = cluster_info.text_range.end - cluster_info.text_range.start;
+                        if length == 0 {
+                            break;
+                        }
+
+                        character_lengths.push(length as u8);
+                        character_positions.push(cluster_info.bounds.left());
+                        character_widths.push(cluster_info.bounds.width());
+
+                        glyph_pos += length;
+                    } else {
+                        break;
+                    }
+                }
+
+                // Include the newline character for hard breaks, as AccessKit needs it
+                let line_end = if line.hard_break {
+                    line.end_including_newline.min(text_len)
+                } else {
+                    glyph_end
+                };
+                let line_text = text.get(line.start_index..line_end).unwrap_or("").to_owned();
+
+                if line.hard_break && line.end_including_newline <= text_len {
+                    character_lengths.push(1);
+                    character_positions.push(line.width as f32);
+                    character_widths.push(0.0);
+                }
+
+                let word_lengths: Vec<u8> = line_text
+                    .unicode_words()
+                    .map(|word| word.graphemes(true).count() as u8)
+                    .collect();
+
+                if first_line_node_id.is_none() {
+                    first_line_node_id = Some(line_node.node_id());
+                }
+
+                // Check if this line contains the selection active (focus) position
+                if selection.active >= line.start_index && selection.active <= line_end {
+                    selection_active_line = Some(line_node.node_id());
+                    selection_active_cursor = byte_offset_to_char_index(
+                        &character_lengths,
+                        selection.active - line.start_index,
+                    );
+                }
+
+                // Check if this line contains the selection anchor position
+                if selection.anchor >= line.start_index && selection.anchor <= line_end {
+                    selection_anchor_line = Some(line_node.node_id());
+                    selection_anchor_cursor = byte_offset_to_char_index(
+                        &character_lengths,
+                        selection.anchor - line.start_index,
+                    );
+                }
+
+                line_node.set_value(line_text.into_boxed_str());
+                line_node.set_character_lengths(character_lengths.into_boxed_slice());
+                line_node.set_character_positions(character_positions.into_boxed_slice());
+                line_node.set_character_widths(character_widths.into_boxed_slice());
+                line_node.set_word_lengths(word_lengths.into_boxed_slice());
+
+                node.add_child(line_node);
             }
         }
 
-        // node.set_text_selection(TextSelection {
-        //     anchor: TextPosition {
-        //         node: selection_anchor_line,
-        //         character_index: selection_anchor_cursor,
-        //     },
-        //     focus: TextPosition {
-        //         node: selection_active_line,
-        //         character_index: selection_active_cursor,
-        //     },
-        // });
+        if let Some(fallback) = first_line_node_id {
+            node.set_text_selection(TextSelection {
+                anchor: TextPosition {
+                    node: selection_anchor_line.unwrap_or(fallback),
+                    character_index: selection_anchor_cursor,
+                },
+                focus: TextPosition {
+                    node: selection_active_line.unwrap_or(fallback),
+                    character_index: selection_active_cursor,
+                },
+            });
+        }
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
@@ -1231,53 +1240,7 @@ where
                 target: _,
                 data: Some(ActionData::SetTextSelection(_selection)),
             }) => {
-                // TODO: This needs testing once I figure out how to trigger it with a screen reader.
-                // let node_id = cx.current.accesskit_id();
-                // cx.text_context.with_editor(cx.current, |_, editor| {
-                //     // let cursor_node = selection.focus.node;
-                //     let selection_node = selection.anchor.node;
-
-                //     // let mut cursor_line_index = 0;
-                //     // let mut cursor_index = 0;
-                //     let mut selection_line_index = 0;
-                //     let mut selection_index = 0;
-
-                //     let mut current_cursor = 0;
-                //     let mut prev_line_index = usize::MAX;
-
-                //     for (index, line) in editor.buffer().layout_runs().enumerate() {
-                //         let line_node = AccessNode::new_from_parent(node_id, index);
-                //         // if line_node.node_id() == cursor_node {
-                //         //     cursor_line_index = line.line_i;
-                //         //     cursor_index = selection.focus.character_index + current_cursor;
-                //         // }
-
-                //         if line_node.node_id() == selection_node {
-                //             selection_line_index = line.line_i;
-                //             selection_index = selection.anchor.character_index + current_cursor;
-                //         }
-
-                //         if line.line_i != prev_line_index {
-                //             current_cursor = 0;
-                //         }
-
-                //         let first_glyph_pos =
-                //             line.glyphs.first().map(|glyph| glyph.start).unwrap_or_default();
-                //         let last_glyph_pos =
-                //             line.glyphs.last().map(|glyph| glyph.end).unwrap_or_default();
-
-                //         let line_length = last_glyph_pos - first_glyph_pos;
-
-                //         current_cursor += line_length;
-                //         prev_line_index = line.line_i;
-                //     }
-
-                //     let selection_cursor = Cursor::new(selection_line_index, selection_index);
-                //     editor.set_selection(Selection::Normal(selection_cursor));
-
-                //     // TODO: Either add a method to set the cursor by index to cosmic,
-                //     // or loop over an `Action` to move the cursor to the correct place.
-                // });
+                // TODO: Implement SetTextSelection action for screen reader support.
             }
 
             _ => {}
@@ -1358,7 +1321,10 @@ where
                 }
             }
 
-            TextEvent::SetPlaceholder(text) => self.placeholder.clone_from(text),
+            TextEvent::SetPlaceholder(text) => {
+                self.placeholder.clone_from(text);
+                cx.style.needs_access_update(cx.current);
+            }
 
             TextEvent::StartEdit => {
                 if !cx.is_disabled() && !self.edit {
@@ -1378,6 +1344,7 @@ where
                     if text.is_empty() {
                         self.show_placeholder = true;
                         self.selection = Selection::caret(0);
+                        cx.style.needs_access_update(cx.current);
                     } else {
                         self.select_all(cx);
                     }
@@ -1424,13 +1391,6 @@ where
                     cx.set_valid(false);
                 }
 
-                // self.show_placeholder = text.is_empty();
-                // if self.show_placeholder {
-                //     cx.style.text.insert(cx.current, self.placeholder.clone());
-                // } else {
-                //     cx.style.text.insert(cx.current, text);
-                // }
-
                 // Reset transform to 0,0
                 let mut transform = self.transform.borrow_mut();
                 *transform = (0.0, 0.0);
@@ -1439,6 +1399,7 @@ where
                 self.selection = Selection::caret(0);
 
                 cx.style.needs_text_update(cx.current);
+                cx.style.needs_access_update(cx.current);
             }
 
             TextEvent::Blur => {
@@ -1558,7 +1519,6 @@ where
         canvas.save();
         let transform = *self.transform.borrow();
         canvas.translate((transform.0, transform.1));
-        // cx.draw_text_and_selection(canvas);
         cx.draw_text(canvas);
 
         if self.edit {
