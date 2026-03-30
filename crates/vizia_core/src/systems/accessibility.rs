@@ -57,8 +57,6 @@ pub fn accessibility_system(cx: &mut Context) {
                     },
                 }));
             }
-
-            // }
         }
 
         cx.style.reaccess.clear();

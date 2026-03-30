@@ -97,6 +97,11 @@ impl AccessNode {
         self.node_builder.set_word_lengths(word_lengths);
     }
 
+    /// Sets the placeholder of a text input node.
+    pub fn set_placeholder(&mut self, placeholder: impl Into<Box<str>>) {
+        self.node_builder.set_placeholder(placeholder);
+    }
+
     /// Sets the step for a numerical node.
     pub fn set_numeric_value_step(&mut self, value: f64) {
         self.node_builder.set_numeric_value_step(value);
