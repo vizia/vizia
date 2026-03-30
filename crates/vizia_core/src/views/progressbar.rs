@@ -56,6 +56,11 @@ impl View for ProgressBar {
     fn element(&self) -> Option<&'static str> {
         Some("progressbar")
     }
+
+    fn accessibility(&self, _cx: &mut AccessContext, node: &mut AccessNode) {
+        node.set_min_numeric_value(0.0);
+        node.set_max_numeric_value(1.0);
+    }
 }
 
 impl ProgressBar {
@@ -94,6 +99,8 @@ impl ProgressBar {
             let progress = lens.map(|v| Units::Percentage(v * 100.0));
             Element::new(cx).width(progress).class("progressbar-bar");
         })
+        .role(Role::ProgressIndicator)
+        .numeric_value(lens.map(|val| *val as f64))
     }
 
     /// Creates a new vertical progress bar bound to the value targeted by the lens.
@@ -105,5 +112,7 @@ impl ProgressBar {
             let progress = lens.map(|v| Units::Percentage(v * 100.0));
             Element::new(cx).top(Stretch(1.0)).height(progress).class("progressbar-bar");
         })
+        .role(Role::ProgressIndicator)
+        .numeric_value(lens.map(|val| *val as f64))
     }
 }
