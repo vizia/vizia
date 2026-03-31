@@ -554,33 +554,12 @@ impl Context {
         self.global_listeners.push(Box::new(listener));
     }
 
-    /// Sets the language used by the application for localization.
-    pub fn set_language(&mut self, lang: LanguageIdentifier) {
-        let cx = &mut EventContext::new(self);
-        if let Some(mut models) = cx.models.remove(&Entity::root()) {
-            if let Some(model) = models.get_mut(&TypeId::of::<Environment>()) {
-                model.event(cx, &mut Event::new(EnvironmentEvent::SetLocale(lang)));
-            }
-
-            self.models.insert(Entity::root(), models);
-        }
-    }
-
+    /// Adds a font to the application from memory.
     pub fn add_font_mem(&mut self, data: impl AsRef<[u8]>) {
-        // self.text_context.font_system().db_mut().load_font_data(data.as_ref().to_vec());
         self.text_context.asset_provider.register_typeface(
             self.text_context.default_font_manager.new_from_data(data.as_ref(), None).unwrap(),
             None,
         );
-    }
-
-    /// Sets the global default font for the application.
-    pub fn set_default_font(&mut self, names: &[&str]) {
-        self.style.default_font = names
-            .iter()
-            .map(|x| FamilyOwned::Named(x.to_string()))
-            .chain(std::iter::once(FamilyOwned::Generic(GenericFontFamily::SansSerif)))
-            .collect();
     }
 
     /// Add a style string to the application.
@@ -621,6 +600,7 @@ impl Context {
         self.resource_manager.image_loader = Some(Box::new(loader));
     }
 
+    /// Adds a translation to the application for the provided language.
     pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: impl ToString) {
         self.resource_manager.add_translation(lang, ftl.to_string());
     }
@@ -783,6 +763,7 @@ impl Context {
         }
     }
 
+    /// Loads an image from memory and associates it with the provided path.
     pub fn load_image(&mut self, path: &str, data: &'static [u8], policy: ImageRetentionPolicy) {
         let id = if let Some(image_id) = self.resource_manager.image_ids.get(path) {
             *image_id
@@ -868,34 +849,8 @@ impl Context {
     }
 
     /// Finds the entity that identifier identifies
-    pub fn resolve_entity_identifier(&self, identity: &str) -> Option<Entity> {
+    pub(crate) fn resolve_entity_identifier(&self, identity: &str) -> Option<Entity> {
         self.entity_identifiers.get(identity).cloned()
-    }
-
-    /// Toggles the addition/removal of a class name for the current view.
-    ///
-    /// # Example
-    /// ```rust
-    /// # use vizia_core::prelude::*;
-    /// # let context = &mut Context::default();
-    /// # let mut cx = &mut EventContext::new(context);
-    /// cx.toggle_class("foo", true);
-    /// ```
-    pub fn toggle_class(&mut self, class_name: &str, applied: bool) {
-        let current = self.current();
-        if let Some(class_list) = self.style.classes.get_mut(current) {
-            if applied {
-                class_list.insert(class_name.to_string());
-            } else {
-                class_list.remove(class_name);
-            }
-        } else if applied {
-            let mut class_list = HashSet::new();
-            class_list.insert(class_name.to_string());
-            self.style.classes.insert(current, class_list);
-        }
-
-        self.style.needs_restyle(self.current);
     }
 
     pub fn set_ime_state(&mut self, new_state: ImeState) {
