@@ -23,20 +23,20 @@
     --foreground: var(--gray-800);
     --card: var(--gray-75);
     --card-foreground: var(--gray-800);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
+    --popover: var(--gray-50);
+    --popover-foreground: var(--gray-800);
     --primary: var(--gray-800);
     --primary-foreground: var(--gray-75);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
+    --secondary: var(--gray-200);
+    --secondary-foreground: var(--gray-800);
     --muted: var(--gray-200);
     --muted-foreground: var(--gray-500);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
+    --accent: var(--gray-200);
+    --accent-foreground: var(--gray-800);
     --destructive: oklch(0.577 0.245 27.325);
-    --border: var(--gray-300);
+    --border: var(--gray-400);
     --input: oklch(0.922 0 0);
-    --ring: var(--gray-400);
+    --ring: var(--gray-500);
     --chart-1: oklch(0.646 0.222 41.116);
     --chart-2: oklch(0.6 0.118 184.704);
     --chart-3: oklch(0.398 0.07 227.392);
@@ -67,9 +67,9 @@
 }
 
 *:focus-visible {
-    outline-width: 1px;
+    outline-width: 3px;
     outline-color: var(--ring);
-    outline-offset: 2px;
+    outline-offset: 0px;
 }
 
 /* BUTTON  */
@@ -291,6 +291,72 @@ checkbox:checked:disabled {
     transition: background-color 100ms;
     transition: border-color 100ms;
     transition: fill 100ms;
+}
+
+/* LIST */
+
+list label.dark,
+virtual-list label.dark {
+    background-color: #00000015;
+}
+
+list.selectable list-item,
+virtual-list.selectable list-item {
+    background-color: transparent;
+}
+
+list.selectable list-item.focused,
+virtual-list.selectable list-item.focused {
+    background-color: #a3a3a3;
+}
+
+list.selectable list-item:hover,
+virtual-list.selectable list-item:hover {
+    background-color: #7b7bff;
+}
+
+list.selectable list-item:checked,
+virtual-list.selectable list-item:checked {
+    background-color: #51afef;
+}
+
+/* PICKLIST */
+
+picklist {
+    corner-radius: 4px;
+}
+
+picklist list.selectable list-item:checked {
+    background-color: transparent;
+}
+
+picklist list.selectable list-item .checkmark {
+    fill: var(--primary);
+    visibility: hidden;
+}
+
+picklist list.selectable list-item:checked .checkmark {
+    visibility: visible;
+}
+
+picklist list.selectable list-item:hover {
+    background-color: var(--accent);
+}
+
+picklist list.selectable list-item:focus-visible {
+    background-color: var(--accent);
+    outline-color: transparent;
+}
+
+/* POPUP */
+
+popup {
+    background-color: var(--popover);
+    corner-radius: 4px;
+    border-width: 1px;
+    border-color: var(--border);
+    padding: 1px;
+    shadow: 0px 3px 12px #00000038;
 }
 
 /* TOGGLE BUTTON */
