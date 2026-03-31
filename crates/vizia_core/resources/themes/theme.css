@@ -52,6 +52,20 @@
     --sidebar-ring: oklch(0.708 0 0);
 }
 
+.dark {
+    --gray-50: #000000;
+    --gray-75: #0e0e0e;
+    --gray-100: #1d1d1d;
+    --gray-200: #303030;
+    --gray-300: #4b4b4b;
+    --gray-400: #6a6a6a;
+    --gray-500: #8d8d8d;
+    --gray-600: #b0b0b0;
+    --gray-700: #d0d0d0;
+    --gray-800: #ebebeb;
+    --gray-900: #ffffff;
+}
+
 *:focus-visible {
     outline-width: 1px;
     outline-color: var(--ring);
@@ -138,8 +152,8 @@ button-group.outline > button:active {
 button.text,
 button-group.text > button {
     background-color: var(--background);
-    color: var(--secondary-foreground);
-    fill: var(--secondary-foreground);
+    color: var(--foreground);
+    fill: var(--foreground);
     transition: background-color 100ms;
     transition: color 100ms;
     transition: fill 100ms;

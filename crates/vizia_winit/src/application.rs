@@ -138,7 +138,7 @@ impl Application {
         cx.set_event_proxy(Box::new(WinitEventProxy(event_proxy_obj)));
 
         cx.renegotiate_language();
-        cx.0.remove_user_themes();
+        cx.0.add_built_in_styles();
         (content)(cx.context());
 
         let proxy = event_loop.create_proxy();
@@ -424,7 +424,7 @@ impl ApplicationHandler<UserEvent> for Application {
                 self.cx.emit_origin(WindowEvent::ThemeChanged(theme));
             }
 
-            self.cx.0.remove_user_themes();
+            self.cx.0.add_built_in_styles();
 
             // Create any subwindows
             for (window_entity, window_state) in self.cx.0.windows.clone().into_iter() {
