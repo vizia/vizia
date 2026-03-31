@@ -12,21 +12,14 @@ fn main() -> Result<(), ApplicationError> {
                 // Basic Button
                 Button::new(cx, |cx| Label::new(cx, "Button"))
                     .on_press(|_cx| debug!("Button Pressed!"));
-                // Accent Button
-                Button::new(cx, |cx| Label::new(cx, "Accent Button"))
-                    .variant(ButtonVariant::Accent);
+                // Secondary Button
+                Button::new(cx, |cx| Label::new(cx, "Secondary Button"))
+                    .variant(ButtonVariant::Secondary);
                 // Outline Button
                 Button::new(cx, |cx| Label::new(cx, "Outline Button"))
                     .variant(ButtonVariant::Outline);
                 // Ghost Button
                 Button::new(cx, |cx| Label::new(cx, "Text Button")).variant(ButtonVariant::Text);
-                // Button with Icon
-                Button::new(cx, |cx| {
-                    HStack::new(cx, |cx| {
-                        Svg::new(cx, ICON_CHECK).class("icon");
-                        Label::new(cx, "Button with Icon");
-                    })
-                });
             })
             .size(Auto)
             .horizontal_gap(Pixels(10.0));
@@ -44,7 +37,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, "Button with Icon");
                     })
                 })
-                .variant(ButtonVariant::Accent);
+                .variant(ButtonVariant::Secondary);
                 Button::new(cx, |cx| {
                     HStack::new(cx, |cx| {
                         Svg::new(cx, ICON_CHECK).class("icon");
@@ -66,7 +59,7 @@ fn main() -> Result<(), ApplicationError> {
             HStack::new(cx, |cx| {
                 Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"));
                 Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"))
-                    .variant(ButtonVariant::Accent);
+                    .variant(ButtonVariant::Secondary);
                 Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"))
                     .variant(ButtonVariant::Outline);
                 Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"))
