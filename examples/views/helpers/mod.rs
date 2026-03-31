@@ -17,7 +17,7 @@ pub const CENTER_LAYOUT: &str = r#"
 pub struct ControlsData {
     pub disabled: Signal<bool>,
     pub theme_options: Signal<Vec<Signal<&'static str>>>,
-    pub selected_theme: Signal<usize>,
+    pub selected_theme: Signal<Option<usize>>,
 }
 
 impl Default for ControlsData {
@@ -25,7 +25,7 @@ impl Default for ControlsData {
         Self {
             disabled: Signal::new(false),
             theme_options: Signal::new(["System", "Dark", "Light"].map(Signal::new).to_vec()),
-            selected_theme: Signal::new(0),
+            selected_theme: Signal::new(Some(0)),
         }
     }
 }
@@ -42,7 +42,7 @@ impl Model for ControlsData {
                 self.disabled.update(|disabled| *disabled ^= true);
             }
             ControlsEvent::SetThemeMode(theme_mode) => {
-                self.selected_theme.set(*theme_mode);
+                self.selected_theme.set(Some(*theme_mode));
                 cx.emit(EnvironmentEvent::SetThemeMode(match theme_mode {
                     0 /* system */ => AppTheme::System,
                     1 /* Dark */ => AppTheme::BuiltIn(ThemeMode::DarkMode),
@@ -158,16 +158,17 @@ impl View for ExamplePage {}
 fn theme_selection_dropdown(
     cx: &mut Context,
     theme_options: Signal<Vec<Signal<&'static str>>>,
-    selected_theme: Signal<usize>,
+    selected_theme: Signal<Option<usize>>,
 ) {
     PickList::new(cx, theme_options, selected_theme, true)
+        .min_selected(1)
         .on_select(|cx, index| cx.emit(ControlsEvent::SetThemeMode(index)))
-        .width(Pixels(100.0));
-    // .tooltip(|cx| {
-    //     Tooltip::new(cx, |cx| {
-    //         Label::new(cx, "Select Theme Mode");
-    //     })
-    // });
+        .width(Pixels(100.0))
+        .tooltip(|cx| {
+            Tooltip::new(cx, |cx| {
+                Label::new(cx, "Select Theme Mode");
+            })
+        });
 }
 
 pub fn setup_logging() -> Result<(), Box<dyn Error>> {

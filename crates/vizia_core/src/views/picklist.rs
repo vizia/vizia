@@ -9,6 +9,8 @@ pub struct PickList {
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
     placeholder: Signal<String>,
     is_open: Signal<bool>,
+    min_selected: Signal<usize>,
+    max_selected: Signal<usize>,
 }
 
 pub(crate) enum PickListEvent {
@@ -27,12 +29,14 @@ impl PickList {
         L: SignalGet<V> + SignalMap<V> + Res<V> + 'static,
         V: Deref<Target = [T]> + Clone + 'static,
         T: 'static + ToStringLocalized + Clone + PartialEq,
-        S: Res<usize> + 'static,
+        S: Res<Option<usize>> + 'static,
     {
         let is_open = Signal::new(false);
         let placeholder = Signal::new(String::new());
+        let min_selected = Signal::new(0);
+        let max_selected = Signal::new(usize::MAX);
         let selected = selected.to_signal(cx);
-        Self { on_select: None, placeholder, is_open }
+        Self { on_select: None, placeholder, is_open, min_selected, max_selected }
             .build(cx, |cx| {
                 Button::new(cx, |cx| {
                     // A Label and an optional Icon
@@ -43,14 +47,18 @@ impl PickList {
                                 handle.bind(selected, move |handle| {
                                     let selected_index = selected.get();
                                     let list_len = list.len();
-                                    if selected_index < list_len {
-                                        let selected_text =
-                                            if let Some(item) = list.get(selected_index) {
+                                    if let Some(index) = selected_index {
+                                        if index < list_len {
+                                            let selected_text = if let Some(item) = list.get(index)
+                                            {
                                                 item.to_string_local(&handle)
                                             } else {
                                                 placeholder.get()
                                             };
-                                        handle.text(selected_text);
+                                            handle.text(selected_text);
+                                        } else {
+                                            handle.text(placeholder.get());
+                                        }
                                     } else {
                                         handle.text(placeholder.get());
                                     }
@@ -84,7 +92,13 @@ impl PickList {
                                 Label::new(cx, item.map(|v| v.clone())).hoverable(false);
                             })
                             .selectable(Selectable::Single)
-                            .selected(selected.map(|s| vec![*s]))
+                            .min_selected(min_selected)
+                            .max_selected(max_selected)
+                            .selected(
+                                selected.map(|s| {
+                                    if let Some(index) = s { vec![*index] } else { vec![] }
+                                }),
+                            )
                             .on_select(|cx, index| {
                                 cx.emit(PickListEvent::SetOption(index));
                                 cx.emit(PopupEvent::Close);
@@ -156,5 +170,23 @@ impl Handle<'_, PickList> {
         F: 'static + Fn(&mut EventContext, usize),
     {
         self.modify(|picklist: &mut PickList| picklist.on_select = Some(Box::new(callback)))
+    }
+
+    /// Sets the minimum number of selected items.
+    pub fn min_selected(self, min_selected: impl Res<usize> + 'static) -> Self {
+        let min_selected = min_selected.to_signal(self.cx);
+        self.bind(min_selected, move |handle| {
+            let min_selected = min_selected.get();
+            handle.modify(|picklist: &mut PickList| picklist.min_selected.set(min_selected));
+        })
+    }
+
+    /// Sets the maximum number of selected items.
+    pub fn max_selected(self, max_selected: impl Res<usize> + 'static) -> Self {
+        let max_selected = max_selected.to_signal(self.cx);
+        self.bind(max_selected, move |handle| {
+            let max_selected = max_selected.get();
+            handle.modify(|picklist: &mut PickList| picklist.max_selected.set(max_selected));
+        })
     }
 }
