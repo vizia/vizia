@@ -1,0 +1,231 @@
+:root {
+    background-color: white;
+    color: #181818;
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", "Noto Sans",
+        Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    font-variation-settings: "wght" 400;
+    font-size: 14px;
+
+    --gray-50: #ffffff;
+    --gray-75: #fdfdfd;
+    --gray-100: #f8f8f8;
+    --gray-200: #e6e6e6;
+    --gray-300: #d5d5d5;
+    --gray-400: #b1b1b1;
+    --gray-500: #909090;
+    --gray-600: #6c6c6c;
+    --gray-700: #464646;
+    --gray-800: #222222;
+    --gray-900: #000000;
+
+    --background: var(--gray-50);
+    --foreground: var(--gray-800);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: var(--gray-300);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    --chart-1: oklch(0.646 0.222 41.116);
+    --chart-2: oklch(0.6 0.118 184.704);
+    --chart-3: oklch(0.398 0.07 227.392);
+    --chart-4: oklch(0.828 0.189 84.429);
+    --chart-5: oklch(0.769 0.188 70.08);
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+}
+
+/* BUTTON  */
+
+button {
+    corner-radius: 4px;
+    background-color: var(--foreground);
+    color: var(--background);
+    transition: background-color 100ms;
+}
+
+button:hover {
+    background-color: var(--gray-700);
+    transition: background-color 100ms;
+}
+
+button:active {
+    background-color: var(--gray-600);
+    transition: background-color 100ms;
+}
+
+button:disabled {
+    color: var(--gray-500);
+    transition: background-color 100ms;
+}
+
+button.accent,
+button-group.accent > button {
+    border-width: 0px;
+    background-color: #51afef;
+    transition: background-color 100ms;
+}
+
+button.accent:hover,
+button-group.accent > button:hover {
+    background-color: #73bff2;
+    transition: background-color 100ms;
+}
+
+button.accent:active,
+button-group.accent > button:active {
+    background-color: #59a4d9;
+    transition: background-color 100ms;
+}
+
+button.accent:disabled,
+button-group.accent:disabled > button {
+    background-color: #c4c4c4;
+    transition: background-color 100ms;
+}
+
+button.outline,
+button-group.outline > button {
+    background-color: var(--background);
+    border-width: 1px;
+    border-color: var(--border);
+    color: var(--foreground);
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+button.outline svg,
+button-group.outline > button svg {
+    fill: var(--foreground);
+}
+
+button.outline:hover,
+button-group.outline > button:hover {
+    background-color: var(--gray-200);
+    transition: background-color 100ms;
+}
+
+button.outline:active,
+button-group.outline > button:active {
+    background-color: var(--gray-200);
+}
+
+button.outline:disabled,
+button-group.outline:disabled > button {
+    border-color: var(--border);
+    background-color: var(--background);
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+button.text,
+button-group.text > button {
+    border-width: 0px;
+    background-color: var(--background);
+    transition: background-color 100ms;
+    color: var(--foreground);
+}
+
+button.text svg,
+button-group.text > button svg {
+    fill: var(--foreground);
+}
+
+button.text:hover,
+button-group.text > button:hover {
+    background-color: var(--gray-200);
+    transition: background-color 100ms;
+}
+
+button.text:active,
+button-group.text > button:active {
+    background-color: var(--gray-300);
+    transition: background-color 100ms;
+}
+
+button.text:disabled,
+button-group.text:disabled > button {
+    color: #626262;
+    background-color: var(--background);
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+button.text:disabled svg,
+button-group.text:disabled > button svg {
+    fill: #626262;
+}
+
+button svg {
+    fill: var(--background);
+    transition: fill 100ms;
+}
+
+button:disabled svg {
+    fill: #a0a0a0;
+}
+
+/* BUTTON GROUP */
+
+button-group {
+    gap: 1px;
+}
+
+button-group.accent {
+    gap: 1px;
+}
+
+button-group.outline {
+    gap: -1px;
+}
+
+button-group > button,
+button-group > toggle-button,
+button-group > textbox {
+    corner-radius: 0px;
+}
+
+button-group.vertical > button,
+button-group.vertical > toggle-button,
+button-group > textbox {
+    corner-radius: 0px;
+}
+
+button-group > :first-child {
+    corner-top-left-radius: 4px;
+    corner-bottom-left-radius: 4px;
+}
+
+button-group > :last-child {
+    corner-top-right-radius: 4px;
+    corner-bottom-right-radius: 4px;
+}
+
+button-group.vertical > :first-child {
+    corner-radius: 0px;
+    corner-top-right-radius: 4px;
+    corner-top-left-radius: 4px;
+}
+
+button-group.vertical > :last-child {
+    corner-radius: 0px;
+    corner-bottom-right-radius: 4px;
+    corner-bottom-left-radius: 4px;
+}

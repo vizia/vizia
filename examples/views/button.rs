@@ -7,7 +7,7 @@ use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        ExamplePage::new(cx, |cx| {
+        ExamplePage::vertical(cx, |cx| {
             HStack::new(cx, |cx| {
                 // Basic Button
                 Button::new(cx, |cx| Label::new(cx, "Button"))
@@ -27,7 +27,50 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, "Button with Icon");
                     })
                 });
+            })
+            .size(Auto)
+            .horizontal_gap(Pixels(10.0));
+
+            HStack::new(cx, |cx| {
+                Button::new(cx, |cx| {
+                    HStack::new(cx, |cx| {
+                        Svg::new(cx, ICON_CHECK).class("icon");
+                        Label::new(cx, "Button with Icon");
+                    })
+                });
+                Button::new(cx, |cx| {
+                    HStack::new(cx, |cx| {
+                        Svg::new(cx, ICON_CHECK).class("icon");
+                        Label::new(cx, "Button with Icon");
+                    })
+                })
+                .variant(ButtonVariant::Accent);
+                Button::new(cx, |cx| {
+                    HStack::new(cx, |cx| {
+                        Svg::new(cx, ICON_CHECK).class("icon");
+                        Label::new(cx, "Button with Icon");
+                    })
+                })
+                .variant(ButtonVariant::Outline);
+                Button::new(cx, |cx| {
+                    HStack::new(cx, |cx| {
+                        Svg::new(cx, ICON_CHECK).class("icon");
+                        Label::new(cx, "Button with Icon");
+                    })
+                })
+                .variant(ButtonVariant::Text);
+            })
+            .size(Auto)
+            .horizontal_gap(Pixels(10.0));
+
+            HStack::new(cx, |cx| {
                 Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"));
+                Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"))
+                    .variant(ButtonVariant::Accent);
+                Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"))
+                    .variant(ButtonVariant::Outline);
+                Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"))
+                    .variant(ButtonVariant::Text);
             })
             .size(Auto)
             .horizontal_gap(Pixels(10.0));
