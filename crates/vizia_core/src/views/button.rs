@@ -148,6 +148,61 @@ pub enum ButtonVariant {
     Text,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Size {
+    Small,
+    Medium,
+    Large,
+    ExtraLarge,
+}
+
+pub trait SizeModifiers {
+    fn size<U: Into<Size> + Clone + 'static>(self, size: impl Res<U> + 'static) -> Self;
+}
+
+impl SizeModifiers for Handle<'_, Button> {
+    fn size<U: Into<Size> + Clone + 'static>(self, size: impl Res<U> + 'static) -> Self {
+        let size = size.to_signal(self.cx);
+        self.bind(size, move |handle| {
+            let val = size.get();
+            let size: Size = val.into();
+            match size {
+                Size::Small => {
+                    handle
+                        .toggle_class("small", true)
+                        .toggle_class("medium", false)
+                        .toggle_class("large", false)
+                        .toggle_class("extra-large", false);
+                }
+
+                Size::Medium => {
+                    handle
+                        .toggle_class("small", false)
+                        .toggle_class("medium", true)
+                        .toggle_class("large", false)
+                        .toggle_class("extra-large", false);
+                }
+
+                Size::Large => {
+                    handle
+                        .toggle_class("small", false)
+                        .toggle_class("medium", false)
+                        .toggle_class("large", true)
+                        .toggle_class("extra-large", false);
+                }
+
+                Size::ExtraLarge => {
+                    handle
+                        .toggle_class("small", false)
+                        .toggle_class("medium", false)
+                        .toggle_class("large", false)
+                        .toggle_class("extra-large", true);
+                }
+            }
+        })
+    }
+}
+
 /// Modifiers for changing the appearance of buttons.
 pub trait ButtonModifiers {
     /// Selects the style variant to be used by the button or button group.
