@@ -85,7 +85,6 @@ toggle-button {
     height: 32px;
     width: auto;
     alignment: center;
-    cursor: hand;
     padding-left: 8px;
     padding-right: 8px;
 }
@@ -127,7 +126,6 @@ button-group.vertical > toggle-button {
 checkbox {
     width: 20px;
     height: 20px;
-    cursor: hand;
 }
 
 checkbox > svg {

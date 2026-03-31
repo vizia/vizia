@@ -250,6 +250,7 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context, redraw_entities: &mut 
             if cx.style.disabled.inherit_inline(entity, parent)
                 | cx.style.caret_color.inherit_inline(entity, parent)
                 | cx.style.selection_color.inherit_inline(entity, parent)
+                | cx.style.fill.inherit_inline(entity, parent)
             {
                 redraw_entities.push(entity);
             }
@@ -289,8 +290,10 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context, redraw_entities: &mut 
                 cx.style.needs_text_update(entity);
             }
 
-            if cx.style.caret_color.inherit_shared(entity, parent)
+            if cx.style.disabled.inherit_shared(entity, parent)
+                | cx.style.caret_color.inherit_shared(entity, parent)
                 | cx.style.selection_color.inherit_shared(entity, parent)
+                | cx.style.fill.inherit_shared(entity, parent)
             {
                 redraw_entities.push(entity);
             }

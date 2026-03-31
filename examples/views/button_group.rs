@@ -48,7 +48,7 @@ fn main() -> Result<(), ApplicationError> {
                 Button::new(cx, |cx| Label::new(cx, "Two"));
                 Button::new(cx, |cx| Label::new(cx, "Three"));
             })
-            .variant(ButtonVariant::Accent);
+            .variant(ButtonVariant::Secondary);
 
             ButtonGroup::new(cx, |cx| {
                 Button::new(cx, |cx| Label::new(cx, "One"));
