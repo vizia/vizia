@@ -96,7 +96,7 @@ impl ProgressBar {
             Element::new(cx).width(progress).class("progressbar-bar");
         })
         .role(Role::ProgressIndicator)
-        .numeric_value(lens.map(|val| *val as f64))
+        .numeric_value(signal.map(|val| *val as f64))
     }
 
     /// Creates a new vertical progress bar bound to the provided value source.
@@ -109,6 +109,6 @@ impl ProgressBar {
             Element::new(cx).top(Stretch(1.0)).height(progress).class("progressbar-bar");
         })
         .role(Role::ProgressIndicator)
-        .numeric_value(lens.map(|val| *val as f64))
+        .numeric_value(signal.map(|val| *val as f64))
     }
 }
