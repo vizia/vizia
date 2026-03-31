@@ -71,6 +71,7 @@ impl PickList {
                     //.gap(Stretch(1.0))
                     .gap(Pixels(8.0))
                 })
+                .variant(ButtonVariant::Outline)
                 .width(Stretch(1.0))
                 .on_press(|cx| cx.emit(PopupEvent::Open));
 
@@ -79,7 +80,6 @@ impl PickList {
                     if is_open {
                         Popup::new(cx, |cx| {
                             List::new(cx, list, move |cx, _, item| {
-                                Element::new(cx).class("focus-indicator");
                                 Svg::new(cx, ICON_CHECK).class("checkmark").size(Pixels(16.0));
                                 Label::new(cx, item.map(|v| v.clone())).hoverable(false);
                             })
