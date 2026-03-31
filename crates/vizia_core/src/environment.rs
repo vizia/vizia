@@ -106,7 +106,10 @@ impl Model for Environment {
             EnvironmentEvent::SetThemeMode(theme) => {
                 theme.clone_into(&mut self.theme.app_theme);
 
-                cx.set_theme_mode(self.theme.get_current_theme());
+                //cx.set_theme_mode(self.theme.get_current_theme());
+                cx.with_current(Entity::root(), |cx| {
+                    cx.toggle_class("dark", self.theme.get_current_theme() == ThemeMode::DarkMode);
+                });
                 cx.reload_styles().unwrap();
             }
 
@@ -123,7 +126,10 @@ impl Model for Environment {
 
                 self.theme.app_theme = AppTheme::BuiltIn(theme_mode);
 
-                cx.set_theme_mode(theme_mode);
+                cx.with_current(Entity::root(), |cx| {
+                    cx.toggle_class("dark", theme_mode == ThemeMode::DarkMode);
+                });
+
                 cx.reload_styles().unwrap();
             }
 
@@ -136,7 +142,12 @@ impl Model for Environment {
             WindowEvent::ThemeChanged(theme) => {
                 self.theme.sys_theme = Some(*theme);
                 if self.theme.app_theme == AppTheme::System {
-                    cx.set_theme_mode(*theme);
+                    cx.with_current(Entity::root(), |cx| {
+                        cx.toggle_class(
+                            "dark",
+                            self.theme.get_current_theme() == ThemeMode::DarkMode,
+                        );
+                    });
                     cx.reload_styles().unwrap();
                 }
             }

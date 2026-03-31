@@ -40,7 +40,6 @@ pub enum ImageRetentionPolicy {
 #[doc(hidden)]
 #[derive(Default)]
 pub struct ResourceManager {
-    pub themes: Vec<String>, // Themes are the string content stylesheets
     pub styles: Vec<Box<dyn IntoCssStr>>,
 
     pub(crate) image_id_manager: IdManager<ImageId>,
@@ -111,8 +110,6 @@ impl ResourceManager {
         );
 
         ResourceManager {
-            themes: Vec::new(),
-
             image_id_manager,
             images,
             image_ids: HashMap::new(),

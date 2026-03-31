@@ -49,8 +49,7 @@ use vizia_input::{ImeState, MouseState};
 use vizia_storage::{ChildIterator, LayoutTreeIterator};
 
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
-static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
-static LIGHT_THEME: &str = include_str!("../../resources/themes/theme.css");
+static DEFAULT_THEME: &str = include_str!("../../resources/themes/theme.css");
 static MARKDOWN: &str = include_str!("../../resources/themes/markdown.css");
 
 type Views = HashMap<Entity, Box<dyn ViewHandler>>;
@@ -562,13 +561,6 @@ impl Context {
         );
     }
 
-    /// Add a style string to the application.
-    pub(crate) fn add_theme(&mut self, theme: &str) {
-        self.resource_manager.themes.push(theme.to_owned());
-
-        EventContext::new(self).reload_styles().expect("Failed to reload styles");
-    }
-
     pub fn add_stylesheet(&mut self, style: impl IntoCssStr) -> Result<(), std::io::Error> {
         self.resource_manager.styles.push(Box::new(style));
 
@@ -578,18 +570,31 @@ impl Context {
     }
 
     /// Remove all user themes from the application.
-    pub fn remove_user_themes(&mut self) {
-        self.resource_manager.themes.clear();
-
-        self.add_theme(DEFAULT_LAYOUT);
-        self.add_theme(MARKDOWN);
-        if !self.ignore_default_theme {
-            let environment = self.data::<Environment>();
-            match environment.theme.get_current_theme() {
-                ThemeMode::LightMode => self.add_theme(LIGHT_THEME),
-                ThemeMode::DarkMode => self.add_theme(DARK_THEME),
-            }
+    pub fn add_built_in_styles(&mut self) {
+        let mut user_styles = Vec::new();
+        if self.resource_manager.styles.len() >= 3 {
+            user_styles = self.resource_manager.styles.drain(3..).collect::<Vec<_>>();
         }
+
+        self.resource_manager.styles.clear();
+
+        self.add_stylesheet(DEFAULT_LAYOUT).unwrap();
+        self.add_stylesheet(MARKDOWN).unwrap();
+
+        if !self.ignore_default_theme {
+            self.add_stylesheet(DEFAULT_THEME).unwrap();
+            let environment = self.data::<Environment>();
+            let theme_mode = environment.theme.get_current_theme();
+            self.with_current(Entity::root(), |cx| {
+                let cx = &mut EventContext::new(cx);
+                cx.toggle_class("dark", theme_mode == ThemeMode::DarkMode);
+            })
+        } else {
+            // Add an empty stylesheet to ensure that the list of styles contains at least three entries.
+            self.add_stylesheet("").unwrap();
+        }
+
+        self.resource_manager.styles.extend(user_styles);
     }
 
     pub fn add_animation(&mut self, animation: AnimationBuilder) -> Animation {
