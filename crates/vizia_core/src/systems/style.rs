@@ -215,6 +215,7 @@ impl Element for Node<'_, '_> {
                 }
                 PseudoClass::Lang(_) => todo!(),
                 PseudoClass::Dir(_) => todo!(),
+                PseudoClass::Has(selector_list) => self.match_has(selector_list, _context),
                 PseudoClass::Custom(name) => {
                     println!("custom: {}", name);
                     todo!()
@@ -240,6 +241,102 @@ impl Element for Node<'_, '_> {
         _filter: &mut vizia_style::selectors::bloom::BloomFilter,
     ) -> bool {
         false
+    }
+}
+
+impl Node<'_, '_> {
+    fn match_has(
+        &self,
+        selector_list: &vizia_style::SelectorList<Selectors>,
+        context: &mut MatchingContext<'_, Selectors>,
+    ) -> bool {
+        use vizia_style::selectors::parser::Combinator;
+
+        // Each selector in the list was parsed as a relative selector with ParseRelative::ForHas.
+        // The leading combinator is stored at parse-order index 1 (index 0 is RelativeSelectorAnchor).
+        // We dispatch to the correct traversal based on that combinator.
+        selector_list.slice().iter().any(|selector| {
+            let leading = selector.combinator_at_parse_order(1);
+            match leading {
+                // > — only direct children
+                Combinator::Child => {
+                    self.any_child(|n| vizia_style::matches_selector(selector, 0, None, n, context))
+                }
+                // space — all descendants
+                Combinator::Descendant => self.any_descendant(|n| {
+                    vizia_style::matches_selector(selector, 0, None, n, context)
+                }),
+                // + — next sibling only
+                Combinator::NextSibling => self
+                    .next_sibling_element()
+                    .is_some_and(|n| vizia_style::matches_selector(selector, 0, None, &n, context)),
+                // ~ — any following sibling
+                Combinator::LaterSibling => self.any_following_sibling(|n| {
+                    vizia_style::matches_selector(selector, 0, None, n, context)
+                }),
+                // Unexpected in :has() context — fall back to descendants
+                _ => self.any_descendant(|n| {
+                    vizia_style::matches_selector(selector, 0, None, n, context)
+                }),
+            }
+        })
+    }
+
+    fn any_child(&self, mut f: impl FnMut(&Node) -> bool) -> bool {
+        let Some(mut child) = self.tree.get_layout_first_child(self.entity).map(|e| Node {
+            entity: e,
+            store: self.store,
+            tree: self.tree,
+        }) else {
+            return false;
+        };
+        loop {
+            if f(&child) {
+                return true;
+            }
+            match child.next_sibling_element() {
+                Some(next) => child = next,
+                None => return false,
+            }
+        }
+    }
+
+    fn any_descendant(&self, mut f: impl FnMut(&Node) -> bool) -> bool {
+        self.any_descendant_inner(&mut f)
+    }
+
+    fn any_descendant_inner(&self, f: &mut impl FnMut(&Node) -> bool) -> bool {
+        let Some(mut child) = self.tree.get_layout_first_child(self.entity).map(|e| Node {
+            entity: e,
+            store: self.store,
+            tree: self.tree,
+        }) else {
+            return false;
+        };
+        loop {
+            if f(&child) || child.any_descendant_inner(f) {
+                return true;
+            }
+            match child.next_sibling_element() {
+                Some(next) => child = next,
+                None => return false,
+            }
+        }
+    }
+
+    fn any_following_sibling(&self, mut f: impl FnMut(&Node) -> bool) -> bool {
+        let Some(mut sibling) = self.next_sibling_element() else {
+            return false;
+        };
+        loop {
+            if f(&sibling) {
+                return true;
+            }
+            match sibling.next_sibling_element() {
+                Some(next) => sibling = next,
+                None => return false,
+            }
+        }
     }
 }
 

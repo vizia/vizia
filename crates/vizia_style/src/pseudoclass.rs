@@ -1,4 +1,5 @@
 use cssparser::*;
+use selectors::SelectorList;
 
 use crate::{Direction, Selectors};
 
@@ -31,6 +32,7 @@ pub enum PseudoClass {
 
     Lang(Vec<String>),
     Dir(Direction),
+    Has(Box<SelectorList<Selectors>>),
     Custom(String),
 }
 
@@ -65,6 +67,7 @@ impl ToCss for PseudoClass {
             PseudoClass::UserInvalid => dest.write_str(":user-invalid"),
             PseudoClass::Lang(ref _lang) => dest.write_str(":lang()"),
             PseudoClass::Dir(_) => dest.write_str(":dir()"),
+            PseudoClass::Has(ref _selectors) => dest.write_str(":has()"),
             PseudoClass::Custom(_) => dest.write_str(":custom"),
         }
     }
