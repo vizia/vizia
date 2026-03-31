@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use cssparser::*;
 use precomputed_hash::PrecomputedHash;
-use selectors::SelectorImpl;
+use selectors::{SelectorImpl, SelectorList};
 
 use crate::{CustomParseError, Direction, Parse, ParserOptions, PseudoClass, PseudoElement};
 
@@ -143,6 +143,15 @@ impl<'i> selectors::parser::Parser<'i> for SelectorParser<'_, 'i> {
 
             "dir" => {
                 Dir(Direction::parse(parser)?)
+            },
+
+            "has" => {
+                let selector_list = SelectorList::parse(
+                    self,
+                    parser,
+                    selectors::parser::ParseRelative::ForHas,
+                )?;
+                Has(Box::new(selector_list))
             },
 
             _=> return Err(parser.new_custom_error(selectors::parser::SelectorParseErrorKind::UnexpectedIdent(name.clone()))),
