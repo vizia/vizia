@@ -57,6 +57,8 @@ pub struct Environment {
     pub locale: Signal<LanguageIdentifier>,
     /// The maximum interval between two clicks to be recognised as a double-click.
     pub double_click_interval: Duration,
+    /// The delay before a tooltip fades in.
+    pub tooltip_delay: Duration,
     /// Current application and system theme.
     pub theme: Theme,
     /// The timer used to blink the caret of a textbox.
@@ -75,6 +77,7 @@ impl Environment {
         Self {
             locale: Signal::new(locale.clone()),
             double_click_interval: Duration::from_millis(500),
+            tooltip_delay: Duration::from_millis(1500),
             theme: Theme::default(),
             caret_timer,
         }
@@ -94,6 +97,8 @@ pub enum EnvironmentEvent {
     ToggleThemeMode,
     /// Set the maximum interval between two clicks to be recognised as a double-click.
     SetDoubleClickInterval(Duration),
+    /// Set the delay before a tooltip fades in.
+    SetTooltipDelay(Duration),
 }
 
 impl Model for Environment {
@@ -135,6 +140,10 @@ impl Model for Environment {
 
             EnvironmentEvent::SetDoubleClickInterval(interval) => {
                 self.double_click_interval = interval;
+            }
+
+            EnvironmentEvent::SetTooltipDelay(delay) => {
+                self.tooltip_delay = delay;
             }
         });
 
