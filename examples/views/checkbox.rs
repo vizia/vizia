@@ -43,7 +43,7 @@ fn main() -> Result<(), ApplicationError> {
                     Label::new(cx, "Checkbox 1").describing("checkbox_1");
                 })
                 .size(Auto)
-                .horizontal_gap(Pixels(5.0))
+                .gap(Pixels(5.0))
                 .alignment(Alignment::Center);
 
                 HStack::new(cx, |cx| {
@@ -53,10 +53,10 @@ fn main() -> Result<(), ApplicationError> {
                     Label::new(cx, "Checkbox 2").describing("checkbox_2");
                 })
                 .size(Auto)
-                .horizontal_gap(Pixels(5.0))
+                .gap(Pixels(5.0))
                 .alignment(Alignment::Center);
             })
-            .vertical_gap(Pixels(10.0))
+            .gap(Pixels(10.0))
             .size(Auto);
 
             Label::new(cx, "Checkbox with custom icon and label").class("h2");
@@ -68,7 +68,7 @@ fn main() -> Result<(), ApplicationError> {
                 Label::new(cx, "Checkbox 3").describing("checkbox_3");
             })
             .size(Auto)
-            .horizontal_gap(Pixels(5.0))
+            .gap(Pixels(5.0))
             .alignment(Alignment::Center);
         });
     })

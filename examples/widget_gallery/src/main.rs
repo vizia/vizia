@@ -37,7 +37,7 @@ pub fn setup_logging() -> Result<(), ApplicationError> {
 fn theme_selection_dropdown(
     cx: &mut Context,
     theme_options: Signal<Vec<Signal<&'static str>>>,
-    selected_theme: Signal<usize>,
+    selected_theme: Signal<Option<usize>>,
 ) {
     PickList::new(cx, theme_options, selected_theme, true)
         .on_select(|cx, index| cx.emit(AppEvent::SetThemeMode(index)))

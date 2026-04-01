@@ -4,8 +4,8 @@ use crate::DemoRegion;
 
 struct PicklistData {
     options: Signal<Vec<Signal<&'static str>>>,
-    selected_option_1: Signal<usize>,
-    selected_option_2: Signal<usize>,
+    selected_option_1: Signal<Option<usize>>,
+    selected_option_2: Signal<Option<usize>>,
 }
 
 pub enum PicklistEvent {
@@ -17,11 +17,11 @@ impl Model for PicklistData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|picklist_event, _| match picklist_event {
             PicklistEvent::SetOption1(index) => {
-                self.selected_option_1.set(*index);
+                self.selected_option_1.set(Some(*index));
             }
 
             PicklistEvent::SetOption2(index) => {
-                self.selected_option_2.set(*index);
+                self.selected_option_2.set(Some(*index));
             }
         });
 
@@ -33,8 +33,8 @@ pub fn picklist(cx: &mut Context) {
     let options = Signal::new(
         ["Red", "Green", "Blue", "Yellow", "Cyan", "Magenta"].map(Signal::new).to_vec(),
     );
-    let selected_option_1 = Signal::new(0usize);
-    let selected_option_2 = Signal::new(200usize);
+    let selected_option_1 = Signal::new(Some(0usize));
+    let selected_option_2 = Signal::new(Some(2usize));
 
     PicklistData { options, selected_option_1, selected_option_2 }.build(cx);
 

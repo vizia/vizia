@@ -12,12 +12,42 @@ pub const CENTER_LAYOUT: &str = r#"
         gap: 20px;
         alignment: top-center;
     }
+
+    :root.primary-blue {
+        --primary: #1f6feb;
+        --primary-foreground: #ffffff;
+    }
+
+    :root.primary-emerald {
+        --primary: #0f9d58;
+        --primary-foreground: #ffffff;
+    }
+
+    :root.primary-crimson {
+        --primary: #c62828;
+        --primary-foreground: #ffffff;
+    }
+
+    :root.primary-amber {
+        --primary: #f59e0b;
+        --primary-foreground: #1f2937;
+    }
+
+    :root.primary-violet {
+        --primary: #7c3aed;
+        --primary-foreground: #ffffff;
+    }
 "#;
+
+const PRIMARY_COLOR_CLASSES: [&str; 5] =
+    ["primary-blue", "primary-emerald", "primary-crimson", "primary-amber", "primary-violet"];
 
 pub struct ControlsData {
     pub disabled: Signal<bool>,
     pub theme_options: Signal<Vec<Signal<&'static str>>>,
     pub selected_theme: Signal<Option<usize>>,
+    pub primary_color_options: Signal<Vec<Signal<&'static str>>>,
+    pub selected_primary_color: Signal<Option<usize>>,
 }
 
 impl Default for ControlsData {
@@ -26,6 +56,10 @@ impl Default for ControlsData {
             disabled: Signal::new(false),
             theme_options: Signal::new(["System", "Dark", "Light"].map(Signal::new).to_vec()),
             selected_theme: Signal::new(Some(0)),
+            primary_color_options: Signal::new(
+                ["Blue", "Emerald", "Crimson", "Amber", "Violet"].map(Signal::new).to_vec(),
+            ),
+            selected_primary_color: Signal::new(Some(0)),
         }
     }
 }
@@ -33,6 +67,7 @@ impl Default for ControlsData {
 pub enum ControlsEvent {
     ToggleDisabled,
     SetThemeMode(usize),
+    SetPrimaryThemeColor(usize),
 }
 
 impl Model for ControlsData {
@@ -49,6 +84,15 @@ impl Model for ControlsData {
                     2 /* Light */ => AppTheme::BuiltIn(ThemeMode::LightMode),
                     _ => unreachable!(),
                 }));
+            }
+            ControlsEvent::SetPrimaryThemeColor(color) => {
+                self.selected_primary_color.set(Some(*color));
+
+                cx.with_current(Entity::root(), |cx| {
+                    for (index, class) in PRIMARY_COLOR_CLASSES.iter().enumerate() {
+                        cx.toggle_class(class, index == *color);
+                    }
+                });
             }
         });
     }
@@ -67,19 +111,23 @@ impl ExamplePage {
             let disabled = controls.disabled;
             let theme_options = controls.theme_options;
             let selected_theme = controls.selected_theme;
+            let primary_color_options = controls.primary_color_options;
+            let selected_primary_color = controls.selected_primary_color;
             controls.build(cx);
             cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System)); // set system theme
+            cx.emit(ControlsEvent::SetPrimaryThemeColor(0));
 
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
                     Switch::new(cx, disabled)
-                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
-                    // .tooltip(|cx| {
-                    //     Tooltip::new(cx, |cx| {
-                    //         Label::new(cx, "Toggle disabled");
-                    //     })
-                    // });
-                    Label::new(cx, "Toggle Disabled");
+                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled))
+                        .id("disabled_toggle")
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, "Toggle disabled");
+                            })
+                        });
+                    Label::new(cx, "Toggle Disabled").describing("disabled_toggle");
                 })
                 .alignment(Alignment::Left)
                 .horizontal_gap(Pixels(5.0))
@@ -88,6 +136,7 @@ impl ExamplePage {
                 .size(Auto);
 
                 theme_selection_dropdown(cx, theme_options, selected_theme);
+                primary_color_selection_dropdown(cx, primary_color_options, selected_primary_color);
             })
             .height(Auto)
             .width(Stretch(1.0))
@@ -113,8 +162,11 @@ impl ExamplePage {
             let disabled = controls.disabled;
             let theme_options = controls.theme_options;
             let selected_theme = controls.selected_theme;
+            let primary_color_options = controls.primary_color_options;
+            let selected_primary_color = controls.selected_primary_color;
             controls.build(cx);
             cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System)); // set system theme
+            cx.emit(ControlsEvent::SetPrimaryThemeColor(0));
 
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
@@ -134,6 +186,7 @@ impl ExamplePage {
                 .size(Auto);
 
                 theme_selection_dropdown(cx, theme_options, selected_theme);
+                primary_color_selection_dropdown(cx, primary_color_options, selected_primary_color);
             })
             .height(Auto)
             .width(Stretch(1.0))
@@ -167,6 +220,22 @@ fn theme_selection_dropdown(
         .tooltip(|cx| {
             Tooltip::new(cx, |cx| {
                 Label::new(cx, "Select Theme Mode");
+            })
+        });
+}
+
+fn primary_color_selection_dropdown(
+    cx: &mut Context,
+    color_options: Signal<Vec<Signal<&'static str>>>,
+    selected_color: Signal<Option<usize>>,
+) {
+    PickList::new(cx, color_options, selected_color, true)
+        .min_selected(1)
+        .on_select(|cx, index| cx.emit(ControlsEvent::SetPrimaryThemeColor(index)))
+        .width(Pixels(120.0))
+        .tooltip(|cx| {
+            Tooltip::new(cx, |cx| {
+                Label::new(cx, "Select Primary Color");
             })
         });
 }
