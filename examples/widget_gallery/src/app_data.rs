@@ -2,7 +2,7 @@ use vizia::prelude::*;
 
 pub struct AppData {
     pub theme_options: Signal<Vec<Signal<&'static str>>>,
-    pub selected_theme: Signal<usize>,
+    pub selected_theme: Signal<Option<usize>>,
     // pub disabled: bool,
     pub tabs: Signal<Vec<&'static str>>,
 }
@@ -15,7 +15,7 @@ impl Model for AppData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::SetThemeMode(theme_mode) => {
-                self.selected_theme.set(*theme_mode);
+                self.selected_theme.set(Some(*theme_mode));
                 cx.emit(EnvironmentEvent::SetThemeMode(match theme_mode {
                     0 /* system */ => AppTheme::System,
                     1 /* Dark */ => AppTheme::BuiltIn(ThemeMode::DarkMode),
@@ -31,7 +31,7 @@ impl AppData {
     pub fn new() -> Self {
         AppData {
             theme_options: Signal::new(["System", "Dark", "Light"].map(Signal::new).to_vec()),
-            selected_theme: Signal::new(0),
+            selected_theme: Signal::new(Some(0)),
             // disabled: false,
             tabs: Signal::new(vec![
                 "Avatar",

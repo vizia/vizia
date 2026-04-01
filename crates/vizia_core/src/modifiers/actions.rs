@@ -539,7 +539,7 @@ impl<V: View> ActionModifiers<V> for Handle<'_, V> {
                                 cx.play_animation(
                                     "tooltip_fade",
                                     Duration::from_millis(100),
-                                    Duration::from_millis(500),
+                                    Duration::from_millis(1500),
                                 )
                             }
                         })

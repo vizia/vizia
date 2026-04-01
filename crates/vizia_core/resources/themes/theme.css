@@ -242,6 +242,7 @@ checkbox {
     border-width: 1px;
     border-color: var(--border);
     background-color: var(--background);
+    fill: var(--foreground);
     transition: background-color 100ms;
     transition: border-color 100ms;
 }
@@ -359,6 +360,63 @@ popup {
     shadow: 0px 3px 12px #00000038;
 }
 
+/* SWITCH */
+
+switch {
+    corner-radius: 50%;
+}
+
+switch .switch-handle-bg {
+    corner-radius: 50%;
+    background-color: var(--secondary);
+    transition: background-color 100ms;
+}
+
+switch .switch-handle {
+    background-color: var(--primary-foreground);
+    corner-radius: 50%;
+    transition: background-color 100ms;
+    transition: left 100ms;
+}
+
+switch:hover .switch-handle {
+    transition: background-color 100ms;
+}
+
+switch:checked .switch-handle-bg {
+    background-color: var(--primary);
+    transition: background-color 100ms;
+}
+
+switch:checked .switch-handle {
+    background-color: var(--primary-foreground);
+    transition: background-color 100ms;
+}
+
+switch:checked:hover .switch-handle {
+    transition: background-color 100ms;
+}
+
+switch:disabled * {
+    background-color: var(--muted);
+    transition: background-color 100ms;
+}
+
+switch:hover:disabled * {
+    background-color: var(--muted);
+    transition: background-color 100ms;
+}
+
+switch:checked:disabled * {
+    background-color: var(--muted);
+    transition: background-color 100ms;
+}
+
+switch:checked:hover:disabled * {
+    background-color: var(--muted);
+    transition: background-color 100ms;
+}
+
 /* TOGGLE BUTTON */
 
 toggle-button {
@@ -389,4 +447,18 @@ toggle-button:disabled {
     background-color: var(--muted);
     transition: background-color 100ms;
     transition: border-color 100ms;
+}
+
+/* TOOLTIP */
+
+tooltip {
+    padding: 8px;
+    background-color: var(--foreground);
+    corner-radius: 4px;
+    color: var(--background);
+    fill: var(--background);
+}
+
+tooltip arrow {
+    background-color: var(--foreground);
 }

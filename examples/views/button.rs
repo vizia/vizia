@@ -5,8 +5,17 @@ use log::debug;
 use vizia::icons::ICON_CHECK;
 use vizia::prelude::*;
 
+const STYLE: &str = r#"
+    :root {
+        --primary: #0049a2;
+        --primary-foreground: #ffffff;
+    }
+"#;
+
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
+
         ExamplePage::vertical(cx, |cx| {
             HStack::new(cx, |cx| {
                 // Basic Button

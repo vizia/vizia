@@ -378,10 +378,6 @@ label {
     text-wrap: false;
 }
 
-label.describing {
-    cursor: hand;
-}
-
 /* LIST */
 
 list {
@@ -549,7 +545,6 @@ radiobutton {
     width: 16px;
     height: 16px;
     alignment: center;
-    cursor: hand;
 }
 
 radiobutton .inner {
@@ -726,26 +721,27 @@ zstack > * {
 switch {
     width: 30px;
     height: 18px;
-    cursor: hand;
 }
 
 switch .switch-handle {
-    left: 0px;
-    width: 18px;
-    height: 18px;
+    left: 1px;
+    width: 16px;
+    height: 16px;
+    top: 1s;
+    bottom: 1s;
     transition: left 100ms;
 }
 
 switch .switch-handle-bg {
     width: 30px;
-    height: 12px;
+    height: 1s;
     top: 1s;
     bottom: 1s;
     transition: background-color 100ms;
 }
 
 switch:checked .switch-handle {
-    left: 12px;
+    left: 13px;
     transition: left 100ms;
 }
 
