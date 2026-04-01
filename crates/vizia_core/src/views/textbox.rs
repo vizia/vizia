@@ -929,10 +929,26 @@ where
                     character_widths.push(0.0);
                 }
 
-                let word_lengths: Vec<u8> = line_text
-                    .unicode_words()
-                    .map(|word| word.graphemes(true).count() as u8)
-                    .collect();
+                let mut word_starts = Vec::new();
+                let mut previous_is_alphanumeric = text
+                    .get(..line.start_index)
+                    .and_then(|prefix| prefix.graphemes(true).next_back())
+                    .and_then(|grapheme| grapheme.chars().next())
+                    .is_some_and(|ch| ch.is_alphanumeric());
+
+                for (character_index, grapheme) in line_text.graphemes(true).enumerate() {
+                    let current_is_alphanumeric =
+                        grapheme.chars().next().is_some_and(|ch| ch.is_alphanumeric());
+
+                    if current_is_alphanumeric
+                        && !previous_is_alphanumeric
+                        && let Ok(character_index) = u8::try_from(character_index)
+                    {
+                        word_starts.push(character_index);
+                    }
+
+                    previous_is_alphanumeric = current_is_alphanumeric;
+                }
 
                 if first_line_node_id.is_none() {
                     first_line_node_id = Some(line_node.node_id());
@@ -960,7 +976,7 @@ where
                 line_node.set_character_lengths(character_lengths.into_boxed_slice());
                 line_node.set_character_positions(character_positions.into_boxed_slice());
                 line_node.set_character_widths(character_widths.into_boxed_slice());
-                line_node.set_word_lengths(word_lengths.into_boxed_slice());
+                line_node.set_word_starts(word_starts.into_boxed_slice());
 
                 node.add_child(line_node);
             }
