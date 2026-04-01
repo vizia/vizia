@@ -444,6 +444,7 @@ impl<'a> EventContext<'a> {
             if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(entity) {
                 pseudo_classes.set(PseudoClassFlags::FOCUS_WITHIN, enabled);
             }
+            self.style.needs_restyle(entity);
         }
     }
 
@@ -971,6 +972,13 @@ impl<'a> EventContext<'a> {
     pub fn labelled_by(&mut self, id: &str) {
         if let Some(entity) = self.resolve_entity_identifier(id) {
             self.style.labelled_by.insert(self.current, entity);
+        }
+    }
+
+    /// Sets the view, by id name, which describes the current view for accessibility.
+    pub fn described_by(&mut self, id: &str) {
+        if let Some(entity) = self.resolve_entity_identifier(id) {
+            self.style.described_by.insert(self.current, entity);
         }
     }
 

@@ -13,8 +13,6 @@ use vizia_storage::LayoutParentIterator;
 use vizia_storage::ParentIterator;
 use vizia_storage::TreeIterator;
 
-const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
-
 /// Dispatches events to views and models.
 ///
 /// The [EventManager] is responsible for taking the events in the event queue in cx
@@ -295,7 +293,8 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             let new_click_time = Instant::now();
             let click_duration = new_click_time - cx.click_time;
             let new_click_pos = (cx.mouse.cursor_x, cx.mouse.cursor_y);
-            if click_duration <= DOUBLE_CLICK_INTERVAL
+            let double_click_interval = cx.environment().double_click_interval;
+            if click_duration <= double_click_interval
                 && new_click_pos == cx.click_pos
                 && *button == cx.click_button
             {

@@ -145,26 +145,36 @@ impl Datepicker {
 
         Self { view_date, on_select: None }.build(cx, move |cx| {
             HStack::new(cx, |cx| {
-                Spinbox::custom(cx, move |cx| {
+                HStack::new(cx, move |cx| {
+                    Button::new(cx, |cx| Label::new(cx, "<"))
+                        .on_press(|ex| ex.emit(DatepickerEvent::DecrementMonth));
+
                     PickList::new(cx, month_options, selected_month, false)
                         .on_select(|ex, index| ex.emit(DatepickerEvent::SelectMonth(index)))
-                        .width(Stretch(1.0))
+                        .width(Stretch(1.0));
+
+                    Button::new(cx, |cx| Label::new(cx, ">"))
+                        .on_press(|ex| ex.emit(DatepickerEvent::IncrementMonth));
                 })
                 .width(Pixels(140.0))
-                .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
-                .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementMonth));
-                Spinbox::custom(cx, |cx| {
+                .class("spinbox");
+
+                HStack::new(cx, |cx| {
+                    Button::new(cx, |cx| Label::new(cx, "-"))
+                        .on_press(|ex| ex.emit(DatepickerEvent::DecrementYear));
+
                     let view_date = cx.data::<Datepicker>().view_date;
                     let year = view_date.map(|date| date.year());
                     Textbox::new(cx, year)
                         .width(Stretch(1.0))
                         .padding(Pixels(1.0))
-                        .on_edit(|ex, v| ex.emit(DatepickerEvent::SelectYear(v)))
+                        .on_edit(|ex, v| ex.emit(DatepickerEvent::SelectYear(v)));
+
+                    Button::new(cx, |cx| Label::new(cx, "+"))
+                        .on_press(|ex| ex.emit(DatepickerEvent::IncrementYear));
                 })
                 .width(Pixels(100.0))
-                .icons(SpinboxIcons::PlusMinus)
-                .on_increment(|ex| ex.emit(DatepickerEvent::IncrementYear))
-                .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementYear));
+                .class("spinbox");
             })
             .class("datepicker-header");
 

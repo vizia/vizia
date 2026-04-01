@@ -533,20 +533,22 @@ impl<V: View> ActionModifiers<V> for Handle<'_, V> {
             Binding::new(cx, tooltip_visible, move |cx| {
                 let tooltip_visible = tooltip_visible.get();
                 if tooltip_visible.0 {
-                    (content)(cx).on_build(|cx| {
-                        if tooltip_visible.1 {
-                            cx.play_animation(
-                                "tooltip_fade",
-                                Duration::from_millis(100),
-                                Duration::from_millis(500),
-                            )
-                        }
-                    });
+                    (content)(cx)
+                        .on_build(|cx| {
+                            if tooltip_visible.1 {
+                                cx.play_animation(
+                                    "tooltip_fade",
+                                    Duration::from_millis(100),
+                                    Duration::from_millis(500),
+                                )
+                            }
+                        })
+                        .id(format!("{entity}"));
                 }
             });
         });
 
-        self
+        self.described_by(format!("{entity}"))
     }
 
     fn menu<C: FnOnce(&mut Context) -> Handle<'_, T>, T: View>(self, content: C) -> Self {

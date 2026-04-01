@@ -50,6 +50,7 @@ pub fn accessibility_system(cx: &mut Context) {
                 cx.tree_updates.push(Some(TreeUpdate {
                     nodes,
                     tree: None,
+                    tree_id: accesskit::TreeId::ROOT,
                     focus: if cx.window_has_focus {
                         cx.focused.accesskit_id()
                     } else {
@@ -109,6 +110,7 @@ pub fn initial_accessibility_system(cx: &mut Context) -> TreeUpdate {
     TreeUpdate {
         nodes,
         tree: Some(Tree::new(Entity::root().accesskit_id())),
+        tree_id: accesskit::TreeId::ROOT,
         focus: Entity::root().accesskit_id(),
     }
 }
@@ -191,6 +193,10 @@ pub(crate) fn get_access_node(
 
     if let Some(labelled_by) = cx.style.labelled_by.get(entity) {
         node_builder.set_labelled_by(vec![labelled_by.accesskit_id()]);
+    }
+
+    if let Some(described_by) = cx.style.described_by.get(entity) {
+        node_builder.set_described_by(vec![described_by.accesskit_id()]);
     }
 
     let checkable = cx
