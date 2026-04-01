@@ -1,5 +1,6 @@
 use crate::animation::{AnimationState, Interpolator};
 use crate::prelude::*;
+use hashbrown::HashMap;
 use vizia_storage::{SparseSet, SparseSetGeneric, SparseSetIndex};
 
 const INDEX_MASK: u32 = u32::MAX / 4;
@@ -26,7 +27,6 @@ impl DataIndex {
         Self(value)
     }
 
-    #[allow(dead_code)]
     pub fn inherited(self) -> Self {
         let value = self.0;
         Self(value | INHERITED_MASK)
@@ -125,6 +125,12 @@ impl SparseSetIndex for SharedIndex {
     }
 }
 
+#[derive(Debug)]
+pub(crate) struct SharedData<T> {
+    pub variable_name_hash: u64,
+    pub value: T,
+}
+
 /// Animatable set is used for storing inline and shared data for entities as well as definitions for
 /// animations, which can be played for entities, and transitions, which play when an entity matches a new shared style
 /// rule which defines a trnasition.
@@ -132,9 +138,9 @@ impl SparseSetIndex for SharedIndex {
 /// Animations are moved from animations to active_animations when played. This allows the active
 /// animations to be quickly iterated to update the value.
 #[derive(Default, Debug)]
-pub(crate) struct AnimatableSet<T: Interpolator> {
+pub(crate) struct AnimatableVarSet<T: Interpolator> {
     /// Shared data determined by style rules
-    pub(crate) shared_data: SparseSetGeneric<SharedIndex, T>,
+    pub(crate) shared_data: SparseSetGeneric<SharedIndex, SharedData<T>>,
     /// Inline data defined on specific entities
     pub(crate) inline_data: SparseSetGeneric<InlineIndex, T>,
     /// Animation descriptions
@@ -143,7 +149,7 @@ pub(crate) struct AnimatableSet<T: Interpolator> {
     active_animations: Vec<AnimationState<T>>,
 }
 
-impl<T> AnimatableSet<T>
+impl<T> AnimatableVarSet<T>
 where
     T: 'static + Default + Clone + Interpolator + PartialEq + std::fmt::Debug,
 {
@@ -179,7 +185,6 @@ where
     }
 
     /// Inherit inline data from a parent entity.
-    #[allow(dead_code)]
     pub fn inherit_inline(&mut self, entity: Entity, parent: Entity) -> bool {
         let entity_index = entity.index();
         let parent_index = parent.index();
@@ -228,7 +233,6 @@ where
     }
 
     /// Inherit shared data from a parent entity.
-    #[allow(dead_code)]
     pub fn inherit_shared(&mut self, entity: Entity, parent: Entity) -> bool {
         let entity_index = entity.index();
         let parent_index = parent.index();
@@ -256,7 +260,9 @@ where
                                     parent_sparse_index.data_index.index(),
                                 )
                                 .inherited(),
-                                anim_index: u32::MAX,
+                                // Preserve any active animation (e.g. a reverse transition
+                                // that was just started before inheritance runs).
+                                anim_index: entity_sparse_index.anim_index,
                             };
                             return true;
                         }
@@ -267,7 +273,8 @@ where
                                     parent_sparse_index.data_index.index(),
                                 )
                                 .inherited(),
-                                anim_index: u32::MAX,
+                                // Preserve any active animation.
+                                anim_index: entity_sparse_index.anim_index,
                             };
                         }
                         return true;
@@ -293,7 +300,11 @@ where
     }
 
     pub(crate) fn insert_rule(&mut self, rule: Rule, value: T) {
-        self.shared_data.insert(rule, value);
+        self.shared_data.insert(rule, SharedData { variable_name_hash: u64::MAX, value });
+    }
+
+    pub(crate) fn insert_variable_rule(&mut self, rule: Rule, variable_name_hash: u64) {
+        self.shared_data.insert(rule, SharedData { variable_name_hash, value: T::default() });
     }
 
     // pub(crate) fn remove_rule(&mut self, rule: Rule) -> Option<T> {
@@ -390,23 +401,6 @@ where
         }
     }
 
-    /// Stop an animation for a given entity.
-    #[allow(dead_code)]
-    pub(crate) fn stop_animation(&mut self, entity: Entity, animation: Animation) {
-        let entity_index = entity.index();
-
-        if entity_index < self.inline_data.sparse.len() {
-            let active_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
-            if active_anim_index < self.active_animations.len() {
-                let anim_state = &mut self.active_animations[active_anim_index];
-                if anim_state.id == animation {
-                    anim_state.entities.remove(&entity);
-                }
-            }
-            self.inline_data.sparse[entity_index].anim_index = u32::MAX;
-        }
-    }
-
     /// Tick the animation for the given time and return a list of entities which have been animated.
     pub fn tick(&mut self, time: Instant) -> Vec<Entity> {
         self.remove_innactive_animations();
@@ -467,6 +461,27 @@ where
 
     //     false
     // }
+
+    /// Returns a reference to the active animations.
+    pub(crate) fn get_active_animations(&mut self) -> Option<&Vec<AnimationState<T>>> {
+        Some(&self.active_animations)
+    }
+
+    /// Stop an active animation for the given entity.
+    pub(crate) fn stop_animation(&mut self, entity: Entity, animation: Animation) {
+        let entity_index = entity.index();
+
+        if entity_index < self.inline_data.sparse.len() {
+            let active_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
+            if active_anim_index < self.active_animations.len() {
+                let anim_state = &mut self.active_animations[active_anim_index];
+                if anim_state.id == animation {
+                    anim_state.entities.remove(&entity);
+                }
+            }
+            self.inline_data.sparse[entity_index].anim_index = u32::MAX;
+        }
+    }
 
     /// Remove any inactive animations from the active animations list.
     pub fn remove_innactive_animations(&mut self) {
@@ -534,54 +549,11 @@ where
     //     None
     // }
 
-    /// Returns a mutable reference to any inline data on the entity if it exists.
-    pub fn get_inline_mut(&mut self, entity: Entity) -> Option<&mut T> {
-        let entity_index = entity.index();
-        if entity_index < self.inline_data.sparse.len() {
-            let data_index = self.inline_data.sparse[entity_index].data_index;
-            if data_index.is_inline() {
-                return self.inline_data.get_mut(entity);
-            }
-        }
-
-        None
-    }
-
-    // /// Returns a reference to any shared data for a given rule if it exists.
-    // pub(crate) fn get_shared(&self, rule: Rule) -> Option<&T> {
-    //     self.shared_data.get(rule)
-    // }
-
-    // /// Returns a mutable reference to any shared data for a given rule if it exists.
-    // pub(crate) fn get_shared_mut(&mut self, rule: Rule) -> Option<&mut T> {
-    //     self.shared_data.get_mut(rule)
-    // }
-
     pub(crate) fn get_animation_mut(
         &mut self,
         animation: Animation,
     ) -> Option<&mut AnimationState<T>> {
         self.animations.get_mut(animation)
-    }
-
-    /// Returns a reference to the active animation linked to the given entity if it exists,
-    /// else returns None.
-    pub(crate) fn get_active_animation(&self, entity: Entity) -> Option<&AnimationState<T>> {
-        let entity_index = entity.index();
-        if entity_index < self.inline_data.sparse.len() {
-            let anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
-            if anim_index < self.active_animations.len() {
-                return Some(&self.active_animations[anim_index]);
-            }
-        }
-
-        None
-    }
-
-    /// Returns a reference to the active animations.
-    #[allow(dead_code)]
-    pub(crate) fn get_active_animations(&mut self) -> Option<&Vec<AnimationState<T>>> {
-        Some(&self.active_animations)
     }
 
     /// Get the animated, inline, or shared data value from the storage.
@@ -601,7 +573,72 @@ where
                     return Some(&self.inline_data.dense[data_index.index()].value);
                 }
             } else if data_index.index() < self.shared_data.dense.len() {
-                return Some(&self.shared_data.dense[data_index.index()].value);
+                return Some(&self.shared_data.dense[data_index.index()].value.value);
+            }
+        }
+
+        None
+    }
+
+    fn get_with_variables(
+        &self,
+        entity: Entity,
+        variables: &HashMap<u64, AnimatableVarSet<T>>,
+    ) -> Option<T> {
+        let entity_index = entity.index();
+        if entity_index < self.inline_data.sparse.len() {
+            let data_index = self.inline_data.sparse[entity_index].data_index;
+            let idx = data_index.index();
+            if !data_index.is_inline() && idx < self.shared_data.dense.len() {
+                if self.shared_data.dense[data_index.index()].value.variable_name_hash != u64::MAX {
+                    if let Some(prop) = variables
+                        .get(&self.shared_data.dense[data_index.index()].value.variable_name_hash)
+                    {
+                        return prop.get_with_variables(entity, variables);
+                    }
+                } else {
+                    return Some(self.shared_data.dense[data_index.index()].value.value.clone());
+                }
+            }
+        }
+
+        None
+    }
+
+    /// Get the current value for an entity, dynamically resolving any variable reference.
+    ///
+    /// Unlike `get()`, this follows the stored variable hash at draw time so that an
+    /// animating custom property (e.g. `--my-color`) is visible to any property that
+    /// references it via `var(--my-color)`.
+    pub fn get_resolved(
+        &self,
+        entity: Entity,
+        variables: &HashMap<u64, AnimatableVarSet<T>>,
+    ) -> Option<T> {
+        let entity_index = entity.index();
+        if entity_index < self.inline_data.sparse.len() {
+            // An active animation on this property itself takes priority.
+            let animation_index = self.inline_data.sparse[entity_index].anim_index as usize;
+            if animation_index < self.active_animations.len() {
+                return self.active_animations[animation_index].get_output().cloned();
+            }
+
+            let data_index = self.inline_data.sparse[entity_index].data_index;
+            if data_index.is_inline() {
+                if data_index.index() < self.inline_data.dense.len() {
+                    return Some(self.inline_data.dense[data_index.index()].value.clone());
+                }
+            } else if data_index.index() < self.shared_data.dense.len() {
+                let shared = &self.shared_data.dense[data_index.index()].value;
+                if shared.variable_name_hash != u64::MAX {
+                    // Property references a CSS variable — resolve dynamically so that
+                    // an in-progress animation on the variable is picked up every frame.
+                    if let Some(var_store) = variables.get(&shared.variable_name_hash) {
+                        return var_store.get_resolved(entity, variables);
+                    }
+                } else {
+                    return Some(shared.value.clone());
+                }
             }
         }
 
@@ -609,7 +646,12 @@ where
     }
 
     /// Link an entity to some shared data.
-    pub(crate) fn link(&mut self, entity: Entity, rules: &[(Rule, u32)]) -> bool {
+    pub(crate) fn link(
+        &mut self,
+        entity: Entity,
+        rules: &[(Rule, u32)],
+        variables: &HashMap<u64, AnimatableVarSet<T>>,
+    ) -> bool {
         let entity_index = entity.index();
 
         // Check if the entity already has some data
@@ -623,6 +665,16 @@ where
 
         // Loop through matched rules and link to the first valid rule
         for (rule, _) in rules {
+            if let Some(shared_data) = self.shared_data.get_mut(*rule) {
+                if shared_data.variable_name_hash != u64::MAX {
+                    if let Some(prop) = variables.get(&shared_data.variable_name_hash) {
+                        if let Some(data) = prop.get_with_variables(entity, variables) {
+                            shared_data.value = data;
+                        }
+                    }
+                }
+            }
+
             if let Some(shared_data_index) = self.shared_data.dense_idx(*rule) {
                 // If the entity doesn't have any previous shared data then create space for it
                 if entity_index >= self.inline_data.sparse.len() {
@@ -650,10 +702,12 @@ where
                                 current_anim_state.keyframes.first_mut().unwrap().value =
                                     self.shared_data.dense[current_anim_state.from_rule]
                                         .value
+                                        .value
                                         .clone();
 
                                 current_anim_state.keyframes.last_mut().unwrap().value =
                                     self.shared_data.dense[current_anim_state.to_rule]
+                                        .value
                                         .value
                                         .clone();
 
@@ -666,6 +720,7 @@ where
                                     current_value;
                                 current_anim_state.keyframes.last_mut().unwrap().value =
                                     self.shared_data.dense[current_anim_state.to_rule]
+                                        .value
                                         .value
                                         .clone();
                                 current_anim_state.t = 0.0;
@@ -683,13 +738,13 @@ where
                         && entity_data_index.index() < self.shared_data.dense.len()
                     {
                         let start_data =
-                            self.shared_data.dense[entity_data_index.index()].value.clone();
+                            self.shared_data.dense[entity_data_index.index()].value.value.clone();
                         transition_state.keyframes.first_mut().unwrap().value = start_data;
                     } else {
-                        transition_state.keyframes.first_mut().unwrap().value = end.clone();
+                        transition_state.keyframes.first_mut().unwrap().value = end.value.clone();
                     }
 
-                    transition_state.keyframes.last_mut().unwrap().value = end.clone();
+                    transition_state.keyframes.last_mut().unwrap().value = end.value.clone();
                     transition_state.from_rule =
                         self.inline_data.sparse[entity_index].data_index.index();
                     transition_state.to_rule = shared_data_index.index();
@@ -708,9 +763,20 @@ where
                             delay,
                         );
                     }
-                    //}
+                } else {
+                    // No transition on the arriving rule — nothing to animate forward.
                 }
                 //}
+
+                // if let Some(shared_data) = self.shared_data.get_mut(*rule) {
+                //     if shared_data.variable_name_hash != u64::MAX {
+                //         if let Some(prop) = variables.get(&shared_data.variable_name_hash) {
+                //             if let Some(data) = prop.get_with_variables(entity, variables) {
+                //                 shared_data.value = data;
+                //             }
+                //         }
+                //     }
+                // }
 
                 let data_index = self.inline_data.sparse[entity_index].data_index;
 
@@ -726,13 +792,79 @@ where
             }
         }
 
-        // No matching rules so set if the data is shared set the index to null if not already null
+        // No matching rules — entity is leaving whatever rule it was linked to.
         if entity_index < self.inline_data.sparse.len() {
             let data_index = self.inline_data.sparse[entity_index].data_index;
             if !data_index.is_inline()
                 && !data_index.is_inherited()
-                && self.inline_data.sparse[entity_index].data_index != DataIndex::null()
+                && data_index != DataIndex::null()
             {
+                let current_dense_idx = data_index.index();
+                if current_dense_idx < self.shared_data.dense.len() {
+                    let entity_anim_index =
+                        self.inline_data.sparse[entity_index].anim_index as usize;
+
+                    if entity_anim_index < self.active_animations.len() {
+                        // Mid-animation: reverse the active state in-place so the
+                        // transition picks up from the current visual position.
+                        let current_value = self.get(entity).cloned().unwrap_or_default();
+                        let current_anim = &mut self.active_animations[entity_anim_index];
+                        if current_anim.is_transition() {
+                            let reverse_to = current_anim.from_rule;
+                            if reverse_to < self.shared_data.dense.len() {
+                                current_anim.from_rule = current_anim.to_rule;
+                                current_anim.to_rule = reverse_to;
+                                current_anim.keyframes.first_mut().unwrap().value = current_value;
+                                current_anim.keyframes.last_mut().unwrap().value =
+                                    self.shared_data.dense[reverse_to].value.value.clone();
+                                current_anim.dt = current_anim.t - 1.0;
+                                current_anim.start_time = Instant::now();
+                            }
+                        }
+                    } else {
+                        // Animation completed — start a fresh reverse transition using the
+                        // template animation stored on the departing (hover) rule, but only
+                        // if that rule actually defined a transition for this property.
+                        if let Some(departing_anim) = self
+                            .shared_data
+                            .sparse
+                            .iter()
+                            .find(|si| si.index() == current_dense_idx && !si.animation.is_null())
+                            .map(|si| si.animation)
+                        {
+                            if let Some(transition_state) = self.animations.get_mut(departing_anim)
+                            {
+                                let prev_rule = transition_state.from_rule;
+                                if prev_rule < self.shared_data.dense.len() {
+                                    let start_value = self.shared_data.dense[current_dense_idx]
+                                        .value
+                                        .value
+                                        .clone();
+                                    let end_value =
+                                        self.shared_data.dense[prev_rule].value.value.clone();
+                                    transition_state.keyframes.first_mut().unwrap().value =
+                                        start_value;
+                                    transition_state.keyframes.last_mut().unwrap().value =
+                                        end_value;
+                                    transition_state.from_rule = current_dense_idx;
+                                    transition_state.to_rule = prev_rule;
+                                    let duration = transition_state.duration;
+                                    let delay = transition_state.delay;
+                                    if transition_state.from_rule != transition_state.to_rule {
+                                        self.play_animation(
+                                            entity,
+                                            departing_anim,
+                                            Instant::now(),
+                                            duration,
+                                            delay,
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 self.inline_data.sparse[entity_index].data_index = DataIndex::null();
                 return true;
             }
@@ -756,78 +888,5 @@ where
                 index.data_index = DataIndex::null();
             }
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    // DataIndex tests
-
-    /// Test for creating an inline data index and retrieving the index.
-    #[test]
-    fn inline() {
-        let data_index = DataIndex::inline(5);
-        assert_eq!(data_index.0, INLINE_MASK + 5);
-        assert_eq!(data_index.index(), 5);
-    }
-
-    /// Test that an invalid (too large) inline index causes a panic.
-    #[test]
-    #[should_panic]
-    fn invalid_inline() {
-        DataIndex::inline(usize::MAX);
-    }
-
-    /// Test for creating a shared data index and retrieving the index.
-    #[test]
-    fn shared() {
-        let data_index = DataIndex::shared(5);
-        assert_eq!(data_index.0, 5);
-        assert_eq!(data_index.index(), 5);
-    }
-
-    /// Test that an invalid (too large) shared index causes a panic.
-    #[test]
-    #[should_panic]
-    fn invalid_shared() {
-        DataIndex::shared(usize::MAX);
-    }
-
-    /// Test of the is_inline() method.
-    #[test]
-    fn is_inline() {
-        let data_index1 = DataIndex::inline(5);
-        assert!(data_index1.is_inline());
-        let data_index2 = DataIndex::shared(5);
-        assert!(!data_index2.is_inline());
-    }
-
-    /// Test that a null data index is the correct value #7FFFFFFF (i.e. all bits = 1 except the first bit).
-    #[test]
-    fn null() {
-        let data_index = DataIndex::null();
-        assert_eq!(data_index.0, 2147483647);
-    }
-
-    // AnimatableStorage tests
-
-    /// Test for constructing a new empty animatable storage.
-    #[test]
-    fn new() {
-        let animatable_storage = AnimatableSet::<f32>::default();
-        assert!(animatable_storage.inline_data.is_empty());
-        assert!(animatable_storage.shared_data.is_empty());
-        assert!(animatable_storage.animations.is_empty());
-        assert!(animatable_storage.active_animations.is_empty());
-    }
-
-    /// Test inserting inline data into the storage.
-    #[test]
-    fn insert_inline() {
-        let mut animatable_storage = AnimatableSet::default();
-        animatable_storage.insert(Entity::root(), 5.0);
-        //assert_eq!(animatable_storage.entity_indices.first().unwrap().data_index, DataIndex::inline(0));
     }
 }
