@@ -108,11 +108,7 @@ impl Switch {
         Self { on_toggle: None }
             .build(cx, |cx| {
                 Element::new(cx)
-                    .class("switch-handle-bg")
-                    .hoverable(false)
-                    .position_type(PositionType::Absolute);
-                Element::new(cx)
-                    .class("switch-handle")
+                    .class("thumb")
                     .hoverable(false)
                     .position_type(PositionType::Absolute);
             })

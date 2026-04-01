@@ -360,60 +360,59 @@ popup {
     shadow: 0px 3px 12px #00000038;
 }
 
+/* SLIDER */
+
+slider * {
+    corner-radius: 2px;
+}
+
+slider .track {
+    background-color: var(--secondary);
+    corner-radius: 2px;
+}
+
+slider .range {
+    background-color: var(--primary);
+    corner-radius: 2px;
+}
+
+slider .thumb {
+    background-color: var(--primary-foreground);
+    corner-radius: 6px;
+    border-width: 1px;
+    border-color: var(--border);
+    width: 12px;
+    height: 12px;
+    padding: 1s;
+}
+
 /* SWITCH */
 
 switch {
-    corner-radius: 50%;
-}
-
-switch .switch-handle-bg {
     corner-radius: 50%;
     background-color: var(--secondary);
     transition: background-color 100ms;
 }
 
-switch .switch-handle {
+switch .thumb {
     background-color: var(--primary-foreground);
     corner-radius: 50%;
     transition: background-color 100ms;
     transition: left 100ms;
 }
 
-switch:hover .switch-handle {
-    transition: background-color 100ms;
-}
-
-switch:checked .switch-handle-bg {
+switch:checked {
     background-color: var(--primary);
     transition: background-color 100ms;
 }
 
-switch:checked .switch-handle {
-    background-color: var(--primary-foreground);
-    transition: background-color 100ms;
-}
-
-switch:checked:hover .switch-handle {
-    transition: background-color 100ms;
-}
-
-switch:disabled * {
+switch:disabled {
     background-color: var(--muted);
     transition: background-color 100ms;
 }
 
-switch:hover:disabled * {
-    background-color: var(--muted);
-    transition: background-color 100ms;
-}
-
-switch:checked:disabled * {
-    background-color: var(--muted);
-    transition: background-color 100ms;
-}
-
-switch:checked:hover:disabled * {
-    background-color: var(--muted);
+switch:disabled .thumb {
+    background-color: var(--muted-foreground);
     transition: background-color 100ms;
 }
 

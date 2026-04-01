@@ -723,7 +723,7 @@ switch {
     height: 18px;
 }
 
-switch .switch-handle {
+switch .thumb {
     left: 1px;
     width: 16px;
     height: 16px;
@@ -732,15 +732,7 @@ switch .switch-handle {
     transition: left 100ms;
 }
 
-switch .switch-handle-bg {
-    width: 30px;
-    height: 1s;
-    top: 1s;
-    bottom: 1s;
-    transition: background-color 100ms;
-}
-
-switch:checked .switch-handle {
+switch:checked .thumb {
     left: 13px;
     transition: left 100ms;
 }
