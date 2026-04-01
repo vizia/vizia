@@ -804,7 +804,7 @@ where
         self.bind(text, move |mut handle| {
             let text = text.get();
             let txt = text.to_string_local(&handle);
-            let entity = handle.entity().clone();
+            let entity = handle.entity();
             handle = handle.modify(|textbox| textbox.placeholder.set(txt));
             handle.context().style.needs_access_update(entity);
         })
