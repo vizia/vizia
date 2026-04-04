@@ -263,6 +263,7 @@ pub struct Style {
     pub(crate) overflowy: StyleSet<Overflow>,
 
     // Filters
+    pub(crate) filter: AnimatableSet<Filter>,
     pub(crate) backdrop_filter: AnimatableSet<Filter>,
 
     pub(crate) blend_mode: StyleSet<BlendMode>,
@@ -1309,6 +1310,10 @@ impl Style {
             }
 
             // Filters
+            Property::Filter(filter) => {
+                self.filter.insert_rule(rule_id, filter);
+            }
+
             Property::BackdropFilter(filter) => {
                 self.backdrop_filter.insert_rule(rule_id, filter);
             }
@@ -2108,7 +2113,8 @@ impl Style {
         self.overflowx.remove(entity);
         self.overflowy.remove(entity);
 
-        // Backdrop Filter
+        // Filters
+        self.filter.remove(entity);
         self.backdrop_filter.remove(entity);
 
         // Blend Mode
@@ -2306,7 +2312,8 @@ impl Style {
         // Clipping
         self.clip_path.clear_rules();
 
-        // Backdrop Filer
+        // Filters
+        self.filter.clear_rules();
         self.backdrop_filter.clear_rules();
 
         // Blend Mode

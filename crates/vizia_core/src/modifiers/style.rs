@@ -335,6 +335,22 @@ pub trait StyleModifiers: internal::Modifiable {
         SystemFlags::RECLIP | SystemFlags::REDRAW
     );
 
+    /// Sets the filter for the view.
+    fn filter<U: Into<Filter>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            value.set_or_bind(cx, move |cx, v| {
+                let value = v.get_value(cx).into();
+                cx.style.filter.insert(entity, value);
+
+                cx.needs_redraw(entity);
+            });
+        });
+
+        self
+    }
+
     /// Sets the backdrop filter for the view.
     fn backdrop_filter<U: Into<Filter>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();

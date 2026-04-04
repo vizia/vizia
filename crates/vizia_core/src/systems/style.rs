@@ -535,6 +535,10 @@ fn link_style_data(
         should_redraw = true;
     }
 
+    if style.filter.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
     if style.backdrop_filter.link(entity, matched_rules) {
         should_redraw = true;
     }
