@@ -403,10 +403,33 @@ impl Placement {
     }
 }
 
-impl Handle<'_, Popup> {
+/// Modifiers for configuring [Popup] behavior and positioning.
+pub trait PopupModifiers: Sized {
     /// Sets the position where the popup should appear relative to its parent element.
     /// Defaults to `Placement::Bottom`.
-    pub fn placement(self, placement: impl Res<Placement> + 'static) -> Self {
+    fn placement(self, placement: impl Res<Placement> + 'static) -> Self;
+
+    /// Sets whether the popup should include an arrow. Defaults to true.
+    fn show_arrow(self, show_arrow: impl Res<bool> + 'static) -> Self;
+
+    /// Sets the size of the popup arrow, or gap if the arrow is hidden.
+    fn arrow_size<U: Into<Length> + Clone + 'static>(
+        self,
+        size: impl Res<U> + 'static,
+    ) -> Self;
+
+    /// Set to whether the popup should reposition to always be visible.
+    fn should_reposition(self, should_reposition: impl Res<bool> + 'static) -> Self;
+
+    /// Registers a callback for when the user clicks off of the popup, usually with the intent of
+    /// closing it.
+    fn on_blur<F>(self, f: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext);
+}
+
+impl PopupModifiers for Handle<'_, Popup> {
+    fn placement(self, placement: impl Res<Placement> + 'static) -> Self {
         let placement = placement.to_signal(self.cx);
         self.bind(placement, move |handle| {
             let placement = placement.get();
@@ -416,8 +439,7 @@ impl Handle<'_, Popup> {
         })
     }
 
-    /// Sets whether the popup should include an arrow. Defaults to true.
-    pub fn show_arrow(self, show_arrow: impl Res<bool> + 'static) -> Self {
+    fn show_arrow(self, show_arrow: impl Res<bool> + 'static) -> Self {
         let show_arrow = show_arrow.to_signal(self.cx);
         self.bind(show_arrow, move |handle| {
             let show_arrow = show_arrow.get();
@@ -425,8 +447,7 @@ impl Handle<'_, Popup> {
         })
     }
 
-    /// Sets the size of the popup arrow, or gap if the arrow is hidden.
-    pub fn arrow_size<U: Into<Length> + Clone + 'static>(
+    fn arrow_size<U: Into<Length> + Clone + 'static>(
         self,
         size: impl Res<U> + 'static,
     ) -> Self {
@@ -438,8 +459,7 @@ impl Handle<'_, Popup> {
         })
     }
 
-    /// Set to whether the popup should reposition to always be visible.
-    pub fn should_reposition(self, should_reposition: impl Res<bool> + 'static) -> Self {
+    fn should_reposition(self, should_reposition: impl Res<bool> + 'static) -> Self {
         let should_reposition = should_reposition.to_signal(self.cx);
         self.bind(should_reposition, move |handle| {
             let should_reposition = should_reposition.get();
@@ -447,9 +467,7 @@ impl Handle<'_, Popup> {
         })
     }
 
-    /// Registers a callback for when the user clicks off of the popup, usually with the intent of
-    /// closing it.
-    pub fn on_blur<F>(self, f: F) -> Self
+    fn on_blur<F>(self, f: F) -> Self
     where
         F: 'static + Fn(&mut EventContext),
     {

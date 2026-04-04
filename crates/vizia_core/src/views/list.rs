@@ -530,9 +530,66 @@ impl View for List {
     }
 }
 
-impl Handle<'_, List> {
+/// Modifiers for changing the behavior and selection state of a [List].
+pub trait ListModifiers: Sized {
     /// Sets the selected items of the list from signal of type indices.
-    pub fn selected<R>(self, selected: impl Res<R> + 'static) -> Self
+    fn selected<R>(self, selected: impl Res<R> + 'static) -> Self
+    where
+        R: Deref<Target = [usize]> + Clone + 'static;
+
+    /// Sets the callback triggered when a [ListItem] is selected.
+    fn on_select<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, usize);
+
+    /// Set the selectable state of the [List].
+    fn selectable<U: Into<Selectable> + Clone + 'static>(
+        self,
+        selectable: impl Res<U> + 'static,
+    ) -> Self;
+
+    /// Sets the minimum number of selected items.
+    fn min_selected(self, min_selected: impl Res<usize> + 'static) -> Self;
+
+    /// Sets the maximum number of selected items.
+    fn max_selected(self, max_selected: impl Res<usize> + 'static) -> Self;
+
+    /// Sets whether the selection should follow the focus.
+    fn selection_follows_focus<U: Into<bool> + Clone + 'static>(
+        self,
+        flag: impl Res<U> + 'static,
+    ) -> Self;
+
+    /// Sets the orientation of the list.
+    fn orientation<U: Into<Orientation> + Clone + 'static>(
+        self,
+        orientation: impl Res<U> + 'static,
+    ) -> Self;
+
+    /// Sets whether the scrollbar should move to the cursor when pressed.
+    fn scroll_to_cursor(self, flag: bool) -> Self;
+
+    /// Sets a callback which will be called when a scrollview is scrolled, either with the mouse wheel, touchpad, or using the scroll bars.
+    fn on_scroll(
+        self,
+        callback: impl Fn(&mut EventContext, f32, f32) + 'static + Send + Sync,
+    ) -> Self;
+
+    /// Set the horizontal scroll position of the [ScrollView]. Accepts a value or signal of type an `f32` between 0 and 1.
+    fn scroll_x(self, scrollx: impl Res<f32> + 'static) -> Self;
+
+    /// Set the vertical scroll position of the [ScrollView]. Accepts a value or signal of type an `f32` between 0 and 1.
+    fn scroll_y(self, scrollx: impl Res<f32> + 'static) -> Self;
+
+    /// Sets whether the horizontal scrollbar should be visible.
+    fn show_horizontal_scrollbar(self, flag: impl Res<bool> + 'static) -> Self;
+
+    /// Sets whether the vertical scrollbar should be visible.
+    fn show_vertical_scrollbar(self, flag: impl Res<bool> + 'static) -> Self;
+}
+
+impl ListModifiers for Handle<'_, List> {
+    fn selected<R>(self, selected: impl Res<R> + 'static) -> Self
     where
         R: Deref<Target = [usize]> + Clone + 'static,
     {
@@ -554,16 +611,14 @@ impl Handle<'_, List> {
         })
     }
 
-    /// Sets the callback triggered when a [ListItem] is selected.
-    pub fn on_select<F>(self, callback: F) -> Self
+    fn on_select<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, usize),
     {
         self.modify(|list: &mut List| list.on_select = Some(Box::new(callback)))
     }
 
-    /// Set the selectable state of the [List].
-    pub fn selectable<U: Into<Selectable> + Clone + 'static>(
+    fn selectable<U: Into<Selectable> + Clone + 'static>(
         self,
         selectable: impl Res<U> + 'static,
     ) -> Self {
@@ -578,8 +633,7 @@ impl Handle<'_, List> {
         })
     }
 
-    /// Sets the minimum number of selected items.
-    pub fn min_selected(self, min_selected: impl Res<usize> + 'static) -> Self {
+    fn min_selected(self, min_selected: impl Res<usize> + 'static) -> Self {
         let min_selected = min_selected.to_signal(self.cx);
         self.bind(min_selected, move |handle| {
             let min_selected = min_selected.get();
@@ -590,8 +644,7 @@ impl Handle<'_, List> {
         })
     }
 
-    /// Sets the maximum number of selected items.
-    pub fn max_selected(self, max_selected: impl Res<usize> + 'static) -> Self {
+    fn max_selected(self, max_selected: impl Res<usize> + 'static) -> Self {
         let max_selected = max_selected.to_signal(self.cx);
         self.bind(max_selected, move |handle| {
             let max_selected = max_selected.get();
@@ -602,8 +655,7 @@ impl Handle<'_, List> {
         })
     }
 
-    /// Sets whether the selection should follow the focus.
-    pub fn selection_follows_focus<U: Into<bool> + Clone + 'static>(
+    fn selection_follows_focus<U: Into<bool> + Clone + 'static>(
         self,
         flag: impl Res<U> + 'static,
     ) -> Self {
@@ -615,8 +667,7 @@ impl Handle<'_, List> {
         })
     }
 
-    /// Sets the orientation of the list.
-    pub fn orientation<U: Into<Orientation> + Clone + 'static>(
+    fn orientation<U: Into<Orientation> + Clone + 'static>(
         self,
         orientation: impl Res<U> + 'static,
     ) -> Self {
@@ -630,23 +681,20 @@ impl Handle<'_, List> {
         })
     }
 
-    /// Sets whether the scrollbar should move to the cursor when pressed.
-    pub fn scroll_to_cursor(self, flag: bool) -> Self {
+    fn scroll_to_cursor(self, flag: bool) -> Self {
         self.modify(|list| {
             list.scroll_to_cursor.set(flag);
         })
     }
 
-    /// Sets a callback which will be called when a scrollview is scrolled, either with the mouse wheel, touchpad, or using the scroll bars.
-    pub fn on_scroll(
+    fn on_scroll(
         self,
         callback: impl Fn(&mut EventContext, f32, f32) + 'static + Send + Sync,
     ) -> Self {
         self.modify(|list: &mut List| list.on_scroll = Some(Box::new(callback)))
     }
 
-    /// Set the horizontal scroll position of the [ScrollView]. Accepts a value or signal of type an `f32` between 0 and 1.
-    pub fn scroll_x(self, scrollx: impl Res<f32> + 'static) -> Self {
+    fn scroll_x(self, scrollx: impl Res<f32> + 'static) -> Self {
         let scrollx = scrollx.to_signal(self.cx);
         self.bind(scrollx, move |handle| {
             let scrollx = scrollx.get();
@@ -657,8 +705,7 @@ impl Handle<'_, List> {
         })
     }
 
-    /// Set the vertical scroll position of the [ScrollView]. Accepts a value or signal of type an `f32` between 0 and 1.
-    pub fn scroll_y(self, scrollx: impl Res<f32> + 'static) -> Self {
+    fn scroll_y(self, scrollx: impl Res<f32> + 'static) -> Self {
         let scrollx = scrollx.to_signal(self.cx);
         self.bind(scrollx, move |handle| {
             let scrolly = scrollx.get();
@@ -669,8 +716,7 @@ impl Handle<'_, List> {
         })
     }
 
-    /// Sets whether the horizontal scrollbar should be visible.
-    pub fn show_horizontal_scrollbar(self, flag: impl Res<bool> + 'static) -> Self {
+    fn show_horizontal_scrollbar(self, flag: impl Res<bool> + 'static) -> Self {
         let flag = flag.to_signal(self.cx);
         self.bind(flag, move |handle| {
             let show_scrollbar = flag.get();
@@ -681,8 +727,7 @@ impl Handle<'_, List> {
         })
     }
 
-    /// Sets whether the vertical scrollbar should be visible.
-    pub fn show_vertical_scrollbar(self, flag: impl Res<bool> + 'static) -> Self {
+    fn show_vertical_scrollbar(self, flag: impl Res<bool> + 'static) -> Self {
         let flag = flag.to_signal(self.cx);
         self.bind(flag, move |handle| {
             let show_scrollbar = flag.get();
