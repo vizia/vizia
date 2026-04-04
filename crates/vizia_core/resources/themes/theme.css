@@ -1,6 +1,7 @@
 :root {
     background-color: var(--background);
     color: var(--foreground);
+    fill: var(--foreground);
     font-family:
         -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", "Noto Sans",
         Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
