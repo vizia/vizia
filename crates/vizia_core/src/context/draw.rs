@@ -449,6 +449,11 @@ impl DrawContext<'_> {
         self.style.shadow.get_resolved(self.current, &self.style.custom_shadow_props)
     }
 
+    /// Returns a reference to any filter applied to the current view.
+    pub fn filter(&self) -> Option<&Filter> {
+        self.style.filter.get(self.current)
+    }
+
     /// Return to reference to any filter applied to the current view.
     pub fn backdrop_filter(&self) -> Option<&Filter> {
         self.style.backdrop_filter.get(self.current)
