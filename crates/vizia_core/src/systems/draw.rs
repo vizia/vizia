@@ -373,6 +373,10 @@ pub(crate) fn draw_bounds(
         return dirty_bounds;
     }
 
+    if tree.is_window(entity) {
+        return dirty_bounds;
+    }
+
     let parent = tree
         .get_layout_parent(entity)
         .unwrap_or_else(|| tree.get_parent_window(entity).unwrap_or(Entity::root()));

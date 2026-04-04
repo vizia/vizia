@@ -595,6 +595,8 @@ impl Context {
         }
 
         self.resource_manager.styles.extend(user_styles);
+
+        EventContext::new(self).reload_styles().unwrap();
     }
 
     pub fn add_animation(&mut self, animation: AnimationBuilder) -> Animation {

@@ -19,9 +19,9 @@
     --gray-800: #222222;
     --gray-900: #000000;
 
-    --background: var(--gray-50);
+    /* --background: var(--gray-50);
     --foreground: var(--gray-800);
-    --card: var(--gray-75);
+    --card: var(--gray-50);
     --card-foreground: var(--gray-800);
     --popover: var(--gray-50);
     --popover-foreground: var(--gray-800);
@@ -34,9 +34,41 @@
     --accent: var(--gray-200);
     --accent-foreground: var(--gray-800);
     --destructive: oklch(0.577 0.245 27.325);
-    --border: var(--gray-400);
-    --input: oklch(0.922 0 0);
+    --border: var(--gray-300);
+    --input: #e5e5e5;
     --ring: var(--gray-500);
+    --chart-1: oklch(0.646 0.222 41.116);
+    --chart-2: oklch(0.6 0.118 184.704);
+    --chart-3: oklch(0.398 0.07 227.392);
+    --chart-4: oklch(0.828 0.189 84.429);
+    --chart-5: oklch(0.769 0.188 70.08);
+    --sidebar: var(--gray-50);
+    --sidebar-foreground: var(--gray-800);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: var(--gray-200);
+    --sidebar-accent-foreground: var(--gray-800);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0); */
+
+    --background: #ffffff;
+    --foreground: #0a0a0a;
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: #171717;
+    --primary-foreground: #fafafa;
+    --secondary: #f5f5f5;
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
     --chart-1: oklch(0.646 0.222 41.116);
     --chart-2: oklch(0.6 0.118 184.704);
     --chart-3: oklch(0.398 0.07 227.392);
@@ -64,6 +96,42 @@
     --gray-700: #d0d0d0;
     --gray-800: #ebebeb;
     --gray-900: #ffffff;
+
+    --background: #0a0a0a;
+    --foreground: #fafafa;
+    --card: #171717;
+    --card-foreground: #fafafa;
+    --popover: #171717;
+    --popover-foreground: #fafafa;
+    --primary: #e5e5e5;
+    --primary-foreground: #171717;
+    --secondary: #262626;
+    --secondary-foreground: #fafafa;
+    --muted: #262626;
+    --muted-foreground: #a1a1a1;
+    --accent: #262626;
+    --accent-foreground: #fafafa;
+    --destructive: #ff6467;
+    --border: #ffffff1a;
+    --input: #ffffff26;
+    --ring: #737373;
+    --chart-1: oklch(0.488 0.243 264.376);
+    --chart-2: oklch(0.696 0.17 162.48);
+    --chart-3: oklch(0.769 0.188 70.08);
+    --chart-4: oklch(0.627 0.265 303.9);
+    --chart-5: oklch(0.645 0.246 16.439);
+    --sidebar: #171717;
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: #262626;
+    --sidebar-accent-foreground: #fafafa;
+    --sidebar-border: #ffffff1a;
+    --sidebar-ring: #737373;
+}
+
+window {
+    background-color: var(--background);
 }
 
 *:focus-visible {
@@ -133,7 +201,7 @@ button-group.outline > button {
 
 button.outline:hover,
 button-group.outline > button:hover {
-    background-color: var(--gray-200);
+    background-color: var(--accent);
     transition: background-color 100ms;
     transition: border-color 100ms;
     transition: color 100ms;
@@ -142,7 +210,7 @@ button-group.outline > button:hover {
 
 button.outline:active,
 button-group.outline > button:active {
-    background-color: var(--gray-300);
+    background-color: var(--accent);
     transition: background-color 100ms;
     transition: border-color 100ms;
     transition: color 100ms;
@@ -161,7 +229,7 @@ button-group.text > button {
 
 button.text:hover,
 button-group.text > button:hover {
-    background-color: var(--gray-200);
+    background-color: var(--accent);
     transition: background-color 100ms;
     transition: color 100ms;
     transition: fill 100ms;
@@ -169,7 +237,7 @@ button-group.text > button:hover {
 
 button.text:active,
 button-group.text > button:active {
-    background-color: var(--gray-300);
+    background-color: var(--accent);
     transition: background-color 100ms;
     transition: color 100ms;
     transition: fill 100ms;
@@ -243,6 +311,7 @@ checkbox {
     border-color: var(--border);
     background-color: var(--background);
     fill: var(--foreground);
+    shadow: 0px 1px 2px #0000001a;
     transition: background-color 100ms;
     transition: border-color 100ms;
 }
@@ -266,7 +335,7 @@ checkbox:disabled {
 
 checkbox:checked {
     background-color: var(--primary);
-    border-color: var(--primary);
+    border-width: 0px;
     fill: var(--primary-foreground);
     transition: background-color 100ms;
     transition: border-color 100ms;
@@ -296,11 +365,6 @@ checkbox:checked:disabled {
 
 /* LIST */
 
-list label.dark,
-virtual-list label.dark {
-    background-color: #00000015;
-}
-
 list.selectable list-item,
 virtual-list.selectable list-item {
     background-color: transparent;
@@ -308,17 +372,17 @@ virtual-list.selectable list-item {
 
 list.selectable list-item.focused,
 virtual-list.selectable list-item.focused {
-    background-color: #a3a3a3;
+    background-color: var(--accent);
 }
 
 list.selectable list-item:hover,
 virtual-list.selectable list-item:hover {
-    background-color: #7b7bff;
+    background-color: var(--accent);
 }
 
 list.selectable list-item:checked,
 virtual-list.selectable list-item:checked {
-    background-color: #51afef;
+    background-color: var(--accent);
 }
 
 /* PICKLIST */
@@ -360,6 +424,45 @@ popup {
     shadow: 0px 3px 12px #00000038;
 }
 
+/* SCROLLVIEW */
+
+scrollview > scrollbar {
+    display: none;
+}
+
+scrollview.h-scroll > scrollbar,
+scrollview.v-scroll > scrollbar {
+    display: flex;
+}
+
+scrollbar .thumb {
+    background-color: var(--muted-foreground);
+    corner-radius: 50%;
+    opacity: 0;
+    transition: opacity 200ms 0s linear;
+}
+
+scrollview.h-scroll:hover > scrollbar.horizontal > .thumb,
+scrollview.v-scroll:hover > scrollbar.vertical > .thumb {
+    background-color: var(--muted-foreground);
+    opacity: 1;
+    transition: opacity 200ms 0s linear;
+}
+
+scrollview.h-scroll:active > scrollbar.horizontal > .thumb,
+scrollview.v-scroll:active > scrollbar.vertical > .thumb {
+    background-color: var(--muted-foreground);
+    opacity: 1;
+    transition: opacity 200ms 0s linear;
+}
+
+scrollview.h-scroll > scrollbar.horizontal:active > .thumb,
+scrollview.v-scroll > scrollbar.vertical:active > .thumb {
+    background-color: var(--muted-foreground);
+    opacity: 1;
+    transition: opacity 200ms 0s linear;
+}
+
 /* SLIDER */
 
 slider * {
@@ -367,7 +470,7 @@ slider * {
 }
 
 slider .track {
-    background-color: var(--secondary);
+    background-color: var(--muted);
     corner-radius: 2px;
 }
 
@@ -377,10 +480,10 @@ slider .range {
 }
 
 slider .thumb {
-    background-color: var(--primary-foreground);
+    background-color: var(--background);
     corner-radius: 6px;
     border-width: 1px;
-    border-color: var(--border);
+    border-color: var(--primary);
     width: 12px;
     height: 12px;
     padding: 1s;
@@ -414,6 +517,50 @@ switch:disabled {
 switch:disabled .thumb {
     background-color: var(--muted-foreground);
     transition: background-color 100ms;
+}
+
+/* TEXTBOX */
+
+textbox {
+    corner-radius: 4px;
+    border-width: 1px;
+    border-color: var(--border);
+    background-color: var(--background);
+    transition: border-color 100ms;
+    transition: background-color 100ms;
+}
+
+textbox:checked {
+    transition: border-color 100ms;
+}
+
+textbox:checked.caret {
+    caret-color: #181818;
+}
+
+textbox:placeholder-shown {
+    caret-color: transparent;
+    color: var(--muted-foreground);
+}
+
+textbox:read-only {
+    background-color: transparent;
+    border-width: 0px;
+}
+
+textbox:disabled {
+    color: #888;
+    transition: color 100ms;
+}
+
+textbox:focus-visible {
+    transition: border-color 100ms;
+}
+
+textbox:invalid {
+    border-color: #ef5151;
+    transition: border-color 100ms;
+    border-width: 2px;
 }
 
 /* TOGGLE BUTTON */
@@ -452,12 +599,12 @@ toggle-button:disabled {
 
 tooltip {
     padding: 8px;
-    background-color: var(--foreground);
+    background-color: var(--primary);
     corner-radius: 4px;
-    color: var(--background);
-    fill: var(--background);
+    color: var(--primary-foreground);
+    fill: var(--primary-foreground);
 }
 
 tooltip arrow {
-    background-color: var(--foreground);
+    background-color: var(--primary-foreground);
 }
