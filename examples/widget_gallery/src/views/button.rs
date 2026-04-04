@@ -28,8 +28,8 @@ A button can be used to send an event when pressed. Typically they are used to t
         DemoRegion::new(
             cx,
             |cx| {
-                Button::new(cx, |cx| Label::new(cx, "Normal"));
-                Button::new(cx, |cx| Label::new(cx, "Accent")).variant(ButtonVariant::Accent);
+                Button::new(cx, |cx| Label::new(cx, "Primary"));
+                Button::new(cx, |cx| Label::new(cx, "Secondary")).variant(ButtonVariant::Secondary);
                 Button::new(cx, |cx| Label::new(cx, "Outline")).variant(ButtonVariant::Outline);
                 Button::new(cx, |cx| Label::new(cx, "Text")).variant(ButtonVariant::Text);
             }, r#"Button::new(cx, |cx| Label::new(cx, "Normal"));

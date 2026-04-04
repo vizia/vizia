@@ -54,7 +54,9 @@ impl<'a> ResourceContext<'a> {
         let id = if let Some(image_id) = self.resource_manager.image_ids.get(&path) {
             *image_id
         } else {
-            self.resource_manager.image_id_manager.create()
+            let id = self.resource_manager.image_id_manager.create();
+            self.resource_manager.image_ids.insert(path.clone(), id);
+            id
         };
 
         match self.resource_manager.images.entry(id) {

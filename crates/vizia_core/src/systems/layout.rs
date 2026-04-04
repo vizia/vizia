@@ -110,13 +110,17 @@ pub(crate) fn layout_system(cx: &mut Context) {
 
         // A relayout, retransform, or reclip, can cause the element under the cursor to change. So we push a mouse move event here to force
         // a new event cycle and the hover system to trigger.
+        // However, skip this during capture to avoid sending stale coordinates that interfere with drag operations.
         if let Some(proxy) = &cx.event_proxy {
-            let event = Event::new(WindowEvent::MouseMove(cx.mouse.cursor_x, cx.mouse.cursor_y))
-                .target(Entity::root())
-                .origin(Entity::root())
-                .propagate(Propagation::Up);
+            if cx.captured.is_null() {
+                let event =
+                    Event::new(WindowEvent::MouseMove(cx.mouse.cursor_x, cx.mouse.cursor_y))
+                        .target(Entity::root())
+                        .origin(Entity::root())
+                        .propagate(Propagation::Up);
 
-            proxy.send(event).expect("Failed to send event");
+                proxy.send(event).expect("Failed to send event");
+            }
         }
 
         cx.style.system_flags.set(SystemFlags::RELAYOUT, false);

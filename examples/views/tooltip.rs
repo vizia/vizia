@@ -5,7 +5,8 @@ use vizia::prelude::*;
 const STYLE: &str = r#"
     element.test {
         background-color: rgb(100, 100, 100);
-        size: 100px;
+        width: 100px;
+        height: 100px;
         padding: 1s;
     }
 "#;

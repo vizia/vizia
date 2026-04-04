@@ -5,7 +5,8 @@
 .foo {
     background-color: grey;
     space: 50px;
-    size: 100px;
+    width: 100px;
+    height: 100px;
 }
 
 .foo:hover {

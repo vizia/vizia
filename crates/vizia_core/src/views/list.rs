@@ -46,6 +46,10 @@ pub struct List {
     focused: Signal<Option<usize>>,
     /// Whether the selection should follow the focus.
     selection_follows_focus: Signal<bool>,
+    /// Minimum number of selected items.
+    min_selected: Signal<usize>,
+    /// Maximum number of selected items.
+    max_selected: Signal<usize>,
     /// The orientation of the list, either vertical or horizontal.
     orientation: Signal<Orientation>,
     /// Whether the scrollview should scroll to the cursor when the scrollbar is pressed.
@@ -147,16 +151,7 @@ impl<T: PartialEq + Clone + 'static> ListItemsBinding<T> {
         if let Some(view) = cx.views.get_mut(&self.list_entity) {
             if let Some(list) = view.downcast_mut::<List>() {
                 list.num_items = len;
-
-                list.selected.update(|selected| {
-                    selected.retain(|index| *index < len);
-                });
-
-                list.focused.update(|focused| {
-                    if focused.is_some_and(|index| index >= len) {
-                        *focused = len.checked_sub(1);
-                    }
-                });
+                list.normalize_selection_state();
             }
         }
     }
@@ -227,6 +222,62 @@ impl<T: PartialEq + Clone + 'static> BindingHandler for ListItemsBinding<T> {
 }
 
 impl List {
+    fn selection_limits(&self) -> (usize, usize) {
+        let mut min_selected = self.min_selected.get();
+        let mut max_selected = self.max_selected.get();
+
+        match self.selectable.get() {
+            Selectable::None => {
+                min_selected = 0;
+                max_selected = 0;
+            }
+
+            Selectable::Single => {
+                min_selected = min_selected.min(1);
+                max_selected = 1;
+            }
+
+            Selectable::Multi => {}
+        }
+
+        max_selected = max_selected.min(self.num_items);
+        min_selected = min_selected.min(max_selected);
+
+        (min_selected, max_selected)
+    }
+
+    fn normalize_selection_state(&mut self) {
+        let (min_selected, max_selected) = self.selection_limits();
+
+        let mut selected = self.selected.get();
+        selected.retain(|index| *index < self.num_items);
+
+        while selected.len() > max_selected {
+            if let Some(last) = selected.iter().next_back().copied() {
+                selected.remove(&last);
+            } else {
+                break;
+            }
+        }
+
+        if selected.len() < min_selected {
+            for index in 0..self.num_items {
+                selected.insert(index);
+                if selected.len() >= min_selected {
+                    break;
+                }
+            }
+        }
+
+        let mut focused = self.focused.get();
+        if focused.is_some_and(|index| index >= self.num_items) {
+            focused = self.num_items.checked_sub(1);
+        }
+
+        self.selected.set(selected);
+        self.focused.set(focused);
+    }
+
     /// Creates a new [List] view from a reactive or static list of values.
     ///
     /// `list` accepts any [`Res<V>`] source where `V` derefs to `[T]` — for example a
@@ -248,6 +299,8 @@ impl List {
         let selected = Signal::new(BTreeSet::default());
         let selectable = Signal::new(Selectable::None);
         let focused = Signal::new(None);
+        let min_selected = Signal::new(0);
+        let max_selected = Signal::new(usize::MAX);
         let orientation = Signal::new(Orientation::Vertical);
         let scroll_to_cursor = Signal::new(false);
         let scroll_x = Signal::new(0.0);
@@ -261,6 +314,8 @@ impl List {
             selectable,
             focused,
             selection_follows_focus: Signal::new(false),
+            min_selected,
+            max_selected,
             orientation,
             scroll_to_cursor,
             on_select: None,
@@ -357,13 +412,16 @@ impl View for List {
             ListEvent::Select(index) => {
                 cx.focus();
                 let selectable = self.selectable.get();
+                let (min_selected, max_selected) = self.selection_limits();
                 let mut selected = self.selected.get();
                 let mut focused = self.focused.get();
                 match selectable {
                     Selectable::Single => {
                         if selected.contains(&index) {
-                            selected.clear();
-                            focused = None;
+                            if min_selected == 0 {
+                                selected.clear();
+                                focused = None;
+                            }
                         } else {
                             selected.clear();
                             selected.insert(index);
@@ -376,13 +434,19 @@ impl View for List {
 
                     Selectable::Multi => {
                         if selected.contains(&index) {
-                            selected.remove(&index);
-                            focused = None;
+                            if selected.len() > min_selected {
+                                selected.remove(&index);
+                                if focused == Some(index) {
+                                    focused = selected.iter().next_back().copied();
+                                }
+                            }
                         } else {
-                            selected.insert(index);
-                            focused = Some(index);
-                            if let Some(on_select) = &self.on_select {
-                                on_select(cx, index);
+                            if selected.len() < max_selected {
+                                selected.insert(index);
+                                focused = Some(index);
+                                if let Some(on_select) = &self.on_select {
+                                    on_select(cx, index);
+                                }
                             }
                         }
                     }
@@ -404,7 +468,10 @@ impl View for List {
             }
 
             ListEvent::ClearSelection => {
-                self.selected.set(BTreeSet::default());
+                let (min_selected, _) = self.selection_limits();
+                if min_selected == 0 {
+                    self.selected.set(BTreeSet::default());
+                }
                 meta.consume();
             }
 
@@ -463,9 +530,66 @@ impl View for List {
     }
 }
 
-impl Handle<'_, List> {
+/// Modifiers for changing the behavior and selection state of a [List].
+pub trait ListModifiers: Sized {
     /// Sets the selected items of the list from signal of type indices.
-    pub fn selected<R>(self, selected: impl Res<R> + 'static) -> Self
+    fn selected<R>(self, selected: impl Res<R> + 'static) -> Self
+    where
+        R: Deref<Target = [usize]> + Clone + 'static;
+
+    /// Sets the callback triggered when a [ListItem] is selected.
+    fn on_select<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, usize);
+
+    /// Set the selectable state of the [List].
+    fn selectable<U: Into<Selectable> + Clone + 'static>(
+        self,
+        selectable: impl Res<U> + 'static,
+    ) -> Self;
+
+    /// Sets the minimum number of selected items.
+    fn min_selected(self, min_selected: impl Res<usize> + 'static) -> Self;
+
+    /// Sets the maximum number of selected items.
+    fn max_selected(self, max_selected: impl Res<usize> + 'static) -> Self;
+
+    /// Sets whether the selection should follow the focus.
+    fn selection_follows_focus<U: Into<bool> + Clone + 'static>(
+        self,
+        flag: impl Res<U> + 'static,
+    ) -> Self;
+
+    /// Sets the orientation of the list.
+    fn orientation<U: Into<Orientation> + Clone + 'static>(
+        self,
+        orientation: impl Res<U> + 'static,
+    ) -> Self;
+
+    /// Sets whether the scrollbar should move to the cursor when pressed.
+    fn scroll_to_cursor(self, flag: bool) -> Self;
+
+    /// Sets a callback which will be called when a scrollview is scrolled, either with the mouse wheel, touchpad, or using the scroll bars.
+    fn on_scroll(
+        self,
+        callback: impl Fn(&mut EventContext, f32, f32) + 'static + Send + Sync,
+    ) -> Self;
+
+    /// Set the horizontal scroll position of the [ScrollView]. Accepts a value or signal of type an `f32` between 0 and 1.
+    fn scroll_x(self, scrollx: impl Res<f32> + 'static) -> Self;
+
+    /// Set the vertical scroll position of the [ScrollView]. Accepts a value or signal of type an `f32` between 0 and 1.
+    fn scroll_y(self, scrollx: impl Res<f32> + 'static) -> Self;
+
+    /// Sets whether the horizontal scrollbar should be visible.
+    fn show_horizontal_scrollbar(self, flag: impl Res<bool> + 'static) -> Self;
+
+    /// Sets whether the vertical scrollbar should be visible.
+    fn show_vertical_scrollbar(self, flag: impl Res<bool> + 'static) -> Self;
+}
+
+impl ListModifiers for Handle<'_, List> {
+    fn selected<R>(self, selected: impl Res<R> + 'static) -> Self
     where
         R: Deref<Target = [usize]> + Clone + 'static,
     {
@@ -482,20 +606,19 @@ impl Handle<'_, List> {
                 }
                 list.selected.set(selected);
                 list.focused.set(focused);
+                list.normalize_selection_state();
             });
         })
     }
 
-    /// Sets the callback triggered when a [ListItem] is selected.
-    pub fn on_select<F>(self, callback: F) -> Self
+    fn on_select<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, usize),
     {
         self.modify(|list: &mut List| list.on_select = Some(Box::new(callback)))
     }
 
-    /// Set the selectable state of the [List].
-    pub fn selectable<U: Into<Selectable> + Clone + 'static>(
+    fn selectable<U: Into<Selectable> + Clone + 'static>(
         self,
         selectable: impl Res<U> + 'static,
     ) -> Self {
@@ -505,12 +628,34 @@ impl Handle<'_, List> {
             let s = selectable.into();
             handle.modify(|list: &mut List| {
                 list.selectable.set(s);
+                list.normalize_selection_state();
             });
         })
     }
 
-    /// Sets whether the selection should follow the focus.
-    pub fn selection_follows_focus<U: Into<bool> + Clone + 'static>(
+    fn min_selected(self, min_selected: impl Res<usize> + 'static) -> Self {
+        let min_selected = min_selected.to_signal(self.cx);
+        self.bind(min_selected, move |handle| {
+            let min_selected = min_selected.get();
+            handle.modify(|list: &mut List| {
+                list.min_selected.set(min_selected);
+                list.normalize_selection_state();
+            });
+        })
+    }
+
+    fn max_selected(self, max_selected: impl Res<usize> + 'static) -> Self {
+        let max_selected = max_selected.to_signal(self.cx);
+        self.bind(max_selected, move |handle| {
+            let max_selected = max_selected.get();
+            handle.modify(|list: &mut List| {
+                list.max_selected.set(max_selected);
+                list.normalize_selection_state();
+            });
+        })
+    }
+
+    fn selection_follows_focus<U: Into<bool> + Clone + 'static>(
         self,
         flag: impl Res<U> + 'static,
     ) -> Self {
@@ -522,8 +667,7 @@ impl Handle<'_, List> {
         })
     }
 
-    /// Sets the orientation of the list.
-    pub fn orientation<U: Into<Orientation> + Clone + 'static>(
+    fn orientation<U: Into<Orientation> + Clone + 'static>(
         self,
         orientation: impl Res<U> + 'static,
     ) -> Self {
@@ -537,23 +681,20 @@ impl Handle<'_, List> {
         })
     }
 
-    /// Sets whether the scrollbar should move to the cursor when pressed.
-    pub fn scroll_to_cursor(self, flag: bool) -> Self {
+    fn scroll_to_cursor(self, flag: bool) -> Self {
         self.modify(|list| {
             list.scroll_to_cursor.set(flag);
         })
     }
 
-    /// Sets a callback which will be called when a scrollview is scrolled, either with the mouse wheel, touchpad, or using the scroll bars.
-    pub fn on_scroll(
+    fn on_scroll(
         self,
         callback: impl Fn(&mut EventContext, f32, f32) + 'static + Send + Sync,
     ) -> Self {
         self.modify(|list: &mut List| list.on_scroll = Some(Box::new(callback)))
     }
 
-    /// Set the horizontal scroll position of the [ScrollView]. Accepts a value or signal of type an `f32` between 0 and 1.
-    pub fn scroll_x(self, scrollx: impl Res<f32> + 'static) -> Self {
+    fn scroll_x(self, scrollx: impl Res<f32> + 'static) -> Self {
         let scrollx = scrollx.to_signal(self.cx);
         self.bind(scrollx, move |handle| {
             let scrollx = scrollx.get();
@@ -564,8 +705,7 @@ impl Handle<'_, List> {
         })
     }
 
-    /// Set the vertical scroll position of the [ScrollView]. Accepts a value or signal of type an `f32` between 0 and 1.
-    pub fn scroll_y(self, scrollx: impl Res<f32> + 'static) -> Self {
+    fn scroll_y(self, scrollx: impl Res<f32> + 'static) -> Self {
         let scrollx = scrollx.to_signal(self.cx);
         self.bind(scrollx, move |handle| {
             let scrolly = scrollx.get();
@@ -576,8 +716,7 @@ impl Handle<'_, List> {
         })
     }
 
-    /// Sets whether the horizontal scrollbar should be visible.
-    pub fn show_horizontal_scrollbar(self, flag: impl Res<bool> + 'static) -> Self {
+    fn show_horizontal_scrollbar(self, flag: impl Res<bool> + 'static) -> Self {
         let flag = flag.to_signal(self.cx);
         self.bind(flag, move |handle| {
             let show_scrollbar = flag.get();
@@ -588,8 +727,7 @@ impl Handle<'_, List> {
         })
     }
 
-    /// Sets whether the vertical scrollbar should be visible.
-    pub fn show_vertical_scrollbar(self, flag: impl Res<bool> + 'static) -> Self {
+    fn show_vertical_scrollbar(self, flag: impl Res<bool> + 'static) -> Self {
         let flag = flag.to_signal(self.cx);
         self.bind(flag, move |handle| {
             let show_scrollbar = flag.get();

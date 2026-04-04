@@ -532,6 +532,7 @@ impl<V: View> ActionModifiers<V> for Handle<'_, V> {
             let tooltip_visible = cx.data::<ModalModel>().tooltip_visible;
             Binding::new(cx, tooltip_visible, move |cx| {
                 let tooltip_visible = tooltip_visible.get();
+                let tooltip_delay = cx.environment().tooltip_delay;
                 if tooltip_visible.0 {
                     (content)(cx)
                         .on_build(|cx| {
@@ -539,7 +540,7 @@ impl<V: View> ActionModifiers<V> for Handle<'_, V> {
                                 cx.play_animation(
                                     "tooltip_fade",
                                     Duration::from_millis(100),
-                                    Duration::from_millis(500),
+                                    tooltip_delay,
                                 )
                             }
                         })

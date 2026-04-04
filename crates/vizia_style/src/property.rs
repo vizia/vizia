@@ -42,7 +42,6 @@ define_property! {
         "width": Width(Units),
         "right": Right(Units),
         "top": Top(Units),
-        "size": Size(Units),
         "height": Height(Units),
         "bottom": Bottom(Units),
 
@@ -184,6 +183,7 @@ define_property! {
         "shadow": Shadow(Vec<Shadow>),
 
         // Backdrop Filter
+        "filter": Filter(Filter),
         "backdrop-filter": BackdropFilter(Filter),
 
         // Animations
@@ -214,5 +214,14 @@ mod tests {
         let mut parser = Parser::new(&mut parser_input);
         let _parsed_property =
             Property::parse_value(CowRcStr::from("background-color"), &mut parser);
+    }
+
+    #[test]
+    fn parse_filter_property() {
+        let mut parser_input = ParserInput::new("blur(5px)");
+        let mut parser = Parser::new(&mut parser_input);
+        let parsed_property = Property::parse_value(CowRcStr::from("filter"), &mut parser).unwrap();
+
+        assert_eq!(parsed_property, Property::Filter(Filter::Blur(Length::px(5.0))));
     }
 }

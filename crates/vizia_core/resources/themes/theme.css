@@ -1,0 +1,611 @@
+:root {
+    background-color: var(--background);
+    color: var(--foreground);
+    fill: var(--foreground);
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", "Noto Sans",
+        Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    font-variation-settings: "wght" 400;
+    font-size: 14px;
+
+    --gray-50: #ffffff;
+    --gray-75: #fdfdfd;
+    --gray-100: #f8f8f8;
+    --gray-200: #e6e6e6;
+    --gray-300: #d5d5d5;
+    --gray-400: #b1b1b1;
+    --gray-500: #909090;
+    --gray-600: #6c6c6c;
+    --gray-700: #464646;
+    --gray-800: #222222;
+    --gray-900: #000000;
+
+    /* --background: var(--gray-50);
+    --foreground: var(--gray-800);
+    --card: var(--gray-50);
+    --card-foreground: var(--gray-800);
+    --popover: var(--gray-50);
+    --popover-foreground: var(--gray-800);
+    --primary: var(--gray-800);
+    --primary-foreground: var(--gray-75);
+    --secondary: var(--gray-200);
+    --secondary-foreground: var(--gray-800);
+    --muted: var(--gray-200);
+    --muted-foreground: var(--gray-500);
+    --accent: var(--gray-200);
+    --accent-foreground: var(--gray-800);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: var(--gray-300);
+    --input: #e5e5e5;
+    --ring: var(--gray-500);
+    --chart-1: oklch(0.646 0.222 41.116);
+    --chart-2: oklch(0.6 0.118 184.704);
+    --chart-3: oklch(0.398 0.07 227.392);
+    --chart-4: oklch(0.828 0.189 84.429);
+    --chart-5: oklch(0.769 0.188 70.08);
+    --sidebar: var(--gray-50);
+    --sidebar-foreground: var(--gray-800);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: var(--gray-200);
+    --sidebar-accent-foreground: var(--gray-800);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0); */
+
+    --background: #ffffff;
+    --foreground: #0a0a0a;
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: #171717;
+    --primary-foreground: #fafafa;
+    --secondary: #f5f5f5;
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    --chart-1: oklch(0.646 0.222 41.116);
+    --chart-2: oklch(0.6 0.118 184.704);
+    --chart-3: oklch(0.398 0.07 227.392);
+    --chart-4: oklch(0.828 0.189 84.429);
+    --chart-5: oklch(0.769 0.188 70.08);
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+    --gray-50: #000000;
+    --gray-75: #0e0e0e;
+    --gray-100: #1d1d1d;
+    --gray-200: #303030;
+    --gray-300: #4b4b4b;
+    --gray-400: #6a6a6a;
+    --gray-500: #8d8d8d;
+    --gray-600: #b0b0b0;
+    --gray-700: #d0d0d0;
+    --gray-800: #ebebeb;
+    --gray-900: #ffffff;
+
+    --background: #0a0a0a;
+    --foreground: #fafafa;
+    --card: #171717;
+    --card-foreground: #fafafa;
+    --popover: #171717;
+    --popover-foreground: #fafafa;
+    --primary: #e5e5e5;
+    --primary-foreground: #171717;
+    --secondary: #262626;
+    --secondary-foreground: #fafafa;
+    --muted: #262626;
+    --muted-foreground: #a1a1a1;
+    --accent: #262626;
+    --accent-foreground: #fafafa;
+    --destructive: #ff6467;
+    --border: #ffffff1a;
+    --input: #ffffff26;
+    --ring: #737373;
+    --chart-1: oklch(0.488 0.243 264.376);
+    --chart-2: oklch(0.696 0.17 162.48);
+    --chart-3: oklch(0.769 0.188 70.08);
+    --chart-4: oklch(0.627 0.265 303.9);
+    --chart-5: oklch(0.645 0.246 16.439);
+    --sidebar: #171717;
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: #262626;
+    --sidebar-accent-foreground: #fafafa;
+    --sidebar-border: #ffffff1a;
+    --sidebar-ring: #737373;
+}
+
+window {
+    background-color: var(--background);
+}
+
+*:focus-visible {
+    outline-width: 3px;
+    outline-color: var(--ring);
+    outline-offset: 0px;
+}
+
+/* BUTTON  */
+
+button {
+    corner-radius: 4px;
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    fill: var(--primary-foreground);
+    transition: background-color 100ms;
+}
+
+button:hover {
+    background-color: var(--gray-700);
+    transition: background-color 100ms;
+}
+
+button:active {
+    background-color: var(--gray-600);
+    transition: background-color 100ms;
+}
+
+button.secondary,
+button-group.secondary > button {
+    background-color: var(--secondary);
+    color: var(--secondary-foreground);
+    fill: var(--secondary-foreground);
+    transition: background-color 100ms;
+    transition: color 100ms;
+    transition: fill 100ms;
+}
+
+button.secondary:hover,
+button-group.secondary > button:hover {
+    background-color: var(--secondary);
+    transition: background-color 100ms;
+    transition: color 100ms;
+    transition: fill 100ms;
+}
+
+button.secondary:active,
+button-group.secondary > button:active {
+    background-color: var(--secondary);
+    transition: background-color 100ms;
+    transition: color 100ms;
+    transition: fill 100ms;
+}
+
+button.outline,
+button-group.outline > button {
+    background-color: var(--background);
+    border-width: 1px;
+    border-color: var(--border);
+    color: var(--foreground);
+    fill: var(--foreground);
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+    transition: color 100ms;
+    transition: fill 100ms;
+}
+
+button.outline:hover,
+button-group.outline > button:hover {
+    background-color: var(--accent);
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+    transition: color 100ms;
+    transition: fill 100ms;
+}
+
+button.outline:active,
+button-group.outline > button:active {
+    background-color: var(--accent);
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+    transition: color 100ms;
+    transition: fill 100ms;
+}
+
+button.text,
+button-group.text > button {
+    background-color: var(--background);
+    color: var(--foreground);
+    fill: var(--foreground);
+    transition: background-color 100ms;
+    transition: color 100ms;
+    transition: fill 100ms;
+}
+
+button.text:hover,
+button-group.text > button:hover {
+    background-color: var(--accent);
+    transition: background-color 100ms;
+    transition: color 100ms;
+    transition: fill 100ms;
+}
+
+button.text:active,
+button-group.text > button:active {
+    background-color: var(--accent);
+    transition: background-color 100ms;
+    transition: color 100ms;
+    transition: fill 100ms;
+}
+
+button:disabled {
+    color: var(--muted-foreground);
+    fill: var(--muted-foreground);
+    transition: background-color 100ms;
+    transition: color 100ms;
+    transition: fill 100ms;
+}
+
+/* BUTTON GROUP */
+
+button-group {
+    gap: 1px;
+}
+
+button-group:has(toggle-button) {
+    gap: -1px;
+}
+
+button-group.secondary {
+    gap: 1px;
+}
+
+button-group.outline {
+    gap: -1px;
+}
+
+button-group > button,
+button-group > toggle-button,
+button-group > textbox {
+    corner-radius: 0px;
+}
+
+button-group.vertical > button,
+button-group.vertical > toggle-button,
+button-group > textbox {
+    corner-radius: 0px;
+}
+
+button-group > :first-child {
+    corner-top-left-radius: 4px;
+    corner-bottom-left-radius: 4px;
+}
+
+button-group > :last-child {
+    corner-top-right-radius: 4px;
+    corner-bottom-right-radius: 4px;
+}
+
+button-group.vertical > :first-child {
+    corner-radius: 0px;
+    corner-top-right-radius: 4px;
+    corner-top-left-radius: 4px;
+}
+
+button-group.vertical > :last-child {
+    corner-radius: 0px;
+    corner-bottom-right-radius: 4px;
+    corner-bottom-left-radius: 4px;
+}
+
+/* CHECKBOX */
+
+checkbox {
+    corner-radius: 2px;
+    border-width: 1px;
+    border-color: var(--border);
+    background-color: var(--background);
+    fill: var(--foreground);
+    shadow: 0px 1px 2px #0000001a;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+checkbox:hover {
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+checkbox:active {
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+checkbox:disabled {
+    border-color: var(--muted);
+    background-color: var(--muted);
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+checkbox:checked {
+    background-color: var(--primary);
+    border-width: 0px;
+    fill: var(--primary-foreground);
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+    transition: fill 100ms;
+}
+
+checkbox:checked:hover {
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+    transition: fill 100ms;
+}
+
+checkbox:checked:active {
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+    transition: fill 100ms;
+}
+
+checkbox:checked:disabled {
+    background-color: var(--muted);
+    border-color: var(--muted);
+    fill: var(--muted-foreground);
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+    transition: fill 100ms;
+}
+
+/* LIST */
+
+list.selectable list-item,
+virtual-list.selectable list-item {
+    background-color: transparent;
+}
+
+list.selectable list-item.focused,
+virtual-list.selectable list-item.focused {
+    background-color: var(--accent);
+}
+
+list.selectable list-item:hover,
+virtual-list.selectable list-item:hover {
+    background-color: var(--accent);
+}
+
+list.selectable list-item:checked,
+virtual-list.selectable list-item:checked {
+    background-color: var(--accent);
+}
+
+/* PICKLIST */
+
+picklist {
+    corner-radius: 4px;
+}
+
+picklist list.selectable list-item:checked {
+    background-color: transparent;
+}
+
+picklist list.selectable list-item .checkmark {
+    fill: var(--primary);
+    visibility: hidden;
+}
+
+picklist list.selectable list-item:checked .checkmark {
+    visibility: visible;
+}
+
+picklist list.selectable list-item:hover {
+    background-color: var(--accent);
+}
+
+picklist list.selectable list-item:focus-visible {
+    background-color: var(--accent);
+    outline-color: transparent;
+}
+
+/* POPUP */
+
+popup {
+    background-color: var(--popover);
+    corner-radius: 4px;
+    border-width: 1px;
+    border-color: var(--border);
+    padding: 1px;
+    shadow: 0px 3px 12px #00000038;
+}
+
+/* SCROLLVIEW */
+
+scrollview > scrollbar {
+    display: none;
+}
+
+scrollview.h-scroll > scrollbar,
+scrollview.v-scroll > scrollbar {
+    display: flex;
+}
+
+scrollbar .thumb {
+    background-color: var(--muted-foreground);
+    corner-radius: 50%;
+    opacity: 0;
+    transition: opacity 200ms 0s linear;
+}
+
+scrollview.h-scroll:hover > scrollbar.horizontal > .thumb,
+scrollview.v-scroll:hover > scrollbar.vertical > .thumb {
+    background-color: var(--muted-foreground);
+    opacity: 1;
+    transition: opacity 200ms 0s linear;
+}
+
+scrollview.h-scroll:active > scrollbar.horizontal > .thumb,
+scrollview.v-scroll:active > scrollbar.vertical > .thumb {
+    background-color: var(--muted-foreground);
+    opacity: 1;
+    transition: opacity 200ms 0s linear;
+}
+
+scrollview.h-scroll > scrollbar.horizontal:active > .thumb,
+scrollview.v-scroll > scrollbar.vertical:active > .thumb {
+    background-color: var(--muted-foreground);
+    opacity: 1;
+    transition: opacity 200ms 0s linear;
+}
+
+/* SLIDER */
+
+slider * {
+    corner-radius: 2px;
+}
+
+slider .track {
+    background-color: var(--muted);
+    corner-radius: 2px;
+}
+
+slider .range {
+    background-color: var(--primary);
+    corner-radius: 2px;
+}
+
+slider .thumb {
+    background-color: var(--background);
+    corner-radius: 6px;
+    border-width: 1px;
+    border-color: var(--primary);
+    width: 12px;
+    height: 12px;
+    padding: 1s;
+}
+
+/* SWITCH */
+
+switch {
+    corner-radius: 50%;
+    background-color: var(--secondary);
+    transition: background-color 100ms;
+}
+
+switch .thumb {
+    background-color: var(--primary-foreground);
+    corner-radius: 50%;
+    transition: background-color 100ms;
+    transition: left 100ms;
+}
+
+switch:checked {
+    background-color: var(--primary);
+    transition: background-color 100ms;
+}
+
+switch:disabled {
+    background-color: var(--muted);
+    transition: background-color 100ms;
+}
+
+switch:disabled .thumb {
+    background-color: var(--muted-foreground);
+    transition: background-color 100ms;
+}
+
+/* TEXTBOX */
+
+textbox {
+    corner-radius: 4px;
+    border-width: 1px;
+    border-color: var(--border);
+    background-color: var(--background);
+    transition: border-color 100ms;
+    transition: background-color 100ms;
+}
+
+textbox:checked {
+    transition: border-color 100ms;
+}
+
+textbox:checked.caret {
+    caret-color: #181818;
+}
+
+textbox:placeholder-shown {
+    caret-color: transparent;
+    color: var(--muted-foreground);
+}
+
+textbox:read-only {
+    background-color: transparent;
+    border-width: 0px;
+}
+
+textbox:disabled {
+    color: #888;
+    transition: color 100ms;
+}
+
+textbox:focus-visible {
+    transition: border-color 100ms;
+}
+
+textbox:invalid {
+    border-color: #ef5151;
+    transition: border-color 100ms;
+    border-width: 2px;
+}
+
+/* TOGGLE BUTTON */
+
+toggle-button {
+    corner-radius: 4px;
+    border-width: 1px;
+    border-color: var(--border);
+    background-color: var(--background);
+    transition: background-color 100ms;
+}
+
+toggle-button:hover {
+    background-color: var(--gray-200);
+    transition: background-color 100ms;
+}
+
+toggle-button:active {
+    background-color: var(--gray-300);
+}
+
+toggle-button:checked {
+    background-color: var(--gray-200);
+    transition: background-color 100ms;
+}
+
+toggle-button:disabled {
+    border-color: var(--border);
+    color: var(--muted-foreground);
+    background-color: var(--muted);
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+/* TOOLTIP */
+
+tooltip {
+    padding: 8px;
+    background-color: var(--primary);
+    corner-radius: 4px;
+    color: var(--primary-foreground);
+    fill: var(--primary-foreground);
+}
+
+tooltip arrow {
+    background-color: var(--primary-foreground);
+}

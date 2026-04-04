@@ -22,7 +22,7 @@ use crate::text::TextContext;
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
-use super::{DARK_THEME, LIGHT_THEME, LocalizationContext, ModelData};
+use super::{LocalizationContext, ModelData};
 
 type Views = HashMap<Entity, Box<dyn ViewHandler>>;
 type Models = HashMap<Entity, HashMap<TypeId, Box<dyn ModelData>>>;
@@ -86,7 +86,6 @@ pub struct EventContext<'a> {
     #[cfg(feature = "clipboard")]
     clipboard: &'a mut Box<dyn ClipboardProvider>,
     pub(crate) event_proxy: &'a mut Option<Box<dyn crate::context::EventProxy>>,
-    pub(crate) ignore_default_theme: &'a bool,
     pub(crate) drop_data: &'a mut Option<DropData>,
     pub windows: &'a mut HashMap<Entity, WindowState>,
 }
@@ -139,7 +138,6 @@ impl<'a> EventContext<'a> {
             #[cfg(feature = "clipboard")]
             clipboard: &mut cx.clipboard,
             event_proxy: &mut cx.event_proxy,
-            ignore_default_theme: &cx.ignore_default_theme,
             drop_data: &mut cx.drop_data,
             windows: &mut cx.windows,
         }
@@ -173,7 +171,6 @@ impl<'a> EventContext<'a> {
             #[cfg(feature = "clipboard")]
             clipboard: &mut cx.clipboard,
             event_proxy: &mut cx.event_proxy,
-            ignore_default_theme: &cx.ignore_default_theme,
             drop_data: &mut cx.drop_data,
             windows: &mut cx.windows,
         }
@@ -291,6 +288,12 @@ impl<'a> EventContext<'a> {
 
     /// Returns the clip bounds of the current view.
     pub fn clip_region(&self) -> BoundingBox {
+        let current_window = if self.tree.is_window(self.current) {
+            self.current
+        } else {
+            self.tree.get_parent_window(self.current).unwrap_or(Entity::root())
+        };
+
         self.cache
             .clip_path
             .get(self.current)
@@ -310,15 +313,16 @@ impl<'a> EventContext<'a> {
                     {
                         return Some(clip_path);
                     }
+
+                    if parent == current_window {
+                        break;
+                    }
+
                     current = parent;
                 }
                 None
             })
-            .unwrap_or_else(|| {
-                let parent_window =
-                    self.tree.get_parent_window(self.current).unwrap_or(Entity::root());
-                self.cache.get_bounds(parent_window)
-            })
+            .unwrap_or_else(|| self.cache.get_bounds(current_window))
     }
 
     /// Returns the 2D transform of the current view.
@@ -685,21 +689,6 @@ impl<'a> EventContext<'a> {
         self.data::<Environment>()
     }
 
-    /// Sets the current [theme mode](ThemeMode).
-    pub fn set_theme_mode(&mut self, theme_mode: ThemeMode) {
-        if !self.ignore_default_theme {
-            match theme_mode {
-                ThemeMode::LightMode => {
-                    self.resource_manager.themes[2] = String::from(LIGHT_THEME);
-                }
-
-                ThemeMode::DarkMode => {
-                    self.resource_manager.themes[2] = String::from(DARK_THEME);
-                }
-            }
-        }
-    }
-
     /// Marks the current view as needing to be redrawn.
     pub fn needs_redraw(&mut self) {
         let parent_window = self.tree.get_parent_window(self.current).unwrap_or(Entity::root());
@@ -751,7 +740,7 @@ impl<'a> EventContext<'a> {
 
     /// Reloads the stylesheets linked to the application.
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
-        if self.resource_manager.themes.is_empty() && self.resource_manager.styles.is_empty() {
+        if self.resource_manager.styles.is_empty() {
             return Ok(());
         }
 
@@ -760,11 +749,6 @@ impl<'a> EventContext<'a> {
         self.style.clear_style_rules();
 
         let mut overall_theme = String::new();
-
-        // Reload built-in themes
-        for theme in self.resource_manager.themes.iter() {
-            overall_theme += theme;
-        }
 
         for style_string in self.resource_manager.styles.iter().flat_map(|style| style.get_style())
         {
@@ -1085,9 +1069,16 @@ impl<'a> EventContext<'a> {
 
     // FILTER
 
+    /// Sets the filter of the current view.
+    pub fn set_filter(&mut self, filter: Filter) {
+        self.style.filter.insert(self.current, filter);
+        self.needs_redraw();
+    }
+
     /// Sets the backdrop filter of the current view.
     pub fn set_backdrop_filter(&mut self, filter: Filter) {
         self.style.backdrop_filter.insert(self.current, filter);
+        self.needs_redraw();
     }
 
     // BOX SHADOW

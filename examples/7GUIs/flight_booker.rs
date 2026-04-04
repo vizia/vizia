@@ -17,7 +17,7 @@ const STYLE: &str = r#"
 "#;
 
 pub struct AppData {
-    selected_option: Signal<usize>,
+    selected_option: Signal<Option<usize>>,
     start_date: Signal<NaiveDate>,
     end_date: Signal<NaiveDate>,
 }
@@ -31,7 +31,7 @@ pub enum AppEvent {
 impl Model for AppData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::SetChoice(choice) => self.selected_option.set(*choice),
+            AppEvent::SetChoice(choice) => self.selected_option.set(Some(*choice)),
             AppEvent::SetStartDate(date) => self.start_date.set(*date),
             AppEvent::SetEndDate(date) => self.end_date.set(*date),
         });
@@ -60,7 +60,7 @@ fn main() -> Result<(), ApplicationError> {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
         let options = Signal::new(["one-way flight", "return flight"].map(Signal::new).to_vec());
-        let selected_option = Signal::new(0usize);
+        let selected_option = Signal::new(Some(0));
         let start_date = Signal::new(NaiveDate::from_ymd_opt(2022, 2, 12).unwrap());
         let end_date = Signal::new(NaiveDate::from_ymd_opt(2022, 2, 26).unwrap());
 

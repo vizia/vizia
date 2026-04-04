@@ -52,21 +52,26 @@ pub(crate) fn clipping_system(cx: &mut Context) {
             }
         });
 
-        let root_bounds = cx.cache.bounds.get(Entity::root()).copied().unwrap();
+        let window_entity = if cx.tree.is_window(entity) {
+            entity
+        } else {
+            cx.tree.get_parent_window(entity).unwrap_or(Entity::root())
+        };
+        let window_bounds = cx.cache.bounds.get(window_entity).copied().unwrap_or(bounds);
 
         let overflow_clip_path = match (overflowx, overflowy) {
             (Overflow::Visible, Overflow::Visible) => None,
             (Overflow::Hidden, Overflow::Visible) => {
                 let left = bounds.left();
                 let right = bounds.right();
-                let top = root_bounds.top();
-                let bottom = root_bounds.bottom();
+                let top = window_bounds.top();
+                let bottom = window_bounds.bottom();
                 let clip_bounds = BoundingBox::from_min_max(left, top, right, bottom);
                 Some(build_clip_path(cx, entity, clip_bounds))
             }
             (Overflow::Visible, Overflow::Hidden) => {
-                let left = root_bounds.left();
-                let right = root_bounds.right();
+                let left = window_bounds.left();
+                let right = window_bounds.right();
                 let top = bounds.top();
                 let bottom = bounds.bottom();
                 let clip_bounds = BoundingBox::from_min_max(left, top, right, bottom);
@@ -86,19 +91,23 @@ pub(crate) fn clipping_system(cx: &mut Context) {
 
         let clip_path = clip_path.map(|clip_path| clip_path.make_transform(&transform));
 
-        let parent_clip_path = cx.cache.clip_path.get(parent).unwrap_or(&None);
+        let parent_clip_path = if cx.tree.is_window(entity) {
+            None
+        } else {
+            cx.cache.clip_path.get(parent).cloned().flatten()
+        };
 
         match (clip_path, parent_clip_path) {
             (Some(clip_path), Some(parent_clip_path)) => {
                 let path_intersection =
-                    clip_path.op(parent_clip_path, skia_safe::PathOp::Intersect);
+                    clip_path.op(&parent_clip_path, skia_safe::PathOp::Intersect);
                 cx.cache.clip_path.insert(entity, path_intersection);
             }
             (Some(clip_path), None) => {
                 cx.cache.clip_path.insert(entity, Some(clip_path));
             }
             (None, Some(parent_clip_path)) => {
-                cx.cache.clip_path.insert(entity, Some(parent_clip_path.clone()));
+                cx.cache.clip_path.insert(entity, Some(parent_clip_path));
             }
             (None, None) => {
                 cx.cache.clip_path.insert(entity, None);

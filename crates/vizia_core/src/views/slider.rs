@@ -3,14 +3,19 @@ use std::ops::Range;
 use crate::prelude::*;
 use accesskit::ActionData;
 
-/// Internal data used by the slider.
-#[derive(Clone, Debug, Default)]
-pub struct SliderDataInternal {}
+/// Internal events for the slider view.
+pub(crate) enum SliderEvent {
+    Increment,
+    Decrement,
+    SetMin,
+    SetMax,
+    ResetDefault,
+}
 
 /// The slider control can be used to select from a continuous set of values.
 ///
 /// The slider control consists of three main parts, a **thumb** element which can be moved between the extremes of a linear **track**,
-/// and an **active** element which fills the slider to indicate the current value.
+/// and a **range** element which fills the slider to indicate the current value.
 ///
 /// # Examples
 ///
@@ -56,13 +61,13 @@ pub struct Slider<S> {
     value: S,
     is_dragging: bool,
     /// The orientation of the slider.
-    pub orientation: Signal<Orientation>,
+    orientation: Signal<Orientation>,
     /// The range of the slider.
-    pub range: Signal<Range<f32>>,
+    range: Signal<Range<f32>>,
     /// The step of the slider.
-    pub step: Signal<f32>,
-    /// How much the slider should change in response to keyboard events.
-    pub keyboard_fraction: Signal<f32>,
+    step: Signal<f32>,
+    /// The value that the slider resets to when double-clicking the thumb.
+    default_value: Signal<f32>,
     on_change: Option<Box<dyn Fn(&mut EventContext, f32)>>,
 }
 
@@ -91,82 +96,107 @@ where
         let range = Signal::new(0.0..1.0);
         let orientation = Signal::new(Orientation::Horizontal);
         let step = Signal::new(0.01);
+        let default_value = Signal::new(value.get());
 
-        Self {
-            value,
-            is_dragging: false,
-            orientation,
-            range,
-            step,
-            keyboard_fraction: Signal::new(0.1),
-            on_change: None,
-        }
-        .build(cx, move |cx| {
-            // Track
-            HStack::new(cx, move |cx| {
-                let active_normalized = Memo::new(move |_| {
-                    let active_range = range.get();
-                    let val = value.get().clamp(active_range.start, active_range.end);
-                    (val - active_range.start) / (active_range.end - active_range.start)
-                });
+        Self { value, is_dragging: false, orientation, range, step, default_value, on_change: None }
+            .build(cx, move |cx| {
+                Keymap::from(vec![
+                    (
+                        KeyChord::new(Modifiers::empty(), Code::ArrowUp),
+                        KeymapEntry::new("Increment", |cx| cx.emit(SliderEvent::Increment)),
+                    ),
+                    (
+                        KeyChord::new(Modifiers::empty(), Code::ArrowRight),
+                        KeymapEntry::new("Increment", |cx| cx.emit(SliderEvent::Increment)),
+                    ),
+                    (
+                        KeyChord::new(Modifiers::empty(), Code::ArrowDown),
+                        KeymapEntry::new("Decrement", |cx| cx.emit(SliderEvent::Decrement)),
+                    ),
+                    (
+                        KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
+                        KeymapEntry::new("Decrement", |cx| cx.emit(SliderEvent::Decrement)),
+                    ),
+                    (
+                        KeyChord::new(Modifiers::empty(), Code::Home),
+                        KeymapEntry::new("Set Min", |cx| cx.emit(SliderEvent::SetMin)),
+                    ),
+                    (
+                        KeyChord::new(Modifiers::empty(), Code::End),
+                        KeymapEntry::new("Set Max", |cx| cx.emit(SliderEvent::SetMax)),
+                    ),
+                ])
+                .build(cx);
 
-                let active_width = Memo::new(move |_| {
-                    let normal_val = active_normalized.get();
-                    if orientation.get() == Orientation::Horizontal {
-                        Percentage(normal_val * 100.0)
-                    } else {
-                        Stretch(1.0)
-                    }
-                });
+                // Track
+                HStack::new(cx, move |cx| {
+                    let active_normalized = Memo::new(move |_| {
+                        let active_range = range.get();
+                        let val = value.get().clamp(active_range.start, active_range.end);
+                        (val - active_range.start) / (active_range.end - active_range.start)
+                    });
 
-                let active_height = Memo::new(move |_| {
-                    let normal_val = active_normalized.get();
-                    if orientation.get() == Orientation::Horizontal {
-                        Stretch(1.0)
-                    } else {
-                        Percentage(normal_val * 100.0)
-                    }
-                });
-
-                // Active track
-                VStack::new(cx, move |cx| {
-                    let thumb_translate: Memo<Translate> = Memo::new(move |_| {
-                        let thumb_range = range.get();
-                        let val = value.get().clamp(thumb_range.start, thumb_range.end);
-                        let normal_val =
-                            (val - thumb_range.start) / (thumb_range.end - thumb_range.start);
-
+                    let active_width = Memo::new(move |_| {
+                        let normal_val = active_normalized.get();
                         if orientation.get() == Orientation::Horizontal {
-                            (Percentage(100.0 * (1.0 - normal_val)), Pixels(0.0)).into()
+                            Percentage(normal_val * 100.0)
                         } else {
-                            (Pixels(0.0), Percentage(-100.0 * (1.0 - normal_val))).into()
+                            Stretch(1.0)
                         }
                     });
 
-                    // Thumb
-                    Element::new(cx).class("thumb").translate(thumb_translate);
+                    let active_height = Memo::new(move |_| {
+                        let normal_val = active_normalized.get();
+                        if orientation.get() == Orientation::Horizontal {
+                            Stretch(1.0)
+                        } else {
+                            Percentage(normal_val * 100.0)
+                        }
+                    });
+
+                    // Range track
+                    VStack::new(cx, move |cx| {
+                        let thumb_translate: Memo<Translate> = Memo::new(move |_| {
+                            let thumb_range = range.get();
+                            let val = value.get().clamp(thumb_range.start, thumb_range.end);
+                            let normal_val =
+                                (val - thumb_range.start) / (thumb_range.end - thumb_range.start);
+
+                            if orientation.get() == Orientation::Horizontal {
+                                (Percentage(100.0 * (1.0 - normal_val)), Pixels(0.0)).into()
+                            } else {
+                                (Pixels(0.0), Percentage(-100.0 * (1.0 - normal_val))).into()
+                            }
+                        });
+
+                        // Thumb
+                        Element::new(cx).class("thumb").translate(thumb_translate);
+                    })
+                    .class("range")
+                    .width(active_width)
+                    .height(active_height)
+                    .layout_type(orientation.map(|o| {
+                        if *o == Orientation::Horizontal {
+                            LayoutType::Row
+                        } else {
+                            LayoutType::Column
+                        }
+                    }))
+                    .alignment(orientation.map(|o| {
+                        if *o == Orientation::Horizontal {
+                            Alignment::Right
+                        } else {
+                            Alignment::TopCenter
+                        }
+                    }));
                 })
-                .class("active")
-                .width(active_width)
-                .height(active_height)
-                .layout_type(orientation.map(|o| {
-                    if *o == Orientation::Horizontal { LayoutType::Row } else { LayoutType::Column }
-                }))
-                .alignment(orientation.map(|o| {
-                    if *o == Orientation::Horizontal {
-                        Alignment::Right
-                    } else {
-                        Alignment::TopCenter
-                    }
-                }));
+                .class("track");
             })
-            .class("track");
-        })
-        .toggle_class("vertical", orientation.map(|o| *o == Orientation::Vertical))
-        .role(Role::Slider)
-        .numeric_value(value.map(|v| (*v as f64 * 100.0).round() / 100.0))
-        .text_value(value.map(|v| format!("{}", (*v as f64 * 100.0).round() / 100.0)))
-        .navigable(true)
+            .toggle_class("vertical", orientation.map(|o| *o == Orientation::Vertical))
+            .role(Role::Slider)
+            .numeric_value(value.map(|v| (*v as f64 * 100.0).round() / 100.0))
+            .text_value(value.map(|v| format!("{}", (*v as f64 * 100.0).round() / 100.0)))
+            .navigable(true)
     }
 }
 
@@ -185,7 +215,52 @@ where
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|window_event, _| match window_event {
+        event.map(|slider_event, _| match slider_event {
+            SliderEvent::Increment => {
+                let min = self.range.get().start;
+                let max = self.range.get().end;
+                let step = self.step.get();
+                let mut val = self.value.get() + step;
+                val = val.clamp(min, max);
+                if let Some(callback) = &self.on_change {
+                    (callback)(cx, val);
+                }
+            }
+
+            SliderEvent::Decrement => {
+                let min = self.range.get().start;
+                let max = self.range.get().end;
+                let step = self.step.get();
+                let mut val = self.value.get() - step;
+                val = val.clamp(min, max);
+                if let Some(callback) = &self.on_change {
+                    (callback)(cx, val);
+                }
+            }
+
+            SliderEvent::SetMin => {
+                if let Some(callback) = &self.on_change {
+                    (callback)(cx, self.range.get().start);
+                }
+            }
+
+            SliderEvent::SetMax => {
+                if let Some(callback) = &self.on_change {
+                    (callback)(cx, self.range.get().end);
+                }
+            }
+
+            SliderEvent::ResetDefault => {
+                let min = self.range.get().start;
+                let max = self.range.get().end;
+                let val = self.default_value.get().clamp(min, max);
+                if let Some(callback) = &self.on_change {
+                    (callback)(cx, val);
+                }
+            }
+        });
+
+        event.map(|window_event, meta| match window_event {
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                 if !cx.is_disabled() {
                     self.is_dragging = true;
@@ -287,25 +362,22 @@ where
                 }
             }
 
-            WindowEvent::KeyDown(Code::ArrowUp | Code::ArrowRight, _) => {
-                let min = self.range.get().start;
-                let max = self.range.get().end;
-                let step = self.step.get();
-                let mut val = self.value.get() + step;
-                val = val.clamp(min, max);
-                if let Some(callback) = &self.on_change {
-                    (callback)(cx, val);
-                }
-            }
+            WindowEvent::MouseDoubleClick(button) if *button == MouseButton::Left => {
+                let is_thumb_target = cx
+                    .get_entities_by_class("thumb")
+                    .first()
+                    .copied()
+                    .map(|thumb| thumb == meta.target)
+                    .unwrap_or(false);
 
-            WindowEvent::KeyDown(Code::ArrowDown | Code::ArrowLeft, _) => {
-                let min = self.range.get().start;
-                let max = self.range.get().end;
-                let step = self.step.get();
-                let mut val = self.value.get() - step;
-                val = val.clamp(min, max);
-                if let Some(callback) = &self.on_change {
-                    (callback)(cx, val);
+                if is_thumb_target {
+                    cx.focus_with_visibility(false);
+                    cx.release();
+                    cx.with_current(Entity::root(), |cx| {
+                        cx.set_pointer_events(true);
+                    });
+                    self.is_dragging = false;
+                    cx.emit(SliderEvent::ResetDefault);
                 }
             }
 
@@ -354,10 +426,7 @@ where
     }
 }
 
-impl<S> Handle<'_, Slider<S>>
-where
-    S: SignalGet<f32> + 'static,
-{
+pub trait SliderModifiers: Sized {
     /// Sets the callback triggered when the slider value is changed.
     ///
     /// Takes a closure which triggers when the slider value is changed,
@@ -378,12 +447,9 @@ where
     ///         let _ = (cx, value);
     ///     });
     /// ```
-    pub fn on_change<F>(self, callback: F) -> Self
+    fn on_change<F>(self, callback: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext, f32),
-    {
-        self.modify(|slider| slider.on_change = Some(Box::new(callback)))
-    }
+        F: 'static + Fn(&mut EventContext, f32);
 
     /// Sets the range of the slider.
     ///
@@ -405,19 +471,7 @@ where
     ///         let _ = (cx, value);
     ///     });
     /// ```
-    pub fn range<U: Into<Range<f32>> + Clone + 'static>(
-        self,
-        range: impl Res<U> + 'static,
-    ) -> Self {
-        let range = range.to_signal(self.cx);
-        self.bind(range, move |handle| {
-            let range = range.get();
-            let range = range.into();
-            handle.modify(|slider| {
-                slider.range.set(range);
-            });
-        })
-    }
+    fn range<U: Into<Range<f32>> + Clone + 'static>(self, range: impl Res<U> + 'static) -> Self;
 
     /// Sets the orientation of the slider.
     ///
@@ -437,19 +491,10 @@ where
     ///         let _ = (cx, value);
     ///     });
     /// ```
-    pub fn orientation<U: Into<Orientation> + Clone + 'static>(
+    fn orientation<U: Into<Orientation> + Clone + 'static>(
         self,
         orientation: impl Res<U> + 'static,
-    ) -> Self {
-        let orientation = orientation.to_signal(self.cx);
-        self.bind(orientation, move |handle| {
-            let orientation = orientation.get();
-            let orientation = orientation.into();
-            handle.modify(|slider| {
-                slider.orientation.set(orientation);
-            });
-        })
-    }
+    ) -> Self;
 
     /// Set the step value for the slider.
     ///
@@ -469,7 +514,52 @@ where
     ///         let _ = (cx, value);
     ///     });
     /// ```
-    pub fn step<U: Into<f32> + Clone + 'static>(self, step: impl Res<U> + 'static) -> Self {
+    fn step<U: Into<f32> + Clone + 'static>(self, step: impl Res<U> + 'static) -> Self;
+
+    /// Sets the value that the slider resets to when the thumb is double-clicked.
+    fn default_value<U: Into<f32> + Clone + 'static>(
+        self,
+        default_value: impl Res<U> + 'static,
+    ) -> Self;
+}
+
+impl<S> SliderModifiers for Handle<'_, Slider<S>>
+where
+    S: SignalGet<f32> + 'static,
+{
+    fn on_change<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, f32),
+    {
+        self.modify(|slider| slider.on_change = Some(Box::new(callback)))
+    }
+
+    fn range<U: Into<Range<f32>> + Clone + 'static>(self, range: impl Res<U> + 'static) -> Self {
+        let range = range.to_signal(self.cx);
+        self.bind(range, move |handle| {
+            let range = range.get();
+            let range = range.into();
+            handle.modify(|slider| {
+                slider.range.set(range);
+            });
+        })
+    }
+
+    fn orientation<U: Into<Orientation> + Clone + 'static>(
+        self,
+        orientation: impl Res<U> + 'static,
+    ) -> Self {
+        let orientation = orientation.to_signal(self.cx);
+        self.bind(orientation, move |handle| {
+            let orientation = orientation.get();
+            let orientation = orientation.into();
+            handle.modify(|slider| {
+                slider.orientation.set(orientation);
+            });
+        })
+    }
+
+    fn step<U: Into<f32> + Clone + 'static>(self, step: impl Res<U> + 'static) -> Self {
         let step = step.to_signal(self.cx);
         self.bind(step, move |handle| {
             let step = step.get();
@@ -480,34 +570,15 @@ where
         })
     }
 
-    /// Sets the fraction of a slider that a press of an arrow key will change.
-    ///
-    /// ```
-    /// # use vizia_core::prelude::*;
-    ///
-    /// # let mut cx = &mut Context::default();
-    /// # #[derive(Default)]
-    /// # pub struct AppData {
-    /// #     value: f32,
-    /// # }
-    /// # impl Model for AppData {}
-    /// # let value = Signal::new(0.5);
-    /// Slider::new(cx, value)
-    ///     .keyboard_fraction(0.05_f32)
-    ///     .on_change(|cx, value| {
-    ///         let _ = (cx, value);
-    ///     });
-    /// ```
-    pub fn keyboard_fraction<U: Into<f32> + Clone + 'static>(
+    fn default_value<U: Into<f32> + Clone + 'static>(
         self,
-        keyboard_fraction: impl Res<U> + 'static,
+        default_value: impl Res<U> + 'static,
     ) -> Self {
-        let keyboard_fraction = keyboard_fraction.to_signal(self.cx);
-        self.bind(keyboard_fraction, move |handle| {
-            let keyboard_fraction = keyboard_fraction.get();
-            let keyboard_fraction = keyboard_fraction.into();
+        let default_value = default_value.to_signal(self.cx);
+        self.bind(default_value, move |handle| {
+            let default_value = default_value.get().into();
             handle.modify(|slider| {
-                slider.keyboard_fraction.set(keyboard_fraction);
+                slider.default_value.set(default_value);
             });
         })
     }
