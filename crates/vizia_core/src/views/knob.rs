@@ -2,6 +2,7 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 use crate::vg;
+use accesskit::ActionData;
 use morphorm::Units;
 
 use crate::prelude::*;
@@ -75,6 +76,8 @@ impl<L: Lens<Target = f32>> Knob<L> {
             });
         })
         .navigable(true)
+        .role(Role::Slider)
+        .numeric_value(lens.map(|val| (*val as f64 * 100.0).round()))
     }
 
     /// Create a custom [Knob] view.
@@ -129,6 +132,11 @@ impl<L: Lens<Target = f32>> Handle<'_, Knob<L>> {
 impl<L: Lens<Target = f32>> View for Knob<L> {
     fn element(&self) -> Option<&'static str> {
         Some("knob")
+    }
+
+    fn accessibility(&self, _cx: &mut AccessContext, node: &mut AccessNode) {
+        node.set_min_numeric_value(0.0);
+        node.set_max_numeric_value(100.0);
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
@@ -200,6 +208,27 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
                 self.continuous_normal = self.lens.get(cx);
                 move_virtual_slider(self, cx, self.continuous_normal - self.arrow_scalar);
             }
+
+            WindowEvent::ActionRequest(action) => match action.action {
+                Action::Increment => {
+                    self.continuous_normal = self.lens.get(cx);
+                    move_virtual_slider(self, cx, self.continuous_normal + self.arrow_scalar);
+                }
+
+                Action::Decrement => {
+                    self.continuous_normal = self.lens.get(cx);
+                    move_virtual_slider(self, cx, self.continuous_normal - self.arrow_scalar);
+                }
+
+                Action::SetValue => {
+                    if let Some(ActionData::NumericValue(val)) = action.data {
+                        let val = (val as f32).clamp(0.0, 1.0);
+                        move_virtual_slider(self, cx, val);
+                    }
+                }
+
+                _ => {}
+            },
 
             _ => {}
         });
