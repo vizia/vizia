@@ -248,10 +248,10 @@ impl<R1: Res<f32> + 'static> View for Scrollbar<R1> {
 impl<R1: 'static> Handle<'_, Scrollbar<R1>> {
     /// Sets whether the scrollbar should move to the cursor when pressed.
     pub fn scroll_to_cursor(mut self, scroll_to_cursor: impl Res<bool>) -> Self {
-        let _entity = self.entity();
-        scroll_to_cursor.set_or_bind(self.context(), |cx, val| {
+        let entity = self.entity();
+        scroll_to_cursor.set_or_bind(self.context(), move |cx, val| {
             let v = val.get_value(cx);
-            cx.emit(ScrollBarEvent::SetScrollToCursor(v));
+            cx.emit_to(entity, ScrollBarEvent::SetScrollToCursor(v));
         });
 
         self
