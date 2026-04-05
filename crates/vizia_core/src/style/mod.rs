@@ -136,6 +136,7 @@ bitflags! {
         const RETRANSFORM = 1 << 4;
         const RECLIP = 1 << 5;
         const REACCESS = 1 << 6;
+        const REINHERIT_INLINE = 1 << 7;
     }
 }
 
@@ -2431,7 +2432,7 @@ impl Style {
         self.pseudo_classes.insert(entity, PseudoClassFlags::VALID);
         self.classes.insert(entity, HashSet::new());
         self.abilities.insert(entity, Abilities::default());
-        self.system_flags = SystemFlags::RELAYOUT;
+        self.system_flags = SystemFlags::RELAYOUT | SystemFlags::REINHERIT_INLINE;
         self.restyle.insert(entity);
         self.reaccess.0.insert(entity).unwrap();
         self.retransform.0.insert(entity).unwrap();

@@ -63,35 +63,35 @@ pub trait TextModifiers: internal::Modifiable {
         /// The font name refers to the name assigned when the font is added to context.
         font_family,
         Vec<FamilyOwned>,
-        SystemFlags::REFLOW
+        SystemFlags::REFLOW | SystemFlags::REINHERIT_INLINE
     );
 
     modifier!(
         /// Sets the font weight that should be used by the view.
         font_weight,
         FontWeight,
-        SystemFlags::REFLOW
+        SystemFlags::REFLOW | SystemFlags::REINHERIT_INLINE
     );
 
     modifier!(
         /// Sets the font style that should be used by the view.
         font_slant,
         FontSlant,
-        SystemFlags::REFLOW
+        SystemFlags::REFLOW | SystemFlags::REINHERIT_INLINE
     );
 
     modifier!(
         /// Sets the font stretch that should be used by the view if the font supports it.
         font_width,
         FontWidth,
-        SystemFlags::REFLOW
+        SystemFlags::REFLOW | SystemFlags::REINHERIT_INLINE
     );
 
     modifier!(
         /// Sets the font variation settings that should be used by the view.
         font_variation_settings,
         Vec<FontVariation>,
-        SystemFlags::REFLOW
+        SystemFlags::REFLOW | SystemFlags::REINHERIT_INLINE
     );
 
     /// Sets the text color of the view.
@@ -101,6 +101,7 @@ pub trait TextModifiers: internal::Modifiable {
         self.context().with_current(current, move |cx| {
             value.set_or_bind(cx, move |cx, v| {
                 cx.style.font_color.insert(entity, v.get_value(cx).into());
+                cx.style.system_flags |= SystemFlags::REINHERIT_INLINE;
                 cx.style.needs_text_update(entity);
                 cx.needs_redraw(entity);
             });
@@ -115,6 +116,7 @@ pub trait TextModifiers: internal::Modifiable {
         self.context().with_current(current, move |cx| {
             value.set_or_bind(cx, move |cx, v| {
                 cx.style.font_size.insert(entity, v.get_value(cx).into());
+                cx.style.system_flags |= SystemFlags::REINHERIT_INLINE;
                 cx.style.needs_text_update(entity);
             });
         });
@@ -125,14 +127,14 @@ pub trait TextModifiers: internal::Modifiable {
         /// Sets the ext caret color of the view.
         caret_color,
         Color,
-        SystemFlags::REDRAW
+        SystemFlags::REDRAW | SystemFlags::REINHERIT_INLINE
     );
 
     modifier!(
         /// Sets the color used to highlight selected text within the view.
         selection_color,
         Color,
-        SystemFlags::REDRAW
+        SystemFlags::REDRAW | SystemFlags::REINHERIT_INLINE
     );
 
     modifier!(
@@ -167,7 +169,7 @@ pub trait TextModifiers: internal::Modifiable {
         /// Sets the max number of .
         text_decoration_line,
         TextDecorationLine,
-        SystemFlags::REFLOW
+        SystemFlags::REFLOW | SystemFlags::REINHERIT_INLINE
     );
 
     modifier!(
@@ -178,7 +180,7 @@ pub trait TextModifiers: internal::Modifiable {
         /// See also [`Self::text_stroke_style`].
         text_stroke_width,
         Length,
-        SystemFlags::REFLOW
+        SystemFlags::REFLOW | SystemFlags::REINHERIT_INLINE
     );
 
     modifier!(
@@ -196,7 +198,7 @@ pub trait TextModifiers: internal::Modifiable {
         /// on achieving this.
         text_stroke_style,
         TextStrokeStyle,
-        SystemFlags::REFLOW
+        SystemFlags::REFLOW | SystemFlags::REINHERIT_INLINE
     );
 }
 

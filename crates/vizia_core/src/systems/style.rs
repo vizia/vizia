@@ -342,6 +342,11 @@ impl Node<'_, '_> {
 
 /// Link inheritable inline properties to their parent.
 pub(crate) fn inline_inheritance_system(cx: &mut Context, redraw_entities: &mut Vec<Entity>) {
+    if !cx.style.system_flags.contains(SystemFlags::REINHERIT_INLINE) {
+        return;
+    }
+    cx.style.system_flags.set(SystemFlags::REINHERIT_INLINE, false);
+
     for entity in cx.tree.into_iter() {
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
             if cx.style.disabled.inherit_inline(entity, parent)
