@@ -9,12 +9,12 @@ use crate::prelude::*;
 ///
 /// ## Basic checkbox
 ///
-/// The checkbox must be bound to some boolean data.
+/// The checkbox takes a boolean signal (for example `Signal<bool>`).
 ///
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # #[derive(Lens)]
+/// #
 /// # struct AppData {
 /// #     value: bool,
 /// # }
@@ -23,20 +23,20 @@ use crate::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
-/// # AppData { value: false }.build(cx);
+/// # let value = Signal::new(false);
 /// #
-/// Checkbox::new(cx, AppData::value);
+/// Checkbox::new(cx, value);
 /// ```
 ///
 /// ## Checkbox with an action
 ///
-/// A checkbox can be used to trigger a callback when toggled. Usually this is emitting an
-/// event responsible for changing the data the checkbox is bound to.
+/// A checkbox can be used to trigger a callback when toggled. Usually this updates
+/// the underlying boolean state.
 ///
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # #[derive(Lens)]
+/// #
 /// # struct AppData {
 /// #     value: bool,
 /// # }
@@ -49,16 +49,16 @@ use crate::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
-/// # AppData { value: false }.build(cx);
+/// # let value = Signal::new(false);
 /// #
-/// Checkbox::new(cx, AppData::value)
+/// Checkbox::new(cx, value)
 ///     .on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
 /// ```
 ///
 /// ## Checkbox with a label
 ///
-/// A checkbox is usually used with a label next to it describing what data the checkbox
-/// is bound to or what the checkbox does when pressed. This can be done, for example, by
+/// A checkbox is usually used with a label next to it describing what state the checkbox
+/// controls or what the checkbox does when pressed. This can be done, for example, by
 /// wrapping the checkbox in an [`HStack`](crate::prelude::HStack) and adding a [`Label`](crate::prelude::Label)
 /// to it.
 ///
@@ -67,7 +67,7 @@ use crate::prelude::*;
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # #[derive(Lens)]
+/// #
 /// # struct AppData {
 /// #     value: bool,
 /// # }
@@ -76,10 +76,10 @@ use crate::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
-/// # AppData { value: false }.build(cx);
+/// # let value = Signal::new(false);
 /// #
 /// HStack::new(cx, |cx| {
-///     Checkbox::new(cx, AppData::value)
+///     Checkbox::new(cx, value)
 ///         .id("check1");
 ///     Label::new(cx, "Press me")
 ///         .describing("check1");
@@ -93,7 +93,7 @@ use crate::prelude::*;
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # #[derive(Lens)]
+/// #
 /// # struct AppData {
 /// #     value: bool,
 /// # }
@@ -106,10 +106,10 @@ use crate::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
-/// # AppData { value: false }.build(cx);
+/// # let value = Signal::new(false);
 /// # use vizia_core::icons::ICON_X;
 ///
-/// Checkbox::with_icons(cx, AppData::value, None, Some(ICON_X))
+/// Checkbox::with_icons(cx, value, Some(""), Some(ICON_X))
 ///     .on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
 /// ```
 pub struct Checkbox {
@@ -124,7 +124,7 @@ impl Checkbox {
     /// ```
     /// # use vizia_core::prelude::*;
     /// #
-    /// # #[derive(Lens)]
+    /// #
     /// # struct AppData {
     /// #     value: bool,
     /// # }
@@ -133,18 +133,18 @@ impl Checkbox {
     /// #
     /// # let cx = &mut Context::default();
     /// #
-    /// # AppData { value: false }.build(cx);
+    /// # let value = Signal::new(false);
     /// #
-    /// Checkbox::new(cx, AppData::value);
+    /// Checkbox::new(cx, value);
     /// ```
-    pub fn new(cx: &mut Context, checked: impl Lens<Target = bool>) -> Handle<Self> {
+    pub fn new(cx: &mut Context, checked: impl Res<bool> + Copy + 'static) -> Handle<Self> {
         Self { on_toggle: None }
-            .build(cx, |cx| {
-                Binding::new(cx, checked, |cx, checked| {
-                    if checked.get(cx) {
+            .build(cx, move |cx| {
+                checked.set_or_bind(cx, |cx, checked| {
+                    if checked.get_value(cx) {
                         Svg::new(cx, ICON_CHECK);
                     }
-                })
+                });
             })
             .checked(checked)
             .role(Role::CheckBox)
@@ -158,7 +158,7 @@ impl Checkbox {
     /// ```
     /// # use vizia_core::prelude::*;
     /// #
-    /// # #[derive(Lens)]
+    /// #
     /// # struct AppData {
     /// #     value: bool,
     /// # }
@@ -171,34 +171,32 @@ impl Checkbox {
     /// #
     /// # let cx = &mut Context::default();
     /// #
-    /// # AppData { value: false }.build(cx);
+    /// # let value = Signal::new(false);
     /// # use vizia_core::icons::ICON_X;
     ///
-    /// Checkbox::with_icons(cx, AppData::value, None, Some(ICON_X))
+    /// Checkbox::with_icons(cx, value, Some(""), Some(ICON_X))
     ///     .on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
     /// ```
     pub fn with_icons<T>(
         cx: &mut Context,
-        checked: impl Lens<Target = bool>,
-        icon_default: Option<impl Res<T> + 'static + Clone>,
-        icon_checked: Option<impl Res<T> + 'static + Clone>,
+        checked: impl Res<bool> + Copy + 'static,
+        icon_default: Option<impl Res<T> + Copy + 'static>,
+        icon_checked: Option<impl Res<T> + Copy + 'static>,
     ) -> Handle<Self>
     where
         T: AsRef<[u8]> + 'static,
     {
         Self { on_toggle: None }
-            .build(cx, |cx| {
-                Binding::new(cx, checked, move |cx, checked| {
-                    let icon_default = icon_default.clone();
-                    let icon_checked = icon_checked.clone();
-                    if checked.get(cx) {
+            .build(cx, move |cx| {
+                checked.set_or_bind(cx, move |cx, checked| {
+                    if checked.get_value(cx) {
                         if let Some(icon) = icon_checked {
                             Svg::new(cx, icon);
                         }
                     } else if let Some(icon) = icon_default {
                         Svg::new(cx, icon);
                     }
-                })
+                });
             })
             .checked(checked)
             .role(Role::CheckBox)
@@ -208,22 +206,29 @@ impl Checkbox {
     /// Creates a new checkbox in an intermediate state.
     pub fn intermediate(
         cx: &mut Context,
-        checked: impl Lens<Target = bool>,
-        intermediate: impl Lens<Target = bool>,
+        checked: impl Res<bool> + Clone + 'static,
+        intermediate: impl Res<bool> + Clone + 'static,
     ) -> Handle<Self> {
+        let checked_state = checked.clone().to_signal(cx);
+        let intermediate_state = intermediate.to_signal(cx);
+
+        let text_memo = Memo::new(move |_| {
+            if checked_state.get() {
+                ICON_CHECK
+            } else if intermediate_state.get() {
+                "-"
+            } else {
+                ""
+            }
+        });
+
+        let is_intermediate_memo =
+            Memo::new(move |_| !checked_state.get() && intermediate_state.get());
+
         Self { on_toggle: None }
             .build(cx, |_| {})
-            .bind(checked, move |handle, c| {
-                handle.bind(intermediate, move |handle, i| {
-                    if c.get(&handle) {
-                        handle.text(ICON_CHECK).toggle_class("intermediate", false);
-                    } else if i.get(&handle) {
-                        handle.text("-").toggle_class("intermediate", true);
-                    } else {
-                        handle.text("").toggle_class("intermediate", false);
-                    }
-                });
-            })
+            .text(text_memo)
+            .toggle_class("intermediate", is_intermediate_memo)
             .checked(checked)
             .navigable(true)
     }
@@ -237,7 +242,7 @@ impl Handle<'_, Checkbox> {
     /// ```
     /// # use vizia_core::prelude::*;
     /// #
-    /// # #[derive(Lens)]
+    /// #
     /// # struct AppData {
     /// #     value: bool,
     /// # }
@@ -250,9 +255,9 @@ impl Handle<'_, Checkbox> {
     /// #
     /// # let cx = &mut Context::default();
     /// #
-    /// # AppData { value: false }.build(cx);
+    /// # let value = Signal::new(false);
     /// #
-    /// Checkbox::new(cx, AppData::value)
+    /// Checkbox::new(cx, value)
     ///     .on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
     /// ```
     pub fn on_toggle<F>(self, callback: F) -> Self

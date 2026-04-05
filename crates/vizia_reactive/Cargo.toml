@@ -1,0 +1,13 @@
+[package]
+name = "vizia_reactive"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+serde = ["dep:serde"]
+
+[dependencies]
+smallvec = "1.15.1"
+parking_lot = { workspace = true }
+serde = { workspace = true, optional = true }

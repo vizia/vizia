@@ -2,9 +2,8 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-#[derive(Lens)]
 pub struct AppData {
-    value: f32,
+    value: Signal<f32>,
 }
 
 #[derive(Debug)]
@@ -16,7 +15,7 @@ impl Model for AppData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::SetValue(value) => {
-                self.value = *value;
+                self.value.set(*value);
             }
         });
     }
@@ -24,10 +23,11 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { value: 0.2 }.build(cx);
+        let value = Signal::new(0.2);
+        AppData { value }.build(cx);
 
         ExamplePage::new(cx, |cx| {
-            Knob::new(cx, 0.5, AppData::value, false).on_change(|cx, val| {
+            Knob::new(cx, 0.5, value, false).on_change(|cx, val| {
                 cx.emit(AppEvent::SetValue(val));
             });
         });

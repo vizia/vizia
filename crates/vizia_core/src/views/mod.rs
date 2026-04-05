@@ -37,7 +37,6 @@ mod tooltip;
 mod virtual_list;
 mod xypad;
 
-pub use crate::binding::Binding;
 pub use avatar::*;
 pub use badge::*;
 pub use button::*;
@@ -79,7 +78,7 @@ pub use xypad::*;
 use crate::prelude::*;
 
 /// The orientation of a widget, such as a slider or scrollbar
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Data)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum Orientation {
     #[default]
     /// A horizontal orientation.
@@ -91,7 +90,7 @@ pub enum Orientation {
 impl_res_simple!(Orientation);
 
 /// Describes the placement of a view relative to its parent element.
-#[derive(Debug, Clone, Copy, Data, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Placement {
     /// The view should be placed above its parent with its left edge aligned with the left edge of its parent.
     TopStart,

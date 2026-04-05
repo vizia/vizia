@@ -19,7 +19,7 @@ use crate::prelude::*;
 /// # let cx = &mut Context::default();
 /// #
 /// Button::new(cx, |cx| Label::new(cx, "Text"))
-///     .on_press(|ex| ex.emit(AppEvent::Action))
+///     .on_press(|ex| ex.emit(AppEvent::Action));
 /// ```
 ///
 /// ## Button without an action
@@ -162,13 +162,21 @@ pub trait ButtonModifiers {
     /// Button::new(cx, |cx| Label::new(cx, "Text"))
     ///     .variant(ButtonVariant::Accent);
     /// ```
-    fn variant<U: Into<ButtonVariant>>(self, variant: impl Res<U>) -> Self;
+    fn variant<U: Into<ButtonVariant> + Clone + 'static>(
+        self,
+        variant: impl Res<U> + 'static,
+    ) -> Self;
 }
 
 impl ButtonModifiers for Handle<'_, Button> {
-    fn variant<U: Into<ButtonVariant>>(self, variant: impl Res<U>) -> Self {
-        self.bind(variant, |handle, val| {
-            let var: ButtonVariant = val.get(&handle).into();
+    fn variant<U: Into<ButtonVariant> + Clone + 'static>(
+        self,
+        variant: impl Res<U> + 'static,
+    ) -> Self {
+        let variant = variant.to_signal(self.cx);
+        self.bind(variant, move |handle| {
+            let val = variant.get();
+            let var: ButtonVariant = val.into();
             match var {
                 ButtonVariant::Normal => {
                     handle
@@ -244,9 +252,14 @@ impl Handle<'_, ButtonGroup> {
 }
 
 impl ButtonModifiers for Handle<'_, ButtonGroup> {
-    fn variant<U: Into<ButtonVariant>>(self, variant: impl Res<U>) -> Self {
-        self.bind(variant, |handle, val| {
-            let var: ButtonVariant = val.get(&handle).into();
+    fn variant<U: Into<ButtonVariant> + Clone + 'static>(
+        self,
+        variant: impl Res<U> + 'static,
+    ) -> Self {
+        let variant = variant.to_signal(self.cx);
+        self.bind(variant, move |handle| {
+            let val = variant.get();
+            let var: ButtonVariant = val.into();
             match var {
                 ButtonVariant::Normal => {
                     handle

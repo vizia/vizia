@@ -2,9 +2,9 @@ use crate::{icons::ICON_X, prelude::*};
 use std::sync::Arc;
 
 /// A visual indicator such as a tag.
-#[derive(Lens)]
 pub struct Chip {
     on_close: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
+    has_close: Signal<bool>,
 }
 
 impl Chip {
@@ -22,12 +22,13 @@ impl Chip {
     where
         T: ToStringLocalized,
     {
-        Self { on_close: None }
+        let has_close = Signal::new(false);
+        Self { on_close: None, has_close }
             .build(cx, move |cx| {
                 Label::new(cx, text).height(Stretch(1.0)).alignment(Alignment::Left);
-                Binding::new(cx, Chip::on_close.map(|on_close| on_close.is_some()), |cx, val| {
-                    if val.get(cx) {
-                        let on_close = Chip::on_close.get(cx).unwrap();
+                Binding::new(cx, has_close, move |cx| {
+                    if has_close.get() {
+                        let on_close = cx.data::<Chip>().on_close.clone().unwrap();
                         Button::new(cx, |cx| Svg::new(cx, ICON_X))
                             .class("close-icon")
                             .height(Pixels(16.0))
@@ -37,7 +38,7 @@ impl Chip {
                     }
                 });
             })
-            .toggle_class("close", Chip::on_close.map(|on_close| on_close.is_some()))
+            .toggle_class("close", has_close)
             .layout_type(LayoutType::Row)
     }
 }
@@ -49,7 +50,7 @@ impl View for Chip {
 }
 
 /// Used in conjunction with the `variant` modifier for selecting the style variant of a chip.
-#[derive(Debug, Clone, Copy, Data, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ChipVariant {
     /// A filled chip.
     Filled,
@@ -65,10 +66,11 @@ impl Handle<'_, Chip> {
     pub fn on_close(self, callback: impl 'static + Fn(&mut EventContext) + Send + Sync) -> Self {
         self.modify(|chip: &mut Chip| {
             chip.on_close = Some(Arc::new(callback));
+            chip.has_close.set(true);
         })
     }
 
-    /// Selects the style variant to be used by the chip. Accepts a value of, or lens to, a [ChipVariant].
+    /// Selects the style variant to be used by the chip. Accepts a value or signal of type [ChipVariant].
     ///
     /// # Example
     /// ```
@@ -80,9 +82,14 @@ impl Handle<'_, Chip> {
     /// Chip::new(cx, "Chip")
     ///     .variant(ChipVariant::Filled);
     /// ```
-    pub fn variant<U: Into<ChipVariant>>(self, variant: impl Res<U>) -> Self {
-        self.bind(variant, |handle, variant| {
-            let variant = variant.get(&handle).into();
+    pub fn variant<U: Into<ChipVariant> + Clone + 'static>(
+        self,
+        variant: impl Res<U> + 'static,
+    ) -> Self {
+        let variant = variant.to_signal(self.cx);
+        self.bind(variant, move |handle| {
+            let variant = variant.get();
+            let variant = variant.into();
 
             match variant {
                 ChipVariant::Filled => {

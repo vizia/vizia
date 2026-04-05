@@ -10,32 +10,20 @@ use crate::prelude::*;
 ///
 /// A basic dropdown displaying five options that the user can choose from.
 ///
-/// ```
+/// ```ignore
 /// # use vizia_core::prelude::*;
-/// #
-/// # #[derive(Lens)]
-/// # struct AppData {
-/// #     value: u8,
-/// # }
-/// #
-/// # impl Model for AppData {}
-/// #
-/// # enum AppEvent {
-/// #     SetValue(u8),
-/// # }
-/// #
 /// # let cx = &mut Context::default();
 /// #
-/// # AppData { value: 0 }.build(cx);
+/// # let selected = Signal::new(0_u8);
 /// #
 /// Dropdown::new(
 ///     cx,
-///     |cx| Label::new(cx, AppData::value),
+///     |cx| Label::new(cx, selected.map(|v| v.to_string())),
 ///     |cx| {
 ///         for i in 0..5 {
 ///             Label::new(cx, i)
 ///                 .on_press(move |cx| {
-///                     cx.emit(AppEvent::SetValue(i));
+///                     selected.set(i);
 ///                     cx.emit(PopupEvent::Close); // close the popup
 ///                 })
 ///                 .width(Stretch(1.0));
@@ -43,7 +31,7 @@ use crate::prelude::*;
 ///     },
 /// )
 /// .width(Pixels(100.0));
-/// ```
+/// ```ignore
 ///
 /// The line marked "close the popup" is not required for anything other than closing the popup -
 /// if you leave it out, the popup will simply not close until the user clicks out of the dropdown.
@@ -101,7 +89,8 @@ use crate::prelude::*;
 ///     .width(Pixels(100.0))
 ///     .height(Pixels(30.0))
 /// }, |cx| {
-///     Binding::new(cx, AppData::root, |cx, lens| {
+///     Binding::new(cx, AppData::root, |cx| {
+///         let lens = AppData::root.get();
 ///         let current = lens.get(cx);
 ///         for i in 0..6 {
 ///             if LABELS[i].to_lowercase().contains(&current.filter.to_lowercase()) {
@@ -117,13 +106,12 @@ use crate::prelude::*;
 ///     });
 /// }).width(Pixels(100.0));
 /// ```
-#[derive(Lens)]
 pub struct Dropdown {
-    pub is_open: PopupData,
-    pub placement: Placement,
-    pub show_arrow: bool,
-    pub arrow_size: Length,
-    pub should_reposition: bool,
+    pub is_open: Signal<bool>,
+    pub placement: Signal<Placement>,
+    pub show_arrow: Signal<bool>,
+    pub arrow_size: Signal<Length>,
+    pub should_reposition: Signal<bool>,
 }
 
 impl Dropdown {
@@ -136,36 +124,39 @@ impl Dropdown {
     /// #
     /// # let cx = &mut Context::default();
     /// #
-    /// Dropdown::new(cx, |cx| Label::new(cx, "Text"), |_| {});
+    /// Dropdown::new(cx, |cx| { Label::new(cx, "Text"); }, |_| {});
     /// ```
     pub fn new<F, L>(cx: &mut Context, trigger: L, content: F) -> Handle<Self>
     where
         L: 'static + Fn(&mut Context),
         F: 'static + Fn(&mut Context),
     {
-        Self {
-            is_open: PopupData::default(),
-            placement: Placement::Bottom,
-            show_arrow: true,
-            arrow_size: Length::Value(LengthValue::Px(4.0)),
-            should_reposition: true,
-        }
-        .build(cx, move |cx| {
-            (trigger)(cx);
+        let is_open = Signal::new(false);
+        let placement = Signal::new(Placement::Bottom);
+        let show_arrow = Signal::new(true);
+        let arrow_size = Signal::new(Length::Value(LengthValue::Px(4.0)));
+        let should_reposition = Signal::new(true);
 
-            Binding::new(cx, Self::is_open, move |cx, is_open| {
-                if is_open.get(cx).into() {
-                    Popup::new(cx, |cx| {
-                        (content)(cx);
-                    })
-                    .on_blur(|cx| cx.emit(PopupEvent::Close))
-                    .placement(Dropdown::placement)
-                    .show_arrow(Dropdown::show_arrow)
-                    .arrow_size(Dropdown::arrow_size)
-                    .should_reposition(Dropdown::should_reposition);
-                }
-            })
-        })
+        Self { is_open, placement, show_arrow, arrow_size, should_reposition }.build(
+            cx,
+            move |cx| {
+                (trigger)(cx);
+
+                Binding::new(cx, is_open, move |cx| {
+                    let is_open = is_open.get();
+                    if is_open {
+                        Popup::new(cx, |cx| {
+                            (content)(cx);
+                        })
+                        .on_blur(|cx| cx.emit(PopupEvent::Close))
+                        .placement(placement)
+                        .show_arrow(show_arrow)
+                        .arrow_size(arrow_size)
+                        .should_reposition(should_reposition);
+                    }
+                })
+            },
+        )
     }
 }
 
@@ -174,35 +165,74 @@ impl View for Dropdown {
         Some("dropdown")
     }
 
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        self.is_open.event(cx, event);
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+        event.map(|popup_event, meta| match popup_event {
+            PopupEvent::Open => {
+                self.is_open.set(true);
+                meta.consume();
+            }
+
+            PopupEvent::Close => {
+                self.is_open.set(false);
+                meta.consume();
+            }
+
+            PopupEvent::Switch => {
+                self.is_open.set(!self.is_open.get());
+
+                meta.consume();
+            }
+        });
     }
 }
 
 impl Handle<'_, Dropdown> {
     /// Sets the position where the tooltip should appear relative to its parent element.
     /// Defaults to `Placement::Bottom`.
-    pub fn placement(self, placement: impl Res<Placement>) -> Self {
-        self.bind(placement, |handle, placement| {
-            let placement = placement.get(&handle);
+    pub fn placement(self, placement: impl Res<Placement> + 'static) -> Self {
+        let placement = placement.to_signal(self.cx);
+        self.bind(placement, move |handle| {
+            let placement = placement.get();
             handle.modify(|dropdown| {
-                dropdown.placement = placement;
+                dropdown.placement.set(placement);
             });
         })
     }
 
     /// Sets whether the popup should include an arrow. Defaults to true.
-    pub fn show_arrow(self, show_arrow: bool) -> Self {
-        self.modify(|dropdown| dropdown.show_arrow = show_arrow)
+    pub fn show_arrow(self, show_arrow: impl Res<bool> + 'static) -> Self {
+        let show_arrow = show_arrow.to_signal(self.cx);
+        self.bind(show_arrow, move |handle| {
+            let show_arrow = show_arrow.get();
+            handle.modify(|dropdown| {
+                dropdown.show_arrow.set(show_arrow);
+            });
+        })
     }
 
     /// Sets the size of the popup arrow, or gap if the arrow is hidden.
-    pub fn arrow_size(self, size: impl Into<Length>) -> Self {
-        self.modify(|dropdown| dropdown.arrow_size = size.into())
+    pub fn arrow_size<U: Into<Length> + Clone + 'static>(
+        self,
+        size: impl Res<U> + 'static,
+    ) -> Self {
+        let size = size.to_signal(self.cx);
+        self.bind(size, move |handle| {
+            let size = size.get();
+            let size = size;
+            handle.modify(|dropdown| {
+                dropdown.arrow_size.set(size.into());
+            });
+        })
     }
 
     /// Set to whether the popup should reposition to always be visible.
-    pub fn should_reposition(self, flag: bool) -> Self {
-        self.modify(|dropdown| dropdown.should_reposition = flag)
+    pub fn should_reposition(self, flag: impl Res<bool> + 'static) -> Self {
+        let flag = flag.to_signal(self.cx);
+        self.bind(flag, move |handle| {
+            let flag = flag.get();
+            handle.modify(|dropdown| {
+                dropdown.should_reposition.set(flag);
+            });
+        })
     }
 }

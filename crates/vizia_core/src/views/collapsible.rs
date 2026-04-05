@@ -9,6 +9,8 @@ pub enum CollapsibleEvent {
 ///
 /// # Example
 /// ```no_run
+/// # use vizia_core::prelude::*;
+/// # let cx = &mut Context::default();
 /// Collapsible::new(
 ///     cx,
 ///     |cx| {
@@ -20,9 +22,8 @@ pub enum CollapsibleEvent {
 /// )
 /// .width(Pixels(300.0));
 /// ```
-#[derive(Lens)]
 pub struct Collapsible {
-    is_open: bool,
+    is_open: Signal<bool>,
 }
 
 impl Collapsible {
@@ -32,7 +33,9 @@ impl Collapsible {
         header: impl Fn(&mut Context),
         content: impl Fn(&mut Context),
     ) -> Handle<Self> {
-        Self { is_open: false }
+        let is_open = Signal::new(false);
+
+        Self { is_open }
             .build(cx, |cx| {
                 // Header
                 HStack::new(cx, |cx| {
@@ -50,7 +53,7 @@ impl Collapsible {
                 })
                 .class("content");
             })
-            .toggle_class("open", Collapsible::is_open)
+            .toggle_class("open", is_open)
     }
 }
 
@@ -62,7 +65,7 @@ impl View for Collapsible {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|collapsible_event, _| match collapsible_event {
             CollapsibleEvent::ToggleOpen => {
-                self.is_open = !self.is_open;
+                self.is_open.set(!self.is_open.get());
             }
         });
     }
@@ -70,10 +73,13 @@ impl View for Collapsible {
 
 impl Handle<'_, Collapsible> {
     /// Set the open state of the collapsible view.
-    pub fn open(self, open: impl Res<bool>) -> Self {
-        self.bind(open, |handle, open| {
-            let open = open.get(&handle);
-            handle.modify(|collapsible| collapsible.is_open = open);
+    pub fn open(self, open: impl Res<bool> + 'static) -> Self {
+        let open = open.to_signal(self.cx);
+        self.bind(open, move |handle| {
+            let open = open.get();
+            handle.modify(|collapsible| {
+                collapsible.is_open.set(open);
+            });
         })
     }
 }

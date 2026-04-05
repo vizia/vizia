@@ -5,10 +5,9 @@ fn main() {
     panic!("This example is not supported on baseview");
 }
 
-#[derive(Lens)]
 pub struct AppData {
-    is_saved: bool,
-    show_dialog: bool,
+    is_saved: Signal<bool>,
+    show_dialog: Signal<bool>,
 }
 
 impl Model for AppData {
@@ -16,8 +15,8 @@ impl Model for AppData {
         event.map(|window_event, meta| {
             // Intercept WindowClose event to show a dialog if not 'saved'.
             if let WindowEvent::WindowClose = window_event {
-                if !self.is_saved {
-                    self.show_dialog = true;
+                if !self.is_saved.get() {
+                    self.show_dialog.set(true);
                     meta.consume();
                 }
             }
@@ -25,16 +24,16 @@ impl Model for AppData {
 
         event.map(|app_event, _| match app_event {
             AppEvent::CloseModal => {
-                self.show_dialog = false;
+                self.show_dialog.set(false);
             }
 
             AppEvent::Save => {
-                self.is_saved = true;
+                self.is_saved.set(true);
             }
 
             AppEvent::SaveAndClose => {
-                self.is_saved = true;
-                self.show_dialog = false;
+                self.is_saved.set(true);
+                self.show_dialog.set(false);
                 cx.emit(WindowEvent::WindowClose);
             }
         });
@@ -50,7 +49,10 @@ pub enum AppEvent {
 #[cfg(not(feature = "baseview"))]
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { is_saved: false, show_dialog: false }.build(cx);
+        let is_saved = Signal::new(false);
+        let show_dialog = Signal::new(false);
+
+        AppData { is_saved, show_dialog }.build(cx);
 
         HStack::new(cx, |cx| {
             Button::new(cx, |cx| Label::new(cx, "Close"))
@@ -61,8 +63,9 @@ fn main() -> Result<(), ApplicationError> {
         .padding(Pixels(50.0))
         .alignment(Alignment::TopCenter);
 
-        Binding::new(cx, AppData::show_dialog, |cx, show_dialog| {
-            if show_dialog.get(cx) {
+        Binding::new(cx, show_dialog, move |cx| {
+            let show_dialog = show_dialog.get();
+            if show_dialog {
                 Window::popup(cx, true, |cx| {
                     VStack::new(cx, |cx| {
                         Label::new(cx, "Save before close?")
@@ -95,7 +98,7 @@ fn main() -> Result<(), ApplicationError> {
             .size(Stretch(1.0))
             .position_type(PositionType::Absolute)
             .backdrop_filter(Filter::Blur(Pixels(2.0).into()))
-            .display(AppData::show_dialog);
+            .display(show_dialog);
     })
     .run()
 }

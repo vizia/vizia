@@ -20,9 +20,8 @@ impl std::fmt::Display for Options {
     }
 }
 
-#[derive(Lens)]
 pub struct RadioData {
-    pub option: Options,
+    pub option: Signal<Options>,
 }
 
 pub enum RadioEvent {
@@ -33,14 +32,15 @@ impl Model for RadioData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|radio_event, _| match radio_event {
             RadioEvent::SetOption(option) => {
-                self.option = *option;
+                self.option.set(*option);
             }
         });
     }
 }
 
 pub fn radiobutton(cx: &mut Context) {
-    RadioData { option: Options::First }.build(cx);
+    let option = Signal::new(Options::First);
+    RadioData { option }.build(cx);
 
     VStack::new(cx, |cx| {
         Markdown::new(cx, "# Radiobutton
@@ -51,10 +51,14 @@ A radio button can be used to select an option from a set of options.
 
         DemoRegion::new(
             cx,
-            |cx| {
-                RadioButton::new(cx, RadioData::option.map(|option| *option == Options::First)).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::First)));
-                RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Second)).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Second)));
-                RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Third)).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Third)));
+            move |cx| {
+                let first_selected = Memo::new(move |_| option.get() == Options::First);
+                let second_selected = Memo::new(move |_| option.get() == Options::Second);
+                let third_selected = Memo::new(move |_| option.get() == Options::Third);
+
+                RadioButton::new(cx, first_selected).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::First)));
+                RadioButton::new(cx, second_selected).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Second)));
+                RadioButton::new(cx, third_selected).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Third)));
             }, r#"TODO"#
         );
 
@@ -64,10 +68,10 @@ The describing modifier can be used to link a label to a particular radiobutton.
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 VStack::new(cx, |cx|{
                     HStack::new(cx, |cx| {
-                        RadioButton::new(cx, RadioData::option.map(|option| *option == Options::First))
+                        RadioButton::new(cx, Memo::new(move |_| option.get() == Options::First))
                             .on_select(|cx| cx.emit(RadioEvent::SetOption(Options::First)))
                             .id("r1");
                         Label::new(cx, "First").describing("r1");
@@ -77,7 +81,7 @@ The describing modifier can be used to link a label to a particular radiobutton.
                     .horizontal_gap(Pixels(8.0));
 
                     HStack::new(cx, |cx| {
-                        RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Second))
+                        RadioButton::new(cx, Memo::new(move |_| option.get() == Options::Second))
                             .on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Second)))
                             .id("r2");
                         Label::new(cx, "Second").describing("r2");
@@ -87,7 +91,7 @@ The describing modifier can be used to link a label to a particular radiobutton.
                     .horizontal_gap(Pixels(8.0));
 
                     HStack::new(cx, |cx| {
-                        RadioButton::new(cx, RadioData::option.map(|option| *option == Options::Third))
+                        RadioButton::new(cx, Memo::new(move |_| option.get() == Options::Third))
                             .on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Third)))
                             .id("r3");
                         Label::new(cx, "Third").describing("r3");

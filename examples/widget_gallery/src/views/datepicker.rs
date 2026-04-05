@@ -2,9 +2,8 @@ use crate::components::DemoRegion;
 use chrono::{NaiveDate, Utc};
 use vizia::prelude::*;
 
-#[derive(Clone, Lens)]
 struct DatepickerState {
-    date: NaiveDate,
+    date: Signal<NaiveDate>,
 }
 
 pub enum DatepickerEvent {
@@ -15,15 +14,17 @@ impl Model for DatepickerState {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             DatepickerEvent::SetDate(date) => {
-                self.date = *date;
+                self.date.set(*date);
             }
         });
     }
 }
 
 pub fn datepicker(cx: &mut Context) {
+    let date = Signal::new(Utc::now().date_naive());
+
     VStack::new(cx, |cx| {
-        DatepickerState { date: Utc::now().date_naive() }.build(cx);
+        DatepickerState { date }.build(cx);
 
         Markdown::new(cx, "# Datepicker");
 
@@ -33,8 +34,8 @@ pub fn datepicker(cx: &mut Context) {
 
         DemoRegion::new(
             cx,
-            |cx| {
-                Datepicker::new(cx, DatepickerState::date)
+            move |cx| {
+                Datepicker::new(cx, date)
                     .on_select(|cx, date| cx.emit(DatepickerEvent::SetDate(date)));
             },
             r#"Datepicker::new(cx, DatepickerState::date)

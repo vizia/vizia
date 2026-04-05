@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use crate::binding::RatioLens;
 use crate::prelude::*;
 
 pub(crate) const SCROLL_SENSITIVITY: f32 = 20.0;
@@ -22,14 +21,13 @@ pub enum ScrollEvent {
 }
 
 /// A container a view which allows the user to scroll any overflowed content.
-#[derive(Lens, Data, Clone)]
+#[derive(Clone)]
 pub struct ScrollView {
     /// Progress of scroll position between 0 and 1 for the x axis
-    pub scroll_x: f32,
+    pub scroll_x: Signal<f32>,
     /// Progress of scroll position between 0 and 1 for the y axis
-    pub scroll_y: f32,
+    pub scroll_y: Signal<f32>,
     /// Callback called when the scrollview is scrolled.
-    #[lens(ignore)]
     pub on_scroll: Option<Arc<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>>,
     /// Width of the inner VStack which holds the content (typically bigger than container_width)
     pub inner_width: f32,
@@ -40,11 +38,16 @@ pub struct ScrollView {
     /// Height of the outer `ScrollView` which wraps the inner (typically smaller than inner_height)
     pub container_height: f32,
     /// Whether the scrollbar should move to the cursor when pressed.
-    pub scroll_to_cursor: bool,
+    pub scroll_to_cursor: Signal<bool>,
     /// Whether the horizontal scrollbar should be visible.
-    pub show_horizontal_scrollbar: bool,
+    pub show_horizontal_scrollbar: Signal<bool>,
     /// Whether the vertical scrollbar should be visible.
-    pub show_vertical_scrollbar: bool,
+    pub show_vertical_scrollbar: Signal<bool>,
+    h_scroll: Signal<bool>,
+    v_scroll: Signal<bool>,
+    scroll_offset: Signal<(f32, f32)>,
+    ratio_y: Signal<f32>,
+    ratio_x: Signal<f32>,
 }
 
 impl ScrollView {
@@ -53,80 +56,86 @@ impl ScrollView {
     where
         F: 'static + FnOnce(&mut Context),
     {
+        let scroll_x = Signal::new(0.0_f32);
+        let scroll_y = Signal::new(0.0_f32);
+        let scroll_to_cursor = Signal::new(false);
+        let show_horizontal_scrollbar = Signal::new(true);
+        let show_vertical_scrollbar = Signal::new(true);
+        let h_scroll = Signal::new(false);
+        let v_scroll = Signal::new(false);
+        let scroll_offset = Signal::new((0.0_f32, 0.0_f32));
+        let ratio_y = Signal::new(1.0_f32);
+        let ratio_x = Signal::new(1.0_f32);
         Self {
-            scroll_to_cursor: false,
-            scroll_x: 0.0,
-            scroll_y: 0.0,
+            scroll_to_cursor,
+            scroll_x,
+            scroll_y,
             on_scroll: None,
             inner_width: 0.0,
             inner_height: 0.0,
             container_width: 0.0,
             container_height: 0.0,
-            show_horizontal_scrollbar: true,
-            show_vertical_scrollbar: true,
+            show_horizontal_scrollbar,
+            show_vertical_scrollbar,
+            h_scroll,
+            v_scroll,
+            scroll_offset,
+            ratio_y,
+            ratio_x,
         }
         .build(cx, move |cx| {
             ScrollContent::new(cx, content);
 
-            Binding::new(cx, ScrollView::show_vertical_scrollbar, |cx, show_scrollbar| {
-                if show_scrollbar.get(cx) {
-                    Scrollbar::new(
-                        cx,
-                        ScrollView::scroll_y,
-                        RatioLens::new(ScrollView::container_height, ScrollView::inner_height),
-                        Orientation::Vertical,
-                        |cx, value| {
-                            cx.emit(ScrollEvent::SetY(value));
-                        },
-                    )
-                    .position_type(PositionType::Absolute)
-                    .scroll_to_cursor(Self::scroll_to_cursor);
-                }
-            });
+            Scrollbar::new(cx, scroll_y, ratio_y, Orientation::Vertical, |cx, value| {
+                cx.emit(ScrollEvent::SetY(value));
+            })
+            .position_type(PositionType::Absolute)
+            .scroll_to_cursor(scroll_to_cursor);
 
-            Binding::new(cx, ScrollView::show_horizontal_scrollbar, |cx, show_scrollbar| {
-                if show_scrollbar.get(cx) {
-                    Scrollbar::new(
-                        cx,
-                        ScrollView::scroll_x,
-                        RatioLens::new(ScrollView::container_width, ScrollView::inner_width),
-                        Orientation::Horizontal,
-                        |cx, value| {
-                            cx.emit(ScrollEvent::SetX(value));
-                        },
-                    )
-                    .position_type(PositionType::Absolute)
-                    .scroll_to_cursor(Self::scroll_to_cursor);
-                }
-            });
+            Scrollbar::new(cx, scroll_x, ratio_x, Orientation::Horizontal, |cx, value| {
+                cx.emit(ScrollEvent::SetX(value));
+            })
+            .position_type(PositionType::Absolute)
+            .scroll_to_cursor(scroll_to_cursor);
         })
-        .bind(ScrollView::root, |mut handle, data| {
-            let data = data.get(&handle);
-            let scale_factor = handle.context().scale_factor();
-            let top = ((data.inner_height - data.container_height) * data.scroll_y).round()
-                / scale_factor;
-            let left =
-                ((data.inner_width - data.container_width) * data.scroll_x).round() / scale_factor;
+        .bind(scroll_offset, move |handle| {
+            let (left, top) = scroll_offset.get();
             handle.horizontal_scroll(-left.abs()).vertical_scroll(-top.abs());
         })
-        .toggle_class(
-            "h-scroll",
-            ScrollView::root.map(|data| data.container_width < data.inner_width),
-        )
-        .toggle_class(
-            "v-scroll",
-            ScrollView::root.map(|data| data.container_height < data.inner_height),
-        )
+        .toggle_class("h-scroll", h_scroll)
+        .toggle_class("v-scroll", v_scroll)
     }
 
     fn reset(&mut self) {
         if self.inner_width == self.container_width {
-            self.scroll_x = 0.0;
+            self.scroll_x.set(0.0);
         }
 
         if self.inner_height == self.container_height {
-            self.scroll_y = 0.0;
+            self.scroll_y.set(0.0);
         }
+    }
+
+    fn sync_signals(&mut self, scale_factor: f32) {
+        let scroll_x = self.scroll_x.get();
+        let scroll_y = self.scroll_y.get();
+        self.h_scroll
+            .set(self.show_horizontal_scrollbar.get() && self.container_width < self.inner_width);
+        self.v_scroll
+            .set(self.show_vertical_scrollbar.get() && self.container_height < self.inner_height);
+        let top = ((self.inner_height - self.container_height) * scroll_y).round() / scale_factor;
+        let left = ((self.inner_width - self.container_width) * scroll_x).round() / scale_factor;
+        self.scroll_offset.set((left, top));
+        self.ratio_y.set(if self.inner_height == 0.0 {
+            1.0
+        } else {
+            (self.container_height / self.inner_height).min(1.0)
+        });
+        self.ratio_x.set(if self.inner_width == 0.0 {
+            1.0
+        } else {
+            (self.container_width / self.inner_width).min(1.0)
+        });
     }
 }
 
@@ -139,31 +148,34 @@ impl View for ScrollView {
         event.map(|scroll_update, meta| {
             match scroll_update {
                 ScrollEvent::ScrollX(f) => {
-                    self.scroll_x = (self.scroll_x + *f).clamp(0.0, 1.0);
-
+                    self.scroll_x.set((self.scroll_x.get() + *f).clamp(0.0, 1.0));
+                    self.sync_signals(cx.scale_factor());
                     if let Some(callback) = &self.on_scroll {
-                        (callback)(cx, self.scroll_x, self.scroll_y);
+                        (callback)(cx, self.scroll_x.get(), self.scroll_y.get());
                     }
                 }
 
                 ScrollEvent::ScrollY(f) => {
-                    self.scroll_y = (self.scroll_y + *f).clamp(0.0, 1.0);
+                    self.scroll_y.set((self.scroll_y.get() + *f).clamp(0.0, 1.0));
+                    self.sync_signals(cx.scale_factor());
                     if let Some(callback) = &self.on_scroll {
-                        (callback)(cx, self.scroll_x, self.scroll_y);
+                        (callback)(cx, self.scroll_x.get(), self.scroll_y.get());
                     }
                 }
 
                 ScrollEvent::SetX(f) => {
-                    self.scroll_x = *f;
+                    self.scroll_x.set(*f);
+                    self.sync_signals(cx.scale_factor());
                     if let Some(callback) = &self.on_scroll {
-                        (callback)(cx, self.scroll_x, self.scroll_y);
+                        (callback)(cx, self.scroll_x.get(), self.scroll_y.get());
                     }
                 }
 
                 ScrollEvent::SetY(f) => {
-                    self.scroll_y = *f;
+                    self.scroll_y.set(*f);
+                    self.sync_signals(cx.scale_factor());
                     if let Some(callback) = &self.on_scroll {
-                        (callback)(cx, self.scroll_x, self.scroll_y);
+                        (callback)(cx, self.scroll_x.get(), self.scroll_y.get());
                     }
                 }
 
@@ -176,11 +188,13 @@ impl View for ScrollView {
                         && self.container_width != 0.0
                         && self.container_height != 0.0
                     {
-                        let top = ((self.inner_height - self.container_height) * self.scroll_y)
-                            .round()
+                        let top = ((self.inner_height - self.container_height)
+                            * self.scroll_y.get())
+                        .round()
                             / scale_factor;
-                        let left = ((self.inner_width - self.container_width) * self.scroll_x)
-                            .round()
+                        let left = ((self.inner_width - self.container_width)
+                            * self.scroll_x.get())
+                        .round()
                             / scale_factor;
 
                         self.container_width = bounds.width();
@@ -189,23 +203,26 @@ impl View for ScrollView {
                         self.inner_height = *h;
 
                         if self.inner_width != self.container_width {
-                            self.scroll_x = ((left * scale_factor)
-                                / (self.inner_width - self.container_width))
-                                .clamp(0.0, 1.0);
+                            self.scroll_x.set(
+                                ((left * scale_factor) / (self.inner_width - self.container_width))
+                                    .clamp(0.0, 1.0),
+                            );
                         } else {
-                            self.scroll_x = 0.0;
+                            self.scroll_x.set(0.0);
                         }
 
                         if self.inner_height != self.container_height {
-                            self.scroll_y = ((top * scale_factor)
-                                / (self.inner_height - self.container_height))
-                                .clamp(0.0, 1.0);
+                            self.scroll_y.set(
+                                ((top * scale_factor)
+                                    / (self.inner_height - self.container_height))
+                                    .clamp(0.0, 1.0),
+                            );
                         } else {
-                            self.scroll_y = 0.0;
+                            self.scroll_y.set(0.0);
                         }
 
                         if let Some(callback) = &self.on_scroll {
-                            (callback)(cx, self.scroll_x, self.scroll_y);
+                            (callback)(cx, self.scroll_x.get(), self.scroll_y.get());
                         }
 
                         self.reset();
@@ -214,6 +231,7 @@ impl View for ScrollView {
                     self.inner_width = *w;
                     self.inner_height = *h;
                     self.reset();
+                    self.sync_signals(cx.scale_factor());
                 }
 
                 ScrollEvent::ScrollToView(entity) => {
@@ -227,13 +245,13 @@ impl View for ScrollView {
                     // Calculate the scroll position to bring the child into view.
                     if dx < 0.0 {
                         let sx = (-dx / (self.inner_width - self.container_width)).clamp(0.0, 1.0);
-                        self.scroll_x = (self.scroll_x + sx).clamp(0.0, 1.0);
+                        self.scroll_x.set((self.scroll_x.get() + sx).clamp(0.0, 1.0));
                     }
 
                     if dy < 0.0 {
                         let sy =
                             (-dy / (self.inner_height - self.container_height)).clamp(0.0, 1.0);
-                        self.scroll_y = (self.scroll_y + sy).clamp(0.0, 1.0);
+                        self.scroll_y.set((self.scroll_y.get() + sy).clamp(0.0, 1.0));
                     }
 
                     let dx = view_bounds.left() - content_bounds.left();
@@ -241,17 +259,18 @@ impl View for ScrollView {
 
                     if dx < 0.0 {
                         let sx = (-dx / (self.inner_width - self.container_width)).clamp(0.0, 1.0);
-                        self.scroll_x = (self.scroll_x - sx).clamp(0.0, 1.0);
+                        self.scroll_x.set((self.scroll_x.get() - sx).clamp(0.0, 1.0));
                     }
 
                     if dy < 0.0 {
                         let sy =
                             (-dy / (self.inner_height - self.container_height)).clamp(0.0, 1.0);
-                        self.scroll_y = (self.scroll_y - sy).clamp(0.0, 1.0);
+                        self.scroll_y.set((self.scroll_y.get() - sy).clamp(0.0, 1.0));
                     }
 
+                    self.sync_signals(cx.scale_factor());
                     if let Some(callback) = &self.on_scroll {
-                        (callback)(cx, self.scroll_x, self.scroll_y);
+                        (callback)(cx, self.scroll_x.get(), self.scroll_y.get());
                     }
                 }
             }
@@ -274,34 +293,39 @@ impl View for ScrollView {
                         && self.container_width != 0.0
                         && self.container_height != 0.0
                     {
-                        let top = ((self.inner_height - self.container_height) * self.scroll_y)
-                            .round()
+                        let top = ((self.inner_height - self.container_height)
+                            * self.scroll_y.get())
+                        .round()
                             / scale_factor;
-                        let left = ((self.inner_width - self.container_width) * self.scroll_x)
-                            .round()
+                        let left = ((self.inner_width - self.container_width)
+                            * self.scroll_x.get())
+                        .round()
                             / scale_factor;
 
                         self.container_width = bounds.width();
                         self.container_height = bounds.height();
 
                         if self.inner_width != self.container_width {
-                            self.scroll_x = ((left * scale_factor)
-                                / (self.inner_width - self.container_width))
-                                .clamp(0.0, 1.0);
+                            self.scroll_x.set(
+                                ((left * scale_factor) / (self.inner_width - self.container_width))
+                                    .clamp(0.0, 1.0),
+                            );
                         } else {
-                            self.scroll_x = 0.0;
+                            self.scroll_x.set(0.0);
                         }
 
                         if self.inner_height != self.container_height {
-                            self.scroll_y = ((top * scale_factor)
-                                / (self.inner_height - self.container_height))
-                                .clamp(0.0, 1.0);
+                            self.scroll_y.set(
+                                ((top * scale_factor)
+                                    / (self.inner_height - self.container_height))
+                                    .clamp(0.0, 1.0),
+                            );
                         } else {
-                            self.scroll_y = 0.0;
+                            self.scroll_y.set(0.0);
                         }
 
                         if let Some(callback) = &self.on_scroll {
-                            (callback)(cx, self.scroll_x, self.scroll_y);
+                            (callback)(cx, self.scroll_x.get(), self.scroll_y.get());
                         }
 
                         self.reset();
@@ -309,6 +333,7 @@ impl View for ScrollView {
 
                     self.container_width = bounds.width();
                     self.container_height = bounds.height();
+                    self.sync_signals(scale_factor);
                 }
             }
 
@@ -356,42 +381,51 @@ impl Handle<'_, ScrollView> {
     }
 
     /// Sets whether the scrollbar should move to the cursor when pressed.
-    pub fn scroll_to_cursor(self, scroll_to_cursor: impl Res<bool>) -> Self {
-        self.bind(scroll_to_cursor, |handle, scroll_to_cursor| {
-            let scroll_to_cursor = scroll_to_cursor.get(&handle);
-            handle.modify(|scrollview| scrollview.scroll_to_cursor = scroll_to_cursor);
+    pub fn scroll_to_cursor(self, scroll_to_cursor: impl Res<bool> + 'static) -> Self {
+        let scroll_to_cursor = scroll_to_cursor.to_signal(self.cx);
+        self.bind(scroll_to_cursor, move |handle| {
+            let scroll_to_cursor = scroll_to_cursor.get();
+            handle.modify(|scrollview| scrollview.scroll_to_cursor.set(scroll_to_cursor));
         })
     }
 
-    /// Set the horizontal scroll position of the [ScrollView]. Accepts a value or lens to an 'f32' between 0 and 1.
-    pub fn scroll_x(self, scrollx: impl Res<f32>) -> Self {
-        self.bind(scrollx, |handle, scrollx| {
-            let sx = scrollx.get(&handle);
-            handle.modify(|scrollview| scrollview.scroll_x = sx);
+    /// Set the horizontal scroll position of the [ScrollView]. Accepts a value or signal of type an `f32` between 0 and 1.
+    pub fn scroll_x(self, scrollx: impl Res<f32> + 'static) -> Self {
+        let scrollx = scrollx.to_signal(self.cx);
+        self.bind(scrollx, move |handle| {
+            let scrollx = scrollx.get();
+            let sx = scrollx;
+            handle.modify(|scrollview| scrollview.scroll_x.set(sx));
         })
     }
 
-    /// Set the vertical scroll position of the [ScrollView]. Accepts a value or lens to an 'f32' between 0 and 1.
-    pub fn scroll_y(self, scrollx: impl Res<f32>) -> Self {
-        self.bind(scrollx, |handle, scrolly| {
-            let sy = scrolly.get(&handle);
-            handle.modify(|scrollview| scrollview.scroll_y = sy);
+    /// Set the vertical scroll position of the [ScrollView]. Accepts a value or signal of type an `f32` between 0 and 1.
+    pub fn scroll_y(self, scrollx: impl Res<f32> + 'static) -> Self {
+        let scrollx = scrollx.to_signal(self.cx);
+        self.bind(scrollx, move |handle| {
+            let scrolly = scrollx.get();
+            let sy = scrolly;
+            handle.modify(|scrollview| scrollview.scroll_y.set(sy));
         })
     }
 
     /// Sets whether the horizontal scrollbar should be visible.
-    pub fn show_horizontal_scrollbar(self, flag: impl Res<bool>) -> Self {
-        self.bind(flag, |handle, show_scrollbar| {
-            let s = show_scrollbar.get(&handle);
-            handle.modify(|scrollview| scrollview.show_horizontal_scrollbar = s);
+    pub fn show_horizontal_scrollbar(self, flag: impl Res<bool> + 'static) -> Self {
+        let flag = flag.to_signal(self.cx);
+        self.bind(flag, move |handle| {
+            let show_scrollbar = flag.get();
+            let s = show_scrollbar;
+            handle.modify(|scrollview| scrollview.show_horizontal_scrollbar.set(s));
         })
     }
 
     /// Sets whether the vertical scrollbar should be visible.
-    pub fn show_vertical_scrollbar(self, flag: impl Res<bool>) -> Self {
-        self.bind(flag, |handle, show_scrollbar| {
-            let s = show_scrollbar.get(&handle);
-            handle.modify(|scrollview| scrollview.show_vertical_scrollbar = s);
+    pub fn show_vertical_scrollbar(self, flag: impl Res<bool> + 'static) -> Self {
+        let flag = flag.to_signal(self.cx);
+        self.bind(flag, move |handle| {
+            let show_scrollbar = flag.get();
+            let s = show_scrollbar;
+            handle.modify(|scrollview| scrollview.show_vertical_scrollbar.set(s));
         })
     }
 }

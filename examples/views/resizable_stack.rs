@@ -30,10 +30,9 @@ const STYLE: &str = r#"
     
 "#;
 
-#[derive(Lens)]
 pub struct AppData {
-    width: Units,
-    height: Units,
+    width: Signal<Units>,
+    height: Signal<Units>,
 }
 
 pub enum AppEvent {
@@ -47,16 +46,16 @@ impl Model for AppData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::SetWidth(width) => {
-                self.width = *width;
+                self.width.set(*width);
             }
             AppEvent::SetHeight(height) => {
-                self.height = *height;
+                self.height.set(*height);
             }
             AppEvent::ResetWidth => {
-                self.width = Pixels(200.0);
+                self.width.set(Pixels(200.0));
             }
             AppEvent::ResetHeight => {
-                self.height = Pixels(200.0);
+                self.height.set(Pixels(200.0));
             }
         });
     }
@@ -66,17 +65,20 @@ fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        AppData { width: Pixels(200.0), height: Pixels(200.0) }.build(cx);
+        let width = Signal::new(Pixels(200.0));
+        let height = Signal::new(Pixels(200.0));
+
+        AppData { width, height }.build(cx);
 
         ResizableStack::new(
             cx,
-            AppData::height,
+            height,
             ResizeStackDirection::Bottom,
             |cx, h| cx.emit(AppEvent::SetHeight(Pixels(h))),
             |cx| {
                 ResizableStack::new(
                     cx,
-                    AppData::width,
+                    width,
                     ResizeStackDirection::Right,
                     |cx, w| cx.emit(AppEvent::SetWidth(Pixels(w))),
                     |_cx| {},

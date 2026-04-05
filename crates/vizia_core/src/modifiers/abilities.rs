@@ -5,7 +5,7 @@ use crate::prelude::*;
 pub trait AbilityModifiers: internal::Modifiable {
     /// Sets whether the view can be hovered by the mouse and receive mouse events.
     ///
-    /// Accepts a bool or a lens to some boolean state.
+    /// Accepts a bool value or signal of type boolean state.
     /// Views which cannot be hovered will not receive mouse input events unless
     /// the view has captured the mouse input, see [`cx.capture()`](crate::prelude::EventContext::capture).
     ///
@@ -20,8 +20,8 @@ pub trait AbilityModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.entity();
         self.context().with_current(current, move |cx| {
-            state.set_or_bind(cx, entity, move |cx, v| {
-                let val = v.get(cx).into();
+            state.set_or_bind(cx, move |cx, v| {
+                let val = v.get_value(cx).into();
                 if let Some(abilities) = cx.style.abilities.get_mut(entity) {
                     abilities.set(Abilities::HOVERABLE, val);
                     cx.needs_restyle(entity);
@@ -34,7 +34,7 @@ pub trait AbilityModifiers: internal::Modifiable {
 
     /// Sets whether the view can be focused to receive keyboard input events.
     ///
-    /// Accepts a bool or a lens to some boolean state.
+    /// Accepts a bool value or signal of type boolean state.
     /// # Example
     /// ```
     /// # use vizia_core::prelude::*;
@@ -46,8 +46,8 @@ pub trait AbilityModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, move |cx| {
-            state.set_or_bind(cx, entity, move |cx, v| {
-                let state = v.get(cx).into();
+            state.set_or_bind(cx, move |cx, v| {
+                let state = v.get_value(cx).into();
                 if let Some(abilities) = cx.style.abilities.get_mut(entity) {
                     abilities.set(Abilities::FOCUSABLE, state);
 
@@ -66,7 +66,7 @@ pub trait AbilityModifiers: internal::Modifiable {
 
     /// Sets whether the view can be checked.
     ///
-    /// Accepts a bool or a lens to some boolean state.
+    /// Accepts a bool value or signal of type boolean state.
     /// # Example
     /// ```
     /// # use vizia_core::prelude::*;
@@ -78,9 +78,9 @@ pub trait AbilityModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, move |cx| {
-            state.set_or_bind(cx, entity, move |cx, v| {
-                let state = v.get(cx).into();
-                if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
+            state.set_or_bind(cx, move |cx, v| {
+                let state = v.get_value(cx).into();
+                if let Some(abilities) = cx.style.abilities.get_mut(entity) {
                     abilities.set(Abilities::CHECKABLE, state);
 
                     cx.needs_restyle(entity);
@@ -93,7 +93,7 @@ pub trait AbilityModifiers: internal::Modifiable {
 
     /// Sets whether the view can be navigated to, i.e. focused, by the keyboard.
     ///
-    /// Accepts a bool or a lens to some boolean state.
+    /// Accepts a bool value or signal of type boolean state.
     /// Navigating to a view with the keyboard gives the view keyboard focus and is typically done with `tab` and `shift + tab` key combinations.
     /// # Example
     /// ```
@@ -106,8 +106,8 @@ pub trait AbilityModifiers: internal::Modifiable {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, move |cx| {
-            state.set_or_bind(cx, entity, move |cx, v| {
-                let val = v.get(cx).into();
+            state.set_or_bind(cx, move |cx, v| {
+                let val = v.get_value(cx).into();
                 if let Some(abilities) = cx.style.abilities.get_mut(entity) {
                     abilities.set(Abilities::NAVIGABLE, val);
                     cx.needs_restyle(entity);

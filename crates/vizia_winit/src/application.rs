@@ -20,6 +20,7 @@ use vizia_input::ImeState;
 use vizia_core::context::EventProxy;
 use vizia_core::prelude::*;
 use vizia_core::{backend::*, events::EventManager};
+use vizia_reactive::Runtime;
 use winit::{
     application::ApplicationHandler,
     dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize},
@@ -134,14 +135,24 @@ impl Application {
             EventLoop::<UserEvent>::with_user_event().build().expect("Failed to create event loop");
 
         let mut cx = BackendContext::new(context);
-        let event_proxy_obj = event_loop.create_proxy();
-        cx.set_event_proxy(Box::new(WinitEventProxy(event_proxy_obj)));
+
+        // Mark the current thread as the UI thread so that rayon workers
+        // correctly enqueue effects via SYNC_RUNTIME instead of the
+        // thread-local RUNTIME (which nobody drains).
+        Runtime::init_on_ui_thread();
+
+        let proxy = event_loop.create_proxy();
+        cx.set_event_proxy(Box::new(WinitEventProxy(proxy.clone())));
+
+        // Ensure we wake the event loop when a SyncSignal is mutated off the UI thread.
+        let waker_proxy = proxy.clone();
+        Runtime::set_sync_effect_waker(move || {
+            let _ = waker_proxy.send_event(UserEvent::Event(Event::new(())));
+        });
 
         cx.renegotiate_language();
         cx.0.remove_user_themes();
         (content)(cx.context());
-
-        let proxy = event_loop.create_proxy();
 
         Self {
             cx,
@@ -737,6 +748,8 @@ impl ApplicationHandler<UserEvent> for Application {
 
         event_loop.set_control_flow(self.control_flow);
 
+        Runtime::drain_pending_work();
+
         self.event_manager.flush_events(self.cx.context(), |_| {});
 
         self.cx.process_style_updates();
@@ -866,112 +879,112 @@ impl ApplicationHandler<UserEvent> for Application {
 
 impl WindowModifiers for Application {
     fn title<T: ToString>(mut self, title: impl Res<T>) -> Self {
-        self.window_description.title = title.get(&self.cx.0).to_string();
+        self.window_description.title = title.get_value(&self.cx.0).to_string();
 
-        title.set_or_bind(&mut self.cx.0, Entity::root(), |cx, title| {
-            cx.emit(WindowEvent::SetTitle(title.get(cx).to_string()));
+        title.set_or_bind(&mut self.cx.0, |cx, title| {
+            cx.emit(WindowEvent::SetTitle(title.get_value(cx).to_string()));
         });
 
         self
     }
 
     fn inner_size<S: Into<WindowSize>>(mut self, size: impl Res<S>) -> Self {
-        self.window_description.inner_size = size.get(&self.cx.0).into();
+        self.window_description.inner_size = size.get_value(&self.cx.0).into();
 
-        size.set_or_bind(&mut self.cx.0, Entity::root(), |cx, size| {
-            cx.emit(WindowEvent::SetSize(size.get(cx).into()));
+        size.set_or_bind(&mut self.cx.0, |cx, size| {
+            cx.emit(WindowEvent::SetSize(size.get_value(cx).into()));
         });
 
         self
     }
 
     fn min_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
-        self.window_description.min_inner_size = size.get(&self.cx.0).map(|s| s.into());
+        self.window_description.min_inner_size = size.get_value(&self.cx.0).map(|s| s.into());
 
-        size.set_or_bind(&mut self.cx.0, Entity::root(), |cx, size| {
-            cx.emit(WindowEvent::SetMinSize(size.get(cx).map(|s| s.into())));
+        size.set_or_bind(&mut self.cx.0, |cx, size| {
+            cx.emit(WindowEvent::SetMinSize(size.get_value(cx).map(|s| s.into())));
         });
 
         self
     }
 
     fn max_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
-        self.window_description.max_inner_size = size.get(&self.cx.0).map(|s| s.into());
+        self.window_description.max_inner_size = size.get_value(&self.cx.0).map(|s| s.into());
 
-        size.set_or_bind(&mut self.cx.0, Entity::root(), |cx, size| {
-            cx.emit(WindowEvent::SetMaxSize(size.get(cx).map(|s| s.into())));
+        size.set_or_bind(&mut self.cx.0, |cx, size| {
+            cx.emit(WindowEvent::SetMaxSize(size.get_value(cx).map(|s| s.into())));
         });
         self
     }
 
     fn position<P: Into<WindowPosition>>(mut self, position: impl Res<P>) -> Self {
-        self.window_description.position = Some(position.get(&self.cx.0).into());
+        self.window_description.position = Some(position.get_value(&self.cx.0).into());
 
-        position.set_or_bind(&mut self.cx.0, Entity::root(), |cx, size| {
-            cx.emit(WindowEvent::SetPosition(size.get(cx).into()));
+        position.set_or_bind(&mut self.cx.0, |cx, size| {
+            cx.emit(WindowEvent::SetPosition(size.get_value(cx).into()));
         });
 
         self
     }
 
     fn offset<P: Into<WindowPosition>>(mut self, offset: impl Res<P>) -> Self {
-        self.window_description.offset = Some(offset.get(&self.cx.0).into());
+        self.window_description.offset = Some(offset.get_value(&self.cx.0).into());
 
         self
     }
 
     fn anchor<P: Into<Anchor>>(mut self, anchor: impl Res<P>) -> Self {
-        self.window_description.anchor = Some(anchor.get(&self.cx.0).into());
+        self.window_description.anchor = Some(anchor.get_value(&self.cx.0).into());
 
         self
     }
 
     fn anchor_target<P: Into<AnchorTarget>>(mut self, anchor_target: impl Res<P>) -> Self {
-        self.window_description.anchor_target = Some(anchor_target.get(&self.cx.0).into());
+        self.window_description.anchor_target = Some(anchor_target.get_value(&self.cx.0).into());
 
         self
     }
 
     fn parent_anchor<P: Into<Anchor>>(mut self, parent_anchor: impl Res<P>) -> Self {
-        self.window_description.parent_anchor = Some(parent_anchor.get(&self.cx.0).into());
+        self.window_description.parent_anchor = Some(parent_anchor.get_value(&self.cx.0).into());
 
         self
     }
 
     fn resizable(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.resizable = flag.get(&self.cx.0);
+        self.window_description.resizable = flag.get_value(&self.cx.0);
 
-        flag.set_or_bind(&mut self.cx.0, Entity::root(), |cx, flag| {
-            cx.emit(WindowEvent::SetResizable(flag.get(cx)));
+        flag.set_or_bind(&mut self.cx.0, |cx, flag| {
+            cx.emit(WindowEvent::SetResizable(flag.get_value(cx)));
         });
 
         self
     }
 
     fn minimized(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.minimized = flag.get(&self.cx.0);
+        self.window_description.minimized = flag.get_value(&self.cx.0);
 
-        flag.set_or_bind(&mut self.cx.0, Entity::root(), |cx, flag| {
-            cx.emit(WindowEvent::SetMinimized(flag.get(cx)));
+        flag.set_or_bind(&mut self.cx.0, |cx, flag| {
+            cx.emit(WindowEvent::SetMinimized(flag.get_value(cx)));
         });
         self
     }
 
     fn maximized(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.maximized = flag.get(&self.cx.0);
+        self.window_description.maximized = flag.get_value(&self.cx.0);
 
-        flag.set_or_bind(&mut self.cx.0, Entity::root(), |cx, flag| {
-            cx.emit(WindowEvent::SetMaximized(flag.get(cx)));
+        flag.set_or_bind(&mut self.cx.0, |cx, flag| {
+            cx.emit(WindowEvent::SetMaximized(flag.get_value(cx)));
         });
 
         self
     }
 
     fn visible(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.visible = flag.get(&self.cx.0);
+        self.window_description.visible = flag.get_value(&self.cx.0);
 
-        flag.set_or_bind(&mut self.cx.0, Entity::root(), |cx, flag| {
-            cx.emit(WindowEvent::SetVisible(flag.get(cx)));
+        flag.set_or_bind(&mut self.cx.0, |cx, flag| {
+            cx.emit(WindowEvent::SetVisible(flag.get_value(cx)));
         });
 
         self

@@ -2,18 +2,19 @@ use crate::modifiers::ModalEvent;
 use crate::{icons::ICON_CHEVRON_RIGHT, prelude::*};
 
 /// A view which represents a horizontal group of menus.
-#[derive(Lens)]
 pub struct MenuBar {
-    is_open: bool,
+    is_open: Signal<bool>,
 }
 
 impl MenuBar {
     /// Creates a new [MenuBar] view.
     pub fn new(cx: &mut Context, content: impl Fn(&mut Context)) -> Handle<Self> {
-        Self { is_open: false }
+        let is_open = Signal::new(false);
+
+        Self { is_open }
             .build(cx, |cx| {
                 cx.add_listener(move |menu_bar: &mut Self, cx, event| {
-                    let flag: bool = menu_bar.is_open;
+                    let flag = menu_bar.is_open.get();
                     event.map(
                         |window_event, meta: &mut crate::events::EventMeta| match window_event {
                             WindowEvent::MouseDown(_) => {
@@ -44,11 +45,11 @@ impl View for MenuBar {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|menu_event, _| match menu_event {
             MenuEvent::MenuIsOpen => {
-                self.is_open = true;
+                self.is_open.set(true);
             }
 
             MenuEvent::CloseAll => {
-                self.is_open = false;
+                self.is_open.set(false);
                 cx.emit_custom(
                     Event::new(MenuEvent::Close).target(cx.current).propagate(Propagation::Subtree),
                 );
@@ -74,11 +75,9 @@ pub enum MenuEvent {
 }
 
 /// A view which represents a submenu within a menu.
-#[derive(Lens)]
 pub struct Submenu {
-    is_open: bool,
+    is_open: Signal<bool>,
     open_on_hover: bool,
-    is_submenu: bool,
 }
 
 impl Submenu {
@@ -88,12 +87,15 @@ impl Submenu {
         content: impl Fn(&mut Context) -> Handle<V> + 'static,
         menu: impl Fn(&mut Context) + 'static,
     ) -> Handle<Self> {
-        let is_submenu = cx.data::<Submenu>().is_some();
+        let is_submenu = cx.try_data::<Submenu>().is_some();
+        let is_open = Signal::new(false);
+        let submenu_popup_placement =
+            if is_submenu { Placement::RightStart } else { Placement::BottomStart };
 
-        let handle = Self { is_open: false, open_on_hover: is_submenu, is_submenu }
+        let handle = Self { is_open, open_on_hover: is_submenu }
             .build(cx, |cx| {
                 cx.add_listener(move |menu_button: &mut Self, cx, event| {
-                    let flag: bool = menu_button.is_open;
+                    let flag = menu_button.is_open.get();
                     event.map(
                         |window_event, meta: &mut crate::events::EventMeta| match window_event {
                             WindowEvent::MouseDown(_) => {
@@ -116,16 +118,15 @@ impl Submenu {
                 (content)(cx).hoverable(false);
                 Svg::new(cx, ICON_CHEVRON_RIGHT).class("arrow").hoverable(false);
                 // });
-                Binding::new(cx, Submenu::is_open, move |cx, is_open| {
-                    if is_open.get(cx) {
+                Binding::new(cx, is_open, move |cx| {
+                    let open = is_open.get();
+                    if open {
                         Popup::new(cx, |cx| {
                             (menu)(cx);
                         })
-                        .placement(Submenu::is_submenu.map(|is_submenu| {
-                            if *is_submenu { Placement::RightStart } else { Placement::BottomStart }
-                        }))
+                        .placement(submenu_popup_placement)
                         .arrow_size(Pixels(0.0))
-                        .checked(Submenu::is_open)
+                        .checked(is_open)
                         .on_hover(|cx| {
                             cx.emit_custom(
                                 Event::new(MenuEvent::Close)
@@ -139,13 +140,14 @@ impl Submenu {
                 // .on_blur(|cx| cx.emit(MenuEvent::CloseAll));
             })
             .navigable(true)
-            .checked(Submenu::is_open)
+            .checked(is_open)
             .layout_type(LayoutType::Row)
             .on_press(|cx| cx.emit(MenuEvent::ToggleOpen));
 
-        if handle.data::<MenuBar>().is_some() {
-            handle.bind(MenuBar::is_open, |handle, is_open| {
-                let is_open = is_open.get(&handle);
+        if handle.try_data::<MenuBar>().is_some() {
+            let menu_bar_open = handle.data::<MenuBar>().is_open;
+            handle.bind(menu_bar_open, move |handle| {
+                let is_open = menu_bar_open.get();
                 handle.modify(|menu_button| menu_button.open_on_hover = is_open);
             })
         } else {
@@ -183,8 +185,8 @@ impl View for Submenu {
             WindowEvent::KeyDown(code, _) => match code {
                 Code::ArrowLeft => {
                     // if cx.is_focused() {
-                    if self.is_open {
-                        self.is_open = false;
+                    if self.is_open.get() {
+                        self.is_open.set(false);
                         cx.focus();
                         meta.consume();
                     }
@@ -192,8 +194,8 @@ impl View for Submenu {
                 }
 
                 Code::ArrowRight => {
-                    if !self.is_open {
-                        self.is_open = true;
+                    if !self.is_open.get() {
+                        self.is_open.set(true);
                     }
                 }
 
@@ -205,18 +207,19 @@ impl View for Submenu {
 
         event.map(|menu_event, meta| match menu_event {
             MenuEvent::Open => {
-                self.is_open = true;
+                self.is_open.set(true);
                 meta.consume();
             }
 
             MenuEvent::Close => {
-                self.is_open = false;
+                self.is_open.set(false);
                 // meta.consume();
             }
 
             MenuEvent::ToggleOpen => {
-                self.is_open ^= true;
-                if self.is_open {
+                let is_open = !self.is_open.get();
+                self.is_open.set(is_open);
+                if is_open {
                     cx.emit(MenuEvent::MenuIsOpen);
                 } else {
                     // If the parent is a MenuBar then this will reset the is_open state
@@ -236,7 +239,6 @@ impl View for Submenu {
 }
 
 /// A view which represents a pressable item within a menu.
-#[derive(Lens)]
 pub struct MenuButton {}
 
 impl MenuButton {

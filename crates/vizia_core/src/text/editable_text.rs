@@ -4,6 +4,21 @@ use std::{borrow::Cow, ops::Range};
 
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
+fn clamp_to_char_boundary(s: &str, offset: usize) -> usize {
+    let mut clamped = offset.min(s.len());
+    while clamped > 0 && !s.is_char_boundary(clamped) {
+        clamped -= 1;
+    }
+    clamped
+}
+
+fn normalize_range(s: &str, range: Range<usize>) -> Range<usize> {
+    let start = clamp_to_char_boundary(s, range.start);
+    let end = clamp_to_char_boundary(s, range.end);
+
+    if start <= end { start..end } else { end..start }
+}
+
 pub trait EditableText: Sized {
     /// Replace range with new text.
     /// Can panic if supplied an invalid range.
@@ -52,11 +67,12 @@ pub trait EditableText: Sized {
 
 impl EditableText for String {
     fn edit(&mut self, range: Range<usize>, new: impl Into<Self>) {
+        let range = normalize_range(self, range);
         self.replace_range(range, &new.into());
     }
 
     fn slice(&self, range: Range<usize>) -> Option<Cow<str>> {
-        self.get(range).map(Cow::from)
+        self.get(normalize_range(self, range)).map(Cow::from)
     }
 
     fn len(&self) -> usize {
@@ -64,16 +80,20 @@ impl EditableText for String {
     }
 
     fn prev_grapheme_offset(&self, from: usize) -> Option<usize> {
+        let from = clamp_to_char_boundary(self, from);
         let mut c = GraphemeCursor::new(from, self.len(), true);
-        c.prev_boundary(self, 0).unwrap()
+        c.prev_boundary(self, 0).ok().flatten()
     }
 
     fn next_grapheme_offset(&self, from: usize) -> Option<usize> {
+        let from = clamp_to_char_boundary(self, from);
         let mut c = GraphemeCursor::new(from, self.len(), true);
-        c.next_boundary(self, 0).unwrap()
+        c.next_boundary(self, 0).ok().flatten()
     }
 
     fn current_grapheme_offset(&self, from: usize) -> usize {
+        let from = clamp_to_char_boundary(self, from);
+
         if from == self.len() {
             self.graphemes(true).count()
         } else {
@@ -97,28 +117,27 @@ impl EditableText for String {
     }
 
     fn prev_codepoint_offset(&self, current_pos: usize) -> Option<usize> {
+        let current_pos = clamp_to_char_boundary(self, current_pos);
+
         if current_pos == 0 {
             None
         } else {
-            let mut len = 1;
-            while !self.is_char_boundary(current_pos - len) {
-                len += 1;
-            }
-
-            Some(current_pos - len)
+            self.get(0..current_pos)?.char_indices().next_back().map(|(idx, _)| idx)
         }
     }
 
     fn next_codepoint_offset(&self, current_pos: usize) -> Option<usize> {
+        let current_pos = clamp_to_char_boundary(self, current_pos);
+
         if current_pos == self.len() {
             None
         } else {
-            let b = self.as_bytes()[current_pos];
-            Some(current_pos + len_utf8_from_first_byte(b))
+            self.get(current_pos..)?.chars().next().map(|ch| current_pos + ch.len_utf8())
         }
     }
 
     fn prev_word_offset(&self, from: usize) -> Option<usize> {
+        let from = clamp_to_char_boundary(self, from);
         let mut offset = from;
         let mut passed_alphanumeric = false;
         for prev_grapheme in self.get(0..from)?.graphemes(true).rev() {
@@ -134,6 +153,7 @@ impl EditableText for String {
     }
 
     fn next_word_offset(&self, from: usize) -> Option<usize> {
+        let from = clamp_to_char_boundary(self, from);
         let mut offset = from;
         let mut passed_alphanumeric = false;
         for next_grapheme in self.get(from..)?.graphemes(true) {
@@ -157,6 +177,7 @@ impl EditableText for String {
     }
 
     fn preceding_line_break(&self, from: usize) -> usize {
+        let from = clamp_to_char_boundary(self, from);
         let mut offset = from;
 
         for byte in self.get(0..from).unwrap_or("").bytes().rev() {
@@ -170,6 +191,7 @@ impl EditableText for String {
     }
 
     fn next_line_break(&self, from: usize) -> usize {
+        let from = clamp_to_char_boundary(self, from);
         let mut offset = from;
 
         for char in self.get(from..).unwrap_or("").bytes() {

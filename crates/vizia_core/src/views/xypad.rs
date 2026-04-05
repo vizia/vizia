@@ -9,14 +9,18 @@ pub struct XYPad {
 
 impl XYPad {
     /// creates a new [XYPad] view.
-    pub fn new<L: Lens<Target = (f32, f32)>>(cx: &mut Context, lens: L) -> Handle<Self> {
+    pub fn new<R: Res<(f32, f32)> + 'static>(cx: &mut Context, value: R) -> Handle<Self> {
+        let value_state = value.to_signal(cx);
+        let left = Memo::new(move |_| Percentage(value_state.get().0 * 100.0));
+        let top = Memo::new(move |_| Percentage((1.0 - value_state.get().1) * 100.0));
+
         Self { is_dragging: false, on_change: None }
             .build(cx, |cx| {
                 // Thumb
                 Element::new(cx)
                     .position_type(PositionType::Absolute)
-                    .left(lens.map(|(x, _)| Percentage(*x * 100.0)))
-                    .top(lens.map(|(_, y)| Percentage((1.0 - *y) * 100.0)))
+                    .left(left)
+                    .top(top)
                     .translate(Translate::new(
                         Length::Value(LengthValue::Px(-6.0)),
                         Length::Value(LengthValue::Px(-6.0)),

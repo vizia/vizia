@@ -21,14 +21,13 @@ use crate::vg;
 ///         Tooltip::new(cx, |cx|{
 ///             Label::new(cx, "Tooltip Text");
 ///         })
-///     })
-
-#[derive(Lens)]
+///     });
+/// ```
 pub struct Tooltip {
-    placement: Placement,
-    shift: Placement,
-    show_arrow: bool,
-    arrow_size: Length,
+    placement: Signal<Placement>,
+    shift: Signal<Placement>,
+    show_arrow: Signal<bool>,
+    arrow_size: Signal<Length>,
 }
 
 impl Tooltip {
@@ -51,48 +50,51 @@ impl Tooltip {
     ///         Tooltip::new(cx, |cx|{
     ///             Label::new(cx, "Tooltip Text");
     ///         })
-    ///     })
+    ///     });
     /// ```
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
-        Self {
-            placement: Placement::Top,
-            shift: Placement::Top,
-            show_arrow: true,
-            arrow_size: Length::Value(LengthValue::Px(8.0)),
-        }
-        .build(cx, |cx| {
-            Binding::new(cx, Tooltip::show_arrow, |cx, show_arrow| {
-                if show_arrow.get(cx) {
-                    Arrow::new(cx);
-                }
-            });
-            (content)(cx);
-        })
-        .z_index(110)
-        .hoverable(false)
-        .position_type(PositionType::Absolute)
-        .space(Pixels(0.0))
-        .on_build(|ex| {
-            ex.add_listener(move |tooltip: &mut Tooltip, ex, event| {
-                event.map(|window_event, _| match window_event {
-                    WindowEvent::MouseMove(x, y) => {
-                        if tooltip.placement == Placement::Cursor && !x.is_nan() && !y.is_nan() {
-                            let scale = ex.scale_factor();
-                            let parent = ex.parent();
-                            let parent_bounds = ex.cache.get_bounds(parent);
-                            if parent_bounds.contains_point(*x, *y) {
-                                ex.set_left(Pixels(
-                                    ((*x - parent_bounds.x) - ex.bounds().width() / 2.0) / scale,
-                                ));
-                                ex.set_top(Pixels((*y - parent_bounds.y) / scale));
+        let placement = Signal::new(Placement::Top);
+        let shift = Signal::new(Placement::Top);
+        let show_arrow = Signal::new(true);
+        let arrow_size = Signal::new(Length::Value(LengthValue::Px(8.0)));
+
+        Self { placement, shift, show_arrow, arrow_size }
+            .build(cx, |cx| {
+                Binding::new(cx, show_arrow, move |cx| {
+                    let show_arrow = show_arrow.get();
+                    if show_arrow {
+                        Arrow::new(cx, shift, arrow_size);
+                    }
+                });
+                (content)(cx);
+            })
+            .z_index(110)
+            .hoverable(false)
+            .position_type(PositionType::Absolute)
+            .space(Pixels(0.0))
+            .on_build(|ex| {
+                ex.add_listener(move |tooltip: &mut Tooltip, ex, event| {
+                    event.map(|window_event, _| match window_event {
+                        WindowEvent::MouseMove(x, y) => {
+                            if tooltip.placement == Placement::Cursor && !x.is_nan() && !y.is_nan()
+                            {
+                                let scale = ex.scale_factor();
+                                let parent = ex.parent();
+                                let parent_bounds = ex.cache.get_bounds(parent);
+                                if parent_bounds.contains_point(*x, *y) {
+                                    ex.set_left(Pixels(
+                                        ((*x - parent_bounds.x) - ex.bounds().width() / 2.0)
+                                            / scale,
+                                    ));
+                                    ex.set_top(Pixels((*y - parent_bounds.y) / scale));
+                                }
                             }
                         }
-                    }
 
-                    _ => {}
+                        _ => {}
+                    });
                 });
-            });
-        })
+            })
     }
 }
 
@@ -110,7 +112,7 @@ impl View for Tooltip {
                 let bounds = cx.bounds();
                 let window_bounds = cx.cache.get_bounds(cx.parent_window());
 
-                let arrow_size = self.arrow_size.to_px().unwrap() * cx.scale_factor();
+                let arrow_size = self.arrow_size.get().to_px().unwrap() * cx.scale_factor();
 
                 let mut available = AvailablePlacement::all();
 
@@ -239,11 +241,11 @@ impl View for Tooltip {
 
                 let scale = cx.scale_factor();
 
-                self.shift = self.placement.place(available);
+                self.shift.set(self.placement.get().place(available));
 
-                let arrow_size = self.arrow_size.to_px().unwrap();
+                let arrow_size = self.arrow_size.get().to_px().unwrap();
 
-                let translate = match self.shift {
+                let translate = match self.shift.get() {
                     Placement::Top => (
                         -(bounds.width() - parent_bounds.width()) / (2.0 * scale),
                         -bounds.height() / scale - arrow_size,
@@ -295,40 +297,59 @@ impl View for Tooltip {
 impl Handle<'_, Tooltip> {
     /// Sets the position where the tooltip should appear relative to its parent element.
     /// Defaults to `Placement::Bottom`.
-    pub fn placement<U: Into<Placement>>(self, placement: impl Res<U>) -> Self {
-        self.bind(placement, |handle, val| {
-            let placement = val.get(&handle).into();
+    pub fn placement<U: Into<Placement> + Clone + 'static>(
+        self,
+        placement: impl Res<U> + 'static,
+    ) -> Self {
+        let placement = placement.to_signal(self.cx);
+        self.bind(placement, move |handle| {
+            let val = placement.get();
+            let placement = val.into();
             handle.modify(|tooltip| {
-                tooltip.placement = placement;
-                tooltip.shift = placement;
+                tooltip.placement.set(placement);
+                tooltip.shift.set(placement);
             });
         })
     }
 
     /// Sets whether the tooltip should include an arrow. Defaults to true.
-    pub fn arrow<U: Into<bool>>(self, show_arrow: impl Res<U>) -> Self {
-        self.bind(show_arrow, |handle, val| {
-            let show_arrow = val.get(&handle).into();
-            handle.modify(|tooltip| tooltip.show_arrow = show_arrow);
+    pub fn arrow<U: Into<bool> + Clone + 'static>(self, show_arrow: impl Res<U> + 'static) -> Self {
+        let show_arrow = show_arrow.to_signal(self.cx);
+        self.bind(show_arrow, move |handle| {
+            let val = show_arrow.get();
+            let show_arrow = val.into();
+            handle.modify(|tooltip| tooltip.show_arrow.set(show_arrow));
         })
     }
 
     /// Sets the size of the tooltip arrow if enabled.
-    pub fn arrow_size<U: Into<Length>>(self, size: impl Res<U>) -> Self {
-        self.bind(size, |handle, val| {
-            let size = val.get(&handle).into();
-            handle.modify(|tooltip| tooltip.arrow_size = size);
+    pub fn arrow_size<U: Into<Length> + Clone + 'static>(
+        self,
+        size: impl Res<U> + 'static,
+    ) -> Self {
+        let size = size.to_signal(self.cx);
+        self.bind(size, move |handle| {
+            let val = size.get();
+            let size = val.into();
+            handle.modify(|tooltip| tooltip.arrow_size.set(size));
         })
     }
 }
 
 /// An arrow view used by the Tooltip view.
-pub(crate) struct Arrow {}
+pub(crate) struct Arrow {
+    shift: Signal<Placement>,
+}
 
 impl Arrow {
-    pub(crate) fn new(cx: &mut Context) -> Handle<Self> {
-        Self {}.build(cx, |_| {}).bind(Tooltip::shift, |mut handle, placement| {
-            let (t, b) = match placement.get(&handle) {
+    pub(crate) fn new(
+        cx: &mut Context,
+        shift: Signal<Placement>,
+        arrow_size: Signal<Length>,
+    ) -> Handle<Self> {
+        Self { shift }.build(cx, |_| {}).bind(shift, move |mut handle| {
+            let placement = shift.get();
+            let (t, b) = match placement {
                 Placement::TopStart | Placement::Top | Placement::TopEnd => {
                     (Percentage(100.0), Stretch(1.0))
                 }
@@ -338,7 +359,7 @@ impl Arrow {
                 _ => (Stretch(1.0), Stretch(1.0)),
             };
 
-            let (l, r) = match placement.get(&handle) {
+            let (l, r) = match placement {
                 Placement::LeftStart | Placement::Left | Placement::LeftEnd => {
                     (Percentage(100.0), Stretch(1.0))
                 }
@@ -358,9 +379,10 @@ impl Arrow {
 
             handle = handle.top(t).bottom(b).left(l).right(r).position_type(PositionType::Absolute);
 
-            handle.bind(Tooltip::arrow_size, move |handle, arrow_size| {
-                let arrow_size = arrow_size.get(&handle).to_px().unwrap_or(8.0);
-                let (w, h) = match placement.get(&handle) {
+            handle.bind(arrow_size, move |handle| {
+                let arrow_size = arrow_size.get();
+                let arrow_size = arrow_size.to_px().unwrap_or(8.0);
+                let (w, h) = match placement {
                     Placement::Top
                     | Placement::Bottom
                     | Placement::TopStart
@@ -384,7 +406,7 @@ impl View for Arrow {
     fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
         let bounds = cx.bounds();
         let mut path = vg::PathBuilder::new();
-        match Tooltip::shift.get(cx) {
+        match self.shift.get() {
             Placement::Bottom | Placement::BottomStart | Placement::BottomEnd => {
                 path.move_to(bounds.bottom_left());
                 path.line_to(bounds.center_top());

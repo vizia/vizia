@@ -2,9 +2,8 @@ use vizia::prelude::*;
 
 use crate::DemoRegion;
 
-#[derive(Lens)]
 pub struct SliderData {
-    value: f32,
+    value: Signal<f32>,
 }
 
 pub enum SliderEvent {
@@ -15,14 +14,15 @@ impl Model for SliderData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|checkbox_event, _| match checkbox_event {
             SliderEvent::SetValue(value) => {
-                self.value = *value;
+                self.value.set(*value);
             }
         });
     }
 }
 
 pub fn slider(cx: &mut Context) {
-    SliderData { value: 0.5 }.build(cx);
+    let value = Signal::new(0.5);
+    SliderData { value }.build(cx);
 
     VStack::new(cx, |cx| {
         Markdown::new(cx, "# Slider");
@@ -33,9 +33,8 @@ pub fn slider(cx: &mut Context) {
 
         DemoRegion::new(
             cx,
-            |cx| {
-                Slider::new(cx, SliderData::value)
-                    .on_change(|cx, value| cx.emit(SliderEvent::SetValue(value)));
+            move |cx| {
+                Slider::new(cx, value).on_change(|cx, value| cx.emit(SliderEvent::SetValue(value)));
             },
             r#"Slider::new(cx, SliderData::value)
     .on_changing(|cx, value| cx.emit(SliderEvent::SetValue(value)));"#,
