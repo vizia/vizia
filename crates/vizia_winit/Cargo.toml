@@ -19,6 +19,7 @@ accesskit = ["dep:accesskit_winit", "dep:accesskit"]
 vizia_input.workspace = true
 vizia_core.workspace = true
 vizia_id.workspace = true
+vizia_reactive.workspace = true
 vizia_window.workspace = true
 
 accesskit = { workspace = true, optional = true }
