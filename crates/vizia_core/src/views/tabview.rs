@@ -76,9 +76,11 @@ impl View for TabView {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|tab_event, meta| match tab_event {
             TabEvent::SetSelected(index) => {
-                self.selected_index.set(*index);
-                if let Some(callback) = &self.on_select {
-                    (callback)(cx, *index);
+                if self.selected_index.get() != *index {
+                    self.selected_index.set(*index);
+                    if let Some(callback) = &self.on_select {
+                        (callback)(cx, *index);
+                    }
                 }
                 meta.consume();
             }

@@ -99,6 +99,18 @@ pub trait SignalUpdate<T> {
         let _ = self.try_update(|v| *v = new_value);
     }
 
+    /// Sets the new_value to the Signal and triggers effect run only if the value has changed
+    fn set_if_changed(&self, new_value: T)
+    where
+        T: PartialEq + 'static,
+    {
+        let _ = self.try_update(|v| {
+            if *v != new_value {
+                *v = new_value;
+            }
+        });
+    }
+
     /// Update the stored value with the given function and triggers effect run
     fn update(&self, f: impl FnOnce(&mut T))
     where

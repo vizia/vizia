@@ -20,6 +20,7 @@ use vizia_input::ImeState;
 use vizia_core::context::EventProxy;
 use vizia_core::prelude::*;
 use vizia_core::{backend::*, events::EventManager};
+use vizia_reactive::Runtime;
 use winit::{
     application::ApplicationHandler,
     dpi::{LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize},
@@ -134,14 +135,24 @@ impl Application {
             EventLoop::<UserEvent>::with_user_event().build().expect("Failed to create event loop");
 
         let mut cx = BackendContext::new(context);
-        let event_proxy_obj = event_loop.create_proxy();
-        cx.set_event_proxy(Box::new(WinitEventProxy(event_proxy_obj)));
+
+        // Mark the current thread as the UI thread so that rayon workers
+        // correctly enqueue effects via SYNC_RUNTIME instead of the
+        // thread-local RUNTIME (which nobody drains).
+        Runtime::init_on_ui_thread();
+
+        let proxy = event_loop.create_proxy();
+        cx.set_event_proxy(Box::new(WinitEventProxy(proxy.clone())));
+
+        // Ensure we wake the event loop when a SyncSignal is mutated off the UI thread.
+        let waker_proxy = proxy.clone();
+        Runtime::set_sync_effect_waker(move || {
+            let _ = waker_proxy.send_event(UserEvent::Event(Event::new(())));
+        });
 
         cx.renegotiate_language();
         cx.0.remove_user_themes();
         (content)(cx.context());
-
-        let proxy = event_loop.create_proxy();
 
         Self {
             cx,
@@ -736,6 +747,8 @@ impl ApplicationHandler<UserEvent> for Application {
         }
 
         event_loop.set_control_flow(self.control_flow);
+
+        Runtime::drain_pending_work();
 
         self.event_manager.flush_events(self.cx.context(), |_| {});
 

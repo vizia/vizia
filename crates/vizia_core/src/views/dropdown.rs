@@ -168,12 +168,12 @@ impl View for Dropdown {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|popup_event, meta| match popup_event {
             PopupEvent::Open => {
-                self.is_open.set(true);
+                self.is_open.set_if_changed(true);
                 meta.consume();
             }
 
             PopupEvent::Close => {
-                self.is_open.set(false);
+                self.is_open.set_if_changed(false);
                 meta.consume();
             }
 

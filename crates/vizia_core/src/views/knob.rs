@@ -2,6 +2,7 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 use crate::vg;
+use accesskit::ActionData;
 use morphorm::Units;
 
 use crate::prelude::*;
@@ -15,7 +16,7 @@ use std::{default, f32::consts::PI};
 
 /// A circular view which represents a value.
 pub struct Knob<T> {
-    source: T,
+    value: T,
     default_normal: f32,
 
     is_dragging: bool,
@@ -42,7 +43,7 @@ impl<R: Res<f32> + Clone + 'static> Knob<R> {
         let value_for_head = value.clone().to_signal(cx);
 
         Self {
-            source: value.clone(),
+            value: value.clone(),
             default_normal: normalized_default.get_value(cx),
 
             is_dragging: false,
@@ -81,6 +82,8 @@ impl<R: Res<f32> + Clone + 'static> Knob<R> {
             });
         })
         .navigable(true)
+        .role(Role::Slider)
+        .numeric_value(value_for_track.map(|val| (*val as f64 * 100.0).round()))
     }
 }
 
@@ -98,7 +101,7 @@ impl<R: Res<f32> + Clone + 'static> Knob<R> {
         let value_for_content = value.clone();
 
         Self {
-            source: value.clone(),
+            value: value.clone(),
             default_normal,
 
             is_dragging: false,
@@ -143,6 +146,11 @@ impl<T: Res<f32> + 'static> View for Knob<T> {
         Some("knob")
     }
 
+    fn accessibility(&self, _cx: &mut AccessContext, node: &mut AccessNode) {
+        node.set_min_numeric_value(0.0);
+        node.set_max_numeric_value(100.0);
+    }
+
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         let move_virtual_slider = |self_ref: &mut Self, cx: &mut EventContext, new_normal: f32| {
             self_ref.continuous_normal = new_normal;
@@ -160,13 +168,13 @@ impl<T: Res<f32> + 'static> View for Knob<T> {
                 cx.capture();
                 cx.focus_with_visibility(false);
 
-                self.continuous_normal = self.source.get_value(cx);
+                self.continuous_normal = self.value.get_value(cx);
             }
 
             WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                 self.is_dragging = false;
 
-                self.continuous_normal = self.source.get_value(cx);
+                self.continuous_normal = self.value.get_value(cx);
 
                 cx.release();
             }
@@ -204,14 +212,35 @@ impl<T: Res<f32> + 'static> View for Knob<T> {
             }
 
             WindowEvent::KeyDown(Code::ArrowUp | Code::ArrowRight, _) => {
-                self.continuous_normal = self.source.get_value(cx);
+                self.continuous_normal = self.value.get_value(cx);
                 move_virtual_slider(self, cx, self.continuous_normal + self.arrow_scalar);
             }
 
             WindowEvent::KeyDown(Code::ArrowDown | Code::ArrowLeft, _) => {
-                self.continuous_normal = self.source.get_value(cx);
+                self.continuous_normal = self.value.get_value(cx);
                 move_virtual_slider(self, cx, self.continuous_normal - self.arrow_scalar);
             }
+
+            WindowEvent::ActionRequest(action) => match action.action {
+                Action::Increment => {
+                    self.continuous_normal = self.value.get_value(cx);
+                    move_virtual_slider(self, cx, self.continuous_normal + self.arrow_scalar);
+                }
+
+                Action::Decrement => {
+                    self.continuous_normal = self.value.get_value(cx);
+                    move_virtual_slider(self, cx, self.continuous_normal - self.arrow_scalar);
+                }
+
+                Action::SetValue => {
+                    if let Some(ActionData::NumericValue(val)) = action.data {
+                        let val = (val as f32).clamp(0.0, 1.0);
+                        move_virtual_slider(self, cx, val);
+                    }
+                }
+
+                _ => {}
+            },
 
             _ => {}
         });

@@ -215,7 +215,7 @@ where
                 let text = value_text.get();
                 let txt = text.to_string_local(&handle);
                 let handle = handle.modify(|textbox| {
-                    textbox.show_placeholder.set(txt.is_empty());
+                    textbox.show_placeholder.set_if_changed(txt.is_empty());
                 });
                 let placeholder_text = placeholder.get().to_string_local(&handle);
 
@@ -447,14 +447,26 @@ where
         let bounds = cx.bounds();
 
         if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-            let padding_left =
-                cx.style.padding_left.get_resolved(cx.current, &cx.style.custom_units_props).unwrap_or_default();
-            let padding_top =
-                cx.style.padding_top.get_resolved(cx.current, &cx.style.custom_units_props).unwrap_or_default();
-            let _padding_right =
-                cx.style.padding_right.get_resolved(cx.current, &cx.style.custom_units_props).unwrap_or_default();
-            let padding_bottom =
-                cx.style.padding_bottom.get_resolved(cx.current, &cx.style.custom_units_props).unwrap_or_default();
+            let padding_left = cx
+                .style
+                .padding_left
+                .get_resolved(cx.current, &cx.style.custom_units_props)
+                .unwrap_or_default();
+            let padding_top = cx
+                .style
+                .padding_top
+                .get_resolved(cx.current, &cx.style.custom_units_props)
+                .unwrap_or_default();
+            let _padding_right = cx
+                .style
+                .padding_right
+                .get_resolved(cx.current, &cx.style.custom_units_props)
+                .unwrap_or_default();
+            let padding_bottom = cx
+                .style
+                .padding_bottom
+                .get_resolved(cx.current, &cx.style.custom_units_props)
+                .unwrap_or_default();
 
             let logical_parent_width = cx.physical_to_logical(bounds.w);
             let logical_parent_height = cx.physical_to_logical(bounds.h);

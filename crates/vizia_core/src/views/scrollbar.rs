@@ -2,8 +2,8 @@ use crate::context::TreeProps;
 use crate::prelude::*;
 
 /// A view which represents a bar that can be dragged to manipulate a scrollview.
-pub struct Scrollbar<L1> {
-    value: L1,
+pub struct Scrollbar {
+    value: Signal<f32>,
     orientation: Orientation,
 
     reference_points: Option<(f32, f32)>,
@@ -18,20 +18,22 @@ enum ScrollBarEvent {
     SetScrollToCursor(bool),
 }
 
-impl<R1: Res<f32> + Clone + 'static> Scrollbar<R1> {
+impl Scrollbar {
     /// Create a new [Scrollbar] view.
-    pub fn new<F, R2: Res<f32> + Clone + 'static>(
+    pub fn new<F, V, R>(
         cx: &mut Context,
-        value: R1,
-        ratio: R2,
+        value: V,
+        ratio: R,
         orientation: Orientation,
         callback: F,
     ) -> Handle<Self>
     where
+        V: Res<f32> + 'static,
+        R: Res<f32> + 'static,
         F: 'static + Fn(&mut EventContext, f32),
     {
-        let value_for_thumb = value.clone().to_signal(cx);
-        let ratio_for_thumb = ratio.clone().to_signal(cx);
+        let value = value.to_signal(cx);
+        let ratio = ratio.to_signal(cx);
 
         Self {
             value,
@@ -45,8 +47,8 @@ impl<R1: Res<f32> + Clone + 'static> Scrollbar<R1> {
             Element::new(cx)
                 .class("thumb")
                 .focusable(true)
-                .bind(value_for_thumb, move |handle| {
-                    let value = value_for_thumb.get();
+                .bind(value, move |handle| {
+                    let value = value.get();
                     match orientation {
                         Orientation::Horizontal => {
                             handle.left(Units::Stretch(value)).right(Units::Stretch(1.0 - value))
@@ -56,8 +58,8 @@ impl<R1: Res<f32> + Clone + 'static> Scrollbar<R1> {
                         }
                     };
                 })
-                .bind(ratio_for_thumb, move |handle| {
-                    let ratio = ratio_for_thumb.get();
+                .bind(ratio, move |handle| {
+                    let ratio = ratio.get();
                     match orientation {
                         Orientation::Horizontal => handle.width(Units::Percentage(ratio * 100.0)),
                         Orientation::Vertical => handle.height(Units::Percentage(ratio * 100.0)),
@@ -71,9 +73,7 @@ impl<R1: Res<f32> + Clone + 'static> Scrollbar<R1> {
             Orientation::Vertical => "vertical",
         })
     }
-}
 
-impl<R1> Scrollbar<R1> {
     fn container_and_thumb_size(&self, cx: &mut EventContext) -> (f32, f32) {
         let current = cx.current();
         let child = cx.tree.get_child(current, 0).unwrap();
@@ -109,7 +109,7 @@ impl<R1> Scrollbar<R1> {
     }
 }
 
-impl<R1: Res<f32> + 'static> View for Scrollbar<R1> {
+impl View for Scrollbar {
     fn element(&self) -> Option<&'static str> {
         Some("scrollbar")
     }
@@ -129,7 +129,7 @@ impl<R1: Res<f32> + 'static> View for Scrollbar<R1> {
             match window_event {
                 WindowEvent::MouseDown(MouseButton::Left) => {
                     if meta.target != cx.current() {
-                        self.reference_points = Some((pos, self.value.get_value(cx)));
+                        self.reference_points = Some((pos, self.value.get()));
                         cx.capture();
                         cx.set_active(true);
                         self.dragging = true;
@@ -188,8 +188,7 @@ impl<R1: Res<f32> + 'static> View for Scrollbar<R1> {
                                 }
                             }
                         };
-                        let changed =
-                            self.compute_new_value(cx, physical_delta, self.value.get_value(cx));
+                        let changed = self.compute_new_value(cx, physical_delta, self.value.get());
                         self.change(cx, changed);
                     }
                 }
@@ -245,15 +244,12 @@ impl<R1: Res<f32> + 'static> View for Scrollbar<R1> {
     }
 }
 
-impl<R1: 'static> Handle<'_, Scrollbar<R1>> {
+impl Handle<'_, Scrollbar> {
     /// Sets whether the scrollbar should move to the cursor when pressed.
-    pub fn scroll_to_cursor(mut self, scroll_to_cursor: impl Res<bool>) -> Self {
-        let _entity = self.entity();
-        scroll_to_cursor.set_or_bind(self.context(), |cx, val| {
-            let v = val.get_value(cx);
-            cx.emit(ScrollBarEvent::SetScrollToCursor(v));
-        });
-
-        self
+    pub fn scroll_to_cursor(self, scroll_to_cursor: impl Res<bool> + 'static) -> Self {
+        let scroll_to_cursor = scroll_to_cursor.to_signal(self.cx);
+        self.bind(scroll_to_cursor, move |handle| {
+            handle.cx.emit(ScrollBarEvent::SetScrollToCursor(scroll_to_cursor.get()));
+        })
     }
 }
