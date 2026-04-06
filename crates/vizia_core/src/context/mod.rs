@@ -585,9 +585,11 @@ impl Context {
             self.add_stylesheet(DEFAULT_THEME).unwrap();
             let environment = self.data::<Environment>();
             let theme_mode = environment.theme.get_current_theme();
+            let direction = environment.direction.get();
             self.with_current(Entity::root(), |cx| {
                 let cx = &mut EventContext::new(cx);
                 cx.toggle_class("dark", theme_mode == ThemeMode::DarkMode);
+                cx.toggle_class("rtl", direction == Direction::RightToLeft);
             })
         } else {
             // Add an empty stylesheet to ensure that the list of styles contains at least three entries.

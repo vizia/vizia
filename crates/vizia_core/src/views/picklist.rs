@@ -43,19 +43,29 @@ impl PickList {
                     HStack::new(cx, move |cx| {
                         Label::new(cx, placeholder)
                             .bind(list, move |handle| {
-                                let list = list.get();
+                                //let list = list.get();
                                 handle.bind(selected, move |handle| {
                                     let selected_index = selected.get();
-                                    let list_len = list.len();
+                                    let list_len = list.with(|list| list.len());
                                     if let Some(index) = selected_index {
                                         if index < list_len {
-                                            let selected_text = if let Some(item) = list.get(index)
-                                            {
-                                                item.to_string_local(&handle)
+                                            let item = Memo::new(move |_| {
+                                                list.with(move |list| list.get(index).cloned())
+                                            });
+                                            println!(
+                                                "selected index: {}, item: {:?}",
+                                                index,
+                                                item.get()
+                                                    .as_ref()
+                                                    .map(|it| it.to_string_local(&handle))
+                                            );
+                                            if let Some(_) = item.get() {
+                                                println!("doing thing");
+                                                handle
+                                                    .text(item.map(move |it| it.clone().unwrap()));
                                             } else {
-                                                placeholder.get()
+                                                handle.text(placeholder.get());
                                             };
-                                            handle.text(selected_text);
                                         } else {
                                             handle.text(placeholder.get());
                                         }

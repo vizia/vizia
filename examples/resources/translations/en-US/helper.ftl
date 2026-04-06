@@ -1,0 +1,11 @@
+system-theme = System
+dark-theme = Dark
+light-theme = Light
+blue = Blue
+emerald = Emerald
+crimson = Crimson
+amber = Amber
+violet = Violet
+en = English
+fr = French
+ar = Arabic

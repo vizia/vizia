@@ -44,9 +44,13 @@ const PRIMARY_COLOR_CLASSES: [&str; 5] =
 
 pub struct ControlsData {
     pub disabled: Signal<bool>,
-    pub theme_options: Signal<Vec<Signal<&'static str>>>,
+    pub theme_options: Signal<Vec<Localized>>,
     pub selected_theme: Signal<Option<usize>>,
-    pub primary_color_options: Signal<Vec<Signal<&'static str>>>,
+    pub language_options: Signal<Vec<Localized>>,
+    pub selected_language: Signal<Option<usize>>,
+    pub direction_options: Signal<Vec<&'static str>>,
+    pub selected_direction: Signal<Option<usize>>,
+    pub primary_color_options: Signal<Vec<Localized>>,
     pub selected_primary_color: Signal<Option<usize>>,
 }
 
@@ -54,10 +58,30 @@ impl Default for ControlsData {
     fn default() -> Self {
         Self {
             disabled: Signal::new(false),
-            theme_options: Signal::new(["System", "Dark", "Light"].map(Signal::new).to_vec()),
+            theme_options: Signal::new(
+                [
+                    Localized::new("system-theme"),
+                    Localized::new("dark-theme"),
+                    Localized::new("light-theme"),
+                ]
+                .to_vec(),
+            ),
             selected_theme: Signal::new(Some(0)),
+            language_options: Signal::new(
+                [Localized::new("en"), Localized::new("fr"), Localized::new("ar")].to_vec(),
+            ),
+            selected_language: Signal::new(Some(0)),
+            direction_options: Signal::new(["LTR", "RTL"].to_vec()),
+            selected_direction: Signal::new(Some(0)),
             primary_color_options: Signal::new(
-                ["Blue", "Emerald", "Crimson", "Amber", "Violet"].map(Signal::new).to_vec(),
+                [
+                    Localized::new("blue"),
+                    Localized::new("emerald"),
+                    Localized::new("crimson"),
+                    Localized::new("amber"),
+                    Localized::new("violet"),
+                ]
+                .to_vec(),
             ),
             selected_primary_color: Signal::new(Some(0)),
         }
@@ -67,6 +91,8 @@ impl Default for ControlsData {
 pub enum ControlsEvent {
     ToggleDisabled,
     SetThemeMode(usize),
+    SetLanguage(usize),
+    SetDirection(usize),
     SetPrimaryThemeColor(usize),
 }
 
@@ -82,6 +108,29 @@ impl Model for ControlsData {
                     0 /* system */ => AppTheme::System,
                     1 /* Dark */ => AppTheme::BuiltIn(ThemeMode::DarkMode),
                     2 /* Light */ => AppTheme::BuiltIn(ThemeMode::LightMode),
+                    _ => unreachable!(),
+                }));
+            }
+            ControlsEvent::SetLanguage(language) => {
+                self.selected_language.set(Some(*language));
+                cx.emit(EnvironmentEvent::SetLocale(match language {
+                    0 /* English */ => langid!("en-US"),
+                    1 /* French */ => langid!("fr"),
+                    2 /* Arabic */ => langid!("ar"),
+                    _ => unreachable!(),
+                }));
+                cx.emit(EnvironmentEvent::SetDirection(match language {
+                    0 => Direction::LeftToRight,
+                    1 => Direction::LeftToRight,
+                    2 => Direction::RightToLeft,
+                    _ => unreachable!(),
+                }));
+            }
+            ControlsEvent::SetDirection(direction) => {
+                self.selected_direction.set(Some(*direction));
+                cx.emit(EnvironmentEvent::SetDirection(match direction {
+                    0 /* LTR */ => Direction::LeftToRight,
+                    1 /* RTL */ => Direction::RightToLeft,
                     _ => unreachable!(),
                 }));
             }
@@ -106,15 +155,35 @@ impl ExamplePage {
 
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
 
+        cx.add_translation(
+            langid!("en-US"),
+            include_str!("../../resources/translations/en-US/helper.ftl"),
+        );
+
+        cx.add_translation(
+            langid!("fr"),
+            include_str!("../../resources/translations/fr/helper.ftl"),
+        );
+
+        cx.add_translation(
+            langid!("ar"),
+            include_str!("../../resources/translations/ar/helper.ftl"),
+        );
+
         Self.build(cx, |cx| {
             let controls = ControlsData::default();
             let disabled = controls.disabled;
             let theme_options = controls.theme_options;
             let selected_theme = controls.selected_theme;
+            let language_options = controls.language_options;
+            let selected_language = controls.selected_language;
+            let direction_options = controls.direction_options;
+            let selected_direction = controls.selected_direction;
             let primary_color_options = controls.primary_color_options;
             let selected_primary_color = controls.selected_primary_color;
             controls.build(cx);
             cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System)); // set system theme
+            cx.emit(EnvironmentEvent::SetDirection(Direction::LeftToRight));
             cx.emit(ControlsEvent::SetPrimaryThemeColor(0));
 
             HStack::new(cx, |cx| {
@@ -136,6 +205,8 @@ impl ExamplePage {
                 .size(Auto);
 
                 theme_selection_dropdown(cx, theme_options, selected_theme);
+                language_selection_dropdown(cx, language_options, selected_language);
+                direction_selection_dropdown(cx, direction_options, selected_direction);
                 primary_color_selection_dropdown(cx, primary_color_options, selected_primary_color);
             })
             .height(Auto)
@@ -157,15 +228,35 @@ impl ExamplePage {
 
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
 
+        cx.add_translation(
+            langid!("en-US"),
+            include_str!("../../resources/translations/en-US/helper.ftl"),
+        );
+
+        cx.add_translation(
+            langid!("fr"),
+            include_str!("../../resources/translations/fr/helper.ftl"),
+        );
+
+        cx.add_translation(
+            langid!("ar"),
+            include_str!("../../resources/translations/ar/helper.ftl"),
+        );
+
         Self.build(cx, |cx| {
             let controls = ControlsData::default();
             let disabled = controls.disabled;
             let theme_options = controls.theme_options;
             let selected_theme = controls.selected_theme;
+            let language_options = controls.language_options;
+            let selected_language = controls.selected_language;
+            let direction_options = controls.direction_options;
+            let selected_direction = controls.selected_direction;
             let primary_color_options = controls.primary_color_options;
             let selected_primary_color = controls.selected_primary_color;
             controls.build(cx);
             cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System)); // set system theme
+            cx.emit(EnvironmentEvent::SetDirection(Direction::LeftToRight));
             cx.emit(ControlsEvent::SetPrimaryThemeColor(0));
 
             HStack::new(cx, |cx| {
@@ -186,6 +277,8 @@ impl ExamplePage {
                 .size(Auto);
 
                 theme_selection_dropdown(cx, theme_options, selected_theme);
+                language_selection_dropdown(cx, language_options, selected_language);
+                direction_selection_dropdown(cx, direction_options, selected_direction);
                 primary_color_selection_dropdown(cx, primary_color_options, selected_primary_color);
             })
             .height(Auto)
@@ -210,7 +303,7 @@ impl View for ExamplePage {}
 
 fn theme_selection_dropdown(
     cx: &mut Context,
-    theme_options: Signal<Vec<Signal<&'static str>>>,
+    theme_options: Signal<Vec<Localized>>,
     selected_theme: Signal<Option<usize>>,
 ) {
     PickList::new(cx, theme_options, selected_theme, true)
@@ -226,7 +319,7 @@ fn theme_selection_dropdown(
 
 fn primary_color_selection_dropdown(
     cx: &mut Context,
-    color_options: Signal<Vec<Signal<&'static str>>>,
+    color_options: Signal<Vec<Localized>>,
     selected_color: Signal<Option<usize>>,
 ) {
     PickList::new(cx, color_options, selected_color, true)
@@ -236,6 +329,38 @@ fn primary_color_selection_dropdown(
         .tooltip(|cx| {
             Tooltip::new(cx, |cx| {
                 Label::new(cx, "Select Primary Color");
+            })
+        });
+}
+
+fn direction_selection_dropdown(
+    cx: &mut Context,
+    direction_options: Signal<Vec<&'static str>>,
+    selected_direction: Signal<Option<usize>>,
+) {
+    PickList::new(cx, direction_options, selected_direction, true)
+        .min_selected(1)
+        .on_select(|cx, index| cx.emit(ControlsEvent::SetDirection(index)))
+        .width(Pixels(100.0))
+        .tooltip(|cx| {
+            Tooltip::new(cx, |cx| {
+                Label::new(cx, "Select Direction");
+            })
+        });
+}
+
+fn language_selection_dropdown(
+    cx: &mut Context,
+    language_options: Signal<Vec<Localized>>,
+    selected_language: Signal<Option<usize>>,
+) {
+    PickList::new(cx, language_options, selected_language, true)
+        .min_selected(1)
+        .on_select(|cx, index| cx.emit(ControlsEvent::SetLanguage(index)))
+        .width(Pixels(110.0))
+        .tooltip(|cx| {
+            Tooltip::new(cx, |cx| {
+                Label::new(cx, "Select Language");
             })
         });
 }

@@ -7,6 +7,7 @@
         Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
     font-variation-settings: "wght" 400;
     font-size: 14px;
+    direction: ltr;
 
     --gray-50: #ffffff;
     --gray-75: #fdfdfd;
@@ -129,6 +130,10 @@
     --sidebar-accent-foreground: #fafafa;
     --sidebar-border: #ffffff1a;
     --sidebar-ring: #737373;
+}
+
+.rtl {
+    direction: rtl;
 }
 
 window {

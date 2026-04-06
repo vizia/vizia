@@ -1,0 +1,11 @@
+system-theme = النظام
+dark-theme = داكن
+light-theme = فاتح
+blue = أزرق
+emerald = زمردي
+crimson = قرمزي
+amber = كهرماني
+violet = بنفسجي
+en = الإنجليزية
+fr = الفرنسية
+ar = العربية

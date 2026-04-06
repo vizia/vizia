@@ -55,6 +55,8 @@ impl Theme {
 pub struct Environment {
     /// The locale used for localization.
     pub locale: Signal<LanguageIdentifier>,
+    /// The text and layout direction used by the application.
+    pub direction: Signal<Direction>,
     /// The maximum interval between two clicks to be recognised as a double-click.
     pub double_click_interval: Duration,
     /// The delay before a tooltip fades in.
@@ -76,6 +78,7 @@ impl Environment {
         });
         Self {
             locale: Signal::new(locale.clone()),
+            direction: Signal::new(Direction::LeftToRight),
             double_click_interval: Duration::from_millis(500),
             tooltip_delay: Duration::from_millis(1500),
             theme: Theme::default(),
@@ -88,6 +91,8 @@ impl Environment {
 pub enum EnvironmentEvent {
     /// Set the locale used for the whole application.
     SetLocale(LanguageIdentifier),
+    /// Set the text and layout direction used by the whole application.
+    SetDirection(Direction),
     /// Set the default theme mode.
     // TODO: add SetSysTheme event when the winit `set_theme` fixed.
     SetThemeMode(AppTheme),
@@ -106,6 +111,13 @@ impl Model for Environment {
         event.take(|event, _| match event {
             EnvironmentEvent::SetLocale(locale) => {
                 self.locale.set(locale.clone());
+            }
+
+            EnvironmentEvent::SetDirection(direction) => {
+                self.direction.set(direction);
+                cx.with_current(Entity::root(), |cx| {
+                    cx.toggle_class("rtl", direction == Direction::RightToLeft);
+                });
             }
 
             EnvironmentEvent::SetThemeMode(theme) => {
