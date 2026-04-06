@@ -317,16 +317,6 @@ checkbox {
     transition: border-color 100ms;
 }
 
-checkbox:hover {
-    transition: background-color 100ms;
-    transition: border-color 100ms;
-}
-
-checkbox:active {
-    transition: background-color 100ms;
-    transition: border-color 100ms;
-}
-
 checkbox:disabled {
     border-color: var(--muted);
     background-color: var(--muted);
@@ -343,18 +333,6 @@ checkbox:checked {
     transition: fill 100ms;
 }
 
-checkbox:checked:hover {
-    transition: background-color 100ms;
-    transition: border-color 100ms;
-    transition: fill 100ms;
-}
-
-checkbox:checked:active {
-    transition: background-color 100ms;
-    transition: border-color 100ms;
-    transition: fill 100ms;
-}
-
 checkbox:checked:disabled {
     background-color: var(--muted);
     border-color: var(--muted);
@@ -362,6 +340,162 @@ checkbox:checked:disabled {
     transition: background-color 100ms;
     transition: border-color 100ms;
     transition: fill 100ms;
+}
+
+/* CHIP */
+
+chip {
+    corner-radius: 50%;
+    background-color: var(--secondary);
+}
+
+chip.outline {
+    border-width: 1px;
+    border-color: var(--border);
+    background-color: transparent;
+}
+
+chip .close-icon {
+    background-color: #e0e0e000;
+    transition: background-color 100ms;
+    corner-radius: 50%;
+}
+
+chip .close-icon:hover {
+    background-color: #c1c1c1;
+    transition: background-color 100ms;
+}
+
+chip:disabled .icon {
+    background-color: transparent;
+}
+
+/* COMBOBOX */
+
+combobox {
+    corner-radius: 4px;
+    background-color: var(--background);
+}
+
+combobox .title {
+    border-width: 1px;
+    border-color: var(--border);
+    corner-radius: 4px;
+}
+
+combobox > textbox:placeholder-shown {
+    color: var(--muted-foreground);
+}
+
+combobox .list label.nav {
+    background-color: #51afef34;
+}
+
+combobox .list label:checked {
+    background-color: #51afef;
+}
+
+/* DATEPICKER */
+
+datepicker {
+    background-color: var(--background);
+    corner-radius: 4px;
+    border-color: var(--border);
+    border-width: 1px;
+}
+
+.datepicker-header textbox {
+    background-color: transparent;
+}
+
+.datepicker-calendar-day {
+    color: var(--muted-foreground);
+    cursor: hand;
+    corner-radius: 4px;
+}
+
+.datepicker-calendar-day:focus-visible {
+    outline-width: 1px;
+    outline-color: var(--accent);
+}
+
+.datepicker-calendar-day:checked {
+    color: #fff;
+    background-color: var(--accent);
+    corner-radius: 4px;
+}
+
+.datepicker-calendar-day-disabled {
+    color: var(--muted-foreground);
+    cursor: arrow;
+}
+
+.datepicker-selected-date {
+    color: var(--muted-foreground);
+}
+
+/* DIVIDER */
+
+divider > .divider-line {
+    background-color: #d2d2d2;
+}
+
+/* DROPDOWN */
+
+dropdown list label:hover {
+    background-color: #51afef34;
+}
+
+dropdown list label:checked {
+    background-color: #51afef;
+}
+
+/* ICON */
+svg:disabled {
+    fill: var(--muted-foreground);
+}
+
+/* KNOB */
+
+knob {
+    border-width: 2px;
+}
+
+knob .knob-track {
+    color: var(--accent);
+}
+
+knob:disabled .knob-track {
+    color: var(--muted);
+}
+
+knob .knob-head {
+    background-color: var(--background);
+    border-width: 2px;
+    border-color: var(--border);
+}
+
+knob:disabled .knob-head {
+    border-color: var(--muted);
+}
+
+knob .knob-tick {
+    background-color: #d2d2d2;
+    corner-radius: 1px;
+}
+
+knob:disabled .knob-tick {
+    background-color: #c4c4c4;
+}
+
+/* LABEL */
+
+label:disabled {
+    color: var(--muted-foreground);
+}
+
+label.describing {
+    cursor: hand;
 }
 
 /* LIST */
@@ -384,6 +518,79 @@ virtual-list.selectable list-item:hover {
 list.selectable list-item:checked,
 virtual-list.selectable list-item:checked {
     background-color: var(--accent);
+}
+
+/* MENU */
+
+menubutton {
+    background-color: transparent;
+    corner-radius: 4px;
+}
+
+menubutton:focus {
+    background-color: var(--accent);
+}
+
+menubutton:hover {
+    background-color: var(--accent);
+}
+
+menubutton:disabled {
+    color: var(--muted-foreground);
+    background-color: transparent;
+}
+
+menubutton .shortcut {
+    color: var(--muted-foreground);
+    font-size: 12px;
+}
+
+submenu {
+    background-color: transparent;
+    corner-radius: 4px;
+}
+
+submenu:checked {
+    background-color: var(--accent);
+}
+
+submenu:focus {
+    background-color: var(--accent);
+}
+
+submenu:hover {
+    background-color: var(--accent);
+}
+
+submenu:disabled {
+    color: var(--muted-foreground);
+    background-color: transparent;
+}
+
+submenu divider {
+    top: 4px;
+    bottom: 4px;
+    background-color: var(--border);
+}
+
+/* PROGRESSBAR */
+
+progressbar {
+    corner-radius: 50%;
+    background-color: #f4f4f4;
+    overflow: hidden;
+}
+
+progressbar:disabled {
+    background-color: #a0a0a0;
+}
+
+progressbar .progressbar-bar {
+    background-color: #51afef;
+}
+
+progressbar:disabled .progressbar-bar {
+    background-color: transparent;
 }
 
 /* PICKLIST */
@@ -423,6 +630,76 @@ popup {
     border-color: var(--border);
     padding: 1px;
     shadow: 0px 3px 12px #00000038;
+}
+
+/* RADIOBUTTON */
+
+radiobutton {
+    border-width: 2px;
+    corner-radius: 50%;
+    border-color: var(--border);
+}
+
+radiobutton:checked {
+    border-color: var(--primary);
+}
+
+radiobutton:disabled {
+    border-color: var(--muted);
+}
+
+radiobutton .inner {
+    width: 0px;
+    height: 0px;
+    corner-radius: 50%;
+}
+
+radiobutton:checked .inner {
+    width: 8px;
+    height: 8px;
+    background-color: var(--primary);
+    transition:
+        width 100ms,
+        height 100ms;
+}
+
+radiobutton:disabled .inner {
+    width: 8px;
+    height: 8px;
+    background-color: var(--muted);
+}
+
+/* RATING */
+
+rating svg {
+    fill: var(--muted);
+    width: 20px;
+    height: 20px;
+}
+
+rating svg:checked {
+    fill: gold;
+}
+
+rating:over > svg:enabled {
+    fill: var(--muted);
+}
+
+rating:over > svg.foo:enabled {
+    fill: gold;
+}
+
+rating svg:hover {
+    scale: 1.2;
+    transition: scale 100ms;
+}
+
+rating svg:disabled {
+    fill: var(--muted);
+}
+
+rating svg:checked:disabled {
+    fill: var(--muted-foreground);
 }
 
 /* SCROLLVIEW */
@@ -520,18 +797,48 @@ switch:disabled .thumb {
     transition: background-color 100ms;
 }
 
-/* TEXTBOX */
+/* TABVIEW */
+tabheader:disabled {
+    background-color: transparent;
+}
 
+tabheader:checked .indicator {
+    background-color: #51afef;
+}
+
+tabview .tabview-divider {
+    background-color: #c4c4c4;
+}
+
+/* TABBAR */
+tabbar {
+    border: 1px solid #d6d6d6;
+}
+
+tabbar > list {
+    background-color: #e9e9e9;
+}
+
+tabbar list-item {
+    background-color: transparent;
+    border: 1px solid #d6d6d6;
+}
+
+tabbar list.selectable list-item:checked {
+    background-color: #ffffff;
+}
+
+/* TEXTBOX */
 textbox {
     corner-radius: 4px;
-    border-width: 1px;
-    border-color: var(--border);
-    background-color: var(--background);
+    border: 1px #d2d2d2;
+    background-color: #fff;
     transition: border-color 100ms;
     transition: background-color 100ms;
 }
 
 textbox:checked {
+    border-color: #51afef;
     transition: border-color 100ms;
 }
 
@@ -539,9 +846,9 @@ textbox:checked.caret {
     caret-color: #181818;
 }
 
-textbox:placeholder-shown {
+textbox > label.placeholder {
     caret-color: transparent;
-    color: var(--muted-foreground);
+    color: gray;
 }
 
 textbox:read-only {
@@ -555,6 +862,7 @@ textbox:disabled {
 }
 
 textbox:focus-visible {
+    border-color: #51afef80;
     transition: border-color 100ms;
 }
 
@@ -607,5 +915,18 @@ tooltip {
 }
 
 tooltip arrow {
-    background-color: var(--primary-foreground);
+    background-color: var(--primary);
+}
+
+xypad .thumb {
+    border-color: #000000ff;
+}
+
+collapsible {
+    background-color: white;
+    shadow: 0px 2px 2px #4f4f4f38;
+}
+
+collapsible > .header > .expand-icon {
+    fill: #979797;
 }
