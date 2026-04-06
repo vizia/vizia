@@ -9,8 +9,9 @@ use crate::{
     id::Id,
     memo::Memo,
     runtime::{RUNTIME, Runtime},
-    signal::{ReadSignal, Signal, SignalState, SignalValue, WriteSignal},
-    storage::{SyncStorage, UnsyncStorage},
+    signal::{ReadSignal, Signal, WriteSignal},
+    state::{SignalState, SignalValue},
+    sync_signal::{SyncReadSignal, SyncSignal, SyncWriteSignal},
 };
 
 /// You can manually control Signal's lifetime by using Scope.
@@ -115,31 +116,25 @@ impl Scope {
 
     /// Create a sync Signal under this Scope
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn create_sync_split_signal<T>(
-        self,
-        value: T,
-    ) -> (ReadSignal<T, SyncStorage>, WriteSignal<T, SyncStorage>)
+    pub fn create_sync_split_signal<T>(self, value: T) -> (SyncReadSignal<T>, SyncWriteSignal<T>)
     where
         T: Any + Send + Sync + 'static,
     {
-        self.enter(|| Signal::<T, SyncStorage>::new_sync_split(value))
+        self.enter(|| SyncSignal::<T>::new_split(value))
     }
 
     /// Create a sync Signal under this Scope
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn create_sync_signal<T>(self, value: T) -> Signal<T, SyncStorage>
+    pub fn create_sync_signal<T>(self, value: T) -> SyncSignal<T>
     where
         T: Any + Send + Sync + 'static,
     {
-        self.enter(|| Signal::<T, SyncStorage>::new_sync(value))
+        self.enter(|| SyncSignal::<T>::new(value))
     }
 
     /// Create a local (unsync) Signal under this Scope
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn create_local_split_signal<T>(
-        self,
-        value: T,
-    ) -> (ReadSignal<T, UnsyncStorage>, WriteSignal<T, UnsyncStorage>)
+    pub fn create_local_split_signal<T>(self, value: T) -> (ReadSignal<T>, WriteSignal<T>)
     where
         T: Any + 'static,
     {
@@ -148,7 +143,7 @@ impl Scope {
 
     /// Create a local (unsync) Signal under this Scope
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn create_local_signal<T>(self, value: T) -> Signal<T, UnsyncStorage>
+    pub fn create_local_signal<T>(self, value: T) -> Signal<T>
     where
         T: Any + 'static,
     {

@@ -1,9 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::{
-    Signal, SignalGet, SignalTrack, SignalUpdate, SignalWith,
-    storage::{SyncStorage, UnsyncStorage},
-};
+use crate::{Signal, SignalGet, SignalTrack, SignalUpdate, SignalWith, SyncSignal};
 
 /// A derived signal backed by a local [`Signal`] (UI-thread only).
 pub struct DerivedSignal<
@@ -12,9 +9,9 @@ pub struct DerivedSignal<
     GF: Fn(&T) -> O + Clone + 'static,
     UF: Fn(&O) -> T + Clone + 'static,
 > {
-    signal: Signal<T, UnsyncStorage>,
-    getter: Signal<Box<GF>, UnsyncStorage>,
-    setter: Signal<Box<UF>, UnsyncStorage>,
+    signal: Signal<T>,
+    getter: Signal<Box<GF>>,
+    setter: Signal<Box<UF>>,
     ty: PhantomData<T>,
     ts: PhantomData<()>,
 }
@@ -213,15 +210,15 @@ where
     GF: Fn(&T) -> O + Clone + 'static,
     UF: Fn(&O) -> T + Clone + 'static,
 {
-    pub fn new(signal: Signal<T, UnsyncStorage>, getter: GF, setter: UF) -> Self {
-        let getter = Signal::<Box<GF>, UnsyncStorage>::new(Box::new(getter));
-        let setter = Signal::<Box<UF>, UnsyncStorage>::new(Box::new(setter));
+    pub fn new(signal: Signal<T>, getter: GF, setter: UF) -> Self {
+        let getter = Signal::<Box<GF>>::new(Box::new(getter));
+        let setter = Signal::<Box<UF>>::new(Box::new(setter));
         DerivedSignal { signal, getter, setter, ty: PhantomData, ts: PhantomData }
     }
 }
 
 pub fn create_derived_signal<T, O, GF, UF>(
-    signal: Signal<T, UnsyncStorage>,
+    signal: Signal<T>,
     getter: GF,
     setter: UF,
 ) -> DerivedSignal<T, O, GF, UF>
@@ -241,9 +238,9 @@ pub struct SyncDerivedSignal<
     GF: Fn(&T) -> O + Clone + Send + Sync + 'static,
     UF: Fn(&O) -> T + Clone + Send + Sync + 'static,
 > {
-    signal: Signal<T, SyncStorage>,
-    getter: Signal<Box<GF>, SyncStorage>,
-    setter: Signal<Box<UF>, SyncStorage>,
+    signal: SyncSignal<T>,
+    getter: SyncSignal<Box<GF>>,
+    setter: SyncSignal<Box<UF>>,
     ty: PhantomData<T>,
     ts: PhantomData<()>,
 }
@@ -446,15 +443,15 @@ where
     GF: Fn(&T) -> O + Clone + Send + Sync + 'static,
     UF: Fn(&O) -> T + Clone + Send + Sync + 'static,
 {
-    pub fn new(signal: Signal<T, SyncStorage>, getter: GF, setter: UF) -> Self {
-        let getter = Signal::<Box<GF>, SyncStorage>::new_sync(Box::new(getter));
-        let setter = Signal::<Box<UF>, SyncStorage>::new_sync(Box::new(setter));
+    pub fn new(signal: SyncSignal<T>, getter: GF, setter: UF) -> Self {
+        let getter = SyncSignal::<Box<GF>>::new(Box::new(getter));
+        let setter = SyncSignal::<Box<UF>>::new(Box::new(setter));
         SyncDerivedSignal { signal, getter, setter, ty: PhantomData, ts: PhantomData }
     }
 }
 
 pub fn create_sync_derived_signal<T, O, GF, UF>(
-    signal: Signal<T, SyncStorage>,
+    signal: SyncSignal<T>,
     getter: GF,
     setter: UF,
 ) -> SyncDerivedSignal<T, O, GF, UF>
