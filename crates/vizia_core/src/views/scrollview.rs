@@ -119,10 +119,12 @@ impl ScrollView {
     fn sync_signals(&mut self, scale_factor: f32) {
         let scroll_x = self.scroll_x.get();
         let scroll_y = self.scroll_y.get();
-        self.h_scroll
-            .set(self.show_horizontal_scrollbar.get() && self.container_width < self.inner_width);
-        self.v_scroll
-            .set(self.show_vertical_scrollbar.get() && self.container_height < self.inner_height);
+        self.h_scroll.set_if_changed(
+            self.show_horizontal_scrollbar.get() && self.container_width < self.inner_width,
+        );
+        self.v_scroll.set_if_changed(
+            self.show_vertical_scrollbar.get() && self.container_height < self.inner_height,
+        );
         let top = ((self.inner_height - self.container_height) * scroll_y).round() / scale_factor;
         let left = ((self.inner_width - self.container_width) * scroll_x).round() / scale_factor;
         self.scroll_offset.set((left, top));

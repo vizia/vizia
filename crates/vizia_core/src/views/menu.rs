@@ -45,11 +45,11 @@ impl View for MenuBar {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|menu_event, _| match menu_event {
             MenuEvent::MenuIsOpen => {
-                self.is_open.set(true);
+                self.is_open.set_if_changed(true);
             }
 
             MenuEvent::CloseAll => {
-                self.is_open.set(false);
+                self.is_open.set_if_changed(false);
                 cx.emit_custom(
                     Event::new(MenuEvent::Close).target(cx.current).propagate(Propagation::Subtree),
                 );
@@ -207,12 +207,12 @@ impl View for Submenu {
 
         event.map(|menu_event, meta| match menu_event {
             MenuEvent::Open => {
-                self.is_open.set(true);
+                self.is_open.set_if_changed(true);
                 meta.consume();
             }
 
             MenuEvent::Close => {
-                self.is_open.set(false);
+                self.is_open.set_if_changed(false);
                 // meta.consume();
             }
 

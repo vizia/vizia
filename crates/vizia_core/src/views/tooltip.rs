@@ -241,7 +241,7 @@ impl View for Tooltip {
 
                 let scale = cx.scale_factor();
 
-                self.shift.set(self.placement.get().place(available));
+                self.shift.set_if_changed(self.placement.get().place(available));
 
                 let arrow_size = self.arrow_size.get().to_px().unwrap();
 

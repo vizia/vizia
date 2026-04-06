@@ -48,7 +48,7 @@ impl VirtualList {
     fn recalc(&self, cx: &mut EventContext) {
         let num_items = self.num_items.get();
         if num_items == 0 {
-            self.visible_range.set(0..0);
+            self.visible_range.set_if_changed(0..0);
             return;
         }
 
@@ -97,7 +97,7 @@ impl VirtualList {
             }
         }
 
-        self.visible_range.set(start_index..end_index);
+        self.visible_range.set_if_changed(start_index..end_index);
     }
 }
 

@@ -215,7 +215,7 @@ where
                 let text = value_text.get();
                 let txt = text.to_string_local(&handle);
                 let handle = handle.modify(|textbox| {
-                    textbox.show_placeholder.set(txt.is_empty());
+                    textbox.show_placeholder.set_if_changed(txt.is_empty());
                 });
                 let placeholder_text = placeholder.get().to_string_local(&handle);
 

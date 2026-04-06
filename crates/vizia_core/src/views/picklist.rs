@@ -116,13 +116,13 @@ impl View for PickList {
 
         event.map(|popup_event, meta| match popup_event {
             PopupEvent::Open => {
-                self.is_open.set(true);
+                self.is_open.set_if_changed(true);
 
                 meta.consume();
             }
 
             PopupEvent::Close => {
-                self.is_open.set(false);
+                self.is_open.set_if_changed(false);
                 let e = cx.first_child();
                 cx.with_current(e, |cx| cx.focus());
                 meta.consume();

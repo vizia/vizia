@@ -78,7 +78,7 @@ impl Handle<'_, Collapsible> {
         self.bind(open, move |handle| {
             let open = open.get();
             handle.modify(|collapsible| {
-                collapsible.is_open.set(open);
+                collapsible.is_open.set_if_changed(open);
             });
         })
     }
