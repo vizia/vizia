@@ -291,6 +291,12 @@ impl<'a> EventContext<'a> {
 
     /// Returns the clip bounds of the current view.
     pub fn clip_region(&self) -> BoundingBox {
+        let current_window = if self.tree.is_window(self.current) {
+            self.current
+        } else {
+            self.tree.get_parent_window(self.current).unwrap_or(Entity::root())
+        };
+
         self.cache
             .clip_path
             .get(self.current)
@@ -310,15 +316,16 @@ impl<'a> EventContext<'a> {
                     {
                         return Some(clip_path);
                     }
+
+                    if parent == current_window {
+                        break;
+                    }
+
                     current = parent;
                 }
                 None
             })
-            .unwrap_or_else(|| {
-                let parent_window =
-                    self.tree.get_parent_window(self.current).unwrap_or(Entity::root());
-                self.cache.get_bounds(parent_window)
-            })
+            .unwrap_or_else(|| self.cache.get_bounds(current_window))
     }
 
     /// Returns the 2D transform of the current view.
