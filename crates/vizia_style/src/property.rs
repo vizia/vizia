@@ -1,9 +1,9 @@
 use crate::{
     Alignment, Angle, BackgroundImage, BackgroundSize, BlendMode, Border, BorderStyle, BorderWidth,
     ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError, CustomProperty,
-    Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight, FontWidth,
-    LayoutType, Length, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow, Parse,
-    PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign, TextDecoration,
+    Direction, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
+    FontWidth, LayoutType, Length, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow,
+    Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign, TextDecoration,
     TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform,
     Transition, Translate, Units, UnparsedProperty, Visibility, define_property,
 };
@@ -27,6 +27,7 @@ define_property! {
         "position-type": PositionType(PositionType),
 
         "alignment": Alignment(Alignment),
+        "direction": Direction(Direction),
 
         // Grid
         "grid-columns": GridColumns(Vec<Units>),

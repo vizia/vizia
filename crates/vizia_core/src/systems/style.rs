@@ -348,6 +348,7 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context, redraw_entities: &mut 
                 | cx.style.caret_color.inherit_inline(entity, parent)
                 | cx.style.selection_color.inherit_inline(entity, parent)
                 | cx.style.fill.inherit_inline(entity, parent)
+                | cx.style.direction.inherit_inline(entity, parent)
             {
                 redraw_entities.push(entity);
             }
@@ -391,6 +392,7 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context, redraw_entities: &mut 
                 | cx.style.caret_color.inherit_shared(entity, parent)
                 | cx.style.selection_color.inherit_shared(entity, parent)
                 | cx.style.fill.inherit_shared(entity, parent)
+                | cx.style.direction.inherit_shared(entity, parent)
             {
                 redraw_entities.push(entity);
             }
@@ -757,6 +759,11 @@ fn link_style_data(
     }
 
     if style.alignment.link(entity, matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if style.direction.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
     }

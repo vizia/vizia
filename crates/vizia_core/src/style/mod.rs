@@ -73,7 +73,7 @@ use crate::storage::animatable_var_set::AnimatableVarSet;
 
 pub use vizia_style::{
     Alignment, Angle, BackgroundImage, BackgroundSize, BorderStyleKeyword, ClipPath, Color,
-    CornerShape, CssRule, CursorIcon, Display, Filter, FontFamily, FontSize, FontSlant,
+    CornerShape, CssRule, CursorIcon, Direction, Display, Filter, FontFamily, FontSize, FontSlant,
     FontVariation, FontWeight, FontWeightKeyword, FontWidth, GenericFontFamily, Gradient,
     HorizontalPosition, HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue,
     LineClamp, LineDirection, LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position,
@@ -355,6 +355,7 @@ pub struct Style {
     pub(crate) position_type: StyleSet<PositionType>,
 
     pub(crate) alignment: StyleSet<Alignment>,
+    pub(crate) direction: StyleSet<Direction>,
 
     // Grid
     pub(crate) grid_columns: StyleSet<Vec<Units>>,
@@ -1559,6 +1560,10 @@ impl Style {
 
             Property::Alignment(alignment) => {
                 self.alignment.insert_rule(rule_id, alignment);
+            }
+
+            Property::Direction(direction) => {
+                self.direction.insert_rule(rule_id, direction);
             }
 
             // Grid
