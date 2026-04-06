@@ -310,9 +310,21 @@ impl<T: Default + 'static> Default for Signal<T> {
     }
 }
 
+impl<T: 'static> From<T> for Signal<T, UnsyncStorage> {
+    fn from(value: T) -> Self {
+        Signal::new(value)
+    }
+}
+
 impl<T: Default + Send + Sync + 'static> Default for Signal<T, SyncStorage> {
     fn default() -> Self {
         Signal::new_sync(T::default())
+    }
+}
+
+impl<T: Send + Sync + 'static> From<T> for Signal<T, SyncStorage> {
+    fn from(value: T) -> Self {
+        Signal::new_sync(value)
     }
 }
 
