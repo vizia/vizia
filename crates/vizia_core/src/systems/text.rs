@@ -3,7 +3,7 @@ use skia_safe::{
     font_arguments::VariationPosition,
     textlayout::{
         FontCollection, Paragraph, ParagraphBuilder, ParagraphStyle, RectHeightStyle,
-        RectWidthStyle, TextStyle,
+        RectWidthStyle, TextDirection, TextStyle,
     },
 };
 use vizia_storage::{LayoutChildIterator, LayoutTreeIterator};
@@ -225,6 +225,15 @@ pub fn build_paragraph(
             TextAlign::Left
         }
         .into(),
+    );
+
+    // Text Direction
+    paragraph_style.set_text_direction(
+        if matches!(style.direction.get(entity).copied(), Some(Direction::RightToLeft)) {
+            TextDirection::RTL
+        } else {
+            TextDirection::LTR
+        },
     );
 
     let mut paragraph_builder = ParagraphBuilder::new(&paragraph_style, font_collection);

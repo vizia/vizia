@@ -871,6 +871,11 @@ where
         let text_len = text.len();
 
         if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+            let text_direction = match cx.style.direction.get(cx.current).copied() {
+                Some(morphorm::Direction::RightToLeft) => TextDirection::RightToLeft,
+                _ => TextDirection::LeftToRight,
+            };
+
             let line_metrics = paragraph.get_line_metrics();
             for line in line_metrics.iter() {
                 // Skip lines that start beyond the actual text (i.e., the ZWS-only line)
@@ -881,8 +886,7 @@ where
                 // We need a child node per line
                 let mut line_node = AccessNode::new_from_parent(node_id, line.line_number);
                 line_node.set_role(Role::TextRun);
-                // TODO: Support bidirectional text.
-                line_node.set_text_direction(TextDirection::LeftToRight);
+                line_node.set_text_direction(text_direction);
                 line_node.set_bounds(BoundingBox {
                     x: line.left as f32,
                     y: (line.baseline - line.ascent) as f32,

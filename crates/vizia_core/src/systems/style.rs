@@ -348,7 +348,6 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context, redraw_entities: &mut 
                 | cx.style.caret_color.inherit_inline(entity, parent)
                 | cx.style.selection_color.inherit_inline(entity, parent)
                 | cx.style.fill.inherit_inline(entity, parent)
-                | cx.style.direction.inherit_inline(entity, parent)
             {
                 redraw_entities.push(entity);
             }
@@ -363,8 +362,10 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context, redraw_entities: &mut 
                 | cx.style.text_stroke_width.inherit_inline(entity, parent)
                 | cx.style.text_stroke_style.inherit_inline(entity, parent)
                 | cx.style.font_variation_settings.inherit_inline(entity, parent)
+                | cx.style.direction.inherit_inline(entity, parent)
             {
                 cx.style.needs_text_update(entity);
+                cx.style.needs_relayout();
             }
         }
     }
@@ -384,15 +385,16 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context, redraw_entities: &mut 
                 | cx.style.text_stroke_width.inherit_shared(entity, parent)
                 | cx.style.text_stroke_style.inherit_shared(entity, parent)
                 | cx.style.font_variation_settings.inherit_shared(entity, parent)
+                | cx.style.direction.inherit_shared(entity, parent)
             {
                 cx.style.needs_text_update(entity);
+                cx.style.needs_relayout();
             }
 
             if cx.style.disabled.inherit_shared(entity, parent)
                 | cx.style.caret_color.inherit_shared(entity, parent)
                 | cx.style.selection_color.inherit_shared(entity, parent)
                 | cx.style.fill.inherit_shared(entity, parent)
-                | cx.style.direction.inherit_shared(entity, parent)
             {
                 redraw_entities.push(entity);
             }
@@ -766,6 +768,7 @@ fn link_style_data(
     if style.direction.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
+        should_reflow = true;
     }
 
     // Background
