@@ -52,15 +52,8 @@ impl PickList {
                                             let item = Memo::new(move |_| {
                                                 list.with(move |list| list.get(index).cloned())
                                             });
-                                            println!(
-                                                "selected index: {}, item: {:?}",
-                                                index,
-                                                item.get()
-                                                    .as_ref()
-                                                    .map(|it| it.to_string_local(&handle))
-                                            );
+
                                             if let Some(_) = item.get() {
-                                                println!("doing thing");
                                                 handle
                                                     .text(item.map(move |it| it.clone().unwrap()));
                                             } else {

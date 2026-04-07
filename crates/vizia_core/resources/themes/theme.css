@@ -840,24 +840,20 @@ tabbar list.selectable list-item:checked {
 /* TEXTBOX */
 textbox {
     corner-radius: 4px;
-    border: 1px #d2d2d2;
-    background-color: #fff;
+    border-width: 1px;
+    border-color: var(--border);
+    background-color: var(--background);
     transition: border-color 100ms;
     transition: background-color 100ms;
 }
 
-textbox:checked {
-    border-color: #51afef;
-    transition: border-color 100ms;
-}
-
 textbox:checked.caret {
-    caret-color: #181818;
+    caret-color: var(--primary);
 }
 
-textbox > label.placeholder {
+textbox:placeholder-shown {
     caret-color: transparent;
-    color: gray;
+    color: var(--muted-foreground);
 }
 
 textbox:read-only {
@@ -866,17 +862,12 @@ textbox:read-only {
 }
 
 textbox:disabled {
-    color: #888;
+    color: var(--muted-foreground);
     transition: color 100ms;
 }
 
-textbox:focus-visible {
-    border-color: #51afef80;
-    transition: border-color 100ms;
-}
-
 textbox:invalid {
-    border-color: #ef5151;
+    border-color: var(--error);
     transition: border-color 100ms;
     border-width: 2px;
 }
