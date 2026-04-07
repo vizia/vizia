@@ -150,6 +150,34 @@ list-item {
     outline-offset: 0px;
 }
 
+/* AVATAR */
+
+avatar {
+    background-color: var(--accent);
+    color: var(--foreground);
+    fill: var(--foreground);
+}
+
+/* BADGE */
+
+badge {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    fill: var(--primary-foreground);
+}
+
+badge.success {
+    background-color: #00ab14;
+}
+
+badge.warning {
+    background-color: #ffaa00;
+}
+
+badge.error {
+    background-color: #ff2d2d;
+}
+
 /* BUTTON  */
 
 button {
@@ -160,37 +188,11 @@ button {
     transition: background-color 100ms;
 }
 
-button:hover {
-    background-color: var(--gray-700);
-    transition: background-color 100ms;
-}
-
-button:active {
-    background-color: var(--gray-600);
-    transition: background-color 100ms;
-}
-
 button.secondary,
 button-group.secondary > button {
     background-color: var(--secondary);
     color: var(--secondary-foreground);
     fill: var(--secondary-foreground);
-    transition: background-color 100ms;
-    transition: color 100ms;
-    transition: fill 100ms;
-}
-
-button.secondary:hover,
-button-group.secondary > button:hover {
-    background-color: var(--secondary);
-    transition: background-color 100ms;
-    transition: color 100ms;
-    transition: fill 100ms;
-}
-
-button.secondary:active,
-button-group.secondary > button:active {
-    background-color: var(--secondary);
     transition: background-color 100ms;
     transition: color 100ms;
     transition: fill 100ms;
@@ -218,15 +220,6 @@ button-group.outline > button:hover {
     transition: fill 100ms;
 }
 
-button.outline:active,
-button-group.outline > button:active {
-    background-color: var(--accent);
-    transition: background-color 100ms;
-    transition: border-color 100ms;
-    transition: color 100ms;
-    transition: fill 100ms;
-}
-
 button.text,
 button-group.text > button {
     background-color: var(--background);
@@ -239,14 +232,6 @@ button-group.text > button {
 
 button.text:hover,
 button-group.text > button:hover {
-    background-color: var(--accent);
-    transition: background-color 100ms;
-    transition: color 100ms;
-    transition: fill 100ms;
-}
-
-button.text:active,
-button-group.text > button:active {
     background-color: var(--accent);
     transition: background-color 100ms;
     transition: color 100ms;
@@ -471,7 +456,7 @@ knob {
 }
 
 knob .knob-track {
-    color: var(--accent);
+    color: var(--primary);
 }
 
 knob:disabled .knob-track {
@@ -489,12 +474,12 @@ knob:disabled .knob-head {
 }
 
 knob .knob-tick {
-    background-color: #d2d2d2;
+    background-color: var(--border);
     corner-radius: 1px;
 }
 
 knob:disabled .knob-tick {
-    background-color: #c4c4c4;
+    background-color: var(--muted);
 }
 
 /* LABEL */
@@ -843,16 +828,20 @@ textbox {
     border-width: 1px;
     border-color: var(--border);
     background-color: var(--background);
+    caret-color: transparent;
     transition: border-color 100ms;
     transition: background-color 100ms;
 }
 
-textbox:checked.caret {
-    caret-color: var(--primary);
+textbox:focus {
+    border-color: var(--ring);
+}
+
+textbox:focus.caret {
+    caret-color: var(--foreground);
 }
 
 textbox:placeholder-shown {
-    caret-color: transparent;
     color: var(--muted-foreground);
 }
 
@@ -882,17 +871,8 @@ toggle-button {
     transition: background-color 100ms;
 }
 
-toggle-button:hover {
-    background-color: var(--gray-200);
-    transition: background-color 100ms;
-}
-
-toggle-button:active {
-    background-color: var(--gray-300);
-}
-
 toggle-button:checked {
-    background-color: var(--gray-200);
+    background-color: var(--accent);
     transition: background-color 100ms;
 }
 

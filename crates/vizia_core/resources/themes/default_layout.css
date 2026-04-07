@@ -821,32 +821,14 @@ textbox {
     padding-right: 8px;
     alignment: left;
     cursor: text;
-    caret-color: transparent;
     selection-color: #6464c888;
-}
-
-textbox:checked.caret {
-    caret-color: #181818;
 }
 
 textbox:read-only {
     caret-color: transparent;
 }
 
-textbox:checked:read-only.caret {
-    caret-color: transparent;
-}
-
-textbox > label.placeholder {
-    padding-left: 8px;
-    alignment: left;
-}
-
 textbox.icon-before {
-    padding-left: 30px;
-}
-
-textbox.icon-before > label.placeholder {
     padding-left: 30px;
 }
 

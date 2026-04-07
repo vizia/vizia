@@ -1014,7 +1014,6 @@ where
                     if !cx.is_disabled() {
                         cx.focus_with_visibility(false);
                         cx.capture();
-                        cx.set_checked(true);
                         cx.lock_cursor_icon();
 
                         if !self.edit {
@@ -1030,7 +1029,6 @@ where
                 } else {
                     cx.emit(TextEvent::Submit(false));
                     cx.release();
-                    cx.set_checked(false);
 
                     // Forward event to hovered
                     cx.event_queue.push_back(
@@ -1378,7 +1376,6 @@ where
                     self.edit = true;
                     cx.focus_with_visibility(false);
                     cx.capture();
-                    cx.set_checked(true);
                     self.reset_caret_timer(cx);
                     self.reset_ime_position(cx);
 
@@ -1414,7 +1411,6 @@ where
             TextEvent::EndEdit => {
                 self.deselect();
                 self.edit = false;
-                cx.set_checked(false);
                 cx.release();
                 cx.stop_timer(self.caret_timer);
 
@@ -1452,7 +1448,6 @@ where
             }
 
             TextEvent::Blur => {
-                cx.set_checked(false);
                 if let Some(callback) = &self.on_blur {
                     (callback)(cx);
                 } else {
