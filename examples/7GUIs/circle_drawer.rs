@@ -344,7 +344,7 @@ impl CircleDrawer {
                         VStack::new(cx, move |cx| {
                             Label::new(
                                 cx,
-                                &format!(
+                                format!(
                                     "Adjust diameter of circle at {:?}.",
                                     circles_data
                                         .map(move |cd| {
