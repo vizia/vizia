@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 /// Enum which represents the geometric variants of an avatar view.
-#[derive(Debug, Default, Clone, Copy, Data, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub enum AvatarVariant {
     #[default]
     /// Represents a circular avatar shape.
@@ -17,6 +17,7 @@ pub enum AvatarVariant {
 /// # Example
 /// ```
 /// # use vizia_core::prelude::*;
+/// # use vizia_core::icons::ICON_USER;
 /// # let cx = &mut Context::default();
 /// Avatar::new(cx, |cx|{
 ///     Svg::new(cx, ICON_USER);
@@ -29,6 +30,7 @@ impl Avatar {
     ///
     /// ```
     /// # use vizia_core::prelude::*;
+    /// # use vizia_core::icons::ICON_USER;
     /// # let cx = &mut Context::default();
     /// Avatar::new(cx, |cx|{
     ///     Svg::new(cx, ICON_USER);
@@ -49,48 +51,39 @@ impl View for Avatar {
 }
 
 impl Handle<'_, Avatar> {
-    /// Selects the geometric variant of the Avatar. Accepts a value of, or lens to, an [AvatarVariant].
+    /// Selects the geometric variant of the Avatar. Accepts a value or signal of type [AvatarVariant].
     ///
     /// ```
     /// # use vizia_core::prelude::*;
+    /// # use vizia_core::icons::ICON_USER;
     /// # let cx = &mut Context::default();
     /// Avatar::new(cx, |cx|{
     ///     Svg::new(cx, ICON_USER);
     /// })
     /// .variant(AvatarVariant::Rounded);
     /// ```
-    pub fn variant<U: Into<AvatarVariant>>(self, variant: impl Res<U>) -> Self {
-        self.bind(variant, |handle, val| {
-            let var: AvatarVariant = val.get(&handle).into();
-            match var {
-                AvatarVariant::Circle => {
-                    handle
-                        .toggle_class("circle", true)
-                        .toggle_class("square", false)
-                        .toggle_class("rounded", false);
-                }
+    pub fn variant<U: Into<AvatarVariant> + Clone + PartialEq + 'static>(
+        mut self,
+        variant: impl Res<U> + 'static,
+    ) -> Self {
+        let avatar_variant = variant.to_signal(self.context()).map(|value| value.clone().into());
 
-                AvatarVariant::Square => {
-                    handle
-                        .toggle_class("circle", false)
-                        .toggle_class("square", true)
-                        .toggle_class("rounded", false);
-                }
+        let is_circle = Memo::new(move |_| avatar_variant.get() == AvatarVariant::Circle);
 
-                AvatarVariant::Rounded => {
-                    handle
-                        .toggle_class("circle", false)
-                        .toggle_class("square", false)
-                        .toggle_class("rounded", true);
-                }
-            }
-        })
+        let is_square = Memo::new(move |_| avatar_variant.get() == AvatarVariant::Square);
+
+        let is_rounded = Memo::new(move |_| avatar_variant.get() == AvatarVariant::Rounded);
+
+        self.toggle_class("circle", is_circle)
+            .toggle_class("square", is_square)
+            .toggle_class("rounded", is_rounded)
     }
 
     /// Adds a badge to the Avatar.
     ///
     /// ```
     /// # use vizia_core::prelude::*;
+    /// # use vizia_core::icons::ICON_USER;
     /// # let cx = &mut Context::default();
     /// Avatar::new(cx, |cx|{
     ///     Svg::new(cx, ICON_USER);

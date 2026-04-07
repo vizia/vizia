@@ -1,24 +1,25 @@
 use vizia::prelude::*;
 use vizia::vg;
 
-pub struct CustomView<L: Lens<Target = Color>> {
-    color: L,
+pub struct CustomView {
+    color: Signal<Color>,
 }
 
-impl<L: Lens<Target = Color>> CustomView<L> {
-    pub fn new(cx: &mut Context, color: L) -> Handle<'_, Self> {
+impl CustomView {
+    pub fn new(cx: &mut Context, color: Signal<Color>) -> Handle<'_, Self> {
         Self { color }
             .build(cx, |cx| {
                 Label::new(cx, "This is a custom view!");
             })
-            // Redraw when lensed data changes
-            .bind(color, |mut handle, _| handle.needs_redraw())
+            .bind(color, |mut view| {
+                view.needs_redraw();
+            })
     }
 }
 
-impl<L: Lens<Target = Color>> View for CustomView<L> {
+impl View for CustomView {
     fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
-        let col = self.color.get(cx);
+        let col = self.color.get();
         let bounds = cx.bounds();
         let rect: vg::Rect = bounds.into();
         let path = vg::Path::rect(rect, None);
@@ -28,15 +29,14 @@ impl<L: Lens<Target = Color>> View for CustomView<L> {
     }
 }
 
-#[derive(Lens)]
 struct AppData {
-    color: Color,
+    color: Signal<Color>,
 }
 
 impl Model for AppData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::SetColor(col) => self.color = *col,
+            AppEvent::SetColor(col) => self.color.set(*col),
         })
     }
 }
@@ -47,9 +47,13 @@ pub enum AppEvent {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        AppData { color: Color::red() }.build(cx);
-        CustomView::new(cx, AppData::color).size(Pixels(200.0));
-        Slider::new(cx, AppData::color.map(|c| c.r() as f32 / 255.0))
+        let color = Signal::new(Color::red());
+
+        AppData { color }.build(cx);
+
+        CustomView::new(cx, color).size(Pixels(200.0));
+
+        Slider::new(cx, color.map(|col| col.r() as f32 / 255.0))
             .on_change(|cx, val| cx.emit(AppEvent::SetColor(Color::rgb((val * 255.0) as u8, 0, 0))))
             .width(Pixels(200.0))
             .space(Pixels(20.0));

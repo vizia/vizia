@@ -1,68 +1,70 @@
 use std::ops::Deref;
 
-use crate::{icons::ICON_PLUS, prelude::*};
+use crate::prelude::*;
 
 pub enum TabEvent {
     SetSelected(usize),
 }
 
-#[derive(Lens)]
 pub struct TabView {
-    selected_index: usize,
-    is_vertical: bool,
-
-    #[lens(ignore)]
+    selected_index: Signal<usize>,
+    is_vertical: Signal<bool>,
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
 }
 
 impl TabView {
-    pub fn new<L, T, F>(cx: &mut Context, lens: L, content: F) -> Handle<Self>
+    pub fn new<S, V, T, F>(cx: &mut Context, list: S, content: F) -> Handle<Self>
     where
-        L: Lens<Target: std::ops::Deref<Target = [T]>>,
+        S: Res<V> + 'static,
+        V: Deref<Target = [T]> + Clone + 'static,
         T: Clone + 'static,
-        F: 'static + Clone + Fn(&mut Context, Index<L, T>) -> TabPair,
+        F: 'static + Clone + Fn(&mut Context, usize, T) -> TabPair,
     {
-        Self { selected_index: 0, is_vertical: false, on_select: None }
+        let selected_index = Signal::new(0usize);
+        let is_vertical = Signal::new(false);
+        let list = list.to_signal(cx);
+
+        Self { selected_index, is_vertical, on_select: None }
             .build(cx, move |cx| {
-                let content2 = content.clone();
-                // Tab headers
+                let content_for_headers = content.clone();
+
                 ScrollView::new(cx, move |cx| {
-                    //VStack::new(cx, move |cx| {
-                    Binding::new(cx, lens.map(|list| list.len()), move |cx, list_length| {
-                        let list_length = list_length.get(cx);
-                        for index in 0..list_length {
-                            let l = lens.idx(index);
-                            let builder = (content2)(cx, l).header;
+                    Binding::new(cx, list, move |cx| {
+                        let list_values = list.get();
+
+                        for (index, item) in list_values.iter().cloned().enumerate() {
+                            let builder = (content_for_headers)(cx, index, item).header;
+                            let is_selected =
+                                selected_index.map(move |selected_index| *selected_index == index);
+
                             TabHeader::new(cx, index, builder)
-                                .bind(TabView::selected_index, move |handle, selected_index| {
-                                    let selected_index = selected_index.get(handle.cx);
-                                    handle.checked(selected_index == index);
-                                })
-                                .toggle_class("vertical", TabView::is_vertical);
+                                .checked(is_selected)
+                                .toggle_class("vertical", is_vertical);
                         }
-                    })
-                    //})
-                    //.toggle_class("vertical", TabView::is_vertical)
-                    //.class("tabview-tabheader-wrapper");
+                    });
                 })
                 .class("tabview-header")
                 .z_index(1)
-                .toggle_class("vertical", TabView::is_vertical);
+                .toggle_class("vertical", is_vertical);
 
-                Divider::new(cx).toggle_class("vertical", TabView::is_vertical);
+                Divider::new(cx).toggle_class("vertical", is_vertical);
 
-                // Tab content
-                VStack::new(cx, |cx| {
-                    Binding::new(cx, TabView::selected_index, move |cx, selected| {
-                        let selected = selected.get(cx);
-                        let l = lens.idx(selected);
-                        ((content)(cx, l).content)(cx);
+                VStack::new(cx, move |cx| {
+                    Binding::new(cx, list, move |cx| {
+                        let list_values = list.get();
+                        let content = content.clone();
+                        Binding::new(cx, selected_index, move |cx| {
+                            let selected = selected_index.get();
+                            if let Some(item) = list_values.get(selected).cloned() {
+                                ((content)(cx, selected, item).content)(cx);
+                            }
+                        });
                     });
                 })
                 .overflow(Overflow::Hidden)
                 .class("tabview-content-wrapper");
             })
-            .toggle_class("vertical", TabView::is_vertical)
+            .toggle_class("vertical", is_vertical)
     }
 }
 
@@ -74,9 +76,11 @@ impl View for TabView {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|tab_event, meta| match tab_event {
             TabEvent::SetSelected(index) => {
-                self.selected_index = *index;
-                if let Some(callback) = &self.on_select {
-                    (callback)(cx, self.selected_index);
+                if self.selected_index.get() != *index {
+                    self.selected_index.set(*index);
+                    if let Some(callback) = &self.on_select {
+                        (callback)(cx, *index);
+                    }
                 }
                 meta.consume();
             }
@@ -86,7 +90,9 @@ impl View for TabView {
 
 impl Handle<'_, TabView> {
     pub fn vertical(self) -> Self {
-        self.modify(|tabview: &mut TabView| tabview.is_vertical = true)
+        self.modify(|tabview: &mut TabView| {
+            tabview.is_vertical.set(true);
+        })
     }
 
     pub fn on_select(self, callback: impl Fn(&mut EventContext, usize) + 'static) -> Self {
@@ -94,9 +100,9 @@ impl Handle<'_, TabView> {
     }
 
     pub fn with_selected<U: Into<usize>>(mut self, selected: impl Res<U>) -> Self {
-        let entity = self.entity();
-        selected.set_or_bind(self.context(), entity, |cx, selected| {
-            let index = selected.get(cx).into();
+        let _entity = self.entity();
+        selected.set_or_bind(self.context(), |cx, selected| {
+            let index = selected.get_value(cx).into();
             cx.emit(TabEvent::SetSelected(index));
         });
 
@@ -145,37 +151,5 @@ impl View for TabHeader {
 
             _ => {}
         });
-    }
-}
-
-pub struct TabBar {}
-
-impl TabBar {
-    pub fn new<L: Lens, T: 'static>(
-        cx: &mut Context,
-        list: L,
-        item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
-    ) -> Handle<Self>
-    where
-        L::Target: Deref<Target = [T]> + Data,
-    {
-        Self {}
-            .build(cx, |cx| {
-                List::new(cx, list, item_content)
-                    .selectable(Selectable::Single)
-                    .layout_type(LayoutType::Row);
-                Button::new(cx, |cx| Svg::new(cx, ICON_PLUS).size(Stretch(1.0)))
-                    .variant(ButtonVariant::Text)
-                    .padding(Pixels(0.0))
-                    .size(Pixels(16.0));
-            })
-            .alignment(Alignment::Left)
-            .layout_type(LayoutType::Row)
-    }
-}
-
-impl View for TabBar {
-    fn element(&self) -> Option<&'static str> {
-        Some("tabbar")
     }
 }

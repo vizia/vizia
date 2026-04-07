@@ -2,10 +2,10 @@ use vizia::{icons::ICON_CHEVRON_DOWN, prelude::*};
 
 use crate::DemoRegion;
 
-#[derive(Lens)]
 pub struct DropdownData {
-    list: Vec<String>,
-    selected: usize,
+    list: Signal<Vec<Signal<String>>>,
+    selected: Signal<usize>,
+    choice: Signal<String>,
 }
 
 pub enum DropdownEvent {
@@ -16,18 +16,25 @@ impl Model for DropdownData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             DropdownEvent::SetSelected(selected) => {
-                self.selected = *selected;
+                self.selected.set(*selected);
+                if let Some(choice) = self.list.get().as_slice().get(*selected).map(|s| s.get()) {
+                    self.choice.set(choice);
+                }
             }
         })
     }
 }
 
 pub fn dropdown(cx: &mut Context) {
-    DropdownData {
-        list: vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()],
-        selected: 0,
-    }
-    .build(cx);
+    let list = Signal::new(vec![
+        Signal::new("Red".to_string()),
+        Signal::new("Green".to_string()),
+        Signal::new("Blue".to_string()),
+    ]);
+    let selected = Signal::new(0usize);
+    let choice = Signal::new("Red".to_string());
+
+    DropdownData { list, selected, choice }.build(cx);
 
     VStack::new(cx, |cx| {
         Markdown::new(cx, "# Dropdown");
@@ -38,26 +45,18 @@ pub fn dropdown(cx: &mut Context) {
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 Dropdown::new(
                     cx,
                     move |cx| {
-                        Button::new(cx, |cx| {
-                            Label::new(cx, "").bind(DropdownData::list, move |handle, list| {
-                                handle.bind(DropdownData::selected, move |handle, sel| {
-                                    let selected_index = sel.get(&handle);
-                                    handle.text(list.idx(selected_index));
-                                });
-                            })
-                        })
-                        .on_press(|cx| cx.emit(PopupEvent::Switch));
+                        Button::new(cx, |cx| Label::new(cx, choice))
+                            .on_press(|cx| cx.emit(PopupEvent::Switch));
                     },
                     move |cx| {
-                        List::new(cx, DropdownData::list, |cx, _, item| {
+                        List::new(cx, list, |cx, _, item| {
                             Label::new(cx, item).hoverable(false);
                         })
                         .selectable(Selectable::Single)
-                        .selected(DropdownData::selected.map(|s| vec![*s]))
                         .on_select(|cx, index| {
                             cx.emit(DropdownEvent::SetSelected(index));
                             cx.emit(PopupEvent::Close);
@@ -71,7 +70,7 @@ pub fn dropdown(cx: &mut Context) {
         cx,
         move |cx| Label::new(cx, AppData::choice),
         move |cx| {
-            List::new(cx, AppData::list, |cx, _, item| {
+            List::new(cx, list, |cx, _, item| {
                 Label::new(cx, item)
                     .cursor(CursorIcon::Hand)
                     .bind(AppData::choice, move |handle, selected| {
@@ -92,7 +91,7 @@ pub fn dropdown(cx: &mut Context) {
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 Dropdown::new(
                     cx,
                     move |cx| {
@@ -109,11 +108,10 @@ pub fn dropdown(cx: &mut Context) {
                         });
                     },
                     move |cx| {
-                        List::new(cx, DropdownData::list, |cx, _, item| {
+                        List::new(cx, list, |cx, _, item| {
                             Label::new(cx, item).hoverable(false);
                         })
                         .selectable(Selectable::Single)
-                        .selected(DropdownData::selected.map(|s| vec![*s]))
                         .on_select(|cx, index| {
                             cx.emit(DropdownEvent::SetSelected(index));
                             cx.emit(PopupEvent::Close);
@@ -127,7 +125,7 @@ pub fn dropdown(cx: &mut Context) {
         cx,
         move |cx| Label::new(cx, AppData::choice),
         move |cx| {
-            List::new(cx, AppData::list, |cx, _, item| {
+            List::new(cx, list, |cx, _, item| {
                 Label::new(cx, item)
                     .cursor(CursorIcon::Hand)
                     .bind(AppData::choice, move |handle, selected| {

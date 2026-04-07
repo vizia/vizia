@@ -14,7 +14,7 @@ pub struct Handle<'a, V> {
 }
 
 impl<V> DataContext for Handle<'_, V> {
-    fn data<T: 'static>(&self) -> Option<&T> {
+    fn try_data<T: 'static>(&self) -> Option<&T> {
         // Return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
             return Some(t);
@@ -123,19 +123,19 @@ impl<V> Handle<'_, V> {
         self
     }
 
-    /// Creates a binding to the given lens and provides a closure which can be used to mutate the view through a handle.
-    pub fn bind<R, T, F>(self, res: R, closure: F) -> Self
+    /// Creates a binding to the given resource and provides a closure which can be used to mutate the view through a handle.
+    pub fn bind<R, T, F>(self, signal: R, closure: F) -> Self
     where
-        R: Res<T>,
-        F: 'static + Fn(Handle<'_, V>, R),
+        R: SignalGet<T> + 'static,
+        T: Clone + 'static,
+        F: 'static + Fn(Handle<'_, V>),
     {
         let entity = self.entity();
         let current = self.current();
         self.cx.with_current(current, |cx| {
-            res.set_or_bind(cx, entity, move |cx, r| {
+            Binding::new(cx, signal, move |cx| {
                 let new_handle = Handle { entity, current: cx.current, p: Default::default(), cx };
-                // new_handle.cx.set_current(new_handle.entity);
-                (closure)(new_handle, r);
+                (closure)(new_handle);
             });
         });
         self

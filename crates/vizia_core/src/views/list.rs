@@ -1,9 +1,11 @@
 use std::{collections::BTreeSet, ops::Deref, rc::Rc};
+use vizia_reactive::{Scope, SignalGet, UpdaterEffect};
 
 use crate::prelude::*;
+use crate::{binding::BindingHandler, context::SIGNAL_REBUILDS};
 
 /// Represents how items can be selected in a list.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Data)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum Selectable {
     #[default]
     /// Items in the list cannot be selected.
@@ -32,110 +34,245 @@ pub enum ListEvent {
     Scroll(f32, f32),
 }
 
-/// A view for creating a list of items from a binding to an iteratable list.
-#[derive(Lens)]
+/// A view for creating a list of items from an iterable signal.
 pub struct List {
     /// The number of items in the list.
     num_items: usize,
     /// The set of selected items in the list.
-    selected: BTreeSet<usize>,
+    selected: Signal<BTreeSet<usize>>,
     /// Whether the list items are selectable.
-    selectable: Selectable,
+    selectable: Signal<Selectable>,
     /// The index of the currently focused item in the list.
-    focused: Option<usize>,
+    focused: Signal<Option<usize>>,
     /// Whether the selection should follow the focus.
-    selection_follows_focus: bool,
+    selection_follows_focus: Signal<bool>,
     /// The orientation of the list, either vertical or horizontal.
-    orientation: Orientation,
+    orientation: Signal<Orientation>,
     /// Whether the scrollview should scroll to the cursor when the scrollbar is pressed.
-    scroll_to_cursor: bool,
+    scroll_to_cursor: Signal<bool>,
     /// Callback called when a list item is selected.
-    #[lens(ignore)]
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
     /// Callback called when the scrollview is scrolled.
-    #[lens(ignore)]
     on_scroll: Option<Box<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>>,
     /// The horizontal scroll position of the list.
-    scroll_x: f32,
+    scroll_x: Signal<f32>,
     /// The vertical scroll position of the list.
-    scroll_y: f32,
+    scroll_y: Signal<f32>,
     /// Whether the horizontal scrollbar should be visible.
-    show_horizontal_scrollbar: bool,
+    show_horizontal_scrollbar: Signal<bool>,
     /// Whether the vertical scrollbar should be visible.
-    show_vertical_scrollbar: bool,
+    show_vertical_scrollbar: Signal<bool>,
+}
+
+/// A binding handler that manages list item entities for a [List].
+///
+/// The user provides `Vec<T>` wrapped in an outer signal.
+/// This handler creates internal signals for each item and maintains them.
+/// Value changes to existing items update their internal signals (zero entity rebuilds).
+/// Structural changes (add/remove/reorder) are handled by diffing values and rebuilding from the first changed position.
+struct ListItemsBinding<T: 'static> {
+    entity: Entity,
+    list_entity: Entity,
+    get_fn: Box<dyn Fn() -> Vec<T>>,
+    item_content: Rc<dyn Fn(&mut Context, usize, Signal<T>)>,
+    selected: Signal<BTreeSet<usize>>,
+    focused: Signal<Option<usize>>,
+    /// Internal signals for each list item.
+    item_signals: Vec<Signal<T>>,
+    /// Entity IDs of the ListItem views.
+    item_entities: Vec<Entity>,
+    /// Previous values, used for value-based diffing.
+    prev_values: Vec<T>,
+    scope: Scope,
+}
+
+impl<T: PartialEq + Clone + 'static> ListItemsBinding<T> {
+    fn create<S, V>(
+        cx: &mut Context,
+        list_entity: Entity,
+        list: S,
+        selected: Signal<BTreeSet<usize>>,
+        focused: Signal<Option<usize>>,
+        item_content: Rc<dyn Fn(&mut Context, usize, Signal<T>)>,
+    ) where
+        S: SignalGet<V> + Copy + 'static,
+        V: Deref<Target = [T]> + Clone + 'static,
+    {
+        let entity = cx.entity_manager.create();
+        cx.tree.add(entity, cx.current()).expect("Failed to add to tree");
+        cx.tree.set_ignored(entity, true);
+
+        let scope = Scope::new();
+        let initial_values: Vec<T> = scope.enter(|| {
+            UpdaterEffect::new(
+                move || list.get().deref().to_vec(),
+                move |_new_value| {
+                    SIGNAL_REBUILDS.with_borrow_mut(|set| {
+                        set.insert(entity);
+                    });
+                },
+            )
+        });
+
+        let mut binding = Self {
+            entity,
+            list_entity,
+            get_fn: Box::new(move || list.get_untracked().deref().to_vec()),
+            item_content,
+            selected,
+            focused,
+            item_signals: Vec::new(),
+            item_entities: Vec::new(),
+            prev_values: Vec::new(),
+            scope,
+        };
+
+        // Build initial items.
+        for (index, value) in initial_values.iter().enumerate() {
+            let signal = Signal::new(value.clone());
+            let entity = binding.create_item_entity(cx, index, signal);
+            binding.item_signals.push(signal);
+            binding.item_entities.push(entity);
+            binding.prev_values.push(value.clone());
+        }
+        binding.update_list_metadata(cx, initial_values.len());
+
+        cx.bindings.insert(entity, Box::new(binding));
+
+        let _: Handle<Self> =
+            Handle { current: entity, entity, p: Default::default(), cx }.ignore();
+    }
+
+    fn update_list_metadata(&self, cx: &mut Context, len: usize) {
+        if let Some(view) = cx.views.get_mut(&self.list_entity) {
+            if let Some(list) = view.downcast_mut::<List>() {
+                list.num_items = len;
+
+                list.selected.update(|selected| {
+                    selected.retain(|index| *index < len);
+                });
+
+                list.focused.update(|focused| {
+                    if focused.is_some_and(|index| index >= len) {
+                        *focused = len.checked_sub(1);
+                    }
+                });
+            }
+        }
+    }
+
+    fn create_item_entity(&self, cx: &mut Context, index: usize, signal: Signal<T>) -> Entity {
+        let mut created = Entity::null();
+        let item_content = self.item_content.clone();
+        let selected = self.selected;
+        let focused = self.focused;
+
+        cx.with_current(self.entity, |cx| {
+            created = ListItem::new(cx, index, signal, selected, focused, {
+                let item_content = item_content.clone();
+                move |cx, index, item| (item_content)(cx, index, item)
+            })
+            .entity();
+        });
+
+        created
+    }
+}
+
+impl<T: PartialEq + Clone + 'static> BindingHandler for ListItemsBinding<T> {
+    fn update(&mut self, cx: &mut Context) {
+        let new_values = (self.get_fn)();
+        let new_len = new_values.len();
+
+        // Find the first position where values differ.
+        let first_diff = self
+            .prev_values
+            .iter()
+            .zip(new_values.iter())
+            .position(|(old, new)| old != new)
+            .unwrap_or(self.prev_values.len().min(new_len));
+
+        // Remove all entities from first_diff onward.
+        for entity in self.item_entities.drain(first_diff..) {
+            cx.remove(entity);
+        }
+        self.item_signals.truncate(first_diff);
+
+        // Update existing signals or create new items from first_diff onward.
+        for (i, value) in new_values[first_diff..].iter().enumerate() {
+            let index = first_diff + i;
+            if index < self.item_signals.len() {
+                // Update existing signal
+                self.item_signals[index].set(value.clone());
+            } else {
+                // Create new signal and item
+                let signal = Signal::new(value.clone());
+                let entity = self.create_item_entity(cx, index, signal);
+                self.item_signals.push(signal);
+                self.item_entities.push(entity);
+            }
+        }
+
+        self.prev_values = new_values;
+        self.update_list_metadata(cx, new_len);
+    }
+
+    fn remove(&self, _cx: &mut Context) {
+        self.scope.dispose();
+    }
+
+    fn debug(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.write_str("ListItemsBinding")
+    }
 }
 
 impl List {
-    /// Creates a new [List] view.
-    pub fn new<L: Lens, T: 'static>(
+    /// Creates a new [List] view from a reactive or static list of values.
+    ///
+    /// `list` accepts any [`Res<V>`] source where `V` derefs to `[T]` — for example a
+    /// `Signal<Vec<T>>` for a reactive list, or a plain `Vec<T>` for a static list.
+    /// The list creates and manages internal signals for each item automatically.
+    /// Value changes to existing items update their internal signals with zero entity rebuilds.
+    /// Structural changes (add/remove/reorder) are handled by diffing values and rebuilding from the first changed position.
+    pub fn new<S, V, T>(
         cx: &mut Context,
-        list: L,
-        item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
+        list: S,
+        item_content: impl 'static + Fn(&mut Context, usize, Signal<T>),
     ) -> Handle<Self>
     where
-        L::Target: Deref<Target = [T]> + Data,
+        S: Res<V> + 'static,
+        V: Deref<Target = [T]> + Clone + 'static,
+        T: PartialEq + Clone + 'static,
     {
-        Self::new_generic(
-            cx,
-            list,
-            |list| list.len(),
-            |list, index| &list[index],
-            |_| true,
-            item_content,
-        )
-    }
+        let content: Rc<dyn Fn(&mut Context, usize, Signal<T>)> = Rc::new(item_content);
+        let selected = Signal::new(BTreeSet::default());
+        let selectable = Signal::new(Selectable::None);
+        let focused = Signal::new(None);
+        let orientation = Signal::new(Orientation::Vertical);
+        let scroll_to_cursor = Signal::new(false);
+        let scroll_x = Signal::new(0.0);
+        let scroll_y = Signal::new(0.0);
+        let show_horizontal_scrollbar = Signal::new(true);
+        let show_vertical_scrollbar = Signal::new(true);
 
-    /// Creates a new [List] view with a provided filter closure.
-    pub fn new_filtered<L: Lens, T: 'static>(
-        cx: &mut Context,
-        list: L,
-        filter: impl 'static + Clone + FnMut(&&T) -> bool,
-        item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
-    ) -> Handle<Self>
-    where
-        L::Target: Deref<Target = [T]> + Data,
-    {
-        let f = filter.clone();
-        Self::new_generic(
-            cx,
-            list,
-            move |list| list.iter().filter(filter.clone()).count(),
-            move |list, index| &list[index],
-            f,
-            item_content,
-        )
-    }
-
-    /// Creates a new [List] view with a binding to the given lens and a template for constructing the list items.
-    pub fn new_generic<L: Lens, T: 'static>(
-        cx: &mut Context,
-        list: L,
-        list_len: impl 'static + Fn(&L::Target) -> usize,
-        list_index: impl 'static + Clone + Fn(&L::Target, usize) -> &T,
-        filter: impl 'static + Clone + FnMut(&&T) -> bool,
-        item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
-    ) -> Handle<Self>
-    where
-        L::Target: Deref<Target = [T]> + Data,
-    {
-        let content = Rc::new(item_content);
-        let num_items = list.map(list_len);
         Self {
-            num_items: num_items.get(cx),
-            selected: BTreeSet::default(),
-            selectable: Selectable::None,
-            focused: None,
-            selection_follows_focus: false,
-            orientation: Orientation::Vertical,
-            scroll_to_cursor: false,
+            num_items: 0,
+            selected,
+            selectable,
+            focused,
+            selection_follows_focus: Signal::new(false),
+            orientation,
+            scroll_to_cursor,
             on_select: None,
             on_scroll: None,
-            scroll_x: 0.0,
-            scroll_y: 0.0,
-            show_horizontal_scrollbar: true,
-            show_vertical_scrollbar: true,
+            scroll_x,
+            scroll_y,
+            show_horizontal_scrollbar,
+            show_vertical_scrollbar,
         }
         .build(cx, move |cx| {
+            let list_entity = cx.current();
+
             Keymap::from(vec![
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowDown),
@@ -156,8 +293,9 @@ impl List {
             ])
             .build(cx);
 
-            Binding::new(cx, List::orientation, |cx, orientation| {
-                if orientation.get(cx) == Orientation::Horizontal {
+            Binding::new(cx, orientation, move |cx| {
+                let orientation = orientation.get();
+                if orientation == Orientation::Horizontal {
                     cx.emit(KeymapEvent::RemoveAction(
                         KeyChord::new(Modifiers::empty(), Code::ArrowDown),
                         "Focus Next",
@@ -180,54 +318,30 @@ impl List {
                 }
             });
 
+            let list_signal = list.to_signal(cx);
             ScrollView::new(cx, move |cx| {
-                // Bind to the list data
-                Binding::new(cx, num_items, move |cx, _| {
-                    // If the number of list items is different to the number of children of the ListView
-                    // then remove and rebuild all the children
-
-                    let mut f = filter.clone();
-                    let ll = list
-                        .get(cx)
-                        .iter()
-                        .enumerate()
-                        .filter(|(_, v)| f(v))
-                        .map(|(idx, _)| idx)
-                        .collect::<Vec<_>>();
-
-                    for index in ll.into_iter() {
-                        let ll = list_index.clone();
-                        let item = list.map_ref(move |list| ll(list, index));
-                        let content = content.clone();
-                        ListItem::new(
-                            cx,
-                            index,
-                            item,
-                            List::selected,
-                            List::focused,
-                            move |cx, index, item| {
-                                content(cx, index, item);
-                            },
-                        );
-                    }
-                });
+                ListItemsBinding::create(
+                    cx,
+                    list_entity,
+                    list_signal,
+                    selected,
+                    focused,
+                    content.clone(),
+                );
             })
-            .show_horizontal_scrollbar(Self::show_horizontal_scrollbar)
-            .show_vertical_scrollbar(Self::show_vertical_scrollbar)
-            .scroll_to_cursor(Self::scroll_to_cursor)
-            .scroll_x(Self::scroll_x)
-            .scroll_y(Self::scroll_y)
+            .show_horizontal_scrollbar(show_horizontal_scrollbar)
+            .show_vertical_scrollbar(show_vertical_scrollbar)
+            .scroll_to_cursor(scroll_to_cursor)
+            .scroll_x(scroll_x)
+            .scroll_y(scroll_y)
             .on_scroll(|cx, x, y| {
                 if y.is_finite() {
                     cx.emit(ListEvent::Scroll(x, y));
                 }
             });
         })
-        .toggle_class("selectable", List::selectable.map(|s| *s != Selectable::None))
-        .toggle_class(
-            "horizontal",
-            Self::orientation.map(|orientation| *orientation == Orientation::Horizontal),
-        )
+        .toggle_class("selectable", selectable.map(|s| *s != Selectable::None))
+        .toggle_class("horizontal", orientation.map(|o| *o == Orientation::Horizontal))
         .navigable(true)
         .role(Role::List)
     }
@@ -242,15 +356,18 @@ impl View for List {
         event.take(|list_event, meta| match list_event {
             ListEvent::Select(index) => {
                 cx.focus();
-                match self.selectable {
+                let selectable = self.selectable.get();
+                let mut selected = self.selected.get();
+                let mut focused = self.focused.get();
+                match selectable {
                     Selectable::Single => {
-                        if self.selected.contains(&index) {
-                            self.selected.clear();
-                            self.focused = None;
+                        if selected.contains(&index) {
+                            selected.clear();
+                            focused = None;
                         } else {
-                            self.selected.clear();
-                            self.selected.insert(index);
-                            self.focused = Some(index);
+                            selected.clear();
+                            selected.insert(index);
+                            focused = Some(index);
                             if let Some(on_select) = &self.on_select {
                                 on_select(cx, index);
                             }
@@ -258,12 +375,12 @@ impl View for List {
                     }
 
                     Selectable::Multi => {
-                        if self.selected.contains(&index) {
-                            self.selected.remove(&index);
-                            self.focused = None;
+                        if selected.contains(&index) {
+                            selected.remove(&index);
+                            focused = None;
                         } else {
-                            self.selected.insert(index);
-                            self.focused = Some(index);
+                            selected.insert(index);
+                            focused = Some(index);
                             if let Some(on_select) = &self.on_select {
                                 on_select(cx, index);
                             }
@@ -273,60 +390,69 @@ impl View for List {
                     Selectable::None => {}
                 }
 
+                self.selected.set(selected);
+                self.focused.set(focused);
+
                 meta.consume();
             }
 
             ListEvent::SelectFocused => {
-                if let Some(focused) = &self.focused {
-                    cx.emit(ListEvent::Select(*focused))
+                if let Some(focused) = self.focused.get() {
+                    cx.emit(ListEvent::Select(focused))
                 }
                 meta.consume();
             }
 
             ListEvent::ClearSelection => {
-                self.selected.clear();
+                self.selected.set(BTreeSet::default());
                 meta.consume();
             }
 
             ListEvent::FocusNext => {
-                if let Some(focused) = &mut self.focused {
-                    if *focused < self.num_items.saturating_sub(1) {
-                        *focused = focused.saturating_add(1);
-                        if self.selection_follows_focus {
+                let mut focused = self.focused.get();
+                if let Some(f) = &mut focused {
+                    if *f < self.num_items.saturating_sub(1) {
+                        *f = f.saturating_add(1);
+                        if self.selection_follows_focus.get() {
                             cx.emit(ListEvent::SelectFocused);
                         }
                     }
                 } else {
-                    self.focused = Some(0);
-                    if self.selection_follows_focus {
+                    focused = Some(0);
+                    if self.selection_follows_focus.get() {
                         cx.emit(ListEvent::SelectFocused);
                     }
                 }
+
+                self.focused.set(focused);
 
                 meta.consume();
             }
 
             ListEvent::FocusPrev => {
-                if let Some(focused) = &mut self.focused {
-                    if *focused > 0 {
-                        *focused = focused.saturating_sub(1);
-                        if self.selection_follows_focus {
+                let mut focused = self.focused.get();
+                if let Some(f) = &mut focused {
+                    if *f > 0 {
+                        *f = f.saturating_sub(1);
+                        if self.selection_follows_focus.get() {
                             cx.emit(ListEvent::SelectFocused);
                         }
                     }
                 } else {
-                    self.focused = Some(self.num_items.saturating_sub(1));
-                    if self.selection_follows_focus {
+                    focused = Some(self.num_items.saturating_sub(1));
+                    if self.selection_follows_focus.get() {
                         cx.emit(ListEvent::SelectFocused);
                     }
                 }
+
+                self.focused.set(focused);
 
                 meta.consume();
             }
 
             ListEvent::Scroll(x, y) => {
-                self.scroll_x = x;
-                self.scroll_y = y;
+                self.scroll_x.set(x);
+                self.scroll_y.set(y);
                 if let Some(callback) = &self.on_scroll {
                     (callback)(cx, x, y);
                 }
@@ -338,19 +464,24 @@ impl View for List {
 }
 
 impl Handle<'_, List> {
-    /// Sets the  selected items of the list. Takes a lens to a list of indices.
-    pub fn selected<S: Lens>(self, selected: S) -> Self
+    /// Sets the selected items of the list from signal of type indices.
+    pub fn selected<R>(self, selected: impl Res<R> + 'static) -> Self
     where
-        S::Target: Deref<Target = [usize]> + Data,
+        R: Deref<Target = [usize]> + Clone + 'static,
     {
-        self.bind(selected, |handle, s| {
-            let ss = s.get(&handle).deref().to_vec();
+        let selected = selected.to_signal(self.cx);
+        self.bind(selected, move |handle| {
+            let selected = selected.get();
+            let ss = selected.deref().to_vec();
             handle.modify(|list| {
-                list.selected.clear();
+                let mut selected = BTreeSet::default();
+                let mut focused = None;
                 for idx in ss {
-                    list.selected.insert(idx);
-                    list.focused = Some(idx);
+                    selected.insert(idx);
+                    focused = Some(idx);
                 }
+                list.selected.set(selected);
+                list.focused.set(focused);
             });
         })
     }
@@ -364,27 +495,44 @@ impl Handle<'_, List> {
     }
 
     /// Set the selectable state of the [List].
-    pub fn selectable<U: Into<Selectable>>(self, selectable: impl Res<U>) -> Self {
-        self.bind(selectable, |handle, selectable| {
-            let s = selectable.get(&handle).into();
-            handle.modify(|list: &mut List| list.selectable = s);
+    pub fn selectable<U: Into<Selectable> + Clone + 'static>(
+        self,
+        selectable: impl Res<U> + 'static,
+    ) -> Self {
+        let selectable = selectable.to_signal(self.cx);
+        self.bind(selectable, move |handle| {
+            let selectable = selectable.get();
+            let s = selectable.into();
+            handle.modify(|list: &mut List| {
+                list.selectable.set(s);
+            });
         })
     }
 
     /// Sets whether the selection should follow the focus.
-    pub fn selection_follows_focus<U: Into<bool>>(self, flag: impl Res<U>) -> Self {
-        self.bind(flag, |handle, selection_follows_focus| {
-            let s = selection_follows_focus.get(&handle).into();
-            handle.modify(|list: &mut List| list.selection_follows_focus = s);
+    pub fn selection_follows_focus<U: Into<bool> + Clone + 'static>(
+        self,
+        flag: impl Res<U> + 'static,
+    ) -> Self {
+        let flag = flag.to_signal(self.cx);
+        self.bind(flag, move |handle| {
+            let selection_follows_focus = flag.get();
+            let s = selection_follows_focus.into();
+            handle.modify(|list: &mut List| list.selection_follows_focus.set(s));
         })
     }
 
     /// Sets the orientation of the list.
-    pub fn orientation<U: Into<Orientation>>(self, orientation: impl Res<U>) -> Self {
-        self.bind(orientation, |handle, orientation| {
-            let orientation = orientation.get(&handle).into();
+    pub fn orientation<U: Into<Orientation> + Clone + 'static>(
+        self,
+        orientation: impl Res<U> + 'static,
+    ) -> Self {
+        let orientation = orientation.to_signal(self.cx);
+        self.bind(orientation, move |handle| {
+            let orientation = orientation.get();
+            let orientation = orientation.into();
             handle.modify(|list: &mut List| {
-                list.orientation = orientation;
+                list.orientation.set(orientation);
             });
         })
     }
@@ -392,7 +540,7 @@ impl Handle<'_, List> {
     /// Sets whether the scrollbar should move to the cursor when pressed.
     pub fn scroll_to_cursor(self, flag: bool) -> Self {
         self.modify(|list| {
-            list.scroll_to_cursor = flag;
+            list.scroll_to_cursor.set(flag);
         })
     }
 
@@ -404,35 +552,51 @@ impl Handle<'_, List> {
         self.modify(|list: &mut List| list.on_scroll = Some(Box::new(callback)))
     }
 
-    /// Set the horizontal scroll position of the [ScrollView]. Accepts a value or lens to an 'f32' between 0 and 1.
-    pub fn scroll_x(self, scrollx: impl Res<f32>) -> Self {
-        self.bind(scrollx, |handle, scrollx| {
-            let sx = scrollx.get(&handle);
-            handle.modify(|list| list.scroll_x = sx);
+    /// Set the horizontal scroll position of the [ScrollView]. Accepts a value or signal of type an `f32` between 0 and 1.
+    pub fn scroll_x(self, scrollx: impl Res<f32> + 'static) -> Self {
+        let scrollx = scrollx.to_signal(self.cx);
+        self.bind(scrollx, move |handle| {
+            let scrollx = scrollx.get();
+            let sx = scrollx;
+            handle.modify(|list| {
+                list.scroll_x.set(sx);
+            });
         })
     }
 
-    /// Set the vertical scroll position of the [ScrollView]. Accepts a value or lens to an 'f32' between 0 and 1.
-    pub fn scroll_y(self, scrollx: impl Res<f32>) -> Self {
-        self.bind(scrollx, |handle, scrolly| {
-            let sy = scrolly.get(&handle);
-            handle.modify(|list| list.scroll_y = sy);
+    /// Set the vertical scroll position of the [ScrollView]. Accepts a value or signal of type an `f32` between 0 and 1.
+    pub fn scroll_y(self, scrollx: impl Res<f32> + 'static) -> Self {
+        let scrollx = scrollx.to_signal(self.cx);
+        self.bind(scrollx, move |handle| {
+            let scrolly = scrollx.get();
+            let sy = scrolly;
+            handle.modify(|list| {
+                list.scroll_y.set(sy);
+            });
         })
     }
 
     /// Sets whether the horizontal scrollbar should be visible.
-    pub fn show_horizontal_scrollbar(self, flag: impl Res<bool>) -> Self {
-        self.bind(flag, |handle, show_scrollbar| {
-            let s = show_scrollbar.get(&handle);
-            handle.modify(|list| list.show_horizontal_scrollbar = s);
+    pub fn show_horizontal_scrollbar(self, flag: impl Res<bool> + 'static) -> Self {
+        let flag = flag.to_signal(self.cx);
+        self.bind(flag, move |handle| {
+            let show_scrollbar = flag.get();
+            let s = show_scrollbar;
+            handle.modify(|list| {
+                list.show_horizontal_scrollbar.set(s);
+            });
         })
     }
 
     /// Sets whether the vertical scrollbar should be visible.
-    pub fn show_vertical_scrollbar(self, flag: impl Res<bool>) -> Self {
-        self.bind(flag, |handle, show_scrollbar| {
-            let s = show_scrollbar.get(&handle);
-            handle.modify(|list| list.show_vertical_scrollbar = s);
+    pub fn show_vertical_scrollbar(self, flag: impl Res<bool> + 'static) -> Self {
+        let flag = flag.to_signal(self.cx);
+        self.bind(flag, move |handle| {
+            let show_scrollbar = flag.get();
+            let s = show_scrollbar;
+            handle.modify(|list| {
+                list.show_vertical_scrollbar.set(s);
+            });
         })
     }
 }
@@ -442,34 +606,31 @@ pub struct ListItem {}
 
 impl ListItem {
     /// Create a new [ListItem] view.
-    pub fn new<L: Lens, T: 'static>(
-        cx: &mut Context,
+    pub fn new<'a, T: Clone + 'static, M: SignalGet<T> + 'static>(
+        cx: &'a mut Context,
         index: usize,
-        item: MapRef<L, T>,
-        selected: impl Lens<Target = BTreeSet<usize>>,
-        focused: impl Lens<Target = Option<usize>>,
-        item_content: impl 'static + Fn(&mut Context, usize, MapRef<L, T>),
-    ) -> Handle<Self> {
+        item: M,
+        selected: impl SignalMap<BTreeSet<usize>>,
+        focused: impl SignalMap<Option<usize>>,
+        item_content: impl 'static + Fn(&mut Context, usize, M),
+    ) -> Handle<'a, Self> {
         let is_focused =
-            focused.map(move |focused| focused.as_ref().is_some_and(|f| *f == index)).get(cx);
+            focused.map(move |focused| focused.as_ref().is_some_and(|f| *f == index)).get();
+        let focused_signal =
+            focused.map(move |focused| focused.as_ref().is_some_and(|f| *f == index));
         Self {}
             .build(cx, move |cx| {
                 item_content(cx, index, item);
             })
             .role(Role::ListItem)
-            .toggle_class(
-                "focused",
-                focused.map(move |focused| focused.as_ref().is_some_and(|f| *f == index)),
-            )
+            .toggle_class("focused", focused_signal)
             .checked(selected.map(move |selected| selected.contains(&index)))
-            .bind(
-                focused.map(move |focused| focused.as_ref().is_some_and(|f| *f == index)),
-                move |handle, focused| {
-                    if focused.get(&handle) != is_focused {
-                        handle.cx.emit(ScrollEvent::ScrollToView(handle.entity()));
-                    }
-                },
-            )
+            .bind(focused_signal, move |handle| {
+                let focused = focused_signal.get();
+                if focused != is_focused {
+                    handle.cx.emit(ScrollEvent::ScrollToView(handle.entity()));
+                }
+            })
             .on_press(move |cx| cx.emit(ListEvent::Select(index)))
     }
 }

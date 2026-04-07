@@ -1,9 +1,8 @@
 use vizia::icons::ICON_CODE;
 use vizia::prelude::*;
 
-#[derive(Lens)]
 pub struct DemoRegion {
-    open: bool,
+    open: Signal<bool>,
 }
 
 pub enum DemoRegionEvent {
@@ -17,7 +16,9 @@ impl DemoRegion {
         code: &'static str,
     ) -> Handle<'a, Self> {
         let code = code.to_string();
-        Self { open: false }
+        let open = Signal::new(false);
+
+        Self { open }
             .build(cx, move |cx| {
                 HStack::new(cx, |cx| {
                     (content)(cx);
@@ -25,7 +26,7 @@ impl DemoRegion {
                 .class("region");
                 Divider::horizontal(cx);
                 HStack::new(cx, |cx| {
-                    ToggleButton::new(cx, DemoRegion::open, |cx| Svg::new(cx, ICON_CODE))
+                    ToggleButton::new(cx, open, |cx| Svg::new(cx, ICON_CODE))
                         .on_press(|ex| ex.emit(DemoRegionEvent::Toggle))
                         .tooltip(|cx| {
                             Tooltip::new(cx, |cx| {
@@ -43,9 +44,9 @@ impl DemoRegion {
                 })
                 .class("code")
                 .height(Auto)
-                .display(DemoRegion::open);
+                .display(open);
             })
-            .toggle_class("open", DemoRegion::open)
+            .toggle_class("open", open)
     }
 }
 
@@ -56,7 +57,7 @@ impl View for DemoRegion {
 
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|e, _| match e {
-            DemoRegionEvent::Toggle => self.open ^= true,
+            DemoRegionEvent::Toggle => self.open.update(|open| *open ^= true),
         })
     }
 }

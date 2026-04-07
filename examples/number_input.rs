@@ -11,9 +11,8 @@ const STYLE: &str = r#"
     }
 "#;
 
-#[derive(Lens)]
 pub struct AppData {
-    number: i32,
+    number: Signal<i32>,
 }
 
 #[derive(Debug)]
@@ -25,7 +24,7 @@ impl Model for AppData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::SetNumber(num) => {
-                self.number = *num;
+                self.number.set(*num);
             }
         });
     }
@@ -34,10 +33,11 @@ impl Model for AppData {
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
-        AppData { number: 5 }.build(cx);
+        let number = Signal::new(5);
+        AppData { number }.build(cx);
 
         HStack::new(cx, |cx| {
-            Textbox::new(cx, AppData::number)
+            Textbox::new(cx, number)
                 .validate(|val| *val < 50)
                 .on_submit(|cx, val, _| {
                     cx.emit(AppEvent::SetNumber(val));
@@ -45,7 +45,7 @@ fn main() -> Result<(), ApplicationError> {
                 .width(Pixels(200.0))
                 .padding_left(Pixels(5.0));
 
-            Label::new(cx, AppData::number)
+            Label::new(cx, number)
                 .width(Pixels(200.0))
                 .height(Pixels(32.0))
                 .alignment(Alignment::Center)

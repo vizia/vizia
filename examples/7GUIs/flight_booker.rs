@@ -16,12 +16,10 @@ const STYLE: &str = r#"
     }
 "#;
 
-#[derive(Lens)]
 pub struct AppData {
-    options: Vec<&'static str>,
-    selected_option: usize,
-    start_date: NaiveDate,
-    end_date: NaiveDate,
+    selected_option: Signal<usize>,
+    start_date: Signal<NaiveDate>,
+    end_date: Signal<NaiveDate>,
 }
 
 pub enum AppEvent {
@@ -33,19 +31,21 @@ pub enum AppEvent {
 impl Model for AppData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::SetChoice(choice) => self.selected_option = *choice,
-            AppEvent::SetStartDate(date) => self.start_date = *date,
-            AppEvent::SetEndDate(date) => self.end_date = *date,
+            AppEvent::SetChoice(choice) => self.selected_option.set(*choice),
+            AppEvent::SetStartDate(date) => self.start_date.set(*date),
+            AppEvent::SetEndDate(date) => self.end_date.set(*date),
         });
     }
 }
 
-fn input_box<L: Lens<Target = NaiveDate>>(
+fn input_box<R>(
     cx: &mut Context,
-    date_lens: L,
+    date_value: R,
     message: impl Fn(NaiveDate) -> AppEvent + Send + Sync + 'static,
-) {
-    Textbox::new(cx, date_lens.map(|date| format!("{}", date.format("%Y:%m:%d"))))
+) where
+    R: Res<String> + Clone + 'static,
+{
+    Textbox::new(cx, date_value)
         .validate(|text| NaiveDate::parse_from_str(text, "%Y:%m:%d").is_ok())
         .on_submit(move |ex, text, _| {
             if let Ok(val) = NaiveDate::parse_from_str(&text, "%Y:%m:%d") {
@@ -59,20 +59,23 @@ fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        AppData {
-            options: vec!["one-way flight", "return flight"],
-            selected_option: 0,
-            start_date: NaiveDate::from_ymd_opt(2022, 2, 12).unwrap(),
-            end_date: NaiveDate::from_ymd_opt(2022, 2, 26).unwrap(),
-        }
-        .build(cx);
+        let options = Signal::new(["one-way flight", "return flight"].map(Signal::new).to_vec());
+        let selected_option = Signal::new(0usize);
+        let start_date = Signal::new(NaiveDate::from_ymd_opt(2022, 2, 12).unwrap());
+        let end_date = Signal::new(NaiveDate::from_ymd_opt(2022, 2, 26).unwrap());
+
+        let start_date_text =
+            Memo::new(move |_| format!("{}", start_date.get().format("%Y:%m:%d")));
+        let end_date_text = Memo::new(move |_| format!("{}", end_date.get().format("%Y:%m:%d")));
+
+        AppData { selected_option, start_date, end_date }.build(cx);
 
         VStack::new(cx, |cx| {
-            PickList::new(cx, AppData::options, AppData::selected_option, true)
+            PickList::new(cx, options, selected_option, true)
                 .on_select(|cx, index| cx.emit(AppEvent::SetChoice(index)));
 
-            input_box(cx, AppData::start_date, AppEvent::SetStartDate);
-            input_box(cx, AppData::end_date, AppEvent::SetEndDate);
+            input_box(cx, start_date_text, AppEvent::SetStartDate);
+            input_box(cx, end_date_text, AppEvent::SetEndDate);
 
             Button::new(cx, |cx| Label::new(cx, "Book"));
         })

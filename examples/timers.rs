@@ -1,9 +1,8 @@
 use log::debug;
 use vizia::prelude::*;
 
-#[derive(Lens)]
 pub struct AppState {
-    pub count: u32,
+    pub count: Signal<u32>,
     pub timer: Timer,
 }
 
@@ -17,14 +16,16 @@ impl Model for AppState {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::Increment => {
-                self.count += 1;
-                if self.count >= 100 {
-                    cx.stop_timer(self.timer);
-                }
+                self.count.update(|count| {
+                    *count += 1;
+                    if *count >= 100 {
+                        cx.stop_timer(self.timer);
+                    }
+                });
             }
 
             AppEvent::Reset => {
-                self.count = 0;
+                self.count.set(0);
             }
         });
     }
@@ -47,10 +48,11 @@ fn main() -> Result<(), ApplicationError> {
             }
         });
 
-        AppState { count: 0, timer }.build(cx);
+        let count = Signal::new(0);
+        AppState { count, timer }.build(cx);
 
         VStack::new(cx, |cx| {
-            Label::new(cx, AppState::count).font_size(80.0);
+            Label::new(cx, count).font_size(80.0);
 
             Button::new(cx, |cx| Label::new(cx, "Start")).on_press(move |cx| {
                 cx.start_timer(timer);

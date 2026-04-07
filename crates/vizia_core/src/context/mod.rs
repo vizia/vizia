@@ -35,15 +35,11 @@ pub use proxy::*;
 pub use resource::*;
 
 use crate::{
-    binding::{Store, StoreId},
     events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler},
     model::ModelData,
 };
 
-use crate::{
-    binding::{BindingHandler, MapId},
-    resource::StoredImage,
-};
+use crate::{binding::BindingHandler, resource::StoredImage};
 use crate::{cache::CachedData, resource::ImageOrSvg};
 
 use crate::prelude::*;
@@ -59,16 +55,12 @@ static MARKDOWN: &str = include_str!("../../resources/themes/markdown.css");
 
 type Views = HashMap<Entity, Box<dyn ViewHandler>>;
 type Models = HashMap<Entity, HashMap<TypeId, Box<dyn ModelData>>>;
-type Stores = HashMap<Entity, HashMap<StoreId, Box<dyn Store>>>;
 type Bindings = HashMap<Entity, Box<dyn BindingHandler>>;
 
 thread_local! {
-    /// ID manager for lens map functions.
-    pub static MAP_MANAGER: RefCell<IdManager<MapId>> = RefCell::new(IdManager::new());
-    /// Store of mapping functions used for lens maps.
-    pub static MAPS: RefCell<HashMap<MapId, (Entity, Box<dyn Any>)>> = RefCell::new(HashMap::new());
-    /// The 'current' entity which is used for storing lens map mapping functions as per above.
-    pub static CURRENT: RefCell<Entity> = RefCell::new(Entity::root());
+    /// Entities for `Binding` views that need to be rebuilt because a reactive signal changed.
+    /// Signal effects push to this set; the binding system drains it each frame.
+    pub(crate) static SIGNAL_REBUILDS: RefCell<HashSet<Entity>> = RefCell::new(HashSet::new());
 }
 
 #[derive(Default, Clone)]
@@ -93,7 +85,6 @@ pub struct Context {
     pub(crate) current: Entity,
     pub(crate) views: Views,
     pub(crate) models: Models,
-    pub(crate) stores: Stores,
     pub(crate) bindings: Bindings,
     pub(crate) event_queue: VecDeque<Event>,
     pub(crate) event_schedule: BinaryHeap<TimedEvent>,
@@ -158,7 +149,6 @@ impl Context {
             current: Entity::root(),
             views: HashMap::default(),
             models: HashMap::default(),
-            stores: HashMap::default(),
             bindings: HashMap::default(),
             style: Style::default(),
             cache,
@@ -254,16 +244,14 @@ impl Context {
     pub fn with_current<T>(&mut self, current: Entity, f: impl FnOnce(&mut Context) -> T) -> T {
         let previous = self.current;
         self.current = current;
-        CURRENT.with_borrow_mut(|f| *f = current);
         let ret = f(self);
-        CURRENT.with_borrow_mut(|f| *f = previous);
         self.current = previous;
         ret
     }
 
     /// Returns a reference to the [Environment] model.
     pub fn environment(&self) -> &Environment {
-        self.data::<Environment>().unwrap()
+        self.data::<Environment>()
     }
 
     /// Returns the entity id of the  parent window to the current view.
@@ -486,21 +474,6 @@ impl Context {
                 self.captured = Entity::null();
             }
 
-            // Remove any map lenses associated with the entity.
-
-            MAP_MANAGER.with_borrow_mut(|manager| {
-                MAPS.with_borrow_mut(|maps| {
-                    maps.retain(|id, (e, _)| {
-                        if e == entity {
-                            manager.destroy(*id);
-                            false
-                        } else {
-                            true
-                        }
-                    });
-                });
-            });
-
             if let Some(parent) = self.tree.get_layout_parent(*entity) {
                 self.style.needs_access_update(parent);
             }
@@ -542,7 +515,6 @@ impl Context {
             self.cache.remove(*entity);
             self.style.remove(*entity);
             self.models.remove(entity);
-            self.stores.remove(entity);
             self.views.remove(entity);
             self.text_context.text_bounds.remove(*entity);
             self.text_context.text_paragraphs.remove(*entity);
@@ -633,7 +605,7 @@ impl Context {
         self.add_theme(DEFAULT_LAYOUT);
         self.add_theme(MARKDOWN);
         if !self.ignore_default_theme {
-            let environment = self.data::<Environment>().expect("Failed to get environment");
+            let environment = self.data::<Environment>();
             match environment.theme.get_current_theme() {
                 ThemeMode::LightMode => self.add_theme(LIGHT_THEME),
                 ThemeMode::DarkMode => self.add_theme(DARK_THEME),
@@ -966,16 +938,21 @@ impl<'a> LocalizationContext<'a> {
     }
 
     pub(crate) fn environment(&self) -> &Environment {
-        self.data::<Environment>().unwrap()
+        self.data::<Environment>()
     }
 }
 
 /// A trait for any Context-like object that lets you access stored model data.
 ///
-/// This lets e.g Lens::get be generic over any of these types.
+/// This lets resource reads be generic over any of these types.
 pub trait DataContext {
     /// Get model/view data from the context. Returns `None` if the data does not exist.
-    fn data<T: 'static>(&self) -> Option<&T>;
+    fn try_data<T: 'static>(&self) -> Option<&T>;
+
+    /// Get model/view data from the context. Panics if the data does not exist.
+    fn data<T: 'static>(&self) -> &T {
+        self.try_data::<T>().expect("data not found in context")
+    }
 
     /// Convert the current context into a [LocalizationContext].
     fn localization_context(&self) -> Option<LocalizationContext<'_>> {
@@ -1097,7 +1074,7 @@ pub trait EmitContext {
 }
 
 impl DataContext for Context {
-    fn data<T: 'static>(&self) -> Option<&T> {
+    fn try_data<T: 'static>(&self) -> Option<&T> {
         // return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
             return Some(t);
@@ -1128,7 +1105,7 @@ impl DataContext for Context {
 }
 
 impl DataContext for LocalizationContext<'_> {
-    fn data<T: 'static>(&self) -> Option<&T> {
+    fn try_data<T: 'static>(&self) -> Option<&T> {
         // return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
             return Some(t);

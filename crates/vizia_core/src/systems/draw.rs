@@ -25,6 +25,10 @@ pub(crate) fn draw_system(
     let mut dirty_rect = std::mem::take(&mut window.dirty_rect);
     let redraw_list = std::mem::take(&mut window.redraw_list);
 
+    // Note: dirty_rect can be populated by entity removal independently of
+    // redraw_list, and backdrop filter processing generates dirty areas outside
+    // the redraw_list. Un-commenting would cause rendering artifacts. Maybe we
+    // can revisit this in the future.
     // if redraw_list.is_empty() {
     //     return false;
     // }
@@ -366,6 +370,10 @@ pub(crate) fn draw_bounds(
 
     // If z-index is not zero we can't be sure of the stacking context so we have to assume so and not clip.
     if matches!(style.z_index.get(entity), Some(z_index) if *z_index != 0) {
+        return dirty_bounds;
+    }
+
+    if tree.is_window(entity) {
         return dirty_bounds;
     }
 

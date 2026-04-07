@@ -2,11 +2,10 @@ use vizia::prelude::*;
 
 use crate::DemoRegion;
 
-#[derive(Lens)]
 struct PicklistData {
-    options: Vec<&'static str>,
-    selected_option_1: usize,
-    selected_option_2: usize,
+    options: Signal<Vec<Signal<&'static str>>>,
+    selected_option_1: Signal<usize>,
+    selected_option_2: Signal<usize>,
 }
 
 pub enum PicklistEvent {
@@ -18,23 +17,26 @@ impl Model for PicklistData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|picklist_event, _| match picklist_event {
             PicklistEvent::SetOption1(index) => {
-                self.selected_option_1 = *index;
+                self.selected_option_1.set(*index);
             }
 
             PicklistEvent::SetOption2(index) => {
-                self.selected_option_2 = *index;
+                self.selected_option_2.set(*index);
             }
         });
+
+        let _ = self.options;
     }
 }
 
 pub fn picklist(cx: &mut Context) {
-    PicklistData {
-        options: vec!["Red", "Green", "Blue", "Yellow", "Cyan", "Magenta"],
-        selected_option_1: 0,
-        selected_option_2: 200,
-    }
-    .build(cx);
+    let options = Signal::new(
+        ["Red", "Green", "Blue", "Yellow", "Cyan", "Magenta"].map(Signal::new).to_vec(),
+    );
+    let selected_option_1 = Signal::new(0usize);
+    let selected_option_2 = Signal::new(200usize);
+
+    PicklistData { options, selected_option_1, selected_option_2 }.build(cx);
 
     VStack::new(cx, |cx| {
         Markdown::new(cx, "# Picklist
@@ -47,19 +49,19 @@ A view which allows the user to select an option from a list.
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 VStack::new(cx, |cx| {
                     Label::new(cx, "Color:").class("field-label");
-                    PickList::new(cx, PicklistData::options, PicklistData::selected_option_1, true)
+                    PickList::new(cx, options, selected_option_1, true)
                         .on_select(|cx, index| cx.emit(PicklistEvent::SetOption1(index)))
                         .width(Pixels(150.0));
                 })
                 .gap(Pixels(2.0))
                 .size(Auto);
             },
-            r#"PickList::new(cx, PicklistData::options, PicklistData::selected_option, true)
-    .on_select(|cx, index| cx.emit(PicklistEvent::SetOption(index)))
-    .width(Pixels(140.0));"#,
+                r#"PickList::new(cx, options, selected_option_1, true)
+            .on_select(|cx, index| cx.emit(PicklistEvent::SetOption1(index)))
+            .width(Pixels(150.0));"#,
         );
 
         Markdown::new(cx, "### Placeholder
@@ -68,10 +70,10 @@ The placeholder text prompts a user to select an option from the picker menu whe
 
         DemoRegion::new(
             cx,
-            |cx| {
+            move |cx| {
                 VStack::new(cx, |cx| {
                     Label::new(cx, "Color:").class("field-label");
-                    PickList::new(cx, PicklistData::options, PicklistData::selected_option_2, true)
+                    PickList::new(cx, options, selected_option_2, true)
                         .placeholder(String::from("Select a color..."))
                         .on_select(|cx, index| cx.emit(PicklistEvent::SetOption2(index)))
                         .width(Pixels(150.0));
@@ -79,9 +81,10 @@ The placeholder text prompts a user to select an option from the picker menu whe
                 .gap(Pixels(2.0))
                 .size(Auto);
             },
-            r#"PickList::new(cx, PicklistData::options, PicklistData::selected_option, true)
-    .on_select(|cx, index| cx.emit(PicklistEvent::SetOption(index)))
-    .width(Pixels(140.0));"#,
+                r#"PickList::new(cx, options, selected_option_2, true)
+            .placeholder(String::from("Select a color..."))
+            .on_select(|cx, index| cx.emit(PicklistEvent::SetOption2(index)))
+            .width(Pixels(150.0));"#,
         );
 
         Markdown::new(cx, "## Keyboard interactions");
