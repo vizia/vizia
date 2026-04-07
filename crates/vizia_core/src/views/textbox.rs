@@ -729,12 +729,14 @@ where
 
                 let mut transform = self.transform.borrow_mut();
 
-                let mut text_bounds = cx.text_context.text_bounds.get(cx.current).copied().unwrap();
+                let text_bounds = BoundingBox::from_min_max(
+                    bounds.x + padding_left,
+                    bounds.y + padding_top + top,
+                    bounds.x + padding_left + paragraph.max_intrinsic_width(),
+                    bounds.y + padding_top + top + paragraph.height(),
+                );
 
-                let mut bounds = cx.bounds();
-
-                text_bounds.x += bounds.x;
-                text_bounds.y += bounds.y;
+                let mut bounds = bounds;
 
                 bounds =
                     bounds.shrink_sides(padding_left, padding_top, padding_right, padding_bottom);
@@ -1074,7 +1076,7 @@ where
                         self.reset_caret_timer(cx);
                     }
                     if cx.mouse.left.pos_down.0 != *x || cx.mouse.left.pos_down.1 != *y {
-                        cx.emit(TextEvent::Drag(cx.mouse.cursor_x, cx.mouse.cursor_y));
+                        cx.emit(TextEvent::Drag(*x, *y));
                     }
                 }
             }
