@@ -43,6 +43,7 @@ define_property! {
         "width": Width(Units),
         "right": Right(Units),
         "top": Top(Units),
+        "size": Size(Units),
         "height": Height(Units),
         "bottom": Bottom(Units),
 

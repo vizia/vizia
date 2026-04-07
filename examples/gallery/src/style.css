@@ -3,8 +3,7 @@
 }
 
 .frame {
-    width: auto;
-    height: auto;
+    size: auto;
     background-color: rgb(7, 7, 13);
 }
 

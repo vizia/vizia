@@ -1615,6 +1615,12 @@ impl Style {
                 self.bottom.insert_rule(rule_id, bottom);
             }
 
+            // Size
+            Property::Size(size) => {
+                self.width.insert_rule(rule_id, size);
+                self.height.insert_rule(rule_id, size);
+            }
+
             Property::Width(width) => {
                 self.width.insert_rule(rule_id, width);
             }
