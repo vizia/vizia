@@ -5,7 +5,8 @@ use parking_lot::{Mutex, MutexGuard};
 use crate::{
     id::Id,
     runtime::Runtime,
-    signal::{SignalValue, TrackedRef, TrackedRefCell},
+    signal::{TrackedRef, TrackedRefCell},
+    state::SignalValue,
 };
 
 pub struct SyncReadRef<'a, T> {

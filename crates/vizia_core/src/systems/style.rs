@@ -1004,7 +1004,11 @@ impl MatchedRules {
         // Potential tuning oppertunity:
         // Lower values make the BloomFilter more effective.
         // Higher values allow more work be done in parellel.
-        let min_len = entities.len().div_ceil(num_threads);
+        let min_len = if entities.len() > num_threads * 4 {
+            entities.len().div_ceil(num_threads)
+        } else {
+            entities.len()
+        };
 
         let cache = DashMap::new();
         let rules = entities

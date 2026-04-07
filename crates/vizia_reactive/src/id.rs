@@ -3,7 +3,7 @@ use std::sync::atomic::AtomicU64;
 use crate::{
     effect::observer_clean_up,
     runtime::{RUNTIME, Runtime},
-    signal::SignalState,
+    state::SignalState,
     sync_runtime::SYNC_RUNTIME,
 };
 

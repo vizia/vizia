@@ -25,6 +25,10 @@ pub(crate) fn draw_system(
     let mut dirty_rect = std::mem::take(&mut window.dirty_rect);
     let redraw_list = std::mem::take(&mut window.redraw_list);
 
+    // Note: dirty_rect can be populated by entity removal independently of
+    // redraw_list, and backdrop filter processing generates dirty areas outside
+    // the redraw_list. Un-commenting would cause rendering artifacts. Maybe we
+    // can revisit this in the future.
     // if redraw_list.is_empty() {
     //     return false;
     // }

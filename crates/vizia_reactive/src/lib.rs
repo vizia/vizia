@@ -14,8 +14,9 @@ mod read;
 mod runtime;
 mod scope;
 mod signal;
-mod storage;
+mod state;
 mod sync_runtime;
+mod sync_signal;
 mod write;
 
 pub use derived::{
@@ -28,5 +29,6 @@ pub use memo::Memo;
 pub use read::{ReadRef, SignalGet, SignalRead, SignalTrack, SignalWith};
 pub use runtime::Runtime;
 pub use scope::Scope;
-pub use signal::{ReadSignal, Signal, SyncReadSignal, SyncSignal, SyncWriteSignal, WriteSignal};
+pub use signal::{ReadSignal, Signal, WriteSignal};
+pub use sync_signal::{SyncReadSignal, SyncSignal, SyncWriteSignal};
 pub use write::{SignalUpdate, SignalWrite, WriteRef};

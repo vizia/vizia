@@ -16,7 +16,7 @@ use smallvec::SmallVec;
 use crate::{
     effect::{EffectPriority, EffectTrait, run_effect},
     id::Id,
-    signal::SignalState,
+    state::SignalState,
     sync_runtime::SYNC_RUNTIME,
 };
 
