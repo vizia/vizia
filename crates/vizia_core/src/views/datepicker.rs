@@ -208,7 +208,7 @@ impl Datepicker {
                                         let selected_date = selected_date.get();
 
                                         handle
-                                            .text(&day_number.to_string())
+                                            .text(day_number.to_string())
                                             .class("datepicker-calendar-day")
                                             .navigable(!disabled)
                                             .toggle_class(

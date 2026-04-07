@@ -18,9 +18,9 @@ impl Chip {
     /// #
     /// Chip::new(cx, "Chip");
     /// ```
-    pub fn new<T>(cx: &mut Context, text: impl Res<T> + Clone) -> Handle<Self>
+    pub fn new<T>(cx: &mut Context, text: impl Res<T> + Clone + 'static) -> Handle<Self>
     where
-        T: ToStringLocalized,
+        T: ToStringLocalized + 'static,
     {
         let has_close = Signal::new(false);
         Self { on_close: None, has_close }

@@ -154,6 +154,28 @@ impl Clone for Localized {
 }
 
 impl Localized {
+    fn resolve_text(&self, cx: &LocalizationContext) -> String {
+        let locale = &cx.environment().locale.get();
+        let bundle = cx.resource_manager.current_translation(locale);
+        let message = if let Some(msg) = bundle.get_message(&self.key) {
+            msg
+        } else {
+            return (self.map)(&self.key);
+        };
+
+        let value = if let Some(value) = message.value() {
+            value
+        } else {
+            return (self.map)(&self.key);
+        };
+
+        let mut err = vec![];
+        let args = self.get_args(cx);
+        let res = bundle.format_pattern(value, Some(&args), &mut err);
+
+        if err.is_empty() { (self.map)(&res) } else { format!("{} {{ERROR: {:?}}}", res, err) }
+    }
+
     fn get_args(&self, cx: &LocalizationContext) -> FluentArgs {
         let mut res = FluentArgs::new();
         for (name, arg) in &self.args {
@@ -244,25 +266,7 @@ impl Localized {
 impl Res<String> for Localized {
     fn get_value(&self, cx: &impl DataContext) -> String {
         let cx = cx.localization_context().expect("Failed to get context");
-        let locale = &cx.environment().locale.get();
-        let bundle = cx.resource_manager.current_translation(locale);
-        let message = if let Some(msg) = bundle.get_message(&self.key) {
-            msg
-        } else {
-            return (self.map)(&self.key);
-        };
-
-        let value = if let Some(value) = message.value() {
-            value
-        } else {
-            return (self.map)(&self.key);
-        };
-
-        let mut err = vec![];
-        let args = self.get_args(&cx);
-        let res = bundle.format_pattern(value, Some(&args), &mut err);
-
-        if err.is_empty() { (self.map)(&res) } else { format!("{} {{ERROR: {:?}}}", res, err) }
+        self.resolve_text(&cx)
     }
 
     fn set_or_bind<F>(self, cx: &mut Context, closure: F)
@@ -272,15 +276,12 @@ impl Res<String> for Localized {
         let current = cx.current();
         let self2 = self.clone();
         let closure = Arc::new(closure);
-        let locale_signal = cx.environment().locale;
-        locale_signal.set_or_bind(cx, move |cx, _| {
-            cx.with_current(current, |cx| {
-                let stores = self2.args.values().map(|x| x.make_clone()).collect::<Vec<_>>();
-                let self3 = self2.clone();
-                let closure = closure.clone();
-                bind_recursive(cx, &stores, move |cx| {
-                    closure(cx, self3.clone());
-                });
+        cx.with_current(current, |cx| {
+            let stores = self2.args.values().map(|x| x.make_clone()).collect::<Vec<_>>();
+            let self3 = self2.clone();
+            let closure = closure.clone();
+            bind_recursive(cx, &stores, move |cx| {
+                closure(cx, self3.clone());
             });
         });
     }
@@ -318,27 +319,6 @@ pub trait ToStringLocalized {
 impl ToStringLocalized for Localized {
     fn to_string_local(&self, cx: &impl DataContext) -> String {
         let cx = cx.localization_context().expect("Failed to get context");
-
-        let locale = &cx.environment().locale.get();
-        let bundle = cx.resource_manager.current_translation(locale);
-        let message = if let Some(msg) = bundle.get_message(&self.key) {
-            msg
-        } else {
-            // Warn here of missing key
-            return (self.map)(&self.key);
-        };
-
-        let value = if let Some(value) = message.value() {
-            value
-        } else {
-            // Warn here of missing value
-            return (self.map)(&self.key);
-        };
-
-        let mut err = vec![];
-        let args = self.get_args(&cx);
-        let res = bundle.format_pattern(value, Some(&args), &mut err);
-
-        if err.is_empty() { (self.map)(&res) } else { format!("{} {{ERROR: {:?}}}", res, err) }
+        self.resolve_text(&cx)
     }
 }

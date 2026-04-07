@@ -19,16 +19,17 @@ fn main() -> Result<(), ApplicationError> {
         ExamplePage::vertical(cx, |cx| {
             HStack::new(cx, |cx| {
                 // Basic Button
-                Button::new(cx, |cx| Label::new(cx, "Button"))
+                Button::new(cx, |cx| Label::new(cx, Localized::new("button")))
                     .on_press(|_cx| debug!("Button Pressed!"));
                 // Secondary Button
-                Button::new(cx, |cx| Label::new(cx, "Secondary Button"))
+                Button::new(cx, |cx| Label::new(cx, Localized::new("secondary-button")))
                     .variant(ButtonVariant::Secondary);
                 // Outline Button
-                Button::new(cx, |cx| Label::new(cx, "Outline Button"))
+                Button::new(cx, |cx| Label::new(cx, Localized::new("outline-button")))
                     .variant(ButtonVariant::Outline);
                 // Ghost Button
-                Button::new(cx, |cx| Label::new(cx, "Text Button")).variant(ButtonVariant::Text);
+                Button::new(cx, |cx| Label::new(cx, Localized::new("text-button")))
+                    .variant(ButtonVariant::Text);
             })
             .size(Auto)
             .horizontal_gap(Pixels(10.0));
@@ -37,27 +38,27 @@ fn main() -> Result<(), ApplicationError> {
                 Button::new(cx, |cx| {
                     HStack::new(cx, |cx| {
                         Svg::new(cx, ICON_CHECK).class("icon");
-                        Label::new(cx, "Button with Icon");
+                        Label::new(cx, Localized::new("button-with-icon"));
                     })
                 });
                 Button::new(cx, |cx| {
                     HStack::new(cx, |cx| {
                         Svg::new(cx, ICON_CHECK).class("icon");
-                        Label::new(cx, "Button with Icon");
+                        Label::new(cx, Localized::new("button-with-icon"));
                     })
                 })
                 .variant(ButtonVariant::Secondary);
                 Button::new(cx, |cx| {
                     HStack::new(cx, |cx| {
                         Svg::new(cx, ICON_CHECK).class("icon");
-                        Label::new(cx, "Button with Icon");
+                        Label::new(cx, Localized::new("button-with-icon"));
                     })
                 })
                 .variant(ButtonVariant::Outline);
                 Button::new(cx, |cx| {
                     HStack::new(cx, |cx| {
                         Svg::new(cx, ICON_CHECK).class("icon");
-                        Label::new(cx, "Button with Icon");
+                        Label::new(cx, Localized::new("button-with-icon"));
                     })
                 })
                 .variant(ButtonVariant::Text);

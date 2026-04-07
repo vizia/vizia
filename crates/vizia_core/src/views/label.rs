@@ -88,9 +88,9 @@ impl Label {
     /// #
     /// Label::new(cx, "Text");
     /// ```
-    pub fn new<T>(cx: &mut Context, text: impl Res<T> + Clone) -> Handle<Self>
+    pub fn new<T>(cx: &mut Context, text: impl Res<T> + Clone + 'static) -> Handle<Self>
     where
-        T: ToStringLocalized,
+        T: ToStringLocalized + 'static,
     {
         Self { describing: None }.build(cx, |_| {}).text(text.clone()).role(Role::Label).name(text)
     }
@@ -98,11 +98,11 @@ impl Label {
     /// Creates a new rich [Label] view.
     pub fn rich<T>(
         cx: &mut Context,
-        text: impl Res<T> + Clone,
+        text: impl Res<T> + Clone + 'static,
         children: impl Fn(&mut Context),
     ) -> Handle<Self>
     where
-        T: ToStringLocalized,
+        T: ToStringLocalized + 'static,
     {
         Self { describing: None }
             .build(cx, |cx| {
@@ -196,7 +196,7 @@ impl TextSpan {
                 cx.style.text_span.insert(cx.current(), true);
                 children(cx);
             })
-            .text(text)
+            .text(text.to_string())
             .display(Display::None)
             .pointer_events(PointerEvents::None)
     }

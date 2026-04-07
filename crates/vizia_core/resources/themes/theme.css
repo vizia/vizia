@@ -140,6 +140,10 @@ window {
     background-color: var(--background);
 }
 
+list-item {
+    gap: 1s;
+}
+
 *:focus-visible {
     outline-width: 3px;
     outline-color: var(--ring);
