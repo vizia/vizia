@@ -1,6 +1,21 @@
 use vizia::prelude::*;
 
 const STYLE: &str = r#"
+    .demo-root {
+        gap: 16px;
+        padding: 16px;
+    }
+
+    .demo-column,
+    .demo-row {
+        gap: 16px;
+    }
+
+    .demo-panel {
+        child-space: 1s;
+        background-color: #dcdcdc;
+    }
+
     resizable-stack {
         background-color: #b1b1b1;
     }
@@ -26,71 +41,77 @@ const STYLE: &str = r#"
         opacity: 1;
         transition: opacity 200ms 200ms ease-in-out;
     }
-
-    
 "#;
 
-pub struct AppData {
-    width: Signal<Units>,
-    height: Signal<Units>,
-}
-
-pub enum AppEvent {
-    SetWidth(Units),
-    SetHeight(Units),
-    ResetWidth,
-    ResetHeight,
-}
-
-impl Model for AppData {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::SetWidth(width) => {
-                self.width.set(*width);
-            }
-            AppEvent::SetHeight(height) => {
-                self.height.set(*height);
-            }
-            AppEvent::ResetWidth => {
-                self.width.set(Pixels(200.0));
-            }
-            AppEvent::ResetHeight => {
-                self.height.set(Pixels(200.0));
-            }
-        });
-    }
+fn build_demo_stack(cx: &mut Context, title: &'static str) {
+    Element::new(cx).class("demo-panel");
+    Label::new(cx, title);
 }
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        let width = Signal::new(Pixels(200.0));
-        let height = Signal::new(Pixels(200.0));
+        let left_width = Signal::new(Pixels(180.0));
+        let right_width = Signal::new(Pixels(180.0));
+        let top_height = Signal::new(Pixels(140.0));
+        let bottom_height = Signal::new(Pixels(140.0));
 
-        AppData { width, height }.build(cx);
-
-        ResizableStack::new(
-            cx,
-            height,
-            ResizeStackDirection::Bottom,
-            |cx, h| cx.emit(AppEvent::SetHeight(Pixels(h))),
-            |cx| {
+        HStack::new(cx, |cx| {
+            VStack::new(cx, |cx| {
                 ResizableStack::new(
                     cx,
-                    width,
-                    ResizeStackDirection::Right,
-                    |cx, w| cx.emit(AppEvent::SetWidth(Pixels(w))),
-                    |_cx| {},
+                    top_height,
+                    ResizeStackDirection::Top,
+                    move |_cx, h| top_height.set(Pixels(h)),
+                    |cx| build_demo_stack(cx, "Top"),
                 )
-                .on_reset(|cx| {
-                    cx.emit(AppEvent::ResetWidth);
+                .on_reset(move |_cx| {
+                    top_height.set(Pixels(140.0));
                 });
-            },
-        )
-        .on_reset(|cx| {
-            cx.emit(AppEvent::ResetHeight);
-        });
+
+                ResizableStack::new(
+                    cx,
+                    bottom_height,
+                    ResizeStackDirection::Bottom,
+                    move |_cx, h| bottom_height.set(Pixels(h)),
+                    |cx| build_demo_stack(cx, "Bottom"),
+                )
+                .on_reset(move |_cx| {
+                    bottom_height.set(Pixels(140.0));
+                });
+            })
+            .class("demo-column")
+            .size(Stretch(1.0));
+
+            VStack::new(cx, |cx| {
+                ResizableStack::new(
+                    cx,
+                    left_width,
+                    ResizeStackDirection::Left,
+                    move |_cx, w| left_width.set(Pixels(w)),
+                    |cx| build_demo_stack(cx, "Left"),
+                )
+                .on_reset(move |_cx| {
+                    left_width.set(Pixels(180.0));
+                });
+
+                ResizableStack::new(
+                    cx,
+                    right_width,
+                    ResizeStackDirection::Right,
+                    move |_cx, w| right_width.set(Pixels(w)),
+                    |cx| build_demo_stack(cx, "Right"),
+                )
+                .on_reset(move |_cx| {
+                    right_width.set(Pixels(180.0));
+                });
+            })
+            .class("demo-row")
+            .size(Stretch(1.0));
+        })
+        .class("demo-root")
+        .size(Stretch(1.0));
     })
     .title("Resizable Stack")
     .inner_size((800, 600))

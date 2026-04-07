@@ -548,6 +548,11 @@ resizable-stack > resize-handle {
     cursor: ew-resize;
 }
 
+resizable-stack.left > resize-handle {
+    left: 0px;
+    translate: -50% 0%;
+}
+
 resizable-stack.horizontal > resize-handle {
     width: 1s;
     height: 4px;
@@ -555,6 +560,11 @@ resizable-stack.horizontal > resize-handle {
     left: 0px;
     translate: 0% 50%;
     cursor: ns-resize;
+}
+
+resizable-stack.top > resize-handle {
+    top: 0px;
+    translate: 0% -50%;
 }
 
 resizable-stack:active > resize-handle,
