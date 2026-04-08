@@ -49,7 +49,7 @@ use vizia_input::{ImeState, MouseState};
 use vizia_storage::{ChildIterator, LayoutTreeIterator};
 
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
-static DEFAULT_THEME: &str = include_str!("../../resources/themes/theme.css");
+static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static MARKDOWN: &str = include_str!("../../resources/themes/markdown.css");
 
 type Views = HashMap<Entity, Box<dyn ViewHandler>>;

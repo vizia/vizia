@@ -50,7 +50,8 @@ impl View for Avatar {
     }
 }
 
-impl Handle<'_, Avatar> {
+/// Modifiers for changing the appearance and content of an [Avatar].
+pub trait AvatarModifiers: Sized {
     /// Selects the geometric variant of the Avatar. Accepts a value or signal of type [AvatarVariant].
     ///
     /// ```
@@ -62,7 +63,33 @@ impl Handle<'_, Avatar> {
     /// })
     /// .variant(AvatarVariant::Rounded);
     /// ```
-    pub fn variant<U: Into<AvatarVariant> + Clone + PartialEq + 'static>(
+    fn variant<U: Into<AvatarVariant> + Clone + PartialEq + 'static>(
+        self,
+        variant: impl Res<U> + 'static,
+    ) -> Self;
+
+    /// Adds a badge to the Avatar.
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_core::icons::ICON_USER;
+    /// # let cx = &mut Context::default();
+    /// Avatar::new(cx, |cx|{
+    ///     Svg::new(cx, ICON_USER);
+    /// })
+    /// .badge(|cx| Badge::empty(cx).class("error"));
+    /// ```
+    #[allow(unused_variables)]
+    fn badge<F>(self, content: F) -> Self
+    where
+        F: FnOnce(&mut Context) -> Handle<'_, Badge>,
+    {
+        self
+    }
+}
+
+impl AvatarModifiers for Handle<'_, Avatar> {
+    fn variant<U: Into<AvatarVariant> + Clone + PartialEq + 'static>(
         mut self,
         variant: impl Res<U> + 'static,
     ) -> Self {
@@ -79,18 +106,7 @@ impl Handle<'_, Avatar> {
             .toggle_class("rounded", is_rounded)
     }
 
-    /// Adds a badge to the Avatar.
-    ///
-    /// ```
-    /// # use vizia_core::prelude::*;
-    /// # use vizia_core::icons::ICON_USER;
-    /// # let cx = &mut Context::default();
-    /// Avatar::new(cx, |cx|{
-    ///     Svg::new(cx, ICON_USER);
-    /// })
-    /// .badge(|cx| Badge::empty(cx).class("error"));
-    /// ```
-    pub fn badge<F>(mut self, content: F) -> Self
+    fn badge<F>(mut self, content: F) -> Self
     where
         F: FnOnce(&mut Context) -> Handle<'_, Badge>,
     {
@@ -120,5 +136,24 @@ impl AvatarGroup {
 impl View for AvatarGroup {
     fn element(&self) -> Option<&'static str> {
         Some("avatar-group")
+    }
+}
+
+impl AvatarModifiers for Handle<'_, AvatarGroup> {
+    fn variant<U: Into<AvatarVariant> + Clone + PartialEq + 'static>(
+        mut self,
+        variant: impl Res<U> + 'static,
+    ) -> Self {
+        let avatar_variant = variant.to_signal(self.context()).map(|value| value.clone().into());
+
+        let is_circle = Memo::new(move |_| avatar_variant.get() == AvatarVariant::Circle);
+
+        let is_square = Memo::new(move |_| avatar_variant.get() == AvatarVariant::Square);
+
+        let is_rounded = Memo::new(move |_| avatar_variant.get() == AvatarVariant::Rounded);
+
+        self.toggle_class("circle", is_circle)
+            .toggle_class("square", is_square)
+            .toggle_class("rounded", is_rounded)
     }
 }
