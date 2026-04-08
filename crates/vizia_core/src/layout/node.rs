@@ -117,14 +117,22 @@ impl Node for Entity {
 
             paragraph.layout(f32::MAX);
 
-            let padding_left =
-                store.padding_left.get_resolved(*self, &store.custom_units_props).unwrap_or_default();
-            let padding_right =
-                store.padding_right.get_resolved(*self, &store.custom_units_props).unwrap_or_default();
-            let padding_top =
-                store.padding_top.get_resolved(*self, &store.custom_units_props).unwrap_or_default();
-            let padding_bottom =
-                store.padding_bottom.get_resolved(*self, &store.custom_units_props).unwrap_or_default();
+            let padding_left = store
+                .padding_left
+                .get_resolved(*self, &store.custom_units_props)
+                .unwrap_or_default();
+            let padding_right = store
+                .padding_right
+                .get_resolved(*self, &store.custom_units_props)
+                .unwrap_or_default();
+            let padding_top = store
+                .padding_top
+                .get_resolved(*self, &store.custom_units_props)
+                .unwrap_or_default();
+            let padding_bottom = store
+                .padding_bottom
+                .get_resolved(*self, &store.custom_units_props)
+                .unwrap_or_default();
 
             let mut child_space_x = 0.0;
             let mut child_space_y = 0.0;
