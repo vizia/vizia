@@ -580,7 +580,7 @@ where
         None
     }
 
-    fn get_with_variables(
+    pub(crate) fn get_with_variables(
         &self,
         entity: Entity,
         variables: &HashMap<u64, AnimatableVarSet<T>>,
@@ -777,6 +777,231 @@ where
                 //         }
                 //     }
                 // }
+
+                let data_index = self.inline_data.sparse[entity_index].data_index;
+
+                // Already linked
+                if !data_index.is_inline() && data_index.index() == shared_data_index.index() {
+                    return false;
+                }
+
+                self.inline_data.sparse[entity_index].data_index =
+                    DataIndex::shared(shared_data_index.index());
+
+                return true;
+            }
+        }
+
+        // No matching rules — entity is leaving whatever rule it was linked to.
+        if entity_index < self.inline_data.sparse.len() {
+            let data_index = self.inline_data.sparse[entity_index].data_index;
+            if !data_index.is_inline()
+                && !data_index.is_inherited()
+                && data_index != DataIndex::null()
+            {
+                let current_dense_idx = data_index.index();
+                if current_dense_idx < self.shared_data.dense.len() {
+                    let entity_anim_index =
+                        self.inline_data.sparse[entity_index].anim_index as usize;
+
+                    if entity_anim_index < self.active_animations.len() {
+                        // Mid-animation: reverse the active state in-place so the
+                        // transition picks up from the current visual position.
+                        let current_value = self.get(entity).cloned().unwrap_or_default();
+                        let current_anim = &mut self.active_animations[entity_anim_index];
+                        if current_anim.is_transition() {
+                            let reverse_to = current_anim.from_rule;
+                            if reverse_to < self.shared_data.dense.len() {
+                                current_anim.from_rule = current_anim.to_rule;
+                                current_anim.to_rule = reverse_to;
+                                current_anim.keyframes.first_mut().unwrap().value = current_value;
+                                current_anim.keyframes.last_mut().unwrap().value =
+                                    self.shared_data.dense[reverse_to].value.value.clone();
+                                current_anim.dt = current_anim.t - 1.0;
+                                current_anim.start_time = Instant::now();
+                            }
+                        }
+                    } else {
+                        // Animation completed — start a fresh reverse transition using the
+                        // template animation stored on the departing (hover) rule, but only
+                        // if that rule actually defined a transition for this property.
+                        if let Some(departing_anim) = self
+                            .shared_data
+                            .sparse
+                            .iter()
+                            .find(|si| si.index() == current_dense_idx && !si.animation.is_null())
+                            .map(|si| si.animation)
+                        {
+                            if let Some(transition_state) = self.animations.get_mut(departing_anim)
+                            {
+                                let prev_rule = transition_state.from_rule;
+                                if prev_rule < self.shared_data.dense.len() {
+                                    let start_value = self.shared_data.dense[current_dense_idx]
+                                        .value
+                                        .value
+                                        .clone();
+                                    let end_value =
+                                        self.shared_data.dense[prev_rule].value.value.clone();
+                                    transition_state.keyframes.first_mut().unwrap().value =
+                                        start_value;
+                                    transition_state.keyframes.last_mut().unwrap().value =
+                                        end_value;
+                                    transition_state.from_rule = current_dense_idx;
+                                    transition_state.to_rule = prev_rule;
+                                    let duration = transition_state.duration;
+                                    let delay = transition_state.delay;
+                                    if transition_state.from_rule != transition_state.to_rule {
+                                        self.play_animation(
+                                            entity,
+                                            departing_anim,
+                                            Instant::now(),
+                                            duration,
+                                            delay,
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                self.inline_data.sparse[entity_index].data_index = DataIndex::null();
+                return true;
+            }
+        }
+
+        false
+    }
+
+    /// Link an entity to some shared data, using a pre-resolved variable snapshot.
+    ///
+    /// This is identical to [`link`] except that, instead of accepting the live
+    /// `HashMap<u64, AnimatableVarSet<T>>` (which would require removing `self`
+    /// from the map to avoid a conflicting borrow), the caller pre-computes a
+    /// `HashMap<u64, T>` snapshot via [`get_with_variables`] and passes that here.
+    /// The variable-baking step then simply clones out of the snapshot.
+    ///
+    /// This removes the per-entity `Vec`-of-keys allocation and the
+    /// remove / re-insert hashmap churn that the old pattern required.
+    pub(crate) fn link_with_resolved(
+        &mut self,
+        entity: Entity,
+        rules: &[(Rule, u32)],
+        resolved_vars: &HashMap<u64, T>,
+    ) -> bool {
+        let entity_index = entity.index();
+
+        // Check if the entity already has some data
+        if entity_index < self.inline_data.sparse.len() {
+            let data_index = self.inline_data.sparse[entity_index].data_index;
+            // If the data is inline then skip linking as inline data overrides shared data
+            if data_index.is_inline() && !data_index.is_inherited() {
+                return false;
+            }
+        }
+
+        // Loop through matched rules and link to the first valid rule
+        for (rule, _) in rules {
+            // Bake the resolved variable value into the shared slot, using the
+            // pre-computed snapshot instead of a live map lookup.
+            if let Some(shared_data) = self.shared_data.get_mut(*rule) {
+                if shared_data.variable_name_hash != u64::MAX {
+                    if let Some(data) = resolved_vars.get(&shared_data.variable_name_hash) {
+                        shared_data.value = data.clone();
+                    }
+                }
+            }
+
+            if let Some(shared_data_index) = self.shared_data.dense_idx(*rule) {
+                // If the entity doesn't have any previous shared data then create space for it
+                if entity_index >= self.inline_data.sparse.len() {
+                    self.inline_data.sparse.resize(entity_index + 1, InlineIndex::null());
+                }
+
+                // Get the animation state index of any animations (transitions) defined for the rule
+                let rule_animation = shared_data_index.animation;
+
+                let entity_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
+                if entity_anim_index < self.active_animations.len() {
+                    // Already animating
+                    let current_value = self.get(entity).cloned().unwrap_or_default();
+                    let current_anim_state = &mut self.active_animations[entity_anim_index];
+                    let rule_data_index = shared_data_index.data_index as usize;
+
+                    if current_anim_state.is_transition() {
+                        // Skip if the transition hasn't changed
+                        if current_anim_state.to_rule != rule_data_index {
+                            if rule_data_index == current_anim_state.from_rule {
+                                // Transitioning back to previous rule
+                                current_anim_state.from_rule = current_anim_state.to_rule;
+                                current_anim_state.to_rule = rule_data_index;
+                                current_anim_state.keyframes.first_mut().unwrap().value =
+                                    self.shared_data.dense[current_anim_state.from_rule]
+                                        .value
+                                        .value
+                                        .clone();
+
+                                current_anim_state.keyframes.last_mut().unwrap().value =
+                                    self.shared_data.dense[current_anim_state.to_rule]
+                                        .value
+                                        .value
+                                        .clone();
+
+                                current_anim_state.dt = current_anim_state.t - 1.0;
+                                current_anim_state.start_time = Instant::now();
+                            } else {
+                                // Transitioning to new rule
+                                current_anim_state.to_rule = rule_data_index;
+                                current_anim_state.keyframes.first_mut().unwrap().value =
+                                    current_value;
+                                current_anim_state.keyframes.last_mut().unwrap().value =
+                                    self.shared_data.dense[current_anim_state.to_rule]
+                                        .value
+                                        .value
+                                        .clone();
+                                current_anim_state.t = 0.0;
+                                current_anim_state.start_time = Instant::now();
+                            }
+                        }
+                    }
+                } else if let Some(transition_state) = self.animations.get_mut(rule_animation) {
+                    // Safe to unwrap because already checked that the rule exists
+                    let end = self.shared_data.get(*rule).unwrap();
+
+                    let entity_data_index = self.inline_data.sparse[entity_index].data_index;
+
+                    if !entity_data_index.is_inline()
+                        && entity_data_index.index() < self.shared_data.dense.len()
+                    {
+                        let start_data =
+                            self.shared_data.dense[entity_data_index.index()].value.value.clone();
+                        transition_state.keyframes.first_mut().unwrap().value = start_data;
+                    } else {
+                        transition_state.keyframes.first_mut().unwrap().value = end.value.clone();
+                    }
+
+                    transition_state.keyframes.last_mut().unwrap().value = end.value.clone();
+                    transition_state.from_rule =
+                        self.inline_data.sparse[entity_index].data_index.index();
+                    transition_state.to_rule = shared_data_index.index();
+
+                    let duration = transition_state.duration;
+                    let delay = transition_state.delay;
+
+                    if transition_state.from_rule != DataIndex::null().index()
+                        && transition_state.from_rule != transition_state.to_rule
+                    {
+                        self.play_animation(
+                            entity,
+                            rule_animation,
+                            Instant::now(),
+                            duration,
+                            delay,
+                        );
+                    }
+                } else {
+                    // No transition on the arriving rule — nothing to animate forward.
+                }
 
                 let data_index = self.inline_data.sparse[entity_index].data_index;
 

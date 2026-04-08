@@ -304,53 +304,86 @@ fn link_variable_data(
     redraw_entities: &mut Vec<Entity>,
     matched_rules: &[(Rule, u32)],
 ) {
-    let keys: Vec<_> = style.custom_color_props.keys().cloned().collect();
-    for name_hash in keys {
-        if let Some(mut prop) = style.custom_color_props.remove(&name_hash) {
-            if prop.link(entity, matched_rules, &style.custom_color_props) {
-                redraw_entities.push(entity);
-            }
-            style.custom_color_props.insert(name_hash, prop);
+    // Fast path: no rules matched, nothing to link.
+    if matched_rules.is_empty() {
+        return;
+    }
+
+    // For each custom-property type we need to:
+    //   1. Resolve all variable values (pure immutable read of the whole map).
+    //   2. Iterate the map mutably to call link_with_resolved().
+    //
+    // Each block-scoped `props` reference lets NLL end the immutable borrow before
+    // the subsequent values_mut() call, avoiding the old remove/re-insert
+    // borrow-splitting trick and eliminating the per-entity Vec allocation.
+
+    // -- Color variables --
+    let resolved_colors: HashMap<u64, _> = {
+        let props = &style.custom_color_props;
+        props
+            .iter()
+            .filter_map(|(h, p)| p.get_with_variables(entity, props).map(|v| (*h, v)))
+            .collect()
+    };
+    for prop in style.custom_color_props.values_mut() {
+        if prop.link_with_resolved(entity, matched_rules, &resolved_colors) {
+            redraw_entities.push(entity);
         }
     }
 
-    let keys: Vec<_> = style.custom_length_props.keys().cloned().collect();
-    for name_hash in keys {
-        if let Some(mut prop) = style.custom_length_props.remove(&name_hash) {
-            if prop.link(entity, matched_rules, &style.custom_length_props) {
-                redraw_entities.push(entity);
-            }
-            style.custom_length_props.insert(name_hash, prop);
+    // -- Length variables --
+    let resolved_lengths: HashMap<u64, _> = {
+        let props = &style.custom_length_props;
+        props
+            .iter()
+            .filter_map(|(h, p)| p.get_with_variables(entity, props).map(|v| (*h, v)))
+            .collect()
+    };
+    for prop in style.custom_length_props.values_mut() {
+        if prop.link_with_resolved(entity, matched_rules, &resolved_lengths) {
+            redraw_entities.push(entity);
         }
     }
 
-    let keys: Vec<_> = style.custom_font_size_props.keys().cloned().collect();
-    for name_hash in keys {
-        if let Some(mut prop) = style.custom_font_size_props.remove(&name_hash) {
-            if prop.link(entity, matched_rules, &style.custom_font_size_props) {
-                redraw_entities.push(entity);
-            }
-            style.custom_font_size_props.insert(name_hash, prop);
+    // -- Font-size variables --
+    let resolved_font_sizes: HashMap<u64, _> = {
+        let props = &style.custom_font_size_props;
+        props
+            .iter()
+            .filter_map(|(h, p)| p.get_with_variables(entity, props).map(|v| (*h, v)))
+            .collect()
+    };
+    for prop in style.custom_font_size_props.values_mut() {
+        if prop.link_with_resolved(entity, matched_rules, &resolved_font_sizes) {
+            redraw_entities.push(entity);
         }
     }
 
-    let keys: Vec<_> = style.custom_units_props.keys().cloned().collect();
-    for name_hash in keys {
-        if let Some(mut prop) = style.custom_units_props.remove(&name_hash) {
-            if prop.link(entity, matched_rules, &style.custom_units_props) {
-                redraw_entities.push(entity);
-            }
-            style.custom_units_props.insert(name_hash, prop);
+    // -- Units variables --
+    let resolved_units: HashMap<u64, _> = {
+        let props = &style.custom_units_props;
+        props
+            .iter()
+            .filter_map(|(h, p)| p.get_with_variables(entity, props).map(|v| (*h, v)))
+            .collect()
+    };
+    for prop in style.custom_units_props.values_mut() {
+        if prop.link_with_resolved(entity, matched_rules, &resolved_units) {
+            redraw_entities.push(entity);
         }
     }
 
-    let keys: Vec<_> = style.custom_opacity_props.keys().cloned().collect();
-    for name_hash in keys {
-        if let Some(mut prop) = style.custom_opacity_props.remove(&name_hash) {
-            if prop.link(entity, matched_rules, &style.custom_opacity_props) {
-                redraw_entities.push(entity);
-            }
-            style.custom_opacity_props.insert(name_hash, prop);
+    // -- Opacity variables --
+    let resolved_opacities: HashMap<u64, _> = {
+        let props = &style.custom_opacity_props;
+        props
+            .iter()
+            .filter_map(|(h, p)| p.get_with_variables(entity, props).map(|v| (*h, v)))
+            .collect()
+    };
+    for prop in style.custom_opacity_props.values_mut() {
+        if prop.link_with_resolved(entity, matched_rules, &resolved_opacities) {
+            redraw_entities.push(entity);
         }
     }
 }
