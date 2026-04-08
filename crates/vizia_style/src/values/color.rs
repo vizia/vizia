@@ -230,8 +230,8 @@ impl From<cssparser_color::Color> for Color {
                         linear_to_u8(c3),
                         alpha,
                     )),
-                    // For other color spaces, fall back to transparent for now
-                    _ => Color::RGBA(RGBA::rgba(0, 0, 0, 0)),
+
+                    _ => Color::CurrentColor,
                 }
             }
         }
