@@ -340,6 +340,10 @@ impl Node for Entity {
         store.direction.get(*self).copied()
     }
 
+    fn wrap(&self, store: &Self::Store) -> Option<morphorm::LayoutWrap> {
+        store.wrap.get(*self).copied()
+    }
+
     fn vertical_scroll(&self, store: &Self::Store) -> Option<f32> {
         store.vertical_scroll.get(*self).cloned().map(|val| store.logical_to_physical(val))
     }

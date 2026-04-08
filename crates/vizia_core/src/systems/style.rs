@@ -771,6 +771,11 @@ fn link_style_data(
         should_reflow = true;
     }
 
+    if style.wrap.link(entity, matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
     // Background
     if style.background_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;

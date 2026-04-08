@@ -105,6 +105,23 @@ fn hover_entity(
         return;
     }
 
+    // Disabled views (and their descendants through inherited disabled state) should never
+    // become hover targets.
+    if cx.style.disabled.get(cx.current).copied().unwrap_or_default() {
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
+            let had_hover = pseudo_classes.contains(PseudoClassFlags::HOVER);
+            let had_over = pseudo_classes.contains(PseudoClassFlags::OVER);
+
+            if had_hover || had_over {
+                pseudo_classes.set(PseudoClassFlags::HOVER, false);
+                pseudo_classes.set(PseudoClassFlags::OVER, false);
+                cx.needs_restyle();
+            }
+        }
+
+        return;
+    }
+
     let pointer_events = cx
         .style
         .pointer_events

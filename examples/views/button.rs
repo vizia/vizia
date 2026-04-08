@@ -1,21 +1,14 @@
 mod helpers;
+use std::alloc::Layout;
+
 use helpers::*;
 
 use log::debug;
 use vizia::icons::ICON_CHECK;
 use vizia::prelude::*;
 
-const STYLE: &str = r#"
-    :root {
-        --primary: #0049a2;
-        --primary-foreground: #ffffff;
-    }
-"#;
-
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
-
         ExamplePage::vertical(cx, |cx| {
             HStack::new(cx, |cx| {
                 // Basic Button
@@ -27,12 +20,15 @@ fn main() -> Result<(), ApplicationError> {
                 // Outline Button
                 Button::new(cx, |cx| Label::new(cx, Localized::new("outline-button")))
                     .variant(ButtonVariant::Outline);
-                // Ghost Button
+                // Text Button
                 Button::new(cx, |cx| Label::new(cx, Localized::new("text-button")))
                     .variant(ButtonVariant::Text);
             })
-            .size(Auto)
-            .horizontal_gap(Pixels(10.0));
+            .wrap(LayoutWrap::Wrap)
+            .width(Stretch(1.0))
+            .height(Auto)
+            .alignment(Alignment::Center)
+            .gap(Pixels(8.0));
 
             HStack::new(cx, |cx| {
                 Button::new(cx, |cx| {
@@ -63,8 +59,11 @@ fn main() -> Result<(), ApplicationError> {
                 })
                 .variant(ButtonVariant::Text);
             })
-            .size(Auto)
-            .horizontal_gap(Pixels(10.0));
+            .height(Auto)
+            .width(Stretch(1.0))
+            .alignment(Alignment::Center)
+            .wrap(LayoutWrap::Wrap)
+            .gap(Pixels(8.0));
 
             HStack::new(cx, |cx| {
                 Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"));
@@ -80,6 +79,6 @@ fn main() -> Result<(), ApplicationError> {
         });
     })
     .title("Button")
-    .inner_size((700, 200))
+    .inner_size((700, 300))
     .run()
 }

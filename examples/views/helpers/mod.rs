@@ -39,8 +39,14 @@ pub const CENTER_LAYOUT: &str = r#"
     }
 "#;
 
-const PRIMARY_COLOR_CLASSES: [&str; 5] =
-    ["primary-blue", "primary-emerald", "primary-crimson", "primary-amber", "primary-violet"];
+const PRIMARY_COLOR_CLASSES: [&str; 6] = [
+    "default",
+    "primary-blue",
+    "primary-emerald",
+    "primary-crimson",
+    "primary-amber",
+    "primary-violet",
+];
 
 pub struct ControlsData {
     pub disabled: Signal<bool>,
@@ -49,7 +55,6 @@ pub struct ControlsData {
     pub language_options: Signal<Vec<Localized>>,
     pub selected_language: Signal<Option<usize>>,
     pub direction_options: Signal<Vec<&'static str>>,
-    pub selected_direction: Signal<Option<usize>>,
     pub primary_color_options: Signal<Vec<Localized>>,
     pub selected_primary_color: Signal<Option<usize>>,
 }
@@ -72,9 +77,9 @@ impl Default for ControlsData {
             ),
             selected_language: Signal::new(Some(0)),
             direction_options: Signal::new(["LTR", "RTL"].to_vec()),
-            selected_direction: Signal::new(Some(0)),
             primary_color_options: Signal::new(
                 [
+                    Localized::new("default"),
                     Localized::new("blue"),
                     Localized::new("emerald"),
                     Localized::new("crimson"),
@@ -127,7 +132,6 @@ impl Model for ControlsData {
                 }));
             }
             ControlsEvent::SetDirection(direction) => {
-                self.selected_direction.set(Some(*direction));
                 cx.emit(EnvironmentEvent::SetDirection(match direction {
                     0 /* LTR */ => Direction::LeftToRight,
                     1 /* RTL */ => Direction::RightToLeft,
@@ -178,7 +182,6 @@ impl ExamplePage {
             let language_options = controls.language_options;
             let selected_language = controls.selected_language;
             let direction_options = controls.direction_options;
-            let selected_direction = controls.selected_direction;
             let primary_color_options = controls.primary_color_options;
             let selected_primary_color = controls.selected_primary_color;
             controls.build(cx);
@@ -193,27 +196,26 @@ impl ExamplePage {
                         .id("disabled_toggle")
                         .tooltip(|cx| {
                             Tooltip::new(cx, |cx| {
-                                Label::new(cx, "Toggle disabled");
+                                Label::new(cx, Localized::new("toggle-disabled"));
                             })
                         });
-                    Label::new(cx, "Toggle Disabled").describing("disabled_toggle");
+                    Label::new(cx, Localized::new("toggle-disabled")).describing("disabled_toggle");
                 })
-                .alignment(Alignment::Left)
-                .horizontal_gap(Pixels(5.0))
-                .top(Stretch(1.0))
-                .bottom(Stretch(1.0))
+                .alignment(Alignment::Center)
+                .gap(Pixels(4.0))
                 .size(Auto);
 
                 theme_selection_dropdown(cx, theme_options, selected_theme);
                 language_selection_dropdown(cx, language_options, selected_language);
-                direction_selection_dropdown(cx, direction_options, selected_direction);
+                direction_selection_dropdown(cx, direction_options);
                 primary_color_selection_dropdown(cx, primary_color_options, selected_primary_color);
             })
             .height(Auto)
             .width(Stretch(1.0))
             .padding(Pixels(10.0))
             .alignment(Alignment::Right)
-            .horizontal_gap(Pixels(20.0));
+            .wrap(LayoutWrap::Wrap)
+            .gap(Pixels(12.0));
 
             VStack::new(cx, |cx| {
                 (content)(cx);
@@ -251,7 +253,6 @@ impl ExamplePage {
             let language_options = controls.language_options;
             let selected_language = controls.selected_language;
             let direction_options = controls.direction_options;
-            let selected_direction = controls.selected_direction;
             let primary_color_options = controls.primary_color_options;
             let selected_primary_color = controls.selected_primary_color;
             controls.build(cx);
@@ -268,24 +269,23 @@ impl ExamplePage {
                     //         Label::new(cx, "Toggle disabled");
                     //     })
                     // });
-                    Label::new(cx, "Toggle Disabled");
+                    Label::new(cx, Localized::new("toggle-disabled"));
                 })
                 .alignment(Alignment::Center)
-                .horizontal_gap(Pixels(5.0))
-                .top(Stretch(1.0))
-                .bottom(Stretch(1.0))
+                .gap(Pixels(4.0))
                 .size(Auto);
 
                 theme_selection_dropdown(cx, theme_options, selected_theme);
                 language_selection_dropdown(cx, language_options, selected_language);
-                direction_selection_dropdown(cx, direction_options, selected_direction);
+                direction_selection_dropdown(cx, direction_options);
                 primary_color_selection_dropdown(cx, primary_color_options, selected_primary_color);
             })
             .height(Auto)
             .width(Stretch(1.0))
             .padding(Pixels(10.0))
             .alignment(Alignment::Right)
-            .horizontal_gap(Pixels(20.0));
+            .wrap(LayoutWrap::Wrap)
+            .gap(Pixels(12.0));
 
             HStack::new(cx, |cx| {
                 let _e = HStack::new(cx, |cx| {
@@ -333,11 +333,11 @@ fn primary_color_selection_dropdown(
         });
 }
 
-fn direction_selection_dropdown(
-    cx: &mut Context,
-    direction_options: Signal<Vec<&'static str>>,
-    selected_direction: Signal<Option<usize>>,
-) {
+fn direction_selection_dropdown(cx: &mut Context, direction_options: Signal<Vec<&'static str>>) {
+    let selected_direction = cx.environment().direction.map(|direction| match direction {
+        Direction::LeftToRight => Some(0),
+        Direction::RightToLeft => Some(1),
+    });
     PickList::new(cx, direction_options, selected_direction, true)
         .min_selected(1)
         .on_select(|cx, index| cx.emit(ControlsEvent::SetDirection(index)))

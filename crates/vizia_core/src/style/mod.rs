@@ -75,11 +75,11 @@ pub use vizia_style::{
     Alignment, Angle, BackgroundImage, BackgroundSize, BorderStyleKeyword, ClipPath, Color,
     CornerShape, CssRule, CursorIcon, Direction, Display, Filter, FontFamily, FontSize, FontSlant,
     FontVariation, FontWeight, FontWeightKeyword, FontWidth, GenericFontFamily, Gradient,
-    HorizontalPosition, HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue,
-    LineClamp, LineDirection, LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position,
-    PositionType, RGBA, Scale, Shadow, TextAlign, TextDecorationLine, TextDecorationStyle,
-    TextOverflow, TextStroke, TextStrokeStyle, Transform, Transition, Translate, VerticalPosition,
-    VerticalPositionKeyword, Visibility,
+    HorizontalPosition, HorizontalPositionKeyword, LayoutWrap, Length, LengthOrPercentage,
+    LengthValue, LineClamp, LineDirection, LinearGradient, Matrix, Opacity, Overflow,
+    PointerEvents, Position, PositionType, RGBA, Scale, Shadow, TextAlign, TextDecorationLine,
+    TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform, Transition,
+    Translate, VerticalPosition, VerticalPositionKeyword, Visibility,
 };
 
 use cssparser::Token as CssToken;
@@ -356,6 +356,7 @@ pub struct Style {
 
     pub(crate) alignment: StyleSet<Alignment>,
     pub(crate) direction: StyleSet<Direction>,
+    pub(crate) wrap: StyleSet<LayoutWrap>,
 
     // Grid
     pub(crate) grid_columns: StyleSet<Vec<Units>>,
@@ -1566,7 +1567,9 @@ impl Style {
                 self.direction.insert_rule(rule_id, direction);
             }
 
-            // Grid
+            Property::Wrap(value) => {
+                self.wrap.insert_rule(rule_id, value);
+            }
             Property::GridColumns(columns) => {
                 self.grid_columns.insert_rule(rule_id, columns);
             }
@@ -2542,6 +2545,7 @@ impl Style {
         self.position_type.remove(entity);
 
         self.alignment.remove(entity);
+        self.wrap.remove(entity);
 
         // Grid
         self.grid_columns.remove(entity);
@@ -2715,6 +2719,7 @@ impl Style {
         self.layout_type.clear_rules();
         self.position_type.clear_rules();
         self.alignment.clear_rules();
+        self.wrap.clear_rules();
 
         // Grid
         self.grid_columns.clear_rules();

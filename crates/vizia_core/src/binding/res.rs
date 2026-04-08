@@ -236,6 +236,8 @@ impl_res_simple!(WindowPosition);
 impl_res_simple!(Anchor);
 impl_res_simple!(AnchorTarget);
 impl_res_clone!(std::ops::Range<f32>);
+impl_res_simple!(Direction);
+impl_res_simple!(LayoutWrap);
 
 impl<'i> Res<FontFamily<'i>> for FontFamily<'i> {
     fn get_value(&self, _: &impl DataContext) -> Self {
