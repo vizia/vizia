@@ -40,7 +40,7 @@ fn main() -> Result<(), ApplicationError> {
                     Checkbox::new(cx, option1)
                         .on_toggle(|cx| cx.emit(AppEvent::ToggleOptions))
                         .id("checkbox_1");
-                    Label::new(cx, "Checkbox 1").describing("checkbox_1");
+                    Label::new(cx, Localized::new("checkbox")).describing("checkbox_1");
                 })
                 .size(Auto)
                 .gap(Pixels(5.0))
@@ -50,7 +50,7 @@ fn main() -> Result<(), ApplicationError> {
                     Checkbox::new(cx, option2)
                         .on_toggle(|cx| cx.emit(AppEvent::ToggleOptions))
                         .id("checkbox_2");
-                    Label::new(cx, "Checkbox 2").describing("checkbox_2");
+                    Label::new(cx, Localized::new("checkbox")).describing("checkbox_2");
                 })
                 .size(Auto)
                 .gap(Pixels(5.0))
@@ -65,14 +65,14 @@ fn main() -> Result<(), ApplicationError> {
                 Checkbox::with_icons(cx, option1, Some(ICON_EYE_OFF), Some(ICON_EYE))
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleOptions))
                     .id("checkbox_3");
-                Label::new(cx, "Checkbox 3").describing("checkbox_3");
+                Label::new(cx, Localized::new("checkbox")).describing("checkbox_3");
             })
             .size(Auto)
             .gap(Pixels(5.0))
             .alignment(Alignment::Center);
         });
     })
-    .title("Checkbox")
-    .inner_size((300, 320))
+    .title(Localized::new("checkbox"))
+    .inner_size((400, 320))
     .run()
 }

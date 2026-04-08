@@ -1,6 +1,4 @@
 mod helpers;
-use std::alloc::Layout;
-
 use helpers::*;
 
 use log::debug;
@@ -78,7 +76,7 @@ fn main() -> Result<(), ApplicationError> {
             .horizontal_gap(Pixels(10.0));
         });
     })
-    .title("Button")
+    .title(Localized::new("button"))
     .inner_size((700, 300))
     .run()
 }

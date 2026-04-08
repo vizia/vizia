@@ -577,12 +577,27 @@ impl WindowModifiers for Handle<'_, Window> {
         self.modify(|window| window.on_create = Some(Box::new(callback)))
     }
 
-    fn title<T: ToString>(mut self, title: impl Res<T>) -> Self {
+    fn title<T: ToStringLocalized>(mut self, title: impl Res<T> + Clone + 'static) -> Self {
         let entity = self.entity();
-        let title = title.get_value(&self).to_string();
+        let initial_title = title.get_value(&self).to_string_local(&self);
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
-            win_state.window_description.title = title;
+            win_state.window_description.title = initial_title;
         }
+
+        let getter_for_locale = title.clone();
+
+        self.context().with_current(entity, |cx| {
+            title.set_or_bind(cx, move |cx, val| {
+                let title_str = val.get_value(cx).to_string_local(cx);
+                cx.emit(WindowEvent::SetTitle(title_str));
+            });
+
+            let locale = cx.environment().locale;
+            locale.set_or_bind(cx, move |cx, _| {
+                let title = getter_for_locale.get_value(cx).to_string_local(cx);
+                cx.emit(WindowEvent::SetTitle(title));
+            });
+        });
 
         self
     }

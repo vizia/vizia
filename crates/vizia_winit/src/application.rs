@@ -878,11 +878,21 @@ impl ApplicationHandler<UserEvent> for Application {
 }
 
 impl WindowModifiers for Application {
-    fn title<T: ToString>(mut self, title: impl Res<T>) -> Self {
-        self.window_description.title = title.get_value(&self.cx.0).to_string();
+    fn title<T: ToStringLocalized>(mut self, title: impl Res<T> + Clone + 'static) -> Self {
+        self.window_description.title = title.get_value(&self.cx.0).to_string_local(&self.cx.0);
 
-        title.set_or_bind(&mut self.cx.0, |cx, title| {
-            cx.emit(WindowEvent::SetTitle(title.get_value(cx).to_string()));
+        let getter_for_locale = title.clone();
+
+        title.set_or_bind(&mut self.cx.0, move |cx, val| {
+            let title_str = val.get_value(cx).to_string_local(cx);
+
+            cx.emit(WindowEvent::SetTitle(title_str));
+        });
+
+        let locale = self.cx.0.environment().locale;
+        locale.set_or_bind(&mut self.cx.0, move |cx, _| {
+            let title = getter_for_locale.get_value(cx).to_string_local(cx);
+            cx.emit(WindowEvent::SetTitle(title));
         });
 
         self

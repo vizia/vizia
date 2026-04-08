@@ -1,11 +1,12 @@
-use vizia_core::{binding::Res, context::EventContext};
+use vizia_core::{binding::Res, context::EventContext, localization::ToStringLocalized};
 use vizia_window::{Anchor, AnchorTarget, WindowButtons, WindowPosition, WindowSize};
 
 /// Modifiers for setting the properties of a window.
 pub trait WindowModifiers {
     fn on_close(self, callback: impl Fn(&mut EventContext) + 'static) -> Self;
     fn on_create(self, callback: impl Fn(&mut EventContext) + 'static) -> Self;
-    /// Sets the title of the window to the given value. Accepts a value or signal of type any type that implements `ToString`.
+    /// Sets the title of the window to the given value. Accepts a value or signal of any type that implements `ToString`.
+    /// Accepts a [`Localized`] value to set a localizable title that updates when the locale changes.
     ///
     /// # Example
     /// ```no_run
@@ -17,7 +18,7 @@ pub trait WindowModifiers {
     /// .title("Vizia Application")
     /// .run();
     /// ```
-    fn title<T: ToString>(self, title: impl Res<T>) -> Self;
+    fn title<T: ToStringLocalized>(self, title: impl Res<T> + Clone + 'static) -> Self;
     /// Sets the inner size of the window to the given value. Accepts a value or signal that can be converted to a [`WindowSize`].
     ///
     /// The inner size is the window area excluding the window borders.

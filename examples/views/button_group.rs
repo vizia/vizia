@@ -89,6 +89,6 @@ fn main() -> Result<(), ApplicationError> {
         });
     })
     .title("Button Group")
-    .inner_size((700, 400))
+    .inner_size((700, 500))
     .run()
 }
