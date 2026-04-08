@@ -335,6 +335,10 @@ name = "collapsible"
 path = "examples/views/collapsible.rs"
 
 [[example]]
+name = "accordion"
+path = "examples/views/accordion.rs"
+
+[[example]]
 name = "divider"
 path = "examples/views/divider.rs"
 

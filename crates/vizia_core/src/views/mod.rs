@@ -1,5 +1,6 @@
 //! Built-in views provided by vizia.
 
+mod accordion;
 mod avatar;
 mod badge;
 mod button;
@@ -37,6 +38,7 @@ mod tooltip;
 mod virtual_list;
 mod xypad;
 
+pub use accordion::*;
 pub use avatar::*;
 pub use badge::*;
 pub use button::*;

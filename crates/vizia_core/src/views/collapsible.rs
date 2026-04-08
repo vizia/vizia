@@ -24,6 +24,7 @@ pub enum CollapsibleEvent {
 /// ```
 pub struct Collapsible {
     is_open: Signal<bool>,
+    on_toggle: Option<Box<dyn Fn(&mut EventContext, bool)>>,
 }
 
 impl Collapsible {
@@ -35,7 +36,7 @@ impl Collapsible {
     ) -> Handle<Self> {
         let is_open = Signal::new(false);
 
-        Self { is_open }
+        Self { is_open, on_toggle: None }
             .build(cx, |cx| {
                 // Header
                 HStack::new(cx, |cx| {
@@ -44,6 +45,8 @@ impl Collapsible {
                         .class("expand-icon")
                         .on_press(|cx| cx.emit(CollapsibleEvent::ToggleOpen));
                 })
+                .navigable(true)
+                .role(Role::Button)
                 .class("header")
                 .on_press(|cx| cx.emit(CollapsibleEvent::ToggleOpen));
 
@@ -62,10 +65,14 @@ impl View for Collapsible {
         Some("collapsible")
     }
 
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|collapsible_event, _| match collapsible_event {
             CollapsibleEvent::ToggleOpen => {
                 self.is_open.set(!self.is_open.get());
+
+                if let Some(callback) = &self.on_toggle {
+                    (callback)(cx, self.is_open.get());
+                }
             }
         });
     }
@@ -81,5 +88,10 @@ impl Handle<'_, Collapsible> {
                 collapsible.is_open.set_if_changed(open);
             });
         })
+    }
+
+    /// Set the callback which is triggered when the open state changes.
+    pub fn on_toggle(self, callback: impl Fn(&mut EventContext, bool) + 'static) -> Self {
+        self.modify(|collapsible| collapsible.on_toggle = Some(Box::new(callback)))
     }
 }

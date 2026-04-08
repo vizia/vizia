@@ -942,3 +942,35 @@ collapsible.open .content {
     max-height: auto;
     transition: max-height 300ms;
 }
+
+accordion {
+    width: 1s;
+    height: auto;
+}
+
+accordion > collapsible > .header {
+    height: auto;
+    padding: 8px;
+}
+
+accordion > collapsible.open > .header {
+    height: auto;
+}
+
+accordion > collapsible .content {
+    padding: 8px;
+    gap: 8px;
+    transition: max-height 220ms;
+}
+
+accordion > collapsible.open .content {
+    transition: max-height 220ms;
+}
+
+accordion > collapsible > .header > .expand-icon {
+    transition: rotate 220ms;
+}
+
+accordion > collapsible.open > .header > .expand-icon {
+    transition: rotate 220ms;
+}
