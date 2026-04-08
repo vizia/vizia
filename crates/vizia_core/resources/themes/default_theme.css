@@ -914,3 +914,20 @@ collapsible > .header > .expand-icon {
 accordion > collapsible {
     background-color: var(--background);
 }
+
+card {
+    background-color: var(--card);
+    color: var(--card-foreground);
+    border-width: 1px;
+    border-color: var(--border);
+    corner-radius: 10px;
+    shadow: 0px 6px 20px #00000012;
+}
+
+card-header > .title {
+    color: var(--card-foreground);
+}
+
+card-header > .description {
+    color: var(--muted-foreground);
+}

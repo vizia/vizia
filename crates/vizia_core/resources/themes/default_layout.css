@@ -974,3 +974,35 @@ accordion > collapsible > .header > .expand-icon {
 accordion > collapsible.open > .header > .expand-icon {
     transition: rotate 220ms;
 }
+
+card {
+    width: auto;
+    height: auto;
+    min-width: 240px;
+}
+
+card-header,
+card-content,
+card-footer {
+    width: 1s;
+    height: auto;
+}
+
+card-header {
+    gap: 4px;
+    padding-top: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+card-content {
+    gap: 12px;
+    padding: 20px;
+}
+
+card-footer {
+    gap: 8px;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px;
+}
