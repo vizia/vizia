@@ -1263,21 +1263,68 @@ impl Style {
             }
 
             property_name if property_name.starts_with("--") => {
-                // Handle custom property transitions
                 let mut s = DefaultHasher::new();
                 property_name.hash(&mut s);
                 let variable_name_hash = s.finish();
-                // Call add_transition before getting mutable borrow to avoid borrow checker issues
-                let animation_state = self.add_transition(transition);
+                // Pre-compute one typed AnimationState per store before taking any mutable
+                // borrows (add_transition takes &self so this is fine).
+                let anim_color: AnimationState<Color> = self.add_transition(transition);
+                let anim_length: AnimationState<LengthOrPercentage> =
+                    self.add_transition(transition);
+                let anim_font_size: AnimationState<FontSize> = self.add_transition(transition);
+                let anim_units: AnimationState<Units> = self.add_transition(transition);
+                let anim_opacity: AnimationState<Opacity> = self.add_transition(transition);
 
+                // Register in every custom-property store so whichever store the variable's
+                // concrete value ends up in will actually animate.
                 if let Some(store) = self.custom_color_props.get_mut(&variable_name_hash) {
-                    store.insert_animation(animation, animation_state.clone());
+                    store.insert_animation(animation, anim_color);
                     store.insert_transition(rule_id, animation);
                 } else {
                     let mut store = AnimatableVarSet::default();
-                    store.insert_animation(animation, animation_state);
+                    store.insert_animation(animation, anim_color);
                     store.insert_transition(rule_id, animation);
                     self.custom_color_props.insert(variable_name_hash, store);
+                }
+
+                if let Some(store) = self.custom_length_props.get_mut(&variable_name_hash) {
+                    store.insert_animation(animation, anim_length);
+                    store.insert_transition(rule_id, animation);
+                } else {
+                    let mut store = AnimatableVarSet::default();
+                    store.insert_animation(animation, anim_length);
+                    store.insert_transition(rule_id, animation);
+                    self.custom_length_props.insert(variable_name_hash, store);
+                }
+
+                if let Some(store) = self.custom_font_size_props.get_mut(&variable_name_hash) {
+                    store.insert_animation(animation, anim_font_size);
+                    store.insert_transition(rule_id, animation);
+                } else {
+                    let mut store = AnimatableVarSet::default();
+                    store.insert_animation(animation, anim_font_size);
+                    store.insert_transition(rule_id, animation);
+                    self.custom_font_size_props.insert(variable_name_hash, store);
+                }
+
+                if let Some(store) = self.custom_units_props.get_mut(&variable_name_hash) {
+                    store.insert_animation(animation, anim_units);
+                    store.insert_transition(rule_id, animation);
+                } else {
+                    let mut store = AnimatableVarSet::default();
+                    store.insert_animation(animation, anim_units);
+                    store.insert_transition(rule_id, animation);
+                    self.custom_units_props.insert(variable_name_hash, store);
+                }
+
+                if let Some(store) = self.custom_opacity_props.get_mut(&variable_name_hash) {
+                    store.insert_animation(animation, anim_opacity);
+                    store.insert_transition(rule_id, animation);
+                } else {
+                    let mut store = AnimatableVarSet::default();
+                    store.insert_animation(animation, anim_opacity);
+                    store.insert_transition(rule_id, animation);
+                    self.custom_opacity_props.insert(variable_name_hash, store);
                 }
             }
 
