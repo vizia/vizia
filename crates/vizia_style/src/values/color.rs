@@ -126,7 +126,7 @@ fn lab_to_linear_srgb(l: f32, a: f32, b: f32) -> (f32, f32, f32) {
     // XYZ D50 → XYZ D65 (Bradford chromatic adaptation)
     let xd = 0.955_577 * x - 0.023_039 * y + 0.063_164 * z;
     let yd = -0.028_290 * x + 1.009_942 * y + 0.021_008 * z;
-    let zd = 0.012_298 * x - 0.020_483 * y + 1.329_910 * z;
+    let zd = 0.012_298 * x - 0.020_483 * y + 1.329_91 * z;
 
     // XYZ D65 → linear sRGB
     let r = 3.240_454 * xd - 1.537_138 * yd - 0.498_531 * zd;
