@@ -178,6 +178,7 @@ impl Node for Entity {
                         paragraph.max_intrinsic_width().ceil()
                     }
                 }
+
                 _ => {
                     if let Some(width) = width {
                         (width - child_space_x).max(paragraph.min_intrinsic_width().ceil())

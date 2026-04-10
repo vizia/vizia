@@ -32,11 +32,13 @@ mod slider;
 mod spinbox;
 mod stack;
 mod switch;
+mod table;
 mod tabview;
 mod textbox;
 mod toggle_button;
 mod tooltip;
 mod virtual_list;
+mod virtual_table;
 mod xypad;
 
 pub use accordion::*;
@@ -72,11 +74,13 @@ pub use slider::*;
 pub use spinbox::*;
 pub use stack::*;
 pub use switch::*;
+pub use table::*;
 pub use tabview::*;
 pub use textbox::*;
 pub use toggle_button::*;
 pub use tooltip::*;
 pub use virtual_list::*;
+pub use virtual_table::*;
 pub use xypad::*;
 
 use crate::prelude::*;

@@ -514,6 +514,133 @@ virtual-list.selectable list-item:checked {
     background-color: var(--accent);
 }
 
+/* TABLE */
+
+table,
+virtual-table {
+    background-color: var(--background);
+    border-width: 1px;
+    border-color: var(--border);
+    corner-radius: 4px;
+    overflow: hidden;
+}
+
+table .table-header-row,
+virtual-table .table-header-row {
+    background-color: var(--muted);
+    border-bottom-width: 1px;
+    border-bottom-color: var(--border);
+}
+
+table .table-header-cell,
+virtual-table .table-header-cell {
+    background-color: var(--muted);
+    min-height: 34px;
+}
+
+table .table-header-content,
+virtual-table .table-header-content {
+    padding-left: 10px;
+    padding-right: 10px;
+    gap: 8px;
+    alignment: left;
+}
+
+table .table-header-title,
+virtual-table .table-header-title {
+    font-weight: 650;
+}
+
+table .table-sort-indicator,
+virtual-table .table-sort-indicator {
+    width: 14px;
+    color: var(--muted-foreground);
+    text-align: center;
+}
+
+table .table-body,
+virtual-table .table-body {
+    background-color: var(--background);
+}
+
+table .table-body scrollview {
+    min-width: auto;
+}
+
+table .table-row,
+virtual-table .table-row {
+    padding-top: 6px;
+    padding-bottom: 6px;
+    min-height: 30px;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--border);
+}
+
+table .table-row.odd,
+virtual-table .table-row.odd {
+    background-color: var(--muted);
+}
+
+table .table-row.even,
+virtual-table .table-row.even {
+    background-color: transparent;
+}
+
+table .table-cell-text,
+virtual-table .table-cell-text {
+    padding-left: 10px;
+    padding-right: 10px;
+    text-wrap: true;
+}
+
+table .table-cell,
+virtual-table .table-cell {
+    padding-left: 10px;
+    padding-right: 10px;
+    gap: 4px;
+    alignment: left;
+}
+
+table .table-cell-meta,
+virtual-table .table-cell-meta {
+    color: var(--muted-foreground);
+    font-size: 12px;
+}
+
+table .table-header-cell resize-handle,
+virtual-table .table-header-cell resize-handle {
+    width: 6px;
+    right: -3px;
+    top: 0px;
+    bottom: 0px;
+    cursor: col-resize;
+    background-color: transparent;
+}
+
+table .table-header-cell.resizable resize-handle:hover,
+table .table-header-cell.resizable:active resize-handle,
+virtual-table .table-header-cell.resizable resize-handle:hover,
+virtual-table .table-header-cell.resizable:active resize-handle {
+    background-color: var(--ring);
+}
+
+table .table-header-cell.not-resizable resize-handle,
+virtual-table .table-header-cell.not-resizable resize-handle {
+    display: none;
+}
+
+table list.selectable list-item:hover,
+virtual-table virtual-list.selectable list-item:hover {
+    background-color: var(--accent);
+}
+
+table list.selectable list-item.focused,
+table list.selectable list-item:checked,
+virtual-table virtual-list.selectable list-item.focused,
+virtual-table virtual-list.selectable list-item:checked {
+    background-color: var(--accent);
+}
+
 /* MENU */
 
 menubutton {

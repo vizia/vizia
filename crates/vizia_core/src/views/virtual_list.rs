@@ -394,17 +394,17 @@ impl Handle<'_, VirtualList> {
     {
         let selected = selected.to_signal(self.cx);
         self.bind(selected, move |handle| {
-            let selected = selected.get();
-            let ss = selected.deref().to_vec();
-            handle.modify(|list| {
-                let mut selected = BTreeSet::default();
-                let mut focused = None;
-                for idx in ss {
-                    selected.insert(idx);
-                    focused = Some(idx);
-                }
-                list.selected.set(selected);
-                list.focused.set(focused);
+            selected.with(|selected_indices| {
+                handle.modify(|list| {
+                    let mut selected = BTreeSet::default();
+                    let mut focused = None;
+                    for idx in selected_indices.deref().iter().copied() {
+                        selected.insert(idx);
+                        focused = Some(idx);
+                    }
+                    list.selected.set(selected);
+                    list.focused.set(focused);
+                });
             });
         })
     }

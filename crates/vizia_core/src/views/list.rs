@@ -1,5 +1,5 @@
 use std::{collections::BTreeSet, ops::Deref, rc::Rc};
-use vizia_reactive::{Scope, SignalGet, UpdaterEffect};
+use vizia_reactive::{Scope, SignalGet, SignalWith, UpdaterEffect};
 
 use crate::prelude::*;
 use crate::{binding::BindingHandler, context::SIGNAL_REBUILDS};
@@ -99,7 +99,7 @@ impl<T: PartialEq + Clone + 'static> ListItemsBinding<T> {
         focused: Signal<Option<usize>>,
         item_content: Rc<dyn Fn(&mut Context, usize, Signal<T>)>,
     ) where
-        S: SignalGet<V> + Copy + 'static,
+        S: SignalGet<V> + SignalWith<V> + Copy + 'static,
         V: Deref<Target = [T]> + Clone + 'static,
     {
         let entity = cx.entity_manager.create();
@@ -109,7 +109,7 @@ impl<T: PartialEq + Clone + 'static> ListItemsBinding<T> {
         let scope = Scope::new();
         let initial_values: Vec<T> = scope.enter(|| {
             UpdaterEffect::new(
-                move || list.get().deref().to_vec(),
+                move || list.with(|list| list.deref().to_vec()),
                 move |_new_value| {
                     SIGNAL_REBUILDS.with_borrow_mut(|set| {
                         set.insert(entity);
@@ -121,7 +121,7 @@ impl<T: PartialEq + Clone + 'static> ListItemsBinding<T> {
         let mut binding = Self {
             entity,
             list_entity,
-            get_fn: Box::new(move || list.get_untracked().deref().to_vec()),
+            get_fn: Box::new(move || list.with_untracked(|list| list.deref().to_vec())),
             item_content,
             selected,
             focused,
@@ -595,18 +595,18 @@ impl ListModifiers for Handle<'_, List> {
     {
         let selected = selected.to_signal(self.cx);
         self.bind(selected, move |handle| {
-            let selected = selected.get();
-            let ss = selected.deref().to_vec();
-            handle.modify(|list| {
-                let mut selected = BTreeSet::default();
-                let mut focused = None;
-                for idx in ss {
-                    selected.insert(idx);
-                    focused = Some(idx);
-                }
-                list.selected.set(selected);
-                list.focused.set(focused);
-                list.normalize_selection_state();
+            selected.with(|selected_indices| {
+                handle.modify(|list| {
+                    let mut selected = BTreeSet::default();
+                    let mut focused = None;
+                    for idx in selected_indices.deref().iter().copied() {
+                        selected.insert(idx);
+                        focused = Some(idx);
+                    }
+                    list.selected.set(selected);
+                    list.focused.set(focused);
+                    list.normalize_selection_state();
+                });
             });
         })
     }
