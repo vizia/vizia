@@ -1,3 +1,5 @@
+mod helpers;
+use helpers::*;
 use vizia::prelude::*;
 
 const STYLE: &str = r#"
@@ -57,7 +59,7 @@ fn main() -> Result<(), ApplicationError> {
         let top_height = Signal::new(Pixels(140.0));
         let bottom_height = Signal::new(Pixels(140.0));
 
-        HStack::new(cx, |cx| {
+        ExamplePage::new(cx, |cx| {
             VStack::new(cx, |cx| {
                 ResizableStack::new(
                     cx,

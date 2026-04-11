@@ -44,7 +44,7 @@ pub struct ResizableStack {
     on_reset: Option<Box<dyn Fn(&mut EventContext)>>,
 
     /// Specifies the edge from which the stack can be resized.
-    direction: ResizeStackDirection,
+    direction: Memo<ResizeStackDirection>,
 
     /// The mouse position on the active axis when dragging starts.
     drag_start: f32,
@@ -61,7 +61,7 @@ impl ResizableStack {
     /// The `content` closure is called to build the content of the stack.
     pub fn new<F>(
         cx: &mut Context,
-        size: impl Res<Units>,
+        size: impl Res<Units> + Copy + 'static,
         direction: ResizeStackDirection,
         on_drag: impl Fn(&mut EventContext, f32) + 'static,
         content: F,
@@ -69,7 +69,20 @@ impl ResizableStack {
     where
         F: FnOnce(&mut Context),
     {
-        let handle = Self {
+        let text_direction = cx.environment().direction;
+        let direction = Memo::new(move |_| {
+            if text_direction.get() == Direction::RightToLeft {
+                match direction {
+                    ResizeStackDirection::Left => ResizeStackDirection::Right,
+                    ResizeStackDirection::Right => ResizeStackDirection::Left,
+                    other => other,
+                }
+            } else {
+                direction
+            }
+        });
+
+        Self {
             is_dragging: false,
             on_drag: Box::new(on_drag),
             on_reset: None,
@@ -81,14 +94,21 @@ impl ResizableStack {
             ResizeHandle::new(cx);
             (content)(cx);
         })
-        .toggle_class("horizontal", direction.is_vertical())
-        .toggle_class("vertical", direction.is_horizontal())
-        .toggle_class("left", direction == ResizeStackDirection::Left)
-        .toggle_class("right", direction == ResizeStackDirection::Right)
-        .toggle_class("top", direction == ResizeStackDirection::Top)
-        .toggle_class("bottom", direction == ResizeStackDirection::Bottom);
+        .toggle_class("horizontal", direction.map(|dir| dir.is_vertical()))
+        .toggle_class("vertical", direction.map(|dir| dir.is_horizontal()))
+        .toggle_class("left", direction.map(|dir| *dir == ResizeStackDirection::Left))
+        .toggle_class("right", direction.map(|dir| *dir == ResizeStackDirection::Right))
+        .toggle_class("top", direction.map(|dir| *dir == ResizeStackDirection::Top))
+        .toggle_class("bottom", direction.map(|dir| *dir == ResizeStackDirection::Bottom))
+        .bind(direction, move |handle| {
+            if direction.get().is_horizontal() {
+                handle.width(size);
+            } else {
+                handle.height(size);
+            }
+        })
 
-        if direction.is_horizontal() { handle.width(size) } else { handle.height(size) }
+        // if direction.get().is_horizontal() { handle.width(size) } else { handle.height(size) }
     }
 }
 
@@ -123,7 +143,7 @@ impl View for ResizableStack {
                 cx.set_active(true);
                 cx.capture();
                 cx.lock_cursor_icon();
-                self.start_size = if self.direction.is_horizontal() {
+                self.start_size = if self.direction.get().is_horizontal() {
                     cx.bounds().w / cx.scale_factor()
                 } else {
                     cx.bounds().h / cx.scale_factor()
@@ -137,7 +157,7 @@ impl View for ResizableStack {
                 // Prevent propagation in case the resizable stack is within another resizable stack
                 event.consume();
 
-                if self.direction.is_horizontal() {
+                if self.direction.get().is_horizontal() {
                     self.drag_start = *cursor_x;
                 } else {
                     self.drag_start = *cursor_y;
@@ -181,13 +201,13 @@ impl View for ResizableStack {
             WindowEvent::MouseMove(x, y) => {
                 let dpi = cx.scale_factor();
                 if self.is_dragging {
-                    let delta = if self.direction.is_horizontal() {
+                    let delta = if self.direction.get().is_horizontal() {
                         (*x - self.drag_start) / dpi
                     } else {
                         (*y - self.drag_start) / dpi
                     };
 
-                    let new_size = if self.direction.resizes_from_leading_edge() {
+                    let new_size = if self.direction.get().resizes_from_leading_edge() {
                         self.start_size - delta
                     } else {
                         self.start_size + delta
