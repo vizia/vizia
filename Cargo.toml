@@ -357,8 +357,8 @@ path = "examples/variables.rs"
 
 [[example]]
 name = "virtual_table"
-path = "examples/virtual_table.rs"
+path = "examples/views/virtual_table.rs"
 
 [[example]]
 name = "table"
-path = "examples/table.rs"
+path = "examples/views/table.rs"

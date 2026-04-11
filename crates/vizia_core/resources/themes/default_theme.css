@@ -563,7 +563,8 @@ virtual-table .table-body {
     background-color: var(--background);
 }
 
-table .table-body scrollview {
+table .table-body scrollview,
+virtual-table .table-body scrollview {
     min-width: auto;
 }
 

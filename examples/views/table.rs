@@ -1,7 +1,9 @@
+mod helpers;
+use helpers::*;
 use vizia::prelude::*;
 
 #[derive(Clone, PartialEq)]
-struct DynamicRow {
+struct RowData {
     id: u32,
     name: String,
     group: String,
@@ -10,7 +12,7 @@ struct DynamicRow {
 }
 
 struct DynamicTableDemo {
-    columns: Signal<Vec<TableColumn<DynamicRow, TableHeader>>>,
+    columns: Signal<Vec<TableColumn<RowData, TableHeader>>>,
     sort_state: Signal<Option<TableSortState>>,
     selected_rows: Signal<Vec<u32>>,
     show_group: Signal<bool>,
@@ -102,37 +104,37 @@ impl Model for DynamicTableDemo {
     }
 }
 
-fn make_rows() -> Vec<DynamicRow> {
+fn make_rows() -> Vec<RowData> {
     vec![
-        DynamicRow {
+        RowData {
             id: 1,
             name: "Alice".to_string(),
             group: "Core".to_string(),
             status: "Ready".to_string(),
             notes: "Maintains the main workflow and documentation.".to_string(),
         },
-        DynamicRow {
+        RowData {
             id: 2,
             name: "Bob".to_string(),
             group: "Ops".to_string(),
             status: "Blocked".to_string(),
             notes: "Waiting on deployment credentials for staging.".to_string(),
         },
-        DynamicRow {
+        RowData {
             id: 3,
             name: "Charlie".to_string(),
             group: "Core".to_string(),
             status: "In Review".to_string(),
             notes: "Reviewing the reactive table implementation.".to_string(),
         },
-        DynamicRow {
+        RowData {
             id: 4,
             name: "Diana".to_string(),
             group: "Design".to_string(),
             status: "Ready".to_string(),
             notes: "Prepared updated layout variants for narrow screens.".to_string(),
         },
-        DynamicRow {
+        RowData {
             id: 5,
             name: "Eve".to_string(),
             group: "Ops".to_string(),
@@ -142,12 +144,12 @@ fn make_rows() -> Vec<DynamicRow> {
     ]
 }
 
-fn build_columns() -> Vec<TableColumn<DynamicRow, TableHeader>> {
+fn build_columns() -> Vec<TableColumn<RowData, TableHeader>> {
     let name_column = TableColumn::new(
         "Name",
         |cx, sort_direction| TableHeader::new(cx, "Name", sort_direction),
         |cx, row| {
-            let text = row.map(|row: &DynamicRow| row.name.clone());
+            let text = row.map(|row: &RowData| row.name.clone());
             Label::new(cx, text).class("table-cell-text").text_wrap(true);
         },
     )
@@ -159,7 +161,7 @@ fn build_columns() -> Vec<TableColumn<DynamicRow, TableHeader>> {
         "Group",
         |cx, sort_direction| TableHeader::new(cx, "Group", sort_direction),
         |cx, row| {
-            let text = row.map(|row: &DynamicRow| row.group.clone());
+            let text = row.map(|row: &RowData| row.group.clone());
             Label::new(cx, text).class("table-cell-text").text_wrap(true);
         },
     )
@@ -171,8 +173,8 @@ fn build_columns() -> Vec<TableColumn<DynamicRow, TableHeader>> {
         "status",
         |cx, sort_direction| TableHeader::new(cx, "Status", sort_direction),
         |cx, row| {
-            let status = row.map(|row: &DynamicRow| row.status.clone());
-            let tone = row.map(|row: &DynamicRow| match row.status.as_str() {
+            let status = row.map(|row: &RowData| row.status.clone());
+            let tone = row.map(|row: &RowData| match row.status.as_str() {
                 "Ready" => "Stable".to_string(),
                 "In Review" => "Pending".to_string(),
                 "Blocked" => "Attention".to_string(),
@@ -191,7 +193,7 @@ fn build_columns() -> Vec<TableColumn<DynamicRow, TableHeader>> {
         "notes",
         |cx, sort_direction| TableHeader::new(cx, "Notes", sort_direction),
         |cx, row| {
-            let notes = row.map(|row: &DynamicRow| row.notes.clone());
+            let notes = row.map(|row: &RowData| row.notes.clone());
             Label::new(cx, notes).class("table-cell-text").text_wrap(true);
         },
     )
@@ -202,7 +204,7 @@ fn build_columns() -> Vec<TableColumn<DynamicRow, TableHeader>> {
     vec![name_column, group_column, status_column, notes_column]
 }
 
-fn sort_rows(mut rows: Vec<DynamicRow>, sort_state: Option<TableSortState>) -> Vec<DynamicRow> {
+fn sort_rows(mut rows: Vec<RowData>, sort_state: Option<TableSortState>) -> Vec<RowData> {
     if let Some(sort_state) = sort_state {
         match sort_state.key.as_str() {
             "Name" => rows.sort_by(|a, b| a.name.cmp(&b.name)),
@@ -247,18 +249,7 @@ fn main() -> Result<(), ApplicationError> {
 
         let sorted_rows = Memo::new(move |_| sort_rows(rows.get(), sort_state.get()));
 
-        VStack::new(cx, |cx| {
-            Label::new(cx, "Reactive Table Columns")
-                .font_size(18.0)
-                .height(Auto);
-
-            Label::new(
-                cx,
-                "This example demonstrates runtime column visibility and ordering using hidden columns and vec order.",
-            )
-            .class("table-cell-meta")
-            .height(Auto);
-
+        ExamplePage::vertical(cx, |cx| {
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
                     Switch::new(cx, show_group)
@@ -295,7 +286,7 @@ fn main() -> Result<(), ApplicationError> {
 
             Label::new(cx, status_text).class("table-cell-meta").height(Auto);
 
-            Table::new(cx, sorted_rows, columns, |row: &DynamicRow| row.id)
+            Table::new(cx, sorted_rows, columns, |row: &RowData| row.id)
                 .sort_state(sort_state)
                 .sort_cycle(TableSortCycle::TriState)
                 .resizable_columns(true)
@@ -312,7 +303,7 @@ fn main() -> Result<(), ApplicationError> {
         .padding(Pixels(12.0))
         .gap(Pixels(8.0));
     })
-    .title("Table Dynamic Columns")
+    .title("Table")
     .inner_size((1100, 720))
     .run()
 }

@@ -1,3 +1,5 @@
+mod helpers;
+use helpers::*;
 use vizia::prelude::*;
 
 #[derive(Clone, PartialEq)]
@@ -107,7 +109,7 @@ fn main() -> Result<(), ApplicationError> {
             .resizable(true),
         ]);
 
-        VStack::new(cx, |cx| {
+        ExamplePage::vertical(cx, |cx| {
             Label::new(cx, "VirtualTable Large Dataset (5,000 Rows)")
                 .font_size(18.0)
                 .height(Auto);

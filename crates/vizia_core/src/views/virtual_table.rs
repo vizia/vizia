@@ -262,7 +262,7 @@ where
                     .width(Stretch(1.0))
                     .min_width(Auto)
                 })
-                .width(Auto)
+                .width(Stretch(1.0))
                 .min_width(Auto)
                 .height(Stretch(1.0))
                 .min_height(Auto)
