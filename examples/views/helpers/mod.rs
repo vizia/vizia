@@ -124,12 +124,6 @@ impl Model for ControlsData {
                     2 /* Arabic */ => langid!("ar"),
                     _ => unreachable!(),
                 }));
-                cx.emit(EnvironmentEvent::SetDirection(match language {
-                    0 => Direction::LeftToRight,
-                    1 => Direction::LeftToRight,
-                    2 => Direction::RightToLeft,
-                    _ => unreachable!(),
-                }));
             }
             ControlsEvent::SetDirection(direction) => {
                 cx.emit(EnvironmentEvent::SetDirection(match direction {
@@ -257,7 +251,6 @@ impl ExamplePage {
             let selected_primary_color = controls.selected_primary_color;
             controls.build(cx);
             cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System)); // set system theme
-            cx.emit(EnvironmentEvent::SetDirection(Direction::LeftToRight));
             cx.emit(ControlsEvent::SetPrimaryThemeColor(0));
 
             HStack::new(cx, |cx| {

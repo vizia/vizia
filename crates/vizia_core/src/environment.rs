@@ -1,6 +1,7 @@
 //! A model for system specific state which can be accessed by any model or view.
 use crate::prelude::*;
 
+use unic_langid::CharacterDirection;
 use unic_langid::LanguageIdentifier;
 use web_time::Duration;
 
@@ -67,6 +68,13 @@ pub struct Environment {
     pub(crate) caret_timer: Timer,
 }
 
+fn direction_from_locale(locale: &LanguageIdentifier) -> Direction {
+    match locale.character_direction() {
+        CharacterDirection::RTL => Direction::RightToLeft,
+        _ => Direction::LeftToRight,
+    }
+}
+
 impl Environment {
     pub(crate) fn new(cx: &mut Context) -> Self {
         let locale: LanguageIdentifier =
@@ -76,9 +84,10 @@ impl Environment {
                 cx.emit(TextEvent::ToggleCaret);
             }
         });
+        let direction = direction_from_locale(&locale);
         Self {
             locale: Signal::new(locale.clone()),
-            direction: Signal::new(Direction::LeftToRight),
+            direction: Signal::new(direction),
             double_click_interval: Duration::from_millis(500),
             tooltip_delay: Duration::from_millis(1500),
             theme: Theme::default(),
@@ -111,6 +120,11 @@ impl Model for Environment {
         event.take(|event, _| match event {
             EnvironmentEvent::SetLocale(locale) => {
                 self.locale.set(locale.clone());
+                let direction = direction_from_locale(&locale);
+                self.direction.set(direction);
+                cx.with_current(Entity::root(), |cx| {
+                    cx.toggle_class("rtl", direction == Direction::RightToLeft);
+                });
             }
 
             EnvironmentEvent::SetDirection(direction) => {
@@ -131,8 +145,14 @@ impl Model for Environment {
             }
 
             EnvironmentEvent::UseSystemLocale => {
-                self.locale
-                    .set(sys_locale::get_locale().map(|l| l.parse().unwrap()).unwrap_or_default());
+                let locale: LanguageIdentifier =
+                    sys_locale::get_locale().map(|l| l.parse().unwrap()).unwrap_or_default();
+                let direction = direction_from_locale(&locale);
+                self.locale.set(locale);
+                self.direction.set(direction);
+                cx.with_current(Entity::root(), |cx| {
+                    cx.toggle_class("rtl", direction == Direction::RightToLeft);
+                });
             }
 
             EnvironmentEvent::ToggleThemeMode => {
