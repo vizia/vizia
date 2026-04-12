@@ -156,17 +156,17 @@ impl ExamplePage {
         cx.add_translation(
             langid!("en-US"),
             include_str!("../../resources/translations/en-US/helper.ftl"),
-        );
+        ).expect("Failed to add en-US helper translation");
 
         cx.add_translation(
             langid!("fr"),
             include_str!("../../resources/translations/fr/helper.ftl"),
-        );
+        ).expect("Failed to add fr helper translation");
 
         cx.add_translation(
             langid!("ar"),
             include_str!("../../resources/translations/ar/helper.ftl"),
-        );
+        ).expect("Failed to add ar helper translation");
 
         Self.build(cx, |cx| {
             let controls = ControlsData::default();
@@ -227,17 +227,17 @@ impl ExamplePage {
         cx.add_translation(
             langid!("en-US"),
             include_str!("../../resources/translations/en-US/helper.ftl"),
-        );
+        ).expect("Failed to add en-US helper translation");
 
         cx.add_translation(
             langid!("fr"),
             include_str!("../../resources/translations/fr/helper.ftl"),
-        );
+        ).expect("Failed to add fr helper translation");
 
         cx.add_translation(
             langid!("ar"),
             include_str!("../../resources/translations/ar/helper.ftl"),
-        );
+        ).expect("Failed to add ar helper translation");
 
         Self.build(cx, |cx| {
             let controls = ControlsData::default();

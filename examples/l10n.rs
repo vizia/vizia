@@ -37,13 +37,15 @@ fn main() -> Result<(), ApplicationError> {
         cx.add_translation(
             "en-US".parse().unwrap(),
             include_str!("resources/translations/en-US/hello.ftl").to_owned(),
-        );
+        )
+        .expect("Failed to add en-US translation");
 
         // Add fluent file for the `fr` locale (French).
         cx.add_translation(
             "fr".parse().unwrap(),
             include_str!("resources/translations/fr/hello.ftl").to_owned(),
-        );
+        )
+        .expect("Failed to add fr translation");
 
         let name = Signal::new("Audrey".to_owned());
         let emails = Signal::new(1);

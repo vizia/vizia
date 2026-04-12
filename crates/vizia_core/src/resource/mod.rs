@@ -12,6 +12,27 @@ use crate::prelude::IntoCssStr;
 use fluent_bundle::{FluentBundle, FluentResource};
 use hashbrown::{HashMap, HashSet};
 use unic_langid::LanguageIdentifier;
+use std::fmt;
+
+/// Error type for translation operations.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TranslationError {
+    /// FTL file syntax is invalid.
+    InvalidFtl(String),
+    /// Failed to add resource to translation bundle.
+    BundleError(String),
+}
+
+impl fmt::Display for TranslationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TranslationError::InvalidFtl(msg) => write!(f, "Invalid FTL syntax: {}", msg),
+            TranslationError::BundleError(msg) => write!(f, "Failed to add to translation bundle: {}", msg),
+        }
+    }
+}
+
+impl std::error::Error for TranslationError {}
 
 pub(crate) enum ImageOrSvg {
     Svg(skia_safe::svg::Dom),
@@ -192,13 +213,23 @@ impl ResourceManager {
         locales
     }
 
-    pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {
-        let res = fluent_bundle::FluentResource::try_new(ftl)
-            .expect("Failed to parse translation as FTL");
-        let bundle =
-            self.translations.entry(lang.clone()).or_insert_with(|| FluentBundle::new(vec![lang]));
-        bundle.add_resource(res).expect("Failed to add resource to bundle");
-        self.renegotiate_language();
+    pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) -> Result<(), TranslationError> {
+        match fluent_bundle::FluentResource::try_new(ftl) {
+            Ok(res) => {
+                let bundle =
+                    self.translations.entry(lang.clone()).or_insert_with(|| FluentBundle::new(vec![lang]));
+                bundle.add_resource(res).map_err(|errors| {
+                    let msg = format!("{:?}", errors);
+                    TranslationError::BundleError(msg)
+                })?;
+                self.renegotiate_language();
+                Ok(())
+            }
+            Err((_, parse_errors)) => {
+                let msg = parse_errors.iter().map(|e| format!("{:?}", e)).collect::<Vec<_>>().join("; ");
+                Err(TranslationError::InvalidFtl(msg))
+            }
+        }
     }
 
     pub fn current_translation(

@@ -610,8 +610,10 @@ impl Context {
     }
 
     /// Adds a translation to the application for the provided language.
-    pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: impl ToString) {
-        self.resource_manager.add_translation(lang, ftl.to_string());
+    ///
+    /// Returns an error if the FTL syntax is invalid or the resource cannot be added to the bundle.
+    pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: impl ToString) -> Result<(), crate::resource::TranslationError> {
+        self.resource_manager.add_translation(lang, ftl.to_string())
     }
 
     /// Adds a timer to the application.
