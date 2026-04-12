@@ -609,16 +609,6 @@ impl Context {
         self.resource_manager.image_loader = Some(Box::new(loader));
     }
 
-    /// Sets a callback to receive structured localization diagnostics.
-    ///
-    /// This is called for missing keys/attributes and Fluent formatting errors.
-    pub fn set_localization_issue_handler<F>(&mut self, handler: F)
-    where
-        F: 'static + Fn(&crate::resource::LocalizationIssue),
-    {
-        self.resource_manager.set_localization_issue_handler(handler);
-    }
-
     /// Adds a translation to the application for the provided language.
     ///
     /// Returns an error if the FTL syntax is invalid or the resource cannot be added to the bundle.

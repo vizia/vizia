@@ -103,7 +103,6 @@ pub struct ResourceManager {
     pub language: LanguageIdentifier,
 
     pub image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>>,
-    pub localization_issue_handler: Option<Box<dyn Fn(&LocalizationIssue)>>,
 }
 
 impl ResourceManager {
@@ -175,21 +174,12 @@ impl ResourceManager {
 
             language: locale,
             image_loader: default_image_loader,
-            localization_issue_handler: None,
         }
-    }
-
-    pub fn set_localization_issue_handler<F>(&mut self, handler: F)
-    where
-        F: 'static + Fn(&LocalizationIssue),
-    {
-        self.localization_issue_handler = Some(Box::new(handler));
     }
 
     pub fn report_localization_issue(&self, issue: LocalizationIssue) {
-        if let Some(handler) = &self.localization_issue_handler {
-            handler(&issue);
-        }
+        // Localization issues are non-fatal and intended for diagnostics.
+        log::warn!("{}", issue);
     }
 
     pub fn renegotiate_language(&mut self) {
@@ -325,7 +315,6 @@ impl ResourceManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::{Arc, Mutex};
 
     #[test]
     fn add_translation_returns_error_for_invalid_ftl() {
@@ -341,9 +330,7 @@ mod tests {
     fn translation_locales_prefers_exact_then_default() {
         let mut manager = ResourceManager::new();
 
-        manager
-            .add_translation("fr".parse().unwrap(), "hello = Bonjour".to_string())
-            .unwrap();
+        manager.add_translation("fr".parse().unwrap(), "hello = Bonjour".to_string()).unwrap();
 
         let locales = manager.translation_locales(&"fr".parse().unwrap());
 
@@ -364,9 +351,7 @@ mod tests {
     fn current_translation_uses_default_bundle_when_requested_locale_missing() {
         let mut manager = ResourceManager::new();
 
-        manager
-            .add_translation("en-US".parse().unwrap(), "hello = Hello".to_string())
-            .unwrap();
+        manager.add_translation("en-US".parse().unwrap(), "hello = Hello".to_string()).unwrap();
 
         let bundle = manager.current_translation(&"zz-ZZ".parse().unwrap());
         let message = bundle.get_message("hello");
@@ -375,28 +360,11 @@ mod tests {
     }
 
     #[test]
-    fn localization_issue_handler_receives_reported_issue() {
-        let mut manager = ResourceManager::new();
-        let issues: Arc<Mutex<Vec<LocalizationIssue>>> = Arc::new(Mutex::new(Vec::new()));
-        let issues_ref = issues.clone();
-
-        manager.set_localization_issue_handler(move |issue| {
-            issues_ref.lock().unwrap().push(issue.clone());
-        });
-
+    fn report_localization_issue_does_not_panic() {
+        let manager = ResourceManager::new();
         manager.report_localization_issue(LocalizationIssue::MissingMessage {
             key: "missing-key".to_string(),
             requested_locale: "en-US".to_string(),
         });
-
-        let locked = issues.lock().unwrap();
-        assert_eq!(locked.len(), 1);
-        assert_eq!(
-            locked[0],
-            LocalizationIssue::MissingMessage {
-                key: "missing-key".to_string(),
-                requested_locale: "en-US".to_string(),
-            }
-        );
     }
 }

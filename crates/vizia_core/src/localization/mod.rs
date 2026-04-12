@@ -30,6 +30,11 @@
 //! cx.emit(EnvironmentEvent::SetLocale(langid!("en-US")));
 //! ```
 //!
+//! ## Diagnostics
+//! Missing keys, missing attributes, and Fluent formatting issues are reported through the standard
+//! [`log`](https://docs.rs/log) backend at `warn` level.
+//! Configure your logger (for example with `env_logger`, `tracing-log`, or `fern`) to surface these messages.
+//!
 //! ## Basic Translation
 //! Use the [`Localized`] type to specify a translation key to be used with fluent files. The key is then used to look up the corresponding translation.
 //! ```ignore
@@ -545,75 +550,38 @@ impl ToStringLocalized for Localized {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::resource::LocalizationIssue;
-    use std::sync::{Arc, Mutex};
 
     #[test]
-    fn reports_missing_message_issue() {
+    fn missing_message_falls_back_to_key() {
         let mut cx = Context::default();
         cx.data::<Environment>().locale.set("en-US".parse().unwrap());
-
-        let issues: Arc<Mutex<Vec<LocalizationIssue>>> = Arc::new(Mutex::new(Vec::new()));
-        let issues_ref = issues.clone();
-        cx.set_localization_issue_handler(move |issue| {
-            issues_ref.lock().unwrap().push(issue.clone());
-        });
 
         let text = Localized::new("missing-key").to_string_local(&cx);
 
         assert_eq!(text, "missing-key");
-        let issues = issues.lock().unwrap();
-        assert!(matches!(
-            issues.first(),
-            Some(LocalizationIssue::MissingMessage { key, requested_locale })
-                if key == "missing-key" && requested_locale == "en-US"
-        ));
     }
 
     #[test]
-    fn reports_missing_attribute_issue() {
+    fn missing_attribute_falls_back_to_key_attribute() {
         let mut cx = Context::default();
         cx.data::<Environment>().locale.set("en-US".parse().unwrap());
         cx.add_translation("en-US".parse().unwrap(), "dialog = File Dialog".to_string()).unwrap();
 
-        let issues: Arc<Mutex<Vec<LocalizationIssue>>> = Arc::new(Mutex::new(Vec::new()));
-        let issues_ref = issues.clone();
-        cx.set_localization_issue_handler(move |issue| {
-            issues_ref.lock().unwrap().push(issue.clone());
-        });
-
         let text = Localized::new("dialog").attribute("title").to_string_local(&cx);
 
         assert_eq!(text, "dialog.title");
-        let issues = issues.lock().unwrap();
-        assert!(matches!(
-            issues.first(),
-            Some(LocalizationIssue::MissingAttribute { key, attribute, requested_locale })
-                if key == "dialog" && attribute == "title" && requested_locale == "en-US"
-        ));
     }
 
     #[test]
-    fn reports_format_error_issue() {
+    fn format_error_returns_partial_resolved_text() {
         let mut cx = Context::default();
         cx.data::<Environment>().locale.set("en-US".parse().unwrap());
         cx.add_translation("en-US".parse().unwrap(), "welcome = Welcome, { $name }!".to_string())
             .unwrap();
 
-        let issues: Arc<Mutex<Vec<LocalizationIssue>>> = Arc::new(Mutex::new(Vec::new()));
-        let issues_ref = issues.clone();
-        cx.set_localization_issue_handler(move |issue| {
-            issues_ref.lock().unwrap().push(issue.clone());
-        });
-
-        let _ = Localized::new("welcome").to_string_local(&cx);
-
-        let issues = issues.lock().unwrap();
-        assert!(matches!(
-            issues.first(),
-            Some(LocalizationIssue::FormatError { key, locale, details })
-                if key == "welcome" && locale == "en-US" && !details.is_empty()
-        ));
+        let text = Localized::new("welcome").to_string_local(&cx);
+        assert!(text.contains("Welcome"));
+        assert!(text.contains("$name"));
     }
 
     #[test]
@@ -628,15 +596,8 @@ mod tests {
         cx.add_translation(LanguageIdentifier::default(), "greeting = Hello from default".to_string())
             .unwrap();
 
-        let issues: Arc<Mutex<Vec<LocalizationIssue>>> = Arc::new(Mutex::new(Vec::new()));
-        let issues_ref = issues.clone();
-        cx.set_localization_issue_handler(move |issue| {
-            issues_ref.lock().unwrap().push(issue.clone());
-        });
-
         let text = Localized::new("greeting").to_string_local(&cx);
 
         assert_eq!(text, "Hello from default");
-        assert!(issues.lock().unwrap().is_empty());
     }
 }
