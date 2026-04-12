@@ -10,6 +10,20 @@ emails =
     }
 refresh = Actualiser la page
 
+## Example of message references
+menu-save = Enregistrer
+help-menu-save = Cliquez sur { menu-save } pour enregistrer le fichier.
+
+## Example of selectors/plurals
+role-label = { $role ->
+    [admin] Vous êtes connecté en tant qu'administrateur.
+   *[user] Vous êtes connecté en tant qu'utilisateur.
+}
+cart-summary = { $count ->
+    [one] Vous avez un article dans votre panier.
+   *[other] Vous avez { $count } articles dans votre panier.
+}
+
 ## Example of message attributes for UI elements
 dialog = Dialogue
     .title = Dialogue de Confirmation

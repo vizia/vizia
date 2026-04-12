@@ -99,6 +99,11 @@ fn main() -> Result<(), ApplicationError> {
             // Example of message references - help-menu-save references menu-save
             Label::new(cx, Localized::new("help-menu-save"));
 
+            // Example of selectors/plurals
+            Label::new(cx, Localized::new("role-label").arg("role", "admin"));
+            Label::new(cx, Localized::new("cart-summary").arg("count", 1));
+            Label::new(cx, Localized::new("cart-summary").arg("count", 3));
+
             // Example of number formatting
             Label::new(cx, Localized::new("item-count").arg("count", item_count));
             Label::new(

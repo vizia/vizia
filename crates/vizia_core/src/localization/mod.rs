@@ -108,6 +108,26 @@
 //! Message references are automatically resolved by the localization system and work seamlessly with the [`Localized`] type.
 //! This is useful for keeping certain translations consistent across the interface and making maintenance easier.
 //!
+//! ## Selectors and Plurals
+//! Fluent selectors let you choose translations based on a variable value:
+//! ```ftl
+//! role-label = { $role ->
+//!     [admin] You are signed in as an administrator.
+//!    *[user] You are signed in as a user.
+//! }
+//! cart-summary = { $count ->
+//!     [one] You have one item in your cart.
+//!    *[other] You have { $count } items in your cart.
+//! }
+//! ```
+//! In Rust, pass the selector values with `arg(...)`:
+//! ```ignore
+//! # use vizia_core::prelude::*;
+//! # let mut cx = &mut Context::default();
+//! Label::new(cx, Localized::new("role-label").arg("role", "admin"));
+//! Label::new(cx, Localized::new("cart-summary").arg("count", 3));
+//! ```
+//!
 //! ## Number Formatting
 //! Numbers can be formatted with locale-specific rules using the built-in `NUMBER` function in FTL:
 //! ```ftl
@@ -599,5 +619,25 @@ mod tests {
         let text = Localized::new("greeting").to_string_local(&cx);
 
         assert_eq!(text, "Hello from default");
+    }
+
+    #[test]
+    fn falls_back_to_default_bundle_for_attribute_when_message_exists_in_requested_locale() {
+        let mut cx = Context::default();
+        cx.data::<Environment>().locale.set("fr".parse().unwrap());
+
+        // Requested locale has the message but not the attribute.
+        cx.add_translation("fr".parse().unwrap(), "dialog = Dialogue".to_string()).unwrap();
+
+        // Default locale provides the missing attribute.
+        cx.add_translation(
+            LanguageIdentifier::default(),
+            "dialog = Dialog\n    .title = Default Title".to_string(),
+        )
+        .unwrap();
+
+        let text = Localized::new("dialog").attribute("title").to_string_local(&cx);
+
+        assert_eq!(text, "Default Title");
     }
 }

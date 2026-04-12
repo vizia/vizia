@@ -38,7 +38,7 @@ impl std::error::Error for TranslationError {}
 
 /// Structured diagnostics emitted by localization while resolving messages.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum LocalizationIssue {
+pub(crate) enum LocalizationIssue {
     /// A message key was not found in any fallback bundle.
     MissingMessage { key: String, requested_locale: String },
     /// A message attribute was not found in any fallback bundle.
@@ -177,7 +177,7 @@ impl ResourceManager {
         }
     }
 
-    pub fn report_localization_issue(&self, issue: LocalizationIssue) {
+    pub(crate) fn report_localization_issue(&self, issue: LocalizationIssue) {
         // Localization issues are non-fatal and intended for diagnostics.
         log::warn!("{}", issue);
     }

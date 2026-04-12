@@ -14,6 +14,16 @@ refresh = Refresh
 menu-save = Save
 help-menu-save = Click { menu-save } to save the file.
 
+## Example of selectors/plurals
+role-label = { $role ->
+    [admin] You are signed in as an administrator.
+   *[user] You are signed in as a user.
+}
+cart-summary = { $count ->
+    [one] You have one item in your cart.
+   *[other] You have { $count } items in your cart.
+}
+
 ## Example of message attributes for UI elements
 dialog = Dialog
     .title = Confirmation Dialog
