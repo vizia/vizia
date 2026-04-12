@@ -541,3 +541,102 @@ impl ToStringLocalized for Localized {
         self.resolve_text(&cx)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::resource::LocalizationIssue;
+    use std::sync::{Arc, Mutex};
+
+    #[test]
+    fn reports_missing_message_issue() {
+        let mut cx = Context::default();
+        cx.data::<Environment>().locale.set("en-US".parse().unwrap());
+
+        let issues: Arc<Mutex<Vec<LocalizationIssue>>> = Arc::new(Mutex::new(Vec::new()));
+        let issues_ref = issues.clone();
+        cx.set_localization_issue_handler(move |issue| {
+            issues_ref.lock().unwrap().push(issue.clone());
+        });
+
+        let text = Localized::new("missing-key").to_string_local(&cx);
+
+        assert_eq!(text, "missing-key");
+        let issues = issues.lock().unwrap();
+        assert!(matches!(
+            issues.first(),
+            Some(LocalizationIssue::MissingMessage { key, requested_locale })
+                if key == "missing-key" && requested_locale == "en-US"
+        ));
+    }
+
+    #[test]
+    fn reports_missing_attribute_issue() {
+        let mut cx = Context::default();
+        cx.data::<Environment>().locale.set("en-US".parse().unwrap());
+        cx.add_translation("en-US".parse().unwrap(), "dialog = File Dialog".to_string()).unwrap();
+
+        let issues: Arc<Mutex<Vec<LocalizationIssue>>> = Arc::new(Mutex::new(Vec::new()));
+        let issues_ref = issues.clone();
+        cx.set_localization_issue_handler(move |issue| {
+            issues_ref.lock().unwrap().push(issue.clone());
+        });
+
+        let text = Localized::new("dialog").attribute("title").to_string_local(&cx);
+
+        assert_eq!(text, "dialog.title");
+        let issues = issues.lock().unwrap();
+        assert!(matches!(
+            issues.first(),
+            Some(LocalizationIssue::MissingAttribute { key, attribute, requested_locale })
+                if key == "dialog" && attribute == "title" && requested_locale == "en-US"
+        ));
+    }
+
+    #[test]
+    fn reports_format_error_issue() {
+        let mut cx = Context::default();
+        cx.data::<Environment>().locale.set("en-US".parse().unwrap());
+        cx.add_translation("en-US".parse().unwrap(), "welcome = Welcome, { $name }!".to_string())
+            .unwrap();
+
+        let issues: Arc<Mutex<Vec<LocalizationIssue>>> = Arc::new(Mutex::new(Vec::new()));
+        let issues_ref = issues.clone();
+        cx.set_localization_issue_handler(move |issue| {
+            issues_ref.lock().unwrap().push(issue.clone());
+        });
+
+        let _ = Localized::new("welcome").to_string_local(&cx);
+
+        let issues = issues.lock().unwrap();
+        assert!(matches!(
+            issues.first(),
+            Some(LocalizationIssue::FormatError { key, locale, details })
+                if key == "welcome" && locale == "en-US" && !details.is_empty()
+        ));
+    }
+
+    #[test]
+    fn falls_back_to_default_bundle_per_key() {
+        let mut cx = Context::default();
+        cx.data::<Environment>().locale.set("fr".parse().unwrap());
+
+        // Ensure the requested locale exists but does not contain the requested key.
+        cx.add_translation("fr".parse().unwrap(), "bonjour = Bonjour".to_string()).unwrap();
+
+        // Provide the requested key only in the default bundle.
+        cx.add_translation(LanguageIdentifier::default(), "greeting = Hello from default".to_string())
+            .unwrap();
+
+        let issues: Arc<Mutex<Vec<LocalizationIssue>>> = Arc::new(Mutex::new(Vec::new()));
+        let issues_ref = issues.clone();
+        cx.set_localization_issue_handler(move |issue| {
+            issues_ref.lock().unwrap().push(issue.clone());
+        });
+
+        let text = Localized::new("greeting").to_string_local(&cx);
+
+        assert_eq!(text, "Hello from default");
+        assert!(issues.lock().unwrap().is_empty());
+    }
+}

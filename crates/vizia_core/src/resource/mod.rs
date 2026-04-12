@@ -321,3 +321,82 @@ impl ResourceManager {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::{Arc, Mutex};
+
+    #[test]
+    fn add_translation_returns_error_for_invalid_ftl() {
+        let mut manager = ResourceManager::new();
+
+        // Invalid FTL: unclosed placeable
+        let res = manager.add_translation("en-US".parse().unwrap(), "hello = { $name".to_string());
+
+        assert!(matches!(res, Err(TranslationError::InvalidFtl(_))));
+    }
+
+    #[test]
+    fn translation_locales_prefers_exact_then_default() {
+        let mut manager = ResourceManager::new();
+
+        manager
+            .add_translation("fr".parse().unwrap(), "hello = Bonjour".to_string())
+            .unwrap();
+
+        let locales = manager.translation_locales(&"fr".parse().unwrap());
+
+        assert_eq!(locales.first(), Some(&"fr".parse().unwrap()));
+        assert!(locales.contains(&LanguageIdentifier::default()));
+    }
+
+    #[test]
+    fn translation_locales_falls_back_to_default_when_no_locale_matches() {
+        let manager = ResourceManager::new();
+
+        let locales = manager.translation_locales(&"zz-ZZ".parse().unwrap());
+
+        assert_eq!(locales, vec![LanguageIdentifier::default()]);
+    }
+
+    #[test]
+    fn current_translation_uses_default_bundle_when_requested_locale_missing() {
+        let mut manager = ResourceManager::new();
+
+        manager
+            .add_translation("en-US".parse().unwrap(), "hello = Hello".to_string())
+            .unwrap();
+
+        let bundle = manager.current_translation(&"zz-ZZ".parse().unwrap());
+        let message = bundle.get_message("hello");
+
+        assert!(message.is_some());
+    }
+
+    #[test]
+    fn localization_issue_handler_receives_reported_issue() {
+        let mut manager = ResourceManager::new();
+        let issues: Arc<Mutex<Vec<LocalizationIssue>>> = Arc::new(Mutex::new(Vec::new()));
+        let issues_ref = issues.clone();
+
+        manager.set_localization_issue_handler(move |issue| {
+            issues_ref.lock().unwrap().push(issue.clone());
+        });
+
+        manager.report_localization_issue(LocalizationIssue::MissingMessage {
+            key: "missing-key".to_string(),
+            requested_locale: "en-US".to_string(),
+        });
+
+        let locked = issues.lock().unwrap();
+        assert_eq!(locked.len(), 1);
+        assert_eq!(
+            locked[0],
+            LocalizationIssue::MissingMessage {
+                key: "missing-key".to_string(),
+                requested_locale: "en-US".to_string(),
+            }
+        );
+    }
+}
