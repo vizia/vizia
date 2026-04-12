@@ -34,9 +34,12 @@ dialog = Dialogue
 brand-welcome = Bienvenue à { -brand }!
 
 ## Number formatting example
+item-count = Nombre d'articles : { $count }
+price-currency = Prix (style devise) : { NUMBER($amount, style: "currency", currency: "EUR") }
 price = Prix: { NUMBER($amount) }
-percentage-complete = { $percent }% complété
+percentage-complete = Progression : { NUMBER($percent) }
 
 ## Date formatting example
 event-date = Date de l'événement: { DATETIME($date, weekday: "long", month: "long", day: "numeric", year: "numeric") }
 last-updated = Dernière mise à jour: { DATETIME($date, month: "short", day: "numeric", year: "2-digit", hour: "numeric", minute: "2-digit") }
+release-date = Date de sortie : { DATETIME($date, month: "long", day: "numeric", year: "numeric") }

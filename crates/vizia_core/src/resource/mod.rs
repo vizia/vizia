@@ -9,7 +9,9 @@ use crate::context::ResourceContext;
 use crate::entity::Entity;
 use crate::prelude::IntoCssStr;
 // use crate::view::Canvas;
-use fluent_bundle::{FluentBundle, FluentResource};
+use chrono::{DateTime, Utc};
+use fluent_bundle::types::{FluentNumber, FluentNumberOptions};
+use fluent_bundle::{FluentArgs, FluentBundle, FluentResource, FluentValue};
 use hashbrown::{HashMap, HashSet};
 use std::fmt;
 use unic_langid::LanguageIdentifier;
@@ -35,6 +37,135 @@ impl fmt::Display for TranslationError {
 }
 
 impl std::error::Error for TranslationError {}
+
+fn fluent_number<'a>(positional: &[FluentValue<'a>], named: &FluentArgs) -> FluentValue<'a> {
+    let Some(first) = positional.first() else {
+        return FluentValue::Error;
+    };
+
+    let mut number = match first {
+        FluentValue::Number(num) => num.clone(),
+        FluentValue::String(value) => value
+            .parse::<FluentNumber>()
+            .unwrap_or_else(|_| FluentNumber::new(0.0, FluentNumberOptions::default())),
+        _ => return FluentValue::Error,
+    };
+
+    number.options.merge(named);
+    FluentValue::Number(number)
+}
+
+fn style_str(args: &FluentArgs, key: &str) -> Option<String> {
+    match args.get(key) {
+        Some(FluentValue::String(value)) => Some(value.to_string()),
+        _ => None,
+    }
+}
+
+fn datetime_format_pattern(args: &FluentArgs) -> String {
+    let weekday = match style_str(args, "weekday").as_deref() {
+        Some("long") => Some("%A"),
+        Some("short") => Some("%a"),
+        _ => None,
+    };
+
+    let month = match style_str(args, "month").as_deref() {
+        Some("long") => Some("%B"),
+        Some("short") => Some("%b"),
+        Some("2-digit") => Some("%m"),
+        Some("numeric") => Some("%-m"),
+        _ => None,
+    };
+
+    let day = match style_str(args, "day").as_deref() {
+        Some("2-digit") => Some("%d"),
+        Some("numeric") => Some("%-d"),
+        _ => None,
+    };
+
+    let year = match style_str(args, "year").as_deref() {
+        Some("2-digit") => Some("%y"),
+        Some("numeric") => Some("%Y"),
+        _ => None,
+    };
+
+    let hour = match style_str(args, "hour").as_deref() {
+        Some("2-digit") => Some("%H"),
+        Some("numeric") => Some("%-H"),
+        _ => None,
+    };
+
+    let minute = match style_str(args, "minute").as_deref() {
+        Some("2-digit") => Some("%M"),
+        Some("numeric") => Some("%-M"),
+        _ => None,
+    };
+
+    let mut date_parts = Vec::new();
+    if let Some(part) = weekday {
+        date_parts.push(part);
+    }
+    if let Some(part) = month {
+        date_parts.push(part);
+    }
+    if let Some(part) = day {
+        date_parts.push(part);
+    }
+    if let Some(part) = year {
+        date_parts.push(part);
+    }
+
+    let mut pattern = date_parts.join(" ");
+    if hour.is_some() || minute.is_some() {
+        if !pattern.is_empty() {
+            pattern.push(' ');
+        }
+        let mut time_parts = Vec::new();
+        if let Some(part) = hour {
+            time_parts.push(part);
+        }
+        if let Some(part) = minute {
+            time_parts.push(part);
+        }
+        pattern.push_str(&time_parts.join(":"));
+    }
+
+    if pattern.is_empty() {
+        "%Y-%m-%d %H:%M:%S".to_string()
+    } else {
+        pattern
+    }
+}
+
+fn fluent_datetime<'a>(positional: &[FluentValue<'a>], named: &FluentArgs) -> FluentValue<'a> {
+    let Some(first) = positional.first() else {
+        return FluentValue::Error;
+    };
+
+    let millis = match first {
+        FluentValue::Number(num) => num.value as i64,
+        FluentValue::String(value) => value.parse::<i64>().unwrap_or_default(),
+        _ => return FluentValue::Error,
+    };
+
+    let Some(dt) = DateTime::<Utc>::from_timestamp_millis(millis) else {
+        return FluentValue::Error;
+    };
+
+    let pattern = datetime_format_pattern(named);
+    FluentValue::String(dt.format(&pattern).to_string().into())
+}
+
+fn make_bundle(lang: LanguageIdentifier) -> FluentBundle<FluentResource> {
+    let mut bundle = FluentBundle::new(vec![lang]);
+
+    bundle.add_function("NUMBER", fluent_number).expect("Failed to register NUMBER function");
+    bundle
+        .add_function("DATETIME", fluent_datetime)
+        .expect("Failed to register DATETIME function");
+
+    bundle
+}
 
 /// Structured diagnostics emitted by localization while resolving messages.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -169,7 +300,7 @@ impl ResourceManager {
 
             translations: HashMap::from([(
                 LanguageIdentifier::default(),
-                FluentBundle::new(vec![LanguageIdentifier::default()]),
+                make_bundle(LanguageIdentifier::default()),
             )]),
 
             language: locale,
@@ -259,7 +390,7 @@ impl ResourceManager {
                 let bundle = self
                     .translations
                     .entry(lang.clone())
-                    .or_insert_with(|| FluentBundle::new(vec![lang]));
+                    .or_insert_with(|| make_bundle(lang));
                 bundle.add_resource(res).map_err(|errors| {
                     let msg = format!("{:?}", errors);
                     TranslationError::BundleError(msg)

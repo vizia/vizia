@@ -34,9 +34,15 @@ dialog = Dialog
 brand-welcome = Welcome to { -brand }!
 
 ## Number formatting example
+item-count = Item count: { $count }
+price-currency = Price (currency style): { NUMBER($amount, style: "currency", currency: "USD") }
 price = Price: { NUMBER($amount) }
-percentage-complete = { $percent }% complete
+percentage-complete = Progress: { NUMBER($percent) }
 
 ## Date formatting example
 event-date = Event date: { DATETIME($date, weekday: "long", month: "long", day: "numeric", year: "numeric") }
 last-updated = Last updated: { DATETIME($date, month: "short", day: "numeric", year: "2-digit", hour: "numeric", minute: "2-digit") }
+release-date = Release date: { DATETIME($date, month: "long", day: "numeric", year: "numeric") }
+
+## Exists only in en-US to demonstrate per-key fallback from other locales
+fallback-only = This line exists only in en-US (fallback demo).
