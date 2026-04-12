@@ -49,6 +49,7 @@ fn main() -> Result<(), ApplicationError> {
         let emails = Signal::new(1);
         let item_count = Signal::new(42);
         let price = Signal::new(99.99);
+        let price_text = Signal::new("99.99".to_owned());
         let event_date = Utc::now();
         let release_date = Utc::now().naive_utc();
 
@@ -105,7 +106,7 @@ fn main() -> Result<(), ApplicationError> {
 
             // Number formatting.
             Label::new(cx, Localized::new("item-count").arg("count", item_count));
-            Label::new(cx, Localized::new("price-currency").arg("amount", price));
+            Label::new(cx, Localized::new("price-currency").arg("amount", price_text));
             Label::new(
                 cx,
                 Localized::new("price").arg("amount", number_with_fraction(price.get(), 2)),

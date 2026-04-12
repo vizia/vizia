@@ -35,7 +35,7 @@ brand-welcome = Bienvenue à { -brand }!
 
 ## Number formatting example
 item-count = Nombre d'articles : { $count }
-price-currency = Prix (style devise) : { NUMBER($amount, style: "currency", currency: "EUR") }
+price-currency = Prix : { $amount } €
 price = Prix: { NUMBER($amount) }
 percentage-complete = Progression : { NUMBER($percent) }
 

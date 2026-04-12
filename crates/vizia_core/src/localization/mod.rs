@@ -129,11 +129,11 @@
 //! ```
 //!
 //! ## Number Formatting
-//! Numbers can be formatted with locale-specific rules using the built-in `NUMBER` function in FTL:
+//! Numbers can be formatted in FTL with the built-in `NUMBER` function:
 //! ```ftl
-//! price = Your total is { NUMBER($amount, style: "currency", currency: "USD") }
+//! price = Your total is { NUMBER($amount) }
 //! ```
-//! In Rust, pass numbers directly as arguments and they will be formatted according to the locale:
+//! In Rust, pass numbers directly as arguments:
 //! ```ignore
 //! # use vizia_core::prelude::*;
 //! # let mut cx = &mut Context::default();
@@ -151,6 +151,21 @@
 //! # use vizia_core::prelude::*;
 //! # let mut cx = &mut Context::default();
 //! Label::new(cx, Localized::new("completion").arg("percent", percentage(0.75, 1)));
+//! ```
+//!
+//! Currency symbols and symbol placement are best handled in translations today.
+//! Pre-format the numeric portion in Rust or upstream and let each locale decide where the symbol belongs:
+//! ```ftl
+//! # en-US
+//! price-currency = Price: ${ $amount }
+//!
+//! # fr
+//! price-currency = Prix : { $amount } €
+//! ```
+//! ```ignore
+//! # use vizia_core::prelude::*;
+//! # let mut cx = &mut Context::default();
+//! Label::new(cx, Localized::new("price-currency").arg("amount", "99.99"));
 //! ```
 //!
 //! ## Date Formatting
