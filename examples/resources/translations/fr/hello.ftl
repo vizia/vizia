@@ -1,3 +1,5 @@
+-brand = Vizia
+
 hello-world = Bonjour, monde!
 intro = Bienvenue, { $name }.
 enter-name = Veuillez saisir votre nom:
@@ -8,23 +10,11 @@ emails =
     }
 refresh = Actualiser la page
 
-January = Janvier
-February = Février
-March = Mars
-April = Avril
-May = Mai
-June = Juin
-July = Juillet
-August = Aout
-September = Septembre
-October = Octobre
-November = Novembre
-December = Décembre
+## Example of message attributes for UI elements
+dialog = Dialogue
+    .title = Dialogue de Confirmation
+    .prompt = Êtes-vous sûr de vouloir continuer?
+    .confirm-button = Oui
+    .cancel-button = Non
 
-Monday = Lundi
-Tuesday = Mardi
-Wednesday = Mercredi
-Thursday = Jeudi
-Friday = Vendredi
-Saturday = Samedi
-Sunday = Dimanche
+brand-welcome = Bienvenue à { -brand }!

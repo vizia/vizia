@@ -80,6 +80,13 @@ fn main() -> Result<(), ApplicationError> {
 
             Button::new(cx, |cx| Label::new(cx, Localized::new("refresh")))
                 .on_press(|cx| cx.emit(AppEvent::ReceiveEmail));
+
+            // Example of using message attributes
+            Label::new(cx, Localized::new("dialog").attribute("title"));
+            Label::new(cx, Localized::new("dialog").attribute("prompt"));
+
+            // Example of using terms - the -brand term is automatically available in all messages
+            Label::new(cx, Localized::new("brand-welcome"));
         })
         .vertical_gap(Pixels(10.0))
         .space(Pixels(10.0));

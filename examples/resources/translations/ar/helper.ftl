@@ -1,3 +1,5 @@
+-app-name = Vizia
+
 system-theme = النظام
 dark-theme = داكن
 light-theme = فاتح
@@ -20,3 +22,9 @@ two = اثنان
 three = ثلاثة
 toggle-disabled = التبديل معطل
 default = افتراضي
+
+## Example message with attributes
+form-submission = إرسال النموذج
+    .label = إرسال النموذج
+    .help-text = جميع الحقول مطلوبة
+    .success-message = تم إرسال النموذج بنجاح

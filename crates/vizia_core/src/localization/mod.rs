@@ -69,6 +69,30 @@
 //! # }
 //! Label::new(cx, Localized::new("welcome").arg("user", AppData::user));
 //! ```
+//!
+//! ## Attributes
+//! Messages can have named attributes that provide alternative translations. These are useful for UI elements that need multiple text values.
+//! Attributes must be preceded by a main message value:
+//! ```ftl
+//! file-dialog = File Dialog
+//!     .title = Save File
+//!     .save-button = Save
+//! ```
+//! To reference an attribute, use the `.attribute()` method:
+//! ```ignore
+//! # use vizia_core::prelude::*;
+//! # let mut cx = &mut Context::default();
+//! Label::new(cx, Localized::new("file-dialog").attribute("title"));
+//! ```
+//!
+//! ## Terms
+//! Terms are special variables prefixed with a hyphen that can be referenced in other messages. They're automatically
+//! available in all translations and are commonly used for product names or branding.
+//! ```ftl
+//! -brand = Vizia
+//! welcome = Welcome to { -brand }!
+//! ```
+//! Terms are automatically resolved when formatting, so no special configuration is needed when using them in messages.
 use crate::context::LocalizationContext;
 use crate::prelude::*;
 use fluent_bundle::FluentArgs;
@@ -133,13 +157,14 @@ where
 /// A type which formats a localized message with any number of named arguments.
 pub struct Localized {
     key: String,
+    attribute: Option<String>,
     args: HashMap<String, Box<dyn FluentStore>>,
     map: Rc<dyn Fn(&str) -> String + 'static>,
 }
 
 impl PartialEq for Localized {
     fn eq(&self, other: &Self) -> bool {
-        self.key == other.key
+        self.key == other.key && self.attribute == other.attribute
     }
 }
 
@@ -147,6 +172,7 @@ impl Clone for Localized {
     fn clone(&self) -> Self {
         Self {
             key: self.key.clone(),
+            attribute: self.attribute.clone(),
             args: self.args.iter().map(|(k, v)| (k.clone(), v.make_clone())).collect(),
             map: self.map.clone(),
         }
@@ -163,10 +189,20 @@ impl Localized {
             return (self.map)(&self.key);
         };
 
-        let value = if let Some(value) = message.value() {
-            value
+        let value = if let Some(attr_name) = &self.attribute {
+            // Resolve attribute instead of message value
+            if let Some(attr) = message.get_attribute(attr_name) {
+                attr.value()
+            } else {
+                return (self.map)(&format!("{}.{}", &self.key, attr_name));
+            }
         } else {
-            return (self.map)(&self.key);
+            // Resolve message value
+            if let Some(value) = message.value() {
+                value
+            } else {
+                return (self.map)(&self.key);
+            }
         };
 
         let mut err = vec![];
@@ -198,7 +234,12 @@ impl Localized {
     /// })
     /// .run();
     pub fn new(key: &str) -> Self {
-        Self { key: key.to_owned(), args: HashMap::new(), map: Rc::new(|s| s.to_string()) }
+        Self {
+            key: key.to_owned(),
+            attribute: None,
+            args: HashMap::new(),
+            map: Rc::new(|s| s.to_string()),
+        }
     }
 
     /// Sets a mapping function to apply to the translated text.
@@ -208,7 +249,24 @@ impl Localized {
         self
     }
 
-    /// Add a variable argument binding to the Localized type.
+    /// Selects a message attribute to translate instead of the message value.
+    ///
+    /// Messages can contain multiple attributes that define alternative translations.
+    /// This method allows you to select a specific attribute by name.
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
+    /// Application::new(|cx|{
+    ///     // Resolves the "title" attribute of the "dialog" message
+    ///     Label::new(cx, Localized::new("dialog").attribute("title"));
+    /// })
+    /// .run();
+    pub fn attribute(mut self, attr_name: &str) -> Self {
+        self.attribute = Some(attr_name.to_owned());
+        self
+    }
     ///
     /// Takes a key name and a signal for the argument value (value or signal).
     ///

@@ -1,3 +1,5 @@
+-app-name = Vizia
+
 system-theme = Système
 dark-theme = Sombre
 light-theme = Clair
@@ -20,3 +22,9 @@ two = Deux
 three = Trois
 toggle-disabled = Basculement Désactivé
 default = Défaut
+
+## Example message with attributes
+form-submission = Soumission du formulaire
+    .label = Soumettre le formulaire
+    .help-text = Tous les champs sont requis
+    .success-message = Formulaire soumis avec succès

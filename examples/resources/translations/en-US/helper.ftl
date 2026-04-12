@@ -1,3 +1,5 @@
+-app-name = Vizia
+
 system-theme = System
 dark-theme = Dark
 light-theme = Light
@@ -19,4 +21,10 @@ one = One
 two = Two
 three = Three
 toggle-disabled = Toggle Disabled
-default = Default 
+default = Default
+
+## Example message with attributes
+form-submission = Form Submission
+    .label = Submit Form
+    .help-text = All fields are required
+    .success-message = Form submitted successfully
