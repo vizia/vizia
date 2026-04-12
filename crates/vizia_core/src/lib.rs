@@ -83,8 +83,7 @@ pub mod prelude {
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
     pub use super::layout::{BoundingBox, GeoChanged};
     pub use super::localization::{
-        Localized, ToStringLocalized, FluentDateTime, FluentNaiveDateTime, number_with_fraction,
-        percentage,
+        Localized, ToStringLocalized, number_with_fraction, percentage,
     };
     pub use super::modifiers::{
         AbilityModifiers, AccessibilityModifiers, ActionModifiers, LayoutModifiers,

@@ -13,7 +13,7 @@
 //! // Adds a fluent file to the application resource manager.
 //! // This file is then used for translations to the corresponding locale.
 //! cx.add_translation(
-//!     "en-US".parse().unwrap(),
+//!     langid!("en-US"),
 //!     include_str!("resources/en-US/translation.ftl").to_owned(),
 //! );
 //!
@@ -21,12 +21,13 @@
 //!
 //! ## Setting the Locale
 //! The application will use the system locale by default, however an environment event can be used to set a custom locale.
-//! If no fluent file can be found for the specified locale, then a fallback fluent file is used from the list of available files.
+//! If no exact translation exists for the specified locale, vizia will negotiate the best available match and then fall back
+//! per message to the default translation bundle when needed.
 //! ```ignore
 //! # use vizia_core::prelude::*;
 //! # let mut cx = &mut Context::default();
 //! // Sets the current locale to en-US, regardless of the system locale
-//! cx.emit(EnvironmentEvent::SetLocale("en-US".parse().unwrap()));
+//! cx.emit(EnvironmentEvent::SetLocale(langid!("en-US")));
 //! ```
 //!
 //! ## Basic Translation
@@ -53,21 +54,20 @@
 //! welcome = Welcome, { $user }!
 //! ```
 //! The [`Localized`] type provides the `arg(...)` method for referencing a variable. It accepts either a plain value
-//! or a reactive resource, binding the fluent variable to application data and updating when that data changes.
+//! or a signal, binding the fluent variable to application data and updating when that data changes.
 //! ```ignore
 //! # use vizia_core::prelude::*;
 //! # let mut cx = &mut Context::default();
 //! Label::new(cx, Localized::new("welcome").arg("user", "Jane"));
 //! ```
-//! The same method also accepts any keyed signal or resource.
+//!
 //! ```ignore
 //! # use vizia_core::prelude::*;
 //! # let mut cx = &mut Context::default();
 //! #
-//! # pub struct AppData {
-//! #   user: String,
-//! # }
-//! Label::new(cx, Localized::new("welcome").arg("user", AppData::user));
+//! let user = Signal::new("Jane".to_string());
+//!
+//! Label::new(cx, Localized::new("welcome").arg("user", user));
 //! ```
 //!
 //! ## Attributes
@@ -129,41 +129,27 @@
 //! ```
 //!
 //! ## Date Formatting
-//! Dates can be formatted with locale-specific rules using the built-in `DATETIME` function in FTL:
-//! ```ftl
-//! today-is = Today is { DATETIME($date, month: "long", day: "numeric") }
-//! ```
-//! In Rust, pass a timestamp (milliseconds since Unix epoch) as a number, and Fluent will format it:
+//! Dates can be formatted with locale-specific rules using the built-in `DATETIME` function in FTL.
+//! Pass chrono datetime values directly to `arg()` - the conversion to milliseconds is handled automatically:
 //! ```ignore
 //! # use vizia_core::prelude::*;
+//! # use chrono::Utc;
 //! # let mut cx = &mut Context::default();
-//! let now_seconds = 1712973600i64; // seconds since Unix epoch
-//! Label::new(cx, Localized::new("today-is").arg("date", now_seconds * 1000)); // Fluent expects milliseconds
+//! let now = Utc::now();
+//! Label::new(cx, Localized::new("event-date").arg("date", now));
 //! ```
-//! Or use pre-formatted date strings if you need custom formatting:
+//!
+//! Both timezone-aware and naive datetimes are supported:
+//! - Timezone-aware datetimes like `DateTime<Utc>` or `DateTime<Local>` work directly
+//! - Naive datetimes are automatically assumed to be in UTC
+//!
+//! For custom formatting, you can use pre-formatted date strings:
 //! ```ignore
 //! # use vizia_core::prelude::*;
 //! # let mut cx = &mut Context::default();
 //! let formatted_date = "April 13, 2026".to_string();
 //! Label::new(cx, Localized::new("event-date").arg("date", formatted_date));
 //! ```
-//!
-//! ### With Chrono
-//! For convenient integration with [chrono](https://docs.rs/chrono/), wrap your datetime values with
-//! [`FluentDateTime`] or [`FluentNaiveDateTime`] - the conversion to milliseconds is handled automatically:
-//! ```ignore
-//! # use vizia_core::prelude::*;
-//! # use vizia_core::localization::FluentDateTime;
-//! # use chrono::Utc;
-//! # let mut cx = &mut Context::default();
-//! let now = Utc::now();
-//! // Automatic conversion to milliseconds happens internally
-//! Label::new(cx, Localized::new("event-date").arg("date", FluentDateTime(now)));
-//! ```
-//! 
-//! The wrappers support:
-//! - `FluentDateTime<Tz>` - for timezone-aware datetimes like `DateTime<Utc>` or `DateTime<Local>`
-//! - `FluentNaiveDateTime` - for naive datetimes (assumes UTC)
 use crate::context::LocalizationContext;
 use crate::prelude::*;
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -219,50 +205,19 @@ pub fn percentage(value: f64, fraction_digits: usize) -> FluentNumber {
     )
 }
 
-/// Helper function to convert a chrono DateTime to milliseconds since Unix epoch for Fluent date formatting.
-///
-/// Fluent's DATETIME function expects milliseconds, not seconds.
-///
-/// # Example
-/// ```ignore
-/// # use vizia_core::prelude::*;
-/// # use chrono::Utc;
-/// # let mut cx = &mut Context::default();
-/// let now = Utc::now();
-/// Label::new(cx, Localized::new("event-date").arg("date", datetime_to_millis(now)));
-/// ```
-pub fn datetime_to_millis<Tz: chrono::TimeZone>(dt: DateTime<Tz>) -> i64 {
-    dt.with_timezone(&Utc).timestamp_millis()
-}
-
-/// Helper function to convert a chrono NaiveDateTime to milliseconds since Unix epoch for Fluent date formatting.
-///
-/// Note: NaiveDateTime is timezone-unaware. It's recommended to use `datetime_to_millis` with timezone-aware DateTime.
-///
-/// # Example
-/// ```ignore
-/// # use vizia_core::prelude::*;
-/// # use chrono::Utc;
-/// # let mut cx = &mut Context::default();
-/// let now = Utc::now().naive_utc();
-/// Label::new(cx, Localized::new("event-date").arg("date", naive_datetime_to_millis(now)));
-/// ```
-pub fn naive_datetime_to_millis(dt: NaiveDateTime) -> i64 {
-    dt.and_utc().timestamp_millis()
-}
-
 /// Wrapper for chrono DateTime that automatically converts to Fluent's expected millisecond format.
 ///
-/// This allows passing chrono types directly to `arg()` without manual millisecond conversion.
+/// While this wrapper can be used, chrono DateTime types implement `Res` directly,
+/// so you can pass them to `arg()` without wrapping:
 ///
 /// # Example
 /// ```ignore
 /// # use vizia_core::prelude::*;
-/// # use vizia_core::localization::FluentDateTime;
 /// # use chrono::Utc;
 /// # let mut cx = &mut Context::default();
 /// let now = Utc::now();
-/// Label::new(cx, Localized::new("event-date").arg("date", FluentDateTime(now)));
+/// // Chrono datetimes work directly with arg()
+/// Label::new(cx, Localized::new("event-date").arg("date", now));
 /// ```
 #[derive(Clone)]
 pub struct FluentDateTime<Tz: chrono::TimeZone + Clone>(pub DateTime<Tz>);
@@ -279,19 +234,25 @@ impl<Tz: chrono::TimeZone + Clone + 'static> Res<FluentDateTime<Tz>> for FluentD
     }
 }
 
+impl<Tz: chrono::TimeZone + Clone + 'static> Res<FluentDateTime<Tz>> for DateTime<Tz> {
+    fn get_value(&self, _: &impl DataContext) -> FluentDateTime<Tz> {
+        FluentDateTime(self.clone())
+    }
+}
+
 /// Wrapper for chrono NaiveDateTime that automatically converts to Fluent's expected millisecond format.
 ///
-/// This allows passing naive chrono types directly to `arg()` without manual millisecond conversion.
-/// Note: assumes UTC timezone for the conversion.
+/// While this wrapper can be used, chrono NaiveDateTime types implement `Res` directly,
+/// so you can pass them to `arg()` without wrapping. Note: assumes UTC timezone for the conversion.
 ///
 /// # Example
 /// ```ignore
 /// # use vizia_core::prelude::*;
-/// # use vizia_core::localization::FluentNaiveDateTime;
 /// # use chrono::Utc;
 /// # let mut cx = &mut Context::default();
 /// let now = Utc::now().naive_utc();
-/// Label::new(cx, Localized::new("event-date").arg("date", FluentNaiveDateTime(now)));
+/// // Naive datetimes work directly with arg() (assumes UTC)
+/// Label::new(cx, Localized::new("event-date").arg("date", now));
 /// ```
 #[derive(Clone)]
 pub struct FluentNaiveDateTime(pub NaiveDateTime);
@@ -305,6 +266,12 @@ impl Into<FluentValue<'static>> for FluentNaiveDateTime {
 impl Res<FluentNaiveDateTime> for FluentNaiveDateTime {
     fn get_value(&self, _: &impl DataContext) -> Self {
         self.clone()
+    }
+}
+
+impl Res<FluentNaiveDateTime> for NaiveDateTime {
+    fn get_value(&self, _: &impl DataContext) -> FluentNaiveDateTime {
+        FluentNaiveDateTime(*self)
     }
 }
 
@@ -366,34 +333,41 @@ impl Clone for Localized {
 impl Localized {
     fn resolve_text(&self, cx: &LocalizationContext) -> String {
         let locale = &cx.environment().locale.get();
-        let bundle = cx.resource_manager.current_translation(locale);
-        let message = if let Some(msg) = bundle.get_message(&self.key) {
-            msg
-        } else {
-            return (self.map)(&self.key);
-        };
+        let args = self.get_args(cx);
 
-        let value = if let Some(attr_name) = &self.attribute {
-            // Resolve attribute instead of message value
-            if let Some(attr) = message.get_attribute(attr_name) {
-                attr.value()
-            } else {
-                return (self.map)(&format!("{}.{}", &self.key, attr_name));
-            }
-        } else {
-            // Resolve message value
-            if let Some(value) = message.value() {
+        for locale in cx.resource_manager.translation_locales(locale) {
+            let bundle = cx.resource_manager.current_translation(&locale);
+            let Some(message) = bundle.get_message(&self.key) else {
+                continue;
+            };
+
+            let value = if let Some(attr_name) = &self.attribute {
+                if let Some(attr) = message.get_attribute(attr_name) {
+                    attr.value()
+                } else {
+                    continue;
+                }
+            } else if let Some(value) = message.value() {
                 value
             } else {
-                return (self.map)(&self.key);
-            }
-        };
+                continue;
+            };
 
-        let mut err = vec![];
-        let args = self.get_args(cx);
-        let res = bundle.format_pattern(value, Some(&args), &mut err);
+            let mut err = vec![];
+            let res = bundle.format_pattern(value, Some(&args), &mut err);
 
-        if err.is_empty() { (self.map)(&res) } else { format!("{} {{ERROR: {:?}}}", res, err) }
+            return if err.is_empty() {
+                (self.map)(&res)
+            } else {
+                format!("{} {{ERROR: {:?}}}", res, err)
+            };
+        }
+
+        if let Some(attr_name) = &self.attribute {
+            (self.map)(&format!("{}.{}", &self.key, attr_name))
+        } else {
+            (self.map)(&self.key)
+        }
     }
 
     fn get_args(&self, cx: &LocalizationContext) -> FluentArgs {

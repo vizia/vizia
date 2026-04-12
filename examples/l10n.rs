@@ -1,6 +1,6 @@
+use chrono::Utc;
 #[allow(unused_imports)]
 use vizia::prelude::*;
-use chrono::Utc;
 
 pub struct AppData {
     name: Signal<String>,
@@ -99,12 +99,15 @@ fn main() -> Result<(), ApplicationError> {
 
             // Example of number formatting
             Label::new(cx, Localized::new("item-count").arg("count", item_count));
-            Label::new(cx, Localized::new("price").arg("amount", number_with_fraction(price.get(), 2)));
+            Label::new(
+                cx,
+                Localized::new("price").arg("amount", number_with_fraction(price.get(), 2)),
+            );
             Label::new(cx, Localized::new("percentage-complete").arg("percent", 75));
 
             // Example of date formatting with chrono (automatic millisecond conversion)
-            Label::new(cx, Localized::new("event-date").arg("date", FluentDateTime(event_date)));
-            Label::new(cx, Localized::new("last-updated").arg("date", FluentDateTime(Utc::now())));
+            Label::new(cx, Localized::new("event-date").arg("date", event_date));
+            Label::new(cx, Localized::new("last-updated").arg("date", Utc::now()));
         })
         .vertical_gap(Pixels(10.0))
         .space(Pixels(10.0));

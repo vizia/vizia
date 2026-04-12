@@ -145,6 +145,53 @@ impl ResourceManager {
         self.language = (**langs.first().unwrap()).clone();
     }
 
+    fn negotiate_translation_locale(&self, locale: &LanguageIdentifier) -> LanguageIdentifier {
+        if self.translations.contains_key(locale) {
+            return locale.clone();
+        }
+
+        let available = self
+            .translations
+            .keys()
+            .filter(|&lang| lang != &LanguageIdentifier::default())
+            .collect::<Vec<_>>();
+
+        if available.is_empty() {
+            return LanguageIdentifier::default();
+        }
+
+        let default = LanguageIdentifier::default();
+        let default_ref = &default;
+        let langs = fluent_langneg::negotiate::negotiate_languages(
+            &[locale],
+            &available,
+            Some(&default_ref),
+            fluent_langneg::NegotiationStrategy::Filtering,
+        );
+
+        langs.first().map(|lang| (**lang).clone()).unwrap_or(default)
+    }
+
+    pub fn translation_locales(&self, locale: &LanguageIdentifier) -> Vec<LanguageIdentifier> {
+        let mut locales = Vec::new();
+
+        if self.translations.contains_key(locale) {
+            locales.push(locale.clone());
+        }
+
+        let negotiated = self.negotiate_translation_locale(locale);
+        if !locales.contains(&negotiated) {
+            locales.push(negotiated);
+        }
+
+        let default = LanguageIdentifier::default();
+        if !locales.contains(&default) {
+            locales.push(default);
+        }
+
+        locales
+    }
+
     pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {
         let res = fluent_bundle::FluentResource::try_new(ftl)
             .expect("Failed to parse translation as FTL");
@@ -158,11 +205,8 @@ impl ResourceManager {
         &self,
         locale: &LanguageIdentifier,
     ) -> &FluentBundle<FluentResource> {
-        if let Some(bundle) = self.translations.get(locale) {
-            bundle
-        } else {
-            self.translations.get(&self.language).unwrap()
-        }
+        let locale = self.translation_locales(locale).into_iter().next().unwrap();
+        self.translations.get(&locale).unwrap()
     }
 
     pub fn mark_images_unused(&mut self) {
