@@ -1,9 +1,12 @@
 #[allow(unused_imports)]
 use vizia::prelude::*;
+use chrono::Utc;
 
 pub struct AppData {
     name: Signal<String>,
     emails: Signal<i32>,
+    item_count: Signal<i32>,
+    price: Signal<f64>,
 }
 
 pub enum AppEvent {
@@ -44,8 +47,11 @@ fn main() -> Result<(), ApplicationError> {
 
         let name = Signal::new("Audrey".to_owned());
         let emails = Signal::new(1);
+        let item_count = Signal::new(42);
+        let price = Signal::new(99.99);
+        let event_date = Utc::now();
 
-        AppData { name, emails }.build(cx);
+        AppData { name, emails, item_count, price }.build(cx);
 
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
@@ -87,6 +93,18 @@ fn main() -> Result<(), ApplicationError> {
 
             // Example of using terms - the -brand term is automatically available in all messages
             Label::new(cx, Localized::new("brand-welcome"));
+
+            // Example of message references - help-menu-save references menu-save
+            Label::new(cx, Localized::new("help-menu-save"));
+
+            // Example of number formatting
+            Label::new(cx, Localized::new("item-count").arg("count", item_count));
+            Label::new(cx, Localized::new("price").arg("amount", number_with_fraction(price.get(), 2)));
+            Label::new(cx, Localized::new("percentage-complete").arg("percent", 75));
+
+            // Example of date formatting with chrono (automatic millisecond conversion)
+            Label::new(cx, Localized::new("event-date").arg("date", FluentDateTime(event_date)));
+            Label::new(cx, Localized::new("last-updated").arg("date", FluentDateTime(Utc::now())));
         })
         .vertical_gap(Pixels(10.0))
         .space(Pixels(10.0));

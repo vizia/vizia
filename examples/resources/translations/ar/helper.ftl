@@ -28,3 +28,11 @@ form-submission = إرسال النموذج
     .label = إرسال النموذج
     .help-text = جميع الحقول مطلوبة
     .success-message = تم إرسال النموذج بنجاح
+
+## Number formatting examples
+item-count = لديك { $count } عناصر
+discount-percent = الخصم: { $discount }%
+
+## Date formatting examples
+joined-date = عضو منذ { DATETIME($date, year: "numeric", month: "long", day: "numeric") }
+last-login = آخر دخول: { DATETIME($date, month: "short", day: "numeric", hour: "2-digit", minute: "2-digit") }

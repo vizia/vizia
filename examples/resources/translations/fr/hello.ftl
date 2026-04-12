@@ -18,3 +18,11 @@ dialog = Dialogue
     .cancel-button = Non
 
 brand-welcome = Bienvenue à { -brand }!
+
+## Number formatting example
+price = Prix: { NUMBER($amount) }
+percentage-complete = { $percent }% complété
+
+## Date formatting example
+event-date = Date de l'événement: { DATETIME($date, weekday: "long", month: "long", day: "numeric", year: "numeric") }
+last-updated = Dernière mise à jour: { DATETIME($date, month: "short", day: "numeric", year: "2-digit", hour: "numeric", minute: "2-digit") }

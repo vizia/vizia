@@ -28,3 +28,11 @@ form-submission = Soumission du formulaire
     .label = Soumettre le formulaire
     .help-text = Tous les champs sont requis
     .success-message = Formulaire soumis avec succès
+
+## Number formatting examples
+item-count = Vous avez { $count } éléments
+discount-percent = Remise: { $discount }%
+
+## Date formatting examples
+joined-date = Membre depuis { DATETIME($date, year: "numeric", month: "long", day: "numeric") }
+last-login = Dernière connexion: { DATETIME($date, month: "short", day: "numeric", hour: "2-digit", minute: "2-digit") }

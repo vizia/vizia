@@ -28,3 +28,11 @@ form-submission = Form Submission
     .label = Submit Form
     .help-text = All fields are required
     .success-message = Form submitted successfully
+
+## Number formatting examples
+item-count = You have { $count } items
+discount-percent = Discount: { $discount }%
+
+## Date formatting examples
+joined-date = Member since { DATETIME($date, year: "numeric", month: "long", day: "numeric") }
+last-login = Last login: { DATETIME($date, month: "short", day: "numeric", hour: "2-digit", minute: "2-digit") }
