@@ -152,6 +152,7 @@
 //! ```
 use crate::context::LocalizationContext;
 use crate::prelude::*;
+use crate::resource::LocalizationIssue;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use fluent_bundle::FluentArgs;
 use fluent_bundle::FluentValue;
@@ -332,14 +333,16 @@ impl Clone for Localized {
 
 impl Localized {
     fn resolve_text(&self, cx: &LocalizationContext) -> String {
-        let locale = &cx.environment().locale.get();
+        let requested_locale = cx.environment().locale.get();
         let args = self.get_args(cx);
+        let mut saw_message = false;
 
-        for locale in cx.resource_manager.translation_locales(locale) {
+        for locale in cx.resource_manager.translation_locales(&requested_locale) {
             let bundle = cx.resource_manager.current_translation(&locale);
             let Some(message) = bundle.get_message(&self.key) else {
                 continue;
             };
+            saw_message = true;
 
             let value = if let Some(attr_name) = &self.attribute {
                 if let Some(attr) = message.get_attribute(attr_name) {
@@ -356,16 +359,36 @@ impl Localized {
             let mut err = vec![];
             let res = bundle.format_pattern(value, Some(&args), &mut err);
 
-            return if err.is_empty() {
-                (self.map)(&res)
-            } else {
-                format!("{} {{ERROR: {:?}}}", res, err)
-            };
+            if !err.is_empty() {
+                cx.resource_manager.report_localization_issue(LocalizationIssue::FormatError {
+                    key: self.key.clone(),
+                    locale: locale.to_string(),
+                    details: format!("{:?}", err),
+                });
+            }
+
+            return (self.map)(&res);
         }
 
         if let Some(attr_name) = &self.attribute {
+            if saw_message {
+                cx.resource_manager.report_localization_issue(LocalizationIssue::MissingAttribute {
+                    key: self.key.clone(),
+                    attribute: attr_name.clone(),
+                    requested_locale: requested_locale.to_string(),
+                });
+            } else {
+                cx.resource_manager.report_localization_issue(LocalizationIssue::MissingMessage {
+                    key: self.key.clone(),
+                    requested_locale: requested_locale.to_string(),
+                });
+            }
             (self.map)(&format!("{}.{}", &self.key, attr_name))
         } else {
+            cx.resource_manager.report_localization_issue(LocalizationIssue::MissingMessage {
+                key: self.key.clone(),
+                requested_locale: requested_locale.to_string(),
+            });
             (self.map)(&self.key)
         }
     }

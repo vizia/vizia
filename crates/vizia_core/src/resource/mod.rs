@@ -11,8 +11,8 @@ use crate::prelude::IntoCssStr;
 // use crate::view::Canvas;
 use fluent_bundle::{FluentBundle, FluentResource};
 use hashbrown::{HashMap, HashSet};
-use unic_langid::LanguageIdentifier;
 use std::fmt;
+use unic_langid::LanguageIdentifier;
 
 /// Error type for translation operations.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -27,12 +27,43 @@ impl fmt::Display for TranslationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             TranslationError::InvalidFtl(msg) => write!(f, "Invalid FTL syntax: {}", msg),
-            TranslationError::BundleError(msg) => write!(f, "Failed to add to translation bundle: {}", msg),
+            TranslationError::BundleError(msg) => {
+                write!(f, "Failed to add to translation bundle: {}", msg)
+            }
         }
     }
 }
 
 impl std::error::Error for TranslationError {}
+
+/// Structured diagnostics emitted by localization while resolving messages.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum LocalizationIssue {
+    /// A message key was not found in any fallback bundle.
+    MissingMessage { key: String, requested_locale: String },
+    /// A message attribute was not found in any fallback bundle.
+    MissingAttribute { key: String, attribute: String, requested_locale: String },
+    /// Fluent formatting reported errors while resolving a message.
+    FormatError { key: String, locale: String, details: String },
+}
+
+impl fmt::Display for LocalizationIssue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            LocalizationIssue::MissingMessage { key, requested_locale } => {
+                write!(f, "Missing localized message '{}' for locale '{}'.", key, requested_locale)
+            }
+            LocalizationIssue::MissingAttribute { key, attribute, requested_locale } => write!(
+                f,
+                "Missing localized attribute '{}.{}' for locale '{}'.",
+                key, attribute, requested_locale
+            ),
+            LocalizationIssue::FormatError { key, locale, details } => {
+                write!(f, "Formatting error for key '{}' in locale '{}': {}", key, locale, details)
+            }
+        }
+    }
+}
 
 pub(crate) enum ImageOrSvg {
     Svg(skia_safe::svg::Dom),
@@ -72,6 +103,7 @@ pub struct ResourceManager {
     pub language: LanguageIdentifier,
 
     pub image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>>,
+    pub localization_issue_handler: Option<Box<dyn Fn(&LocalizationIssue)>>,
 }
 
 impl ResourceManager {
@@ -143,6 +175,20 @@ impl ResourceManager {
 
             language: locale,
             image_loader: default_image_loader,
+            localization_issue_handler: None,
+        }
+    }
+
+    pub fn set_localization_issue_handler<F>(&mut self, handler: F)
+    where
+        F: 'static + Fn(&LocalizationIssue),
+    {
+        self.localization_issue_handler = Some(Box::new(handler));
+    }
+
+    pub fn report_localization_issue(&self, issue: LocalizationIssue) {
+        if let Some(handler) = &self.localization_issue_handler {
+            handler(&issue);
         }
     }
 
@@ -213,11 +259,17 @@ impl ResourceManager {
         locales
     }
 
-    pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) -> Result<(), TranslationError> {
+    pub fn add_translation(
+        &mut self,
+        lang: LanguageIdentifier,
+        ftl: String,
+    ) -> Result<(), TranslationError> {
         match fluent_bundle::FluentResource::try_new(ftl) {
             Ok(res) => {
-                let bundle =
-                    self.translations.entry(lang.clone()).or_insert_with(|| FluentBundle::new(vec![lang]));
+                let bundle = self
+                    .translations
+                    .entry(lang.clone())
+                    .or_insert_with(|| FluentBundle::new(vec![lang]));
                 bundle.add_resource(res).map_err(|errors| {
                     let msg = format!("{:?}", errors);
                     TranslationError::BundleError(msg)
@@ -226,7 +278,8 @@ impl ResourceManager {
                 Ok(())
             }
             Err((_, parse_errors)) => {
-                let msg = parse_errors.iter().map(|e| format!("{:?}", e)).collect::<Vec<_>>().join("; ");
+                let msg =
+                    parse_errors.iter().map(|e| format!("{:?}", e)).collect::<Vec<_>>().join("; ");
                 Err(TranslationError::InvalidFtl(msg))
             }
         }
