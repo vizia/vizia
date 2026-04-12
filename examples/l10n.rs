@@ -110,7 +110,10 @@ fn main() -> Result<(), ApplicationError> {
                 cx,
                 Localized::new("price").arg("amount", number_with_fraction(price.get(), 2)),
             );
-            Label::new(cx, Localized::new("percentage-complete").arg("percent", percentage(0.753, 1)));
+            Label::new(
+                cx,
+                Localized::new("percentage-complete").arg("percent", percentage(0.753, 1)),
+            );
 
             // Date formatting with chrono (timezone-aware + naive).
             Label::new(cx, Localized::new("event-date").arg("date", event_date));

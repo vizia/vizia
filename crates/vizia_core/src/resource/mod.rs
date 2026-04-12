@@ -130,11 +130,7 @@ fn datetime_format_pattern(args: &FluentArgs) -> String {
         pattern.push_str(&time_parts.join(":"));
     }
 
-    if pattern.is_empty() {
-        "%Y-%m-%d %H:%M:%S".to_string()
-    } else {
-        pattern
-    }
+    if pattern.is_empty() { "%Y-%m-%d %H:%M:%S".to_string() } else { pattern }
 }
 
 fn fluent_datetime<'a>(positional: &[FluentValue<'a>], named: &FluentArgs) -> FluentValue<'a> {
@@ -160,9 +156,7 @@ fn make_bundle(lang: LanguageIdentifier) -> FluentBundle<FluentResource> {
     let mut bundle = FluentBundle::new(vec![lang]);
 
     bundle.add_function("NUMBER", fluent_number).expect("Failed to register NUMBER function");
-    bundle
-        .add_function("DATETIME", fluent_datetime)
-        .expect("Failed to register DATETIME function");
+    bundle.add_function("DATETIME", fluent_datetime).expect("Failed to register DATETIME function");
 
     bundle
 }
@@ -387,10 +381,8 @@ impl ResourceManager {
     ) -> Result<(), TranslationError> {
         match fluent_bundle::FluentResource::try_new(ftl) {
             Ok(res) => {
-                let bundle = self
-                    .translations
-                    .entry(lang.clone())
-                    .or_insert_with(|| make_bundle(lang));
+                let bundle =
+                    self.translations.entry(lang.clone()).or_insert_with(|| make_bundle(lang));
                 bundle.add_resource(res).map_err(|errors| {
                     let msg = format!("{:?}", errors);
                     TranslationError::BundleError(msg)
