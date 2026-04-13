@@ -22,8 +22,8 @@ pub use chip::*;
 pub mod combobox;
 pub use combobox::*;
 
-pub mod datepicker;
-pub use datepicker::*;
+pub mod calendar;
+pub use calendar::*;
 
 pub mod divider;
 pub use divider::*;
@@ -55,8 +55,8 @@ pub use menu::*;
 pub mod menu_bar;
 pub use menu_bar::*;
 
-pub mod picklist;
-pub use picklist::*;
+pub mod select;
+pub use select::*;
 
 pub mod progressbar;
 pub use progressbar::*;

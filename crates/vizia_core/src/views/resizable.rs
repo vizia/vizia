@@ -25,11 +25,11 @@ impl ResizeStackDirection {
 
 /// A view that can be resized by clicking and dragging from one of its edges.
 ///
-/// The `ResizableStack` struct allows users to create a resizable container in a user interface.
+/// The `Resizable` struct allows users to create a resizable container in a user interface.
 /// It supports resizing in either a horizontal or vertical direction, as specified
 /// by the `direction` field. The resizing behavior is controlled via the `on_drag` callback, which
 /// is triggered during a drag operation.
-pub struct ResizableStack {
+pub struct Resizable {
     /// Tracks whether the edge of the view is currently being dragged.
     is_dragging: bool,
 
@@ -53,8 +53,8 @@ pub struct ResizableStack {
     start_size: f32,
 }
 
-impl ResizableStack {
-    /// Creates a new `ResizableStack` view.
+impl Resizable {
+    /// Creates a new `Resizable` view.
     /// The `size` parameter is a `Res<Units>` source for the stack size, updated when the stack is resized.
     /// The `direction` parameter specifies which edge of the stack is resizable.
     /// The `on_drag` callback is called with the new size when the stack is being resized.
@@ -112,8 +112,8 @@ impl ResizableStack {
     }
 }
 
-/// Events emitted by the `ResizableStack` view to indicate changes in dragging state.
-pub enum ResizableStackEvent {
+/// Events emitted by the `Resizable` view to indicate changes in dragging state.
+pub enum ResizableEvent {
     /// Emitted when the user starts dragging the resizable edge of the stack.
     /// This event is triggered when the user presses down on the resize handle.
     /// It enables dragging behavior and locks the cursor.
@@ -131,14 +131,14 @@ pub enum ResizableStackEvent {
     Reset,
 }
 
-impl View for ResizableStack {
+impl View for Resizable {
     fn element(&self) -> Option<&'static str> {
-        Some("resizable-stack")
+        Some("resizable")
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|resizable_stack_event, event| match resizable_stack_event {
-            ResizableStackEvent::StartDrag { cursor_x, cursor_y } => {
+        event.map(|resizable_event, event| match resizable_event {
+            ResizableEvent::StartDrag { cursor_x, cursor_y } => {
                 self.is_dragging = true;
                 cx.set_active(true);
                 cx.capture();
@@ -164,7 +164,7 @@ impl View for ResizableStack {
                 }
             }
 
-            ResizableStackEvent::StopDrag => {
+            ResizableEvent::StopDrag => {
                 self.is_dragging = false;
                 cx.set_active(false);
                 cx.release();
@@ -178,7 +178,7 @@ impl View for ResizableStack {
                 event.consume()
             }
 
-            ResizableStackEvent::Reset => {
+            ResizableEvent::Reset => {
                 self.is_dragging = false;
                 cx.set_active(false);
                 cx.release();
@@ -220,7 +220,7 @@ impl View for ResizableStack {
             }
 
             WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
-                cx.emit(ResizableStackEvent::StopDrag);
+                cx.emit(ResizableEvent::StopDrag);
             }
 
             _ => {}
@@ -228,7 +228,7 @@ impl View for ResizableStack {
     }
 }
 
-impl Handle<'_, ResizableStack> {
+impl Handle<'_, Resizable> {
     /// Sets a callback to be called when the stack is reset, i.e. when the resize handle is double-clicked.
     pub fn on_reset<F>(self, on_reset: F) -> Self
     where
@@ -256,14 +256,14 @@ impl View for ResizeHandle {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _| match window_event {
             WindowEvent::PressDown { mouse } if *mouse => {
-                cx.emit(ResizableStackEvent::StartDrag {
+                cx.emit(ResizableEvent::StartDrag {
                     cursor_x: cx.mouse.cursor_x,
                     cursor_y: cx.mouse.cursor_y,
                 });
             }
 
             WindowEvent::MouseDoubleClick(button) if *button == MouseButton::Left => {
-                cx.emit(ResizableStackEvent::Reset);
+                cx.emit(ResizableEvent::Reset);
             }
 
             _ => {}

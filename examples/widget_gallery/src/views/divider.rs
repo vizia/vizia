@@ -10,13 +10,9 @@ pub fn divider(cx: &mut Context) {
 
         Markdown::new(cx, "### Basic divider");
 
-        DemoRegion::new(
-            cx,
-            |cx| {
-                Divider::new(cx);
-            },
-            r#"Divider::new(cx);"#,
-        );
+        DemoRegion::new(cx, "Basic Divider", |cx| {
+            Divider::new(cx);
+        });
     })
     .class("panel");
 }

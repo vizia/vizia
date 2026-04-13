@@ -168,7 +168,7 @@ where
                             .width(Stretch(1.0))
                             .min_width(Auto);
                         } else {
-                            ResizableStack::new(
+                            Resizable::new(
                                 cx,
                                 width_signal.map(|value| Pixels(*value)),
                                 ResizeStackDirection::Right,

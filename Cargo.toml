@@ -170,12 +170,12 @@ name = "window_modifiers"
 path = "examples/window_modifiers.rs"
 
 [[example]]
-name = "datepicker"
-path = "examples/views/datepicker.rs"
+name = "calendar"
+path = "examples/views/calendar.rs"
 
 [[example]]
-name = "picklist"
-path = "examples/views/picklist.rs"
+name = "select"
+path = "examples/views/select.rs"
 
 [[example]]
 name = "combobox"
@@ -348,8 +348,8 @@ name = "divider"
 path = "examples/views/divider.rs"
 
 [[example]]
-name = "resizable_stack"
-path = "examples/views/resizable_stack.rs"
+name = "resizable"
+path = "examples/views/resizable.rs"
 
 [[example]]
 name = "variables"

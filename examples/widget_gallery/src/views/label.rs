@@ -15,13 +15,9 @@ A label can be used to display a string of text.
 
         Markdown::new(cx, "### Basic label");
 
-        DemoRegion::new(
-            cx,
-            |cx| {
-                Label::new(cx, "Hello Vizia");
-            },
-            r#"Label::new(cx, "Hello Vizia");"#,
-        );
+        DemoRegion::new(cx, "Basic Label", |cx| {
+            Label::new(cx, "Hello Vizia");
+        });
     })
     .class("panel");
 }

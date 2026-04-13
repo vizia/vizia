@@ -39,7 +39,7 @@ fn theme_selection_dropdown(
     theme_options: Signal<Vec<Signal<&'static str>>>,
     selected_theme: Signal<Option<usize>>,
 ) {
-    PickList::new(cx, theme_options, selected_theme, true)
+    Select::new(cx, theme_options, selected_theme, true)
         .on_select(|cx, index| cx.emit(AppEvent::SetThemeMode(index)))
         .width(Pixels(100.0))
         .tooltip(|cx| {
@@ -171,13 +171,13 @@ fn main() -> Result<(), ApplicationError> {
                     },
                 ),
 
-                "Datepicker" => TabPair::new(
+                "Calendar" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
                         ScrollView::new(cx, |cx| {
-                            datepicker(cx);
+                            calendar(cx);
                         })
                         .class("widgets");
                     },
@@ -315,13 +315,13 @@ fn main() -> Result<(), ApplicationError> {
                     },
                 ),
 
-                "Picklist" => TabPair::new(
+                "Select" => TabPair::new(
                     move |cx| {
                         Label::new(cx, item).class("tab-name").hoverable(false);
                     },
                     |cx| {
                         ScrollView::new(cx, |cx| {
-                            picklist(cx);
+                            select(cx);
                         })
                         .class("widgets");
                     },

@@ -47,12 +47,12 @@ fn main() -> Result<(), ApplicationError> {
         AppState { _options: options, selected_option }.build(cx);
 
         ExamplePage::vertical(cx, |cx| {
-            PickList::new(cx, options, selected_option, true)
+            Select::new(cx, options, selected_option, true)
                 .placeholder("Select an option...")
                 .on_select(|cx, index| cx.emit(AppEvent::SetOption(index)))
                 .width(Pixels(150.0));
         });
     })
-    .title("Picklist")
+    .title("Select")
     .run()
 }

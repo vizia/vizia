@@ -5,7 +5,7 @@ use crate::icons::{ICON_CHECK, ICON_CHEVRON_DOWN};
 use crate::prelude::*;
 
 /// A view which allows the user to select an item from a dropdown list.
-pub struct PickList {
+pub struct Select {
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
     placeholder: Signal<String>,
     is_open: Signal<bool>,
@@ -13,12 +13,12 @@ pub struct PickList {
     max_selected: Signal<usize>,
 }
 
-pub(crate) enum PickListEvent {
+pub(crate) enum SelectEvent {
     SetOption(usize),
 }
 
-impl PickList {
-    /// Creates a new [PickList] view.
+impl Select {
+    /// Creates a new [Select] view.
     pub fn new<L, S, V, T>(
         cx: &mut Context,
         list: L,
@@ -103,7 +103,7 @@ impl PickList {
                                 }),
                             )
                             .on_select(|cx, index| {
-                                cx.emit(PickListEvent::SetOption(index));
+                                cx.emit(SelectEvent::SetOption(index));
                                 cx.emit(PopupEvent::Close);
                             })
                             .focused(true);
@@ -117,14 +117,14 @@ impl PickList {
     }
 }
 
-impl View for PickList {
+impl View for Select {
     fn element(&self) -> Option<&'static str> {
-        Some("picklist")
+        Some("select")
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|picklist_event, _| match picklist_event {
-            PickListEvent::SetOption(index) => {
+        event.map(|select_event, _| match select_event {
+            SelectEvent::SetOption(index) => {
                 if let Some(callback) = &self.on_select {
                     (callback)(cx, *index);
                 }
@@ -153,7 +153,7 @@ impl View for PickList {
     }
 }
 
-impl Handle<'_, PickList> {
+impl Handle<'_, Select> {
     /// Sets the placeholder text that appears when the textbox has no value.
     pub fn placeholder<P: ToStringLocalized + Clone + 'static>(
         self,
@@ -163,7 +163,7 @@ impl Handle<'_, PickList> {
         self.bind(placeholder, move |handle| {
             let val = placeholder.get();
             let txt = val.to_string_local(&handle);
-            handle.modify(|picklist| picklist.placeholder.set(txt));
+            handle.modify(|select| select.placeholder.set(txt));
         })
     }
 
@@ -172,7 +172,7 @@ impl Handle<'_, PickList> {
     where
         F: 'static + Fn(&mut EventContext, usize),
     {
-        self.modify(|picklist: &mut PickList| picklist.on_select = Some(Box::new(callback)))
+        self.modify(|select: &mut Select| select.on_select = Some(Box::new(callback)))
     }
 
     /// Sets the minimum number of selected items.
@@ -180,7 +180,7 @@ impl Handle<'_, PickList> {
         let min_selected = min_selected.to_signal(self.cx);
         self.bind(min_selected, move |handle| {
             let min_selected = min_selected.get();
-            handle.modify(|picklist: &mut PickList| picklist.min_selected.set(min_selected));
+            handle.modify(|select: &mut Select| select.min_selected.set(min_selected));
         })
     }
 
@@ -189,7 +189,7 @@ impl Handle<'_, PickList> {
         let max_selected = max_selected.to_signal(self.cx);
         self.bind(max_selected, move |handle| {
             let max_selected = max_selected.get();
-            handle.modify(|picklist: &mut PickList| picklist.max_selected.set(max_selected));
+            handle.modify(|select: &mut Select| select.max_selected.set(max_selected));
         })
     }
 }

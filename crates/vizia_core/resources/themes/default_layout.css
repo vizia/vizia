@@ -163,7 +163,7 @@ chip > .close-icon svg {
 
 /* DATEPICKER */
 
-datepicker {
+calendar {
     width: auto;
     height: auto;
     padding: 4px;
@@ -171,47 +171,47 @@ datepicker {
     alignment: center;
 }
 
-.datepicker-header {
+.calendar-header {
     width: auto;
     height: auto;
     horizontal-gap: 4px;
 }
 
-.datepicker-header picklist popup {
+.calendar-header select popup {
     left: 1s;
     right: 1s;
     width: auto;
 }
 
-.datepicker-calendar {
+.calendar-calendar {
     width: auto;
     height: auto;
 }
 
-.datepicker-calendar-headers {
+.calendar-calendar-headers {
     alignment: center;
     height: auto;
 }
 
-.datepicker-calendar-header {
+.calendar-calendar-header {
     alignment: center;
     width: 32px;
     height: 32px;
 }
 
-.datepicker-calendar-day {
+.calendar-calendar-day {
     width: 32px;
     height: 32px;
     alignment: center;
 }
 
-.datepicker-calendar-day-disabled {
+.calendar-calendar-day-disabled {
     width: 32px;
     height: 32px;
     alignment: center;
 }
 
-.datepicker-selected-date {
+.calendar-selected-date {
     left: 1s;
     right: 1s;
 }
@@ -511,7 +511,7 @@ submenu divider {
 
 /* PICKLIST */
 
-picklist {
+select {
     width: auto;
     height: 32px;
     min-width: 64px;
@@ -549,8 +549,8 @@ rating {
     layout-type: row;
 }
 
-/* RESIZABLE STACK */
-resizable-stack > resize-handle {
+/* RESIZABLE */
+resizable > resize-handle {
     opacity: 0;
     width: 4px;
     height: 1s;
@@ -560,12 +560,12 @@ resizable-stack > resize-handle {
     cursor: ew-resize;
 }
 
-resizable-stack.left > resize-handle {
+resizable.left > resize-handle {
     left: 0px;
     translate: -50% 0%;
 }
 
-resizable-stack.horizontal > resize-handle {
+resizable.horizontal > resize-handle {
     width: 1s;
     height: 4px;
     top: 1s;
@@ -574,13 +574,13 @@ resizable-stack.horizontal > resize-handle {
     cursor: ns-resize;
 }
 
-resizable-stack.top > resize-handle {
+resizable.top > resize-handle {
     top: 0px;
     translate: 0% -50%;
 }
 
-resizable-stack:active > resize-handle,
-resizable-stack > resize-handle:hover {
+resizable:active > resize-handle,
+resizable > resize-handle:hover {
     opacity: 1;
 }
 
@@ -700,7 +700,7 @@ spinbox .spinbox-value {
     alignment: center;
 }
 
-spinbox picklist.spinbox-value dropdown {
+spinbox select.spinbox-value dropdown {
     width: 1s;
     left: 0px;
     right: 0px;

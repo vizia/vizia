@@ -29,30 +29,18 @@ pub fn list(cx: &mut Context) {
 
         Markdown::new(cx, "### Basic list");
 
-        DemoRegion::new(
-            cx,
-            move |cx| {
-                List::new(cx, list, |cx, index, item| {
-                    Label::new(cx, item)
-                        .toggle_class("dark", index % 2 == 0)
-                        .width(Stretch(1.0))
-                        .height(Pixels(30.0))
-                        .hoverable(false);
-                })
-                .selectable(selectable)
-                .show_vertical_scrollbar(show_vertical_scrollbar)
-                .size(Pixels(300.0));
-            },
-            r#"List::new(cx, list, |cx, index, item| {
-    Label::new(cx, item)
-        .toggle_class("dark", index % 2 == 0)
-        .width(Stretch(1.0))
-        .height(Pixels(30.0));
-})
+        DemoRegion::new(cx, "Basic List", move |cx| {
+            List::new(cx, list, |cx, index, item| {
+                Label::new(cx, item)
+                    .toggle_class("dark", index % 2 == 0)
+                    .width(Stretch(1.0))
+                    .height(Pixels(30.0))
+                    .hoverable(false);
+            })
             .selectable(selectable)
             .show_vertical_scrollbar(show_vertical_scrollbar)
-        .size(Pixels(300.0));"#,
-        );
+            .size(Pixels(300.0));
+        });
     })
     .class("panel");
 }

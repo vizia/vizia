@@ -299,7 +299,7 @@ fn theme_selection_dropdown(
     theme_options: Signal<Vec<Localized>>,
     selected_theme: Signal<Option<usize>>,
 ) {
-    PickList::new(cx, theme_options, selected_theme, true)
+    Select::new(cx, theme_options, selected_theme, true)
         .min_selected(1)
         .on_select(|cx, index| cx.emit(ControlsEvent::SetThemeMode(index)))
         .width(Pixels(100.0))
@@ -315,7 +315,7 @@ fn primary_color_selection_dropdown(
     color_options: Signal<Vec<Localized>>,
     selected_color: Signal<Option<usize>>,
 ) {
-    PickList::new(cx, color_options, selected_color, true)
+    Select::new(cx, color_options, selected_color, true)
         .min_selected(1)
         .on_select(|cx, index| cx.emit(ControlsEvent::SetPrimaryThemeColor(index)))
         .width(Pixels(120.0))
@@ -331,7 +331,7 @@ fn direction_selection_dropdown(cx: &mut Context, direction_options: Signal<Vec<
         Direction::LeftToRight => Some(0),
         Direction::RightToLeft => Some(1),
     });
-    PickList::new(cx, direction_options, selected_direction, true)
+    Select::new(cx, direction_options, selected_direction, true)
         .min_selected(1)
         .on_select(|cx, index| cx.emit(ControlsEvent::SetDirection(index)))
         .width(Pixels(100.0))
@@ -347,7 +347,7 @@ fn language_selection_dropdown(
     language_options: Signal<Vec<Localized>>,
     selected_language: Signal<Option<usize>>,
 ) {
-    PickList::new(cx, language_options, selected_language, true)
+    Select::new(cx, language_options, selected_language, true)
         .min_selected(1)
         .on_select(|cx, index| cx.emit(ControlsEvent::SetLanguage(index)))
         .width(Pixels(110.0))

@@ -3,7 +3,7 @@ use chrono::{Datelike, NaiveDate, Weekday};
 use crate::prelude::*;
 
 /// A control used to select a date.
-pub struct Datepicker {
+pub struct Calendar {
     view_date: Signal<NaiveDate>,
     on_select: Option<Box<dyn Fn(&mut EventContext, NaiveDate)>>,
 }
@@ -26,7 +26,7 @@ const MONTHS: [&str; 12] = [
 const DAYS_HEADER: [&str; 7] =
     ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-pub(crate) enum DatepickerEvent {
+pub(crate) enum CalendarEvent {
     IncrementMonth,
     DecrementMonth,
     SelectMonth(usize),
@@ -38,7 +38,7 @@ pub(crate) enum DatepickerEvent {
     SelectDate(NaiveDate),
 }
 
-impl Datepicker {
+impl Calendar {
     fn set_view_date(&mut self, year: i32, month: u32, day: u32) {
         self.view_date.set(NaiveDate::from_ymd_opt(year, month, day).unwrap());
     }
@@ -128,7 +128,7 @@ impl Datepicker {
         }
     }
 
-    /// Create a new [Datepicker] view.
+    /// Create a new [Calendar] view.
     pub fn new<R, D>(cx: &mut Context, date: R) -> Handle<Self>
     where
         R: Res<D> + Clone + 'static,
@@ -147,36 +147,36 @@ impl Datepicker {
             HStack::new(cx, |cx| {
                 HStack::new(cx, move |cx| {
                     Button::new(cx, |cx| Label::new(cx, "<"))
-                        .on_press(|ex| ex.emit(DatepickerEvent::DecrementMonth));
+                        .on_press(|ex| ex.emit(CalendarEvent::DecrementMonth));
 
-                    PickList::new(cx, month_options, selected_month, false)
-                        .on_select(|ex, index| ex.emit(DatepickerEvent::SelectMonth(index)))
+                    Select::new(cx, month_options, selected_month, false)
+                        .on_select(|ex, index| ex.emit(CalendarEvent::SelectMonth(index)))
                         .width(Stretch(1.0));
 
                     Button::new(cx, |cx| Label::new(cx, ">"))
-                        .on_press(|ex| ex.emit(DatepickerEvent::IncrementMonth));
+                        .on_press(|ex| ex.emit(CalendarEvent::IncrementMonth));
                 })
                 .width(Pixels(140.0))
                 .class("spinbox");
 
                 HStack::new(cx, |cx| {
                     Button::new(cx, |cx| Label::new(cx, "-"))
-                        .on_press(|ex| ex.emit(DatepickerEvent::DecrementYear));
+                        .on_press(|ex| ex.emit(CalendarEvent::DecrementYear));
 
-                    let view_date = cx.data::<Datepicker>().view_date;
+                    let view_date = cx.data::<Calendar>().view_date;
                     let year = view_date.map(|date| date.year());
                     Textbox::new(cx, year)
                         .width(Stretch(1.0))
                         .padding(Pixels(1.0))
-                        .on_edit(|ex, v| ex.emit(DatepickerEvent::SelectYear(v)));
+                        .on_edit(|ex, v| ex.emit(CalendarEvent::SelectYear(v)));
 
                     Button::new(cx, |cx| Label::new(cx, "+"))
-                        .on_press(|ex| ex.emit(DatepickerEvent::IncrementYear));
+                        .on_press(|ex| ex.emit(CalendarEvent::IncrementYear));
                 })
                 .width(Pixels(100.0))
                 .class("spinbox");
             })
-            .class("datepicker-header");
+            .class("calendar-header");
 
             Divider::new(cx);
 
@@ -185,10 +185,10 @@ impl Datepicker {
                 HStack::new(cx, |cx| {
                     for h in DAYS_HEADER {
                         Label::new(cx, Localized::new(h).map(|day| day[0..2].to_string()))
-                            .class("datepicker-calendar-header");
+                            .class("calendar-calendar-header");
                     }
                 })
-                .class("datepicker-calendar-headers");
+                .class("calendar-calendar-headers");
 
                 // Numbered days in a grid
                 VStack::new(cx, move |cx| {
@@ -196,7 +196,7 @@ impl Datepicker {
                         HStack::new(cx, |cx| {
                             for x in 0..7 {
                                 let selected_date = selected_date_signal;
-                                let view_date = cx.data::<Datepicker>().view_date;
+                                let view_date = cx.data::<Calendar>().view_date;
                                 Label::new(cx, "").bind(view_date, move |handle| {
                                     let view_date = view_date.get();
                                     let selected_date = selected_date;
@@ -209,15 +209,15 @@ impl Datepicker {
 
                                         handle
                                             .text(day_number.to_string())
-                                            .class("datepicker-calendar-day")
+                                            .class("calendar-calendar-day")
                                             .navigable(!disabled)
                                             .toggle_class(
-                                                "datepicker-calendar-day-disabled",
+                                                "calendar-calendar-day-disabled",
                                                 disabled,
                                             )
                                             .on_press(move |ex| {
                                                 if !disabled {
-                                                    ex.emit(DatepickerEvent::SelectDate(
+                                                    ex.emit(CalendarEvent::SelectDate(
                                                         NaiveDate::from_ymd_opt(
                                                             view_date.year(),
                                                             view_date.month(),
@@ -243,47 +243,47 @@ impl Datepicker {
                 .width(Pixels(32.0 * 7.0))
                 .height(Pixels(32.0 * 6.0));
             })
-            .class("datepicker-calendar");
+            .class("calendar-calendar");
         })
     }
 }
 
-impl View for Datepicker {
+impl View for Calendar {
     fn element(&self) -> Option<&'static str> {
-        Some("datepicker")
+        Some("calendar")
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|e, _| match e {
-            DatepickerEvent::IncrementMonth => {
+            CalendarEvent::IncrementMonth => {
                 self.shift_month(1);
             }
 
-            DatepickerEvent::DecrementMonth => {
+            CalendarEvent::DecrementMonth => {
                 self.shift_month(-1);
             }
 
-            DatepickerEvent::SelectMonth(month) => {
+            CalendarEvent::SelectMonth(month) => {
                 let view_date = self.view_date.get();
                 self.set_view_date(view_date.year(), *month as u32 + 1, view_date.day());
             }
 
-            DatepickerEvent::IncrementYear => {
+            CalendarEvent::IncrementYear => {
                 self.shift_year(1);
             }
 
-            DatepickerEvent::DecrementYear => {
+            CalendarEvent::DecrementYear => {
                 self.shift_year(-1);
             }
 
-            DatepickerEvent::SelectYear(year) => {
+            CalendarEvent::SelectYear(year) => {
                 if let Ok(year) = year.parse::<i32>() {
                     let view_date = self.view_date.get();
                     self.set_view_date(year, view_date.month(), view_date.day());
                 }
             }
 
-            DatepickerEvent::SelectDate(date) => {
+            CalendarEvent::SelectDate(date) => {
                 if let Some(callback) = &self.on_select {
                     (callback)(cx, *date);
                 }
@@ -292,9 +292,9 @@ impl View for Datepicker {
     }
 }
 
-impl Handle<'_, Datepicker> {
-    /// Set the callback triggered when a date is selected from the [Datepicker] view.
+impl Handle<'_, Calendar> {
+    /// Set the callback triggered when a date is selected from the [Calendar] view.
     pub fn on_select<F: 'static + Fn(&mut EventContext, NaiveDate)>(self, callback: F) -> Self {
-        self.modify(|datepicker: &mut Datepicker| datepicker.on_select = Some(Box::new(callback)))
+        self.modify(|calendar: &mut Calendar| calendar.on_select = Some(Box::new(callback)))
     }
 }

@@ -29,15 +29,9 @@ pub fn knob(cx: &mut Context) {
 
         Divider::new(cx);
 
-        DemoRegion::new(
-            cx,
-            move |cx| {
-                Knob::new(cx, 0.5, value, false)
-                    .on_change(|cx, val| cx.emit(KnobEvent::SetValue(val)));
-            },
-            r#"Knob::new(cx, 0.5, KnobState::value, false)
-    .on_changing(|cx, val| cx.emit(KnobEvent::SetValue(val)));"#,
-        );
+        DemoRegion::new(cx, "Knob", move |cx| {
+            Knob::new(cx, 0.5, value, false).on_change(|cx, val| cx.emit(KnobEvent::SetValue(val)));
+        });
     })
     .class("panel");
 }

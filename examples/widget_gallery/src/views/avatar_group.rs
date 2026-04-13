@@ -17,7 +17,7 @@ An avatar is used to visually represent a person or entity and can contain text,
         Divider::new(cx);
 
         Markdown::new(cx, "### Basic avatar group");
-        DemoRegion::new(cx, |cx|{
+        DemoRegion::new(cx, "Avatar Group", |cx|{
             AvatarGroup::new(cx, |cx|{
                 Avatar::new(cx, |cx|{
                     Svg::new(cx, ICON_USER);
@@ -31,9 +31,7 @@ An avatar is used to visually represent a person or entity and can contain text,
                     Svg::new(cx, ICON_USER);
                 });
             });
-        },r#"Avatar::new(cx, |cx|{
-    Svg::new(cx, ICON_USER)
-});"#);
+        });
 
 
     }).class("panel");

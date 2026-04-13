@@ -8,13 +8,9 @@ pub fn svg(cx: &mut Context) {
 
         Divider::new(cx);
 
-        DemoRegion::new(
-            cx,
-            |cx| {
-                Svg::new(cx, ICON_USER);
-            },
-            r#"Svg::new(cx, ICON_USER);"#,
-        );
+        DemoRegion::new(cx, "Basic Svg", |cx| {
+            Svg::new(cx, ICON_USER);
+        });
     })
     .class("panel");
 }

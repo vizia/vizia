@@ -31,14 +31,9 @@ pub fn slider(cx: &mut Context) {
 
         Markdown::new(cx, "### Basic slider");
 
-        DemoRegion::new(
-            cx,
-            move |cx| {
-                Slider::new(cx, value).on_change(|cx, value| cx.emit(SliderEvent::SetValue(value)));
-            },
-            r#"Slider::new(cx, SliderData::value)
-    .on_changing(|cx, value| cx.emit(SliderEvent::SetValue(value)));"#,
-        );
+        DemoRegion::new(cx, "Basic Slider", move |cx| {
+            Slider::new(cx, value).on_change(|cx, value| cx.emit(SliderEvent::SetValue(value)));
+        });
     })
     .class("panel");
 }

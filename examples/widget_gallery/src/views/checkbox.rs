@@ -24,7 +24,7 @@ pub fn checkbox(cx: &mut Context) {
     let check_a = Signal::new(true);
     CheckboxData { check_a }.build(cx);
 
-    VStack::new(cx, |cx| {
+    VStack::new(cx, move |cx| {
         Markdown::new(cx, "# Checkbox
 A checkbox can be used to display a boolean value, or to select one or more items from a set of options.        
         ");
@@ -33,17 +33,16 @@ A checkbox can be used to display a boolean value, or to select one or more item
 
         Markdown::new(cx, "### Basic checkboxes");
 
-        DemoRegion::new(cx, move |cx| {
+        DemoRegion::new(cx, "Basic Checkboxes", move |cx| {
             Checkbox::new(cx, check_a)
                 .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA));
-        }, r#"Checkbox::new(cx, CheckboxData::check_a)
-    .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA));"#);
+        });
 
         Markdown::new(cx, "### Labelled checkbox
-A `HStack` can be used to add a label to a checkbox. The describing modifier can be used to link a label to a particular checkbox. Pressing on the label will then toggle the corresponding checkbox.        
+A `HStack` can be used to add a label to a checkbox. The describing modifier can be used to link a label to a particular checkbox. Pressing on the label will then toggle the corresponding checkbox.
         ");
 
-        DemoRegion::new(cx, move |cx| {
+        DemoRegion::new(cx, "Labelled Checkbox", move |cx| {
             HStack::new(cx, |cx| {
                 Checkbox::new(cx, check_a)
                     .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA))
@@ -53,14 +52,7 @@ A `HStack` can be used to add a label to a checkbox. The describing modifier can
             .size(Auto)
             .alignment(Alignment::Center)
             .horizontal_gap(Pixels(8.0));
-        }, r#"HStack::new(cx, |cx| {
-    Checkbox::new(cx, CheckboxData::check_a)
-        .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA))
-        .id("check");
-    Label::new(cx, "Label").describing("check");
-})
-.size(Auto)
-.horizontal_gap(Pixels(8.0));"#);
+        });
     })
     .class("panel");
 }

@@ -36,25 +36,15 @@ pub fn virtual_list(cx: &mut Context) {
 
         Markdown::new(cx, "### Basic virtual list");
 
-        DemoRegion::new(
-            cx,
-            move |cx| {
-                VirtualList::new(cx, list, 40.0, |cx, index, item| {
-                    Label::new(cx, item).toggle_class("dark", index % 2 == 0)
-                })
-                .selected(selected)
-                .on_select(|cx, index| cx.emit(VirtualListEvent::SetSelected(index)))
-                .selection_follows_focus(selection_follows_focus)
-                .size(Pixels(300.0));
-            },
-            r#"VirtualList::new(cx, list, 40.0, |cx, index, item| {
-        Label::new(cx, item).toggle_class("dark", index % 2 == 0)
-    })
-    .selected(selected)
-    .on_select(|cx, index| cx.emit(VirtualListEvent::SetSelected(index)))
-    .selection_follows_focus(selection_follows_focus)
-    .size(Pixels(300.0));"#,
-        );
+        DemoRegion::new(cx, "Basic Virtual List", move |cx| {
+            VirtualList::new(cx, list, 40.0, |cx, index, item| {
+                Label::new(cx, item).toggle_class("dark", index % 2 == 0)
+            })
+            .selected(selected)
+            .on_select(|cx, index| cx.emit(VirtualListEvent::SetSelected(index)))
+            .selection_follows_focus(selection_follows_focus)
+            .size(Pixels(300.0));
+        });
     })
     .class("panel");
 }

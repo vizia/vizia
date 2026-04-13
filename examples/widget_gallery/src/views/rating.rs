@@ -29,15 +29,10 @@ pub fn rating(cx: &mut Context) {
 
         Markdown::new(cx, "### Basic rating");
 
-        DemoRegion::new(
-            cx,
-            move |cx| {
-                Rating::new(cx, 5, rating)
-                    .on_change(|ex, rating| ex.emit(RatingEvent::SetRating(rating)));
-            },
-            r#"Rating::new(cx, 5, RatingData::rating)
-    .on_change(|ex, rating| ex.emit(RatingEvent::SetRating(rating)));"#,
-        );
+        DemoRegion::new(cx, "Basic Rating", move |cx| {
+            Rating::new(cx, 5, rating)
+                .on_change(|ex, rating| ex.emit(RatingEvent::SetRating(rating)));
+        });
     })
     .class("panel");
 }

@@ -51,6 +51,7 @@ A radio button can be used to select an option from a set of options.
 
         DemoRegion::new(
             cx,
+            "Basic Radio Button",
             move |cx| {
                 let first_selected = Memo::new(move |_| option.get() == Options::First);
                 let second_selected = Memo::new(move |_| option.get() == Options::Second);
@@ -59,8 +60,7 @@ A radio button can be used to select an option from a set of options.
                 RadioButton::new(cx, first_selected).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::First)));
                 RadioButton::new(cx, second_selected).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Second)));
                 RadioButton::new(cx, third_selected).on_select(|cx| cx.emit(RadioEvent::SetOption(Options::Third)));
-            }, r#"TODO"#
-        );
+            });
 
         Markdown::new(cx, "### Radio button and label
 The describing modifier can be used to link a label to a particular radiobutton. Pressing on the label will then toggle the corresponding radiobutton. Alternatively, a FormControl can be used.        
@@ -68,6 +68,7 @@ The describing modifier can be used to link a label to a particular radiobutton.
 
         DemoRegion::new(
             cx,
+            "Radio Button and Label",
             move |cx| {
                 VStack::new(cx, |cx|{
                     HStack::new(cx, |cx| {
@@ -103,8 +104,7 @@ The describing modifier can be used to link a label to a particular radiobutton.
                 })
                 .vertical_gap(Pixels(4.0))
                 .size(Auto);
-            }, r#"TODO"#
-        );
+            });
     })
     .class("panel");
 }

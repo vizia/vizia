@@ -48,13 +48,9 @@ pub fn progressbar(cx: &mut Context) {
 
         Markdown::new(cx, "### Basic progress bar");
 
-        DemoRegion::new(
-            cx,
-            move |cx| {
-                ProgressBar::horizontal(cx, progress).width(Pixels(300.0));
-            },
-            r#"ProgressBar::horizontal(cx, ProgressData::progress).width(Pixels(300.0));"#,
-        );
+        DemoRegion::new(cx, "Basic Progress Bar", move |cx| {
+            ProgressBar::horizontal(cx, progress).width(Pixels(300.0));
+        });
     })
     .class("panel");
 }

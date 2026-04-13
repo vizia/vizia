@@ -71,7 +71,7 @@ fn main() -> Result<(), ApplicationError> {
         AppData { selected_option, start_date, end_date }.build(cx);
 
         VStack::new(cx, |cx| {
-            PickList::new(cx, options, selected_option, true)
+            Select::new(cx, options, selected_option, true)
                 .on_select(|cx, index| cx.emit(AppEvent::SetChoice(index)));
 
             input_box(cx, start_date_text, AppEvent::SetStartDate);

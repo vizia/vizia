@@ -82,11 +82,11 @@ self.date.set(*date);
 ```rust
 // Before
 Label::new(cx, AppData::count);
-Datepicker::new(cx, AppState::date);
+Calendar::new(cx, AppState::date);
 
 // After
 Label::new(cx, count);
-Datepicker::new(cx, date);
+Calendar::new(cx, date);
 ```
 
 ### 5) Collection shapes

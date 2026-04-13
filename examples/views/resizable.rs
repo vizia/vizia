@@ -18,28 +18,28 @@ const STYLE: &str = r#"
         background-color: #dcdcdc;
     }
 
-    resizable-stack {
+    resizable {
         background-color: #b1b1b1;
     }
 
-    resizable-stack.vertical {
+    resizable.vertical {
         background-color: #878787;
         min-width: 100px;
         max-width: 500px;
     }
 
-    resizable-stack.horizontal {
+    resizable.horizontal {
         min-height: 100px;
         max-height: 500px;
     }
 
-    resizable-stack > resize-handle {
+    resizable > resize-handle {
         background-color: #73a3cd;
         opacity: 0;
     }
 
-    resizable-stack:active > resize-handle,
-    resizable-stack > resize-handle:hover {
+    resizable:active > resize-handle,
+    resizable > resize-handle:hover {
         opacity: 1;
         transition: opacity 200ms 200ms ease-in-out;
     }
@@ -61,7 +61,7 @@ fn main() -> Result<(), ApplicationError> {
 
         ExamplePage::new(cx, |cx| {
             VStack::new(cx, |cx| {
-                ResizableStack::new(
+                Resizable::new(
                     cx,
                     top_height,
                     ResizeStackDirection::Top,
@@ -72,7 +72,7 @@ fn main() -> Result<(), ApplicationError> {
                     top_height.set(Pixels(140.0));
                 });
 
-                ResizableStack::new(
+                Resizable::new(
                     cx,
                     bottom_height,
                     ResizeStackDirection::Bottom,
@@ -87,7 +87,7 @@ fn main() -> Result<(), ApplicationError> {
             .size(Stretch(1.0));
 
             VStack::new(cx, |cx| {
-                ResizableStack::new(
+                Resizable::new(
                     cx,
                     left_width,
                     ResizeStackDirection::Left,
@@ -98,7 +98,7 @@ fn main() -> Result<(), ApplicationError> {
                     left_width.set(Pixels(180.0));
                 });
 
-                ResizableStack::new(
+                Resizable::new(
                     cx,
                     right_width,
                     ResizeStackDirection::Right,
@@ -115,7 +115,7 @@ fn main() -> Result<(), ApplicationError> {
         .class("demo-root")
         .size(Stretch(1.0));
     })
-    .title("Resizable Stack")
+    .title("Resizable")
     .inner_size((800, 600))
     .run()
 }

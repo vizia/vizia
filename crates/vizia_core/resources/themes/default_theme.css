@@ -391,40 +391,40 @@ combobox .list label:checked {
 
 /* DATEPICKER */
 
-datepicker {
+calendar {
     background-color: var(--background);
     corner-radius: 4px;
     border-color: var(--border);
     border-width: 1px;
 }
 
-.datepicker-header textbox {
+.calendar-header textbox {
     background-color: transparent;
 }
 
-.datepicker-calendar-day {
+.calendar-calendar-day {
     color: var(--muted-foreground);
     cursor: hand;
     corner-radius: 4px;
 }
 
-.datepicker-calendar-day:focus-visible {
+.calendar-calendar-day:focus-visible {
     outline-width: 1px;
     outline-color: var(--accent);
 }
 
-.datepicker-calendar-day:checked {
+.calendar-calendar-day:checked {
     color: #fff;
     background-color: var(--accent);
     corner-radius: 4px;
 }
 
-.datepicker-calendar-day-disabled {
+.calendar-calendar-day-disabled {
     color: var(--muted-foreground);
     cursor: arrow;
 }
 
-.datepicker-selected-date {
+.calendar-selected-date {
     color: var(--muted-foreground);
 }
 
@@ -717,28 +717,28 @@ progressbar:disabled .progressbar-bar {
 
 /* PICKLIST */
 
-picklist {
+select {
     corner-radius: 4px;
 }
 
-picklist list.selectable list-item:checked {
+select list.selectable list-item:checked {
     background-color: transparent;
 }
 
-picklist list.selectable list-item .checkmark {
+select list.selectable list-item .checkmark {
     fill: var(--primary);
     visibility: hidden;
 }
 
-picklist list.selectable list-item:checked .checkmark {
+select list.selectable list-item:checked .checkmark {
     visibility: visible;
 }
 
-picklist list.selectable list-item:hover {
+select list.selectable list-item:hover {
     background-color: var(--accent);
 }
 
-picklist list.selectable list-item:focus-visible {
+select list.selectable list-item:focus-visible {
     background-color: var(--accent);
     outline-color: transparent;
 }

@@ -9,13 +9,9 @@ pub fn badge(cx: &mut Context) {
         Divider::new(cx);
 
         Markdown::new(cx, "### Basic badge");
-        DemoRegion::new(
-            cx,
-            |cx| {
-                Badge::new(cx, |cx| Label::new(cx, "5"));
-            },
-            r#"Badge::new(cx, |cx| Label::new(cx, "5"));"#,
-        );
+        DemoRegion::new(cx, "Basic Badge", |cx| {
+            Badge::new(cx, |cx| Label::new(cx, "5"));
+        });
     })
     .class("panel");
 }

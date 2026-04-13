@@ -38,65 +38,35 @@ A label can be used to display a string of text.
 
         Label::new(cx, "### Basic tab view");
 
-        DemoRegion::new(
-            cx,
-            move |cx| {
-                TabView::new(cx, tabs, |_, _, item| match item {
-                    "Tab1" => TabPair::new(
-                        move |cx| {
-                            Label::new(cx, item).hoverable(false);
-                            Element::new(cx).class("indicator");
-                        },
-                        |cx| {
-                            Element::new(cx).size(Pixels(200.0)).background_color(Color::red());
-                        },
-                    ),
+        DemoRegion::new(cx, "Basic TabView", move |cx| {
+            TabView::new(cx, tabs, |_, _, item| match item {
+                "Tab1" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).hoverable(false);
+                        Element::new(cx).class("indicator");
+                    },
+                    |cx| {
+                        Element::new(cx).size(Pixels(200.0)).background_color(Color::red());
+                    },
+                ),
 
-                    "Tab2" => TabPair::new(
-                        move |cx| {
-                            Label::new(cx, item).hoverable(false);
-                            Element::new(cx).class("indicator");
-                        },
-                        |cx| {
-                            Element::new(cx).size(Pixels(200.0)).background_color(Color::blue());
-                        },
-                    ),
+                "Tab2" => TabPair::new(
+                    move |cx| {
+                        Label::new(cx, item).hoverable(false);
+                        Element::new(cx).class("indicator");
+                    },
+                    |cx| {
+                        Element::new(cx).size(Pixels(200.0)).background_color(Color::blue());
+                    },
+                ),
 
-                    _ => unreachable!(),
-                })
-                .with_selected(selected_tab)
-                .on_select(|cx, index| cx.emit(TabEvent::SetSelected(index)))
-                .width(Pixels(300.0))
-                .height(Pixels(300.0));
-            },
-            r#"TabView::new(cx, tabs, |_, _, item| match item {
-    "Tab1" => TabPair::new(
-        move |cx| {
-            Label::new(cx, item).hoverable(false);
-            Element::new(cx).class("indicator");
-        },
-        |cx| {
-            Element::new(cx).size(Pixels(200.0)).background_color(Color::red());
-        },
-    ),
-
-    "Tab2" => TabPair::new(
-        move |cx| {
-            Label::new(cx, item).hoverable(false);
-            Element::new(cx).class("indicator");
-        },
-        |cx| {
-            Element::new(cx).size(Pixels(200.0)).background_color(Color::blue());
-        },
-    ),
-
-    _ => unreachable!(),
-})
-.with_selected(selected_tab)
-.on_select(|cx, index| cx.emit(TabEvent::SetSelected(index)))
-.width(Pixels(300.0))
-.height(Pixels(300.0));"#,
-        );
+                _ => unreachable!(),
+            })
+            .with_selected(selected_tab)
+            .on_select(|cx, index| cx.emit(TabEvent::SetSelected(index)))
+            .width(Pixels(300.0))
+            .height(Pixels(300.0));
+        });
     })
     .class("panel");
 }
