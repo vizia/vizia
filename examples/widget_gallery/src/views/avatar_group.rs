@@ -5,18 +5,16 @@ use crate::components::DemoRegion;
 pub fn avatar_group(cx: &mut Context) {
     cx.load_image(
         "vizia.png",
-        include_bytes!("../../assets/vizia-logo-01.png"),
+        include_bytes!("../../resources/images/vizia-logo-01.png"),
         ImageRetentionPolicy::DropWhenNoObservers,
     );
 
     VStack::new(cx, |cx|{
-        Markdown::new(cx, "# Avatar
-An avatar is used to visually represent a person or entity and can contain text, an icon, or an image.
-        ");
+        Markdown::new(cx, "# Avatar Group
+An avatar group displays multiple avatars stacked together to represent a collection of users or entities.");
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic avatar group");
         DemoRegion::new(cx, "Avatar Group", |cx|{
             AvatarGroup::new(cx, |cx|{
                 Avatar::new(cx, |cx|{

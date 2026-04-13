@@ -145,7 +145,7 @@ impl Dropdown {
                 Binding::new(cx, is_open, move |cx| {
                     let is_open = is_open.get();
                     if is_open {
-                        Popup::new(cx, |cx| {
+                        Popover::new(cx, |cx| {
                             (content)(cx);
                         })
                         .on_blur(|cx| cx.emit(PopupEvent::Close))

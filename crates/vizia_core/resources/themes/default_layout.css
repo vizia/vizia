@@ -280,6 +280,30 @@ popup {
     right: 1s;
 }
 
+/* SIDEBAR */
+
+sidebar {
+    width: 280px;
+    height: 1s;
+}
+
+sidebar > .sidebar-header {
+    width: 1s;
+    height: auto;
+    padding: 8px;
+}
+
+sidebar > .sidebar-content {
+    width: 1s;
+    height: 1s;
+}
+
+sidebar > .sidebar-footer {
+    width: 1s;
+    height: auto;
+    padding: 8px;
+}
+
 popup > list {
     width: 1s;
     min-width: auto;
@@ -901,16 +925,13 @@ collapsible {
 collapsible > .header {
     gap: 1s;
     min-gap: 16px;
-    height: 48px;
+    height: auto;
     alignment: left;
-    padding-left: 24px;
-    padding-right: 24px;
-    transition: height 300ms;
+    padding: 8px;
 }
 
 collapsible.open > .header {
-    height: 64px;
-    transition: height 300ms;
+    height: auto;
 }
 
 collapsible > .header > .expand-icon {
@@ -929,11 +950,7 @@ collapsible .content {
     max-height: 0px;
     overflow: hidden;
     transition: max-height 300ms;
-    padding-left: 24px;
-    padding-right: 24px;
-    padding-top: 0px;
-    padding-bottom: 16px;
-    gap: 16px;
+    gap: 8px;
 }
 
 collapsible.open .content {

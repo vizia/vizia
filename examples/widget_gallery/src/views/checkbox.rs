@@ -31,8 +31,6 @@ A checkbox can be used to display a boolean value, or to select one or more item
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic checkboxes");
-
         DemoRegion::new(cx, "Basic Checkboxes", move |cx| {
             Checkbox::new(cx, check_a)
                 .on_toggle(|cx| cx.emit(CheckboxEvent::ToggleA));

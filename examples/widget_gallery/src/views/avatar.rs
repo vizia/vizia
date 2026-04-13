@@ -8,18 +8,17 @@ use crate::components::DemoRegion;
 pub fn avatar(cx: &mut Context) {
     cx.load_image(
         "vizia.png",
-        include_bytes!("../../assets/vizia-logo-01.png"),
+        include_bytes!("../../resources/images/vizia-logo-01.png"),
         ImageRetentionPolicy::DropWhenNoObservers,
     );
 
-    VStack::new(cx, |cx|{
+    VStack::new(cx, |cx| {
         Markdown::new(cx, "# Avatar
 An avatar is used to visually represent a person or entity and can contain text, an icon, or an image.
         ");
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic avatar");
         DemoRegion::new(cx, "Basic Avatar", |cx|{
             Avatar::new(cx, |cx|{
                 Svg::new(cx, ICON_USER);

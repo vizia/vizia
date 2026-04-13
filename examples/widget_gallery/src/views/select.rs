@@ -45,8 +45,6 @@ A view which allows the user to select an option from a list.
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic select");
-
         DemoRegion::new(
             cx,
             "Basic Select",

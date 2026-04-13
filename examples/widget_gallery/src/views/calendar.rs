@@ -30,8 +30,6 @@ pub fn calendar(cx: &mut Context) {
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic calendar");
-
         DemoRegion::new(cx, "Basic Calendar", move |cx| {
             Calendar::new(cx, date).on_select(|cx, date| cx.emit(CalendarEvent::SetDate(date)));
         });

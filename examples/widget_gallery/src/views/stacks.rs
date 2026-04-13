@@ -13,8 +13,6 @@ The hstack container can be used to layout views in a row.
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### HStack");
-
         DemoRegion::new(cx, "HStack", |cx| {
             HStack::new(cx, |cx| {
                 Element::new(cx).size(Pixels(100.0)).background_color(Color::red());
@@ -39,8 +37,6 @@ The vstack container can be used to layout views in a column.
 
         Divider::new(cx);
 
-        Markdown::new(cx, "## VStack");
-
         DemoRegion::new(cx, "VStack", |cx| {
             VStack::new(cx, |cx| {
                 Element::new(cx).size(Pixels(100.0)).background_color(Color::red());
@@ -59,13 +55,10 @@ pub fn zstack(cx: &mut Context) {
         Markdown::new(
             cx,
             "# ZStack
-The zstack container can be used to layout views in a vertical stack.        
-        ",
+The zstack container can be used to layer views on top of each other.",
         );
 
         Divider::new(cx);
-
-        Markdown::new(cx, "### ZStack");
 
         DemoRegion::new(cx, "ZStack", |cx| {
             ZStack::new(cx, |cx| {

@@ -34,8 +34,6 @@ pub fn virtual_list(cx: &mut Context) {
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic virtual list");
-
         DemoRegion::new(cx, "Basic Virtual List", move |cx| {
             VirtualList::new(cx, list, 40.0, |cx, index, item| {
                 Label::new(cx, item).toggle_class("dark", index % 2 == 0)

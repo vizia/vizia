@@ -1031,8 +1031,7 @@ xypad .thumb {
 }
 
 collapsible {
-    background-color: white;
-    shadow: 0px 2px 2px #4f4f4f38;
+    /* shadow: 0px 2px 2px #4f4f4f38; */
 }
 
 collapsible > .header > .expand-icon {
@@ -1057,5 +1056,93 @@ card-header > .title {
 }
 
 card-header > .description {
+    color: var(--muted-foreground);
+}
+
+/* SIDEBAR */
+
+sidebar {
+    width: auto;
+    background-color: var(--sidebar);
+    color: var(--sidebar-foreground);
+}
+
+sidebar .sidebar-header {
+    width: 1s;
+    height: auto;
+    padding: 12px;
+    gap: 4px;
+}
+
+sidebar .sidebar-title {
+    height: auto;
+    padding: 8px;
+    padding-bottom: 4px;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+sidebar .sidebar-search {
+    width: 1s;
+    height: 32px;
+    padding: 4px;
+}
+
+sidebar .sidebar-content {
+    padding: 12px;
+}
+
+sidebar collapsible.sidebar-group > .header > label.sidebar-group-label {
+    width: 1s;
+    font-size: 12px;
+    color: var(--muted-foreground);
+}
+
+sidebar collapsible.sidebar-group > .header:hover {
+    background-color: var(--sidebar-accent);
+}
+
+sidebar button.sidebar-menu-button {
+    width: 1s;
+    background-color: var(--sidebar);
+    color: var(--sidebar-foreground);
+    alignment: left;
+}
+
+.rtl sidebar button.sidebar-menu-button {
+    alignment: right;
+}
+
+sidebar button.sidebar-menu-button:hover {
+    background-color: var(--sidebar-accent);
+}
+
+sidebar button.sidebar-menu-button.sidebar-menu-button-active {
+    background-color: var(--sidebar-accent);
+}
+
+sidebar button.sidebar-menu-button.sidebar-menu-button-active > label {
+    color: var(--secondary-foreground);
+}
+
+sidebar label.sidebar-empty-state {
+    width: 1s;
+    height: auto;
+    padding: 10px;
+    color: var(--muted-foreground);
+    text-wrap: true;
+}
+
+sidebar .sidebar-menu {
+    width: 1s;
+    height: auto;
+    gap: 4px;
+}
+
+sidebar .sidebar-footer {
+    width: 1s;
+    height: auto;
+    padding: 8px;
+    font-size: 11px;
     color: var(--muted-foreground);
 }

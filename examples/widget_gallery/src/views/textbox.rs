@@ -32,8 +32,6 @@ A textbox can be used to display a string of text which can be edited.
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic textbox");
-
         DemoRegion::new(cx, "Basic Textbox", move |cx| {
             Textbox::new(cx, text)
                 .on_submit(|cx, text, _| cx.emit(TextboxEvent::SetText(text.clone())))

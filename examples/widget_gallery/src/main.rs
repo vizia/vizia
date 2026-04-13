@@ -36,10 +36,11 @@ pub fn setup_logging() -> Result<(), ApplicationError> {
 
 fn theme_selection_dropdown(
     cx: &mut Context,
-    theme_options: Signal<Vec<Signal<&'static str>>>,
+    theme_options: Signal<Vec<Localized>>,
     selected_theme: Signal<Option<usize>>,
 ) {
     Select::new(cx, theme_options, selected_theme, true)
+        .min_selected(1)
         .on_select(|cx, index| cx.emit(AppEvent::SetThemeMode(index)))
         .width(Pixels(100.0))
         .tooltip(|cx| {
@@ -49,460 +50,286 @@ fn theme_selection_dropdown(
         });
 }
 
+fn primary_color_selection_dropdown(
+    cx: &mut Context,
+    color_options: Signal<Vec<Localized>>,
+    selected_color: Signal<Option<usize>>,
+) {
+    Select::new(cx, color_options, selected_color, true)
+        .min_selected(1)
+        .on_select(|cx, index| cx.emit(AppEvent::SetPrimaryThemeColor(index)))
+        .width(Pixels(120.0))
+        .tooltip(|cx| {
+            Tooltip::new(cx, |cx| {
+                Label::new(cx, "Select Primary Color");
+            })
+        });
+}
+
+fn direction_selection_dropdown(cx: &mut Context, direction_options: Signal<Vec<&'static str>>) {
+    let selected_direction = cx.environment().direction.map(|direction| match direction {
+        Direction::LeftToRight => Some(0),
+        Direction::RightToLeft => Some(1),
+    });
+    Select::new(cx, direction_options, selected_direction, true)
+        .min_selected(1)
+        .on_select(|cx, index| cx.emit(AppEvent::SetDirection(index)))
+        .width(Pixels(100.0))
+        .tooltip(|cx| {
+            Tooltip::new(cx, |cx| {
+                Label::new(cx, "Select Direction");
+            })
+        });
+}
+
+fn language_selection_dropdown(
+    cx: &mut Context,
+    language_options: Signal<Vec<Localized>>,
+    selected_language: Signal<Option<usize>>,
+) {
+    Select::new(cx, language_options, selected_language, true)
+        .min_selected(1)
+        .on_select(|cx, index| cx.emit(AppEvent::SetLanguage(index)))
+        .width(Pixels(110.0))
+        .tooltip(|cx| {
+            Tooltip::new(cx, |cx| {
+                Label::new(cx, "Select Language");
+            })
+        });
+}
+
+fn build_sidebar_content(
+    cx: &mut Context,
+    selected_view: Signal<&'static str>,
+    search_text: Signal<String>,
+    open_categories: Signal<Vec<bool>>,
+) {
+    Binding::new(cx, search_text, move |cx| {
+        let query = search_text.get().to_lowercase();
+        let query = query.trim().to_string();
+
+        //Binding::new(cx, open_categories, move |cx| {
+        let mut visible_item_count = 0usize;
+
+        for (index, (category, items)) in CATEGORIES.iter().enumerate() {
+            let matching: Vec<&'static str> = items
+                .iter()
+                .copied()
+                .filter(|item| query.is_empty() || item.to_lowercase().contains(&query))
+                .collect();
+
+            if matching.is_empty() {
+                continue;
+            }
+
+            visible_item_count += matching.len();
+
+            let query_for_open = query.clone();
+            let open_categories_for_open = open_categories;
+            let category_open = Memo::new(move |_| {
+                if query_for_open.is_empty() {
+                    open_categories_for_open.get().get(index).copied().unwrap_or(true)
+                } else {
+                    true
+                }
+            });
+
+            let open_categories_for_toggle = open_categories;
+            Collapsible::new(
+                cx,
+                move |cx| {
+                    Label::new(cx, *category).class("sidebar-group-label").hoverable(false);
+                },
+                move |cx| {
+                    VStack::new(cx, |cx| {
+                        for item in matching.clone() {
+                            let selected_view = selected_view;
+                            Button::new(cx, move |cx| Label::new(cx, item).hoverable(false))
+                                .class("sidebar-menu-button")
+                                .toggle_class(
+                                    "sidebar-menu-button-active",
+                                    selected_view.map(move |sv| *sv == item),
+                                )
+                                .on_press(move |cx| cx.emit(AppEvent::SelectView(item)));
+                        }
+                    })
+                    .class("sidebar-menu")
+                    .height(Auto);
+                },
+            )
+            .class("sidebar-group")
+            .open(category_open)
+            .on_toggle(move |_cx, is_open| {
+                open_categories_for_toggle.update(|open_states| {
+                    if let Some(state) = open_states.get_mut(index) {
+                        *state = is_open;
+                    }
+                });
+            });
+        }
+
+        if visible_item_count == 0 {
+            Label::new(cx, "No widgets match your search.").class("sidebar-empty-state");
+        }
+        //});
+    });
+}
+
+fn content_area(cx: &mut Context, selected_view: Signal<&'static str>) {
+    ScrollView::new(cx, move |cx| {
+        Binding::new(cx, selected_view, move |cx| {
+            let current_view = selected_view.get();
+            VStack::new(cx, |cx| match current_view {
+                "Accordion" => accordion(cx),
+                "Avatar" => avatar(cx),
+                "Avatar Group" => avatar_group(cx),
+                "Badge" => badge(cx),
+                "Button" => button(cx),
+                "Button Group" => button_group(cx),
+                "Calendar" => calendar(cx),
+                "Card" => card(cx),
+                "Checkbox" => checkbox(cx),
+                "Chip" => chip(cx),
+                "Collapsible" => collapsible(cx),
+                "Combobox" => combobox(cx),
+                "Divider" => divider(cx),
+                "Dropdown" => dropdown(cx),
+                "Element" => element(cx),
+                "Grid" => grid(cx),
+                "HStack" => hstack(cx),
+                "Image" => image(cx),
+                "Knob" => knob(cx),
+                "Label" => label(cx),
+                "List" => list(cx),
+                "Markdown" => markdown_panel(cx),
+                "Menu" => menu(cx),
+                "MenuBar" => menu_bar(cx),
+                "Popup" => popup(cx),
+                "Progressbar" => progressbar(cx),
+                "Radiobutton" => radiobutton(cx),
+                "Rating" => rating(cx),
+                "Resizable" => resizable(cx),
+                "Scrollview" => scrollview(cx),
+                "Select" => select(cx),
+                "Slider" => slider(cx),
+                "Spinbox" => spinbox(cx),
+                "Svg" => svg(cx),
+                "Switch" => switch(cx),
+                "Table" => table(cx),
+                "Tabview" => tabview(cx),
+                "Textbox" => textbox(cx),
+                "ToggleButton" => toggle_button(cx),
+                "Tooltip" => tooltip(cx),
+                "VirtualList" => virtual_list(cx),
+                "VirtualTable" => virtual_table(cx),
+                "VStack" => vstack(cx),
+                "XYPad" => xypad(cx),
+                "ZStack" => zstack(cx),
+                _ => {}
+            })
+            .class("content-area")
+            .alignment(Alignment::TopCenter)
+            .height(Auto)
+            .width(Stretch(1.0));
+        });
+    })
+    .class("widgets")
+    .width(Stretch(1.0));
+}
+
 fn main() -> Result<(), ApplicationError> {
     setup_logging()?;
 
     Application::new(|cx: &mut Context| {
+        cx.add_translation(
+            langid!("en-US"),
+            include_str!("../../resources/translations/en-US/helper.ftl"),
+        )
+        .unwrap();
+
+        cx.add_translation(
+            langid!("fr"),
+            include_str!("../../resources/translations/fr/helper.ftl"),
+        )
+        .unwrap();
+
+        cx.add_translation(
+            langid!("ar"),
+            include_str!("../../resources/translations/ar/helper.ftl"),
+        )
+        .unwrap();
+
         let app_data = AppData::new();
-        let theme_options = app_data.theme_options;
-        let selected_theme = app_data.selected_theme;
-        let tabs = app_data.tabs;
         app_data.build(cx);
 
         cx.add_stylesheet(include_style!("src/style.css")).expect("Failed to add stylesheet");
 
         VStack::new(cx, |cx| {
-            // Header
             HStack::new(cx, |cx| {
-                // toggle_disabled_switch(cx);
-                theme_selection_dropdown(cx, theme_options, selected_theme);
+                Sidebar::new(
+                    cx,
+                    move |cx| {
+                        Label::new(cx, "Widget Gallery").class("sidebar-title");
+
+                        Textbox::new(cx, app_data.search_text)
+                            .on_edit(|cx, text| cx.emit(AppEvent::SetSearchText(text)))
+                            .placeholder("Search widgets...")
+                            .class("sidebar-search");
+                    },
+                    move |cx| {
+                        build_sidebar_content(
+                            cx,
+                            app_data.selected_view,
+                            app_data.search_text,
+                            app_data.open_categories,
+                        )
+                    },
+                    move |cx| {},
+                );
+                VStack::new(cx, |cx| {
+                    HStack::new(cx, |cx| {
+                        HStack::new(cx, |cx| {
+                            Switch::new(cx, app_data.disabled)
+                                .on_toggle(|cx| cx.emit(AppEvent::ToggleDisabled))
+                                .id("disabled_toggle")
+                                .tooltip(|cx| {
+                                    Tooltip::new(cx, |cx| {
+                                        Label::new(cx, Localized::new("toggle-disabled"));
+                                    })
+                                });
+                            Label::new(cx, Localized::new("toggle-disabled"))
+                                .describing("disabled_toggle");
+                        })
+                        .alignment(Alignment::Center)
+                        .gap(Pixels(4.0))
+                        .size(Auto);
+
+                        theme_selection_dropdown(
+                            cx,
+                            app_data.theme_options,
+                            app_data.selected_theme,
+                        );
+                        language_selection_dropdown(
+                            cx,
+                            app_data.language_options,
+                            app_data.selected_language,
+                        );
+                        direction_selection_dropdown(cx, app_data.direction_options);
+                        primary_color_selection_dropdown(
+                            cx,
+                            app_data.primary_color_options,
+                            app_data.selected_primary_color,
+                        );
+                    })
+                    .height(Auto);
+                    content_area(cx, app_data.selected_view);
+                });
             })
-            .padding(Pixels(8.0))
-            .alignment(Alignment::Right)
-            .horizontal_gap(Pixels(20.0))
-            .height(Auto);
-
-            Divider::new(cx);
-
-            TabView::new(cx, tabs, |_cx, _, item| match item {
-                "Avatar" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            avatar(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Avatar Group" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            avatar_group(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Badge" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            badge(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Button" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            button(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Button Group" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            button_group(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Checkbox" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            checkbox(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Chip" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            chip(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Combobox" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            combobox(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Calendar" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            calendar(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Divider" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            divider(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Dropdown" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            dropdown(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Element" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            element(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "HStack" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            hstack(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Svg" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            svg(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Image" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            image(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Knob" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            knob(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Label" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            label(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "List" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            list(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Menu" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            menu(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "MenuBar" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            menu_bar(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Select" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            select(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Progressbar" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            progressbar(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Radiobutton" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            radiobutton(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Rating" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            rating(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Scrollview" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            scrollview(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Slider" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            slider(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Spinbox" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            spinbox(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Switch" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            switch(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Tabview" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            tabview(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Textbox" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            textbox(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "ToggleButton" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            toggle_button(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "Tooltip" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            tooltip(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "VirtualList" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            virtual_list(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "VStack" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            vstack(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                "ZStack" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, item).class("tab-name").hoverable(false);
-                    },
-                    |cx| {
-                        ScrollView::new(cx, |cx| {
-                            zstack(cx);
-                        })
-                        .class("widgets");
-                    },
-                ),
-
-                _ => TabPair::new(|_| {}, |_| {}),
-            })
-            .class("widgets")
-            .vertical();
+            .height(Stretch(1.0));
         });
     })
     .title("Widget Gallery")
-    .inner_size((1400, 600))
-    .min_inner_size(Some((900, 300)))
+    .inner_size((1400, 760))
+    .min_inner_size(Some((900, 400)))
     .run()
 }

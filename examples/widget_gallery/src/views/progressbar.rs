@@ -46,8 +46,6 @@ pub fn progressbar(cx: &mut Context) {
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic progress bar");
-
         DemoRegion::new(cx, "Basic Progress Bar", move |cx| {
             ProgressBar::horizontal(cx, progress).width(Pixels(300.0));
         });

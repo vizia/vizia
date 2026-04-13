@@ -89,7 +89,7 @@ impl Select {
                 Binding::new(cx, is_open, move |cx| {
                     let is_open = is_open.get();
                     if is_open {
-                        Popup::new(cx, |cx| {
+                        Popover::new(cx, |cx| {
                             List::new(cx, list, move |cx, _, item| {
                                 Svg::new(cx, ICON_CHECK).class("checkmark").size(Pixels(16.0));
                                 Label::new(cx, item.map(|v| v.clone())).hoverable(false);

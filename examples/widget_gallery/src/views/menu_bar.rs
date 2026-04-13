@@ -11,8 +11,6 @@ pub fn menu_bar(cx: &mut Context) {
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic menu bar");
-
         DemoRegion::new(cx, "Basic Menu Bar", |cx| {
             MenuBar::new(cx, |cx| {
                 Submenu::new(

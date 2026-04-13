@@ -8,8 +8,6 @@ pub fn scrollview(cx: &mut Context) {
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Vertical scroll view");
-
         DemoRegion::new(cx, "Vertical Scroll View", |cx| {
             ScrollView::new(cx, |cx| {
                 Label::new(cx, "Vertical Scroll").height(Pixels(1000.0)).width(Stretch(1.0));

@@ -93,7 +93,7 @@ where
             Binding::new(cx, is_open, move |cx| {
                 let open = is_open.get();
                 if open {
-                    Popup::new(cx, move |cx: &mut Context| {
+                    Popover::new(cx, move |cx: &mut Context| {
                         let filtered_indices = Memo::new(move |_| {
                             let query = filter_text.get().to_ascii_lowercase();
                             list.get()

@@ -8,19 +8,6 @@ scrollview.widgets > scroll-content {
     vertical-gap: 15px;
 }
 
-tabview.widgets > scrollview > scroll-content {
-    padding: 8px;
-}
-
-tabview.widgets tabheader label.tab-name {
-    width: 220px;
-}
-
-tabview.widgets tabheader:checked label.tab-name {
-    corner-radius: 4px;
-    background-color: #51afef;
-}
-
 vstack.panel {
     height: auto;
     width: 3s;
@@ -73,4 +60,49 @@ demo-region .region-title {
 
 markdown {
     padding: 0px;
+}
+
+/* ── Content meta ────────────────────────────────────────────────────── */
+
+hstack.content-meta {
+    width: 1s;
+    height: auto;
+    padding: 4px 0 12px 0;
+}
+
+label.content-view-title {
+    height: auto;
+    font-size: 13px;
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+}
+
+label.content-view-badge {
+    height: auto;
+    width: auto;
+    padding: 2px 8px;
+    corner-radius: 999px;
+    background-color: #51afef;
+    color: white;
+    font-size: 11px;
+}
+
+/* ── Resizable demo helpers ──────────────────────────────────────────── */
+
+element.gallery-resizable-panel {
+    background-color: #78c1f3;
+    corner-radius: 4px;
+}
+
+element.gallery-resizable-fill {
+    background-color: var(--background-alt, #e8e8e8);
+    corner-radius: 4px;
+}
+
+/* ── Grid demo helpers ───────────────────────────────────────────────── */
+
+vstack.gallery-css-grid {
+    layout-type: grid;
+    grid-columns: 1s 1s;
+    grid-rows: 80px 80px;
 }

@@ -9,8 +9,6 @@ pub fn menu(cx: &mut Context) {
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic menu");
-
         DemoRegion::new(cx, "Basic Menu", |cx| {
             Submenu::new(
                 cx,

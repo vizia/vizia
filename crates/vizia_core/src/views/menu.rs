@@ -121,7 +121,7 @@ impl Submenu {
                 Binding::new(cx, is_open, move |cx| {
                     let open = is_open.get();
                     if open {
-                        Popup::new(cx, |cx| {
+                        Popover::new(cx, |cx| {
                             (menu)(cx);
                         })
                         .placement(submenu_popup_placement)

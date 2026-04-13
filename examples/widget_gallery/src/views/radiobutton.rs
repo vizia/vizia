@@ -44,10 +44,9 @@ pub fn radiobutton(cx: &mut Context) {
 
     VStack::new(cx, |cx| {
         Markdown::new(cx, "# Radiobutton
-A radio button can be used to select an option from a set of options.        
-        ");
+A radio button can be used to select an option from a set of options.");
 
-        Markdown::new(cx, "### Basic radio button");
+        Divider::new(cx);
 
         DemoRegion::new(
             cx,

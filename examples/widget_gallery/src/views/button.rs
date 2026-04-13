@@ -1,58 +1,98 @@
+use log::debug;
 use vizia::{
-    icons::{ICON_PENCIL, ICON_TRASH},
+    icons::{ICON_CHECK, ICON_PENCIL, ICON_TRASH},
     prelude::*,
 };
 
 use crate::components::DemoRegion;
 
 pub fn button(cx: &mut Context) {
-    VStack::new(cx, |cx|{
-
-        Markdown::new(cx, "# Button
-A button can be used to send an event when pressed. Typically they are used to trigger an action.        
-        ");
+    VStack::new(cx, |cx| {
+        Markdown::new(
+            cx,
+            "# Button
+A button can be used to send an event when pressed. Typically they are used to trigger an action.
+        ",
+        );
 
         Divider::new(cx);
 
-        DemoRegion::new(
-            cx,
-            "Basic Button",
-            |cx| {
-                Button::new(cx, |cx| Label::new(cx, "Button"));
-            }
-        );
+        DemoRegion::new(cx, "Basic Button", |cx| {
+            Button::new(cx, |cx| Label::new(cx, "Button"));
+        });
 
-        DemoRegion::new(
-            cx,
-            "Button Variants",
-            |cx| {
-                Button::new(cx, |cx| Label::new(cx, "Primary"));
-                Button::new(cx, |cx| Label::new(cx, "Secondary")).variant(ButtonVariant::Secondary);
-                Button::new(cx, |cx| Label::new(cx, "Outline")).variant(ButtonVariant::Outline);
-                Button::new(cx, |cx| Label::new(cx, "Text")).variant(ButtonVariant::Text);
-            });
+        DemoRegion::new(cx, "Button Variants", |cx| {
+            HStack::new(cx, |cx| {
+                // Basic Button
+                Button::new(cx, |cx| Label::new(cx, Localized::new("button")))
+                    .on_press(|_cx| debug!("Button Pressed!"));
+                // Secondary Button
+                Button::new(cx, |cx| Label::new(cx, Localized::new("secondary-button")))
+                    .variant(ButtonVariant::Secondary);
+                // Outline Button
+                Button::new(cx, |cx| Label::new(cx, Localized::new("outline-button")))
+                    .variant(ButtonVariant::Outline);
+                // Text Button
+                Button::new(cx, |cx| Label::new(cx, Localized::new("text-button")))
+                    .variant(ButtonVariant::Text);
+            })
+            .wrap(LayoutWrap::Wrap)
+            .width(Stretch(1.0))
+            .height(Auto)
+            .alignment(Alignment::Center)
+            .gap(Pixels(8.0));
+        });
 
-            
-        DemoRegion::new(
-            cx,
-            "Button with Icon and Label",
-            |cx| {
+        DemoRegion::new(cx, "Button with Icon and Label", |cx| {
+            HStack::new(cx, |cx| {
                 Button::new(cx, |cx| {
                     HStack::new(cx, |cx| {
-                        Svg::new(cx, ICON_TRASH);
-                        Label::new(cx, "Delete");
+                        Svg::new(cx, ICON_CHECK).class("icon");
+                        Label::new(cx, Localized::new("button-with-icon"));
                     })
-                })
-                .class("outline");
-
+                });
                 Button::new(cx, |cx| {
                     HStack::new(cx, |cx| {
-                        Label::new(cx, "Edit");
-                        Svg::new(cx, ICON_PENCIL);
+                        Svg::new(cx, ICON_CHECK).class("icon");
+                        Label::new(cx, Localized::new("button-with-icon"));
                     })
                 })
-                .class("accent");
-            });
+                .variant(ButtonVariant::Secondary);
+                Button::new(cx, |cx| {
+                    HStack::new(cx, |cx| {
+                        Svg::new(cx, ICON_CHECK).class("icon");
+                        Label::new(cx, Localized::new("button-with-icon"));
+                    })
+                })
+                .variant(ButtonVariant::Outline);
+                Button::new(cx, |cx| {
+                    HStack::new(cx, |cx| {
+                        Svg::new(cx, ICON_CHECK).class("icon");
+                        Label::new(cx, Localized::new("button-with-icon"));
+                    })
+                })
+                .variant(ButtonVariant::Text);
+            })
+            .height(Auto)
+            .width(Stretch(1.0))
+            .alignment(Alignment::Center)
+            .wrap(LayoutWrap::Wrap)
+            .gap(Pixels(8.0));
+        });
 
-    }).class("panel");
+        DemoRegion::new(cx, "Button Variants", |cx| {
+            HStack::new(cx, |cx| {
+                Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"));
+                Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"))
+                    .variant(ButtonVariant::Secondary);
+                Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"))
+                    .variant(ButtonVariant::Outline);
+                Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"))
+                    .variant(ButtonVariant::Text);
+            })
+            .size(Auto)
+            .horizontal_gap(Pixels(10.0));
+        });
+    })
+    .class("panel");
 }
