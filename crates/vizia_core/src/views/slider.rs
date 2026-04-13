@@ -156,14 +156,26 @@ where
 
                     // Range track
                     VStack::new(cx, move |cx| {
+                        let dir = cx.environment().direction;
+
                         let thumb_translate: Memo<Translate> = Memo::new(move |_| {
                             let thumb_range = range.get();
                             let val = value.get().clamp(thumb_range.start, thumb_range.end);
                             let normal_val =
                                 (val - thumb_range.start) / (thumb_range.end - thumb_range.start);
-
+                            // Todo: Find a way to react to local direction rather than global direction.
+                            // Currently not possible because local direction is a style property
+                            // that gets resolved after bindings.
+                            // Ideally we need a way to do the translation in css which means changing
+                            // a css variable in rust code that gets used in the stylesheet to do the translation
+                            // rather than doing it here in code.
+                            let is_rtl = dir.get() == Direction::RightToLeft;
                             if orientation.get() == Orientation::Horizontal {
-                                (Percentage(100.0 * (1.0 - normal_val)), Pixels(0.0)).into()
+                                if is_rtl {
+                                    (Percentage(-100.0 * (1.0 - normal_val)), Pixels(0.0)).into()
+                                } else {
+                                    (Percentage(100.0 * (1.0 - normal_val)), Pixels(0.0)).into()
+                                }
                             } else {
                                 (Pixels(0.0), Percentage(-100.0 * (1.0 - normal_val))).into()
                             }
@@ -285,10 +297,16 @@ where
                     let posx = cx.cache.get_posx(current);
                     let posy = cx.cache.get_posy(current);
 
+                    let is_rtl = matches!(
+                        cx.style.direction.get(current).copied(),
+                        Some(Direction::RightToLeft)
+                    );
+
                     let mut dx = match self.orientation.get() {
                         Orientation::Horizontal => {
-                            (cx.mouse.left.pos_down.0 - posx - thumb_size / 2.0)
-                                / (width - thumb_size)
+                            let raw_dx = (cx.mouse.left.pos_down.0 - posx - thumb_size / 2.0)
+                                / (width - thumb_size);
+                            if is_rtl { 1.0 - raw_dx } else { raw_dx }
                         }
 
                         Orientation::Vertical => {
@@ -339,9 +357,15 @@ where
                     let posx = cx.cache.get_posx(current);
                     let posy = cx.cache.get_posy(current);
 
+                    let is_rtl = matches!(
+                        cx.style.direction.get(current).copied(),
+                        Some(Direction::RightToLeft)
+                    );
+
                     let mut dx = match self.orientation.get() {
                         Orientation::Horizontal => {
-                            (*x - posx - thumb_size / 2.0) / (width - thumb_size)
+                            let raw_dx = (*x - posx - thumb_size / 2.0) / (width - thumb_size);
+                            if is_rtl { 1.0 - raw_dx } else { raw_dx }
                         }
 
                         Orientation::Vertical => {
