@@ -431,7 +431,7 @@ calendar {
 /* DIVIDER */
 
 divider > .divider-line {
-    background-color: #d2d2d2;
+    background-color: var(--border);
 }
 
 /* DROPDOWN */
@@ -893,7 +893,7 @@ slider .thumb {
 
 switch {
     corner-radius: 50%;
-    background-color: var(--secondary);
+    background-color: var(--input);
     transition: background-color 100ms;
 }
 

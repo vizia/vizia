@@ -45,7 +45,7 @@ impl Accordion {
                             }));
                         });
                     if index < list_length - 1 {
-                        Divider::new(cx);
+                        Divider::horizontal(cx);
                     }
                 }
             });

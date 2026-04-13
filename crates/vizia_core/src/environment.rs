@@ -42,6 +42,21 @@ fn direction_from_locale(locale: &LanguageIdentifier) -> Direction {
     }
 }
 
+fn apply_direction_class(cx: &mut EventContext, direction: Direction) {
+    let rtl = direction == Direction::RightToLeft;
+    let window_entities = cx.windows.keys().copied().collect::<Vec<_>>();
+
+    cx.with_current(Entity::root(), |cx| {
+        cx.toggle_class("rtl", rtl);
+    });
+
+    for window_entity in window_entities {
+        cx.with_current(window_entity, |cx| {
+            cx.toggle_class("rtl", rtl);
+        });
+    }
+}
+
 impl Environment {
     pub(crate) fn new(cx: &mut Context) -> Self {
         let locale: LanguageIdentifier =
@@ -89,16 +104,14 @@ impl Model for Environment {
                 self.locale.set(locale.clone());
                 let direction = direction_from_locale(&locale);
                 self.direction.set(direction);
-                cx.with_current(Entity::root(), |cx| {
-                    cx.toggle_class("rtl", direction == Direction::RightToLeft);
-                });
+                apply_direction_class(cx, direction);
+                cx.reload_styles().unwrap();
             }
 
             EnvironmentEvent::SetDirection(direction) => {
-                self.direction.set(direction);
-                cx.with_current(Entity::root(), |cx| {
-                    cx.toggle_class("rtl", direction == Direction::RightToLeft);
-                });
+                self.direction.set_if_changed(direction);
+                apply_direction_class(cx, direction);
+                cx.reload_styles().unwrap();
             }
 
             EnvironmentEvent::SetThemeMode(theme) => {
@@ -116,9 +129,8 @@ impl Model for Environment {
                 let direction = direction_from_locale(&locale);
                 self.locale.set(locale);
                 self.direction.set(direction);
-                cx.with_current(Entity::root(), |cx| {
-                    cx.toggle_class("rtl", direction == Direction::RightToLeft);
-                });
+                apply_direction_class(cx, direction);
+                cx.reload_styles().unwrap();
             }
 
             EnvironmentEvent::ToggleThemeMode => {

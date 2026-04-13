@@ -757,6 +757,18 @@ switch:checked .thumb {
     transition: left 100ms;
 }
 
+.rtl switch .thumb {
+    left: 1s;
+    right: 1px;
+    transition: right 100ms;
+}
+
+.rtl switch:checked .thumb {
+    left: 1s;
+    right: 13px;
+    transition: right 100ms;
+}
+
 /* TABVIEW */
 
 tabview {

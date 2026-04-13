@@ -31,7 +31,7 @@ An accordion displays a list of headers that can be expanded one at a time to re
 
         Divider::new(cx);
 
-        DemoRegion::new(cx, "Basic Accordion", move |cx| {
+        DemoRegion::new(cx, "Accordion", move |cx| {
             Accordion::new(cx, items, |_cx, _index, item| {
                 let header = item.0;
                 let content = item.1;
