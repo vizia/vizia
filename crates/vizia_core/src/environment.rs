@@ -8,49 +8,16 @@ use web_time::Duration;
 /// And enum which represents the current built-in theme mode.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum ThemeMode {
+    /// Follow the system theme.
+    #[default]
+    System,
     /// The built-in vizia dark theme.
     DarkMode,
     /// The built-in vizia light theme.
-    #[default]
     LightMode,
 }
 
 use crate::{context::EventContext, events::Event};
-
-/// Represents the theme used by the application.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum AppTheme {
-    /// System theme, if we choose this as our theme vizia
-    /// will follow system theme in supported platforms.
-    System,
-    /// Built-in vizia themes.
-    BuiltIn(ThemeMode),
-    // Custom(String),
-}
-
-/// Represents the theme used by the application.
-pub struct Theme {
-    /// The current application theme
-    pub app_theme: AppTheme,
-    /// The current system theme
-    pub sys_theme: Option<ThemeMode>,
-}
-
-impl Default for Theme {
-    fn default() -> Self {
-        Self { app_theme: AppTheme::BuiltIn(ThemeMode::LightMode), sys_theme: None }
-    }
-}
-
-impl Theme {
-    /// Returns the current theme of the application.
-    pub fn get_current_theme(&self) -> ThemeMode {
-        match self.app_theme {
-            AppTheme::System => self.sys_theme.unwrap_or_default(),
-            AppTheme::BuiltIn(theme) => theme,
-        }
-    }
-}
 
 /// A model for system specific state which can be accessed by any model or view.
 pub struct Environment {
@@ -63,7 +30,7 @@ pub struct Environment {
     /// The delay before a tooltip fades in.
     pub tooltip_delay: Duration,
     /// Current application and system theme.
-    pub theme: Theme,
+    pub theme_mode: ThemeMode,
     /// The timer used to blink the caret of a textbox.
     pub(crate) caret_timer: Timer,
 }
@@ -90,7 +57,7 @@ impl Environment {
             direction: Signal::new(direction),
             double_click_interval: Duration::from_millis(500),
             tooltip_delay: Duration::from_millis(1500),
-            theme: Theme::default(),
+            theme_mode: ThemeMode::default(),
             caret_timer,
         }
     }
@@ -104,7 +71,7 @@ pub enum EnvironmentEvent {
     SetDirection(Direction),
     /// Set the default theme mode.
     // TODO: add SetSysTheme event when the winit `set_theme` fixed.
-    SetThemeMode(AppTheme),
+    SetThemeMode(ThemeMode),
     /// Reset the locale to use the system provided locale.
     UseSystemLocale,
     /// Alternate between dark and light theme modes.
@@ -135,11 +102,10 @@ impl Model for Environment {
             }
 
             EnvironmentEvent::SetThemeMode(theme) => {
-                theme.clone_into(&mut self.theme.app_theme);
+                self.theme_mode = theme;
 
-                //cx.set_theme_mode(self.theme.get_current_theme());
                 cx.with_current(Entity::root(), |cx| {
-                    cx.toggle_class("dark", self.theme.get_current_theme() == ThemeMode::DarkMode);
+                    cx.toggle_class("dark", self.theme_mode == ThemeMode::DarkMode);
                 });
                 cx.reload_styles().unwrap();
             }
@@ -156,12 +122,13 @@ impl Model for Environment {
             }
 
             EnvironmentEvent::ToggleThemeMode => {
-                let theme_mode = match self.theme.get_current_theme() {
+                let theme_mode = match self.theme_mode {
+                    ThemeMode::System => ThemeMode::System,
                     ThemeMode::DarkMode => ThemeMode::LightMode,
                     ThemeMode::LightMode => ThemeMode::DarkMode,
                 };
 
-                self.theme.app_theme = AppTheme::BuiltIn(theme_mode);
+                self.theme_mode = theme_mode;
 
                 cx.with_current(Entity::root(), |cx| {
                     cx.toggle_class("dark", theme_mode == ThemeMode::DarkMode);
@@ -181,13 +148,10 @@ impl Model for Environment {
 
         event.map(|event, _| match event {
             WindowEvent::ThemeChanged(theme) => {
-                self.theme.sys_theme = Some(*theme);
-                if self.theme.app_theme == AppTheme::System {
+                self.theme_mode = *theme;
+                if self.theme_mode == ThemeMode::System {
                     cx.with_current(Entity::root(), |cx| {
-                        cx.toggle_class(
-                            "dark",
-                            self.theme.get_current_theme() == ThemeMode::DarkMode,
-                        );
+                        cx.toggle_class("dark", self.theme_mode == ThemeMode::DarkMode);
                     });
                     cx.reload_styles().unwrap();
                 }

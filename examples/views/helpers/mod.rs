@@ -110,9 +110,9 @@ impl Model for ControlsData {
             ControlsEvent::SetThemeMode(theme_mode) => {
                 self.selected_theme.set(Some(*theme_mode));
                 cx.emit(EnvironmentEvent::SetThemeMode(match theme_mode {
-                    0 /* system */ => AppTheme::System,
-                    1 /* Dark */ => AppTheme::BuiltIn(ThemeMode::DarkMode),
-                    2 /* Light */ => AppTheme::BuiltIn(ThemeMode::LightMode),
+                    0 /* system */ => ThemeMode::System,
+                    1 /* Dark */ => ThemeMode::DarkMode,
+                    2 /* Light */ => ThemeMode::LightMode,
                     _ => unreachable!(),
                 }));
             }
@@ -156,17 +156,20 @@ impl ExamplePage {
         cx.add_translation(
             langid!("en-US"),
             include_str!("../../resources/translations/en-US/helper.ftl"),
-        ).expect("Failed to add en-US helper translation");
+        )
+        .expect("Failed to add en-US helper translation");
 
         cx.add_translation(
             langid!("fr"),
             include_str!("../../resources/translations/fr/helper.ftl"),
-        ).expect("Failed to add fr helper translation");
+        )
+        .expect("Failed to add fr helper translation");
 
         cx.add_translation(
             langid!("ar"),
             include_str!("../../resources/translations/ar/helper.ftl"),
-        ).expect("Failed to add ar helper translation");
+        )
+        .expect("Failed to add ar helper translation");
 
         Self.build(cx, |cx| {
             let controls = ControlsData::default();
@@ -179,7 +182,7 @@ impl ExamplePage {
             let primary_color_options = controls.primary_color_options;
             let selected_primary_color = controls.selected_primary_color;
             controls.build(cx);
-            cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System)); // set system theme
+            cx.emit(EnvironmentEvent::SetThemeMode(ThemeMode::System)); // set system theme
             cx.emit(EnvironmentEvent::SetDirection(Direction::LeftToRight));
             cx.emit(ControlsEvent::SetPrimaryThemeColor(0));
 
@@ -227,17 +230,20 @@ impl ExamplePage {
         cx.add_translation(
             langid!("en-US"),
             include_str!("../../resources/translations/en-US/helper.ftl"),
-        ).expect("Failed to add en-US helper translation");
+        )
+        .expect("Failed to add en-US helper translation");
 
         cx.add_translation(
             langid!("fr"),
             include_str!("../../resources/translations/fr/helper.ftl"),
-        ).expect("Failed to add fr helper translation");
+        )
+        .expect("Failed to add fr helper translation");
 
         cx.add_translation(
             langid!("ar"),
             include_str!("../../resources/translations/ar/helper.ftl"),
-        ).expect("Failed to add ar helper translation");
+        )
+        .expect("Failed to add ar helper translation");
 
         Self.build(cx, |cx| {
             let controls = ControlsData::default();
@@ -250,7 +256,7 @@ impl ExamplePage {
             let primary_color_options = controls.primary_color_options;
             let selected_primary_color = controls.selected_primary_color;
             controls.build(cx);
-            cx.emit(EnvironmentEvent::SetThemeMode(AppTheme::System)); // set system theme
+            cx.emit(EnvironmentEvent::SetThemeMode(ThemeMode::System)); // set system theme
             cx.emit(ControlsEvent::SetPrimaryThemeColor(0));
 
             HStack::new(cx, |cx| {

@@ -584,7 +584,7 @@ impl Context {
         if !self.ignore_default_theme {
             self.add_stylesheet(DEFAULT_THEME).unwrap();
             let environment = self.data::<Environment>();
-            let theme_mode = environment.theme.get_current_theme();
+            let theme_mode = environment.theme_mode;
             let direction = environment.direction.get();
             self.with_current(Entity::root(), |cx| {
                 let cx = &mut EventContext::new(cx);

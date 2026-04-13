@@ -88,9 +88,9 @@ impl Model for AppData {
             AppEvent::SetThemeMode(theme_mode) => {
                 self.selected_theme.set(Some(*theme_mode));
                 cx.emit(EnvironmentEvent::SetThemeMode(match theme_mode {
-                    0 /* system */ => AppTheme::System,
-                    1 /* Dark */ => AppTheme::BuiltIn(ThemeMode::DarkMode),
-                    2 /* Light */ => AppTheme::BuiltIn(ThemeMode::LightMode),
+                    0 /* system */ => ThemeMode::System,
+                    1 /* Dark */ => ThemeMode::DarkMode,
+                    2 /* Light */ => ThemeMode::LightMode,
                     _ => unreachable!(),
                 }));
             }

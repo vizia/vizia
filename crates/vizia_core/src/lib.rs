@@ -77,7 +77,7 @@ pub mod prelude {
         EventContext, ProxyEmitError, WindowState,
     };
     pub use super::entity::Entity;
-    pub use super::environment::{AppTheme, Environment, EnvironmentEvent, ThemeMode};
+    pub use super::environment::{Environment, EnvironmentEvent, ThemeMode};
     pub use super::events::{Event, Propagation, Timer, TimerAction};
     pub use super::include_style;
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
