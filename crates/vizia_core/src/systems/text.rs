@@ -211,22 +211,7 @@ pub fn build_paragraph(
     }
 
     // Text Align
-    paragraph_style.set_text_align(
-        if let Some(text_align) = style.text_align.get(entity) {
-            *text_align
-        } else if let Some(alignment) = style.alignment.get(entity) {
-            match alignment {
-                Alignment::TopLeft | Alignment::Left | Alignment::BottomLeft => TextAlign::Left,
-                Alignment::TopCenter | Alignment::Center | Alignment::BottomCenter => {
-                    TextAlign::Center
-                }
-                Alignment::TopRight | Alignment::Right | Alignment::BottomRight => TextAlign::Right,
-            }
-        } else {
-            TextAlign::Left
-        }
-        .into(),
-    );
+    paragraph_style.set_text_align(resolve_text_align(style, entity).into());
 
     // Text Direction
     paragraph_style.set_text_direction(
@@ -243,6 +228,53 @@ pub fn build_paragraph(
 
     paragraph_builder.add_text("\u{200B}");
     paragraph_builder.build().into()
+}
+
+fn resolve_text_align(style: &Style, entity: Entity) -> TextAlign {
+    let is_rtl = matches!(style.direction.get(entity).copied(), Some(Direction::RightToLeft));
+
+    if let Some(text_align) = style.text_align.get(entity).copied() {
+        return flip_text_align_for_rtl(text_align, is_rtl);
+    }
+
+    if let Some(alignment) = style.alignment.get(entity).copied() {
+        let alignment = flip_alignment_for_rtl(alignment, is_rtl);
+        return match alignment {
+            Alignment::TopLeft | Alignment::Left | Alignment::BottomLeft => TextAlign::Left,
+            Alignment::TopCenter | Alignment::Center | Alignment::BottomCenter => TextAlign::Center,
+            Alignment::TopRight | Alignment::Right | Alignment::BottomRight => TextAlign::Right,
+        };
+    }
+
+    flip_text_align_for_rtl(TextAlign::Left, is_rtl)
+}
+
+fn flip_text_align_for_rtl(text_align: TextAlign, is_rtl: bool) -> TextAlign {
+    if !is_rtl {
+        return text_align;
+    }
+
+    match text_align {
+        TextAlign::Left => TextAlign::Right,
+        TextAlign::Right => TextAlign::Left,
+        _ => text_align,
+    }
+}
+
+fn flip_alignment_for_rtl(alignment: Alignment, is_rtl: bool) -> Alignment {
+    if !is_rtl {
+        return alignment;
+    }
+
+    match alignment {
+        Alignment::TopLeft => Alignment::TopRight,
+        Alignment::Left => Alignment::Right,
+        Alignment::BottomLeft => Alignment::BottomRight,
+        Alignment::TopRight => Alignment::TopLeft,
+        Alignment::Right => Alignment::Left,
+        Alignment::BottomRight => Alignment::BottomLeft,
+        _ => alignment,
+    }
 }
 
 fn add_block(
@@ -353,5 +385,28 @@ fn add_block(
         if style.text_span.get(child).copied().unwrap_or_default() {
             add_block(style, tree, child, paragraph_builder, current);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rtl_flips_explicit_left_right_text_align() {
+        assert_eq!(flip_text_align_for_rtl(TextAlign::Left, true), TextAlign::Right);
+        assert_eq!(flip_text_align_for_rtl(TextAlign::Right, true), TextAlign::Left);
+        assert_eq!(flip_text_align_for_rtl(TextAlign::Center, true), TextAlign::Center);
+    }
+
+    #[test]
+    fn rtl_flips_horizontal_alignment_variants() {
+        assert_eq!(flip_alignment_for_rtl(Alignment::TopLeft, true), Alignment::TopRight);
+        assert_eq!(flip_alignment_for_rtl(Alignment::Left, true), Alignment::Right);
+        assert_eq!(flip_alignment_for_rtl(Alignment::BottomLeft, true), Alignment::BottomRight);
+        assert_eq!(flip_alignment_for_rtl(Alignment::TopRight, true), Alignment::TopLeft);
+        assert_eq!(flip_alignment_for_rtl(Alignment::Right, true), Alignment::Left);
+        assert_eq!(flip_alignment_for_rtl(Alignment::BottomRight, true), Alignment::BottomLeft);
+        assert_eq!(flip_alignment_for_rtl(Alignment::Center, true), Alignment::Center);
     }
 }

@@ -1109,10 +1109,6 @@ sidebar button.sidebar-menu-button {
     alignment: left;
 }
 
-.rtl sidebar button.sidebar-menu-button {
-    alignment: right;
-}
-
 sidebar button.sidebar-menu-button:hover {
     background-color: var(--sidebar-accent);
 }
