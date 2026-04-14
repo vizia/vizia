@@ -322,12 +322,12 @@ popup > list {
     width: 1s;
     min-width: auto;
     height: auto;
-    padding-top: 4px;
-    padding-bottom: 4px;
+    max-height: 200px;
 }
 
 popup > list > scrollview {
     height: auto;
+    max-height: 200px;
     width: 1s;
     min-width: auto;
 }
@@ -553,6 +553,10 @@ select {
     width: auto;
     height: 32px;
     min-width: 64px;
+}
+
+select popup {
+    max-height: 200px;
 }
 
 /* POPUP */

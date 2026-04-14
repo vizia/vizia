@@ -1,7 +1,7 @@
 use chrono::{Datelike, NaiveDate, Weekday};
 
 use crate::{
-    icons::{ICON_CHEVRON_LEFT, ICON_CHEVRON_RIGHT, ICON_CHEVRONS_LEFT, ICON_CHEVRONS_RIGHT},
+    icons::{ICON_CHEVRON_LEFT, ICON_CHEVRON_RIGHT},
     prelude::*,
 };
 
@@ -17,7 +17,7 @@ const MONTHS: [&str; 12] =
 const DAYS_HEADER: [&str; 7] =
     ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-pub(crate) enum CalendarEvent {
+pub enum CalendarEvent {
     IncrementMonth,
     DecrementMonth,
     SelectMonth(usize),
@@ -133,8 +133,8 @@ impl Calendar {
         let month_options =
             Signal::new(MONTHS.iter().map(|m| Localized::new(m)).collect::<Vec<_>>());
         let selected_month = view_date.map(|date| Some(date.month() as usize - 1));
-        let year_start = selected_date.year() - 100;
-        let year_end = selected_date.year() + 100;
+        let year_start = selected_date.year() - 50;
+        let year_end = selected_date.year() + 50;
         let year_options =
             Signal::new((year_start..=year_end).map(|year| year.to_string()).collect::<Vec<_>>());
         let selected_year = view_date.map(move |date| {

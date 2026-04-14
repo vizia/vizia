@@ -740,7 +740,9 @@ impl ListModifiers for Handle<'_, List> {
 }
 
 /// A view which represents a selectable item within a list.
-pub struct ListItem {}
+pub struct ListItem {
+    selected: Memo<bool>,
+}
 
 impl ListItem {
     /// Create a new [ListItem] view.
@@ -748,7 +750,7 @@ impl ListItem {
         cx: &'a mut Context,
         index: usize,
         item: M,
-        selected: impl SignalMap<BTreeSet<usize>>,
+        selected: impl SignalMap<BTreeSet<usize>> + SignalGet<BTreeSet<usize>>,
         focused: impl SignalMap<Option<usize>>,
         item_content: impl 'static + Fn(&mut Context, usize, M),
     ) -> Handle<'a, Self> {
@@ -756,7 +758,8 @@ impl ListItem {
             focused.map(move |focused| focused.as_ref().is_some_and(|f| *f == index)).get();
         let focused_signal =
             focused.map(move |focused| focused.as_ref().is_some_and(|f| *f == index));
-        Self {}
+        let is_selected = selected.map(move |selected| selected.contains(&index));
+        Self { selected: is_selected }
             .build(cx, move |cx| {
                 item_content(cx, index, item);
             })
@@ -769,6 +772,13 @@ impl ListItem {
                     handle.cx.emit(ScrollEvent::ScrollToView(handle.entity()));
                 }
             })
+            .bind(selected, move |handle| {
+                let is_selected = selected.get().contains(&index);
+                if is_selected {
+                    println!("Item {} selected", index);
+                    handle.cx.emit(ScrollEvent::ScrollToView(handle.entity()));
+                }
+            })
             .on_press(move |cx| cx.emit(ListEvent::Select(index)))
     }
 }
@@ -776,5 +786,17 @@ impl ListItem {
 impl View for ListItem {
     fn element(&self) -> Option<&'static str> {
         Some("list-item")
+    }
+
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|window_event, _| match window_event {
+            WindowEvent::GeometryChanged(geo) => {
+                if self.selected.get() && geo.contains(GeoChanged::HEIGHT_CHANGED) {
+                    cx.emit(ScrollEvent::ScrollToView(cx.current()));
+                }
+            }
+
+            _ => {}
+        });
     }
 }

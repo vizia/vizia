@@ -2,9 +2,36 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
+#[derive(Debug, Clone, Copy)]
 struct AppState {
-    _options: Signal<Vec<Signal<&'static str>>>,
+    options: Signal<Vec<&'static str>>,
     selected_option: Signal<Option<usize>>,
+}
+
+impl AppState {
+    pub fn new() -> Self {
+        Self {
+            options: Signal::new(
+                vec![
+                    "One",
+                    "Two",
+                    "Three",
+                    "Four",
+                    "Five",
+                    "Six really long",
+                    "Seven",
+                    "Eight",
+                    "Nine",
+                    "Ten",
+                    "Eleven",
+                    "Twelve",
+                ]
+                .into_iter()
+                .collect::<Vec<_>>(),
+            ),
+            selected_option: Signal::new(None),
+        }
+    }
 }
 
 pub enum AppEvent {
@@ -23,28 +50,7 @@ impl Model for AppState {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let options = Signal::new(
-            vec![
-                "One",
-                "Two",
-                "Three",
-                "Four",
-                "Five",
-                "Six really long",
-                "Seven",
-                "Eight",
-                "Nine",
-                "Ten",
-                "Eleven",
-                "Twelve",
-            ]
-            .into_iter()
-            .map(Signal::new)
-            .collect::<Vec<_>>(),
-        );
-        let selected_option = Signal::new(None);
-
-        AppState { _options: options, selected_option }.build(cx);
+        let &AppState { options, selected_option } = AppState::new().build(cx);
 
         ExamplePage::vertical(cx, |cx| {
             Select::new(cx, options, selected_option, true)
