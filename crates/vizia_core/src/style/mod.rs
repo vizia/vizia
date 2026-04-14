@@ -307,7 +307,7 @@ pub struct Style {
     pub(crate) background_size: AnimatableSet<Vec<BackgroundSize>>,
 
     // Shadow
-    pub(crate) shadow: AnimatableSet<Vec<Shadow>>,
+    pub(crate) shadow: AnimatableVarSet<Vec<Shadow>>,
 
     // Text
     pub(crate) text: SparseSet<String>,
@@ -417,6 +417,7 @@ pub struct Style {
     pub(crate) custom_font_size_props: HashMap<u64, AnimatableVarSet<FontSize>>,
     pub(crate) custom_units_props: HashMap<u64, AnimatableVarSet<Units>>,
     pub(crate) custom_opacity_props: HashMap<u64, AnimatableVarSet<Opacity>>,
+    pub(crate) custom_shadow_props: HashMap<u64, AnimatableVarSet<Vec<Shadow>>>,
 }
 
 impl Style {
@@ -616,7 +617,7 @@ impl Style {
 
                 // BOX SHADOW
                 Property::Shadow(value) => {
-                    insert_keyframe(&mut self.shadow, animation_id, time, value.clone());
+                    insert_keyframe2(&mut self.shadow, animation_id, time, value.clone());
                 }
 
                 // TEXT
@@ -864,6 +865,10 @@ impl Style {
         }
         // Play animations on custom opacity properties
         for store in self.custom_opacity_props.values_mut() {
+            store.play_animation(entity, animation, start_time, duration, delay);
+        }
+        // Play animations on custom shadow properties
+        for store in self.custom_shadow_props.values_mut() {
             store.play_animation(entity, animation, start_time, duration, delay);
         }
     }
@@ -1418,6 +1423,93 @@ impl Style {
             }
         }
 
+        fn parse_shadow_list(tokens: &[TokenOrValue<'_>]) -> Option<Vec<Shadow>> {
+            fn parse_shadow_length(token: &TokenOrValue<'_>) -> Option<Length> {
+                match token {
+                    TokenOrValue::Token(CssToken::Dimension { value, unit, .. })
+                        if unit.as_ref().eq_ignore_ascii_case("px") =>
+                    {
+                        Some(Length::Value(LengthValue::Px(*value)))
+                    }
+
+                    TokenOrValue::Token(CssToken::Number { value, .. }) if *value == 0.0 => {
+                        Some(Length::Value(LengthValue::Px(0.0)))
+                    }
+
+                    _ => None,
+                }
+            }
+
+            fn parse_single_shadow(tokens: &[TokenOrValue<'_>]) -> Option<Shadow> {
+                let mut lengths: Vec<Length> = Vec::new();
+                let mut color = None;
+                let mut inset = false;
+
+                for token in tokens {
+                    match token {
+                        TokenOrValue::Token(CssToken::WhiteSpace(_)) => {}
+
+                        TokenOrValue::Color(c) => {
+                            if color.is_some() {
+                                return None;
+                            }
+                            color = Some(*c);
+                        }
+
+                        TokenOrValue::Token(CssToken::Ident(ident))
+                            if ident.as_ref().eq_ignore_ascii_case("inset") =>
+                        {
+                            if inset {
+                                return None;
+                            }
+                            inset = true;
+                        }
+
+                        other => {
+                            if let Some(length) = parse_shadow_length(other) {
+                                lengths.push(length);
+                            } else {
+                                return None;
+                            }
+                        }
+                    }
+                }
+
+                if !(2..=4).contains(&lengths.len()) {
+                    return None;
+                }
+
+                let x_offset = lengths[0].clone();
+                let y_offset = lengths[1].clone();
+                let blur_radius = lengths.get(2).cloned();
+                let spread_radius = lengths.get(3).cloned();
+
+                Some(Shadow::new(x_offset, y_offset, blur_radius, spread_radius, color, inset))
+            }
+
+            let mut parts = Vec::<&[TokenOrValue<'_>]>::new();
+            let mut start = 0usize;
+            for (idx, token) in tokens.iter().enumerate() {
+                if matches!(token, TokenOrValue::Token(CssToken::Comma)) {
+                    parts.push(&tokens[start..idx]);
+                    start = idx + 1;
+                }
+            }
+            parts.push(&tokens[start..]);
+
+            let mut parsed = Vec::new();
+            for part in parts {
+                let shadow = parse_single_shadow(part)?;
+                parsed.push(shadow);
+            }
+
+            Some(parsed)
+        }
+
+        fn shadow_fallback(var: &Variable<'_>) -> Option<Vec<Shadow>> {
+            var.fallback.as_ref().and_then(|TokenList(tokens)| parse_shadow_list(tokens))
+        }
+
         match property.clone() {
             // Display
             Property::Display(display) => {
@@ -1954,18 +2046,52 @@ impl Style {
                         parse_length_var!(self.corner_bottom_right_radius)
                     }
                     "border-width" => parse_length_var!(self.border_width),
+                    "border" => {
+                        if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
+                            let hash = variable_hash(var);
+                            self.border_width.insert_variable_rule(
+                                rule_id,
+                                hash,
+                                length_fallback(var),
+                            );
+                            self.border_color.insert_variable_rule(
+                                rule_id,
+                                hash,
+                                color_fallback(var),
+                            );
+                        }
+                    }
+                    "outline" => {
+                        if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
+                            let hash = variable_hash(var);
+                            self.outline_width.insert_variable_rule(
+                                rule_id,
+                                hash,
+                                length_fallback(var),
+                            );
+                            self.outline_color.insert_variable_rule(
+                                rule_id,
+                                hash,
+                                color_fallback(var),
+                            );
+                        }
+                    }
                     "outline-width" => parse_length_var!(self.outline_width),
                     "outline-offset" => parse_length_var!(self.outline_offset),
                     "left" => parse_units_var!(self.left),
                     "right" => parse_units_var!(self.right),
                     "top" => parse_units_var!(self.top),
                     "bottom" => parse_units_var!(self.bottom),
+                    "space" => parse_units_var!(self.left, self.right, self.top, self.bottom),
                     "width" => parse_units_var!(self.width),
                     "height" => parse_units_var!(self.height),
+                    "size" => parse_units_var!(self.width, self.height),
                     "min-width" => parse_units_var!(self.min_width),
                     "max-width" => parse_units_var!(self.max_width),
                     "min-height" => parse_units_var!(self.min_height),
                     "max-height" => parse_units_var!(self.max_height),
+                    "min-size" => parse_units_var!(self.min_width, self.min_height),
+                    "max-size" => parse_units_var!(self.max_width, self.max_height),
                     "padding-left" => parse_units_var!(self.padding_left),
                     "padding-right" => parse_units_var!(self.padding_right),
                     "padding-top" => parse_units_var!(self.padding_top),
@@ -1979,12 +2105,27 @@ impl Style {
                     "row-gap" | "vertical-gap" => parse_units_var!(self.vertical_gap),
                     "column-gap" | "horizontal-gap" => parse_units_var!(self.horizontal_gap),
                     "gap" => parse_units_var!(self.vertical_gap, self.horizontal_gap),
+                    "min-gap" => {
+                        parse_units_var!(self.min_horizontal_gap, self.min_vertical_gap)
+                    }
+                    "max-gap" => {
+                        parse_units_var!(self.max_horizontal_gap, self.max_vertical_gap)
+                    }
                     "opacity" => {
                         if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
                             self.opacity.insert_variable_rule(
                                 rule_id,
                                 variable_hash(var),
                                 opacity_fallback(var),
+                            );
+                        }
+                    }
+                    "shadow" => {
+                        if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
+                            self.shadow.insert_variable_rule(
+                                rule_id,
+                                variable_hash(var),
+                                shadow_fallback(var),
                             );
                         }
                     }
@@ -1996,6 +2137,17 @@ impl Style {
                 let mut s = DefaultHasher::new();
                 custom.name.hash(&mut s);
                 let variable_name_hash = s.finish();
+
+                if let Some(shadows) = parse_shadow_list(&custom.value.0) {
+                    if let Some(store) = self.custom_shadow_props.get_mut(&variable_name_hash) {
+                        store.insert_rule(rule_id, shadows);
+                    } else {
+                        let mut store = AnimatableVarSet::default();
+                        store.insert_rule(rule_id, shadows);
+                        self.custom_shadow_props.insert(variable_name_hash, store);
+                    }
+                }
+
                 // Parse custom properties and store them
                 for token in custom.value.0.iter() {
                     // Try parsing colors
@@ -2128,11 +2280,19 @@ impl Style {
                             if let Some(store) =
                                 self.custom_length_props.get_mut(&variable_name_hash)
                             {
-                                store.insert_variable_rule(rule_id, name_hash, length_fallback(var));
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    length_fallback(var),
+                                );
                             } else {
                                 let mut store: AnimatableVarSet<LengthOrPercentage> =
                                     AnimatableVarSet::default();
-                                store.insert_variable_rule(rule_id, name_hash, length_fallback(var));
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    length_fallback(var),
+                                );
                                 self.custom_length_props.insert(variable_name_hash, store);
                             }
                             if let Some(store) =
@@ -2166,12 +2326,39 @@ impl Style {
                             if let Some(store) =
                                 self.custom_opacity_props.get_mut(&variable_name_hash)
                             {
-                                store.insert_variable_rule(rule_id, name_hash, opacity_fallback(var));
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    opacity_fallback(var),
+                                );
                             } else {
                                 let mut store: AnimatableVarSet<Opacity> =
                                     AnimatableVarSet::default();
-                                store.insert_variable_rule(rule_id, name_hash, opacity_fallback(var));
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    opacity_fallback(var),
+                                );
                                 self.custom_opacity_props.insert(variable_name_hash, store);
+                            }
+
+                            if let Some(store) =
+                                self.custom_shadow_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    shadow_fallback(var),
+                                );
+                            } else {
+                                let mut store: AnimatableVarSet<Vec<Shadow>> =
+                                    AnimatableVarSet::default();
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    shadow_fallback(var),
+                                );
+                                self.custom_shadow_props.insert(variable_name_hash, store);
                             }
                         }
                         TokenOrValue::Token(CssToken::Number { value, .. }) => {

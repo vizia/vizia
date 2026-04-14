@@ -444,9 +444,9 @@ impl DrawContext<'_> {
         self.style.line_clamp.get(self.current).copied().map(|lc| lc.0 as usize)
     }
 
-    /// Returns a reference to any shadows of the current view.
-    pub fn shadows(&self) -> Option<&Vec<Shadow>> {
-        self.style.shadow.get(self.current)
+    /// Returns the resolved shadows of the current view.
+    pub fn shadows(&self) -> Option<Vec<Shadow>> {
+        self.style.shadow.get_resolved(self.current, &self.style.custom_shadow_props)
     }
 
     /// Return to reference to any filter applied to the current view.

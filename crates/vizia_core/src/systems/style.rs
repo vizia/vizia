@@ -787,7 +787,7 @@ fn link_style_data(
     }
 
     // Outer Shadow
-    if style.shadow.link(entity, matched_rules) {
+    if style.shadow.link(entity, matched_rules, &style.custom_shadow_props) {
         should_redraw = true;
     }
 

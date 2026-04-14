@@ -557,6 +557,19 @@ where
     //     None
     // }
 
+    /// Returns a mutable reference to any inline data on the entity if it exists.
+    pub fn get_inline_mut(&mut self, entity: Entity) -> Option<&mut T> {
+        let entity_index = entity.index();
+        if entity_index < self.inline_data.sparse.len() {
+            let data_index = self.inline_data.sparse[entity_index].data_index;
+            if data_index.is_inline() {
+                return self.inline_data.get_mut(entity);
+            }
+        }
+
+        None
+    }
+
     pub(crate) fn get_animation_mut(
         &mut self,
         animation: Animation,
