@@ -344,6 +344,10 @@ name = "card"
 path = "examples/views/card.rs"
 
 [[example]]
+name = "avatar"
+path = "examples/views/avatar.rs"
+
+[[example]]
 name = "divider"
 path = "examples/views/divider.rs"
 

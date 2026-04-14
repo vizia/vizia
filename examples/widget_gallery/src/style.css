@@ -13,6 +13,12 @@ vstack.panel {
     width: 3s;
     min-width: 500px;
     max-width: 700px;
+    gap: 20px;
+}
+
+label.dropdown-label {
+    font-size: 11px;
+    color: var(--muted-foreground);
 }
 
 label.title {
@@ -45,7 +51,8 @@ demo-region > .region {
     corner-radius: 4px;
     height: auto;
     padding: 30px;
-    alignment: top-center;
+    alignment: center;
+    gap: 20px;
     border-width: 1px;
     border-color: var(--border);
 }

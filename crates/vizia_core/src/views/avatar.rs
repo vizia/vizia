@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use crate::tree::ChildIterator;
 
 /// Enum which represents the geometric variants of an avatar view.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
@@ -40,7 +41,7 @@ impl Avatar {
     where
         F: FnOnce(&mut Context),
     {
-        Self {}.build(cx, content).class("circle")
+        Self {}.build(cx, content).variant(AvatarVariant::Circle).control_size(ControlSize::Medium)
     }
 }
 
@@ -113,10 +114,19 @@ impl AvatarModifiers for Handle<'_, Avatar> {
         let entity = self.entity();
 
         self.context().with_current(entity, |cx| {
-            (content)(cx).placement(BadgePlacement::default());
+            (content)(cx);
         });
 
         self
+    }
+}
+
+impl ControlModifiers for Handle<'_, Avatar> {
+    fn control_size<U: Into<ControlSize> + Clone + 'static>(
+        self,
+        size: impl Res<U> + 'static,
+    ) -> Self {
+        crate::modifiers::bind_control_size(self, size)
     }
 }
 
@@ -129,7 +139,48 @@ impl AvatarGroup {
     where
         F: FnOnce(&mut Context),
     {
-        Self {}.build(cx, content).size(Auto).gap(Pixels(-20.0)).layout_type(LayoutType::Row)
+        Self {}.build(cx, content)
+    }
+}
+
+fn apply_avatar_group_max_visible(cx: &mut Context, entity: Entity, max_visible: usize) {
+    let mut avatars = Vec::new();
+    let mut overflow_avatar = None;
+
+    for child in ChildIterator::new(&cx.tree, entity) {
+        let is_overflow = cx
+            .style
+            .classes
+            .get(child)
+            .is_some_and(|class_list| class_list.contains("avatar-group-overflow"));
+
+        if is_overflow {
+            overflow_avatar = Some(child);
+        } else {
+            avatars.push(child);
+        }
+    }
+
+    if let Some(overflow_avatar) = overflow_avatar {
+        cx.remove(overflow_avatar);
+    }
+
+    let hidden_count = avatars.len().saturating_sub(max_visible);
+
+    for (index, avatar) in avatars.into_iter().enumerate() {
+        let display = if index < max_visible { Display::Flex } else { Display::None };
+
+        Handle::<Avatar> { current: entity, entity: avatar, p: Default::default(), cx }
+            .display(display);
+    }
+
+    if hidden_count > 0 {
+        cx.with_current(entity, |cx| {
+            Avatar::new(cx, move |cx| {
+                Label::new(cx, format!("+{}", hidden_count));
+            })
+            .class("avatar-group-overflow");
+        });
     }
 }
 
@@ -155,5 +206,27 @@ impl AvatarModifiers for Handle<'_, AvatarGroup> {
         self.toggle_class("circle", is_circle)
             .toggle_class("square", is_square)
             .toggle_class("rounded", is_rounded)
+    }
+}
+
+impl ControlModifiers for Handle<'_, AvatarGroup> {
+    fn control_size<U: Into<ControlSize> + Clone + 'static>(
+        self,
+        size: impl Res<U> + 'static,
+    ) -> Self {
+        crate::modifiers::bind_control_size(self, size)
+    }
+}
+
+impl Handle<'_, AvatarGroup> {
+    /// Limits the number of visible avatars in a group and adds a final overflow avatar with
+    /// a `+N` label when more avatars are present.
+    pub fn max_visible(self, max_visible: impl Res<usize> + 'static) -> Self {
+        let max_visible = max_visible.to_signal(self.cx);
+        self.bind(max_visible, move |mut handle| {
+            let max_visible = max_visible.get();
+            let entity = handle.entity();
+            apply_avatar_group_max_visible(handle.context(), entity, max_visible);
+        })
     }
 }

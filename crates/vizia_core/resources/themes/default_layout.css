@@ -14,7 +14,6 @@
 /* AVATAR */
 
 avatar {
-    size: 50px;
     alignment: center;
 }
 
@@ -31,11 +30,13 @@ avatar.rounded {
 }
 
 avatar > svg {
-    size: 24px;
+    size: 1s;
 }
 
 avatar > image {
+    position-type: absolute;
     size: 100%;
+    space: 0px;
     background-size: cover;
 }
 
@@ -47,7 +48,34 @@ avatar.rounded > image {
     corner-radius: 4px;
 }
 
+avatar.xsmall {
+    size: 24px;
+    padding: 6px;
+}
+
+avatar.small {
+    size: 32px;
+    padding: 8px;
+}
+
+avatar.medium {
+    size: 42px;
+    padding: 10px;
+}
+
+avatar.large {
+    size: 56px;
+    padding: 12px;
+}
+
 /* AVATAR GROUP */
+
+avatar-group {
+    layout-type: row;
+    horizontal-gap: -20px;
+    size: auto;
+    alignment: center;
+}
 
 avatar-group > avatar {
     border: 2px solid #fff;
@@ -63,6 +91,26 @@ avatar-group.square > avatar {
 
 avatar-group.rounded > avatar {
     corner-radius: 4px;
+}
+
+avatar-group.xsmall > avatar {
+    size: 24px;
+    padding: 6px;
+}
+
+avatar-group.small > avatar {
+    size: 32px;
+    padding: 8px;
+}
+
+avatar-group.medium > avatar {
+    size: 42px;
+    padding: 10px;
+}
+
+avatar-group.large > avatar {
+    size: 56px;
+    padding: 12px;
 }
 
 /* BADGE */

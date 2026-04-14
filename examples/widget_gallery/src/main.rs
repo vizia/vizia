@@ -39,15 +39,21 @@ fn theme_selection_dropdown(
     theme_options: Signal<Vec<Localized>>,
     selected_theme: Signal<Option<usize>>,
 ) {
-    Select::new(cx, theme_options, selected_theme, true)
-        .min_selected(1)
-        .on_select(|cx, index| cx.emit(AppEvent::SetThemeMode(index)))
-        .width(Pixels(100.0))
-        .tooltip(|cx| {
-            Tooltip::new(cx, |cx| {
-                Label::new(cx, "Select Theme Mode");
-            })
-        });
+    VStack::new(cx, |cx| {
+        Label::new(cx, "Theme Mode").class("dropdown-label");
+        Select::new(cx, theme_options, selected_theme, true)
+            .min_selected(1)
+            .on_select(|cx, index| cx.emit(AppEvent::SetThemeMode(index)))
+            .width(Pixels(100.0))
+            .tooltip(|cx| {
+                Tooltip::new(cx, |cx| {
+                    Label::new(cx, "Select Theme Mode");
+                })
+            });
+    })
+    .alignment(Alignment::Left)
+    .gap(Pixels(4.0))
+    .size(Auto);
 }
 
 fn primary_color_selection_dropdown(
@@ -55,15 +61,21 @@ fn primary_color_selection_dropdown(
     color_options: Signal<Vec<Localized>>,
     selected_color: Signal<Option<usize>>,
 ) {
-    Select::new(cx, color_options, selected_color, true)
-        .min_selected(1)
-        .on_select(|cx, index| cx.emit(AppEvent::SetPrimaryThemeColor(index)))
-        .width(Pixels(120.0))
-        .tooltip(|cx| {
-            Tooltip::new(cx, |cx| {
-                Label::new(cx, "Select Primary Color");
-            })
-        });
+    VStack::new(cx, |cx| {
+        Label::new(cx, "Primary Color").class("dropdown-label");
+        Select::new(cx, color_options, selected_color, true)
+            .min_selected(1)
+            .on_select(|cx, index| cx.emit(AppEvent::SetPrimaryThemeColor(index)))
+            .width(Pixels(120.0))
+            .tooltip(|cx| {
+                Tooltip::new(cx, |cx| {
+                    Label::new(cx, "Select Primary Color");
+                })
+            });
+    })
+    .alignment(Alignment::Left)
+    .gap(Pixels(4.0))
+    .size(Auto);
 }
 
 fn direction_selection_dropdown(cx: &mut Context, direction_options: Signal<Vec<&'static str>>) {
@@ -71,15 +83,22 @@ fn direction_selection_dropdown(cx: &mut Context, direction_options: Signal<Vec<
         Direction::LeftToRight => Some(0),
         Direction::RightToLeft => Some(1),
     });
-    Select::new(cx, direction_options, selected_direction, true)
-        .min_selected(1)
-        .on_select(|cx, index| cx.emit(AppEvent::SetDirection(index)))
-        .width(Pixels(100.0))
-        .tooltip(|cx| {
-            Tooltip::new(cx, |cx| {
-                Label::new(cx, "Select Direction");
-            })
-        });
+
+    VStack::new(cx, |cx| {
+        Label::new(cx, "Direction").class("dropdown-label");
+        Select::new(cx, direction_options, selected_direction, true)
+            .min_selected(1)
+            .on_select(|cx, index| cx.emit(AppEvent::SetDirection(index)))
+            .width(Pixels(100.0))
+            .tooltip(|cx| {
+                Tooltip::new(cx, |cx| {
+                    Label::new(cx, "Select Direction");
+                })
+            });
+    })
+    .alignment(Alignment::Left)
+    .gap(Pixels(4.0))
+    .size(Auto);
 }
 
 fn language_selection_dropdown(
@@ -87,15 +106,21 @@ fn language_selection_dropdown(
     language_options: Signal<Vec<Localized>>,
     selected_language: Signal<Option<usize>>,
 ) {
-    Select::new(cx, language_options, selected_language, true)
-        .min_selected(1)
-        .on_select(|cx, index| cx.emit(AppEvent::SetLanguage(index)))
-        .width(Pixels(110.0))
-        .tooltip(|cx| {
-            Tooltip::new(cx, |cx| {
-                Label::new(cx, "Select Language");
-            })
-        });
+    VStack::new(cx, |cx| {
+        Label::new(cx, "Language").class("dropdown-label");
+        Select::new(cx, language_options, selected_language, true)
+            .min_selected(1)
+            .on_select(|cx, index| cx.emit(AppEvent::SetLanguage(index)))
+            .width(Pixels(110.0))
+            .tooltip(|cx| {
+                Tooltip::new(cx, |cx| {
+                    Label::new(cx, "Select Language");
+                })
+            });
+    })
+    .alignment(Alignment::Left)
+    .gap(Pixels(4.0))
+    .size(Auto);
 }
 
 fn build_sidebar_content(
@@ -321,6 +346,9 @@ fn main() -> Result<(), ApplicationError> {
                             app_data.selected_primary_color,
                         );
                     })
+                    .alignment(Alignment::Center)
+                    .gap(Pixels(12.0))
+                    .padding(Pixels(12.0))
                     .height(Auto);
                     content_area(cx, app_data.selected_view);
                 });
@@ -329,7 +357,7 @@ fn main() -> Result<(), ApplicationError> {
         });
     })
     .title("Widget Gallery")
-    .inner_size((1400, 760))
-    .min_inner_size(Some((900, 400)))
+    .inner_size((1000, 760))
+    .min_inner_size(Some((800, 400)))
     .run()
 }
