@@ -85,7 +85,7 @@ pub use vizia_style::{
 use cssparser::Token as CssToken;
 use vizia_style::{
     BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, Selectors, StyleSheet,
-    TokenOrValue,
+    TokenList, TokenOrValue, Variable,
 };
 
 mod rule;
@@ -1333,6 +1333,91 @@ impl Style {
     }
 
     fn insert_property(&mut self, rule_id: Rule, property: &Property) {
+        fn variable_hash(var: &Variable<'_>) -> u64 {
+            let mut s = DefaultHasher::new();
+            var.name.hash(&mut s);
+            s.finish()
+        }
+
+        fn first_fallback_token<'i>(var: &'i Variable<'i>) -> Option<&'i TokenOrValue<'i>> {
+            var.fallback.as_ref().and_then(|TokenList(tokens)| tokens.first())
+        }
+
+        fn color_fallback(var: &Variable<'_>) -> Option<Color> {
+            match first_fallback_token(var) {
+                Some(TokenOrValue::Color(color)) => Some(*color),
+                _ => None,
+            }
+        }
+
+        fn length_fallback(var: &Variable<'_>) -> Option<LengthOrPercentage> {
+            match first_fallback_token(var) {
+                Some(TokenOrValue::Token(CssToken::Dimension { value, unit, .. }))
+                    if unit.as_ref().eq_ignore_ascii_case("px") =>
+                {
+                    Some(LengthOrPercentage::Length(Length::Value(LengthValue::Px(*value))))
+                }
+
+                Some(TokenOrValue::Token(CssToken::Percentage { unit_value, .. })) => {
+                    Some(LengthOrPercentage::Percentage(*unit_value * 100.0))
+                }
+
+                _ => None,
+            }
+        }
+
+        fn font_size_fallback(var: &Variable<'_>) -> Option<FontSize> {
+            match first_fallback_token(var) {
+                Some(TokenOrValue::Token(CssToken::Dimension { value, unit, .. }))
+                    if unit.as_ref().eq_ignore_ascii_case("px") =>
+                {
+                    Some(FontSize(Length::Value(LengthValue::Px(*value))))
+                }
+
+                _ => None,
+            }
+        }
+
+        fn units_fallback(var: &Variable<'_>) -> Option<Units> {
+            match first_fallback_token(var) {
+                Some(TokenOrValue::Token(CssToken::Dimension { value, unit, .. }))
+                    if unit.as_ref().eq_ignore_ascii_case("px") =>
+                {
+                    Some(Units::Pixels(*value))
+                }
+
+                Some(TokenOrValue::Token(CssToken::Dimension { value, unit, .. }))
+                    if unit.as_ref().eq_ignore_ascii_case("s") =>
+                {
+                    Some(Units::Stretch(*value))
+                }
+
+                Some(TokenOrValue::Token(CssToken::Ident(ident)))
+                    if ident.as_ref().eq_ignore_ascii_case("auto") =>
+                {
+                    Some(Units::Auto)
+                }
+
+                Some(TokenOrValue::Token(CssToken::Percentage { unit_value, .. })) => {
+                    Some(Units::Percentage(*unit_value * 100.0))
+                }
+
+                _ => None,
+            }
+        }
+
+        fn opacity_fallback(var: &Variable<'_>) -> Option<Opacity> {
+            match first_fallback_token(var) {
+                Some(TokenOrValue::Token(CssToken::Percentage { unit_value, .. })) => {
+                    Some(Opacity(*unit_value))
+                }
+
+                Some(TokenOrValue::Token(CssToken::Number { value, .. })) => Some(Opacity(*value)),
+
+                _ => None,
+            }
+        }
+
         match property.clone() {
             // Display
             Property::Display(display) => {
@@ -1805,29 +1890,40 @@ impl Style {
                 macro_rules! parse_color_var {
                     ($prop:expr) => {
                         if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
-                            let mut s = DefaultHasher::new();
-                            var.name.hash(&mut s);
-                            $prop.insert_variable_rule(rule_id, s.finish());
+                            $prop.insert_variable_rule(
+                                rule_id,
+                                variable_hash(var),
+                                color_fallback(var),
+                            );
                         }
                     };
                 }
                 macro_rules! parse_length_var {
                     ($($prop:expr),+) => {
                         if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
-                            let mut s = DefaultHasher::new();
-                            var.name.hash(&mut s);
-                            let hash = s.finish();
-                            $($prop.insert_variable_rule(rule_id, hash);)+
+                            let hash = variable_hash(var);
+                            let fallback = length_fallback(var);
+                            $($prop.insert_variable_rule(rule_id, hash, fallback.clone());)+
+                        }
+                    };
+                }
+                macro_rules! parse_font_size_var {
+                    ($prop:expr) => {
+                        if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
+                            $prop.insert_variable_rule(
+                                rule_id,
+                                variable_hash(var),
+                                font_size_fallback(var),
+                            );
                         }
                     };
                 }
                 macro_rules! parse_units_var {
                     ($($prop:expr),+) => {
                         if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
-                            let mut s = DefaultHasher::new();
-                            var.name.hash(&mut s);
-                            let hash = s.finish();
-                            $($prop.insert_variable_rule(rule_id, hash);)+
+                            let hash = variable_hash(var);
+                            let fallback = units_fallback(var);
+                            $($prop.insert_variable_rule(rule_id, hash, fallback.clone());)+
                         }
                     };
                 }
@@ -1842,7 +1938,7 @@ impl Style {
                     "underline-color" => parse_color_var!(self.underline_color),
                     "overline-color" => parse_color_var!(self.overline_color),
                     "strikethrough-color" => parse_color_var!(self.strikethrough_color),
-                    "font-size" => parse_length_var!(self.font_size),
+                    "font-size" => parse_font_size_var!(self.font_size),
                     "corner-radius" => parse_length_var!(
                         self.corner_top_left_radius,
                         self.corner_top_right_radius,
@@ -1885,10 +1981,11 @@ impl Style {
                     "gap" => parse_units_var!(self.vertical_gap, self.horizontal_gap),
                     "opacity" => {
                         if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
-                            let mut s = DefaultHasher::new();
-                            var.name.hash(&mut s);
-                            let hash = s.finish();
-                            self.opacity.insert_variable_rule(rule_id, hash);
+                            self.opacity.insert_variable_rule(
+                                rule_id,
+                                variable_hash(var),
+                                opacity_fallback(var),
+                            );
                         }
                     }
                     n => warn!("Unparsed {} {:?}", n, unparsed.value),
@@ -2017,57 +2114,63 @@ impl Style {
                             }
                         }
                         TokenOrValue::Var(var) => {
-                            let mut s = DefaultHasher::new();
-                            var.name.hash(&mut s);
-                            let name_hash = s.finish();
+                            let name_hash = variable_hash(var);
                             // Store var reference in all maps (type is unknown at parse time)
                             if let Some(store) =
                                 self.custom_color_props.get_mut(&variable_name_hash)
                             {
-                                store.insert_variable_rule(rule_id, name_hash);
+                                store.insert_variable_rule(rule_id, name_hash, color_fallback(var));
                             } else {
                                 let mut store = AnimatableVarSet::default();
-                                store.insert_variable_rule(rule_id, name_hash);
+                                store.insert_variable_rule(rule_id, name_hash, color_fallback(var));
                                 self.custom_color_props.insert(variable_name_hash, store);
                             }
                             if let Some(store) =
                                 self.custom_length_props.get_mut(&variable_name_hash)
                             {
-                                store.insert_variable_rule(rule_id, name_hash);
+                                store.insert_variable_rule(rule_id, name_hash, length_fallback(var));
                             } else {
                                 let mut store: AnimatableVarSet<LengthOrPercentage> =
                                     AnimatableVarSet::default();
-                                store.insert_variable_rule(rule_id, name_hash);
+                                store.insert_variable_rule(rule_id, name_hash, length_fallback(var));
                                 self.custom_length_props.insert(variable_name_hash, store);
                             }
                             if let Some(store) =
                                 self.custom_font_size_props.get_mut(&variable_name_hash)
                             {
-                                store.insert_variable_rule(rule_id, name_hash);
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    font_size_fallback(var),
+                                );
                             } else {
                                 let mut store: AnimatableVarSet<FontSize> =
                                     AnimatableVarSet::default();
-                                store.insert_variable_rule(rule_id, name_hash);
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    font_size_fallback(var),
+                                );
                                 self.custom_font_size_props.insert(variable_name_hash, store);
                             }
                             if let Some(store) =
                                 self.custom_units_props.get_mut(&variable_name_hash)
                             {
-                                store.insert_variable_rule(rule_id, name_hash);
+                                store.insert_variable_rule(rule_id, name_hash, units_fallback(var));
                             } else {
                                 let mut store: AnimatableVarSet<Units> =
                                     AnimatableVarSet::default();
-                                store.insert_variable_rule(rule_id, name_hash);
+                                store.insert_variable_rule(rule_id, name_hash, units_fallback(var));
                                 self.custom_units_props.insert(variable_name_hash, store);
                             }
                             if let Some(store) =
                                 self.custom_opacity_props.get_mut(&variable_name_hash)
                             {
-                                store.insert_variable_rule(rule_id, name_hash);
+                                store.insert_variable_rule(rule_id, name_hash, opacity_fallback(var));
                             } else {
                                 let mut store: AnimatableVarSet<Opacity> =
                                     AnimatableVarSet::default();
-                                store.insert_variable_rule(rule_id, name_hash);
+                                store.insert_variable_rule(rule_id, name_hash, opacity_fallback(var));
                                 self.custom_opacity_props.insert(variable_name_hash, store);
                             }
                         }

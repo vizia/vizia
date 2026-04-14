@@ -128,6 +128,7 @@ impl SparseSetIndex for SharedIndex {
 #[derive(Debug)]
 pub(crate) struct SharedData<T> {
     pub variable_name_hash: u64,
+    pub fallback: Option<T>,
     pub value: T,
 }
 
@@ -300,11 +301,18 @@ where
     }
 
     pub(crate) fn insert_rule(&mut self, rule: Rule, value: T) {
-        self.shared_data.insert(rule, SharedData { variable_name_hash: u64::MAX, value });
+        self.shared_data
+            .insert(rule, SharedData { variable_name_hash: u64::MAX, fallback: None, value });
     }
 
-    pub(crate) fn insert_variable_rule(&mut self, rule: Rule, variable_name_hash: u64) {
-        self.shared_data.insert(rule, SharedData { variable_name_hash, value: T::default() });
+    pub(crate) fn insert_variable_rule(
+        &mut self,
+        rule: Rule,
+        variable_name_hash: u64,
+        fallback: Option<T>,
+    ) {
+        self.shared_data
+            .insert(rule, SharedData { variable_name_hash, fallback, value: T::default() });
     }
 
     // pub(crate) fn remove_rule(&mut self, rule: Rule) -> Option<T> {
@@ -591,11 +599,13 @@ where
             let idx = data_index.index();
             if !data_index.is_inline() && idx < self.shared_data.dense.len() {
                 if self.shared_data.dense[data_index.index()].value.variable_name_hash != u64::MAX {
-                    if let Some(prop) = variables
-                        .get(&self.shared_data.dense[data_index.index()].value.variable_name_hash)
-                    {
-                        return prop.get_with_variables(entity, variables);
+                    let shared = &self.shared_data.dense[data_index.index()].value;
+                    if let Some(prop) = variables.get(&shared.variable_name_hash) {
+                        return prop
+                            .get_with_variables(entity, variables)
+                            .or_else(|| shared.fallback.clone());
                     }
+                    return shared.fallback.clone();
                 } else {
                     return Some(self.shared_data.dense[data_index.index()].value.value.clone());
                 }
@@ -634,8 +644,11 @@ where
                     // Property references a CSS variable — resolve dynamically so that
                     // an in-progress animation on the variable is picked up every frame.
                     if let Some(var_store) = variables.get(&shared.variable_name_hash) {
-                        return var_store.get_resolved(entity, variables);
+                        return var_store
+                            .get_resolved(entity, variables)
+                            .or_else(|| shared.fallback.clone());
                     }
+                    return shared.fallback.clone();
                 } else {
                     return Some(shared.value.clone());
                 }
