@@ -38,7 +38,7 @@ pub fn virtual_list(cx: &mut Context) {
             VirtualList::new(cx, list, 40.0, |cx, index, item| {
                 Label::new(cx, item).toggle_class("dark", index % 2 == 0)
             })
-            .selected(selected)
+            .selection(selected)
             .on_select(|cx, index| cx.emit(VirtualListEvent::SetSelected(index)))
             .selection_follows_focus(selection_follows_focus)
             .size(Pixels(300.0));

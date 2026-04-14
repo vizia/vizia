@@ -267,7 +267,7 @@ where
                 .height(Stretch(1.0))
                 .min_height(Auto)
                 .class("table-body")
-                .selected(selected_indices)
+                .selection(selected_indices)
                 .selectable(selectable)
                 .selection_follows_focus(selection_follows_focus)
                 .on_select(move |cx, index| cx.emit(VirtualTableEvent::<K>::SelectRow(index)));

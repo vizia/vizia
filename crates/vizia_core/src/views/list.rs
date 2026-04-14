@@ -39,7 +39,7 @@ pub struct List {
     /// The number of items in the list.
     num_items: usize,
     /// The set of selected items in the list.
-    selected: Signal<BTreeSet<usize>>,
+    selection: Signal<BTreeSet<usize>>,
     /// Whether the list items are selectable.
     selectable: Signal<Selectable>,
     /// The index of the currently focused item in the list.
@@ -79,7 +79,7 @@ struct ListItemsBinding<T: 'static> {
     list_entity: Entity,
     get_fn: Box<dyn Fn() -> Vec<T>>,
     item_content: Rc<dyn Fn(&mut Context, usize, Signal<T>)>,
-    selected: Signal<BTreeSet<usize>>,
+    selection: Signal<BTreeSet<usize>>,
     focused: Signal<Option<usize>>,
     /// Internal signals for each list item.
     item_signals: Vec<Signal<T>>,
@@ -95,7 +95,7 @@ impl<T: PartialEq + Clone + 'static> ListItemsBinding<T> {
         cx: &mut Context,
         list_entity: Entity,
         list: S,
-        selected: Signal<BTreeSet<usize>>,
+        selection: Signal<BTreeSet<usize>>,
         focused: Signal<Option<usize>>,
         item_content: Rc<dyn Fn(&mut Context, usize, Signal<T>)>,
     ) where
@@ -123,7 +123,7 @@ impl<T: PartialEq + Clone + 'static> ListItemsBinding<T> {
             list_entity,
             get_fn: Box::new(move || list.with_untracked(|list| list.deref().to_vec())),
             item_content,
-            selected,
+            selection,
             focused,
             item_signals: Vec::new(),
             item_entities: Vec::new(),
@@ -159,11 +159,11 @@ impl<T: PartialEq + Clone + 'static> ListItemsBinding<T> {
     fn create_item_entity(&self, cx: &mut Context, index: usize, signal: Signal<T>) -> Entity {
         let mut created = Entity::null();
         let item_content = self.item_content.clone();
-        let selected = self.selected;
+        let selection = self.selection;
         let focused = self.focused;
 
         cx.with_current(self.entity, |cx| {
-            created = ListItem::new(cx, index, signal, selected, focused, {
+            created = ListItem::new(cx, index, signal, selection, focused, {
                 let item_content = item_content.clone();
                 move |cx, index, item| (item_content)(cx, index, item)
             })
@@ -249,21 +249,21 @@ impl List {
     fn normalize_selection_state(&mut self) {
         let (min_selected, max_selected) = self.selection_limits();
 
-        let mut selected = self.selected.get();
-        selected.retain(|index| *index < self.num_items);
+        let mut selection = self.selection.get();
+        selection.retain(|index| *index < self.num_items);
 
-        while selected.len() > max_selected {
-            if let Some(last) = selected.iter().next_back().copied() {
-                selected.remove(&last);
+        while selection.len() > max_selected {
+            if let Some(last) = selection.iter().next_back().copied() {
+                selection.remove(&last);
             } else {
                 break;
             }
         }
 
-        if selected.len() < min_selected {
+        if selection.len() < min_selected {
             for index in 0..self.num_items {
-                selected.insert(index);
-                if selected.len() >= min_selected {
+                selection.insert(index);
+                if selection.len() >= min_selected {
                     break;
                 }
             }
@@ -274,7 +274,7 @@ impl List {
             focused = self.num_items.checked_sub(1);
         }
 
-        self.selected.set(selected);
+        self.selection.set(selection);
         self.focused.set(focused);
     }
 
@@ -296,7 +296,7 @@ impl List {
         T: PartialEq + Clone + 'static,
     {
         let content: Rc<dyn Fn(&mut Context, usize, Signal<T>)> = Rc::new(item_content);
-        let selected = Signal::new(BTreeSet::default());
+        let selection = Signal::new(BTreeSet::default());
         let selectable = Signal::new(Selectable::None);
         let focused = Signal::new(None);
         let min_selected = Signal::new(0);
@@ -310,7 +310,7 @@ impl List {
 
         Self {
             num_items: 0,
-            selected,
+            selection,
             selectable,
             focused,
             selection_follows_focus: Signal::new(false),
@@ -379,7 +379,7 @@ impl List {
                     cx,
                     list_entity,
                     list_signal,
-                    selected,
+                    selection,
                     focused,
                     content.clone(),
                 );
@@ -413,18 +413,18 @@ impl View for List {
                 cx.focus();
                 let selectable = self.selectable.get();
                 let (min_selected, max_selected) = self.selection_limits();
-                let mut selected = self.selected.get();
+                let mut selection = self.selection.get();
                 let mut focused = self.focused.get();
                 match selectable {
                     Selectable::Single => {
-                        if selected.contains(&index) {
+                        if selection.contains(&index) {
                             if min_selected == 0 {
-                                selected.clear();
+                                selection.clear();
                                 focused = None;
                             }
                         } else {
-                            selected.clear();
-                            selected.insert(index);
+                            selection.clear();
+                            selection.insert(index);
                             focused = Some(index);
                             if let Some(on_select) = &self.on_select {
                                 on_select(cx, index);
@@ -433,16 +433,16 @@ impl View for List {
                     }
 
                     Selectable::Multi => {
-                        if selected.contains(&index) {
-                            if selected.len() > min_selected {
-                                selected.remove(&index);
+                        if selection.contains(&index) {
+                            if selection.len() > min_selected {
+                                selection.remove(&index);
                                 if focused == Some(index) {
-                                    focused = selected.iter().next_back().copied();
+                                    focused = selection.iter().next_back().copied();
                                 }
                             }
                         } else {
-                            if selected.len() < max_selected {
-                                selected.insert(index);
+                            if selection.len() < max_selected {
+                                selection.insert(index);
                                 focused = Some(index);
                                 if let Some(on_select) = &self.on_select {
                                     on_select(cx, index);
@@ -454,7 +454,7 @@ impl View for List {
                     Selectable::None => {}
                 }
 
-                self.selected.set(selected);
+                self.selection.set(selection);
                 self.focused.set(focused);
 
                 meta.consume();
@@ -470,7 +470,7 @@ impl View for List {
             ListEvent::ClearSelection => {
                 let (min_selected, _) = self.selection_limits();
                 if min_selected == 0 {
-                    self.selected.set(BTreeSet::default());
+                    self.selection.set(BTreeSet::default());
                 }
                 meta.consume();
             }
@@ -533,7 +533,7 @@ impl View for List {
 /// Modifiers for changing the behavior and selection state of a [List].
 pub trait ListModifiers: Sized {
     /// Sets the selected items of the list from signal of type indices.
-    fn selected<R>(self, selected: impl Res<R> + 'static) -> Self
+    fn selection<R>(self, selection: impl Res<R> + 'static) -> Self
     where
         R: Deref<Target = [usize]> + Clone + 'static;
 
@@ -589,21 +589,21 @@ pub trait ListModifiers: Sized {
 }
 
 impl ListModifiers for Handle<'_, List> {
-    fn selected<R>(self, selected: impl Res<R> + 'static) -> Self
+    fn selection<R>(self, selection: impl Res<R> + 'static) -> Self
     where
         R: Deref<Target = [usize]> + Clone + 'static,
     {
-        let selected = selected.to_signal(self.cx);
-        self.bind(selected, move |handle| {
-            selected.with(|selected_indices| {
+        let selection = selection.to_signal(self.cx);
+        self.bind(selection, move |handle| {
+            selection.with(|selected_indices| {
                 handle.modify(|list| {
-                    let mut selected = BTreeSet::default();
+                    let mut selection = BTreeSet::default();
                     let mut focused = None;
                     for idx in selected_indices.deref().iter().copied() {
-                        selected.insert(idx);
+                        selection.insert(idx);
                         focused = Some(idx);
                     }
-                    list.selected.set(selected);
+                    list.selection.set(selection);
                     list.focused.set(focused);
                     list.normalize_selection_state();
                 });
@@ -750,7 +750,7 @@ impl ListItem {
         cx: &'a mut Context,
         index: usize,
         item: M,
-        selected: impl SignalMap<BTreeSet<usize>> + SignalGet<BTreeSet<usize>>,
+        selection: impl SignalMap<BTreeSet<usize>> + SignalGet<BTreeSet<usize>>,
         focused: impl SignalMap<Option<usize>>,
         item_content: impl 'static + Fn(&mut Context, usize, M),
     ) -> Handle<'a, Self> {
@@ -758,24 +758,17 @@ impl ListItem {
             focused.map(move |focused| focused.as_ref().is_some_and(|f| *f == index)).get();
         let focused_signal =
             focused.map(move |focused| focused.as_ref().is_some_and(|f| *f == index));
-        let is_selected = selected.map(move |selected| selected.contains(&index));
+        let is_selected = selection.map(move |selection| selection.contains(&index));
         Self { selected: is_selected }
             .build(cx, move |cx| {
                 item_content(cx, index, item);
             })
             .role(Role::ListItem)
             .toggle_class("focused", focused_signal)
-            .checked(selected.map(move |selected| selected.contains(&index)))
+            .checked(selection.map(move |selection| selection.contains(&index)))
             .bind(focused_signal, move |handle| {
                 let focused = focused_signal.get();
                 if focused != is_focused {
-                    handle.cx.emit(ScrollEvent::ScrollToView(handle.entity()));
-                }
-            })
-            .bind(selected, move |handle| {
-                let is_selected = selected.get().contains(&index);
-                if is_selected {
-                    println!("Item {} selected", index);
                     handle.cx.emit(ScrollEvent::ScrollToView(handle.entity()));
                 }
             })

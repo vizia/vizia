@@ -191,6 +191,10 @@ pub(crate) fn get_access_node(
         node_builder.set_expanded(expanded);
     }
 
+    if let Some(selected) = cx.style.selected.get(entity).copied() {
+        node_builder.set_selected(selected);
+    }
+
     if let Some(live) = cx.style.live.get(entity) {
         node_builder.set_live(*live);
     }
@@ -214,6 +218,12 @@ pub(crate) fn get_access_node(
     if let Some(controlled_id) = cx.style.controls.get(entity) {
         if let Some(controlled) = cx.resolve_entity_identifier(controlled_id) {
             node_builder.set_controls(vec![controlled.accesskit_id()]);
+        }
+    }
+
+    if let Some(active_descendant_id) = cx.style.active_descendant.get(entity) {
+        if let Some(active_descendant) = cx.resolve_entity_identifier(active_descendant_id) {
+            node_builder.set_active_descendant(active_descendant.accesskit_id());
         }
     }
 

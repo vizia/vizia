@@ -61,6 +61,23 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets the accessibility active descendant relationship for the view.
+    fn active_descendant<U: Into<String> + Clone + 'static>(
+        mut self,
+        id: impl Res<U> + 'static,
+    ) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            id.set_or_bind(cx, move |cx, id| {
+                cx.style.active_descendant.insert(entity, id.get_value(cx).into());
+                cx.style.needs_access_update(entity);
+            });
+        });
+
+        self
+    }
+
     // /// Sets the accessibility default action for the view.
     // fn default_action_verb(mut self, action_verb: DefaultActionVerb) -> Self {
     //     let id = self.entity();
@@ -102,6 +119,20 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         self.context().with_current(current, |cx| {
             expanded.set_or_bind(cx, move |cx, expanded| {
                 cx.style.expanded.insert(entity, expanded.get_value(cx).into());
+                cx.style.needs_access_update(entity);
+            });
+        });
+
+        self
+    }
+
+    /// Sets whether the view should be announced as selected (`true`) or not selected (`false`).
+    fn selected<U: Into<bool>>(mut self, selected: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            selected.set_or_bind(cx, move |cx, selected| {
+                cx.style.selected.insert(entity, selected.get_value(cx).into());
                 cx.style.needs_access_update(entity);
             });
         });

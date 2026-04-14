@@ -30,7 +30,7 @@ fn main() -> Result<(), ApplicationError> {
                 Label::new(cx, item).toggle_class("dark", index % 2 == 0).hoverable(false)
             })
             .size(Pixels(300.0))
-            .selected(selected)
+            .selection(selected)
             .on_select(|cx, index| cx.emit(AppEvent::SetSelected(index)))
             .selectable(Selectable::Single)
             .selection_follows_focus(selection_follows_focus);

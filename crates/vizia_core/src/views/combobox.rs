@@ -80,6 +80,8 @@ where
                 });
             });
 
+            let entity = cx.current();
+
             Textbox::new(cx, filter_text)
                 .on_edit(|cx, txt| cx.emit(ComboBoxEvent::SetFilterText(txt)))
                 // Prevent blur/cancel from ending edit; this view handles it explicitly.
@@ -88,7 +90,15 @@ where
                 .width(Stretch(1.0))
                 .height(Pixels(32.0))
                 .placeholder(placeholder)
-                .class("title");
+                .class("title")
+                .role(Role::ComboBox)
+                .expanded(is_open)
+                .active_descendant(highlighted.map(move |highlighted| {
+                    highlighted
+                        .map(|index| format!("{}-option-{}", entity, index))
+                        .unwrap_or_default()
+                }))
+                .controls(format!("{}", entity));
 
             Binding::new(cx, is_open, move |cx| {
                 let open = is_open.get();
@@ -136,11 +146,17 @@ where
                             });
 
                             List::new(cx, options_state, move |cx, _row, item| {
+                                let source_index = item.get().0;
+                                let option_id = format!("{}-option-{}", entity, source_index);
+                                cx.style.ids.insert(cx.current(), option_id.clone());
+                                cx.needs_restyle(cx.current());
+                                cx.entity_identifiers.insert(option_id, cx.current());
+
                                 Label::new(cx, item.map(|(_, text)| text.clone())).hoverable(false);
                             })
                             .width(Stretch(1.0))
                             .selectable(Selectable::Single)
-                            .selected(highlighted_row)
+                            .selection(highlighted_row)
                             .show_horizontal_scrollbar(false)
                             .on_select(move |cx, row| {
                                 if let Some((source_index, _)) = options_state.get().get(row) {
@@ -150,6 +166,8 @@ where
                             });
                         });
                     })
+                    .role(Role::ListBox)
+                    .id(format!("{}", entity))
                     .should_reposition(false)
                     .arrow_size(Pixels(4.0));
                 }

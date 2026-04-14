@@ -97,7 +97,7 @@ impl Select {
                             .selectable(Selectable::Single)
                             .min_selected(min_selected)
                             .max_selected(max_selected)
-                            .selected(
+                            .selection(
                                 selected.map(|s| {
                                     if let Some(index) = s { vec![*index] } else { vec![] }
                                 }),

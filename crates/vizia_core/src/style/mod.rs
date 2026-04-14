@@ -244,7 +244,9 @@ pub struct Style {
     pub(crate) labelled_by: SparseSet<String>,
     pub(crate) described_by: SparseSet<String>,
     pub(crate) controls: SparseSet<String>,
+    pub(crate) active_descendant: SparseSet<String>,
     pub(crate) expanded: SparseSet<bool>,
+    pub(crate) selected: SparseSet<bool>,
     pub(crate) hidden: SparseSet<bool>,
     pub(crate) text_value: SparseSet<String>,
     pub(crate) numeric_value: SparseSet<f64>,
@@ -2450,7 +2452,9 @@ impl Style {
         self.labelled_by.remove(entity);
         self.described_by.remove(entity);
         self.controls.remove(entity);
+        self.active_descendant.remove(entity);
         self.expanded.remove(entity);
+        self.selected.remove(entity);
         self.hidden.remove(entity);
         self.text_value.remove(entity);
         self.numeric_value.remove(entity);
