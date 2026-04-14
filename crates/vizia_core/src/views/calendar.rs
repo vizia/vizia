@@ -1,6 +1,9 @@
 use chrono::{Datelike, NaiveDate, Weekday};
 
-use crate::prelude::*;
+use crate::{
+    icons::{ICON_CHEVRON_LEFT, ICON_CHEVRON_RIGHT, ICON_CHEVRONS_LEFT, ICON_CHEVRONS_RIGHT},
+    prelude::*,
+};
 
 /// A control used to select a date.
 pub struct Calendar {
@@ -8,20 +11,8 @@ pub struct Calendar {
     on_select: Option<Box<dyn Fn(&mut EventContext, NaiveDate)>>,
 }
 
-const MONTHS: [&str; 12] = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-];
+const MONTHS: [&str; 12] =
+    ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"];
 
 const DAYS_HEADER: [&str; 7] =
     ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -33,7 +24,7 @@ pub(crate) enum CalendarEvent {
 
     IncrementYear,
     DecrementYear,
-    SelectYear(String),
+    SelectYear(i32),
 
     SelectDate(NaiveDate),
 }
@@ -142,53 +133,48 @@ impl Calendar {
         let month_options =
             Signal::new(MONTHS.iter().map(|m| Localized::new(m)).collect::<Vec<_>>());
         let selected_month = view_date.map(|date| Some(date.month() as usize - 1));
+        let year_start = selected_date.year() - 100;
+        let year_end = selected_date.year() + 100;
+        let year_options =
+            Signal::new((year_start..=year_end).map(|year| year.to_string()).collect::<Vec<_>>());
+        let selected_year = view_date.map(move |date| {
+            let index = date.year() - year_start;
+            if (0..=(year_end - year_start)).contains(&index) { Some(index as usize) } else { None }
+        });
 
         Self { view_date, on_select: None }.build(cx, move |cx| {
-            HStack::new(cx, |cx| {
+            HStack::new(cx, move |cx| {
+                Button::new(cx, |cx| Svg::new(cx, ICON_CHEVRON_LEFT))
+                    .on_press(|ex| ex.emit(CalendarEvent::DecrementMonth))
+                    .variant(ButtonVariant::Text)
+                    .class("month-nav");
                 HStack::new(cx, move |cx| {
-                    Button::new(cx, |cx| Label::new(cx, "<"))
-                        .on_press(|ex| ex.emit(CalendarEvent::DecrementMonth));
-
-                    Select::new(cx, month_options, selected_month, false)
-                        .on_select(|ex, index| ex.emit(CalendarEvent::SelectMonth(index)))
-                        .width(Stretch(1.0));
-
-                    Button::new(cx, |cx| Label::new(cx, ">"))
-                        .on_press(|ex| ex.emit(CalendarEvent::IncrementMonth));
+                    Select::new(cx, month_options, selected_month, true)
+                        .on_select(|ex, index| ex.emit(CalendarEvent::SelectMonth(index)));
+                    Select::new(cx, year_options, selected_year, true).on_select(
+                        move |ex, index| {
+                            ex.emit(CalendarEvent::SelectYear(year_start + index as i32));
+                        },
+                    );
                 })
-                .width(Pixels(140.0))
-                .class("spinbox");
+                .class("calendar-controls-select");
 
-                HStack::new(cx, |cx| {
-                    Button::new(cx, |cx| Label::new(cx, "-"))
-                        .on_press(|ex| ex.emit(CalendarEvent::DecrementYear));
-
-                    let view_date = cx.data::<Calendar>().view_date;
-                    let year = view_date.map(|date| date.year());
-                    Textbox::new(cx, year)
-                        .width(Stretch(1.0))
-                        .padding(Pixels(1.0))
-                        .on_edit(|ex, v| ex.emit(CalendarEvent::SelectYear(v)));
-
-                    Button::new(cx, |cx| Label::new(cx, "+"))
-                        .on_press(|ex| ex.emit(CalendarEvent::IncrementYear));
-                })
-                .width(Pixels(100.0))
-                .class("spinbox");
+                Button::new(cx, |cx| Svg::new(cx, ICON_CHEVRON_RIGHT))
+                    .on_press(|ex| ex.emit(CalendarEvent::IncrementMonth))
+                    .variant(ButtonVariant::Text)
+                    .class("month-nav");
             })
-            .class("calendar-header");
-
-            Divider::new(cx);
+            .class("calendar-controls");
 
             VStack::new(cx, move |cx| {
                 // Days of the week
                 HStack::new(cx, |cx| {
                     for h in DAYS_HEADER {
                         Label::new(cx, Localized::new(h).map(|day| day[0..2].to_string()))
-                            .class("calendar-calendar-header");
+                            .class("calendar-dow");
                     }
                 })
-                .class("calendar-calendar-headers");
+                .class("calendar-header");
 
                 // Numbered days in a grid
                 VStack::new(cx, move |cx| {
@@ -209,12 +195,9 @@ impl Calendar {
 
                                         handle
                                             .text(day_number.to_string())
-                                            .class("calendar-calendar-day")
+                                            .class("calendar-day")
                                             .navigable(!disabled)
-                                            .toggle_class(
-                                                "calendar-calendar-day-disabled",
-                                                disabled,
-                                            )
+                                            .toggle_class("calendar-day-disabled", disabled)
                                             .on_press(move |ex| {
                                                 if !disabled {
                                                     ex.emit(CalendarEvent::SelectDate(
@@ -243,7 +226,7 @@ impl Calendar {
                 .width(Pixels(32.0 * 7.0))
                 .height(Pixels(32.0 * 6.0));
             })
-            .class("calendar-calendar");
+            .class("calendar-body");
         })
     }
 }
@@ -277,10 +260,8 @@ impl View for Calendar {
             }
 
             CalendarEvent::SelectYear(year) => {
-                if let Ok(year) = year.parse::<i32>() {
-                    let view_date = self.view_date.get();
-                    self.set_view_date(year, view_date.month(), view_date.day());
-                }
+                let view_date = self.view_date.get();
+                self.set_view_date(*year, view_date.month(), view_date.day());
             }
 
             CalendarEvent::SelectDate(date) => {

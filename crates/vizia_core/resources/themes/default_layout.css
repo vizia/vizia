@@ -166,54 +166,68 @@ chip > .close-icon svg {
 calendar {
     width: auto;
     height: auto;
-    padding: 4px;
-    vertical-gap: 4px;
+    padding: 12px;
+    vertical-gap: 16px;
     alignment: center;
+}
+
+.calendar-controls {
+    width: 1s;
+    height: auto;
+    alignment: center;
+}
+
+.calendar-controls .month-nav {
+    width: 32px;
+    height: 32px;
+    alignment: center;
+    padding: 12px;
+}
+
+.calendar-controls .month-nav svg {
+    size: 16px;
+}
+
+.calendar-controls-select {
+    width: 1s;
+    height: auto;
+    gap: 6px;
+    alignment: center;
+}
+
+.calendar-controls select {
+    width: auto;
+    height: 32px;
+    min-width: 68px;
+}
+
+.calendar-body {
+    width: auto;
+    height: auto;
+    gap: 4px;
 }
 
 .calendar-header {
-    width: auto;
-    height: auto;
-    horizontal-gap: 4px;
-}
-
-.calendar-header select popup {
-    left: 1s;
-    right: 1s;
-    width: auto;
-}
-
-.calendar-calendar {
-    width: auto;
-    height: auto;
-}
-
-.calendar-calendar-headers {
     alignment: center;
     height: auto;
 }
 
-.calendar-calendar-header {
+.calendar-dow {
     alignment: center;
     width: 32px;
-    height: 32px;
+    height: 21px;
 }
 
-.calendar-calendar-day {
+.calendar-day {
     width: 32px;
     height: 32px;
     alignment: center;
 }
 
-.calendar-calendar-day-disabled {
+.calendar-day-disabled {
     width: 32px;
     height: 32px;
     alignment: center;
-}
-
-.calendar-selected-date {
-    left: 1s;
-    right: 1s;
 }
 
 /* DIVIDER */
