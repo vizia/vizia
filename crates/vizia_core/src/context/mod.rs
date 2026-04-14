@@ -338,6 +338,10 @@ impl Context {
         if system_flags.contains(SystemFlags::RECLIP) {
             self.needs_reclip(entity);
         }
+
+        if system_flags.contains(SystemFlags::REACCESS) {
+            self.style.needs_access_update(entity);
+        }
     }
 
     /// Enables or disables PseudoClasses for the focus of an entity

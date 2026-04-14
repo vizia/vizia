@@ -135,6 +135,7 @@ bitflags! {
         const REDRAW = 1 << 3;
         const RETRANSFORM = 1 << 4;
         const RECLIP = 1 << 5;
+        const REACCESS = 1 << 6;
     }
 }
 

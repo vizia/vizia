@@ -104,6 +104,7 @@ pub trait StyleModifiers: internal::Modifiable {
                     pseudo_classes.set(PseudoClassFlags::CHECKED, val);
                 }
                 cx.needs_restyle(entity);
+                cx.style.needs_access_update(entity);
             });
         });
 
@@ -238,7 +239,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// This property is inherited by the descendants of the view.
         disabled,
         bool,
-        SystemFlags::RESTYLE
+        SystemFlags::RESTYLE | SystemFlags::REACCESS
     );
 
     modifier!(
