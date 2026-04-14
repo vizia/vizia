@@ -18,6 +18,7 @@ pub fn accessibility_system(cx: &mut Context) {
             let mut access_context = AccessContext {
                 current: entity,
                 tree: &cx.tree,
+                entity_identifiers: &cx.entity_identifiers,
                 cache: &cx.cache,
                 style: &cx.style,
                 text_context: &mut cx.text_context,
@@ -73,6 +74,7 @@ pub fn initial_accessibility_system(cx: &mut Context) -> TreeUpdate {
         let mut access_context = AccessContext {
             current: entity,
             tree: &cx.tree,
+            entity_identifiers: &cx.entity_identifiers,
             cache: &cx.cache,
             style: &cx.style,
             text_context: &mut cx.text_context,
@@ -122,8 +124,9 @@ pub(crate) fn get_access_node(
 ) -> Option<AccessNode> {
     let mut node_builder = Node::default();
 
-    if let Some(role) = cx.style.role.get(entity) {
-        node_builder.set_role(*role);
+    let role = cx.style.role.get(entity).copied();
+    if let Some(role) = role {
+        node_builder.set_role(role);
     }
 
     let bounds = cx.cache.get_bounds(entity);
@@ -183,6 +186,11 @@ pub(crate) fn get_access_node(
         }
     }
 
+    let has_expanded = cx.style.expanded.get(entity).copied();
+    if let Some(expanded) = has_expanded {
+        node_builder.set_expanded(expanded);
+    }
+
     if let Some(live) = cx.style.live.get(entity) {
         node_builder.set_live(*live);
     }
@@ -191,12 +199,22 @@ pub(crate) fn get_access_node(
     //     node_builder.set_default_action_verb(*default_action_verb);
     // }
 
-    if let Some(labelled_by) = cx.style.labelled_by.get(entity) {
-        node_builder.set_labelled_by(vec![labelled_by.accesskit_id()]);
+    if let Some(labelled_by_id) = cx.style.labelled_by.get(entity) {
+        if let Some(labelled_by) = cx.resolve_entity_identifier(labelled_by_id) {
+            node_builder.set_labelled_by(vec![labelled_by.accesskit_id()]);
+        }
     }
 
-    if let Some(described_by) = cx.style.described_by.get(entity) {
-        node_builder.set_described_by(vec![described_by.accesskit_id()]);
+    if let Some(described_by_id) = cx.style.described_by.get(entity) {
+        if let Some(described_by) = cx.resolve_entity_identifier(described_by_id) {
+            node_builder.set_described_by(vec![described_by.accesskit_id()]);
+        }
+    }
+
+    if let Some(controlled_id) = cx.style.controls.get(entity) {
+        if let Some(controlled) = cx.resolve_entity_identifier(controlled_id) {
+            node_builder.set_controls(vec![controlled.accesskit_id()]);
+        }
     }
 
     let checkable = cx

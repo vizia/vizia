@@ -84,9 +84,8 @@ pub mod prelude {
     pub use super::layout::{BoundingBox, GeoChanged};
     pub use super::localization::{Localized, ToStringLocalized, number_with_fraction, percentage};
     pub use super::modifiers::{
-        AbilityModifiers, AccessibilityModifiers, ActionModifiers, ControlModifiers,
-        ControlSize, LayoutModifiers, LinearGradientBuilder, ShadowBuilder, StyleModifiers,
-        TextModifiers,
+        AbilityModifiers, AccessibilityModifiers, ActionModifiers, ControlModifiers, ControlSize,
+        LayoutModifiers, LinearGradientBuilder, ShadowBuilder, StyleModifiers, TextModifiers,
     };
     pub use super::resource::{ImageId, ImageRetentionPolicy};
     pub use super::util::{CSS, IntoCssStr};

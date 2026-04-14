@@ -33,10 +33,8 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         let entity = self.entity();
         let id = id.into();
 
-        if let Some(label_entity) = self.context().resolve_entity_identifier(&id) {
-            self.context().style.labelled_by.insert(entity, label_entity);
-            self.context().style.needs_access_update(entity);
-        }
+        self.context().style.labelled_by.insert(entity, id);
+        self.context().style.needs_access_update(entity);
 
         self
     }
@@ -46,10 +44,19 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         let entity = self.entity();
         let id = id.into();
 
-        if let Some(description_entity) = self.context().resolve_entity_identifier(&id) {
-            self.context().style.described_by.insert(entity, description_entity);
-            self.context().style.needs_access_update(entity);
-        }
+        self.context().style.described_by.insert(entity, id);
+        self.context().style.needs_access_update(entity);
+
+        self
+    }
+
+    /// Sets the accessibility controls relationship for the view using the ID of another view.
+    fn controls(mut self, id: impl Into<String>) -> Self {
+        let entity = self.entity();
+        let id = id.into();
+
+        self.context().style.controls.insert(entity, id);
+        self.context().style.needs_access_update(entity);
 
         self
     }
@@ -81,6 +88,20 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         self.context().with_current(current, |cx| {
             hidden.set_or_bind(cx, move |cx, hidden| {
                 cx.style.hidden.insert(entity, hidden.get_value(cx).into());
+                cx.style.needs_access_update(entity);
+            });
+        });
+
+        self
+    }
+
+    /// Sets whether the view should be announced as expanded (`true`) or collapsed (`false`).
+    fn expanded<U: Into<bool>>(mut self, expanded: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            expanded.set_or_bind(cx, move |cx, expanded| {
+                cx.style.expanded.insert(entity, expanded.get_value(cx).into());
                 cx.style.needs_access_update(entity);
             });
         });

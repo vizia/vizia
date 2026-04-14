@@ -221,43 +221,43 @@ fn draw_entity(
         || backdrop_filter.is_some()
         || blend_mode != BlendMode::Normal
     {
-            let mut paint = Paint::default();
-            paint.set_alpha_f(cx.opacity());
-            paint.set_blend_mode(blend_mode.into());
+        let mut paint = Paint::default();
+        paint.set_alpha_f(cx.opacity());
+        paint.set_blend_mode(blend_mode.into());
 
-            let rect: Rect = cx.bounds().into();
-            let mut backdrop_image_filter = ImageFilter::crop(rect, None, None).unwrap();
+        let rect: Rect = cx.bounds().into();
+        let mut backdrop_image_filter = ImageFilter::crop(rect, None, None).unwrap();
 
-            if let Some(filter) = filter {
-                match filter {
-                    Filter::Blur(radius) => {
-                        let sigma = radius.to_px().unwrap() * cx.scale_factor() / 2.0;
-                        let image_filter = ImageFilter::crop(rect, None, None)
-                            .unwrap()
-                            .blur(None, (sigma, sigma), None)
-                            .unwrap();
-                        paint.set_image_filter(image_filter);
-                    }
+        if let Some(filter) = filter {
+            match filter {
+                Filter::Blur(radius) => {
+                    let sigma = radius.to_px().unwrap() * cx.scale_factor() / 2.0;
+                    let image_filter = ImageFilter::crop(rect, None, None)
+                        .unwrap()
+                        .blur(None, (sigma, sigma), None)
+                        .unwrap();
+                    paint.set_image_filter(image_filter);
                 }
             }
+        }
 
-            let slr = if let Some(backdrop_filter) = backdrop_filter {
-                match backdrop_filter {
-                    Filter::Blur(radius) => {
-                        let sigma = radius.to_px().unwrap() * cx.scale_factor() / 2.0;
-                        backdrop_image_filter =
-                            backdrop_image_filter.blur(None, (sigma, sigma), None).unwrap();
-                        SaveLayerRec::default().paint(&paint).backdrop(&backdrop_image_filter)
-                    }
+        let slr = if let Some(backdrop_filter) = backdrop_filter {
+            match backdrop_filter {
+                Filter::Blur(radius) => {
+                    let sigma = radius.to_px().unwrap() * cx.scale_factor() / 2.0;
+                    backdrop_image_filter =
+                        backdrop_image_filter.blur(None, (sigma, sigma), None).unwrap();
+                    SaveLayerRec::default().paint(&paint).backdrop(&backdrop_image_filter)
                 }
-            } else {
-                SaveLayerRec::default().paint(&paint)
-            };
-
-            Some(canvas.save_layer(&slr))
+            }
         } else {
-            None
+            SaveLayerRec::default().paint(&paint)
         };
+
+        Some(canvas.save_layer(&slr))
+    } else {
+        None
+    };
 
     canvas.save();
     if let Some(Some(clip_path)) = cx.cache.clip_path.get(current) {

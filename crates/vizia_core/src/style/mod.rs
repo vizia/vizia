@@ -240,8 +240,10 @@ pub struct Style {
     pub(crate) name: StyleSet<String>,
     pub(crate) role: SparseSet<Role>,
     pub(crate) live: SparseSet<Live>,
-    pub(crate) labelled_by: SparseSet<Entity>,
-    pub(crate) described_by: SparseSet<Entity>,
+    pub(crate) labelled_by: SparseSet<String>,
+    pub(crate) described_by: SparseSet<String>,
+    pub(crate) controls: SparseSet<String>,
+    pub(crate) expanded: SparseSet<bool>,
     pub(crate) hidden: SparseSet<bool>,
     pub(crate) text_value: SparseSet<String>,
     pub(crate) numeric_value: SparseSet<f64>,
@@ -2446,6 +2448,8 @@ impl Style {
         self.live.remove(entity);
         self.labelled_by.remove(entity);
         self.described_by.remove(entity);
+        self.controls.remove(entity);
+        self.expanded.remove(entity);
         self.hidden.remove(entity);
         self.text_value.remove(entity);
         self.numeric_value.remove(entity);

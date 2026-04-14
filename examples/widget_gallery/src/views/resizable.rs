@@ -26,9 +26,7 @@ Double-click the handle to reset.",
                     ResizeStackDirection::Right,
                     move |_cx, w| width.set(Pixels(w)),
                     |cx| {
-                        Element::new(cx)
-                            .class("gallery-resizable-panel")
-                            .size(Stretch(1.0));
+                        Element::new(cx).class("gallery-resizable-panel").size(Stretch(1.0));
                     },
                 )
                 .on_reset(move |_cx| width.set(Pixels(200.0)))
@@ -52,9 +50,7 @@ Double-click the handle to reset.",
                     ResizeStackDirection::Bottom,
                     move |_cx, h| height.set(Pixels(h)),
                     |cx| {
-                        Element::new(cx)
-                            .class("gallery-resizable-panel")
-                            .size(Stretch(1.0));
+                        Element::new(cx).class("gallery-resizable-panel").size(Stretch(1.0));
                     },
                 )
                 .on_reset(move |_cx| height.set(Pixels(100.0)))

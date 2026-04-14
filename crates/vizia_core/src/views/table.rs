@@ -125,7 +125,9 @@ where
     pub header_content: Rc<TableHeaderContent<S>>,
 }
 
-impl<T: PartialEq + 'static, S: View, K: Clone + PartialEq + Send + Sync + 'static> Clone for TableColumn<T, S, K> {
+impl<T: PartialEq + 'static, S: View, K: Clone + PartialEq + Send + Sync + 'static> Clone
+    for TableColumn<T, S, K>
+{
     fn clone(&self) -> Self {
         Self {
             key: self.key.clone(),
@@ -140,7 +142,9 @@ impl<T: PartialEq + 'static, S: View, K: Clone + PartialEq + Send + Sync + 'stat
     }
 }
 
-impl<T: PartialEq + 'static, S: View, K: Clone + PartialEq + Send + Sync + 'static> TableColumn<T, S, K> {
+impl<T: PartialEq + 'static, S: View, K: Clone + PartialEq + Send + Sync + 'static>
+    TableColumn<T, S, K>
+{
     /// Creates a new table column from explicit header and cell builders.
     ///
     /// Use this when you need full control over header and cell rendering.

@@ -412,11 +412,13 @@ impl Localized {
 
         if let Some(attr_name) = &self.attribute {
             if saw_message {
-                cx.resource_manager.report_localization_issue(LocalizationIssue::MissingAttribute {
-                    key: self.key.clone(),
-                    attribute: attr_name.clone(),
-                    requested_locale: requested_locale.to_string(),
-                });
+                cx.resource_manager.report_localization_issue(
+                    LocalizationIssue::MissingAttribute {
+                        key: self.key.clone(),
+                        attribute: attr_name.clone(),
+                        requested_locale: requested_locale.to_string(),
+                    },
+                );
             } else {
                 cx.resource_manager.report_localization_issue(LocalizationIssue::MissingMessage {
                     key: self.key.clone(),
@@ -628,8 +630,11 @@ mod tests {
         cx.add_translation("fr".parse().unwrap(), "bonjour = Bonjour".to_string()).unwrap();
 
         // Provide the requested key only in the default bundle.
-        cx.add_translation(LanguageIdentifier::default(), "greeting = Hello from default".to_string())
-            .unwrap();
+        cx.add_translation(
+            LanguageIdentifier::default(),
+            "greeting = Hello from default".to_string(),
+        )
+        .unwrap();
 
         let text = Localized::new("greeting").to_string_local(&cx);
 

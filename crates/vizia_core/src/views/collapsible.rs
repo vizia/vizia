@@ -38,6 +38,7 @@ impl Collapsible {
 
         Self { is_open, on_toggle: None }
             .build(cx, |cx| {
+                let entity = cx.current();
                 // Header
                 HStack::new(cx, |cx| {
                     header(cx);
@@ -47,13 +48,16 @@ impl Collapsible {
                 })
                 .navigable(true)
                 .role(Role::Button)
+                .expanded(is_open)
                 .class("header")
+                .controls(format!("{}", entity))
                 .on_press(|cx| cx.emit(CollapsibleEvent::ToggleOpen));
 
                 // Content
                 VStack::new(cx, |cx| {
                     content(cx);
                 })
+                .id(format!("{}", entity))
                 .class("content");
             })
             .toggle_class("open", is_open)

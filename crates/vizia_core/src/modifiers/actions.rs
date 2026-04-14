@@ -177,6 +177,7 @@ impl Model for ActionsModel {
                 }
 
                 if !cx.is_disabled() && cx.current == meta.target {
+                    cx.focus();
                     if let Some(action) = &self.on_press {
                         (action)(cx);
                     }
