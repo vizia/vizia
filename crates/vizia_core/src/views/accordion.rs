@@ -174,8 +174,9 @@ impl Accordion {
 impl Handle<'_, Accordion> {
     /// Sets the open section by index.
     pub fn with_open<U: Into<Option<usize>>>(mut self, index: impl Res<U>) -> Self {
-        index.set_or_bind(self.context(), |cx, index| {
-            cx.emit(AccordionEvent::SetOpen(index.get_value(cx).into()));
+        let entity = self.entity();
+        index.set_or_bind(self.context(), move |cx, index| {
+            cx.emit_to(entity, AccordionEvent::SetOpen(index.get_value(cx).into()));
         });
 
         self
