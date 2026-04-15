@@ -392,6 +392,11 @@ popup scrollview scrollbar.vertical {
     right: 2px;
 }
 
+.rtl popup scrollview scrollbar.vertical {
+    left: 2px;
+    right: 1s;
+}
+
 popup scrollview {
     width: 1s;
     min-width: auto;
@@ -691,6 +696,10 @@ scrollview > scrollbar.horizontal {
 
 scrollview > scrollbar.vertical {
     left: 1s;
+}
+
+.rtl scrollview > scrollbar.vertical {
+    left: 0px;
 }
 
 /* SCROLLBAR */

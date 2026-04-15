@@ -45,6 +45,14 @@ pub struct ScrollView {
 }
 
 impl ScrollView {
+    fn map_scroll_x_to_physical(scroll_x: f32, direction: Direction) -> f32 {
+        if direction == Direction::RightToLeft { 1.0 - scroll_x } else { scroll_x }
+    }
+
+    fn map_scroll_x_from_physical(scroll_x: f32, direction: Direction) -> f32 {
+        if direction == Direction::RightToLeft { 1.0 - scroll_x } else { scroll_x }
+    }
+
     /// Creates a new [ScrollView].
     pub fn new<F>(cx: &mut Context, content: F) -> Handle<Self>
     where
@@ -59,6 +67,7 @@ impl ScrollView {
         let container_height = Signal::new(0.0_f32);
         let show_horizontal_scrollbar = Signal::new(true);
         let show_vertical_scrollbar = Signal::new(true);
+        let direction = cx.environment().direction;
 
         let vertical_ratio: Memo<f32> = Memo::new(move |_| {
             let inner = inner_height.get();
@@ -81,6 +90,10 @@ impl ScrollView {
         let has_h_scroll = Memo::new(move |_| container_width.get() < inner_width.get());
         let has_v_scroll = Memo::new(move |_| container_height.get() < inner_height.get());
 
+        let horizontal_scrollbar_value: Memo<f32> = Memo::new(move |_| {
+            ScrollView::map_scroll_x_to_physical(scroll_x.get(), direction.get())
+        });
+
         let scroll_state = Memo::new(move |_| {
             (
                 scroll_x.get(),
@@ -89,6 +102,7 @@ impl ScrollView {
                 inner_height.get(),
                 container_width.get(),
                 container_height.get(),
+                direction.get(),
             )
         });
         let scroll_state_signal = scroll_state;
@@ -128,7 +142,7 @@ impl ScrollView {
                 if show_horizontal_scrollbar.get() {
                     Scrollbar::new(
                         cx,
-                        scroll_x,
+                        horizontal_scrollbar_value,
                         horizontal_ratio,
                         Orientation::Horizontal,
                         |cx, value| {
@@ -141,11 +155,19 @@ impl ScrollView {
             });
         })
         .bind(scroll_state, move |mut handle| {
-            let (scroll_x, scroll_y, inner_width, inner_height, container_width, container_height) =
-                scroll_state_signal.get();
+            let (
+                scroll_x,
+                scroll_y,
+                inner_width,
+                inner_height,
+                container_width,
+                container_height,
+                direction,
+            ) = scroll_state_signal.get();
             let scale_factor = handle.context().scale_factor();
             let top = ((inner_height - container_height) * scroll_y).round() / scale_factor;
-            let left = ((inner_width - container_width) * scroll_x).round() / scale_factor;
+            let physical_scroll_x = ScrollView::map_scroll_x_to_physical(scroll_x, direction);
+            let left = ((inner_width - container_width) * physical_scroll_x).round() / scale_factor;
             handle.horizontal_scroll(-left.abs()).vertical_scroll(-top.abs());
         })
         .toggle_class("h-scroll", has_h_scroll)
@@ -172,7 +194,12 @@ impl View for ScrollView {
         event.map(|scroll_update, meta| {
             match scroll_update {
                 ScrollEvent::ScrollX(f) => {
-                    self.scroll_x.set((self.scroll_x.get() + *f).clamp(0.0, 1.0));
+                    let delta = if cx.environment().direction.get() == Direction::RightToLeft {
+                        -*f
+                    } else {
+                        *f
+                    };
+                    self.scroll_x.set((self.scroll_x.get() + delta).clamp(0.0, 1.0));
 
                     if let Some(callback) = &self.on_scroll {
                         (callback)(cx, self.scroll_x.get(), self.scroll_y.get());
@@ -187,7 +214,11 @@ impl View for ScrollView {
                 }
 
                 ScrollEvent::SetX(f) => {
-                    self.scroll_x.set(*f);
+                    let mapped = ScrollView::map_scroll_x_from_physical(
+                        *f,
+                        cx.environment().direction.get(),
+                    );
+                    self.scroll_x.set(mapped);
                     if let Some(callback) = &self.on_scroll {
                         (callback)(cx, self.scroll_x.get(), self.scroll_y.get());
                     }
@@ -218,8 +249,12 @@ impl View for ScrollView {
                     {
                         let top =
                             ((inner_height - container_height) * scroll_y).round() / scale_factor;
-                        let left =
-                            ((inner_width - container_width) * scroll_x).round() / scale_factor;
+                        let physical_scroll_x = ScrollView::map_scroll_x_to_physical(
+                            scroll_x,
+                            cx.environment().direction.get(),
+                        );
+                        let left = ((inner_width - container_width) * physical_scroll_x).round()
+                            / scale_factor;
 
                         container_width = bounds.width();
                         container_height = bounds.height();
@@ -227,8 +262,13 @@ impl View for ScrollView {
                         inner_height = *h;
 
                         if inner_width != container_width {
-                            scroll_x = ((left * scale_factor) / (inner_width - container_width))
+                            let physical_scroll_x = ((left * scale_factor)
+                                / (inner_width - container_width))
                                 .clamp(0.0, 1.0);
+                            scroll_x = ScrollView::map_scroll_x_from_physical(
+                                physical_scroll_x,
+                                cx.environment().direction.get(),
+                            );
                         } else {
                             scroll_x = 0.0;
                         }
@@ -264,6 +304,10 @@ impl View for ScrollView {
 
                     let content_bounds = cx.bounds();
 
+                    let direction = cx.environment().direction.get();
+                    let mut physical_scroll_x =
+                        ScrollView::map_scroll_x_to_physical(self.scroll_x.get(), direction);
+
                     let dx = content_bounds.right() - view_bounds.right();
                     let dy = content_bounds.bottom() - view_bounds.bottom();
 
@@ -271,7 +315,7 @@ impl View for ScrollView {
                     if dx < 0.0 {
                         let sx = (-dx / (self.inner_width.get() - self.container_width.get()))
                             .clamp(0.0, 1.0);
-                        self.scroll_x.set((self.scroll_x.get() + sx).clamp(0.0, 1.0));
+                        physical_scroll_x = (physical_scroll_x + sx).clamp(0.0, 1.0);
                     }
 
                     if dy < 0.0 {
@@ -286,8 +330,11 @@ impl View for ScrollView {
                     if dx < 0.0 {
                         let sx = (-dx / (self.inner_width.get() - self.container_width.get()))
                             .clamp(0.0, 1.0);
-                        self.scroll_x.set((self.scroll_x.get() - sx).clamp(0.0, 1.0));
+                        physical_scroll_x = (physical_scroll_x - sx).clamp(0.0, 1.0);
                     }
+
+                    self.scroll_x
+                        .set(ScrollView::map_scroll_x_from_physical(physical_scroll_x, direction));
 
                     if dy < 0.0 {
                         let sy = (-dy / (self.inner_height.get() - self.container_height.get()))
@@ -328,15 +375,24 @@ impl View for ScrollView {
                     {
                         let top =
                             ((inner_height - container_height) * scroll_y).round() / scale_factor;
-                        let left =
-                            ((inner_width - container_width) * scroll_x).round() / scale_factor;
+                        let physical_scroll_x = ScrollView::map_scroll_x_to_physical(
+                            scroll_x,
+                            cx.environment().direction.get(),
+                        );
+                        let left = ((inner_width - container_width) * physical_scroll_x).round()
+                            / scale_factor;
 
                         container_width = bounds.width();
                         container_height = bounds.height();
 
                         if inner_width != container_width {
-                            scroll_x = ((left * scale_factor) / (inner_width - container_width))
+                            let physical_scroll_x = ((left * scale_factor)
+                                / (inner_width - container_width))
                                 .clamp(0.0, 1.0);
+                            scroll_x = ScrollView::map_scroll_x_from_physical(
+                                physical_scroll_x,
+                                cx.environment().direction.get(),
+                            );
                         } else {
                             scroll_x = 0.0;
                         }
