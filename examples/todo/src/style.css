@@ -11,7 +11,7 @@
 
 .todo-header_title {
     width: 1s;
-    font-size: 48;
+    font-size: 48px;
     font-weight: bold;
     color: #842222;
     alignment: center;
@@ -20,7 +20,7 @@
 
 .todo-header_text {
     width: 1s;
-    font-size: 24;
+    font-size: 24px;
     color: #464646;
     height: 48px;
     border-width: 0px;
