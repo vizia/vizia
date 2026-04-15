@@ -590,7 +590,7 @@ mod tests {
 
     #[test]
     fn missing_message_falls_back_to_key() {
-        let mut cx = Context::default();
+        let cx = Context::default();
         cx.data::<Environment>().locale.set("en-US".parse().unwrap());
 
         let text = Localized::new("missing-key").to_string_local(&cx);

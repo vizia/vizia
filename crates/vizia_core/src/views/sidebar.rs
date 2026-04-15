@@ -7,7 +7,7 @@ use crate::prelude::*;
 /// - `sidebar-content`
 /// - `sidebar-footer`
 pub struct Sidebar {
-    width: Signal<Units>,
+    _width: Signal<Units>,
 }
 
 impl Sidebar {
@@ -18,13 +18,13 @@ impl Sidebar {
         C: 'static + Fn(&mut Context),
         F: 'static + Fn(&mut Context),
     {
-        let width: Signal<Units> = Signal::new(Pixels(200.0));
-        Self { width }.build(cx, move |cx| {
+        let _width: Signal<Units> = Signal::new(Pixels(200.0));
+        Self { _width }.build(cx, move |cx| {
             Resizable::new(
                 cx,
-                width,
+                _width,
                 ResizeStackDirection::Right,
-                move |_cx, new_size| width.set(Pixels(new_size)),
+                move |_cx, new_size| _width.set(Pixels(new_size)),
                 move |cx| {
                     VStack::new(cx, |cx| {
                         (header)(cx);

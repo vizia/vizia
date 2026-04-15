@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
 use bytes::Bytes;
-use civitai::{Status, download, list};
+use images::{Status, download, list};
 use vizia::prelude::*;
 
-mod civitai;
-use crate::civitai::{Id, ImageData, Size};
+mod images;
+use crate::images::{Id, ImageData, Size};
 
 pub struct AppData {
     images: Signal<Vec<Vec<Id>>>,
@@ -40,6 +40,10 @@ impl AppData {
 impl Model for AppData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.take(|app_event, _| match app_event {
+            AppEvent::ImagesListed(Err(e)) => {
+                eprintln!("Failed to list images: {e}");
+            }
+
             AppEvent::ImagesListed(Ok(images)) => {
                 self.thumbnails.update(|thumbnails| {
                     for img in images.iter() {
@@ -67,6 +71,10 @@ impl Model for AppData {
                         let _ = c.emit(AppEvent::ImageDownloaded(id, image));
                     });
                 }
+            }
+
+            AppEvent::ImageDownloaded(id, Err(e)) => {
+                eprintln!("Failed to download image {}: {e}", id.0);
             }
 
             AppEvent::ImageDownloaded(id, Ok(img)) => {
