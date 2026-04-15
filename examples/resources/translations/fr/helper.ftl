@@ -36,3 +36,40 @@ discount-percent = Remise: { $discount }%
 ## Date formatting examples
 joined-date = Membre depuis { DATETIME($date, year: "numeric", month: "long", day: "numeric") }
 last-login = Dernière connexion: { DATETIME($date, month: "short", day: "numeric", hour: "2-digit", minute: "2-digit") }
+
+## Calendar
+calendar-previous-month = Mois précédent
+calendar-next-month = Mois suivant
+calendar-week-start = monday
+calendar-month-year-heading = { DATETIME($date, year: "numeric", month: "long") }
+calendar-day-cell-name = { DATETIME($date, weekday: "long", year: "numeric", month: "long", day: "numeric") }
+calendar-keyboard-help = Utilisez les flèches pour les jours, Début/Fin pour les limites de semaine, Page précédente/Page suivante pour le mois, Maj plus Page précédente/Page suivante pour l'année, et Entrée ou Espace pour sélectionner.
+
+Jan = Janv
+Feb = Févr
+Mar = Mars
+Apr = Avr
+May = Mai
+Jun = Juin
+Jul = Juil
+Aug = Août
+Sept = Sept
+Oct = Oct
+Nov = Nov
+Dec = Déc
+
+Monday = Lundi
+Tuesday = Mardi
+Wednesday = Mercredi
+Thursday = Jeudi
+Friday = Vendredi
+Saturday = Samedi
+Sunday = Dimanche
+
+Monday-short = Lu
+Tuesday-short = Ma
+Wednesday-short = Me
+Thursday-short = Je
+Friday-short = Ve
+Saturday-short = Sa
+Sunday-short = Di

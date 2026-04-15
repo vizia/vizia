@@ -246,7 +246,7 @@ calendar {
 .calendar-controls select {
     width: auto;
     height: 32px;
-    min-width: 68px;
+    min-width: 74px;
 }
 
 .calendar-body {

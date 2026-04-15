@@ -80,6 +80,18 @@
     direction: rtl;
 }
 
+.rtl svg {
+    transform: scaleX(-1);
+}
+
+.rtl checkbox svg {
+    transform: scaleX(1);
+}
+
+.rtl select svg {
+    transform: scaleX(1);
+}
+
 window {
     background-color: var(--background);
 }
@@ -359,10 +371,22 @@ calendar {
 
 .calendar-day:focus-visible {
     outline-width: 1px;
-    outline-color: var(--accent);
+    outline-color: var(--ring);
 }
 
 .calendar-day:checked {
+    color: var(--primary-foreground);
+    background-color: var(--primary);
+    corner-radius: 4px;
+}
+
+.calendar-day-selected {
+    color: var(--primary-foreground);
+    background-color: var(--primary);
+    corner-radius: 4px;
+}
+
+.calendar-day-selected:hover {
     color: var(--primary-foreground);
     background-color: var(--primary);
     corner-radius: 4px;

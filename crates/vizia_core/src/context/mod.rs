@@ -51,6 +51,8 @@ use vizia_storage::{ChildIterator, LayoutTreeIterator};
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static MARKDOWN: &str = include_str!("../../resources/themes/markdown.css");
+static DEFAULT_TRANSLATION_EN_US: &str =
+    include_str!("../../resources/translations/en-US/core.ftl");
 
 type Views = HashMap<Entity, Box<dyn ViewHandler>>;
 type Models = HashMap<Entity, HashMap<TypeId, Box<dyn ModelData>>>;
@@ -123,6 +125,7 @@ pub struct Context {
     pub(crate) click_button: MouseButton,
 
     pub ignore_default_theme: bool,
+    built_in_translations_added: bool,
     pub window_has_focus: bool,
     pub ime_state: ImeState,
 
@@ -205,6 +208,7 @@ impl Context {
             click_button: MouseButton::Left,
 
             ignore_default_theme: false,
+            built_in_translations_added: false,
             window_has_focus: true,
 
             ime_state: Default::default(),
@@ -575,6 +579,8 @@ impl Context {
 
     /// Remove all user themes from the application.
     pub fn add_built_in_styles(&mut self) {
+        self.add_built_in_translations();
+
         let mut user_styles = Vec::new();
         if self.resource_manager.styles.len() >= 3 {
             user_styles = self.resource_manager.styles.drain(3..).collect::<Vec<_>>();
@@ -603,6 +609,17 @@ impl Context {
         self.resource_manager.styles.extend(user_styles);
 
         EventContext::new(self).reload_styles().unwrap();
+    }
+
+    /// Adds built-in translations for default view strings.
+    pub fn add_built_in_translations(&mut self) {
+        if self.built_in_translations_added {
+            return;
+        }
+
+        self.add_translation("en-US".parse().unwrap(), DEFAULT_TRANSLATION_EN_US)
+            .expect("Failed to load built-in en-US translation resources");
+        self.built_in_translations_added = true;
     }
 
     pub fn add_animation(&mut self, animation: AnimationBuilder) -> Animation {
