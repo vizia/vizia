@@ -689,7 +689,7 @@ progressbar:disabled .progressbar-bar {
     background-color: transparent;
 }
 
-/* PICKLIST */
+/* SELECT */
 
 select {
     corner-radius: 4px;
@@ -709,6 +709,10 @@ select list.selectable list-item:checked .checkmark {
 }
 
 select list.selectable list-item:hover {
+    background-color: var(--accent);
+}
+
+select list.selectable list-item.focused {
     background-color: var(--accent);
 }
 
