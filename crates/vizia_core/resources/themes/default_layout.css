@@ -765,22 +765,20 @@ slider .thumb {
 
 spinbox {
     alignment: center;
+    width: auto;
+    height: auto;
 }
 
 spinbox.horizontal {
     layout-type: row;
-    height: 32px;
-    padding-left: 4px;
-    padding-right: 4px;
-    horizontal-gap: 4px;
+    padding: 4px;
+    gap: 4px;
 }
 
 spinbox.vertical {
     layout-type: column;
-    width: 32px;
-    padding-top: 4px;
-    padding-bottom: 4px;
-    vertical-gap: 4px;
+    padding: 4px;
+    gap: 4px;
 }
 
 spinbox .spinbox-button {
@@ -793,16 +791,10 @@ spinbox .spinbox-button > svg {
 }
 
 spinbox .spinbox-value {
-    width: 1s;
-    min-width: auto;
-    height: auto;
+    width: 50px;
+    min-width: 50px;
+    height: 1s;
     alignment: center;
-}
-
-spinbox select.spinbox-value dropdown {
-    width: 1s;
-    left: 0px;
-    right: 0px;
 }
 
 /* STACK */

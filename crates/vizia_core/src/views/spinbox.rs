@@ -109,6 +109,8 @@ impl Spinbox {
                         .on_press(|ex| ex.emit(SpinboxEvent::Decrement))
                         .disabled(at_min)
                         .navigable(false)
+                        .name(Localized::new("decrement"))
+                        .variant(ButtonVariant::Text)
                         .class("spinbox-button");
                     }
 
@@ -125,6 +127,8 @@ impl Spinbox {
                         .on_press(|ex| ex.emit(SpinboxEvent::Increment))
                         .disabled(at_max)
                         .navigable(false)
+                        .name(Localized::new("increment"))
+                        .variant(ButtonVariant::Text)
                         .class("spinbox-button");
                     }
                 });
@@ -143,6 +147,8 @@ impl Spinbox {
                         .on_press(|ex| ex.emit(SpinboxEvent::Increment))
                         .disabled(at_max)
                         .navigable(false)
+                        .name(Localized::new("increment"))
+                        .variant(ButtonVariant::Text)
                         .class("spinbox-button");
                     }
 
@@ -159,6 +165,8 @@ impl Spinbox {
                         .on_press(|ex| ex.emit(SpinboxEvent::Decrement))
                         .disabled(at_min)
                         .navigable(false)
+                        .name(Localized::new("decrement"))
+                        .variant(ButtonVariant::Text)
                         .class("spinbox-button");
                     }
                 });
