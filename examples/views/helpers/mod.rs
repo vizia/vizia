@@ -334,7 +334,7 @@ fn primary_color_selection_dropdown(
 
 fn direction_selection_dropdown(cx: &mut Context, direction_options: Signal<Vec<&'static str>>) {
     let selected_direction = cx.environment().direction.map(|direction| match direction {
-        Direction::LeftToRight => Some(0),
+        Direction::LeftToRight | Direction::Auto => Some(0),
         Direction::RightToLeft => Some(1),
     });
     Select::new(cx, direction_options, selected_direction, true)

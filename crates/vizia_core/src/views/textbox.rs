@@ -5,7 +5,7 @@ use crate::prelude::*;
 
 use crate::text::{
     Direction, EditableText, Movement, PreeditBackup, Selection, VerticalMovement, apply_movement,
-    enforce_text_bounds, ensure_visible, offset_for_delete_backwards,
+    enforce_text_bounds, ensure_visible, offset_for_delete_backwards, resolved_text_direction,
 };
 use accesskit::{ActionData, ActionRequest, TextDirection, TextPosition, TextSelection};
 use skia_safe::textlayout::{RectHeightStyle, RectWidthStyle};
@@ -479,10 +479,8 @@ where
             let padding_bottom =
                 padding_bottom.to_px(logical_parent_height, 0.0) * cx.scale_factor();
 
-            if matches!(
-                cx.style.direction.get(cx.current).copied(),
-                Some(morphorm::Direction::RightToLeft)
-            ) {
+            if resolved_text_direction(&cx.style, cx.current) == crate::style::Direction::RightToLeft
+            {
                 std::mem::swap(&mut padding_left, &mut padding_right);
             }
 
@@ -659,10 +657,9 @@ where
                             _ => 0.0,
                         };
 
-                        if matches!(
-                            cx.style.direction.get(cx.current).copied(),
-                            Some(morphorm::Direction::RightToLeft)
-                        ) {
+                        if resolved_text_direction(&cx.style, cx.current)
+                            == crate::style::Direction::RightToLeft
+                        {
                             std::mem::swap(&mut padding_left, &mut padding_right);
                         }
 
@@ -736,10 +733,9 @@ where
                     _ => 0.0,
                 };
 
-                if matches!(
-                    cx.style.direction.get(cx.current).copied(),
-                    Some(morphorm::Direction::RightToLeft)
-                ) {
+                if resolved_text_direction(&cx.style, cx.current)
+                    == crate::style::Direction::RightToLeft
+                {
                     std::mem::swap(&mut padding_left, &mut padding_right);
                 }
 
@@ -902,10 +898,12 @@ where
         let text_len = text.len();
 
         if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-            let text_direction = match cx.style.direction.get(cx.current).copied() {
-                Some(morphorm::Direction::RightToLeft) => TextDirection::RightToLeft,
-                _ => TextDirection::LeftToRight,
-            };
+            let text_direction =
+                if resolved_text_direction(&cx.style, cx.current) == crate::style::Direction::RightToLeft {
+                    TextDirection::RightToLeft
+                } else {
+                    TextDirection::LeftToRight
+                };
 
             let line_metrics = paragraph.get_line_metrics();
             for line in line_metrics.iter() {

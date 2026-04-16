@@ -9,6 +9,7 @@ use skia_safe::{
 use vizia_storage::{LayoutChildIterator, LayoutTreeIterator};
 
 use crate::{cache::CachedData, prelude::*};
+use crate::text::resolved_text_direction;
 
 pub(crate) fn text_system(cx: &mut Context) {
     if cx.style.text.is_empty() || cx.style.text_construction.is_empty() {
@@ -76,10 +77,7 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                 .to_px(bounds.width(), 0.0)
                 * cx.style.scale_factor();
 
-            if matches!(
-                cx.style.direction.get(entity).copied(),
-                Some(Direction::RightToLeft)
-            ) {
+            if resolved_text_direction(&cx.style, entity) == Direction::RightToLeft {
                 std::mem::swap(&mut padding_left, &mut padding_right);
             }
 
@@ -230,13 +228,13 @@ pub fn build_paragraph(
     paragraph_style.set_text_align(resolve_text_align(style, entity).into());
 
     // Text Direction
-    paragraph_style.set_text_direction(
-        if matches!(style.direction.get(entity).copied(), Some(Direction::RightToLeft)) {
-            TextDirection::RTL
-        } else {
-            TextDirection::LTR
-        },
-    );
+    paragraph_style.set_text_direction(if resolved_text_direction(style, entity)
+        == Direction::RightToLeft
+    {
+        TextDirection::RTL
+    } else {
+        TextDirection::LTR
+    });
 
     let mut paragraph_builder = ParagraphBuilder::new(&paragraph_style, font_collection);
 
@@ -247,7 +245,7 @@ pub fn build_paragraph(
 }
 
 fn resolve_text_align(style: &Style, entity: Entity) -> TextAlign {
-    let is_rtl = matches!(style.direction.get(entity).copied(), Some(Direction::RightToLeft));
+    let is_rtl = resolved_text_direction(style, entity) == Direction::RightToLeft;
 
     if let Some(text_align) = style.text_align.get(entity).copied() {
         return flip_text_align_for_rtl(text_align, is_rtl);

@@ -358,7 +358,11 @@ impl Node for Entity {
     }
 
     fn direction(&self, store: &Self::Store) -> Option<morphorm::Direction> {
-        store.direction.get(*self).copied()
+        match store.direction.get(*self).copied() {
+            Some(Direction::LeftToRight) => Some(morphorm::Direction::LeftToRight),
+            Some(Direction::RightToLeft) => Some(morphorm::Direction::RightToLeft),
+            Some(Direction::Auto) | None => Some(morphorm::Direction::LeftToRight), // Default to LTR if auto or not set, since morphorm doesn't support auto
+        }
     }
 
     fn wrap(&self, store: &Self::Store) -> Option<morphorm::LayoutWrap> {

@@ -94,6 +94,7 @@ sys-locale = "0.3"
 tokio = { version = "1.50.0", features = ["rt-multi-thread"] }
 unic-langid = { version = "0.9.6", features = ["macros"] }
 unicode-segmentation = "1.12"
+unicode-bidi = "0.3.18"
 web-time = "1.1"
 windows-sys = { version = "0.59", default-features = false, features = ["Win32_Graphics_Dwm"] }
 winit = { version = "0.30.13", default-features = false }

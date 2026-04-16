@@ -464,6 +464,7 @@ knob {
 label {
     size: auto;
     text-wrap: false;
+    direction: auto;
 }
 
 /* LIST */
@@ -945,6 +946,7 @@ textbox {
     padding-left: 8px;
     padding-right: 8px;
     alignment: left;
+    direction: auto;
     cursor: text;
     selection-color: #6464c888;
 }

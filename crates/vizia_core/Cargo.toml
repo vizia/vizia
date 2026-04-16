@@ -33,6 +33,7 @@ fluent-langneg.workspace = true
 unic-langid.workspace = true
 sys-locale.workspace = true
 unicode-segmentation.workspace = true
+unicode-bidi.workspace = true
 copypasta = { workspace = true, optional = true }
 chrono.workspace = true
 hashbrown.workspace = true

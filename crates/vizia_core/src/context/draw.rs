@@ -16,7 +16,7 @@ use crate::cache::CachedData;
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::{ImageOrSvg, ResourceManager};
-use crate::text::TextContext;
+use crate::text::{TextContext, resolved_text_direction};
 use vizia_input::MouseState;
 
 use super::ModelData;
@@ -1197,10 +1197,7 @@ impl DrawContext<'_> {
                 _ => 0.0,
             };
 
-            if matches!(
-                self.style.direction.get(self.current).copied(),
-                Some(Direction::RightToLeft)
-            ) {
+            if resolved_text_direction(self.style, self.current) == Direction::RightToLeft {
                 std::mem::swap(&mut padding_left, &mut padding_right);
             }
 

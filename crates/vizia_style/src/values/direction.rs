@@ -1,6 +1,12 @@
 use crate::{Parse, impl_parse};
 
-pub use morphorm::Direction;
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub enum Direction {
+    #[default]
+    LeftToRight,
+    RightToLeft,
+    Auto,
+}
 
 impl_parse! {
     Direction,
@@ -9,6 +15,7 @@ impl_parse! {
         ident {
             "ltr" => Direction::LeftToRight,
             "rtl" => Direction::RightToLeft,
+            "auto" => Direction::Auto,
         }
     }
 }

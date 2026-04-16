@@ -1,6 +1,9 @@
 mod movement;
 pub use movement::*;
 
+mod direction;
+pub(crate) use direction::*;
+
 pub(crate) mod scrolling;
 pub(crate) use scrolling::*;
 
