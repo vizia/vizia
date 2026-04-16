@@ -21,6 +21,29 @@ impl ToggleButton {
             .checkable(true) // To let the accesskit know button is toggleable
             .checked(checked)
     }
+
+    /// Create a new [ToggleButton] view with distinct content for unchecked and checked states.
+    pub fn with_contents<V1: View, V2: View>(
+        cx: &mut Context,
+        checked: impl Res<bool> + Copy + 'static,
+        content_unchecked: impl Fn(&mut Context) -> Handle<V1> + 'static,
+        content_checked: impl Fn(&mut Context) -> Handle<V2> + 'static,
+    ) -> Handle<Self> {
+        Self { on_toggle: None }
+            .build(cx, move |cx| {
+                checked.set_or_bind(cx, move |cx, checked| {
+                    if checked.get_value(cx) {
+                        (content_checked)(cx).hoverable(false);
+                    } else {
+                        (content_unchecked)(cx).hoverable(false);
+                    }
+                });
+            })
+            .role(Role::Button)
+            .navigable(true)
+            .checkable(true) // To let the accesskit know button is toggleable
+            .checked(checked)
+    }
 }
 
 impl View for ToggleButton {
