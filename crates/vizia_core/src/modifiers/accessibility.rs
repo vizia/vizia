@@ -140,6 +140,39 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets the accessibility orientation of the view.
+    /// This does not affect the layout of the view, but is used to inform
+    /// assistive technologies of the orientation of the view.
+    fn orientation<U: Into<Orientation>>(mut self, orientation: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            orientation.set_or_bind(cx, move |cx, orientation| {
+                let orientation_value = orientation.get_value(cx).into();
+                println!(
+                    "Setting orientation for entity {:?} to {:?}",
+                    cx.current(),
+                    orientation_value
+                );
+                if orientation_value == Orientation::Horizontal {
+                    cx.with_current(entity, |cx| {
+                        cx.toggle_class("horizontal", true);
+                        cx.toggle_class("vertical", false);
+                    });
+                } else {
+                    cx.with_current(entity, |cx| {
+                        cx.toggle_class("horizontal", false);
+                        cx.toggle_class("vertical", true);
+                    });
+                }
+                cx.style.orientation.insert(entity, orientation_value);
+                cx.style.needs_access_update(entity);
+            });
+        });
+
+        self
+    }
+
     /// Sets the accessibility numeric value for the view.
     fn numeric_value<U: Into<f64>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();

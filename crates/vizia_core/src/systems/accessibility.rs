@@ -1,5 +1,5 @@
 use crate::{accessibility::IntoNode, events::ViewHandler, prelude::*};
-use accesskit::{Node, NodeId, Rect, Toggled, Tree, TreeUpdate};
+use accesskit::{Node, NodeId, Orientation as AccessOrientation, Rect, Toggled, Tree, TreeUpdate};
 use hashbrown::HashMap;
 use vizia_storage::LayoutTreeIterator;
 
@@ -193,6 +193,14 @@ pub(crate) fn get_access_node(
 
     if let Some(selected) = cx.style.selected.get(entity).copied() {
         node_builder.set_selected(selected);
+    }
+
+    if let Some(orientation) = cx.style.orientation.get(entity).copied() {
+        let orientation = match orientation {
+            Orientation::Horizontal => AccessOrientation::Horizontal,
+            Orientation::Vertical => AccessOrientation::Vertical,
+        };
+        node_builder.set_orientation(orientation);
     }
 
     if let Some(live) = cx.style.live.get(entity) {

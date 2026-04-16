@@ -529,6 +529,27 @@ impl Context {
         }
     }
 
+    /// Sets whether a view should have the given class name.
+    pub fn toggle_class(&mut self, name: &str, applied: impl Res<bool>) {
+        let name = name.to_owned();
+        let entity = self.current();
+        let current = self.current();
+        self.with_current(current, |cx| {
+            applied.set_or_bind(cx, move |cx, applied| {
+                let applied = applied.get_value(cx);
+                if let Some(class_list) = cx.style.classes.get_mut(entity) {
+                    if applied {
+                        class_list.insert(name.clone());
+                    } else {
+                        class_list.remove(&name);
+                    }
+                }
+
+                cx.needs_restyle(entity);
+            });
+        });
+    }
+
     /// Add a listener to an entity.
     ///
     /// A listener can be used to handle events which would not normally propagate to the entity.

@@ -248,6 +248,7 @@ pub struct Style {
     pub(crate) expanded: SparseSet<bool>,
     pub(crate) selected: SparseSet<bool>,
     pub(crate) hidden: SparseSet<bool>,
+    pub(crate) orientation: SparseSet<Orientation>,
     pub(crate) text_value: SparseSet<String>,
     pub(crate) numeric_value: SparseSet<f64>,
 
@@ -2456,6 +2457,7 @@ impl Style {
         self.expanded.remove(entity);
         self.selected.remove(entity);
         self.hidden.remove(entity);
+        self.orientation.remove(entity);
         self.text_value.remove(entity);
         self.numeric_value.remove(entity);
 

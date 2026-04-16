@@ -74,16 +74,13 @@ impl ProgressBar {
     /// # }
     /// # impl Model for AppData {}
     /// # AppData::default().build(cx);
-    /// ProgressBar::new(cx, AppData::value, Orientation::Horizontal);
+    /// ProgressBar::new(cx, AppData::value);
     /// ```
-    pub fn new<L>(cx: &mut Context, signal: L, orientation: Orientation) -> Handle<Self>
+    pub fn new<L>(cx: &mut Context, signal: L) -> Handle<Self>
     where
         L: SignalGet<f32> + SignalMap<f32>,
     {
-        match orientation {
-            Orientation::Horizontal => Self::horizontal(cx, signal),
-            Orientation::Vertical => Self::vertical(cx, signal),
-        }
+        Self::horizontal(cx, signal)
     }
 
     /// Creates a new horizontal progress bar bound to the provided value source.
@@ -97,6 +94,7 @@ impl ProgressBar {
         })
         .role(Role::ProgressIndicator)
         .numeric_value(signal.map(|val| *val as f64))
+        .orientation(Orientation::Horizontal)
     }
 
     /// Creates a new vertical progress bar bound to the provided value source.
@@ -110,5 +108,6 @@ impl ProgressBar {
         })
         .role(Role::ProgressIndicator)
         .numeric_value(signal.map(|val| *val as f64))
+        .orientation(Orientation::Vertical)
     }
 }

@@ -171,8 +171,7 @@ impl Spinbox {
                     }
                 });
             })
-            .toggle_class("horizontal", orientation.map(|o| o == &Orientation::Horizontal))
-            .toggle_class("vertical", orientation.map(|o| o == &Orientation::Vertical))
+            .orientation(orientation)
             .navigable(false)
     }
 
@@ -213,11 +212,16 @@ impl Handle<'_, Spinbox> {
         self.modify(|spinbox: &mut Spinbox| spinbox.on_decrement = Some(Box::new(callback)))
     }
 
-    /// Sets the orientation of the [Spinbox].
-    pub fn orientation(self, orientation: impl Res<Orientation> + 'static) -> Self {
-        let orientation = orientation.to_signal(self.cx);
-        self.bind(orientation, move |handle| {
-            let orientation = orientation.get();
+    /// Sets the orientation of the [Spinbox] to vertical.
+    pub fn vertical<U: Into<bool> + Clone + 'static>(
+        self,
+        vertical: impl Res<U> + 'static,
+    ) -> Self {
+        let vertical = vertical.to_signal(self.cx);
+        self.bind(vertical, move |handle| {
+            let vertical = vertical.get().into();
+            let orientation =
+                if vertical { Orientation::Vertical } else { Orientation::Horizontal };
             handle.modify(move |spinbox| spinbox.orientation.set(orientation));
         })
     }

@@ -56,7 +56,7 @@ A slider allows the user to select a value from a continuous range by dragging a
 
         DemoRegion::new(cx, "Vertical Slider", move |cx| {
             Slider::new(cx, value)
-                .orientation(Orientation::Vertical)
+                .vertical(true)
                 .on_change(move |_cx, v| value.set(v))
                 .height(Pixels(150.0));
         });

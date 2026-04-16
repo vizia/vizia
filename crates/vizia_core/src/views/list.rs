@@ -396,7 +396,7 @@ impl List {
             });
         })
         .toggle_class("selectable", selectable.map(|s| *s != Selectable::None))
-        .toggle_class("horizontal", orientation.map(|o| *o == Orientation::Horizontal))
+        .orientation(orientation)
         .navigable(true)
         .role(Role::List)
     }
@@ -561,10 +561,8 @@ pub trait ListModifiers: Sized {
     ) -> Self;
 
     /// Sets the orientation of the list.
-    fn orientation<U: Into<Orientation> + Clone + 'static>(
-        self,
-        orientation: impl Res<U> + 'static,
-    ) -> Self;
+    fn horizontal<U: Into<bool> + Clone + 'static>(self, horizontal: impl Res<U> + 'static)
+    -> Self;
 
     /// Sets whether the scrollbar should move to the cursor when pressed.
     fn scroll_to_cursor(self, flag: bool) -> Self;
@@ -667,16 +665,20 @@ impl ListModifiers for Handle<'_, List> {
         })
     }
 
-    fn orientation<U: Into<Orientation> + Clone + 'static>(
+    fn horizontal<U: Into<bool> + Clone + 'static>(
         self,
-        orientation: impl Res<U> + 'static,
+        horizontal: impl Res<U> + 'static,
     ) -> Self {
-        let orientation = orientation.to_signal(self.cx);
-        self.bind(orientation, move |handle| {
-            let orientation = orientation.get();
-            let orientation = orientation.into();
+        let horizontal = horizontal.to_signal(self.cx);
+        self.bind(horizontal, move |handle| {
+            let horizontal = horizontal.get();
+            let horizontal = horizontal.into();
             handle.modify(|list: &mut List| {
-                list.orientation.set(orientation);
+                list.orientation.set(if horizontal {
+                    Orientation::Horizontal
+                } else {
+                    Orientation::Vertical
+                });
             });
         })
     }

@@ -68,10 +68,8 @@ impl Scrollbar {
                 .position_type(PositionType::Absolute);
         })
         .pointer_events(PointerEvents::Auto)
-        .class(match orientation {
-            Orientation::Horizontal => "horizontal",
-            Orientation::Vertical => "vertical",
-        })
+        .orientation(orientation)
+        .role(Role::ScrollBar)
     }
 
     fn container_and_thumb_size(&self, cx: &mut EventContext) -> (f32, f32) {

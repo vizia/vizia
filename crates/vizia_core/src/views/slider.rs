@@ -204,7 +204,7 @@ where
                 })
                 .class("track");
             })
-            .toggle_class("vertical", orientation.map(|o| *o == Orientation::Vertical))
+            .orientation(orientation)
             .role(Role::Slider)
             .numeric_value(value.map(|v| (*v as f64 * 100.0).round() / 100.0))
             .text_value(value.map(|v| format!("{}", (*v as f64 * 100.0).round() / 100.0)))
@@ -497,7 +497,7 @@ pub trait SliderModifiers: Sized {
     /// ```
     fn range<U: Into<Range<f32>> + Clone + 'static>(self, range: impl Res<U> + 'static) -> Self;
 
-    /// Sets the orientation of the slider.
+    /// Sets the orientation of the slider to vertical.
     ///
     /// ```
     /// # use vizia_core::prelude::*;
@@ -510,15 +510,12 @@ pub trait SliderModifiers: Sized {
     /// # impl Model for AppData {}
     /// # let value = Signal::new(0.5);
     /// Slider::new(cx, value)
-    ///     .orientation(Orientation::Vertical)
+    ///     .vertical(true)
     ///     .on_change(|cx, value| {
     ///         let _ = (cx, value);
     ///     });
     /// ```
-    fn orientation<U: Into<Orientation> + Clone + 'static>(
-        self,
-        orientation: impl Res<U> + 'static,
-    ) -> Self;
+    fn vertical<U: Into<bool> + Clone + 'static>(self, vertical: impl Res<U> + 'static) -> Self;
 
     /// Set the step value for the slider.
     ///
@@ -569,14 +566,13 @@ where
         })
     }
 
-    fn orientation<U: Into<Orientation> + Clone + 'static>(
-        self,
-        orientation: impl Res<U> + 'static,
-    ) -> Self {
-        let orientation = orientation.to_signal(self.cx);
-        self.bind(orientation, move |handle| {
-            let orientation = orientation.get();
-            let orientation = orientation.into();
+    fn vertical<U: Into<bool> + Clone + 'static>(self, vertical: impl Res<U> + 'static) -> Self {
+        let vertical = vertical.to_signal(self.cx);
+        self.bind(vertical, move |handle| {
+            let vertical = vertical.get().into();
+
+            let orientation =
+                if vertical { Orientation::Vertical } else { Orientation::Horizontal };
             handle.modify(|slider| {
                 slider.orientation.set(orientation);
             });
