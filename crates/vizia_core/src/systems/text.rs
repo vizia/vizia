@@ -51,7 +51,7 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
 
         if let Some(paragraph) = cx.text_context.text_paragraphs.get_mut(entity) {
             let bounds = cx.cache.get_bounds(entity);
-            let padding_left = cx
+            let mut padding_left = cx
                 .style
                 .padding_left
                 .get(entity)
@@ -59,7 +59,7 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                 .unwrap_or_default()
                 .to_px(bounds.width(), 0.0)
                 * cx.style.scale_factor();
-            let padding_right = cx
+            let mut padding_right = cx
                 .style
                 .padding_right
                 .get(entity)
@@ -76,8 +76,15 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                 .to_px(bounds.width(), 0.0)
                 * cx.style.scale_factor();
 
+            if matches!(
+                cx.style.direction.get(entity).copied(),
+                Some(Direction::RightToLeft)
+            ) {
+                std::mem::swap(&mut padding_left, &mut padding_right);
+            }
+
             let text_bounds =
-                BoundingBox { x: padding_left, y: 0.0, w: bounds.w - padding_right, h: bounds.h };
+                BoundingBox { x: padding_left, y: 0.0, w: bounds.w - padding_left - padding_right, h: bounds.h };
 
             if !cx
                 .style
@@ -107,9 +114,18 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                     text_bounds.w = paragraph.max_intrinsic_width();
                     cx.text_context.text_bounds.insert(entity, text_bounds);
                 }
-            } else if let Some(stored_text_bounds) = cx.text_context.text_bounds.get_mut(entity) {
-                stored_text_bounds.x = bounds.x + padding_left;
-                stored_text_bounds.y = bounds.y + padding_top;
+            } else {
+                // For auto-sized text views, re-layout at the final constrained width
+                // so constraints like min-width affect line breaking and text bounds.
+                let final_text_width = text_bounds.width();
+                paragraph.layout(final_text_width);
+
+                if let Some(stored_text_bounds) = cx.text_context.text_bounds.get_mut(entity) {
+                    stored_text_bounds.x = bounds.x + padding_left;
+                    stored_text_bounds.y = bounds.y + padding_top;
+                    stored_text_bounds.w = final_text_width;
+                    stored_text_bounds.h = paragraph.height();
+                }
             }
 
             layout_span(&cx.style, &mut cx.cache, &cx.tree, entity, paragraph, bounds);

@@ -1187,10 +1187,22 @@ impl DrawContext<'_> {
 
             top *= bounds.height() - padding_top - padding_bottom - paragraph.height();
 
-            let padding_left = match self.padding_left() {
+            let mut padding_left = match self.padding_left() {
                 Units::Pixels(val) => val,
                 _ => 0.0,
             };
+
+            let mut padding_right = match self.padding_right() {
+                Units::Pixels(val) => val,
+                _ => 0.0,
+            };
+
+            if matches!(
+                self.style.direction.get(self.current).copied(),
+                Some(Direction::RightToLeft)
+            ) {
+                std::mem::swap(&mut padding_left, &mut padding_right);
+            }
 
             paragraph.paint(
                 canvas,

@@ -457,7 +457,7 @@ where
                 .padding_top
                 .get_resolved(cx.current, &cx.style.custom_units_props)
                 .unwrap_or_default();
-            let _padding_right = cx
+            let padding_right = cx
                 .style
                 .padding_right
                 .get_resolved(cx.current, &cx.style.custom_units_props)
@@ -471,10 +471,20 @@ where
             let logical_parent_width = cx.physical_to_logical(bounds.w);
             let logical_parent_height = cx.physical_to_logical(bounds.h);
 
-            let padding_left = padding_left.to_px(logical_parent_width, 0.0) * cx.scale_factor();
+            let mut padding_left =
+                padding_left.to_px(logical_parent_width, 0.0) * cx.scale_factor();
+            let mut padding_right =
+                padding_right.to_px(logical_parent_width, 0.0) * cx.scale_factor();
             let padding_top = padding_top.to_px(logical_parent_height, 0.0) * cx.scale_factor();
             let padding_bottom =
                 padding_bottom.to_px(logical_parent_height, 0.0) * cx.scale_factor();
+
+            if matches!(
+                cx.style.direction.get(cx.current).copied(),
+                Some(morphorm::Direction::RightToLeft)
+            ) {
+                std::mem::swap(&mut padding_left, &mut padding_right);
+            }
 
             let (mut top, _) = match cx.style.alignment.get(cx.current).copied().unwrap_or_default()
             {
@@ -639,10 +649,22 @@ where
 
                         top *= bounds.height() - padding_top - padding_bottom - paragraph.height();
 
-                        let padding_left = match cx.padding_left() {
+                        let mut padding_left = match cx.padding_left() {
                             Units::Pixels(val) => val,
                             _ => 0.0,
                         };
+
+                        let mut padding_right = match cx.padding_right() {
+                            Units::Pixels(val) => val,
+                            _ => 0.0,
+                        };
+
+                        if matches!(
+                            cx.style.direction.get(cx.current).copied(),
+                            Some(morphorm::Direction::RightToLeft)
+                        ) {
+                            std::mem::swap(&mut padding_left, &mut padding_right);
+                        }
 
                         let x = bounds.x + padding_left + cursor_rect.rect.left + left;
                         let y = bounds.y + padding_top + cursor_rect.rect.top + top;
@@ -704,15 +726,22 @@ where
 
                 top *= bounds.height() - padding_top - padding_bottom - paragraph.height();
 
-                let padding_left = match cx.padding_left() {
+                let mut padding_left = match cx.padding_left() {
                     Units::Pixels(val) => val,
                     _ => 0.0,
                 };
 
-                let padding_right = match cx.padding_right() {
+                let mut padding_right = match cx.padding_right() {
                     Units::Pixels(val) => val,
                     _ => 0.0,
                 };
+
+                if matches!(
+                    cx.style.direction.get(cx.current).copied(),
+                    Some(morphorm::Direction::RightToLeft)
+                ) {
+                    std::mem::swap(&mut padding_left, &mut padding_right);
+                }
 
                 let x = (bounds.x + padding_left + cursor_rect.rect.left).round();
                 let y = (bounds.y + padding_top + cursor_rect.rect.top + top).round();
