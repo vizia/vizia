@@ -464,7 +464,13 @@ impl View for Window {
             }
 
             WindowEvent::SetTitle(title) => {
-                self.window().set_title(title);
+                if let Some(window_state) = cx.windows.get_mut(&cx.current()) {
+                    window_state.window_description.title = title.clone();
+                }
+
+                if let Some(window) = &self.window {
+                    window.set_title(title);
+                }
             }
 
             WindowEvent::SetSize(size) => {
