@@ -16,8 +16,12 @@
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
     --primary: oklch(0.205 0 0);
+    --primary-hover: oklch(0.28 0 0);
+    --primary-active: oklch(0.145 0 0);
     --primary-foreground: oklch(0.985 0 0);
     --secondary: oklch(0.97 0 0);
+    --secondary-hover: oklch(0.93 0 0);
+    --secondary-active: oklch(0.89 0 0);
     --secondary-foreground: oklch(0.205 0 0);
     --muted: oklch(0.97 0 0);
     --muted-foreground: oklch(0.556 0 0);
@@ -50,8 +54,12 @@
     --popover: oklch(0.205 0 0);
     --popover-foreground: oklch(0.985 0 0);
     --primary: oklch(0.922 0 0);
+    --primary-hover: oklch(0.86 0 0);
+    --primary-active: oklch(0.78 0 0);
     --primary-foreground: oklch(0.205 0 0);
     --secondary: oklch(0.269 0 0);
+    --secondary-hover: oklch(0.33 0 0);
+    --secondary-active: oklch(0.38 0 0);
     --secondary-foreground: oklch(0.985 0 0);
     --muted: oklch(0.269 0 0);
     --muted-foreground: oklch(0.708 0 0);
@@ -144,6 +152,18 @@ button {
     transition: background-color 100ms;
 }
 
+button:hover,
+button-group > button:hover {
+    background-color: var(--primary-hover);
+    transition: background-color 100ms;
+}
+
+button:active,
+button-group > button:active {
+    background-color: var(--primary-active);
+    transition: background-color 100ms;
+}
+
 button.secondary,
 button-group.secondary > button {
     background-color: var(--secondary);
@@ -152,6 +172,18 @@ button-group.secondary > button {
     transition: background-color 100ms;
     transition: color 100ms;
     transition: fill 100ms;
+}
+
+button.secondary:hover,
+button-group.secondary > button:hover {
+    background-color: var(--secondary-hover);
+    transition: background-color 100ms;
+}
+
+button.secondary:active,
+button-group.secondary > button:active {
+    background-color: var(--secondary-active);
+    transition: background-color 100ms;
 }
 
 button.outline,
