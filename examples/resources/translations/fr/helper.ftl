@@ -73,3 +73,13 @@ Thursday-short = Je
 Friday-short = Ve
 Saturday-short = Sa
 Sunday-short = Di
+
+## Accordion
+accordion-title-1 = Aperçu du projet
+accordion-content-1 = Vizia est un framework GUI déclaratif pour les applications de bureau.
+accordion-title-2 = Installation
+accordion-content-2 = Ajoutez `vizia` à vos dépendances et exécutez l'application.
+accordion-title-3 = Style
+accordion-content-3 = Utilisez des feuilles de style de type CSS et des sélecteurs de classe pour personnaliser votre interface utilisateur.
+allow-multiple-open = Autoriser plusieurs ouverts
+toggle-section = Basculer la deuxième section

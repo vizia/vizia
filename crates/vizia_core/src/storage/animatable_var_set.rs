@@ -763,8 +763,22 @@ where
                     if !entity_data_index.is_inline()
                         && entity_data_index.index() < self.shared_data.dense.len()
                     {
-                        let start_data =
-                            self.shared_data.dense[entity_data_index.index()].value.value.clone();
+                        // Resolve the start value dynamically so that a stale baked value
+                        // is not used when only a CSS variable changed since the last link.
+                        let start_data = {
+                            let shared = &self.shared_data.dense[entity_data_index.index()].value;
+                            if shared.variable_name_hash != u64::MAX {
+                                if let Some(var_store) = variables.get(&shared.variable_name_hash) {
+                                    var_store
+                                        .get_resolved(entity, variables)
+                                        .unwrap_or_else(|| shared.value.clone())
+                                } else {
+                                    shared.fallback.clone().unwrap_or_else(|| shared.value.clone())
+                                }
+                            } else {
+                                shared.value.clone()
+                            }
+                        };
                         transition_state.keyframes.first_mut().unwrap().value = start_data;
                     } else {
                         transition_state.keyframes.first_mut().unwrap().value = end.value.clone();
@@ -999,8 +1013,20 @@ where
                     if !entity_data_index.is_inline()
                         && entity_data_index.index() < self.shared_data.dense.len()
                     {
-                        let start_data =
-                            self.shared_data.dense[entity_data_index.index()].value.value.clone();
+                        // Resolve the start value dynamically so that a stale baked value
+                        // is not used when only a CSS variable changed since the last link.
+                        let start_data = {
+                            let shared = &self.shared_data.dense[entity_data_index.index()].value;
+                            if shared.variable_name_hash != u64::MAX {
+                                resolved_vars
+                                    .get(&shared.variable_name_hash)
+                                    .cloned()
+                                    .or_else(|| shared.fallback.clone())
+                                    .unwrap_or_else(|| shared.value.clone())
+                            } else {
+                                shared.value.clone()
+                            }
+                        };
                         transition_state.keyframes.first_mut().unwrap().value = start_data;
                     } else {
                         transition_state.keyframes.first_mut().unwrap().value = end.value.clone();

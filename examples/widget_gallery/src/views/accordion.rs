@@ -20,7 +20,7 @@ pub fn accordion(cx: &mut Context) {
                 .to_string(),
         ),
     ]);
-    let open_index = Signal::new(Some(0usize));
+    let open_indices = Signal::new(vec![0usize]);
 
     VStack::new(cx, |cx| {
         Markdown::new(
@@ -44,7 +44,17 @@ An accordion displays a list of headers that can be expanded one at a time to re
                     },
                 )
             })
-            .with_open(open_index)
+            .open(open_indices)
+            .on_toggle(move |_cx, index, is_open| {
+                open_indices.update(|indices| {
+                    if is_open {
+                        indices.clear();
+                        indices.push(index);
+                    } else {
+                        indices.retain(|&open_index| open_index != index);
+                    }
+                });
+            })
             .width(Stretch(1.0));
         });
     })

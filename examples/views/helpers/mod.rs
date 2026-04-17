@@ -15,26 +15,36 @@ pub const CENTER_LAYOUT: &str = r#"
 
     :root.primary-blue {
         --primary: #1f6feb;
+        --primary-hover: #388bfd;
+        --primary-active: #1a5cc7;
         --primary-foreground: #ffffff;
     }
 
     :root.primary-emerald {
         --primary: #0f9d58;
+        --primary-hover: #12b76a;
+        --primary-active: #0a7a44;
         --primary-foreground: #ffffff;
     }
 
     :root.primary-crimson {
         --primary: #c62828;
+        --primary-hover: #d32f2f;
+        --primary-active: #b71c1c;
         --primary-foreground: #ffffff;
     }
 
     :root.primary-amber {
         --primary: #f59e0b;
+        --primary-hover: #fbbf24;
+        --primary-active: #d97706;
         --primary-foreground: #1f2937;
     }
 
     :root.primary-violet {
         --primary: #7c3aed;
+        --primary-hover: #8b5cf6;
+        --primary-active: #6d28d9;
         --primary-foreground: #ffffff;
     }
 "#;

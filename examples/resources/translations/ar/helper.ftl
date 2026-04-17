@@ -73,3 +73,13 @@ Thursday-short = خمي
 Friday-short = جمع
 Saturday-short = سبت
 Sunday-short = أحد
+
+## Accordion
+accordion-title-1 = نظرة عامة على المشروع
+accordion-content-1 = Vizia عبارة عن إطار عمل واجهة مستخدم تصريحي لتطبيقات سطح المكتب.
+accordion-title-2 = التثبيت
+accordion-content-2 = أضف `vizia` إلى المتطلبات الخاصة بك وقم بتشغيل التطبيق.
+accordion-title-3 = التصميم
+accordion-content-3 = استخدم أوراق نمط من نوع CSS وأجهزة اختيار الفئات لتخصيص واجهة المستخدم الخاصة بك.
+allow-multiple-open = السماح بفتح عدة أقسام
+toggle-section = تبديل القسم الثاني

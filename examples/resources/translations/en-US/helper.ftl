@@ -36,3 +36,13 @@ discount-percent = Discount: { $discount }%
 ## Date formatting examples
 joined-date = Member since { DATETIME($date, year: "numeric", month: "long", day: "numeric") }
 last-login = Last login: { DATETIME($date, month: "short", day: "numeric", hour: "2-digit", minute: "2-digit") }
+
+## Accordion
+accordion-title-1 = Project overview
+accordion-content-1 = Vizia is a declarative GUI framework for desktop applications.
+accordion-title-2 = Installation
+accordion-content-2 = Add `vizia` to your dependencies and run the application.
+accordion-title-3 = Styling
+accordion-content-3 = Use CSS-like stylesheets and class selectors to customize your UI.
+allow-multiple-open = Allow Multiple Open
+toggle-section = Toggle second section

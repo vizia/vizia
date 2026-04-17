@@ -3,7 +3,7 @@ use std::ops::Deref;
 use crate::prelude::*;
 
 pub enum AccordionEvent {
-    SetOpen(Option<usize>),
+    ToggleOpen(usize, bool),
     ClearHeaders,
     RegisterHeader(usize, Entity),
     FocusNextHeader,
@@ -14,10 +14,11 @@ pub enum AccordionEvent {
 
 /// A view which organizes content into expandable sections.
 ///
-/// The accordion is implemented using internal [Collapsible] views and maintains
-/// a single-open-section behavior.
+/// The accordion is implemented using internal [Collapsible] views and is fully
+/// controlled by external open state passed to [`Handle::open`].
 pub struct Accordion {
-    open_index: Signal<Option<usize>>,
+    open_indices: Signal<Vec<usize>>,
+    on_toggle: Option<Box<dyn Fn(&mut EventContext, usize, bool) + 'static>>,
     header_entities: Vec<Entity>,
 }
 
@@ -30,10 +31,10 @@ impl Accordion {
         T: Clone + 'static,
         F: 'static + Clone + Fn(&mut Context, usize, T) -> AccordionPair,
     {
-        let open_index = Signal::new(None);
         let list = list.to_signal(cx);
+        let open_indices = Signal::new(Vec::new());
 
-        Self { open_index, header_entities: Vec::new() }.build(cx, move |cx| {
+        Self { open_indices, on_toggle: None, header_entities: Vec::new() }.build(cx, move |cx| {
             Keymap::from(vec![
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowDown),
@@ -78,14 +79,11 @@ impl Accordion {
                                 cx.emit(AccordionEvent::RegisterHeader(index, header));
                             }
                         })
-                        .open(open_index.map(move |open| *open == Some(index)))
-                        .on_toggle(move |cx, is_open| {
-                            cx.emit(AccordionEvent::SetOpen(if is_open {
-                                Some(index)
-                            } else {
-                                None
-                            }));
-                        });
+                        .on_toggle(move |cx, next_open| {
+                            cx.emit(AccordionEvent::ToggleOpen(index, next_open));
+                        })
+                        .open(open_indices.map(move |indices| indices.contains(&index)));
+
                     if index < list_length - 1 {
                         Divider::horizontal(cx);
                     }
@@ -102,8 +100,10 @@ impl View for Accordion {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|accordion_event, _| match accordion_event {
-            AccordionEvent::SetOpen(index) => {
-                self.open_index.set(*index);
+            AccordionEvent::ToggleOpen(index, next_open) => {
+                if let Some(callback) = &self.on_toggle {
+                    (callback)(cx, *index, *next_open);
+                }
             }
 
             AccordionEvent::ClearHeaders => {
@@ -172,14 +172,27 @@ impl Accordion {
 }
 
 impl Handle<'_, Accordion> {
-    /// Sets the open section by index.
-    pub fn with_open<U: Into<Option<usize>>>(mut self, index: impl Res<U>) -> Self {
-        let entity = self.entity();
-        index.set_or_bind(self.context(), move |cx, index| {
-            cx.emit_to(entity, AccordionEvent::SetOpen(index.get_value(cx).into()));
-        });
+    /// Sets which sections are open by index.
+    pub fn open(mut self, indices: impl Res<Vec<usize>> + 'static) -> Self {
+        let indices = indices.to_signal(self.context());
+        self.bind(indices, move |handle| {
+            handle.modify(|accordion| {
+                accordion.open_indices.set(indices.get());
+            });
+        })
+    }
 
-        self
+    /// Set a callback that fires when a section is toggled open or closed.
+    ///
+    /// The callback receives the section index and the desired next open state.
+    /// Use this to update the external signal passed to `open()`.
+    pub fn on_toggle<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, usize, bool),
+    {
+        self.modify(|accordion| {
+            accordion.on_toggle = Some(Box::new(callback));
+        })
     }
 }
 
