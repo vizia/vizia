@@ -84,41 +84,6 @@ macro_rules! get_units_property {
     };
 }
 
-macro_rules! get_color_property {
-    (
-        $(#[$meta:meta])*
-        $name:ident
-    ) => {
-        $(#[$meta])*
-        pub fn $name(&self) -> Color {
-            if let Some(col) = self.style.$name.get(self.current) {
-                Color::rgba(col.r(), col.g(), col.b(), col.a())
-            } else {
-                Color::rgba(0, 0, 0, 0)
-            }
-        }
-    };
-}
-
-macro_rules! get_length_property {
-    (
-        $(#[$meta:meta])*
-        $name:ident
-    ) => {
-        $(#[$meta])*
-        pub fn $name(&self) -> f32 {
-            if let Some(length) = self.style.$name.get(self.current) {
-                let bounds = self.bounds();
-
-                let px = length.to_pixels(bounds.w.min(bounds.h), self.scale_factor());
-                return px.round();
-            }
-
-            0.0
-        }
-    };
-}
-
 impl DrawContext<'_> {
     pub fn with_current<T>(&mut self, entity: Entity, f: impl FnOnce(&mut DrawContext) -> T) -> T {
         let current = self.current;
@@ -193,7 +158,11 @@ impl DrawContext<'_> {
 
     /// Returns the opacity of the current view.
     pub fn opacity(&self) -> f32 {
-        self.style.opacity.get(self.current).copied().unwrap_or(Opacity(1.0)).0
+        self.style
+            .opacity
+            .get_resolved(self.current, &self.style.custom_opacity_props)
+            .unwrap_or(Opacity(1.0))
+            .0
     }
 
     /// Returns the lookup pattern to pick the default font.
@@ -203,14 +172,13 @@ impl DrawContext<'_> {
 
     /// Returns the font-size of the current view in physical pixels.
     pub fn font_size(&self) -> f32 {
-        self.logical_to_physical(
-            self.style
-                .font_size
-                .get(self.current)
-                .cloned()
-                .map(|f| f.0.to_px().unwrap())
-                .unwrap_or(16.0),
-        )
+        let fs = self
+            .style
+            .font_size
+            .get_resolved(self.current, &self.style.custom_font_size_props)
+            .and_then(|f| f.0.to_px())
+            .unwrap_or(16.0);
+        self.logical_to_physical(fs)
     }
 
     /// Returns the font-weight of the current view.
@@ -243,45 +211,93 @@ impl DrawContext<'_> {
         self.style.physical_to_logical(physical)
     }
 
-    get_length_property!(
-        /// Returns the border width of the current view in physical pixels.
-        border_width
-    );
+    /// Returns the border width of the current view in physical pixels.
+    pub fn border_width(&self) -> f32 {
+        if let Some(length) =
+            self.style.border_width.get_resolved(self.current, &self.style.custom_length_props)
+        {
+            let bounds = self.bounds();
+            return length.to_pixels(bounds.w.min(bounds.h), self.scale_factor()).round();
+        }
+        0.0
+    }
 
-    get_color_property!(
-        /// Returns the outline color of the current view.
-        outline_color
-    );
+    /// Returns the outline color of the current view.
+    pub fn outline_color(&self) -> Color {
+        if let Some(col) =
+            self.style.outline_color.get_resolved(self.current, &self.style.custom_color_props)
+        {
+            Color::rgba(col.r(), col.g(), col.b(), col.a())
+        } else {
+            Color::rgba(0, 0, 0, 0)
+        }
+    }
 
-    get_length_property!(
-        /// Returns the outline width of the current view in physical pixels.
-        outline_width
-    );
+    /// Returns the outline width of the current view in physical pixels.
+    pub fn outline_width(&self) -> f32 {
+        if let Some(length) =
+            self.style.outline_width.get_resolved(self.current, &self.style.custom_length_props)
+        {
+            let bounds = self.bounds();
+            return length.to_pixels(bounds.w.min(bounds.h), self.scale_factor()).round();
+        }
+        0.0
+    }
 
-    get_length_property!(
-        /// Returns the outline offset of the current view in physcial pixels.
-        outline_offset
-    );
+    /// Returns the outline offset of the current view in physical pixels.
+    pub fn outline_offset(&self) -> f32 {
+        if let Some(length) =
+            self.style.outline_offset.get_resolved(self.current, &self.style.custom_length_props)
+        {
+            let bounds = self.bounds();
+            return length.to_pixels(bounds.w.min(bounds.h), self.scale_factor()).round();
+        }
+        0.0
+    }
 
-    get_length_property!(
-        /// Returns the corner radius for the top-left corner of the current view.
-        corner_top_left_radius
-    );
+    /// Returns the corner radius for the top-left corner of the current view.
+    pub fn corner_top_left_radius(&self) -> f32 {
+        let bounds = self.bounds();
+        let scale = self.scale_factor();
+        self.style
+            .corner_top_left_radius
+            .get_resolved(self.current, &self.style.custom_length_props)
+            .map(|l| l.to_pixels(bounds.w.min(bounds.h), scale).round())
+            .unwrap_or(0.0)
+    }
 
-    get_length_property!(
-        /// Returns the corner radius for the top-right corner of the current view.
-        corner_top_right_radius
-    );
+    /// Returns the corner radius for the top-right corner of the current view.
+    pub fn corner_top_right_radius(&self) -> f32 {
+        let bounds = self.bounds();
+        let scale = self.scale_factor();
+        self.style
+            .corner_top_right_radius
+            .get_resolved(self.current, &self.style.custom_length_props)
+            .map(|l| l.to_pixels(bounds.w.min(bounds.h), scale).round())
+            .unwrap_or(0.0)
+    }
 
-    get_length_property!(
-        /// Returns the corner radius for the bottom-left corner of the current view.
-        corner_bottom_left_radius
-    );
+    /// Returns the corner radius for the bottom-left corner of the current view.
+    pub fn corner_bottom_left_radius(&self) -> f32 {
+        let bounds = self.bounds();
+        let scale = self.scale_factor();
+        self.style
+            .corner_bottom_left_radius
+            .get_resolved(self.current, &self.style.custom_length_props)
+            .map(|l| l.to_pixels(bounds.w.min(bounds.h), scale).round())
+            .unwrap_or(0.0)
+    }
 
-    get_length_property!(
-        /// Returns the corner radius for the bottom-right corner of the current view.
-        corner_bottom_right_radius
-    );
+    /// Returns the corner radius for the bottom-right corner of the current view.
+    pub fn corner_bottom_right_radius(&self) -> f32 {
+        let bounds = self.bounds();
+        let scale = self.scale_factor();
+        self.style
+            .corner_bottom_right_radius
+            .get_resolved(self.current, &self.style.custom_length_props)
+            .map(|l| l.to_pixels(bounds.w.min(bounds.h), scale).round())
+            .unwrap_or(0.0)
+    }
 
     /// Returns the corner shape for the top-left corner of the current view.
     pub fn corner_top_left_shape(&self) -> CornerShape {
@@ -348,35 +364,65 @@ impl DrawContext<'_> {
         self.style.alignment.get(self.current).copied().unwrap_or_default()
     }
 
-    get_color_property!(
-        /// Returns the background color of the current view.
-        background_color
-    );
+    /// Returns the background color of the current view.
+    pub fn background_color(&self) -> Color {
+        if let Some(col) =
+            self.style.background_color.get_resolved(self.current, &self.style.custom_color_props)
+        {
+            Color::rgba(col.r(), col.g(), col.b(), col.a())
+        } else {
+            Color::rgba(0, 0, 0, 0)
+        }
+    }
 
-    get_color_property!(
-        /// Returns the border color of the current view.
-        border_color
-    );
+    /// Returns the border color of the current view.
+    pub fn border_color(&self) -> Color {
+        if let Some(col) =
+            self.style.border_color.get_resolved(self.current, &self.style.custom_color_props)
+        {
+            Color::rgba(col.r(), col.g(), col.b(), col.a())
+        } else {
+            Color::rgba(0, 0, 0, 0)
+        }
+    }
 
     /// Returns the border style of the current view.
     pub fn border_style(&self) -> BorderStyleKeyword {
         self.style.border_style.get(self.current).copied().unwrap_or_default()
     }
 
-    get_color_property!(
-        /// Returns the text selection color for the current view.
-        selection_color
-    );
+    /// Returns the text selection color for the current view.
+    pub fn selection_color(&self) -> Color {
+        if let Some(col) =
+            self.style.selection_color.get_resolved(self.current, &self.style.custom_color_props)
+        {
+            Color::rgba(col.r(), col.g(), col.b(), col.a())
+        } else {
+            Color::rgba(0, 0, 0, 0)
+        }
+    }
 
-    get_color_property!(
-        /// Returns the text caret color for the current view.
-        caret_color
-    );
+    /// Returns the text caret color for the current view.
+    pub fn caret_color(&self) -> Color {
+        if let Some(col) =
+            self.style.caret_color.get_resolved(self.current, &self.style.custom_color_props)
+        {
+            Color::rgba(col.r(), col.g(), col.b(), col.a())
+        } else {
+            Color::rgba(0, 0, 0, 0)
+        }
+    }
 
-    get_color_property!(
-        /// Returns the font color for the current view.
-        font_color
-    );
+    /// Returns the font color for the current view.
+    pub fn font_color(&self) -> Color {
+        if let Some(col) =
+            self.style.font_color.get_resolved(self.current, &self.style.custom_color_props)
+        {
+            Color::rgba(col.r(), col.g(), col.b(), col.a())
+        } else {
+            Color::rgba(0, 0, 0, 0)
+        }
+    }
 
     /// Returns whether the current view should have its text wrapped.
     pub fn text_wrap(&self) -> bool {
@@ -398,9 +444,9 @@ impl DrawContext<'_> {
         self.style.line_clamp.get(self.current).copied().map(|lc| lc.0 as usize)
     }
 
-    /// Returns a reference to any shadows of the current view.
-    pub fn shadows(&self) -> Option<&Vec<Shadow>> {
-        self.style.shadow.get(self.current)
+    /// Returns the resolved shadows of the current view.
+    pub fn shadows(&self) -> Option<Vec<Shadow>> {
+        self.style.shadow.get_resolved(self.current, &self.style.custom_shadow_props)
     }
 
     /// Return to reference to any filter applied to the current view.
@@ -1082,9 +1128,10 @@ impl DrawContext<'_> {
 
                                             svg.render(canvas);
 
-                                            if let Some(color) =
-                                                self.style.fill.get(self.current).copied()
-                                            {
+                                            if let Some(color) = self.style.fill.get_resolved(
+                                                self.current,
+                                                &self.style.custom_color_props,
+                                            ) {
                                                 let mut paint = Paint::default();
 
                                                 paint.set_anti_alias(true);

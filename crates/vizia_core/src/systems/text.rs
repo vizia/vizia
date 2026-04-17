@@ -79,8 +79,18 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
             let text_bounds =
                 BoundingBox { x: padding_left, y: 0.0, w: bounds.w - padding_right, h: bounds.h };
 
-            if !cx.style.width.get(entity).copied().unwrap_or_default().is_auto()
-                && !cx.style.height.get(entity).copied().unwrap_or_default().is_auto()
+            if !cx
+                .style
+                .width
+                .get_resolved(entity, &cx.style.custom_units_props)
+                .unwrap_or_default()
+                .is_auto()
+                && !cx
+                    .style
+                    .height
+                    .get_resolved(entity, &cx.style.custom_units_props)
+                    .unwrap_or_default()
+                    .is_auto()
             {
                 if cx.style.text_overflow.get(entity).copied().unwrap_or_default()
                     == TextOverflow::Clip
@@ -240,7 +250,10 @@ fn add_block(
 
             let mut text_style = TextStyle::new();
 
-            let font_color = style.font_color.get(entity).cloned().unwrap_or_default();
+            let font_color = style
+                .font_color
+                .get_resolved(entity, &style.custom_color_props)
+                .unwrap_or_default();
 
             if let Some(text_decoration_line) = style.text_decoration_line.get(entity).copied() {
                 text_style.set_decoration_type(text_decoration_line.into());
@@ -258,8 +271,10 @@ fn add_block(
 
             let mut paint = Paint::default();
             // Font Color
-            if let Some(font_color) = style.font_color.get(entity) {
-                paint.set_color(*font_color);
+            if let Some(font_color) =
+                style.font_color.get_resolved(entity, &style.custom_color_props)
+            {
+                paint.set_color(font_color);
                 paint.set_anti_alias(false);
                 paint.set_blend_mode(BlendMode::SrcOver);
             }
@@ -285,8 +300,11 @@ fn add_block(
             }
 
             // Font Size
-            let font_size =
-                style.font_size.get(entity).map_or(16.0, |f| f.0.to_px().unwrap_or(16.0));
+            let font_size = style
+                .font_size
+                .get_resolved(entity, &style.custom_font_size_props)
+                .and_then(|f| f.0.to_px())
+                .unwrap_or(16.0);
             text_style.set_font_size(font_size * style.scale_factor());
 
             // Font Style

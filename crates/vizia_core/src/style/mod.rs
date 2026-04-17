@@ -64,10 +64,12 @@ use hashbrown::{HashMap, HashSet};
 use indexmap::IndexMap;
 use log::warn;
 use std::fmt::Debug;
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::ops::{Deref, DerefMut, Range};
 use vizia_style::selectors::parser::{AncestorHashes, Selector};
 
 use crate::prelude::*;
+use crate::storage::animatable_var_set::AnimatableVarSet;
 
 pub use vizia_style::{
     Alignment, Angle, BackgroundImage, BackgroundSize, BorderStyleKeyword, ClipPath, Color,
@@ -80,8 +82,10 @@ pub use vizia_style::{
     VerticalPositionKeyword, Visibility,
 };
 
+use cssparser::Token as CssToken;
 use vizia_style::{
     BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, Selectors, StyleSheet,
+    TokenList, TokenOrValue, Variable,
 };
 
 mod rule;
@@ -245,7 +249,7 @@ pub struct Style {
     pub(crate) visibility: StyleSet<Visibility>,
 
     // Opacity
-    pub(crate) opacity: AnimatableSet<Opacity>,
+    pub(crate) opacity: AnimatableVarSet<Opacity>,
 
     // Z Order
     pub(crate) z_index: StyleSet<i32>,
@@ -270,8 +274,8 @@ pub struct Style {
     pub(crate) scale: AnimatableSet<Scale>,
 
     // Border
-    pub(crate) border_width: AnimatableSet<LengthOrPercentage>,
-    pub(crate) border_color: AnimatableSet<Color>,
+    pub(crate) border_width: AnimatableVarSet<LengthOrPercentage>,
+    pub(crate) border_color: AnimatableVarSet<Color>,
     pub(crate) border_style: StyleSet<BorderStyleKeyword>,
 
     // Corner Shape
@@ -281,10 +285,10 @@ pub struct Style {
     pub(crate) corner_bottom_right_shape: StyleSet<CornerShape>,
 
     // Corner Radius
-    pub(crate) corner_top_left_radius: AnimatableSet<LengthOrPercentage>,
-    pub(crate) corner_top_right_radius: AnimatableSet<LengthOrPercentage>,
-    pub(crate) corner_bottom_left_radius: AnimatableSet<LengthOrPercentage>,
-    pub(crate) corner_bottom_right_radius: AnimatableSet<LengthOrPercentage>,
+    pub(crate) corner_top_left_radius: AnimatableVarSet<LengthOrPercentage>,
+    pub(crate) corner_top_right_radius: AnimatableVarSet<LengthOrPercentage>,
+    pub(crate) corner_bottom_left_radius: AnimatableVarSet<LengthOrPercentage>,
+    pub(crate) corner_bottom_right_radius: AnimatableVarSet<LengthOrPercentage>,
 
     // Corner Smoothing
     pub(crate) corner_top_left_smoothing: AnimatableSet<f32>,
@@ -293,17 +297,17 @@ pub struct Style {
     pub(crate) corner_bottom_right_smoothing: AnimatableSet<f32>,
 
     // Outline
-    pub(crate) outline_width: AnimatableSet<LengthOrPercentage>,
-    pub(crate) outline_color: AnimatableSet<Color>,
-    pub(crate) outline_offset: AnimatableSet<LengthOrPercentage>,
+    pub(crate) outline_width: AnimatableVarSet<LengthOrPercentage>,
+    pub(crate) outline_color: AnimatableVarSet<Color>,
+    pub(crate) outline_offset: AnimatableVarSet<LengthOrPercentage>,
 
     // Background
-    pub(crate) background_color: AnimatableSet<Color>,
+    pub(crate) background_color: AnimatableVarSet<Color>,
     pub(crate) background_image: AnimatableSet<Vec<ImageOrGradient>>,
     pub(crate) background_size: AnimatableSet<Vec<BackgroundSize>>,
 
     // Shadow
-    pub(crate) shadow: AnimatableSet<Vec<Shadow>>,
+    pub(crate) shadow: AnimatableVarSet<Vec<Shadow>>,
 
     // Text
     pub(crate) text: SparseSet<String>,
@@ -317,20 +321,20 @@ pub struct Style {
     pub(crate) underline_style: StyleSet<TextDecorationLine>,
     pub(crate) overline_style: StyleSet<TextDecorationStyle>,
     pub(crate) strikethrough_style: StyleSet<TextDecorationStyle>,
-    pub(crate) underline_color: AnimatableSet<Color>,
-    pub(crate) overline_color: AnimatableSet<Color>,
-    pub(crate) strikethrough_color: AnimatableSet<Color>,
+    pub(crate) underline_color: AnimatableVarSet<Color>,
+    pub(crate) overline_color: AnimatableVarSet<Color>,
+    pub(crate) strikethrough_color: AnimatableVarSet<Color>,
     pub(crate) font_family: StyleSet<Vec<FamilyOwned>>,
-    pub(crate) font_color: AnimatableSet<Color>,
-    pub(crate) font_size: AnimatableSet<FontSize>,
+    pub(crate) font_color: AnimatableVarSet<Color>,
+    pub(crate) font_size: AnimatableVarSet<FontSize>,
     pub(crate) font_weight: StyleSet<FontWeight>,
     pub(crate) font_slant: StyleSet<FontSlant>,
     pub(crate) font_width: StyleSet<FontWidth>,
     pub(crate) font_variation_settings: StyleSet<Vec<FontVariation>>,
-    pub(crate) caret_color: AnimatableSet<Color>,
-    pub(crate) selection_color: AnimatableSet<Color>,
+    pub(crate) caret_color: AnimatableVarSet<Color>,
+    pub(crate) selection_color: AnimatableVarSet<Color>,
 
-    pub(crate) fill: AnimatableSet<Color>,
+    pub(crate) fill: AnimatableVarSet<Color>,
 
     // cursor Icon
     pub(crate) cursor: StyleSet<CursorIcon>,
@@ -360,38 +364,38 @@ pub struct Style {
     pub(crate) row_span: StyleSet<usize>,
 
     // Spacing
-    pub(crate) left: AnimatableSet<Units>,
-    pub(crate) right: AnimatableSet<Units>,
-    pub(crate) top: AnimatableSet<Units>,
-    pub(crate) bottom: AnimatableSet<Units>,
+    pub(crate) left: AnimatableVarSet<Units>,
+    pub(crate) right: AnimatableVarSet<Units>,
+    pub(crate) top: AnimatableVarSet<Units>,
+    pub(crate) bottom: AnimatableVarSet<Units>,
 
     // Padding
-    pub(crate) padding_left: AnimatableSet<Units>,
-    pub(crate) padding_right: AnimatableSet<Units>,
-    pub(crate) padding_top: AnimatableSet<Units>,
-    pub(crate) padding_bottom: AnimatableSet<Units>,
-    pub(crate) vertical_gap: AnimatableSet<Units>,
-    pub(crate) horizontal_gap: AnimatableSet<Units>,
+    pub(crate) padding_left: AnimatableVarSet<Units>,
+    pub(crate) padding_right: AnimatableVarSet<Units>,
+    pub(crate) padding_top: AnimatableVarSet<Units>,
+    pub(crate) padding_bottom: AnimatableVarSet<Units>,
+    pub(crate) vertical_gap: AnimatableVarSet<Units>,
+    pub(crate) horizontal_gap: AnimatableVarSet<Units>,
 
     // Scrolling
     pub(crate) vertical_scroll: AnimatableSet<f32>,
     pub(crate) horizontal_scroll: AnimatableSet<f32>,
 
     // Size
-    pub(crate) width: AnimatableSet<Units>,
-    pub(crate) height: AnimatableSet<Units>,
+    pub(crate) width: AnimatableVarSet<Units>,
+    pub(crate) height: AnimatableVarSet<Units>,
 
     // Size Constraints
-    pub(crate) min_width: AnimatableSet<Units>,
-    pub(crate) max_width: AnimatableSet<Units>,
-    pub(crate) min_height: AnimatableSet<Units>,
-    pub(crate) max_height: AnimatableSet<Units>,
+    pub(crate) min_width: AnimatableVarSet<Units>,
+    pub(crate) max_width: AnimatableVarSet<Units>,
+    pub(crate) min_height: AnimatableVarSet<Units>,
+    pub(crate) max_height: AnimatableVarSet<Units>,
 
     // Gap Constraints
-    pub(crate) min_horizontal_gap: AnimatableSet<Units>,
-    pub(crate) max_horizontal_gap: AnimatableSet<Units>,
-    pub(crate) min_vertical_gap: AnimatableSet<Units>,
-    pub(crate) max_vertical_gap: AnimatableSet<Units>,
+    pub(crate) min_horizontal_gap: AnimatableVarSet<Units>,
+    pub(crate) max_horizontal_gap: AnimatableVarSet<Units>,
+    pub(crate) min_vertical_gap: AnimatableVarSet<Units>,
+    pub(crate) max_vertical_gap: AnimatableVarSet<Units>,
 
     pub(crate) system_flags: SystemFlags,
 
@@ -407,6 +411,13 @@ pub struct Style {
 
     /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
     pub(crate) dpi_factor: f64,
+
+    pub(crate) custom_color_props: HashMap<u64, AnimatableVarSet<Color>>,
+    pub(crate) custom_length_props: HashMap<u64, AnimatableVarSet<LengthOrPercentage>>,
+    pub(crate) custom_font_size_props: HashMap<u64, AnimatableVarSet<FontSize>>,
+    pub(crate) custom_units_props: HashMap<u64, AnimatableVarSet<Units>>,
+    pub(crate) custom_opacity_props: HashMap<u64, AnimatableVarSet<Opacity>>,
+    pub(crate) custom_shadow_props: HashMap<u64, AnimatableVarSet<Vec<Shadow>>>,
 }
 
 impl Style {
@@ -456,6 +467,22 @@ impl Style {
             }
         }
 
+        fn insert_keyframe2<T: 'static + Interpolator + Debug + Clone + PartialEq + Default>(
+            storage: &mut AnimatableVarSet<T>,
+            animation_id: Animation,
+            time: f32,
+            value: T,
+        ) {
+            let keyframe = Keyframe { time, value, timing_function: TimingFunction::linear() };
+
+            if let Some(anim_state) = storage.get_animation_mut(animation_id) {
+                anim_state.keyframes.push(keyframe)
+            } else {
+                let anim_state = AnimationState::new(animation_id).with_keyframe(keyframe);
+                storage.insert_animation(animation_id, anim_state);
+            }
+        }
+
         for property in properties.iter() {
             match property {
                 // DISPLAY
@@ -464,7 +491,7 @@ impl Style {
                 }
 
                 Property::Opacity(value) => {
-                    insert_keyframe(&mut self.opacity, animation_id, time, *value);
+                    insert_keyframe2(&mut self.opacity, animation_id, time, *value);
                 }
 
                 Property::ClipPath(value) => {
@@ -497,7 +524,7 @@ impl Style {
 
                 // BORDER
                 Property::BorderWidth(value) => {
-                    insert_keyframe(
+                    insert_keyframe2(
                         &mut self.border_width,
                         animation_id,
                         time,
@@ -506,11 +533,11 @@ impl Style {
                 }
 
                 Property::BorderColor(value) => {
-                    insert_keyframe(&mut self.border_color, animation_id, time, *value);
+                    insert_keyframe2(&mut self.border_color, animation_id, time, *value);
                 }
 
                 Property::CornerTopLeftRadius(value) => {
-                    insert_keyframe(
+                    insert_keyframe2(
                         &mut self.corner_top_left_radius,
                         animation_id,
                         time,
@@ -519,7 +546,7 @@ impl Style {
                 }
 
                 Property::CornerTopRightRadius(value) => {
-                    insert_keyframe(
+                    insert_keyframe2(
                         &mut self.corner_top_right_radius,
                         animation_id,
                         time,
@@ -528,7 +555,7 @@ impl Style {
                 }
 
                 Property::CornerBottomLeftRadius(value) => {
-                    insert_keyframe(
+                    insert_keyframe2(
                         &mut self.corner_bottom_left_radius,
                         animation_id,
                         time,
@@ -537,7 +564,7 @@ impl Style {
                 }
 
                 Property::CornerBottomRightRadius(value) => {
-                    insert_keyframe(
+                    insert_keyframe2(
                         &mut self.corner_bottom_right_radius,
                         animation_id,
                         time,
@@ -547,7 +574,7 @@ impl Style {
 
                 // OUTLINE
                 Property::OutlineWidth(value) => {
-                    insert_keyframe(
+                    insert_keyframe2(
                         &mut self.outline_width,
                         animation_id,
                         time,
@@ -556,16 +583,16 @@ impl Style {
                 }
 
                 Property::OutlineColor(value) => {
-                    insert_keyframe(&mut self.outline_color, animation_id, time, *value);
+                    insert_keyframe2(&mut self.outline_color, animation_id, time, *value);
                 }
 
                 Property::OutlineOffset(value) => {
-                    insert_keyframe(&mut self.outline_offset, animation_id, time, value.clone());
+                    insert_keyframe2(&mut self.outline_offset, animation_id, time, value.clone());
                 }
 
                 // BACKGROUND
                 Property::BackgroundColor(value) => {
-                    insert_keyframe(&mut self.background_color, animation_id, time, *value);
+                    insert_keyframe2(&mut self.background_color, animation_id, time, *value);
                 }
 
                 Property::BackgroundImage(images) => {
@@ -590,132 +617,132 @@ impl Style {
 
                 // BOX SHADOW
                 Property::Shadow(value) => {
-                    insert_keyframe(&mut self.shadow, animation_id, time, value.clone());
+                    insert_keyframe2(&mut self.shadow, animation_id, time, value.clone());
                 }
 
                 // TEXT
                 Property::FontColor(value) => {
-                    insert_keyframe(&mut self.font_color, animation_id, time, *value);
+                    insert_keyframe2(&mut self.font_color, animation_id, time, *value);
                 }
 
                 Property::FontSize(value) => {
-                    insert_keyframe(&mut self.font_size, animation_id, time, value.clone());
+                    insert_keyframe2(&mut self.font_size, animation_id, time, value.clone());
                 }
 
                 Property::CaretColor(value) => {
-                    insert_keyframe(&mut self.caret_color, animation_id, time, *value);
+                    insert_keyframe2(&mut self.caret_color, animation_id, time, *value);
                 }
 
                 Property::SelectionColor(value) => {
-                    insert_keyframe(&mut self.selection_color, animation_id, time, *value);
+                    insert_keyframe2(&mut self.selection_color, animation_id, time, *value);
                 }
 
                 // SPACE
                 Property::Left(value) => {
-                    insert_keyframe(&mut self.left, animation_id, time, *value);
+                    insert_keyframe2(&mut self.left, animation_id, time, *value);
                 }
 
                 Property::Right(value) => {
-                    insert_keyframe(&mut self.right, animation_id, time, *value);
+                    insert_keyframe2(&mut self.right, animation_id, time, *value);
                 }
 
                 Property::Top(value) => {
-                    insert_keyframe(&mut self.top, animation_id, time, *value);
+                    insert_keyframe2(&mut self.top, animation_id, time, *value);
                 }
 
                 Property::Bottom(value) => {
-                    insert_keyframe(&mut self.bottom, animation_id, time, *value);
+                    insert_keyframe2(&mut self.bottom, animation_id, time, *value);
                 }
 
                 // Padding
                 Property::PaddingLeft(value) => {
-                    insert_keyframe(&mut self.padding_left, animation_id, time, *value);
+                    insert_keyframe2(&mut self.padding_left, animation_id, time, *value);
                 }
 
                 Property::PaddingRight(value) => {
-                    insert_keyframe(&mut self.padding_right, animation_id, time, *value);
+                    insert_keyframe2(&mut self.padding_right, animation_id, time, *value);
                 }
 
                 Property::PaddingTop(value) => {
-                    insert_keyframe(&mut self.padding_top, animation_id, time, *value);
+                    insert_keyframe2(&mut self.padding_top, animation_id, time, *value);
                 }
 
                 Property::PaddingBottom(value) => {
-                    insert_keyframe(&mut self.padding_bottom, animation_id, time, *value);
+                    insert_keyframe2(&mut self.padding_bottom, animation_id, time, *value);
                 }
 
                 Property::HorizontalGap(value) => {
-                    insert_keyframe(&mut self.horizontal_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.horizontal_gap, animation_id, time, *value);
                 }
 
                 Property::VerticalGap(value) => {
-                    insert_keyframe(&mut self.vertical_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.vertical_gap, animation_id, time, *value);
                 }
 
                 Property::Gap(value) => {
-                    insert_keyframe(&mut self.horizontal_gap, animation_id, time, *value);
-                    insert_keyframe(&mut self.vertical_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.horizontal_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.vertical_gap, animation_id, time, *value);
                 }
 
                 // GAP CONSSTRAINTS
                 Property::MinGap(value) => {
-                    insert_keyframe(&mut self.min_horizontal_gap, animation_id, time, *value);
-                    insert_keyframe(&mut self.min_vertical_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.min_horizontal_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.min_vertical_gap, animation_id, time, *value);
                 }
 
                 Property::MaxGap(value) => {
-                    insert_keyframe(&mut self.max_horizontal_gap, animation_id, time, *value);
-                    insert_keyframe(&mut self.max_vertical_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.max_horizontal_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.max_vertical_gap, animation_id, time, *value);
                 }
 
                 Property::MinHorizontalGap(value) => {
-                    insert_keyframe(&mut self.min_horizontal_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.min_horizontal_gap, animation_id, time, *value);
                 }
 
                 Property::MaxHorizontalGap(value) => {
-                    insert_keyframe(&mut self.max_horizontal_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.max_horizontal_gap, animation_id, time, *value);
                 }
 
                 Property::MinVerticalGap(value) => {
-                    insert_keyframe(&mut self.min_vertical_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.min_vertical_gap, animation_id, time, *value);
                 }
 
                 Property::MaxVerticalGap(value) => {
-                    insert_keyframe(&mut self.max_vertical_gap, animation_id, time, *value);
+                    insert_keyframe2(&mut self.max_vertical_gap, animation_id, time, *value);
                 }
 
                 // SIZE
                 Property::Width(value) => {
-                    insert_keyframe(&mut self.width, animation_id, time, *value);
+                    insert_keyframe2(&mut self.width, animation_id, time, *value);
                 }
 
                 Property::Height(value) => {
-                    insert_keyframe(&mut self.height, animation_id, time, *value);
+                    insert_keyframe2(&mut self.height, animation_id, time, *value);
                 }
 
                 // SIZE CONSTRAINTS
                 Property::MinWidth(value) => {
-                    insert_keyframe(&mut self.min_width, animation_id, time, *value);
+                    insert_keyframe2(&mut self.min_width, animation_id, time, *value);
                 }
 
                 Property::MaxWidth(value) => {
-                    insert_keyframe(&mut self.max_width, animation_id, time, *value);
+                    insert_keyframe2(&mut self.max_width, animation_id, time, *value);
                 }
 
                 Property::MinHeight(value) => {
-                    insert_keyframe(&mut self.min_height, animation_id, time, *value);
+                    insert_keyframe2(&mut self.min_height, animation_id, time, *value);
                 }
 
                 Property::MaxHeight(value) => {
-                    insert_keyframe(&mut self.max_height, animation_id, time, *value);
+                    insert_keyframe2(&mut self.max_height, animation_id, time, *value);
                 }
 
                 Property::UnderlineColor(value) => {
-                    insert_keyframe(&mut self.underline_color, animation_id, time, *value);
+                    insert_keyframe2(&mut self.underline_color, animation_id, time, *value);
                 }
 
                 Property::Fill(value) => {
-                    insert_keyframe(&mut self.fill, animation_id, time, *value);
+                    insert_keyframe2(&mut self.fill, animation_id, time, *value);
                 }
 
                 _ => {}
@@ -823,6 +850,27 @@ impl Style {
         self.underline_color.play_animation(entity, animation, start_time, duration, delay);
 
         self.fill.play_animation(entity, animation, start_time, duration, delay);
+
+        // Play animations on custom color properties
+        for store in self.custom_color_props.values_mut() {
+            store.play_animation(entity, animation, start_time, duration, delay);
+        }
+        // Play animations on custom length properties
+        for store in self.custom_length_props.values_mut() {
+            store.play_animation(entity, animation, start_time, duration, delay);
+        }
+        // Play animations on custom units properties
+        for store in self.custom_units_props.values_mut() {
+            store.play_animation(entity, animation, start_time, duration, delay);
+        }
+        // Play animations on custom opacity properties
+        for store in self.custom_opacity_props.values_mut() {
+            store.play_animation(entity, animation, start_time, duration, delay);
+        }
+        // Play animations on custom shadow properties
+        for store in self.custom_shadow_props.values_mut() {
+            store.play_animation(entity, animation, start_time, duration, delay);
+        }
     }
 
     pub(crate) fn is_animating(&self, entity: Entity, animation: Animation) -> bool {
@@ -1219,11 +1267,249 @@ impl Style {
                 self.fill.insert_transition(rule_id, animation);
             }
 
+            property_name if property_name.starts_with("--") => {
+                let mut s = DefaultHasher::new();
+                property_name.hash(&mut s);
+                let variable_name_hash = s.finish();
+                // Pre-compute one typed AnimationState per store before taking any mutable
+                // borrows (add_transition takes &self so this is fine).
+                let anim_color: AnimationState<Color> = self.add_transition(transition);
+                let anim_length: AnimationState<LengthOrPercentage> =
+                    self.add_transition(transition);
+                let anim_font_size: AnimationState<FontSize> = self.add_transition(transition);
+                let anim_units: AnimationState<Units> = self.add_transition(transition);
+                let anim_opacity: AnimationState<Opacity> = self.add_transition(transition);
+
+                // Register in every custom-property store so whichever store the variable's
+                // concrete value ends up in will actually animate.
+                if let Some(store) = self.custom_color_props.get_mut(&variable_name_hash) {
+                    store.insert_animation(animation, anim_color);
+                    store.insert_transition(rule_id, animation);
+                } else {
+                    let mut store = AnimatableVarSet::default();
+                    store.insert_animation(animation, anim_color);
+                    store.insert_transition(rule_id, animation);
+                    self.custom_color_props.insert(variable_name_hash, store);
+                }
+
+                if let Some(store) = self.custom_length_props.get_mut(&variable_name_hash) {
+                    store.insert_animation(animation, anim_length);
+                    store.insert_transition(rule_id, animation);
+                } else {
+                    let mut store = AnimatableVarSet::default();
+                    store.insert_animation(animation, anim_length);
+                    store.insert_transition(rule_id, animation);
+                    self.custom_length_props.insert(variable_name_hash, store);
+                }
+
+                if let Some(store) = self.custom_font_size_props.get_mut(&variable_name_hash) {
+                    store.insert_animation(animation, anim_font_size);
+                    store.insert_transition(rule_id, animation);
+                } else {
+                    let mut store = AnimatableVarSet::default();
+                    store.insert_animation(animation, anim_font_size);
+                    store.insert_transition(rule_id, animation);
+                    self.custom_font_size_props.insert(variable_name_hash, store);
+                }
+
+                if let Some(store) = self.custom_units_props.get_mut(&variable_name_hash) {
+                    store.insert_animation(animation, anim_units);
+                    store.insert_transition(rule_id, animation);
+                } else {
+                    let mut store = AnimatableVarSet::default();
+                    store.insert_animation(animation, anim_units);
+                    store.insert_transition(rule_id, animation);
+                    self.custom_units_props.insert(variable_name_hash, store);
+                }
+
+                if let Some(store) = self.custom_opacity_props.get_mut(&variable_name_hash) {
+                    store.insert_animation(animation, anim_opacity);
+                    store.insert_transition(rule_id, animation);
+                } else {
+                    let mut store = AnimatableVarSet::default();
+                    store.insert_animation(animation, anim_opacity);
+                    store.insert_transition(rule_id, animation);
+                    self.custom_opacity_props.insert(variable_name_hash, store);
+                }
+            }
+
             _ => {}
         }
     }
 
     fn insert_property(&mut self, rule_id: Rule, property: &Property) {
+        fn variable_hash(var: &Variable<'_>) -> u64 {
+            let mut s = DefaultHasher::new();
+            var.name.hash(&mut s);
+            s.finish()
+        }
+
+        fn first_fallback_token<'i>(var: &'i Variable<'i>) -> Option<&'i TokenOrValue<'i>> {
+            var.fallback.as_ref().and_then(|TokenList(tokens)| tokens.first())
+        }
+
+        fn color_fallback(var: &Variable<'_>) -> Option<Color> {
+            match first_fallback_token(var) {
+                Some(TokenOrValue::Color(color)) => Some(*color),
+                _ => None,
+            }
+        }
+
+        fn length_fallback(var: &Variable<'_>) -> Option<LengthOrPercentage> {
+            match first_fallback_token(var) {
+                Some(TokenOrValue::Token(CssToken::Dimension { value, unit, .. }))
+                    if unit.as_ref().eq_ignore_ascii_case("px") =>
+                {
+                    Some(LengthOrPercentage::Length(Length::Value(LengthValue::Px(*value))))
+                }
+
+                Some(TokenOrValue::Token(CssToken::Percentage { unit_value, .. })) => {
+                    Some(LengthOrPercentage::Percentage(*unit_value * 100.0))
+                }
+
+                _ => None,
+            }
+        }
+
+        fn font_size_fallback(var: &Variable<'_>) -> Option<FontSize> {
+            match first_fallback_token(var) {
+                Some(TokenOrValue::Token(CssToken::Dimension { value, unit, .. }))
+                    if unit.as_ref().eq_ignore_ascii_case("px") =>
+                {
+                    Some(FontSize(Length::Value(LengthValue::Px(*value))))
+                }
+
+                _ => None,
+            }
+        }
+
+        fn units_fallback(var: &Variable<'_>) -> Option<Units> {
+            match first_fallback_token(var) {
+                Some(TokenOrValue::Token(CssToken::Dimension { value, unit, .. }))
+                    if unit.as_ref().eq_ignore_ascii_case("px") =>
+                {
+                    Some(Units::Pixels(*value))
+                }
+
+                Some(TokenOrValue::Token(CssToken::Dimension { value, unit, .. }))
+                    if unit.as_ref().eq_ignore_ascii_case("s") =>
+                {
+                    Some(Units::Stretch(*value))
+                }
+
+                Some(TokenOrValue::Token(CssToken::Ident(ident)))
+                    if ident.as_ref().eq_ignore_ascii_case("auto") =>
+                {
+                    Some(Units::Auto)
+                }
+
+                Some(TokenOrValue::Token(CssToken::Percentage { unit_value, .. })) => {
+                    Some(Units::Percentage(*unit_value * 100.0))
+                }
+
+                _ => None,
+            }
+        }
+
+        fn opacity_fallback(var: &Variable<'_>) -> Option<Opacity> {
+            match first_fallback_token(var) {
+                Some(TokenOrValue::Token(CssToken::Percentage { unit_value, .. })) => {
+                    Some(Opacity(*unit_value))
+                }
+
+                Some(TokenOrValue::Token(CssToken::Number { value, .. })) => Some(Opacity(*value)),
+
+                _ => None,
+            }
+        }
+
+        fn parse_shadow_list(tokens: &[TokenOrValue<'_>]) -> Option<Vec<Shadow>> {
+            fn parse_shadow_length(token: &TokenOrValue<'_>) -> Option<Length> {
+                match token {
+                    TokenOrValue::Token(CssToken::Dimension { value, unit, .. })
+                        if unit.as_ref().eq_ignore_ascii_case("px") =>
+                    {
+                        Some(Length::Value(LengthValue::Px(*value)))
+                    }
+
+                    TokenOrValue::Token(CssToken::Number { value, .. }) if *value == 0.0 => {
+                        Some(Length::Value(LengthValue::Px(0.0)))
+                    }
+
+                    _ => None,
+                }
+            }
+
+            fn parse_single_shadow(tokens: &[TokenOrValue<'_>]) -> Option<Shadow> {
+                let mut lengths: Vec<Length> = Vec::new();
+                let mut color = None;
+                let mut inset = false;
+
+                for token in tokens {
+                    match token {
+                        TokenOrValue::Token(CssToken::WhiteSpace(_)) => {}
+
+                        TokenOrValue::Color(c) => {
+                            if color.is_some() {
+                                return None;
+                            }
+                            color = Some(*c);
+                        }
+
+                        TokenOrValue::Token(CssToken::Ident(ident))
+                            if ident.as_ref().eq_ignore_ascii_case("inset") =>
+                        {
+                            if inset {
+                                return None;
+                            }
+                            inset = true;
+                        }
+
+                        other => {
+                            if let Some(length) = parse_shadow_length(other) {
+                                lengths.push(length);
+                            } else {
+                                return None;
+                            }
+                        }
+                    }
+                }
+
+                if !(2..=4).contains(&lengths.len()) {
+                    return None;
+                }
+
+                let x_offset = lengths[0].clone();
+                let y_offset = lengths[1].clone();
+                let blur_radius = lengths.get(2).cloned();
+                let spread_radius = lengths.get(3).cloned();
+
+                Some(Shadow::new(x_offset, y_offset, blur_radius, spread_radius, color, inset))
+            }
+
+            let mut parts = Vec::<&[TokenOrValue<'_>]>::new();
+            let mut start = 0usize;
+            for (idx, token) in tokens.iter().enumerate() {
+                if matches!(token, TokenOrValue::Token(CssToken::Comma)) {
+                    parts.push(&tokens[start..idx]);
+                    start = idx + 1;
+                }
+            }
+            parts.push(&tokens[start..]);
+
+            let mut parsed = Vec::new();
+            for part in parts {
+                let shadow = parse_single_shadow(part)?;
+                parsed.push(shadow);
+            }
+
+            Some(parsed)
+        }
+
+        fn shadow_fallback(var: &Variable<'_>) -> Option<Vec<Shadow>> {
+            var.fallback.as_ref().and_then(|TokenList(tokens)| parse_shadow_list(tokens))
+        }
+
         match property.clone() {
             // Display
             Property::Display(display) => {
@@ -1668,15 +1954,6 @@ impl Style {
                 self.pointer_events.insert_rule(rule_id, pointer_events);
             }
 
-            // Unparsed. TODO: Log the error.
-            Property::Unparsed(unparsed) => {
-                warn!("Unparsed: {}", unparsed.name);
-            }
-
-            // TODO: Custom property support
-            Property::Custom(custom) => {
-                warn!("Custom Property: {}", custom.name);
-            }
             Property::TextOverflow(text_overflow) => {
                 self.text_overflow.insert_rule(rule_id, text_overflow);
             }
@@ -1698,6 +1975,408 @@ impl Style {
             }
             Property::Fill(fill) => {
                 self.fill.insert_rule(rule_id, fill);
+            }
+
+            // Unparsed. TODO: Log the error.
+            Property::Unparsed(unparsed) => {
+                macro_rules! parse_color_var {
+                    ($prop:expr) => {
+                        if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
+                            $prop.insert_variable_rule(
+                                rule_id,
+                                variable_hash(var),
+                                color_fallback(var),
+                            );
+                        }
+                    };
+                }
+                macro_rules! parse_length_var {
+                    ($($prop:expr),+) => {
+                        if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
+                            let hash = variable_hash(var);
+                            let fallback = length_fallback(var);
+                            $($prop.insert_variable_rule(rule_id, hash, fallback.clone());)+
+                        }
+                    };
+                }
+                macro_rules! parse_font_size_var {
+                    ($prop:expr) => {
+                        if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
+                            $prop.insert_variable_rule(
+                                rule_id,
+                                variable_hash(var),
+                                font_size_fallback(var),
+                            );
+                        }
+                    };
+                }
+                macro_rules! parse_units_var {
+                    ($($prop:expr),+) => {
+                        if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
+                            let hash = variable_hash(var);
+                            let fallback = units_fallback(var);
+                            $($prop.insert_variable_rule(rule_id, hash, fallback.clone());)+
+                        }
+                    };
+                }
+                match unparsed.name.as_ref() {
+                    "background-color" => parse_color_var!(self.background_color),
+                    "border-color" => parse_color_var!(self.border_color),
+                    "outline-color" => parse_color_var!(self.outline_color),
+                    "color" => parse_color_var!(self.font_color),
+                    "caret-color" => parse_color_var!(self.caret_color),
+                    "selection-color" => parse_color_var!(self.selection_color),
+                    "fill" => parse_color_var!(self.fill),
+                    "underline-color" => parse_color_var!(self.underline_color),
+                    "overline-color" => parse_color_var!(self.overline_color),
+                    "strikethrough-color" => parse_color_var!(self.strikethrough_color),
+                    "font-size" => parse_font_size_var!(self.font_size),
+                    "corner-radius" => parse_length_var!(
+                        self.corner_top_left_radius,
+                        self.corner_top_right_radius,
+                        self.corner_bottom_left_radius,
+                        self.corner_bottom_right_radius
+                    ),
+                    "corner-top-left-radius" => parse_length_var!(self.corner_top_left_radius),
+                    "corner-top-right-radius" => parse_length_var!(self.corner_top_right_radius),
+                    "corner-bottom-left-radius" => {
+                        parse_length_var!(self.corner_bottom_left_radius)
+                    }
+                    "corner-bottom-right-radius" => {
+                        parse_length_var!(self.corner_bottom_right_radius)
+                    }
+                    "border-width" => parse_length_var!(self.border_width),
+                    "border" => {
+                        if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
+                            let hash = variable_hash(var);
+                            self.border_width.insert_variable_rule(
+                                rule_id,
+                                hash,
+                                length_fallback(var),
+                            );
+                            self.border_color.insert_variable_rule(
+                                rule_id,
+                                hash,
+                                color_fallback(var),
+                            );
+                        }
+                    }
+                    "outline" => {
+                        if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
+                            let hash = variable_hash(var);
+                            self.outline_width.insert_variable_rule(
+                                rule_id,
+                                hash,
+                                length_fallback(var),
+                            );
+                            self.outline_color.insert_variable_rule(
+                                rule_id,
+                                hash,
+                                color_fallback(var),
+                            );
+                        }
+                    }
+                    "outline-width" => parse_length_var!(self.outline_width),
+                    "outline-offset" => parse_length_var!(self.outline_offset),
+                    "left" => parse_units_var!(self.left),
+                    "right" => parse_units_var!(self.right),
+                    "top" => parse_units_var!(self.top),
+                    "bottom" => parse_units_var!(self.bottom),
+                    "space" => parse_units_var!(self.left, self.right, self.top, self.bottom),
+                    "width" => parse_units_var!(self.width),
+                    "height" => parse_units_var!(self.height),
+                    "size" => parse_units_var!(self.width, self.height),
+                    "min-width" => parse_units_var!(self.min_width),
+                    "max-width" => parse_units_var!(self.max_width),
+                    "min-height" => parse_units_var!(self.min_height),
+                    "max-height" => parse_units_var!(self.max_height),
+                    "min-size" => parse_units_var!(self.min_width, self.min_height),
+                    "max-size" => parse_units_var!(self.max_width, self.max_height),
+                    "padding-left" => parse_units_var!(self.padding_left),
+                    "padding-right" => parse_units_var!(self.padding_right),
+                    "padding-top" => parse_units_var!(self.padding_top),
+                    "padding-bottom" => parse_units_var!(self.padding_bottom),
+                    "padding" => parse_units_var!(
+                        self.padding_left,
+                        self.padding_right,
+                        self.padding_top,
+                        self.padding_bottom
+                    ),
+                    "row-gap" | "vertical-gap" => parse_units_var!(self.vertical_gap),
+                    "column-gap" | "horizontal-gap" => parse_units_var!(self.horizontal_gap),
+                    "gap" => parse_units_var!(self.vertical_gap, self.horizontal_gap),
+                    "min-gap" => {
+                        parse_units_var!(self.min_horizontal_gap, self.min_vertical_gap)
+                    }
+                    "max-gap" => {
+                        parse_units_var!(self.max_horizontal_gap, self.max_vertical_gap)
+                    }
+                    "opacity" => {
+                        if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
+                            self.opacity.insert_variable_rule(
+                                rule_id,
+                                variable_hash(var),
+                                opacity_fallback(var),
+                            );
+                        }
+                    }
+                    "shadow" => {
+                        if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
+                            self.shadow.insert_variable_rule(
+                                rule_id,
+                                variable_hash(var),
+                                shadow_fallback(var),
+                            );
+                        }
+                    }
+                    n => warn!("Unparsed {} {:?}", n, unparsed.value),
+                }
+            }
+
+            Property::Custom(custom) => {
+                let mut s = DefaultHasher::new();
+                custom.name.hash(&mut s);
+                let variable_name_hash = s.finish();
+
+                if let Some(shadows) = parse_shadow_list(&custom.value.0) {
+                    if let Some(store) = self.custom_shadow_props.get_mut(&variable_name_hash) {
+                        store.insert_rule(rule_id, shadows);
+                    } else {
+                        let mut store = AnimatableVarSet::default();
+                        store.insert_rule(rule_id, shadows);
+                        self.custom_shadow_props.insert(variable_name_hash, store);
+                    }
+                }
+
+                // Parse custom properties and store them
+                for token in custom.value.0.iter() {
+                    // Try parsing colors
+                    if let TokenOrValue::Color(color) = token {
+                        if let Some(store) = self.custom_color_props.get_mut(&variable_name_hash) {
+                            store.insert_rule(rule_id, *color);
+                        } else {
+                            let mut store = AnimatableVarSet::default();
+                            store.insert_rule(rule_id, *color);
+                            self.custom_color_props.insert(variable_name_hash, store);
+                        }
+                    }
+
+                    // Parse length/percentage tokens into custom_length_props
+                    match token {
+                        TokenOrValue::Token(CssToken::Dimension { value, unit, .. }) => {
+                            let lop = if unit.as_ref().eq_ignore_ascii_case("px") {
+                                Some(LengthOrPercentage::Length(Length::Value(LengthValue::Px(
+                                    *value,
+                                ))))
+                            } else {
+                                None
+                            };
+                            if let Some(lop) = lop {
+                                if let Some(store) =
+                                    self.custom_length_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, lop.clone());
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, lop.clone());
+                                    self.custom_length_props.insert(variable_name_hash, store);
+                                }
+                                // Also try storing as FontSize
+                                let fs = FontSize(Length::Value(LengthValue::Px(*value)));
+                                if let Some(store) =
+                                    self.custom_font_size_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, fs);
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, fs);
+                                    self.custom_font_size_props.insert(variable_name_hash, store);
+                                }
+                                // Also store as Units::Pixels
+                                let units_val = Units::Pixels(*value);
+                                if let Some(store) =
+                                    self.custom_units_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, units_val);
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, units_val);
+                                    self.custom_units_props.insert(variable_name_hash, store);
+                                }
+                            } else if unit.as_ref().eq_ignore_ascii_case("s") {
+                                // "1s" => Units::Stretch(1.0)
+                                let units_val = Units::Stretch(*value);
+                                if let Some(store) =
+                                    self.custom_units_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, units_val);
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, units_val);
+                                    self.custom_units_props.insert(variable_name_hash, store);
+                                }
+                            }
+                        }
+                        TokenOrValue::Token(CssToken::Ident(ident))
+                            if ident.as_ref().eq_ignore_ascii_case("auto") =>
+                        {
+                            let units_val = Units::Auto;
+                            if let Some(store) =
+                                self.custom_units_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_rule(rule_id, units_val);
+                            } else {
+                                let mut store = AnimatableVarSet::default();
+                                store.insert_rule(rule_id, units_val);
+                                self.custom_units_props.insert(variable_name_hash, store);
+                            }
+                        }
+                        TokenOrValue::Token(CssToken::Percentage { unit_value, .. }) => {
+                            let lop = LengthOrPercentage::Percentage(*unit_value * 100.0);
+                            if let Some(store) =
+                                self.custom_length_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_rule(rule_id, lop);
+                            } else {
+                                let mut store = AnimatableVarSet::default();
+                                store.insert_rule(rule_id, lop);
+                                self.custom_length_props.insert(variable_name_hash, store);
+                            }
+                            // Also store as Units::Percentage
+                            let units_val = Units::Percentage(*unit_value * 100.0);
+                            if let Some(store) =
+                                self.custom_units_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_rule(rule_id, units_val);
+                            } else {
+                                let mut store = AnimatableVarSet::default();
+                                store.insert_rule(rule_id, units_val);
+                                self.custom_units_props.insert(variable_name_hash, store);
+                            }
+                            // Also store as Opacity (percentage as 0..1)
+                            let opacity_val = Opacity(*unit_value);
+                            if let Some(store) =
+                                self.custom_opacity_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_rule(rule_id, opacity_val);
+                            } else {
+                                let mut store = AnimatableVarSet::default();
+                                store.insert_rule(rule_id, opacity_val);
+                                self.custom_opacity_props.insert(variable_name_hash, store);
+                            }
+                        }
+                        TokenOrValue::Var(var) => {
+                            let name_hash = variable_hash(var);
+                            // Store var reference in all maps (type is unknown at parse time)
+                            if let Some(store) =
+                                self.custom_color_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_variable_rule(rule_id, name_hash, color_fallback(var));
+                            } else {
+                                let mut store = AnimatableVarSet::default();
+                                store.insert_variable_rule(rule_id, name_hash, color_fallback(var));
+                                self.custom_color_props.insert(variable_name_hash, store);
+                            }
+                            if let Some(store) =
+                                self.custom_length_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    length_fallback(var),
+                                );
+                            } else {
+                                let mut store: AnimatableVarSet<LengthOrPercentage> =
+                                    AnimatableVarSet::default();
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    length_fallback(var),
+                                );
+                                self.custom_length_props.insert(variable_name_hash, store);
+                            }
+                            if let Some(store) =
+                                self.custom_font_size_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    font_size_fallback(var),
+                                );
+                            } else {
+                                let mut store: AnimatableVarSet<FontSize> =
+                                    AnimatableVarSet::default();
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    font_size_fallback(var),
+                                );
+                                self.custom_font_size_props.insert(variable_name_hash, store);
+                            }
+                            if let Some(store) =
+                                self.custom_units_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_variable_rule(rule_id, name_hash, units_fallback(var));
+                            } else {
+                                let mut store: AnimatableVarSet<Units> =
+                                    AnimatableVarSet::default();
+                                store.insert_variable_rule(rule_id, name_hash, units_fallback(var));
+                                self.custom_units_props.insert(variable_name_hash, store);
+                            }
+                            if let Some(store) =
+                                self.custom_opacity_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    opacity_fallback(var),
+                                );
+                            } else {
+                                let mut store: AnimatableVarSet<Opacity> =
+                                    AnimatableVarSet::default();
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    opacity_fallback(var),
+                                );
+                                self.custom_opacity_props.insert(variable_name_hash, store);
+                            }
+
+                            if let Some(store) =
+                                self.custom_shadow_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    shadow_fallback(var),
+                                );
+                            } else {
+                                let mut store: AnimatableVarSet<Vec<Shadow>> =
+                                    AnimatableVarSet::default();
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    shadow_fallback(var),
+                                );
+                                self.custom_shadow_props.insert(variable_name_hash, store);
+                            }
+                        }
+                        TokenOrValue::Token(CssToken::Number { value, .. }) => {
+                            // Plain number like 0.5 → Opacity
+                            let opacity_val = Opacity(*value);
+                            if let Some(store) =
+                                self.custom_opacity_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_rule(rule_id, opacity_val);
+                            } else {
+                                let mut store = AnimatableVarSet::default();
+                                store.insert_rule(rule_id, opacity_val);
+                                self.custom_opacity_props.insert(variable_name_hash, store);
+                            }
+                        }
+                        _ => {}
+                    }
+                }
             }
             _ => {}
         }
@@ -1896,6 +2575,23 @@ impl Style {
         self.text_span.remove(entity);
 
         self.fill.remove(entity);
+
+        // Remove per-entity data from custom property stores
+        for store in self.custom_color_props.values_mut() {
+            store.remove(entity);
+        }
+        for store in self.custom_length_props.values_mut() {
+            store.remove(entity);
+        }
+        for store in self.custom_font_size_props.values_mut() {
+            store.remove(entity);
+        }
+        for store in self.custom_units_props.values_mut() {
+            store.remove(entity);
+        }
+        for store in self.custom_opacity_props.values_mut() {
+            store.remove(entity);
+        }
     }
 
     pub(crate) fn needs_restyle(&mut self, entity: Entity) {
@@ -2069,5 +2765,32 @@ impl Style {
         self.name.clear_rules();
 
         self.fill.clear_rules();
+
+        // Clear all custom property rule data on stylesheet reload
+        for store in self.custom_color_props.values_mut() {
+            store.clear_rules();
+        }
+        self.custom_color_props
+            .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
+        for store in self.custom_length_props.values_mut() {
+            store.clear_rules();
+        }
+        self.custom_length_props
+            .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
+        for store in self.custom_font_size_props.values_mut() {
+            store.clear_rules();
+        }
+        self.custom_font_size_props
+            .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
+        for store in self.custom_units_props.values_mut() {
+            store.clear_rules();
+        }
+        self.custom_units_props
+            .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
+        for store in self.custom_opacity_props.values_mut() {
+            store.clear_rules();
+        }
+        self.custom_opacity_props
+            .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
     }
 }

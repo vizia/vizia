@@ -75,12 +75,165 @@ impl From<RGBA> for Color {
     }
 }
 
+/// Convert an sRGB float (0..1, already gamma-encoded) to u8.
+#[inline]
+fn srgb_to_u8(c: f32) -> u8 {
+    (c.clamp(0.0, 1.0) * 255.0).round() as u8
+}
+
+/// Apply sRGB gamma encoding to a linear light value, then convert to u8.
+#[inline]
+fn linear_to_u8(c: f32) -> u8 {
+    let encoded = if c <= 0.0031308 { c * 12.92 } else { 1.055 * c.powf(1.0 / 2.4) - 0.055 };
+    srgb_to_u8(encoded)
+}
+
+/// Convert OKLab (L, a, b) to linear sRGB (r, g, b).
+/// <https://bottosson.github.io/posts/oklab/>
+#[inline]
+fn oklab_to_linear_srgb(l: f32, a: f32, b: f32) -> (f32, f32, f32) {
+    let l_ = l + 0.396_337_78 * a + 0.215_803_76 * b;
+    let m_ = l - 0.105_561_35 * a - 0.063_854_17 * b;
+    let s_ = l - 0.089_484_18 * a - 1.291_485_5 * b;
+
+    let l3 = l_ * l_ * l_;
+    let m3 = m_ * m_ * m_;
+    let s3 = s_ * s_ * s_;
+
+    let r = 4.076_741_7 * l3 - 3.307_711_6 * m3 + 0.230_969_94 * s3;
+    let g = -1.268_438 * l3 + 2.609_757_4 * m3 - 0.341_319_38 * s3;
+    let b_out = -0.004_196_09 * l3 - 0.703_418_6 * m3 + 1.707_614_7 * s3;
+    (r, g, b_out)
+}
+
+/// Convert CIE Lab (L, a, b) to linear sRGB via XYZ D50 → XYZ D65 → linear sRGB.
+#[inline]
+fn lab_to_linear_srgb(l: f32, a: f32, b: f32) -> (f32, f32, f32) {
+    // Lab → XYZ D50
+    let fy = (l + 16.0) / 116.0;
+    let fx = a / 500.0 + fy;
+    let fz = fy - b / 200.0;
+    const KAPPA: f32 = 24389.0 / 27.0;
+    const EPSILON: f32 = 216.0 / 24389.0;
+    let x = if fx * fx * fx > EPSILON { fx * fx * fx } else { (116.0 * fx - 16.0) / KAPPA };
+    let y = if l > KAPPA * EPSILON { ((l + 16.0) / 116.0).powi(3) } else { l / KAPPA };
+    let z = if fz * fz * fz > EPSILON { fz * fz * fz } else { (116.0 * fz - 16.0) / KAPPA };
+
+    // D50 white point
+    let x = x * 0.964_2;
+    let z = z * 0.825_1;
+
+    // XYZ D50 → XYZ D65 (Bradford chromatic adaptation)
+    let xd = 0.955_577 * x - 0.023_039 * y + 0.063_164 * z;
+    let yd = -0.028_290 * x + 1.009_942 * y + 0.021_008 * z;
+    let zd = 0.012_298 * x - 0.020_483 * y + 1.329_91 * z;
+
+    // XYZ D65 → linear sRGB
+    let r = 3.240_454 * xd - 1.537_138 * yd - 0.498_531 * zd;
+    let g = -0.969_266 * xd + 1.876_011 * yd + 0.041_556 * zd;
+    let b_out = 0.055_643 * xd - 0.204_026 * yd + 1.057_225 * zd;
+    (r, g, b_out)
+}
+
 impl From<cssparser_color::Color> for Color {
     fn from(color: cssparser_color::Color) -> Self {
+        use std::f32::consts::PI;
+
         match color {
             cssparser_color::Color::CurrentColor => Color::CurrentColor,
             cssparser_color::Color::Rgba(rgba) => Color::RGBA(rgba.into()),
-            _ => Color::CurrentColor,
+            cssparser_color::Color::Hsl(hsl) => {
+                let (r, g, b) = cssparser_color::hsl_to_rgb(
+                    hsl.hue.unwrap_or(0.0) / 360.0,
+                    hsl.saturation.unwrap_or(0.0),
+                    hsl.lightness.unwrap_or(0.0),
+                );
+                let alpha = srgb_to_u8(hsl.alpha.unwrap_or(1.0));
+                Color::RGBA(RGBA::rgba(srgb_to_u8(r), srgb_to_u8(g), srgb_to_u8(b), alpha))
+            }
+            cssparser_color::Color::Hwb(hwb) => {
+                let (r, g, b) = cssparser_color::hwb_to_rgb(
+                    hwb.hue.unwrap_or(0.0) / 360.0,
+                    hwb.whiteness.unwrap_or(0.0),
+                    hwb.blackness.unwrap_or(0.0),
+                );
+                let alpha = srgb_to_u8(hwb.alpha.unwrap_or(1.0));
+                Color::RGBA(RGBA::rgba(srgb_to_u8(r), srgb_to_u8(g), srgb_to_u8(b), alpha))
+            }
+            cssparser_color::Color::Oklab(oklab) => {
+                let l = oklab.lightness.unwrap_or(0.0);
+                let a = oklab.a.unwrap_or(0.0);
+                let b = oklab.b.unwrap_or(0.0);
+                let alpha = srgb_to_u8(oklab.alpha.unwrap_or(1.0));
+                let (r, g, b_out) = oklab_to_linear_srgb(l, a, b);
+                Color::RGBA(RGBA::rgba(
+                    linear_to_u8(r),
+                    linear_to_u8(g),
+                    linear_to_u8(b_out),
+                    alpha,
+                ))
+            }
+            cssparser_color::Color::Oklch(oklch) => {
+                let l = oklch.lightness.unwrap_or(0.0);
+                let c = oklch.chroma.unwrap_or(0.0);
+                let h = oklch.hue.unwrap_or(0.0) * PI / 180.0;
+                let alpha = srgb_to_u8(oklch.alpha.unwrap_or(1.0));
+                let (r, g, b_out) = oklab_to_linear_srgb(l, c * h.cos(), c * h.sin());
+                Color::RGBA(RGBA::rgba(
+                    linear_to_u8(r),
+                    linear_to_u8(g),
+                    linear_to_u8(b_out),
+                    alpha,
+                ))
+            }
+            cssparser_color::Color::Lab(lab) => {
+                let l = lab.lightness.unwrap_or(0.0);
+                let a = lab.a.unwrap_or(0.0);
+                let b = lab.b.unwrap_or(0.0);
+                let alpha = srgb_to_u8(lab.alpha.unwrap_or(1.0));
+                let (r, g, b_out) = lab_to_linear_srgb(l, a, b);
+                Color::RGBA(RGBA::rgba(
+                    linear_to_u8(r),
+                    linear_to_u8(g),
+                    linear_to_u8(b_out),
+                    alpha,
+                ))
+            }
+            cssparser_color::Color::Lch(lch) => {
+                let l = lch.lightness.unwrap_or(0.0);
+                let c = lch.chroma.unwrap_or(0.0);
+                let h = lch.hue.unwrap_or(0.0) * PI / 180.0;
+                let alpha = srgb_to_u8(lch.alpha.unwrap_or(1.0));
+                let (r, g, b_out) = lab_to_linear_srgb(l, c * h.cos(), c * h.sin());
+                Color::RGBA(RGBA::rgba(
+                    linear_to_u8(r),
+                    linear_to_u8(g),
+                    linear_to_u8(b_out),
+                    alpha,
+                ))
+            }
+            cssparser_color::Color::ColorFunction(f) => {
+                let c1 = f.c1.unwrap_or(0.0);
+                let c2 = f.c2.unwrap_or(0.0);
+                let c3 = f.c3.unwrap_or(0.0);
+                let alpha = srgb_to_u8(f.alpha.unwrap_or(1.0));
+                match f.color_space {
+                    cssparser::color::PredefinedColorSpace::Srgb => Color::RGBA(RGBA::rgba(
+                        srgb_to_u8(c1),
+                        srgb_to_u8(c2),
+                        srgb_to_u8(c3),
+                        alpha,
+                    )),
+                    cssparser::color::PredefinedColorSpace::SrgbLinear => Color::RGBA(RGBA::rgba(
+                        linear_to_u8(c1),
+                        linear_to_u8(c2),
+                        linear_to_u8(c3),
+                        alpha,
+                    )),
+
+                    _ => Color::CurrentColor,
+                }
+            }
         }
     }
 }

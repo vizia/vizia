@@ -447,12 +447,26 @@ where
         let bounds = cx.bounds();
 
         if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-            let padding_left = cx.style.padding_left.get(cx.current).copied().unwrap_or_default();
-            let padding_top = cx.style.padding_top.get(cx.current).copied().unwrap_or_default();
-            let _padding_right =
-                cx.style.padding_right.get(cx.current).copied().unwrap_or_default();
-            let padding_bottom =
-                cx.style.padding_bottom.get(cx.current).copied().unwrap_or_default();
+            let padding_left = cx
+                .style
+                .padding_left
+                .get_resolved(cx.current, &cx.style.custom_units_props)
+                .unwrap_or_default();
+            let padding_top = cx
+                .style
+                .padding_top
+                .get_resolved(cx.current, &cx.style.custom_units_props)
+                .unwrap_or_default();
+            let _padding_right = cx
+                .style
+                .padding_right
+                .get_resolved(cx.current, &cx.style.custom_units_props)
+                .unwrap_or_default();
+            let padding_bottom = cx
+                .style
+                .padding_bottom
+                .get_resolved(cx.current, &cx.style.custom_units_props)
+                .unwrap_or_default();
 
             let logical_parent_width = cx.physical_to_logical(bounds.w);
             let logical_parent_height = cx.physical_to_logical(bounds.h);

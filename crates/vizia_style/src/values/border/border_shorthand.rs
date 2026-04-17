@@ -27,46 +27,41 @@ impl Border {
 impl<'i> Parse<'i> for Border {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         let location = input.current_source_location();
-        // let width = input.try_parse(LengthOrPercentage::parse).ok();
-        // let style = input.try_parse(BorderStyle::parse).ok();
-        // let color = input.try_parse(Color::parse).ok();
-
-        // if (width.is_some() || style.is_some() || color.is_some()) && input.is_exhausted() {
-        //     Ok(Border::new(width, style, color))
-        // } else {
-        //     return Err(cssparser::ParseError {
-        //         kind: cssparser::ParseErrorKind::Custom(CustomParseError::InvalidDeclaration),
-        //         location,
-        //     });
-        // }
         let mut width = None;
         let mut style = None;
         let mut color = None;
         let mut any = false;
         loop {
+            let mut consumed = false;
+
             if width.is_none() {
                 if let Ok(value) = input.try_parse(|i| BorderWidthValue::parse(i)) {
                     width = Some(value);
                     any = true;
+                    consumed = true;
                 }
             }
             if style.is_none() {
                 if let Ok(value) = input.try_parse(BorderStyle::parse) {
                     style = Some(value);
                     any = true;
-                    continue;
+                    consumed = true;
                 }
             }
             if color.is_none() {
                 if let Ok(value) = input.try_parse(|i| Color::parse(i)) {
                     color = Some(value);
                     any = true;
-                    continue;
+                    consumed = true;
                 }
             }
-            break;
+
+            if !consumed {
+                break;
+            }
         }
-        if any {
+
+        if any && input.is_exhausted() {
             Ok(Border { width, style, color })
         } else {
             Err(cssparser::ParseError {

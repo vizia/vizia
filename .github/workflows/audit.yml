@@ -25,4 +25,5 @@ jobs:
       - run: rustup update
       - run: cargo audit --version
       # RUSTSEC-2025-0057: fxhash is unmaintained
-      - run: cargo audit --deny warnings --ignore RUSTSEC-2025-0057
+      # RUSTSEC-2026-0097: Rand is unsound with a custom logger using `rand::rng()`
+      - run: cargo audit --deny warnings --ignore RUSTSEC-2025-0057 --ignore RUSTSEC-2026-0097

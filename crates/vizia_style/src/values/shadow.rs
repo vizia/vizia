@@ -41,6 +41,7 @@ impl Shadow {
 
 impl<'i> Parse<'i> for Shadow {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+        let location = input.current_source_location();
         let x_offset = Length::parse(input)?;
         let y_offset = Length::parse(input)?;
         let blur_radius = input.try_parse(Length::parse).ok();
@@ -48,7 +49,14 @@ impl<'i> Parse<'i> for Shadow {
         let color = input.try_parse(Color::parse).ok();
         let inset = input.try_parse(InsetKeyword::parse).map(|_| true).unwrap_or(false);
 
-        Ok(Shadow::new(x_offset, y_offset, blur_radius, spread_radius, color, inset))
+        if input.is_exhausted() {
+            Ok(Shadow::new(x_offset, y_offset, blur_radius, spread_radius, color, inset))
+        } else {
+            Err(cssparser::ParseError {
+                kind: cssparser::ParseErrorKind::Custom(CustomParseError::InvalidDeclaration),
+                location,
+            })
+        }
     }
 }
 

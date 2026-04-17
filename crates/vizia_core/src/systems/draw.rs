@@ -308,7 +308,7 @@ pub(crate) fn draw_bounds(
 ) -> BoundingBox {
     let mut layout_bounds = cache.bounds.get(entity).copied().unwrap();
 
-    if let Some(shadows) = style.shadow.get(entity) {
+    if let Some(shadows) = style.shadow.get_resolved(entity, &style.custom_shadow_props) {
         let original_bounds = layout_bounds;
 
         for shadow in shadows.iter().filter(|shadow| !shadow.inset) {
@@ -335,12 +335,16 @@ pub(crate) fn draw_bounds(
 
     let mut outline_bounds = layout_bounds;
 
-    if let Some(outline_width) = style.outline_width.get(entity) {
+    if let Some(outline_width) =
+        style.outline_width.get_resolved(entity, &style.custom_length_props)
+    {
         outline_bounds = outline_bounds
             .expand(outline_width.to_pixels(layout_bounds.diagonal(), style.scale_factor()));
     }
 
-    if let Some(outline_offset) = style.outline_offset.get(entity) {
+    if let Some(outline_offset) =
+        style.outline_offset.get_resolved(entity, &style.custom_length_props)
+    {
         outline_bounds = outline_bounds
             .expand(outline_offset.to_pixels(layout_bounds.diagonal(), style.scale_factor()));
     }
