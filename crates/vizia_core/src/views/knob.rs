@@ -179,26 +179,30 @@ impl<T: Res<f32> + 'static> View for Knob<T> {
                 cx.release();
             }
 
-            WindowEvent::MouseMove(_, y) if self.is_dragging && !cx.is_disabled() => {
-                let mut delta_normal = (*y - self.prev_drag_y) * self.drag_scalar;
+            WindowEvent::MouseMove(_, y) => {
+                if self.is_dragging && !cx.is_disabled() {
+                    let mut delta_normal = (*y - self.prev_drag_y) * self.drag_scalar;
 
-                self.prev_drag_y = *y;
+                    self.prev_drag_y = *y;
 
-                if cx.modifiers.shift() {
-                    delta_normal *= self.modifier_scalar;
+                    if cx.modifiers.shift() {
+                        delta_normal *= self.modifier_scalar;
+                    }
+
+                    let new_normal = self.continuous_normal - delta_normal;
+
+                    move_virtual_slider(self, cx, new_normal);
                 }
-
-                let new_normal = self.continuous_normal - delta_normal;
-
-                move_virtual_slider(self, cx, new_normal);
             }
 
-            WindowEvent::MouseScroll(_, y) if *y != 0.0 => {
-                let delta_normal = -*y * self.wheel_scalar;
+            WindowEvent::MouseScroll(_, y) => {
+                if *y != 0.0 {
+                    let delta_normal = -*y * self.wheel_scalar;
 
-                let new_normal = self.continuous_normal - delta_normal;
+                    let new_normal = self.continuous_normal - delta_normal;
 
-                move_virtual_slider(self, cx, new_normal);
+                    move_virtual_slider(self, cx, new_normal);
+                }
             }
 
             WindowEvent::MouseDoubleClick(button) if *button == MouseButton::Left => {

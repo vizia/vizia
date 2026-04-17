@@ -75,19 +75,19 @@ impl Tooltip {
             .on_build(|ex| {
                 ex.add_listener(move |tooltip: &mut Tooltip, ex, event| {
                     event.map(|window_event, _| match window_event {
-                        WindowEvent::MouseMove(x, y)
-                            if tooltip.placement == Placement::Cursor
-                                && !x.is_nan()
-                                && !y.is_nan() =>
-                        {
-                            let scale = ex.scale_factor();
-                            let parent = ex.parent();
-                            let parent_bounds = ex.cache.get_bounds(parent);
-                            if parent_bounds.contains_point(*x, *y) {
-                                ex.set_left(Pixels(
-                                    ((*x - parent_bounds.x) - ex.bounds().width() / 2.0) / scale,
-                                ));
-                                ex.set_top(Pixels((*y - parent_bounds.y) / scale));
+                        WindowEvent::MouseMove(x, y) => {
+                            if tooltip.placement == Placement::Cursor && !x.is_nan() && !y.is_nan()
+                            {
+                                let scale = ex.scale_factor();
+                                let parent = ex.parent();
+                                let parent_bounds = ex.cache.get_bounds(parent);
+                                if parent_bounds.contains_point(*x, *y) {
+                                    ex.set_left(Pixels(
+                                        ((*x - parent_bounds.x) - ex.bounds().width() / 2.0)
+                                            / scale,
+                                    ));
+                                    ex.set_top(Pixels((*y - parent_bounds.y) / scale));
+                                }
                             }
                         }
 

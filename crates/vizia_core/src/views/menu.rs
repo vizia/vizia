@@ -17,13 +17,13 @@ impl MenuBar {
                     let flag = menu_bar.is_open.get();
                     event.map(
                         |window_event, meta: &mut crate::events::EventMeta| match window_event {
-                            WindowEvent::MouseDown(_)
-                                if flag
-                                    && meta.origin != cx.current()
+                            WindowEvent::MouseDown(_) => {
+                                if flag && meta.origin != cx.current() {
                                     // Check if the mouse was pressed outside of any descendants
-                                    && !cx.hovered.is_descendant_of(cx.tree, cx.current) =>
-                            {
-                                cx.emit(MenuEvent::CloseAll);
+                                    if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
+                                        cx.emit(MenuEvent::CloseAll);
+                                    }
+                                }
                             }
 
                             _ => {}
@@ -98,16 +98,16 @@ impl Submenu {
                     let flag = menu_button.is_open.get();
                     event.map(
                         |window_event, meta: &mut crate::events::EventMeta| match window_event {
-                            WindowEvent::MouseDown(_)
-                                if flag
-                                    && meta.origin != cx.current()
+                            WindowEvent::MouseDown(_) => {
+                                if flag && meta.origin != cx.current() {
                                     // Check if the mouse was pressed outside of any descendants
-                                    && !cx.hovered.is_descendant_of(cx.tree, cx.current) =>
-                            {
-                                cx.emit(MenuEvent::CloseAll);
-                                cx.emit(MenuEvent::Close);
-                                // TODO: This might be needed
-                                // meta.consume();
+                                    if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
+                                        cx.emit(MenuEvent::CloseAll);
+                                        cx.emit(MenuEvent::Close);
+                                        // TODO: This might be needed
+                                        // meta.consume();
+                                    }
+                                }
                             }
 
                             _ => {}
@@ -163,30 +163,40 @@ impl View for Submenu {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
-            WindowEvent::MouseEnter if meta.target == cx.current && self.open_on_hover => {
-                // if self.open_on_hover {
-                //     cx.focus();
-                // }
-                // Close any open submenus of the parent
-                let parent = cx.tree.get_parent(cx.current).unwrap();
-                cx.emit_custom(
-                    Event::new(MenuEvent::Close).target(parent).propagate(Propagation::Subtree),
-                );
-                // Open this submenu
-                cx.emit(MenuEvent::Open);
+            WindowEvent::MouseEnter => {
+                if meta.target == cx.current {
+                    // if self.open_on_hover {
+                    //     cx.focus();
+                    // }
+                    if self.open_on_hover {
+                        // Close any open submenus of the parent
+                        let parent = cx.tree.get_parent(cx.current).unwrap();
+                        cx.emit_custom(
+                            Event::new(MenuEvent::Close)
+                                .target(parent)
+                                .propagate(Propagation::Subtree),
+                        );
+                        // Open this submenu
+                        cx.emit(MenuEvent::Open);
+                    }
+                }
             }
 
             WindowEvent::KeyDown(code, _) => match code {
-                Code::ArrowLeft if self.is_open.get() => {
+                Code::ArrowLeft => {
                     // if cx.is_focused() {
-                    self.is_open.set(false);
-                    cx.focus();
-                    meta.consume();
+                    if self.is_open.get() {
+                        self.is_open.set(false);
+                        cx.focus();
+                        meta.consume();
+                    }
                     // }
                 }
 
-                Code::ArrowRight if !self.is_open.get() => {
-                    self.is_open.set(true);
+                Code::ArrowRight => {
+                    if !self.is_open.get() {
+                        self.is_open.set(true);
+                    }
                 }
 
                 _ => {}
@@ -260,11 +270,13 @@ impl View for MenuButton {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
-            WindowEvent::MouseEnter if meta.target == cx.current => {
-                let parent = cx.tree.get_parent(cx.current).unwrap();
-                cx.emit_custom(
-                    Event::new(MenuEvent::Close).target(parent).propagate(Propagation::Subtree),
-                );
+            WindowEvent::MouseEnter => {
+                if meta.target == cx.current {
+                    let parent = cx.tree.get_parent(cx.current).unwrap();
+                    cx.emit_custom(
+                        Event::new(MenuEvent::Close).target(parent).propagate(Propagation::Subtree),
+                    );
+                }
             }
 
             _ => {}

@@ -186,51 +186,54 @@ where
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _| match window_event {
-            WindowEvent::MouseDown(button) if *button == MouseButton::Left && !cx.is_disabled() => {
-                self.is_dragging = true;
-                cx.capture();
-                cx.focus_with_visibility(false);
-                cx.with_current(Entity::root(), |cx| {
-                    cx.set_pointer_events(false);
-                });
+            WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
+                if !cx.is_disabled() {
+                    self.is_dragging = true;
+                    cx.capture();
+                    cx.focus_with_visibility(false);
+                    cx.with_current(Entity::root(), |cx| {
+                        cx.set_pointer_events(false);
+                    });
 
-                let thumb = cx.get_entities_by_class("thumb").first().copied().unwrap();
-                let thumb_size = match self.orientation.get() {
-                    Orientation::Horizontal => cx.cache.get_width(thumb),
-                    Orientation::Vertical => cx.cache.get_height(thumb),
-                };
-                let min = self.range.get().start;
-                let max = self.range.get().end;
-                let step = self.step.get();
+                    let thumb = cx.get_entities_by_class("thumb").first().copied().unwrap();
+                    let thumb_size = match self.orientation.get() {
+                        Orientation::Horizontal => cx.cache.get_width(thumb),
+                        Orientation::Vertical => cx.cache.get_height(thumb),
+                    };
+                    let min = self.range.get().start;
+                    let max = self.range.get().end;
+                    let step = self.step.get();
 
-                let current = cx.current();
-                let width = cx.cache.get_width(current);
-                let height = cx.cache.get_height(current);
-                let posx = cx.cache.get_posx(current);
-                let posy = cx.cache.get_posy(current);
+                    let current = cx.current();
+                    let width = cx.cache.get_width(current);
+                    let height = cx.cache.get_height(current);
+                    let posx = cx.cache.get_posx(current);
+                    let posy = cx.cache.get_posy(current);
 
-                let mut dx = match self.orientation.get() {
-                    Orientation::Horizontal => {
-                        (cx.mouse.left.pos_down.0 - posx - thumb_size / 2.0) / (width - thumb_size)
+                    let mut dx = match self.orientation.get() {
+                        Orientation::Horizontal => {
+                            (cx.mouse.left.pos_down.0 - posx - thumb_size / 2.0)
+                                / (width - thumb_size)
+                        }
+
+                        Orientation::Vertical => {
+                            (height - (cx.mouse.left.pos_down.1 - posy) - thumb_size / 2.0)
+                                / (height - thumb_size)
+                        }
+                    };
+
+                    dx = dx.clamp(0.0, 1.0);
+
+                    let mut val = min + dx * (max - min);
+
+                    val = step * (val / step).ceil();
+                    val = val.clamp(min, max);
+
+                    if let Some(callback) = self.on_change.take() {
+                        (callback)(cx, val);
+
+                        self.on_change = Some(callback);
                     }
-
-                    Orientation::Vertical => {
-                        (height - (cx.mouse.left.pos_down.1 - posy) - thumb_size / 2.0)
-                            / (height - thumb_size)
-                    }
-                };
-
-                dx = dx.clamp(0.0, 1.0);
-
-                let mut val = min + dx * (max - min);
-
-                val = step * (val / step).ceil();
-                val = val.clamp(min, max);
-
-                if let Some(callback) = self.on_change.take() {
-                    (callback)(cx, val);
-
-                    self.on_change = Some(callback);
                 }
             }
 
@@ -243,42 +246,44 @@ where
                 });
             }
 
-            WindowEvent::MouseMove(x, y) if self.is_dragging => {
-                let thumb = cx.get_entities_by_class("thumb").first().copied().unwrap();
-                let thumb_size = match self.orientation.get() {
-                    Orientation::Horizontal => cx.cache.get_width(thumb),
-                    Orientation::Vertical => cx.cache.get_height(thumb),
-                };
+            WindowEvent::MouseMove(x, y) => {
+                if self.is_dragging {
+                    let thumb = cx.get_entities_by_class("thumb").first().copied().unwrap();
+                    let thumb_size = match self.orientation.get() {
+                        Orientation::Horizontal => cx.cache.get_width(thumb),
+                        Orientation::Vertical => cx.cache.get_height(thumb),
+                    };
 
-                let min = self.range.get().start;
-                let max = self.range.get().end;
-                let step = self.step.get();
+                    let min = self.range.get().start;
+                    let max = self.range.get().end;
+                    let step = self.step.get();
 
-                let current = cx.current();
-                let width = cx.cache.get_width(current);
-                let height = cx.cache.get_height(current);
-                let posx = cx.cache.get_posx(current);
-                let posy = cx.cache.get_posy(current);
+                    let current = cx.current();
+                    let width = cx.cache.get_width(current);
+                    let height = cx.cache.get_height(current);
+                    let posx = cx.cache.get_posx(current);
+                    let posy = cx.cache.get_posy(current);
 
-                let mut dx = match self.orientation.get() {
-                    Orientation::Horizontal => {
-                        (*x - posx - thumb_size / 2.0) / (width - thumb_size)
+                    let mut dx = match self.orientation.get() {
+                        Orientation::Horizontal => {
+                            (*x - posx - thumb_size / 2.0) / (width - thumb_size)
+                        }
+
+                        Orientation::Vertical => {
+                            (height - (*y - posy) - thumb_size / 2.0) / (height - thumb_size)
+                        }
+                    };
+
+                    dx = dx.clamp(0.0, 1.0);
+
+                    let mut val = min + dx * (max - min);
+
+                    val = step * (val / step).ceil();
+                    val = val.clamp(min, max);
+
+                    if let Some(callback) = &self.on_change {
+                        (callback)(cx, val);
                     }
-
-                    Orientation::Vertical => {
-                        (height - (*y - posy) - thumb_size / 2.0) / (height - thumb_size)
-                    }
-                };
-
-                dx = dx.clamp(0.0, 1.0);
-
-                let mut val = min + dx * (max - min);
-
-                val = step * (val / step).ceil();
-                val = val.clamp(min, max);
-
-                if let Some(callback) = &self.on_change {
-                    (callback)(cx, val);
                 }
             }
 

@@ -457,17 +457,20 @@ impl Handle<'_, Popup> {
         self.cx.with_current(self.entity, |cx| {
             cx.add_listener(move |_: &mut Popup, cx, event| {
                 event.map(|window_event, meta| match window_event {
-                    WindowEvent::MouseDown(_)
-                        if meta.origin != cx.current()
+                    WindowEvent::MouseDown(_) => {
+                        if meta.origin != cx.current() {
                             // Check if the mouse was pressed outside of any descendants
-                            && !cx.hovered.is_descendant_of(cx.tree, cx.current) =>
-                    {
-                        (focus_event)(cx);
-                        meta.consume();
+                            if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
+                                (focus_event)(cx);
+                                meta.consume();
+                            }
+                        }
                     }
 
-                    WindowEvent::KeyDown(code, _) if *code == Code::Escape => {
-                        (focus_event)(cx);
+                    WindowEvent::KeyDown(code, _) => {
+                        if *code == Code::Escape {
+                            (focus_event)(cx);
+                        }
                     }
 
                     _ => {}

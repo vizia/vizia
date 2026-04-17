@@ -204,30 +204,34 @@ impl View for Scrollbar {
                     });
                 }
 
-                WindowEvent::MouseMove(_, _) if self.dragging => {
-                    if let Some((mouse_ref, value_ref)) = self.reference_points {
-                        let physical_delta = pos - mouse_ref;
-                        let changed = self.compute_new_value(cx, physical_delta, value_ref);
-                        self.change(cx, changed);
-                    } else if self.scroll_to_cursor {
-                        let thumb_bounds = self.thumb_bounds(cx);
-                        let bounds = cx.bounds();
-                        let sx = bounds.w - thumb_bounds.w;
-                        let sy = bounds.h - thumb_bounds.h;
-                        match self.orientation {
-                            Orientation::Horizontal => {
-                                let px = cx.mouse.cursor_x - cx.bounds().x - thumb_bounds.w / 2.0;
-                                let x = (px / sx).clamp(0.0, 1.0);
-                                if let Some(callback) = &self.on_changing {
-                                    (callback)(cx, x);
+                WindowEvent::MouseMove(_, _) => {
+                    if self.dragging {
+                        if let Some((mouse_ref, value_ref)) = self.reference_points {
+                            let physical_delta = pos - mouse_ref;
+                            let changed = self.compute_new_value(cx, physical_delta, value_ref);
+                            self.change(cx, changed);
+                        } else if self.scroll_to_cursor {
+                            let thumb_bounds = self.thumb_bounds(cx);
+                            let bounds = cx.bounds();
+                            let sx = bounds.w - thumb_bounds.w;
+                            let sy = bounds.h - thumb_bounds.h;
+                            match self.orientation {
+                                Orientation::Horizontal => {
+                                    let px =
+                                        cx.mouse.cursor_x - cx.bounds().x - thumb_bounds.w / 2.0;
+                                    let x = (px / sx).clamp(0.0, 1.0);
+                                    if let Some(callback) = &self.on_changing {
+                                        (callback)(cx, x);
+                                    }
                                 }
-                            }
 
-                            Orientation::Vertical => {
-                                let py = cx.mouse.cursor_y - cx.bounds().y - thumb_bounds.h / 2.0;
-                                let y = (py / sy).clamp(0.0, 1.0);
-                                if let Some(callback) = &self.on_changing {
-                                    (callback)(cx, y);
+                                Orientation::Vertical => {
+                                    let py =
+                                        cx.mouse.cursor_y - cx.bounds().y - thumb_bounds.h / 2.0;
+                                    let y = (py / sy).clamp(0.0, 1.0);
+                                    if let Some(callback) = &self.on_changing {
+                                        (callback)(cx, y);
+                                    }
                                 }
                             }
                         }
