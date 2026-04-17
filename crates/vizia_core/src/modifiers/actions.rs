@@ -39,16 +39,12 @@ impl Model for ModalModel {
         });
 
         event.map(|window_event, _| match window_event {
-            WindowEvent::MouseOver => {
-                if !self.tooltip_visible.get().0 {
-                    self.tooltip_visible.set((true, true));
-                }
+            WindowEvent::MouseOver if !self.tooltip_visible.get().0 => {
+                self.tooltip_visible.set((true, true));
             }
             WindowEvent::MouseOut => self.tooltip_visible.set((false, true)),
-            WindowEvent::FocusIn => {
-                if !self.tooltip_visible.get().0 {
-                    self.tooltip_visible.set((true, false));
-                }
+            WindowEvent::FocusIn if !self.tooltip_visible.get().0 => {
+                self.tooltip_visible.set((true, false));
             }
             WindowEvent::FocusOut => self.tooltip_visible.set((false, false)),
             WindowEvent::FocusVisibility(vis) if !(*vis) => {
@@ -195,27 +191,23 @@ impl Model for ActionsModel {
                 }
             }
 
-            WindowEvent::MouseDoubleClick(button) => {
-                if meta.target == cx.current && !cx.is_disabled() {
-                    if let Some(action) = &self.on_double_click {
-                        (action)(cx, *button);
-                    }
+            WindowEvent::MouseDoubleClick(button)
+                if meta.target == cx.current && !cx.is_disabled() =>
+            {
+                if let Some(action) = &self.on_double_click {
+                    (action)(cx, *button);
                 }
             }
 
-            WindowEvent::MouseEnter => {
-                if meta.target == cx.current() {
-                    if let Some(action) = &self.on_hover {
-                        (action)(cx);
-                    }
+            WindowEvent::MouseEnter if meta.target == cx.current() => {
+                if let Some(action) = &self.on_hover {
+                    (action)(cx);
                 }
             }
 
-            WindowEvent::MouseLeave => {
-                if meta.target == cx.current() {
-                    if let Some(action) = &self.on_hover_out {
-                        (action)(cx);
-                    }
+            WindowEvent::MouseLeave if meta.target == cx.current() => {
+                if let Some(action) = &self.on_hover_out {
+                    (action)(cx);
                 }
             }
 
@@ -284,11 +276,9 @@ impl Model for ActionsModel {
                 }
             }
 
-            WindowEvent::GeometryChanged(geo) => {
-                if meta.target == cx.current() {
-                    if let Some(action) = &self.on_geo_changed {
-                        (action)(cx, *geo);
-                    }
+            WindowEvent::GeometryChanged(geo) if meta.target == cx.current() => {
+                if let Some(action) = &self.on_geo_changed {
+                    (action)(cx, *geo);
                 }
             }
 

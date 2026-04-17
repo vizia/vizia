@@ -189,10 +189,10 @@ where
             cx.add_listener(move |textbox: &mut Self, cx, event| {
                 let flag: bool = textbox.edit;
                 event.map(|window_event, meta| match window_event {
-                    WindowEvent::MouseDown(_) => {
-                        if flag && meta.origin != cx.current() && cx.hovered() != cx.current() {
-                            cx.emit(TextEvent::Blur);
-                        }
+                    WindowEvent::MouseDown(_)
+                        if flag && meta.origin != cx.current() && cx.hovered() != cx.current() =>
+                    {
+                        cx.emit(TextEvent::Blur);
                     }
 
                     _ => {}
@@ -1020,12 +1020,11 @@ where
                 }
             }
 
-            WindowEvent::FocusIn => {
-                if cx.mouse.left.pressed != cx.current()
-                    || cx.mouse.left.state == MouseButtonState::Released
-                {
-                    cx.emit(TextEvent::StartEdit);
-                }
+            WindowEvent::FocusIn
+                if (cx.mouse.left.pressed != cx.current()
+                    || cx.mouse.left.state == MouseButtonState::Released) =>
+            {
+                cx.emit(TextEvent::StartEdit);
             }
 
             WindowEvent::FocusOut => {
@@ -1046,16 +1045,15 @@ where
                 cx.release();
             }
 
-            WindowEvent::MouseMove(x, y) => {
+            WindowEvent::MouseMove(x, y)
                 if cx.mouse.left.state == MouseButtonState::Pressed
-                    && cx.mouse.left.pressed == cx.current
-                {
-                    if self.edit {
-                        self.reset_caret_timer(cx);
-                    }
-                    if cx.mouse.left.pos_down.0 != *x || cx.mouse.left.pos_down.1 != *y {
-                        cx.emit(TextEvent::Drag(cx.mouse.cursor_x, cx.mouse.cursor_y));
-                    }
+                    && cx.mouse.left.pressed == cx.current =>
+            {
+                if self.edit {
+                    self.reset_caret_timer(cx);
+                }
+                if cx.mouse.left.pos_down.0 != *x || cx.mouse.left.pos_down.1 != *y {
+                    cx.emit(TextEvent::Drag(cx.mouse.cursor_x, cx.mouse.cursor_y));
                 }
             }
 
@@ -1063,7 +1061,7 @@ where
                 cx.emit(TextEvent::Scroll(*x, *y));
             }
 
-            WindowEvent::CharInput(c) => {
+            WindowEvent::CharInput(c)
                 if *c != '\u{1b}' && // Escape
                     *c != '\u{8}' && // Backspace
                     *c != '\u{9}' && // Tab
@@ -1072,28 +1070,33 @@ where
                     !cx.modifiers.ctrl() &&
                     !cx.modifiers.logo() &&
                     self.edit &&
-                    !cx.is_read_only()
-                {
-                    self.reset_caret_timer(cx);
-                    cx.emit(TextEvent::InsertText(String::from(*c)));
-                }
+                    !cx.is_read_only() =>
+            {
+                self.reset_caret_timer(cx);
+                cx.emit(TextEvent::InsertText(String::from(*c)));
             }
 
-            WindowEvent::ImeCommit(text) => {
-                if !cx.modifiers.ctrl() && !cx.modifiers.logo() && self.edit && !cx.is_read_only() {
-                    self.reset_caret_timer(cx);
-                    cx.emit(TextEvent::ClearPreedit);
-                    cx.emit(TextEvent::InsertText(text.to_string()));
+            WindowEvent::ImeCommit(text)
+                if !cx.modifiers.ctrl()
+                    && !cx.modifiers.logo()
+                    && self.edit
+                    && !cx.is_read_only() =>
+            {
+                self.reset_caret_timer(cx);
+                cx.emit(TextEvent::ClearPreedit);
+                cx.emit(TextEvent::InsertText(text.to_string()));
 
-                    self.reset_ime_position(cx);
-                }
+                self.reset_ime_position(cx);
             }
 
-            WindowEvent::ImePreedit(text, cursor) => {
-                if !cx.modifiers.ctrl() && !cx.modifiers.logo() && self.edit && !cx.is_read_only() {
-                    self.reset_caret_timer(cx);
-                    cx.emit(TextEvent::UpdatePreedit(text.to_string(), *cursor));
-                }
+            WindowEvent::ImePreedit(text, cursor)
+                if !cx.modifiers.ctrl()
+                    && !cx.modifiers.logo()
+                    && self.edit
+                    && !cx.is_read_only() =>
+            {
+                self.reset_caret_timer(cx);
+                cx.emit(TextEvent::UpdatePreedit(text.to_string(), *cursor));
             }
 
             WindowEvent::KeyDown(code, _) => match code {

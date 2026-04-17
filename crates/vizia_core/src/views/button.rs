@@ -106,17 +106,13 @@ impl View for Button {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
-            WindowEvent::PressDown { mouse: _ } => {
-                if meta.target == cx.current {
-                    cx.focus();
-                }
+            WindowEvent::PressDown { mouse: _ } if meta.target == cx.current => {
+                cx.focus();
             }
 
-            WindowEvent::Press { .. } => {
-                if meta.target == cx.current {
-                    if let Some(action) = &self.action {
-                        (action)(cx);
-                    }
+            WindowEvent::Press { .. } if meta.target == cx.current => {
+                if let Some(action) = &self.action {
+                    (action)(cx);
                 }
             }
 

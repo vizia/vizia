@@ -307,62 +307,59 @@ impl View for ScrollView {
         });
 
         event.map(|window_event, meta| match window_event {
-            WindowEvent::GeometryChanged(geo) => {
-                if geo.contains(GeoChanged::WIDTH_CHANGED)
-                    || geo.contains(GeoChanged::HEIGHT_CHANGED)
+            WindowEvent::GeometryChanged(geo)
+                if (geo.contains(GeoChanged::WIDTH_CHANGED)
+                    || geo.contains(GeoChanged::HEIGHT_CHANGED)) =>
+            {
+                let bounds = cx.bounds();
+                let scale_factor = cx.scale_factor();
+
+                let mut scroll_x = self.scroll_x.get();
+                let mut scroll_y = self.scroll_y.get();
+                let inner_width = self.inner_width.get();
+                let inner_height = self.inner_height.get();
+                let mut container_width = self.container_width.get();
+                let mut container_height = self.container_height.get();
+
+                if inner_width != 0.0
+                    && inner_height != 0.0
+                    && container_width != 0.0
+                    && container_height != 0.0
                 {
-                    let bounds = cx.bounds();
-                    let scale_factor = cx.scale_factor();
+                    let top = ((inner_height - container_height) * scroll_y).round() / scale_factor;
+                    let left = ((inner_width - container_width) * scroll_x).round() / scale_factor;
 
-                    let mut scroll_x = self.scroll_x.get();
-                    let mut scroll_y = self.scroll_y.get();
-                    let inner_width = self.inner_width.get();
-                    let inner_height = self.inner_height.get();
-                    let mut container_width = self.container_width.get();
-                    let mut container_height = self.container_height.get();
+                    container_width = bounds.width();
+                    container_height = bounds.height();
 
-                    if inner_width != 0.0
-                        && inner_height != 0.0
-                        && container_width != 0.0
-                        && container_height != 0.0
-                    {
-                        let top =
-                            ((inner_height - container_height) * scroll_y).round() / scale_factor;
-                        let left =
-                            ((inner_width - container_width) * scroll_x).round() / scale_factor;
-
-                        container_width = bounds.width();
-                        container_height = bounds.height();
-
-                        if inner_width != container_width {
-                            scroll_x = ((left * scale_factor) / (inner_width - container_width))
-                                .clamp(0.0, 1.0);
-                        } else {
-                            scroll_x = 0.0;
-                        }
-
-                        if inner_height != container_height {
-                            scroll_y = ((top * scale_factor) / (inner_height - container_height))
-                                .clamp(0.0, 1.0);
-                        } else {
-                            scroll_y = 0.0;
-                        }
-
-                        self.scroll_x.set(scroll_x);
-                        self.scroll_y.set(scroll_y);
-                        self.container_width.set(container_width);
-                        self.container_height.set(container_height);
-
-                        if let Some(callback) = &self.on_scroll {
-                            (callback)(cx, self.scroll_x.get(), self.scroll_y.get());
-                        }
-
-                        self.reset();
+                    if inner_width != container_width {
+                        scroll_x = ((left * scale_factor) / (inner_width - container_width))
+                            .clamp(0.0, 1.0);
+                    } else {
+                        scroll_x = 0.0;
                     }
 
-                    self.container_width.set(bounds.width());
-                    self.container_height.set(bounds.height());
+                    if inner_height != container_height {
+                        scroll_y = ((top * scale_factor) / (inner_height - container_height))
+                            .clamp(0.0, 1.0);
+                    } else {
+                        scroll_y = 0.0;
+                    }
+
+                    self.scroll_x.set(scroll_x);
+                    self.scroll_y.set(scroll_y);
+                    self.container_width.set(container_width);
+                    self.container_height.set(container_height);
+
+                    if let Some(callback) = &self.on_scroll {
+                        (callback)(cx, self.scroll_x.get(), self.scroll_y.get());
+                    }
+
+                    self.reset();
                 }
+
+                self.container_width.set(bounds.width());
+                self.container_height.set(bounds.height());
             }
 
             WindowEvent::MouseScroll(x, y) => {
@@ -464,14 +461,13 @@ impl View for ScrollContent {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _| match window_event {
-            WindowEvent::GeometryChanged(geo) => {
-                if geo.contains(GeoChanged::WIDTH_CHANGED)
-                    || geo.contains(GeoChanged::HEIGHT_CHANGED)
-                {
-                    let bounds = cx.bounds();
-                    // If the width or height have changed then send this back up to the ScrollData.
-                    cx.emit(ScrollEvent::ChildGeo(bounds.w, bounds.h));
-                }
+            WindowEvent::GeometryChanged(geo)
+                if (geo.contains(GeoChanged::WIDTH_CHANGED)
+                    || geo.contains(GeoChanged::HEIGHT_CHANGED)) =>
+            {
+                let bounds = cx.bounds();
+                // If the width or height have changed then send this back up to the ScrollData.
+                cx.emit(ScrollEvent::ChildGeo(bounds.w, bounds.h));
             }
 
             _ => {}

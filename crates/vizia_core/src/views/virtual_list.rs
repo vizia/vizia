@@ -375,10 +375,10 @@ impl View for VirtualList {
         });
 
         event.map(|window_event, _| match window_event {
-            WindowEvent::GeometryChanged(geo) => {
-                if geo.intersects(GeoChanged::WIDTH_CHANGED | GeoChanged::HEIGHT_CHANGED) {
-                    self.recalc(cx);
-                }
+            WindowEvent::GeometryChanged(geo)
+                if geo.intersects(GeoChanged::WIDTH_CHANGED | GeoChanged::HEIGHT_CHANGED) =>
+            {
+                self.recalc(cx);
             }
 
             _ => {}
