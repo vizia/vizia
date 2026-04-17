@@ -57,6 +57,7 @@ fn main() -> Result<(), ApplicationError> {
                 Svg::new(cx, ICON_SEARCH)
                     .color(Color::gray())
                     .position_type(PositionType::Absolute)
+                    .left(Pixels(5.0))
                     .top(Stretch(1.0))
                     .bottom(Stretch(1.0));
             })

@@ -479,7 +479,8 @@ where
             let padding_bottom =
                 padding_bottom.to_px(logical_parent_height, 0.0) * cx.scale_factor();
 
-            if resolved_text_direction(&cx.style, cx.current) == crate::style::Direction::RightToLeft
+            if resolved_text_direction(&cx.style, cx.current)
+                == crate::style::Direction::RightToLeft
             {
                 std::mem::swap(&mut padding_left, &mut padding_right);
             }
@@ -689,13 +690,26 @@ where
 
                 let current = text.current_grapheme_offset(self.selection.active);
 
+                let grapheme_count = text.graphemes(true).count();
+                let (range_start, range_end, use_trailing_edge) = if current < grapheme_count {
+                    (current, current + 1, false)
+                } else if current > 0 {
+                    // At end-of-text, use the previous grapheme box and place the caret on its trailing edge.
+                    (current - 1, current, true)
+                } else {
+                    // Empty text or no valid grapheme box to anchor the caret.
+                    return;
+                };
+
                 let rects = paragraph.get_rects_for_range(
-                    current..current + 1,
+                    range_start..range_end,
                     RectHeightStyle::Tight,
                     RectWidthStyle::Tight,
                 );
 
-                let cursor_rect = rects.first().unwrap();
+                let Some(cursor_rect) = rects.first() else {
+                    return;
+                };
 
                 let alignment = cx.alignment();
 
@@ -739,7 +753,10 @@ where
                     std::mem::swap(&mut padding_left, &mut padding_right);
                 }
 
-                let x = (bounds.x + padding_left + cursor_rect.rect.left).round();
+                let caret_x =
+                    if use_trailing_edge { cursor_rect.rect.right } else { cursor_rect.rect.left };
+
+                let x = (bounds.x + padding_left + caret_x).round();
                 let y = (bounds.y + padding_top + cursor_rect.rect.top + top).round();
 
                 let x2 = x + 1.0;
@@ -898,12 +915,13 @@ where
         let text_len = text.len();
 
         if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-            let text_direction =
-                if resolved_text_direction(&cx.style, cx.current) == crate::style::Direction::RightToLeft {
-                    TextDirection::RightToLeft
-                } else {
-                    TextDirection::LeftToRight
-                };
+            let text_direction = if resolved_text_direction(&cx.style, cx.current)
+                == crate::style::Direction::RightToLeft
+            {
+                TextDirection::RightToLeft
+            } else {
+                TextDirection::LeftToRight
+            };
 
             let line_metrics = paragraph.get_line_metrics();
             for line in line_metrics.iter() {
