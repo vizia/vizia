@@ -537,6 +537,11 @@ impl ApplicationRunner {
             (idle_callback)(self.cx.context());
         }
     }
+
+    /// Element name of the view that currently has keyboard focus.
+    pub fn focused_element(&self) -> Option<&'static str> {
+        self.cx.focused_element()
+    }
 }
 
 /// Returns true if the provided event should cause an [`Application`] to
