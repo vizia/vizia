@@ -708,34 +708,42 @@ fn link_style_data(
 
     if style.corner_top_left_shape.link(entity, matched_rules) {
         should_redraw = true;
+        cache.path.remove(entity);
     }
 
     if style.corner_top_right_shape.link(entity, matched_rules) {
         should_redraw = true;
+        cache.path.remove(entity);
     }
 
     if style.corner_bottom_left_shape.link(entity, matched_rules) {
         should_redraw = true;
+        cache.path.remove(entity);
     }
 
     if style.corner_bottom_right_shape.link(entity, matched_rules) {
         should_redraw = true;
+        cache.path.remove(entity);
     }
 
     if style.corner_top_left_radius.link(entity, matched_rules, &style.custom_length_props) {
         should_redraw = true;
+        cache.path.remove(entity);
     }
 
     if style.corner_top_right_radius.link(entity, matched_rules, &style.custom_length_props) {
         should_redraw = true;
+        cache.path.remove(entity);
     }
 
     if style.corner_bottom_left_radius.link(entity, matched_rules, &style.custom_length_props) {
         should_redraw = true;
+        cache.path.remove(entity);
     }
 
     if style.corner_bottom_right_radius.link(entity, matched_rules, &style.custom_length_props) {
         should_redraw = true;
+        cache.path.remove(entity);
     }
 
     if style.outline_width.link(entity, matched_rules, &style.custom_length_props) {

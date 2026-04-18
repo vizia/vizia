@@ -17,7 +17,7 @@
     --popover-foreground: oklch(0.145 0 0);
     --primary: oklch(0.205 0 0);
     --primary-hover: oklch(0.28 0 0);
-    --primary-active: oklch(0.145 0 0);
+    --primary-active: oklch(0.34 0 0);
     --primary-foreground: oklch(0.985 0 0);
     --secondary: oklch(0.97 0 0);
     --secondary-hover: oklch(0.93 0 0);
@@ -252,15 +252,11 @@ button-group.outline {
     gap: -1px;
 }
 
-button-group > button,
-button-group > toggle-button,
-button-group > textbox {
+button-group > * {
     corner-radius: 0px;
 }
 
-button-group.vertical > button,
-button-group.vertical > toggle-button,
-button-group > textbox {
+button-group.vertical > * {
     corner-radius: 0px;
 }
 
@@ -269,9 +265,23 @@ button-group > :first-child {
     corner-bottom-left-radius: 4px;
 }
 
+.rtl button-group > :first-child {
+    corner-top-left-radius: 0px;
+    corner-bottom-left-radius: 0px;
+    corner-top-right-radius: 4px;
+    corner-bottom-right-radius: 4px;
+}
+
 button-group > :last-child {
     corner-top-right-radius: 4px;
     corner-bottom-right-radius: 4px;
+}
+
+.rtl button-group > :last-child {
+    corner-top-right-radius: 0px;
+    corner-bottom-right-radius: 0px;
+    corner-top-left-radius: 4px;
+    corner-bottom-left-radius: 4px;
 }
 
 button-group.vertical > :first-child {
