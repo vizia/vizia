@@ -228,11 +228,7 @@ impl WindowHandler for ViziaWindow {
             window.close();
         }
 
-        if captured {
-            EventStatus::Captured
-        } else {
-            EventStatus::Ignored
-        }
+        if captured { EventStatus::Captured } else { EventStatus::Ignored }
     }
 }
 
