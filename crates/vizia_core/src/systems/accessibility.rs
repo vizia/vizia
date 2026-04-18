@@ -25,18 +25,6 @@ pub fn accessibility_system(cx: &mut Context) {
             };
 
             if let Some(node) = get_access_node(&mut access_context, &mut cx.views, entity) {
-                let navigable = cx
-                    .style
-                    .abilities
-                    .get(entity)
-                    .copied()
-                    .unwrap_or_default()
-                    .contains(Abilities::NAVIGABLE);
-
-                if node.node_builder.role() == Role::Unknown && !navigable {
-                    continue;
-                }
-
                 let mut nodes = vec![(node.node_id(), node.node_builder)];
 
                 // If child nodes were generated then append them to the nodes list
