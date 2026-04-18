@@ -61,19 +61,18 @@ where
             cx.add_listener(move |popup: &mut Self, cx, event| {
                 let open = popup.is_open.get();
                 event.map(|window_event, meta| match window_event {
-                    WindowEvent::MouseDown(_) => {
+                    WindowEvent::MouseDown(_)
                         if open
                             && meta.origin != cx.current()
-                            && !cx.hovered.is_descendant_of(cx.tree, cx.current)
-                        {
-                            cx.emit(TextEvent::Submit(false));
-                            cx.emit_custom(
-                                Event::new(TextEvent::EndEdit)
-                                    .target(cx.current)
-                                    .propagate(Propagation::Subtree),
-                            );
-                            meta.consume();
-                        }
+                            && !cx.hovered.is_descendant_of(cx.tree, cx.current) =>
+                    {
+                        cx.emit(TextEvent::Submit(false));
+                        cx.emit_custom(
+                            Event::new(TextEvent::EndEdit)
+                                .target(cx.current)
+                                .propagate(Propagation::Subtree),
+                        );
+                        meta.consume();
                     }
 
                     _ => {}
@@ -253,58 +252,52 @@ where
 
         event.map(|window_event, meta| match window_event {
             WindowEvent::KeyDown(code, _) => match code {
-                Code::ArrowDown => {
-                    if self.is_open.get() {
-                        let filtered = self.filtered_indices();
-                        if !filtered.is_empty() {
-                            let current_pos = self
-                                .highlighted
-                                .get()
-                                .and_then(|h| filtered.iter().position(|index| *index == h))
-                                .unwrap_or_else(|| {
-                                    filtered
-                                        .iter()
-                                        .position(|index| *index == self.selected.get())
-                                        .unwrap_or(0)
-                                });
+                Code::ArrowDown if self.is_open.get() => {
+                    let filtered = self.filtered_indices();
+                    if !filtered.is_empty() {
+                        let current_pos = self
+                            .highlighted
+                            .get()
+                            .and_then(|h| filtered.iter().position(|index| *index == h))
+                            .unwrap_or_else(|| {
+                                filtered
+                                    .iter()
+                                    .position(|index| *index == self.selected.get())
+                                    .unwrap_or(0)
+                            });
 
-                            let next_pos = (current_pos + 1) % filtered.len();
-                            self.highlighted.set(Some(filtered[next_pos]));
-                            meta.consume();
-                        }
+                        let next_pos = (current_pos + 1) % filtered.len();
+                        self.highlighted.set(Some(filtered[next_pos]));
+                        meta.consume();
                     }
                 }
 
-                Code::ArrowUp => {
-                    if self.is_open.get() {
-                        let filtered = self.filtered_indices();
-                        if !filtered.is_empty() {
-                            let current_pos = self
-                                .highlighted
-                                .get()
-                                .and_then(|h| filtered.iter().position(|index| *index == h))
-                                .unwrap_or_else(|| {
-                                    filtered
-                                        .iter()
-                                        .position(|index| *index == self.selected.get())
-                                        .unwrap_or(0)
-                                });
+                Code::ArrowUp if self.is_open.get() => {
+                    let filtered = self.filtered_indices();
+                    if !filtered.is_empty() {
+                        let current_pos = self
+                            .highlighted
+                            .get()
+                            .and_then(|h| filtered.iter().position(|index| *index == h))
+                            .unwrap_or_else(|| {
+                                filtered
+                                    .iter()
+                                    .position(|index| *index == self.selected.get())
+                                    .unwrap_or(0)
+                            });
 
-                            let prev_pos =
-                                if current_pos == 0 { filtered.len() - 1 } else { current_pos - 1 };
+                        let prev_pos =
+                            if current_pos == 0 { filtered.len() - 1 } else { current_pos - 1 };
 
-                            self.highlighted.set(Some(filtered[prev_pos]));
-                            meta.consume();
-                        }
+                        self.highlighted.set(Some(filtered[prev_pos]));
+                        meta.consume();
                     }
                 }
 
-                Code::Enter => {
-                    if self.is_open.get() {
-                        if let Some(index) = self.highlighted.get() {
-                            cx.emit(ComboBoxEvent::SetOption(index));
-                            meta.consume();
-                        }
+                Code::Enter if self.is_open.get() => {
+                    if let Some(index) = self.highlighted.get() {
+                        cx.emit(ComboBoxEvent::SetOption(index));
+                        meta.consume();
                     }
                 }
 

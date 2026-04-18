@@ -208,33 +208,31 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             cx.drop_data = Some(drop_data.clone());
         }
 
-        WindowEvent::MouseMove(x, y) => {
-            if !x.is_nan() && !y.is_nan() {
-                cx.mouse.previous_cursor_x = cx.mouse.cursor_x;
-                cx.mouse.previous_cursor_y = cx.mouse.cursor_y;
-                cx.mouse.cursor_x = *x;
-                cx.mouse.cursor_y = *y;
+        WindowEvent::MouseMove(x, y) if !x.is_nan() && !y.is_nan() => {
+            cx.mouse.previous_cursor_x = cx.mouse.cursor_x;
+            cx.mouse.previous_cursor_y = cx.mouse.cursor_y;
+            cx.mouse.cursor_x = *x;
+            cx.mouse.cursor_y = *y;
 
-                hover_system(cx, meta.origin);
+            hover_system(cx, meta.origin);
 
-                mutate_direct_or_up(meta, cx.captured, cx.hovered, false);
-            }
-
-            // if cx.mouse.cursor_x != cx.mouse.previous_cursor_x
-            //     || cx.mouse.cursor_y != cx.mouse.previous_cursor_y
-            // {
-            // }
-
-            // if let Some(dropped_file) = cx.dropped_file.take() {
-            //     emit_direct_or_up(
-            //         cx,
-            //         WindowEvent::DroppedFile(dropped_file),
-            //         cx.captured,
-            //         cx.hovered,
-            //         true,
-            //     );
-            // }
+            mutate_direct_or_up(meta, cx.captured, cx.hovered, false);
         }
+
+        // if cx.mouse.cursor_x != cx.mouse.previous_cursor_x
+        //     || cx.mouse.cursor_y != cx.mouse.previous_cursor_y
+        // {
+        // }
+
+        // if let Some(dropped_file) = cx.dropped_file.take() {
+        //     emit_direct_or_up(
+        //         cx,
+        //         WindowEvent::DroppedFile(dropped_file),
+        //         cx.captured,
+        //         cx.hovered,
+        //         true,
+        //     );
+        // }
         WindowEvent::MouseDown(button) => {
             // do direct state-updates
             match button {

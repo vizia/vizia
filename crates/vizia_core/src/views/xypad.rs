@@ -77,18 +77,16 @@ impl View for XYPad {
                 }
             }
 
-            WindowEvent::MouseMove(x, y) => {
-                if self.is_dragging {
-                    let current = cx.current();
-                    let mut dx = (*x - cx.cache.get_posx(current)) / cx.cache.get_width(current);
-                    let mut dy = (*y - cx.cache.get_posy(current)) / cx.cache.get_height(current);
+            WindowEvent::MouseMove(x, y) if self.is_dragging => {
+                let current = cx.current();
+                let mut dx = (*x - cx.cache.get_posx(current)) / cx.cache.get_width(current);
+                let mut dy = (*y - cx.cache.get_posy(current)) / cx.cache.get_height(current);
 
-                    dx = dx.clamp(0.0, 1.0);
-                    dy = dy.clamp(0.0, 1.0);
+                dx = dx.clamp(0.0, 1.0);
+                dy = dy.clamp(0.0, 1.0);
 
-                    if let Some(callback) = &self.on_change {
-                        (callback)(cx, dx, 1.0 - dy);
-                    }
+                if let Some(callback) = &self.on_change {
+                    (callback)(cx, dx, 1.0 - dy);
                 }
             }
 

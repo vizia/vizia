@@ -156,24 +156,24 @@ impl View for Label {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
-            WindowEvent::Press { .. } | WindowEvent::PressDown { .. } => {
-                if cx.current() == cx.mouse.left.pressed && meta.target == cx.current() {
-                    if let Some(describing) = self
-                        .describing
-                        .as_ref()
-                        .and_then(|identity| cx.resolve_entity_identifier(identity))
-                    {
-                        let old = cx.current;
-                        cx.current = describing;
-                        cx.focus_with_visibility(false);
-                        let message = if matches!(window_event, WindowEvent::Press { .. }) {
-                            WindowEvent::Press { mouse: false }
-                        } else {
-                            WindowEvent::PressDown { mouse: false }
-                        };
-                        cx.emit_to(describing, message);
-                        cx.current = old;
-                    }
+            WindowEvent::Press { .. } | WindowEvent::PressDown { .. }
+                if cx.current() == cx.mouse.left.pressed && meta.target == cx.current() =>
+            {
+                if let Some(describing) = self
+                    .describing
+                    .as_ref()
+                    .and_then(|identity| cx.resolve_entity_identifier(identity))
+                {
+                    let old = cx.current;
+                    cx.current = describing;
+                    cx.focus_with_visibility(false);
+                    let message = if matches!(window_event, WindowEvent::Press { .. }) {
+                        WindowEvent::Press { mouse: false }
+                    } else {
+                        WindowEvent::PressDown { mouse: false }
+                    };
+                    cx.emit_to(describing, message);
+                    cx.current = old;
                 }
             }
             _ => {}
