@@ -1112,7 +1112,6 @@ where
                 // or Cmd is held). Handling it here as well produced double
                 // insertion on platforms that emit both events for a plain
                 // spacebar press.
-
                 Code::ArrowLeft => {
                     self.reset_caret_timer(cx);
                     // macOS convention: Option (alt) for word movement,
@@ -1182,8 +1181,10 @@ where
                     if !cx.is_read_only() {
                         #[cfg(target_os = "macos")]
                         let movement = if cx.modifiers.logo() {
-                            // Cmd+Backspace deletes from caret to line start on macOS.
-                            Movement::ParagraphStart
+                            // Cmd+Backspace deletes from caret to the visual
+                            // line start on macOS, matching Cmd+Left cursor
+                            // movement (which uses `Movement::LineStart`).
+                            Movement::LineStart
                         } else if cx.modifiers.alt() {
                             Movement::Word(Direction::Upstream)
                         } else {
