@@ -1,5 +1,6 @@
+use vizia_storage::LayoutChildIterator;
+
 use crate::prelude::*;
-use crate::tree::ChildIterator;
 
 /// Enum which represents the geometric variants of an avatar view.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
@@ -147,7 +148,7 @@ fn apply_avatar_group_max_visible(cx: &mut Context, entity: Entity, max_visible:
     let mut avatars = Vec::new();
     let mut overflow_avatar = None;
 
-    for child in ChildIterator::new(&cx.tree, entity) {
+    for child in LayoutChildIterator::new(&cx.tree, entity) {
         let is_overflow = cx
             .style
             .classes

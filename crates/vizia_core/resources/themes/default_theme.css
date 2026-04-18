@@ -40,7 +40,7 @@
     --sidebar-foreground: oklch(0.145 0 0);
     --sidebar-primary: oklch(0.205 0 0);
     --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent: oklch(0.95 0 0);
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
@@ -208,6 +208,15 @@ button-group.outline > button:hover {
     transition: fill 100ms;
 }
 
+button.outline:active,
+button-group.outline > button:active {
+    background-color: var(--secondary-active);
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+    transition: color 100ms;
+    transition: fill 100ms;
+}
+
 button.text,
 button-group.text > button {
     background-color: var(--background);
@@ -221,6 +230,14 @@ button-group.text > button {
 button.text:hover,
 button-group.text > button:hover {
     background-color: var(--accent);
+    transition: background-color 100ms;
+    transition: color 100ms;
+    transition: fill 100ms;
+}
+
+button.text:active,
+button-group.text > button:active {
+    background-color: var(--secondary-active);
     transition: background-color 100ms;
     transition: color 100ms;
     transition: fill 100ms;
@@ -252,11 +269,15 @@ button-group.outline {
     gap: -1px;
 }
 
-button-group > * {
+button-group > button,
+button-group > toggle-button,
+button-group > textbox {
     corner-radius: 0px;
 }
 
-button-group.vertical > * {
+button-group.vertical > button,
+button-group.vertical > toggle-button,
+button-group.vertical > textbox {
     corner-radius: 0px;
 }
 

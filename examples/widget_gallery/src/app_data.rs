@@ -57,16 +57,11 @@ const PRIMARY_COLOR_CLASSES: [&str; 6] = [
 #[derive(Clone, Copy)]
 pub struct AppData {
     pub disabled: Signal<bool>,
-    pub theme_options: Signal<Vec<Localized>>,
     pub selected_theme: Signal<Option<usize>>,
-    pub language_options: Signal<Vec<Localized>>,
     pub selected_language: Signal<Option<usize>>,
-    pub direction_options: Signal<Vec<&'static str>>,
-    pub primary_color_options: Signal<Vec<Localized>>,
     pub selected_primary_color: Signal<Option<usize>>,
     pub selected_view: Signal<&'static str>,
     pub search_text: Signal<String>,
-    pub open_categories: Signal<Vec<bool>>,
 }
 
 pub enum AppEvent {
@@ -129,47 +124,15 @@ impl Model for AppData {
     }
 }
 
-pub fn category_for_view(view_name: &str) -> &'static str {
-    CATEGORIES
-        .iter()
-        .find(|(_, items)| items.contains(&view_name))
-        .map(|(name, _)| *name)
-        .unwrap_or("Other")
-}
-
 impl AppData {
     pub fn new() -> Self {
         AppData {
             disabled: Signal::new(false),
-            theme_options: Signal::new(
-                [
-                    Localized::new("system-theme"),
-                    Localized::new("dark-theme"),
-                    Localized::new("light-theme"),
-                ]
-                .to_vec(),
-            ),
             selected_theme: Signal::new(Some(0)),
-            language_options: Signal::new(
-                [Localized::new("en"), Localized::new("fr"), Localized::new("ar")].to_vec(),
-            ),
             selected_language: Signal::new(Some(0)),
-            direction_options: Signal::new(["LTR", "RTL"].to_vec()),
-            primary_color_options: Signal::new(
-                [
-                    Localized::new("default"),
-                    Localized::new("blue"),
-                    Localized::new("emerald"),
-                    Localized::new("crimson"),
-                    Localized::new("amber"),
-                    Localized::new("violet"),
-                ]
-                .to_vec(),
-            ),
             selected_primary_color: Signal::new(Some(0)),
-            selected_view: Signal::new("Button"),
+            selected_view: Signal::new("All"),
             search_text: Signal::new(String::new()),
-            open_categories: Signal::new(vec![true; CATEGORIES.len()]),
         }
     }
 }

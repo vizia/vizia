@@ -1,8 +1,5 @@
 use log::debug;
-use vizia::{
-    icons::{ICON_CHECK, ICON_PENCIL, ICON_TRASH},
-    prelude::*,
-};
+use vizia::{icons::ICON_CHECK, prelude::*};
 
 use crate::components::DemoRegion;
 
@@ -43,7 +40,7 @@ A button can be used to send an event when pressed. Typically they are used to t
             .gap(Pixels(8.0));
         });
 
-        DemoRegion::new(cx, "Button with Icon and Label", |cx| {
+        DemoRegion::new(cx, "Button with Icon", |cx| {
             HStack::new(cx, |cx| {
                 Button::new(cx, |cx| {
                     HStack::new(cx, |cx| {
@@ -80,7 +77,7 @@ A button can be used to send an event when pressed. Typically they are used to t
             .gap(Pixels(8.0));
         });
 
-        DemoRegion::new(cx, "Button Variants", |cx| {
+        DemoRegion::new(cx, "Icon Button", |cx| {
             HStack::new(cx, |cx| {
                 Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"));
                 Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"))

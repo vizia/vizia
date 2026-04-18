@@ -3,12 +3,6 @@ use vizia::{icons::ICON_USER, prelude::*};
 use crate::components::DemoRegion;
 
 pub fn avatar_group(cx: &mut Context) {
-    cx.load_image(
-        "vizia.png",
-        include_bytes!("../../resources/images/vizia-logo-01.png"),
-        ImageRetentionPolicy::DropWhenNoObservers,
-    );
-
     VStack::new(cx, |cx| {
         Markdown::new(
             cx,

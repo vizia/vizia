@@ -21,6 +21,25 @@ label.dropdown-label {
     color: var(--muted-foreground);
 }
 
+hstack.gallery-toolbar {
+    justify-content: flex-end;
+}
+
+submenu.controls-menu-button {
+    min-width: 150px;
+}
+
+hstack.control-menu-row {
+    width: 1s;
+    min-width: 180px;
+}
+
+label.control-menu-value {
+    left: 1s;
+    color: var(--muted-foreground);
+    font-size: 12px;
+}
+
 label.title {
     font-size: 30;
     font-weight: bold;
@@ -69,6 +88,34 @@ markdown {
     padding: 0px;
 }
 
+hstack.all-view-grid {
+    align-items: stretch;
+}
+
+card.all-view-card {
+    height: auto;
+    min-height: 240px;
+}
+
+card.all-view-card > card-content {
+    padding: 8px;
+}
+
+card.all-view-card vstack.panel {
+    min-width: 0px;
+    max-width: none;
+    width: 1s;
+}
+
+label.all-view-card-title {
+    font-size: 18px;
+    font-weight: semi-bold;
+}
+
+label.all-view-card-category {
+    color: var(--muted-foreground);
+}
+
 /* ── Content meta ────────────────────────────────────────────────────── */
 
 hstack.content-meta {
@@ -112,4 +159,11 @@ vstack.gallery-css-grid {
     layout-type: grid;
     grid-columns: 1s 1s;
     grid-rows: 80px 80px;
+}
+
+.sidebar-logo {
+    width: 32px;
+    height: 32px;
+    corner-radius: 4px;
+    background-size: cover;
 }

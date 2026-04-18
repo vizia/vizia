@@ -6,12 +6,6 @@ use vizia::{
 use crate::components::DemoRegion;
 
 pub fn avatar(cx: &mut Context) {
-    cx.load_image(
-        "vizia.png",
-        include_bytes!("../../resources/images/vizia-logo-01.png"),
-        ImageRetentionPolicy::DropWhenNoObservers,
-    );
-
     VStack::new(cx, |cx| {
         Markdown::new(cx, "# Avatar
 An avatar is used to visually represent a person or entity and can contain text, an icon, or an image.
