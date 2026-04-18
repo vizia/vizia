@@ -1106,12 +1106,27 @@ where
                     }
                 }
 
-                Code::Space => {
-                    cx.emit(TextEvent::InsertText(String::from(" ")));
-                }
+                // Note: no `Code::Space` arm — the space character arrives
+                // through `WindowEvent::CharInput(' ')` above, which already
+                // inserts it (and correctly suppresses insertion when Ctrl
+                // or Cmd is held). Handling it here as well produced double
+                // insertion on platforms that emit both events for a plain
+                // spacebar press.
 
                 Code::ArrowLeft => {
                     self.reset_caret_timer(cx);
+                    // macOS convention: Option (alt) for word movement,
+                    // Cmd (logo) for line-boundary movement.
+                    // Other platforms: Ctrl for word movement.
+                    #[cfg(target_os = "macos")]
+                    let movement = if cx.modifiers.logo() {
+                        Movement::LineStart
+                    } else if cx.modifiers.alt() {
+                        Movement::Word(Direction::Left)
+                    } else {
+                        Movement::Grapheme(Direction::Left)
+                    };
+                    #[cfg(not(target_os = "macos"))]
                     let movement = if cx.modifiers.ctrl() {
                         Movement::Word(Direction::Left)
                     } else {
@@ -1124,6 +1139,15 @@ where
                 Code::ArrowRight => {
                     self.reset_caret_timer(cx);
 
+                    #[cfg(target_os = "macos")]
+                    let movement = if cx.modifiers.logo() {
+                        Movement::LineEnd
+                    } else if cx.modifiers.alt() {
+                        Movement::Word(Direction::Right)
+                    } else {
+                        Movement::Grapheme(Direction::Right)
+                    };
+                    #[cfg(not(target_os = "macos"))]
                     let movement = if cx.modifiers.ctrl() {
                         Movement::Word(Direction::Right)
                     } else {
@@ -1156,24 +1180,43 @@ where
                 Code::Backspace => {
                     self.reset_caret_timer(cx);
                     if !cx.is_read_only() {
-                        if cx.modifiers.ctrl() {
-                            cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Upstream)));
+                        #[cfg(target_os = "macos")]
+                        let movement = if cx.modifiers.logo() {
+                            // Cmd+Backspace deletes from caret to line start on macOS.
+                            Movement::ParagraphStart
+                        } else if cx.modifiers.alt() {
+                            Movement::Word(Direction::Upstream)
                         } else {
-                            cx.emit(TextEvent::DeleteText(Movement::Grapheme(Direction::Upstream)));
-                        }
+                            Movement::Grapheme(Direction::Upstream)
+                        };
+                        #[cfg(not(target_os = "macos"))]
+                        let movement = if cx.modifiers.ctrl() {
+                            Movement::Word(Direction::Upstream)
+                        } else {
+                            Movement::Grapheme(Direction::Upstream)
+                        };
+
+                        cx.emit(TextEvent::DeleteText(movement));
                     }
                 }
 
                 Code::Delete => {
                     self.reset_caret_timer(cx);
                     if !cx.is_read_only() {
-                        if cx.modifiers.ctrl() {
-                            cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Downstream)));
+                        #[cfg(target_os = "macos")]
+                        let movement = if cx.modifiers.alt() {
+                            Movement::Word(Direction::Downstream)
                         } else {
-                            cx.emit(TextEvent::DeleteText(Movement::Grapheme(
-                                Direction::Downstream,
-                            )));
-                        }
+                            Movement::Grapheme(Direction::Downstream)
+                        };
+                        #[cfg(not(target_os = "macos"))]
+                        let movement = if cx.modifiers.ctrl() {
+                            Movement::Word(Direction::Downstream)
+                        } else {
+                            Movement::Grapheme(Direction::Downstream)
+                        };
+
+                        cx.emit(TextEvent::DeleteText(movement));
                     }
                 }
 
