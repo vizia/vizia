@@ -63,6 +63,18 @@ impl BackendContext {
         self.0.focused
     }
 
+    /// Returns the element name (e.g. `"textbox"`) of the currently focused
+    /// view, or `None` if the focused entity has no view or the view doesn't
+    /// declare an element name.
+    ///
+    /// Windowing backends can use this to decide whether a keyboard event
+    /// should be reported as captured so the platform does not forward the
+    /// event further — preventing the host from also processing keys
+    /// intended for a focused text input.
+    pub fn focused_element(&self) -> Option<&'static str> {
+        self.0.views.get(&self.0.focused).and_then(|view| view.element())
+    }
+
     pub fn add_main_window(
         &mut self,
         window_entity: Entity,

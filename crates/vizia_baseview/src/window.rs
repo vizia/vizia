@@ -212,6 +212,14 @@ impl WindowHandler for ViziaWindow {
     fn on_event(&mut self, window: &mut Window<'_>, event: Event) -> EventStatus {
         let mut should_quit = false;
 
+        // If a text input currently holds focus, a native keyboard event is
+        // intended for the plugin. Report it as `Captured` so the backend
+        // does not forward the platform event further — otherwise the host
+        // (e.g. a DAW) also processes the same keystroke, producing double
+        // handling and a system beep on macOS.
+        let captured = matches!(event, Event::Keyboard(_))
+            && self.application.focused_element() == Some("textbox");
+
         self.application.handle_event(event, &mut should_quit);
 
         self.application.handle_idle(&self.on_idle);
@@ -220,7 +228,11 @@ impl WindowHandler for ViziaWindow {
             window.close();
         }
 
-        EventStatus::Ignored
+        if captured {
+            EventStatus::Captured
+        } else {
+            EventStatus::Ignored
+        }
     }
 }
 
