@@ -21,7 +21,6 @@ fn main() -> Result<(), ApplicationError> {
         ExamplePage::new(cx, |cx| {
             Spinbox::new(cx, spinbox_value)
                 .icons(SpinboxIcons::PlusMinus)
-                .width(Pixels(100.0))
                 .on_change(|ex, v| ex.emit(AppEvent::SetValue(v)));
         });
     })

@@ -67,8 +67,12 @@ where
         self
     }
 
-    pub fn title(mut self, title: &str) -> Self {
-        self.window_description.title = title.to_owned();
+    /// Sets the window title from a value that can be localized.
+    ///
+    /// Unlike the winit backend this resolves the title once during application setup.
+    pub fn title<T: ToStringLocalized>(mut self, title: impl Res<T>) -> Self {
+        let cx = Context::default();
+        self.window_description.title = title.get_value(&cx).to_string_local(&cx);
 
         self
     }

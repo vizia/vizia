@@ -36,13 +36,13 @@ fn main() -> Result<(), ApplicationError> {
                 ScrollView::new(cx, |cx| {
                     Label::new(cx, "Vertical Scroll").height(Pixels(1000.0)).width(Stretch(1.0));
                 })
-                .size(Pixels(300.0))
+                .size(Pixels(200.0))
                 .class("bg-default");
 
                 ScrollView::new(cx, |cx| {
                     Label::new(cx, "Horizontal Scroll").width(Pixels(1000.0)).height(Stretch(1.0));
                 })
-                .size(Pixels(300.0))
+                .size(Pixels(200.0))
                 .class("bg-default");
 
                 ScrollView::new(cx, |cx| {
@@ -50,7 +50,7 @@ fn main() -> Result<(), ApplicationError> {
                         .width(Pixels(1000.0))
                         .height(Pixels(1000.0));
                 })
-                .size(Pixels(300.0))
+                .size(Pixels(200.0))
                 .class("bg-default");
             })
             .alignment(Alignment::Center)
@@ -64,7 +64,7 @@ fn main() -> Result<(), ApplicationError> {
                 .show_vertical_scrollbar(show_vertical_scrollbar)
                 .scroll_to_cursor(scroll_to_cursor)
                 .on_scroll(|cx, _, scroll_y| cx.emit(AppEvent::ScrollY(scroll_y)))
-                .size(Pixels(300.0))
+                .size(Pixels(200.0))
                 .class("bg-default");
 
                 ScrollView::new(cx, |cx| {
@@ -74,7 +74,7 @@ fn main() -> Result<(), ApplicationError> {
                 .show_horizontal_scrollbar(show_horizontal_scrollbar)
                 .scroll_to_cursor(scroll_to_cursor)
                 .on_scroll(|cx, scroll_x, _| cx.emit(AppEvent::ScrollX(scroll_x)))
-                .size(Pixels(300.0))
+                .size(Pixels(200.0))
                 .class("bg-default");
 
                 ScrollView::new(cx, |cx| {
@@ -91,7 +91,7 @@ fn main() -> Result<(), ApplicationError> {
                     cx.emit(AppEvent::ScrollX(scroll_x));
                     cx.emit(AppEvent::ScrollY(scroll_y));
                 })
-                .size(Pixels(300.0))
+                .size(Pixels(200.0))
                 .class("bg-default");
             })
             .alignment(Alignment::Center)

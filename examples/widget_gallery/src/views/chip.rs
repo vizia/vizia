@@ -15,49 +15,27 @@ A chip can be used to inform the user of the status of specific data.
 
         Markdown::new(cx, "### Basic chip");
 
-        DemoRegion::new(
-            cx,
-            |cx| {
-                Chip::new(cx, "Chip");
-            },
-            r#"Chip::new(cx, "Chip");"#,
-        );
+        DemoRegion::new(cx, "Basic Chip", |cx| {
+            Chip::new(cx, "Chip");
+        });
 
         Markdown::new(cx, "### Chip variants");
 
-        DemoRegion::new(
-            cx,
-            |cx| {
-                Chip::new(cx, "Filled (Default)").variant(ChipVariant::Filled);
-                Chip::new(cx, "Outline").variant(ChipVariant::Outline);
-            },
-            r#"Chip::new(cx, "Filled (Default)")
-    .variant(ChipVariant::Filled);
-Chip::new(cx, "Outline")
-    .variant(ChipVariant::Outline);"#,
-        );
+        DemoRegion::new(cx, "Chip Variants", |cx| {
+            Chip::new(cx, "Filled (Default)").variant(ChipVariant::Filled);
+            Chip::new(cx, "Outline").variant(ChipVariant::Outline);
+        });
 
         Markdown::new(cx, "### Chip actions");
 
-        DemoRegion::new(
-            cx,
-            |cx| {
-                Chip::new(cx, "Clickable").on_press(|_| {});
-                Chip::new(cx, "Closable").on_close(|_| {});
-                Chip::new(cx, "Clickable & Closable")
-                    .variant(ChipVariant::Outline)
-                    .on_press(|_| {})
-                    .on_close(|_| {});
-            },
-            r#"Chip::new(cx, "Clickable")
-    .on_press(|cx| {});
-Chip::new(cx, "Closable")
-    .on_close(|cx| {...});
-Chip::new(cx, "Clickable & Closable")
-    .variant(ChipVariant::Outline)
-    .on_press(|cx| {...})
-    .on_close(|cx| {...});"#,
-        );
+        DemoRegion::new(cx, "Chip Actions", |cx| {
+            Chip::new(cx, "Clickable").on_press(|_| {});
+            Chip::new(cx, "Closable").on_close(|_| {});
+            Chip::new(cx, "Clickable & Closable")
+                .variant(ChipVariant::Outline)
+                .on_press(|_| {})
+                .on_close(|_| {});
+        });
     })
     .class("panel");
 }

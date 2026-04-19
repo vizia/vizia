@@ -26,7 +26,7 @@ pub struct VirtualList {
     /// Whether the vertical scrollbar should be visible.
     show_vertical_scrollbar: Signal<bool>,
     /// The set of selected items in the list.
-    selected: Signal<BTreeSet<usize>>,
+    selection: Signal<BTreeSet<usize>>,
     /// The selectable state of the list.
     selectable: Signal<Selectable>,
     /// The index of the currently focused item in the list.
@@ -145,7 +145,7 @@ impl VirtualList {
         let scroll_y = Signal::new(0.0);
         let show_horizontal_scrollbar = Signal::new(false);
         let show_vertical_scrollbar = Signal::new(true);
-        let selected = Signal::new(BTreeSet::default());
+        let selection = Signal::new(BTreeSet::default());
         let selectable = Signal::new(Selectable::None);
         let focused = Signal::new(None);
         let selection_follows_focus = Signal::new(false);
@@ -161,7 +161,7 @@ impl VirtualList {
             scroll_y,
             show_horizontal_scrollbar,
             show_vertical_scrollbar,
-            selected,
+            selection,
             selectable,
             focused,
             selection_follows_focus,
@@ -214,7 +214,7 @@ impl VirtualList {
                                         cx,
                                         index,
                                         item,
-                                        selected,
+                                        selection,
                                         focused,
                                         move |cx, index, item| {
                                             item_content(cx, index, item).height(Percentage(100.0));
@@ -264,17 +264,17 @@ impl View for VirtualList {
             ListEvent::Select(index) => {
                 cx.focus();
                 let selectable = self.selectable.get();
-                let mut selected = self.selected.get();
+                let mut selection = self.selection.get();
                 let mut focused = self.focused.get();
 
                 match selectable {
                     Selectable::Single => {
-                        if selected.contains(&index) {
-                            selected.clear();
+                        if selection.contains(&index) {
+                            selection.clear();
                             focused = None;
                         } else {
-                            selected.clear();
-                            selected.insert(index);
+                            selection.clear();
+                            selection.insert(index);
                             focused = Some(index);
                             if let Some(on_select) = &self.on_select {
                                 on_select(cx, index);
@@ -283,11 +283,11 @@ impl View for VirtualList {
                     }
 
                     Selectable::Multi => {
-                        if selected.contains(&index) {
-                            selected.remove(&index);
+                        if selection.contains(&index) {
+                            selection.remove(&index);
                             focused = None;
                         } else {
-                            selected.insert(index);
+                            selection.insert(index);
                             focused = Some(index);
                             if let Some(on_select) = &self.on_select {
                                 on_select(cx, index);
@@ -298,7 +298,7 @@ impl View for VirtualList {
                     Selectable::None => {}
                 }
 
-                self.selected.set(selected);
+                self.selection.set(selection);
                 self.focused.set(focused);
 
                 meta.consume();
@@ -312,7 +312,7 @@ impl View for VirtualList {
             }
 
             ListEvent::ClearSelection => {
-                self.selected.set(BTreeSet::default());
+                self.selection.set(BTreeSet::default());
                 meta.consume();
             }
 
@@ -388,23 +388,23 @@ impl View for VirtualList {
 
 impl Handle<'_, VirtualList> {
     /// Sets the selected items of the list from a signal of indices.
-    pub fn selected<R>(self, selected: impl Res<R> + 'static) -> Self
+    pub fn selection<R>(self, selection: impl Res<R> + 'static) -> Self
     where
         R: Deref<Target = [usize]> + Clone + 'static,
     {
-        let selected = selected.to_signal(self.cx);
-        self.bind(selected, move |handle| {
-            let selected = selected.get();
-            let ss = selected.deref().to_vec();
-            handle.modify(|list| {
-                let mut selected = BTreeSet::default();
-                let mut focused = None;
-                for idx in ss {
-                    selected.insert(idx);
-                    focused = Some(idx);
-                }
-                list.selected.set(selected);
-                list.focused.set(focused);
+        let selection = selection.to_signal(self.cx);
+        self.bind(selection, move |handle| {
+            selection.with(|selected_indices| {
+                handle.modify(|list| {
+                    let mut selection = BTreeSet::default();
+                    let mut focused = None;
+                    for idx in selected_indices.deref().iter().copied() {
+                        selection.insert(idx);
+                        focused = Some(idx);
+                    }
+                    list.selection.set(selection);
+                    list.focused.set(focused);
+                });
             });
         })
     }

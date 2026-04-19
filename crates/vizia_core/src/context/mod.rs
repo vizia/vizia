@@ -49,9 +49,10 @@ use vizia_input::{ImeState, MouseState};
 use vizia_storage::{ChildIterator, LayoutTreeIterator};
 
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
-static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
-static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css");
+static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static MARKDOWN: &str = include_str!("../../resources/themes/markdown.css");
+static DEFAULT_TRANSLATION_EN_US: &str =
+    include_str!("../../resources/translations/en-US/core.ftl");
 
 type Views = HashMap<Entity, Box<dyn ViewHandler>>;
 type Models = HashMap<Entity, HashMap<TypeId, Box<dyn ModelData>>>;
@@ -124,6 +125,7 @@ pub struct Context {
     pub(crate) click_button: MouseButton,
 
     pub ignore_default_theme: bool,
+    built_in_translations_added: bool,
     pub window_has_focus: bool,
     pub ime_state: ImeState,
 
@@ -206,6 +208,7 @@ impl Context {
             click_button: MouseButton::Left,
 
             ignore_default_theme: false,
+            built_in_translations_added: false,
             window_has_focus: true,
 
             ime_state: Default::default(),
@@ -338,6 +341,10 @@ impl Context {
 
         if system_flags.contains(SystemFlags::RECLIP) {
             self.needs_reclip(entity);
+        }
+
+        if system_flags.contains(SystemFlags::REACCESS) {
+            self.style.needs_access_update(entity);
         }
     }
 
@@ -522,6 +529,27 @@ impl Context {
         }
     }
 
+    /// Sets whether a view should have the given class name.
+    pub fn toggle_class(&mut self, name: &str, applied: impl Res<bool>) {
+        let name = name.to_owned();
+        let entity = self.current();
+        let current = self.current();
+        self.with_current(current, |cx| {
+            applied.set_or_bind(cx, move |cx, applied| {
+                let applied = applied.get_value(cx);
+                if let Some(class_list) = cx.style.classes.get_mut(entity) {
+                    if applied {
+                        class_list.insert(name.clone());
+                    } else {
+                        class_list.remove(&name);
+                    }
+                }
+
+                cx.needs_restyle(entity);
+            });
+        });
+    }
+
     /// Add a listener to an entity.
     ///
     /// A listener can be used to handle events which would not normally propagate to the entity.
@@ -562,13 +590,6 @@ impl Context {
         );
     }
 
-    /// Add a style string to the application.
-    pub(crate) fn add_theme(&mut self, theme: &str) {
-        self.resource_manager.themes.push(theme.to_owned());
-
-        EventContext::new(self).reload_styles().expect("Failed to reload styles");
-    }
-
     pub fn add_stylesheet(&mut self, style: impl IntoCssStr) -> Result<(), std::io::Error> {
         self.resource_manager.styles.push(Box::new(style));
 
@@ -578,18 +599,48 @@ impl Context {
     }
 
     /// Remove all user themes from the application.
-    pub fn remove_user_themes(&mut self) {
-        self.resource_manager.themes.clear();
+    pub fn add_built_in_styles(&mut self) {
+        self.add_built_in_translations();
 
-        self.add_theme(DEFAULT_LAYOUT);
-        self.add_theme(MARKDOWN);
-        if !self.ignore_default_theme {
-            let environment = self.data::<Environment>();
-            match environment.theme.get_current_theme() {
-                ThemeMode::LightMode => self.add_theme(LIGHT_THEME),
-                ThemeMode::DarkMode => self.add_theme(DARK_THEME),
-            }
+        let mut user_styles = Vec::new();
+        if self.resource_manager.styles.len() >= 3 {
+            user_styles = self.resource_manager.styles.drain(3..).collect::<Vec<_>>();
         }
+
+        self.resource_manager.styles.clear();
+
+        self.add_stylesheet(DEFAULT_LAYOUT).unwrap();
+        self.add_stylesheet(MARKDOWN).unwrap();
+
+        if !self.ignore_default_theme {
+            self.add_stylesheet(DEFAULT_THEME).unwrap();
+            let environment = self.data::<Environment>();
+            let theme_mode = environment.theme_mode;
+            let direction = environment.direction.get();
+            self.with_current(Entity::root(), |cx| {
+                let cx = &mut EventContext::new(cx);
+                cx.toggle_class("dark", theme_mode == ThemeMode::DarkMode);
+                cx.toggle_class("rtl", direction == Direction::RightToLeft);
+            })
+        } else {
+            // Add an empty stylesheet to ensure that the list of styles contains at least three entries.
+            self.add_stylesheet("").unwrap();
+        }
+
+        self.resource_manager.styles.extend(user_styles);
+
+        EventContext::new(self).reload_styles().unwrap();
+    }
+
+    /// Adds built-in translations for default view strings.
+    pub fn add_built_in_translations(&mut self) {
+        if self.built_in_translations_added {
+            return;
+        }
+
+        self.add_translation("en-US".parse().unwrap(), DEFAULT_TRANSLATION_EN_US)
+            .expect("Failed to load built-in en-US translation resources");
+        self.built_in_translations_added = true;
     }
 
     pub fn add_animation(&mut self, animation: AnimationBuilder) -> Animation {
@@ -601,8 +652,14 @@ impl Context {
     }
 
     /// Adds a translation to the application for the provided language.
-    pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: impl ToString) {
-        self.resource_manager.add_translation(lang, ftl.to_string());
+    ///
+    /// Returns an error if the FTL syntax is invalid or the resource cannot be added to the bundle.
+    pub fn add_translation(
+        &mut self,
+        lang: LanguageIdentifier,
+        ftl: impl ToString,
+    ) -> Result<(), crate::resource::TranslationError> {
+        self.resource_manager.add_translation(lang, ftl.to_string())
     }
 
     /// Adds a timer to the application.

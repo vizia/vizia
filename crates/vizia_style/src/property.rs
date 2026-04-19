@@ -1,11 +1,12 @@
 use crate::{
     Alignment, Angle, BackgroundImage, BackgroundSize, BlendMode, Border, BorderStyle, BorderWidth,
     ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError, CustomProperty,
-    Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight, FontWidth,
-    LayoutType, Length, LengthOrPercentage, LineClamp, Opacity, Outline, Overflow, Parse,
-    PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign, TextDecoration,
-    TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform,
-    Transition, Translate, Units, UnparsedProperty, Visibility, define_property,
+    Direction, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
+    FontWidth, LayoutType, LayoutWrap, Length, LengthOrPercentage, LineClamp, Opacity, Outline,
+    Overflow, Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign,
+    TextDecoration, TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke,
+    TextStrokeStyle, Transform, Transition, Translate, Units, UnparsedProperty, Visibility,
+    define_property,
 };
 use cssparser::Parser;
 
@@ -27,6 +28,8 @@ define_property! {
         "position-type": PositionType(PositionType),
 
         "alignment": Alignment(Alignment),
+        "direction": Direction(Direction),
+        "wrap": Wrap(LayoutWrap),
 
         // Grid
         "grid-columns": GridColumns(Vec<Units>),
@@ -184,6 +187,7 @@ define_property! {
         "shadow": Shadow(Vec<Shadow>),
 
         // Backdrop Filter
+        "filter": Filter(Filter),
         "backdrop-filter": BackdropFilter(Filter),
 
         // Animations
@@ -214,5 +218,14 @@ mod tests {
         let mut parser = Parser::new(&mut parser_input);
         let _parsed_property =
             Property::parse_value(CowRcStr::from("background-color"), &mut parser);
+    }
+
+    #[test]
+    fn parse_filter_property() {
+        let mut parser_input = ParserInput::new("blur(5px)");
+        let mut parser = Parser::new(&mut parser_input);
+        let parsed_property = Property::parse_value(CowRcStr::from("filter"), &mut parser).unwrap();
+
+        assert_eq!(parsed_property, Property::Filter(Filter::Blur(Length::px(5.0))));
     }
 }

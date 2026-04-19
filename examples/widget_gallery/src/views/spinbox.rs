@@ -106,19 +106,12 @@ pub fn spinbox(cx: &mut Context) {
 
         Label::new(cx, "### Basic spinbox");
 
-        DemoRegion::new(
-            cx,
-            move |cx| {
-                Spinbox::new(cx, spinbox_value_1)
-                    .width(Pixels(100.0))
-                    .on_increment(|ex| ex.emit(SpinboxEvent::Increment1))
-                    .on_decrement(|ex| ex.emit(SpinboxEvent::Decrement1));
-            },
-            r#"Spinbox::new(cx, SpinboxData::spinbox_value_1)
-    .width(Pixels(100.0))
-    .on_increment(|ex| ex.emit(SpinboxEvent::Increment1))
-    .on_decrement(|ex| ex.emit(SpinboxEvent::Decrement1));"#,
-        );
+        DemoRegion::new(cx, "Basic Spinbox", move |cx| {
+            Spinbox::new(cx, spinbox_value_1)
+                .width(Pixels(100.0))
+                .on_increment(|ex| ex.emit(SpinboxEvent::Increment1))
+                .on_decrement(|ex| ex.emit(SpinboxEvent::Decrement1));
+        });
     })
     .class("panel");
 }

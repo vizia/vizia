@@ -56,7 +56,7 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, "Click me to collapse the content").hoverable(false);
                     },
                     |cx| {
-                        Label::new(cx, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5").hoverable(false);
+                        Label::new(cx, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5").text_wrap(true).hoverable(false);
                     },
                 )
                 .open(collapsed);

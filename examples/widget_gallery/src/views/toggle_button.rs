@@ -48,45 +48,25 @@ pub fn toggle_button(cx: &mut Context) {
 
         Markdown::new(cx, "### Basic toggle button");
 
-        DemoRegion::new(
-            cx,
-            move |cx| {
-                ToggleButton::new(cx, bold, |cx| Label::new(cx, "Bold"))
-                    .on_toggle(|cx| cx.emit(ToggleEvent::Bold));
-            },
-            r#"ToggleButton::new(cx, ToggleData::bold, |cx| Label::new(cx, "Bold"))
-    .on_toggle(|cx| cx.emit(ToggleEvent::ToggleBold));"#,
-        );
+        DemoRegion::new(cx, "Basic Toggle Button", move |cx| {
+            ToggleButton::new(cx, bold, |cx| Label::new(cx, "Bold"))
+                .on_toggle(|cx| cx.emit(ToggleEvent::Bold));
+        });
 
         Markdown::new(cx, "### Toggle button group");
 
-        DemoRegion::new(
-            cx,
-            move |cx| {
-                ButtonGroup::new(cx, |cx| {
-                    ToggleButton::new(cx, bold, |cx| Svg::new(cx, ICON_BOLD))
-                        .on_toggle(|cx| cx.emit(ToggleEvent::Bold));
+        DemoRegion::new(cx, "Toggle Button Group", move |cx| {
+            ButtonGroup::new(cx, |cx| {
+                ToggleButton::new(cx, bold, |cx| Svg::new(cx, ICON_BOLD))
+                    .on_toggle(|cx| cx.emit(ToggleEvent::Bold));
 
-                    ToggleButton::new(cx, italic, |cx| Svg::new(cx, ICON_ITALIC))
-                        .on_toggle(|cx| cx.emit(ToggleEvent::Italic));
+                ToggleButton::new(cx, italic, |cx| Svg::new(cx, ICON_ITALIC))
+                    .on_toggle(|cx| cx.emit(ToggleEvent::Italic));
 
-                    ToggleButton::new(cx, underline, |cx| Svg::new(cx, ICON_UNDERLINE))
-                        .on_toggle(|cx| cx.emit(ToggleEvent::Underline));
-                });
-            },
-            r#"ButtonGroup::new(cx, |cx| {
-    ToggleButton::new(cx, ToggleData::bold, |cx| Svg::new(cx, ICON_BOLD))
-        .on_toggle(|cx| cx.emit(ToggleEvent::ToggleBold));
-
-    ToggleButton::new(cx, ToggleData::italic, |cx| Svg::new(cx, ICON_ITALIC))
-        .on_toggle(|cx| cx.emit(ToggleEvent::ToggleItalic));
-
-    ToggleButton::new(cx, ToggleData::underline, |cx| {
-        Svg::new(cx, ICON_UNDERLINE)
-    })
-    .on_toggle(|cx| cx.emit(ToggleEvent::ToggleUnderline));
-});"#,
-        );
+                ToggleButton::new(cx, underline, |cx| Svg::new(cx, ICON_UNDERLINE))
+                    .on_toggle(|cx| cx.emit(ToggleEvent::Underline));
+            });
+        });
     })
     .class("panel");
 }

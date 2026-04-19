@@ -137,6 +137,7 @@ pub trait View: 'static + Sized {
             cache: &cx.cache,
             style: &cx.style,
             text_context: &mut cx.text_context,
+            entity_identifiers: &cx.entity_identifiers,
         };
 
         if let Some(parent_node) = get_access_node(&mut access_context, &mut cx.views, parent_id) {

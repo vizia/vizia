@@ -3,38 +3,42 @@ use vizia::{icons::ICON_USER, prelude::*};
 use crate::components::DemoRegion;
 
 pub fn avatar_group(cx: &mut Context) {
-    cx.load_image(
-        "vizia.png",
-        include_bytes!("../../assets/vizia-logo-01.png"),
-        ImageRetentionPolicy::DropWhenNoObservers,
-    );
-
-    VStack::new(cx, |cx|{
-        Markdown::new(cx, "# Avatar
-An avatar is used to visually represent a person or entity and can contain text, an icon, or an image.
-        ");
+    VStack::new(cx, |cx| {
+        Markdown::new(
+            cx,
+            "# Avatar Group
+An avatar group displays multiple avatars stacked together to represent a collection of users or entities.",
+        );
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic avatar group");
-        DemoRegion::new(cx, |cx|{
-            AvatarGroup::new(cx, |cx|{
-                Avatar::new(cx, |cx|{
+        DemoRegion::new(cx, "Avatar Group", |cx| {
+            AvatarGroup::new(cx, |cx| {
+                Avatar::new(cx, |cx| {
                     Svg::new(cx, ICON_USER);
                 });
 
-                Avatar::new(cx, |cx|{
+                Avatar::new(cx, |cx| {
                     Svg::new(cx, ICON_USER);
                 });
 
-                Avatar::new(cx, |cx|{
+                Avatar::new(cx, |cx| {
                     Svg::new(cx, ICON_USER);
                 });
             });
-        },r#"Avatar::new(cx, |cx|{
-    Svg::new(cx, ICON_USER)
-});"#);
+        });
 
-
-    }).class("panel");
+        DemoRegion::new(cx, "Avatar Group Overflow", |cx| {
+            AvatarGroup::new(cx, |cx| {
+                for initials in ["GA", "AB", "CD", "EF", "GH"] {
+                    Avatar::new(cx, |cx| {
+                        Label::new(cx, initials);
+                    })
+                    .control_size(ControlSize::Medium);
+                }
+            })
+            .max_visible(3);
+        });
+    })
+    .class("panel");
 }

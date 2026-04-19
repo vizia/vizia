@@ -14,7 +14,6 @@
 /* AVATAR */
 
 avatar {
-    size: 50px;
     alignment: center;
 }
 
@@ -31,11 +30,13 @@ avatar.rounded {
 }
 
 avatar > svg {
-    size: 24px;
+    size: 1s;
 }
 
 avatar > image {
+    position-type: absolute;
     size: 100%;
+    space: 0px;
     background-size: cover;
 }
 
@@ -47,10 +48,69 @@ avatar.rounded > image {
     corner-radius: 4px;
 }
 
+avatar.xsmall {
+    size: 24px;
+    padding: 6px;
+}
+
+avatar.small {
+    size: 32px;
+    padding: 8px;
+}
+
+avatar.medium {
+    size: 42px;
+    padding: 10px;
+}
+
+avatar.large {
+    size: 56px;
+    padding: 12px;
+}
+
 /* AVATAR GROUP */
+
+avatar-group {
+    layout-type: row;
+    horizontal-gap: -20px;
+    size: auto;
+    alignment: center;
+}
 
 avatar-group > avatar {
     border: 2px solid #fff;
+}
+
+avatar-group.circle > avatar {
+    corner-radius: 50%;
+}
+
+avatar-group.square > avatar {
+    corner-radius: 0px;
+}
+
+avatar-group.rounded > avatar {
+    corner-radius: 4px;
+}
+
+avatar-group.xsmall > avatar {
+    size: 24px;
+    padding: 6px;
+}
+
+avatar-group.small > avatar {
+    size: 32px;
+    padding: 8px;
+}
+
+avatar-group.medium > avatar {
+    size: 42px;
+    padding: 10px;
+}
+
+avatar-group.large > avatar {
+    size: 56px;
+    padding: 12px;
 }
 
 /* BADGE */
@@ -79,7 +139,6 @@ toggle-button {
     height: 32px;
     width: auto;
     alignment: center;
-    cursor: hand;
     padding-left: 8px;
     padding-right: 8px;
 }
@@ -117,8 +176,8 @@ button-group.vertical > toggle-button {
 /* CHECKBOX */
 
 checkbox {
-    size: 20px;
-    cursor: hand;
+    width: 20px;
+    height: 20px;
 }
 
 checkbox > svg {
@@ -152,57 +211,71 @@ chip > .close-icon svg {
 
 /* DATEPICKER */
 
-datepicker {
+calendar {
     width: auto;
     height: auto;
-    padding: 4px;
-    vertical-gap: 4px;
+    padding: 12px;
+    vertical-gap: 16px;
     alignment: center;
 }
 
-.datepicker-header {
-    width: auto;
+.calendar-controls {
+    width: 1s;
     height: auto;
-    horizontal-gap: 4px;
-}
-
-.datepicker-header picklist popup {
-    left: 1s;
-    right: 1s;
-    width: auto;
-}
-
-.datepicker-calendar {
-    width: auto;
-    height: auto;
-}
-
-.datepicker-calendar-headers {
     alignment: center;
-    height: auto;
 }
 
-.datepicker-calendar-header {
-    alignment: center;
-    width: 32px;
-    height: 32px;
-}
-
-.datepicker-calendar-day {
+.calendar-controls .month-nav {
     width: 32px;
     height: 32px;
     alignment: center;
+    padding: 12px;
 }
 
-.datepicker-calendar-day-disabled {
+.calendar-controls .month-nav svg {
+    size: 16px;
+}
+
+.calendar-controls-select {
+    width: 1s;
+    height: auto;
+    gap: 6px;
+    alignment: center;
+}
+
+.calendar-controls select {
+    width: auto;
+    height: 32px;
+    min-width: 74px;
+}
+
+.calendar-body {
+    width: auto;
+    height: auto;
+    gap: 4px;
+}
+
+.calendar-header {
+    alignment: center;
+    height: auto;
+}
+
+.calendar-dow {
+    alignment: center;
+    width: 32px;
+    height: 21px;
+}
+
+.calendar-day {
     width: 32px;
     height: 32px;
     alignment: center;
 }
 
-.datepicker-selected-date {
-    left: 1s;
-    right: 1s;
+.calendar-day-disabled {
+    width: 32px;
+    height: 32px;
+    alignment: center;
 }
 
 /* DIVIDER */
@@ -269,16 +342,40 @@ popup {
     right: 1s;
 }
 
+/* SIDEBAR */
+
+sidebar {
+    width: 280px;
+    height: 1s;
+}
+
+sidebar > .sidebar-header {
+    width: 1s;
+    height: auto;
+    padding: 8px;
+}
+
+sidebar > .sidebar-content {
+    width: 1s;
+    height: 1s;
+}
+
+sidebar > .sidebar-footer {
+    width: 1s;
+    height: auto;
+    padding: 8px;
+}
+
 popup > list {
     width: 1s;
     min-width: auto;
     height: auto;
-    padding-top: 4px;
-    padding-bottom: 4px;
+    max-height: 200px;
 }
 
 popup > list > scrollview {
     height: auto;
+    max-height: 200px;
     width: 1s;
     min-width: auto;
 }
@@ -293,6 +390,11 @@ popup scrollview scrollbar.vertical {
     top: 4px;
     bottom: 4px;
     right: 2px;
+}
+
+.rtl popup scrollview scrollbar.vertical {
+    left: 2px;
+    right: 1s;
 }
 
 popup scrollview {
@@ -362,10 +464,7 @@ knob {
 label {
     size: auto;
     text-wrap: false;
-}
-
-label.describing {
-    cursor: hand;
+    direction: auto;
 }
 
 /* LIST */
@@ -504,10 +603,14 @@ submenu divider {
 
 /* PICKLIST */
 
-picklist {
+select {
     width: auto;
     height: 32px;
     min-width: 64px;
+}
+
+select popup {
+    max-height: 200px;
 }
 
 /* POPUP */
@@ -529,7 +632,6 @@ progressbar {
 radiobutton {
     size: 16px;
     alignment: center;
-    cursor: hand;
 }
 
 radiobutton .inner {
@@ -543,8 +645,8 @@ rating {
     layout-type: row;
 }
 
-/* RESIZABLE STACK */
-resizable-stack > resize-handle {
+/* RESIZABLE */
+resizable > resize-handle {
     opacity: 0;
     width: 4px;
     height: 1s;
@@ -554,7 +656,12 @@ resizable-stack > resize-handle {
     cursor: ew-resize;
 }
 
-resizable-stack.horizontal > resize-handle {
+resizable.left > resize-handle {
+    left: 0px;
+    translate: -50% 0%;
+}
+
+resizable.horizontal > resize-handle {
     width: 1s;
     height: 4px;
     top: 1s;
@@ -563,8 +670,13 @@ resizable-stack.horizontal > resize-handle {
     cursor: ns-resize;
 }
 
-resizable-stack:active > resize-handle,
-resizable-stack > resize-handle:hover {
+resizable.top > resize-handle {
+    top: 0px;
+    translate: 0% -50%;
+}
+
+resizable:active > resize-handle,
+resizable > resize-handle:hover {
     opacity: 1;
 }
 
@@ -585,6 +697,10 @@ scrollview > scrollbar.horizontal {
 
 scrollview > scrollbar.vertical {
     left: 1s;
+}
+
+.rtl scrollview > scrollbar.vertical {
+    left: 0px;
 }
 
 /* SCROLLBAR */
@@ -650,22 +766,20 @@ slider .thumb {
 
 spinbox {
     alignment: center;
+    width: auto;
+    height: auto;
 }
 
 spinbox.horizontal {
     layout-type: row;
-    height: 32px;
-    padding-left: 4px;
-    padding-right: 4px;
-    horizontal-gap: 4px;
+    padding: 4px;
+    gap: 4px;
 }
 
 spinbox.vertical {
     layout-type: column;
-    width: 32px;
-    padding-top: 4px;
-    padding-bottom: 4px;
-    vertical-gap: 4px;
+    padding: 4px;
+    gap: 4px;
 }
 
 spinbox .spinbox-button {
@@ -678,16 +792,10 @@ spinbox .spinbox-button > svg {
 }
 
 spinbox .spinbox-value {
-    width: 1s;
-    min-width: auto;
-    height: auto;
+    width: 50px;
+    min-width: 50px;
+    height: 1s;
     alignment: center;
-}
-
-spinbox picklist.spinbox-value dropdown {
-    width: 1s;
-    left: 0px;
-    right: 0px;
 }
 
 /* STACK */
@@ -701,27 +809,32 @@ zstack > * {
 switch {
     width: 30px;
     height: 18px;
-    cursor: hand;
 }
 
-switch .switch-handle {
-    left: 0px;
-    width: 18px;
-    height: 18px;
-    transition: left 100ms;
-}
-
-switch .switch-handle-bg {
-    width: 30px;
-    height: 12px;
+switch .thumb {
+    left: 1px;
+    width: 16px;
+    height: 16px;
     top: 1s;
     bottom: 1s;
-    transition: background-color 100ms;
+    transition: left 100ms;
 }
 
-switch:checked .switch-handle {
-    left: 12px;
+switch:checked .thumb {
+    left: 13px;
     transition: left 100ms;
+}
+
+.rtl switch .thumb {
+    left: 1s;
+    right: 1px;
+    transition: right 100ms;
+}
+
+.rtl switch:checked .thumb {
+    left: 1s;
+    right: 13px;
+    transition: right 100ms;
 }
 
 /* TABVIEW */
@@ -833,33 +946,16 @@ textbox {
     padding-left: 8px;
     padding-right: 8px;
     alignment: left;
+    direction: auto;
     cursor: text;
-    caret-color: transparent;
     selection-color: #6464c888;
-}
-
-textbox:checked.caret {
-    caret-color: #181818;
 }
 
 textbox:read-only {
     caret-color: transparent;
 }
 
-textbox:checked:read-only.caret {
-    caret-color: transparent;
-}
-
-textbox > label.placeholder {
-    padding-left: 8px;
-    alignment: left;
-}
-
 textbox.icon-before {
-    padding-left: 30px;
-}
-
-textbox.icon-before > label.placeholder {
     padding-left: 30px;
 }
 
@@ -910,16 +1006,13 @@ collapsible {
 collapsible > .header {
     gap: 1s;
     min-gap: 16px;
-    height: 48px;
+    height: auto;
     alignment: left;
-    padding-left: 24px;
-    padding-right: 24px;
-    transition: height 300ms;
+    padding: 8px;
 }
 
 collapsible.open > .header {
-    height: 64px;
-    transition: height 300ms;
+    height: auto;
 }
 
 collapsible > .header > .expand-icon {
@@ -938,11 +1031,7 @@ collapsible .content {
     max-height: 0px;
     overflow: hidden;
     transition: max-height 300ms;
-    padding-left: 24px;
-    padding-right: 24px;
-    padding-top: 0px;
-    padding-bottom: 16px;
-    gap: 16px;
+    gap: 8px;
 }
 
 collapsible.open .content {
@@ -950,4 +1039,68 @@ collapsible.open .content {
     height: auto;
     max-height: auto;
     transition: max-height 300ms;
+}
+
+accordion {
+    width: 1s;
+    height: auto;
+}
+
+accordion > collapsible > .header {
+    height: auto;
+    padding: 8px;
+}
+
+accordion > collapsible.open > .header {
+    height: auto;
+}
+
+accordion > collapsible .content {
+    padding: 8px;
+    gap: 8px;
+    transition: max-height 220ms;
+}
+
+accordion > collapsible.open .content {
+    transition: max-height 220ms;
+}
+
+accordion > collapsible > .header > .expand-icon {
+    transition: rotate 220ms;
+}
+
+accordion > collapsible.open > .header > .expand-icon {
+    transition: rotate 220ms;
+}
+
+card {
+    width: auto;
+    height: auto;
+    min-width: 240px;
+}
+
+card-header,
+card-content,
+card-footer {
+    width: 1s;
+    height: auto;
+}
+
+card-header {
+    gap: 4px;
+    padding-top: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+card-content {
+    gap: 12px;
+    padding: 20px;
+}
+
+card-footer {
+    gap: 8px;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px;
 }

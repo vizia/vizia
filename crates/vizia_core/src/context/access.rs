@@ -1,4 +1,5 @@
 use accesskit::{Node, NodeId, Rect, TextDirection, TextSelection};
+use hashbrown::HashMap;
 
 use crate::{cache::CachedData, prelude::*, text::TextContext};
 
@@ -6,6 +7,7 @@ use crate::{cache::CachedData, prelude::*, text::TextContext};
 pub struct AccessContext<'a> {
     pub(crate) current: Entity,
     pub(crate) tree: &'a Tree<Entity>,
+    pub(crate) entity_identifiers: &'a HashMap<String, Entity>,
     pub(crate) style: &'a Style,
     pub(crate) cache: &'a CachedData,
     pub(crate) text_context: &'a mut TextContext,
@@ -15,6 +17,11 @@ impl AccessContext<'_> {
     /// Returns the bounds of the current view.
     pub fn bounds(&self) -> BoundingBox {
         self.cache.get_bounds(self.current)
+    }
+
+    /// Finds the entity that identifier identifies.
+    pub fn resolve_entity_identifier(&self, identity: &str) -> Option<Entity> {
+        self.entity_identifiers.get(identity).copied()
     }
 }
 

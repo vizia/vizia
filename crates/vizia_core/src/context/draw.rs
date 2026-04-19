@@ -16,7 +16,7 @@ use crate::cache::CachedData;
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::{ImageOrSvg, ResourceManager};
-use crate::text::TextContext;
+use crate::text::{TextContext, resolved_text_direction};
 use vizia_input::MouseState;
 
 use super::ModelData;
@@ -447,6 +447,11 @@ impl DrawContext<'_> {
     /// Returns the resolved shadows of the current view.
     pub fn shadows(&self) -> Option<Vec<Shadow>> {
         self.style.shadow.get_resolved(self.current, &self.style.custom_shadow_props)
+    }
+
+    /// Returns a reference to any filter applied to the current view.
+    pub fn filter(&self) -> Option<&Filter> {
+        self.style.filter.get(self.current)
     }
 
     /// Return to reference to any filter applied to the current view.
@@ -1182,10 +1187,19 @@ impl DrawContext<'_> {
 
             top *= bounds.height() - padding_top - padding_bottom - paragraph.height();
 
-            let padding_left = match self.padding_left() {
+            let mut padding_left = match self.padding_left() {
                 Units::Pixels(val) => val,
                 _ => 0.0,
             };
+
+            let mut padding_right = match self.padding_right() {
+                Units::Pixels(val) => val,
+                _ => 0.0,
+            };
+
+            if resolved_text_direction(self.style, self.current) == Direction::RightToLeft {
+                std::mem::swap(&mut padding_left, &mut padding_right);
+            }
 
             paragraph.paint(
                 canvas,

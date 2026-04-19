@@ -111,6 +111,7 @@ pub trait AbilityModifiers: internal::Modifiable {
                 if let Some(abilities) = cx.style.abilities.get_mut(entity) {
                     abilities.set(Abilities::NAVIGABLE, val);
                     cx.needs_restyle(entity);
+                    cx.style.needs_access_update(entity);
                 }
             });
         });

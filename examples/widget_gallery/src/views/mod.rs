@@ -22,8 +22,8 @@ pub use chip::*;
 pub mod combobox;
 pub use combobox::*;
 
-pub mod datepicker;
-pub use datepicker::*;
+pub mod calendar;
+pub use calendar::*;
 
 pub mod divider;
 pub use divider::*;
@@ -55,8 +55,8 @@ pub use menu::*;
 pub mod menu_bar;
 pub use menu_bar::*;
 
-pub mod picklist;
-pub use picklist::*;
+pub mod select;
+pub use select::*;
 
 pub mod progressbar;
 pub use progressbar::*;
@@ -96,3 +96,33 @@ pub use tooltip::*;
 
 pub mod virtual_list;
 pub use virtual_list::*;
+
+pub mod accordion;
+pub use accordion::*;
+
+pub mod card;
+pub use card::*;
+
+pub mod collapsible;
+pub use collapsible::*;
+
+pub mod grid;
+pub use grid::*;
+
+pub mod markdown_panel;
+pub use markdown_panel::*;
+
+pub mod popup;
+pub use popup::*;
+
+pub mod resizable;
+pub use resizable::*;
+
+pub mod table;
+pub use table::*;
+
+pub mod virtual_table;
+pub use virtual_table::*;
+
+pub mod xypad;
+pub use xypad::*;

@@ -233,6 +233,20 @@ pub trait LayoutModifiers: internal::Modifiable {
         SystemFlags::RELAYOUT
     );
 
+    modifier!(
+        /// Set the text direction of the view.
+        direction,
+        Direction,
+        SystemFlags::RELAYOUT
+    );
+
+    modifier!(
+        /// Set the wrapping behavior of the view.
+        wrap,
+        LayoutWrap,
+        SystemFlags::RELAYOUT
+    );
+
     /// Sets the space between the vew and its children.
     ///
     /// The child_space works by overriding the `Auto` space properties of its children.

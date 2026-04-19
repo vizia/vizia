@@ -36,19 +36,11 @@ pub fn combobox(cx: &mut Context) {
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic combobox");
-
-        DemoRegion::new(
-            cx,
-            move |cx| {
-                ComboBox::new(cx, options, selected_option)
-                    .on_select(|cx, index| cx.emit(ComboBoxEvent::SetOption(index)))
-                    .width(Pixels(100.0));
-            },
-            r#"ComboBox::new(cx, options, selected_option)
-    .on_select(|cx, index| cx.emit(ComboBoxEvent::SetOption(index)))
-    .width(Pixels(100.0));"#,
-        );
+        DemoRegion::new(cx, "Basic Combobox", move |cx| {
+            ComboBox::new(cx, options, selected_option)
+                .on_select(|cx, index| cx.emit(ComboBoxEvent::SetOption(index)))
+                .width(Pixels(100.0));
+        });
     })
     .class("panel");
 }

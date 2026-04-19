@@ -88,9 +88,9 @@ impl Label {
     /// #
     /// Label::new(cx, "Text");
     /// ```
-    pub fn new<T>(cx: &mut Context, text: impl Res<T> + Clone) -> Handle<Self>
+    pub fn new<T>(cx: &mut Context, text: impl Res<T> + Clone + 'static) -> Handle<Self>
     where
-        T: ToStringLocalized,
+        T: ToStringLocalized + 'static,
     {
         Self { describing: None }.build(cx, |_| {}).text(text.clone()).role(Role::Label).name(text)
     }
@@ -98,11 +98,11 @@ impl Label {
     /// Creates a new rich [Label] view.
     pub fn rich<T>(
         cx: &mut Context,
-        text: impl Res<T> + Clone,
+        text: impl Res<T> + Clone + 'static,
         children: impl Fn(&mut Context),
     ) -> Handle<Self>
     where
-        T: ToStringLocalized,
+        T: ToStringLocalized + 'static,
     {
         Self { describing: None }
             .build(cx, |cx| {
@@ -143,7 +143,9 @@ impl Handle<'_, Label> {
     pub fn describing(self, entity_identifier: impl Into<String>) -> Self {
         let identifier = entity_identifier.into();
         if let Some(id) = self.cx.resolve_entity_identifier(&identifier) {
-            self.cx.style.labelled_by.insert(id, self.entity);
+            let label_identifier = format!("{}", self.entity);
+            self.cx.entity_identifiers.insert(label_identifier.clone(), self.entity);
+            self.cx.style.labelled_by.insert(id, label_identifier);
         }
         self.modify(|label| label.describing = Some(identifier)).class("describing").hidden(true)
     }
@@ -196,7 +198,7 @@ impl TextSpan {
                 cx.style.text_span.insert(cx.current(), true);
                 children(cx);
             })
-            .text(text)
+            .text(text.to_string())
             .display(Display::None)
             .pointer_events(PointerEvents::None)
     }

@@ -1,5 +1,5 @@
 use crate::{accessibility::IntoNode, events::ViewHandler, prelude::*};
-use accesskit::{Node, NodeId, Rect, Toggled, Tree, TreeUpdate};
+use accesskit::{Node, NodeId, Orientation as AccessOrientation, Rect, Toggled, Tree, TreeUpdate};
 use hashbrown::HashMap;
 use vizia_storage::LayoutTreeIterator;
 
@@ -18,24 +18,13 @@ pub fn accessibility_system(cx: &mut Context) {
             let mut access_context = AccessContext {
                 current: entity,
                 tree: &cx.tree,
+                entity_identifiers: &cx.entity_identifiers,
                 cache: &cx.cache,
                 style: &cx.style,
                 text_context: &mut cx.text_context,
             };
 
             if let Some(node) = get_access_node(&mut access_context, &mut cx.views, entity) {
-                let navigable = cx
-                    .style
-                    .abilities
-                    .get(entity)
-                    .copied()
-                    .unwrap_or_default()
-                    .contains(Abilities::NAVIGABLE);
-
-                if node.node_builder.role() == Role::Unknown && !navigable {
-                    continue;
-                }
-
                 let mut nodes = vec![(node.node_id(), node.node_builder)];
 
                 // If child nodes were generated then append them to the nodes list
@@ -73,6 +62,7 @@ pub fn initial_accessibility_system(cx: &mut Context) -> TreeUpdate {
         let mut access_context = AccessContext {
             current: entity,
             tree: &cx.tree,
+            entity_identifiers: &cx.entity_identifiers,
             cache: &cx.cache,
             style: &cx.style,
             text_context: &mut cx.text_context,
@@ -122,8 +112,9 @@ pub(crate) fn get_access_node(
 ) -> Option<AccessNode> {
     let mut node_builder = Node::default();
 
-    if let Some(role) = cx.style.role.get(entity) {
-        node_builder.set_role(*role);
+    let role = cx.style.role.get(entity).copied();
+    if let Some(role) = role {
+        node_builder.set_role(role);
     }
 
     let bounds = cx.cache.get_bounds(entity);
@@ -183,6 +174,23 @@ pub(crate) fn get_access_node(
         }
     }
 
+    let has_expanded = cx.style.expanded.get(entity).copied();
+    if let Some(expanded) = has_expanded {
+        node_builder.set_expanded(expanded);
+    }
+
+    if let Some(selected) = cx.style.selected.get(entity).copied() {
+        node_builder.set_selected(selected);
+    }
+
+    if let Some(orientation) = cx.style.orientation.get(entity).copied() {
+        let orientation = match orientation {
+            Orientation::Horizontal => AccessOrientation::Horizontal,
+            Orientation::Vertical => AccessOrientation::Vertical,
+        };
+        node_builder.set_orientation(orientation);
+    }
+
     if let Some(live) = cx.style.live.get(entity) {
         node_builder.set_live(*live);
     }
@@ -191,12 +199,28 @@ pub(crate) fn get_access_node(
     //     node_builder.set_default_action_verb(*default_action_verb);
     // }
 
-    if let Some(labelled_by) = cx.style.labelled_by.get(entity) {
-        node_builder.set_labelled_by(vec![labelled_by.accesskit_id()]);
+    if let Some(labelled_by_id) = cx.style.labelled_by.get(entity) {
+        if let Some(labelled_by) = cx.resolve_entity_identifier(labelled_by_id) {
+            node_builder.set_labelled_by(vec![labelled_by.accesskit_id()]);
+        }
     }
 
-    if let Some(described_by) = cx.style.described_by.get(entity) {
-        node_builder.set_described_by(vec![described_by.accesskit_id()]);
+    if let Some(described_by_id) = cx.style.described_by.get(entity) {
+        if let Some(described_by) = cx.resolve_entity_identifier(described_by_id) {
+            node_builder.set_described_by(vec![described_by.accesskit_id()]);
+        }
+    }
+
+    if let Some(controlled_id) = cx.style.controls.get(entity) {
+        if let Some(controlled) = cx.resolve_entity_identifier(controlled_id) {
+            node_builder.set_controls(vec![controlled.accesskit_id()]);
+        }
+    }
+
+    if let Some(active_descendant_id) = cx.style.active_descendant.get(entity) {
+        if let Some(active_descendant) = cx.resolve_entity_identifier(active_descendant_id) {
+            node_builder.set_active_descendant(active_descendant.accesskit_id());
+        }
     }
 
     let checkable = cx

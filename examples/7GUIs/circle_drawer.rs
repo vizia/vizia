@@ -320,7 +320,7 @@ impl CircleDrawer {
             Binding::new(cx, menu_open, move |cx| {
                 let is_open = menu_open.get();
                 if is_open {
-                    Popup::new(cx, |cx| {
+                    Popover::new(cx, |cx| {
                         Button::new(cx, |cx| Label::new(cx, "Adjust diameter..")).on_press(|cx| {
                             cx.emit(CircleDrawerEvent::ToggleDialog);
                             cx.emit(CircleDrawerEvent::ToggleRightMenu);
@@ -344,7 +344,7 @@ impl CircleDrawer {
                         VStack::new(cx, move |cx| {
                             Label::new(
                                 cx,
-                                &format!(
+                                format!(
                                     "Adjust diameter of circle at {:?}.",
                                     circles_data
                                         .map(move |cd| {

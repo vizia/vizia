@@ -2,7 +2,7 @@ use crate::prelude::*;
 
 /// A dropdown is used to display some state with the ability to open a popup with options to change that state.
 ///
-/// Usually a dropdown is used in the context of a "combobox" or "picklist" to allow the user to select
+/// Usually a dropdown is used in the context of a "combobox" or "select" to allow the user to select
 /// from one of several discrete options. The dropdown takes two closures, one which shows the current state
 /// regardless of whether the dropdown is open or closed, and one which shows the contents while it is open.
 ///
@@ -145,7 +145,7 @@ impl Dropdown {
                 Binding::new(cx, is_open, move |cx| {
                     let is_open = is_open.get();
                     if is_open {
-                        Popup::new(cx, |cx| {
+                        Popover::new(cx, |cx| {
                             (content)(cx);
                         })
                         .on_blur(|cx| cx.emit(PopupEvent::Close))

@@ -31,14 +31,9 @@ pub fn switch(cx: &mut Context) {
 
         Markdown::new(cx, "### Basic switch");
 
-        DemoRegion::new(
-            cx,
-            move |cx| {
-                Switch::new(cx, flag).on_toggle(|cx| cx.emit(SwitchEvent::ToggleFlag));
-            },
-            r#"Switch::new(cx, SwitchData::flag)
-    .on_toggle(|cx| cx.emit(SwitchEvent::ToggleFlag));"#,
-        );
+        DemoRegion::new(cx, "Basic Switch", move |cx| {
+            Switch::new(cx, flag).on_toggle(|cx| cx.emit(SwitchEvent::ToggleFlag));
+        });
     })
     .class("panel");
 }

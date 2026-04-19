@@ -76,7 +76,8 @@ hashbrown = "0.16.1"
 indexmap = "2.13"
 keyboard-types = { version = "0.7", default-features = false }
 log = "0.4.29"
-morphorm = "0.7.0"
+morphorm = {git = "https://github.com/vizia/morphorm.git", branch = "direction"}
+# morphorm = {path = "../morphorm"}
 open = "5.3.3"
 parking_lot = "0.12.1"
 proc-macro2 = "1.0.106"
@@ -93,6 +94,7 @@ sys-locale = "0.3"
 tokio = { version = "1.50.0", features = ["rt-multi-thread"] }
 unic-langid = { version = "0.9.6", features = ["macros"] }
 unicode-segmentation = "1.12"
+unicode-bidi = "0.3.18"
 web-time = "1.1"
 windows-sys = { version = "0.59", default-features = false, features = ["Win32_Graphics_Dwm"] }
 winit = { version = "0.30.13", default-features = false }
@@ -169,12 +171,12 @@ name = "window_modifiers"
 path = "examples/window_modifiers.rs"
 
 [[example]]
-name = "datepicker"
-path = "examples/views/datepicker.rs"
+name = "calendar"
+path = "examples/views/calendar.rs"
 
 [[example]]
-name = "picklist"
-path = "examples/views/picklist.rs"
+name = "select"
+path = "examples/views/select.rs"
 
 [[example]]
 name = "combobox"
@@ -203,6 +205,10 @@ path = "examples/views/rating.rs"
 [[example]]
 name = "button"
 path = "examples/views/button.rs"
+
+[[example]]
+name = "button_group"
+path = "examples/views/button_group.rs"
 
 [[example]]
 name = "checkbox"
@@ -331,13 +337,33 @@ name = "collapsible"
 path = "examples/views/collapsible.rs"
 
 [[example]]
+name = "accordion"
+path = "examples/views/accordion.rs"
+
+[[example]]
+name = "card"
+path = "examples/views/card.rs"
+
+[[example]]
+name = "avatar"
+path = "examples/views/avatar.rs"
+
+[[example]]
 name = "divider"
 path = "examples/views/divider.rs"
 
 [[example]]
-name = "resizable_stack"
-path = "examples/views/resizable_stack.rs"
+name = "resizable"
+path = "examples/views/resizable.rs"
 
 [[example]]
 name = "variables"
 path = "examples/variables.rs"
+
+[[example]]
+name = "virtual_table"
+path = "examples/views/virtual_table.rs"
+
+[[example]]
+name = "table"
+path = "examples/views/table.rs"

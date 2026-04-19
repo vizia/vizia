@@ -33,10 +33,8 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         let entity = self.entity();
         let id = id.into();
 
-        if let Some(label_entity) = self.context().resolve_entity_identifier(&id) {
-            self.context().style.labelled_by.insert(entity, label_entity);
-            self.context().style.needs_access_update(entity);
-        }
+        self.context().style.labelled_by.insert(entity, id);
+        self.context().style.needs_access_update(entity);
 
         self
     }
@@ -46,10 +44,36 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         let entity = self.entity();
         let id = id.into();
 
-        if let Some(description_entity) = self.context().resolve_entity_identifier(&id) {
-            self.context().style.described_by.insert(entity, description_entity);
-            self.context().style.needs_access_update(entity);
-        }
+        self.context().style.described_by.insert(entity, id);
+        self.context().style.needs_access_update(entity);
+
+        self
+    }
+
+    /// Sets the accessibility controls relationship for the view using the ID of another view.
+    fn controls(mut self, id: impl Into<String>) -> Self {
+        let entity = self.entity();
+        let id = id.into();
+
+        self.context().style.controls.insert(entity, id);
+        self.context().style.needs_access_update(entity);
+
+        self
+    }
+
+    /// Sets the accessibility active descendant relationship for the view.
+    fn active_descendant<U: Into<String> + Clone + 'static>(
+        mut self,
+        id: impl Res<U> + 'static,
+    ) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            id.set_or_bind(cx, move |cx, id| {
+                cx.style.active_descendant.insert(entity, id.get_value(cx).into());
+                cx.style.needs_access_update(entity);
+            });
+        });
 
         self
     }
@@ -81,6 +105,63 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         self.context().with_current(current, |cx| {
             hidden.set_or_bind(cx, move |cx, hidden| {
                 cx.style.hidden.insert(entity, hidden.get_value(cx).into());
+                cx.style.needs_access_update(entity);
+            });
+        });
+
+        self
+    }
+
+    /// Sets whether the view should be announced as expanded (`true`) or collapsed (`false`).
+    fn expanded<U: Into<bool>>(mut self, expanded: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            expanded.set_or_bind(cx, move |cx, expanded| {
+                cx.style.expanded.insert(entity, expanded.get_value(cx).into());
+                cx.style.needs_access_update(entity);
+            });
+        });
+
+        self
+    }
+
+    /// Sets whether the view should be announced as selected (`true`) or not selected (`false`).
+    fn selected<U: Into<bool>>(mut self, selected: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            selected.set_or_bind(cx, move |cx, selected| {
+                cx.style.selected.insert(entity, selected.get_value(cx).into());
+                cx.style.needs_access_update(entity);
+            });
+        });
+
+        self
+    }
+
+    /// Sets the accessibility orientation of the view.
+    /// This does not affect the layout of the view, but is used to inform
+    /// assistive technologies of the orientation of the view.
+    fn orientation<U: Into<Orientation>>(mut self, orientation: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            orientation.set_or_bind(cx, move |cx, orientation| {
+                let orientation_value = orientation.get_value(cx).into();
+
+                if orientation_value == Orientation::Horizontal {
+                    cx.with_current(entity, |cx| {
+                        cx.toggle_class("horizontal", true);
+                        cx.toggle_class("vertical", false);
+                    });
+                } else {
+                    cx.with_current(entity, |cx| {
+                        cx.toggle_class("horizontal", false);
+                        cx.toggle_class("vertical", true);
+                    });
+                }
+                cx.style.orientation.insert(entity, orientation_value);
                 cx.style.needs_access_update(entity);
             });
         });

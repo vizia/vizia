@@ -29,14 +29,40 @@ pub struct Badge {
     placement: Signal<BadgePlacement>,
 }
 
+impl BadgePlacement {
+    /// Mirrors Left↔Right placements for RTL layouts. Top and Bottom are unchanged.
+    fn flip_h(self) -> Self {
+        match self {
+            Self::TopLeft => Self::TopRight,
+            Self::TopRight => Self::TopLeft,
+            Self::BottomLeft => Self::BottomRight,
+            Self::BottomRight => Self::BottomLeft,
+            Self::Left => Self::Right,
+            Self::Right => Self::Left,
+            other => other,
+        }
+    }
+}
+
 impl Badge {
     fn common<F>(cx: &mut Context, content: F) -> Handle<Self>
     where
         F: FnOnce(&mut Context),
     {
         let placement = Signal::new(BadgePlacement::TopRight);
-        Self { placement }.build(cx, content).bind(placement, move |mut handle| {
-            let placement = placement.get();
+        let direction = cx.environment().direction;
+        let combined = Memo::new(move |_| (placement.get(), direction.get()));
+
+        Self { placement }.build(cx, content).bind(combined, move |mut handle| {
+            let (raw_placement, env_dir) = combined.get();
+            // Prefer the per-entity computed direction (set via CSS or a direction modifier)
+            // so a user can override direction on a specific badge without changing the global
+            // setting. Fall back to env_dir to stay reactive on global direction changes.
+            let entity = handle.entity();
+            let dir = handle.cx.style.direction.get(entity).copied().unwrap_or(env_dir);
+            let placement =
+                if dir == Direction::RightToLeft { raw_placement.flip_h() } else { raw_placement };
+
             let (t, b) = match placement {
                 BadgePlacement::TopLeft | BadgePlacement::TopRight => {
                     (Stretch(1.0), Percentage(85.35))
@@ -46,7 +72,6 @@ impl Badge {
                 BadgePlacement::BottomLeft | BadgePlacement::BottomRight => {
                     (Percentage(85.35), Stretch(1.0))
                 }
-
                 BadgePlacement::Left | BadgePlacement::Right => (Stretch(1.0), Stretch(1.0)),
             };
 

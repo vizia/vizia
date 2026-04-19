@@ -10,16 +10,25 @@ macro_rules! process_auto_animations {
             for animation in animations {
                 if animation.keyframes.iter().any(|keyframe| keyframe.value == Units::Auto) {
                     for entity in animation.entities.iter() {
-                        entities.push((*entity, animation.clone()));
+                        let current_bounds = $cx.cache.get_bounds(*entity);
+                        let current_measured =
+                            if $height { current_bounds.h } else { current_bounds.w };
+                        entities.push((*entity, animation.clone(), current_measured));
                     }
                 }
             }
 
-            for (entity, mut animation) in entities {
-                $property.stop_animation(entity, animation.id);
-                $property.insert(entity, Units::Auto);
+            if entities.is_empty() {
+                // No auto keyframes for this property in the current frame.
+            } else {
+                // Resolve auto values against a root layout pass so wrapped text is measured using
+                // real parent constraints (especially width) rather than isolated node layout.
+                for (entity, animation, _) in entities.iter() {
+                    $property.stop_animation(*entity, animation.id);
+                    $property.insert(*entity, Units::Auto);
+                }
 
-                let size = entity.layout(
+                Entity::root().layout(
                     &mut $cx.cache,
                     &$cx.tree,
                     &$cx.style,
@@ -29,30 +38,40 @@ macro_rules! process_auto_animations {
                     },
                 );
 
-                $property.remove(entity);
-                animation.keyframes.iter_mut().for_each(|keyframe| {
-                    if keyframe.value == Units::Auto {
-                        let parent = $cx.tree.get_parent(entity).unwrap_or(Entity::root());
-                        let parent_layout_type =
-                            $cx.style.layout_type.get(parent).copied().unwrap_or_default();
-                        let value = if (parent_layout_type == LayoutType::Row) == $height {
-                            size.cross
-                        } else {
-                            size.main
-                        };
-                        keyframe.value = Units::Pixels(value);
-                    }
-                });
+                for (entity, mut animation, current_measured) in entities {
+                    $property.remove(entity);
 
-                let id = $cx.style.animation_manager.create();
-                $property.insert_animation(id, animation.clone());
-                $property.play_animation(
-                    entity,
-                    id,
-                    animation.start_time,
-                    animation.duration,
-                    animation.delay,
-                );
+                    let measured_target =
+                        if let Some(bounds) = $cx.cache.relative_bounds.get(entity) {
+                            if $height { bounds.h } else { bounds.w }
+                        } else {
+                            let bounds = $cx.cache.get_bounds(entity);
+                            if $height { bounds.h } else { bounds.w }
+                        };
+
+                    animation.keyframes.iter_mut().for_each(|keyframe| {
+                        if keyframe.value == Units::Auto {
+                            // Preserve transition direction: start keyframes resolve from current
+                            // geometry, later keyframes resolve from target auto geometry.
+                            let measured = if keyframe.time <= 0.0 {
+                                current_measured
+                            } else {
+                                measured_target
+                            };
+                            keyframe.value = Units::Pixels(measured);
+                        }
+                    });
+
+                    let id = $cx.style.animation_manager.create();
+                    $property.insert_animation(id, animation.clone());
+                    $property.play_animation(
+                        entity,
+                        id,
+                        animation.start_time,
+                        animation.duration,
+                        animation.delay,
+                    );
+                }
             }
         }
     };

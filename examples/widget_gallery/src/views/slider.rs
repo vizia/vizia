@@ -2,43 +2,64 @@ use vizia::prelude::*;
 
 use crate::DemoRegion;
 
-pub struct SliderData {
-    value: Signal<f32>,
-}
-
-pub enum SliderEvent {
-    SetValue(f32),
-}
-
-impl Model for SliderData {
-    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
-        event.map(|checkbox_event, _| match checkbox_event {
-            SliderEvent::SetValue(value) => {
-                self.value.set(*value);
-            }
-        });
-    }
-}
-
 pub fn slider(cx: &mut Context) {
-    let value = Signal::new(0.5);
-    SliderData { value }.build(cx);
+    let value = Signal::new(0.5f32);
+    let ranged = Signal::new(20.0f32);
+    let stepped = Signal::new(0.0f32);
 
     VStack::new(cx, |cx| {
-        Markdown::new(cx, "# Slider");
+        Markdown::new(
+            cx,
+            "# Slider
+A slider allows the user to select a value from a continuous range by dragging a thumb along a track.",
+        );
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic slider");
+        DemoRegion::new(cx, "Basic Slider", move |cx| {
+            VStack::new(cx, |cx| {
+                Slider::new(cx, value)
+                    .on_change(move |_cx, v| value.set(v))
+                    .width(Pixels(200.0));
+                Label::new(cx, value.map(|v| format!("{:.2}", v)));
+            })
+            .height(Auto)
+            .gap(Pixels(8.0))
+            .alignment(Alignment::Center);
+        });
 
-        DemoRegion::new(
-            cx,
-            move |cx| {
-                Slider::new(cx, value).on_change(|cx, value| cx.emit(SliderEvent::SetValue(value)));
-            },
-            r#"Slider::new(cx, SliderData::value)
-    .on_changing(|cx, value| cx.emit(SliderEvent::SetValue(value)));"#,
-        );
+        DemoRegion::new(cx, "Range Slider", move |cx| {
+            VStack::new(cx, |cx| {
+                Slider::new(cx, ranged)
+                    .range(0.0f32..100.0f32)
+                    .on_change(move |_cx, v| ranged.set(v))
+                    .width(Pixels(200.0));
+                Label::new(cx, ranged.map(|v| format!("{:.0}", v)));
+            })
+            .height(Auto)
+            .gap(Pixels(8.0))
+            .alignment(Alignment::Center);
+        });
+
+        DemoRegion::new(cx, "Stepped Slider", move |cx| {
+            VStack::new(cx, |cx| {
+                Slider::new(cx, stepped)
+                    .step(0.25f32)
+                    .on_change(move |_cx, v| stepped.set(v))
+                    .width(Pixels(200.0));
+                Label::new(cx, stepped.map(|v| format!("{:.2}", v)));
+            })
+            .height(Auto)
+            .gap(Pixels(8.0))
+            .alignment(Alignment::Center);
+        });
+
+        DemoRegion::new(cx, "Vertical Slider", move |cx| {
+            Slider::new(cx, value)
+                .vertical(true)
+                .on_change(move |_cx, v| value.set(v))
+                .height(Pixels(150.0));
+        });
     })
     .class("panel");
 }

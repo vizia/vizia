@@ -160,6 +160,20 @@ impl Node for Entity {
                 child_space_y += val;
             }
 
+            // When width is auto, morphorm may still clamp the final node width via min/max
+            // constraints. For text nodes, we need to include resolvable constraints in shaping
+            // width so line breaks and caret metrics match the final box size.
+            let min_content_width = if width.is_none() {
+                match store.min_width.get_resolved(*self, &store.custom_units_props) {
+                    Some(Pixels(val)) => {
+                        Some((val * store.scale_factor() - child_space_x).max(0.0))
+                    }
+                    _ => None,
+                }
+            } else {
+                None
+            };
+
             let text_width = match (
                 store.text_wrap.get(*self).copied().unwrap_or(true),
                 store.text_overflow.get(*self).copied(),
@@ -178,6 +192,7 @@ impl Node for Entity {
                         paragraph.max_intrinsic_width().ceil()
                     }
                 }
+
                 _ => {
                     if let Some(width) = width {
                         (width - child_space_x).max(paragraph.min_intrinsic_width().ceil())
@@ -185,6 +200,12 @@ impl Node for Entity {
                         paragraph.max_intrinsic_width().ceil()
                     }
                 }
+            };
+
+            let text_width = if let Some(min_width) = min_content_width {
+                text_width.max(min_width)
+            } else {
+                text_width
             };
 
             paragraph.layout(text_width);
@@ -334,6 +355,18 @@ impl Node for Entity {
 
     fn alignment(&self, store: &Self::Store) -> Option<morphorm::Alignment> {
         store.alignment.get(*self).copied()
+    }
+
+    fn direction(&self, store: &Self::Store) -> Option<morphorm::Direction> {
+        match store.direction.get(*self).copied() {
+            Some(Direction::LeftToRight) => Some(morphorm::Direction::LeftToRight),
+            Some(Direction::RightToLeft) => Some(morphorm::Direction::RightToLeft),
+            Some(Direction::Auto) | None => Some(morphorm::Direction::LeftToRight), // Default to LTR if auto or not set, since morphorm doesn't support auto
+        }
+    }
+
+    fn wrap(&self, store: &Self::Store) -> Option<morphorm::LayoutWrap> {
+        store.wrap.get(*self).copied()
     }
 
     fn vertical_scroll(&self, store: &Self::Store) -> Option<f32> {

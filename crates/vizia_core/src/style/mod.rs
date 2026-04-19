@@ -73,13 +73,13 @@ use crate::storage::animatable_var_set::AnimatableVarSet;
 
 pub use vizia_style::{
     Alignment, Angle, BackgroundImage, BackgroundSize, BorderStyleKeyword, ClipPath, Color,
-    CornerShape, CssRule, CursorIcon, Display, Filter, FontFamily, FontSize, FontSlant,
+    CornerShape, CssRule, CursorIcon, Direction, Display, Filter, FontFamily, FontSize, FontSlant,
     FontVariation, FontWeight, FontWeightKeyword, FontWidth, GenericFontFamily, Gradient,
-    HorizontalPosition, HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue,
-    LineClamp, LineDirection, LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position,
-    PositionType, RGBA, Scale, Shadow, TextAlign, TextDecorationLine, TextDecorationStyle,
-    TextOverflow, TextStroke, TextStrokeStyle, Transform, Transition, Translate, VerticalPosition,
-    VerticalPositionKeyword, Visibility,
+    HorizontalPosition, HorizontalPositionKeyword, LayoutWrap, Length, LengthOrPercentage,
+    LengthValue, LineClamp, LineDirection, LinearGradient, Matrix, Opacity, Overflow,
+    PointerEvents, Position, PositionType, RGBA, Scale, Shadow, TextAlign, TextDecorationLine,
+    TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform, Transition,
+    Translate, VerticalPosition, VerticalPositionKeyword, Visibility,
 };
 
 use cssparser::Token as CssToken;
@@ -135,6 +135,7 @@ bitflags! {
         const REDRAW = 1 << 3;
         const RETRANSFORM = 1 << 4;
         const RECLIP = 1 << 5;
+        const REACCESS = 1 << 6;
     }
 }
 
@@ -240,9 +241,14 @@ pub struct Style {
     pub(crate) name: StyleSet<String>,
     pub(crate) role: SparseSet<Role>,
     pub(crate) live: SparseSet<Live>,
-    pub(crate) labelled_by: SparseSet<Entity>,
-    pub(crate) described_by: SparseSet<Entity>,
+    pub(crate) labelled_by: SparseSet<String>,
+    pub(crate) described_by: SparseSet<String>,
+    pub(crate) controls: SparseSet<String>,
+    pub(crate) active_descendant: SparseSet<String>,
+    pub(crate) expanded: SparseSet<bool>,
+    pub(crate) selected: SparseSet<bool>,
     pub(crate) hidden: SparseSet<bool>,
+    pub(crate) orientation: SparseSet<Orientation>,
     pub(crate) text_value: SparseSet<String>,
     pub(crate) numeric_value: SparseSet<f64>,
 
@@ -263,6 +269,7 @@ pub struct Style {
     pub(crate) overflowy: StyleSet<Overflow>,
 
     // Filters
+    pub(crate) filter: AnimatableSet<Filter>,
     pub(crate) backdrop_filter: AnimatableSet<Filter>,
 
     pub(crate) blend_mode: StyleSet<BlendMode>,
@@ -354,6 +361,8 @@ pub struct Style {
     pub(crate) position_type: StyleSet<PositionType>,
 
     pub(crate) alignment: StyleSet<Alignment>,
+    pub(crate) direction: StyleSet<Direction>,
+    pub(crate) wrap: StyleSet<LayoutWrap>,
 
     // Grid
     pub(crate) grid_columns: StyleSet<Vec<Units>>,
@@ -1533,6 +1542,10 @@ impl Style {
             }
 
             // Filters
+            Property::Filter(filter) => {
+                self.filter.insert_rule(rule_id, filter);
+            }
+
             Property::BackdropFilter(filter) => {
                 self.backdrop_filter.insert_rule(rule_id, filter);
             }
@@ -1556,7 +1569,13 @@ impl Style {
                 self.alignment.insert_rule(rule_id, alignment);
             }
 
-            // Grid
+            Property::Direction(direction) => {
+                self.direction.insert_rule(rule_id, direction);
+            }
+
+            Property::Wrap(value) => {
+                self.wrap.insert_rule(rule_id, value);
+            }
             Property::GridColumns(columns) => {
                 self.grid_columns.insert_rule(rule_id, columns);
             }
@@ -2433,7 +2452,12 @@ impl Style {
         self.live.remove(entity);
         self.labelled_by.remove(entity);
         self.described_by.remove(entity);
+        self.controls.remove(entity);
+        self.active_descendant.remove(entity);
+        self.expanded.remove(entity);
+        self.selected.remove(entity);
         self.hidden.remove(entity);
+        self.orientation.remove(entity);
         self.text_value.remove(entity);
         self.numeric_value.remove(entity);
 
@@ -2451,7 +2475,8 @@ impl Style {
         self.overflowx.remove(entity);
         self.overflowy.remove(entity);
 
-        // Backdrop Filter
+        // Filters
+        self.filter.remove(entity);
         self.backdrop_filter.remove(entity);
 
         // Blend Mode
@@ -2531,6 +2556,7 @@ impl Style {
         self.position_type.remove(entity);
 
         self.alignment.remove(entity);
+        self.wrap.remove(entity);
 
         // Grid
         self.grid_columns.remove(entity);
@@ -2649,7 +2675,8 @@ impl Style {
         // Clipping
         self.clip_path.clear_rules();
 
-        // Backdrop Filer
+        // Filters
+        self.filter.clear_rules();
         self.backdrop_filter.clear_rules();
 
         // Blend Mode
@@ -2703,6 +2730,7 @@ impl Style {
         self.layout_type.clear_rules();
         self.position_type.clear_rules();
         self.alignment.clear_rules();
+        self.wrap.clear_rules();
 
         // Grid
         self.grid_columns.clear_rules();

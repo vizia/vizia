@@ -52,7 +52,7 @@ pub(crate) fn draw_system(
                 dirty_bounds = dirty_bounds.union(previous_draw_bounds);
             }
 
-            if dirty_bounds.w != 0.0 && dirty_bounds.h != 0.0 {
+            if dirty_bounds.w > 0.0 && dirty_bounds.h > 0.0 {
                 if let Some(dr) = &mut dirty_rect {
                     *dr = dr.union(&dirty_bounds);
                 } else {
@@ -78,38 +78,38 @@ pub(crate) fn draw_system(
             continue;
         }
 
-        // Check if the entity has a backdrop filter style.
-        if cx.style.backdrop_filter.get(entity).is_some() {
+        // Check if the entity has a filter style.
+        if cx.style.filter.get(entity).is_some() || cx.style.backdrop_filter.get(entity).is_some() {
             if entity.visible(&cx.style) {
-                // Entity is VISIBLE and has a backdrop filter.
+                // Entity is VISIBLE and has a filter.
                 // Skip recomputation if already processed in redraw_list.
                 if !redraw_list.contains(&entity) {
-                    let bf_current_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
+                    let filter_current_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
 
                     // Update cache for visible entity
                     if let Some(dr) = cx.cache.draw_bounds.get_mut(entity) {
-                        *dr = bf_current_bounds;
+                        *dr = filter_current_bounds;
                     } else {
-                        cx.cache.draw_bounds.insert(entity, bf_current_bounds);
+                        cx.cache.draw_bounds.insert(entity, filter_current_bounds);
                     }
 
-                    if bf_current_bounds.w > 0.0 && bf_current_bounds.h > 0.0 {
+                    if filter_current_bounds.w > 0.0 && filter_current_bounds.h > 0.0 {
                         // Ensure bounds are valid
                         // Condition to update dirty_rect:
-                        // 1. dirty_rect is None (then set it to bf_current_bounds).
-                        // 2. dirty_rect is Some, and bf_current_bounds intersects with it (then union).
+                        // 1. dirty_rect is None (then set it to filter_current_bounds).
+                        // 2. dirty_rect is Some, and filter_current_bounds intersects with it (then union).
                         if dirty_rect.is_none_or(|current_dr_val| {
-                            bf_current_bounds.intersects(&current_dr_val)
+                            filter_current_bounds.intersects(&current_dr_val)
                         }) {
                             dirty_rect =
-                                Some(dirty_rect.map_or(bf_current_bounds, |current_dr_val| {
-                                    current_dr_val.union(&bf_current_bounds)
+                                Some(dirty_rect.map_or(filter_current_bounds, |current_dr_val| {
+                                    current_dr_val.union(&filter_current_bounds)
                                 }));
                         }
                     }
                 }
             } else {
-                // Entity is INVISIBLE but has (or had) a backdrop filter style.
+                // Entity is INVISIBLE but has (or had) a filter style.
                 // Its *previous* bounds need to be added to dirty_rect.
                 if let Some(previous_draw_bounds) = cx.cache.draw_bounds.get(entity).copied() {
                     if previous_draw_bounds.w > 0.0 && previous_draw_bounds.h > 0.0 {
@@ -212,34 +212,52 @@ fn draw_entity(
         return;
     }
 
+    let filter = cx.filter();
     let backdrop_filter = cx.backdrop_filter();
     let blend_mode = cx.style.blend_mode.get(current).copied().unwrap_or_default();
 
-    let layer_count =
-        if cx.opacity() != 1.0 || backdrop_filter.is_some() || blend_mode != BlendMode::Normal {
-            let mut paint = Paint::default();
-            paint.set_alpha_f(cx.opacity());
-            paint.set_blend_mode(blend_mode.into());
+    let layer_count = if cx.opacity() != 1.0
+        || filter.is_some()
+        || backdrop_filter.is_some()
+        || blend_mode != BlendMode::Normal
+    {
+        let mut paint = Paint::default();
+        paint.set_alpha_f(cx.opacity());
+        paint.set_blend_mode(blend_mode.into());
 
-            let rect: Rect = cx.bounds().into();
-            let mut filter = ImageFilter::crop(rect, None, None).unwrap();
+        let rect: Rect = cx.bounds().into();
+        let mut backdrop_image_filter = ImageFilter::crop(rect, None, None).unwrap();
 
-            let slr = if let Some(backdrop_filter) = backdrop_filter {
-                match backdrop_filter {
-                    Filter::Blur(radius) => {
-                        let sigma = radius.to_px().unwrap() * cx.scale_factor() / 2.0;
-                        filter = filter.blur(None, (sigma, sigma), None).unwrap();
-                        SaveLayerRec::default().paint(&paint).backdrop(&filter)
-                    }
+        if let Some(filter) = filter {
+            match filter {
+                Filter::Blur(radius) => {
+                    let sigma = radius.to_px().unwrap() * cx.scale_factor() / 2.0;
+                    let image_filter = ImageFilter::crop(rect, None, None)
+                        .unwrap()
+                        .blur(None, (sigma, sigma), None)
+                        .unwrap();
+                    paint.set_image_filter(image_filter);
                 }
-            } else {
-                SaveLayerRec::default().paint(&paint)
-            };
+            }
+        }
 
-            Some(canvas.save_layer(&slr))
+        let slr = if let Some(backdrop_filter) = backdrop_filter {
+            match backdrop_filter {
+                Filter::Blur(radius) => {
+                    let sigma = radius.to_px().unwrap() * cx.scale_factor() / 2.0;
+                    backdrop_image_filter =
+                        backdrop_image_filter.blur(None, (sigma, sigma), None).unwrap();
+                    SaveLayerRec::default().paint(&paint).backdrop(&backdrop_image_filter)
+                }
+            }
         } else {
-            None
+            SaveLayerRec::default().paint(&paint)
         };
+
+        Some(canvas.save_layer(&slr))
+    } else {
+        None
+    };
 
     canvas.save();
     if let Some(Some(clip_path)) = cx.cache.clip_path.get(current) {
@@ -369,6 +387,14 @@ pub(crate) fn draw_bounds(
         let child_iter = DrawChildIterator::new(tree, entity);
         for child in child_iter {
             dirty_bounds = dirty_bounds.union(&draw_bounds(style, cache, tree, child));
+        }
+    }
+
+    if let Some(filter) = style.filter.get(entity) {
+        match filter {
+            Filter::Blur(radius) => {
+                dirty_bounds = dirty_bounds.expand(radius.to_px().unwrap() * style.scale_factor());
+            }
         }
     }
 

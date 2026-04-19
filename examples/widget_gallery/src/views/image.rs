@@ -8,13 +8,9 @@ pub fn image(cx: &mut Context) {
 
         Divider::new(cx);
 
-        DemoRegion::new(
-            cx,
-            |cx| {
-                Label::new(cx, "Coming soon...");
-            },
-            r#""#,
-        );
+        DemoRegion::new(cx, "Image", |cx| {
+            Label::new(cx, "Coming soon...");
+        });
     })
     .class("panel");
 }

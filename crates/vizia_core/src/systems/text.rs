@@ -3,11 +3,12 @@ use skia_safe::{
     font_arguments::VariationPosition,
     textlayout::{
         FontCollection, Paragraph, ParagraphBuilder, ParagraphStyle, RectHeightStyle,
-        RectWidthStyle, TextStyle,
+        RectWidthStyle, TextDirection, TextStyle,
     },
 };
 use vizia_storage::{LayoutChildIterator, LayoutTreeIterator};
 
+use crate::text::resolved_text_direction;
 use crate::{cache::CachedData, prelude::*};
 
 pub(crate) fn text_system(cx: &mut Context) {
@@ -51,7 +52,7 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
 
         if let Some(paragraph) = cx.text_context.text_paragraphs.get_mut(entity) {
             let bounds = cx.cache.get_bounds(entity);
-            let padding_left = cx
+            let mut padding_left = cx
                 .style
                 .padding_left
                 .get(entity)
@@ -59,7 +60,7 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                 .unwrap_or_default()
                 .to_px(bounds.width(), 0.0)
                 * cx.style.scale_factor();
-            let padding_right = cx
+            let mut padding_right = cx
                 .style
                 .padding_right
                 .get(entity)
@@ -76,8 +77,16 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                 .to_px(bounds.width(), 0.0)
                 * cx.style.scale_factor();
 
-            let text_bounds =
-                BoundingBox { x: padding_left, y: 0.0, w: bounds.w - padding_right, h: bounds.h };
+            if resolved_text_direction(&cx.style, entity) == Direction::RightToLeft {
+                std::mem::swap(&mut padding_left, &mut padding_right);
+            }
+
+            let text_bounds = BoundingBox {
+                x: padding_left,
+                y: 0.0,
+                w: bounds.w - padding_left - padding_right,
+                h: bounds.h,
+            };
 
             if !cx
                 .style
@@ -107,9 +116,18 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                     text_bounds.w = paragraph.max_intrinsic_width();
                     cx.text_context.text_bounds.insert(entity, text_bounds);
                 }
-            } else if let Some(stored_text_bounds) = cx.text_context.text_bounds.get_mut(entity) {
-                stored_text_bounds.x = bounds.x + padding_left;
-                stored_text_bounds.y = bounds.y + padding_top;
+            } else {
+                // For auto-sized text views, re-layout at the final constrained width
+                // so constraints like min-width affect line breaking and text bounds.
+                let final_text_width = text_bounds.width();
+                paragraph.layout(final_text_width);
+
+                if let Some(stored_text_bounds) = cx.text_context.text_bounds.get_mut(entity) {
+                    stored_text_bounds.x = bounds.x + padding_left;
+                    stored_text_bounds.y = bounds.y + padding_top;
+                    stored_text_bounds.w = final_text_width;
+                    stored_text_bounds.h = paragraph.height();
+                }
             }
 
             layout_span(&cx.style, &mut cx.cache, &cx.tree, entity, paragraph, bounds);
@@ -203,28 +221,23 @@ pub fn build_paragraph(
         paragraph_style.set_max_lines(line_clamp.0 as usize);
     }
 
-    // if let Some(text_wrap) = style.text_wrap.get(entity).copied() {
-    //     if !text_wrap {
-    //         paragraph_style.set_max_lines(1);
-    //     }
-    // }
+    if let Some(text_wrap) = style.text_wrap.get(entity).copied() {
+        if !text_wrap {
+            // Disable soft wrapping by constraining to a single visual line.
+            paragraph_style.set_max_lines(1);
+        }
+    }
 
     // Text Align
-    paragraph_style.set_text_align(
-        if let Some(text_align) = style.text_align.get(entity) {
-            *text_align
-        } else if let Some(alignment) = style.alignment.get(entity) {
-            match alignment {
-                Alignment::TopLeft | Alignment::Left | Alignment::BottomLeft => TextAlign::Left,
-                Alignment::TopCenter | Alignment::Center | Alignment::BottomCenter => {
-                    TextAlign::Center
-                }
-                Alignment::TopRight | Alignment::Right | Alignment::BottomRight => TextAlign::Right,
-            }
+    paragraph_style.set_text_align(resolve_text_align(style, entity).into());
+
+    // Text Direction
+    paragraph_style.set_text_direction(
+        if resolved_text_direction(style, entity) == Direction::RightToLeft {
+            TextDirection::RTL
         } else {
-            TextAlign::Left
-        }
-        .into(),
+            TextDirection::LTR
+        },
     );
 
     let mut paragraph_builder = ParagraphBuilder::new(&paragraph_style, font_collection);
@@ -233,6 +246,53 @@ pub fn build_paragraph(
 
     paragraph_builder.add_text("\u{200B}");
     paragraph_builder.build().into()
+}
+
+fn resolve_text_align(style: &Style, entity: Entity) -> TextAlign {
+    let is_rtl = resolved_text_direction(style, entity) == Direction::RightToLeft;
+
+    if let Some(text_align) = style.text_align.get(entity).copied() {
+        return flip_text_align_for_rtl(text_align, is_rtl);
+    }
+
+    if let Some(alignment) = style.alignment.get(entity).copied() {
+        let alignment = flip_alignment_for_rtl(alignment, is_rtl);
+        return match alignment {
+            Alignment::TopLeft | Alignment::Left | Alignment::BottomLeft => TextAlign::Left,
+            Alignment::TopCenter | Alignment::Center | Alignment::BottomCenter => TextAlign::Center,
+            Alignment::TopRight | Alignment::Right | Alignment::BottomRight => TextAlign::Right,
+        };
+    }
+
+    flip_text_align_for_rtl(TextAlign::Left, is_rtl)
+}
+
+fn flip_text_align_for_rtl(text_align: TextAlign, is_rtl: bool) -> TextAlign {
+    if !is_rtl {
+        return text_align;
+    }
+
+    match text_align {
+        TextAlign::Left => TextAlign::Right,
+        TextAlign::Right => TextAlign::Left,
+        _ => text_align,
+    }
+}
+
+fn flip_alignment_for_rtl(alignment: Alignment, is_rtl: bool) -> Alignment {
+    if !is_rtl {
+        return alignment;
+    }
+
+    match alignment {
+        Alignment::TopLeft => Alignment::TopRight,
+        Alignment::Left => Alignment::Right,
+        Alignment::BottomLeft => Alignment::BottomRight,
+        Alignment::TopRight => Alignment::TopLeft,
+        Alignment::Right => Alignment::Left,
+        Alignment::BottomRight => Alignment::BottomLeft,
+        _ => alignment,
+    }
 }
 
 fn add_block(
@@ -343,5 +403,28 @@ fn add_block(
         if style.text_span.get(child).copied().unwrap_or_default() {
             add_block(style, tree, child, paragraph_builder, current);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rtl_flips_explicit_left_right_text_align() {
+        assert_eq!(flip_text_align_for_rtl(TextAlign::Left, true), TextAlign::Right);
+        assert_eq!(flip_text_align_for_rtl(TextAlign::Right, true), TextAlign::Left);
+        assert_eq!(flip_text_align_for_rtl(TextAlign::Center, true), TextAlign::Center);
+    }
+
+    #[test]
+    fn rtl_flips_horizontal_alignment_variants() {
+        assert_eq!(flip_alignment_for_rtl(Alignment::TopLeft, true), Alignment::TopRight);
+        assert_eq!(flip_alignment_for_rtl(Alignment::Left, true), Alignment::Right);
+        assert_eq!(flip_alignment_for_rtl(Alignment::BottomLeft, true), Alignment::BottomRight);
+        assert_eq!(flip_alignment_for_rtl(Alignment::TopRight, true), Alignment::TopLeft);
+        assert_eq!(flip_alignment_for_rtl(Alignment::Right, true), Alignment::Left);
+        assert_eq!(flip_alignment_for_rtl(Alignment::BottomRight, true), Alignment::BottomLeft);
+        assert_eq!(flip_alignment_for_rtl(Alignment::Center, true), Alignment::Center);
     }
 }

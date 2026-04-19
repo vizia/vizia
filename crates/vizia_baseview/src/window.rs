@@ -97,7 +97,7 @@ impl ViziaWindow {
             WindowState { window_description: win_desc.clone(), ..Default::default() },
         );
 
-        cx.context().remove_user_themes();
+        cx.context().add_built_in_styles();
         if let Some(builder) = builder {
             (builder)(cx.context());
         }
@@ -152,7 +152,7 @@ impl ViziaWindow {
                 let mut cx = Context::new();
 
                 cx.ignore_default_theme = ignore_default_theme;
-                cx.remove_user_themes();
+                cx.add_built_in_styles();
 
                 let mut cx = BackendContext::new(cx);
 
@@ -191,7 +191,7 @@ impl ViziaWindow {
                 let mut cx = Context::new();
 
                 cx.ignore_default_theme = ignore_default_theme;
-                cx.remove_user_themes();
+                cx.add_built_in_styles();
 
                 let mut cx = BackendContext::new(cx);
 

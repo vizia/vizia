@@ -22,20 +22,6 @@ use crate::prelude::*;
 ///     .on_press(|ex| ex.emit(AppEvent::Action));
 /// ```
 ///
-/// ## Button without an action
-///
-/// A button can be used without an action and therefore do nothing when pressed.
-/// This is useful for prototyping and testing out the different styling options of
-/// a button without having to add an action.
-///
-/// ```
-/// # use vizia_core::prelude::*;
-/// #
-/// # let cx = &mut Context::default();
-/// #
-/// Button::new(cx, |cx| Label::new(cx, "Text"));
-/// ```
-///
 /// ## Button containing multiple views
 ///
 /// A button can contain more than just a single view or label inside of it. This can
@@ -68,7 +54,7 @@ use crate::prelude::*;
 /// # let cx = &mut Context::default();
 /// #
 /// Button::new(cx, |cx| Label::new(cx, "Text"))
-///     .variant(ButtonVariant::Accent);
+///     .variant(ButtonVariant::Secondary);
 /// ```
 pub struct Button {
     pub(crate) action: Option<Box<dyn Fn(&mut EventContext)>>,
@@ -138,10 +124,10 @@ impl View for Button {
 /// Used in conjunction with the [`variant`](ButtonModifiers::variant) modifier for selecting the style variant of a button or button group.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ButtonVariant {
-    /// A normal button.
-    Normal,
-    /// A button with an accent color.
-    Accent,
+    /// A button with the primary color.
+    Primary,
+    /// A button with a secondary color.
+    Secondary,
     /// A button with just a border.
     Outline,
     /// A button with just text.
@@ -178,30 +164,30 @@ impl ButtonModifiers for Handle<'_, Button> {
             let val = variant.get();
             let var: ButtonVariant = val.into();
             match var {
-                ButtonVariant::Normal => {
+                ButtonVariant::Primary => {
                     handle
-                        .toggle_class("accent", false)
+                        .toggle_class("secondary", false)
                         .toggle_class("outline", false)
                         .toggle_class("text", false);
                 }
 
-                ButtonVariant::Accent => {
+                ButtonVariant::Secondary => {
                     handle
-                        .toggle_class("accent", true)
+                        .toggle_class("secondary", true)
                         .toggle_class("outline", false)
                         .toggle_class("text", false);
                 }
 
                 ButtonVariant::Outline => {
                     handle
-                        .toggle_class("accent", false)
+                        .toggle_class("secondary", false)
                         .toggle_class("outline", true)
                         .toggle_class("text", false);
                 }
 
                 ButtonVariant::Text => {
                     handle
-                        .toggle_class("accent", false)
+                        .toggle_class("secondary", false)
                         .toggle_class("outline", false)
                         .toggle_class("text", true);
                 }
@@ -261,30 +247,30 @@ impl ButtonModifiers for Handle<'_, ButtonGroup> {
             let val = variant.get();
             let var: ButtonVariant = val.into();
             match var {
-                ButtonVariant::Normal => {
+                ButtonVariant::Primary => {
                     handle
-                        .toggle_class("accent", false)
+                        .toggle_class("secondary", false)
                         .toggle_class("outline", false)
                         .toggle_class("text", false);
                 }
 
-                ButtonVariant::Accent => {
+                ButtonVariant::Secondary => {
                     handle
-                        .toggle_class("accent", true)
+                        .toggle_class("secondary", true)
                         .toggle_class("outline", false)
                         .toggle_class("text", false);
                 }
 
                 ButtonVariant::Outline => {
                     handle
-                        .toggle_class("accent", false)
+                        .toggle_class("secondary", false)
                         .toggle_class("outline", true)
                         .toggle_class("text", false);
                 }
 
                 ButtonVariant::Text => {
                     handle
-                        .toggle_class("accent", false)
+                        .toggle_class("secondary", false)
                         .toggle_class("outline", false)
                         .toggle_class("text", true);
                 }

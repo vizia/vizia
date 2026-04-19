@@ -1,83 +1,95 @@
-use vizia::{
-    icons::{ICON_PENCIL, ICON_TRASH},
-    prelude::*,
-};
+use log::debug;
+use vizia::{icons::ICON_CHECK, prelude::*};
 
 use crate::components::DemoRegion;
 
 pub fn button(cx: &mut Context) {
-    VStack::new(cx, |cx|{
-
-        Markdown::new(cx, "# Button
-A button can be used to send an event when pressed. Typically they are used to trigger an action.        
-        ");
+    VStack::new(cx, |cx| {
+        Markdown::new(
+            cx,
+            "# Button
+A button can be used to send an event when pressed. Typically they are used to trigger an action.
+        ",
+        );
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic button");
+        DemoRegion::new(cx, "Basic Button", |cx| {
+            Button::new(cx, |cx| Label::new(cx, "Button"));
+        });
 
-        DemoRegion::new(
-            cx,
-            |cx| {
-                Button::new(cx, |cx| Label::new(cx, "Button"));
-            }, r#"Button::new(cx, |cx| Label::new(cx, "Button"));"#
-        );
+        DemoRegion::new(cx, "Button Variants", |cx| {
+            HStack::new(cx, |cx| {
+                // Basic Button
+                Button::new(cx, |cx| Label::new(cx, Localized::new("button")))
+                    .on_press(|_cx| debug!("Button Pressed!"));
+                // Secondary Button
+                Button::new(cx, |cx| Label::new(cx, Localized::new("secondary-button")))
+                    .variant(ButtonVariant::Secondary);
+                // Outline Button
+                Button::new(cx, |cx| Label::new(cx, Localized::new("outline-button")))
+                    .variant(ButtonVariant::Outline);
+                // Text Button
+                Button::new(cx, |cx| Label::new(cx, Localized::new("text-button")))
+                    .variant(ButtonVariant::Text);
+            })
+            .wrap(LayoutWrap::Wrap)
+            .width(Stretch(1.0))
+            .height(Auto)
+            .alignment(Alignment::Center)
+            .gap(Pixels(8.0));
+        });
 
-        Markdown::new(cx, "### Button variants");
-
-        DemoRegion::new(
-            cx,
-            |cx| {
-                Button::new(cx, |cx| Label::new(cx, "Normal"));
-                Button::new(cx, |cx| Label::new(cx, "Accent")).variant(ButtonVariant::Accent);
-                Button::new(cx, |cx| Label::new(cx, "Outline")).variant(ButtonVariant::Outline);
-                Button::new(cx, |cx| Label::new(cx, "Text")).variant(ButtonVariant::Text);
-            }, r#"Button::new(cx, |cx| Label::new(cx, "Normal"));
-Button::new(cx, |cx| Label::new(cx, "Accent"))
-    .variant(ButtonVariant::Accent);
-Button::new(cx, |cx| Label::new(cx, "Outline"))
-    .variant(ButtonVariant::Outline);
-Button::new(cx, |cx| Label::new(cx, "Text"))
-    .variant(ButtonVariant::Text);"#
-        );
-
-        Markdown::new(cx, "### Button with icon and label
-An HStack can be used to add an icon as well as a label to a button. The icon can be positioned before or after the label by changing the order of the declarations.");
-
-        DemoRegion::new(
-            cx,
-            |cx| {
+        DemoRegion::new(cx, "Button with Icon", |cx| {
+            HStack::new(cx, |cx| {
                 Button::new(cx, |cx| {
                     HStack::new(cx, |cx| {
-                        Svg::new(cx, ICON_TRASH);
-                        Label::new(cx, "Delete");
+                        Svg::new(cx, ICON_CHECK).class("icon");
+                        Label::new(cx, Localized::new("button-with-icon"));
                     })
-                })
-                .class("outline");
-
+                });
                 Button::new(cx, |cx| {
                     HStack::new(cx, |cx| {
-                        Label::new(cx, "Edit");
-                        Svg::new(cx, ICON_PENCIL);
+                        Svg::new(cx, ICON_CHECK).class("icon");
+                        Label::new(cx, Localized::new("button-with-icon"));
                     })
                 })
-                .class("accent");
-            }, r#"Button::new(cx, |cx| {
-    HStack::new(cx, |cx| {
-        Svg::new(cx, ICON_TRASH);
-        Label::new(cx, "Delete");
-    })
-})
-.class("outline");
+                .variant(ButtonVariant::Secondary);
+                Button::new(cx, |cx| {
+                    HStack::new(cx, |cx| {
+                        Svg::new(cx, ICON_CHECK).class("icon");
+                        Label::new(cx, Localized::new("button-with-icon"));
+                    })
+                })
+                .variant(ButtonVariant::Outline);
+                Button::new(cx, |cx| {
+                    HStack::new(cx, |cx| {
+                        Svg::new(cx, ICON_CHECK).class("icon");
+                        Label::new(cx, Localized::new("button-with-icon"));
+                    })
+                })
+                .variant(ButtonVariant::Text);
+            })
+            .height(Auto)
+            .width(Stretch(1.0))
+            .alignment(Alignment::Center)
+            .wrap(LayoutWrap::Wrap)
+            .gap(Pixels(8.0));
+        });
 
-Button::new(cx, |cx| {
-    HStack::new(cx, |cx| {
-        Label::new(cx, "Edit");
-        Svg::new(cx, ICON_PENCIL);
+        DemoRegion::new(cx, "Icon Button", |cx| {
+            HStack::new(cx, |cx| {
+                Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"));
+                Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"))
+                    .variant(ButtonVariant::Secondary);
+                Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"))
+                    .variant(ButtonVariant::Outline);
+                Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"))
+                    .variant(ButtonVariant::Text);
+            })
+            .size(Auto)
+            .horizontal_gap(Pixels(10.0));
+        });
     })
-})
-.class("accent");"#
-        );
-
-    }).class("panel");
+    .class("panel");
 }

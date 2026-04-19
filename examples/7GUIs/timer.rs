@@ -103,7 +103,7 @@ fn main() -> Result<(), ApplicationError> {
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
                 Label::new(cx, "Elapsed Time:");
-                ProgressBar::new(cx, progress, Orientation::Horizontal);
+                ProgressBar::new(cx, progress);
             });
 
             Label::new(cx, Memo::new(move |_| format!("{:.1}s", elapsed_time.get().as_secs_f32())));

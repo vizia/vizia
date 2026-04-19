@@ -6,31 +6,25 @@ use vizia::{
 use crate::components::DemoRegion;
 
 pub fn tooltip(cx: &mut Context) {
-    VStack::new(cx, |cx|{
+    VStack::new(cx, |cx| {
 
         Markdown::new(cx, "# Tooltip
 A tooltip displays supplemental information near its target view. Tooltips are triggered on hover or focus of the target view and dismissed on blur or mouse-out of the target or tooltip container.        
         ");
 
-        Markdown::new(cx, "### Basic tooltip");
-
         DemoRegion::new(
             cx,
+            "Basic Tooltip",
             |cx| {
                 Button::new(cx, |cx |Svg::new(cx, ICON_TRASH))
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
                         Label::new(cx, "Delete");
                     }));
-            }, r#"IconButton::new(cx, ICON_TRASH)
-    .tooltip(|cx| Tooltip::new(cx, |cx|{
-        Label::new(cx, "Delete");
-    }));"#
-        );
-
-        Markdown::new(cx, "### Tooltip content");
+            });
 
         DemoRegion::new(
             cx,
+            "Tooltip Content",
             |cx| {
                 Button::new(cx, |cx |Svg::new(cx, ICON_TRASH))
                     .tooltip(|cx| Tooltip::new(cx, |cx|{
@@ -39,16 +33,12 @@ A tooltip displays supplemental information near its target view. Tooltips are t
                             Label::new(cx, "Delete");
                         }).size(Auto).alignment(Alignment::Left);
                     }));
-            }, r#"IconButton::new(cx, ICON_TRASH)
-    .tooltip(|cx| Tooltip::new(cx, |cx|{
-        Label::new(cx, "Delete");
-    }));"#
-        );
-
-        Markdown::new(cx, "### Tooltip placement");
+            });
 
         DemoRegion::new(
             cx,
+            "Tooltip Placement",
+
             |cx| {
 
                 VStack::new(cx, |cx|{
@@ -176,10 +166,7 @@ A tooltip displays supplemental information near its target view. Tooltips are t
                         Label::new(cx, "Tooltip");
                     }).placement(Placement::BottomEnd));
                 }).vertical_gap(Pixels(8.0)).size(Auto);
-            }, r#"IconButton::new(cx, ICON_TRASH).tooltip(|cx| Tooltip::new(cx, |cx|{
-    Label::new(cx, "Delete");
-}));"#
-        );
+            });
 
     }).class("panel");
 }

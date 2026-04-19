@@ -1,8 +1,8 @@
 use crate::{icons::ICON_STAR_FILLED, prelude::*};
 
 /// A view which represents a rating as a number of filled stars.
-pub struct Rating<R> {
-    rating: R,
+pub struct Rating {
+    rating: Signal<u32>,
     max_rating: u32,
     on_change: Option<Box<dyn Fn(&mut EventContext, u32)>>,
 }
@@ -14,13 +14,15 @@ pub(crate) enum RatingEvent {
     Decrement,
 }
 
-impl<R> Rating<R>
-where
-    R: SignalGet<u32> + SignalUpdate<u32> + SignalMap<u32> + Res<u32> + 'static,
-{
+impl Rating {
     /// Creates a new [Rating] view.
-    pub fn new(cx: &mut Context, max_rating: u32, rating: R) -> Handle<Self> {
-        Self { rating, max_rating, on_change: None }
+    pub fn new(
+        cx: &mut Context,
+        max_rating: u32,
+        rating: impl Res<u32> + SignalGet<u32> + SignalMap<u32>,
+    ) -> Handle<Self> {
+        let local_rating = Signal::new(rating.get());
+        Self { rating: local_rating, max_rating, on_change: None }
             .build(cx, |cx| {
                 for i in 1..max_rating + 1 {
                     Svg::new(cx, ICON_STAR_FILLED)
@@ -28,8 +30,8 @@ where
                         .checkable(true)
                         .numeric_value(1)
                         .role(Role::RadioButton)
-                        .checked(rating.map(move |val| *val >= i))
-                        .toggle_class("foo", rating.map(move |val| *val >= i))
+                        .checked(rating.map(move |r| *r >= i))
+                        .toggle_class("foo", local_rating.map(move |r| *r >= i))
                         .on_hover(move |ex| ex.emit(RatingEvent::SetRating(i)))
                         .on_press(|ex| ex.emit(RatingEvent::EmitRating));
                 }
@@ -37,13 +39,14 @@ where
             .numeric_value(rating)
             .navigable(true)
             .role(Role::RadioGroup)
+            .bind(rating, move |handle| {
+                let val = rating.get();
+                handle.modify(|rating| rating.rating.set(val));
+            })
     }
 }
 
-impl<R> View for Rating<R>
-where
-    R: SignalGet<u32> + SignalUpdate<u32> + SignalMap<u32> + Res<u32> + 'static,
-{
+impl View for Rating {
     fn element(&self) -> Option<&'static str> {
         Some("rating")
     }
@@ -53,12 +56,11 @@ where
             RatingEvent::SetRating(val) => self.rating.set(*val),
             RatingEvent::EmitRating => {
                 if let Some(callback) = &self.on_change {
-                    (callback)(cx, self.rating.get())
+                    (callback)(cx, self.rating.get());
                 }
             }
             RatingEvent::Increment => {
-                self.rating.set(self.rating.get() + 1);
-                self.rating.set(self.rating.get() % (self.max_rating + 1));
+                self.rating.set((self.rating.get() + 1) % (self.max_rating + 1));
                 cx.emit(RatingEvent::EmitRating);
             }
             RatingEvent::Decrement => {
@@ -89,10 +91,7 @@ where
     }
 }
 
-impl<R> Handle<'_, Rating<R>>
-where
-    R: SignalGet<u32> + SignalUpdate<u32> + SignalMap<u32> + Res<u32> + 'static,
-{
+impl Handle<'_, Rating> {
     /// Set the callback which is triggered when the rating changes.
     pub fn on_change<F>(self, callback: F) -> Self
     where

@@ -77,15 +77,15 @@ pub mod prelude {
         EventContext, ProxyEmitError, WindowState,
     };
     pub use super::entity::Entity;
-    pub use super::environment::{AppTheme, Environment, EnvironmentEvent, ThemeMode};
+    pub use super::environment::{Environment, EnvironmentEvent, ThemeMode};
     pub use super::events::{Event, Propagation, Timer, TimerAction};
     pub use super::include_style;
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
     pub use super::layout::{BoundingBox, GeoChanged};
-    pub use super::localization::{Localized, ToStringLocalized};
+    pub use super::localization::{Localized, ToStringLocalized, number_with_fraction, percentage};
     pub use super::modifiers::{
-        AbilityModifiers, AccessibilityModifiers, ActionModifiers, LayoutModifiers,
-        LinearGradientBuilder, ShadowBuilder, StyleModifiers, TextModifiers,
+        AbilityModifiers, AccessibilityModifiers, ActionModifiers, ControlModifiers, ControlSize,
+        LayoutModifiers, LinearGradientBuilder, ShadowBuilder, StyleModifiers, TextModifiers,
     };
     pub use super::resource::{ImageId, ImageRetentionPolicy};
     pub use super::util::{CSS, IntoCssStr};

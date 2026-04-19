@@ -5,7 +5,7 @@ use crate::prelude::*;
 
 use crate::text::{
     Direction, EditableText, Movement, PreeditBackup, Selection, VerticalMovement, apply_movement,
-    enforce_text_bounds, ensure_visible, offset_for_delete_backwards,
+    enforce_text_bounds, ensure_visible, offset_for_delete_backwards, resolved_text_direction,
 };
 use accesskit::{ActionData, ActionRequest, TextDirection, TextPosition, TextSelection};
 use skia_safe::textlayout::{RectHeightStyle, RectWidthStyle};
@@ -457,7 +457,7 @@ where
                 .padding_top
                 .get_resolved(cx.current, &cx.style.custom_units_props)
                 .unwrap_or_default();
-            let _padding_right = cx
+            let padding_right = cx
                 .style
                 .padding_right
                 .get_resolved(cx.current, &cx.style.custom_units_props)
@@ -471,10 +471,19 @@ where
             let logical_parent_width = cx.physical_to_logical(bounds.w);
             let logical_parent_height = cx.physical_to_logical(bounds.h);
 
-            let padding_left = padding_left.to_px(logical_parent_width, 0.0) * cx.scale_factor();
+            let mut padding_left =
+                padding_left.to_px(logical_parent_width, 0.0) * cx.scale_factor();
+            let mut padding_right =
+                padding_right.to_px(logical_parent_width, 0.0) * cx.scale_factor();
             let padding_top = padding_top.to_px(logical_parent_height, 0.0) * cx.scale_factor();
             let padding_bottom =
                 padding_bottom.to_px(logical_parent_height, 0.0) * cx.scale_factor();
+
+            if resolved_text_direction(&cx.style, cx.current)
+                == crate::style::Direction::RightToLeft
+            {
+                std::mem::swap(&mut padding_left, &mut padding_right);
+            }
 
             let (mut top, _) = match cx.style.alignment.get(cx.current).copied().unwrap_or_default()
             {
@@ -639,10 +648,21 @@ where
 
                         top *= bounds.height() - padding_top - padding_bottom - paragraph.height();
 
-                        let padding_left = match cx.padding_left() {
+                        let mut padding_left = match cx.padding_left() {
                             Units::Pixels(val) => val,
                             _ => 0.0,
                         };
+
+                        let mut padding_right = match cx.padding_right() {
+                            Units::Pixels(val) => val,
+                            _ => 0.0,
+                        };
+
+                        if resolved_text_direction(&cx.style, cx.current)
+                            == crate::style::Direction::RightToLeft
+                        {
+                            std::mem::swap(&mut padding_left, &mut padding_right);
+                        }
 
                         let x = bounds.x + padding_left + cursor_rect.rect.left + left;
                         let y = bounds.y + padding_top + cursor_rect.rect.top + top;
@@ -670,13 +690,26 @@ where
 
                 let current = text.current_grapheme_offset(self.selection.active);
 
+                let grapheme_count = text.graphemes(true).count();
+                let (range_start, range_end, use_trailing_edge) = if current < grapheme_count {
+                    (current, current + 1, false)
+                } else if current > 0 {
+                    // At end-of-text, use the previous grapheme box and place the caret on its trailing edge.
+                    (current - 1, current, true)
+                } else {
+                    // Empty text or no valid grapheme box to anchor the caret.
+                    return;
+                };
+
                 let rects = paragraph.get_rects_for_range(
-                    current..current + 1,
+                    range_start..range_end,
                     RectHeightStyle::Tight,
                     RectWidthStyle::Tight,
                 );
 
-                let cursor_rect = rects.first().unwrap();
+                let Some(cursor_rect) = rects.first() else {
+                    return;
+                };
 
                 let alignment = cx.alignment();
 
@@ -704,17 +737,26 @@ where
 
                 top *= bounds.height() - padding_top - padding_bottom - paragraph.height();
 
-                let padding_left = match cx.padding_left() {
+                let mut padding_left = match cx.padding_left() {
                     Units::Pixels(val) => val,
                     _ => 0.0,
                 };
 
-                let padding_right = match cx.padding_right() {
+                let mut padding_right = match cx.padding_right() {
                     Units::Pixels(val) => val,
                     _ => 0.0,
                 };
 
-                let x = (bounds.x + padding_left + cursor_rect.rect.left).round();
+                if resolved_text_direction(&cx.style, cx.current)
+                    == crate::style::Direction::RightToLeft
+                {
+                    std::mem::swap(&mut padding_left, &mut padding_right);
+                }
+
+                let caret_x =
+                    if use_trailing_edge { cursor_rect.rect.right } else { cursor_rect.rect.left };
+
+                let x = (bounds.x + padding_left + caret_x).round();
                 let y = (bounds.y + padding_top + cursor_rect.rect.top + top).round();
 
                 let x2 = x + 1.0;
@@ -729,12 +771,14 @@ where
 
                 let mut transform = self.transform.borrow_mut();
 
-                let mut text_bounds = cx.text_context.text_bounds.get(cx.current).copied().unwrap();
+                let text_bounds = BoundingBox::from_min_max(
+                    bounds.x + padding_left,
+                    bounds.y + padding_top + top,
+                    bounds.x + padding_left + paragraph.max_intrinsic_width(),
+                    bounds.y + padding_top + top + paragraph.height(),
+                );
 
-                let mut bounds = cx.bounds();
-
-                text_bounds.x += bounds.x;
-                text_bounds.y += bounds.y;
+                let mut bounds = bounds;
 
                 bounds =
                     bounds.shrink_sides(padding_left, padding_top, padding_right, padding_bottom);
@@ -871,6 +915,14 @@ where
         let text_len = text.len();
 
         if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+            let text_direction = if resolved_text_direction(&cx.style, cx.current)
+                == crate::style::Direction::RightToLeft
+            {
+                TextDirection::RightToLeft
+            } else {
+                TextDirection::LeftToRight
+            };
+
             let line_metrics = paragraph.get_line_metrics();
             for line in line_metrics.iter() {
                 // Skip lines that start beyond the actual text (i.e., the ZWS-only line)
@@ -881,8 +933,7 @@ where
                 // We need a child node per line
                 let mut line_node = AccessNode::new_from_parent(node_id, line.line_number);
                 line_node.set_role(Role::TextRun);
-                // TODO: Support bidirectional text.
-                line_node.set_text_direction(TextDirection::LeftToRight);
+                line_node.set_text_direction(text_direction);
                 line_node.set_bounds(BoundingBox {
                     x: line.left as f32,
                     y: (line.baseline - line.ascent) as f32,
@@ -1008,7 +1059,6 @@ where
                     if !cx.is_disabled() {
                         cx.focus_with_visibility(false);
                         cx.capture();
-                        cx.set_checked(true);
                         cx.lock_cursor_icon();
 
                         if !self.edit {
@@ -1024,7 +1074,6 @@ where
                 } else {
                     cx.emit(TextEvent::Submit(false));
                     cx.release();
-                    cx.set_checked(false);
 
                     // Forward event to hovered
                     cx.event_queue.push_back(
@@ -1070,7 +1119,7 @@ where
                         self.reset_caret_timer(cx);
                     }
                     if cx.mouse.left.pos_down.0 != *x || cx.mouse.left.pos_down.1 != *y {
-                        cx.emit(TextEvent::Drag(cx.mouse.cursor_x, cx.mouse.cursor_y));
+                        cx.emit(TextEvent::Drag(*x, *y));
                     }
                 }
             }
@@ -1416,7 +1465,6 @@ where
                     self.edit = true;
                     cx.focus_with_visibility(false);
                     cx.capture();
-                    cx.set_checked(true);
                     self.reset_caret_timer(cx);
                     self.reset_ime_position(cx);
 
@@ -1452,7 +1500,6 @@ where
             TextEvent::EndEdit => {
                 self.deselect();
                 self.edit = false;
-                cx.set_checked(false);
                 cx.release();
                 cx.stop_timer(self.caret_timer);
 
@@ -1490,7 +1537,6 @@ where
             }
 
             TextEvent::Blur => {
-                cx.set_checked(false);
                 if let Some(callback) = &self.on_blur {
                     (callback)(cx);
                 } else {

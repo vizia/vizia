@@ -24,6 +24,7 @@ pub struct ComboBox<L: SignalGet<Vec<T>>, S: SignalGet<usize>, T: 'static + Clon
 }
 
 pub(crate) enum ComboBoxEvent {
+    OpenPopup,
     SetOption(usize),
     SetFilterText(String),
 }
@@ -76,11 +77,22 @@ where
                         }
                     }
 
+                    WindowEvent::FocusOut => {
+                        if meta.target.is_descendant_of(cx.tree, cx.current)
+                            && !cx.focused().is_descendant_of(cx.tree, cx.current)
+                        {
+                            popup.is_open.set(false);
+                        }
+                    }
+
                     _ => {}
                 });
             });
 
+            let entity = cx.current();
+
             Textbox::new(cx, filter_text)
+                .on_press(|cx| cx.emit(ComboBoxEvent::OpenPopup))
                 .on_edit(|cx, txt| cx.emit(ComboBoxEvent::SetFilterText(txt)))
                 // Prevent blur/cancel from ending edit; this view handles it explicitly.
                 .on_blur(|_| {})
@@ -88,12 +100,20 @@ where
                 .width(Stretch(1.0))
                 .height(Pixels(32.0))
                 .placeholder(placeholder)
-                .class("title");
+                .class("title")
+                .role(Role::ComboBox)
+                .expanded(is_open)
+                .active_descendant(highlighted.map(move |highlighted| {
+                    highlighted
+                        .map(|index| format!("{}-option-{}", entity, index))
+                        .unwrap_or_default()
+                }))
+                .controls(format!("{}", entity));
 
             Binding::new(cx, is_open, move |cx| {
                 let open = is_open.get();
                 if open {
-                    Popup::new(cx, move |cx: &mut Context| {
+                    Popover::new(cx, move |cx: &mut Context| {
                         let filtered_indices = Memo::new(move |_| {
                             let query = filter_text.get().to_ascii_lowercase();
                             list.get()
@@ -136,11 +156,18 @@ where
                             });
 
                             List::new(cx, options_state, move |cx, _row, item| {
+                                let source_index = item.get().0;
+                                let option_id = format!("{}-option-{}", entity, source_index);
+                                cx.style.ids.insert(cx.current(), option_id.clone());
+                                cx.needs_restyle(cx.current());
+                                cx.entity_identifiers.insert(option_id, cx.current());
+
                                 Label::new(cx, item.map(|(_, text)| text.clone())).hoverable(false);
                             })
+                            .navigable(false)
                             .width(Stretch(1.0))
                             .selectable(Selectable::Single)
-                            .selected(highlighted_row)
+                            .selection(highlighted_row)
                             .show_horizontal_scrollbar(false)
                             .on_select(move |cx, row| {
                                 if let Some((source_index, _)) = options_state.get().get(row) {
@@ -150,6 +177,8 @@ where
                             });
                         });
                     })
+                    .role(Role::ListBox)
+                    .id(format!("{}", entity))
                     .should_reposition(false)
                     .arrow_size(Pixels(4.0));
                 }
@@ -201,6 +230,13 @@ where
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|combobox_event, _| match combobox_event {
+            ComboBoxEvent::OpenPopup => {
+                self.is_open.set(true);
+                self.highlighted.set(
+                    self.filtered_indices().first().copied().or_else(|| Some(self.selected.get())),
+                );
+            }
+
             ComboBoxEvent::SetOption(index) => {
                 if let Some(selected_item) = self.list.get().get(*index).cloned() {
                     self.placeholder.set(selected_item.to_string());
@@ -233,7 +269,6 @@ where
 
         event.map(|textbox_event, _| match textbox_event {
             TextEvent::StartEdit => {
-                self.is_open.set(true);
                 self.highlighted.set(
                     self.filtered_indices().first().copied().or_else(|| Some(self.selected.get())),
                 );
@@ -254,8 +289,8 @@ where
         event.map(|window_event, meta| match window_event {
             WindowEvent::KeyDown(code, _) => match code {
                 Code::ArrowDown => {
+                    let filtered = self.filtered_indices();
                     if self.is_open.get() {
-                        let filtered = self.filtered_indices();
                         if !filtered.is_empty() {
                             let current_pos = self
                                 .highlighted
@@ -272,12 +307,27 @@ where
                             self.highlighted.set(Some(filtered[next_pos]));
                             meta.consume();
                         }
+                    } else {
+                        self.is_open.set(true);
+                        self.highlighted.set(
+                            self.highlighted
+                                .get()
+                                .filter(|h| filtered.contains(h))
+                                .or_else(|| {
+                                    filtered
+                                        .iter()
+                                        .position(|index| *index == self.selected.get())
+                                        .map(|pos| filtered[pos])
+                                })
+                                .or_else(|| filtered.first().copied()),
+                        );
+                        meta.consume();
                     }
                 }
 
                 Code::ArrowUp => {
+                    let filtered = self.filtered_indices();
                     if self.is_open.get() {
-                        let filtered = self.filtered_indices();
                         if !filtered.is_empty() {
                             let current_pos = self
                                 .highlighted
@@ -296,6 +346,21 @@ where
                             self.highlighted.set(Some(filtered[prev_pos]));
                             meta.consume();
                         }
+                    } else {
+                        self.is_open.set(true);
+                        self.highlighted.set(
+                            self.highlighted
+                                .get()
+                                .filter(|h| filtered.contains(h))
+                                .or_else(|| {
+                                    filtered
+                                        .iter()
+                                        .position(|index| *index == self.selected.get())
+                                        .map(|pos| filtered[pos])
+                                })
+                                .or_else(|| filtered.last().copied()),
+                        );
+                        meta.consume();
                     }
                 }
 

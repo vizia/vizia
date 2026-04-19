@@ -102,3 +102,6 @@ pub use text::*;
 
 mod abilities;
 pub use abilities::*;
+
+mod control;
+pub use control::*;

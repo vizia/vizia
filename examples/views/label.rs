@@ -45,8 +45,8 @@ fn main() -> Result<(), ApplicationError> {
                 .width(Pixels(200.0));
 
             Label::new(cx, "Unless text wrapping is disabled.")
-                .width(Pixels(200.0))
-                .text_wrap(false)
+                .width(Auto)
+                .text_wrap(true)
                 .font_slant(FontSlant::Italic);
 
             HStack::new(cx, |cx| {

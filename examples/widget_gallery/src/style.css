@@ -8,24 +8,36 @@ scrollview.widgets > scroll-content {
     vertical-gap: 15px;
 }
 
-tabview.widgets > scrollview > scroll-content {
-    padding: 8px;
-}
-
-tabview.widgets tabheader label.tab-name {
-    width: 220px;
-}
-
-tabview.widgets tabheader:checked label.tab-name {
-    corner-radius: 4px;
-    background-color: #51afef;
-}
-
 vstack.panel {
     height: auto;
     width: 3s;
     min-width: 500px;
     max-width: 700px;
+    gap: 20px;
+}
+
+label.dropdown-label {
+    font-size: 11px;
+    color: var(--muted-foreground);
+}
+
+hstack.gallery-toolbar {
+    justify-content: flex-end;
+}
+
+submenu.controls-menu-button {
+    min-width: 150px;
+}
+
+hstack.control-menu-row {
+    width: 1s;
+    min-width: 180px;
+}
+
+label.control-menu-value {
+    left: 1s;
+    color: var(--muted-foreground);
+    font-size: 12px;
 }
 
 label.title {
@@ -48,63 +60,110 @@ label.paragraph {
 }
 
 demo-region {
-    corner-radius: 4px;
     /* padding: 40px; */
     /* padding-left: 1s;
     child-right: 1s; */
     height: auto;
-    border: 1px #d2d2d2;
 }
 
-demo-region label.code {
-    corner-top-left-radius: 0px;
-    corner-top-right-radius: 0px;
+demo-region > .region {
+    corner-radius: 4px;
+    height: auto;
+    padding: 30px;
+    alignment: center;
+    gap: 20px;
+    border-width: 1px;
+    border-color: var(--border);
+}
+
+demo-region .region-title {
     height: auto;
     width: auto;
-}
-
-demo-region hstack.controls {
-    height: auto;
-    padding: 4px;
-    background-color: #f4f4f4;
-    corner-bottom-left-radius: 4px;
-    corner-bottom-right-radius: 4px;
-    alignment: right;
-}
-
-demo-region toggle-button svg {
-    size: 20px;
-}
-
-demo-region.open hstack.controls {
-    corner-radius: 0px;
-}
-
-demo-region hstack.region {
-    corner-radius: 4px;
-    padding: 50px;
-    alignment: center;
-    height: auto;
-    min-height: 100px;
-    horizontal-gap: 12px;
-}
-
-demo-region > divider {
-    background-color: rgb(210, 210, 210);
-}
-
-demo-region > hstack.code {
-    background-color: #2d343f;
-    color: white;
-    font-family: monospace;
-    width: 1s;
-    padding: 10px;
-    corner-radius: 4px;
-    corner-top-left-radius: 0px;
-    corner-top-right-radius: 0px;
-    font-size: 14;
+    padding: 8px;
+    font-size: 16px;
+    color: var(--muted-foreground);
 }
 
 markdown {
     padding: 0px;
+}
+
+hstack.all-view-grid {
+    align-items: stretch;
+}
+
+card.all-view-card {
+    height: auto;
+    min-height: 240px;
+}
+
+card.all-view-card > card-content {
+    padding: 8px;
+}
+
+card.all-view-card vstack.panel {
+    min-width: 0px;
+    max-width: none;
+    width: 1s;
+}
+
+label.all-view-card-title {
+    font-size: 18px;
+    font-weight: semi-bold;
+}
+
+label.all-view-card-category {
+    color: var(--muted-foreground);
+}
+
+/* ── Content meta ────────────────────────────────────────────────────── */
+
+hstack.content-meta {
+    width: 1s;
+    height: auto;
+    padding: 4px 0 12px 0;
+}
+
+label.content-view-title {
+    height: auto;
+    font-size: 13px;
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+}
+
+label.content-view-badge {
+    height: auto;
+    width: auto;
+    padding: 2px 8px;
+    corner-radius: 999px;
+    background-color: #51afef;
+    color: white;
+    font-size: 11px;
+}
+
+/* ── Resizable demo helpers ──────────────────────────────────────────── */
+
+element.gallery-resizable-panel {
+    background-color: #78c1f3;
+    corner-radius: 4px;
+}
+
+element.gallery-resizable-fill {
+    background-color: var(--background-alt, #e8e8e8);
+    corner-radius: 4px;
+}
+
+/* ── Grid demo helpers ───────────────────────────────────────────────── */
+
+vstack.gallery-css-grid {
+    layout-type: grid;
+    grid-columns: 1s 1s;
+    grid-rows: 80px 80px;
+}
+
+.sidebar-logo {
+    width: 32px;
+    height: 32px;
+    corner-radius: 4px;
+    background-size: cover;
 }

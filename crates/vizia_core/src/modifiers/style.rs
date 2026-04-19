@@ -104,6 +104,7 @@ pub trait StyleModifiers: internal::Modifiable {
                     pseudo_classes.set(PseudoClassFlags::CHECKED, val);
                 }
                 cx.needs_restyle(entity);
+                cx.style.needs_access_update(entity);
             });
         });
 
@@ -238,7 +239,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// This property is inherited by the descendants of the view.
         disabled,
         bool,
-        SystemFlags::RESTYLE
+        SystemFlags::RESTYLE | SystemFlags::REACCESS
     );
 
     modifier!(
@@ -334,6 +335,22 @@ pub trait StyleModifiers: internal::Modifiable {
         Overflow,
         SystemFlags::RECLIP | SystemFlags::REDRAW
     );
+
+    /// Sets the filter for the view.
+    fn filter<U: Into<Filter>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            value.set_or_bind(cx, move |cx, v| {
+                let value = v.get_value(cx).into();
+                cx.style.filter.insert(entity, value);
+
+                cx.needs_redraw(entity);
+            });
+        });
+
+        self
+    }
 
     /// Sets the backdrop filter for the view.
     fn backdrop_filter<U: Into<Filter>>(mut self, value: impl Res<U>) -> Self {

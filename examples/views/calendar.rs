@@ -28,9 +28,9 @@ fn main() -> Result<(), ApplicationError> {
         AppState { date }.build(cx);
 
         ExamplePage::new(cx, |cx| {
-            Datepicker::new(cx, date).on_select(|cx, date| cx.emit(AppEvent::SetDate(date)));
+            Calendar::new(cx, date).on_select(|cx, date| cx.emit(AppEvent::SetDate(date)));
         });
     })
-    .title("Datepicker")
+    .title("Calendar")
     .run()
 }
