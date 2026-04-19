@@ -196,6 +196,24 @@ pub trait StyleModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets whether any descendant of the view has keyboard focus.
+    fn focus_within<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            state.set_or_bind(cx, move |cx, val| {
+                let val = val.get_value(cx).into();
+                if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
+                    pseudo_classes.set(PseudoClassFlags::FOCUS_WITHIN, val);
+                }
+
+                cx.needs_restyle(entity);
+            });
+        });
+
+        self
+    }
+
     /// Sets whether the view is showing a placeholder.
     fn placeholder_shown<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();

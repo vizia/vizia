@@ -98,6 +98,7 @@ impl<'i> selectors::parser::Parser<'i> for SelectorParser<'_, 'i> {
             "over" => Over,
             "focus" => Focus,
             "focus-visible" => FocusVisible,
+            "focus-within" => FocusWithin,
             "enabled" => Enabled,
             "disabled" => Disabled,
             "read-only" => ReadOnly,

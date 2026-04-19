@@ -363,7 +363,7 @@ impl ApplicationHandler<UserEvent> for Application {
                         }
                     }
                     accesskit_winit::WindowEvent::ActionRequested(action_request) => {
-                        let node_id = action_request.target;
+                        let node_id = action_request.target_node;
 
                         if action_request.action != Action::ScrollIntoView {
                             let entity = Entity::new(node_id.0, 0);

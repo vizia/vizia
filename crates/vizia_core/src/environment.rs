@@ -55,6 +55,8 @@ impl Theme {
 pub struct Environment {
     /// The locale used for localization.
     pub locale: Signal<LanguageIdentifier>,
+    /// The maximum interval between two clicks to be recognised as a double-click.
+    pub double_click_interval: Duration,
     /// Current application and system theme.
     pub theme: Theme,
     /// The timer used to blink the caret of a textbox.
@@ -70,7 +72,12 @@ impl Environment {
                 cx.emit(TextEvent::ToggleCaret);
             }
         });
-        Self { locale: Signal::new(locale.clone()), theme: Theme::default(), caret_timer }
+        Self {
+            locale: Signal::new(locale.clone()),
+            double_click_interval: Duration::from_millis(500),
+            theme: Theme::default(),
+            caret_timer,
+        }
     }
 }
 
@@ -85,6 +92,8 @@ pub enum EnvironmentEvent {
     UseSystemLocale,
     /// Alternate between dark and light theme modes.
     ToggleThemeMode,
+    /// Set the maximum interval between two clicks to be recognised as a double-click.
+    SetDoubleClickInterval(Duration),
 }
 
 impl Model for Environment {
@@ -116,6 +125,10 @@ impl Model for Environment {
 
                 cx.set_theme_mode(theme_mode);
                 cx.reload_styles().unwrap();
+            }
+
+            EnvironmentEvent::SetDoubleClickInterval(interval) => {
+                self.double_click_interval = interval;
             }
         });
 

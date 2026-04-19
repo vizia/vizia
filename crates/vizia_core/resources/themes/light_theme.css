@@ -839,6 +839,12 @@ spinbox {
     border-color: #d2d2d2;
 }
 
+spinbox:focus-within {
+    outline-width: 1px;
+    outline-color: #51afef;
+    outline-offset: 3px;
+}
+
 spinbox .spinbox-button {
     cursor: hand;
     border-width: 0px;
@@ -862,6 +868,7 @@ spinbox textbox.spinbox-value {
     background-color: transparent;
     border-width: 0px;
     corner-radius: 0px;
+    outline-width: 0px;
 }
 
 spinbox picklist.spinbox-value > button {
