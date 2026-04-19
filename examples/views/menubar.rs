@@ -1,6 +1,6 @@
 mod helpers;
 use helpers::*;
-use log::{LevelFilter, debug};
+use log::debug;
 use vizia::prelude::*;
 use vizia_core::icons::{ICON_CLIPBOARD, ICON_COPY, ICON_CUT};
 

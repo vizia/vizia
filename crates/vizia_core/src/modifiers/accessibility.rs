@@ -149,11 +149,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         self.context().with_current(current, |cx| {
             orientation.set_or_bind(cx, move |cx, orientation| {
                 let orientation_value = orientation.get_value(cx).into();
-                println!(
-                    "Setting orientation for entity {:?} to {:?}",
-                    cx.current(),
-                    orientation_value
-                );
+
                 if orientation_value == Orientation::Horizontal {
                     cx.with_current(entity, |cx| {
                         cx.toggle_class("horizontal", true);
