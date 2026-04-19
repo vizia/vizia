@@ -192,13 +192,10 @@ impl EditableText for String {
 
     fn next_line_break(&self, from: usize) -> usize {
         let from = clamp_to_char_boundary(self, from);
-        let mut offset = from;
-
-        for char in self.get(from..).unwrap_or("").bytes() {
-            if char == 0x0a {
-                return offset;
+        for (offset, byte) in self.get(from..).unwrap_or("").bytes().enumerate() {
+            if byte == 0x0a {
+                return from + offset;
             }
-            offset += 1;
         }
 
         self.len()

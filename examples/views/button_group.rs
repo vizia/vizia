@@ -11,17 +11,17 @@ struct AppData {
 }
 
 enum AppEvent {
-    ToggleBold,
-    ToggleItalic,
-    ToggleUnderline,
+    Bold,
+    Italic,
+    Underline,
 }
 
 impl Model for AppData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::ToggleBold => self.bold.update(|v| *v ^= true),
-            AppEvent::ToggleItalic => self.italic.update(|v| *v ^= true),
-            AppEvent::ToggleUnderline => self.underline.update(|v| *v ^= true),
+            AppEvent::Bold => self.bold.update(|v| *v ^= true),
+            AppEvent::Italic => self.italic.update(|v| *v ^= true),
+            AppEvent::Underline => self.underline.update(|v| *v ^= true),
         });
     }
 }
@@ -80,11 +80,11 @@ fn main() -> Result<(), ApplicationError> {
             // Toggle button group (text formatting toolbar)
             ButtonGroup::new(cx, |cx| {
                 ToggleButton::new(cx, bold, |cx| Svg::new(cx, ICON_BOLD).class("icon"))
-                    .on_toggle(|cx| cx.emit(AppEvent::ToggleBold));
+                    .on_toggle(|cx| cx.emit(AppEvent::Bold));
                 ToggleButton::new(cx, italic, |cx| Svg::new(cx, ICON_ITALIC).class("icon"))
-                    .on_toggle(|cx| cx.emit(AppEvent::ToggleItalic));
+                    .on_toggle(|cx| cx.emit(AppEvent::Italic));
                 ToggleButton::new(cx, underline, |cx| Svg::new(cx, ICON_UNDERLINE).class("icon"))
-                    .on_toggle(|cx| cx.emit(AppEvent::ToggleUnderline));
+                    .on_toggle(|cx| cx.emit(AppEvent::Underline));
             });
         });
     })

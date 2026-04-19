@@ -282,8 +282,8 @@ impl Application {
                     );
 
                     window.set_outer_position(PhysicalPosition::new(
-                        parent_position.x + x as i32 + offset.x,
-                        parent_position.y + y as i32 + offset.y,
+                        parent_position.x + x + offset.x,
+                        parent_position.y + y + offset.y,
                     ));
                 }
             }
