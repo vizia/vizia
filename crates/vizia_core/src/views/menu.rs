@@ -176,6 +176,7 @@ impl View for Submenu {
                                 .target(parent)
                                 .propagate(Propagation::Subtree),
                         );
+                        cx.focus();
                         // Open this submenu
                         cx.emit(MenuEvent::Open);
                     }

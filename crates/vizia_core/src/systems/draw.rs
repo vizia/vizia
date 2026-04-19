@@ -52,7 +52,7 @@ pub(crate) fn draw_system(
                 dirty_bounds = dirty_bounds.union(previous_draw_bounds);
             }
 
-            if dirty_bounds.w != 0.0 && dirty_bounds.h != 0.0 {
+            if dirty_bounds.w > 0.0 && dirty_bounds.h > 0.0 {
                 if let Some(dr) = &mut dirty_rect {
                     *dr = dr.union(&dirty_bounds);
                 } else {

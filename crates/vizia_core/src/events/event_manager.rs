@@ -533,6 +533,11 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                                 .target(prev_focused)
                                 .origin(Entity::root()),
                         );
+                        cx.event_queue.push_back(
+                            Event::new(ScrollEvent::ScrollToView(prev_focused))
+                                .target(prev_focused)
+                                .origin(Entity::root()),
+                        );
 
                         cx.focused = prev_focused;
 
@@ -564,6 +569,11 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                         );
                         cx.event_queue.push_back(
                             Event::new(WindowEvent::FocusIn)
+                                .target(next_focused)
+                                .origin(Entity::root()),
+                        );
+                        cx.event_queue.push_back(
+                            Event::new(ScrollEvent::ScrollToView(next_focused))
                                 .target(next_focused)
                                 .origin(Entity::root()),
                         );

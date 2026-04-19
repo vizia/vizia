@@ -230,7 +230,11 @@ impl BoundingBox {
         let right = self.right().min(other.right());
         let top = self.top().max(other.top());
         let bottom = self.bottom().min(other.bottom());
-        BoundingBox::from_min_max(left, top, right, bottom)
+        if right <= left || bottom <= top {
+            BoundingBox::default()
+        } else {
+            BoundingBox::from_min_max(left, top, right, bottom)
+        }
     }
 
     /// Returns a new [BoundingBox] representing the union of the current bounding box and the given bounding box.
