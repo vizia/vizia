@@ -7,6 +7,8 @@
 #![allow(clippy::enum_variant_names)]
 #![allow(clippy::only_used_in_recursion)]
 #![allow(clippy::uninlined_format_args)]
+#![allow(clippy::collapsible_match)]
+#![allow(clippy::new_ret_no_self)]
 #![allow(mismatched_lifetime_syntaxes)]
 // #![warn(missing_docs)]
 

@@ -479,8 +479,7 @@ where
             let padding_bottom =
                 padding_bottom.to_px(logical_parent_height, 0.0) * cx.scale_factor();
 
-            if resolved_text_direction(&cx.style, cx.current)
-                == crate::style::Direction::RightToLeft
+            if resolved_text_direction(cx.style, cx.current) == crate::style::Direction::RightToLeft
             {
                 std::mem::swap(&mut padding_left, &mut padding_right);
             }
@@ -658,7 +657,7 @@ where
                             _ => 0.0,
                         };
 
-                        if resolved_text_direction(&cx.style, cx.current)
+                        if resolved_text_direction(cx.style, cx.current)
                             == crate::style::Direction::RightToLeft
                         {
                             std::mem::swap(&mut padding_left, &mut padding_right);
@@ -747,7 +746,7 @@ where
                     _ => 0.0,
                 };
 
-                if resolved_text_direction(&cx.style, cx.current)
+                if resolved_text_direction(cx.style, cx.current)
                     == crate::style::Direction::RightToLeft
                 {
                     std::mem::swap(&mut padding_left, &mut padding_right);
@@ -915,7 +914,7 @@ where
         let text_len = text.len();
 
         if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-            let text_direction = if resolved_text_direction(&cx.style, cx.current)
+            let text_direction = if resolved_text_direction(cx.style, cx.current)
                 == crate::style::Direction::RightToLeft
             {
                 TextDirection::RightToLeft

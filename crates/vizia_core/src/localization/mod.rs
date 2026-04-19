@@ -263,9 +263,10 @@ pub fn percentage(value: f64, fraction_digits: usize) -> FluentNumber {
 #[derive(Clone)]
 pub struct FluentDateTime<Tz: chrono::TimeZone + Clone>(pub DateTime<Tz>);
 
-impl<Tz: chrono::TimeZone + Clone> Into<FluentValue<'static>> for FluentDateTime<Tz> {
-    fn into(self) -> FluentValue<'static> {
-        self.0.with_timezone(&Utc).timestamp_millis().into()
+impl<Tz: chrono::TimeZone + Clone> From<FluentDateTime<Tz>> for FluentValue<'static> {
+    fn from(val: FluentDateTime<Tz>) -> Self {
+        let FluentDateTime(datetime) = val;
+        datetime.with_timezone(&Utc).timestamp_millis().into()
     }
 }
 
@@ -298,9 +299,9 @@ impl<Tz: chrono::TimeZone + Clone + 'static> Res<FluentDateTime<Tz>> for DateTim
 #[derive(Clone)]
 pub struct FluentNaiveDateTime(pub NaiveDateTime);
 
-impl Into<FluentValue<'static>> for FluentNaiveDateTime {
-    fn into(self) -> FluentValue<'static> {
-        self.0.and_utc().timestamp_millis().into()
+impl From<FluentNaiveDateTime> for FluentValue<'static> {
+    fn from(val: FluentNaiveDateTime) -> Self {
+        val.0.and_utc().timestamp_millis().into()
     }
 }
 

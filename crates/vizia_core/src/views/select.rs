@@ -53,7 +53,7 @@ impl Select {
                                                 list.with(move |list| list.get(index).cloned())
                                             });
 
-                                            if let Some(_) = item.get() {
+                                            if item.get().is_some() {
                                                 handle
                                                     .text(item.map(move |it| it.clone().unwrap()));
                                             } else {
