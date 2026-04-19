@@ -32,6 +32,24 @@ impl ViziaWindow {
         builder: Option<Box<dyn FnOnce(&mut Context) + Send>>,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
     ) -> ViziaWindow {
+        // Reactive runtime setup — mirrors what `vizia_winit::Application::new` does.
+        //
+        // Mark this thread as the UI thread so off-thread `SyncSignal` writes correctly
+        // enqueue effects via `SYNC_RUNTIME` instead of the thread-local `RUNTIME` (which
+        // nobody drains). `on_frame_update` later calls `Runtime::drain_pending_work` to
+        // apply those effects on this thread.
+        Runtime::init_on_ui_thread();
+
+        // Register a no-op sync waker. baseview doesn't expose a proxy-event primitive we
+        // can use to wake the event loop from another thread, but it drives `on_frame` at
+        // the host compositor's vsync rate anyway — signal changes from off-UI writes will
+        // be observed on the next frame (at most one frame of latency).
+        //
+        // Registering the waker here — even as a no-op — has two benefits: (1) it matches
+        // the pattern in `vizia_winit`, so embedders don't have to know about sync-runtime
+        // internals; (2) if a future baseview release gains a window-wake mechanism, only
+        // this one line needs to change.
+        Runtime::set_sync_effect_waker(|| {});
         let context = window.gl_context().expect("Window was created without OpenGL support");
 
         unsafe { context.make_current() };

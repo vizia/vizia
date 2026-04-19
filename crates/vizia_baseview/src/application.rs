@@ -210,6 +210,11 @@ impl ApplicationRunner {
     /// Handle all reactivity within a frame. The window instance is used to resize the window when
     /// needed.
     pub fn on_frame_update(&mut self, window: &mut Window) {
+        // Pick up any effects enqueued by off-UI-thread `SyncSignal` writes since the last
+        // frame. These sit in `SYNC_RUNTIME` until a UI-thread call processes them — this
+        // is the analogue of the `drain_pending_work` call in `vizia_winit`'s frame loop.
+        Runtime::drain_pending_work();
+
         while let Some(event) = queue_get() {
             self.cx.send_event(event);
         }

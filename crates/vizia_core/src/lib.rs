@@ -64,7 +64,7 @@ pub mod prelude {
     pub use super::binding::{Binding, Res};
 
     pub use vizia_reactive::{
-        Effect, Memo, ReadSignal, Signal, SignalGet, SignalMap, SignalRead, SignalTrack,
+        Effect, Memo, ReadSignal, Runtime, Signal, SignalGet, SignalMap, SignalRead, SignalTrack,
         SignalUpdate, SignalWith, SignalWrite, SyncDerivedSignal, SyncReadSignal, SyncSignal,
         SyncWriteSignal, UpdaterEffect, WriteSignal,
     };
