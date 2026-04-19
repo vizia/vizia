@@ -1,10 +1,35 @@
 mod helpers;
 use helpers::*;
-use log::debug;
+use log::{LevelFilter, debug};
 use vizia::prelude::*;
 use vizia_core::icons::{ICON_CLIPBOARD, ICON_COPY, ICON_CUT};
 
+pub fn setup_logging() -> Result<(), ApplicationError> {
+    #[cfg(debug_assertions)]
+    const MAIN_LOG_LEVEL: LevelFilter = LevelFilter::Debug;
+    #[cfg(not(debug_assertions))]
+    const MAIN_LOG_LEVEL: LevelFilter = LevelFilter::Info;
+
+    fern::Dispatch::new()
+        // Perform allocation-free log formatting
+        .format(move |out, message, record| {
+            out.finish(format_args!("[{}][{}] {}", record.target(), record.level(), message))
+        })
+        // Add blanket level filter
+        .level(MAIN_LOG_LEVEL)
+        .level_for("selectors::matching", LevelFilter::Warn)
+        // Output to stdout
+        .chain(std::io::stdout())
+        // Apply globally
+        .apply()
+        .map_err(|_| ApplicationError::LogError)?;
+
+    Ok(())
+}
+
 fn main() -> Result<(), ApplicationError> {
+    setup_logging()?;
+
     Application::new(|cx: &mut Context| {
         ExamplePage::new(cx, |cx| {
             MenuBar::new(cx, |cx| {

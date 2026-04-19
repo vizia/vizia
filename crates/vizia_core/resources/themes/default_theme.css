@@ -686,7 +686,7 @@ menubutton {
     corner-radius: 4px;
 }
 
-menubutton:focus {
+menubutton:focus-visible {
     background-color: var(--accent);
 }
 
@@ -713,7 +713,7 @@ submenu:checked {
     background-color: var(--accent);
 }
 
-submenu:focus {
+submenu:focus-visible {
     background-color: var(--accent);
 }
 

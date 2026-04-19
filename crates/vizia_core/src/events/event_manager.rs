@@ -51,6 +51,8 @@ impl EventManager {
 
             // Loop over the events in the event queue.
             'events: for event in self.event_queue.iter_mut() {
+                let keyboard_lock_root = keyboard_event_lock_root(cx, event);
+
                 // Handle internal events.
                 event.take(|internal_event, _| match internal_event {
                     InternalEvent::Redraw => cx.needs_redraw(Entity::root()),
@@ -74,6 +76,12 @@ impl EventManager {
                 // Send events to any local listeners.
                 let listeners = cx.listeners.keys().copied().collect::<Vec<Entity>>();
                 for entity in listeners {
+                    if let Some(lock_root) = keyboard_lock_root {
+                        if !entity.is_descendant_of(&cx.tree, lock_root) {
+                            continue;
+                        }
+                    }
+
                     if let Some(listener) = cx.listeners.remove(&entity) {
                         if let Some(mut event_handler) = cx.views.remove(&entity) {
                             cx.with_current(entity, |cx| {
@@ -113,7 +121,12 @@ impl EventManager {
                 let target = event.meta.target;
 
                 // Send event to target.
-                visit_entity(cx, target, event);
+                if keyboard_lock_root
+                    .map(|lock_root| target.is_descendant_of(cx.tree, lock_root))
+                    .unwrap_or(true)
+                {
+                    visit_entity(cx, target, event);
+                }
 
                 // Skip to next event if the current event was consumed.
                 if event.meta.consumed {
@@ -126,6 +139,12 @@ impl EventManager {
                     let iter = target.parent_iter(cx.tree).skip(1);
 
                     for entity in iter {
+                        if let Some(lock_root) = keyboard_lock_root {
+                            if !entity.is_descendant_of(cx.tree, lock_root) {
+                                break;
+                            }
+                        }
+
                         // Send event to all ancestors of the target.
                         visit_entity(cx, entity, event);
 
@@ -142,8 +161,13 @@ impl EventManager {
                     let iter = target.branch_iter(cx.tree).skip(1);
 
                     for entity in iter {
-                        // Send event to all entities in the subtree after the target.
-                        visit_entity(cx, entity, event);
+                        if keyboard_lock_root
+                            .map(|lock_root| entity.is_descendant_of(cx.tree, lock_root))
+                            .unwrap_or(true)
+                        {
+                            // Send event to all entities in the subtree after the target.
+                            visit_entity(cx, entity, event);
+                        }
 
                         // Skip to the next event if the current event was consumed.
                         if event.meta.consumed {
@@ -163,6 +187,33 @@ impl EventManager {
             !cx.event_queue.is_empty()
         } {}
     }
+}
+fn is_keyboard_window_event(window_event: &WindowEvent) -> bool {
+    matches!(
+        window_event,
+        WindowEvent::KeyDown(_, _)
+            | WindowEvent::KeyUp(_, _)
+            | WindowEvent::CharInput(_)
+            | WindowEvent::ImeActivate(_)
+            | WindowEvent::ImeCommit(_)
+            | WindowEvent::ImePreedit(_, _)
+            | WindowEvent::SetImeCursorArea(_, _)
+    )
+}
+
+fn keyboard_event_lock_root(cx: &Context, event: &mut Event) -> Option<Entity> {
+    let mut lock_root = None;
+
+    event.map(|window_event: &WindowEvent, _| {
+        if is_keyboard_window_event(window_event) {
+            let candidate = cx.tree.lock_focus_within(cx.focused);
+            if candidate != Entity::root() {
+                lock_root = Some(candidate);
+            }
+        }
+    });
+
+    lock_root
 }
 
 fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {
@@ -509,14 +560,30 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 }
 
                 let lock_focus_to = cx.tree.lock_focus_within(cx.focused);
+
+                // If the locked subtree contains no navigatable items (e.g. a menu popup
+                // where items are focusable but not navigatable), fall back to global
+                // navigation so Tab can escape the lock. Dialog boxes with navigatable
+                // items inside are unaffected.
+                let effective_lock = if lock_focus_to != Entity::root()
+                    && !TreeIterator::full(&cx.tree)
+                        .any(|node| is_navigatable(&cx.tree, &cx.style, node, lock_focus_to))
+                {
+                    Entity::root()
+                } else {
+                    lock_focus_to
+                };
+
                 if cx.modifiers.shift() {
                     let prev_focused = if let Some(prev_focused) =
-                        focus_backward(&cx.tree, &cx.style, cx.focused, lock_focus_to)
+                        focus_backward(&cx.tree, &cx.style, cx.focused, effective_lock)
                     {
                         prev_focused
                     } else {
                         TreeIterator::full(&cx.tree)
-                            .rfind(|node| is_navigatable(&cx.tree, &cx.style, *node, lock_focus_to))
+                            .rfind(|node| {
+                                is_navigatable(&cx.tree, &cx.style, *node, effective_lock)
+                            })
                             .unwrap_or(Entity::root())
                     };
 
@@ -550,12 +617,12 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                     }
                 } else {
                     let next_focused = if let Some(next_focused) =
-                        focus_forward(&cx.tree, &cx.style, cx.focused, lock_focus_to)
+                        focus_forward(&cx.tree, &cx.style, cx.focused, effective_lock)
                     {
                         next_focused
                     } else {
                         TreeIterator::full(&cx.tree)
-                            .find(|node| is_navigatable(&cx.tree, &cx.style, *node, lock_focus_to))
+                            .find(|node| is_navigatable(&cx.tree, &cx.style, *node, effective_lock))
                             .unwrap_or(Entity::root())
                     };
 

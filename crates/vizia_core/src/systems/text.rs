@@ -8,8 +8,8 @@ use skia_safe::{
 };
 use vizia_storage::{LayoutChildIterator, LayoutTreeIterator};
 
-use crate::{cache::CachedData, prelude::*};
 use crate::text::resolved_text_direction;
+use crate::{cache::CachedData, prelude::*};
 
 pub(crate) fn text_system(cx: &mut Context) {
     if cx.style.text.is_empty() || cx.style.text_construction.is_empty() {
@@ -81,8 +81,12 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
                 std::mem::swap(&mut padding_left, &mut padding_right);
             }
 
-            let text_bounds =
-                BoundingBox { x: padding_left, y: 0.0, w: bounds.w - padding_left - padding_right, h: bounds.h };
+            let text_bounds = BoundingBox {
+                x: padding_left,
+                y: 0.0,
+                w: bounds.w - padding_left - padding_right,
+                h: bounds.h,
+            };
 
             if !cx
                 .style
@@ -228,13 +232,13 @@ pub fn build_paragraph(
     paragraph_style.set_text_align(resolve_text_align(style, entity).into());
 
     // Text Direction
-    paragraph_style.set_text_direction(if resolved_text_direction(style, entity)
-        == Direction::RightToLeft
-    {
-        TextDirection::RTL
-    } else {
-        TextDirection::LTR
-    });
+    paragraph_style.set_text_direction(
+        if resolved_text_direction(style, entity) == Direction::RightToLeft {
+            TextDirection::RTL
+        } else {
+            TextDirection::LTR
+        },
+    );
 
     let mut paragraph_builder = ParagraphBuilder::new(&paragraph_style, font_collection);
 

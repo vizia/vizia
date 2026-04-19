@@ -35,10 +35,10 @@ pub async fn list() -> Result<Vec<ImageData>, reqwest::Error> {
     Ok(items
         .into_iter()
         .filter_map(|item| {
-            item.id.parse::<u32>().ok().map(|n| ImageData {
-                id: Id(n),
-                url: format!("https://picsum.photos/id/{n}"),
-            })
+            item.id
+                .parse::<u32>()
+                .ok()
+                .map(|n| ImageData { id: Id(n), url: format!("https://picsum.photos/id/{n}") })
         })
         .collect())
 }
