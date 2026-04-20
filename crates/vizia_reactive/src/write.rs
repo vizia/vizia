@@ -100,12 +100,6 @@ pub trait SignalUpdate<T> {
     }
 
     /// Sets the new_value to the Signal and triggers effect run only if the value has changed.
-    ///
-    /// The previous implementation delegated to `try_update` with an internal equality guard
-    /// on the assignment, but `try_update` fires effects unconditionally regardless of whether
-    /// the closure mutated the value — so `set_if_changed` behaved like `set` for every caller,
-    /// in violation of its documented contract. This short-circuits with a non-tracking read
-    /// and only falls through to `set` when the new value genuinely differs.
     fn set_if_changed(&self, new_value: T)
     where
         T: PartialEq + 'static,
