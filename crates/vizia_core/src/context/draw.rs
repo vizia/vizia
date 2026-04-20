@@ -1137,12 +1137,24 @@ impl DrawContext<'_> {
                                                 self.current,
                                                 &self.style.custom_color_props,
                                             ) {
-                                                let mut paint = Paint::default();
-
-                                                paint.set_anti_alias(true);
-                                                paint.set_blend_mode(skia_safe::BlendMode::SrcIn);
-                                                paint.set_color(color);
-                                                canvas.draw_paint(&paint);
+                                                // Escape hatch for multi-color SVGs (logos,
+                                                // illustrations) that would otherwise be flooded
+                                                // by the root-level `fill: var(--foreground)`
+                                                // tint in the default theme. Setting
+                                                // `fill: transparent` on such elements makes the
+                                                // SrcIn pass a no-op, so the SVG's own path
+                                                // fills render untouched. Icon SVGs that want
+                                                // the tint still work — they set a
+                                                // non-transparent fill explicitly. See #636.
+                                                if color.a() != 0 {
+                                                    let mut paint = Paint::default();
+                                                    paint.set_anti_alias(true);
+                                                    paint.set_blend_mode(
+                                                        skia_safe::BlendMode::SrcIn,
+                                                    );
+                                                    paint.set_color(color);
+                                                    canvas.draw_paint(&paint);
+                                                }
                                             }
                                             canvas.restore();
                                         }
