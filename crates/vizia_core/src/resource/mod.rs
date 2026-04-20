@@ -346,11 +346,8 @@ impl ResourceManager {
         // is one of them, otherwise the first registered translation. `available` is
         // non-empty here (checked above), so `available.first()` is always `Some`.
         let first_available = *available.first().expect("non-empty checked above");
-        let fallback = if available.iter().any(|&l| l == &self.language) {
-            &self.language
-        } else {
-            first_available
-        };
+        let fallback =
+            if available.contains(&&self.language) { &self.language } else { first_available };
         let langs = fluent_langneg::negotiate::negotiate_languages(
             &[locale],
             &available,
