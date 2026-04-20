@@ -445,3 +445,55 @@ impl<T: Send + Sync> SignalWrite<T> for SyncWriteSignal<T> {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    use crate::{Scope, SignalGet, SignalUpdate, SyncSignal, UpdaterEffect};
+
+    /// Regression: `set_if_changed` must not notify subscribers when the new value equals the
+    /// stored value. The previous implementation delegated to `try_update`, which fires effects
+    /// unconditionally — so the equality guard on the internal assignment was ineffective and
+    /// every `set_if_changed` call behaved like `set`.
+    ///
+    /// Deliberately does NOT call `Runtime::init_on_ui_thread()`: that flips the global
+    /// UI-thread-enforcement flag, which would retroactively panic any other reactive test
+    /// running on a different thread under `cargo test`'s default parallel executor.
+    #[test]
+    fn set_if_changed_skips_notifications_when_value_unchanged() {
+        let scope = Scope::new();
+
+        let signal = SyncSignal::new(42_i32);
+        let fires = Arc::new(AtomicUsize::new(0));
+
+        let fires_in_effect = fires.clone();
+        scope.enter(|| {
+            UpdaterEffect::new(
+                move || signal.get(),
+                move |_| {
+                    fires_in_effect.fetch_add(1, Ordering::SeqCst);
+                },
+            );
+        });
+
+        // `UpdaterEffect::new` runs `compute` once at registration but does not invoke
+        // `on_change` until a signal write fires effects. Baseline should be 0.
+        assert_eq!(fires.load(Ordering::SeqCst), 0, "baseline: on_change not yet fired");
+
+        // Same-value write: equality guard must short-circuit before any effect fires.
+        signal.set_if_changed(42);
+        assert_eq!(fires.load(Ordering::SeqCst), 0, "same-value write should skip");
+
+        // Different-value write: must fire once.
+        signal.set_if_changed(100);
+        assert_eq!(fires.load(Ordering::SeqCst), 1, "different-value write should fire");
+
+        // Second same-value write (the new current is now 100): must skip again.
+        signal.set_if_changed(100);
+        assert_eq!(fires.load(Ordering::SeqCst), 1, "same-value re-write should skip");
+
+        scope.dispose();
+    }
+}

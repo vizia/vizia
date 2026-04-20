@@ -6,7 +6,7 @@ use std::{
 
 use parking_lot::{Mutex, MutexGuard};
 
-use crate::{id::Id, signal::TrackedRefCell};
+use crate::{id::Id, read::SignalRead, signal::TrackedRefCell};
 
 pub struct SyncWriteRef<'a, T> {
     id: Id,
@@ -99,16 +99,25 @@ pub trait SignalUpdate<T> {
         let _ = self.try_update(|v| *v = new_value);
     }
 
-    /// Sets the new_value to the Signal and triggers effect run only if the value has changed
+    /// Sets the new_value to the Signal and triggers effect run only if the value has changed.
+    ///
+    /// The previous implementation delegated to `try_update` with an internal equality guard
+    /// on the assignment, but `try_update` fires effects unconditionally regardless of whether
+    /// the closure mutated the value — so `set_if_changed` behaved like `set` for every caller,
+    /// in violation of its documented contract. This short-circuits with a non-tracking read
+    /// and only falls through to `set` when the new value genuinely differs.
     fn set_if_changed(&self, new_value: T)
     where
         T: PartialEq + 'static,
+        Self: SignalRead<T>,
     {
-        let _ = self.try_update(|v| {
-            if *v != new_value {
-                *v = new_value;
-            }
-        });
+        let equal = self
+            .try_read_untracked()
+            .map(|current| *current == new_value)
+            .unwrap_or(false);
+        if !equal {
+            self.set(new_value);
+        }
     }
 
     /// Update the stored value with the given function and triggers effect run
