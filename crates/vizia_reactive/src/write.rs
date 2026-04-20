@@ -111,10 +111,7 @@ pub trait SignalUpdate<T> {
         T: PartialEq + 'static,
         Self: SignalRead<T>,
     {
-        let equal = self
-            .try_read_untracked()
-            .map(|current| *current == new_value)
-            .unwrap_or(false);
+        let equal = self.try_read_untracked().map(|current| *current == new_value).unwrap_or(false);
         if !equal {
             self.set(new_value);
         }
