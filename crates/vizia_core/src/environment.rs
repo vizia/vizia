@@ -29,8 +29,10 @@ pub struct Environment {
     pub double_click_interval: Duration,
     /// The delay before a tooltip fades in.
     pub tooltip_delay: Duration,
-    /// Current application and system theme.
+    /// The user's theme preference (may be `System` to follow the OS).
     pub theme_mode: ThemeMode,
+    /// The OS-reported system theme (always `DarkMode` or `LightMode`, never `System`).
+    pub system_theme_mode: ThemeMode,
     /// The timer used to blink the caret of a textbox.
     pub(crate) caret_timer: Timer,
 }
@@ -73,7 +75,17 @@ impl Environment {
             double_click_interval: Duration::from_millis(500),
             tooltip_delay: Duration::from_millis(1500),
             theme_mode: ThemeMode::default(),
+            system_theme_mode: ThemeMode::LightMode,
             caret_timer,
+        }
+    }
+
+    /// Returns the effective (resolved) theme, substituting the OS theme when the
+    /// user preference is [`ThemeMode::System`].
+    pub fn effective_theme(&self) -> ThemeMode {
+        match self.theme_mode {
+            ThemeMode::System => self.system_theme_mode,
+            other => other,
         }
     }
 }
@@ -116,9 +128,9 @@ impl Model for Environment {
 
             EnvironmentEvent::SetThemeMode(theme) => {
                 self.theme_mode = theme;
-
+                let is_dark = self.effective_theme() == ThemeMode::DarkMode;
                 cx.with_current(Entity::root(), |cx| {
-                    cx.toggle_class("dark", self.theme_mode == ThemeMode::DarkMode);
+                    cx.toggle_class("dark", is_dark);
                 });
                 cx.reload_styles().unwrap();
             }
@@ -142,8 +154,9 @@ impl Model for Environment {
 
                 self.theme_mode = theme_mode;
 
+                let is_dark = self.effective_theme() == ThemeMode::DarkMode;
                 cx.with_current(Entity::root(), |cx| {
-                    cx.toggle_class("dark", theme_mode == ThemeMode::DarkMode);
+                    cx.toggle_class("dark", is_dark);
                 });
 
                 cx.reload_styles().unwrap();
@@ -160,10 +173,11 @@ impl Model for Environment {
 
         event.map(|event, _| match event {
             WindowEvent::ThemeChanged(theme) => {
-                self.theme_mode = *theme;
+                self.system_theme_mode = *theme;
                 if self.theme_mode == ThemeMode::System {
+                    let is_dark = self.system_theme_mode == ThemeMode::DarkMode;
                     cx.with_current(Entity::root(), |cx| {
-                        cx.toggle_class("dark", self.theme_mode == ThemeMode::DarkMode);
+                        cx.toggle_class("dark", is_dark);
                     });
                     cx.reload_styles().unwrap();
                 }
