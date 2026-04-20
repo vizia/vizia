@@ -342,16 +342,23 @@ impl ResourceManager {
             return LanguageIdentifier::default();
         }
 
-        let default = LanguageIdentifier::default();
-        let default_ref = &default;
+        // Pick a fallback from the registered translations: prefer `self.language` if it
+        // is one of them, otherwise the first registered translation. `available` is
+        // non-empty here (checked above), so `available.first()` is always `Some`.
+        let first_available = *available.first().expect("non-empty checked above");
+        let fallback = if available.iter().any(|&l| l == &self.language) {
+            &self.language
+        } else {
+            first_available
+        };
         let langs = fluent_langneg::negotiate::negotiate_languages(
             &[locale],
             &available,
-            Some(&default_ref),
+            Some(&fallback),
             fluent_langneg::NegotiationStrategy::Filtering,
         );
 
-        langs.first().map(|lang| (**lang).clone()).unwrap_or(default)
+        langs.first().map(|lang| (**lang).clone()).unwrap_or_else(|| fallback.clone())
     }
 
     pub fn translation_locales(&self, locale: &LanguageIdentifier) -> Vec<LanguageIdentifier> {
@@ -471,15 +478,37 @@ mod tests {
     }
 
     #[test]
-    fn current_translation_uses_default_bundle_when_requested_locale_missing() {
+    fn current_translation_falls_back_to_registered_bundle_when_requested_locale_missing() {
         let mut manager = ResourceManager::new();
 
         manager.add_translation("en-US".parse().unwrap(), "hello = Hello".to_string()).unwrap();
 
         let bundle = manager.current_translation(&"zz-ZZ".parse().unwrap());
+
+        assert!(bundle.get_message("hello").is_some());
+    }
+
+    #[test]
+    fn current_translation_returns_registered_bundle_for_exact_match() {
+        let mut manager = ResourceManager::new();
+
+        manager.add_translation("fr".parse().unwrap(), "hello = Bonjour".to_string()).unwrap();
+
+        let bundle = manager.current_translation(&"fr".parse().unwrap());
         let message = bundle.get_message("hello");
 
         assert!(message.is_some());
+    }
+
+    #[test]
+    fn current_translation_returns_empty_default_when_no_translations_registered() {
+        let manager = ResourceManager::new();
+
+        // No `add_translation` call. The only entry in `translations` is the seeded empty
+        // default. A miss must not panic — it falls back to that default bundle.
+        let bundle = manager.current_translation(&"zz-ZZ".parse().unwrap());
+
+        assert!(bundle.get_message("hello").is_none());
     }
 
     #[test]
