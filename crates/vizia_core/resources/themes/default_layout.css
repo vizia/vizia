@@ -463,7 +463,6 @@ knob {
 
 label {
     size: auto;
-    text-wrap: false;
     direction: auto;
 }
 
