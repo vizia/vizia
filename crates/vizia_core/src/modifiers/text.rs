@@ -101,7 +101,7 @@ pub trait TextModifiers: internal::Modifiable {
         self.context().with_current(current, move |cx| {
             value.set_or_bind(cx, move |cx, v| {
                 cx.style.font_color.insert(entity, v.get_value(cx).into());
-                cx.style.system_flags |= SystemFlags::REINHERIT_INLINE;
+                cx.style.needs_reinherit_inline(entity);
                 cx.style.needs_text_update(entity);
                 cx.needs_redraw(entity);
             });
@@ -116,7 +116,7 @@ pub trait TextModifiers: internal::Modifiable {
         self.context().with_current(current, move |cx| {
             value.set_or_bind(cx, move |cx, v| {
                 cx.style.font_size.insert(entity, v.get_value(cx).into());
-                cx.style.system_flags |= SystemFlags::REINHERIT_INLINE;
+                cx.style.needs_reinherit_inline(entity);
                 cx.style.needs_text_update(entity);
             });
         });
