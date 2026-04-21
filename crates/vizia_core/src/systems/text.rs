@@ -221,13 +221,6 @@ pub fn build_paragraph(
         paragraph_style.set_max_lines(line_clamp.0 as usize);
     }
 
-    if let Some(text_wrap) = style.text_wrap.get(entity).copied() {
-        if !text_wrap {
-            // Disable soft wrapping by constraining to a single visual line.
-            paragraph_style.set_max_lines(1);
-        }
-    }
-
     // Text Align
     paragraph_style.set_text_align(resolve_text_align(style, entity).into());
 
