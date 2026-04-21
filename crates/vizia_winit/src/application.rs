@@ -613,12 +613,21 @@ impl ApplicationHandler<UserEvent> for Application {
                     _ => None,
                 };
 
-                if let winit::keyboard::Key::Character(character) = event.logical_key {
-                    if event.state == ElementState::Pressed {
-                        self.cx.emit_window_event(
-                            window.entity,
-                            WindowEvent::CharInput(character.as_str().chars().next().unwrap()),
-                        );
+                if event.state == ElementState::Pressed {
+                    match &event.logical_key {
+                        winit::keyboard::Key::Character(character) => {
+                            if let Some(character) = character.as_str().chars().next() {
+                                self.cx.emit_window_event(
+                                    window.entity,
+                                    WindowEvent::CharInput(character),
+                                );
+                            }
+                        }
+                        // Some platforms report space as a named key instead of character text.
+                        winit::keyboard::Key::Named(winit::keyboard::NamedKey::Space) => {
+                            self.cx.emit_window_event(window.entity, WindowEvent::CharInput(' '));
+                        }
+                        _ => {}
                     }
                 }
 
