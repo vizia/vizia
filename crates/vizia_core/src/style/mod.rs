@@ -2556,6 +2556,7 @@ impl Style {
         self.position_type.remove(entity);
 
         self.alignment.remove(entity);
+        self.direction.remove(entity);
         self.wrap.remove(entity);
 
         // Grid
@@ -2730,6 +2731,7 @@ impl Style {
         self.layout_type.clear_rules();
         self.position_type.clear_rules();
         self.alignment.clear_rules();
+        self.direction.clear_rules();
         self.wrap.clear_rules();
 
         // Grid
