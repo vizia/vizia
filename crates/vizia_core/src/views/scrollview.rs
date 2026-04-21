@@ -242,11 +242,7 @@ impl View for ScrollView {
                     let mut container_width = self.container_width.get();
                     let mut container_height = self.container_height.get();
 
-                    if inner_width != 0.0
-                        && inner_height != 0.0
-                        && container_width != 0.0
-                        && container_height != 0.0
-                    {
+                    if inner_width != 0.0 && inner_height != 0.0 {
                         let top =
                             ((inner_height - container_height) * scroll_y).round() / scale_factor;
                         let physical_scroll_x = ScrollView::map_scroll_x_to_physical(
@@ -368,11 +364,7 @@ impl View for ScrollView {
                     let mut container_width = self.container_width.get();
                     let mut container_height = self.container_height.get();
 
-                    if inner_width != 0.0
-                        && inner_height != 0.0
-                        && container_width != 0.0
-                        && container_height != 0.0
-                    {
+                    if inner_width != 0.0 && inner_height != 0.0 {
                         let top =
                             ((inner_height - container_height) * scroll_y).round() / scale_factor;
                         let physical_scroll_x = ScrollView::map_scroll_x_to_physical(
