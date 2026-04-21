@@ -128,7 +128,7 @@ impl Default for Abilities {
 }
 
 bitflags! {
-    pub(crate) struct SystemFlags: u8 {
+    pub(crate) struct SystemFlags: u16 {
         const RELAYOUT = 1;
         const RESTYLE = 1 << 1;
         const REFLOW = 1 << 2;
@@ -137,6 +137,7 @@ bitflags! {
         const RECLIP = 1 << 5;
         const REACCESS = 1 << 6;
         const REINHERIT_INLINE = 1 << 7;
+        const REINHERIT_SHARED = 1 << 8;
     }
 }
 

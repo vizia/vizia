@@ -239,7 +239,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// This property is inherited by the descendants of the view.
         disabled,
         bool,
-        SystemFlags::RESTYLE | SystemFlags::REACCESS
+        SystemFlags::RESTYLE | SystemFlags::REACCESS | SystemFlags::REINHERIT_INLINE
     );
 
     modifier!(
@@ -666,7 +666,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// Overrides the fill color of SVG images.
         fill,
         Color,
-        SystemFlags::REDRAW
+        SystemFlags::REDRAW | SystemFlags::REINHERIT_INLINE
     );
 
     // Cursor Icon

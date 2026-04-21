@@ -345,6 +345,7 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context, redraw_entities: &mut 
     if !cx.style.system_flags.contains(SystemFlags::REINHERIT_INLINE) {
         return;
     }
+
     cx.style.system_flags.set(SystemFlags::REINHERIT_INLINE, false);
 
     for entity in cx.tree.into_iter() {
@@ -378,6 +379,12 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context, redraw_entities: &mut 
 
 /// Link inheritable shared properties to their parent.
 pub(crate) fn shared_inheritance_system(cx: &mut Context, redraw_entities: &mut Vec<Entity>) {
+    if !cx.style.system_flags.contains(SystemFlags::REINHERIT_SHARED) {
+        return;
+    }
+
+    cx.style.system_flags.set(SystemFlags::REINHERIT_SHARED, false);
+
     for entity in cx.tree.into_iter() {
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
             if cx.style.font_color.inherit_shared(entity, parent)
@@ -546,6 +553,7 @@ fn link_style_data(
     let mut should_reflow = false;
     let mut should_retransform = false;
     let mut should_reclip = false;
+    let mut should_reinherit = false;
 
     // Display
     if style.display.link(entity, matched_rules) {
@@ -782,6 +790,7 @@ fn link_style_data(
         should_relayout = true;
         should_redraw = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.wrap.link(entity, matched_rules) {
@@ -806,42 +815,49 @@ fn link_style_data(
     if style.font_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.font_size.link(entity, matched_rules, &style.custom_font_size_props) {
         should_relayout = true;
         should_redraw = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.font_family.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.font_weight.link(entity, matched_rules) {
         should_redraw = true;
         should_relayout = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.font_slant.link(entity, matched_rules) {
         should_redraw = true;
         should_relayout = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.font_width.link(entity, matched_rules) {
         should_redraw = true;
         should_relayout = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.font_variation_settings.link(entity, matched_rules) {
         should_redraw = true;
         should_relayout = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.text_wrap.link(entity, matched_rules) {
@@ -867,25 +883,30 @@ fn link_style_data(
 
     if style.selection_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
+        should_reinherit = true;
     }
 
     if style.caret_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
+        should_reinherit = true;
     }
 
     if style.text_decoration_line.link(entity, matched_rules) {
         should_redraw = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.text_stroke_width.link(entity, matched_rules) {
         should_redraw = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.text_stroke_style.link(entity, matched_rules) {
         should_redraw = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.underline_style.link(entity, matched_rules) {
@@ -989,6 +1010,7 @@ fn link_style_data(
 
     if style.fill.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
+        should_reinherit = true;
     }
 
     //
@@ -1024,6 +1046,10 @@ fn link_style_data(
                 break;
             }
         }
+    }
+
+    if should_reinherit {
+        style.system_flags.set(SystemFlags::REINHERIT_SHARED, true);
     }
 }
 
