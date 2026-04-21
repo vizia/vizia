@@ -45,25 +45,18 @@ pub(crate) fn draw_system(
 
         if entity.visible(&cx.style) {
             let draw_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
-
-            let mut dirty_bounds = draw_bounds;
-
-            if let Some(previous_draw_bounds) = cx.cache.draw_bounds.get(entity) {
-                dirty_bounds = dirty_bounds.union(previous_draw_bounds);
-            }
-
-            if dirty_bounds.w > 0.0 && dirty_bounds.h > 0.0 {
-                if let Some(dr) = &mut dirty_rect {
-                    *dr = dr.union(&dirty_bounds);
-                } else {
-                    dirty_rect = Some(dirty_bounds);
-                }
-            }
-
-            if let Some(dr) = cx.cache.draw_bounds.get_mut(entity) {
-                *dr = draw_bounds;
-            } else {
-                cx.cache.draw_bounds.insert(entity, draw_bounds);
+            let dirty_bounds = cx
+                .cache
+                .draw_bounds
+                .get(entity)
+                .map_or(draw_bounds, |prev_bounds| draw_bounds.union(prev_bounds));
+            union_dirty_rect(&mut dirty_rect, dirty_bounds);
+            cx.cache.draw_bounds.insert(entity, draw_bounds);
+        } else {
+            // If the entity was previously visible but is no longer, we must dirty
+            // its previous area so that it is correctly cleared from the screen.
+            if let Some(previous_draw_bounds) = cx.cache.draw_bounds.remove(entity) {
+                union_dirty_rect(&mut dirty_rect, previous_draw_bounds);
             }
         }
     }
@@ -87,11 +80,7 @@ pub(crate) fn draw_system(
                     let filter_current_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
 
                     // Update cache for visible entity
-                    if let Some(dr) = cx.cache.draw_bounds.get_mut(entity) {
-                        *dr = filter_current_bounds;
-                    } else {
-                        cx.cache.draw_bounds.insert(entity, filter_current_bounds);
-                    }
+                    cx.cache.draw_bounds.insert(entity, filter_current_bounds);
 
                     if filter_current_bounds.w > 0.0 && filter_current_bounds.h > 0.0 {
                         // Ensure bounds are valid
@@ -112,16 +101,7 @@ pub(crate) fn draw_system(
                 // Entity is INVISIBLE but has (or had) a filter style.
                 // Its *previous* bounds need to be added to dirty_rect.
                 if let Some(previous_draw_bounds) = cx.cache.draw_bounds.get(entity).copied() {
-                    if previous_draw_bounds.w > 0.0 && previous_draw_bounds.h > 0.0 {
-                        // Ensure previous bounds were valid
-                        // Union previous_draw_bounds into dirty_rect.
-                        // If dirty_rect is None, it becomes Some(previous_draw_bounds).
-                        // If dirty_rect is Some, it's unioned with previous_draw_bounds.
-                        dirty_rect =
-                            Some(dirty_rect.map_or(previous_draw_bounds, |current_dr_val| {
-                                current_dr_val.union(&previous_draw_bounds)
-                            }));
-                    }
+                    union_dirty_rect(&mut dirty_rect, previous_draw_bounds);
                 }
 
                 // Remove from cache as it's no longer visible with these bounds.
@@ -188,6 +168,18 @@ pub(crate) fn draw_system(
     // }
 
     true
+}
+
+fn union_dirty_rect(dirty_rect: &mut Option<BoundingBox>, bounds: BoundingBox) {
+    if bounds.w <= 0.0 || bounds.h <= 0.0 {
+        return;
+    }
+
+    if let Some(current) = dirty_rect.as_mut() {
+        *current = current.union(&bounds);
+    } else {
+        *dirty_rect = Some(bounds);
+    }
 }
 
 fn draw_entity(

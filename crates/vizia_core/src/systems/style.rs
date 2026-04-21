@@ -546,6 +546,7 @@ fn link_style_data(
     if style.display.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
+        should_reflow = true;
     }
 
     if style.visibility.link(entity, matched_rules) {

@@ -323,6 +323,10 @@ impl Context {
     }
 
     pub(crate) fn set_system_flags(&mut self, entity: Entity, system_flags: SystemFlags) {
+        if system_flags.contains(SystemFlags::RELAYOUT) {
+            self.needs_relayout();
+        }
+
         if system_flags.contains(SystemFlags::RESTYLE) {
             self.needs_restyle(entity);
         }
