@@ -248,7 +248,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// A display value of `Display::None` causes the view to be ignored by both layout and rendering.
         display,
         Display,
-        SystemFlags::RELAYOUT | SystemFlags::REDRAW
+        SystemFlags::RELAYOUT | SystemFlags::REDRAW | SystemFlags::REFLOW
     );
 
     modifier!(
