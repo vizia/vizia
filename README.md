@@ -81,6 +81,22 @@
 
 <br />
 
+# Widget Gallery
+
+<div align="center"><img src="widget_gallery.png" width="800px"/></div>
+
+<br />
+
+Explore all of the built-in views in the widget gallery. Run with:
+
+```bash
+cargo run --release -p widget_gallery
+```
+
+<br />
+
+
+
 # At a Glance
 A simple counter application. Run with `cargo run --example counter`.
 ```rust, no_run
