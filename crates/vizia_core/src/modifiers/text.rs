@@ -1,17 +1,51 @@
 use super::internal;
 use crate::prelude::*;
+use std::{cell::RefCell, rc::Rc};
 
 /// Modifiers for changing the text properties of a view.
 pub trait TextModifiers: internal::Modifiable {
     /// Sets the text content of the view.
-    fn text<T: ToStringLocalized>(mut self, value: impl Res<T>) -> Self {
+    fn text<T: ToStringLocalized, R: Res<T> + 'static>(mut self, value: R) -> Self {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, move |cx, val| {
-                let cx: &mut EventContext<'_> = &mut EventContext::new_with_current(cx, entity);
-                let text_data = val.get_value(cx).to_string_local(cx);
+            let value_store = Rc::new(RefCell::new(None::<R>));
+            let value_store_for_binding = value_store.clone();
 
+            value.set_or_bind(cx, move |cx, val| {
+                *value_store_for_binding.borrow_mut() = Some(val);
+                let cx: &mut EventContext<'_> = &mut EventContext::new_with_current(cx, entity);
+                let text_data = value_store_for_binding
+                    .borrow()
+                    .as_ref()
+                    .map(|value| value.get_value(cx).to_string_local(cx));
+
+                let Some(text_data) = text_data else {
+                    return;
+                };
+
+                // cx.text_context.set_text(entity, &text_data);
+                cx.style.text.insert(entity, text_data);
+
+                cx.style.needs_text_update(entity);
+                cx.needs_relayout();
+                cx.needs_redraw();
+            });
+
+            let value_store_for_locale = value_store;
+            let locale = cx.environment().locale;
+            locale.set_or_bind(cx, move |cx, _| {
+                let cx: &mut EventContext<'_> = &mut EventContext::new_with_current(cx, entity);
+                let text_data = value_store_for_locale
+                    .borrow()
+                    .as_ref()
+                    .map(|value| value.get_value(cx).to_string_local(cx));
+
+                let Some(text_data) = text_data else {
+                    return;
+                };
+
+                // cx.text_context.set_text(entity, &text_data);
                 cx.style.text.insert(entity, text_data);
 
                 cx.style.needs_text_update(entity);
