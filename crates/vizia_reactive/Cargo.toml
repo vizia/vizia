@@ -1,5 +1,6 @@
 [package]
 name = "vizia_reactive"
+description = "Reactive primitives for VIZIA"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

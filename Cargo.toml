@@ -36,7 +36,7 @@ fern.workspace = true
 members = [ "crates/*", "examples/todo", "examples/widget_gallery", "examples/gallery"]
 
 [workspace.package]
-version = "0.3.0"
+version = "0.4.0"
 authors = ["George Atkinson"]
 edition = "2024"
 license = "MIT"
@@ -44,16 +44,16 @@ repository = "https://github.com/vizia/vizia"
 rust-version = "1.85"
 
 [workspace.dependencies]
-vizia = { version = "0.3.0", path = "." }
-vizia_core = { version = "0.3.0", path = "crates/vizia_core" }
-vizia_winit = { version = "0.3.0", path = "crates/vizia_winit", default-features = false }
-vizia_baseview = { version = "0.3.0", path = "crates/vizia_baseview" }
-vizia_id = { version = "0.3.0", path = "crates/vizia_id" }
-vizia_input = { version = "0.3.0", path = "crates/vizia_input" }
-vizia_storage = { version = "0.3.0", path = "crates/vizia_storage" }
-vizia_style = { version = "0.3.0", path = "crates/vizia_style" }
-vizia_window = { version = "0.3.0", path = "crates/vizia_window" }
-vizia_reactive = { version = "0.3.0", path = "crates/vizia_reactive" }
+vizia = { version = "0.4.0", path = "." }
+vizia_core = { version = "0.4.0", path = "crates/vizia_core" }
+vizia_winit = { version = "0.4.0", path = "crates/vizia_winit", default-features = false }
+vizia_baseview = { version = "0.4.0", path = "crates/vizia_baseview" }
+vizia_id = { version = "0.4.0", path = "crates/vizia_id" }
+vizia_input = { version = "0.4.0", path = "crates/vizia_input" }
+vizia_storage = { version = "0.4.0", path = "crates/vizia_storage" }
+vizia_style = { version = "0.4.0", path = "crates/vizia_style" }
+vizia_window = { version = "0.4.0", path = "crates/vizia_window" }
+vizia_reactive = { version = "0.4.0", path = "crates/vizia_reactive" }
 accesskit = "0.24"
 accesskit_winit = "0.32"
 baseview = { git = "https://github.com/vizia/baseview.git", rev = "77fec022db136fb771d5775ae13d088f4f166c04", features = ["opengl"] }
@@ -76,8 +76,7 @@ hashbrown = "0.16.1"
 indexmap = "2.13"
 keyboard-types = { version = "0.7", default-features = false }
 log = "0.4.29"
-morphorm = {git = "https://github.com/vizia/morphorm.git", branch = "direction"}
-# morphorm = {path = "../morphorm"}
+morphorm = "0.8.0"
 open = "5.3.3"
 parking_lot = "0.12.1"
 proc-macro2 = "1.0.106"
