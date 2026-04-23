@@ -506,6 +506,7 @@ impl ApplicationHandler<UserEvent> for Application {
 
                 self.cx.process_style_updates();
 
+                #[cfg(target_os = "windows")]
                 if self.cx.process_animations() {
                     window.window().request_redraw();
                 }
