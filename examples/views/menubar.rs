@@ -10,15 +10,16 @@ fn main() -> Result<(), ApplicationError> {
             MenuBar::new(cx, |cx| {
                 Submenu::new(
                     cx,
-                    |cx| Label::new(cx, "File"),
+                    |cx| Label::new(cx, Localized::new("menubar-file")),
                     |cx| {
                         MenuButton::new(
                             cx,
                             |_| debug!("New"),
                             |cx| {
                                 HStack::new(cx, |cx| {
-                                    Label::new(cx, "New");
-                                    Label::new(cx, "Ctrl + N").class("shortcut");
+                                    Label::new(cx, Localized::new("menu-new"));
+                                    Label::new(cx, Localized::new("menu-shortcut-new"))
+                                        .class("shortcut");
                                 })
                                 .gap(Stretch(1.0))
                             },
@@ -28,63 +29,76 @@ fn main() -> Result<(), ApplicationError> {
                             |_| debug!("Open"),
                             |cx| {
                                 HStack::new(cx, |cx| {
-                                    Label::new(cx, "Open");
-                                    Label::new(cx, "Ctrl + O").class("shortcut");
+                                    Label::new(cx, Localized::new("menu-open"));
+                                    Label::new(cx, Localized::new("menu-shortcut-open"))
+                                        .class("shortcut");
                                 })
                                 .gap(Stretch(1.0))
                             },
                         );
                         Submenu::new(
                             cx,
-                            |cx| Label::new(cx, "Open Recent"),
+                            |cx| Label::new(cx, Localized::new("menu-open-recent")),
                             |cx| {
                                 MenuButton::new(
                                     cx,
                                     |_| debug!("Doc 1"),
-                                    |cx| Label::new(cx, "Doc 1"),
+                                    |cx| Label::new(cx, Localized::new("menu-doc-1")),
                                 );
                                 Submenu::new(
                                     cx,
-                                    |cx| Label::new(cx, "Doc 2"),
+                                    |cx| Label::new(cx, Localized::new("menu-doc-2")),
                                     |cx| {
                                         MenuButton::new(
                                             cx,
                                             |_| debug!("Version 1"),
-                                            |cx| Label::new(cx, "Version 1"),
+                                            |cx| Label::new(cx, Localized::new("menu-version-1")),
                                         );
                                         MenuButton::new(
                                             cx,
                                             |_| debug!("Version 2"),
-                                            |cx| Label::new(cx, "Version 2"),
+                                            |cx| Label::new(cx, Localized::new("menu-version-2")),
                                         );
                                         MenuButton::new(
                                             cx,
                                             |_| debug!("Version 3"),
-                                            |cx| Label::new(cx, "Version 3"),
+                                            |cx| Label::new(cx, Localized::new("menu-version-3")),
                                         );
                                     },
                                 );
                                 MenuButton::new(
                                     cx,
                                     |_| debug!("Doc 3"),
-                                    |cx| Label::new(cx, "Doc 3"),
+                                    |cx| Label::new(cx, Localized::new("menu-doc-3")),
                                 );
                             },
                         );
                         Spacer::new(cx).height(Pixels(4.0));
                         Divider::new(cx);
                         Spacer::new(cx).height(Pixels(4.0));
-                        MenuButton::new(cx, |_| debug!("Save"), |cx| Label::new(cx, "Save"));
-                        MenuButton::new(cx, |_| debug!("Save As"), |cx| Label::new(cx, "Save As"));
+                        MenuButton::new(
+                            cx,
+                            |_| debug!("Save"),
+                            |cx| Label::new(cx, Localized::new("menu-save")),
+                        );
+                        MenuButton::new(
+                            cx,
+                            |_| debug!("Save As"),
+                            |cx| Label::new(cx, Localized::new("menu-save-as")),
+                        );
                         Spacer::new(cx).height(Pixels(4.0));
                         Divider::new(cx);
                         Spacer::new(cx).height(Pixels(4.0));
-                        MenuButton::new(cx, |_| debug!("Quit"), |cx| Label::new(cx, "Quit"));
+                        MenuButton::new(
+                            cx,
+                            |_| debug!("Quit"),
+                            |cx| Label::new(cx, Localized::new("menu-quit")),
+                        );
                     },
                 );
                 Submenu::new(
                     cx,
-                    |cx| Label::new(cx, "Edit"),
+                    |cx| Label::new(cx, Localized::new("menubar-edit")),
                     |cx| {
                         MenuButton::new(
                             cx,
@@ -92,7 +106,7 @@ fn main() -> Result<(), ApplicationError> {
                             |cx| {
                                 HStack::new(cx, |cx| {
                                     Svg::new(cx, ICON_CUT).class("icon");
-                                    Label::new(cx, "Cut");
+                                    Label::new(cx, Localized::new("menubar-cut"));
                                 })
                             },
                         );
@@ -102,7 +116,7 @@ fn main() -> Result<(), ApplicationError> {
                             |cx| {
                                 HStack::new(cx, |cx| {
                                     Svg::new(cx, ICON_COPY).class("icon");
-                                    Label::new(cx, "Copy");
+                                    Label::new(cx, Localized::new("menubar-copy"));
                                 })
                             },
                         );
@@ -112,7 +126,7 @@ fn main() -> Result<(), ApplicationError> {
                             |cx| {
                                 HStack::new(cx, |cx| {
                                     Svg::new(cx, ICON_CLIPBOARD).class("icon");
-                                    Label::new(cx, "Paste");
+                                    Label::new(cx, Localized::new("menubar-paste"));
                                 })
                             },
                         );
@@ -120,35 +134,51 @@ fn main() -> Result<(), ApplicationError> {
                 );
                 Submenu::new(
                     cx,
-                    |cx| Label::new(cx, "View"),
+                    |cx| Label::new(cx, Localized::new("menubar-view")),
                     |cx| {
-                        MenuButton::new(cx, |_| debug!("Zoom In"), |cx| Label::new(cx, "Zoom In"));
+                        MenuButton::new(
+                            cx,
+                            |_| debug!("Zoom In"),
+                            |cx| Label::new(cx, Localized::new("menubar-zoom-in")),
+                        );
                         MenuButton::new(
                             cx,
                             |_| debug!("Zoom Out"),
-                            |cx| Label::new(cx, "Zoom Out"),
+                            |cx| Label::new(cx, Localized::new("menubar-zoom-out")),
                         );
                         Submenu::new(
                             cx,
-                            |cx| Label::new(cx, "Zoom Level"),
+                            |cx| Label::new(cx, Localized::new("menubar-zoom-level")),
                             |cx| {
-                                MenuButton::new(cx, |_| debug!("10%"), |cx| Label::new(cx, "10%"));
-                                MenuButton::new(cx, |_| debug!("20%"), |cx| Label::new(cx, "20%"));
-                                MenuButton::new(cx, |_| debug!("50%"), |cx| Label::new(cx, "50%"));
+                                MenuButton::new(
+                                    cx,
+                                    |_| debug!("10%"),
+                                    |cx| Label::new(cx, Localized::new("menubar-zoom-10")),
+                                );
+                                MenuButton::new(
+                                    cx,
+                                    |_| debug!("20%"),
+                                    |cx| Label::new(cx, Localized::new("menubar-zoom-20")),
+                                );
+                                MenuButton::new(
+                                    cx,
+                                    |_| debug!("50%"),
+                                    |cx| Label::new(cx, Localized::new("menubar-zoom-50")),
+                                );
                                 MenuButton::new(
                                     cx,
                                     |_| debug!("100%"),
-                                    |cx| Label::new(cx, "100%"),
+                                    |cx| Label::new(cx, Localized::new("menubar-zoom-100")),
                                 );
                                 MenuButton::new(
                                     cx,
                                     |_| debug!("150%"),
-                                    |cx| Label::new(cx, "150%"),
+                                    |cx| Label::new(cx, Localized::new("menubar-zoom-150")),
                                 );
                                 MenuButton::new(
                                     cx,
                                     |_| debug!("200%"),
-                                    |cx| Label::new(cx, "200%"),
+                                    |cx| Label::new(cx, Localized::new("menubar-zoom-200")),
                                 );
                             },
                         );
@@ -156,19 +186,23 @@ fn main() -> Result<(), ApplicationError> {
                 );
                 Submenu::new(
                     cx,
-                    |cx| Label::new(cx, "Help"),
+                    |cx| Label::new(cx, Localized::new("menubar-help")),
                     |cx| {
                         MenuButton::new(
                             cx,
                             |_| debug!("Show License"),
-                            |cx| Label::new(cx, "Show License"),
+                            |cx| Label::new(cx, Localized::new("menubar-show-license")),
                         );
-                        MenuButton::new(cx, |_| debug!("About"), |cx| Label::new(cx, "About"));
+                        MenuButton::new(
+                            cx,
+                            |_| debug!("About"),
+                            |cx| Label::new(cx, Localized::new("menubar-about")),
+                        );
                     },
                 );
             });
         });
     })
-    .title("Menu Bar")
+    .title(Localized::new("view-title-menubar"))
     .run()
 }

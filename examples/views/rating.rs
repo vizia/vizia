@@ -35,7 +35,7 @@ fn main() -> Result<(), ApplicationError> {
                 .on_change(|ex, rating| ex.emit(AppEvent::SetRating2(rating)));
         });
     })
-    .title("Rating")
+    .title(Localized::new("view-title-rating"))
     .inner_size((400, 200))
     .run()
 }

@@ -32,7 +32,7 @@ fn main() -> Result<(), ApplicationError> {
         AppData { option1, option2 }.build(cx);
 
         ExamplePage::vertical(cx, |cx| {
-            Label::new(cx, "Checkbox with label").class("h2");
+            Label::new(cx, Localized::new("checkbox-with-label")).class("h2");
 
             VStack::new(cx, |cx| {
                 // Checkboxes with label
@@ -59,7 +59,7 @@ fn main() -> Result<(), ApplicationError> {
             .gap(Pixels(10.0))
             .size(Auto);
 
-            Label::new(cx, "Checkbox with custom icon and label").class("h2");
+            Label::new(cx, Localized::new("checkbox-with-custom-icon-label")).class("h2");
 
             HStack::new(cx, |cx| {
                 Checkbox::with_icons(cx, option1, Some(ICON_EYE_OFF), Some(ICON_EYE))

@@ -43,7 +43,7 @@ fn main() -> Result<(), ApplicationError> {
         AppData { bold, italic, underline }.build(cx);
 
         ExamplePage::vertical(cx, |cx| {
-            ToggleButton::new(cx, bold, |cx| Label::new(cx, "Bold"))
+            ToggleButton::new(cx, bold, |cx| Label::new(cx, Localized::new("toggle-bold")))
                 .on_toggle(|cx| cx.emit(AppEvent::ToggleBold));
 
             ButtonGroup::new(cx, |cx| {
@@ -58,7 +58,7 @@ fn main() -> Result<(), ApplicationError> {
             });
         });
     })
-    .title("ToggleButton")
+    .title(Localized::new("view-title-toggle-button"))
     .inner_size((700, 200))
     .run()
 }

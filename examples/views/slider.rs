@@ -63,6 +63,6 @@ fn main() -> Result<(), ApplicationError> {
             .vertical_gap(Pixels(8.0));
         });
     })
-    .title("Slider")
+    .title(Localized::new("view-title-slider"))
     .run()
 }

@@ -274,7 +274,7 @@ where
             });
         })
         .class("table")
-        .role(Role::List)
+        .role(Role::Table)
     }
 }
 

@@ -159,12 +159,23 @@ impl Handle<'_, Select> {
         self,
         placeholder: impl Res<P> + 'static,
     ) -> Self {
+        //let pt = placeholder.get_value(self.cx).to_string_local(self.cx);
+        //println!("Setting initial placeholder: {}", pt);
         let placeholder = placeholder.to_signal(self.cx);
+        //let direction = self.cx.environment().locale;
+
         self.bind(placeholder, move |handle| {
             let val = placeholder.get();
             let txt = val.to_string_local(&handle);
             handle.modify(|select| select.placeholder.set(txt));
         })
+        // .bind(direction, move |handle, _| {
+        //     // Re-evaluate placeholder whenever direction (locale) changes
+        //     let val = placeholder.get();
+        //     let txt = val.to_string_local(&handle);
+        //     println!("Direction changed, updating placeholder to: {}", txt);
+        //     handle.modify(|select| select.placeholder.set(txt));
+        // })
     }
 
     /// Sets the callback triggered when an option is selected.

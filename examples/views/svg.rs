@@ -45,7 +45,7 @@ fn main() -> Result<(), ApplicationError> {
                 .border_width(Pixels(1.0));
         });
     })
-    .title("Svg")
+    .title(Localized::new("view-title-svg"))
     .inner_size((400, 200))
     .run()
 }

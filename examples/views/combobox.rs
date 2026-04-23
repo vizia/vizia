@@ -2,9 +2,37 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
+#[derive(Debug, Clone, Copy)]
 struct AppState {
-    options: Signal<Vec<&'static str>>,
+    options: Signal<Vec<Localized>>,
     selected_option: Signal<usize>,
+}
+
+impl AppState {
+    pub fn new() -> Self {
+        Self {
+            options: Signal::new(
+                vec![
+                    "select-option-one",
+                    "select-option-two",
+                    "select-option-three",
+                    "select-option-four",
+                    "select-option-five",
+                    "select-option-six",
+                    "select-option-seven",
+                    "select-option-eight",
+                    "select-option-nine",
+                    "select-option-ten",
+                    "select-option-eleven",
+                    "select-option-twelve",
+                ]
+                .into_iter()
+                .map(Localized::new)
+                .collect::<Vec<_>>(),
+            ),
+            selected_option: Signal::new(0usize),
+        }
+    }
 }
 
 pub enum AppEvent {
@@ -18,28 +46,12 @@ impl Model for AppState {
                 self.selected_option.set(*index);
             }
         });
-
-        let _ = self.options;
     }
 }
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let options = Signal::new(vec![
-            "One",
-            "Two",
-            "Three",
-            "Four",
-            "Five",
-            "Six something long",
-            "Seven",
-            "Eight",
-            "Nine",
-            "Ten",
-        ]);
-        let selected_option = Signal::new(0usize);
-
-        AppState { options, selected_option }.build(cx);
+        let &AppState { options, selected_option } = AppState::new().build(cx);
 
         ExamplePage::new(cx, |cx| {
             ComboBox::new(cx, options, selected_option)
@@ -48,7 +60,7 @@ fn main() -> Result<(), ApplicationError> {
                 .top(Pixels(100.0));
         });
     })
-    .title("Combobox")
+    .title(Localized::new("view-title-combobox"))
     .inner_size((400, 400))
     .run()
 }

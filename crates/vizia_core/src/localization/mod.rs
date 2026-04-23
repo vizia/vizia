@@ -540,10 +540,13 @@ impl Res<String> for Localized {
         let closure = Arc::new(closure);
         cx.with_current(current, |cx| {
             let stores = self2.args.values().map(|x| x.make_clone()).collect::<Vec<_>>();
-            let self3 = self2.clone();
-            let closure = closure.clone();
             bind_recursive(cx, &stores, move |cx| {
-                closure(cx, self3.clone());
+                let locale = cx.environment().locale;
+                let self3 = self2.clone();
+                let closure = closure.clone();
+                locale.set_or_bind(cx, move |cx, _| {
+                    closure(cx, self3.clone());
+                });
             });
         });
     }

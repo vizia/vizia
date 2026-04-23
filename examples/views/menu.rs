@@ -8,15 +8,16 @@ fn main() -> Result<(), ApplicationError> {
         ExamplePage::new(cx, |cx| {
             Submenu::new(
                 cx,
-                |cx| Label::new(cx, "Menu"),
+                |cx| Label::new(cx, Localized::new("menu-root")),
                 |cx| {
                     MenuButton::new(
                         cx,
                         |_| debug!("New"),
                         |cx| {
                             HStack::new(cx, |cx| {
-                                Label::new(cx, "New");
-                                Label::new(cx, "Ctrl + N").class("shortcut");
+                                Label::new(cx, Localized::new("menu-new"));
+                                Label::new(cx, Localized::new("menu-shortcut-new"))
+                                    .class("shortcut");
                             })
                         },
                     );
@@ -25,50 +26,71 @@ fn main() -> Result<(), ApplicationError> {
                         |_| debug!("Open"),
                         |cx| {
                             HStack::new(cx, |cx| {
-                                Label::new(cx, "Open");
-                                Label::new(cx, "Ctrl + O").class("shortcut");
+                                Label::new(cx, Localized::new("menu-open"));
+                                Label::new(cx, Localized::new("menu-shortcut-open"))
+                                    .class("shortcut");
                             })
                         },
                     );
                     Submenu::new(
                         cx,
-                        |cx| Label::new(cx, "Open Recent"),
+                        |cx| Label::new(cx, Localized::new("menu-open-recent")),
                         |cx| {
-                            MenuButton::new(cx, |_| debug!("Doc 1"), |cx| Label::new(cx, "Doc 1"));
+                            MenuButton::new(
+                                cx,
+                                |_| debug!("Doc 1"),
+                                |cx| Label::new(cx, Localized::new("menu-doc-1")),
+                            );
                             Submenu::new(
                                 cx,
-                                |cx| Label::new(cx, "Doc 2"),
+                                |cx| Label::new(cx, Localized::new("menu-doc-2")),
                                 |cx| {
                                     MenuButton::new(
                                         cx,
                                         |_| debug!("Version 1"),
-                                        |cx| Label::new(cx, "Version 1"),
+                                        |cx| Label::new(cx, Localized::new("menu-version-1")),
                                     );
                                     MenuButton::new(
                                         cx,
                                         |_| debug!("Version 2"),
-                                        |cx| Label::new(cx, "Version 2"),
+                                        |cx| Label::new(cx, Localized::new("menu-version-2")),
                                     );
                                     MenuButton::new(
                                         cx,
                                         |_| debug!("Version 3"),
-                                        |cx| Label::new(cx, "Version 3"),
+                                        |cx| Label::new(cx, Localized::new("menu-version-3")),
                                     );
                                 },
                             );
-                            MenuButton::new(cx, |_| debug!("Doc 3"), |cx| Label::new(cx, "Doc 3"));
+                            MenuButton::new(
+                                cx,
+                                |_| debug!("Doc 3"),
+                                |cx| Label::new(cx, Localized::new("menu-doc-3")),
+                            );
                         },
                     );
                     Divider::new(cx);
-                    MenuButton::new(cx, |_| debug!("Save"), |cx| Label::new(cx, "Save"));
-                    MenuButton::new(cx, |_| debug!("Save As"), |cx| Label::new(cx, "Save As"));
+                    MenuButton::new(
+                        cx,
+                        |_| debug!("Save"),
+                        |cx| Label::new(cx, Localized::new("menu-save")),
+                    );
+                    MenuButton::new(
+                        cx,
+                        |_| debug!("Save As"),
+                        |cx| Label::new(cx, Localized::new("menu-save-as")),
+                    );
                     Divider::new(cx);
-                    MenuButton::new(cx, |_| debug!("Quit"), |cx| Label::new(cx, "Quit"));
+                    MenuButton::new(
+                        cx,
+                        |_| debug!("Quit"),
+                        |cx| Label::new(cx, Localized::new("menu-quit")),
+                    );
                 },
             )
             .width(Pixels(100.0));
         });
     })
-    .title("Menu")
+    .title(Localized::new("view-title-menu"))
     .run()
 }

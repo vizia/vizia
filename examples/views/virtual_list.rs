@@ -36,6 +36,6 @@ fn main() -> Result<(), ApplicationError> {
             .selection_follows_focus(selection_follows_focus);
         });
     })
-    .title("Virtual List")
+    .title(Localized::new("view-title-virtual-list"))
     .run()
 }

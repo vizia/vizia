@@ -30,19 +30,20 @@ fn main() -> Result<(), ApplicationError> {
 
         ExamplePage::vertical(cx, |cx| {
             // Create a new button that toggles the collapsed state.
-            Button::new(cx, |cx| Label::new(cx, "Toggle collapsed"))
+            Button::new(cx, |cx| Label::new(cx, Localized::new("collapsible-toggle")))
                 .on_press(|cx| cx.emit(AppEvent::ToggleCollapse));
 
             VStack::new(cx, |cx| {
-
                 // Create a new collapsible view with a header and content.
                 Collapsible::new(
                     cx,
                     |cx| {
-                        Label::new(cx, "Click me to collapse the content").hoverable(false);
+                        Label::new(cx, Localized::new("collapsible-header")).hoverable(false);
                     },
                     |cx| {
-                        Label::new(cx, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10").hoverable(false);
+                        Label::new(cx, Localized::new("collapsible-content-long"))
+                            .width(Stretch(1.0))
+                            .hoverable(false);
                     },
                 )
                 .open(collapsed);
@@ -53,10 +54,12 @@ fn main() -> Result<(), ApplicationError> {
                 Collapsible::new(
                     cx,
                     |cx| {
-                        Label::new(cx, "Click me to collapse the content").hoverable(false);
+                        Label::new(cx, Localized::new("collapsible-header")).hoverable(false);
                     },
                     |cx| {
-                        Label::new(cx, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5").text_wrap(true).hoverable(false);
+                        Label::new(cx, Localized::new("collapsible-content-short"))
+                            .width(Stretch(1.0))
+                            .hoverable(false);
                     },
                 )
                 .open(collapsed);
@@ -67,14 +70,18 @@ fn main() -> Result<(), ApplicationError> {
                 Collapsible::new(
                     cx,
                     |cx| {
-                        Label::new(cx, "Click me to collapse the content").hoverable(false);
+                        Label::new(cx, Localized::new("collapsible-header")).hoverable(false);
                     },
                     |cx| {
-                        Label::new(cx, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5").hoverable(false);
+                        Label::new(cx, Localized::new("collapsible-content-short"))
+                            .width(Stretch(1.0))
+                            .hoverable(false);
                         Divider::new(cx);
-                        HStack::new(cx, |cx|{
-                            Button::new(cx, |cx| Label::new(cx, "CANCEL")).variant(ButtonVariant::Text);
-                            Button::new(cx, |cx| Label::new(cx, "SAVE")).variant(ButtonVariant::Text);
+                        HStack::new(cx, |cx| {
+                            Button::new(cx, |cx| Label::new(cx, Localized::new("action-cancel")))
+                                .variant(ButtonVariant::Secondary);
+                            Button::new(cx, |cx| Label::new(cx, Localized::new("action-save")))
+                                .variant(ButtonVariant::Secondary);
                         })
                         .height(Auto)
                         .gap(Pixels(8.0))
@@ -86,9 +93,7 @@ fn main() -> Result<(), ApplicationError> {
             })
             .alignment(Alignment::TopCenter);
         });
-
-
     })
-    .title("Collapsible")
+    .title(Localized::new("view-title-collapsible"))
     .run()
 }

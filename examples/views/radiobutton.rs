@@ -45,7 +45,7 @@ fn main() -> Result<(), ApplicationError> {
         // Exclusive checkboxes (radio buttons) with labels
         // Only one checkbox can be checked at a time and cannot be unchecked
         ExamplePage::vertical(cx, |cx| {
-            Label::new(cx, "Basic Radiobuttons");
+            Label::new(cx, Localized::new("radiobutton-basic"));
             HStack::new(cx, |cx| {
                 for i in 0..3 {
                     let current_option = index_to_option(i);
@@ -57,7 +57,7 @@ fn main() -> Result<(), ApplicationError> {
             .size(Auto)
             .horizontal_gap(Pixels(20.0));
 
-            Label::new(cx, "Radiobuttons with labels").top(Pixels(20.0));
+            Label::new(cx, Localized::new("radiobutton-with-labels")).top(Pixels(20.0));
 
             VStack::new(cx, |cx| {
                 for i in 0..3 {
@@ -68,7 +68,7 @@ fn main() -> Result<(), ApplicationError> {
                             .on_select(move |cx| cx.emit(AppEvent::SetOption(current_option)))
                             .id(format!("button_{i}"));
 
-                        Label::new(cx, current_option.to_string())
+                        Label::new(cx, Localized::new(option_label_key(current_option)))
                             .describing(format!("button_{i}"));
                     })
                     .size(Auto)
@@ -80,7 +80,7 @@ fn main() -> Result<(), ApplicationError> {
             .size(Auto);
         });
     })
-    .title("Radiobutton")
+    .title(Localized::new("view-title-radiobutton"))
     .run()
 }
 
@@ -90,5 +90,13 @@ fn index_to_option(index: usize) -> Options {
         1 => Options::Second,
         2 => Options::Third,
         _ => unreachable!(),
+    }
+}
+
+fn option_label_key(option: Options) -> &'static str {
+    match option {
+        Options::First => "option-first",
+        Options::Second => "option-second",
+        Options::Third => "option-third",
     }
 }

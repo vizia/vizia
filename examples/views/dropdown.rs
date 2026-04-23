@@ -72,7 +72,7 @@ fn main() -> Result<(), ApplicationError> {
             .width(Pixels(100.0));
         });
     })
-    .title("Dropdown")
+    .title(Localized::new("view-title-dropdown"))
     .inner_size((350, 300))
     .run()
 }

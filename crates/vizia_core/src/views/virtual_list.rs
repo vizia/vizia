@@ -250,7 +250,7 @@ impl VirtualList {
         })
         .toggle_class("selectable", selectable.map(|s| *s != Selectable::None))
         .navigable(true)
-        .role(Role::List)
+        .role(Role::ListBox)
     }
 }
 

@@ -8,39 +8,45 @@ fn main() -> Result<(), ApplicationError> {
             HStack::new(cx, |cx| {
                 Card::new(cx, |cx| {
                     CardHeader::new(cx, |cx| {
-                        Label::new(cx, "Starter plan").class("title").font_size(18.0);
-                        Label::new(cx, "For prototypes and quick experiments").class("description");
+                        Label::new(cx, Localized::new("card-starter-title"))
+                            .class("title")
+                            .font_size(18.0);
+                        Label::new(cx, Localized::new("card-starter-description"))
+                            .class("description");
                     });
 
                     CardContent::new(cx, |cx| {
-                        Label::new(cx, "$9 / month").font_size(28.0);
+                        Label::new(cx, Localized::new("card-starter-price")).font_size(28.0);
                         VStack::new(cx, |cx| {
-                            Label::new(cx, "Up to 3 projects");
-                            Label::new(cx, "Community support");
-                            Label::new(cx, "Shared workspaces");
+                            Label::new(cx, Localized::new("card-starter-feature-1"));
+                            Label::new(cx, Localized::new("card-starter-feature-2"));
+                            Label::new(cx, Localized::new("card-starter-feature-3"));
                         })
                         .height(Auto)
                         .gap(Pixels(6.0));
                     });
 
                     CardFooter::new(cx, |cx| {
-                        Button::new(cx, |cx| Label::new(cx, "Choose plan"));
+                        Button::new(cx, |cx| Label::new(cx, Localized::new("card-choose-plan")));
                     });
                 })
                 .width(Pixels(280.0));
 
                 Card::new(cx, |cx| {
                     CardHeader::new(cx, |cx| {
-                        Label::new(cx, "Team plan").class("title").font_size(18.0);
-                        Label::new(cx, "More control for production apps").class("description");
+                        Label::new(cx, Localized::new("card-team-title"))
+                            .class("title")
+                            .font_size(18.0);
+                        Label::new(cx, Localized::new("card-team-description"))
+                            .class("description");
                     });
 
                     CardContent::new(cx, |cx| {
-                        Label::new(cx, "$29 / month").font_size(28.0);
+                        Label::new(cx, Localized::new("card-team-price")).font_size(28.0);
                         VStack::new(cx, |cx| {
-                            Label::new(cx, "Unlimited projects");
-                            Label::new(cx, "Priority support");
-                            Label::new(cx, "Theme customization");
+                            Label::new(cx, Localized::new("card-team-feature-1"));
+                            Label::new(cx, Localized::new("card-team-feature-2"));
+                            Label::new(cx, Localized::new("card-team-feature-3"));
                         })
                         .height(Auto)
                         .gap(Pixels(6.0));
@@ -48,9 +54,9 @@ fn main() -> Result<(), ApplicationError> {
 
                     CardFooter::new(cx, |cx| {
                         HStack::new(cx, |cx| {
-                            Button::new(cx, |cx| Label::new(cx, "Preview"))
+                            Button::new(cx, |cx| Label::new(cx, Localized::new("card-preview")))
                                 .variant(ButtonVariant::Secondary);
-                            Button::new(cx, |cx| Label::new(cx, "Upgrade"));
+                            Button::new(cx, |cx| Label::new(cx, Localized::new("card-upgrade")));
                         })
                         .height(Auto)
                         .gap(Pixels(8.0));
@@ -65,7 +71,7 @@ fn main() -> Result<(), ApplicationError> {
             .gap(Pixels(16.0));
         });
     })
-    .title("Card")
+    .title(Localized::new("view-title-card"))
     .inner_size((760, 420))
     .run()
 }

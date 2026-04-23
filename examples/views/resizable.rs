@@ -115,7 +115,7 @@ fn main() -> Result<(), ApplicationError> {
         .class("demo-root")
         .size(Stretch(1.0));
     })
-    .title("Resizable")
+    .title(Localized::new("view-title-resizable"))
     .inner_size((800, 600))
     .run()
 }
