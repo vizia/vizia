@@ -154,27 +154,39 @@ fn main() {
 
 # Learning
 ## Book
-A quickstart guide for vizia is available [here](https://book.vizia.dev).
+A guide book for vizia is available [here](https://book.vizia.dev).
 ## Docs
 Auto-generated code documentation can be found [here](https://docs.vizia.dev).
 ## Examples
 
 A list of [examples](https://github.com/vizia/vizia/tree/main/examples) is included in the repository.
 
-To run an example with the [winit](https://github.com/rust-windowing/winit) (default) windowing backend:
+To run an example:
 ```bash
 cargo run --release --example name_of_example
 ```
 
-### Baseview
-
-To run an example with the [baseview](https://github.com/RustAudio/baseview) windowing backend:
+TThere are also example applications which are packages with their own Cargo.toml files. To run, for example, the widget gallery, use the following command:
 
 ```bash
-cargo run --release --example name_of_example --no-default-features --features baseview
+cargo run -p widget_gallery
 ```
 
+Where widget_gallery should be replaced with the name of the example package you wish to run.
+
+
 # Contributing and Community
+
+The Vizia project welcomes contributions from developers of all experience levels! Whether you’re interested in:
+
+- Reporting bugs in the framework or examples
+- Improving documentation and examples
+- Adding features or optimizations
+- Fixing issues or reviewing pull requests
+- Writing custom widgets or extensions
+
+All contributions are valuable.
+
 For help with vizia, or to get involved with contributing to the project, come join us on [our discord](https://discord.gg/aNkTPsRm2w).
 
 # License and Attribution
