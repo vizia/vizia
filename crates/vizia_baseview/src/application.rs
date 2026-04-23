@@ -337,7 +337,8 @@ impl ApplicationRunner {
         if self.should_redraw {
             let context = window.gl_context().expect("Window was created without OpenGL support");
             unsafe { context.make_current() };
-            self.cx.draw(Entity::root(), &mut self.surface, &mut self.dirty_surface);
+            // TODO
+            // self.cx.draw(Entity::root(), &mut self.surface, &mut self.dirty_surface);
             self.gr_context.flush_and_submit();
             self.should_redraw = false;
             context.swap_buffers();

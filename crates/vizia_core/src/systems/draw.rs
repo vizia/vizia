@@ -157,19 +157,20 @@ pub(crate) fn draw_system<'a>(
         // paint.set_stroke_width(1.0);
         // surface.canvas().draw_rect(clip_rect, &paint);
 
-    // surface.canvas().clear(Color::transparent());
-    dirty_surface.draw(surface.canvas(), (0, 0), SamplingOptions::default(), None);
+        // surface.canvas().clear(Color::transparent());
+        // dirty_surface.draw(surface.canvas(), (0, 0), SamplingOptions::default(), None);
 
-    // Debug draw dirty rect
-    // if let Some(rect) = dirty_rect.map(Rect::from) {
-    //     let mut paint = Paint::default();
-    //     paint.set_style(skia_safe::PaintStyle::Stroke);
-    //     paint.set_color(Color::red());
-    //     paint.set_stroke_width(1.0);
-    //     surface.canvas().draw_rect(rect, &paint);
-    // }
+        // Debug draw dirty rect
+        // if let Some(rect) = dirty_rect.map(Rect::from) {
+        //     let mut paint = Paint::default();
+        //     paint.set_style(skia_safe::PaintStyle::Stroke);
+        //     paint.set_color(Color::red());
+        //     paint.set_stroke_width(1.0);
+        //     surface.canvas().draw_rect(rect, &paint);
+        // }
 
-    dirty_rect
+        dirty_rect
+    })
 }
 
 fn union_dirty_rect(dirty_rect: &mut Option<BoundingBox>, bounds: BoundingBox) {
@@ -270,11 +271,9 @@ fn draw_entity(
 
     // Draw the view
     if is_visible {
-        let should_draw = if let Some(dirty_rect) = dirty_rect {
+        let should_draw = {
             let bounds = cached_draw_bounds(cx, current);
             bounds.intersects(dirty_rect)
-        } else {
-            true
         };
 
         if should_draw {
