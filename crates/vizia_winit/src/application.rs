@@ -501,41 +501,18 @@ impl ApplicationHandler<UserEvent> for Application {
                 window.resize(size);
                 self.cx.set_window_size(window.entity, size.width as f32, size.height as f32);
                 self.cx.needs_refresh(window.entity);
-                window.window().request_redraw();
 
-                #[cfg(target_os = "windows")]
-                {
-                    self.event_manager.flush_events(self.cx.context(), |_| {});
+                self.event_manager.flush_events(self.cx.context(), |_| {});
 
-                    self.cx.process_style_updates();
+                self.cx.process_style_updates();
 
-                    if self.cx.process_animations() {
-                        window.window().request_redraw();
-                    }
-
-                    self.cx.process_visual_updates();
-
-                    // #[cfg(feature = "accesskit")]
-
-                    // self.cx.process_tree_updates(|tree_updates| {
-                    //     for update in tree_updates.iter_mut() {
-                    //         self.accesskit_adapter
-                    //             .unwrap()
-                    //             .update_if_active(|| update.take().unwrap());
-                    //     }
-                    // });
-
-                    // for update in self.cx.0.tree_updates.iter_mut() {
-                    //     self.accesskit_adapter
-                    //         .as_mut()
-                    //         .unwrap()
-                    //         .update_if_active(|| update.take().unwrap());
-                    // }
-
-                    // self.cx.0.tree_updates.clear();
-
+                if self.cx.process_animations() {
                     window.window().request_redraw();
                 }
+
+                self.cx.process_visual_updates();
+
+                window.window().request_redraw();
             }
 
             winit::event::WindowEvent::Moved(position) => {
