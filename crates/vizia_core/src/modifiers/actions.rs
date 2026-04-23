@@ -177,7 +177,22 @@ impl Model for ActionsModel {
                 }
 
                 if !cx.is_disabled() && cx.current == meta.target {
-                    cx.focus();
+                    // Only grab keyboard focus if the view has opted in via
+                    // the FOCUSABLE ability. Without this gate, any view with
+                    // an `on_press` callback steals focus on click even when
+                    // `.focusable(false)` is set, and every subsequent
+                    // Space / Enter keypress then re-dispatches
+                    // `WindowEvent::Press` straight back to the clicked view
+                    // and re-runs its action — a confusing non-feature for
+                    // chrome buttons that are mouse-only by design.
+                    let focusable = cx
+                        .style
+                        .abilities
+                        .get(cx.current())
+                        .is_some_and(|abilities| abilities.contains(Abilities::FOCUSABLE));
+                    if focusable {
+                        cx.focus();
+                    }
                     if let Some(action) = &self.on_press {
                         (action)(cx);
                     }
