@@ -38,31 +38,30 @@ fn main() -> Result<(), ApplicationError> {
         AppData { xy_data }.build(cx);
 
         ExamplePage::vertical(cx, |cx| {
-            Label::new(cx, "2-dimensional XY Pad");
-            VStack::new(cx, |cx| {
-                HStack::new(cx, |cx| {
-                    Slider::new(cx, value_y)
-                        .width(Pixels(10.0))
-                        .height(Pixels(100.0))
-                        .range(0.0..1.0)
-                        .on_change(move |cx, val| cx.emit(AppEvent::YSliderChange(val)));
-                    // XY pad
-                    XYPad::new(cx, xy_data).on_change(|ex, value_x, value_y| {
-                        ex.emit(AppEvent::XYPadChange(value_x, value_y))
-                    });
-                })
-                .size(Auto)
-                .horizontal_gap(Pixels(5.0))
-                .alignment(Alignment::Center);
-                Slider::new(cx, value_x)
-                    .width(Pixels(100.0))
-                    .height(Pixels(10.0))
+            HStack::new(cx, |cx| {
+                Slider::new(cx, value_y)
+                    .width(Pixels(10.0))
+                    .height(Pixels(100.0))
                     .range(0.0..1.0)
-                    .on_change(move |cx, val| cx.emit(AppEvent::XSliderChange(val)));
+                    .vertical(true)
+                    .on_change(move |cx, val| cx.emit(AppEvent::YSliderChange(val)));
+                // XY pad
+                XYPad::new(cx, xy_data)
+                    .on_change(|ex, value_x, value_y| {
+                        ex.emit(AppEvent::XYPadChange(value_x, value_y))
+                    })
+                    .background_color(Color::gray());
             })
+            .size(Auto)
+            .horizontal_gap(Pixels(5.0))
             .alignment(Alignment::Center);
+            Slider::new(cx, value_x)
+                .width(Pixels(100.0))
+                .height(Pixels(10.0))
+                .range(0.0..1.0)
+                .on_change(move |cx, val| cx.emit(AppEvent::XSliderChange(val)));
         });
     })
-    .title("XY Pad")
+    .title(Localized::new("view-title-xypad"))
     .run()
 }

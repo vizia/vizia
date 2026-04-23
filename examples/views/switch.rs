@@ -35,13 +35,13 @@ fn main() -> Result<(), ApplicationError> {
         AppData { option1, option2 }.build(cx);
 
         ExamplePage::vertical(cx, |cx| {
-            Label::new(cx, "Basic Switches");
+            Label::new(cx, Localized::new("switch-basic"));
 
             HStack::new(cx, |cx| {
                 Switch::new(cx, option1)
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleOption1))
                     .id("Switch_1");
-                Label::new(cx, "Switch 1").describing("Switch_1");
+                Label::new(cx, Localized::new("switch-1")).describing("Switch_1");
             })
             .size(Auto)
             .horizontal_gap(Pixels(5.0))
@@ -51,13 +51,13 @@ fn main() -> Result<(), ApplicationError> {
                 Switch::new(cx, option2)
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleOption2))
                     .id("Switch_2");
-                Label::new(cx, "Switch 2").describing("Switch_2");
+                Label::new(cx, Localized::new("switch-2")).describing("Switch_2");
             })
             .size(Auto)
             .horizontal_gap(Pixels(5.0))
             .alignment(Alignment::Center);
         });
     })
-    .title("Switch")
+    .title(Localized::new("view-title-switch"))
     .run()
 }

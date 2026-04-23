@@ -123,6 +123,6 @@ fn main() -> Result<(), ApplicationError> {
             .width(Stretch(1.0));
         });
     })
-    .title("Accordion")
+    .title(Localized::new("view-title-accordion"))
     .run()
 }

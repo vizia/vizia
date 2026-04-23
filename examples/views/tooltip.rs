@@ -17,10 +17,10 @@ fn main() -> Result<(), ApplicationError> {
         ExamplePage::vertical(cx, |cx| {
             HStack::new(cx, |cx| {
                 Element::new(cx)
-                    .text("Top Start")
+                    .text(Localized::new("tooltip-placement-top-start"))
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
+                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
                         })
                         .padding(Pixels(4.0))
                         .size(Auto)
@@ -29,10 +29,10 @@ fn main() -> Result<(), ApplicationError> {
                     .class("test");
 
                 Element::new(cx)
-                    .text("Top")
+                    .text(Localized::new("tooltip-placement-top"))
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
+                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
                         })
                         .padding(Pixels(4.0))
                         .size(Auto)
@@ -41,10 +41,10 @@ fn main() -> Result<(), ApplicationError> {
                     .class("test");
 
                 Element::new(cx)
-                    .text("Top End")
+                    .text(Localized::new("tooltip-placement-top-end"))
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
+                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
                         })
                         .padding(Pixels(4.0))
                         .size(Auto)
@@ -57,10 +57,10 @@ fn main() -> Result<(), ApplicationError> {
 
             HStack::new(cx, |cx| {
                 Element::new(cx)
-                    .text("LeftStart")
+                    .text(Localized::new("tooltip-placement-left-start"))
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
+                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
                         })
                         .padding(Pixels(4.0))
                         .size(Auto)
@@ -69,10 +69,10 @@ fn main() -> Result<(), ApplicationError> {
                     .class("test");
 
                 Element::new(cx)
-                    .text("Left")
+                    .text(Localized::new("tooltip-placement-left"))
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
+                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
                         })
                         .padding(Pixels(4.0))
                         .size(Auto)
@@ -81,10 +81,10 @@ fn main() -> Result<(), ApplicationError> {
                     .class("test");
 
                 Element::new(cx)
-                    .text("LeftEnd")
+                    .text(Localized::new("tooltip-placement-left-end"))
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
+                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
                         })
                         .padding(Pixels(4.0))
                         .size(Auto)
@@ -97,10 +97,10 @@ fn main() -> Result<(), ApplicationError> {
 
             HStack::new(cx, |cx| {
                 Element::new(cx)
-                    .text("RightStart")
+                    .text(Localized::new("tooltip-placement-right-start"))
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
+                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
                         })
                         .padding(Pixels(4.0))
                         .size(Auto)
@@ -109,10 +109,10 @@ fn main() -> Result<(), ApplicationError> {
                     .class("test");
 
                 Element::new(cx)
-                    .text("Right")
+                    .text(Localized::new("tooltip-placement-right"))
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
+                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
                         })
                         .padding(Pixels(4.0))
                         .size(Auto)
@@ -121,10 +121,10 @@ fn main() -> Result<(), ApplicationError> {
                     .class("test");
 
                 Element::new(cx)
-                    .text("RightEnd")
+                    .text(Localized::new("tooltip-placement-right-end"))
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
+                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
                         })
                         .padding(Pixels(4.0))
                         .size(Auto)
@@ -137,10 +137,10 @@ fn main() -> Result<(), ApplicationError> {
 
             HStack::new(cx, |cx| {
                 Element::new(cx)
-                    .text("BottomStart")
+                    .text(Localized::new("tooltip-placement-bottom-start"))
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
+                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
                         })
                         .padding(Pixels(4.0))
                         .size(Auto)
@@ -149,10 +149,10 @@ fn main() -> Result<(), ApplicationError> {
                     .class("test");
 
                 Element::new(cx)
-                    .text("Bottom")
+                    .text(Localized::new("tooltip-placement-bottom"))
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
+                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
                         })
                         .padding(Pixels(4.0))
                         .size(Auto)
@@ -161,10 +161,10 @@ fn main() -> Result<(), ApplicationError> {
                     .class("test");
 
                 Element::new(cx)
-                    .text("BottomEnd")
+                    .text(Localized::new("tooltip-placement-bottom-end"))
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
+                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
                         })
                         .padding(Pixels(4.0))
                         .size(Auto)
@@ -177,10 +177,10 @@ fn main() -> Result<(), ApplicationError> {
 
             HStack::new(cx, |cx| {
                 Element::new(cx)
-                    .text("Over")
+                    .text(Localized::new("tooltip-placement-over"))
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
+                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
                         })
                         .padding(Pixels(4.0))
                         .size(Auto)
@@ -189,10 +189,10 @@ fn main() -> Result<(), ApplicationError> {
                     .class("test");
 
                 Element::new(cx)
-                    .text("Cursor")
+                    .text(Localized::new("tooltip-placement-cursor"))
                     .tooltip(|cx| {
                         Tooltip::new(cx, |cx| {
-                            Label::new(cx, "This is a tooltip").padding(Pixels(4.0));
+                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
                         })
                         .padding(Pixels(4.0))
                         .size(Auto)
@@ -204,7 +204,7 @@ fn main() -> Result<(), ApplicationError> {
             .horizontal_gap(Pixels(8.0));
         });
     })
-    .title("Tooltip")
+    .title(Localized::new("view-title-tooltip"))
     .inner_size((800, 800))
     .run()
 }

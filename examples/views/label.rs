@@ -32,7 +32,7 @@ fn main() -> Result<(), ApplicationError> {
         AppData { _text: text, _value: value, checked }.build(cx);
 
         ExamplePage::vertical(cx, |cx| {
-            Label::new(cx, "A label can display a static string of unicode 😂")
+            Label::new(cx, Localized::new("label-static-unicode"))
                 .background_color(Color::gray())
                 .padding(Pixels(20.0));
 
@@ -40,13 +40,11 @@ fn main() -> Result<(), ApplicationError> {
 
             Label::new(cx, value);
 
-            Label::new(cx, "Text which is too long for the label will be wrapped.")
-                .text_wrap(true)
-                .width(Pixels(200.0));
+            Label::new(cx, Localized::new("label-wrap-enabled")).width(Pixels(200.0));
 
-            Label::new(cx, "Unless text wrapping is disabled.")
+            Label::new(cx, Localized::new("label-wrap-disabled"))
                 .width(Auto)
-                .text_wrap(true)
+                .text_wrap(false)
                 .font_slant(FontSlant::Italic);
 
             HStack::new(cx, |cx| {
@@ -54,8 +52,7 @@ fn main() -> Result<(), ApplicationError> {
                     .on_toggle(|cx| cx.emit(AppEvent::Toggle))
                     .id("checkbox_1");
 
-                Label::new(cx, "A label that is describing a form element also acts as a trigger")
-                    .describing("checkbox_1");
+                Label::new(cx, Localized::new("label-describing-trigger")).describing("checkbox_1");
             })
             .width(Auto)
             .height(Auto)
@@ -63,6 +60,6 @@ fn main() -> Result<(), ApplicationError> {
             .horizontal_gap(Pixels(8.0));
         });
     })
-    .title("Label")
+    .title(Localized::new("view-title-label"))
     .run()
 }

@@ -4,7 +4,7 @@ use vizia::prelude::*;
 
 #[derive(Debug, Clone, Copy)]
 struct AppState {
-    options: Signal<Vec<&'static str>>,
+    options: Signal<Vec<Localized>>,
     selected_option: Signal<Option<usize>>,
 }
 
@@ -13,20 +13,21 @@ impl AppState {
         Self {
             options: Signal::new(
                 vec![
-                    "One",
-                    "Two",
-                    "Three",
-                    "Four",
-                    "Five",
-                    "Six really long",
-                    "Seven",
-                    "Eight",
-                    "Nine",
-                    "Ten",
-                    "Eleven",
-                    "Twelve",
+                    "select-option-one",
+                    "select-option-two",
+                    "select-option-three",
+                    "select-option-four",
+                    "select-option-five",
+                    "select-option-six",
+                    "select-option-seven",
+                    "select-option-eight",
+                    "select-option-nine",
+                    "select-option-ten",
+                    "select-option-eleven",
+                    "select-option-twelve",
                 ]
                 .into_iter()
+                .map(Localized::new)
                 .collect::<Vec<_>>(),
             ),
             selected_option: Signal::new(None),
@@ -54,11 +55,11 @@ fn main() -> Result<(), ApplicationError> {
 
         ExamplePage::vertical(cx, |cx| {
             Select::new(cx, options, selected_option, true)
-                .placeholder("Select an option...")
+                .placeholder(Localized::new("select-placeholder"))
                 .on_select(|cx, index| cx.emit(AppEvent::SetOption(index)))
                 .width(Pixels(150.0));
         });
     })
-    .title("Select")
+    .title(Localized::new("view-title-select"))
     .run()
 }

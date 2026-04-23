@@ -32,7 +32,7 @@ fn main() -> Result<(), ApplicationError> {
             });
         });
     })
-    .title("Knob")
+    .title(Localized::new("view-title-knob"))
     .inner_size((300, 300))
     .run()
 }

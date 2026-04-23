@@ -17,7 +17,7 @@ fn main() -> Result<(), ApplicationError> {
             });
         });
     })
-    .title("Divider")
+    .title(Localized::new("view-title-divider"))
     .inner_size((350, 300))
     .run()
 }

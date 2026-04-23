@@ -102,6 +102,6 @@ fn main() -> Result<(), ApplicationError> {
             // .selection_follows_focus(true);
         });
     })
-    .title("List")
+    .title(Localized::new("view-title-list"))
     .run()
 }

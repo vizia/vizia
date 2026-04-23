@@ -15,6 +15,6 @@ fn main() -> Result<(), ApplicationError> {
             .alignment(Alignment::Center);
         });
     })
-    .title("HStack")
+    .title(Localized::new("view-title-hstack"))
     .run()
 }

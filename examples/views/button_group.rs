@@ -37,23 +37,23 @@ fn main() -> Result<(), ApplicationError> {
         ExamplePage::vertical(cx, |cx| {
             // Basic horizontal button group
             ButtonGroup::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "One"));
-                Button::new(cx, |cx| Label::new(cx, "Two"));
-                Button::new(cx, |cx| Label::new(cx, "Three"));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("one")));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("two")));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("three")));
             });
 
             // Button group with variants
             ButtonGroup::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "One"));
-                Button::new(cx, |cx| Label::new(cx, "Two"));
-                Button::new(cx, |cx| Label::new(cx, "Three"));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("one")));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("two")));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("three")));
             })
             .variant(ButtonVariant::Secondary);
 
             ButtonGroup::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "One"));
-                Button::new(cx, |cx| Label::new(cx, "Two"));
-                Button::new(cx, |cx| Label::new(cx, "Three"));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("one")));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("two")));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("three")));
             })
             .variant(ButtonVariant::Outline);
 
@@ -62,18 +62,18 @@ fn main() -> Result<(), ApplicationError> {
                 Button::new(cx, |cx| {
                     HStack::new(cx, |cx| {
                         Svg::new(cx, ICON_CHECK).class("icon");
-                        Label::new(cx, "Accept");
+                        Label::new(cx, Localized::new("button-accept"));
                     })
                 });
-                Button::new(cx, |cx| Label::new(cx, "Maybe"));
-                Button::new(cx, |cx| Label::new(cx, "Decline"));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("button-maybe")));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("button-decline")));
             });
 
             // Vertical button group
             ButtonGroup::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "Top"));
-                Button::new(cx, |cx| Label::new(cx, "Middle"));
-                Button::new(cx, |cx| Label::new(cx, "Bottom"));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("button-top")));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("button-middle")));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("button-bottom")));
             })
             .vertical(true);
 
@@ -88,7 +88,7 @@ fn main() -> Result<(), ApplicationError> {
             });
         });
     })
-    .title("Button Group")
+    .title(Localized::new("view-title-button-group"))
     .inner_size((700, 500))
     .run()
 }

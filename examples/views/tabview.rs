@@ -66,6 +66,6 @@ fn main() -> Result<(), ApplicationError> {
             .height(Pixels(300.0));
         });
     })
-    .title("Tabview")
+    .title(Localized::new("view-title-tabview"))
     .run()
 }

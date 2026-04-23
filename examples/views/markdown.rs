@@ -39,6 +39,6 @@ fn main() -> Result<(), ApplicationError> {
             );
         });
     })
-    .title("Markdown")
+    .title(Localized::new("view-title-markdown"))
     .run()
 }

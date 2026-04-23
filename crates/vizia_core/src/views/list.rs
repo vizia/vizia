@@ -398,7 +398,7 @@ impl List {
         .toggle_class("selectable", selectable.map(|s| *s != Selectable::None))
         .orientation(orientation)
         .navigable(true)
-        .role(Role::List)
+        .role(Role::ListBox)
     }
 }
 
@@ -765,7 +765,7 @@ impl ListItem {
             .build(cx, move |cx| {
                 item_content(cx, index, item);
             })
-            .role(Role::ListItem)
+            .role(Role::ListBoxOption)
             .toggle_class("focused", focused_signal)
             .checked(selection.map(move |selection| selection.contains(&index)))
             .bind(focused_signal, move |handle| {

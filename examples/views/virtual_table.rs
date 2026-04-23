@@ -110,11 +110,9 @@ fn main() -> Result<(), ApplicationError> {
         ]);
 
         ExamplePage::vertical(cx, |cx| {
-            Label::new(cx, "VirtualTable Large Dataset (5,000 Rows)")
-                .font_size(18.0)
-                .height(Auto);
+            Label::new(cx, Localized::new("virtual-table-heading")).font_size(18.0).height(Auto);
 
-            Label::new(cx, "Virtualized fixed-height rows for large datasets. Use sorting and resizing to profile interactivity.")
+            Label::new(cx, Localized::new("virtual-table-description"))
                 .class("table-cell-meta")
                 .height(Auto);
 
@@ -135,7 +133,7 @@ fn main() -> Result<(), ApplicationError> {
         .padding(Pixels(12.0))
         .gap(Pixels(6.0));
     })
-    .title("VirtualTable Large Dataset")
+    .title(Localized::new("view-title-virtual-table"))
     .inner_size((1100, 760))
     .run()
 }

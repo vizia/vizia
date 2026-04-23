@@ -46,7 +46,7 @@ fn main() -> Result<(), ApplicationError> {
             ProgressBar::horizontal(cx, progress).width(Pixels(300.0));
         });
     })
-    .title("ProgressBar")
+    .title(Localized::new("view-title-progressbar"))
     .inner_size((750, 550))
     .run()
 }

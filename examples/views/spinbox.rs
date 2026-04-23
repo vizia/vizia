@@ -24,7 +24,7 @@ fn main() -> Result<(), ApplicationError> {
                 .on_change(|ex, v| ex.emit(AppEvent::SetValue(v)));
         });
     })
-    .title("Spinbox")
+    .title(Localized::new("view-title-spinbox"))
     .run()
 }
 

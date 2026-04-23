@@ -34,19 +34,23 @@ fn main() -> Result<(), ApplicationError> {
         ExamplePage::vertical(cx, |cx| {
             HStack::new(cx, |cx| {
                 ScrollView::new(cx, |cx| {
-                    Label::new(cx, "Vertical Scroll").height(Pixels(1000.0)).width(Stretch(1.0));
+                    Label::new(cx, Localized::new("scroll-vertical"))
+                        .height(Pixels(1000.0))
+                        .width(Stretch(1.0));
                 })
                 .size(Pixels(200.0))
                 .class("bg-default");
 
                 ScrollView::new(cx, |cx| {
-                    Label::new(cx, "Horizontal Scroll").width(Pixels(1000.0)).height(Stretch(1.0));
+                    Label::new(cx, Localized::new("scroll-horizontal"))
+                        .width(Pixels(1000.0))
+                        .height(Stretch(1.0));
                 })
                 .size(Pixels(200.0))
                 .class("bg-default");
 
                 ScrollView::new(cx, |cx| {
-                    Label::new(cx, "Horizontal and Vertical Scroll")
+                    Label::new(cx, Localized::new("scroll-horizontal-vertical"))
                         .width(Pixels(1000.0))
                         .height(Pixels(1000.0));
                 })
@@ -58,7 +62,9 @@ fn main() -> Result<(), ApplicationError> {
 
             HStack::new(cx, |cx| {
                 ScrollView::new(cx, |cx| {
-                    Label::new(cx, "Vertical Scroll").height(Pixels(1000.0)).width(Stretch(1.0));
+                    Label::new(cx, Localized::new("scroll-vertical"))
+                        .height(Pixels(1000.0))
+                        .width(Stretch(1.0));
                 })
                 .scroll_y(scroll_y)
                 .show_vertical_scrollbar(show_vertical_scrollbar)
@@ -68,7 +74,9 @@ fn main() -> Result<(), ApplicationError> {
                 .class("bg-default");
 
                 ScrollView::new(cx, |cx| {
-                    Label::new(cx, "Horizontal Scroll").width(Pixels(1000.0)).height(Stretch(1.0));
+                    Label::new(cx, Localized::new("scroll-horizontal"))
+                        .width(Pixels(1000.0))
+                        .height(Stretch(1.0));
                 })
                 .scroll_x(scroll_x)
                 .show_horizontal_scrollbar(show_horizontal_scrollbar)
@@ -78,7 +86,7 @@ fn main() -> Result<(), ApplicationError> {
                 .class("bg-default");
 
                 ScrollView::new(cx, |cx| {
-                    Label::new(cx, "Horizontal and Vertical Scroll")
+                    Label::new(cx, Localized::new("scroll-horizontal-vertical"))
                         .width(Pixels(1000.0))
                         .height(Pixels(1000.0));
                 })
@@ -98,7 +106,7 @@ fn main() -> Result<(), ApplicationError> {
             .gap(Pixels(50.0));
         });
     })
-    .title("Scrollview")
+    .title(Localized::new("view-title-scrollview"))
     .inner_size((1100, 800))
     .run()
 }

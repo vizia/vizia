@@ -31,6 +31,6 @@ fn main() -> Result<(), ApplicationError> {
             Calendar::new(cx, date).on_select(|cx, date| cx.emit(AppEvent::SetDate(date)));
         });
     })
-    .title("Calendar")
+    .title(Localized::new("view-title-calendar"))
     .run()
 }

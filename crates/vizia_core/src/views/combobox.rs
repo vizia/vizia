@@ -4,7 +4,11 @@ use crate::prelude::*;
 
 /// A ComboBox view which combines a textbox with a list popup, allowing users to
 /// filter options by typing.
-pub struct ComboBox<L: SignalGet<Vec<T>>, S: SignalGet<usize>, T: 'static + Clone + ToString> {
+pub struct ComboBox<
+    L: SignalGet<Vec<T>>,
+    S: SignalGet<usize>,
+    T: 'static + Clone + ToStringLocalized,
+> {
     // Text used to filter the list.
     filter_text: Signal<String>,
     // Text displayed when the textbox is not actively editing.
@@ -24,7 +28,6 @@ pub struct ComboBox<L: SignalGet<Vec<T>>, S: SignalGet<usize>, T: 'static + Clon
 }
 
 pub(crate) enum ComboBoxEvent {
-    OpenPopup,
     SetOption(usize),
     SetFilterText(String),
 }
@@ -32,7 +35,7 @@ pub(crate) enum ComboBoxEvent {
 impl<L, S, T> ComboBox<L, S, T>
 where
     L: SignalGet<Vec<T>> + Copy + 'static,
-    T: 'static + Clone + ToString,
+    T: 'static + Clone + ToStringLocalized,
     S: SignalGet<usize> + Copy + 'static,
 {
     /// Creates a new [ComboBox] view.
@@ -41,7 +44,7 @@ where
         let placeholder = Signal::new(
             list.get()
                 .get(selected.get())
-                .map(ToString::to_string)
+                .map(|item| item.to_string_local(cx))
                 .unwrap_or_else(|| String::from("Select")),
         );
         let is_open = Signal::new(false);
@@ -92,7 +95,7 @@ where
             let entity = cx.current();
 
             Textbox::new(cx, filter_text)
-                .on_press(|cx| cx.emit(ComboBoxEvent::OpenPopup))
+                //.on_press(|cx| cx.emit(ComboBoxEvent::OpenPopup))
                 .on_edit(|cx, txt| cx.emit(ComboBoxEvent::SetFilterText(txt)))
                 // Prevent blur/cancel from ending edit; this view handles it explicitly.
                 .on_blur(|_| {})
@@ -114,66 +117,60 @@ where
                 let open = is_open.get();
                 if open {
                     Popover::new(cx, move |cx: &mut Context| {
-                        let filtered_indices = Memo::new(move |_| {
-                            let query = filter_text.get().to_ascii_lowercase();
-                            list.get()
-                                .iter()
-                                .enumerate()
-                                .filter_map(|(index, item)| {
-                                    if query.is_empty()
-                                        || item.to_string().to_ascii_lowercase().contains(&query)
-                                    {
-                                        Some(index)
-                                    } else {
-                                        None
-                                    }
-                                })
-                                .collect::<Vec<usize>>()
-                        });
+                        Binding::new(cx, list, move |cx| {
+                            Binding::new(cx, filter_text, move |cx| {
+                                let query = filter_text.get().to_ascii_lowercase();
+                                let values = list.get();
+                                let options = values
+                                    .iter()
+                                    .enumerate()
+                                    .filter_map(|(index, item)| {
+                                        let text = item.to_string_local(cx);
+                                        if query.is_empty()
+                                            || text.to_ascii_lowercase().contains(&query)
+                                        {
+                                            Some((index, text))
+                                        } else {
+                                            None
+                                        }
+                                    })
+                                    .collect::<Vec<(usize, String)>>();
 
-                        Binding::new(cx, filtered_indices, move |cx| {
-                            let indices = filtered_indices.get();
-                            let values = list.get();
-                            let options = indices
-                                .into_iter()
-                                .filter_map(|index| {
-                                    values.get(index).map(|item| (index, item.to_string()))
-                                })
-                                .collect::<Vec<(usize, String)>>();
+                                let options_state = Signal::new(options);
 
-                            let options_state = Signal::new(options);
+                                let highlighted_row = Memo::new(move |_| {
+                                    let highlighted_source = highlighted.get();
+                                    let row = highlighted_source.and_then(|source_index| {
+                                        options_state
+                                            .get()
+                                            .iter()
+                                            .position(|item| item.0 == source_index)
+                                    });
 
-                            let highlighted_row = Memo::new(move |_| {
-                                let highlighted_source = highlighted.get();
-                                let row = highlighted_source.and_then(|source_index| {
-                                    options_state
-                                        .get()
-                                        .iter()
-                                        .position(|item| item.0 == source_index)
+                                    row.map(|idx| vec![idx]).unwrap_or_default()
                                 });
 
-                                row.map(|idx| vec![idx]).unwrap_or_default()
-                            });
+                                List::new(cx, options_state, move |cx, _row, item| {
+                                    let source_index = item.get().0;
+                                    let option_id = format!("{}-option-{}", entity, source_index);
+                                    cx.style.ids.insert(cx.current(), option_id.clone());
+                                    cx.needs_restyle(cx.current());
+                                    cx.entity_identifiers.insert(option_id, cx.current());
 
-                            List::new(cx, options_state, move |cx, _row, item| {
-                                let source_index = item.get().0;
-                                let option_id = format!("{}-option-{}", entity, source_index);
-                                cx.style.ids.insert(cx.current(), option_id.clone());
-                                cx.needs_restyle(cx.current());
-                                cx.entity_identifiers.insert(option_id, cx.current());
-
-                                Label::new(cx, item.map(|(_, text)| text.clone())).hoverable(false);
-                            })
-                            .navigable(false)
-                            .width(Stretch(1.0))
-                            .selectable(Selectable::Single)
-                            .selection(highlighted_row)
-                            .show_horizontal_scrollbar(false)
-                            .on_select(move |cx, row| {
-                                if let Some((source_index, _)) = options_state.get().get(row) {
-                                    cx.emit(ComboBoxEvent::SetOption(*source_index));
-                                    cx.emit(PopupEvent::Close);
-                                }
+                                    Label::new(cx, item.map(|(_, text)| text.clone()))
+                                        .hoverable(false);
+                                })
+                                .navigable(false)
+                                .width(Stretch(1.0))
+                                .selectable(Selectable::Single)
+                                .selection(highlighted_row)
+                                .show_horizontal_scrollbar(false)
+                                .on_select(move |cx, row| {
+                                    if let Some((source_index, _)) = options_state.get().get(row) {
+                                        cx.emit(ComboBoxEvent::SetOption(*source_index));
+                                        cx.emit(PopupEvent::Close);
+                                    }
+                                });
                             });
                         });
                     })
@@ -184,10 +181,12 @@ where
                 }
             });
 
-            Binding::new(cx, selected, move |_cx| {
+            Binding::new(cx, selected, move |cx| {
                 let selected_index = selected.get();
                 if let Some(selected_item) = list.get().get(selected_index).cloned() {
-                    placeholder.set(selected_item.to_string());
+                    cx.environment().locale.set_or_bind(cx, move |cx, _| {
+                        placeholder.set(selected_item.to_string_local(cx));
+                    });
                 }
                 highlighted.set(Some(selected_index));
             });
@@ -198,17 +197,19 @@ where
 impl<L, S, T> ComboBox<L, S, T>
 where
     L: SignalGet<Vec<T>>,
-    T: 'static + Clone + ToString,
+    T: 'static + Clone + ToStringLocalized,
     S: SignalGet<usize>,
 {
-    fn filtered_indices(&self) -> Vec<usize> {
+    fn filtered_indices(&self, cx: &impl DataContext) -> Vec<usize> {
         let query = self.filter_text.get().to_ascii_lowercase();
         self.list
             .get()
             .iter()
             .enumerate()
             .filter_map(|(index, item)| {
-                if query.is_empty() || item.to_string().to_ascii_lowercase().contains(&query) {
+                if query.is_empty()
+                    || item.to_string_local(cx).to_ascii_lowercase().contains(&query)
+                {
                     Some(index)
                 } else {
                     None
@@ -221,7 +222,7 @@ where
 impl<L, S, T> View for ComboBox<L, S, T>
 where
     L: SignalGet<Vec<T>> + 'static,
-    T: 'static + Clone + ToString,
+    T: 'static + Clone + ToStringLocalized,
     S: SignalGet<usize> + 'static,
 {
     fn element(&self) -> Option<&'static str> {
@@ -230,16 +231,9 @@ where
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|combobox_event, _| match combobox_event {
-            ComboBoxEvent::OpenPopup => {
-                self.is_open.set(true);
-                self.highlighted.set(
-                    self.filtered_indices().first().copied().or_else(|| Some(self.selected.get())),
-                );
-            }
-
             ComboBoxEvent::SetOption(index) => {
                 if let Some(selected_item) = self.list.get().get(*index).cloned() {
-                    self.placeholder.set(selected_item.to_string());
+                    self.placeholder.set(selected_item.to_string_local(cx));
                 }
                 self.highlighted.set(Some(*index));
 
@@ -260,7 +254,7 @@ where
             ComboBoxEvent::SetFilterText(text) => {
                 self.placeholder.set(text.clone());
                 self.filter_text.set(text.clone());
-                self.highlighted.set(self.filtered_indices().first().copied());
+                self.highlighted.set(self.filtered_indices(cx).first().copied());
 
                 // Reopen in case it was closed with Escape.
                 self.is_open.set(true);
@@ -269,9 +263,7 @@ where
 
         event.map(|textbox_event, _| match textbox_event {
             TextEvent::StartEdit => {
-                self.highlighted.set(
-                    self.filtered_indices().first().copied().or_else(|| Some(self.selected.get())),
-                );
+                self.is_open.set(true);
             }
 
             TextEvent::Submit(enter) => {
@@ -289,7 +281,7 @@ where
         event.map(|window_event, meta| match window_event {
             WindowEvent::KeyDown(code, _) => match code {
                 Code::ArrowDown => {
-                    let filtered = self.filtered_indices();
+                    let filtered = self.filtered_indices(cx);
                     if self.is_open.get() {
                         if !filtered.is_empty() {
                             let current_pos = self
@@ -326,7 +318,7 @@ where
                 }
 
                 Code::ArrowUp => {
-                    let filtered = self.filtered_indices();
+                    let filtered = self.filtered_indices(cx);
                     if self.is_open.get() {
                         if !filtered.is_empty() {
                             let current_pos = self
@@ -368,6 +360,7 @@ where
                     if self.is_open.get() {
                         if let Some(index) = self.highlighted.get() {
                             cx.emit(ComboBoxEvent::SetOption(index));
+                            self.is_open.set(false);
                             meta.consume();
                         }
                     }
@@ -392,7 +385,7 @@ where
 impl<L, S, T> Handle<'_, ComboBox<L, S, T>>
 where
     L: SignalGet<Vec<T>> + 'static,
-    T: 'static + Clone + ToString,
+    T: 'static + Clone + ToStringLocalized,
     S: SignalGet<usize> + 'static,
 {
     /// Sets the callback triggered when an item is selected from the [ComboBox] list.

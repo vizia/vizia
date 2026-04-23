@@ -94,7 +94,7 @@ fn main() -> Result<(), ApplicationError> {
             .max_visible(3);
         });
     })
-    .title("Avatar")
+    .title(Localized::new("view-title-avatar"))
     .inner_size((600, 500))
     .run()
 }

@@ -255,7 +255,7 @@ fn main() -> Result<(), ApplicationError> {
                     Switch::new(cx, show_group)
                         .on_toggle(|cx| cx.emit(DynamicTableEvent::ToggleGroup))
                         .id("show_group");
-                    Label::new(cx, "Show Group").describing("show_group");
+                    Label::new(cx, Localized::new("table-show-group")).describing("show_group");
                 })
                 .size(Auto)
                 .gap(Pixels(6.0))
@@ -265,7 +265,7 @@ fn main() -> Result<(), ApplicationError> {
                     Switch::new(cx, show_notes)
                         .on_toggle(|cx| cx.emit(DynamicTableEvent::ToggleNotes))
                         .id("show_notes");
-                    Label::new(cx, "Show Notes").describing("show_notes");
+                    Label::new(cx, Localized::new("table-show-notes")).describing("show_notes");
                 })
                 .size(Auto)
                 .gap(Pixels(6.0))
@@ -275,7 +275,8 @@ fn main() -> Result<(), ApplicationError> {
                     Switch::new(cx, emphasize_status)
                         .on_toggle(|cx| cx.emit(DynamicTableEvent::ToggleOrder))
                         .id("status_first");
-                    Label::new(cx, "Prioritize Status").describing("status_first");
+                    Label::new(cx, Localized::new("table-prioritize-status"))
+                        .describing("status_first");
                 })
                 .size(Auto)
                 .gap(Pixels(6.0))
@@ -303,7 +304,7 @@ fn main() -> Result<(), ApplicationError> {
         .padding(Pixels(12.0))
         .gap(Pixels(8.0));
     })
-    .title("Table")
+    .title(Localized::new("view-title-table"))
     .inner_size((1100, 720))
     .run()
 }

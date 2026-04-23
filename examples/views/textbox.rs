@@ -45,14 +45,14 @@ fn main() -> Result<(), ApplicationError> {
         ExamplePage::vertical(cx, |cx| {
             Textbox::new(cx, editable_text)
                 .width(Pixels(300.0))
-                .placeholder("Type something...")
+                .placeholder(Localized::new("textbox-placeholder-type"))
                 .on_edit(|cx, text| cx.emit(AppEvent::SetEditableText(text)));
 
             HStack::new(cx, |cx| {
                 Textbox::new(cx, editable_text)
                     .class("icon-before")
                     .width(Stretch(1.0))
-                    .placeholder("Search")
+                    .placeholder(Localized::new("textbox-placeholder-search"))
                     .on_edit(|cx, text| cx.emit(AppEvent::SetEditableText(text)));
                 Svg::new(cx, ICON_SEARCH)
                     .color(Color::gray())
@@ -74,6 +74,6 @@ fn main() -> Result<(), ApplicationError> {
                 .read_only(true);
         });
     })
-    .title("Textbox")
+    .title(Localized::new("view-title-textbox"))
     .run()
 }
