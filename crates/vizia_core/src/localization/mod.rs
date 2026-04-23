@@ -535,43 +535,18 @@ impl Res<String> for Localized {
     where
         F: 'static + Fn(&mut Context, Localized),
     {
-        bind_localized_updates(cx, self, Arc::new(closure));
-    }
-
-    fn to_signal(self, cx: &mut Context) -> Signal<String> {
-        let signal = Signal::new(self.get_value(cx));
-
-        bind_localized_updates(
-            cx,
-            self,
-            Arc::new(move |cx, localized| {
-                signal.set(localized.get_value(cx));
-            }),
-        );
-
-        signal
-    }
-}
-
-fn bind_localized_updates(
-    cx: &mut Context,
-    localized: Localized,
-    closure: Arc<dyn Fn(&mut Context, Localized)>,
-) {
-    let current = cx.current();
-    let localized_for_scope = localized.clone();
-    cx.with_current(current, move |cx| {
-        let stores = localized_for_scope.args.values().map(|x| x.make_clone()).collect::<Vec<_>>();
-        let localized_for_bind = localized_for_scope.clone();
-        let closure_for_bind = closure.clone();
-        bind_recursive(cx, &stores, move |cx| {
-            let localized_for_locale = localized_for_bind.clone();
-            let closure_for_locale = closure_for_bind.clone();
-            cx.environment().locale.set_or_bind(cx, move |cx, _| {
-                closure_for_locale(cx, localized_for_locale.clone());
+        let current = cx.current();
+        let self2 = self.clone();
+        let closure = Arc::new(closure);
+        cx.with_current(current, |cx| {
+            let stores = self2.args.values().map(|x| x.make_clone()).collect::<Vec<_>>();
+            let self3 = self2.clone();
+            let closure = closure.clone();
+            bind_recursive(cx, &stores, move |cx| {
+                closure(cx, self3.clone());
             });
         });
-    });
+    }
 }
 
 fn bind_recursive<F>(cx: &mut Context, stores: &[Box<dyn FluentStore>], closure: F)

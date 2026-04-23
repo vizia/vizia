@@ -88,11 +88,11 @@ impl Label {
     /// #
     /// Label::new(cx, "Text");
     /// ```
-    pub fn new<T>(cx: &mut Context, text: impl Res<T>) -> Handle<Self>
+    pub fn new<T>(cx: &mut Context, text: impl Res<T> + Clone + 'static) -> Handle<Self>
     where
-        T: ToStringLocalized,
+        T: ToStringLocalized + 'static,
     {
-        Self { describing: None }.build(cx, |_| {}).text(text).role(Role::Label)
+        Self { describing: None }.build(cx, |_| {}).text(text.clone()).role(Role::Label).name(text)
     }
 
     /// Creates a new rich [Label] view.
