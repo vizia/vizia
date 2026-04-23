@@ -1,5 +1,5 @@
 use morphorm::Node;
-use vizia_storage::LayoutTreeIterator;
+use vizia_storage::{DrawChildIterator, LayoutTreeIterator};
 
 use crate::layout::node::SubLayout;
 use crate::prelude::*;
@@ -90,6 +90,18 @@ pub(crate) fn layout_system(cx: &mut Context) {
 
                     cx.needs_retransform();
                     cx.needs_reclip();
+
+                    // If the entity clips its children (Overflow::Hidden or ClipPath::Shape)
+                    // and its geometry changed, the clip path has changed too, so invalidate
+                    // all children's cached draw_bounds.
+                    if matches!(cx.style.overflowx.get(entity), Some(Overflow::Hidden))
+                        || matches!(cx.style.overflowy.get(entity), Some(Overflow::Hidden))
+                        || matches!(cx.style.clip_path.get(entity), Some(ClipPath::Shape(_)))
+                    {
+                        for child in DrawChildIterator::new(cx.tree, entity) {
+                            cx.cache.draw_bounds.remove(child);
+                        }
+                    }
                 }
 
                 // TODO: Use geo changed to determine whether an entity needs to be redrawn.
