@@ -110,6 +110,10 @@ pub trait AbilityModifiers: internal::Modifiable {
                 let val = v.get_value(cx).into();
                 if let Some(abilities) = cx.style.abilities.get_mut(entity) {
                     abilities.set(Abilities::NAVIGABLE, val);
+                    if val {
+                        // If an element is navigable then it must be focusable.
+                        abilities.set(Abilities::FOCUSABLE, true);
+                    }
                     cx.needs_restyle(entity);
                     cx.style.needs_access_update(entity);
                 }
