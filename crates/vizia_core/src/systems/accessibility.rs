@@ -151,6 +151,16 @@ pub(crate) fn get_access_node(
         node_builder.set_value(value.clone().into_boxed_str());
     }
 
+    if let Some(text) = cx.style.text.get(entity) {
+        match cx.style.role.get(entity) {
+            Some(Role::Label | Role::TextRun) => {
+                node_builder.set_value(text.clone().into_boxed_str());
+            }
+            _ => {}
+        }
+    }
+
+    // TODO: Should name override text?
     if let Some(name) = cx.style.name.get(entity) {
         match cx.style.role.get(entity) {
             Some(Role::Label | Role::TextRun) => {
