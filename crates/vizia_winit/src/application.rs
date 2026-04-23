@@ -282,11 +282,12 @@ impl Application {
                         .get_parent_window(window_entity)
                         .and_then(|parent_window| self.window_ids.get(&parent_window))
                         .and_then(|id| self.windows.get(id))
-                        .and_then(|WinState { window, .. }| {
-                            let position = window
+                        .and_then(|win_state| {
+                            let position = win_state
+                                .window()
                                 .outer_position()
                                 .inspect_err(|e| warn!("can't get window position: {e:?}"));
-                            Some((position.ok()?, window.inner_size()))
+                            Some((position.ok()?, win_state.window().inner_size()))
                         }),
                     AnchorTarget::Mouse => self
                         .cx
@@ -295,8 +296,9 @@ impl Application {
                         .get_parent_window(window_entity)
                         .and_then(|parent_window| self.window_ids.get(&parent_window))
                         .and_then(|id| self.windows.get(id))
-                        .and_then(|WinState { window, .. }| {
-                            window
+                        .and_then(|win_state| {
+                            win_state
+                                .window()
                                 .outer_position()
                                 .inspect_err(|e| warn!("can't get window position: {e:?}"))
                                 .ok()

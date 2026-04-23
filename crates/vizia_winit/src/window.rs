@@ -6,7 +6,7 @@ use crate::convert::cursor_icon_to_cursor_icon;
 use crate::window_modifiers::WindowModifiers;
 
 use vizia_core::{context::TreeProps, prelude::*};
-use vizia_window::AnchorTarget;
+use vizia_window::{AnchorTarget, WindowDescription};
 
 use winit::{
     dpi::*,
