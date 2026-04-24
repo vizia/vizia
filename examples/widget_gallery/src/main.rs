@@ -738,12 +738,9 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
         "ZStack" => {
             ZStack::new(cx, |cx| {
                 Element::new(cx).size(Pixels(44.0)).background_color(Color::red());
-                Element::new(cx)
-                    .size(Pixels(44.0))
-                    .space(Pixels(12.0))
-                    .background_color(Color::blue());
+                Element::new(cx).size(Pixels(36.0)).background_color(Color::blue());
             })
-            .size(Pixels(72.0));
+            .size(Auto);
         }
         _ => {
             Label::new(cx, "No preview");

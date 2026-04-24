@@ -63,16 +63,11 @@ The zstack container can be used to layer views on top of each other.",
         DemoRegion::new(cx, "ZStack", |cx| {
             ZStack::new(cx, |cx| {
                 Element::new(cx).size(Pixels(100.0)).background_color(Color::red());
-                Element::new(cx)
-                    .size(Pixels(100.0))
-                    .space(Pixels(20.0))
-                    .background_color(Color::green());
-                Element::new(cx)
-                    .size(Pixels(100.0))
-                    .space(Pixels(40.0))
-                    .background_color(Color::blue());
+                Element::new(cx).size(Pixels(70.0)).background_color(Color::green());
+                Element::new(cx).size(Pixels(40.0)).background_color(Color::blue());
             })
-            .size(Pixels(140.0))
+            .size(Auto)
+            .padding(Pixels(20.0))
             .alignment(Alignment::Center);
         });
     })
