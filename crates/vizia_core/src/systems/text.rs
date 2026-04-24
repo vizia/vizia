@@ -360,6 +360,22 @@ fn add_block(
                 .unwrap_or(16.0);
             text_style.set_font_size(font_size * style.scale_factor());
 
+            if let Some(line_height) = style.line_height.get(entity).cloned() {
+                let height = match line_height {
+                    LineHeight::Normal => None,
+                    LineHeight::Number(number) => Some(number),
+                    LineHeight::Percentage(percentage) => Some(percentage / 100.0),
+                    LineHeight::Length(length) => length
+                        .to_px()
+                        .and_then(|pixels| (font_size > 0.0).then_some(pixels / font_size)),
+                };
+
+                if let Some(height) = height {
+                    text_style.set_height_override(true);
+                    text_style.set_height(height);
+                }
+            }
+
             // Font Style
             match (
                 style.font_weight.get(entity),
