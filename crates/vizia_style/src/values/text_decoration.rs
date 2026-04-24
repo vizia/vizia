@@ -1,4 +1,4 @@
-use crate::{CustomParseError, LengthOrPercentage, Parse, define_enum};
+use crate::{CustomParseError, LengthOrPercentage, NoneKeyword, Parse, define_enum};
 use bitflags::bitflags;
 use cssparser::*;
 use cssparser_color::Color;
@@ -79,6 +79,11 @@ impl Default for TextDecorationLine {
 
 impl<'i> Parse<'i> for TextDecorationLine {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+        // `none` means no decoration lines; must stand alone.
+        if input.try_parse(NoneKeyword::parse).is_ok() {
+            return Ok(TextDecorationLine::empty());
+        }
+
         let mut value = TextDecorationLine::empty();
         let mut any = false;
 
@@ -87,7 +92,6 @@ impl<'i> Parse<'i> for TextDecorationLine {
                 let location = input.current_source_location();
                 let ident = input.expect_ident()?;
                 Ok(match_ignore_ascii_case! { &ident,
-                  "none" if value.is_empty() => TextDecorationLine::empty(),
                   "underline" => TextDecorationLine::Underline,
                   "overline" => TextDecorationLine::Overline,
                   "strikethrough" | "line-through" => TextDecorationLine::Strikethrough,

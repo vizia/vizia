@@ -1,4 +1,4 @@
-use crate::{Color, CustomParseError, InsetKeyword, Length, Parse};
+use crate::{Color, CustomParseError, InsetKeyword, Length, NoneKeyword, Parse};
 use cssparser::{ParseError, Parser, ParserInput};
 
 /// A box shadow adding a shadow effect around an element's frame.
@@ -62,6 +62,10 @@ impl<'i> Parse<'i> for Shadow {
 
 impl<'i> Parse<'i> for Vec<Shadow> {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+        // CSS `shadow: none` means no shadows.
+        if input.try_parse(NoneKeyword::parse).is_ok() {
+            return Ok(vec![]);
+        }
         input.parse_comma_separated(Shadow::parse)
     }
 }
@@ -114,6 +118,7 @@ mod tests {
 
         custom {
             success {
+                "none" => vec![],
                 "10px 20px, 10px 20px 30px 40px red inset" => vec![
                     Shadow::new(
                         Length::px(10.0),

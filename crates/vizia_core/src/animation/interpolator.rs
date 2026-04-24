@@ -89,6 +89,15 @@ impl Interpolator for Filter {
             (Filter::Blur(start), Filter::Blur(end)) => {
                 Filter::Blur(Length::interpolate(start, end, t))
             }
+            (Filter::None, Filter::None) => Filter::None,
+            // Mismatched variants: snap to end when past halfway, else hold start.
+            _ => {
+                if t >= 0.5 {
+                    end.clone()
+                } else {
+                    start.clone()
+                }
+            }
         }
     }
 }
