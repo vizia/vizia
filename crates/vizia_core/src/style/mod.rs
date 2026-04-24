@@ -76,7 +76,7 @@ pub use vizia_style::{
     CornerShape, CssRule, CursorIcon, Direction, Display, Filter, FontFamily, FontSize, FontSlant,
     FontVariation, FontWeight, FontWeightKeyword, FontWidth, GenericFontFamily, Gradient,
     HorizontalPosition, HorizontalPositionKeyword, LayoutWrap, Length, LengthOrPercentage,
-    LengthValue, LineClamp, LineDirection, LineHeight, LinearGradient, Matrix, Opacity, Overflow,
+    LengthValue, LineClamp, LineDirection, LinearGradient, Matrix, Opacity, Overflow,
     PointerEvents, Position, PositionType, RGBA, Scale, Shadow, TextAlign, TextDecorationLine,
     TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform, Transition,
     Translate, VerticalPosition, VerticalPositionKeyword, Visibility,
@@ -321,7 +321,6 @@ pub struct Style {
     pub(crate) text: SparseSet<String>,
     pub(crate) text_wrap: StyleSet<bool>,
     pub(crate) text_overflow: StyleSet<TextOverflow>,
-    pub(crate) line_height: StyleSet<LineHeight>,
     pub(crate) line_clamp: StyleSet<LineClamp>,
     pub(crate) text_align: StyleSet<TextAlign>,
     pub(crate) text_decoration_line: StyleSet<TextDecorationLine>,
@@ -1977,9 +1976,6 @@ impl Style {
 
             Property::TextOverflow(text_overflow) => {
                 self.text_overflow.insert_rule(rule_id, text_overflow);
-            }
-            Property::LineHeight(line_height) => {
-                self.line_height.insert_rule(rule_id, line_height);
             }
             Property::LineClamp(line_clamp) => {
                 self.line_clamp.insert_rule(rule_id, line_clamp);
