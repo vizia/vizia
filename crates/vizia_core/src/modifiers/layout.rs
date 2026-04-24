@@ -237,7 +237,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// Set the text direction of the view.
         direction,
         Direction,
-        SystemFlags::RELAYOUT
+        SystemFlags::RELAYOUT | SystemFlags::REINHERIT_INLINE
     );
 
     modifier!(

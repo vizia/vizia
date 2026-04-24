@@ -342,30 +342,40 @@ impl Node<'_, '_> {
 
 /// Link inheritable inline properties to their parent.
 pub(crate) fn inline_inheritance_system(cx: &mut Context, redraw_entities: &mut Vec<Entity>) {
-    for entity in cx.tree.into_iter() {
-        if let Some(parent) = cx.tree.get_layout_parent(entity) {
-            if cx.style.disabled.inherit_inline(entity, parent)
-                | cx.style.caret_color.inherit_inline(entity, parent)
-                | cx.style.selection_color.inherit_inline(entity, parent)
-                | cx.style.fill.inherit_inline(entity, parent)
-            {
-                redraw_entities.push(entity);
-            }
+    if cx.style.reinherit_inline.is_empty() {
+        return;
+    }
 
-            if cx.style.font_color.inherit_inline(entity, parent)
-                | cx.style.font_size.inherit_inline(entity, parent)
-                | cx.style.font_family.inherit_inline(entity, parent)
-                | cx.style.font_weight.inherit_inline(entity, parent)
-                | cx.style.font_slant.inherit_inline(entity, parent)
-                | cx.style.font_width.inherit_inline(entity, parent)
-                | cx.style.text_decoration_line.inherit_inline(entity, parent)
-                | cx.style.text_stroke_width.inherit_inline(entity, parent)
-                | cx.style.text_stroke_style.inherit_inline(entity, parent)
-                | cx.style.font_variation_settings.inherit_inline(entity, parent)
-                | cx.style.direction.inherit_inline(entity, parent)
-            {
-                cx.style.needs_text_update(entity);
-                cx.style.needs_relayout();
+    let changed: Vec<Entity> = cx.style.reinherit_inline.drain().collect();
+    let root_changes = filter_to_root_entities(&changed, &cx.tree);
+
+    for &root_entity in &root_changes {
+        let iter = LayoutTreeIterator::subtree(&cx.tree, root_entity);
+        for entity in iter {
+            if let Some(parent) = cx.tree.get_layout_parent(entity) {
+                if cx.style.disabled.inherit_inline(entity, parent)
+                    | cx.style.caret_color.inherit_inline(entity, parent)
+                    | cx.style.selection_color.inherit_inline(entity, parent)
+                    | cx.style.fill.inherit_inline(entity, parent)
+                {
+                    redraw_entities.push(entity);
+                }
+
+                if cx.style.font_color.inherit_inline(entity, parent)
+                    | cx.style.font_size.inherit_inline(entity, parent)
+                    | cx.style.font_family.inherit_inline(entity, parent)
+                    | cx.style.font_weight.inherit_inline(entity, parent)
+                    | cx.style.font_slant.inherit_inline(entity, parent)
+                    | cx.style.font_width.inherit_inline(entity, parent)
+                    | cx.style.text_decoration_line.inherit_inline(entity, parent)
+                    | cx.style.text_stroke_width.inherit_inline(entity, parent)
+                    | cx.style.text_stroke_style.inherit_inline(entity, parent)
+                    | cx.style.font_variation_settings.inherit_inline(entity, parent)
+                    | cx.style.direction.inherit_inline(entity, parent)
+                {
+                    cx.style.needs_text_update(entity);
+                    cx.style.needs_relayout();
+                }
             }
         }
     }
@@ -373,30 +383,41 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context, redraw_entities: &mut 
 
 /// Link inheritable shared properties to their parent.
 pub(crate) fn shared_inheritance_system(cx: &mut Context, redraw_entities: &mut Vec<Entity>) {
-    for entity in cx.tree.into_iter() {
-        if let Some(parent) = cx.tree.get_layout_parent(entity) {
-            if cx.style.font_color.inherit_shared(entity, parent)
-                | cx.style.font_size.inherit_shared(entity, parent)
-                | cx.style.font_family.inherit_shared(entity, parent)
-                | cx.style.font_weight.inherit_shared(entity, parent)
-                | cx.style.font_slant.inherit_shared(entity, parent)
-                | cx.style.font_width.inherit_shared(entity, parent)
-                | cx.style.text_decoration_line.inherit_shared(entity, parent)
-                | cx.style.text_stroke_width.inherit_shared(entity, parent)
-                | cx.style.text_stroke_style.inherit_shared(entity, parent)
-                | cx.style.font_variation_settings.inherit_shared(entity, parent)
-                | cx.style.direction.inherit_shared(entity, parent)
-            {
-                cx.style.needs_text_update(entity);
-                cx.style.needs_relayout();
-            }
+    if cx.style.reinherit_shared.is_empty() {
+        return;
+    }
 
-            if cx.style.disabled.inherit_shared(entity, parent)
-                | cx.style.caret_color.inherit_shared(entity, parent)
-                | cx.style.selection_color.inherit_shared(entity, parent)
-                | cx.style.fill.inherit_shared(entity, parent)
-            {
-                redraw_entities.push(entity);
+    let changed: Vec<Entity> = cx.style.reinherit_shared.drain().collect();
+    let root_changes = filter_to_root_entities(&changed, &cx.tree);
+
+    // Only iterate subtrees of entities that had inheritable property changes
+    for &root_entity in &root_changes {
+        let iter = LayoutTreeIterator::subtree(&cx.tree, root_entity);
+        for entity in iter {
+            if let Some(parent) = cx.tree.get_layout_parent(entity) {
+                if cx.style.font_color.inherit_shared(entity, parent)
+                    | cx.style.font_size.inherit_shared(entity, parent)
+                    | cx.style.font_family.inherit_shared(entity, parent)
+                    | cx.style.font_weight.inherit_shared(entity, parent)
+                    | cx.style.font_slant.inherit_shared(entity, parent)
+                    | cx.style.font_width.inherit_shared(entity, parent)
+                    | cx.style.text_decoration_line.inherit_shared(entity, parent)
+                    | cx.style.text_stroke_width.inherit_shared(entity, parent)
+                    | cx.style.text_stroke_style.inherit_shared(entity, parent)
+                    | cx.style.font_variation_settings.inherit_shared(entity, parent)
+                    | cx.style.direction.inherit_shared(entity, parent)
+                {
+                    cx.style.needs_text_update(entity);
+                    cx.style.needs_relayout();
+                }
+
+                if cx.style.disabled.inherit_shared(entity, parent)
+                    | cx.style.caret_color.inherit_shared(entity, parent)
+                    | cx.style.selection_color.inherit_shared(entity, parent)
+                    | cx.style.fill.inherit_shared(entity, parent)
+                {
+                    redraw_entities.push(entity);
+                }
             }
         }
     }
@@ -541,6 +562,7 @@ fn link_style_data(
     let mut should_reflow = false;
     let mut should_retransform = false;
     let mut should_reclip = false;
+    let mut should_reinherit = false;
 
     // Display
     if style.display.link(entity, matched_rules) {
@@ -778,6 +800,7 @@ fn link_style_data(
         should_relayout = true;
         should_redraw = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.wrap.link(entity, matched_rules) {
@@ -802,42 +825,49 @@ fn link_style_data(
     if style.font_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.font_size.link(entity, matched_rules, &style.custom_font_size_props) {
         should_relayout = true;
         should_redraw = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.font_family.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.font_weight.link(entity, matched_rules) {
         should_redraw = true;
         should_relayout = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.font_slant.link(entity, matched_rules) {
         should_redraw = true;
         should_relayout = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.font_width.link(entity, matched_rules) {
         should_redraw = true;
         should_relayout = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.font_variation_settings.link(entity, matched_rules) {
         should_redraw = true;
         should_relayout = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.text_wrap.link(entity, matched_rules) {
@@ -863,25 +893,30 @@ fn link_style_data(
 
     if style.selection_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
+        should_reinherit = true;
     }
 
     if style.caret_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
+        should_reinherit = true;
     }
 
     if style.text_decoration_line.link(entity, matched_rules) {
         should_redraw = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.text_stroke_width.link(entity, matched_rules) {
         should_redraw = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.text_stroke_style.link(entity, matched_rules) {
         should_redraw = true;
         should_reflow = true;
+        should_reinherit = true;
     }
 
     if style.underline_style.link(entity, matched_rules) {
@@ -985,6 +1020,7 @@ fn link_style_data(
 
     if style.fill.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
+        should_reinherit = true;
     }
 
     //
@@ -1020,6 +1056,10 @@ fn link_style_data(
                 break;
             }
         }
+    }
+
+    if should_reinherit {
+        style.needs_reinherit_shared(entity);
     }
 }
 
@@ -1234,6 +1274,37 @@ impl MatchedRules {
         let entry = parent_cache.get(*i)?;
         if entry.rules.is_empty() { None } else { Some(&entry.rules) }
     }
+}
+
+/// Filter changed entities to only include root entities (those without ancestors in the changed set).
+fn filter_to_root_entities(changed: &[Entity], tree: &Tree<Entity>) -> Vec<Entity> {
+    // If one of the changed entities is the root then return just the root since all entities are affected.
+    if changed.contains(&Entity::root()) {
+        return vec![Entity::root()];
+    }
+
+    let mut root_changed = Vec::with_capacity(changed.len());
+
+    for &entity in changed {
+        let mut is_root = true;
+        // Check if any ancestor is also in the changed list
+        let parent_iter = LayoutParentIterator::new(tree, entity);
+        for ancestor in parent_iter {
+            if ancestor == entity {
+                continue;
+            }
+
+            if changed.contains(&ancestor) {
+                is_root = false;
+                break;
+            }
+        }
+        if is_root {
+            root_changed.push(entity);
+        }
+    }
+
+    root_changed
 }
 
 // Iterates the tree and determines the matching style rules for each entity, then links the entity to the corresponding style rule data.

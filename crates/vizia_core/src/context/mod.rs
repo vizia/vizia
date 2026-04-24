@@ -350,6 +350,10 @@ impl Context {
         if system_flags.contains(SystemFlags::REACCESS) {
             self.style.needs_access_update(entity);
         }
+
+        if system_flags.contains(SystemFlags::REINHERIT_INLINE) {
+            self.style.needs_reinherit_inline(entity);
+        }
     }
 
     /// Enables or disables PseudoClasses for the focus of an entity

@@ -128,7 +128,7 @@ impl Default for Abilities {
 }
 
 bitflags! {
-    pub(crate) struct SystemFlags: u8 {
+    pub(crate) struct SystemFlags: u16 {
         const RELAYOUT = 1;
         const RESTYLE = 1 << 1;
         const REFLOW = 1 << 2;
@@ -136,6 +136,7 @@ bitflags! {
         const RETRANSFORM = 1 << 4;
         const RECLIP = 1 << 5;
         const REACCESS = 1 << 6;
+        const REINHERIT_INLINE = 1 << 7;
     }
 }
 
@@ -410,6 +411,8 @@ pub struct Style {
     pub(crate) system_flags: SystemFlags,
 
     pub(crate) restyle: HashSet<Entity>,
+    pub(crate) reinherit_inline: HashSet<Entity>,
+    pub(crate) reinherit_shared: HashSet<Entity>,
     pub(crate) text_construction: Bloom,
     pub(crate) text_layout: Bloom,
     pub(crate) reaccess: Bloom,
@@ -2432,6 +2435,8 @@ impl Style {
         self.classes.insert(entity, HashSet::new());
         self.abilities.insert(entity, Abilities::default());
         self.system_flags = SystemFlags::RELAYOUT;
+        self.reinherit_inline.insert(Entity::root());
+        self.reinherit_shared.insert(Entity::root());
         self.restyle.insert(entity);
         self.reaccess.0.insert(entity).unwrap();
         self.retransform.0.insert(entity).unwrap();
@@ -2628,6 +2633,14 @@ impl Style {
             return;
         }
         self.restyle.insert(entity);
+    }
+
+    pub(crate) fn needs_reinherit_inline(&mut self, entity: Entity) {
+        self.reinherit_inline.insert(entity);
+    }
+
+    pub(crate) fn needs_reinherit_shared(&mut self, entity: Entity) {
+        self.reinherit_shared.insert(entity);
     }
 
     pub(crate) fn needs_relayout(&mut self) {
