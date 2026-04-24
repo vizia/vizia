@@ -435,6 +435,13 @@ pub trait StyleModifiers: internal::Modifiable {
         SystemFlags::REDRAW
     );
 
+    modifier!(
+        /// Sets the background size of the view.
+        background_size,
+        Vec<BackgroundSize>,
+        SystemFlags::REDRAW
+    );
+
     /// Set the background image of the view.
     fn background_image<'i, U: Into<BackgroundImage<'i>>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();

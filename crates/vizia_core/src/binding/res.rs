@@ -238,6 +238,7 @@ impl_res_simple!(AnchorTarget);
 impl_res_clone!(std::ops::Range<f32>);
 impl_res_simple!(Direction);
 impl_res_simple!(LayoutWrap);
+impl_res_clone!(BackgroundSize);
 
 impl<'i> Res<FontFamily<'i>> for FontFamily<'i> {
     fn get_value(&self, _: &impl DataContext) -> Self {
