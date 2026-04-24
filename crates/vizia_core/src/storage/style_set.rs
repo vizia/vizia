@@ -252,6 +252,10 @@ where
         self.shared_data.insert(rule, value);
     }
 
+    pub(crate) fn has_rule(&self, rule: Rule) -> bool {
+        self.shared_data.dense_idx(rule).is_some()
+    }
+
     // pub(crate) fn remove_rule(&mut self, rule: Rule) -> Option<T> {
     //     self.shared_data.remove(rule)
     // }
