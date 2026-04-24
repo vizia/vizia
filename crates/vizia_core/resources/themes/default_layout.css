@@ -440,12 +440,14 @@ knob {
 .knob-track {
     width: 1s;
     height: 1s;
+    position-type: absolute;
 }
 
 .knob-head {
     width: 1s;
     height: 1s;
     layout-type: row;
+    position-type: absolute;
     top: 2px;
     left: 2px;
     right: 2px;
@@ -800,8 +802,8 @@ spinbox .spinbox-value {
 
 /* STACK */
 
-zstack > * {
-    position-type: absolute;
+zstack {
+    layout-type: overlay;
 }
 
 /* SWITCH */

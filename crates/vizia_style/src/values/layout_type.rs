@@ -9,6 +9,7 @@ impl_parse! {
             "row" => LayoutType::Row,
             "column" => LayoutType::Column,
             "grid" => LayoutType::Grid,
+            "overlay" => LayoutType::Overlay,
         }
     }
 }
