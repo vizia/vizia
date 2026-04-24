@@ -224,6 +224,17 @@ impl WindowHandler for ViziaWindow {
     fn on_frame(&mut self, window: &mut Window) {
         self.application.on_frame_update(window);
 
+        // Run the embedder's idle callback on every frame tick, not only after
+        // an AppKit event. Mirrors what `vizia_winit` does in its
+        // `about_to_wait` handler: the idle callback is the documented hook
+        // for embedders to drain work queued from off-UI threads (e.g. a
+        // plugin host delivering keys on the host thread), and invoking it
+        // only from `on_event` means such work can stall indefinitely when
+        // AppKit events are sparse — observed in a macOS VST3 host where
+        // keystrokes queued from `IPlugView::onKeyDown` only drained when
+        // the next mouse move or key event happened to arrive.
+        self.application.handle_idle(&self.on_idle);
+
         self.application.render(window);
     }
 
