@@ -222,6 +222,7 @@ fn draw_entity(
 
         if let Some(filter) = filter {
             match filter {
+                Filter::None => {}
                 Filter::Blur(radius) => {
                     let sigma = radius.to_px().unwrap() * cx.scale_factor() / 2.0;
                     let image_filter = ImageFilter::crop(rect, None, None)
@@ -235,6 +236,7 @@ fn draw_entity(
 
         let slr = if let Some(backdrop_filter) = backdrop_filter {
             match backdrop_filter {
+                Filter::None => SaveLayerRec::default().paint(&paint),
                 Filter::Blur(radius) => {
                     let sigma = radius.to_px().unwrap() * cx.scale_factor() / 2.0;
                     backdrop_image_filter =
@@ -384,6 +386,7 @@ pub(crate) fn draw_bounds(
 
     if let Some(filter) = style.filter.get(entity) {
         match filter {
+            Filter::None => {}
             Filter::Blur(radius) => {
                 dirty_bounds = dirty_bounds.expand(radius.to_px().unwrap() * style.scale_factor());
             }

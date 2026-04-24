@@ -1,4 +1,6 @@
-use crate::{Angle, CustomParseError, LengthOrPercentage, Matrix, Parse, PercentageOrNumber};
+use crate::{
+    Angle, CustomParseError, LengthOrPercentage, Matrix, NoneKeyword, Parse, PercentageOrNumber,
+};
 use cssparser::{ParseError, Parser, Token, match_ignore_ascii_case};
 
 /// An individual transform function.
@@ -114,6 +116,11 @@ impl<'i> Parse<'i> for Transform {
 
 impl<'i> Parse<'i> for Vec<Transform> {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+        // CSS `transform: none` means no transforms.
+        if input.try_parse(NoneKeyword::parse).is_ok() {
+            return Ok(vec![]);
+        }
+
         let mut results = vec![Transform::parse(input)?];
         loop {
             if input.is_exhausted() {
@@ -189,6 +196,7 @@ mod tests {
 
         custom {
             success {
+                "none" => vec![],
                 "translate(10px, 20%) scale(40%, 40) rotate(50grad) skew(60turn, 70rad) matrix(10, 20, 30, 40, 50, 60)" =>
                     vec![
                         Transform::Translate((LengthOrPercentage::Length(Length::px(10.0)), LengthOrPercentage::Percentage(20.0))),

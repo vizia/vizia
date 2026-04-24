@@ -1,10 +1,10 @@
 use crate::{
     Alignment, Angle, BackgroundImage, BackgroundSize, BlendMode, Border, BorderStyle, BorderWidth,
     ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError, CustomProperty,
-    Direction, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
-    FontWidth, LayoutType, LayoutWrap, Length, LengthOrPercentage, LineClamp, Opacity, Outline,
-    Overflow, Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign,
-    TextDecoration, TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke,
+    Direction, Display, FillColor, Filter, FontFamily, FontSize, FontSlant, FontVariation,
+    FontWeight, FontWidth, LayoutType, LayoutWrap, Length, LengthOrPercentage, LineClamp, Opacity,
+    Outline, Overflow, Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow,
+    TextAlign, TextDecoration, TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke,
     TextStrokeStyle, Transform, Transition, Translate, Units, UnparsedProperty, Visibility,
     define_property,
 };
@@ -152,7 +152,7 @@ define_property! {
         "background-image": BackgroundImage(Vec<BackgroundImage<'i>>),
         "background-size": BackgroundSize(Vec<BackgroundSize>),
 
-        "fill": Fill(Color),
+        "fill": Fill(FillColor),
 
         // Text
         "font-size": FontSize(FontSize),

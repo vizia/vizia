@@ -752,7 +752,7 @@ impl Style {
                 }
 
                 Property::Fill(value) => {
-                    insert_keyframe2(&mut self.fill, animation_id, time, *value);
+                    insert_keyframe2(&mut self.fill, animation_id, time, value.clone().into());
                 }
 
                 _ => {}
@@ -1994,7 +1994,7 @@ impl Style {
                 self.text_stroke_style.insert_rule(rule_id, stroke_style);
             }
             Property::Fill(fill) => {
-                self.fill.insert_rule(rule_id, fill);
+                self.fill.insert_rule(rule_id, fill.into());
             }
 
             // Unparsed. TODO: Log the error.

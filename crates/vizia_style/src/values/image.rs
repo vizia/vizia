@@ -1,6 +1,6 @@
 use cssparser::*;
 
-use crate::{CustomParseError, Gradient, Parse, Url};
+use crate::{CustomParseError, Gradient, NoneKeyword, Parse, Url};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum BackgroundImage<'i> {
@@ -19,7 +19,7 @@ impl<'i> Parse<'i> for BackgroundImage<'i> {
     fn parse<'t>(
         input: &mut cssparser::Parser<'i, 't>,
     ) -> Result<Self, cssparser::ParseError<'i, crate::CustomParseError<'i>>> {
-        if input.try_parse(|i| i.expect_ident_matching("none")).is_ok() {
+        if input.try_parse(NoneKeyword::parse).is_ok() {
             return Ok(BackgroundImage::None);
         }
 
@@ -52,5 +52,29 @@ impl<'i> From<&'i str> for BackgroundImage<'i> {
 impl<'i> Parse<'i> for Vec<BackgroundImage<'i>> {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         input.parse_comma_separated(BackgroundImage::parse)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn parse_background_image(
+        input: &str,
+    ) -> Result<BackgroundImage<'_>, ParseError<'_, CustomParseError<'_>>> {
+        let mut parser_input = ParserInput::new(input);
+        let mut parser = Parser::new(&mut parser_input);
+        BackgroundImage::parse(&mut parser)
+    }
+
+    #[test]
+    fn parses_none_keyword() {
+        assert_eq!(parse_background_image("none"), Ok(BackgroundImage::None));
+    }
+
+    #[test]
+    fn parses_url_value() {
+        let parsed = parse_background_image("url(\"foo.png\")");
+        assert!(matches!(parsed, Ok(BackgroundImage::Url(_))));
     }
 }
