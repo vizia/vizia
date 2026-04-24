@@ -225,6 +225,43 @@ impl BackendContext {
         image_system(&mut self.0);
     }
 
+    /// Ensure the currently focused entity is still a valid focus target
+    /// after style resolution. Moves focus to [`Entity::root`] when the
+    /// focused entity (or any of its ancestors) has become `Display::None`,
+    /// or when the focused entity has become disabled.
+    ///
+    /// Without this, keyboard input continues to be dispatched to an
+    /// invisible view: `WindowEvent::KeyDown` routes to `cx.focused`
+    /// regardless of the view's display state, and nothing else
+    /// invalidates focus when an ancestor's display toggles (the existing
+    /// cleanup in `Context::remove` only fires when an entity is removed
+    /// from the tree, not when it merely becomes non-visible).
+    ///
+    /// Called from each backend after [`process_style_updates`]: display
+    /// and disabled values are authoritative for the frame once style
+    /// resolution has run, but layout has not yet consumed them, so
+    /// invalidating here avoids one frame of incorrect routing. Falls
+    /// back to [`Entity::root`] rather than popping `focus_stack` because
+    /// that stack is scoped to `lock_focus_to_within` modal-dialog
+    /// save/restore semantics and mixing the two concerns would be
+    /// surprising.
+    pub fn process_focus_invalidation(&mut self) {
+        let focused = self.0.focused;
+        if focused == Entity::null() || focused == Entity::root() {
+            return;
+        }
+
+        let hidden =
+            std::iter::once(focused).chain(focused.parent_iter(&self.0.tree)).any(|entity| {
+                self.0.style.display.get(entity).copied().unwrap_or_default() == Display::None
+            });
+        let disabled = self.0.style.disabled.get(focused).cloned().unwrap_or_default();
+
+        if hidden || disabled {
+            self.0.with_current(Entity::root(), |cx| cx.focus());
+        }
+    }
+
     // Returns true if animations are playing
     pub fn process_animations(&mut self) -> bool {
         animation_system(&mut self.0)

@@ -509,6 +509,8 @@ impl ApplicationHandler<UserEvent> for Application {
 
                     self.cx.process_style_updates();
 
+                    self.cx.process_focus_invalidation();
+
                     if self.cx.process_animations() {
                         window.window().request_redraw();
                     }
@@ -550,6 +552,8 @@ impl ApplicationHandler<UserEvent> for Application {
                     self.event_manager.flush_events(self.cx.context(), |_| {});
 
                     self.cx.process_style_updates();
+
+                    self.cx.process_focus_invalidation();
 
                     if self.cx.process_animations() {
                         window.window().request_redraw();
@@ -762,6 +766,8 @@ impl ApplicationHandler<UserEvent> for Application {
         self.event_manager.flush_events(self.cx.context(), |_| {});
 
         self.cx.process_style_updates();
+
+        self.cx.process_focus_invalidation();
 
         if self.cx.process_animations() {
             for window in self.windows.values() {

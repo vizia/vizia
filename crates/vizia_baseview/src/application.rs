@@ -322,6 +322,8 @@ impl ApplicationRunner {
         self.cx.process_style_updates();
         unsafe { context.make_not_current() };
 
+        self.cx.process_focus_invalidation();
+
         self.cx.process_animations();
 
         self.cx.process_visual_updates();
