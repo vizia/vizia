@@ -88,15 +88,15 @@
     direction: rtl;
 }
 
-.rtl svg {
+svg:dir(rtl) {
     transform: scaleX(-1);
 }
 
-.rtl checkbox svg {
+checkbox:dir(rtl) svg {
     transform: scaleX(1);
 }
 
-.rtl select svg {
+select:dir(rtl) svg {
     transform: scaleX(1);
 }
 
@@ -286,7 +286,7 @@ button-group > :first-child {
     corner-bottom-left-radius: 4px;
 }
 
-.rtl button-group > :first-child {
+button-group:dir(rtl) > :first-child {
     corner-top-left-radius: 0px;
     corner-bottom-left-radius: 0px;
     corner-top-right-radius: 4px;
@@ -298,7 +298,7 @@ button-group > :last-child {
     corner-bottom-right-radius: 4px;
 }
 
-.rtl button-group > :last-child {
+button-group:dir(rtl) > :last-child {
     corner-top-right-radius: 0px;
     corner-bottom-right-radius: 0px;
     corner-top-left-radius: 4px;

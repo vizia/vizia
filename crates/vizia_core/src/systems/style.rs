@@ -1,4 +1,4 @@
-use crate::{cache::CachedData, prelude::*};
+use crate::{cache::CachedData, prelude::*, text::resolved_text_direction};
 #[cfg(feature = "rayon")]
 use dashmap::{DashMap, ReadOnlyView};
 use hashbrown::HashMap;
@@ -30,6 +30,19 @@ pub(crate) struct Node<'s, 't> {
 impl std::fmt::Debug for Node<'_, '_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.entity)
+    }
+}
+
+impl Node<'_, '_> {
+    fn matches_direction(&self, expected: &Direction) -> bool {
+        match expected {
+            Direction::LeftToRight | Direction::RightToLeft => {
+                resolved_text_direction(self.store, self.entity) == *expected
+            }
+            Direction::Auto => {
+                self.store.direction.get(self.entity).copied() == Some(Direction::Auto)
+            }
+        }
     }
 }
 
@@ -172,57 +185,125 @@ impl Element for Node<'_, '_> {
         pc: &<Self::Impl as SelectorImpl>::NonTSPseudoClass,
         _context: &mut MatchingContext<'_, Self::Impl>,
     ) -> bool {
-        if let Some(psudeo_class_flag) = self.store.pseudo_classes.get(self.entity) {
-            match pc {
-                PseudoClass::Hover => psudeo_class_flag.contains(PseudoClassFlags::HOVER),
-                PseudoClass::Active => psudeo_class_flag.contains(PseudoClassFlags::ACTIVE),
-                PseudoClass::Over => psudeo_class_flag.contains(PseudoClassFlags::OVER),
-                PseudoClass::Focus => psudeo_class_flag.contains(PseudoClassFlags::FOCUS),
-                PseudoClass::FocusVisible => {
-                    psudeo_class_flag.contains(PseudoClassFlags::FOCUS_VISIBLE)
-                }
-                PseudoClass::FocusWithin => {
-                    psudeo_class_flag.contains(PseudoClassFlags::FOCUS_WITHIN)
-                }
-                PseudoClass::Enabled => {
-                    self.store.disabled.get(self.entity).map(|disabled| !*disabled).unwrap_or(true)
-                }
-                PseudoClass::Disabled => {
-                    self.store.disabled.get(self.entity).copied().unwrap_or_default()
-                }
-                PseudoClass::ReadOnly => psudeo_class_flag.contains(PseudoClassFlags::READ_ONLY),
-                PseudoClass::ReadWrite => psudeo_class_flag.contains(PseudoClassFlags::READ_WRITE),
-                PseudoClass::PlaceholderShown => {
-                    psudeo_class_flag.contains(PseudoClassFlags::PLACEHOLDER_SHOWN)
-                }
-                PseudoClass::Default => psudeo_class_flag.contains(PseudoClassFlags::DEFAULT),
-                PseudoClass::Checked => psudeo_class_flag.contains(PseudoClassFlags::CHECKED),
-                PseudoClass::Indeterminate => {
-                    psudeo_class_flag.contains(PseudoClassFlags::INDETERMINATE)
-                }
-                PseudoClass::Blank => psudeo_class_flag.contains(PseudoClassFlags::BLANK),
-                PseudoClass::Valid => psudeo_class_flag.contains(PseudoClassFlags::VALID),
-                PseudoClass::Invalid => psudeo_class_flag.contains(PseudoClassFlags::INVALID),
-                PseudoClass::InRange => psudeo_class_flag.contains(PseudoClassFlags::IN_RANGE),
-                PseudoClass::OutOfRange => {
-                    psudeo_class_flag.contains(PseudoClassFlags::OUT_OF_RANGE)
-                }
-                PseudoClass::Required => psudeo_class_flag.contains(PseudoClassFlags::REQUIRED),
-                PseudoClass::Optional => psudeo_class_flag.contains(PseudoClassFlags::OPTIONAL),
-                PseudoClass::UserValid => psudeo_class_flag.contains(PseudoClassFlags::USER_VALID),
-                PseudoClass::UserInvalid => {
-                    psudeo_class_flag.contains(PseudoClassFlags::USER_INVALID)
-                }
-                PseudoClass::Lang(_) => todo!(),
-                PseudoClass::Dir(_) => todo!(),
-                PseudoClass::Has(selector_list) => self.match_has(selector_list, _context),
-                PseudoClass::Custom(name) => {
-                    println!("custom: {}", name);
-                    todo!()
-                }
+        match pc {
+            PseudoClass::Hover => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::HOVER)),
+            PseudoClass::Active => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::ACTIVE)),
+            PseudoClass::Over => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::OVER)),
+            PseudoClass::Focus => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::FOCUS)),
+            PseudoClass::FocusVisible => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::FOCUS_VISIBLE)),
+            PseudoClass::FocusWithin => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::FOCUS_WITHIN)),
+            PseudoClass::Enabled => {
+                self.store.disabled.get(self.entity).map(|disabled| !*disabled).unwrap_or(true)
             }
-        } else {
-            false
+            PseudoClass::Disabled => {
+                self.store.disabled.get(self.entity).copied().unwrap_or_default()
+            }
+            PseudoClass::ReadOnly => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::READ_ONLY)),
+            PseudoClass::ReadWrite => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::READ_WRITE)),
+            PseudoClass::PlaceholderShown => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::PLACEHOLDER_SHOWN)),
+            PseudoClass::Default => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::DEFAULT)),
+            PseudoClass::Checked => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::CHECKED)),
+            PseudoClass::Indeterminate => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::INDETERMINATE)),
+            PseudoClass::Blank => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::BLANK)),
+            PseudoClass::Valid => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::VALID)),
+            PseudoClass::Invalid => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::INVALID)),
+            PseudoClass::InRange => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::IN_RANGE)),
+            PseudoClass::OutOfRange => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::OUT_OF_RANGE)),
+            PseudoClass::Required => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::REQUIRED)),
+            PseudoClass::Optional => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::OPTIONAL)),
+            PseudoClass::UserValid => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::USER_VALID)),
+            PseudoClass::UserInvalid => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::USER_INVALID)),
+            PseudoClass::Lang(_) => todo!(),
+            PseudoClass::Dir(direction) => self.matches_direction(direction),
+            PseudoClass::Has(selector_list) => self.match_has(selector_list, _context),
+            PseudoClass::Custom(name) => {
+                println!("custom: {}", name);
+                todo!()
+            }
         }
     }
 
@@ -1023,6 +1104,77 @@ fn link_style_data(
     }
 }
 
+fn compute_matched_direction_rules(
+    entity: Entity,
+    store: &Style,
+    tree: &Tree<Entity>,
+    bloom: &BloomFilter,
+) -> Vec<(Rule, u32)> {
+    let mut matched_rules = Vec::with_capacity(4);
+
+    let mut cache = SelectorCaches::default();
+    let mut context = MatchingContext::new(
+        MatchingMode::Normal,
+        Some(bloom),
+        &mut cache,
+        QuirksMode::NoQuirks,
+        NeedsSelectorFlags::Yes,
+        MatchingForInvalidation::No,
+    );
+
+    let node = Node { entity, store, tree };
+
+    for (rule_id, rule) in store.rules.iter() {
+        if !store.direction.has_rule(*rule_id) {
+            continue;
+        }
+
+        let matches = matches_selector(&rule.selector, 0, Some(&rule.hashes), &node, &mut context);
+
+        if matches {
+            matched_rules.push((*rule_id, rule.selector.specificity()));
+        }
+    }
+
+    sort_matched_rules(&mut matched_rules);
+    matched_rules
+}
+
+fn sort_matched_rules(matched_rules: &mut [(Rule, u32)]) {
+    matched_rules.sort_by(|(rule_a, specificity_a), (rule_b, specificity_b)| {
+        specificity_b.cmp(specificity_a).then_with(|| rule_b.index().cmp(&rule_a.index()))
+    });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::sort_matched_rules;
+    use crate::style::Rule;
+    use vizia_id::GenerationalId;
+
+    #[test]
+    fn sort_matched_rules_uses_rule_order_for_specificity_ties() {
+        let mut matched_rules = vec![
+            (Rule::new(1, 0), 10),
+            (Rule::new(3, 0), 10),
+            (Rule::new(2, 0), 11),
+            (Rule::new(4, 0), 10),
+        ];
+
+        sort_matched_rules(&mut matched_rules);
+
+        assert_eq!(
+            matched_rules,
+            vec![
+                (Rule::new(2, 0), 11),
+                (Rule::new(4, 0), 10),
+                (Rule::new(3, 0), 10),
+                (Rule::new(1, 0), 10),
+            ]
+        );
+    }
+}
+
 /// Compute a list of matching style rules for a given entity.
 pub(crate) fn compute_matched_rules(
     entity: Entity,
@@ -1052,8 +1204,7 @@ pub(crate) fn compute_matched_rules(
         }
     }
 
-    matched_rules.sort_by_key(|(_, s)| *s);
-    matched_rules.reverse();
+    sort_matched_rules(&mut matched_rules);
     matched_rules
 }
 
@@ -1243,12 +1394,46 @@ pub(crate) fn style_system(cx: &mut Context) {
     inline_inheritance_system(cx, &mut redraw_entities);
 
     if cx.style.restyle.is_empty() {
+        for entity in redraw_entities {
+            cx.needs_redraw(entity);
+        }
         return;
     }
 
+    let current_restyle = std::mem::take(&mut cx.style.restyle);
+
     let entities = TreeBreadthIterator::full(&cx.tree)
-        .filter(|e| cx.style.restyle.contains(e))
+        .filter(|e| current_restyle.contains(e))
         .collect::<Vec<_>>();
+
+    let mut direction_bloom = BloomFilter::default();
+    for entity in entities.iter().copied() {
+        compute_element_hash(entity, &cx.tree, &cx.style, &mut direction_bloom);
+        let matched_direction_rules =
+            compute_matched_direction_rules(entity, &cx.style, &cx.tree, &direction_bloom);
+
+        if cx.style.direction.link(entity, &matched_direction_rules) {
+            cx.style.system_flags.set(SystemFlags::RELAYOUT, true);
+            redraw_entities.push(entity);
+
+            let iter = LayoutParentIterator::new(&cx.tree, entity);
+            for parent in iter {
+                if cx.style.display.get(parent).copied().unwrap_or_default() != Display::None {
+                    cx.style.needs_text_update(parent);
+                    break;
+                }
+            }
+        }
+    }
+
+    for entity in cx.tree.into_iter() {
+        if let Some(parent) = cx.tree.get_layout_parent(entity) {
+            if cx.style.direction.inherit_shared(entity, parent) {
+                cx.style.needs_text_update(entity);
+                cx.style.needs_relayout();
+            }
+        }
+    }
 
     let matched_rules = {
         #[cfg(feature = "rayon")]
@@ -1261,7 +1446,6 @@ pub(crate) fn style_system(cx: &mut Context) {
         }
     };
 
-    //  Apply matched rules to entities
     for entity in entities.iter() {
         if let Some(matched_rules) = matched_rules.get(entity) {
             link_variable_data(&mut cx.style, *entity, &mut redraw_entities, matched_rules);
@@ -1270,7 +1454,7 @@ pub(crate) fn style_system(cx: &mut Context) {
 
     inherit_variable_data(&mut cx.style, &cx.tree, &mut redraw_entities);
 
-    for entity in entities {
+    for entity in entities.iter().copied() {
         if let Some(matched_rules) = matched_rules.get(&entity) {
             link_style_data(
                 &mut cx.style,
@@ -1282,8 +1466,6 @@ pub(crate) fn style_system(cx: &mut Context) {
             );
         }
     }
-
-    cx.style.restyle.clear();
 
     shared_inheritance_system(cx, &mut redraw_entities);
 
