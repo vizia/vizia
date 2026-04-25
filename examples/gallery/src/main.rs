@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use bytes::Bytes;
 use images::{Status, download, list};
 use vizia::prelude::*;
 
@@ -123,8 +122,8 @@ impl Model for AppData {
 enum AppEvent {
     ImagesListed(Result<Vec<ImageData>, reqwest::Error>),
     ImagePoppedIn(Id),
-    ImageDownloaded(Id, Result<Bytes, reqwest::Error>),
-    OriginalDownloaded(Id, Result<Bytes, reqwest::Error>),
+    ImageDownloaded(Id, Result<Vec<u8>, reqwest::Error>),
+    OriginalDownloaded(Id, Result<Vec<u8>, reqwest::Error>),
     ShowOriginal(Id),
     HideOriginal,
 }

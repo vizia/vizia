@@ -11,7 +11,7 @@ pub(crate) fn transform_system(cx: &mut Context) {
     let iter = LayoutTreeIterator::full(&cx.tree);
 
     for entity in iter {
-        if !cx.style.retransform.contains(entity) {
+        if !cx.style.retransform.contains(&entity) {
             continue;
         }
 

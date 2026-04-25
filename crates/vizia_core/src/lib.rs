@@ -105,6 +105,6 @@ pub mod prelude {
 
     pub use morphorm::Units::*;
     pub use morphorm::{LayoutType, PositionType, Units};
+    pub use std::time::{Duration, Instant};
     pub use unic_langid::{LanguageIdentifier, langid};
-    pub use web_time::{Duration, Instant};
 }
