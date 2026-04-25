@@ -1,15 +1,15 @@
 use std::{error::Error, sync::Arc};
 
 use skia_safe::{
-    gpu::{
-        d3d::{BackendContext, TextureResourceInfo},
-        surfaces, BackendRenderTarget, DirectContext, Protected, SurfaceOrigin,
-    },
     ColorSpace, ColorType, Surface, SurfaceProps,
+    gpu::{
+        BackendRenderTarget, DirectContext, Protected, SurfaceOrigin,
+        d3d::{BackendContext, TextureResourceInfo},
+        surfaces,
+    },
 };
 
 use windows::{
-    core::Interface,
     Win32::{
         Foundation::*,
         Graphics::{
@@ -19,6 +19,7 @@ use windows::{
         },
         System::Threading::*,
     },
+    core::Interface,
 };
 
 use winit::{
@@ -285,8 +286,8 @@ impl DrawSurface for WinState {
 
 /// Get the first "high performance" hardware adapter that supports Direct3D 12.
 ///
-fn get_hardware_adapter_and_device(
-) -> windows::core::Result<(IDXGIFactory6, IDXGIAdapter1, ID3D12Device)> {
+fn get_hardware_adapter_and_device()
+-> windows::core::Result<(IDXGIFactory6, IDXGIAdapter1, ID3D12Device)> {
     let factory: IDXGIFactory6 = unsafe { CreateDXGIFactory2(Default::default())? };
 
     for i in 0.. {

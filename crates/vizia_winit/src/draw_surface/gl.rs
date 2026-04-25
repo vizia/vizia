@@ -17,11 +17,11 @@ use glutin::{
 use glutin_winit::DisplayBuilder;
 
 use skia_safe::{
-    gpu::{
-        self, backend_render_targets, ganesh::context_options, gl::FramebufferInfo, ContextOptions,
-        DirectContext, SurfaceOrigin,
-    },
     ColorSpace, ColorType, PixelGeometry, Surface, SurfaceProps, SurfacePropsFlags,
+    gpu::{
+        self, ContextOptions, DirectContext, SurfaceOrigin, backend_render_targets,
+        ganesh::context_options, gl::FramebufferInfo,
+    },
 };
 
 use winit::{
@@ -145,7 +145,7 @@ impl WinState {
         let inner_size: (i32, i32) = window.inner_size().into();
 
         let mut surface = create_surface(
-            &window,
+            inner_size,
             fb_info,
             &mut gr_context,
             gl_config.num_samples() as usize,
@@ -209,24 +209,23 @@ impl DrawSurface for WinState {
 
         self.gl_context.make_current(&self.gl_surface).unwrap();
 
+        self.gl_surface.resize(
+            &self.gl_context,
+            NonZeroU32::new(width.max(1)).unwrap(),
+            NonZeroU32::new(height.max(1)).unwrap(),
+        );
+
+        let size = (width.max(1) as i32, height.max(1) as i32);
+
         self.surface = create_surface(
-            &self.window,
+            size,
             fb_info,
             &mut self.gr_context,
             self.gl_config.num_samples() as usize,
             self.gl_config.stencil_size() as usize,
         );
 
-        self.dirty_surface = self
-            .surface
-            .new_surface_with_dimensions((width.max(1) as i32, height.max(1) as i32))
-            .unwrap();
-
-        self.gl_surface.resize(
-            &self.gl_context,
-            NonZeroU32::new(width.max(1)).unwrap(),
-            NonZeroU32::new(height.max(1)).unwrap(),
-        );
+        self.dirty_surface = self.surface.new_surface_with_dimensions(size).unwrap();
 
         true
     }
@@ -240,7 +239,7 @@ impl DrawSurface for WinState {
     }
 
     fn swap_buffers(&mut self, _dirty_rect: BoundingBox) {
-        self.gr_context.flush_and_submit();
+        self.gr_context.flush_submit_and_sync_cpu();
         self.gl_surface.swap_buffers(&self.gl_context).expect("Failed to swap buffers");
     }
 
@@ -284,18 +283,12 @@ fn build_window(
 }
 
 pub fn create_surface(
-    window: &Window,
+    size: (i32, i32),
     fb_info: FramebufferInfo,
     gr_context: &mut DirectContext,
     num_samples: usize,
     stencil_size: usize,
 ) -> Surface {
-    let size = window.inner_size();
-    let size = (
-        size.width.try_into().expect("Could not convert width"),
-        size.height.try_into().expect("Could not convert height"),
-    );
-
     let backend_render_target =
         backend_render_targets::make_gl(size, num_samples, stencil_size, fb_info);
 

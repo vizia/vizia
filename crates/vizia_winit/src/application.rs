@@ -6,7 +6,7 @@ use crate::{
 };
 #[cfg(feature = "accesskit")]
 use accesskit_winit::Adapter;
-use hashbrown::HashMap;
+use hashbrown::{HashMap, HashSet};
 use log::warn;
 use std::{error::Error, fmt::Display, sync::Arc};
 use vizia_input::ImeState;
@@ -111,6 +111,7 @@ pub struct Application {
     event_loop_proxy: EventLoopProxy<UserEvent>,
     windows: HashMap<WindowId, Box<dyn DrawSurface>>,
     window_ids: HashMap<Entity, WindowId>,
+    resize_relayout_windows: HashSet<WindowId>,
     resolved_graphics_backend: Option<GraphicsBackend>,
     #[cfg(feature = "accesskit")]
     accesskit_adapter: Option<accesskit_winit::Adapter>,
@@ -170,6 +171,7 @@ impl Application {
             event_loop_proxy: proxy,
             windows: HashMap::new(),
             window_ids: HashMap::new(),
+            resize_relayout_windows: HashSet::new(),
             resolved_graphics_backend: None,
             #[cfg(feature = "accesskit")]
             accesskit_adapter: None,
@@ -208,7 +210,9 @@ impl Application {
                 // Setting this attribute with dx12 backends makes resizing look better.
                 // But we don't know which backend was available until after the window
                 // is already created, and using it on non-dx12 backends breaks display.
-                if let Some(GraphicsBackend::Dx12) = preferred_backend {
+                // On Windows, Dx12 is the platform default when no preference is set.
+                let effective_backend = preferred_backend.unwrap_or(GraphicsBackend::Dx12);
+                if effective_backend == GraphicsBackend::Dx12 {
                     window_attributes = window_attributes.with_no_redirection_bitmap(true);
                 }
 
@@ -427,44 +431,42 @@ impl Application {
         self.event_loop.take().unwrap().run_app(&mut self).map_err(ApplicationError::EventLoopError)
     }
 
-    pub fn resize(&mut self, window_id: WindowId, size: PhysicalSize<u32>) {
+    fn redraw_window(&mut self, window_id: WindowId) {
+        if self.resize_relayout_windows.remove(&window_id) {
+            self.event_manager.flush_events(self.cx.context(), |_| {});
+            self.cx.process_style_updates();
+            if self.cx.process_animations()
+                && let Some(window) = self.windows.get(&window_id)
+            {
+                window.window().request_redraw();
+            }
+            self.cx.process_visual_updates();
+        }
+
         let Some(window) = self.windows.get_mut(&window_id) else {
             return;
         };
 
-        if !window.resize(size) {
+        let Some(mut draw) = self.cx.draw(window.entity()) else {
             return;
-        }
+        };
 
-        self.cx.set_window_size(window.entity(), size.width as f32, size.height as f32);
-        self.cx.needs_refresh(window.entity());
+        window.draw_surface(&mut draw);
 
         #[cfg(target_os = "windows")]
         {
-            self.event_manager.flush_events(self.cx.context(), |_| {});
-            self.cx.process_style_updates();
-            self.cx.process_animations();
-            self.cx.process_visual_updates();
+            let is_cloaked = window.is_initially_cloaked();
+            if *is_cloaked {
+                *is_cloaked = false;
+                window.set_cloak(false);
+            }
         }
     }
 
     pub fn redraw(&mut self) {
-        for window in self.windows.values_mut() {
-            let Some(mut draw) = self.cx.draw(window.entity()) else {
-                continue;
-            };
-
-            window.draw_surface(&mut draw);
-
-            // Un-cloak
-            #[cfg(target_os = "windows")]
-            {
-                let is_cloaked = window.is_initially_cloaked();
-                if *is_cloaked {
-                    *is_cloaked = false;
-                    window.set_cloak(false);
-                }
-            }
+        let window_ids = self.windows.keys().copied().collect::<Vec<_>>();
+        for window_id in window_ids {
+            self.redraw_window(window_id);
         }
     }
 
@@ -629,8 +631,17 @@ impl ApplicationHandler<UserEvent> for Application {
 
         match event {
             winit::event::WindowEvent::Resized(size) => {
-                self.resize(window_id, size);
-                self.redraw();
+                if !window.resize(size) {
+                    return;
+                }
+
+                self.cx.set_window_size(window.entity(), size.width as f32, size.height as f32);
+                // Reuse incremental update systems for resize.
+                // set_window_size already marks relayout/retransform/reclip.
+                self.cx.context().needs_redraw(window.entity());
+                self.resize_relayout_windows.insert(window_id);
+
+                window.window().request_redraw();
             }
 
             winit::event::WindowEvent::Moved(position) => {
@@ -815,6 +826,8 @@ impl ApplicationHandler<UserEvent> for Application {
             } => {
                 self.cx.set_scale_factor(scale_factor);
                 self.cx.needs_refresh(window.entity());
+                self.resize_relayout_windows.insert(window_id);
+                window.window().request_redraw();
             }
             winit::event::WindowEvent::ThemeChanged(theme) => {
                 let theme = match theme {
@@ -825,7 +838,7 @@ impl ApplicationHandler<UserEvent> for Application {
             }
             winit::event::WindowEvent::Occluded(_) => {}
             winit::event::WindowEvent::RedrawRequested => {
-                self.redraw();
+                self.redraw_window(window_id);
             }
 
             _ => {}
@@ -852,7 +865,9 @@ impl ApplicationHandler<UserEvent> for Application {
             }
         }
 
-        self.cx.process_visual_updates();
+        if self.resize_relayout_windows.is_empty() {
+            self.cx.process_visual_updates();
+        }
 
         #[cfg(feature = "accesskit")]
         {

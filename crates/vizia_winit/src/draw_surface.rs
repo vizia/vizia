@@ -20,10 +20,10 @@ use vizia_window::{GraphicsBackend, WindowDescription};
 #[cfg(feature = "gl")]
 mod gl;
 
-#[cfg(feature = "dx12")]
+#[cfg(all(feature = "dx12", target_os = "windows"))]
 mod dx12;
 
-#[cfg(feature = "metal")]
+#[cfg(all(feature = "metal", target_os = "macos"))]
 mod metal;
 
 #[cfg(feature = "vulkan")]
@@ -75,6 +75,7 @@ pub trait DrawSurface {
         dirty_surface.draw(canvas, (0, 0), SamplingOptions::default(), None);
 
         self.make_current();
+        self.window().pre_present_notify();
         self.swap_buffers(dirty_rect);
     }
 
@@ -96,7 +97,7 @@ pub trait DrawSurface {
     fn set_cloak(&mut self, state: bool) -> bool {
         use windows::Win32::{
             Foundation::{BOOL, FALSE, HWND, TRUE},
-            Graphics::Dwm::{DwmSetWindowAttribute, DWMWA_CLOAK},
+            Graphics::Dwm::{DWMWA_CLOAK, DwmSetWindowAttribute},
         };
 
         let handle = self.raw_window_handle();
@@ -150,9 +151,9 @@ pub(super) fn create_draw_surface(
     let mut errors = Vec::with_capacity(4);
 
     let mut backends = [
-        #[cfg(feature = "dx12")]
+        #[cfg(all(feature = "dx12", target_os = "windows"))]
         GraphicsBackend::Dx12,
-        #[cfg(feature = "metal")]
+        #[cfg(all(feature = "metal", target_os = "macos"))]
         GraphicsBackend::Metal,
         #[cfg(feature = "vulkan")]
         GraphicsBackend::Vulkan,
@@ -160,7 +161,22 @@ pub(super) fn create_draw_surface(
         GraphicsBackend::Gl,
     ];
 
-    if let Some(pref) = preferred_backend {
+    let effective_pref = preferred_backend.or_else(|| {
+        #[cfg(target_os = "macos")]
+        {
+            Some(GraphicsBackend::Metal)
+        }
+        #[cfg(target_os = "windows")]
+        {
+            Some(GraphicsBackend::Dx12)
+        }
+        #[cfg(all(not(target_os = "macos"), not(target_os = "windows")))]
+        {
+            Some(GraphicsBackend::Vulkan)
+        }
+    });
+
+    if let Some(pref) = effective_pref {
         backends.sort_by_key(|backend| *backend != pref);
     }
 
@@ -191,13 +207,13 @@ fn create(
             let ws = gl::WinState::new(entity, window_attributes, window_description, event_loop)?;
             Ok(Box::new(ws) as _)
         }
-        #[cfg(feature = "dx12")]
+        #[cfg(all(feature = "dx12", target_os = "windows"))]
         GraphicsBackend::Dx12 => {
             let ws =
                 dx12::WinState::new(entity, window_attributes, window_description, event_loop)?;
             Ok(Box::new(ws) as _)
         }
-        #[cfg(feature = "metal")]
+        #[cfg(all(feature = "metal", target_os = "macos"))]
         GraphicsBackend::Metal => {
             let ws =
                 metal::WinState::new(entity, window_attributes, window_description, event_loop)?;

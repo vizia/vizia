@@ -1,6 +1,6 @@
 use crate::{cache::CachedData, prelude::*};
 use morphorm::Node;
-use skia_safe::{ClipOp, ImageFilter, Paint, Rect, SamplingOptions, Surface, canvas::SaveLayerRec};
+use skia_safe::{ClipOp, ImageFilter, Paint, Rect, Surface, canvas::SaveLayerRec};
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use vizia_storage::{DrawChildIterator, LayoutTreeIterator};
