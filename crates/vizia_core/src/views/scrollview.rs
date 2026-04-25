@@ -68,7 +68,6 @@ impl ScrollView {
         let show_horizontal_scrollbar = Signal::new(true);
         let show_vertical_scrollbar = Signal::new(true);
         let direction = cx.environment().direction;
-
         let vertical_ratio: Memo<f32> = Memo::new(move |_| {
             let inner = inner_height.get();
             if inner == 0.0_f32 {
@@ -90,9 +89,7 @@ impl ScrollView {
         let has_h_scroll = Memo::new(move |_| container_width.get() < inner_width.get());
         let has_v_scroll = Memo::new(move |_| container_height.get() < inner_height.get());
 
-        let horizontal_scrollbar_value: Memo<f32> = Memo::new(move |_| {
-            ScrollView::map_scroll_x_to_physical(scroll_x.get(), direction.get())
-        });
+        let horizontal_scrollbar_value: Memo<f32> = Memo::new(move |_| scroll_x.get());
 
         let scroll_state = Memo::new(move |_| {
             (
@@ -214,11 +211,7 @@ impl View for ScrollView {
                 }
 
                 ScrollEvent::SetX(f) => {
-                    let mapped = ScrollView::map_scroll_x_from_physical(
-                        *f,
-                        cx.environment().direction.get(),
-                    );
-                    self.scroll_x.set(mapped);
+                    self.scroll_x.set(*f);
                     if let Some(callback) = &self.on_scroll {
                         (callback)(cx, self.scroll_x.get(), self.scroll_y.get());
                     }

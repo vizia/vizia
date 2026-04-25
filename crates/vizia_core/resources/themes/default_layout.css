@@ -701,10 +701,6 @@ scrollview > scrollbar.vertical {
     left: 1s;
 }
 
-.rtl scrollview > scrollbar.vertical {
-    left: 0px;
-}
-
 /* SCROLLBAR */
 
 scrollbar.horizontal {
