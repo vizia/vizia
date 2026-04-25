@@ -378,6 +378,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use vizia_id::GenerationalId;
 
     // DataIndex tests
 
@@ -443,5 +444,20 @@ mod tests {
         let mut animatable_storage = StyleSet::new();
         animatable_storage.insert(Entity::root(), 5.0);
         //assert_eq!(animatable_storage.entity_indices.first().unwrap().data_index, DataIndex::inline(0));
+    }
+
+    #[test]
+    fn link_empty_rules_clears_shared_data() {
+        let mut style_set = StyleSet::new();
+        let entity = Entity::root();
+        let rule = Rule::new(1, 0);
+
+        style_set.insert_rule(rule, 5.0);
+
+        assert!(style_set.link(entity, &[(rule, 1)]));
+        assert_eq!(style_set.get(entity), Some(&5.0));
+
+        assert!(style_set.link(entity, &[]));
+        assert_eq!(style_set.get(entity), None);
     }
 }

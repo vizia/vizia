@@ -1136,9 +1136,43 @@ fn compute_matched_direction_rules(
         }
     }
 
-    matched_rules.sort_by_key(|(_, s)| *s);
-    matched_rules.reverse();
+    sort_matched_rules(&mut matched_rules);
     matched_rules
+}
+
+fn sort_matched_rules(matched_rules: &mut [(Rule, u32)]) {
+    matched_rules.sort_by(|(rule_a, specificity_a), (rule_b, specificity_b)| {
+        specificity_b.cmp(specificity_a).then_with(|| rule_b.index().cmp(&rule_a.index()))
+    });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::sort_matched_rules;
+    use crate::style::Rule;
+    use vizia_id::GenerationalId;
+
+    #[test]
+    fn sort_matched_rules_uses_rule_order_for_specificity_ties() {
+        let mut matched_rules = vec![
+            (Rule::new(1, 0), 10),
+            (Rule::new(3, 0), 10),
+            (Rule::new(2, 0), 11),
+            (Rule::new(4, 0), 10),
+        ];
+
+        sort_matched_rules(&mut matched_rules);
+
+        assert_eq!(
+            matched_rules,
+            vec![
+                (Rule::new(2, 0), 11),
+                (Rule::new(4, 0), 10),
+                (Rule::new(3, 0), 10),
+                (Rule::new(1, 0), 10),
+            ]
+        );
+    }
 }
 
 /// Compute a list of matching style rules for a given entity.
@@ -1170,8 +1204,7 @@ pub(crate) fn compute_matched_rules(
         }
     }
 
-    matched_rules.sort_by_key(|(_, s)| *s);
-    matched_rules.reverse();
+    sort_matched_rules(&mut matched_rules);
     matched_rules
 }
 
@@ -1379,9 +1412,7 @@ pub(crate) fn style_system(cx: &mut Context) {
         let matched_direction_rules =
             compute_matched_direction_rules(entity, &cx.style, &cx.tree, &direction_bloom);
 
-        if !matched_direction_rules.is_empty()
-            && cx.style.direction.link(entity, &matched_direction_rules)
-        {
+        if cx.style.direction.link(entity, &matched_direction_rules) {
             cx.style.system_flags.set(SystemFlags::RELAYOUT, true);
             redraw_entities.push(entity);
 
