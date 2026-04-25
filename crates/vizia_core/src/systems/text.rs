@@ -201,6 +201,22 @@ pub fn build_paragraph(
     let mut paragraph_style = ParagraphStyle::default();
     // paragraph_style.turn_hinting_off();
 
+    // For fixed line-height lengths, use paragraph struts to enforce absolute line height.
+    if let Some(LineHeight::Length(length)) = style.line_height.get(entity).cloned() {
+        if let Some(line_height_px) = length.to_px() {
+            if line_height_px > 0.0 {
+                let mut strut_style = skia_safe::textlayout::StrutStyle::new();
+                strut_style
+                    .set_strut_enabled(true)
+                    .set_force_strut_height(true)
+                    .set_height_override(true)
+                    .set_height(1.0)
+                    .set_font_size(line_height_px * style.scale_factor());
+                paragraph_style.set_strut_style(strut_style);
+            }
+        }
+    }
+
     // Overflow
     match style.text_overflow.get(entity) {
         Some(&TextOverflow::Ellipsis) => {
