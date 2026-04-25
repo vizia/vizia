@@ -24,6 +24,7 @@ use windows::{
 use winit::{
     dpi::PhysicalSize,
     event_loop::ActiveEventLoop,
+    raw_window_handle::{HasWindowHandle, RawWindowHandle},
     window::{Window, WindowAttributes},
 };
 
@@ -380,7 +381,10 @@ fn create_swap_chain(
         Flags: flags.0 as _,
     };
 
-    let hwnd = HWND(u64::from(window.id()) as _);
+    let RawWindowHandle::Win32(handle) = window.window_handle().unwrap().as_raw() else {
+        unreachable!();
+    };
+    let hwnd = HWND(handle.hwnd.get() as _);
 
     unsafe {
         let swap_chain = factory

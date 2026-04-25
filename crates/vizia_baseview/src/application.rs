@@ -337,9 +337,24 @@ impl ApplicationRunner {
         if self.should_redraw {
             let context = window.gl_context().expect("Window was created without OpenGL support");
             unsafe { context.make_current() };
-            // TODO
-            // self.cx.draw(Entity::root(), &mut self.surface, &mut self.dirty_surface);
-            self.gr_context.flush_and_submit();
+
+            if let Some(mut draw) = self.cx.draw(Entity::root()) {
+                let dirty_rect = draw(&mut self.dirty_surface);
+
+                if !dirty_rect.is_empty() {
+                    let canvas = self.surface.canvas();
+                    canvas.clear(Color::transparent());
+                    self.dirty_surface.draw(
+                        canvas,
+                        (0, 0),
+                        skia_safe::SamplingOptions::default(),
+                        None,
+                    );
+
+                    self.gr_context.flush_and_submit();
+                }
+            }
+
             self.should_redraw = false;
             context.swap_buffers();
             unsafe { context.make_not_current() };
