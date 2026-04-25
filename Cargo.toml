@@ -65,8 +65,8 @@ cssparser = "0.36"
 cssparser-color = "0.4"
 dashmap = { version = "6.1", features = ["inline"] }
 fern = "0.7"
-fluent-bundle = "0.15"
-fluent-langneg = "0.13"
+fluent-bundle = "0.16.0"
+fluent-langneg = "0.13.1"
 fxhash = "0.2"
 gl-rs = { package = "gl", version = "0.14" }
 glutin = { version = "0.32", default-features = false, features = ["egl", "wgl", "glx"] }
@@ -86,7 +86,7 @@ serde = { version = "1.0", features = ["derive"] }
 skia-safe = { version = "0.93", features = ["gl", "textlayout", "svg"] }
 sys-locale = "0.3"
 tokio = { version = "1.52", features = ["rt-multi-thread"] }
-unic-langid = { version = "0.9", features = ["macros"] }
+unic-langid = { version = "0.9.6", features = ["macros"] }
 unicode-segmentation = "1.12"
 unicode-bidi = "0.3"
 windows-sys = { version = "0.59", default-features = false, features = ["Win32_Graphics_Dwm"] }
