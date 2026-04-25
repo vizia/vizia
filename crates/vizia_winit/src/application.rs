@@ -111,6 +111,7 @@ pub struct Application {
     event_loop_proxy: EventLoopProxy<UserEvent>,
     windows: HashMap<WindowId, Box<dyn DrawSurface>>,
     window_ids: HashMap<Entity, WindowId>,
+    resolved_graphics_backend: Option<GraphicsBackend>,
     #[cfg(feature = "accesskit")]
     accesskit_adapter: Option<accesskit_winit::Adapter>,
     #[cfg(feature = "accesskit")]
@@ -169,6 +170,7 @@ impl Application {
             event_loop_proxy: proxy,
             windows: HashMap::new(),
             window_ids: HashMap::new(),
+            resolved_graphics_backend: None,
             #[cfg(feature = "accesskit")]
             accesskit_adapter: None,
             #[cfg(feature = "accesskit")]
@@ -186,7 +188,10 @@ impl Application {
         #[allow(unused_mut)]
         let mut window_attributes = apply_window_description(window_description);
 
-        let preferred_backend = self.window_description.graphics_backend;
+        let preferred_backend = self
+            .resolved_graphics_backend
+            .or(self.window_description.graphics_backend)
+            .or(window_description.graphics_backend);
 
         let graphics_backend = {
             #[cfg(target_os = "windows")]
@@ -240,6 +245,23 @@ impl Application {
                 )?
             }
         };
+
+        let active_backend = graphics_backend.backend();
+        if let Some(locked_backend) = self.resolved_graphics_backend {
+            if active_backend != locked_backend {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    format!(
+                        "Graphics backend mismatch: expected {}, got {}",
+                        locked_backend.as_str(),
+                        active_backend.as_str()
+                    ),
+                )
+                .into());
+            }
+        } else {
+            self.resolved_graphics_backend = Some(active_backend);
+        }
 
         let window = graphics_backend.window();
 
