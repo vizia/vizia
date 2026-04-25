@@ -157,6 +157,13 @@ pub trait TextModifiers: internal::Modifiable {
     );
 
     modifier!(
+        /// Sets the line height of the view text.
+        line_height,
+        LineHeight,
+        SystemFlags::REFLOW
+    );
+
+    modifier!(
         /// Sets the max number of .
         line_clamp,
         LineClamp,
