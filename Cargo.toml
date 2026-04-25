@@ -11,7 +11,7 @@ rust-version.workspace = true
 exclude = ["assets/", "examples/"]
 
 [features]
-default = ["winit", "clipboard", "x11", "wayland", "markdown", "accesskit", "gl"]
+default = ["winit", "clipboard", "x11", "wayland", "markdown", "accesskit"]
 clipboard = ["vizia_core/clipboard", "vizia_winit?/clipboard"]
 winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]
@@ -31,6 +31,16 @@ vulkan = ["vizia_winit/vulkan"]
 vizia_core.workspace = true
 vizia_winit = { workspace = true, optional = true, default-features = false}
 vizia_baseview = { workspace = true, optional = true }
+
+# Activate the native GPU backend on each platform by default.
+[target.'cfg(target_os = "macos")'.dependencies]
+vizia_winit = { workspace = true, optional = true, default-features = false, features = ["metal"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+vizia_winit = { workspace = true, optional = true, default-features = false, features = ["dx12"] }
+
+[target.'cfg(all(not(target_os = "macos"), not(target_os = "windows")))'.dependencies]
+vizia_winit = { workspace = true, optional = true, default-features = false, features = ["vulkan"] }
 
 [dev-dependencies]
 chrono.workspace = true

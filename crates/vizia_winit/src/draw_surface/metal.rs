@@ -81,10 +81,8 @@ impl DrawSurface for WinState {
 
     fn swap_buffers(&mut self, _dirty_rect: BoundingBox) {
         let layer = &self.metal_layers[0];
-        unsafe {
-            self.view.setWantsLayer(true);
-            self.view.setLayer(Some(layer));
-        };
+        self.view.setWantsLayer(true);
+        self.view.setLayer(Some(layer));
 
         let (surface, drawable) = self.surface.as_mut().unwrap();
         self.direct_context.flush_and_submit_surface(surface, None);
@@ -175,15 +173,15 @@ impl WinState {
     }
 
     pub fn drawable_size(&self) -> [u32; 2] {
-        let size = unsafe { self.metal_layers[0].drawableSize() };
+        let size = self.metal_layers[0].drawableSize();
         [size.width as u32, size.height as u32]
     }
 
     fn create_surface(&mut self, index: usize) -> (Surface, Retained<Drawable>) {
         let layer = &self.metal_layers[index];
 
-        let drawable = unsafe { layer.nextDrawable().unwrap() };
-        let texture = unsafe { Retained::as_ptr(&drawable.texture()) };
+        let drawable = layer.nextDrawable().unwrap();
+        let texture = Retained::as_ptr(&drawable.texture());
         let texture_info = unsafe { TextureInfo::new(texture.cast()) };
 
         let backend_render_target =
@@ -223,7 +221,7 @@ fn create_metal_layers(
     let (width, height) = size.into();
     let size = NSSize { width, height };
 
-    std::array::from_fn(|_| unsafe {
+    std::array::from_fn(|_| {
         let layer = CAMetalLayer::init(mtm.alloc());
         layer.setDevice(Some(device));
         layer.setDisplaySyncEnabled(vsync);
