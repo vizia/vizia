@@ -12,7 +12,7 @@ rust-version.workspace = true
 clipboard = ["copypasta"]
 x11 = ["copypasta?/x11"]
 wayland = ["copypasta?/wayland"]
-markdown = ["comrak"]
+markdown = ["comrak", "dep:open"]
 rayon = ["dep:rayon", "dep:dashmap", "hashbrown/rayon"]
 serde = ["vizia_reactive/serde"]
 
@@ -39,10 +39,8 @@ chrono.workspace = true
 hashbrown.workspace = true
 log.workspace = true
 indexmap.workspace = true
-qfilter.workspace = true
-web-time.workspace = true
 comrak = { workspace = true, optional = true }
-open.workspace = true
+open = { workspace = true, optional = true }
 fxhash.workspace = true
 rayon = { workspace = true, optional = true }
 dashmap = { workspace = true, optional = true }
