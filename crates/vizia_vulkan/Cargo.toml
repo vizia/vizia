@@ -1,0 +1,35 @@
+[package]
+name = "vizia_vulkan"
+edition = "2024"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+vizia_input.workspace = true
+vizia_core.workspace = true
+vizia_id.workspace = true
+vizia_window.workspace = true
+
+accesskit = { workspace = true, optional = true }
+skia-safe.workspace = true
+copypasta = { workspace = true, optional = true }
+accesskit_winit = { workspace = true, optional = true }
+hashbrown.workspace = true
+log.workspace = true
+ash.workspace = true
+ash-window = "0.13"
+thiserror = "2"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys.workspace = true
+
+[dev-dependencies]
+winit = { workspace = true, features = ["x11", "wayland", "rwh_06"] }
+env_logger = "0.11"
+raw-window-handle = "0.6"
+
+[lints]
+workspace = true
