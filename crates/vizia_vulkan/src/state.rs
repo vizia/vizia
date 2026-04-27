@@ -70,11 +70,7 @@ impl State {
         Ok(Self { skia_context })
     }
 
-    pub fn skia_ctx(&self) -> &skia_safe::gpu::DirectContext {
-        &self.skia_context
-    }
-
-    pub fn skia_ctx_mut(&mut self) -> &mut skia_safe::gpu::DirectContext {
+    pub fn skia_context_mut(&mut self) -> &mut skia_safe::gpu::DirectContext {
         &mut self.skia_context
     }
 }

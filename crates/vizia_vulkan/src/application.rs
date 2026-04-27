@@ -1,7 +1,6 @@
 //! Main VulkanApplication type - headless vizia renderer.
 //!
-//! A `VulkanApplication` manages a single Vizia `Context` (shared fonts, images,
-//! themes, styles) and renders to a Vulkan `RenderTarget` (ImageView).
+//! A `VulkanApplication` manages a single Vizia `Context` and renders to a Vulkan `RenderTarget`.
 //! This matches how vizia's winit backend works: one Context, one main window.
 
 use ash::vk::Handle;
@@ -32,7 +31,7 @@ impl RenderTargetState {
                 skia_safe::gpu::vk::ImageLayout::UNDEFINED,
                 vulkan_format_to_skia_format(target.format),
                 1,
-                None, // sample count
+                None,
                 None,
                 None,
                 None,
@@ -70,19 +69,22 @@ impl RenderTargetState {
         Some(Self { surface, dirty_surface, target })
     }
 
-    unsafe fn resize(
+    unsafe fn replace_render_target(
         &mut self,
         skia_context: &mut skia_safe::gpu::DirectContext,
         new_target: RenderTarget,
     ) -> bool {
-        let new_state = unsafe { Self::new(skia_context, new_target) };
-        if let Some(new_state) = new_state {
-            self.surface = new_state.surface;
-            self.dirty_surface = new_state.dirty_surface;
-            self.target = new_state.target;
-            return true;
-        }
-        false
+        let new_state = if let Some(new_state) = unsafe { Self::new(skia_context, new_target) } {
+            new_state
+        } else {
+            return false;
+        };
+
+        self.surface = new_state.surface;
+        self.dirty_surface = new_state.dirty_surface;
+        self.target = new_state.target;
+
+        true
     }
 }
 
@@ -144,7 +146,7 @@ impl VulkanApplication {
 
         cx.needs_refresh(Entity::root());
 
-        let skia_context = vulkan_state.skia_ctx_mut();
+        let skia_context = vulkan_state.skia_context_mut();
         let render_target = unsafe { RenderTargetState::new(skia_context, target) }?;
 
         Some(Self {
@@ -156,11 +158,11 @@ impl VulkanApplication {
         })
     }
 
-    pub fn resize_render_target(&mut self, new_target: RenderTarget) -> bool {
+    pub fn replace_render_target(&mut self, new_target: RenderTarget) -> bool {
         if let Some(target_state) = self.render_target.as_mut() {
-            let skia_context = self.vulkan_state.skia_ctx_mut();
+            let skia_context = self.vulkan_state.skia_context_mut();
 
-            return if unsafe { target_state.resize(skia_context, new_target) } {
+            if unsafe { target_state.replace_render_target(skia_context, new_target) } {
                 self.cx.set_window_size(
                     Entity::root(),
                     target_state.target.extent.width as f32,
@@ -168,10 +170,8 @@ impl VulkanApplication {
                 );
                 self.cx.needs_refresh(Entity::root());
                 self.needs_render = true;
-                true
-            } else {
-                false
-            };
+                return true;
+            }
         }
 
         false
@@ -215,7 +215,7 @@ impl VulkanApplication {
             );
         }
 
-        self.vulkan_state.skia_ctx_mut().flush_and_submit();
+        self.vulkan_state.skia_context_mut().flush_and_submit();
 
         self.needs_render = false;
         true
