@@ -432,16 +432,16 @@ impl Application {
     }
 
     fn redraw_window(&mut self, window_id: WindowId) {
-        if self.resize_relayout_windows.remove(&window_id) {
-            self.event_manager.flush_events(self.cx.context(), |_| {});
-            self.cx.process_style_updates();
-            if self.cx.process_animations()
-                && let Some(window) = self.windows.get(&window_id)
-            {
-                window.window().request_redraw();
-            }
-            self.cx.process_visual_updates();
-        }
+        //if self.resize_relayout_windows.remove(&window_id) {
+        //self.event_manager.flush_events(self.cx.context(), |_| {});
+        self.cx.process_style_updates();
+        // if self.cx.process_animations()
+        //     && let Some(window) = self.windows.get(&window_id)
+        // {
+        //     window.window().request_redraw();
+        // }
+        self.cx.process_visual_updates();
+        //}
 
         let Some(window) = self.windows.get_mut(&window_id) else {
             return;
@@ -631,17 +631,43 @@ impl ApplicationHandler<UserEvent> for Application {
 
         match event {
             winit::event::WindowEvent::Resized(size) => {
+                #[cfg(target_os = "macos")]
+                window.set_presents_with_transaction(true);
+
                 if !window.resize(size) {
+                    #[cfg(target_os = "macos")]
+                    window.set_presents_with_transaction(false);
                     return;
                 }
 
-                self.cx.set_window_size(window.entity(), size.width as f32, size.height as f32);
+                let entity = window.entity();
+                self.cx.set_window_size(entity, size.width as f32, size.height as f32);
                 // Reuse incremental update systems for resize.
                 // set_window_size already marks relayout/retransform/reclip.
-                self.cx.context().needs_redraw(window.entity());
+                self.cx.needs_refresh(entity);
                 self.resize_relayout_windows.insert(window_id);
 
-                window.window().request_redraw();
+                // On macOS, `request_redraw` defers drawing to the next event-loop iteration.
+                // By then Core Animation has already composited the window at its new size using
+                // old/stretched content, producing visible jiggle. Redrawing synchronously here
+                // ensures the rendered frame is presented inside the same CA transaction as the
+                // window resize, eliminating the flicker.
+                #[cfg(target_os = "macos")]
+                {
+                    self.cx.process_style_updates();
+                    self.cx.process_visual_updates();
+                    if let Some(mut draw) = self.cx.draw(entity) {
+                        window.draw_surface(&mut draw);
+                    }
+                    window.set_presents_with_transaction(false);
+                    // Clear the resize flag since we already drew synchronously
+                    self.resize_relayout_windows.remove(&window_id);
+                }
+
+                #[cfg(not(target_os = "macos"))]
+                {
+                    window.window().request_redraw();
+                }
             }
 
             winit::event::WindowEvent::Moved(position) => {
@@ -825,6 +851,8 @@ impl ApplicationHandler<UserEvent> for Application {
                 inner_size_writer: _,
             } => {
                 self.cx.set_scale_factor(scale_factor);
+                let size = window.window().inner_size();
+                self.cx.set_window_size(window.entity(), size.width as f32, size.height as f32);
                 self.cx.needs_refresh(window.entity());
                 self.resize_relayout_windows.insert(window_id);
                 window.window().request_redraw();

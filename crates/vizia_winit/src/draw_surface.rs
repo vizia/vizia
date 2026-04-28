@@ -59,6 +59,11 @@ pub trait DrawSurface {
     ///
     fn resize(&mut self, size: PhysicalSize<u32>) -> bool;
 
+    /// Enables or disables transaction-bound presentation.
+    ///
+    /// Backends that don't support this can keep the default no-op.
+    fn set_presents_with_transaction(&mut self, _enabled: bool) {}
+
     // Provided methods
 
     fn make_current(&mut self) {}
