@@ -40,7 +40,10 @@ pub const CATEGORIES: &[(&str, &[&str])] = &[
         ],
     ),
     ("Navigation", &["Menu", "MenuBar", "Scrollview", "Tabview"]),
-    ("Data", &["List", "Table", "VirtualList", "VirtualTable"]),
+    (
+        "Data",
+        &["List", "Table", "TreeTable", "VirtualList", "VirtualTable"],
+    ),
     ("Feedback", &["Popup", "Progressbar", "Tooltip"]),
     ("Containers", &["Accordion", "Collapsible"]),
 ];
