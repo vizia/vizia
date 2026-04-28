@@ -387,3 +387,7 @@ path = "examples/views/table.rs"
 name = "task_download"
 path = "examples/task_download.rs"
 required-features = ["tokio"]
+
+[[example]]
+name = "tree_table"
+path = "examples/views/tree_table.rs"
