@@ -153,22 +153,19 @@ where
             }
         });
 
-        let selected_indices = Memo::new(move |_| {
-            visible_rows.with(|rows| {
-                selected_row_ids.with(|selected_ids| {
-                    rows.iter()
-                        .enumerate()
-                        .filter_map(|(index, row)| {
-                            if selected_ids.contains(&row.id) {
-                                Some(index)
-                            } else {
-                                None
-                            }
-                        })
-                        .collect::<Vec<usize>>()
+        let selected_indices =
+            Memo::new(move |_| {
+                visible_rows.with(|rows| {
+                    selected_row_ids.with(|selected_ids| {
+                        rows.iter()
+                            .enumerate()
+                            .filter_map(|(index, row)| {
+                                if selected_ids.contains(&row.id) { Some(index) } else { None }
+                            })
+                            .collect::<Vec<usize>>()
+                    })
                 })
-            })
-        });
+            });
 
         let column_layout = Memo::new(move |_| {
             column_signal.with(|columns| {
@@ -254,8 +251,10 @@ where
                                             sort_state.get().as_ref(),
                                             &column_key,
                                         );
-                                        let next_direction =
-                                            next_sort_direction(sort_cycle.get(), current_direction);
+                                        let next_direction = next_sort_direction(
+                                            sort_cycle.get(),
+                                            current_direction,
+                                        );
                                         cx.emit(VirtualTreeTableEvent::<K, Id>::RequestSort(
                                             column_key.clone(),
                                             next_direction,
@@ -311,8 +310,7 @@ where
                             )
                             .toggle_class(
                                 "not-resizable",
-                                resizable_columns
-                                    .map(move |enabled| !*enabled || !resizable.get()),
+                                resizable_columns.map(move |enabled| !*enabled || !resizable.get()),
                             )
                             .min_width(min_width.map(|value| Pixels(*value)));
                         }
@@ -566,9 +564,8 @@ where
         let cycle = cycle.to_signal(self.cx);
         self.bind(cycle, move |handle| {
             let cycle = cycle.get().into();
-            handle.modify(|table: &mut VirtualTreeTable<T, V, Id, H, K>| {
-                table.sort_cycle.set(cycle)
-            });
+            handle
+                .modify(|table: &mut VirtualTreeTable<T, V, Id, H, K>| table.sort_cycle.set(cycle));
         })
     }
 
