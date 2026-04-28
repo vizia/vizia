@@ -37,7 +37,7 @@ vizia_baseview = { workspace = true, optional = true }
 vizia_winit = { workspace = true, optional = true, default-features = false, features = ["metal"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-vizia_winit = { workspace = true, optional = true, default-features = false, features = ["dx12"] }
+vizia_winit = { workspace = true, optional = true, default-features = false, features = ["dx12", "vulkan", "gl"] }
 
 [target.'cfg(all(not(target_os = "macos"), not(target_os = "windows")))'.dependencies]
 vizia_winit = { workspace = true, optional = true, default-features = false, features = ["vulkan"] }
