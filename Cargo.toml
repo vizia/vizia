@@ -34,6 +34,7 @@ tokio = { workspace = true, optional = true }
 chrono.workspace = true
 log.workspace = true
 fern.workspace = true
+ego-tree.workspace = true
 
 [workspace]
 members = [ "crates/*", "examples/todo", "examples/widget_gallery", "examples/gallery"]
@@ -70,6 +71,7 @@ dashmap = { version = "6.1", features = ["inline"] }
 fern = "0.7"
 fluent-bundle = "0.16.0"
 fluent-langneg = "0.13.1"
+ego-tree = "0.10"
 fxhash = "0.2"
 gl-rs = { package = "gl", version = "0.14" }
 glutin = { version = "0.32", default-features = false, features = ["egl", "wgl", "glx"] }
