@@ -101,9 +101,10 @@ pub trait DrawSurface {
     #[cfg(target_os = "windows")]
     fn set_cloak(&mut self, state: bool) -> bool {
         use windows::Win32::{
-            Foundation::{BOOL, FALSE, HWND, TRUE},
+            Foundation::{FALSE, HWND, TRUE},
             Graphics::Dwm::{DWMWA_CLOAK, DwmSetWindowAttribute},
         };
+        use windows::core::BOOL;
 
         let handle = self.raw_window_handle();
 
