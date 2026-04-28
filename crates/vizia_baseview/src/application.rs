@@ -582,7 +582,10 @@ impl ApplicationRunner {
 /// forward it through, in which case the previous unconditional
 /// match would tear down the plug-in's GL surface and leave the
 /// host with an empty plug-in shell.
-pub fn requests_exit(event: &baseview::Event, is_parented: bool) -> bool {
+pub fn requests_exit(
+    event: &baseview::Event,
+    #[cfg_attr(not(target_os = "macos"), allow(unused_variables))] is_parented: bool,
+) -> bool {
     match event {
         baseview::Event::Window(baseview::WindowEvent::WillClose) => true,
         #[cfg(target_os = "macos")]
