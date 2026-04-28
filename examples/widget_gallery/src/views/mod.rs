@@ -124,6 +124,9 @@ pub use resizable::*;
 pub mod table;
 pub use table::*;
 
+pub mod tree_table;
+pub use tree_table::*;
+
 pub mod virtual_table;
 pub use virtual_table::*;
 
