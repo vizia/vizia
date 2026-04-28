@@ -19,7 +19,6 @@ struct TreeRow {
     kind: String,
     size: String,
     modified: String,
-    check_state: CheckState,
 }
 
 #[derive(Clone)]
@@ -33,7 +32,6 @@ struct FsNode {
 
 struct AppData {
     tree: Signal<Tree<FsNode>>,
-    data: Signal<Vec<TreeRow>>,
     sort_state: Signal<Option<TableSortState>>,
     selected_rows: Signal<Vec<NodeId>>,
     expanded_rows: Signal<Vec<NodeId>>,
@@ -52,7 +50,6 @@ impl Model for AppData {
             AppEvent::ToggleCheckState(id) => {
                 self.tree.update(|tree| {
                     toggle_check_state(tree, *id);
-                    self.data.set(flatten_tree_rows(tree));
                 });
             }
 
@@ -143,6 +140,12 @@ fn toggle_check_state(tree: &mut Tree<FsNode>, node_id: NodeId) {
     }
 }
 
+fn node_check_state(tree: &Tree<FsNode>, node_id: NodeId) -> CheckState {
+    tree.get(node_id)
+        .map(|node| node.value().check_state)
+        .unwrap_or(CheckState::Unchecked)
+}
+
 fn format_size(bytes: u64) -> String {
     if bytes < 1_024 {
         format!("{} B", bytes)
@@ -230,7 +233,6 @@ fn flatten_tree_rows(tree: &Tree<FsNode>) -> Vec<TreeRow> {
             kind: value.kind.clone(),
             size: value.size.clone(),
             modified: value.modified.clone(),
-            check_state: value.check_state,
         });
 
         let child_ids = node.children().map(|child| child.id()).collect::<Vec<_>>();
@@ -265,7 +267,7 @@ fn build_fs_tree() -> Tree<FsNode> {
     tree
 }
 
-fn columns() -> Vec<TreeTableColumn<TreeRow, NodeId, TableHeader>> {
+fn columns(tree: Signal<Tree<FsNode>>) -> Vec<TreeTableColumn<TreeRow, NodeId, TableHeader>> {
     vec![
         TreeTableColumn::new(
             "name",
@@ -274,14 +276,23 @@ fn columns() -> Vec<TreeTableColumn<TreeRow, NodeId, TableHeader>> {
                 let row_for_first_cell: TreeTableRow<TreeRow, NodeId> = row.get();
 
                 TreeTableFirstCell::new(cx, row_for_first_cell, move |cx, row| {
-                    let checked = row.row.check_state == CheckState::Checked;
-                    let intermediate = row.row.check_state == CheckState::Intermediate;
                     let row_id = row.id;
                     let text = row.row.name.clone();
+                    let checked = tree.map({
+                        let node_id = row_id.clone();
+                        move |tree| node_check_state(tree, node_id) == CheckState::Checked
+                    });
+                    let intermediate = tree.map({
+                        let node_id = row_id.clone();
+                        move |tree| node_check_state(tree, node_id) == CheckState::Intermediate
+                    });
 
                     HStack::new(cx, move |cx| {
-                        Checkbox::intermediate(cx, checked, intermediate).on_toggle(move |cx| {
-                            cx.emit(AppEvent::ToggleCheckState(row_id));
+                        Checkbox::intermediate(cx, checked, intermediate).on_toggle({
+                            let node_id = row_id.clone();
+                            move |cx| {
+                                cx.emit(AppEvent::ToggleCheckState(node_id));
+                            }
                         });
                         Label::new(cx, text).class("table-cell-text");
                     })
@@ -334,12 +345,12 @@ fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         let tree = Signal::new(build_fs_tree());
         let data = Signal::new(flatten_tree_rows(&tree.get()));
-        let cols = Signal::new(columns());
+        let cols = Signal::new(columns(tree));
         let sort_state: Signal<Option<TableSortState>> = Signal::new(None);
         let selected_rows: Signal<Vec<NodeId>> = Signal::new(vec![]);
         let expanded_rows: Signal<Vec<NodeId>> = Signal::new(vec![]);
 
-        AppData { tree, data, sort_state, selected_rows, expanded_rows }.build(cx);
+        AppData { tree, sort_state, selected_rows, expanded_rows }.build(cx);
 
         ExamplePage::vertical(cx, move |cx| {
             TreeTable::new(cx, data, cols, |row: &TreeRow| row.id, |row: &TreeRow| row.parent_id)
