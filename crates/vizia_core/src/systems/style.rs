@@ -1472,4 +1472,58 @@ pub(crate) fn style_system(cx: &mut Context) {
     for entity in redraw_entities {
         cx.needs_redraw(entity);
     }
+
+    invalidate_focus_on_hidden(cx);
+}
+
+/// Re-validates `cx.focused` after style resolution.
+///
+/// `WindowEvent::KeyDown` dispatch in `event_manager` routes to
+/// `cx.focused` regardless of the focused view's visibility. Without
+/// re-validation, an entity that becomes `Display::None` (or whose
+/// ancestor does) via either a CSS rule or the `.display(...)` modifier
+/// keeps focus indefinitely; the existing cleanup in `Context::remove`
+/// only fires when an entity is *removed from the tree*, not when it
+/// merely becomes non-visible. The most user-visible symptom is a
+/// plug-in `Textbox` inside a modal that gets hidden via
+/// `Display::None` — every subsequent host keystroke continues to be
+/// routed to the invisible textbox.
+///
+/// Runs at the end of [`style_system`]: at this point `display` and
+/// `disabled` are authoritative for the frame, but layout / draw
+/// haven't consumed them yet, so re-routing here avoids one frame of
+/// incorrect dispatch.
+///
+/// When the focused entity (or any ancestor) is `Display::None`, or
+/// the focused entity is `disabled`, focus moves to the previous
+/// focusable element in tab order via [`focus_backward`]. If
+/// `focus_backward` returns `None` (no prior focusable in scope),
+/// focus falls back to [`Entity::root`] so keystrokes route to the
+/// window rather than to an invisible view.
+fn invalidate_focus_on_hidden(cx: &mut Context) {
+    use crate::style::Display;
+    use crate::tree::focus_backward;
+
+    let focused = cx.focused;
+    if focused == Entity::null() || focused == Entity::root() {
+        return;
+    }
+
+    let hidden = std::iter::once(focused)
+        .chain(focused.parent_iter(&cx.tree))
+        .any(|entity| cx.style.display.get(entity).copied().unwrap_or_default() == Display::None);
+    let disabled = cx.style.disabled.get(focused).cloned().unwrap_or_default();
+
+    if !hidden && !disabled {
+        return;
+    }
+
+    // `lock_focus_to` matches the scope used by `focus_prev` / `focus_next`
+    // for keyboard navigation: respect any active modal-focus lock from
+    // `lock_focus_to_within`, otherwise scope to the entire tree.
+    let lock_focus_to = cx.focus_stack.last().copied().unwrap_or(Entity::root());
+    let new_target =
+        focus_backward(&cx.tree, &cx.style, focused, lock_focus_to).unwrap_or(Entity::root());
+
+    cx.with_current(new_target, |cx| cx.focus());
 }
