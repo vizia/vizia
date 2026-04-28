@@ -366,3 +366,7 @@ path = "examples/views/virtual_table.rs"
 [[example]]
 name = "table"
 path = "examples/views/table.rs"
+
+[[example]]
+name = "tree_table"
+path = "examples/views/tree_table.rs"
