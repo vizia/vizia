@@ -211,6 +211,14 @@ impl<'a> EventContext<'a> {
         None
     }
 
+    pub fn graphics_backend(&self) -> GraphicsBackend {
+        let parent_window = self.parent_window();
+        self.windows
+            .get(&parent_window)
+            .and_then(|state| state.window_description.graphics_backend)
+            .unwrap_or_default()
+    }
+
     /// Returns the descendant [Entity] ids, of the current view, with the given class name.
     pub fn get_entities_by_class(&self, class: &str) -> Vec<Entity> {
         let mut entities = Vec::new();
