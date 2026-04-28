@@ -1,4 +1,4 @@
-use std::{error::Error, sync::Arc};
+use std::{error::Error, result::Result, sync::Arc};
 
 use skia_safe::{
     ColorSpace, ColorType, Surface, SurfaceProps,
@@ -19,7 +19,7 @@ use windows::{
         },
         System::Threading::*,
     },
-    core::Interface,
+    core::*,
 };
 
 use winit::{

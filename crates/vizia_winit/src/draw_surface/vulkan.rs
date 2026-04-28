@@ -145,7 +145,7 @@ impl DrawSurface for WinState {
                 extent: [w as u32, h as u32],
                 layer: 0,
             };
-            swapchain_info.present_regions = vec![rect];
+            swapchain_info.present_region = vec![rect];
         }
 
         match previous_frame_end
@@ -352,9 +352,12 @@ fn get_vulkan_instance(
         return Ok(instance.clone());
     }
 
+    let required_extensions = VulkanSurface::required_extensions(window)
+        .expect("failed to get required instance extensions for surface");
+
     let mut enabled_extensions = InstanceExtensions {
         ext_surface_maintenance1: true, // Required for vsync support.
-        ..VulkanSurface::required_extensions(window)
+        ..required_extensions
     };
 
     //
@@ -380,7 +383,7 @@ fn get_vulkan_instance(
 fn create_vulkan_surface(
     instance: &Arc<Instance>,
     window: &Arc<Window>,
-) -> Result<Arc<VulkanSurface>, Validated<VulkanError>> {
+) -> Result<Arc<VulkanSurface>, vulkano::swapchain::FromWindowError> {
     VulkanSurface::from_window(instance.clone(), window.clone())
 }
 
