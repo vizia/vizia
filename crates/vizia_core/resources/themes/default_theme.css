@@ -651,7 +651,7 @@ table .table-cell-text,
 virtual-table .table-cell-text,
 tree-table .table-cell-text,
 virtual-tree-table .table-cell-text {
-    text-wrap: true;
+    width: 1s;
 }
 
 table .table-cell,

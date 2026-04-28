@@ -1,6 +1,7 @@
 mod helpers;
+use ego_tree::{NodeId, Tree};
 use helpers::*;
-use std::{collections::HashMap, fs, path::Path, time::SystemTime};
+use std::{fs, path::Path, time::SystemTime};
 use vizia::prelude::*;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -12,8 +13,17 @@ enum CheckState {
 
 #[derive(Clone, PartialEq)]
 struct TreeRow {
-    id: u32,
-    parent_id: Option<u32>,
+    id: NodeId,
+    parent_id: Option<NodeId>,
+    name: String,
+    kind: String,
+    size: String,
+    modified: String,
+    check_state: CheckState,
+}
+
+#[derive(Clone)]
+struct FsNode {
     name: String,
     kind: String,
     size: String,
@@ -22,24 +32,28 @@ struct TreeRow {
 }
 
 struct AppData {
+    tree: Signal<Tree<FsNode>>,
     data: Signal<Vec<TreeRow>>,
     sort_state: Signal<Option<TableSortState>>,
-    selected_rows: Signal<Vec<u32>>,
-    expanded_rows: Signal<Vec<u32>>,
+    selected_rows: Signal<Vec<NodeId>>,
+    expanded_rows: Signal<Vec<NodeId>>,
 }
 
 enum AppEvent {
-    ToggleCheckState(u32),
+    ToggleCheckState(NodeId),
     SetSort(String, TableSortDirection),
-    SelectRow(u32),
-    ToggleRow(u32, bool),
+    SelectRow(NodeId),
+    ToggleRow(NodeId, bool),
 }
 
 impl Model for AppData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::ToggleCheckState(id) => {
-                self.data.update(|rows| toggle_check_state(rows, *id));
+                self.tree.update(|tree| {
+                    toggle_check_state(tree, *id);
+                    self.data.set(flatten_tree_rows(tree));
+                });
             }
 
             AppEvent::SetSort(key, direction) => {
@@ -66,25 +80,6 @@ impl Model for AppData {
     }
 }
 
-fn build_indices(
-    rows: &[TreeRow],
-) -> (HashMap<u32, usize>, HashMap<u32, Vec<u32>>, HashMap<u32, Option<u32>>) {
-    let id_to_index =
-        rows.iter().enumerate().map(|(index, row)| (row.id, index)).collect::<HashMap<_, _>>();
-
-    let mut children_by_parent: HashMap<u32, Vec<u32>> = HashMap::new();
-    let mut parent_by_id: HashMap<u32, Option<u32>> = HashMap::new();
-
-    for row in rows {
-        parent_by_id.insert(row.id, row.parent_id);
-        if let Some(parent_id) = row.parent_id {
-            children_by_parent.entry(parent_id).or_default().push(row.id);
-        }
-    }
-
-    (id_to_index, children_by_parent, parent_by_id)
-}
-
 fn aggregate_check_state(child_states: impl Iterator<Item = CheckState>) -> CheckState {
     let mut saw_checked = false;
     let mut saw_unchecked = false;
@@ -107,61 +102,45 @@ fn aggregate_check_state(child_states: impl Iterator<Item = CheckState>) -> Chec
     if saw_checked { CheckState::Checked } else { CheckState::Unchecked }
 }
 
-fn set_descendants(
-    rows: &mut [TreeRow],
-    root_id: u32,
-    target_state: CheckState,
-    id_to_index: &HashMap<u32, usize>,
-    children_by_parent: &HashMap<u32, Vec<u32>>,
-) {
-    let mut stack = vec![root_id];
-
-    while let Some(current_id) = stack.pop() {
-        if let Some(&index) = id_to_index.get(&current_id) {
-            rows[index].check_state = target_state;
-        }
-
-        if let Some(children) = children_by_parent.get(&current_id) {
-            stack.extend(children.iter().copied());
-        }
+fn toggle_check_state(tree: &mut Tree<FsNode>, node_id: NodeId) {
+    if tree.get(node_id).is_none() {
+        return;
     }
-}
 
-fn recompute_ancestors(
-    rows: &mut [TreeRow],
-    start_id: u32,
-    id_to_index: &HashMap<u32, usize>,
-    children_by_parent: &HashMap<u32, Vec<u32>>,
-    parent_by_id: &HashMap<u32, Option<u32>>,
-) {
-    let mut current = parent_by_id.get(&start_id).copied().flatten();
-
-    while let Some(parent_id) = current {
-        if let (Some(child_ids), Some(&parent_index)) =
-            (children_by_parent.get(&parent_id), id_to_index.get(&parent_id))
-        {
-            rows[parent_index].check_state = aggregate_check_state(
-                child_ids
-                    .iter()
-                    .filter_map(|id| id_to_index.get(id).map(|&index| rows[index].check_state)),
-            );
-        }
-
-        current = parent_by_id.get(&parent_id).copied().flatten();
-    }
-}
-
-fn toggle_check_state(rows: &mut [TreeRow], id: u32) {
-    let (id_to_index, children_by_parent, parent_by_id) = build_indices(rows);
-
-    let next_checked = id_to_index
-        .get(&id)
-        .map(|&index| rows[index].check_state != CheckState::Checked)
+    let next_checked = tree
+        .get(node_id)
+        .map(|node| node.value().check_state != CheckState::Checked)
         .unwrap_or(false);
-
     let target_state = if next_checked { CheckState::Checked } else { CheckState::Unchecked };
-    set_descendants(rows, id, target_state, &id_to_index, &children_by_parent);
-    recompute_ancestors(rows, id, &id_to_index, &children_by_parent, &parent_by_id);
+
+    let descendant_ids = tree
+        .get(node_id)
+        .map(|node| node.descendants().map(|descendant| descendant.id()).collect::<Vec<_>>())
+        .unwrap_or_default();
+
+    for descendant_id in descendant_ids {
+        if let Some(mut descendant) = tree.get_mut(descendant_id) {
+            descendant.value().check_state = target_state;
+        }
+    }
+
+    let ancestor_ids = tree
+        .get(node_id)
+        .map(|node| node.ancestors().map(|ancestor| ancestor.id()).collect::<Vec<_>>())
+        .unwrap_or_default();
+
+    for ancestor_id in ancestor_ids {
+        let next_state = match tree.get(ancestor_id) {
+            Some(ancestor) => {
+                aggregate_check_state(ancestor.children().map(|child| child.value().check_state))
+            }
+            None => continue,
+        };
+
+        if let Some(mut ancestor) = tree.get_mut(ancestor_id) {
+            ancestor.value().check_state = next_state;
+        }
+    }
 }
 
 fn format_size(bytes: u64) -> String {
@@ -189,7 +168,7 @@ fn format_modified(t: SystemTime) -> String {
     format!("{year}-{month:02}-{day:02}")
 }
 
-fn read_dir_flat(root: &Path, parent_id: Option<u32>, next_id: &mut u32, rows: &mut Vec<TreeRow>) {
+fn add_dir_to_tree(tree: &mut Tree<FsNode>, parent_node: NodeId, root: &Path) {
     let Ok(mut entries) = fs::read_dir(root) else { return };
 
     // Collect and sort: directories first, then files, both alphabetically
@@ -212,9 +191,6 @@ fn read_dir_flat(root: &Path, parent_id: Option<u32>, next_id: &mut u32, rows: &
 
     for (path, meta) in dirs.into_iter().chain(files) {
         let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("?").to_string();
-        let id = *next_id;
-        *next_id += 1;
-
         let (kind, size) = if meta.is_dir() {
             ("Folder".to_string(), "—".to_string())
         } else {
@@ -223,38 +199,79 @@ fn read_dir_flat(root: &Path, parent_id: Option<u32>, next_id: &mut u32, rows: &
 
         let modified = meta.modified().map(format_modified).unwrap_or_else(|_| "—".to_string());
 
-        rows.push(TreeRow {
-            id,
-            parent_id,
-            name,
-            kind,
-            size,
-            modified,
-            check_state: CheckState::Unchecked,
-        });
+        let child_id = {
+            let mut parent = tree.get_mut(parent_node).expect("tree parent node should exist");
+            parent
+                .append(FsNode { name, kind, size, modified, check_state: CheckState::Unchecked })
+                .id()
+        };
 
         if meta.is_dir() {
-            read_dir_flat(&path, Some(id), next_id, rows);
+            add_dir_to_tree(tree, child_id, &path);
         }
     }
 }
 
-fn rows() -> Vec<TreeRow> {
-    // Walk the vizia workspace root (one directory up from examples/)
-    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let mut all = Vec::new();
-    let mut next_id = 1u32;
-    read_dir_flat(root, None, &mut next_id, &mut all);
-    all
+fn flatten_tree_rows(tree: &Tree<FsNode>) -> Vec<TreeRow> {
+    fn visit(
+        tree: &Tree<FsNode>,
+        node_id: NodeId,
+        parent_id: Option<NodeId>,
+        out: &mut Vec<TreeRow>,
+    ) {
+        let node = tree.get(node_id).expect("tree node should exist");
+        let value = node.value();
+        let current_id = node.id();
+
+        out.push(TreeRow {
+            id: current_id,
+            parent_id,
+            name: value.name.clone(),
+            kind: value.kind.clone(),
+            size: value.size.clone(),
+            modified: value.modified.clone(),
+            check_state: value.check_state,
+        });
+
+        let child_ids = node.children().map(|child| child.id()).collect::<Vec<_>>();
+        for child_id in child_ids {
+            visit(tree, child_id, Some(current_id), out);
+        }
+    }
+
+    let mut rows = Vec::new();
+    let root = tree.root();
+    let top_level_ids = root.children().map(|child| child.id()).collect::<Vec<_>>();
+    for child_id in top_level_ids {
+        visit(tree, child_id, None, &mut rows);
+    }
+
+    rows
 }
 
-fn columns() -> Vec<TreeTableColumn<TreeRow, u32, TableHeader>> {
+fn build_fs_tree() -> Tree<FsNode> {
+    // Walk the vizia workspace root (one directory up from examples/)
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let mut tree = Tree::new(FsNode {
+        name: String::new(),
+        kind: "Folder".to_string(),
+        size: "—".to_string(),
+        modified: "—".to_string(),
+        check_state: CheckState::Unchecked,
+    });
+
+    let root_id = tree.root().id();
+    add_dir_to_tree(&mut tree, root_id, root);
+    tree
+}
+
+fn columns() -> Vec<TreeTableColumn<TreeRow, NodeId, TableHeader>> {
     vec![
         TreeTableColumn::new(
             "name",
             |cx, sort_dir| TableHeader::new(cx, "Name", sort_dir),
             move |cx, row| {
-                let row_for_first_cell: TreeTableRow<TreeRow, u32> = row.get();
+                let row_for_first_cell: TreeTableRow<TreeRow, NodeId> = row.get();
 
                 TreeTableFirstCell::new(cx, row_for_first_cell, move |cx, row| {
                     let checked = row.row.check_state == CheckState::Checked;
@@ -263,8 +280,8 @@ fn columns() -> Vec<TreeTableColumn<TreeRow, u32, TableHeader>> {
                     let text = row.row.name.clone();
 
                     HStack::new(cx, move |cx| {
-                        Checkbox::intermediate(cx, checked, intermediate).on_toggle(move |_cx| {
-                            _cx.emit(AppEvent::ToggleCheckState(row_id));
+                        Checkbox::intermediate(cx, checked, intermediate).on_toggle(move |cx| {
+                            cx.emit(AppEvent::ToggleCheckState(row_id));
                         });
                         Label::new(cx, text).class("table-cell-text");
                     })
@@ -281,7 +298,7 @@ fn columns() -> Vec<TreeTableColumn<TreeRow, u32, TableHeader>> {
             "kind",
             |cx, sort_dir| TableHeader::new(cx, "Kind", sort_dir),
             |cx, row| {
-                let text = row.map(|r: &TreeTableRow<TreeRow, u32>| r.row.kind.clone());
+                let text = row.map(|r: &TreeTableRow<TreeRow, NodeId>| r.row.kind.clone());
                 Label::new(cx, text).class("table-cell-text");
             },
         )
@@ -292,8 +309,8 @@ fn columns() -> Vec<TreeTableColumn<TreeRow, u32, TableHeader>> {
             "size",
             |cx, sort_dir| TableHeader::new(cx, "Size", sort_dir),
             |cx, row| {
-                let text = row.map(|r: &TreeTableRow<TreeRow, u32>| r.row.size.clone());
-                Label::new(cx, text).class("table-cell-text");
+                let text = row.map(|r: &TreeTableRow<TreeRow, NodeId>| r.row.size.clone());
+                Label::new(cx, text).class("table-cell-text").text_wrap(false);
             },
         )
         .width(90.0)
@@ -303,7 +320,7 @@ fn columns() -> Vec<TreeTableColumn<TreeRow, u32, TableHeader>> {
             "modified",
             |cx, sort_dir| TableHeader::new(cx, "Modified", sort_dir),
             |cx, row| {
-                let text = row.map(|r: &TreeTableRow<TreeRow, u32>| r.row.modified.clone());
+                let text = row.map(|r: &TreeTableRow<TreeRow, NodeId>| r.row.modified.clone());
                 Label::new(cx, text).class("table-cell-text");
             },
         )
@@ -315,13 +332,14 @@ fn columns() -> Vec<TreeTableColumn<TreeRow, u32, TableHeader>> {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let data = Signal::new(rows());
+        let tree = Signal::new(build_fs_tree());
+        let data = Signal::new(flatten_tree_rows(&tree.get()));
         let cols = Signal::new(columns());
         let sort_state: Signal<Option<TableSortState>> = Signal::new(None);
-        let selected_rows: Signal<Vec<u32>> = Signal::new(vec![]);
-        let expanded_rows: Signal<Vec<u32>> = Signal::new(vec![]);
+        let selected_rows: Signal<Vec<NodeId>> = Signal::new(vec![]);
+        let expanded_rows: Signal<Vec<NodeId>> = Signal::new(vec![]);
 
-        AppData { data, sort_state, selected_rows, expanded_rows }.build(cx);
+        AppData { tree, data, sort_state, selected_rows, expanded_rows }.build(cx);
 
         ExamplePage::vertical(cx, move |cx| {
             TreeTable::new(cx, data, cols, |row: &TreeRow| row.id, |row: &TreeRow| row.parent_id)
