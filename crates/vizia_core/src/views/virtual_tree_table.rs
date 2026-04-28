@@ -1,34 +1,19 @@
 use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
+    marker::PhantomData,
     ops::Deref,
     rc::Rc,
     sync::Arc,
 };
 
-use crate::{
-    icons::{ICON_CHEVRON_DOWN, ICON_CHEVRON_RIGHT},
-    prelude::*,
-};
+use crate::prelude::*;
 
 use super::{
-    TableSortCycle, TableSortDirection, TableSortState, table::next_sort_direction,
-    table::sort_direction_for_column,
+    TableSortCycle, TableSortDirection, TableSortState, TreeTableColumn, TreeTableFirstCellEvent,
+    TreeTableRow, table::next_sort_direction, table::sort_direction_for_column,
 };
 
-#[derive(Clone, PartialEq)]
-pub struct TreeTableRow<T, Id>
-where
-    T: PartialEq + Clone + 'static,
-    Id: Clone + Eq + Hash + 'static,
-{
-    pub row: T,
-    pub id: Id,
-    pub parent_id: Option<Id>,
-    pub depth: usize,
-    pub has_children: bool,
-    pub expanded: bool,
-}
 fn flatten_visible_rows<T, V, Id>(
     rows: &V,
     row_id: &dyn Fn(&T) -> Id,
@@ -90,180 +75,16 @@ where
     visible_rows
 }
 
-/// Event emitted by [`TreeTableFirstCell`] when the disclosure button is pressed.
-pub enum TreeTableFirstCellEvent<Id: Send + Sync + 'static> {
-    Toggle(Id, bool),
-}
-
-#[derive(Clone)]
-pub struct TreeTableFirstCell;
-
-impl TreeTableFirstCell {
-    /// Creates the tree-column first cell, showing an indent spacer, disclosure toggle, and
-    /// the caller-supplied cell content. Call this inside the first column's `cell_content`
-    /// closure of a [`TreeTableColumn`].
-    pub fn new<T, Id, F>(
-        cx: &mut Context,
-        row: TreeTableRow<T, Id>,
-        cell_content: F,
-    ) -> Handle<'_, Self>
-    where
-        T: PartialEq + Clone + 'static,
-        Id: PartialEq + Eq + Hash + Clone + Send + Sync + 'static,
-        F: Fn(&mut Context, TreeTableRow<T, Id>) + 'static,
-    {
-        let cell_content: Rc<dyn Fn(&mut Context, TreeTableRow<T, Id>)> = Rc::new(cell_content);
-        let depth = row.depth as f32 * 16.0;
-        let has_children = row.has_children;
-        let expanded = row.expanded;
-        let node_id = row.id.clone();
-
-        Self.build(cx, move |cx| {
-            HStack::new(cx, move |cx| {
-                Element::new(cx)
-                    .class("tree-table-indent")
-                    .width(Pixels(depth))
-                    .height(Stretch(1.0));
-
-                if has_children {
-                    let icon = if expanded { ICON_CHEVRON_DOWN } else { ICON_CHEVRON_RIGHT };
-
-                    Button::new(cx, move |cx| Svg::new(cx, icon).text_wrap(false))
-                        .variant(ButtonVariant::Text)
-                        .class("tree-table-disclosure")
-                        .on_press(move |cx| {
-                            cx.emit(TreeTableFirstCellEvent::Toggle(node_id.clone(), !expanded));
-                        });
-                } else {
-                    Element::new(cx).class("tree-table-disclosure-placeholder");
-                }
-
-                let cell_content = cell_content.clone();
-                VStack::new(cx, move |cx| {
-                    cell_content(cx, row.clone());
-                })
-                .class("tree-table-cell-content")
-                .width(Stretch(1.0))
-                .min_width(Auto)
-                .height(Auto);
-            })
-            .alignment(Alignment::Left)
-            .width(Stretch(1.0))
-            .min_width(Auto)
-            .height(Auto);
-        })
-        .width(Stretch(1.0))
-        .height(Auto)
-    }
-}
-
-impl View for TreeTableFirstCell {
-    fn element(&self) -> Option<&'static str> {
-        Some("tree-table-first-cell")
-    }
-}
-
-type TreeTableHeaderContent<H> = dyn Fn(&mut Context, Memo<TableSortDirection>) -> Handle<H>;
-type TreeTableCellContent<T, Id> = dyn Fn(&mut Context, Memo<TreeTableRow<T, Id>>);
-
-/// A column definition for [`TreeTable`]. All cell content closures receive the full
-/// [`TreeTableRow`] so the first column can call [`TreeTableFirstCell::new`] directly.
-pub struct TreeTableColumn<T, Id, H, K = String>
-where
-    T: PartialEq + Clone + 'static,
-    Id: Clone + Eq + Hash + 'static,
-    H: View,
-    K: Clone + PartialEq + Send + Sync + 'static,
-{
-    pub key: K,
-    pub width: Signal<f32>,
-    pub min_width: Signal<f32>,
-    pub sortable: Signal<bool>,
-    pub resizable: Signal<bool>,
-    pub hidden: Signal<bool>,
-    pub cell_content: Rc<TreeTableCellContent<T, Id>>,
-    pub header_content: Rc<TreeTableHeaderContent<H>>,
-}
-
-impl<T, Id, H, K> Clone for TreeTableColumn<T, Id, H, K>
-where
-    T: PartialEq + Clone + 'static,
-    Id: Clone + Eq + Hash + 'static,
-    H: View + Clone,
-    K: Clone + PartialEq + Send + Sync + 'static,
-{
-    fn clone(&self) -> Self {
-        Self {
-            key: self.key.clone(),
-            width: self.width,
-            min_width: self.min_width,
-            sortable: self.sortable,
-            resizable: self.resizable,
-            hidden: self.hidden,
-            cell_content: self.cell_content.clone(),
-            header_content: self.header_content.clone(),
-        }
-    }
-}
-
-impl<T, Id, H, K> TreeTableColumn<T, Id, H, K>
-where
-    T: PartialEq + Clone + 'static,
-    Id: Clone + Eq + Hash + 'static,
-    H: View + Clone,
-    K: Clone + PartialEq + Send + Sync + 'static,
-{
-    pub fn new(
-        key: impl Into<K>,
-        header_content: impl Fn(&mut Context, Memo<TableSortDirection>) -> Handle<H> + 'static,
-        cell_content: impl Fn(&mut Context, Memo<TreeTableRow<T, Id>>) + 'static,
-    ) -> Self {
-        Self {
-            key: key.into(),
-            width: Signal::new(150.0),
-            min_width: Signal::new(60.0),
-            sortable: Signal::new(false),
-            resizable: Signal::new(false),
-            hidden: Signal::new(false),
-            cell_content: Rc::new(cell_content),
-            header_content: Rc::new(header_content),
-        }
-    }
-
-    pub fn width(self, width: f32) -> Self {
-        self.width.set(width);
-        self
-    }
-
-    pub fn min_width(self, min_width: f32) -> Self {
-        self.min_width.set(min_width);
-        self
-    }
-
-    pub fn sortable(self, sortable: bool) -> Self {
-        self.sortable.set(sortable);
-        self
-    }
-
-    pub fn resizable(self, resizable: bool) -> Self {
-        self.resizable.set(resizable);
-        self
-    }
-
-    pub fn hidden(self, hidden: bool) -> Self {
-        self.hidden.set(hidden);
-        self
-    }
-}
-
-pub struct TreeTable<T, V, Id, K = String>
+pub struct VirtualTreeTable<T, V, Id, H, K = String>
 where
     V: Deref<Target = [T]> + Clone + 'static,
     T: PartialEq + Clone + 'static,
     Id: Eq + Hash + Clone + Send + Sync + 'static,
+    H: View,
     K: Clone + PartialEq + Send + Sync + 'static,
 {
     rows: Signal<V>,
+    _header: PhantomData<H>,
     row_id: Rc<dyn Fn(&T) -> Id>,
     parent_id: Rc<dyn Fn(&T) -> Option<Id>>,
     sort_state: Signal<Option<TableSortState<K>>>,
@@ -278,26 +99,27 @@ where
     on_row_toggle: Option<Box<dyn Fn(&mut EventContext, Id, bool)>>,
 }
 
-enum TreeTableEvent<K, Id> {
+enum VirtualTreeTableEvent<K, Id> {
     RequestSort(K, TableSortDirection),
     SelectRow(usize),
-    #[allow(dead_code)]
-    ToggleRow(Id, bool),
     ExpandSelected,
     CollapseSelected,
+    ToggleRow(Id, bool),
 }
 
-impl<T, V, Id, K> TreeTable<T, V, Id, K>
+impl<T, V, Id, H, K> VirtualTreeTable<T, V, Id, H, K>
 where
     V: Deref<Target = [T]> + Clone + 'static,
     T: PartialEq + Clone + 'static,
     Id: Eq + Hash + Clone + Send + Sync + 'static,
+    H: Clone + View,
     K: Clone + PartialEq + Send + Sync + 'static,
 {
-    pub fn new<S, C, R, H>(
+    pub fn new<S, C, R>(
         cx: &mut Context,
         rows: S,
         columns: C,
+        item_height: f32,
         row_id: impl Fn(&T) -> Id + 'static,
         parent_id: impl Fn(&T) -> Option<Id> + 'static,
     ) -> Handle<Self>
@@ -305,12 +127,12 @@ where
         S: Res<V> + 'static,
         C: Res<R> + 'static,
         R: Deref<Target = [TreeTableColumn<T, Id, H, K>]> + Clone + 'static,
-        H: Clone + View,
     {
         let row_signal = rows.to_signal(cx);
         let column_signal = columns.to_signal(cx);
         let row_id: Rc<dyn Fn(&T) -> Id> = Rc::new(row_id);
         let parent_id: Rc<dyn Fn(&T) -> Option<Id>> = Rc::new(parent_id);
+
         let sort_state = Signal::new(None);
         let sort_cycle = Signal::new(TableSortCycle::BiState);
         let resizable_columns = Signal::new(false);
@@ -331,19 +153,22 @@ where
             }
         });
 
-        let selected_indices =
-            Memo::new(move |_| {
-                visible_rows.with(|rows| {
-                    selected_row_ids.with(|selected_ids| {
-                        rows.iter()
-                            .enumerate()
-                            .filter_map(|(index, row)| {
-                                if selected_ids.contains(&row.id) { Some(index) } else { None }
-                            })
-                            .collect::<Vec<usize>>()
-                    })
+        let selected_indices = Memo::new(move |_| {
+            visible_rows.with(|rows| {
+                selected_row_ids.with(|selected_ids| {
+                    rows.iter()
+                        .enumerate()
+                        .filter_map(|(index, row)| {
+                            if selected_ids.contains(&row.id) {
+                                Some(index)
+                            } else {
+                                None
+                            }
+                        })
+                        .collect::<Vec<usize>>()
                 })
-            });
+            })
+        });
 
         let column_layout = Memo::new(move |_| {
             column_signal.with(|columns| {
@@ -357,6 +182,7 @@ where
 
         Self {
             rows: row_signal,
+            _header: PhantomData,
             row_id,
             parent_id,
             sort_state,
@@ -375,13 +201,13 @@ where
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowRight),
                     KeymapEntry::new("Expand Selected", |cx| {
-                        cx.emit(TreeTableEvent::<K, Id>::ExpandSelected)
+                        cx.emit(VirtualTreeTableEvent::<K, Id>::ExpandSelected)
                     }),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
                     KeymapEntry::new("Collapse Selected", |cx| {
-                        cx.emit(TreeTableEvent::<K, Id>::CollapseSelected)
+                        cx.emit(VirtualTreeTableEvent::<K, Id>::CollapseSelected)
                     }),
                 ),
             ])
@@ -399,7 +225,6 @@ where
 
                 let last_header_index = visible_columns.len().saturating_sub(1);
                 let header_columns = Rc::new(visible_columns);
-                let body_columns = header_columns.clone();
 
                 HStack::new(cx, move |cx| {
                     for (column_index, column) in header_columns.iter().cloned().enumerate() {
@@ -429,11 +254,9 @@ where
                                             sort_state.get().as_ref(),
                                             &column_key,
                                         );
-                                        let next_direction = next_sort_direction(
-                                            sort_cycle.get(),
-                                            current_direction,
-                                        );
-                                        cx.emit(TreeTableEvent::<K, Id>::RequestSort(
+                                        let next_direction =
+                                            next_sort_direction(sort_cycle.get(), current_direction);
+                                        cx.emit(VirtualTreeTableEvent::<K, Id>::RequestSort(
                                             column_key.clone(),
                                             next_direction,
                                         ));
@@ -442,7 +265,9 @@ where
                             })
                             .class("table-header-cell")
                             .toggle_class("sortable", sortable)
+                            .toggle_class("not-sortable", sortable.map(|value| !*value))
                             .toggle_class("resizable", false)
+                            .toggle_class("not-resizable", true)
                             .width(Stretch(1.0))
                             .min_width(Auto);
                         } else {
@@ -469,7 +294,7 @@ where
                                                 sort_cycle.get(),
                                                 current_direction,
                                             );
-                                            cx.emit(TreeTableEvent::<K, Id>::RequestSort(
+                                            cx.emit(VirtualTreeTableEvent::<K, Id>::RequestSort(
                                                 column_key.clone(),
                                                 next_direction,
                                             ));
@@ -479,9 +304,15 @@ where
                             )
                             .class("table-header-cell")
                             .toggle_class("sortable", sortable)
+                            .toggle_class("not-sortable", sortable.map(|value| !*value))
                             .toggle_class(
                                 "resizable",
                                 resizable_columns.map(move |enabled| *enabled && resizable.get()),
+                            )
+                            .toggle_class(
+                                "not-resizable",
+                                resizable_columns
+                                    .map(move |enabled| !*enabled || !resizable.get()),
                             )
                             .min_width(min_width.map(|value| Pixels(*value)));
                         }
@@ -492,35 +323,42 @@ where
                 .width(Stretch(1.0))
                 .min_width(Auto);
 
-                List::new(cx, visible_rows, move |cx, row_index, row| {
-                    let row: Memo<TreeTableRow<T, Id>> = Memo::new(move |_| row.get());
+                VirtualList::new(cx, visible_rows, item_height, move |cx, row_index, row| {
                     HStack::new(cx, |cx| {
-                        for (column_index, column) in body_columns.iter().enumerate() {
-                            let width_signal = column.width;
-                            let min_width = column.min_width;
-                            let cell_content = column.cell_content.clone();
-                            let is_last_column = column_index + 1 == body_columns.len();
+                        column_signal.with(|columns| {
+                            let visible_columns = columns
+                                .deref()
+                                .iter()
+                                .filter(|column| !column.hidden.get())
+                                .collect::<Vec<_>>();
 
-                            if is_last_column {
-                                VStack::new(cx, move |cx| {
-                                    cell_content(cx, row);
-                                })
-                                .class("table-cell")
-                                .toggle_class("tree-table-cell", column_index == 0)
-                                .width(Stretch(1.0))
-                                .min_width(Auto)
-                                .height(Auto);
-                            } else {
-                                VStack::new(cx, move |cx| {
-                                    cell_content(cx, row);
-                                })
-                                .class("table-cell")
-                                .toggle_class("tree-table-cell", column_index == 0)
-                                .width(width_signal.map(|value| Pixels(*value)))
-                                .min_width(min_width.map(|value| Pixels(*value)))
-                                .height(Auto);
+                            for (column_index, column) in visible_columns.iter().enumerate() {
+                                let width_signal = column.width;
+                                let min_width = column.min_width;
+                                let cell_content = column.cell_content.clone();
+                                let is_last_column = column_index + 1 == visible_columns.len();
+
+                                if is_last_column {
+                                    VStack::new(cx, move |cx| {
+                                        cell_content(cx, row.map(|value| value.clone()));
+                                    })
+                                    .class("table-cell")
+                                    .toggle_class("tree-table-cell", column_index == 0)
+                                    .width(Stretch(1.0))
+                                    .min_width(Auto)
+                                    .height(Percentage(100.0));
+                                } else {
+                                    VStack::new(cx, move |cx| {
+                                        cell_content(cx, row.map(|value| value.clone()));
+                                    })
+                                    .class("table-cell")
+                                    .toggle_class("tree-table-cell", column_index == 0)
+                                    .width(width_signal.map(|value| Pixels(*value)))
+                                    .min_width(min_width.map(|value| Pixels(*value)))
+                                    .height(Percentage(100.0));
+                                }
                             }
-                        }
+                        });
                     })
                     .class("table-row")
                     .class("tree-table-row")
@@ -529,13 +367,11 @@ where
                     .toggle_class("expanded", row.map(|value| value.expanded))
                     .toggle_class("collapsible", row.map(|value| value.has_children))
                     .alignment(Alignment::Left)
-                    .height(Auto)
+                    .height(Percentage(100.0))
                     .width(Stretch(1.0))
                     .min_width(Auto)
                     .role(Role::Row)
-                    .expanded(row.map(|value| value.expanded));
-
-                    Divider::new(cx).width(Stretch(1.0));
+                    .expanded(row.map(|value| value.expanded))
                 })
                 .width(Stretch(1.0))
                 .min_width(Auto)
@@ -546,11 +382,15 @@ where
                 .selection(selected_indices)
                 .selectable(selectable)
                 .selection_follows_focus(selection_follows_focus)
-                .on_select(move |cx, index| cx.emit(TreeTableEvent::<K, Id>::SelectRow(index)));
+                .on_select(move |cx, index| {
+                    cx.emit(VirtualTreeTableEvent::<K, Id>::SelectRow(index))
+                });
             });
         })
         .class("table")
+        .class("virtual-table")
         .class("tree-table")
+        .class("virtual-tree-table")
         .navigable(true)
         .role(Role::Table)
     }
@@ -574,26 +414,27 @@ where
     }
 }
 
-impl<T, V, Id, K> View for TreeTable<T, V, Id, K>
+impl<T, V, Id, H, K> View for VirtualTreeTable<T, V, Id, H, K>
 where
     V: Deref<Target = [T]> + Clone + 'static,
     T: PartialEq + Clone + 'static,
     Id: Eq + Hash + Clone + Send + Sync + 'static,
+    H: Clone + View,
     K: Clone + PartialEq + Send + Sync + 'static,
 {
     fn element(&self) -> Option<&'static str> {
-        Some("tree-table")
+        Some("virtual-tree-table")
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|tree_event: &TreeTableEvent<K, Id>, _| match tree_event {
-            TreeTableEvent::RequestSort(key, direction) => {
+        event.map(|table_event: &VirtualTreeTableEvent<K, Id>, _| match table_event {
+            VirtualTreeTableEvent::RequestSort(column, direction) => {
                 if let Some(callback) = &self.on_sort {
-                    (callback)(cx, key.clone(), *direction);
+                    (callback)(cx, column.clone(), *direction);
                 }
             }
 
-            TreeTableEvent::SelectRow(index) => {
+            VirtualTreeTableEvent::SelectRow(index) => {
                 let visible_rows = flatten_visible_rows(
                     &self.rows.get(),
                     &*self.row_id,
@@ -608,11 +449,7 @@ where
                 }
             }
 
-            TreeTableEvent::ToggleRow(row_id, next) => {
-                self.emit_toggle(cx, row_id.clone(), *next);
-            }
-
-            TreeTableEvent::ExpandSelected => {
+            VirtualTreeTableEvent::ExpandSelected => {
                 if let Some(row) = self.selected_visible_row() {
                     if row.has_children && !row.expanded {
                         self.emit_toggle(cx, row.id, true);
@@ -620,7 +457,7 @@ where
                 }
             }
 
-            TreeTableEvent::CollapseSelected => {
+            VirtualTreeTableEvent::CollapseSelected => {
                 if let Some(row) = self.selected_visible_row() {
                     if row.has_children && row.expanded {
                         self.emit_toggle(cx, row.id, false);
@@ -629,16 +466,20 @@ where
                     }
                 }
             }
+
+            VirtualTreeTableEvent::ToggleRow(row_id, next) => {
+                self.emit_toggle(cx, row_id.clone(), *next);
+            }
         });
 
         event.map(|cell_event: &TreeTableFirstCellEvent<Id>, _| {
             let TreeTableFirstCellEvent::Toggle(id, next) = cell_event;
-            self.emit_toggle(cx, id.clone(), *next);
+            cx.emit(VirtualTreeTableEvent::<K, Id>::ToggleRow(id.clone(), *next));
         });
     }
 }
 
-pub trait TreeTableModifiers<Id, K = String>: Sized
+pub trait VirtualTreeTableModifiers<Id, K = String>: Sized
 where
     Id: Eq + Hash + Clone + Send + Sync + 'static,
     K: Clone + PartialEq + Send + Sync + 'static,
@@ -686,18 +527,22 @@ where
         F: 'static + Fn(&mut EventContext, Id, bool);
 }
 
-impl<T, V, Id, K> TreeTableModifiers<Id, K> for Handle<'_, TreeTable<T, V, Id, K>>
+impl<T, V, Id, H, K> VirtualTreeTableModifiers<Id, K>
+    for Handle<'_, VirtualTreeTable<T, V, Id, H, K>>
 where
     V: Deref<Target = [T]> + Clone + 'static,
     T: PartialEq + Clone + 'static,
     Id: Eq + Hash + Clone + Send + Sync + 'static,
+    H: Clone + View,
     K: Clone + PartialEq + Send + Sync + 'static,
 {
     fn sort_state(self, sort_state: impl Res<Option<TableSortState<K>>> + 'static) -> Self {
         let sort_state = sort_state.to_signal(self.cx);
         self.bind(sort_state, move |handle| {
             let sort_state = sort_state.get();
-            handle.modify(|table: &mut TreeTable<T, V, Id, K>| table.sort_state.set(sort_state));
+            handle.modify(|table: &mut VirtualTreeTable<T, V, Id, H, K>| {
+                table.sort_state.set(sort_state)
+            });
         })
     }
 
@@ -708,7 +553,9 @@ where
         let flag = flag.to_signal(self.cx);
         self.bind(flag, move |handle| {
             let flag = flag.get().into();
-            handle.modify(|table: &mut TreeTable<T, V, Id, K>| table.resizable_columns.set(flag));
+            handle.modify(|table: &mut VirtualTreeTable<T, V, Id, H, K>| {
+                table.resizable_columns.set(flag)
+            });
         })
     }
 
@@ -719,7 +566,9 @@ where
         let cycle = cycle.to_signal(self.cx);
         self.bind(cycle, move |handle| {
             let cycle = cycle.get().into();
-            handle.modify(|table: &mut TreeTable<T, V, Id, K>| table.sort_cycle.set(cycle));
+            handle.modify(|table: &mut VirtualTreeTable<T, V, Id, H, K>| {
+                table.sort_cycle.set(cycle)
+            });
         })
     }
 
@@ -730,7 +579,9 @@ where
         let selectable = selectable.to_signal(self.cx);
         self.bind(selectable, move |handle| {
             let selectable = selectable.get().into();
-            handle.modify(|table: &mut TreeTable<T, V, Id, K>| table.selectable.set(selectable));
+            handle.modify(|table: &mut VirtualTreeTable<T, V, Id, H, K>| {
+                table.selectable.set(selectable)
+            });
         })
     }
 
@@ -741,7 +592,7 @@ where
         let flag = flag.to_signal(self.cx);
         self.bind(flag, move |handle| {
             let flag = flag.get().into();
-            handle.modify(|table: &mut TreeTable<T, V, Id, K>| {
+            handle.modify(|table: &mut VirtualTreeTable<T, V, Id, H, K>| {
                 table.selection_follows_focus.set(flag)
             });
         })
@@ -754,7 +605,9 @@ where
         let selected_row_ids = selected_row_ids.to_signal(self.cx);
         self.bind(selected_row_ids, move |handle| {
             let ids = selected_row_ids.with(|ids| ids.deref().to_vec());
-            handle.modify(|table: &mut TreeTable<T, V, Id, K>| table.selected_row_ids.set(ids));
+            handle.modify(|table: &mut VirtualTreeTable<T, V, Id, H, K>| {
+                table.selected_row_ids.set(ids)
+            });
         })
     }
 
@@ -765,7 +618,9 @@ where
         let expanded_row_ids = expanded_row_ids.to_signal(self.cx);
         self.bind(expanded_row_ids, move |handle| {
             let ids = expanded_row_ids.with(|ids| ids.deref().to_vec());
-            handle.modify(|table: &mut TreeTable<T, V, Id, K>| table.expanded_row_ids.set(ids));
+            handle.modify(|table: &mut VirtualTreeTable<T, V, Id, H, K>| {
+                table.expanded_row_ids.set(ids)
+            });
         })
     }
 
@@ -773,14 +628,16 @@ where
     where
         F: 'static + Fn(&mut EventContext, K, TableSortDirection) + Send + Sync,
     {
-        self.modify(|table: &mut TreeTable<T, V, Id, K>| table.on_sort = Some(Arc::new(callback)))
+        self.modify(|table: &mut VirtualTreeTable<T, V, Id, H, K>| {
+            table.on_sort = Some(Arc::new(callback))
+        })
     }
 
     fn on_row_select<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, Id),
     {
-        self.modify(|table: &mut TreeTable<T, V, Id, K>| {
+        self.modify(|table: &mut VirtualTreeTable<T, V, Id, H, K>| {
             table.on_row_select = Some(Box::new(callback))
         })
     }
@@ -789,7 +646,7 @@ where
     where
         F: 'static + Fn(&mut EventContext, Id, bool),
     {
-        self.modify(|table: &mut TreeTable<T, V, Id, K>| {
+        self.modify(|table: &mut VirtualTreeTable<T, V, Id, H, K>| {
             table.on_row_toggle = Some(Box::new(callback))
         })
     }
