@@ -239,7 +239,7 @@ impl DrawSurface for WinState {
     }
 
     fn swap_buffers(&mut self, _dirty_rect: BoundingBox) {
-        self.gr_context.flush_submit_and_sync_cpu();
+        self.gr_context.flush_and_submit();
         self.gl_surface.swap_buffers(&self.gl_context).expect("Failed to swap buffers");
     }
 

@@ -432,16 +432,10 @@ impl Application {
     }
 
     fn redraw_window(&mut self, window_id: WindowId) {
-        //if self.resize_relayout_windows.remove(&window_id) {
-        //self.event_manager.flush_events(self.cx.context(), |_| {});
-        self.cx.process_style_updates();
-        // if self.cx.process_animations()
-        //     && let Some(window) = self.windows.get(&window_id)
-        // {
-        //     window.window().request_redraw();
-        // }
-        self.cx.process_visual_updates();
-        //}
+        if self.resize_relayout_windows.remove(&window_id) {
+            self.cx.process_style_updates();
+            self.cx.process_visual_updates();
+        }
 
         let Some(window) = self.windows.get_mut(&window_id) else {
             return;
