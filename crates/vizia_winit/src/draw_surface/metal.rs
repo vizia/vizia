@@ -1,12 +1,12 @@
 use std::{error::Error, sync::Arc};
 
 use skia_safe::{
+    ColorSpace, ColorType, Surface,
     gpu::{
-        backend_render_targets, direct_contexts,
+        DirectContext, SurfaceOrigin, backend_render_targets, direct_contexts,
         mtl::{BackendContext, TextureInfo},
-        surfaces, DirectContext, SurfaceOrigin,
+        surfaces,
     },
-    ColorSpace, ColorType, Surface, SurfaceProps,
 };
 
 use vizia_core::prelude::{BoundingBox, Entity};
@@ -39,14 +39,16 @@ pub struct WinState {
     window: Arc<Window>,
 
     vsync: bool,
+    presents_with_transaction: bool,
     is_initially_cloaked: bool,
+    current_size: PhysicalSize<u32>,
 
     surface: Option<(Surface, Retained<Drawable>)>,
-    dirty_surface: Option<(Surface, Retained<Drawable>)>,
+    dirty_surface: Option<Surface>,
 
     direct_context: DirectContext,
 
-    metal_layers: [Retained<CAMetalLayer>; 2],
+    metal_layer: Retained<CAMetalLayer>,
     queue: Retained<CommandQueue>,
     device: Retained<Device>,
     view: Retained<NSView>,
@@ -67,48 +69,51 @@ impl DrawSurface for WinState {
 
     fn surfaces_mut(&mut self) -> Option<(&mut Surface, &mut Surface)> {
         if self.surface.is_none() {
-            self.surface = Some(self.create_surface(0));
+            self.surface = Some(self.create_surface());
         }
         if self.dirty_surface.is_none() {
-            self.dirty_surface = Some(self.create_surface(1));
+            self.dirty_surface = Some(self.create_dirty_surface());
         }
 
         let (surface, _) = self.surface.as_mut()?;
-        let (dirty_surface, _) = self.dirty_surface.as_mut()?;
+        let dirty_surface = self.dirty_surface.as_mut()?;
 
         Some((surface, dirty_surface))
     }
 
     fn swap_buffers(&mut self, _dirty_rect: BoundingBox) {
-        let layer = &self.metal_layers[0];
-        self.view.setWantsLayer(true);
-        self.view.setLayer(Some(layer));
-
         let (surface, drawable) = self.surface.as_mut().unwrap();
         self.direct_context.flush_and_submit_surface(surface, None);
 
         let command_buffer = self.queue.commandBuffer().unwrap();
         command_buffer.presentDrawable(drawable);
         command_buffer.commit();
-
-        self.dirty_surface = self.surface.take();
-        self.metal_layers.swap(0, 1);
-    }
-
-    fn resize(&mut self, size: PhysicalSize<u32>) -> bool {
-        let [w, h] = self.drawable_size();
-
-        if size.width == w && size.height == h {
-            return false;
-        }
-        if size.width == 0 || size.height == 0 {
-            return false;
+        if self.presents_with_transaction {
+            command_buffer.waitUntilScheduled();
         }
 
         self.surface = None;
+    }
+
+    fn set_presents_with_transaction(&mut self, enabled: bool) {
+        self.presents_with_transaction = enabled;
+        self.metal_layer.setPresentsWithTransaction(enabled);
+    }
+
+    fn resize(&mut self, size: PhysicalSize<u32>) -> bool {
+        if size.width == 0 || size.height == 0 {
+            return false;
+        }
+        if size == self.current_size {
+            return false;
+        }
+
+        self.current_size = size;
+        self.surface = None;
         self.dirty_surface = None;
 
-        self.metal_layers = create_metal_layers(&self.device, self.vsync, size);
+        let (width, height) = size.into();
+        self.metal_layer.setDrawableSize(NSSize { width, height });
 
         true
     }
@@ -128,19 +133,23 @@ impl WinState {
         let vsync = window_description.vsync;
 
         let window = event_loop.create_window(window_attributes.clone())?;
+        let current_size = window.inner_size();
 
         let RawWindowHandle::AppKit(handle) = window.window_handle().unwrap().as_raw() else {
             unreachable!();
         };
 
-        let view = unsafe {
+        let view: Retained<NSView> = unsafe {
             Retained::retain(handle.ns_view.as_ptr().cast())
                 .expect("Failed to get NSView from Window.")
         };
 
         let device = MTLCreateSystemDefaultDevice().expect("Failed to get default system device.");
         let queue = device.newCommandQueue().expect("Failed to create a command queue.");
-        let metal_layers = create_metal_layers(&device, vsync, window.inner_size());
+        let metal_layer = create_metal_layer(&device, vsync, window.inner_size());
+
+        view.setWantsLayer(true);
+        view.setLayer(Some(&metal_layer));
 
         let backend_context = unsafe {
             BackendContext::new(
@@ -155,14 +164,16 @@ impl WinState {
             window: window.into(),
 
             vsync,
+            presents_with_transaction: false,
             is_initially_cloaked: false,
+            current_size,
 
             surface: None,
             dirty_surface: None,
 
             direct_context,
 
-            metal_layers,
+            metal_layer,
 
             queue,
             device,
@@ -173,26 +184,18 @@ impl WinState {
     }
 
     pub fn drawable_size(&self) -> [u32; 2] {
-        let size = self.metal_layers[0].drawableSize();
+        let size = self.metal_layer.drawableSize();
         [size.width as u32, size.height as u32]
     }
 
-    fn create_surface(&mut self, index: usize) -> (Surface, Retained<Drawable>) {
-        let layer = &self.metal_layers[index];
-
-        let drawable = layer.nextDrawable().unwrap();
+    fn create_surface(&mut self) -> (Surface, Retained<Drawable>) {
+        let drawable = self.metal_layer.nextDrawable().unwrap();
         let texture = Retained::as_ptr(&drawable.texture());
         let texture_info = unsafe { TextureInfo::new(texture.cast()) };
 
+        let [w, h] = self.drawable_size();
         let backend_render_target =
-            backend_render_targets::make_mtl(self.window.inner_size().into(), &texture_info);
-
-        let surface_props = SurfaceProps::new_with_text_properties(
-            Default::default(),
-            Default::default(),
-            0.5,
-            0.0,
-        );
+            backend_render_targets::make_mtl((w as i32, h as i32), &texture_info);
 
         let surface = surfaces::wrap_backend_render_target(
             &mut self.direct_context,
@@ -200,7 +203,7 @@ impl WinState {
             SurfaceOrigin::TopLeft,
             ColorType::BGRA8888,
             ColorSpace::new_srgb(),
-            Some(&surface_props),
+            None,
         )
         .unwrap();
 
@@ -208,32 +211,36 @@ impl WinState {
 
         (surface, drawable)
     }
+
+    fn create_dirty_surface(&mut self) -> Surface {
+        let [w, h] = self.drawable_size();
+        let (surface, _) = self.surface.as_mut().unwrap();
+        surface.new_surface_with_dimensions((w as i32, h as i32)).unwrap()
+    }
 }
 
-fn create_metal_layers(
+fn create_metal_layer(
     device: &Device,
     vsync: bool,
     size: PhysicalSize<u32>,
-) -> [Retained<CAMetalLayer>; 2] //
+) -> Retained<CAMetalLayer> //
 {
     let mtm = MainThreadMarker::new().unwrap();
 
     let (width, height) = size.into();
     let size = NSSize { width, height };
 
-    std::array::from_fn(|_| {
-        let layer = CAMetalLayer::init(mtm.alloc());
-        layer.setDevice(Some(device));
-        layer.setDisplaySyncEnabled(vsync);
-        layer.setPixelFormat(MTLPixelFormat::BGRA8Unorm);
-        layer.setPresentsWithTransaction(false);
-        layer.setDrawableSize(size);
+    let layer = CAMetalLayer::init(mtm.alloc());
+    layer.setDevice(Some(device));
+    layer.setDisplaySyncEnabled(vsync);
+    layer.setPixelFormat(MTLPixelFormat::BGRA8Unorm);
+    layer.setPresentsWithTransaction(false);
+    layer.setDrawableSize(size);
 
-        // Disabling this option allows Skia's Blend Mode to work.
-        // More about: https://developer.apple.com/documentation/quartzcore/cametallayer/1478168-framebufferonly
-        layer.setFramebufferOnly(false);
+    // Disabling this option allows Skia's Blend Mode to work.
+    // More about: https://developer.apple.com/documentation/quartzcore/cametallayer/1478168-framebufferonly
+    layer.setFramebufferOnly(false);
 
-        // layer.setNeedsDisplay();
-        layer
-    })
+    // layer.setNeedsDisplay();
+    layer
 }
