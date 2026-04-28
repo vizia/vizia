@@ -1,6 +1,9 @@
 use std::{ops::Deref, rc::Rc, sync::Arc};
 
-use crate::prelude::*;
+use crate::{
+    icons::{ICON_ARROWS_SORT, ICON_SORT_ASCENDING, ICON_SORT_DESCENDING},
+    prelude::*,
+};
 
 /// Sort direction for a table column.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -74,14 +77,19 @@ impl TableHeader {
             let title = title.into();
             Label::new(cx, title).class("table-header-title").width(Stretch(1.0)).min_width(Auto);
             let sort_indicator = Memo::new(move |_| match sort_direction.get() {
-                TableSortDirection::Ascending => "^".to_string(),
-                TableSortDirection::Descending => "v".to_string(),
-                TableSortDirection::None => "·".to_string(),
+                TableSortDirection::Ascending => ICON_SORT_ASCENDING,
+                TableSortDirection::Descending => ICON_SORT_DESCENDING,
+                TableSortDirection::None => ICON_ARROWS_SORT,
             });
 
-            Label::new(cx, sort_indicator).class("table-sort-indicator").text_wrap(false);
+            Button::new(cx, move |cx| Svg::new(cx, sort_indicator))
+                .class("table-sort-indicator")
+                .variant(ButtonVariant::Text);
         })
         .layout_type(LayoutType::Row)
+        .alignment(Alignment::Left)
+        .padding_left(Pixels(8.0))
+        .padding_right(Pixels(8.0))
         .width(Stretch(1.0))
         .min_width(Auto)
     }
