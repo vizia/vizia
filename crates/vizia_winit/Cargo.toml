@@ -46,7 +46,7 @@ vizia_reactive.workspace = true
 vizia_window.workspace = true
 
 accesskit = {workspace = true, optional = true}
-winit = { workspace = true, features = ["rwh_05"] }
+winit = { workspace = true, features = ["rwh_06"] }
 skia-safe = { workspace = true }
 copypasta = {workspace = true, optional = true, default-features = false }
 accesskit_winit = { workspace = true, optional = true}
