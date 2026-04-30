@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{any::Any, path::PathBuf, sync::Arc};
 
 use crate::{entity::Entity, environment::ThemeMode, layout::cache::GeoChanged};
 use vizia_input::{Code, Key, MouseButton};
@@ -12,6 +12,25 @@ pub enum DropData {
     File(PathBuf),
     ///  Entity ID of a dropped entity.
     Id(Entity),
+    /// Internal payload used by reorderable list drag/drop.
+    Reorder { source_list: Entity, source_item: Entity, source_index: usize },
+    /// Any custom drag/drop payload.
+    General(Arc<dyn DropPayload>),
+}
+
+/// Trait object bounds for general drop payloads.
+pub trait DropPayload: Any + Send + Sync + std::fmt::Debug {}
+
+impl<T> DropPayload for T where T: Any + Send + Sync + std::fmt::Debug {}
+
+impl DropData {
+    /// Creates a general-purpose drop payload.
+    pub fn general<T>(value: T) -> Self
+    where
+        T: Any + Send + Sync + std::fmt::Debug,
+    {
+        DropData::General(Arc::new(value))
+    }
 }
 
 impl From<Entity> for DropData {
@@ -23,6 +42,12 @@ impl From<Entity> for DropData {
 impl From<PathBuf> for DropData {
     fn from(value: PathBuf) -> Self {
         DropData::File(value)
+    }
+}
+
+impl From<Arc<dyn DropPayload>> for DropData {
+    fn from(value: Arc<dyn DropPayload>) -> Self {
+        DropData::General(value)
     }
 }
 

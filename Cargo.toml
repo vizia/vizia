@@ -270,6 +270,10 @@ name = "list"
 path = "examples/views/list.rs"
 
 [[example]]
+name = "reorderable_list"
+path = "examples/reorderable_list.rs"
+
+[[example]]
 name = "menu"
 path = "examples/views/menu.rs"
 
