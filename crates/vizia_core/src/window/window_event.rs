@@ -66,6 +66,12 @@ pub enum WindowEvent {
     MouseEnter,
     /// Emitted when the mouse cursor leaves an entity.
     MouseLeave,
+    /// Emitted when drag data enters the hovered entity.
+    DragEnter,
+    /// Emitted when drag data leaves the previously hovered entity.
+    DragLeave,
+    /// Emitted when drag data moves over the currently hovered entity.
+    DragMove(f32, f32),
     /// Emitted when an entity gains keyboard focus.
     FocusIn,
     /// Emitted when an entity loses keyboard focus.

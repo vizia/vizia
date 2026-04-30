@@ -87,6 +87,7 @@ pub mod prelude {
     pub use super::localization::{Localized, ToStringLocalized, number_with_fraction, percentage};
     pub use super::modifiers::{
         AbilityModifiers, AccessibilityModifiers, ActionModifiers, ControlModifiers, ControlSize,
+        DragModifiers,
         LayoutModifiers, LinearGradientBuilder, ShadowBuilder, StyleModifiers, TextModifiers,
     };
     pub use super::resource::{ImageId, ImageRetentionPolicy};

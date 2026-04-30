@@ -87,6 +87,7 @@ pub struct EventContext<'a> {
     clipboard: &'a mut Box<dyn ClipboardProvider>,
     pub(crate) event_proxy: &'a mut Option<Box<dyn crate::context::EventProxy>>,
     pub(crate) drop_data: &'a mut Option<DropData>,
+    pub(crate) active_drag_view: &'a mut Option<Entity>,
     pub windows: &'a mut HashMap<Entity, WindowState>,
 }
 
@@ -139,6 +140,7 @@ impl<'a> EventContext<'a> {
             clipboard: &mut cx.clipboard,
             event_proxy: &mut cx.event_proxy,
             drop_data: &mut cx.drop_data,
+            active_drag_view: &mut cx.active_drag_view,
             windows: &mut cx.windows,
         }
     }
@@ -172,6 +174,7 @@ impl<'a> EventContext<'a> {
             clipboard: &mut cx.clipboard,
             event_proxy: &mut cx.event_proxy,
             drop_data: &mut cx.drop_data,
+            active_drag_view: &mut cx.active_drag_view,
             windows: &mut cx.windows,
         }
     }
@@ -260,6 +263,21 @@ impl<'a> EventContext<'a> {
     /// Returns true if in a drop state.
     pub fn has_drop_data(&self) -> bool {
         self.drop_data.is_some()
+    }
+
+    /// Returns the current drop payload, if any.
+    pub fn drop_data(&self) -> Option<&DropData> {
+        self.drop_data.as_ref()
+    }
+
+    /// Returns the active drag preview view entity, if any.
+    pub fn active_drag_view(&self) -> Option<Entity> {
+        *self.active_drag_view
+    }
+
+    /// Sets the active drag preview view entity.
+    pub fn set_active_drag_view(&mut self, drag_view: Option<Entity>) {
+        *self.active_drag_view = drag_view;
     }
 
     /// Returns the bounds of the current view.

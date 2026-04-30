@@ -106,6 +106,7 @@ pub struct Context {
     pub(crate) captured: Entity,
     pub(crate) triggered: Entity,
     pub(crate) hovered: Entity,
+    pub(crate) drag_hovered: Entity,
     pub(crate) focused: Entity,
     pub(crate) focus_stack: Vec<Entity>,
     pub(crate) cursor_icon_locked: bool,
@@ -130,6 +131,7 @@ pub struct Context {
     pub ime_state: ImeState,
 
     pub(crate) drop_data: Option<DropData>,
+    pub(crate) active_drag_view: Option<Entity>,
 }
 
 impl Default for Context {
@@ -168,6 +170,7 @@ impl Context {
             captured: Entity::null(),
             triggered: Entity::null(),
             hovered: Entity::root(),
+            drag_hovered: Entity::null(),
             focused: Entity::root(),
             focus_stack: Vec::new(),
             cursor_icon_locked: false,
@@ -214,6 +217,7 @@ impl Context {
             ime_state: Default::default(),
 
             drop_data: None,
+            active_drag_view: None,
         };
 
         result.tree.set_window(Entity::root(), true);
