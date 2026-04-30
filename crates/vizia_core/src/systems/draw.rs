@@ -6,6 +6,10 @@ use std::collections::BinaryHeap;
 use vizia_storage::{DrawChildIterator, LayoutTreeIterator};
 use vizia_style::BlendMode;
 
+fn should_apply_entity_clip(style: &Style, entity: Entity) -> bool {
+    !style.ignore_clipping.get(entity).copied().unwrap_or(false)
+}
+
 pub(crate) fn draw_system(
     cx: &mut Context,
     window_entity: Entity,
@@ -253,7 +257,9 @@ fn draw_entity(
 
     canvas.save();
     if let Some(Some(clip_path)) = cx.cache.clip_path.get(current) {
-        canvas.clip_path(clip_path, ClipOp::Intersect, true);
+        if should_apply_entity_clip(cx.style, current) {
+            canvas.clip_path(clip_path, ClipOp::Intersect, true);
+        }
     }
 
     if let Some(transform) = cx.cache.transform.get(current) {

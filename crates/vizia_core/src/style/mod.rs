@@ -239,6 +239,9 @@ pub struct Style {
     // Z Order
     pub(crate) z_index: StyleSet<i32>,
 
+    // Controls whether an entity should ignore ancestor clipping during drawing.
+    pub(crate) ignore_clipping: StyleSet<bool>,
+
     // Clipping
     pub(crate) clip_path: AnimatableSet<ClipPath>,
 
@@ -2447,6 +2450,7 @@ impl Style {
         self.opacity.remove(entity);
         // Z Order
         self.z_index.remove(entity);
+        self.ignore_clipping.remove(entity);
         // Clipping
         self.clip_path.remove(entity);
 

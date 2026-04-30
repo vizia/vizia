@@ -91,7 +91,9 @@ pub(crate) fn clipping_system(cx: &mut Context) {
 
         let clip_path = clip_path.map(|clip_path| clip_path.make_transform(&transform));
 
-        let parent_clip_path = if cx.tree.is_window(entity) {
+        let ignore_clipping = cx.style.ignore_clipping.get(entity).copied().unwrap_or(false);
+
+        let parent_clip_path = if ignore_clipping || cx.tree.is_window(entity) {
             None
         } else {
             cx.cache.clip_path.get(parent).cloned().flatten()
