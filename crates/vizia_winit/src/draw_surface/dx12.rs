@@ -71,7 +71,7 @@ impl WinState {
         let window = Arc::new(event_loop.create_window(window_attributes.clone())?);
 
         let inner_size = window.inner_size();
-        let buffer_size = window.current_monitor().map_or(inner_size, |monitor| monitor.size());
+        let buffer_size = inner_size;
 
         let (factory, adapter, device) =
             get_hardware_adapter_and_device() //
@@ -134,7 +134,8 @@ impl WinState {
 
         self.surfaces.clear();
         self.surfaces.extend((0..BUFFER_COUNT).map(|i| {
-            let resource = unsafe { self.swap_chain.GetBuffer(i).unwrap() };
+            let resource =
+                unsafe { self.swap_chain.GetBuffer(i).expect("Failed to get swap chain buffer") };
 
             let mut info = TextureResourceInfo::from_resource(resource);
             info.format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -156,7 +157,7 @@ impl WinState {
                 ColorSpace::new_srgb(),
                 Some(&surface_props),
             )
-            .unwrap();
+            .expect("Failed to wrap backend render target");
 
             (surface, backend_render_target)
         }));
@@ -182,9 +183,12 @@ impl DrawSurface for WinState {
     }
 
     fn surfaces_mut(&mut self) -> Option<(&mut Surface, &mut Surface)> {
+        if self.surfaces.len() < 2 {
+            return None;
+        }
         let index = self.current_surface_index();
 
-        let [(s0, _), (s1, _)] = self.surfaces.as_mut_slice() else { unreachable!() };
+        let [(s0, _), (s1, _)] = self.surfaces.as_mut_slice() else { return None };
 
         Some(if index == 0 { (s0, s1) } else { (s1, s0) })
     }
@@ -210,18 +214,20 @@ impl DrawSurface for WinState {
 
             self.direct_context.flush_and_submit_surface(surface, None);
 
-            self.swap_chain
-                .Present1(
-                    self.sync_interval,
-                    self.present_flags,
-                    &DXGI_PRESENT_PARAMETERS {
-                        DirtyRectsCount: 1,
-                        pDirtyRects: rects.as_mut_ptr(),
-                        pScrollRect: std::ptr::null_mut(),
-                        pScrollOffset: std::ptr::null_mut(),
-                    },
-                )
-                .unwrap();
+            let hr = self.swap_chain.Present1(
+                self.sync_interval,
+                self.present_flags,
+                &DXGI_PRESENT_PARAMETERS {
+                    DirtyRectsCount: 1,
+                    pDirtyRects: rects.as_mut_ptr(),
+                    pScrollRect: std::ptr::null_mut(),
+                    pScrollOffset: std::ptr::null_mut(),
+                },
+            );
+            if hr.is_err() {
+                // Log device errors but don't panic - the device may recover
+                eprintln!("Failed to present frame: {:?}", hr);
+            }
         }
     }
 
@@ -246,31 +252,31 @@ impl DrawSurface for WinState {
         }
 
         self.inner_size = size;
+        self.buffer_size = size;
 
-        // We only need to resize the buffers if the inner size is larger than the buffer size.
+        // Flush, submit, and block until the GPU is idle before releasing D3D12 buffer
+        // references. Without a CPU sync, ResizeBuffers may fail with DXGI_ERROR_INVALID_CALL
+        // because the GPU is still reading from the back buffers.
+        self.direct_context.flush_submit_and_sync_cpu();
+        self.direct_context.free_gpu_resources();
+        self.surfaces.clear();
 
-        if self.inner_size.width > self.buffer_size.width
-            || self.inner_size.height > self.buffer_size.height
-        {
-            self.buffer_size =
-                self.window.current_monitor().map_or(self.inner_size, |monitor| monitor.size());
+        // Re-use the same flags the swap chain was created with.
+        let mut flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
+        if (self.present_flags & DXGI_PRESENT_ALLOW_TEARING) != DXGI_PRESENT(0) {
+            flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+        }
 
-            // All references to our buffers must be released before calling `ResizeBuffers`.
-
-            self.direct_context.free_gpu_resources();
-            self.direct_context.reset(None);
-            self.surfaces.clear();
-
-            unsafe {
-                self.swap_chain
-                    .ResizeBuffers(
-                        BUFFER_COUNT,
-                        self.buffer_size.width,
-                        self.buffer_size.height,
-                        DXGI_FORMAT_R8G8B8A8_UNORM,
-                        Default::default(),
-                    )
-                    .unwrap();
+        unsafe {
+            if let Err(e) = self.swap_chain.ResizeBuffers(
+                BUFFER_COUNT,
+                self.buffer_size.width,
+                self.buffer_size.height,
+                DXGI_FORMAT_R8G8B8A8_UNORM,
+                flags,
+            ) {
+                eprintln!("Failed to resize swap chain buffers: {:?}", e);
+                return false;
             }
         }
 
@@ -396,7 +402,10 @@ fn create_swap_chain(
 
         WaitForSingleObject(waitable, 1000);
 
-        swap_chain.Present(sync_interval, present_flags).unwrap();
+        let hr = swap_chain.Present(sync_interval, present_flags);
+        if hr.is_err() {
+            eprintln!("Initial swap chain present failed: {:?}", hr);
+        }
 
         Ok((swap_chain, waitable))
     }
