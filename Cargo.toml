@@ -83,7 +83,7 @@ rayon = "1.11"
 reqwest = { version = "0.13", features = ["json", "query"] }
 selectors = "0.37"
 serde = { version = "1.0", features = ["derive"] }
-skia-safe = { version = "0.93", features = ["gl", "textlayout", "svg"] }
+skia-safe = { version = "0.97", features = ["gl", "textlayout", "svg"] }
 sys-locale = "0.3"
 tokio = { version = "1.52", features = ["rt-multi-thread"] }
 unic-langid = { version = "0.9.6", features = ["macros"] }
@@ -93,12 +93,16 @@ windows-sys = { version = "0.59", default-features = false, features = ["Win32_G
 winit = { version = "0.30", default-features = false }
 
 [target."cfg(target_os = \"macos\")".dependencies.skia-safe]
-version = "0.93.1"
+version = "0.97"
 features = ["textlayout", "svg", "metal", "gl"]
 
 [target."cfg(target_os = \"linux\")".dependencies.skia-safe]
-version = "0.93.1"
+version = "0.97"
 features = ["textlayout", "svg", "x11", "wayland", "gl"]
+
+[target."cfg(target_os = \"windows\")".dependencies.skia-safe]
+version = "0.97"
+features = ["textlayout", "svg", "d3d", "vulkan", "gl"]
 
 [workspace.lints.rust]
 # future_incompatible = "allow"
