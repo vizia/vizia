@@ -31,6 +31,7 @@ vizia_baseview = { workspace = true, optional = true }
 chrono.workspace = true
 log.workspace = true
 fern.workspace = true
+ego-tree.workspace = true
 
 [workspace]
 members = [ "crates/*", "examples/todo", "examples/widget_gallery", "examples/gallery"]
@@ -66,6 +67,7 @@ cssparser = "0.35"
 cssparser-color = "0.3"
 dashmap = { version = "6.1", features = ["inline"] }
 fern = "0.7"
+ego-tree = "0.10"
 fluent-bundle = "0.15"
 fluent-langneg = "0.13"
 fxhash = "0.2"
@@ -364,5 +366,13 @@ name = "virtual_table"
 path = "examples/views/virtual_table.rs"
 
 [[example]]
+name = "virtual_tree_table"
+path = "examples/views/virtual_tree_table.rs"
+
+[[example]]
 name = "table"
 path = "examples/views/table.rs"
+
+[[example]]
+name = "tree_table"
+path = "examples/views/tree_table.rs"

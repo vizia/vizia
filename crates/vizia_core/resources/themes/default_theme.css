@@ -554,7 +554,9 @@ virtual-list.selectable list-item:checked {
 /* TABLE */
 
 table,
-virtual-table {
+virtual-table,
+tree-table,
+virtual-tree-table {
     background-color: var(--background);
     border-width: 1px;
     border-color: var(--border);
@@ -563,20 +565,26 @@ virtual-table {
 }
 
 table .table-header-row,
-virtual-table .table-header-row {
+virtual-table .table-header-row,
+tree-table .table-header-row,
+virtual-tree-table .table-header-row {
     background-color: var(--muted);
     border-bottom-width: 1px;
     border-bottom-color: var(--border);
 }
 
 table .table-header-cell,
-virtual-table .table-header-cell {
+virtual-table .table-header-cell,
+tree-table .table-header-cell,
+virtual-tree-table .table-header-cell {
     background-color: var(--muted);
     min-height: 34px;
 }
 
 table .table-header-content,
-virtual-table .table-header-content {
+virtual-table .table-header-content,
+tree-table .table-header-content,
+virtual-tree-table .table-header-content {
     padding-left: 10px;
     padding-right: 10px;
     gap: 8px;
@@ -584,34 +592,42 @@ virtual-table .table-header-content {
 }
 
 table .table-header-title,
-virtual-table .table-header-title {
+virtual-table .table-header-title,
+tree-table .table-header-title,
+virtual-tree-table .table-header-title {
     font-weight: 650;
 }
 
 table .table-sort-indicator,
-virtual-table .table-sort-indicator {
+virtual-table .table-sort-indicator,
+tree-table .table-sort-indicator,
+virtual-tree-table .table-sort-indicator {
     width: 14px;
+    height: 14px;
     color: var(--muted-foreground);
-    text-align: center;
 }
 
 table .table-body,
-virtual-table .table-body {
+virtual-table .table-body,
+tree-table .table-body,
+virtual-tree-table .table-body {
     background-color: var(--background);
 }
 
 table .table-body scrollview,
-virtual-table .table-body scrollview {
+virtual-table .table-body scrollview,
+tree-table .table-body scrollview,
+virtual-tree-table .table-body scrollview {
     min-width: auto;
 }
 
 table .table-row,
-virtual-table .table-row {
+virtual-table .table-row,
+tree-table .table-row,
+virtual-tree-table .table-row {
     padding-top: 6px;
     padding-bottom: 6px;
     min-height: 30px;
-    border-bottom-width: 1px;
-    border-bottom-color: var(--border);
 }
 
 table .table-row.odd,
@@ -624,29 +640,42 @@ virtual-table .table-row.even {
     background-color: transparent;
 }
 
+tree-table .table-row.odd,
+tree-table .table-row.even,
+virtual-tree-table .table-row.odd,
+virtual-tree-table .table-row.even {
+    background-color: transparent;
+}
+
 table .table-cell-text,
-virtual-table .table-cell-text {
-    padding-left: 10px;
-    padding-right: 10px;
-    text-wrap: true;
+virtual-table .table-cell-text,
+tree-table .table-cell-text,
+virtual-tree-table .table-cell-text {
+    width: 1s;
 }
 
 table .table-cell,
-virtual-table .table-cell {
-    padding-left: 10px;
-    padding-right: 10px;
+virtual-table .table-cell,
+tree-table .table-cell,
+virtual-tree-table .table-cell {
+    padding-left: 8px;
+    padding-right: 8px;
     gap: 4px;
     alignment: left;
 }
 
 table .table-cell-meta,
-virtual-table .table-cell-meta {
+virtual-table .table-cell-meta,
+tree-table .table-cell-meta,
+virtual-tree-table .table-cell-meta {
     color: var(--muted-foreground);
     font-size: 12px;
 }
 
 table .table-header-cell resize-handle,
-virtual-table .table-header-cell resize-handle {
+virtual-table .table-header-cell resize-handle,
+tree-table .table-header-cell resize-handle,
+virtual-tree-table .table-header-cell resize-handle {
     width: 6px;
     right: -3px;
     top: 0px;
@@ -658,25 +687,102 @@ virtual-table .table-header-cell resize-handle {
 table .table-header-cell.resizable resize-handle:hover,
 table .table-header-cell.resizable:active resize-handle,
 virtual-table .table-header-cell.resizable resize-handle:hover,
-virtual-table .table-header-cell.resizable:active resize-handle {
+virtual-table .table-header-cell.resizable:active resize-handle,
+tree-table .table-header-cell.resizable resize-handle:hover,
+tree-table .table-header-cell.resizable:active resize-handle,
+virtual-tree-table .table-header-cell.resizable resize-handle:hover,
+virtual-tree-table .table-header-cell.resizable:active resize-handle {
     background-color: var(--ring);
 }
 
 table .table-header-cell.not-resizable resize-handle,
-virtual-table .table-header-cell.not-resizable resize-handle {
+virtual-table .table-header-cell.not-resizable resize-handle,
+tree-table .table-header-cell.not-resizable resize-handle,
+virtual-tree-table .table-header-cell.not-resizable resize-handle {
     display: none;
 }
 
 table list.selectable list-item:hover,
-virtual-table virtual-list.selectable list-item:hover {
+virtual-table virtual-list.selectable list-item:hover,
+tree-table list.selectable list-item:hover,
+virtual-tree-table virtual-list.selectable list-item:hover {
     background-color: var(--accent);
 }
 
 table list.selectable list-item.focused,
 table list.selectable list-item:checked,
 virtual-table virtual-list.selectable list-item.focused,
-virtual-table virtual-list.selectable list-item:checked {
+virtual-table virtual-list.selectable list-item:checked,
+tree-table list.selectable list-item.focused,
+tree-table list.selectable list-item:checked,
+virtual-tree-table virtual-list.selectable list-item.focused,
+virtual-tree-table virtual-list.selectable list-item:checked {
     background-color: var(--accent);
+}
+
+tree-table .tree-table-cell {
+    padding-left: 4px;
+    gap: 0px;
+}
+
+virtual-tree-table .tree-table-cell {
+    padding-left: 4px;
+    gap: 0px;
+}
+
+tree-table .tree-table-indent {
+    background-color: transparent;
+}
+
+virtual-tree-table .tree-table-indent {
+    background-color: transparent;
+}
+
+tree-table .tree-table-disclosure {
+    width: 20px;
+    height: 20px;
+}
+
+virtual-tree-table .tree-table-disclosure {
+    width: 20px;
+    height: 20px;
+}
+
+tree-table .tree-table-disclosure-placeholder {
+    width: 20px;
+    height: 20px;
+}
+
+virtual-tree-table .tree-table-disclosure-placeholder {
+    width: 20px;
+    height: 20px;
+}
+
+tree-table .tree-table-row.collapsible {
+    cursor: default;
+}
+
+virtual-tree-table .tree-table-row.collapsible {
+    cursor: default;
+}
+
+tree-table divider > .divider-line {
+    height: 1px;
+    width: stretch;
+    background-color: var(--border);
+}
+
+/* TREE TABLE */
+tree-table {
+    border-width: 1px;
+    border-color: var(--border);
+    padding: 1px;
+}
+
+virtual-tree-table {
+    border-width: 1px;
+    border-color: var(--border);
+    padding: 1px;
 }
 
 /* MENU */

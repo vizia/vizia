@@ -38,8 +38,10 @@ mod tabview;
 mod textbox;
 mod toggle_button;
 mod tooltip;
+mod tree_table;
 mod virtual_list;
 mod virtual_table;
+mod virtual_tree_table;
 mod xypad;
 
 pub use accordion::*;
@@ -81,8 +83,10 @@ pub use tabview::*;
 pub use textbox::*;
 pub use toggle_button::*;
 pub use tooltip::*;
+pub use tree_table::*;
 pub use virtual_list::*;
 pub use virtual_table::*;
+pub use virtual_tree_table::*;
 pub use xypad::*;
 
 use crate::prelude::*;

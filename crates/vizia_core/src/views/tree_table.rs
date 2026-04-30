@@ -1,140 +1,196 @@
-use std::{ops::Deref, rc::Rc, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    hash::Hash,
+    ops::Deref,
+    rc::Rc,
+    sync::Arc,
+};
 
 use crate::{
-    icons::{ICON_ARROWS_SORT, ICON_SORT_ASCENDING, ICON_SORT_DESCENDING},
+    icons::{ICON_CHEVRON_DOWN, ICON_CHEVRON_RIGHT},
     prelude::*,
 };
 
-/// Sort direction for a table column.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TableSortDirection {
-    /// No sort direction.
-    None,
-    /// Sort in ascending order.
-    Ascending,
-    /// Sort in descending order.
-    Descending,
-}
+use super::{
+    TableSortCycle, TableSortDirection, TableSortState, table::next_sort_direction,
+    table::sort_direction_for_column,
+};
 
-impl_res_simple!(TableSortDirection);
-
-/// Controls how sortable columns cycle through sort directions when clicked.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TableSortCycle {
-    /// Cycles between ascending and descending.
-    BiState,
-    /// Cycles ascending -> descending -> unsorted.
-    TriState,
-}
-
-impl_res_simple!(TableSortCycle);
-
-pub(super) fn sort_direction_for_column<K: PartialEq>(
-    sort_state: Option<&TableSortState<K>>,
-    column_key: &K,
-) -> TableSortDirection {
-    match sort_state {
-        Some(state) if &state.key == column_key => state.direction,
-        _ => TableSortDirection::None,
-    }
-}
-
-pub(super) fn next_sort_direction(
-    sort_cycle: TableSortCycle,
-    current_direction: TableSortDirection,
-) -> TableSortDirection {
-    match (sort_cycle, current_direction) {
-        (TableSortCycle::BiState, TableSortDirection::Ascending) => TableSortDirection::Descending,
-        (TableSortCycle::BiState, _) => TableSortDirection::Ascending,
-        (TableSortCycle::TriState, TableSortDirection::None) => TableSortDirection::Ascending,
-        (TableSortCycle::TriState, TableSortDirection::Ascending) => TableSortDirection::Descending,
-        (TableSortCycle::TriState, TableSortDirection::Descending) => TableSortDirection::None,
-    }
-}
-
-type TableHeaderContent<S> = dyn Fn(&mut Context, Memo<TableSortDirection>) -> Handle<S>;
-type TableCellContent<T> = dyn Fn(&mut Context, Memo<T>);
-
-impl<T: PartialEq + 'static, S: View, K: Clone + PartialEq + Send + Sync + 'static>
-    Res<Vec<TableColumn<T, S, K>>> for Vec<TableColumn<T, S, K>>
+#[derive(Clone, PartialEq)]
+pub struct TreeTableRow<T, Id>
+where
+    T: PartialEq + Clone + 'static,
+    Id: Clone + Eq + Hash + 'static,
 {
-    fn get_value(&self, _: &impl DataContext) -> Vec<TableColumn<T, S, K>> {
-        self.clone()
-    }
+    pub row: T,
+    pub id: Id,
+    pub parent_id: Option<Id>,
+    pub depth: usize,
+    pub has_children: bool,
+    pub expanded: bool,
 }
+fn flatten_visible_rows<T, V, Id>(
+    rows: &V,
+    row_id: &dyn Fn(&T) -> Id,
+    parent_id: &dyn Fn(&T) -> Option<Id>,
+    expanded_row_ids: &[Id],
+) -> Vec<TreeTableRow<T, Id>>
+where
+    V: Deref<Target = [T]>,
+    T: PartialEq + Clone + 'static,
+    Id: Clone + Eq + Hash + 'static,
+{
+    let mut rows_by_parent: HashMap<Option<Id>, Vec<T>> = HashMap::new();
+    for row in rows.deref().iter().cloned() {
+        rows_by_parent.entry(parent_id(&row)).or_default().push(row);
+    }
 
-/// Reusable helpers for building table header content.
-#[derive(Clone)]
-pub struct TableHeader;
+    let expanded_set: HashSet<Id> = expanded_row_ids.iter().cloned().collect();
+    let mut visible_rows = Vec::new();
 
-impl TableHeader {
-    pub fn new(
-        cx: &mut Context,
-        title: impl Into<String>,
-        sort_direction: Memo<TableSortDirection>,
-    ) -> Handle<'_, TableHeader> {
-        Self.build(cx, move |cx| {
-            let title = title.into();
-            Label::new(cx, title).class("table-header-title").width(Stretch(1.0)).min_width(Auto);
-            let sort_indicator = Memo::new(move |_| match sort_direction.get() {
-                TableSortDirection::Ascending => ICON_SORT_ASCENDING,
-                TableSortDirection::Descending => ICON_SORT_DESCENDING,
-                TableSortDirection::None => ICON_ARROWS_SORT,
+    fn visit<T, Id>(
+        rows: &[T],
+        depth: usize,
+        rows_by_parent: &HashMap<Option<Id>, Vec<T>>,
+        expanded_set: &HashSet<Id>,
+        row_id: &dyn Fn(&T) -> Id,
+        out: &mut Vec<TreeTableRow<T, Id>>,
+    ) where
+        T: PartialEq + Clone + 'static,
+        Id: Clone + Eq + Hash + 'static,
+    {
+        for row in rows {
+            let id = row_id(row);
+            let child_rows = rows_by_parent.get(&Some(id.clone())).cloned().unwrap_or_default();
+            let has_children = !child_rows.is_empty();
+            let expanded = has_children && expanded_set.contains(&id);
+
+            out.push(TreeTableRow {
+                row: row.clone(),
+                id: id.clone(),
+                parent_id: None,
+                depth,
+                has_children,
+                expanded,
             });
 
-            Button::new(cx, move |cx| Svg::new(cx, sort_indicator))
-                .class("table-sort-indicator")
-                .variant(ButtonVariant::Text);
+            if expanded {
+                visit(&child_rows, depth + 1, rows_by_parent, expanded_set, row_id, out);
+            }
+        }
+    }
+
+    let roots = rows_by_parent.get(&None).cloned().unwrap_or_default();
+    visit(&roots, 0, &rows_by_parent, &expanded_set, row_id, &mut visible_rows);
+
+    for visible_row in &mut visible_rows {
+        visible_row.parent_id = parent_id(&visible_row.row);
+    }
+
+    visible_rows
+}
+
+/// Event emitted by [`TreeTableFirstCell`] when the disclosure button is pressed.
+pub enum TreeTableFirstCellEvent<Id: Send + Sync + 'static> {
+    Toggle(Id, bool),
+}
+
+#[derive(Clone)]
+pub struct TreeTableFirstCell;
+
+impl TreeTableFirstCell {
+    /// Creates the tree-column first cell, showing an indent spacer, disclosure toggle, and
+    /// the caller-supplied cell content. Call this inside the first column's `cell_content`
+    /// closure of a [`TreeTableColumn`].
+    pub fn new<T, Id, F>(
+        cx: &mut Context,
+        row: TreeTableRow<T, Id>,
+        cell_content: F,
+    ) -> Handle<'_, Self>
+    where
+        T: PartialEq + Clone + 'static,
+        Id: PartialEq + Eq + Hash + Clone + Send + Sync + 'static,
+        F: Fn(&mut Context, TreeTableRow<T, Id>) + 'static,
+    {
+        let cell_content: Rc<dyn Fn(&mut Context, TreeTableRow<T, Id>)> = Rc::new(cell_content);
+        let depth = row.depth as f32 * 16.0;
+        let has_children = row.has_children;
+        let expanded = row.expanded;
+        let node_id = row.id.clone();
+
+        Self.build(cx, move |cx| {
+            HStack::new(cx, move |cx| {
+                Element::new(cx)
+                    .class("tree-table-indent")
+                    .width(Pixels(depth))
+                    .height(Stretch(1.0));
+
+                if has_children {
+                    let icon = if expanded { ICON_CHEVRON_DOWN } else { ICON_CHEVRON_RIGHT };
+
+                    Button::new(cx, move |cx| Svg::new(cx, icon).text_wrap(false))
+                        .variant(ButtonVariant::Text)
+                        .class("tree-table-disclosure")
+                        .on_press(move |cx| {
+                            cx.emit(TreeTableFirstCellEvent::Toggle(node_id.clone(), !expanded));
+                        });
+                } else {
+                    Element::new(cx).class("tree-table-disclosure-placeholder");
+                }
+
+                let cell_content = cell_content.clone();
+                VStack::new(cx, move |cx| {
+                    cell_content(cx, row.clone());
+                })
+                .class("tree-table-cell-content")
+                .width(Stretch(1.0))
+                .min_width(Auto)
+                .height(Auto);
+            })
+            .alignment(Alignment::Left)
+            .width(Stretch(1.0))
+            .min_width(Auto)
+            .height(Auto);
         })
-        .layout_type(LayoutType::Row)
-        .alignment(Alignment::Left)
-        .padding_left(Pixels(8.0))
-        .padding_right(Pixels(8.0))
         .width(Stretch(1.0))
-        .min_width(Auto)
+        .height(Auto)
     }
 }
 
-impl View for TableHeader {
+impl View for TreeTableFirstCell {
     fn element(&self) -> Option<&'static str> {
-        Some("table-header")
+        Some("tree-table-first-cell")
     }
 }
 
-/// Externally controlled sort state for a table.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TableSortState<K = String> {
-    /// Stable column key.
-    pub key: K,
-    /// Current sort direction.
-    pub direction: TableSortDirection,
-}
+type TreeTableHeaderContent<H> = dyn Fn(&mut Context, Memo<TableSortDirection>) -> Handle<H>;
+type TreeTableCellContent<T, Id> = dyn Fn(&mut Context, Memo<TreeTableRow<T, Id>>);
 
-/// Describes a table column.
-pub struct TableColumn<T: PartialEq + 'static, S: View, K = String>
+/// A column definition for [`TreeTable`]. All cell content closures receive the full
+/// [`TreeTableRow`] so the first column can call [`TreeTableFirstCell::new`] directly.
+pub struct TreeTableColumn<T, Id, H, K = String>
 where
+    T: PartialEq + Clone + 'static,
+    Id: Clone + Eq + Hash + 'static,
+    H: View,
     K: Clone + PartialEq + Send + Sync + 'static,
 {
-    /// Stable identity used to preserve state across reactive column updates.
     pub key: K,
-    /// Initial width in logical pixels.
     pub width: Signal<f32>,
-    /// Minimum width in logical pixels when resized.
     pub min_width: Signal<f32>,
-    /// Whether this column can trigger sorting.
     pub sortable: Signal<bool>,
-    /// Whether this column can be resized when table resizing is enabled.
     pub resizable: Signal<bool>,
-    /// Whether this column is hidden from layout and rendering.
     pub hidden: Signal<bool>,
-    /// Custom cell content builder.
-    pub cell_content: Rc<TableCellContent<T>>,
-    /// Custom header content builder.
-    pub header_content: Rc<TableHeaderContent<S>>,
+    pub cell_content: Rc<TreeTableCellContent<T, Id>>,
+    pub header_content: Rc<TreeTableHeaderContent<H>>,
 }
 
-impl<T: PartialEq + 'static, S: View, K: Clone + PartialEq + Send + Sync + 'static> Clone
-    for TableColumn<T, S, K>
+impl<T, Id, H, K> Clone for TreeTableColumn<T, Id, H, K>
+where
+    T: PartialEq + Clone + 'static,
+    Id: Clone + Eq + Hash + 'static,
+    H: View + Clone,
+    K: Clone + PartialEq + Send + Sync + 'static,
 {
     fn clone(&self) -> Self {
         Self {
@@ -150,35 +206,23 @@ impl<T: PartialEq + 'static, S: View, K: Clone + PartialEq + Send + Sync + 'stat
     }
 }
 
-impl<T: PartialEq + 'static, S: View, K: Clone + PartialEq + Send + Sync + 'static>
-    TableColumn<T, S, K>
+impl<T, Id, H, K> TreeTableColumn<T, Id, H, K>
+where
+    T: PartialEq + Clone + 'static,
+    Id: Clone + Eq + Hash + 'static,
+    H: View + Clone,
+    K: Clone + PartialEq + Send + Sync + 'static,
 {
-    /// Creates a new table column from explicit header and cell builders.
-    ///
-    /// Use this when you need full control over header and cell rendering.
-    ///
-    /// ```ignore
-    /// TableColumn::new(
-    ///     "status",
-    ///     |cx, sort_direction| TableHeader::new(cx, "Status", sort_direction),
-    ///     |cx, row| {
-    ///         let status = row.map(|row: &RowData| row.status.clone());
-    ///         Label::new(cx, status).class("table-cell-text");
-    ///     },
-    /// )
-    /// .resizable(true)
-    /// .sortable(true);
-    /// ```
     pub fn new(
         key: impl Into<K>,
-        header_content: impl Fn(&mut Context, Memo<TableSortDirection>) -> Handle<S> + 'static,
-        cell_content: impl Fn(&mut Context, Memo<T>) + 'static,
+        header_content: impl Fn(&mut Context, Memo<TableSortDirection>) -> Handle<H> + 'static,
+        cell_content: impl Fn(&mut Context, Memo<TreeTableRow<T, Id>>) + 'static,
     ) -> Self {
         Self {
             key: key.into(),
-            width: Signal::new(180.0),
-            min_width: Signal::new(80.0),
-            sortable: Signal::new(true),
+            width: Signal::new(150.0),
+            min_width: Signal::new(60.0),
+            sortable: Signal::new(false),
             resizable: Signal::new(false),
             hidden: Signal::new(false),
             cell_content: Rc::new(cell_content),
@@ -186,142 +230,120 @@ impl<T: PartialEq + 'static, S: View, K: Clone + PartialEq + Send + Sync + 'stat
         }
     }
 
-    /// Sets the initial width.
     pub fn width(self, width: f32) -> Self {
-        self.width.set(width.max(self.min_width.get_untracked()));
+        self.width.set(width);
         self
     }
 
-    /// Sets the minimum width.
     pub fn min_width(self, min_width: f32) -> Self {
         self.min_width.set(min_width);
-        self.width.set(self.width.get_untracked().max(min_width));
         self
     }
 
-    /// Sets whether this column can trigger sorting.
     pub fn sortable(self, sortable: bool) -> Self {
         self.sortable.set(sortable);
         self
     }
 
-    /// Sets whether this column can be resized when table resizing is enabled.
     pub fn resizable(self, resizable: bool) -> Self {
         self.resizable.set(resizable);
         self
     }
 
-    /// Sets whether this column is hidden from layout and rendering.
     pub fn hidden(self, hidden: bool) -> Self {
         self.hidden.set(hidden);
         self
     }
-
-    /// Binds hidden state to an external resource.
-    pub fn hidden_res<U: Into<bool> + Clone + 'static>(
-        self,
-        cx: &mut Context,
-        hidden: impl Res<U> + 'static,
-    ) -> Self {
-        let hidden_signal = self.hidden;
-        hidden.set_or_bind(cx, move |cx, res| {
-            hidden_signal.set(res.get_value(cx).into());
-        });
-        self
-    }
 }
 
-/// A table-like view backed by [`List`] for variable row heights.
-///
-/// This implementation prioritizes flexible row layout over viewport virtualization.
-/// For large datasets, prefer filtering, pagination, or incremental loading at the model layer.
-pub struct Table<T, V, Id, K = String>
+pub struct TreeTable<T, V, Id, K = String>
 where
     V: Deref<Target = [T]> + Clone + 'static,
     T: PartialEq + Clone + 'static,
-    Id: PartialEq + Clone + 'static,
+    Id: Eq + Hash + Clone + Send + Sync + 'static,
     K: Clone + PartialEq + Send + Sync + 'static,
 {
     rows: Signal<V>,
     row_id: Rc<dyn Fn(&T) -> Id>,
+    parent_id: Rc<dyn Fn(&T) -> Option<Id>>,
     sort_state: Signal<Option<TableSortState<K>>>,
     sort_cycle: Signal<TableSortCycle>,
     resizable_columns: Signal<bool>,
     selectable: Signal<Selectable>,
     selection_follows_focus: Signal<bool>,
     selected_row_ids: Signal<Vec<Id>>,
+    expanded_row_ids: Signal<Vec<Id>>,
     on_sort: Option<Arc<dyn Fn(&mut EventContext, K, TableSortDirection) + Send + Sync>>,
     on_row_select: Option<Box<dyn Fn(&mut EventContext, Id)>>,
+    on_row_toggle: Option<Box<dyn Fn(&mut EventContext, Id, bool)>>,
 }
 
-enum TableEvent<K> {
+enum TreeTableEvent<K, Id> {
     RequestSort(K, TableSortDirection),
     SelectRow(usize),
+    #[allow(dead_code)]
+    ToggleRow(Id, bool),
+    ExpandSelected,
+    CollapseSelected,
 }
 
-impl<T, V, Id, K> Table<T, V, Id, K>
+impl<T, V, Id, K> TreeTable<T, V, Id, K>
 where
     V: Deref<Target = [T]> + Clone + 'static,
     T: PartialEq + Clone + 'static,
-    Id: PartialEq + Clone + 'static,
+    Id: Eq + Hash + Clone + Send + Sync + 'static,
     K: Clone + PartialEq + Send + Sync + 'static,
 {
-    /// Creates a new table view.
-    ///
-    /// Sorting is emit-only: header presses call `on_sort`, while sorted data should be provided
-    /// by the caller (for example via `Memo<Vec<T>>`).
-    ///
-    /// ```ignore
-    /// Table::new(cx, sorted_rows, columns, |row: &RowData| row.id)
-    ///     .sort_state(sort_state)
-    ///     .resizable_columns(true)
-    ///     .selectable(Selectable::Single)
-    ///     .selected_row_ids(selected_ids)
-    ///     .on_sort(|cx, column, direction| {
-    ///         cx.emit(AppEvent::SetSort(column, direction));
-    ///     })
-    ///     .on_row_select(|cx, id| {
-    ///         cx.emit(AppEvent::SelectRow(id));
-    ///     });
-    /// ```
     pub fn new<S, C, R, H>(
         cx: &mut Context,
         rows: S,
         columns: C,
         row_id: impl Fn(&T) -> Id + 'static,
+        parent_id: impl Fn(&T) -> Option<Id> + 'static,
     ) -> Handle<Self>
     where
         S: Res<V> + 'static,
         C: Res<R> + 'static,
-        R: Deref<Target = [TableColumn<T, H, K>]> + Clone + 'static,
+        R: Deref<Target = [TreeTableColumn<T, Id, H, K>]> + Clone + 'static,
         H: Clone + View,
     {
         let row_signal = rows.to_signal(cx);
         let column_signal = columns.to_signal(cx);
         let row_id: Rc<dyn Fn(&T) -> Id> = Rc::new(row_id);
+        let parent_id: Rc<dyn Fn(&T) -> Option<Id>> = Rc::new(parent_id);
         let sort_state = Signal::new(None);
         let sort_cycle = Signal::new(TableSortCycle::BiState);
         let resizable_columns = Signal::new(false);
         let selectable = Signal::new(Selectable::None);
         let selection_follows_focus = Signal::new(false);
         let selected_row_ids = Signal::new(Vec::new());
-        let selected_indices = Memo::new({
+        let expanded_row_ids = Signal::new(Vec::new());
+
+        let visible_rows = Memo::new({
             let row_id = row_id.clone();
+            let parent_id = parent_id.clone();
             move |_| {
                 row_signal.with(|rows| {
-                    selected_row_ids.with(|selected_ids| {
-                        rows.deref()
-                            .iter()
-                            .enumerate()
-                            .filter_map(|(index, row)| {
-                                let id = (row_id)(row);
-                                if selected_ids.contains(&id) { Some(index) } else { None }
-                            })
-                            .collect::<Vec<usize>>()
+                    expanded_row_ids.with(|expanded| {
+                        flatten_visible_rows(rows, &*row_id, &*parent_id, expanded)
                     })
                 })
             }
         });
+
+        let selected_indices =
+            Memo::new(move |_| {
+                visible_rows.with(|rows| {
+                    selected_row_ids.with(|selected_ids| {
+                        rows.iter()
+                            .enumerate()
+                            .filter_map(|(index, row)| {
+                                if selected_ids.contains(&row.id) { Some(index) } else { None }
+                            })
+                            .collect::<Vec<usize>>()
+                    })
+                })
+            });
 
         let column_layout = Memo::new(move |_| {
             column_signal.with(|columns| {
@@ -336,16 +358,35 @@ where
         Self {
             rows: row_signal,
             row_id,
+            parent_id,
             sort_state,
             sort_cycle,
             resizable_columns,
             selectable,
             selection_follows_focus,
             selected_row_ids,
+            expanded_row_ids,
             on_sort: None,
             on_row_select: None,
+            on_row_toggle: None,
         }
         .build(cx, move |cx| {
+            Keymap::from(vec![
+                (
+                    KeyChord::new(Modifiers::empty(), Code::ArrowRight),
+                    KeymapEntry::new("Expand Selected", |cx| {
+                        cx.emit(TreeTableEvent::<K, Id>::ExpandSelected)
+                    }),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
+                    KeymapEntry::new("Collapse Selected", |cx| {
+                        cx.emit(TreeTableEvent::<K, Id>::CollapseSelected)
+                    }),
+                ),
+            ])
+            .build(cx);
+
             Binding::new(cx, column_layout, move |cx| {
                 let visible_columns = column_signal.with(|columns| {
                     columns
@@ -355,8 +396,8 @@ where
                         .cloned()
                         .collect::<Vec<_>>()
                 });
-                let last_header_index = visible_columns.len().saturating_sub(1);
 
+                let last_header_index = visible_columns.len().saturating_sub(1);
                 let header_columns = Rc::new(visible_columns);
                 let body_columns = header_columns.clone();
 
@@ -392,7 +433,7 @@ where
                                             sort_cycle.get(),
                                             current_direction,
                                         );
-                                        cx.emit(TableEvent::RequestSort(
+                                        cx.emit(TreeTableEvent::<K, Id>::RequestSort(
                                             column_key.clone(),
                                             next_direction,
                                         ));
@@ -428,7 +469,7 @@ where
                                                 sort_cycle.get(),
                                                 current_direction,
                                             );
-                                            cx.emit(TableEvent::RequestSort(
+                                            cx.emit(TreeTableEvent::<K, Id>::RequestSort(
                                                 column_key.clone(),
                                                 next_direction,
                                             ));
@@ -451,7 +492,8 @@ where
                 .width(Stretch(1.0))
                 .min_width(Auto);
 
-                List::new(cx, row_signal, move |cx, row_index, row| {
+                List::new(cx, visible_rows, move |cx, row_index, row| {
+                    let row: Memo<TreeTableRow<T, Id>> = Memo::new(move |_| row.get());
                     HStack::new(cx, |cx| {
                         for (column_index, column) in body_columns.iter().enumerate() {
                             let width_signal = column.width;
@@ -461,17 +503,19 @@ where
 
                             if is_last_column {
                                 VStack::new(cx, move |cx| {
-                                    cell_content(cx, row.map(|value| value.clone()));
+                                    cell_content(cx, row);
                                 })
                                 .class("table-cell")
+                                .toggle_class("tree-table-cell", column_index == 0)
                                 .width(Stretch(1.0))
                                 .min_width(Auto)
                                 .height(Auto);
                             } else {
                                 VStack::new(cx, move |cx| {
-                                    cell_content(cx, row.map(|value| value.clone()));
+                                    cell_content(cx, row);
                                 })
                                 .class("table-cell")
+                                .toggle_class("tree-table-cell", column_index == 0)
                                 .width(width_signal.map(|value| Pixels(*value)))
                                 .min_width(min_width.map(|value| Pixels(*value)))
                                 .height(Auto);
@@ -479,118 +523,181 @@ where
                         }
                     })
                     .class("table-row")
+                    .class("tree-table-row")
                     .toggle_class("odd", row_index % 2 == 1)
                     .toggle_class("even", row_index % 2 == 0)
+                    .toggle_class("expanded", row.map(|value| value.expanded))
+                    .toggle_class("collapsible", row.map(|value| value.has_children))
                     .alignment(Alignment::Left)
                     .height(Auto)
                     .width(Stretch(1.0))
-                    .min_width(Auto);
+                    .min_width(Auto)
+                    .role(Role::Row)
+                    .expanded(row.map(|value| value.expanded));
+
+                    Divider::new(cx).width(Stretch(1.0));
                 })
                 .width(Stretch(1.0))
                 .min_width(Auto)
                 .height(Stretch(1.0))
                 .min_height(Auto)
                 .class("table-body")
+                .class("tree-table-body")
                 .selection(selected_indices)
                 .selectable(selectable)
                 .selection_follows_focus(selection_follows_focus)
-                .on_select(move |cx, index| cx.emit(TableEvent::<K>::SelectRow(index)));
+                .on_select(move |cx, index| cx.emit(TreeTableEvent::<K, Id>::SelectRow(index)));
             });
         })
+        .class("table")
+        .class("tree-table")
+        .navigable(true)
+        .role(Role::Table)
+    }
+
+    fn emit_toggle(&self, cx: &mut EventContext, row_id: Id, next_expanded: bool) {
+        if let Some(callback) = &self.on_row_toggle {
+            (callback)(cx, row_id, next_expanded);
+        }
+    }
+
+    fn selected_visible_row(&self) -> Option<TreeTableRow<T, Id>> {
+        let selected_id = self.selected_row_ids.get().first().cloned()?;
+        let visible_rows = flatten_visible_rows(
+            &self.rows.get(),
+            &*self.row_id,
+            &*self.parent_id,
+            &self.expanded_row_ids.get(),
+        );
+
+        visible_rows.into_iter().find(|row| row.id == selected_id)
     }
 }
 
-impl<T, V, Id, K> View for Table<T, V, Id, K>
+impl<T, V, Id, K> View for TreeTable<T, V, Id, K>
 where
     V: Deref<Target = [T]> + Clone + 'static,
     T: PartialEq + Clone + 'static,
-    Id: PartialEq + Clone + 'static,
+    Id: Eq + Hash + Clone + Send + Sync + 'static,
     K: Clone + PartialEq + Send + Sync + 'static,
 {
     fn element(&self) -> Option<&'static str> {
-        Some("table")
+        Some("tree-table")
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|table_event: &TableEvent<K>, _| match table_event {
-            TableEvent::RequestSort(key, direction) => {
+        event.map(|tree_event: &TreeTableEvent<K, Id>, _| match tree_event {
+            TreeTableEvent::RequestSort(key, direction) => {
                 if let Some(callback) = &self.on_sort {
                     (callback)(cx, key.clone(), *direction);
                 }
             }
 
-            TableEvent::SelectRow(index) => {
-                let rows = self.rows.get();
-                if let Some(row) = rows.deref().get(*index) {
+            TreeTableEvent::SelectRow(index) => {
+                let visible_rows = flatten_visible_rows(
+                    &self.rows.get(),
+                    &*self.row_id,
+                    &*self.parent_id,
+                    &self.expanded_row_ids.get(),
+                );
+
+                if let Some(row) = visible_rows.get(*index) {
                     if let Some(callback) = &self.on_row_select {
-                        (callback)(cx, (self.row_id)(row));
+                        (callback)(cx, row.id.clone());
+                    }
+                }
+            }
+
+            TreeTableEvent::ToggleRow(row_id, next) => {
+                self.emit_toggle(cx, row_id.clone(), *next);
+            }
+
+            TreeTableEvent::ExpandSelected => {
+                if let Some(row) = self.selected_visible_row() {
+                    if row.has_children && !row.expanded {
+                        self.emit_toggle(cx, row.id, true);
+                    }
+                }
+            }
+
+            TreeTableEvent::CollapseSelected => {
+                if let Some(row) = self.selected_visible_row() {
+                    if row.has_children && row.expanded {
+                        self.emit_toggle(cx, row.id, false);
+                    } else if let Some(parent_id) = row.parent_id {
+                        self.emit_toggle(cx, parent_id, false);
                     }
                 }
             }
         });
+
+        event.map(|cell_event: &TreeTableFirstCellEvent<Id>, _| {
+            let TreeTableFirstCellEvent::Toggle(id, next) = cell_event;
+            self.emit_toggle(cx, id.clone(), *next);
+        });
     }
 }
 
-/// Modifiers for configuring controlled table state and callbacks.
-pub trait TableModifiers<Id, K = String>: Sized
+pub trait TreeTableModifiers<Id, K = String>: Sized
 where
+    Id: Eq + Hash + Clone + Send + Sync + 'static,
     K: Clone + PartialEq + Send + Sync + 'static,
 {
-    /// Sets the current sort state.
     fn sort_state(self, sort_state: impl Res<Option<TableSortState<K>>> + 'static) -> Self;
 
-    /// Enables or disables column resizing for all columns.
     fn resizable_columns<U: Into<bool> + Clone + 'static>(
         self,
         flag: impl Res<U> + 'static,
     ) -> Self;
 
-    /// Sets the sort cycle behavior for sortable columns.
     fn sort_cycle<U: Into<TableSortCycle> + Clone + 'static>(
         self,
         cycle: impl Res<U> + 'static,
     ) -> Self;
 
-    /// Sets the selectable state of the table rows.
     fn selectable<U: Into<Selectable> + Clone + 'static>(
         self,
         selectable: impl Res<U> + 'static,
     ) -> Self;
 
-    /// Sets whether selection follows focus.
     fn selection_follows_focus<U: Into<bool> + Clone + 'static>(
         self,
         flag: impl Res<U> + 'static,
     ) -> Self;
 
-    /// Sets externally controlled selected row ids.
     fn selected_row_ids<R>(self, selected_row_ids: impl Res<R> + 'static) -> Self
     where
         R: Deref<Target = [Id]> + Clone + 'static;
 
-    /// Sets the callback triggered when a header requests sorting.
+    fn expanded_row_ids<R>(self, expanded_row_ids: impl Res<R> + 'static) -> Self
+    where
+        R: Deref<Target = [Id]> + Clone + 'static;
+
     fn on_sort<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, K, TableSortDirection) + Send + Sync;
 
-    /// Sets the callback triggered when a row is selected.
     fn on_row_select<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, Id);
+
+    fn on_row_toggle<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, Id, bool);
 }
 
-impl<T, V, Id, K> TableModifiers<Id, K> for Handle<'_, Table<T, V, Id, K>>
+impl<T, V, Id, K> TreeTableModifiers<Id, K> for Handle<'_, TreeTable<T, V, Id, K>>
 where
     V: Deref<Target = [T]> + Clone + 'static,
     T: PartialEq + Clone + 'static,
-    Id: PartialEq + Clone + 'static,
+    Id: Eq + Hash + Clone + Send + Sync + 'static,
     K: Clone + PartialEq + Send + Sync + 'static,
 {
     fn sort_state(self, sort_state: impl Res<Option<TableSortState<K>>> + 'static) -> Self {
         let sort_state = sort_state.to_signal(self.cx);
         self.bind(sort_state, move |handle| {
             let sort_state = sort_state.get();
-            handle.modify(|table: &mut Table<T, V, Id, K>| table.sort_state.set(sort_state));
+            handle.modify(|table: &mut TreeTable<T, V, Id, K>| table.sort_state.set(sort_state));
         })
     }
 
@@ -601,7 +708,7 @@ where
         let flag = flag.to_signal(self.cx);
         self.bind(flag, move |handle| {
             let flag = flag.get().into();
-            handle.modify(|table: &mut Table<T, V, Id, K>| table.resizable_columns.set(flag));
+            handle.modify(|table: &mut TreeTable<T, V, Id, K>| table.resizable_columns.set(flag));
         })
     }
 
@@ -612,7 +719,7 @@ where
         let cycle = cycle.to_signal(self.cx);
         self.bind(cycle, move |handle| {
             let cycle = cycle.get().into();
-            handle.modify(|table: &mut Table<T, V, Id, K>| table.sort_cycle.set(cycle));
+            handle.modify(|table: &mut TreeTable<T, V, Id, K>| table.sort_cycle.set(cycle));
         })
     }
 
@@ -623,7 +730,7 @@ where
         let selectable = selectable.to_signal(self.cx);
         self.bind(selectable, move |handle| {
             let selectable = selectable.get().into();
-            handle.modify(|table: &mut Table<T, V, Id, K>| table.selectable.set(selectable));
+            handle.modify(|table: &mut TreeTable<T, V, Id, K>| table.selectable.set(selectable));
         })
     }
 
@@ -634,7 +741,9 @@ where
         let flag = flag.to_signal(self.cx);
         self.bind(flag, move |handle| {
             let flag = flag.get().into();
-            handle.modify(|table: &mut Table<T, V, Id, K>| table.selection_follows_focus.set(flag));
+            handle.modify(|table: &mut TreeTable<T, V, Id, K>| {
+                table.selection_follows_focus.set(flag)
+            });
         })
     }
 
@@ -645,7 +754,18 @@ where
         let selected_row_ids = selected_row_ids.to_signal(self.cx);
         self.bind(selected_row_ids, move |handle| {
             let ids = selected_row_ids.with(|ids| ids.deref().to_vec());
-            handle.modify(|table: &mut Table<T, V, Id, K>| table.selected_row_ids.set(ids));
+            handle.modify(|table: &mut TreeTable<T, V, Id, K>| table.selected_row_ids.set(ids));
+        })
+    }
+
+    fn expanded_row_ids<R>(self, expanded_row_ids: impl Res<R> + 'static) -> Self
+    where
+        R: Deref<Target = [Id]> + Clone + 'static,
+    {
+        let expanded_row_ids = expanded_row_ids.to_signal(self.cx);
+        self.bind(expanded_row_ids, move |handle| {
+            let ids = expanded_row_ids.with(|ids| ids.deref().to_vec());
+            handle.modify(|table: &mut TreeTable<T, V, Id, K>| table.expanded_row_ids.set(ids));
         })
     }
 
@@ -653,13 +773,24 @@ where
     where
         F: 'static + Fn(&mut EventContext, K, TableSortDirection) + Send + Sync,
     {
-        self.modify(|table: &mut Table<T, V, Id, K>| table.on_sort = Some(Arc::new(callback)))
+        self.modify(|table: &mut TreeTable<T, V, Id, K>| table.on_sort = Some(Arc::new(callback)))
     }
 
     fn on_row_select<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, Id),
     {
-        self.modify(|table: &mut Table<T, V, Id, K>| table.on_row_select = Some(Box::new(callback)))
+        self.modify(|table: &mut TreeTable<T, V, Id, K>| {
+            table.on_row_select = Some(Box::new(callback))
+        })
+    }
+
+    fn on_row_toggle<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, Id, bool),
+    {
+        self.modify(|table: &mut TreeTable<T, V, Id, K>| {
+            table.on_row_toggle = Some(Box::new(callback))
+        })
     }
 }

@@ -1,4 +1,4 @@
-use crate::icons::ICON_CHECK;
+use crate::icons::{ICON_CHECK, ICON_MINUS};
 use crate::prelude::*;
 
 /// A checkbox used to display and toggle a boolean state.
@@ -209,25 +209,35 @@ impl Checkbox {
         checked: impl Res<bool> + Clone + 'static,
         intermediate: impl Res<bool> + Clone + 'static,
     ) -> Handle<Self> {
-        let checked_state = checked.clone().to_signal(cx);
-        let intermediate_state = intermediate.to_signal(cx);
+        let checked_state_for_icon = checked.clone().to_signal(cx);
+        let intermediate_state_for_icon = intermediate.clone().to_signal(cx);
+        let checked_state_for_class = checked.clone().to_signal(cx);
+        let intermediate_state_for_class = intermediate.clone().to_signal(cx);
 
-        let text_memo = Memo::new(move |_| {
-            if checked_state.get() {
-                ICON_CHECK
-            } else if intermediate_state.get() {
-                "-"
-            } else {
-                ""
-            }
+        let is_intermediate_memo = Memo::new(move |_| {
+            let checked = checked_state_for_class.get();
+            let intermediate = intermediate_state_for_class.get();
+            !checked && intermediate
         });
 
-        let is_intermediate_memo =
-            Memo::new(move |_| !checked_state.get() && intermediate_state.get());
-
         Self { on_toggle: None }
-            .build(cx, |_| {})
-            .text(text_memo)
+            .build(cx, move |cx| {
+                let icon_memo = Memo::new(move |_| {
+                    if checked_state_for_icon.get() {
+                        Some(ICON_CHECK)
+                    } else if intermediate_state_for_icon.get() {
+                        Some(ICON_MINUS)
+                    } else {
+                        None
+                    }
+                });
+
+                Binding::new(cx, icon_memo, move |cx| {
+                    if let Some(icon) = icon_memo.get() {
+                        Svg::new(cx, icon);
+                    }
+                });
+            })
             .toggle_class("intermediate", is_intermediate_memo)
             .checked(checked)
             .navigable(true)
