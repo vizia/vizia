@@ -1,7 +1,6 @@
 //! A model for system specific state which can be accessed by any model or view.
 use crate::prelude::*;
 
-use std::time::Duration;
 use unic_langid::CharacterDirection;
 use unic_langid::LanguageIdentifier;
 

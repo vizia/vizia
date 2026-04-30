@@ -1,3 +1,4 @@
+use bytes::Bytes;
 use serde::Deserialize;
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
@@ -42,7 +43,7 @@ pub async fn list() -> Result<Vec<ImageData>, reqwest::Error> {
         .collect())
 }
 
-pub async fn download(url: String, size: Size) -> Result<Vec<u8>, reqwest::Error> {
+pub async fn download(url: String, size: Size) -> Result<Bytes, reqwest::Error> {
     let client = reqwest::Client::new();
 
     let url = match size {
@@ -50,9 +51,7 @@ pub async fn download(url: String, size: Size) -> Result<Vec<u8>, reqwest::Error
         Size::Original => format!("{url}/1920/1200"),
     };
 
-    let bytes = client.get(url).send().await?.error_for_status()?.bytes().await?;
-
-    Ok(bytes.to_vec())
+    client.get(url).send().await?.error_for_status()?.bytes().await
 }
 
 pub const LIMIT: usize = 99;
