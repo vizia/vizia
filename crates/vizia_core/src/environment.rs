@@ -35,6 +35,8 @@ pub struct Environment {
     pub system_theme_mode: ThemeMode,
     /// The timer used to blink the caret of a textbox.
     pub(crate) caret_timer: Timer,
+    /// The distance the mouse has to be dragged to start a drag operation.
+    pub drag_distance: Signal<u32>,
 }
 
 fn direction_from_locale(locale: &LanguageIdentifier) -> Direction {
@@ -77,6 +79,7 @@ impl Environment {
             theme_mode: ThemeMode::default(),
             system_theme_mode: ThemeMode::LightMode,
             caret_timer,
+            drag_distance: Signal::new(4),
         }
     }
 
@@ -107,6 +110,8 @@ pub enum EnvironmentEvent {
     SetDoubleClickInterval(Duration),
     /// Set the delay before a tooltip fades in.
     SetTooltipDelay(Duration),
+    /// Set the distance the mouse has to be dragged to start a drag operation.
+    SetDragDistance(u32),
 }
 
 impl Model for Environment {
@@ -168,6 +173,10 @@ impl Model for Environment {
 
             EnvironmentEvent::SetTooltipDelay(delay) => {
                 self.tooltip_delay = delay;
+            }
+
+            EnvironmentEvent::SetDragDistance(distance) => {
+                self.drag_distance.set_if_changed(distance);
             }
         });
 

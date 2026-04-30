@@ -265,6 +265,16 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 cx.mouse.cursor_y = *y;
 
                 hover_system(cx, meta.origin);
+                dispatch_drag_events(cx, *x, *y);
+
+                if let Some(drag_view) = cx.active_drag_view {
+                    if cx.drop_data.is_some() {
+                        position_drag_view(cx, drag_view, *x, *y);
+                    } else {
+                        hide_drag_view(cx, drag_view);
+                        cx.active_drag_view = None;
+                    }
+                }
 
                 mutate_direct_or_up(meta, cx.captured, cx.hovered, false);
             }
@@ -311,6 +321,10 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
 
                     // Reset drag data
                     cx.drop_data = None;
+                    cx.drag_hovered = Entity::null();
+                    if let Some(drag_view) = cx.active_drag_view.take() {
+                        hide_drag_view(cx, drag_view);
+                    }
 
                     cx.with_current(if focusable { cx.hovered } else { cx.focused }, |cx| {
                         cx.focus_with_visibility(false)
@@ -368,6 +382,14 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             mutate_direct_or_up(meta, cx.captured, cx.hovered, true);
         }
         WindowEvent::MouseUp(button) => {
+            if let Some(drag_view) = cx.active_drag_view.take() {
+                hide_drag_view(cx, drag_view);
+            }
+
+            if matches!(button, MouseButton::Left) && cx.drop_data.is_some() {
+                cx.captured = Entity::null();
+            }
+
             match button {
                 MouseButton::Left => {
                     cx.mouse.left.pos_up = (cx.mouse.cursor_x, cx.mouse.cursor_y);
@@ -411,7 +433,13 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 cx.triggered = Entity::null();
             }
 
-            mutate_direct_or_up(meta, cx.captured, cx.hovered, true);
+            if cx.drop_data.is_some() {
+                // During drag-and-drop, resolve drop handlers against the true hovered target
+                // instead of the captured source.
+                mutate_direct_or_up(meta, Entity::null(), cx.hovered, true);
+            } else {
+                mutate_direct_or_up(meta, cx.captured, cx.hovered, true);
+            }
         }
         WindowEvent::MouseScroll(_, _) => {
             meta.target = cx.hovered;
@@ -737,6 +765,60 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
         }
 
         _ => {}
+    }
+}
+
+fn position_drag_view(cx: &mut Context, drag_view: Entity, x: f32, y: f32) {
+    if !cx.entity_manager.is_alive(drag_view) {
+        cx.active_drag_view = None;
+        return;
+    }
+
+    let left = cx.style.physical_to_logical(x);
+    let top = cx.style.physical_to_logical(y);
+
+    cx.with_current(drag_view, |cx| {
+        let mut ex = EventContext::new(cx);
+        ex.set_display(Display::Flex);
+        ex.set_left(Units::Pixels(left));
+        ex.set_top(Units::Pixels(top));
+    });
+}
+
+fn hide_drag_view(cx: &mut Context, drag_view: Entity) {
+    if !cx.entity_manager.is_alive(drag_view) {
+        return;
+    }
+
+    cx.with_current(drag_view, |cx| {
+        let mut ex = EventContext::new(cx);
+        ex.set_display(Display::None);
+    });
+}
+
+fn dispatch_drag_events(cx: &mut Context, x: f32, y: f32) {
+    if cx.drop_data.is_some() {
+        let hovered = cx.hovered;
+
+        if hovered != cx.drag_hovered {
+            if cx.drag_hovered != Entity::null() {
+                cx.event_queue
+                    .push_back(Event::new(WindowEvent::DragLeave).direct(cx.drag_hovered));
+            }
+
+            if hovered != Entity::null() {
+                cx.event_queue.push_back(Event::new(WindowEvent::DragEnter).direct(hovered));
+            }
+
+            cx.drag_hovered = hovered;
+        }
+
+        if hovered != Entity::null() {
+            cx.event_queue.push_back(Event::new(WindowEvent::DragMove(x, y)).target(hovered));
+        }
+    } else if cx.drag_hovered != Entity::null() {
+        cx.event_queue.push_back(Event::new(WindowEvent::DragLeave).direct(cx.drag_hovered));
+        cx.drag_hovered = Entity::null();
     }
 }
 
