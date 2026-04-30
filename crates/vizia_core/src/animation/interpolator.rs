@@ -1,8 +1,8 @@
 use morphorm::Units;
 use vizia_style::{
     Angle, BackgroundSize, ClipPath, Color, ColorStop, Display, Filter, FontSize, Gradient, Length,
-    LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LineDirection, LinearGradient,
-    Opacity, PercentageOrNumber, RGBA, Rect, Scale, Shadow, Transform, Translate,
+    LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LineDirection, LineHeight,
+    LinearGradient, Opacity, PercentageOrNumber, RGBA, Rect, Scale, Shadow, Transform, Translate,
 };
 
 use skia_safe::Matrix;
@@ -336,6 +336,24 @@ impl<T: Interpolator + Clone + Default> Interpolator for Option<T> {
 impl Interpolator for FontSize {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         FontSize(Length::interpolate(&start.0, &end.0, t))
+    }
+}
+
+impl Interpolator for LineHeight {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        match (start, end) {
+            (LineHeight::Normal, LineHeight::Normal) => LineHeight::Normal,
+            (LineHeight::Number(start), LineHeight::Number(end)) => {
+                LineHeight::Number(f32::interpolate(start, end, t))
+            }
+            (LineHeight::Percentage(start), LineHeight::Percentage(end)) => {
+                LineHeight::Percentage(f32::interpolate(start, end, t))
+            }
+            (LineHeight::Length(start), LineHeight::Length(end)) => {
+                LineHeight::Length(Length::interpolate(start, end, t))
+            }
+            _ => end.clone(),
+        }
     }
 }
 
