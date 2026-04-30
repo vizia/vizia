@@ -257,9 +257,7 @@ fn draw_entity(
 
     canvas.save();
     if let Some(Some(clip_path)) = cx.cache.clip_path.get(current) {
-        if should_apply_entity_clip(cx.style, current) {
-            canvas.clip_path(clip_path, ClipOp::Intersect, true);
-        }
+        canvas.clip_path(clip_path, ClipOp::Intersect, true);
     }
 
     if let Some(transform) = cx.cache.transform.get(current) {
@@ -402,6 +400,10 @@ pub(crate) fn draw_bounds(
     }
 
     if tree.is_window(entity) {
+        return dirty_bounds;
+    }
+
+    if !should_apply_entity_clip(style, entity) {
         return dirty_bounds;
     }
 
