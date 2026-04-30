@@ -202,7 +202,9 @@ pub fn build_paragraph(
     // paragraph_style.turn_hinting_off();
 
     // For fixed line-height lengths, use paragraph struts to enforce absolute line height.
-    if let Some(LineHeight::Length(length)) = style.line_height.get(entity).cloned() {
+    if let Some(LineHeight::Length(length)) =
+        style.line_height.get_resolved(entity, &style.custom_line_height_props)
+    {
         if let Some(line_height_px) = length.to_px() {
             if line_height_px > 0.0 {
                 let mut strut_style = skia_safe::textlayout::StrutStyle::new();
@@ -376,7 +378,9 @@ fn add_block(
                 .unwrap_or(16.0);
             text_style.set_font_size(font_size * style.scale_factor());
 
-            if let Some(line_height) = style.line_height.get(entity).cloned() {
+            if let Some(line_height) =
+                style.line_height.get_resolved(entity, &style.custom_line_height_props)
+            {
                 let height = match line_height {
                     LineHeight::Normal => None,
                     LineHeight::Number(number) => Some(number),

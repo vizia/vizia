@@ -130,6 +130,8 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     reflow_entities.extend(cx.style.font_color.tick(time));
     // Font Size
     reflow_entities.extend(cx.style.font_size.tick(time));
+    // Line Height
+    reflow_entities.extend(cx.style.line_height.tick(time));
 
     // Properties which affect layout
     relayout_entities.extend(cx.style.display.tick(time));
@@ -172,6 +174,10 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     }
     // Tick animations on custom font-size properties
     for store in cx.style.custom_font_size_props.values_mut() {
+        reflow_entities.extend(store.tick(time));
+    }
+    // Tick animations on custom line-height properties
+    for store in cx.style.custom_line_height_props.values_mut() {
         reflow_entities.extend(store.tick(time));
     }
     // Tick animations on custom units properties
