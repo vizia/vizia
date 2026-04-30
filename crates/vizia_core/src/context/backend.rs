@@ -102,7 +102,7 @@ impl BackendContext {
 
         self.0.style.pseudo_classes.insert(window_entity, PseudoClassFlags::OVER);
         self.0.style.restyle.insert(window_entity);
-        self.0.style.reaccess.insert(window_entity).unwrap();
+        self.0.style.reaccess.insert(window_entity);
 
         self.0.style.position_type.insert(window_entity, PositionType::Absolute);
 

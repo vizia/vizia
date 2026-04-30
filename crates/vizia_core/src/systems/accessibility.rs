@@ -11,7 +11,7 @@ pub fn accessibility_system(cx: &mut Context) {
         let iterator = LayoutTreeIterator::full(&cx.tree);
 
         for entity in iterator {
-            if !cx.style.reaccess.contains(entity) {
+            if !cx.style.reaccess.contains(&entity) {
                 continue;
             }
 

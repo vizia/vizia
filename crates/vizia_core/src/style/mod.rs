@@ -65,7 +65,7 @@ use indexmap::IndexMap;
 use log::warn;
 use std::fmt::Debug;
 use std::hash::{DefaultHasher, Hash, Hasher};
-use std::ops::{Deref, DerefMut, Range};
+use std::ops::Range;
 use vizia_style::selectors::parser::{AncestorHashes, Selector};
 
 use crate::prelude::*;
@@ -175,28 +175,6 @@ impl AsRef<str> for FamilyOwned {
             },
             FamilyOwned::Named(family) => family.as_str(),
         }
-    }
-}
-
-pub(crate) struct Bloom(pub(crate) qfilter::Filter);
-
-impl Default for Bloom {
-    fn default() -> Self {
-        Self(qfilter::Filter::new_resizeable(10000, 10000000, 0.01).unwrap())
-    }
-}
-
-impl Deref for Bloom {
-    type Target = qfilter::Filter;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for Bloom {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
     }
 }
 
@@ -410,11 +388,11 @@ pub struct Style {
     pub(crate) system_flags: SystemFlags,
 
     pub(crate) restyle: HashSet<Entity>,
-    pub(crate) text_construction: Bloom,
-    pub(crate) text_layout: Bloom,
-    pub(crate) reaccess: Bloom,
-    pub(crate) retransform: Bloom,
-    pub(crate) reclip: Bloom,
+    pub(crate) text_construction: HashSet<Entity>,
+    pub(crate) text_layout: HashSet<Entity>,
+    pub(crate) reaccess: HashSet<Entity>,
+    pub(crate) retransform: HashSet<Entity>,
+    pub(crate) reclip: HashSet<Entity>,
 
     pub(crate) text_range: SparseSet<Range<usize>>,
     pub(crate) text_span: SparseSet<bool>,
@@ -2433,9 +2411,9 @@ impl Style {
         self.abilities.insert(entity, Abilities::default());
         self.system_flags = SystemFlags::RELAYOUT;
         self.restyle.insert(entity);
-        self.reaccess.0.insert(entity).unwrap();
-        self.retransform.0.insert(entity).unwrap();
-        self.reclip.0.insert(entity).unwrap();
+        self.reaccess.insert(entity);
+        self.retransform.insert(entity);
+        self.reclip.insert(entity);
     }
 
     // Remove style data for the given entity.
@@ -2635,24 +2613,24 @@ impl Style {
     }
 
     pub(crate) fn needs_access_update(&mut self, entity: Entity) {
-        self.reaccess.0.insert(entity).unwrap();
+        self.reaccess.insert(entity);
     }
 
     pub(crate) fn needs_text_update(&mut self, entity: Entity) {
-        self.text_construction.0.insert(entity).unwrap();
-        self.text_layout.0.insert(entity).unwrap();
+        self.text_construction.insert(entity);
+        self.text_layout.insert(entity);
     }
 
     pub(crate) fn needs_text_layout(&mut self, entity: Entity) {
-        self.text_layout.0.insert(entity).unwrap();
+        self.text_layout.insert(entity);
     }
 
     pub(crate) fn needs_retransform(&mut self, entity: Entity) {
-        self.retransform.0.insert(entity).unwrap();
+        self.retransform.insert(entity);
     }
 
     pub(crate) fn needs_reclip(&mut self, entity: Entity) {
-        self.reclip.0.insert(entity).unwrap();
+        self.reclip.insert(entity);
     }
 
     // pub fn should_redraw<F: FnOnce()>(&mut self, f: F) {
