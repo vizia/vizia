@@ -48,10 +48,10 @@ use crate::text::TextContext;
 use vizia_input::{ImeState, MouseState};
 use vizia_storage::{ChildIterator, LayoutTreeIterator};
 
-static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
-static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
-static MARKDOWN: &str = include_str!("../../resources/themes/markdown.css");
-static DEFAULT_TRANSLATION_EN_US: &str =
+pub static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
+pub static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
+pub static MARKDOWN: &str = include_str!("../../resources/themes/markdown.css");
+pub static DEFAULT_TRANSLATION_EN_US: &str =
     include_str!("../../resources/translations/en-US/core.ftl");
 
 type Views = HashMap<Entity, Box<dyn ViewHandler>>;
