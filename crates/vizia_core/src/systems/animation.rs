@@ -192,7 +192,7 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     }
 
     for entity in reflow_entities.iter() {
-        cx.style.text_construction.insert(*entity).unwrap();
+        cx.style.text_construction.insert(*entity);
     }
 
     for entity in retransform_entities.iter() {

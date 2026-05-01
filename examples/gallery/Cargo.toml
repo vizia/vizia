@@ -10,9 +10,9 @@ rust-version.workspace = true
 [dependencies]
 vizia.workspace = true
 tokio.workspace = true
-bytes.workspace = true
 serde.workspace = true
 reqwest.workspace = true
+bytes = "1"
 
 [lints]
 workspace = true

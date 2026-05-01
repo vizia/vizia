@@ -31,6 +31,7 @@ impl ViziaWindow {
         window: &mut baseview::Window,
         builder: Option<Box<dyn FnOnce(&mut Context) + Send>>,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
+        is_parented: bool,
     ) -> ViziaWindow {
         // Reactive runtime setup — mirrors what `vizia_winit::Application::new` does.
         //
@@ -128,6 +129,7 @@ impl ViziaWindow {
             surface,
             dirty_surface,
             win_desc,
+            is_parented,
         );
         unsafe { context.make_not_current() };
 
@@ -175,7 +177,15 @@ impl ViziaWindow {
                 let mut cx = BackendContext::new(cx);
 
                 cx.set_event_proxy(Box::new(BaseviewProxy));
-                ViziaWindow::new(cx, win_desc, scale_policy, window, Some(Box::new(app)), on_idle)
+                ViziaWindow::new(
+                    cx,
+                    win_desc,
+                    scale_policy,
+                    window,
+                    Some(Box::new(app)),
+                    on_idle,
+                    true, // is_parented
+                )
             },
         )
     }
@@ -214,7 +224,15 @@ impl ViziaWindow {
                 let mut cx = BackendContext::new(cx);
 
                 cx.set_event_proxy(Box::new(BaseviewProxy));
-                ViziaWindow::new(cx, win_desc, scale_policy, window, Some(Box::new(app)), on_idle)
+                ViziaWindow::new(
+                    cx,
+                    win_desc,
+                    scale_policy,
+                    window,
+                    Some(Box::new(app)),
+                    on_idle,
+                    false, // is_parented
+                )
             },
         )
     }

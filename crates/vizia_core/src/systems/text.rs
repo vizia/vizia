@@ -18,7 +18,7 @@ pub(crate) fn text_system(cx: &mut Context) {
 
     let iterator = LayoutTreeIterator::full(&cx.tree);
     for entity in iterator {
-        if !cx.style.text_construction.contains(entity) {
+        if !cx.style.text_construction.contains(&entity) {
             continue;
         }
 
@@ -46,7 +46,7 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
     let iterator = LayoutTreeIterator::full(&cx.tree);
     let mut redraw_entities = Vec::new();
     for entity in iterator {
-        if !cx.style.text_layout.contains(entity) {
+        if !cx.style.text_layout.contains(&entity) {
             continue;
         }
 

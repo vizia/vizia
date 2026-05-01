@@ -392,7 +392,7 @@ popup scrollview scrollbar.vertical {
     right: 2px;
 }
 
-.rtl popup scrollview scrollbar.vertical {
+popup scrollview:dir(rtl) scrollbar.vertical {
     left: 2px;
     right: 1s;
 }
@@ -701,10 +701,6 @@ scrollview > scrollbar.vertical {
     left: 1s;
 }
 
-.rtl scrollview > scrollbar.vertical {
-    left: 0px;
-}
-
 /* SCROLLBAR */
 
 scrollbar.horizontal {
@@ -827,13 +823,13 @@ switch:checked .thumb {
     transition: left 100ms;
 }
 
-.rtl switch .thumb {
+switch:dir(rtl) .thumb {
     left: 1s;
     right: 1px;
     transition: right 100ms;
 }
 
-.rtl switch:checked .thumb {
+switch:checked:dir(rtl) .thumb {
     left: 1s;
     right: 13px;
     transition: right 100ms;
@@ -1078,7 +1074,6 @@ accordion > collapsible.open > .header > .expand-icon {
 card {
     width: auto;
     height: auto;
-    min-width: 240px;
 }
 
 card-header,
@@ -1090,19 +1085,19 @@ card-footer {
 
 card-header {
     gap: 4px;
-    padding-top: 20px;
-    padding-left: 20px;
-    padding-right: 20px;
+    padding-top: 12px;
+    padding-left: 12px;
+    padding-right: 12px;
 }
 
 card-content {
     gap: 12px;
-    padding: 20px;
+    padding: 12px;
 }
 
 card-footer {
     gap: 8px;
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-bottom: 20px;
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-bottom: 12px;
 }

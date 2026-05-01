@@ -16,7 +16,7 @@ pub(crate) fn clipping_system(cx: &mut Context) {
     let iter = LayoutTreeIterator::full(&cx.tree);
 
     for entity in iter {
-        if !cx.style.reclip.contains(entity) {
+        if !cx.style.reclip.contains(&entity) {
             continue;
         }
 

@@ -179,9 +179,18 @@ pub(crate) struct ApplicationRunner {
     pub dirty_surface: skia_safe::Surface,
     window_description: WindowDescription,
     is_initialized: bool,
+    /// `true` when the underlying baseview window was opened via
+    /// [`Window::open_parented`] (i.e. the vizia application is embedded
+    /// inside a host such as a DAW). Gates lifecycle decisions that
+    /// should be left to the host: when parented, vizia_baseview must
+    /// not interpret Cmd+Q as a close request, because closing the
+    /// child window without the host's knowledge leaves the host with
+    /// an empty plug-in shell.
+    is_parented: bool,
 }
 
 impl ApplicationRunner {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         cx: BackendContext,
         gr_context: skia_safe::gpu::DirectContext,
@@ -190,6 +199,7 @@ impl ApplicationRunner {
         surface: skia_safe::Surface,
         dirty_surface: skia_safe::Surface,
         window_description: WindowDescription,
+        is_parented: bool,
     ) -> Self {
         ApplicationRunner {
             should_redraw: true,
@@ -204,6 +214,7 @@ impl ApplicationRunner {
             dirty_surface,
             window_description,
             is_initialized: false,
+            is_parented,
         }
     }
 
@@ -346,7 +357,7 @@ impl ApplicationRunner {
     }
 
     pub fn handle_event(&mut self, event: baseview::Event, should_quit: &mut bool) {
-        if requests_exit(&event) {
+        if requests_exit(&event, self.is_parented) {
             self.cx.send_event(Event::new(WindowEvent::WindowClose));
             *should_quit = true;
         }
@@ -555,11 +566,30 @@ impl ApplicationRunner {
 
 /// Returns true if the provided event should cause an [`Application`] to
 /// exit.
-pub fn requests_exit(event: &baseview::Event) -> bool {
+///
+/// `WindowEvent::WillClose` is honoured in both standalone and parented
+/// modes — it's a legitimate close signal from baseview / the host.
+///
+/// On macOS, Cmd+Q is recognized as a quit shortcut **only when the
+/// application is standalone** (`is_parented == false`). When
+/// vizia_baseview is embedded as a child window inside a host (the
+/// usual audio-plug-in setup), the host owns the application
+/// lifecycle: pressing Cmd+Q should quit the host, not close the
+/// plug-in's child window. Most hosts on macOS bind Cmd+Q to their
+/// own menu's "Quit" item, so AppKit's `performKeyEquivalent:`
+/// dispatch claims the key before the plug-in's NSView sees it.
+/// Hosts with looser key dispatch (Bitwig observed 2026-04-28) do
+/// forward it through, in which case the previous unconditional
+/// match would tear down the plug-in's GL surface and leave the
+/// host with an empty plug-in shell.
+pub fn requests_exit(
+    event: &baseview::Event,
+    #[cfg_attr(not(target_os = "macos"), allow(unused_variables))] is_parented: bool,
+) -> bool {
     match event {
         baseview::Event::Window(baseview::WindowEvent::WillClose) => true,
         #[cfg(target_os = "macos")]
-        baseview::Event::Keyboard(event) => {
+        baseview::Event::Keyboard(event) if !is_parented => {
             if event.code == vizia_input::Code::KeyQ
                 && event.modifiers == vizia_input::KeyboardModifiers::META
                 && event.state == vizia_input::KeyState::Down

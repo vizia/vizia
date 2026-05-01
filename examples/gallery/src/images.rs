@@ -51,9 +51,7 @@ pub async fn download(url: String, size: Size) -> Result<Bytes, reqwest::Error> 
         Size::Original => format!("{url}/1920/1200"),
     };
 
-    let bytes = client.get(url).send().await?.error_for_status()?.bytes().await?;
-
-    Ok(bytes)
+    client.get(url).send().await?.error_for_status()?.bytes().await
 }
 
 pub const LIMIT: usize = 99;
