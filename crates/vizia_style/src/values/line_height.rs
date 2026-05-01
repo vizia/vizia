@@ -1,6 +1,6 @@
-use cssparser::{Parser, ParserInput};
+use cssparser::{ParseError, ParseErrorKind, Parser, ParserInput};
 
-use crate::{Length, Parse, Percentage, define_enum, impl_parse};
+use crate::{CustomParseError, Length, Parse, Percentage, define_enum};
 
 define_enum! {
     #[derive(Default)]
@@ -19,14 +19,48 @@ pub enum LineHeight {
     Length(Length),
 }
 
-impl_parse! {
-    LineHeight,
+impl<'i> Parse<'i> for LineHeight {
+    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+        let location = input.current_source_location();
 
-    try_parse {
-        LineHeightKeyword,
-        Percentage,
-        f32,
-        Length,
+        if let Ok(keyword) = input.try_parse(LineHeightKeyword::parse) {
+            return Ok(keyword.into());
+        }
+
+        if let Ok(percentage) = input.try_parse(Percentage::parse) {
+            if percentage.0 < 0.0 {
+                return Err(ParseError {
+                    kind: ParseErrorKind::Custom(CustomParseError::InvalidValue),
+                    location,
+                });
+            }
+
+            return Ok(LineHeight::Percentage(percentage.0));
+        }
+
+        if let Ok(number) = input.try_parse(f32::parse) {
+            if number < 0.0 {
+                return Err(ParseError {
+                    kind: ParseErrorKind::Custom(CustomParseError::InvalidValue),
+                    location,
+                });
+            }
+
+            return Ok(LineHeight::Number(number));
+        }
+
+        let length = input.try_parse(Length::parse)?;
+        if let Length::Value(length_value) = &length {
+            let (value, _) = length_value.to_unit_value();
+            if value < 0.0 {
+                return Err(ParseError {
+                    kind: ParseErrorKind::Custom(CustomParseError::InvalidValue),
+                    location,
+                });
+            }
+        }
+
+        Ok(LineHeight::Length(length))
     }
 }
 
@@ -89,6 +123,7 @@ mod line_height_tests {
         custom {
             success {
                 "normal" => LineHeight::Normal,
+                "0" => LineHeight::Number(0.0),
                 "24px" => LineHeight::Length(Length::Value(LengthValue::Px(24.0))),
             }
 
@@ -96,6 +131,9 @@ mod line_height_tests {
                 "auto",
                 "none",
                 "abc",
+                "-1",
+                "-10%",
+                "-2px",
             }
         }
     }
