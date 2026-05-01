@@ -170,6 +170,7 @@ define_property! {
         "line-clamp": LineClamp(LineClamp),
         "text-decoration": TextDecoration(TextDecoration),
         "text-decoration-line": TextDecorationLine(TextDecorationLine),
+        "text-decoration-style": TextDecorationStyle(TextDecorationStyle),
         "text-stroke": TextStroke(TextStroke),
         "text-stroke-width": TextStrokeWidth(Length),
         "text-stroke-style": TextStrokeStyle(TextStrokeStyle),

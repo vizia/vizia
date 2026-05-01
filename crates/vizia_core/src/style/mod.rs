@@ -304,7 +304,7 @@ pub struct Style {
     pub(crate) text_decoration_line: StyleSet<TextDecorationLine>,
     pub(crate) text_stroke_width: StyleSet<Length>,
     pub(crate) text_stroke_style: StyleSet<TextStrokeStyle>,
-    pub(crate) underline_style: StyleSet<TextDecorationLine>,
+    pub(crate) underline_style: StyleSet<TextDecorationStyle>,
     pub(crate) overline_style: StyleSet<TextDecorationStyle>,
     pub(crate) strikethrough_style: StyleSet<TextDecorationStyle>,
     pub(crate) underline_color: AnimatableVarSet<Color>,
@@ -1958,8 +1958,22 @@ impl Style {
             Property::LineClamp(line_clamp) => {
                 self.line_clamp.insert_rule(rule_id, line_clamp);
             }
+            Property::TextDecoration(decoration) => {
+                self.text_decoration_line.insert_rule(rule_id, decoration.line);
+                self.underline_style.insert_rule(rule_id, decoration.style);
+                self.overline_style.insert_rule(rule_id, decoration.style);
+                self.strikethrough_style.insert_rule(rule_id, decoration.style);
+                self.underline_color.insert_rule(rule_id, decoration.color.into());
+                self.overline_color.insert_rule(rule_id, decoration.color.into());
+                self.strikethrough_color.insert_rule(rule_id, decoration.color.into());
+            }
             Property::TextDecorationLine(line) => {
                 self.text_decoration_line.insert_rule(rule_id, line);
+            }
+            Property::TextDecorationStyle(decoration_style) => {
+                self.underline_style.insert_rule(rule_id, decoration_style);
+                self.overline_style.insert_rule(rule_id, decoration_style);
+                self.strikethrough_style.insert_rule(rule_id, decoration_style);
             }
             Property::TextStroke(stroke) => {
                 self.text_stroke_width.insert_rule(rule_id, stroke.width);
@@ -1970,6 +1984,24 @@ impl Style {
             }
             Property::TextStrokeStyle(stroke_style) => {
                 self.text_stroke_style.insert_rule(rule_id, stroke_style);
+            }
+            Property::UnderlineStyle(underline_style) => {
+                self.underline_style.insert_rule(rule_id, underline_style);
+            }
+            Property::OverlineStyle(overline_style) => {
+                self.overline_style.insert_rule(rule_id, overline_style);
+            }
+            Property::StrikethroughStyle(strikethrough_style) => {
+                self.strikethrough_style.insert_rule(rule_id, strikethrough_style);
+            }
+            Property::UnderlineColor(underline_color) => {
+                self.underline_color.insert_rule(rule_id, underline_color);
+            }
+            Property::OverlineColor(overline_color) => {
+                self.overline_color.insert_rule(rule_id, overline_color);
+            }
+            Property::StrikethroughColor(strikethrough_color) => {
+                self.strikethrough_color.insert_rule(rule_id, strikethrough_color);
             }
             Property::Fill(fill) => {
                 self.fill.insert_rule(rule_id, fill);
@@ -2519,6 +2551,12 @@ impl Style {
         self.caret_color.remove(entity);
         self.selection_color.remove(entity);
         self.text_decoration_line.remove(entity);
+        self.underline_style.remove(entity);
+        self.overline_style.remove(entity);
+        self.strikethrough_style.remove(entity);
+        self.underline_color.remove(entity);
+        self.overline_color.remove(entity);
+        self.strikethrough_color.remove(entity);
         self.text_stroke_width.remove(entity);
         self.text_stroke_style.remove(entity);
 
@@ -2765,6 +2803,12 @@ impl Style {
         self.selection_color.clear_rules();
         self.caret_color.clear_rules();
         self.text_decoration_line.clear_rules();
+        self.underline_style.clear_rules();
+        self.overline_style.clear_rules();
+        self.strikethrough_style.clear_rules();
+        self.underline_color.clear_rules();
+        self.overline_color.clear_rules();
+        self.strikethrough_color.clear_rules();
         self.text_stroke_width.clear_rules();
         self.text_stroke_style.clear_rules();
 

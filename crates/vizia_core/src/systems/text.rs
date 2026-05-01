@@ -310,7 +310,35 @@ fn add_block(
 
             if let Some(text_decoration_line) = style.text_decoration_line.get(entity).copied() {
                 text_style.set_decoration_type(text_decoration_line.into());
-                text_style.set_decoration_color(font_color);
+
+                let text_decoration_style =
+                    if text_decoration_line.contains(TextDecorationLine::Underline) {
+                        style.underline_style.get(entity).copied()
+                    } else if text_decoration_line.contains(TextDecorationLine::Overline) {
+                        style.overline_style.get(entity).copied()
+                    } else if text_decoration_line.contains(TextDecorationLine::Strikethrough) {
+                        style.strikethrough_style.get(entity).copied()
+                    } else {
+                        None
+                    };
+
+                if let Some(text_decoration_style) = text_decoration_style {
+                    text_style.set_decoration_style(text_decoration_style.into());
+                }
+
+                let text_decoration_color =
+                    if text_decoration_line.contains(TextDecorationLine::Underline) {
+                        style.underline_color.get_resolved(entity, &style.custom_color_props)
+                    } else if text_decoration_line.contains(TextDecorationLine::Overline) {
+                        style.overline_color.get_resolved(entity, &style.custom_color_props)
+                    } else if text_decoration_line.contains(TextDecorationLine::Strikethrough) {
+                        style.strikethrough_color.get_resolved(entity, &style.custom_color_props)
+                    } else {
+                        None
+                    }
+                    .unwrap_or(font_color);
+
+                text_style.set_decoration_color(text_decoration_color);
             }
 
             // Font Families
