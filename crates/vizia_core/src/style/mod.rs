@@ -73,13 +73,13 @@ use crate::storage::animatable_var_set::AnimatableVarSet;
 
 pub use vizia_style::{
     Alignment, Angle, BackgroundImage, BackgroundSize, BorderStyleKeyword, ClipPath, Color,
-    CornerShape, CssRule, CursorIcon, Direction, Display, Filter, FontFamily, FontSize, FontSlant,
-    FontVariation, FontWeight, FontWeightKeyword, FontWidth, GenericFontFamily, Gradient,
-    HorizontalPosition, HorizontalPositionKeyword, LayoutWrap, Length, LengthOrPercentage,
-    LengthValue, LineClamp, LineDirection, LinearGradient, Matrix, Opacity, Overflow,
-    PointerEvents, Position, PositionType, RGBA, Scale, Shadow, TextAlign, TextDecorationLine,
-    TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform, Transition,
-    Translate, VerticalPosition, VerticalPositionKeyword, Visibility,
+    CornerShape, CssRule, CursorIcon, Direction, Display, Filter, FontFamily, FontSize,
+    FontSizeKeyword, FontSlant, FontVariation, FontWeight, FontWeightKeyword, FontWidth,
+    GenericFontFamily, Gradient, HorizontalPosition, HorizontalPositionKeyword, LayoutWrap, Length,
+    LengthOrPercentage, LengthValue, LineClamp, LineDirection, LinearGradient, Matrix, Opacity,
+    Overflow, PointerEvents, Position, PositionType, RGBA, Scale, Shadow, TextAlign,
+    TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform,
+    Transition, Translate, VerticalPosition, VerticalPositionKeyword, Visibility,
 };
 
 use cssparser::Token as CssToken;
