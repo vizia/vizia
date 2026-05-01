@@ -76,7 +76,7 @@ pub use vizia_style::{
     CornerShape, CssRule, CursorIcon, Direction, Display, Filter, FontFamily, FontSize, FontSlant,
     FontVariation, FontWeight, FontWeightKeyword, FontWidth, GenericFontFamily, Gradient,
     HorizontalPosition, HorizontalPositionKeyword, LayoutWrap, Length, LengthOrPercentage,
-    LengthValue, LineClamp, LineDirection, LinearGradient, Matrix, Opacity, Overflow,
+    LengthValue, LineClamp, LineDirection, LineHeight, LinearGradient, Matrix, Opacity, Overflow,
     PointerEvents, Position, PositionType, RGBA, Scale, Shadow, TextAlign, TextDecorationLine,
     TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform, Transition,
     Translate, VerticalPosition, VerticalPositionKeyword, Visibility,
@@ -299,6 +299,7 @@ pub struct Style {
     pub(crate) text: SparseSet<String>,
     pub(crate) text_wrap: StyleSet<bool>,
     pub(crate) text_overflow: StyleSet<TextOverflow>,
+    pub(crate) line_height: AnimatableVarSet<LineHeight>,
     pub(crate) line_clamp: StyleSet<LineClamp>,
     pub(crate) text_align: StyleSet<TextAlign>,
     pub(crate) text_decoration_line: StyleSet<TextDecorationLine>,
@@ -403,6 +404,7 @@ pub struct Style {
     pub(crate) custom_color_props: HashMap<u64, AnimatableVarSet<Color>>,
     pub(crate) custom_length_props: HashMap<u64, AnimatableVarSet<LengthOrPercentage>>,
     pub(crate) custom_font_size_props: HashMap<u64, AnimatableVarSet<FontSize>>,
+    pub(crate) custom_line_height_props: HashMap<u64, AnimatableVarSet<LineHeight>>,
     pub(crate) custom_units_props: HashMap<u64, AnimatableVarSet<Units>>,
     pub(crate) custom_opacity_props: HashMap<u64, AnimatableVarSet<Opacity>>,
     pub(crate) custom_shadow_props: HashMap<u64, AnimatableVarSet<Vec<Shadow>>>,
@@ -617,6 +619,10 @@ impl Style {
                     insert_keyframe2(&mut self.font_size, animation_id, time, value.clone());
                 }
 
+                Property::LineHeight(value) => {
+                    insert_keyframe2(&mut self.line_height, animation_id, time, value.clone());
+                }
+
                 Property::CaretColor(value) => {
                     insert_keyframe2(&mut self.caret_color, animation_id, time, *value);
                 }
@@ -807,6 +813,7 @@ impl Style {
 
         self.font_color.play_animation(entity, animation, start_time, duration, delay);
         self.font_size.play_animation(entity, animation, start_time, duration, delay);
+        self.line_height.play_animation(entity, animation, start_time, duration, delay);
         self.caret_color.play_animation(entity, animation, start_time, duration, delay);
         self.selection_color.play_animation(entity, animation, start_time, duration, delay);
 
@@ -847,6 +854,14 @@ impl Style {
         for store in self.custom_length_props.values_mut() {
             store.play_animation(entity, animation, start_time, duration, delay);
         }
+        // Play animations on custom font-size properties
+        for store in self.custom_font_size_props.values_mut() {
+            store.play_animation(entity, animation, start_time, duration, delay);
+        }
+        // Play animations on custom line-height properties
+        for store in self.custom_line_height_props.values_mut() {
+            store.play_animation(entity, animation, start_time, duration, delay);
+        }
         // Play animations on custom units properties
         for store in self.custom_units_props.values_mut() {
             store.play_animation(entity, animation, start_time, duration, delay);
@@ -885,6 +900,7 @@ impl Style {
             | self.shadow.has_active_animation(entity, animation)
             | self.font_color.has_active_animation(entity, animation)
             | self.font_size.has_active_animation(entity, animation)
+            | self.line_height.has_active_animation(entity, animation)
             | self.caret_color.has_active_animation(entity, animation)
             | self.selection_color.has_active_animation(entity, animation)
             | self.left.has_active_animation(entity, animation)
@@ -1126,6 +1142,11 @@ impl Style {
                 self.font_size.insert_transition(rule_id, animation);
             }
 
+            "line-height" => {
+                self.line_height.insert_animation(animation, self.add_transition(transition));
+                self.line_height.insert_transition(rule_id, animation);
+            }
+
             "caret-color" => {
                 self.caret_color.insert_animation(animation, self.add_transition(transition));
                 self.caret_color.insert_transition(rule_id, animation);
@@ -1265,6 +1286,7 @@ impl Style {
                 let anim_length: AnimationState<LengthOrPercentage> =
                     self.add_transition(transition);
                 let anim_font_size: AnimationState<FontSize> = self.add_transition(transition);
+                let anim_line_height: AnimationState<LineHeight> = self.add_transition(transition);
                 let anim_units: AnimationState<Units> = self.add_transition(transition);
                 let anim_opacity: AnimationState<Opacity> = self.add_transition(transition);
 
@@ -1298,6 +1320,16 @@ impl Style {
                     store.insert_animation(animation, anim_font_size);
                     store.insert_transition(rule_id, animation);
                     self.custom_font_size_props.insert(variable_name_hash, store);
+                }
+
+                if let Some(store) = self.custom_line_height_props.get_mut(&variable_name_hash) {
+                    store.insert_animation(animation, anim_line_height);
+                    store.insert_transition(rule_id, animation);
+                } else {
+                    let mut store = AnimatableVarSet::default();
+                    store.insert_animation(animation, anim_line_height);
+                    store.insert_transition(rule_id, animation);
+                    self.custom_line_height_props.insert(variable_name_hash, store);
                 }
 
                 if let Some(store) = self.custom_units_props.get_mut(&variable_name_hash) {
@@ -1365,6 +1397,32 @@ impl Style {
                     if unit.as_ref().eq_ignore_ascii_case("px") =>
                 {
                     Some(FontSize(Length::Value(LengthValue::Px(*value))))
+                }
+
+                _ => None,
+            }
+        }
+
+        fn line_height_fallback(var: &Variable<'_>) -> Option<LineHeight> {
+            match first_fallback_token(var) {
+                Some(TokenOrValue::Token(CssToken::Dimension { value, unit, .. }))
+                    if unit.as_ref().eq_ignore_ascii_case("px") =>
+                {
+                    Some(LineHeight::Length(Length::Value(LengthValue::Px(*value))))
+                }
+
+                Some(TokenOrValue::Token(CssToken::Percentage { unit_value, .. })) => {
+                    Some(LineHeight::Percentage(*unit_value * 100.0))
+                }
+
+                Some(TokenOrValue::Token(CssToken::Number { value, .. })) => {
+                    Some(LineHeight::Number(*value))
+                }
+
+                Some(TokenOrValue::Token(CssToken::Ident(ident)))
+                    if ident.as_ref().eq_ignore_ascii_case("normal") =>
+                {
+                    Some(LineHeight::Normal)
                 }
 
                 _ => None,
@@ -1955,6 +2013,9 @@ impl Style {
             Property::TextOverflow(text_overflow) => {
                 self.text_overflow.insert_rule(rule_id, text_overflow);
             }
+            Property::LineHeight(line_height) => {
+                self.line_height.insert_rule(rule_id, line_height);
+            }
             Property::LineClamp(line_clamp) => {
                 self.line_clamp.insert_rule(rule_id, line_clamp);
             }
@@ -2008,6 +2069,17 @@ impl Style {
                         }
                     };
                 }
+                macro_rules! parse_line_height_var {
+                    ($prop:expr) => {
+                        if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
+                            $prop.insert_variable_rule(
+                                rule_id,
+                                variable_hash(var),
+                                line_height_fallback(var),
+                            );
+                        }
+                    };
+                }
                 macro_rules! parse_units_var {
                     ($($prop:expr),+) => {
                         if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
@@ -2029,6 +2101,7 @@ impl Style {
                     "overline-color" => parse_color_var!(self.overline_color),
                     "strikethrough-color" => parse_color_var!(self.strikethrough_color),
                     "font-size" => parse_font_size_var!(self.font_size),
+                    "line-height" => parse_line_height_var!(self.line_height),
                     "corner-radius" => parse_length_var!(
                         self.corner_top_left_radius,
                         self.corner_top_right_radius,
@@ -2190,6 +2263,18 @@ impl Style {
                                     store.insert_rule(rule_id, fs);
                                     self.custom_font_size_props.insert(variable_name_hash, store);
                                 }
+                                // Also try storing as LineHeight::Length
+                                let line_height =
+                                    LineHeight::Length(Length::Value(LengthValue::Px(*value)));
+                                if let Some(store) =
+                                    self.custom_line_height_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, line_height);
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, line_height);
+                                    self.custom_line_height_props.insert(variable_name_hash, store);
+                                }
                                 // Also store as Units::Pixels
                                 let units_val = Units::Pixels(*value);
                                 if let Some(store) =
@@ -2239,6 +2324,17 @@ impl Style {
                                 let mut store = AnimatableVarSet::default();
                                 store.insert_rule(rule_id, lop);
                                 self.custom_length_props.insert(variable_name_hash, store);
+                            }
+                            // Also store as LineHeight::Percentage
+                            let line_height = LineHeight::Percentage(*unit_value * 100.0);
+                            if let Some(store) =
+                                self.custom_line_height_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_rule(rule_id, line_height);
+                            } else {
+                                let mut store = AnimatableVarSet::default();
+                                store.insert_rule(rule_id, line_height);
+                                self.custom_line_height_props.insert(variable_name_hash, store);
                             }
                             // Also store as Units::Percentage
                             let units_val = Units::Percentage(*unit_value * 100.0);
@@ -2312,6 +2408,24 @@ impl Style {
                                 self.custom_font_size_props.insert(variable_name_hash, store);
                             }
                             if let Some(store) =
+                                self.custom_line_height_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    line_height_fallback(var),
+                                );
+                            } else {
+                                let mut store: AnimatableVarSet<LineHeight> =
+                                    AnimatableVarSet::default();
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    line_height_fallback(var),
+                                );
+                                self.custom_line_height_props.insert(variable_name_hash, store);
+                            }
+                            if let Some(store) =
                                 self.custom_units_props.get_mut(&variable_name_hash)
                             {
                                 store.insert_variable_rule(rule_id, name_hash, units_fallback(var));
@@ -2370,6 +2484,32 @@ impl Style {
                                 let mut store = AnimatableVarSet::default();
                                 store.insert_rule(rule_id, opacity_val);
                                 self.custom_opacity_props.insert(variable_name_hash, store);
+                            }
+
+                            // Plain number like 1.2 -> LineHeight::Number
+                            let line_height = LineHeight::Number(*value);
+                            if let Some(store) =
+                                self.custom_line_height_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_rule(rule_id, line_height);
+                            } else {
+                                let mut store = AnimatableVarSet::default();
+                                store.insert_rule(rule_id, line_height);
+                                self.custom_line_height_props.insert(variable_name_hash, store);
+                            }
+                        }
+                        TokenOrValue::Token(CssToken::Ident(ident))
+                            if ident.as_ref().eq_ignore_ascii_case("normal") =>
+                        {
+                            let line_height = LineHeight::Normal;
+                            if let Some(store) =
+                                self.custom_line_height_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_rule(rule_id, line_height);
+                            } else {
+                                let mut store = AnimatableVarSet::default();
+                                store.insert_rule(rule_id, line_height);
+                                self.custom_line_height_props.insert(variable_name_hash, store);
                             }
                         }
                         _ => {}
@@ -2507,6 +2647,7 @@ impl Style {
         self.text.remove(entity);
         self.text_wrap.remove(entity);
         self.text_overflow.remove(entity);
+        self.line_height.remove(entity);
         self.line_clamp.remove(entity);
         self.text_align.remove(entity);
         self.font_family.remove(entity);
@@ -2591,6 +2732,9 @@ impl Style {
             store.remove(entity);
         }
         for store in self.custom_font_size_props.values_mut() {
+            store.remove(entity);
+        }
+        for store in self.custom_line_height_props.values_mut() {
             store.remove(entity);
         }
         for store in self.custom_units_props.values_mut() {
@@ -2754,6 +2898,7 @@ impl Style {
         // Text and Font
         self.text_wrap.clear_rules();
         self.text_overflow.clear_rules();
+        self.line_height.clear_rules();
         self.line_clamp.clear_rules();
         self.text_align.clear_rules();
         self.font_family.clear_rules();
@@ -2791,6 +2936,11 @@ impl Style {
             store.clear_rules();
         }
         self.custom_font_size_props
+            .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
+        for store in self.custom_line_height_props.values_mut() {
+            store.clear_rules();
+        }
+        self.custom_line_height_props
             .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
         for store in self.custom_units_props.values_mut() {
             store.clear_rules();

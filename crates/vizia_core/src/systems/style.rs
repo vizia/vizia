@@ -435,6 +435,7 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context, redraw_entities: &mut 
 
             if cx.style.font_color.inherit_inline(entity, parent)
                 | cx.style.font_size.inherit_inline(entity, parent)
+                | cx.style.line_height.inherit_inline(entity, parent)
                 | cx.style.font_family.inherit_inline(entity, parent)
                 | cx.style.font_weight.inherit_inline(entity, parent)
                 | cx.style.font_slant.inherit_inline(entity, parent)
@@ -458,6 +459,7 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context, redraw_entities: &mut 
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
             if cx.style.font_color.inherit_shared(entity, parent)
                 | cx.style.font_size.inherit_shared(entity, parent)
+                | cx.style.line_height.inherit_shared(entity, parent)
                 | cx.style.font_family.inherit_shared(entity, parent)
                 | cx.style.font_weight.inherit_shared(entity, parent)
                 | cx.style.font_slant.inherit_shared(entity, parent)
@@ -544,6 +546,20 @@ fn link_variable_data(
         }
     }
 
+    // -- Line-height variables --
+    let resolved_line_heights: HashMap<u64, _> = {
+        let props = &style.custom_line_height_props;
+        props
+            .iter()
+            .filter_map(|(h, p)| p.get_with_variables(entity, props).map(|v| (*h, v)))
+            .collect()
+    };
+    for prop in style.custom_line_height_props.values_mut() {
+        if prop.link_with_resolved(entity, matched_rules, &resolved_line_heights) {
+            redraw_entities.push(entity);
+        }
+    }
+
     // -- Units variables --
     let resolved_units: HashMap<u64, _> = {
         let props = &style.custom_units_props;
@@ -591,6 +607,11 @@ fn inherit_variable_data(
                 }
             }
             for prop in style.custom_font_size_props.values_mut() {
+                if prop.inherit_shared(entity, parent) {
+                    redraw_entities.push(entity);
+                }
+            }
+            for prop in style.custom_line_height_props.values_mut() {
                 if prop.inherit_shared(entity, parent) {
                     redraw_entities.push(entity);
                 }
@@ -934,6 +955,12 @@ fn link_style_data(
 
     if style.text_overflow.link(entity, matched_rules) {
         should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.line_height.link(entity, matched_rules, &style.custom_line_height_props) {
+        should_redraw = true;
+        should_relayout = true;
         should_reflow = true;
     }
 
