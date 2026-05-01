@@ -294,35 +294,41 @@ impl<'a> EventContext<'a> {
             self.tree.get_parent_window(self.current).unwrap_or(Entity::root())
         };
 
-        self.cache
-            .clip_path
-            .get(self.current)
-            .cloned()
-            .flatten()
-            .map(|clip_path| Into::<BoundingBox>::into(*clip_path.bounds()))
-            .or_else(|| {
-                let mut current = self.current;
-                while let Some(parent) = self.tree.get_parent(current) {
-                    if let Some(clip_path) = self
-                        .cache
-                        .clip_path
-                        .get(parent)
-                        .cloned()
-                        .flatten()
-                        .map(|clip_path| Into::<BoundingBox>::into(*clip_path.bounds()))
-                    {
-                        return Some(clip_path);
-                    }
+        let window_bounds = self.cache.get_bounds(current_window);
 
-                    if parent == current_window {
-                        break;
-                    }
+        // A cached entry (including None) is authoritative for this entity.
+        if let Some(clip_path) = self.cache.clip_path.get(self.current) {
+            return clip_path
+                .clone()
+                .map(|clip_path| Into::<BoundingBox>::into(*clip_path.bounds()))
+                .unwrap_or(window_bounds);
+        }
 
-                    current = parent;
-                }
-                None
-            })
-            .unwrap_or_else(|| self.cache.get_bounds(current_window))
+        if self.style.ignore_clipping.get(self.current).copied().unwrap_or(false) {
+            return window_bounds;
+        }
+
+        let mut current = self.current;
+        while let Some(parent) = self.tree.get_parent(current) {
+            if let Some(clip_path) = self
+                .cache
+                .clip_path
+                .get(parent)
+                .cloned()
+                .flatten()
+                .map(|clip_path| Into::<BoundingBox>::into(*clip_path.bounds()))
+            {
+                return clip_path;
+            }
+
+            if parent == current_window {
+                break;
+            }
+
+            current = parent;
+        }
+
+        window_bounds
     }
 
     /// Returns the 2D transform of the current view.
