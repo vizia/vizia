@@ -310,6 +310,10 @@ impl<'a> EventContext<'a> {
 
         let mut current = self.current;
         while let Some(parent) = self.tree.get_parent(current) {
+            if self.style.ignore_clipping.get(parent).copied().unwrap_or(false) {
+                return window_bounds;
+            }
+
             if let Some(clip_path) = self
                 .cache
                 .clip_path
