@@ -63,6 +63,7 @@ comrak = { version = "0.52", default-features = false }
 copypasta = { version = "0.10", default-features = false }
 cssparser = "0.36"
 cssparser-color = "0.4"
+dark-light = "2.0.0"
 dashmap = { version = "6.1", features = ["inline"] }
 fern = "0.7"
 fluent-bundle = "0.16.0"
