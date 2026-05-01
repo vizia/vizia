@@ -44,7 +44,7 @@ open = { workspace = true, optional = true }
 fxhash.workspace = true
 rayon = { workspace = true, optional = true }
 dashmap = { workspace = true, optional = true }
-dark-light.workspace = true
+mundy.workspace = true
 
 [lib]
 doctest = false
