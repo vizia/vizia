@@ -27,18 +27,11 @@ pub fn tabview(cx: &mut Context) {
     TabData { tabs, selected_tab }.build(cx);
 
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# Label
-A label can be used to display a string of text.        
-        ",
-        );
+        Label::new(cx, Localized::new("tabview")).class("panel-title");
 
         Divider::new(cx);
 
-        Label::new(cx, "### Basic tab view");
-
-        DemoRegion::new(cx, "Basic TabView", move |cx| {
+        DemoRegion::new(cx, "TabView", move |cx| {
             TabView::new(cx, tabs, |_, _, item| match item {
                 "Tab1" => TabPair::new(
                     move |cx| {

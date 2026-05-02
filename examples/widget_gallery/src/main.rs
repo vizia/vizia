@@ -1,7 +1,10 @@
-use vizia::{icons::ICON_CLOCK, prelude::*};
+use vizia::{
+    icons::{ICON_CLIPBOARD, ICON_CLOCK, ICON_COPY, ICON_CUT},
+    prelude::*,
+};
 
 use chrono::Utc;
-use log::LevelFilter;
+use log::{LevelFilter, debug};
 use vizia::icons::{ICON_BOLD, ICON_ITALIC, ICON_SETTINGS, ICON_UNDERLINE, ICON_USER};
 
 mod app_data;
@@ -264,25 +267,34 @@ fn build_sidebar_content(
         let query = search_text.get().to_lowercase();
         let query = query.trim().to_string();
 
-        let mut matching_items: Vec<&'static str> = std::iter::once("All")
-            .chain(CATEGORIES.iter().flat_map(|(_, items)| items.iter().copied()))
+        let mut matching_items: Vec<&'static str> = std::iter::once(ALL_VIEW_ID)
+            .chain(CATEGORIES.iter().flat_map(|(_, items)| items.iter().map(|(id, _)| *id)))
             .filter(|item| query.is_empty() || item.to_lowercase().contains(&query))
             .collect();
 
         matching_items.sort_unstable();
 
-        for item in matching_items.iter().copied() {
-            let selected_view = selected_view;
-            Button::new(cx, move |cx| Label::new(cx, item).hoverable(false))
+        let no_match = matching_items.is_empty();
+
+        VStack::new(cx, move |cx| {
+            for item in matching_items.iter().copied() {
+                let selected_view = selected_view;
+                Button::new(cx, move |cx| {
+                    Label::new(cx, Localized::new(localized_view_key(item))).hoverable(false)
+                })
                 .class("sidebar-menu-button")
                 .toggle_class(
                     "sidebar-menu-button-active",
                     selected_view.map(move |sv| *sv == item),
                 )
                 .on_press(move |cx| cx.emit(AppEvent::SelectView(item)));
-        }
+            }
+        })
+        .height(Auto)
+        .padding_left(Pixels(12.0))
+        .padding_right(Pixels(12.0));
 
-        if matching_items.is_empty() {
+        if no_match {
             Label::new(cx, "No widgets match your search.").class("sidebar-empty-state");
         }
     });
@@ -291,9 +303,7 @@ fn build_sidebar_content(
 fn all_views_page(cx: &mut Context) {
     let mut all_views: Vec<(&'static str, &'static str)> = CATEGORIES
         .iter()
-        .flat_map(|(category, items)| {
-            items.iter().copied().map(move |view_name| (*category, view_name))
-        })
+        .flat_map(|(category, items)| items.iter().map(move |(view_id, _)| (*category, *view_id)))
         .collect();
 
     all_views.sort_unstable_by_key(|(_, view_name)| *view_name);
@@ -303,8 +313,9 @@ fn all_views_page(cx: &mut Context) {
             for (category, view_name) in all_views.iter().copied() {
                 Card::new(cx, move |cx| {
                     CardHeader::new(cx, |cx| {
-                        Label::new(cx, view_name).class("all-view-card-title");
-                        Label::new(cx, category).class("all-view-card-category");
+                        Label::new(cx, Localized::new(localized_view_key(view_name)))
+                            .class("all-view-card-title");
+                        Label::new(cx, Localized::new(category)).class("all-view-card-category");
                     })
                     .height(Auto);
 
@@ -315,7 +326,8 @@ fn all_views_page(cx: &mut Context) {
                     .alignment(Alignment::Center);
                 })
                 .class("all-view-card")
-                .width(Pixels(180.0))
+                .min_width(Pixels(180.0))
+                .width(Stretch(1.0))
                 .height(Pixels(180.0));
             }
         })
@@ -490,40 +502,70 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
             Element::new(cx).size(Pixels(64.0)).background_color(Color::rgb(58, 134, 255));
         }
         "Grid" => {
-            Grid::new(cx, vec![Stretch(1.0), Stretch(1.0)], vec![Pixels(60.0)], |cx| {
-                Label::new(cx, "A")
-                    .column_start(0)
-                    .row_start(0)
-                    .background_color(Color::red())
-                    .color(Color::white())
-                    .alignment(Alignment::Center);
-                Label::new(cx, "B")
-                    .column_start(1)
-                    .row_start(0)
-                    .background_color(Color::blue())
-                    .color(Color::white())
-                    .alignment(Alignment::Center);
-            })
+            Grid::new(
+                cx,
+                vec![Pixels(60.0), Stretch(1.0)],
+                vec![Pixels(60.0), Pixels(40.0)],
+                |cx| {
+                    Label::new(cx, "A")
+                        .column_start(0)
+                        .row_start(0)
+                        .background_color(Color::red())
+                        .color(Color::white())
+                        .alignment(Alignment::Center);
+                    Label::new(cx, "B")
+                        .column_start(1)
+                        .row_start(0)
+                        .background_color(Color::blue())
+                        .color(Color::white())
+                        .alignment(Alignment::Center);
+                    Label::new(cx, "C")
+                        .column_start(0)
+                        .column_span(2)
+                        .row_start(1)
+                        .background_color(Color::green())
+                        .color(Color::white())
+                        .alignment(Alignment::Center);
+                },
+            )
             .width(Stretch(1.0))
-            .height(Pixels(60.0));
+            .height(Pixels(100.0));
         }
         "HStack" => {
             HStack::new(cx, |cx| {
                 Element::new(cx).size(Pixels(30.0)).background_color(Color::red());
                 Element::new(cx).size(Pixels(30.0)).background_color(Color::green());
+                Element::new(cx).size(Pixels(30.0)).background_color(Color::blue());
             })
             .height(Auto)
+            .width(Auto)
             .gap(Pixels(6.0));
         }
         "Image" => {
-            Label::new(cx, "Coming soon...");
+            Image::new(cx, "vizia.png")
+                .width(Pixels(64.0))
+                .height(Pixels(64.0))
+                .background_size(vec![BackgroundSize::Cover]);
         }
         "Knob" => {
             let value = Signal::new(0.3f32);
             Knob::new(cx, 0.5, value, false).on_change(move |_cx, v| value.set(v));
         }
         "Label" => {
-            Label::new(cx, "Hello Vizia");
+            VStack::new(cx, |cx| {
+                Label::new(cx, "Hello Vizia");
+                Label::rich(cx, "Hello", |cx| {
+                    TextSpan::new(cx, " Rich", |cx| {
+                        TextSpan::new(cx, " Label", |_| {})
+                            .font_slant(FontSlant::Italic)
+                            .color(Color::red());
+                    })
+                    .font_weight(FontWeightKeyword::Bold);
+                });
+            })
+            .alignment(Alignment::Center)
+            .gap(Pixels(12.0))
+            .height(Auto);
         }
         "List" => {
             let list = Signal::new(vec![Signal::new(1u32), Signal::new(2u32), Signal::new(3u32)]);
@@ -551,7 +593,116 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
                     cx,
                     |cx| Label::new(cx, "File"),
                     |cx| {
-                        MenuButton::new(cx, |_| {}, |cx| Label::new(cx, "Open"));
+                        MenuButton::new(
+                            cx,
+                            |_| debug!("New"),
+                            |cx| {
+                                HStack::new(cx, |cx| {
+                                    Label::new(cx, "New");
+                                    Label::new(cx, "Ctrl + N").class("shortcut");
+                                })
+                            },
+                        );
+                        MenuButton::new(
+                            cx,
+                            |_| debug!("Open"),
+                            |cx| {
+                                HStack::new(cx, |cx| {
+                                    Label::new(cx, "Open");
+                                    Label::new(cx, "Ctrl + O").class("shortcut");
+                                })
+                            },
+                        );
+                        Submenu::new(
+                            cx,
+                            |cx| Label::new(cx, "Open Recent"),
+                            |cx| {
+                                MenuButton::new(
+                                    cx,
+                                    |_| debug!("Doc 1"),
+                                    |cx| Label::new(cx, "Doc 1"),
+                                );
+                                Submenu::new(
+                                    cx,
+                                    |cx| Label::new(cx, "Doc 2"),
+                                    |cx| {
+                                        MenuButton::new(
+                                            cx,
+                                            |_| debug!("Version 1"),
+                                            |cx| Label::new(cx, "Version 1"),
+                                        );
+                                        MenuButton::new(
+                                            cx,
+                                            |_| debug!("Version 2"),
+                                            |cx| Label::new(cx, "Version 2"),
+                                        );
+                                        MenuButton::new(
+                                            cx,
+                                            |_| debug!("Version 3"),
+                                            |cx| Label::new(cx, "Version 3"),
+                                        );
+                                    },
+                                );
+                                MenuButton::new(
+                                    cx,
+                                    |_| debug!("Doc 3"),
+                                    |cx| Label::new(cx, "Doc 3"),
+                                );
+                            },
+                        );
+                        Divider::new(cx);
+                        MenuButton::new(cx, |_| debug!("Save"), |cx| Label::new(cx, "Save"));
+                        MenuButton::new(cx, |_| debug!("Save As"), |cx| Label::new(cx, "Save As"));
+                        Divider::new(cx);
+                        MenuButton::new(cx, |_| debug!("Quit"), |cx| Label::new(cx, "Quit"));
+                    },
+                );
+                Submenu::new(
+                    cx,
+                    |cx| Label::new(cx, "Edit"),
+                    |cx| {
+                        MenuButton::new(
+                            cx,
+                            |_| debug!("Cut"),
+                            |cx| {
+                                HStack::new(cx, |cx| {
+                                    Svg::new(cx, ICON_CUT).class("icon");
+                                    Label::new(cx, "Cut");
+                                })
+                            },
+                        );
+                        MenuButton::new(
+                            cx,
+                            |_| debug!("Copy"),
+                            |cx| {
+                                HStack::new(cx, |cx| {
+                                    Svg::new(cx, ICON_COPY).class("icon");
+                                    Label::new(cx, "Copy");
+                                })
+                            },
+                        );
+                        MenuButton::new(
+                            cx,
+                            |_| debug!("Paste"),
+                            |cx| {
+                                HStack::new(cx, |cx| {
+                                    Svg::new(cx, ICON_CLIPBOARD).class("icon");
+                                    Label::new(cx, "Paste");
+                                })
+                            },
+                        );
+                    },
+                );
+                Submenu::new(
+                    cx,
+                    |cx| Label::new(cx, "Help"),
+                    |cx| {
+                        MenuButton::new(
+                            cx,
+                            |_| debug!("Show License"),
+                            |cx| Label::new(cx, "Show License"),
+                        );
+                        MenuButton::new(cx, |_| debug!("About"), |cx| Label::new(cx, "About"));
                     },
                 );
             })
@@ -614,7 +765,8 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
         }
         "Slider" => {
             let value = Signal::new(0.5f32);
-            Slider::new(cx, value).on_change(move |_cx, v| value.set(v)).width(Pixels(180.0));
+
+            Slider::new(cx, value).on_change(move |_cx, v| value.set(v));
         }
         "Spinbox" => {
             let value = Signal::new(10.0f64);
@@ -737,10 +889,13 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
         }
         "ZStack" => {
             ZStack::new(cx, |cx| {
-                Element::new(cx).size(Pixels(44.0)).background_color(Color::red());
-                Element::new(cx).size(Pixels(36.0)).background_color(Color::blue());
+                Element::new(cx).size(Pixels(100.0)).background_color(Color::red());
+                Element::new(cx).size(Pixels(70.0)).background_color(Color::green());
+                Element::new(cx).size(Pixels(40.0)).background_color(Color::blue());
             })
-            .size(Auto);
+            .size(Auto)
+            .padding(Pixels(20.0))
+            .alignment(Alignment::Center);
         }
         _ => {
             Label::new(cx, "No preview");
@@ -754,7 +909,7 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
 
 fn render_view_page(cx: &mut Context, view_name: &'static str) {
     match view_name {
-        "All" => all_views_page(cx),
+        ALL_VIEW_ID => all_views_page(cx),
         "Accordion" => accordion(cx),
         "Avatar" => avatar(cx),
         "Avatar Group" => avatar_group(cx),
@@ -827,21 +982,15 @@ fn main() -> Result<(), ApplicationError> {
     Application::new(|cx: &mut Context| {
         cx.add_translation(
             langid!("en-US"),
-            include_str!("../../resources/translations/en-US/helper.ftl"),
+            include_str!("../resources/translations/en-US/helper.ftl"),
         )
         .unwrap();
 
-        cx.add_translation(
-            langid!("fr"),
-            include_str!("../../resources/translations/fr/helper.ftl"),
-        )
-        .unwrap();
+        cx.add_translation(langid!("fr"), include_str!("../resources/translations/fr/helper.ftl"))
+            .unwrap();
 
-        cx.add_translation(
-            langid!("ar"),
-            include_str!("../../resources/translations/ar/helper.ftl"),
-        )
-        .unwrap();
+        cx.add_translation(langid!("ar"), include_str!("../resources/translations/ar/helper.ftl"))
+            .unwrap();
 
         cx.load_image(
             "vizia.png",
@@ -852,7 +1001,11 @@ fn main() -> Result<(), ApplicationError> {
         let app_data = AppData::new();
         app_data.build(cx);
 
-        cx.add_stylesheet(include_style!("src/style.css")).expect("Failed to add stylesheet");
+        cx.add_stylesheet(include_style!("resources/themes/theme.css"))
+            .expect("Failed to add stylesheet");
+
+        cx.add_stylesheet(include_style!("resources/themes/accents.css"))
+            .expect("Failed to add stylesheet");
 
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
@@ -878,7 +1031,9 @@ fn main() -> Result<(), ApplicationError> {
                     move |cx| {
                         build_sidebar_content(cx, app_data.selected_view, app_data.search_text)
                     },
-                    move |_cx| {},
+                    move |cx| {
+                        Label::new(cx, "Sidebar Footer").class("sidebar-footer");
+                    },
                 );
                 VStack::new(cx, |cx| {
                     HStack::new(cx, |cx| {

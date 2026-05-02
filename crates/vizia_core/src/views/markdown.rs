@@ -123,6 +123,7 @@ fn parse_node<'a>(
                 .height(Auto);
             })
             .class("li")
+            .alignment(Alignment::Left)
             .height(Auto);
         }
 

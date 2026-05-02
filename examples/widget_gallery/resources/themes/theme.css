@@ -1,5 +1,14 @@
-.container {
-    padding: 0px;
+.panel-title {
+    font-size: 40px;
+    font-weight: bold;
+    width: 1s;
+}
+
+.panel-description {
+    font-size: 14px;
+    color: var(--muted-foreground);
+    width: 1s;
+    text-wrap: true;
 }
 
 scrollview.widgets > scroll-content {

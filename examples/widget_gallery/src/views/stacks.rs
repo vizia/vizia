@@ -4,12 +4,7 @@ use crate::DemoRegion;
 
 pub fn hstack(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# HStack
-The hstack container can be used to layout views in a row.        
-        ",
-        );
+        Label::new(cx, Localized::new("hstack")).class("panel-title");
 
         Divider::new(cx);
 
@@ -28,12 +23,7 @@ The hstack container can be used to layout views in a row.
 
 pub fn vstack(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# VStack
-The vstack container can be used to layout views in a column.        
-        ",
-        );
+        Label::new(cx, Localized::new("vstack")).class("panel-title");
 
         Divider::new(cx);
 
@@ -52,11 +42,7 @@ The vstack container can be used to layout views in a column.
 
 pub fn zstack(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# ZStack
-The zstack container can be used to layer views on top of each other.",
-        );
+        Label::new(cx, Localized::new("zstack")).class("panel-title");
 
         Divider::new(cx);
 

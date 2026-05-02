@@ -37,11 +37,9 @@ pub fn dropdown(cx: &mut Context) {
     DropdownData { list, selected, choice }.build(cx);
 
     VStack::new(cx, |cx| {
-        Markdown::new(cx, "# Dropdown");
+        Label::new(cx, Localized::new("dropdown")).class("panel-title");
 
         Divider::new(cx);
-
-        Markdown::new(cx, "### Basic dropdown");
 
         DemoRegion::new(cx, "Basic Dropdown", move |cx| {
             Dropdown::new(

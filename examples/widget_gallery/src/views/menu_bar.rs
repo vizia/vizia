@@ -7,11 +7,11 @@ use crate::DemoRegion;
 
 pub fn menu_bar(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Markdown::new(cx, "# MenuBar");
+        Label::new(cx, Localized::new("menu-bar")).class("panel-title");
 
         Divider::new(cx);
 
-        DemoRegion::new(cx, "Basic Menu Bar", |cx| {
+        DemoRegion::new(cx, "Menu Bar", |cx| {
             MenuBar::new(cx, |cx| {
                 Submenu::new(
                     cx,

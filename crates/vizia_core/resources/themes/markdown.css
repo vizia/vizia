@@ -3,9 +3,9 @@
 } */
 
 markdown {
-    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",
-        "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji",
-        "Segoe UI Emoji";
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", "Noto Sans",
+        Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
     font-size: 16px;
     padding: 20px;
 }

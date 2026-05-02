@@ -79,16 +79,11 @@ pub fn virtual_table(cx: &mut Context) {
     ]);
 
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# VirtualTable
-A virtual table renders only the visible rows for large datasets, keeping memory and \
-render cost low. This demo shows 500 rows.",
-        );
+        Label::new(cx, Localized::new("virtual-table")).class("panel-title");
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### 500-row VirtualTable");
+        Label::new(cx, Localized::new("virtual-table-500-row")).class("section-title");
 
         DemoRegion::new(cx, "VirtualTable (500 rows)", move |cx| {
             VirtualTable::new(cx, sorted_rows, columns, 34.0, |row: &VTableRow| row.id)

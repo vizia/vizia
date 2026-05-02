@@ -42,18 +42,14 @@ pub fn toggle_button(cx: &mut Context) {
     ToggleData { bold, italic, underline }.build(cx);
 
     VStack::new(cx, |cx| {
-        Markdown::new(cx, "# ToggleButton");
+        Label::new(cx, Localized::new("toggle-button")).class("panel-title");
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic toggle button");
-
-        DemoRegion::new(cx, "Basic Toggle Button", move |cx| {
+        DemoRegion::new(cx, "Toggle Button", move |cx| {
             ToggleButton::new(cx, bold, |cx| Label::new(cx, "Bold"))
                 .on_toggle(|cx| cx.emit(ToggleEvent::Bold));
         });
-
-        Markdown::new(cx, "### Toggle button group");
 
         DemoRegion::new(cx, "Toggle Button Group", move |cx| {
             ButtonGroup::new(cx, |cx| {
