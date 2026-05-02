@@ -1,6 +1,8 @@
 //! A model for system specific state which can be accessed by any model or view.
 use crate::prelude::*;
 
+use mundy::Interest;
+use mundy::Preferences;
 use unic_langid::CharacterDirection;
 use unic_langid::LanguageIdentifier;
 
@@ -58,6 +60,18 @@ fn apply_direction_class(cx: &mut EventContext, direction: Direction) {
     }
 }
 
+fn detect_theme() -> ThemeMode {
+    let mundy_prefs = Preferences::once_blocking(Interest::ColorScheme, Duration::from_millis(500));
+
+    if let Some(preferences) = mundy_prefs
+        && preferences.color_scheme == mundy::ColorScheme::Dark
+    {
+        ThemeMode::DarkMode
+    } else {
+        ThemeMode::LightMode
+    }
+}
+
 impl Environment {
     pub(crate) fn new(cx: &mut Context) -> Self {
         let locale: LanguageIdentifier =
@@ -74,7 +88,7 @@ impl Environment {
             double_click_interval: Duration::from_millis(500),
             tooltip_delay: Duration::from_millis(1500),
             theme_mode: ThemeMode::default(),
-            system_theme_mode: ThemeMode::LightMode,
+            system_theme_mode: detect_theme(),
             caret_timer,
         }
     }
