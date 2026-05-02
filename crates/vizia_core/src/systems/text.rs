@@ -310,7 +310,22 @@ fn add_block(
 
             if let Some(text_decoration_line) = style.text_decoration_line.get(entity).copied() {
                 text_style.set_decoration_type(text_decoration_line.into());
-                text_style.set_decoration_color(font_color);
+
+                if let Some(text_decoration_style) =
+                    style.text_decoration_style.get(entity).copied()
+                {
+                    text_style.set_decoration_style(text_decoration_style.into());
+                }
+
+                let text_decoration_color = match style
+                    .text_decoration_color
+                    .get_resolved(entity, &style.custom_color_props)
+                {
+                    Some(Color::CurrentColor) | None => font_color,
+                    Some(color) => color,
+                };
+
+                text_style.set_decoration_color(text_decoration_color);
             }
 
             // Font Families
