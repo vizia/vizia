@@ -302,14 +302,10 @@ pub struct Style {
     pub(crate) line_clamp: StyleSet<LineClamp>,
     pub(crate) text_align: StyleSet<TextAlign>,
     pub(crate) text_decoration_line: StyleSet<TextDecorationLine>,
+    pub(crate) text_decoration_style: StyleSet<TextDecorationStyle>,
+    pub(crate) text_decoration_color: AnimatableVarSet<Color>,
     pub(crate) text_stroke_width: StyleSet<Length>,
     pub(crate) text_stroke_style: StyleSet<TextStrokeStyle>,
-    pub(crate) underline_style: StyleSet<TextDecorationStyle>,
-    pub(crate) overline_style: StyleSet<TextDecorationStyle>,
-    pub(crate) strikethrough_style: StyleSet<TextDecorationStyle>,
-    pub(crate) underline_color: AnimatableVarSet<Color>,
-    pub(crate) overline_color: AnimatableVarSet<Color>,
-    pub(crate) strikethrough_color: AnimatableVarSet<Color>,
     pub(crate) font_family: StyleSet<Vec<FamilyOwned>>,
     pub(crate) font_color: AnimatableVarSet<Color>,
     pub(crate) font_size: AnimatableVarSet<FontSize>,
@@ -725,8 +721,8 @@ impl Style {
                     insert_keyframe2(&mut self.max_height, animation_id, time, *value);
                 }
 
-                Property::UnderlineColor(value) => {
-                    insert_keyframe2(&mut self.underline_color, animation_id, time, *value);
+                Property::TextDecorationColor(value) => {
+                    insert_keyframe2(&mut self.text_decoration_color, animation_id, time, *value);
                 }
 
                 Property::Fill(value) => {
@@ -835,7 +831,7 @@ impl Style {
         self.min_vertical_gap.play_animation(entity, animation, start_time, duration, delay);
         self.max_vertical_gap.play_animation(entity, animation, start_time, duration, delay);
 
-        self.underline_color.play_animation(entity, animation, start_time, duration, delay);
+        self.text_decoration_color.play_animation(entity, animation, start_time, duration, delay);
 
         self.fill.play_animation(entity, animation, start_time, duration, delay);
 
@@ -907,7 +903,7 @@ impl Style {
             | self.max_horizontal_gap.has_active_animation(entity, animation)
             | self.min_vertical_gap.has_active_animation(entity, animation)
             | self.max_vertical_gap.has_active_animation(entity, animation)
-            | self.underline_color.has_active_animation(entity, animation)
+            | self.text_decoration_color.has_active_animation(entity, animation)
             | self.fill.has_active_animation(entity, animation)
     }
 
@@ -1245,9 +1241,10 @@ impl Style {
                 self.max_vertical_gap.insert_transition(rule_id, animation);
             }
 
-            "underline-color" => {
-                self.underline_color.insert_animation(animation, self.add_transition(transition));
-                self.underline_color.insert_transition(rule_id, animation);
+            "text-decoration-color" => {
+                self.text_decoration_color
+                    .insert_animation(animation, self.add_transition(transition));
+                self.text_decoration_color.insert_transition(rule_id, animation);
             }
 
             "fill" => {
@@ -1960,20 +1957,17 @@ impl Style {
             }
             Property::TextDecoration(decoration) => {
                 self.text_decoration_line.insert_rule(rule_id, decoration.line);
-                self.underline_style.insert_rule(rule_id, decoration.style);
-                self.overline_style.insert_rule(rule_id, decoration.style);
-                self.strikethrough_style.insert_rule(rule_id, decoration.style);
-                self.underline_color.insert_rule(rule_id, decoration.color.into());
-                self.overline_color.insert_rule(rule_id, decoration.color.into());
-                self.strikethrough_color.insert_rule(rule_id, decoration.color.into());
+                self.text_decoration_style.insert_rule(rule_id, decoration.style);
+                self.text_decoration_color.insert_rule(rule_id, decoration.color.into());
             }
             Property::TextDecorationLine(line) => {
                 self.text_decoration_line.insert_rule(rule_id, line);
             }
+            Property::TextDecorationColor(decoration_color) => {
+                self.text_decoration_color.insert_rule(rule_id, decoration_color);
+            }
             Property::TextDecorationStyle(decoration_style) => {
-                self.underline_style.insert_rule(rule_id, decoration_style);
-                self.overline_style.insert_rule(rule_id, decoration_style);
-                self.strikethrough_style.insert_rule(rule_id, decoration_style);
+                self.text_decoration_style.insert_rule(rule_id, decoration_style);
             }
             Property::TextStroke(stroke) => {
                 self.text_stroke_width.insert_rule(rule_id, stroke.width);
@@ -1984,24 +1978,6 @@ impl Style {
             }
             Property::TextStrokeStyle(stroke_style) => {
                 self.text_stroke_style.insert_rule(rule_id, stroke_style);
-            }
-            Property::UnderlineStyle(underline_style) => {
-                self.underline_style.insert_rule(rule_id, underline_style);
-            }
-            Property::OverlineStyle(overline_style) => {
-                self.overline_style.insert_rule(rule_id, overline_style);
-            }
-            Property::StrikethroughStyle(strikethrough_style) => {
-                self.strikethrough_style.insert_rule(rule_id, strikethrough_style);
-            }
-            Property::UnderlineColor(underline_color) => {
-                self.underline_color.insert_rule(rule_id, underline_color);
-            }
-            Property::OverlineColor(overline_color) => {
-                self.overline_color.insert_rule(rule_id, overline_color);
-            }
-            Property::StrikethroughColor(strikethrough_color) => {
-                self.strikethrough_color.insert_rule(rule_id, strikethrough_color);
             }
             Property::Fill(fill) => {
                 self.fill.insert_rule(rule_id, fill);
@@ -2057,9 +2033,7 @@ impl Style {
                     "caret-color" => parse_color_var!(self.caret_color),
                     "selection-color" => parse_color_var!(self.selection_color),
                     "fill" => parse_color_var!(self.fill),
-                    "underline-color" => parse_color_var!(self.underline_color),
-                    "overline-color" => parse_color_var!(self.overline_color),
-                    "strikethrough-color" => parse_color_var!(self.strikethrough_color),
+                    "text-decoration-color" => parse_color_var!(self.text_decoration_color),
                     "font-size" => parse_font_size_var!(self.font_size),
                     "corner-radius" => parse_length_var!(
                         self.corner_top_left_radius,
@@ -2551,12 +2525,8 @@ impl Style {
         self.caret_color.remove(entity);
         self.selection_color.remove(entity);
         self.text_decoration_line.remove(entity);
-        self.underline_style.remove(entity);
-        self.overline_style.remove(entity);
-        self.strikethrough_style.remove(entity);
-        self.underline_color.remove(entity);
-        self.overline_color.remove(entity);
-        self.strikethrough_color.remove(entity);
+        self.text_decoration_style.remove(entity);
+        self.text_decoration_color.remove(entity);
         self.text_stroke_width.remove(entity);
         self.text_stroke_style.remove(entity);
 
@@ -2803,12 +2773,8 @@ impl Style {
         self.selection_color.clear_rules();
         self.caret_color.clear_rules();
         self.text_decoration_line.clear_rules();
-        self.underline_style.clear_rules();
-        self.overline_style.clear_rules();
-        self.strikethrough_style.clear_rules();
-        self.underline_color.clear_rules();
-        self.overline_color.clear_rules();
-        self.strikethrough_color.clear_rules();
+        self.text_decoration_style.clear_rules();
+        self.text_decoration_color.clear_rules();
         self.text_stroke_width.clear_rules();
         self.text_stroke_style.clear_rules();
 

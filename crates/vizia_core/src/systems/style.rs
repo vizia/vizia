@@ -440,12 +440,8 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context, redraw_entities: &mut 
                 | cx.style.font_slant.inherit_inline(entity, parent)
                 | cx.style.font_width.inherit_inline(entity, parent)
                 | cx.style.text_decoration_line.inherit_inline(entity, parent)
-                | cx.style.underline_style.inherit_inline(entity, parent)
-                | cx.style.overline_style.inherit_inline(entity, parent)
-                | cx.style.strikethrough_style.inherit_inline(entity, parent)
-                | cx.style.underline_color.inherit_inline(entity, parent)
-                | cx.style.overline_color.inherit_inline(entity, parent)
-                | cx.style.strikethrough_color.inherit_inline(entity, parent)
+                | cx.style.text_decoration_style.inherit_inline(entity, parent)
+                | cx.style.text_decoration_color.inherit_inline(entity, parent)
                 | cx.style.text_stroke_width.inherit_inline(entity, parent)
                 | cx.style.text_stroke_style.inherit_inline(entity, parent)
                 | cx.style.font_variation_settings.inherit_inline(entity, parent)
@@ -469,12 +465,8 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context, redraw_entities: &mut 
                 | cx.style.font_slant.inherit_shared(entity, parent)
                 | cx.style.font_width.inherit_shared(entity, parent)
                 | cx.style.text_decoration_line.inherit_shared(entity, parent)
-                | cx.style.underline_style.inherit_shared(entity, parent)
-                | cx.style.overline_style.inherit_shared(entity, parent)
-                | cx.style.strikethrough_style.inherit_shared(entity, parent)
-                | cx.style.underline_color.inherit_shared(entity, parent)
-                | cx.style.overline_color.inherit_shared(entity, parent)
-                | cx.style.strikethrough_color.inherit_shared(entity, parent)
+                | cx.style.text_decoration_style.inherit_shared(entity, parent)
+                | cx.style.text_decoration_color.inherit_shared(entity, parent)
                 | cx.style.text_stroke_width.inherit_shared(entity, parent)
                 | cx.style.text_stroke_style.inherit_shared(entity, parent)
                 | cx.style.font_variation_settings.inherit_shared(entity, parent)
@@ -967,42 +959,22 @@ fn link_style_data(
         should_reflow = true;
     }
 
+    if style.text_decoration_style.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.text_decoration_color.link(entity, matched_rules, &style.custom_color_props) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
     if style.text_stroke_width.link(entity, matched_rules) {
         should_redraw = true;
         should_reflow = true;
     }
 
     if style.text_stroke_style.link(entity, matched_rules) {
-        should_redraw = true;
-        should_reflow = true;
-    }
-
-    if style.underline_style.link(entity, matched_rules) {
-        should_redraw = true;
-        should_reflow = true;
-    }
-
-    if style.underline_color.link(entity, matched_rules, &style.custom_color_props) {
-        should_redraw = true;
-        should_reflow = true;
-    }
-
-    if style.overline_style.link(entity, matched_rules) {
-        should_redraw = true;
-        should_reflow = true;
-    }
-
-    if style.overline_color.link(entity, matched_rules, &style.custom_color_props) {
-        should_redraw = true;
-        should_reflow = true;
-    }
-
-    if style.strikethrough_style.link(entity, matched_rules) {
-        should_redraw = true;
-        should_reflow = true;
-    }
-
-    if style.strikethrough_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
         should_reflow = true;
     }
