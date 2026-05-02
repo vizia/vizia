@@ -77,10 +77,6 @@ avatar-group {
     alignment: center;
 }
 
-avatar-group > avatar {
-    border: 2px solid #fff;
-}
-
 avatar-group.circle > avatar {
     corner-radius: 50%;
 }
@@ -821,18 +817,6 @@ switch .thumb {
 switch:checked .thumb {
     left: 13px;
     transition: left 100ms;
-}
-
-switch:dir(rtl) .thumb {
-    left: 1s;
-    right: 1px;
-    transition: right 100ms;
-}
-
-switch:checked:dir(rtl) .thumb {
-    left: 1s;
-    right: 13px;
-    transition: right 100ms;
 }
 
 /* TABVIEW */

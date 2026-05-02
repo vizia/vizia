@@ -4,7 +4,7 @@ use crate::DemoRegion;
 
 pub fn scrollview(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Markdown::new(cx, "# Scrollview");
+        Label::new(cx, Localized::new("scrollview")).class("panel-title");
 
         Divider::new(cx);
 

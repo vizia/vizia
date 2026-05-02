@@ -4,11 +4,7 @@ use crate::DemoRegion;
 
 pub fn element(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# Element\n`Element` is a bare-bones view with no built-in content. It is a flexible building block \
-for custom layouts, decorative shapes, and styled placeholder regions.",
-        );
+        Label::new(cx, Localized::new("element")).class("panel-title");
 
         Divider::new(cx);
 

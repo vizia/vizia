@@ -7,16 +7,9 @@ pub fn resizable(cx: &mut Context) {
     let height = Signal::new(Pixels(100.0));
 
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# Resizable
-A resizable wraps a view with a draggable handle that lets the user change its size. \
-Double-click the handle to reset.",
-        );
+        Label::new(cx, Localized::new("resizable")).class("panel-title");
 
         Divider::new(cx);
-
-        Markdown::new(cx, "### Horizontal Resize (Right handle)");
 
         DemoRegion::new(cx, "Horizontal Resize", move |cx| {
             HStack::new(cx, |cx| {
@@ -39,8 +32,6 @@ Double-click the handle to reset.",
             .height(Pixels(80.0))
             .width(Stretch(1.0));
         });
-
-        Markdown::new(cx, "### Vertical Resize (Bottom handle)");
 
         DemoRegion::new(cx, "Vertical Resize", move |cx| {
             VStack::new(cx, |cx| {

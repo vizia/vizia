@@ -4,15 +4,11 @@ use crate::DemoRegion;
 
 pub fn markdown_panel(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# Markdown
-The `Markdown` view renders a subset of Markdown inline within the UI.",
-        );
+        Label::new(cx, Localized::new("markdown")).class("panel-title");
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Markdown Rendering");
+        Label::new(cx, Localized::new("markdown-rendering")).class("section-title");
 
         DemoRegion::new(cx, "Markdown Rendering", |cx| {
             Markdown::new(

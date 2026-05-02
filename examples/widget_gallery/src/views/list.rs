@@ -23,11 +23,9 @@ pub fn list(cx: &mut Context) {
     ListData { list, selectable, show_vertical_scrollbar }.build(cx);
 
     VStack::new(cx, |cx| {
-        Markdown::new(cx, "# List");
+        Label::new(cx, Localized::new("list")).class("panel-title");
 
         Divider::new(cx);
-
-        Markdown::new(cx, "### Basic list");
 
         DemoRegion::new(cx, "Basic List", move |cx| {
             List::new(cx, list, |cx, index, item| {

@@ -3,28 +3,14 @@ use vizia::prelude::*;
 pub struct DemoRegion;
 
 impl DemoRegion {
-    pub fn new<'a>(
+    pub fn new<'a, T: ToStringLocalized + Clone + 'static>(
         cx: &'a mut Context,
-        title: impl Into<String>,
+        title: impl Res<T> + 'static + Clone,
         content: impl Fn(&mut Context) + 'static,
     ) -> Handle<'a, Self> {
         Self.build(cx, move |cx| {
-            Label::new(cx, title.into()).class("region-title");
+            Label::new(cx, title).class("region-title");
             HStack::new(cx, |cx| {
-                (content)(cx);
-            })
-            .class("region");
-        })
-    }
-
-    pub fn new_vertical<'a>(
-        cx: &'a mut Context,
-        title: impl Into<String>,
-        content: impl Fn(&mut Context) + 'static,
-    ) -> Handle<'a, Self> {
-        Self.build(cx, move |cx| {
-            Label::new(cx, title.into()).class("region-title");
-            VStack::new(cx, |cx| {
                 (content)(cx);
             })
             .class("region");

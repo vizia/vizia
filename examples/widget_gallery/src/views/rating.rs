@@ -23,13 +23,11 @@ pub fn rating(cx: &mut Context) {
     RatingData { rating }.build(cx);
 
     VStack::new(cx, |cx| {
-        Markdown::new(cx, "# Rating");
+        Label::new(cx, Localized::new("rating")).class("panel-title");
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic rating");
-
-        DemoRegion::new(cx, "Basic Rating", move |cx| {
+        DemoRegion::new(cx, "Rating", move |cx| {
             Rating::new(cx, 5, rating)
                 .on_change(|ex, rating| ex.emit(RatingEvent::SetRating(rating)));
         });
