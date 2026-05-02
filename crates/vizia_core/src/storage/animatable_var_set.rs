@@ -707,6 +707,21 @@ where
                     self.inline_data.sparse.resize(entity_index + 1, InlineIndex::null());
                 }
 
+                let data_index = self.inline_data.sparse[entity_index].data_index;
+                // Already linked
+                if !data_index.is_inline() && data_index.index() == shared_data_index.index() {
+                    return false;
+                }
+
+                let new_value = &self.shared_data.dense[shared_data_index.index()].value.value;
+                let value_changed = self.get(entity) != Some(new_value);
+                if !value_changed {
+                    // Keep linkage accurate, but do not invalidate when value is unchanged.
+                    self.inline_data.sparse[entity_index].data_index =
+                        DataIndex::shared(shared_data_index.index());
+                    return false;
+                }
+
                 // Get the animation state index of any animations (transitions) defined for the rule
                 let rule_animation = shared_data_index.animation;
 
@@ -817,13 +832,6 @@ where
                 //         }
                 //     }
                 // }
-
-                let data_index = self.inline_data.sparse[entity_index].data_index;
-
-                // Already linked
-                if !data_index.is_inline() && data_index.index() == shared_data_index.index() {
-                    return false;
-                }
 
                 self.inline_data.sparse[entity_index].data_index =
                     DataIndex::shared(shared_data_index.index());
@@ -958,6 +966,21 @@ where
                     self.inline_data.sparse.resize(entity_index + 1, InlineIndex::null());
                 }
 
+                let data_index = self.inline_data.sparse[entity_index].data_index;
+                // Already linked
+                if !data_index.is_inline() && data_index.index() == shared_data_index.index() {
+                    return false;
+                }
+
+                let new_value = &self.shared_data.dense[shared_data_index.index()].value.value;
+                let value_changed = self.get(entity) != Some(new_value);
+                if !value_changed {
+                    // Keep linkage accurate, but do not invalidate when value is unchanged.
+                    self.inline_data.sparse[entity_index].data_index =
+                        DataIndex::shared(shared_data_index.index());
+                    return false;
+                }
+
                 // Get the animation state index of any animations (transitions) defined for the rule
                 let rule_animation = shared_data_index.animation;
 
@@ -1053,13 +1076,6 @@ where
                     }
                 } else {
                     // No transition on the arriving rule — nothing to animate forward.
-                }
-
-                let data_index = self.inline_data.sparse[entity_index].data_index;
-
-                // Already linked
-                if !data_index.is_inline() && data_index.index() == shared_data_index.index() {
-                    return false;
                 }
 
                 self.inline_data.sparse[entity_index].data_index =
