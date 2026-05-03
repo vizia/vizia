@@ -179,8 +179,12 @@ fn main() -> Result<(), ApplicationError> {
             List::new(cx, indices, move |cx, _, index| {
                 TodoItemModel { index }.build(cx);
 
-                let title = Memo::new(move |_| todos.get()[index.get()].title.clone());
-                let completed = Memo::new(move |_| todos.get()[index.get()].completed);
+                let title = Memo::new(move |_| {
+                    todos.get().get(index.get()).map(|todo| todo.title.clone()).unwrap_or_default()
+                });
+                let completed = Memo::new(move |_| {
+                    todos.get().get(index.get()).map(|todo| todo.completed).unwrap_or(false)
+                });
 
                 HStack::new(cx, |cx| {
                     Checkbox::new(cx, completed)
