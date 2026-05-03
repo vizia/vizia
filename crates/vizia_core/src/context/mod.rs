@@ -476,7 +476,7 @@ impl Context {
                     // Fall back to the nearest enclosing window so focus is never
                     // stranded on the root sentinel.
                     let fallback = self.tree.get_parent_window(*entity).unwrap_or(Entity::root());
-                    self.focused = fallback;
+                    self.with_current(fallback, |cx| cx.focus());
                 }
             }
 

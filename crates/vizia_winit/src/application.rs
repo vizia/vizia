@@ -9,7 +9,6 @@ use crate::{
 use accesskit_winit::Adapter;
 use hashbrown::HashMap;
 use log::warn;
-use std::cell::RefCell;
 use std::{error::Error, fmt::Display, sync::Arc};
 use vizia_input::ImeState;
 
@@ -113,6 +112,7 @@ pub struct Application {
     event_loop_proxy: EventLoopProxy<UserEvent>,
     windows: HashMap<WindowId, WinState>,
     window_ids: HashMap<Entity, WindowId>,
+    custom_cursors: Arc<HashMap<CursorIcon, CustomCursor>>,
     startup_mode: StartupMode,
     exit_when_no_windows: bool,
     had_windows: bool,
@@ -179,37 +179,7 @@ impl Application {
 
         cx.renegotiate_language();
         cx.0.add_built_in_styles();
-
-        if startup_mode == StartupMode::Compatibility {
-            let main_window_entity = cx.create_child_entity(Entity::root());
-            let content = RefCell::new(Some(content));
-
-            cx.add_window(
-                main_window_entity,
-                Window {
-                    window: None,
-                    on_close: None,
-                    on_create: None,
-                    should_close: false,
-                    custom_cursors: Default::default(),
-                },
-            );
-            cx.0.windows.insert(
-                main_window_entity,
-                WindowState {
-                    content: Some(Arc::new(move |cx| {
-                        if let Some(content) = content.borrow_mut().take() {
-                            content(cx);
-                        }
-                    })),
-                    window_description: WindowDescription::new(),
-                    ..Default::default()
-                },
-            );
-            cx.0.tree.set_window(main_window_entity, true);
-        } else {
-            (content)(cx.context());
-        }
+        (content)(cx.context());
 
         Self {
             cx,
@@ -221,6 +191,7 @@ impl Application {
             event_loop_proxy: proxy,
             windows: HashMap::new(),
             window_ids: HashMap::new(),
+            custom_cursors: Arc::new(HashMap::new()),
             startup_mode,
             exit_when_no_windows: true,
             had_windows: false,
@@ -461,11 +432,78 @@ impl ApplicationHandler<UserEvent> for Application {
 
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.windows.is_empty() {
-            let custom_cursors = Arc::new(load_default_cursors(event_loop));
+            if self.custom_cursors.is_empty() {
+                self.custom_cursors = Arc::new(load_default_cursors(event_loop));
+            }
+            let mut implicit_window_entity = None;
+
+            if self.startup_mode == StartupMode::Compatibility {
+                // Create the implicit primary window for compatibility mode as a child of root.
+                let main_window_entity = self.cx.create_child_entity(Entity::root());
+
+                let main_window: Arc<winit::window::Window> = self
+                    .create_window(
+                        event_loop,
+                        main_window_entity,
+                        &self.window_description.clone(),
+                        None,
+                    )
+                    .expect("failed to create initial window");
+
+                self.cx.add_main_window(
+                    main_window_entity,
+                    &self.window_description,
+                    main_window.scale_factor() as f32,
+                );
+                self.cx.add_window(
+                    main_window_entity,
+                    Window {
+                        window: Some(main_window.clone()),
+                        on_close: None,
+                        on_create: None,
+                        should_close: false,
+                        custom_cursors: self.custom_cursors.clone(),
+                    },
+                );
+
+                self.cx.0.windows.insert(
+                    main_window_entity,
+                    WindowState {
+                        window_description: self.window_description.clone(),
+                        ..Default::default()
+                    },
+                );
+
+                implicit_window_entity = Some(main_window_entity);
+
+                #[cfg(feature = "accesskit")]
+                {
+                    self.accesskit_adapter = Some(Adapter::with_event_loop_proxy(
+                        event_loop,
+                        &main_window,
+                        self.event_loop_proxy.clone(),
+                    ));
+                }
+
+                main_window.set_visible(self.window_description.visible);
+
+                // Set current system theme if available.
+                if let Some(theme) = main_window.theme() {
+                    let theme = match theme {
+                        winit::window::Theme::Light => ThemeMode::LightMode,
+                        winit::window::Theme::Dark => ThemeMode::DarkMode,
+                    };
+                    self.cx.emit_origin(WindowEvent::ThemeChanged(theme));
+                }
+            }
+
             self.cx.0.add_built_in_styles();
 
             // Create user-defined windows.
             for (window_entity, window_state) in self.cx.0.windows.clone().into_iter() {
+                if Some(window_entity) == implicit_window_entity {
+                    continue;
+                }
                 let owner = window_state.owner.and_then(|entity| {
                     self.window_ids
                         .get(&entity)
@@ -497,20 +535,6 @@ impl ApplicationHandler<UserEvent> for Application {
                 );
                 window.set_visible(window_state.window_description.visible);
 
-                if self.startup_mode == StartupMode::Compatibility
-                    && window_entity.parent(&self.cx.0.tree) == Some(Entity::root())
-                    && self.window_description.visible == window_state.window_description.visible
-                    && window_state.owner.is_none()
-                {
-                    if let Some(theme) = window.theme() {
-                        let theme = match theme {
-                            winit::window::Theme::Light => ThemeMode::LightMode,
-                            winit::window::Theme::Dark => ThemeMode::DarkMode,
-                        };
-                        self.cx.emit_origin(WindowEvent::ThemeChanged(theme));
-                    }
-                }
-
                 self.cx.0.with_current(window_entity, |cx| {
                     if let Some(content) = &window_state.content {
                         (content)(cx)
@@ -518,7 +542,7 @@ impl ApplicationHandler<UserEvent> for Application {
                 });
                 self.cx.mutate_window(window_entity, |cx, win: &mut Window| {
                     win.window = Some(window.clone());
-                    win.custom_cursors = custom_cursors.clone();
+                    win.custom_cursors = self.custom_cursors.clone();
                     if let Some(callback) = &win.on_create {
                         (callback)(&mut EventContext::new_with_current(
                             cx.context(),
@@ -796,6 +820,10 @@ impl ApplicationHandler<UserEvent> for Application {
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        if self.custom_cursors.is_empty() {
+            self.custom_cursors = Arc::new(load_default_cursors(event_loop));
+        }
+
         event_loop.set_control_flow(self.control_flow);
 
         Runtime::drain_pending_work();
@@ -912,6 +940,7 @@ impl ApplicationHandler<UserEvent> for Application {
 
                     self.cx.mutate_window(*window_entity, |cx, win: &mut Window| {
                         win.window = Some(window.clone());
+                        win.custom_cursors = self.custom_cursors.clone();
                         if let Some(callback) = &win.on_create {
                             (callback)(&mut EventContext::new_with_current(
                                 cx.context(),
