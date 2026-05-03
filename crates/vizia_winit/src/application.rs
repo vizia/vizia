@@ -9,6 +9,7 @@ use crate::{
 use accesskit_winit::Adapter;
 use hashbrown::HashMap;
 use log::warn;
+use std::cell::RefCell;
 use std::{error::Error, fmt::Display, sync::Arc};
 use vizia_input::ImeState;
 
@@ -16,7 +17,6 @@ use vizia_input::ImeState;
 // use accesskit::{Action, NodeBuilder, NodeId, TreeUpdate};
 // #[cfg(feature = "accesskit")]
 // use accesskit_winit;
-// use std::cell::RefCell;
 use vizia_core::context::EventProxy;
 use vizia_core::prelude::*;
 use vizia_core::{backend::*, events::EventManager};
@@ -179,7 +179,37 @@ impl Application {
 
         cx.renegotiate_language();
         cx.0.add_built_in_styles();
-        (content)(cx.context());
+
+        if startup_mode == StartupMode::Compatibility {
+            let main_window_entity = cx.create_child_entity(Entity::root());
+            let content = RefCell::new(Some(content));
+
+            cx.add_window(
+                main_window_entity,
+                Window {
+                    window: None,
+                    on_close: None,
+                    on_create: None,
+                    should_close: false,
+                    custom_cursors: Default::default(),
+                },
+            );
+            cx.0.windows.insert(
+                main_window_entity,
+                WindowState {
+                    content: Some(Arc::new(move |cx| {
+                        if let Some(content) = content.borrow_mut().take() {
+                            content(cx);
+                        }
+                    })),
+                    window_description: WindowDescription::new(),
+                    ..Default::default()
+                },
+            );
+            cx.0.tree.set_window(main_window_entity, true);
+        } else {
+            (content)(cx.context());
+        }
 
         Self {
             cx,
@@ -438,8 +468,22 @@ impl ApplicationHandler<UserEvent> for Application {
             let mut implicit_window_entity = None;
 
             if self.startup_mode == StartupMode::Compatibility {
-                // Create the implicit primary window for compatibility mode as a child of root.
-                let main_window_entity = self.cx.create_child_entity(Entity::root());
+                // Reuse the implicit primary window entity allocated during build().
+                let main_window_entity = self
+                    .cx
+                    .0
+                    .windows
+                    .iter()
+                    .find_map(|(entity, window_state)| {
+                        if window_state.content.is_some()
+                            && self.cx.0.tree.get_parent(*entity) == Some(Entity::root())
+                        {
+                            Some(*entity)
+                        } else {
+                            None
+                        }
+                    })
+                    .expect("Compatibility mode missing implicit window entity");
 
                 let main_window: Arc<winit::window::Window> = self
                     .create_window(
@@ -465,14 +509,19 @@ impl ApplicationHandler<UserEvent> for Application {
                         custom_cursors: self.custom_cursors.clone(),
                     },
                 );
+                if let Some(window_state) = self.cx.0.windows.get_mut(&main_window_entity) {
+                    window_state.window_description = self.window_description.clone();
+                }
 
-                self.cx.0.windows.insert(
-                    main_window_entity,
-                    WindowState {
-                        window_description: self.window_description.clone(),
-                        ..Default::default()
-                    },
-                );
+                if let Some(content) = self
+                    .cx
+                    .0
+                    .windows
+                    .get(&main_window_entity)
+                    .and_then(|window_state| window_state.content.clone())
+                {
+                    self.cx.0.with_current(main_window_entity, |cx| (content)(cx));
+                }
 
                 implicit_window_entity = Some(main_window_entity);
 
