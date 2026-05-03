@@ -319,6 +319,10 @@ name = "multiwindow"
 path = "examples/multiwindow.rs"
 
 [[example]]
+name = "multiwindow_headless"
+path = "examples/multiwindow_headless.rs"
+
+[[example]]
 name = "popup_window"
 path = "examples/popup_window.rs"
 

@@ -9,6 +9,7 @@ use crate::{
 use accesskit_winit::Adapter;
 use hashbrown::HashMap;
 use log::warn;
+use std::cell::RefCell;
 use std::{error::Error, fmt::Display, sync::Arc};
 use vizia_input::ImeState;
 
@@ -67,6 +68,12 @@ impl From<vizia_core::events::Event> for UserEvent {
 
 type IdleCallback = Option<Box<dyn Fn(&mut Context)>>;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum StartupMode {
+    Compatibility,
+    Headless,
+}
+
 #[derive(Debug)]
 pub enum ApplicationError {
     EventLoopError(EventLoopError),
@@ -106,6 +113,9 @@ pub struct Application {
     event_loop_proxy: EventLoopProxy<UserEvent>,
     windows: HashMap<WindowId, WinState>,
     window_ids: HashMap<Entity, WindowId>,
+    startup_mode: StartupMode,
+    exit_when_no_windows: bool,
+    had_windows: bool,
     #[cfg(feature = "accesskit")]
     accesskit_adapter: Option<accesskit_winit::Adapter>,
     #[cfg(feature = "accesskit")]
@@ -126,6 +136,23 @@ impl EventProxy for WinitEventProxy {
 
 impl Application {
     pub fn new<F>(content: F) -> Self
+    where
+        F: 'static + FnOnce(&mut Context),
+    {
+        Self::build(content, StartupMode::Compatibility)
+    }
+
+    /// Creates an application without an implicit primary window.
+    ///
+    /// Use this when you want explicit control over top-level window creation.
+    pub fn headless<F>(content: F) -> Self
+    where
+        F: 'static + FnOnce(&mut Context),
+    {
+        Self::build(content, StartupMode::Headless)
+    }
+
+    fn build<F>(content: F, startup_mode: StartupMode) -> Self
     where
         F: 'static + FnOnce(&mut Context),
     {
@@ -152,7 +179,37 @@ impl Application {
 
         cx.renegotiate_language();
         cx.0.add_built_in_styles();
-        (content)(cx.context());
+
+        if startup_mode == StartupMode::Compatibility {
+            let main_window_entity = cx.create_child_entity(Entity::root());
+            let content = RefCell::new(Some(content));
+
+            cx.add_window(
+                main_window_entity,
+                Window {
+                    window: None,
+                    on_close: None,
+                    on_create: None,
+                    should_close: false,
+                    custom_cursors: Default::default(),
+                },
+            );
+            cx.0.windows.insert(
+                main_window_entity,
+                WindowState {
+                    content: Some(Arc::new(move |cx| {
+                        if let Some(content) = content.borrow_mut().take() {
+                            content(cx);
+                        }
+                    })),
+                    window_description: WindowDescription::new(),
+                    ..Default::default()
+                },
+            );
+            cx.0.tree.set_window(main_window_entity, true);
+        } else {
+            (content)(cx.context());
+        }
 
         Self {
             cx,
@@ -164,6 +221,9 @@ impl Application {
             event_loop_proxy: proxy,
             windows: HashMap::new(),
             window_ids: HashMap::new(),
+            startup_mode,
+            exit_when_no_windows: true,
+            had_windows: false,
             #[cfg(feature = "accesskit")]
             accesskit_adapter: None,
             #[cfg(feature = "accesskit")]
@@ -292,6 +352,7 @@ impl Application {
         let window_id = window_state.window.id();
         self.windows.insert(window_id, window_state);
         self.window_ids.insert(window_entity, window_id);
+        self.had_windows = true;
         Ok(window)
     }
 
@@ -330,6 +391,17 @@ impl Application {
     pub fn on_idle<F: 'static + Fn(&mut Context)>(mut self, callback: F) -> Self {
         self.on_idle = Some(Box::new(callback));
 
+        self
+    }
+
+    /// Controls whether the application exits automatically when all windows are closed.
+    ///
+    /// Defaults to `true`. The exit only triggers once at least one window has been opened and
+    /// then all windows are closed — so headless apps that start with no windows are not affected
+    /// until their first window is created and subsequently closed.
+    /// Set to `false` to keep the event loop running as a daemon even after all windows close.
+    pub fn exit_when_no_windows(mut self, exit: bool) -> Self {
+        self.exit_when_no_windows = exit;
         self
     }
 
@@ -389,59 +461,11 @@ impl ApplicationHandler<UserEvent> for Application {
 
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.windows.is_empty() {
-            // Create the main window
-            let main_window: Arc<winit::window::Window> = self
-                .create_window(event_loop, Entity::root(), &self.window_description.clone(), None)
-                .expect("failed to create initial window");
             let custom_cursors = Arc::new(load_default_cursors(event_loop));
-            self.cx.add_main_window(
-                Entity::root(),
-                &self.window_description,
-                main_window.scale_factor() as f32,
-            );
-            self.cx.add_window(Window {
-                window: Some(main_window.clone()),
-                on_close: None,
-                on_create: None,
-                should_close: false,
-                custom_cursors: custom_cursors.clone(),
-            });
-
-            self.cx.0.windows.insert(
-                Entity::root(),
-                WindowState {
-                    window_description: self.window_description.clone(),
-                    ..Default::default()
-                },
-            );
-
-            #[cfg(feature = "accesskit")]
-            {
-                self.accesskit_adapter = Some(Adapter::with_event_loop_proxy(
-                    event_loop,
-                    &main_window,
-                    self.event_loop_proxy.clone(),
-                ));
-            }
-
-            main_window.set_visible(self.window_description.visible);
-
-            // set current system theme if available
-            if let Some(theme) = main_window.theme() {
-                let theme = match theme {
-                    winit::window::Theme::Light => ThemeMode::LightMode,
-                    winit::window::Theme::Dark => ThemeMode::DarkMode,
-                };
-                self.cx.emit_origin(WindowEvent::ThemeChanged(theme));
-            }
-
             self.cx.0.add_built_in_styles();
 
-            // Create any subwindows
+            // Create user-defined windows.
             for (window_entity, window_state) in self.cx.0.windows.clone().into_iter() {
-                if window_entity == Entity::root() {
-                    continue;
-                }
                 let owner = window_state.owner.and_then(|entity| {
                     self.window_ids
                         .get(&entity)
@@ -457,13 +481,35 @@ impl ApplicationHandler<UserEvent> for Application {
                     )
                     .expect("Failed to create window");
 
+                #[cfg(feature = "accesskit")]
+                if self.accesskit_adapter.is_none() {
+                    self.accesskit_adapter = Some(Adapter::with_event_loop_proxy(
+                        event_loop,
+                        &window,
+                        self.event_loop_proxy.clone(),
+                    ));
+                }
+
                 self.cx.add_main_window(
                     window_entity,
                     &window_state.window_description,
                     window.scale_factor() as f32,
                 );
-
                 window.set_visible(window_state.window_description.visible);
+
+                if self.startup_mode == StartupMode::Compatibility
+                    && window_entity.parent(&self.cx.0.tree) == Some(Entity::root())
+                    && self.window_description.visible == window_state.window_description.visible
+                    && window_state.owner.is_none()
+                {
+                    if let Some(theme) = window.theme() {
+                        let theme = match theme {
+                            winit::window::Theme::Light => ThemeMode::LightMode,
+                            winit::window::Theme::Dark => ThemeMode::DarkMode,
+                        };
+                        self.cx.emit_origin(WindowEvent::ThemeChanged(theme));
+                    }
+                }
 
                 self.cx.0.with_current(window_entity, |cx| {
                     if let Some(content) = &window_state.content {
@@ -750,11 +796,6 @@ impl ApplicationHandler<UserEvent> for Application {
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
-        if self.windows.is_empty() {
-            event_loop.exit();
-            return;
-        }
-
         event_loop.set_control_flow(self.control_flow);
 
         Runtime::drain_pending_work();
@@ -824,10 +865,11 @@ impl ApplicationHandler<UserEvent> for Application {
             self.cx.0.remove(window_entity);
         }
 
-        // Sync window state with context
+        // Sync OS window state with the logical window map.
         self.windows.retain(|_, win| self.cx.0.windows.contains_key(&win.entity));
         self.window_ids.retain(|e, _| self.cx.0.windows.contains_key(e));
 
+        // Create any logical windows that don't yet have an OS window.
         if self.windows.len() != self.cx.0.windows.len() {
             for (window_entity, window_state) in self.cx.0.windows.clone().iter() {
                 if !self.window_ids.contains_key(window_entity) {
@@ -846,12 +888,20 @@ impl ApplicationHandler<UserEvent> for Application {
                         )
                         .expect("Failed to create window");
 
+                    #[cfg(feature = "accesskit")]
+                    if self.accesskit_adapter.is_none() {
+                        self.accesskit_adapter = Some(Adapter::with_event_loop_proxy(
+                            event_loop,
+                            &window,
+                            self.event_loop_proxy.clone(),
+                        ));
+                    }
+
                     self.cx.add_main_window(
                         *window_entity,
                         &window_state.window_description,
                         window.scale_factor() as f32,
                     );
-
                     window.set_visible(window_state.window_description.visible);
 
                     self.cx.0.with_current(*window_entity, |cx| {
@@ -873,7 +923,14 @@ impl ApplicationHandler<UserEvent> for Application {
             }
         }
 
-        if self.windows.is_empty() {
+        // Exit when all windows have been closed. The `had_windows` guard prevents
+        // premature exit at startup for headless apps that begin with no windows —
+        // the exit only fires after at least one window has been opened and closed.
+        if self.exit_when_no_windows
+            && self.had_windows
+            && self.windows.is_empty()
+            && self.cx.0.windows.is_empty()
+        {
             event_loop.exit();
         }
     }
