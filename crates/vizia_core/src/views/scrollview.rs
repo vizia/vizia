@@ -135,17 +135,13 @@ impl ScrollView {
                 let top = (y_overflow * scroll_y).round() / scale_factor;
                 let x_overflow = (inner_width - container_width).max(0.0);
                 let left = (x_overflow * scroll_x).round() / scale_factor;
-                println!(
-                    "scroll_x: {}, left: {}, top: {}, x_overflow: {}",
-                    scroll_x, left, top, x_overflow
-                );
 
                 let tx = if direction == Direction::RightToLeft { left } else { -left };
 
-                handle.transform(vec![Transform::Translate((
-                    LengthOrPercentage::Length(Length::px(tx)),
-                    LengthOrPercentage::Length(Length::px(-top)),
-                ))]);
+                handle.translate(Translate {
+                    x: LengthOrPercentage::Length(Length::px(tx)),
+                    y: LengthOrPercentage::Length(Length::px(-top)),
+                });
             });
 
             Binding::new(cx, show_vertical_scrollbar, move |cx| {

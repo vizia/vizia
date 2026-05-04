@@ -35,6 +35,7 @@ impl Scrollbar {
     {
         let value = value.to_signal(cx);
         let ratio = ratio.to_signal(cx);
+        let translate_state: Memo<(f32, f32)> = Memo::new(move |_| (value.get(), ratio.get()));
 
         Self {
             value,
@@ -48,10 +49,9 @@ impl Scrollbar {
             Element::new(cx)
                 .class("thumb")
                 .focusable(true)
-                .bind(value, move |handle| {
-                    let value = value.get();
-
-                    let ratio = ratio.get().clamp(0.0001, 1.0);
+                .bind(translate_state, move |handle| {
+                    let (value, ratio) = translate_state.get();
+                    let ratio = ratio.clamp(0.0001, 1.0);
                     let offset =
                         if ratio >= 1.0 { 0.0 } else { (value * (1.0 - ratio) / ratio) * 100.0 };
 
