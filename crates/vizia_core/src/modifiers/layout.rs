@@ -303,14 +303,14 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// Set the vertical scroll position of the view.
         vertical_scroll,
         f32,
-        SystemFlags::RELAYOUT
+        SystemFlags::REDRAW | SystemFlags::RECLIP
     );
 
     modifier!(
         /// Set the horizontal scroll position of the view.
         horizontal_scroll,
         f32,
-        SystemFlags::RELAYOUT
+        SystemFlags::REDRAW | SystemFlags::RECLIP
     );
 
     modifier!(
