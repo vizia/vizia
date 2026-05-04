@@ -1,5 +1,6 @@
 use crate::context::TreeProps;
 use crate::prelude::*;
+use skia_safe::Rect;
 
 /// A view which represents a bar that can be dragged to manipulate a scrollview.
 pub struct Scrollbar {
@@ -19,11 +20,6 @@ enum ScrollBarEvent {
 }
 
 impl Scrollbar {
-    fn is_horizontal_rtl(&self, cx: &EventContext) -> bool {
-        self.orientation == Orientation::Horizontal
-            && cx.environment().direction.get() == Direction::RightToLeft
-    }
-
     /// Create a new [Scrollbar] view.
     pub fn new<F, V, R>(
         cx: &mut Context,
@@ -54,13 +50,20 @@ impl Scrollbar {
                 .focusable(true)
                 .bind(value, move |handle| {
                     let value = value.get();
+
+                    let ratio = ratio.get().clamp(0.0001, 1.0);
+                    let offset =
+                        if ratio >= 1.0 { 0.0 } else { (value * (1.0 - ratio) / ratio) * 100.0 };
+
                     match orientation {
-                        Orientation::Horizontal => {
-                            handle.left(Units::Stretch(value)).right(Units::Stretch(1.0 - value))
-                        }
-                        Orientation::Vertical => {
-                            handle.top(Units::Stretch(value)).bottom(Units::Stretch(1.0 - value))
-                        }
+                        Orientation::Horizontal => handle.translate(Translate {
+                            x: LengthOrPercentage::Percentage(offset),
+                            y: LengthOrPercentage::Length(Length::px(0.0)),
+                        }),
+                        Orientation::Vertical => handle.translate(Translate {
+                            x: LengthOrPercentage::Length(Length::px(0.0)),
+                            y: LengthOrPercentage::Percentage(offset),
+                        }),
                     };
                 })
                 .bind(ratio, move |handle| {
@@ -88,8 +91,19 @@ impl Scrollbar {
 
     fn thumb_bounds(&self, cx: &mut EventContext) -> BoundingBox {
         let child = cx.first_child();
+        let bounds = cx.with_current(child, |cx| cx.bounds());
 
-        cx.with_current(child, |cx| cx.bounds())
+        if let Some(transform) = cx.cache.transform.get(child).copied() {
+            let (rect, _) = transform.map_rect(Rect::from(bounds));
+            BoundingBox::from_min_max(
+                rect.left().floor(),
+                rect.top().floor(),
+                rect.right().ceil(),
+                rect.bottom().ceil(),
+            )
+        } else {
+            bounds
+        }
     }
 
     fn compute_new_value(&self, cx: &mut EventContext, physical_delta: f32, value_ref: f32) -> f32 {
@@ -100,8 +114,6 @@ impl Scrollbar {
             value_ref
         } else {
             // what percentage of negative space have we crossed?
-            let physical_delta =
-                if self.is_horizontal_rtl(cx) { -physical_delta } else { physical_delta };
             let logical_delta = physical_delta / negative_space;
             value_ref + logical_delta
         }
@@ -155,10 +167,7 @@ impl View for Scrollbar {
                         match self.orientation {
                             Orientation::Horizontal => {
                                 let px = cx.mouse.cursor_x - cx.bounds().x - thumb_bounds.w / 2.0;
-                                let mut x = (px / sx).clamp(0.0, 1.0);
-                                if self.is_horizontal_rtl(cx) {
-                                    x = 1.0 - x;
-                                }
+                                let x = (px / sx).clamp(0.0, 1.0);
                                 if let Some(callback) = &self.on_changing {
                                     (callback)(cx, x);
                                 }
@@ -227,10 +236,7 @@ impl View for Scrollbar {
                                 Orientation::Horizontal => {
                                     let px =
                                         cx.mouse.cursor_x - cx.bounds().x - thumb_bounds.w / 2.0;
-                                    let mut x = (px / sx).clamp(0.0, 1.0);
-                                    if self.is_horizontal_rtl(cx) {
-                                        x = 1.0 - x;
-                                    }
+                                    let x = (px / sx).clamp(0.0, 1.0);
                                     if let Some(callback) = &self.on_changing {
                                         (callback)(cx, x);
                                     }
