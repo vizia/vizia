@@ -58,10 +58,9 @@ use crate::{
     model::ModelData,
 };
 
-use crate::{
-    binding::BindingHandler,
-    resource::{LoadingStatus, StoredImage},
-};
+
+use crate::environment::{apply_direction_class, apply_theme_class};
+use crate::{binding::BindingHandler, resource::StoredImage};
 use crate::{cache::CachedData, resource::ImageOrSvg};
 
 use crate::prelude::*;
@@ -917,11 +916,9 @@ impl Context {
             let environment = self.data::<Environment>();
             let theme_mode = environment.effective_theme();
             let direction = environment.direction.get();
-            self.with_current(Entity::root(), |cx| {
-                let cx = &mut EventContext::new(cx);
-                cx.toggle_class("dark", theme_mode == ThemeMode::DarkMode);
-                cx.toggle_class("rtl", direction == Direction::RightToLeft);
-            })
+            let cx = &mut EventContext::new(self);
+            apply_theme_class(cx, theme_mode == ThemeMode::DarkMode);
+            apply_direction_class(cx, direction);
         } else {
             // Add an empty stylesheet to ensure that the list of styles contains at least three entries.
             self.resource_manager.styles.push(Box::new(""));
