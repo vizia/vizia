@@ -671,6 +671,44 @@ where
         None
     }
 
+    /// Get the current value for an entity using a pre-resolved variable snapshot.
+    ///
+    /// This mirrors [`get_resolved`] but reads variable values from `resolved_vars`
+    /// (used by [`link_with_resolved`]).
+    fn get_resolved_with_snapshot(
+        &self,
+        entity: Entity,
+        resolved_vars: &HashMap<u64, T>,
+    ) -> Option<T> {
+        let entity_index = entity.index();
+        if entity_index < self.inline_data.sparse.len() {
+            // An active animation on this property itself takes priority.
+            let animation_index = self.inline_data.sparse[entity_index].anim_index as usize;
+            if animation_index < self.active_animations.len() {
+                return self.active_animations[animation_index].get_output().cloned();
+            }
+
+            let data_index = self.inline_data.sparse[entity_index].data_index;
+            if data_index.is_inline() {
+                if data_index.index() < self.inline_data.dense.len() {
+                    return Some(self.inline_data.dense[data_index.index()].value.clone());
+                }
+            } else if data_index.index() < self.shared_data.dense.len() {
+                let shared = &self.shared_data.dense[data_index.index()].value;
+                if shared.variable_name_hash != u64::MAX {
+                    return resolved_vars
+                        .get(&shared.variable_name_hash)
+                        .cloned()
+                        .or_else(|| shared.fallback.clone());
+                } else {
+                    return Some(shared.value.clone());
+                }
+            }
+        }
+
+        None
+    }
+
     /// Link an entity to some shared data.
     pub(crate) fn link(
         &mut self,
@@ -716,7 +754,8 @@ where
                 let entity_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
                 if entity_anim_index >= self.active_animations.len() {
                     let new_value = &self.shared_data.dense[shared_data_index.index()].value.value;
-                    let value_changed = self.get(entity) != Some(new_value);
+                    let value_changed =
+                        self.get_resolved(entity, variables).as_ref() != Some(new_value);
                     if !value_changed {
                         // Keep linkage accurate, but do not invalidate when value is unchanged.
                         self.inline_data.sparse[entity_index].data_index =
@@ -977,7 +1016,9 @@ where
                 let entity_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
                 if entity_anim_index >= self.active_animations.len() {
                     let new_value = &self.shared_data.dense[shared_data_index.index()].value.value;
-                    let value_changed = self.get(entity) != Some(new_value);
+                    let value_changed =
+                        self.get_resolved_with_snapshot(entity, resolved_vars).as_ref()
+                            != Some(new_value);
                     if !value_changed {
                         // Keep linkage accurate, but do not invalidate when value is unchanged.
                         self.inline_data.sparse[entity_index].data_index =
