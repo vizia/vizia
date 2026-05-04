@@ -20,7 +20,8 @@ pub struct Knob<T> {
     default_normal: f32,
 
     is_dragging: bool,
-    prev_drag_y: f32,
+    drag_anchor_x: f32,
+    drag_anchor_y: f32,
     continuous_normal: f32,
 
     drag_scalar: f32,
@@ -47,7 +48,8 @@ impl<R: Res<f32> + Clone + 'static> Knob<R> {
             default_normal: normalized_default.get_value(cx),
 
             is_dragging: false,
-            prev_drag_y: 0.0,
+            drag_anchor_x: 0.0,
+            drag_anchor_y: 0.0,
             continuous_normal: value.get_value(cx),
 
             drag_scalar: DEFAULT_DRAG_SCALAR,
@@ -105,7 +107,8 @@ impl<R: Res<f32> + Clone + 'static> Knob<R> {
             default_normal,
 
             is_dragging: false,
-            prev_drag_y: 0.0,
+            drag_anchor_x: 0.0,
+            drag_anchor_y: 0.0,
             continuous_normal: value.get_value(cx),
 
             drag_scalar: DEFAULT_DRAG_SCALAR,
@@ -163,9 +166,12 @@ impl<T: Res<f32> + 'static> View for Knob<T> {
         event.map(|window_event, _| match window_event {
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                 self.is_dragging = true;
-                self.prev_drag_y = cx.mouse.left.pos_down.1;
+                self.drag_anchor_x = cx.mouse.left.pos_down.0;
+                self.drag_anchor_y = cx.mouse.left.pos_down.1;
 
                 cx.capture();
+                cx.lock_cursor_icon();
+                cx.emit(WindowEvent::SetCursor(CursorIcon::None));
                 cx.focus_with_visibility(false);
 
                 self.continuous_normal = self.value.get_value(cx);
@@ -176,14 +182,13 @@ impl<T: Res<f32> + 'static> View for Knob<T> {
 
                 self.continuous_normal = self.value.get_value(cx);
 
+                cx.unlock_cursor_icon();
                 cx.release();
             }
 
             WindowEvent::MouseMove(_, y) => {
                 if self.is_dragging && !cx.is_disabled() {
-                    let mut delta_normal = (*y - self.prev_drag_y) * self.drag_scalar;
-
-                    self.prev_drag_y = *y;
+                    let mut delta_normal = (*y - self.drag_anchor_y) * self.drag_scalar;
 
                     if cx.modifiers.shift() {
                         delta_normal *= self.modifier_scalar;
@@ -192,6 +197,12 @@ impl<T: Res<f32> + 'static> View for Knob<T> {
                     let new_normal = self.continuous_normal - delta_normal;
 
                     move_virtual_slider(self, cx, new_normal);
+
+                    if delta_normal != 0.0 {
+                        let anchor_x = self.drag_anchor_x.max(0.0) as u32;
+                        let anchor_y = self.drag_anchor_y.max(0.0) as u32;
+                        cx.emit(WindowEvent::SetCursorPosition(anchor_x, anchor_y));
+                    }
                 }
             }
 
@@ -207,6 +218,7 @@ impl<T: Res<f32> + 'static> View for Knob<T> {
 
             WindowEvent::MouseDoubleClick(button) if *button == MouseButton::Left => {
                 self.is_dragging = false;
+                cx.unlock_cursor_icon();
 
                 move_virtual_slider(self, cx, self.default_normal);
             }
