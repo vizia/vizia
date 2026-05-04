@@ -70,6 +70,7 @@ impl Tooltip {
             })
             .role(Role::Tooltip)
             .z_index(110)
+            .ignore_clipping(true)
             .hoverable(false)
             .position_type(PositionType::Absolute)
             .space(Pixels(0.0))

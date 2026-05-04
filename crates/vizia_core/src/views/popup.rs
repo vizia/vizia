@@ -76,6 +76,7 @@ impl Popover {
                 });
             })
             .position_type(PositionType::Absolute)
+            .ignore_clipping(true)
             .space(Pixels(0.0))
     }
 }
