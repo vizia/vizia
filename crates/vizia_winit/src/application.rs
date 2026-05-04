@@ -114,6 +114,7 @@ pub struct Application {
     window_ids: HashMap<Entity, WindowId>,
     custom_cursors: Arc<HashMap<CursorIcon, CustomCursor>>,
     startup_mode: StartupMode,
+    implicit_primary_window: Option<Entity>,
     exit_when_no_windows: bool,
     had_windows: bool,
     #[cfg(feature = "accesskit")]
@@ -157,6 +158,7 @@ impl Application {
         F: 'static + FnOnce(&mut Context),
     {
         let context = Context::new();
+        let mut implicit_primary_window = None;
 
         let event_loop =
             EventLoop::<UserEvent>::with_user_event().build().expect("Failed to create event loop");
@@ -182,6 +184,7 @@ impl Application {
 
         if startup_mode == StartupMode::Compatibility {
             let main_window_entity = cx.create_child_entity(Entity::root());
+            implicit_primary_window = Some(main_window_entity);
             let content = RefCell::new(Some(content));
 
             cx.add_window(
@@ -223,6 +226,7 @@ impl Application {
             window_ids: HashMap::new(),
             custom_cursors: Arc::new(HashMap::new()),
             startup_mode,
+            implicit_primary_window,
             exit_when_no_windows: true,
             had_windows: false,
             #[cfg(feature = "accesskit")]
@@ -230,6 +234,10 @@ impl Application {
             #[cfg(feature = "accesskit")]
             adapter_initialized: false,
         }
+    }
+
+    fn app_window_modifier_target(&self) -> Entity {
+        self.implicit_primary_window.unwrap_or(Entity::root())
     }
 
     fn create_window(
@@ -1024,19 +1032,24 @@ impl ApplicationHandler<UserEvent> for Application {
 impl WindowModifiers for Application {
     fn title<T: ToStringLocalized>(mut self, title: impl Res<T> + Clone + 'static) -> Self {
         self.window_description.title = title.get_value(&self.cx.0).to_string_local(&self.cx.0);
+        let target = self.app_window_modifier_target();
 
         let getter_for_locale = title.clone();
 
         title.set_or_bind(&mut self.cx.0, move |cx, val| {
             let title_str = val.get_value(cx).to_string_local(cx);
 
-            cx.emit(WindowEvent::SetTitle(title_str));
+            cx.with_current(target, |cx| {
+                cx.emit(WindowEvent::SetTitle(title_str));
+            });
         });
 
         let locale = self.cx.0.environment().locale;
         locale.set_or_bind(&mut self.cx.0, move |cx, _| {
             let title = getter_for_locale.get_value(cx).to_string_local(cx);
-            cx.emit(WindowEvent::SetTitle(title));
+            cx.with_current(target, |cx| {
+                cx.emit(WindowEvent::SetTitle(title));
+            });
         });
 
         self
@@ -1044,9 +1057,12 @@ impl WindowModifiers for Application {
 
     fn inner_size<S: Into<WindowSize>>(mut self, size: impl Res<S>) -> Self {
         self.window_description.inner_size = size.get_value(&self.cx.0).into();
+        let target = self.app_window_modifier_target();
 
-        size.set_or_bind(&mut self.cx.0, |cx, size| {
-            cx.emit(WindowEvent::SetSize(size.get_value(cx).into()));
+        size.set_or_bind(&mut self.cx.0, move |cx, size| {
+            cx.with_current(target, |cx| {
+                cx.emit(WindowEvent::SetSize(size.get_value(cx).into()));
+            });
         });
 
         self
@@ -1054,9 +1070,12 @@ impl WindowModifiers for Application {
 
     fn min_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
         self.window_description.min_inner_size = size.get_value(&self.cx.0).map(|s| s.into());
+        let target = self.app_window_modifier_target();
 
-        size.set_or_bind(&mut self.cx.0, |cx, size| {
-            cx.emit(WindowEvent::SetMinSize(size.get_value(cx).map(|s| s.into())));
+        size.set_or_bind(&mut self.cx.0, move |cx, size| {
+            cx.with_current(target, |cx| {
+                cx.emit(WindowEvent::SetMinSize(size.get_value(cx).map(|s| s.into())));
+            });
         });
 
         self
@@ -1064,18 +1083,24 @@ impl WindowModifiers for Application {
 
     fn max_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
         self.window_description.max_inner_size = size.get_value(&self.cx.0).map(|s| s.into());
+        let target = self.app_window_modifier_target();
 
-        size.set_or_bind(&mut self.cx.0, |cx, size| {
-            cx.emit(WindowEvent::SetMaxSize(size.get_value(cx).map(|s| s.into())));
+        size.set_or_bind(&mut self.cx.0, move |cx, size| {
+            cx.with_current(target, |cx| {
+                cx.emit(WindowEvent::SetMaxSize(size.get_value(cx).map(|s| s.into())));
+            });
         });
         self
     }
 
     fn position<P: Into<WindowPosition>>(mut self, position: impl Res<P>) -> Self {
         self.window_description.position = Some(position.get_value(&self.cx.0).into());
+        let target = self.app_window_modifier_target();
 
-        position.set_or_bind(&mut self.cx.0, |cx, size| {
-            cx.emit(WindowEvent::SetPosition(size.get_value(cx).into()));
+        position.set_or_bind(&mut self.cx.0, move |cx, size| {
+            cx.with_current(target, |cx| {
+                cx.emit(WindowEvent::SetPosition(size.get_value(cx).into()));
+            });
         });
 
         self
@@ -1107,9 +1132,12 @@ impl WindowModifiers for Application {
 
     fn resizable(mut self, flag: impl Res<bool>) -> Self {
         self.window_description.resizable = flag.get_value(&self.cx.0);
+        let target = self.app_window_modifier_target();
 
-        flag.set_or_bind(&mut self.cx.0, |cx, flag| {
-            cx.emit(WindowEvent::SetResizable(flag.get_value(cx)));
+        flag.set_or_bind(&mut self.cx.0, move |cx, flag| {
+            cx.with_current(target, |cx| {
+                cx.emit(WindowEvent::SetResizable(flag.get_value(cx)));
+            });
         });
 
         self
@@ -1117,18 +1145,24 @@ impl WindowModifiers for Application {
 
     fn minimized(mut self, flag: impl Res<bool>) -> Self {
         self.window_description.minimized = flag.get_value(&self.cx.0);
+        let target = self.app_window_modifier_target();
 
-        flag.set_or_bind(&mut self.cx.0, |cx, flag| {
-            cx.emit(WindowEvent::SetMinimized(flag.get_value(cx)));
+        flag.set_or_bind(&mut self.cx.0, move |cx, flag| {
+            cx.with_current(target, |cx| {
+                cx.emit(WindowEvent::SetMinimized(flag.get_value(cx)));
+            });
         });
         self
     }
 
     fn maximized(mut self, flag: impl Res<bool>) -> Self {
         self.window_description.maximized = flag.get_value(&self.cx.0);
+        let target = self.app_window_modifier_target();
 
-        flag.set_or_bind(&mut self.cx.0, |cx, flag| {
-            cx.emit(WindowEvent::SetMaximized(flag.get_value(cx)));
+        flag.set_or_bind(&mut self.cx.0, move |cx, flag| {
+            cx.with_current(target, |cx| {
+                cx.emit(WindowEvent::SetMaximized(flag.get_value(cx)));
+            });
         });
 
         self
@@ -1136,9 +1170,12 @@ impl WindowModifiers for Application {
 
     fn visible(mut self, flag: impl Res<bool>) -> Self {
         self.window_description.visible = flag.get_value(&self.cx.0);
+        let target = self.app_window_modifier_target();
 
-        flag.set_or_bind(&mut self.cx.0, |cx, flag| {
-            cx.emit(WindowEvent::SetVisible(flag.get_value(cx)));
+        flag.set_or_bind(&mut self.cx.0, move |cx, flag| {
+            cx.with_current(target, |cx| {
+                cx.emit(WindowEvent::SetVisible(flag.get_value(cx)));
+            });
         });
 
         self
