@@ -112,16 +112,11 @@ pub fn table(cx: &mut Context) {
     ]);
 
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# Table
-A table displays tabular data with sortable, resizable columns and row selection. \
-Click a column header to sort. Click a row to select it.",
-        );
+        Label::new(cx, Localized::new("table")).class("panel-title");
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic Table");
+        Label::new(cx, Localized::new("basic-table")).class("section-title");
 
         DemoRegion::new(cx, "Basic Table", move |cx| {
             Table::new(cx, sorted_rows, columns, |row: &TableRow| row.id)

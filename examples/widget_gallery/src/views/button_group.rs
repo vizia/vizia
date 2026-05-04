@@ -33,35 +33,33 @@ pub fn button_group(cx: &mut Context) {
     ButtonGroupData { bold, italic, underline }.build(cx);
 
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# Button Group
-Buttons can be grouped by wrapping them in a ButtonGroup view.
-        ",
-        );
+        VStack::new(cx, |cx| {
+            Label::new(cx, Localized::new("button-group")).class("panel-title");
+            Label::new(cx, Localized::new("button-group").attribute("description"));
+        })
+        .height(Auto)
+        .gap(Pixels(4.0));
 
         Divider::new(cx);
 
-        DemoRegion::new(cx, "Horizontal Button Group", |cx| {
+        DemoRegion::new(cx, Localized::new("demo-region-horizontal-button-group"), |cx| {
             ButtonGroup::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "One"));
-                Button::new(cx, |cx| Label::new(cx, "Two"));
-                Button::new(cx, |cx| Label::new(cx, "Three"));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("one")));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("two")));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("three")));
             });
         });
 
-        DemoRegion::new(cx, "Vertical Button Group", |cx| {
+        DemoRegion::new(cx, Localized::new("demo-region-vertical-button-group"), |cx| {
             ButtonGroup::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "One"));
-                Button::new(cx, |cx| Label::new(cx, "Two"));
-                Button::new(cx, |cx| Label::new(cx, "Three"));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("one")));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("two")));
+                Button::new(cx, |cx| Label::new(cx, Localized::new("three")));
             })
             .vertical(true);
         });
 
-        Divider::new(cx);
-
-        DemoRegion::new(cx, "Toggle Button Group", move |cx| {
+        DemoRegion::new(cx, Localized::new("demo-region-toggle-button-group"), move |cx| {
             ButtonGroup::new(cx, |cx| {
                 ToggleButton::new(cx, bold, |cx| {
                     Svg::new(cx, ICON_BOLD).direction(Direction::LeftToRight)

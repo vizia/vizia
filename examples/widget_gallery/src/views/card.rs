@@ -4,11 +4,7 @@ use crate::DemoRegion;
 
 pub fn card(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# Card
-A card is a surface that groups related content and actions on a single topic.",
-        );
+        Label::new(cx, Localized::new("card")).class("panel-title");
 
         Divider::new(cx);
 

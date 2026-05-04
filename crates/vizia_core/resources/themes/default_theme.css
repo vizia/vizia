@@ -122,6 +122,13 @@ avatar {
     fill: var(--foreground);
 }
 
+/* AVATAR GROUP */
+
+avatar-group > avatar {
+    border-width: 2px;
+    border-color: var(--background);
+}
+
 /* BADGE */
 
 badge {
@@ -1148,10 +1155,6 @@ sidebar .sidebar-search {
     width: 1s;
     height: 32px;
     padding: 4px;
-}
-
-sidebar .sidebar-content {
-    padding: 12px;
 }
 
 sidebar collapsible.sidebar-group > .header > label.sidebar-group-label {

@@ -30,11 +30,11 @@ pub fn virtual_list(cx: &mut Context) {
     VirtualListData { list, selected, selection_follows_focus }.build(cx);
 
     VStack::new(cx, |cx| {
-        Markdown::new(cx, "# Virtual List");
+        Label::new(cx, Localized::new("virtual-list")).class("panel-title");
 
         Divider::new(cx);
 
-        DemoRegion::new(cx, "Basic Virtual List", move |cx| {
+        DemoRegion::new(cx, "Virtual List", move |cx| {
             VirtualList::new(cx, list, 40.0, |cx, index, item| {
                 Label::new(cx, item).toggle_class("dark", index % 2 == 0)
             })

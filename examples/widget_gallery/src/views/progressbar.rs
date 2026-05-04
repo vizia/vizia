@@ -42,11 +42,11 @@ pub fn progressbar(cx: &mut Context) {
     ProgressData { progress, timer }.build(cx);
 
     VStack::new(cx, |cx| {
-        Markdown::new(cx, "# ProgressBar");
+        Label::new(cx, Localized::new("progress-bar")).class("panel-title");
 
         Divider::new(cx);
 
-        DemoRegion::new(cx, "Basic Progress Bar", move |cx| {
+        DemoRegion::new(cx, "Progress Bar", move |cx| {
             ProgressBar::horizontal(cx, progress).width(Pixels(300.0));
         });
     })

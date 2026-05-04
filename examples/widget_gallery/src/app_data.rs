@@ -1,49 +1,96 @@
 use vizia::prelude::*;
 
-pub const CATEGORIES: &[(&str, &[&str])] = &[
-    ("Layout", &["Grid", "HStack", "Resizable", "VStack", "ZStack"]),
+pub const ALL_VIEW_ID: &str = "All";
+pub const ALL_VIEW_KEY: &str = "all";
+
+pub const CATEGORIES: &[(&str, &[(&str, &str)])] = &[
     (
-        "Display",
+        "category-layout",
         &[
-            "Avatar",
-            "Avatar Group",
-            "Badge",
-            "Card",
-            "Divider",
-            "Element",
-            "Image",
-            "Label",
-            "Markdown",
-            "Svg",
+            ("Grid", "grid"),
+            ("HStack", "hstack"),
+            ("Resizable", "resizable"),
+            ("VStack", "vstack"),
+            ("ZStack", "zstack"),
         ],
     ),
     (
-        "Input",
+        "category-display",
         &[
-            "Button",
-            "Button Group",
-            "Calendar",
-            "Checkbox",
-            "Chip",
-            "Combobox",
-            "Dropdown",
-            "Knob",
-            "Radiobutton",
-            "Rating",
-            "Select",
-            "Slider",
-            "Spinbox",
-            "Switch",
-            "Textbox",
-            "ToggleButton",
-            "XYPad",
+            ("Avatar", "avatar"),
+            ("Avatar Group", "avatar-group"),
+            ("Badge", "badge"),
+            ("Card", "card"),
+            ("Divider", "divider"),
+            ("Element", "element"),
+            ("Image", "image"),
+            ("Label", "label"),
+            ("Markdown", "markdown"),
+            ("Svg", "svg"),
         ],
     ),
-    ("Navigation", &["Menu", "MenuBar", "Scrollview", "Tabview"]),
-    ("Data", &["List", "Table", "VirtualList", "VirtualTable"]),
-    ("Feedback", &["Popup", "Progressbar", "Tooltip"]),
-    ("Containers", &["Accordion", "Collapsible"]),
+    (
+        "category-input",
+        &[
+            ("Button", "button-title"),
+            ("Button Group", "button-group"),
+            ("Calendar", "calendar"),
+            ("Checkbox", "checkbox"),
+            ("Chip", "chip"),
+            ("Combobox", "combobox"),
+            ("Dropdown", "dropdown"),
+            ("Knob", "knob"),
+            ("Radiobutton", "radiobutton"),
+            ("Rating", "rating"),
+            ("Select", "select"),
+            ("Slider", "slider"),
+            ("Spinbox", "spinbox"),
+            ("Switch", "switch"),
+            ("Textbox", "textbox"),
+            ("ToggleButton", "toggle-button"),
+            ("XYPad", "xypad"),
+        ],
+    ),
+    (
+        "category-navigation",
+        &[
+            ("Menu", "menu"),
+            ("MenuBar", "menu-bar"),
+            ("Scrollview", "scrollview"),
+            ("Tabview", "tabview"),
+        ],
+    ),
+    (
+        "category-data",
+        &[
+            ("List", "list"),
+            ("Table", "table"),
+            ("VirtualList", "virtual-list"),
+            ("VirtualTable", "virtual-table"),
+        ],
+    ),
+    (
+        "category-feedback",
+        &[("Popup", "popup"), ("Progressbar", "progress-bar"), ("Tooltip", "tooltip")],
+    ),
+    ("category-containers", &[("Accordion", "accordion"), ("Collapsible", "collapsible")]),
 ];
+
+pub fn localized_view_key(view_id: &str) -> &'static str {
+    if view_id == ALL_VIEW_ID {
+        return ALL_VIEW_KEY;
+    }
+
+    for (_, items) in CATEGORIES.iter() {
+        for (id, key) in items.iter().copied() {
+            if id == view_id {
+                return key;
+            }
+        }
+    }
+
+    ALL_VIEW_KEY
+}
 
 const PRIMARY_COLOR_CLASSES: [&str; 6] = [
     "default",
@@ -131,7 +178,7 @@ impl AppData {
             selected_theme: Signal::new(Some(0)),
             selected_language: Signal::new(Some(0)),
             selected_primary_color: Signal::new(Some(0)),
-            selected_view: Signal::new("All"),
+            selected_view: Signal::new(ALL_VIEW_ID),
             search_text: Signal::new(String::new()),
         }
     }
