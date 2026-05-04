@@ -369,12 +369,16 @@ impl Node for Entity {
         store.wrap.get(*self).copied()
     }
 
-    fn vertical_scroll(&self, store: &Self::Store) -> Option<f32> {
-        store.vertical_scroll.get(*self).cloned().map(|val| store.logical_to_physical(val))
+    fn vertical_scroll(&self, _store: &Self::Store) -> Option<f32> {
+        // Scroll offset is applied via transform on ScrollContent, not through morphorm.
+        // Return None so morphorm takes its non-scroll code path.
+        None
     }
 
-    fn horizontal_scroll(&self, store: &Self::Store) -> Option<f32> {
-        store.horizontal_scroll.get(*self).cloned().map(|val| store.logical_to_physical(val))
+    fn horizontal_scroll(&self, _store: &Self::Store) -> Option<f32> {
+        // Scroll offset is applied via transform on ScrollContent, not through morphorm.
+        // Return None so morphorm takes its non-scroll code path.
+        None
     }
 
     fn min_vertical_gap(&self, store: &Self::Store) -> Option<Units> {

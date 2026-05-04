@@ -89,7 +89,9 @@ impl ScrollView {
         let has_h_scroll = Memo::new(move |_| container_width.get() < inner_width.get());
         let has_v_scroll = Memo::new(move |_| container_height.get() < inner_height.get());
 
-        let horizontal_scrollbar_value: Memo<f32> = Memo::new(move |_| scroll_x.get());
+        let horizontal_scrollbar_value: Memo<f32> = Memo::new(move |_| {
+            ScrollView::map_scroll_x_to_physical(scroll_x.get(), direction.get())
+        });
 
         let scroll_state = Memo::new(move |_| {
             (
@@ -117,7 +119,30 @@ impl ScrollView {
             show_vertical_scrollbar,
         }
         .build(cx, move |cx| {
-            ScrollContent::new(cx, content);
+            // Apply scroll offset as a translation transform on scroll_content.
+            ScrollContent::new(cx, content).bind(scroll_state, move |mut handle| {
+                let (
+                    scroll_x,
+                    scroll_y,
+                    inner_width,
+                    inner_height,
+                    container_width,
+                    container_height,
+                    direction,
+                ) = scroll_state_signal.get();
+                let scale_factor = handle.context().scale_factor();
+                let y_overflow = (inner_height - container_height).max(0.0);
+                let top = (y_overflow * scroll_y).round() / scale_factor;
+                let x_overflow = (inner_width - container_width).max(0.0);
+                let left = (x_overflow * scroll_x).round() / scale_factor;
+
+                let tx = if direction == Direction::RightToLeft { left } else { -left };
+
+                handle.translate(Translate {
+                    x: LengthOrPercentage::Length(Length::px(tx)),
+                    y: LengthOrPercentage::Length(Length::px(-top)),
+                });
+            });
 
             Binding::new(cx, show_vertical_scrollbar, move |cx| {
                 if show_vertical_scrollbar.get() {
@@ -143,29 +168,17 @@ impl ScrollView {
                         horizontal_ratio,
                         Orientation::Horizontal,
                         |cx, value| {
-                            cx.emit(ScrollEvent::SetX(value));
+                            let logical = ScrollView::map_scroll_x_from_physical(
+                                value,
+                                cx.environment().direction.get(),
+                            );
+                            cx.emit(ScrollEvent::SetX(logical));
                         },
                     )
                     .position_type(PositionType::Absolute)
                     .scroll_to_cursor(scroll_to_cursor);
                 }
             });
-        })
-        .bind(scroll_state, move |mut handle| {
-            let (
-                scroll_x,
-                scroll_y,
-                inner_width,
-                inner_height,
-                container_width,
-                container_height,
-                direction,
-            ) = scroll_state_signal.get();
-            let scale_factor = handle.context().scale_factor();
-            let top = ((inner_height - container_height) * scroll_y).round() / scale_factor;
-            let physical_scroll_x = ScrollView::map_scroll_x_to_physical(scroll_x, direction);
-            let left = ((inner_width - container_width) * physical_scroll_x).round() / scale_factor;
-            handle.horizontal_scroll(-left.abs()).vertical_scroll(-top.abs());
         })
         .toggle_class("h-scroll", has_h_scroll)
         .toggle_class("v-scroll", has_v_scroll)
@@ -191,12 +204,7 @@ impl View for ScrollView {
         event.map(|scroll_update, meta| {
             match scroll_update {
                 ScrollEvent::ScrollX(f) => {
-                    let delta = if cx.environment().direction.get() == Direction::RightToLeft {
-                        -*f
-                    } else {
-                        *f
-                    };
-                    self.scroll_x.set((self.scroll_x.get() + delta).clamp(0.0, 1.0));
+                    self.scroll_x.set((self.scroll_x.get() + *f).clamp(0.0, 1.0));
 
                     if let Some(callback) = &self.on_scroll {
                         (callback)(cx, self.scroll_x.get(), self.scroll_y.get());
@@ -250,7 +258,7 @@ impl View for ScrollView {
                         inner_width = *w;
                         inner_height = *h;
 
-                        if inner_width != container_width {
+                        if inner_width > container_width {
                             let physical_scroll_x = ((left * scale_factor)
                                 / (inner_width - container_width))
                                 .clamp(0.0, 1.0);
@@ -262,7 +270,7 @@ impl View for ScrollView {
                             scroll_x = 0.0;
                         }
 
-                        if inner_height != container_height {
+                        if inner_height > container_height {
                             scroll_y = ((top * scale_factor) / (inner_height - container_height))
                                 .clamp(0.0, 1.0);
                         } else {
@@ -370,7 +378,7 @@ impl View for ScrollView {
                         container_width = bounds.width();
                         container_height = bounds.height();
 
-                        if inner_width != container_width {
+                        if inner_width > container_width {
                             let physical_scroll_x = ((left * scale_factor)
                                 / (inner_width - container_width))
                                 .clamp(0.0, 1.0);
@@ -382,7 +390,7 @@ impl View for ScrollView {
                             scroll_x = 0.0;
                         }
 
-                        if inner_height != container_height {
+                        if inner_height > container_height {
                             scroll_y = ((top * scale_factor) / (inner_height - container_height))
                                 .clamp(0.0, 1.0);
                         } else {

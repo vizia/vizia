@@ -86,6 +86,12 @@ pub(crate) fn transform_system(cx: &mut Context) {
                     let iter = LayoutTreeIterator::subtree(&cx.tree, entity);
                     for descendant in iter {
                         cx.style.needs_reclip(descendant);
+                        // Cached draw bounds include transformed and clipped extents.
+                        // Invalidate them when ancestor transforms change so dirty/intersection
+                        // checks don't cull newly visible descendants.
+                        if descendant != entity {
+                            cx.cache.draw_bounds.remove(descendant);
+                        }
                     }
                 }
 
