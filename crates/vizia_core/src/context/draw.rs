@@ -140,12 +140,13 @@ impl DrawContext<'_> {
         // If there is no cached value yet, walk ancestors to find an inherited clip.
         let mut current = self.current;
         while let Some(parent) = self.tree.get_parent(current) {
-            if self.style.ignore_clipping.get(parent).copied().unwrap_or(false) {
-                return None;
+            // A cached parent entry (including None) is authoritative.
+            if let Some(clip_path) = self.cache.clip_path.get(parent) {
+                return clip_path.clone();
             }
 
-            if let Some(clip_path) = self.cache.clip_path.get(parent).cloned().flatten() {
-                return Some(clip_path);
+            if self.style.ignore_clipping.get(parent).copied().unwrap_or(false) {
+                return None;
             }
             current = parent;
         }

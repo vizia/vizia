@@ -639,6 +639,11 @@ fn link_style_data(
         should_redraw = true;
     }
 
+    if style.ignore_clipping.link(entity, matched_rules) {
+        should_reclip = true;
+        should_redraw = true;
+    }
+
     if style.overflowx.link(entity, matched_rules) {
         should_reclip = true;
         should_redraw = true;

@@ -310,19 +310,16 @@ impl<'a> EventContext<'a> {
 
         let mut current = self.current;
         while let Some(parent) = self.tree.get_parent(current) {
-            if self.style.ignore_clipping.get(parent).copied().unwrap_or(false) {
-                return window_bounds;
+            // A cached parent entry (including None) is authoritative.
+            if let Some(clip_path) = self.cache.clip_path.get(parent) {
+                return clip_path
+                    .clone()
+                    .map(|clip_path| Into::<BoundingBox>::into(*clip_path.bounds()))
+                    .unwrap_or(window_bounds);
             }
 
-            if let Some(clip_path) = self
-                .cache
-                .clip_path
-                .get(parent)
-                .cloned()
-                .flatten()
-                .map(|clip_path| Into::<BoundingBox>::into(*clip_path.bounds()))
-            {
-                return clip_path;
+            if self.style.ignore_clipping.get(parent).copied().unwrap_or(false) {
+                return window_bounds;
             }
 
             if parent == current_window {

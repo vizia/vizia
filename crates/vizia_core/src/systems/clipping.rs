@@ -21,10 +21,28 @@ pub(crate) fn clipping_system(cx: &mut Context) {
         }
 
         let bounds = cx.cache.bounds.get(entity).copied().unwrap();
+        let previous_clip_bounds = cx
+            .cache
+            .clip_path
+            .get(entity)
+            .and_then(|clip_path| clip_path.as_ref())
+            .map(|clip_path| *clip_path.bounds());
 
         if entity == Entity::root() {
             let clip_path = build_clip_path(cx, Entity::root(), bounds);
             cx.cache.clip_path.insert(entity, Some(clip_path));
+            let new_clip_bounds = cx
+                .cache
+                .clip_path
+                .get(entity)
+                .and_then(|clip_path| clip_path.as_ref())
+                .map(|clip_path| *clip_path.bounds());
+
+            if previous_clip_bounds != new_clip_bounds {
+                for descendant in LayoutTreeIterator::subtree(&cx.tree, entity).skip(1) {
+                    cx.cache.draw_bounds.remove(descendant);
+                }
+            }
             continue;
         }
 
@@ -99,20 +117,21 @@ pub(crate) fn clipping_system(cx: &mut Context) {
             cx.cache.clip_path.get(parent).cloned().flatten()
         };
 
-        match (clip_path, parent_clip_path) {
+        let effective_clip_path = match (clip_path, parent_clip_path) {
             (Some(clip_path), Some(parent_clip_path)) => {
-                let path_intersection =
-                    clip_path.op(&parent_clip_path, skia_safe::PathOp::Intersect);
-                cx.cache.clip_path.insert(entity, path_intersection);
+                clip_path.op(&parent_clip_path, skia_safe::PathOp::Intersect)
             }
-            (Some(clip_path), None) => {
-                cx.cache.clip_path.insert(entity, Some(clip_path));
-            }
-            (None, Some(parent_clip_path)) => {
-                cx.cache.clip_path.insert(entity, Some(parent_clip_path));
-            }
-            (None, None) => {
-                cx.cache.clip_path.insert(entity, None);
+            (Some(clip_path), None) => Some(clip_path),
+            (None, Some(parent_clip_path)) => Some(parent_clip_path),
+            (None, None) => None,
+        };
+
+        let new_clip_bounds = effective_clip_path.as_ref().map(|clip_path| *clip_path.bounds());
+        cx.cache.clip_path.insert(entity, effective_clip_path);
+
+        if previous_clip_bounds != new_clip_bounds {
+            for descendant in LayoutTreeIterator::subtree(&cx.tree, entity).skip(1) {
+                cx.cache.draw_bounds.remove(descendant);
             }
         }
     }
