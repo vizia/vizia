@@ -38,9 +38,19 @@ impl BackendContext {
         }
     }
 
-    /// Adds a root window view to the context.
-    pub fn add_window<W: View>(&mut self, window: W) {
-        self.0.views.insert(Entity::root(), Box::new(window));
+    /// Registers a window view for the given entity in the context.
+    pub fn add_window<W: View>(&mut self, window_entity: Entity, window: W) {
+        self.0.views.insert(window_entity, Box::new(window));
+    }
+
+    /// Creates a new entity as a child of the provided parent and inserts it into the tree.
+    pub fn create_child_entity(&mut self, parent: Entity) -> Entity {
+        let entity = self.0.entity_manager.create();
+        self.0.tree.add(entity, parent).expect("Failed to add entity to tree");
+        self.0.cache.add(entity);
+        self.0.style.add(entity);
+        self.0.needs_redraw(entity);
+        entity
     }
 
     /// Returns a mutable reference to the style data.
@@ -107,6 +117,9 @@ impl BackendContext {
         self.0.style.position_type.insert(window_entity, PositionType::Absolute);
 
         self.0.tree.set_window(window_entity, true);
+
+        // Every real window entity carries the accessibility Window role.
+        self.0.style.role.insert(window_entity, Role::Window);
 
         // let physical_x = window_description.position.unwrap_or_default().x as f32 * dpi_factor;
         // let physical_y = window_description.position.unwrap_or_default().y as f32 * dpi_factor;

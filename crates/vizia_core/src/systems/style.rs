@@ -96,6 +96,8 @@ impl Element for Node<'_, '_> {
 
     fn is_root(&self) -> bool {
         self.entity == Entity::root()
+            || (self.tree.is_window(self.entity)
+                && self.tree.get_parent(self.entity) == Some(Entity::root()))
     }
 
     fn is_html_element_in_html_document(&self) -> bool {

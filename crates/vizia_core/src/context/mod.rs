@@ -39,6 +39,7 @@ use crate::{
     model::ModelData,
 };
 
+use crate::environment::{apply_direction_class, apply_theme_class};
 use crate::{binding::BindingHandler, resource::StoredImage};
 use crate::{cache::CachedData, resource::ImageOrSvg};
 
@@ -216,8 +217,6 @@ impl Context {
             drop_data: None,
         };
 
-        result.tree.set_window(Entity::root(), true);
-
         result.style.needs_restyle(Entity::root());
         result.style.needs_relayout();
         result.style.needs_retransform(Entity::root());
@@ -231,8 +230,6 @@ impl Context {
         Environment::new(&mut result).build(&mut result);
 
         result.entity_manager.create();
-
-        result.style.role.insert(Entity::root(), Role::Window);
 
         result
     }
@@ -257,7 +254,7 @@ impl Context {
         self.data::<Environment>()
     }
 
-    /// Returns the entity id of the  parent window to the current view.
+    /// Returns the entity id of the parent window of the current view.
     pub fn parent_window(&self) -> Entity {
         self.tree.get_parent_window(self.current).unwrap_or(Entity::root())
     }
@@ -477,7 +474,10 @@ impl Context {
                 if let Some(new_focus) = self.focus_stack.pop() {
                     self.with_current(new_focus, |cx| cx.focus());
                 } else {
-                    self.with_current(Entity::root(), |cx| cx.focus());
+                    // Fall back to the nearest enclosing window so focus is never
+                    // stranded on the root sentinel.
+                    let fallback = self.tree.get_parent_window(*entity).unwrap_or(Entity::root());
+                    self.with_current(fallback, |cx| cx.focus());
                 }
             }
 
@@ -501,22 +501,28 @@ impl Context {
                 self.stop_timer(timer);
             }
 
-            let window_entity = self.tree.get_parent_window(*entity).unwrap_or(Entity::root());
+            let window_entity = if self.tree.is_window(*entity) {
+                // The entity being removed IS a window – its own WindowState is the target.
+                *entity
+            } else {
+                self.tree.get_parent_window(*entity).unwrap_or(Entity::root())
+            };
 
             if !self.tree.is_window(*entity) {
                 if let Some(draw_bounds) = self.cache.draw_bounds.get(*entity) {
-                    if let Some(dirty_rect) =
-                        &mut self.windows.get_mut(&window_entity).unwrap().dirty_rect
-                    {
-                        *dirty_rect = dirty_rect.union(draw_bounds);
-                    } else {
-                        self.windows.get_mut(&window_entity).unwrap().dirty_rect =
-                            Some(*draw_bounds);
+                    if let Some(ws) = self.windows.get_mut(&window_entity) {
+                        if let Some(dirty_rect) = &mut ws.dirty_rect {
+                            *dirty_rect = dirty_rect.union(draw_bounds);
+                        } else {
+                            ws.dirty_rect = Some(*draw_bounds);
+                        }
                     }
                 }
             }
 
-            self.windows.get_mut(&window_entity).unwrap().redraw_list.remove(entity);
+            if let Some(ws) = self.windows.get_mut(&window_entity) {
+                ws.redraw_list.remove(entity);
+            }
 
             if self.windows.contains_key(entity) {
                 self.windows.remove(entity);
@@ -632,11 +638,9 @@ impl Context {
             let environment = self.data::<Environment>();
             let theme_mode = environment.effective_theme();
             let direction = environment.direction.get();
-            self.with_current(Entity::root(), |cx| {
-                let cx = &mut EventContext::new(cx);
-                cx.toggle_class("dark", theme_mode == ThemeMode::DarkMode);
-                cx.toggle_class("rtl", direction == Direction::RightToLeft);
-            })
+            let cx = &mut EventContext::new(self);
+            apply_theme_class(cx, theme_mode == ThemeMode::DarkMode);
+            apply_direction_class(cx, direction);
         } else {
             // Add an empty stylesheet to ensure that the list of styles contains at least three entries.
             self.add_stylesheet("").unwrap();
