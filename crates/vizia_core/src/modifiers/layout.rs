@@ -300,20 +300,6 @@ pub trait LayoutModifiers: internal::Modifiable {
     }
 
     modifier!(
-        /// Set the vertical scroll position of the view.
-        vertical_scroll,
-        f32,
-        SystemFlags::REDRAW | SystemFlags::RECLIP
-    );
-
-    modifier!(
-        /// Set the horizontal scroll position of the view.
-        horizontal_scroll,
-        f32,
-        SystemFlags::REDRAW | SystemFlags::RECLIP
-    );
-
-    modifier!(
         /// Sets the minimum width of the view.
         min_width,
         Units,
