@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use crate::prelude::*;
+use skia_safe::Rect;
 
 pub(crate) const SCROLL_SENSITIVITY: f32 = 20.0;
 
@@ -193,6 +194,22 @@ impl ScrollView {
             self.scroll_y.set(0.0);
         }
     }
+
+    fn transformed_bounds(cx: &EventContext, entity: Entity) -> BoundingBox {
+        let bounds = cx.cache.get_bounds(entity);
+
+        if let Some(transform) = cx.cache.transform.get(entity).copied() {
+            let (rect, _) = transform.map_rect(Rect::from(bounds));
+            BoundingBox::from_min_max(
+                rect.left().floor(),
+                rect.top().floor(),
+                rect.right().ceil(),
+                rect.bottom().ceil(),
+            )
+        } else {
+            bounds
+        }
+    }
 }
 
 impl View for ScrollView {
@@ -297,9 +314,8 @@ impl View for ScrollView {
                 }
 
                 ScrollEvent::ScrollToView(entity) => {
-                    let view_bounds = cx.cache.get_bounds(*entity);
-
-                    let content_bounds = cx.bounds();
+                    let view_bounds = ScrollView::transformed_bounds(cx, *entity);
+                    let content_bounds = ScrollView::transformed_bounds(cx, cx.current());
 
                     let direction = cx.environment().direction.get();
                     let mut physical_scroll_x =
