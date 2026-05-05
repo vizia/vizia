@@ -1,6 +1,5 @@
 use crate::context::TreeProps;
 use crate::prelude::*;
-use skia_safe::Rect;
 
 /// A view which represents a bar that can be dragged to manipulate a scrollview.
 pub struct Scrollbar {
@@ -91,19 +90,7 @@ impl Scrollbar {
 
     fn thumb_bounds(&self, cx: &mut EventContext) -> BoundingBox {
         let child = cx.first_child();
-        let bounds = cx.with_current(child, |cx| cx.bounds());
-
-        if let Some(transform) = cx.cache.transform.get(child).copied() {
-            let (rect, _) = transform.map_rect(Rect::from(bounds));
-            BoundingBox::from_min_max(
-                rect.left().floor(),
-                rect.top().floor(),
-                rect.right().ceil(),
-                rect.bottom().ceil(),
-            )
-        } else {
-            bounds
-        }
+        cx.transformed_bounds(child)
     }
 
     fn compute_new_value(&self, cx: &mut EventContext, physical_delta: f32, value_ref: f32) -> f32 {
