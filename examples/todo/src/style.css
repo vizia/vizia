@@ -82,8 +82,10 @@
 
 .todo-list {
     height: auto;
+    max-height: 250px;
 }
 
 .todo-list scrollview {
     height: auto;
+    max-height: 250px;
 }
