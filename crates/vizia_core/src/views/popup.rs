@@ -90,8 +90,7 @@ impl View for Popover {
         event.map(|window_event, _| match window_event {
             // Reposition popup if there isn't enough room for it.
             WindowEvent::GeometryChanged(_) => {
-                let parent = cx.parent();
-                let parent_bounds = cx.cache.get_bounds(parent);
+                let parent_bounds = cx.parent_transformed_bounds();
                 let bounds = cx.bounds();
                 let window_bounds = cx.cache.get_bounds(cx.parent_window());
                 let scale = cx.scale_factor();

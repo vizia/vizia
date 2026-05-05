@@ -16,7 +16,7 @@ use crate::resource::{ImageOrSvg, ResourceManager, StoredImage};
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use vizia_input::MouseState;
 
-use skia_safe::Matrix;
+use skia_safe::{Matrix, Rect};
 
 use crate::text::TextContext;
 #[cfg(feature = "clipboard")]
@@ -283,6 +283,28 @@ impl<'a> EventContext<'a> {
     /// Returns the bounds of the current view.
     pub fn bounds(&self) -> BoundingBox {
         self.cache.get_bounds(self.current)
+    }
+
+    /// Returns the transformed bounds of an entity in window coordinates.
+    pub fn transformed_bounds(&self, entity: Entity) -> BoundingBox {
+        let bounds = self.cache.get_bounds(entity);
+
+        if let Some(transform) = self.cache.transform.get(entity).copied() {
+            let (rect, _) = transform.map_rect(Rect::from(bounds));
+            BoundingBox::from_min_max(
+                rect.left().floor(),
+                rect.top().floor(),
+                rect.right().ceil(),
+                rect.bottom().ceil(),
+            )
+        } else {
+            bounds
+        }
+    }
+
+    /// Returns the transformed bounds of the current view's parent.
+    pub fn parent_transformed_bounds(&self) -> BoundingBox {
+        self.transformed_bounds(self.parent())
     }
 
     // pub fn set_bounds(&mut self, bounds: BoundingBox) {
