@@ -218,6 +218,69 @@ impl ApplicationRunner {
         }
     }
 
+    /// Apply a new user scale factor: resize the embedded window,
+    /// update vizia's tracked DPI factor + root viewport bounds, and
+    /// recreate the Skia render surfaces at the new physical size.
+    ///
+    /// Driven by `WindowEvent::SetUserScale(f64)`. baseview does not
+    /// emit a `Resized` event in response to a self-driven
+    /// `Window::resize` (the only Resized trigger on macOS is
+    /// `viewDidChangeBackingProperties`, which fires on backing-scale
+    /// changes only) so this function performs every step the
+    /// `Resized` handler does, plus the `Window::resize` call.
+    fn apply_user_scale(&mut self, window: &mut Window, new_user_scale: f64) {
+        self.window_description.user_scale_factor = new_user_scale;
+
+        // baseview treats the user scale factor as part of its
+        // logical size, so the size we hand to `Window::resize` is
+        // already user-scaled. The HiDPI factor is applied on top by
+        // baseview itself when computing pixel dims.
+        let base_logical_w = self.window_description.inner_size.width as f64;
+        let base_logical_h = self.window_description.inner_size.height as f64;
+        let scaled_logical_w = base_logical_w * new_user_scale;
+        let scaled_logical_h = base_logical_h * new_user_scale;
+        window.resize(baseview::Size {
+            width: scaled_logical_w,
+            height: scaled_logical_h,
+        });
+
+        let new_dpi_factor = self.window_scale_factor * new_user_scale;
+        self.cx.set_scale_factor(new_dpi_factor);
+
+        let new_physical_w = (scaled_logical_w * self.window_scale_factor) as f32;
+        let new_physical_h = (scaled_logical_h * self.window_scale_factor) as f32;
+        self.cx.set_window_size(Entity::root(), new_physical_w, new_physical_h);
+
+        if new_physical_w > 0.0 && new_physical_h > 0.0 {
+            let fb_info = {
+                let mut fboid: GLint = 0;
+                unsafe { gl::GetIntegerv(gl::FRAMEBUFFER_BINDING, &mut fboid) };
+
+                FramebufferInfo {
+                    fboid: fboid.try_into().unwrap(),
+                    format: skia_safe::gpu::gl::Format::RGBA8.into(),
+                    ..Default::default()
+                }
+            };
+
+            self.surface = create_surface(
+                (new_physical_w as i32, new_physical_h as i32),
+                fb_info,
+                &mut self.gr_context,
+            );
+
+            self.dirty_surface = self
+                .surface
+                .new_surface_with_dimensions((
+                    new_physical_w.max(1.0) as i32,
+                    new_physical_h.max(1.0) as i32,
+                ))
+                .unwrap();
+        }
+
+        self.cx.needs_refresh(Entity::root());
+    }
+
     /// Handle all reactivity within a frame. The window instance is used to resize the window when
     /// needed.
     pub fn on_frame_update(&mut self, window: &mut Window) {
@@ -230,17 +293,30 @@ impl ApplicationRunner {
             self.cx.send_event(event);
         }
 
-        // Events
+        // Events. The flush callback can't borrow `&mut self`, so size /
+        // scale change requests get latched into locals here and applied
+        // after the drain.
+        let mut pending_user_scale: Option<f64> = None;
         self.event_manager.flush_events(self.cx.context(), |window_event| {
             // For some reason calling window.close() crashes baseview on macos
             // WindowEvent::WindowClose => *should_close = true,
-            if let WindowEvent::FocusIn = window_event {
-                #[cfg(not(target_os = "linux"))] // not implemented for linux yet
-                if !window.has_focus() {
-                    window.focus();
+            match window_event {
+                WindowEvent::FocusIn => {
+                    #[cfg(not(target_os = "linux"))] // not implemented for linux yet
+                    if !window.has_focus() {
+                        window.focus();
+                    }
                 }
+                WindowEvent::SetUserScale(factor) => {
+                    pending_user_scale = Some(*factor);
+                }
+                _ => {}
             }
         });
+
+        if let Some(new_user_scale) = pending_user_scale {
+            self.apply_user_scale(window, new_user_scale);
+        }
 
         // We need to resize the window to make sure that the new size is applied. This is a workaround
         // for the fact that baseview does not resize the window when the scale factor changes.

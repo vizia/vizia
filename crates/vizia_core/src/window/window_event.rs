@@ -100,6 +100,14 @@ pub enum WindowEvent {
     SetTitle(String),
     /// Sets the size of the window.
     SetSize(WindowSize),
+    /// Sets the user scale factor applied on top of the system DPI
+    /// scale. The windowing backend resizes the window and updates
+    /// vizia's internal scale + bounds in lockstep so every
+    /// `Pixels(N)` value (layout, font sizes) reflows at the new
+    /// scale on the next layout pass. Currently honoured by the
+    /// `vizia_baseview` backend; the `vizia_winit` backend ignores
+    /// it.
+    SetUserScale(f64),
     /// Sets the position of the window.
     SetPosition(WindowPosition),
     /// Sets the maximum size of the window.
