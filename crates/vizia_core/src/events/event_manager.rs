@@ -179,6 +179,19 @@ impl EventManager {
                 event.map(|window_event: &WindowEvent, _| {
                     (window_event_callback)(window_event);
                 });
+
+                let mut clear_drop_state = false;
+                event.map(|window_event: &WindowEvent, _| {
+                    if matches!(window_event, WindowEvent::MouseUp(MouseButton::Left))
+                        && cx.drop_data.is_some()
+                    {
+                        clear_drop_state = true;
+                    }
+                });
+
+                if clear_drop_state {
+                    *cx.drop_data = None;
+                }
             }
 
             binding_system(cx);
@@ -803,11 +816,11 @@ fn dispatch_drag_events(cx: &mut Context, x: f32, y: f32) {
         if hovered != cx.drag_hovered {
             if cx.drag_hovered != Entity::null() {
                 cx.event_queue
-                    .push_back(Event::new(WindowEvent::DragLeave).direct(cx.drag_hovered));
+                    .push_back(Event::new(WindowEvent::DragLeave).target(cx.drag_hovered));
             }
 
             if hovered != Entity::null() {
-                cx.event_queue.push_back(Event::new(WindowEvent::DragEnter).direct(hovered));
+                cx.event_queue.push_back(Event::new(WindowEvent::DragEnter).target(hovered));
             }
 
             cx.drag_hovered = hovered;
@@ -817,7 +830,7 @@ fn dispatch_drag_events(cx: &mut Context, x: f32, y: f32) {
             cx.event_queue.push_back(Event::new(WindowEvent::DragMove(x, y)).target(hovered));
         }
     } else if cx.drag_hovered != Entity::null() {
-        cx.event_queue.push_back(Event::new(WindowEvent::DragLeave).direct(cx.drag_hovered));
+        cx.event_queue.push_back(Event::new(WindowEvent::DragLeave).target(cx.drag_hovered));
         cx.drag_hovered = Entity::null();
     }
 }
