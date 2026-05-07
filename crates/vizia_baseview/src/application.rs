@@ -239,10 +239,7 @@ impl ApplicationRunner {
         let base_logical_h = self.window_description.inner_size.height as f64;
         let scaled_logical_w = base_logical_w * new_user_scale;
         let scaled_logical_h = base_logical_h * new_user_scale;
-        window.resize(baseview::Size {
-            width: scaled_logical_w,
-            height: scaled_logical_h,
-        });
+        window.resize(baseview::Size { width: scaled_logical_w, height: scaled_logical_h });
 
         let new_dpi_factor = self.window_scale_factor * new_user_scale;
         self.cx.set_scale_factor(new_dpi_factor);
