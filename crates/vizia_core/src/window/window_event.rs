@@ -1,17 +1,44 @@
-use std::path::PathBuf;
+use std::{any::Any, fmt, path::PathBuf, sync::Arc};
 
 use crate::{entity::Entity, environment::ThemeMode, layout::cache::GeoChanged};
 use vizia_input::{Code, Key, MouseButton};
 use vizia_style::CursorIcon;
 use vizia_window::{WindowPosition, WindowSize};
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 /// Data associated with a drop event.
 pub enum DropData {
     /// Path to a dropped file.
     File(PathBuf),
     ///  Entity ID of a dropped entity.
     Id(Entity),
+    /// Arbitrary user payload for app-defined drag/drop operations.
+    Any(Arc<dyn Any + Send + Sync>),
+}
+
+impl fmt::Debug for DropData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            DropData::File(path) => f.debug_tuple("File").field(path).finish(),
+            DropData::Id(entity) => f.debug_tuple("Id").field(entity).finish(),
+            DropData::Any(_) => f.debug_tuple("Any").field(&"<opaque>").finish(),
+        }
+    }
+}
+
+impl DropData {
+    /// Creates a drop payload from arbitrary application-defined data.
+    pub fn any<T: Any + Send + Sync>(value: T) -> Self {
+        Self::Any(Arc::new(value))
+    }
+
+    /// Attempts to downcast arbitrary drop payload data by reference.
+    pub fn downcast_ref<T: Any>(&self) -> Option<&T> {
+        match self {
+            DropData::Any(value) => value.downcast_ref::<T>(),
+            _ => None,
+        }
+    }
 }
 
 impl From<Entity> for DropData {
@@ -23,6 +50,12 @@ impl From<Entity> for DropData {
 impl From<PathBuf> for DropData {
     fn from(value: PathBuf) -> Self {
         DropData::File(value)
+    }
+}
+
+impl From<Arc<dyn Any + Send + Sync>> for DropData {
+    fn from(value: Arc<dyn Any + Send + Sync>) -> Self {
+        DropData::Any(value)
     }
 }
 

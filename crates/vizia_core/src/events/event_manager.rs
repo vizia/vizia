@@ -447,6 +447,15 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             }
 
             if cx.drop_data.is_some() {
+                // Dispatch Drop to the hovered drop target.
+                if cx.drag_hovered != Entity::null() {
+                    if let Some(data) = cx.drop_data.clone() {
+                        cx.event_queue.push_back(
+                            Event::new(WindowEvent::Drop(data)).target(cx.drag_hovered),
+                        );
+                    }
+                }
+                cx.drag_hovered = Entity::null();
                 // During drag-and-drop, resolve drop handlers against the true hovered target
                 // instead of the captured source.
                 mutate_direct_or_up(meta, Entity::null(), cx.hovered, true);

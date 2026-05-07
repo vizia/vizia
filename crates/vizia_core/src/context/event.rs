@@ -657,6 +657,11 @@ impl<'a> EventContext<'a> {
         *self.drop_data = Some(data.into())
     }
 
+    /// Sets arbitrary typed drop data of the current view.
+    pub fn set_drop_data_any<T: Any + Send + Sync>(&mut self, data: T) {
+        *self.drop_data = Some(DropData::any(data));
+    }
+
     /// Get the contents of the system clipboard.
     ///
     /// This may fail for a variety of backend-specific reasons.
