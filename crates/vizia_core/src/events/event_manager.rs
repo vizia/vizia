@@ -450,9 +450,8 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 // Dispatch Drop to the hovered drop target.
                 if cx.drag_hovered != Entity::null() {
                     if let Some(data) = cx.drop_data.clone() {
-                        cx.event_queue.push_back(
-                            Event::new(WindowEvent::Drop(data)).target(cx.drag_hovered),
-                        );
+                        cx.event_queue
+                            .push_back(Event::new(WindowEvent::Drop(data)).target(cx.drag_hovered));
                     }
                 }
                 cx.drag_hovered = Entity::null();

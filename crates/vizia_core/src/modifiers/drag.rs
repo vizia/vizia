@@ -281,8 +281,14 @@ impl<V: View> DragModifiers<V> for Handle<'_, V> {
 
         self.cx.with_current(source_entity, move |cx| {
             let is_dragging = cx.data::<DragModel>().dragging;
+            let preview_entity: Signal<Option<Entity>> = Signal::new(None);
             Binding::new(cx, is_dragging, move |cx| {
                 if is_dragging.get() {
+                    // Remove any leftover preview entity from a previous drag.
+                    if let Some(prev) = preview_entity.get() {
+                        cx.remove(prev);
+                    }
+
                     let window_entity = cx.parent_window();
                     let drag_entity = cx.with_current(window_entity, |cx| {
                         (content)(cx)
@@ -295,8 +301,19 @@ impl<V: View> DragModifiers<V> for Handle<'_, V> {
                             .entity()
                     });
 
+                    preview_entity.set(Some(drag_entity));
+
                     let mut ex = EventContext::new(cx);
                     ex.set_active_drag_view(Some(drag_entity));
+                } else {
+                    // Drag ended — remove the preview entity and clear the active drag view.
+                    if let Some(entity) = preview_entity.get() {
+                        cx.remove(entity);
+                        preview_entity.set(None);
+                    }
+
+                    let mut ex = EventContext::new(cx);
+                    ex.set_active_drag_view(None);
                 }
             });
         });
