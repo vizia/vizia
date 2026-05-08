@@ -136,7 +136,7 @@ impl EventManager {
 
                 // Skip to next event if the current event was consumed.
                 if event.meta.consumed {
-                    clear_drop_state_for_drop_event(is_drop_event, cx.drop_data);
+                    clear_drop_state_for_drop_event(is_drop_event, &mut *cx.drop_data);
                     continue 'events;
                 }
 
@@ -157,7 +157,7 @@ impl EventManager {
 
                         // Skip to the next event if the current event was consumed.
                         if event.meta.consumed {
-                            clear_drop_state_for_drop_event(is_drop_event, cx.drop_data);
+                            clear_drop_state_for_drop_event(is_drop_event, &mut *cx.drop_data);
                             continue 'events;
                         }
                     }
@@ -179,7 +179,7 @@ impl EventManager {
 
                         // Skip to the next event if the current event was consumed.
                         if event.meta.consumed {
-                            clear_drop_state_for_drop_event(is_drop_event, cx.drop_data);
+                            clear_drop_state_for_drop_event(is_drop_event, &mut *cx.drop_data);
                             continue 'events;
                         }
                     }
@@ -189,7 +189,7 @@ impl EventManager {
                     (window_event_callback)(window_event);
                 });
 
-                clear_drop_state_for_drop_event(is_drop_event, cx.drop_data);
+                clear_drop_state_for_drop_event(is_drop_event, &mut *cx.drop_data);
             }
 
             binding_system(cx);
@@ -283,7 +283,9 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 cx.mouse.cursor_y = *y;
 
                 hover_system(cx, meta.origin);
-                dispatch_drag_events(cx, *x, *y);
+                if cx.drop_data.is_some() || cx.drag_hovered != Entity::null() {
+                    dispatch_drag_events(cx, *x, *y);
+                }
 
                 if let Some(drag_view) = cx.active_drag_view {
                     if cx.drop_data.is_some() {
