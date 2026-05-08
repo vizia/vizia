@@ -29,6 +29,7 @@ where
     pub has_children: bool,
     pub expanded: bool,
 }
+
 fn flatten_visible_rows<T, V, Id>(
     rows: &V,
     row_id: &dyn Fn(&T) -> Id,
@@ -61,7 +62,8 @@ where
     {
         for row in rows {
             let id = row_id(row);
-            let child_rows = rows_by_parent.get(&Some(id.clone())).cloned().unwrap_or_default();
+            let child_rows =
+                rows_by_parent.get(&Some(id.clone())).map(Vec::as_slice).unwrap_or(&[]);
             let has_children = !child_rows.is_empty();
             let expanded = has_children && expanded_set.contains(&id);
 
@@ -75,13 +77,13 @@ where
             });
 
             if expanded {
-                visit(&child_rows, depth + 1, rows_by_parent, expanded_set, row_id, out);
+                visit(child_rows, depth + 1, rows_by_parent, expanded_set, row_id, out);
             }
         }
     }
 
-    let roots = rows_by_parent.get(&None).cloned().unwrap_or_default();
-    visit(&roots, 0, &rows_by_parent, &expanded_set, row_id, &mut visible_rows);
+    let roots = rows_by_parent.get(&None).map(Vec::as_slice).unwrap_or(&[]);
+    visit(roots, 0, &rows_by_parent, &expanded_set, row_id, &mut visible_rows);
 
     for visible_row in &mut visible_rows {
         visible_row.parent_id = parent_id(&visible_row.row);
@@ -222,7 +224,7 @@ where
             key: key.into(),
             width: Signal::new(150.0),
             min_width: Signal::new(60.0),
-            sortable: Signal::new(false),
+            sortable: Signal::new(true),
             resizable: Signal::new(false),
             hidden: Signal::new(false),
             cell_content: Rc::new(cell_content),
@@ -231,12 +233,13 @@ where
     }
 
     pub fn width(self, width: f32) -> Self {
-        self.width.set(width);
+        self.width.set(width.max(self.min_width.get_untracked()));
         self
     }
 
     pub fn min_width(self, min_width: f32) -> Self {
         self.min_width.set(min_width);
+        self.width.set(self.width.get_untracked().max(min_width));
         self
     }
 
@@ -278,11 +281,9 @@ where
     on_row_toggle: Option<Box<dyn Fn(&mut EventContext, Id, bool)>>,
 }
 
-enum TreeTableEvent<K, Id> {
+enum TreeTableEvent<K> {
     RequestSort(K, TableSortDirection),
     SelectRow(usize),
-    #[allow(dead_code)]
-    ToggleRow(Id, bool),
     ExpandSelected,
     CollapseSelected,
 }
@@ -380,13 +381,13 @@ where
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowRight),
                     KeymapEntry::new("Expand Selected", |cx| {
-                        cx.emit(TreeTableEvent::<K, Id>::ExpandSelected)
+                        cx.emit(TreeTableEvent::<K>::ExpandSelected)
                     }),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
                     KeymapEntry::new("Collapse Selected", |cx| {
-                        cx.emit(TreeTableEvent::<K, Id>::CollapseSelected)
+                        cx.emit(TreeTableEvent::<K>::CollapseSelected)
                     }),
                 ),
             ])
@@ -438,7 +439,7 @@ where
                                             sort_cycle.get(),
                                             current_direction,
                                         );
-                                        cx.emit(TreeTableEvent::<K, Id>::RequestSort(
+                                        cx.emit(TreeTableEvent::<K>::RequestSort(
                                             column_key.clone(),
                                             next_direction,
                                         ));
@@ -474,7 +475,7 @@ where
                                                 sort_cycle.get(),
                                                 current_direction,
                                             );
-                                            cx.emit(TreeTableEvent::<K, Id>::RequestSort(
+                                            cx.emit(TreeTableEvent::<K>::RequestSort(
                                                 column_key.clone(),
                                                 next_direction,
                                             ));
@@ -551,7 +552,7 @@ where
                 .selection(selected_indices)
                 .selectable(selectable)
                 .selection_follows_focus(selection_follows_focus)
-                .on_select(move |cx, index| cx.emit(TreeTableEvent::<K, Id>::SelectRow(index)));
+                .on_select(move |cx, index| cx.emit(TreeTableEvent::<K>::SelectRow(index)));
             });
         })
         .class("table")
@@ -613,7 +614,7 @@ where
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|tree_event: &TreeTableEvent<K, Id>, _| match tree_event {
+        event.map(|tree_event: &TreeTableEvent<K>, _| match tree_event {
             TreeTableEvent::RequestSort(key, direction) => {
                 if let Some(callback) = &self.on_sort {
                     (callback)(cx, key.clone(), *direction);
@@ -633,10 +634,6 @@ where
                         (callback)(cx, row.id.clone());
                     }
                 }
-            }
-
-            TreeTableEvent::ToggleRow(row_id, next) => {
-                self.emit_toggle(cx, row_id.clone(), *next);
             }
 
             TreeTableEvent::ExpandSelected => {
