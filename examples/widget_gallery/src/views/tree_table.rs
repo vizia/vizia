@@ -61,34 +61,34 @@ pub fn tree_table(cx: &mut Context) {
     let selected_rows: Signal<Vec<u32>> = Signal::new(vec![]);
     let expanded_rows: Signal<Vec<u32>> = Signal::new(vec![1, 4]);
 
-    let columns: Signal<Vec<TableColumn<TreeRow, TableHeader>>> = Signal::new(vec![
-        TableColumn::new(
+    let columns: Signal<Vec<TreeTableColumn<TreeRow, u32, TableHeader>>> = Signal::new(vec![
+        TreeTableColumn::new(
             "name",
             |cx, sort_dir| TableHeader::new(cx, "Name", sort_dir),
             |cx, row| {
-                let text = row.map(|r: &TreeRow| r.name.clone());
+                let text = row.map(|r: &TreeTableRow<TreeRow, u32>| r.row.name.clone());
                 Label::new(cx, text).class("table-cell-text");
             },
         )
         .width(220.0)
         .min_width(140.0)
         .resizable(true),
-        TableColumn::new(
+        TreeTableColumn::new(
             "category",
             |cx, sort_dir| TableHeader::new(cx, "Category", sort_dir),
             |cx, row| {
-                let text = row.map(|r: &TreeRow| r.category.clone());
+                let text = row.map(|r: &TreeTableRow<TreeRow, u32>| r.row.category.clone());
                 Label::new(cx, text).class("table-cell-text");
             },
         )
         .width(140.0)
         .min_width(100.0)
         .resizable(true),
-        TableColumn::new(
+        TreeTableColumn::new(
             "status",
             |cx, sort_dir| TableHeader::new(cx, "Status", sort_dir),
             |cx, row| {
-                let text = row.map(|r: &TreeRow| r.status.clone());
+                let text = row.map(|r: &TreeTableRow<TreeRow, u32>| r.row.status.clone());
                 Label::new(cx, text).class("table-cell-text");
             },
         )
@@ -107,7 +107,7 @@ A TreeTable combines table columns with expandable hierarchical rows.",
         Divider::new(cx);
 
         DemoRegion::new(cx, "TreeTable", move |cx| {
-            TreeTable::new(
+            TreeTable::from_rows(
                 cx,
                 rows,
                 columns,

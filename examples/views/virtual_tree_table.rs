@@ -342,7 +342,6 @@ fn columns(tree: Signal<Tree<FsNode>>) -> Vec<TreeTableColumn<TreeRow, NodeId, T
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         let tree = Signal::new(build_fs_tree());
-        let data = Signal::new(flatten_tree_rows(&tree.get()));
         let cols = Signal::new(columns(tree));
         let sort_state: Signal<Option<TableSortState>> = Signal::new(None);
         let selected_rows: Signal<Vec<NodeId>> = Signal::new(vec![]);
@@ -353,9 +352,10 @@ fn main() -> Result<(), ApplicationError> {
         ExamplePage::vertical(cx, move |cx| {
             VirtualTreeTable::new(
                 cx,
-                data,
+                tree,
                 cols,
                 34.0,
+                |tree: &Tree<FsNode>| flatten_tree_rows(tree),
                 |row: &TreeRow| row.id,
                 |row: &TreeRow| row.parent_id,
             )
