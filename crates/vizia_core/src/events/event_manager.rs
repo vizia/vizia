@@ -52,6 +52,10 @@ impl EventManager {
             // Loop over the events in the event queue.
             'events: for event in self.event_queue.iter_mut() {
                 let keyboard_lock_root = keyboard_event_lock_root(cx, event);
+                let mut is_drop_event = false;
+                event.map(|window_event: &WindowEvent, _| {
+                    is_drop_event = matches!(window_event, WindowEvent::Drop(_));
+                });
 
                 // Handle internal events.
                 event.take(|internal_event, _| match internal_event {
@@ -99,6 +103,7 @@ impl EventManager {
                     }
 
                     if event.meta.consumed {
+                        clear_drop_state_for_drop_event(is_drop_event, &mut cx.drop_data);
                         continue 'events;
                     }
                 }
@@ -112,6 +117,7 @@ impl EventManager {
 
                 // Skip to next event if the current event was consumed when handling internal state updates.
                 if event.meta.consumed {
+                    clear_drop_state_for_drop_event(is_drop_event, &mut cx.drop_data);
                     continue 'events;
                 }
 
@@ -130,6 +136,7 @@ impl EventManager {
 
                 // Skip to next event if the current event was consumed.
                 if event.meta.consumed {
+                    clear_drop_state_for_drop_event(is_drop_event, cx.drop_data);
                     continue 'events;
                 }
 
@@ -150,6 +157,7 @@ impl EventManager {
 
                         // Skip to the next event if the current event was consumed.
                         if event.meta.consumed {
+                            clear_drop_state_for_drop_event(is_drop_event, cx.drop_data);
                             continue 'events;
                         }
                     }
@@ -171,6 +179,7 @@ impl EventManager {
 
                         // Skip to the next event if the current event was consumed.
                         if event.meta.consumed {
+                            clear_drop_state_for_drop_event(is_drop_event, cx.drop_data);
                             continue 'events;
                         }
                     }
@@ -180,16 +189,7 @@ impl EventManager {
                     (window_event_callback)(window_event);
                 });
 
-                let mut clear_drop_state = false;
-                event.map(|window_event: &WindowEvent, _| {
-                    if matches!(window_event, WindowEvent::Drop(_)) && cx.drop_data.is_some() {
-                        clear_drop_state = true;
-                    }
-                });
-
-                if clear_drop_state {
-                    *cx.drop_data = None;
-                }
+                clear_drop_state_for_drop_event(is_drop_event, cx.drop_data);
             }
 
             binding_system(cx);
@@ -199,6 +199,13 @@ impl EventManager {
         } {}
     }
 }
+
+fn clear_drop_state_for_drop_event(is_drop_event: bool, drop_data: &mut Option<DropData>) {
+    if is_drop_event && drop_data.is_some() {
+        *drop_data = None;
+    }
+}
+
 fn is_keyboard_window_event(window_event: &WindowEvent) -> bool {
     matches!(
         window_event,
@@ -455,6 +462,10 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                         cx.event_queue
                             .push_back(Event::new(WindowEvent::Drop(data)).target(cx.drag_hovered));
                     }
+
+                    // Drag is ending, so notify the last hovered drop target that the pointer left.
+                    cx.event_queue
+                        .push_back(Event::new(WindowEvent::DragLeave).target(cx.drag_hovered));
                 }
                 cx.drag_hovered = Entity::null();
                 // During drag-and-drop, resolve drop handlers against the true hovered target

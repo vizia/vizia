@@ -21,6 +21,24 @@ impl DragModel {
             dragging: Signal::new(false),
         }
     }
+
+    fn try_start_drag(&mut self, cx: &mut EventContext) {
+        if cx.mouse.left.state == MouseButtonState::Pressed
+            && cx.mouse.left.pressed == cx.current()
+            && cx.is_draggable()
+            && reached_drag_distance_threshold(cx)
+            && !cx.has_drop_data()
+        {
+            if let Some(action) = &self.on_drag_start {
+                (action)(cx);
+            }
+
+            if cx.has_drop_data() {
+                cx.capture();
+                self.dragging.set(true);
+            }
+        }
+    }
 }
 
 pub(crate) enum DragEvent {
@@ -90,41 +108,11 @@ impl Model for DragModel {
             }
 
             WindowEvent::MouseOut => {
-                if cx.mouse.left.state == MouseButtonState::Pressed
-                    && cx.mouse.left.pressed == cx.current()
-                    && cx.is_draggable()
-                    && reached_drag_distance_threshold(cx)
-                    && !cx.has_drop_data()
-                {
-                    if let Some(action) = &self.on_drag_start {
-                        (action)(cx);
-                    }
-
-                    if cx.has_drop_data() {
-                        cx.capture();
-
-                        self.dragging.set(true);
-                    }
-                }
+                self.try_start_drag(cx);
             }
 
             WindowEvent::MouseMove(_, _) => {
-                if cx.mouse.left.state == MouseButtonState::Pressed
-                    && cx.mouse.left.pressed == cx.current()
-                    && cx.is_draggable()
-                    && reached_drag_distance_threshold(cx)
-                    && !cx.has_drop_data()
-                {
-                    if let Some(action) = &self.on_drag_start {
-                        (action)(cx);
-                    }
-
-                    if cx.has_drop_data() {
-                        cx.capture();
-
-                        self.dragging.set(true);
-                    }
-                }
+                self.try_start_drag(cx);
 
                 if cx.mouse.left.state == MouseButtonState::Released {
                     self.dragging.set(false);
