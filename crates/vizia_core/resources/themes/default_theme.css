@@ -777,7 +777,7 @@ virtual-tree-table .tree-table-row.collapsible {
 
 tree-table divider > .divider-line {
     height: 1px;
-    width: stretch;
+    width: 1s;
     background-color: var(--border);
 }
 

@@ -46,7 +46,8 @@ where
     {
         for row in rows {
             let id = row_id(row);
-            let child_rows = rows_by_parent.get(&Some(id.clone())).cloned().unwrap_or_default();
+            let child_rows =
+                rows_by_parent.get(&Some(id.clone())).map(Vec::as_slice).unwrap_or(&[]);
             let has_children = !child_rows.is_empty();
             let expanded = has_children && expanded_set.contains(&id);
 
@@ -60,13 +61,13 @@ where
             });
 
             if expanded {
-                visit(&child_rows, depth + 1, rows_by_parent, expanded_set, row_id, out);
+                visit(child_rows, depth + 1, rows_by_parent, expanded_set, row_id, out);
             }
         }
     }
 
-    let roots = rows_by_parent.get(&None).cloned().unwrap_or_default();
-    visit(&roots, 0, &rows_by_parent, &expanded_set, row_id, &mut visible_rows);
+    let roots = rows_by_parent.get(&None).map(Vec::as_slice).unwrap_or(&[]);
+    visit(roots, 0, &rows_by_parent, &expanded_set, row_id, &mut visible_rows);
 
     for visible_row in &mut visible_rows {
         visible_row.parent_id = parent_id(&visible_row.row);

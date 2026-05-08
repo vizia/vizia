@@ -82,9 +82,7 @@ impl TableHeader {
                 TableSortDirection::None => ICON_ARROWS_SORT,
             });
 
-            Button::new(cx, move |cx| Svg::new(cx, sort_indicator))
-                .class("table-sort-indicator")
-                .variant(ButtonVariant::Text);
+            Svg::new(cx, sort_indicator).class("table-sort-indicator");
         })
         .layout_type(LayoutType::Row)
         .alignment(Alignment::Left)
