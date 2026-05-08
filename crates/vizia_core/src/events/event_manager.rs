@@ -182,9 +182,7 @@ impl EventManager {
 
                 let mut clear_drop_state = false;
                 event.map(|window_event: &WindowEvent, _| {
-                    if matches!(window_event, WindowEvent::MouseUp(MouseButton::Left))
-                        && cx.drop_data.is_some()
-                    {
+                    if matches!(window_event, WindowEvent::Drop(_)) && cx.drop_data.is_some() {
                         clear_drop_state = true;
                     }
                 });
@@ -395,11 +393,13 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             mutate_direct_or_up(meta, cx.captured, cx.hovered, true);
         }
         WindowEvent::MouseUp(button) => {
+            let had_drop_data = cx.drop_data.is_some();
+
             if let Some(drag_view) = cx.active_drag_view.take() {
                 hide_drag_view(cx, drag_view);
             }
 
-            if matches!(button, MouseButton::Left) && cx.drop_data.is_some() {
+            if matches!(button, MouseButton::Left) && had_drop_data {
                 cx.captured = Entity::null();
             }
 
@@ -446,10 +446,12 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 cx.triggered = Entity::null();
             }
 
-            if cx.drop_data.is_some() {
+            if had_drop_data {
+                let drop_data = cx.drop_data.take();
+
                 // Dispatch Drop to the hovered drop target.
                 if cx.drag_hovered != Entity::null() {
-                    if let Some(data) = cx.drop_data.clone() {
+                    if let Some(data) = drop_data {
                         cx.event_queue
                             .push_back(Event::new(WindowEvent::Drop(data)).target(cx.drag_hovered));
                     }

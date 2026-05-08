@@ -65,6 +65,12 @@ impl Model for DragModel {
         });
 
         event.map(|window_event, _meta| match window_event {
+            WindowEvent::Drop(drop_data) => {
+                if let Some(action) = &self.on_drop {
+                    (action)(cx, drop_data.clone());
+                }
+            }
+
             WindowEvent::DragEnter => {
                 if let Some(action) = &self.on_drag_enter {
                     (action)(cx);
@@ -121,22 +127,12 @@ impl Model for DragModel {
                 }
 
                 if cx.mouse.left.state == MouseButtonState::Released {
-                    if let Some(action) = &self.on_drop {
-                        if let Some(drop_data) = cx.drop_data.clone() {
-                            (action)(cx, drop_data);
-                        }
-                    }
                     self.dragging.set(false);
                 }
             }
 
             WindowEvent::MouseUp(_) => {
                 self.dragging.set(false);
-                if let Some(action) = &self.on_drop {
-                    if let Some(drop_data) = cx.drop_data.clone() {
-                        (action)(cx, drop_data);
-                    }
-                }
             }
 
             _ => {}
