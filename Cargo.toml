@@ -61,8 +61,8 @@ bitflags = "2.11"
 chrono = "0.4"
 comrak = { version = "0.52", default-features = false }
 copypasta = { version = "0.10", default-features = false }
-cssparser = "0.36"
-cssparser-color = "0.4"
+cssparser = "0.37"
+cssparser-color = "0.5"
 dashmap = { version = "6.1", features = ["inline"] }
 fern = "0.7"
 fluent-bundle = "0.16.0"
@@ -82,11 +82,11 @@ parking_lot = "0.12"
 raw-window-handle = "0.5"
 rayon = "1.11"
 reqwest = { version = "0.13", features = ["json", "query"] }
-selectors = "0.37"
+selectors = "0.38"
 serde = { version = "1.0", features = ["derive"] }
 skia-safe = { version = "0.97", features = ["gl", "textlayout", "svg"] }
 sys-locale = "0.3"
-tokio = { version = "1.52", features = ["rt-multi-thread"] }
+tokio = { version = "1.52.3", features = ["rt-multi-thread"] }
 unic-langid = { version = "0.9.6", features = ["macros"] }
 unicode-segmentation = "1.12"
 unicode-bidi = "0.3"
