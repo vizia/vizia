@@ -973,7 +973,7 @@ virtual-list .list-item {
 /* XY PAD */
 
 xypad {
-    size: 50px;
+    size: 1s;
 }
 
 xypad .thumb {

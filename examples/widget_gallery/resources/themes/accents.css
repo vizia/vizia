@@ -1,4 +1,5 @@
-:root.primary-blue {
+:root.primary-blue,
+.dark .primary-blue {
     --primary: #1f6feb;
     --primary-hover: #388bfd;
     --primary-active: #1a5cc7;

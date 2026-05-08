@@ -267,12 +267,19 @@ fn build_sidebar_content(
         let query = search_text.get().to_lowercase();
         let query = query.trim().to_string();
 
-        let mut matching_items: Vec<&'static str> = std::iter::once(ALL_VIEW_ID)
-            .chain(CATEGORIES.iter().flat_map(|(_, items)| items.iter().map(|(id, _)| *id)))
+        let include_all = query.is_empty() || ALL_VIEW_ID.to_lowercase().contains(&query);
+
+        let mut matching_items: Vec<&'static str> = CATEGORIES
+            .iter()
+            .flat_map(|(_, items)| items.iter().map(|(id, _)| *id))
             .filter(|item| query.is_empty() || item.to_lowercase().contains(&query))
             .collect();
 
         matching_items.sort_unstable();
+
+        if include_all {
+            matching_items.insert(0, ALL_VIEW_ID);
+        }
 
         let no_match = matching_items.is_empty();
 
@@ -311,6 +318,8 @@ fn all_views_page(cx: &mut Context) {
     VStack::new(cx, |cx| {
         HStack::new(cx, move |cx| {
             for (category, view_name) in all_views.iter().copied() {
+                let (min_width, min_height) =
+                    if view_name == "Calendar" { (320.0, 360.0) } else { (200.0, 220.0) };
                 Card::new(cx, move |cx| {
                     CardHeader::new(cx, |cx| {
                         Label::new(cx, Localized::new(localized_view_key(view_name)))
@@ -326,9 +335,10 @@ fn all_views_page(cx: &mut Context) {
                     .alignment(Alignment::Center);
                 })
                 .class("all-view-card")
-                .min_width(Pixels(180.0))
+                .min_width(Pixels(min_width))
+                .min_height(Pixels(min_height))
                 .width(Stretch(1.0))
-                .height(Pixels(180.0));
+                .height(Stretch(1.0));
             }
         })
         .class("all-view-grid")
@@ -427,8 +437,8 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
             });
         }
         "Calendar" => {
-            //let date = Signal::new(Utc::now().date_naive());
-            //Calendar::new(cx, date).on_select(move |_cx, d| date.set(d));
+            let date = Signal::new(Utc::now().date_naive());
+            Calendar::new(cx, date).on_select(move |_cx, d| date.set(d));
         }
         "Card" => {
             Card::new(cx, |cx| {
@@ -727,11 +737,19 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
         }
         "Progressbar" => {
             let progress = Signal::new(0.6f32);
-            ProgressBar::horizontal(cx, progress).width(Pixels(180.0));
+            ProgressBar::horizontal(cx, progress);
         }
         "Radiobutton" => {
-            let selected = Signal::new(true);
-            RadioButton::new(cx, selected).on_select(move |_cx| selected.set(true));
+            let selected = Signal::new(0usize);
+            HStack::new(cx, move |cx| {
+                for i in 0..3 {
+                    RadioButton::new(cx, selected.map(move |s| *s == i))
+                        .on_select(move |_cx| selected.set(i));
+                }
+            })
+            .alignment(Alignment::Center)
+            .gap(Pixels(8.0))
+            .height(Auto);
         }
         "Rating" => {
             let rating = Signal::new(3u32);
@@ -877,9 +895,11 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
         }
         "VStack" => {
             VStack::new(cx, |cx| {
-                Element::new(cx).size(Pixels(24.0)).background_color(Color::red());
-                Element::new(cx).size(Pixels(24.0)).background_color(Color::green());
+                Element::new(cx).size(Pixels(30.0)).background_color(Color::red());
+                Element::new(cx).size(Pixels(30.0)).background_color(Color::green());
+                Element::new(cx).size(Pixels(30.0)).background_color(Color::blue());
             })
+            .alignment(Alignment::Center)
             .height(Auto)
             .gap(Pixels(6.0));
         }
@@ -977,7 +997,7 @@ fn content_area(cx: &mut Context, selected_view: Signal<&'static str>) {
 }
 
 fn main() -> Result<(), ApplicationError> {
-    setup_logging()?;
+    // setup_logging()?;
 
     Application::new(|cx: &mut Context| {
         cx.add_translation(

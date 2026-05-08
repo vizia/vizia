@@ -510,7 +510,7 @@ knob:disabled .knob-track {
 knob .knob-head {
     background-color: var(--background);
     border-width: 2px;
-    border-color: var(--border);
+    border-color: var(--muted-foreground);
 }
 
 knob:disabled .knob-head {
@@ -518,7 +518,7 @@ knob:disabled .knob-head {
 }
 
 knob .knob-tick {
-    background-color: var(--border);
+    background-color: var(--muted-foreground);
     corner-radius: 1px;
 }
 
@@ -1095,10 +1095,6 @@ tooltip arrow {
     background-color: var(--primary);
 }
 
-xypad .thumb {
-    border-color: #000000ff;
-}
-
 collapsible {
     /* shadow: 0px 2px 2px #4f4f4f38; */
 }
@@ -1206,4 +1202,14 @@ sidebar .sidebar-footer {
     padding: 8px;
     font-size: 11px;
     color: var(--muted-foreground);
+}
+
+/* XYPAD */
+
+xypad {
+    background-color: var(--muted);
+}
+
+xypad .thumb {
+    border-color: #000000ff;
 }
