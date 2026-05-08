@@ -141,9 +141,7 @@ fn toggle_check_state(tree: &mut Tree<FsNode>, node_id: NodeId) {
 }
 
 fn node_check_state(tree: &Tree<FsNode>, node_id: NodeId) -> CheckState {
-    tree.get(node_id)
-        .map(|node| node.value().check_state)
-        .unwrap_or(CheckState::Unchecked)
+    tree.get(node_id).map(|node| node.value().check_state).unwrap_or(CheckState::Unchecked)
 }
 
 fn format_size(bytes: u64) -> String {
@@ -344,7 +342,6 @@ fn columns(tree: Signal<Tree<FsNode>>) -> Vec<TreeTableColumn<TreeRow, NodeId, T
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         let tree = Signal::new(build_fs_tree());
-        let data = Signal::new(flatten_tree_rows(&tree.get()));
         let cols = Signal::new(columns(tree));
         let sort_state: Signal<Option<TableSortState>> = Signal::new(None);
         let selected_rows: Signal<Vec<NodeId>> = Signal::new(vec![]);
@@ -353,24 +350,31 @@ fn main() -> Result<(), ApplicationError> {
         AppData { tree, sort_state, selected_rows, expanded_rows }.build(cx);
 
         ExamplePage::vertical(cx, move |cx| {
-            TreeTable::new(cx, data, cols, |row: &TreeRow| row.id, |row: &TreeRow| row.parent_id)
-                .sort_state(sort_state)
-                .sort_cycle(TableSortCycle::TriState)
-                .resizable_columns(true)
-                .selectable(Selectable::Single)
-                .selected_row_ids(selected_rows)
-                .expanded_row_ids(expanded_rows)
-                .on_sort(move |cx, key, direction| {
-                    cx.emit(AppEvent::SetSort(key, direction));
-                })
-                .on_row_select(move |cx, id| {
-                    cx.emit(AppEvent::SelectRow(id));
-                })
-                .on_row_toggle(move |cx, id, expanded| {
-                    cx.emit(AppEvent::ToggleRow(id, expanded));
-                })
-                .width(Stretch(1.0))
-                .height(Pixels(360.0));
+            TreeTable::new(
+                cx,
+                tree,
+                cols,
+                |tree: &Tree<FsNode>| flatten_tree_rows(tree),
+                |row: &TreeRow| row.id,
+                |row: &TreeRow| row.parent_id,
+            )
+            .sort_state(sort_state)
+            .sort_cycle(TableSortCycle::TriState)
+            .resizable_columns(true)
+            .selectable(Selectable::Single)
+            .selected_row_ids(selected_rows)
+            .expanded_row_ids(expanded_rows)
+            .on_sort(move |cx, key, direction| {
+                cx.emit(AppEvent::SetSort(key, direction));
+            })
+            .on_row_select(move |cx, id| {
+                cx.emit(AppEvent::SelectRow(id));
+            })
+            .on_row_toggle(move |cx, id, expanded| {
+                cx.emit(AppEvent::ToggleRow(id, expanded));
+            })
+            .width(Stretch(1.0))
+            .height(Pixels(360.0));
         });
     })
     .run()

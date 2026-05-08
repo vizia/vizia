@@ -842,13 +842,15 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
                 PreviewTreeRow { id: 2, parent_id: Some(1), name: "Table".to_string() },
                 PreviewTreeRow { id: 3, parent_id: Some(1), name: "List".to_string() },
             ]);
-            let columns: Signal<Vec<TableColumn<PreviewTreeRow, TableHeader>>> =
+            let columns: Signal<Vec<TreeTableColumn<PreviewTreeRow, u32, TableHeader>>> =
                 Signal::new(vec![
-                    TableColumn::new(
+                    TreeTableColumn::new(
                         "name",
                         |cx, sort_dir| TableHeader::new(cx, "Name", sort_dir),
                         |cx, row| {
-                            let text = row.map(|r: &PreviewTreeRow| r.name.clone());
+                            let text = row.map(|r: &TreeTableRow<PreviewTreeRow, u32>| {
+                                r.row.name.clone()
+                            });
                             Label::new(cx, text);
                         },
                     )
@@ -856,7 +858,7 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
                 ]);
             let expanded = Signal::new(vec![1u32]);
 
-            TreeTable::new(
+            TreeTable::from_rows(
                 cx,
                 rows,
                 columns,

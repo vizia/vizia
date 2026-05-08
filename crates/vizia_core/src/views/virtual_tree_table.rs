@@ -115,20 +115,25 @@ where
     H: Clone + View,
     K: Clone + PartialEq + Send + Sync + 'static,
 {
-    pub fn new<S, C, R>(
+    pub fn new<S, U, C, R, F>(
         cx: &mut Context,
-        rows: S,
+        tree: S,
         columns: C,
         item_height: f32,
+        flatten_rows: F,
         row_id: impl Fn(&T) -> Id + 'static,
         parent_id: impl Fn(&T) -> Option<Id> + 'static,
     ) -> Handle<Self>
     where
-        S: Res<V> + 'static,
+        S: Res<U> + 'static,
+        U: Clone + 'static,
         C: Res<R> + 'static,
         R: Deref<Target = [TreeTableColumn<T, Id, H, K>]> + Clone + 'static,
+        F: Fn(&U) -> V + 'static,
     {
-        let row_signal = rows.to_signal(cx);
+        let tree_signal = tree.to_signal(cx);
+        let flatten_rows: Rc<dyn Fn(&U) -> V> = Rc::new(flatten_rows);
+        let row_signal = Signal::new(tree_signal.with(|tree| flatten_rows(tree)));
         let column_signal = columns.to_signal(cx);
         let row_id: Rc<dyn Fn(&T) -> Id> = Rc::new(row_id);
         let parent_id: Rc<dyn Fn(&T) -> Option<Id>> = Rc::new(parent_id);
@@ -177,7 +182,7 @@ where
             })
         });
 
-        Self {
+        let handle = Self {
             rows: row_signal,
             _header: PhantomData,
             row_id,
@@ -390,7 +395,29 @@ where
         .class("tree-table")
         .class("virtual-tree-table")
         .navigable(true)
-        .role(Role::Table)
+        .role(Role::Table);
+
+        let flatten_rows_for_bind = flatten_rows.clone();
+        handle.bind(tree_signal, move |handle| {
+            let rows = tree_signal.with(|tree| flatten_rows_for_bind(tree));
+            handle.modify(|table: &mut VirtualTreeTable<T, V, Id, H, K>| table.rows.set(rows));
+        })
+    }
+
+    pub fn from_rows<S, C, R>(
+        cx: &mut Context,
+        rows: S,
+        columns: C,
+        item_height: f32,
+        row_id: impl Fn(&T) -> Id + 'static,
+        parent_id: impl Fn(&T) -> Option<Id> + 'static,
+    ) -> Handle<Self>
+    where
+        S: Res<V> + 'static,
+        C: Res<R> + 'static,
+        R: Deref<Target = [TreeTableColumn<T, Id, H, K>]> + Clone + 'static,
+    {
+        Self::new(cx, rows, columns, item_height, |rows: &V| rows.clone(), row_id, parent_id)
     }
 
     fn emit_toggle(&self, cx: &mut EventContext, row_id: Id, next_expanded: bool) {
