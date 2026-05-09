@@ -201,6 +201,24 @@ pub fn build_paragraph(
     let mut paragraph_style = ParagraphStyle::default();
     // paragraph_style.turn_hinting_off();
 
+    // For fixed line-height lengths, use paragraph struts to enforce absolute line height.
+    if let Some(LineHeight::Length(length)) =
+        style.line_height.get_resolved(entity, &style.custom_line_height_props)
+    {
+        if let Some(line_height_px) = length.to_px() {
+            if line_height_px > 0.0 {
+                let mut strut_style = skia_safe::textlayout::StrutStyle::new();
+                strut_style
+                    .set_strut_enabled(true)
+                    .set_force_strut_height(true)
+                    .set_height_override(true)
+                    .set_height(1.0)
+                    .set_font_size(line_height_px * style.scale_factor());
+                paragraph_style.set_strut_style(strut_style);
+            }
+        }
+    }
+
     // Overflow
     match style.text_overflow.get(entity) {
         Some(&TextOverflow::Ellipsis) => {
@@ -359,6 +377,24 @@ fn add_block(
                 .and_then(|f| f.0.to_px())
                 .unwrap_or(16.0);
             text_style.set_font_size(font_size * style.scale_factor());
+
+            if let Some(line_height) =
+                style.line_height.get_resolved(entity, &style.custom_line_height_props)
+            {
+                let height = match line_height {
+                    LineHeight::Normal => None,
+                    LineHeight::Number(number) => Some(number),
+                    LineHeight::Percentage(percentage) => Some(percentage / 100.0),
+                    LineHeight::Length(length) => length
+                        .to_px()
+                        .and_then(|pixels| (font_size > 0.0).then_some(pixels / font_size)),
+                };
+
+                if let Some(height) = height {
+                    text_style.set_height_override(true);
+                    text_style.set_height(height);
+                }
+            }
 
             // Font Style
             match (
