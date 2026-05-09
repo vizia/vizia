@@ -128,17 +128,30 @@ impl DrawContext<'_> {
 
     /// Returns the clip path of the current view.
     pub fn clip_path(&self) -> Option<skia_safe::Path> {
-        // Get clip path or iterate up tree to get ancestor clip path
-        self.cache.clip_path.get(self.current).cloned().flatten().or_else(|| {
-            let mut current = self.current;
-            while let Some(parent) = self.tree.get_parent(current) {
-                if let Some(clip_path) = self.cache.clip_path.get(parent).cloned().flatten() {
-                    return Some(clip_path);
-                }
-                current = parent;
+        // A cached entry (including None) is authoritative for this entity.
+        if let Some(clip_path) = self.cache.clip_path.get(self.current) {
+            return clip_path.clone();
+        }
+
+        if self.style.ignore_clipping.get(self.current).copied().unwrap_or(false) {
+            return None;
+        }
+
+        // If there is no cached value yet, walk ancestors to find an inherited clip.
+        let mut current = self.current;
+        while let Some(parent) = self.tree.get_parent(current) {
+            // A cached parent entry (including None) is authoritative.
+            if let Some(clip_path) = self.cache.clip_path.get(parent) {
+                return clip_path.clone();
             }
-            None
-        })
+
+            if self.style.ignore_clipping.get(parent).copied().unwrap_or(false) {
+                return None;
+            }
+            current = parent;
+        }
+
+        None
     }
 
     /// Returns the 2D transform of the current view.

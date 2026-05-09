@@ -6,6 +6,10 @@ use std::collections::BinaryHeap;
 use vizia_storage::{DrawChildIterator, LayoutTreeIterator};
 use vizia_style::BlendMode;
 
+fn should_apply_entity_clip(style: &Style, entity: Entity) -> bool {
+    !style.ignore_clipping.get(entity).copied().unwrap_or(false)
+}
+
 pub(crate) fn draw_system(
     cx: &mut Context,
     window_entity: Entity,
@@ -396,6 +400,10 @@ pub(crate) fn draw_bounds(
     }
 
     if tree.is_window(entity) {
+        return dirty_bounds;
+    }
+
+    if !should_apply_entity_clip(style, entity) {
         return dirty_bounds;
     }
 

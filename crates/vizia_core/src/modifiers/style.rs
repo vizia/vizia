@@ -285,6 +285,15 @@ pub trait StyleModifiers: internal::Modifiable {
         self
     }
 
+    modifier!(
+        /// Sets whether the view should ignore ancestor clipping paths when drawing.
+        ///
+        /// This is useful for overlays such as popovers that need to escape overflow clipping.
+        ignore_clipping,
+        bool,
+        SystemFlags::RECLIP | SystemFlags::REDRAW
+    );
+
     /// Sets the clip path for the the view.
     fn clip_path<U: Into<ClipPath>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
