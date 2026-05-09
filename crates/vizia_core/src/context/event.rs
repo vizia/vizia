@@ -290,16 +290,28 @@ impl<'a> EventContext<'a> {
         let bounds = self.cache.get_bounds(entity);
 
         if let Some(transform) = self.cache.transform.get(entity).copied() {
+            // The cache stores identity matrices for all entities by default, so skip map/rounding
+            // work when no effective transform is present.
+            if transform == Matrix::new_identity() {
+                return bounds;
+            }
+
             let (rect, _) = transform.map_rect(Rect::from(bounds));
-            BoundingBox::from_min_max(
-                rect.left().floor(),
-                rect.top().floor(),
-                rect.right().ceil(),
-                rect.bottom().ceil(),
-            )
+            rect.into()
         } else {
             bounds
         }
+    }
+
+    /// Returns transformed bounds expanded to pixel-snapped extents.
+    pub fn transformed_bounds_snapped(&self, entity: Entity) -> BoundingBox {
+        let bounds = self.transformed_bounds(entity);
+        BoundingBox::from_min_max(
+            bounds.left().floor(),
+            bounds.top().floor(),
+            bounds.right().ceil(),
+            bounds.bottom().ceil(),
+        )
     }
 
     /// Returns the transformed bounds of the current view's parent.
