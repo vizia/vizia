@@ -408,10 +408,6 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 hide_drag_view(cx, drag_view);
             }
 
-            if matches!(button, MouseButton::Left) && had_drop_data {
-                cx.captured = Entity::null();
-            }
-
             match button {
                 MouseButton::Left => {
                     cx.mouse.left.pos_up = (cx.mouse.cursor_x, cx.mouse.cursor_y);
@@ -470,12 +466,12 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                         .push_back(Event::new(WindowEvent::DragLeave).target(cx.drag_hovered));
                 }
                 cx.drag_hovered = Entity::null();
-                // During drag-and-drop, resolve drop handlers against the true hovered target
-                // instead of the captured source.
-                mutate_direct_or_up(meta, Entity::null(), cx.hovered, true);
-            } else {
-                mutate_direct_or_up(meta, cx.captured, cx.hovered, true);
             }
+            // Always route MouseUp through the captured entity (the drag source) so it
+            // receives the release and can reset its dragging state via DragModel::MouseUp.
+            // Capture is cleared by DragModel calling cx.release(). Drop and DragLeave are
+            // already queued to drag_hovered and will fire on the next event cycle.
+            mutate_direct_or_up(meta, cx.captured, cx.hovered, true);
         }
         WindowEvent::MouseScroll(_, _) => {
             meta.target = cx.hovered;

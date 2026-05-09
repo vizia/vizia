@@ -119,7 +119,10 @@ impl Model for DragModel {
                 }
             }
 
-            WindowEvent::MouseUp(_) => {
+            WindowEvent::MouseUp(MouseButton::Left) => {
+                // Dragging is initiated via the left button, so only left-button
+                // release should end the drag and release capture.
+                cx.release();
                 self.dragging.set(false);
             }
 
