@@ -52,6 +52,10 @@ impl EventManager {
             // Loop over the events in the event queue.
             'events: for event in self.event_queue.iter_mut() {
                 let keyboard_lock_root = keyboard_event_lock_root(cx, event);
+                let mut is_drop_event = false;
+                event.map(|window_event: &WindowEvent, _| {
+                    is_drop_event = matches!(window_event, WindowEvent::Drop(_));
+                });
 
                 // Handle internal events.
                 event.take(|internal_event, _| match internal_event {
@@ -99,6 +103,7 @@ impl EventManager {
                     }
 
                     if event.meta.consumed {
+                        clear_drop_state_for_drop_event(is_drop_event, &mut cx.drop_data);
                         continue 'events;
                     }
                 }
@@ -112,6 +117,7 @@ impl EventManager {
 
                 // Skip to next event if the current event was consumed when handling internal state updates.
                 if event.meta.consumed {
+                    clear_drop_state_for_drop_event(is_drop_event, &mut cx.drop_data);
                     continue 'events;
                 }
 
@@ -130,6 +136,7 @@ impl EventManager {
 
                 // Skip to next event if the current event was consumed.
                 if event.meta.consumed {
+                    clear_drop_state_for_drop_event(is_drop_event, &mut *cx.drop_data);
                     continue 'events;
                 }
 
@@ -150,6 +157,7 @@ impl EventManager {
 
                         // Skip to the next event if the current event was consumed.
                         if event.meta.consumed {
+                            clear_drop_state_for_drop_event(is_drop_event, &mut *cx.drop_data);
                             continue 'events;
                         }
                     }
@@ -171,6 +179,7 @@ impl EventManager {
 
                         // Skip to the next event if the current event was consumed.
                         if event.meta.consumed {
+                            clear_drop_state_for_drop_event(is_drop_event, &mut *cx.drop_data);
                             continue 'events;
                         }
                     }
@@ -179,6 +188,8 @@ impl EventManager {
                 event.map(|window_event: &WindowEvent, _| {
                     (window_event_callback)(window_event);
                 });
+
+                clear_drop_state_for_drop_event(is_drop_event, &mut *cx.drop_data);
             }
 
             binding_system(cx);
@@ -188,6 +199,13 @@ impl EventManager {
         } {}
     }
 }
+
+fn clear_drop_state_for_drop_event(is_drop_event: bool, drop_data: &mut Option<DropData>) {
+    if is_drop_event && drop_data.is_some() {
+        *drop_data = None;
+    }
+}
+
 fn is_keyboard_window_event(window_event: &WindowEvent) -> bool {
     matches!(
         window_event,
@@ -265,6 +283,18 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 cx.mouse.cursor_y = *y;
 
                 hover_system(cx, meta.origin);
+                if cx.drop_data.is_some() || cx.drag_hovered != Entity::null() {
+                    dispatch_drag_events(cx, *x, *y);
+                }
+
+                if let Some(drag_view) = cx.active_drag_view {
+                    if cx.drop_data.is_some() {
+                        position_drag_view(cx, drag_view, *x, *y);
+                    } else {
+                        hide_drag_view(cx, drag_view);
+                        cx.active_drag_view = None;
+                    }
+                }
 
                 mutate_direct_or_up(meta, cx.captured, cx.hovered, false);
             }
@@ -311,6 +341,10 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
 
                     // Reset drag data
                     cx.drop_data = None;
+                    cx.drag_hovered = Entity::null();
+                    if let Some(drag_view) = cx.active_drag_view.take() {
+                        hide_drag_view(cx, drag_view);
+                    }
 
                     cx.with_current(if focusable { cx.hovered } else { cx.focused }, |cx| {
                         cx.focus_with_visibility(false)
@@ -368,6 +402,12 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             mutate_direct_or_up(meta, cx.captured, cx.hovered, true);
         }
         WindowEvent::MouseUp(button) => {
+            let had_drop_data = cx.drop_data.is_some();
+
+            if let Some(drag_view) = cx.active_drag_view.take() {
+                hide_drag_view(cx, drag_view);
+            }
+
             match button {
                 MouseButton::Left => {
                     cx.mouse.left.pos_up = (cx.mouse.cursor_x, cx.mouse.cursor_y);
@@ -411,6 +451,26 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 cx.triggered = Entity::null();
             }
 
+            if had_drop_data {
+                let drop_data = cx.drop_data.take();
+
+                // Dispatch Drop to the hovered drop target.
+                if cx.drag_hovered != Entity::null() {
+                    if let Some(data) = drop_data {
+                        cx.event_queue
+                            .push_back(Event::new(WindowEvent::Drop(data)).target(cx.drag_hovered));
+                    }
+
+                    // Drag is ending, so notify the last hovered drop target that the pointer left.
+                    cx.event_queue
+                        .push_back(Event::new(WindowEvent::DragLeave).target(cx.drag_hovered));
+                }
+                cx.drag_hovered = Entity::null();
+            }
+            // Always route MouseUp through the captured entity (the drag source) so it
+            // receives the release and can reset its dragging state via DragModel::MouseUp.
+            // Capture is cleared by DragModel calling cx.release(). Drop and DragLeave are
+            // already queued to drag_hovered and will fire on the next event cycle.
             mutate_direct_or_up(meta, cx.captured, cx.hovered, true);
         }
         WindowEvent::MouseScroll(_, _) => {
@@ -737,6 +797,60 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
         }
 
         _ => {}
+    }
+}
+
+fn position_drag_view(cx: &mut Context, drag_view: Entity, x: f32, y: f32) {
+    if !cx.entity_manager.is_alive(drag_view) {
+        cx.active_drag_view = None;
+        return;
+    }
+
+    let left = cx.style.physical_to_logical(x);
+    let top = cx.style.physical_to_logical(y);
+
+    cx.with_current(drag_view, |cx| {
+        let mut ex = EventContext::new(cx);
+        ex.set_display(Display::Flex);
+        ex.set_left(Units::Pixels(left));
+        ex.set_top(Units::Pixels(top));
+    });
+}
+
+fn hide_drag_view(cx: &mut Context, drag_view: Entity) {
+    if !cx.entity_manager.is_alive(drag_view) {
+        return;
+    }
+
+    cx.with_current(drag_view, |cx| {
+        let mut ex = EventContext::new(cx);
+        ex.set_display(Display::None);
+    });
+}
+
+fn dispatch_drag_events(cx: &mut Context, x: f32, y: f32) {
+    if cx.drop_data.is_some() {
+        let hovered = cx.hovered;
+
+        if hovered != cx.drag_hovered {
+            if cx.drag_hovered != Entity::null() {
+                cx.event_queue
+                    .push_back(Event::new(WindowEvent::DragLeave).target(cx.drag_hovered));
+            }
+
+            if hovered != Entity::null() {
+                cx.event_queue.push_back(Event::new(WindowEvent::DragEnter).target(hovered));
+            }
+
+            cx.drag_hovered = hovered;
+        }
+
+        if hovered != Entity::null() {
+            cx.event_queue.push_back(Event::new(WindowEvent::DragMove(x, y)).target(hovered));
+        }
+    } else if cx.drag_hovered != Entity::null() {
+        cx.event_queue.push_back(Event::new(WindowEvent::DragLeave).target(cx.drag_hovered));
+        cx.drag_hovered = Entity::null();
     }
 }
 

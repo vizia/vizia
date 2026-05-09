@@ -77,8 +77,6 @@ pub(crate) struct ActionsModel {
     pub(crate) on_focus_in: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
     pub(crate) on_focus_out: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
     pub(crate) on_geo_changed: Option<Box<dyn Fn(&mut EventContext, GeoChanged) + Send + Sync>>,
-    pub(crate) on_drag_start: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
-    pub(crate) on_drop: Option<Box<dyn Fn(&mut EventContext, DropData) + Send + Sync>>,
 }
 
 impl ActionsModel {
@@ -97,8 +95,6 @@ impl ActionsModel {
             on_focus_in: None,
             on_focus_out: None,
             on_geo_changed: None,
-            on_drag_start: None,
-            on_drop: None,
         }
     }
 }
@@ -158,14 +154,6 @@ impl Model for ActionsModel {
                 self.on_geo_changed = Some(on_geo_changed);
                 cx.cache.set_bounds(cx.current, BoundingBox::default());
                 cx.needs_relayout();
-            }
-
-            ActionsEvent::OnDragStart(on_drag_start) => {
-                self.on_drag_start = Some(on_drag_start);
-            }
-
-            ActionsEvent::OnDrop(on_drop) => {
-                self.on_drop = Some(on_drop);
             }
         });
 
@@ -246,28 +234,12 @@ impl Model for ActionsModel {
                 if let Some(action) = &self.on_over_out {
                     (action)(cx);
                 }
-
-                if cx.mouse.left.state == MouseButtonState::Pressed
-                    && cx.mouse.left.pressed == cx.current()
-                    && cx.is_draggable()
-                {
-                    if let Some(action) = &self.on_drag_start {
-                        (action)(cx);
-                    }
-                }
                 // }
             }
 
             WindowEvent::MouseMove(x, y) => {
                 if let Some(action) = &self.on_mouse_move {
                     (action)(cx, *x, *y);
-                }
-                if cx.mouse.left.state == MouseButtonState::Released {
-                    if let Some(drop_data) = cx.drop_data.take() {
-                        if let Some(action) = &self.on_drop {
-                            (action)(cx, drop_data);
-                        }
-                    }
                 }
             }
 
@@ -280,11 +252,6 @@ impl Model for ActionsModel {
             WindowEvent::MouseUp(mouse_button) => {
                 if let Some(action) = &self.on_mouse_up {
                     (action)(cx, *mouse_button);
-                }
-                if let Some(drop_data) = cx.drop_data.take() {
-                    if let Some(action) = &self.on_drop {
-                        (action)(cx, drop_data);
-                    }
                 }
             }
 
@@ -327,8 +294,6 @@ pub(crate) enum ActionsEvent {
     OnFocusIn(Box<dyn Fn(&mut EventContext) + Send + Sync>),
     OnFocusOut(Box<dyn Fn(&mut EventContext) + Send + Sync>),
     OnGeoChanged(Box<dyn Fn(&mut EventContext, GeoChanged) + Send + Sync>),
-    OnDragStart(Box<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnDrop(Box<dyn Fn(&mut EventContext, DropData) + Send + Sync>),
 }
 
 /// Modifiers which add an action callback to a view.
@@ -504,16 +469,6 @@ pub trait ActionModifiers<V> {
 
     /// Adds a popup menu to the view.
     fn menu<C: FnOnce(&mut Context) -> Handle<'_, T>, T: View>(self, content: C) -> Self;
-
-    /// Adds a callback which is performed when the view is dragged during a drag and drop operation.
-    fn on_drag<F>(self, action: F) -> Self
-    where
-        F: 'static + Fn(&mut EventContext) + Send + Sync;
-
-    /// Adds a callback which is performed when data is dropped on the view during a drag and drop operation.
-    fn on_drop<F>(self, action: F) -> Self
-    where
-        F: 'static + Fn(&mut EventContext, DropData) + Send + Sync;
 }
 
 // If the entity doesn't have an `ActionsModel` then add one to the entity
@@ -788,40 +743,6 @@ impl<V: View> ActionModifiers<V> for Handle<'_, V> {
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnGeoChanged(Box::new(action)))
-                .target(self.entity)
-                .origin(self.entity),
-        );
-
-        self
-    }
-
-    fn on_drag<F>(self, action: F) -> Self
-    where
-        F: 'static + Fn(&mut EventContext) + Send + Sync,
-    {
-        build_action_model(self.cx, self.entity);
-
-        if let Some(abilities) = self.cx.style.abilities.get_mut(self.entity) {
-            abilities.set(Abilities::DRAGGABLE, true);
-        }
-
-        self.cx.emit_custom(
-            Event::new(ActionsEvent::OnDragStart(Box::new(action)))
-                .target(self.entity)
-                .origin(self.entity),
-        );
-
-        self
-    }
-
-    fn on_drop<F>(self, action: F) -> Self
-    where
-        F: 'static + Fn(&mut EventContext, DropData) + Send + Sync,
-    {
-        build_action_model(self.cx, self.entity);
-
-        self.cx.emit_custom(
-            Event::new(ActionsEvent::OnDrop(Box::new(action)))
                 .target(self.entity)
                 .origin(self.entity),
         );
