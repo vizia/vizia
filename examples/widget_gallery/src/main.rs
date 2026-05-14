@@ -842,7 +842,7 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
                             Label::new(cx, text);
                         },
                     )
-                    .width(180.0),
+                    .width(Pixels(180.0)),
                 ]);
             let expanded = Signal::new(vec![1u32]);
 

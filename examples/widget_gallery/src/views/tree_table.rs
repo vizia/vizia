@@ -70,7 +70,7 @@ pub fn tree_table(cx: &mut Context) {
                 Label::new(cx, text).class("table-cell-text");
             },
         )
-        .width(220.0)
+        .width(Pixels(220.0))
         .min_width(140.0)
         .resizable(true),
         TreeTableColumn::new(
@@ -81,7 +81,7 @@ pub fn tree_table(cx: &mut Context) {
                 Label::new(cx, text).class("table-cell-text");
             },
         )
-        .width(140.0)
+        .width(Pixels(140.0))
         .min_width(100.0)
         .resizable(true),
         TreeTableColumn::new(
@@ -92,7 +92,7 @@ pub fn tree_table(cx: &mut Context) {
                 Label::new(cx, text).class("table-cell-text");
             },
         )
-        .width(120.0)
+        .width(Pixels(120.0))
         .min_width(90.0)
         .resizable(true),
     ]);
