@@ -278,11 +278,11 @@ where
                         } else {
                             Resizable::new(
                                 cx,
-                                width_signal.map(|value| Pixels(*value)),
+                                width_signal,
                                 ResizeStackDirection::Right,
                                 move |_cx, new_size| {
                                     if resizable_columns.get() && resizable.get() {
-                                        width_signal.set(new_size.max(min_width.get()));
+                                        width_signal.set(Pixels(new_size.max(min_width.get())));
                                     }
                                 },
                                 move |cx| {
@@ -357,7 +357,7 @@ where
                                     })
                                     .class("table-cell")
                                     .toggle_class("tree-table-cell", column_index == 0)
-                                    .width(width_signal.map(|value| Pixels(*value)))
+                                    .width(width_signal)
                                     .min_width(min_width.map(|value| Pixels(*value)))
                                     .height(Percentage(100.0));
                                 }

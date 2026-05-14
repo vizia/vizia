@@ -178,7 +178,7 @@ where
     K: Clone + PartialEq + Send + Sync + 'static,
 {
     pub key: K,
-    pub width: Signal<f32>,
+    pub width: Signal<Units>,
     pub min_width: Signal<f32>,
     pub sortable: Signal<bool>,
     pub resizable: Signal<bool>,
@@ -222,7 +222,7 @@ where
     ) -> Self {
         Self {
             key: key.into(),
-            width: Signal::new(150.0),
+            width: Signal::new(Pixels(150.0)),
             min_width: Signal::new(60.0),
             sortable: Signal::new(true),
             resizable: Signal::new(false),
@@ -232,14 +232,20 @@ where
         }
     }
 
-    pub fn width(self, width: f32) -> Self {
-        self.width.set(width.max(self.min_width.get_untracked()));
+    pub fn width(self, width: Units) -> Self {
+        self.width.set(match width {
+            Pixels(px) => Pixels(px.max(self.min_width.get_untracked())),
+            Percentage(pct) => Percentage(pct.clamp(0.0, 100.0)),
+            _ => width,
+        });
         self
     }
 
     pub fn min_width(self, min_width: f32) -> Self {
         self.min_width.set(min_width);
-        self.width.set(self.width.get_untracked().max(min_width));
+        if let Pixels(width) = self.width.get_untracked() {
+            self.width.set(Pixels(width.max(min_width)));
+        }
         self
     }
 
@@ -454,11 +460,11 @@ where
                         } else {
                             Resizable::new(
                                 cx,
-                                width_signal.map(|value| Pixels(*value)),
+                                width_signal,
                                 ResizeStackDirection::Right,
                                 move |_cx, new_size| {
                                     if resizable_columns.get() && resizable.get() {
-                                        width_signal.set(new_size.max(min_width.get()));
+                                        width_signal.set(Pixels(new_size.max(min_width.get())));
                                     }
                                 },
                                 move |cx| {
@@ -522,7 +528,7 @@ where
                                 })
                                 .class("table-cell")
                                 .toggle_class("tree-table-cell", column_index == 0)
-                                .width(width_signal.map(|value| Pixels(*value)))
+                                .width(width_signal)
                                 .min_width(min_width.map(|value| Pixels(*value)))
                                 .height(Auto);
                             }

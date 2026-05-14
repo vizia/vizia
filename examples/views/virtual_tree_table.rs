@@ -300,7 +300,7 @@ fn columns(tree: Signal<Tree<FsNode>>) -> Vec<TreeTableColumn<TreeRow, NodeId, T
                 });
             },
         )
-        .width(260.0)
+        .width(Percentage(50.0))
         .min_width(140.0)
         .resizable(true),
         TreeTableColumn::new(
@@ -311,7 +311,7 @@ fn columns(tree: Signal<Tree<FsNode>>) -> Vec<TreeTableColumn<TreeRow, NodeId, T
                 Label::new(cx, text).class("table-cell-text");
             },
         )
-        .width(80.0)
+        .width(Pixels(80.0))
         .min_width(60.0)
         .resizable(true),
         TreeTableColumn::new(
@@ -322,7 +322,7 @@ fn columns(tree: Signal<Tree<FsNode>>) -> Vec<TreeTableColumn<TreeRow, NodeId, T
                 Label::new(cx, text).class("table-cell-text");
             },
         )
-        .width(90.0)
+        .width(Pixels(90.0))
         .min_width(60.0)
         .resizable(true),
         TreeTableColumn::new(
@@ -333,7 +333,7 @@ fn columns(tree: Signal<Tree<FsNode>>) -> Vec<TreeTableColumn<TreeRow, NodeId, T
                 Label::new(cx, text).class("table-cell-text");
             },
         )
-        .width(110.0)
+        .width(Pixels(110.0))
         .min_width(80.0)
         .resizable(true),
     ]
