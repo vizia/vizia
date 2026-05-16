@@ -5,7 +5,7 @@ use crate::components::DemoRegion;
 
 pub fn menu(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Markdown::new(cx, "# Menu");
+        Label::new(cx, Localized::new("menu")).class("panel-title");
 
         Divider::new(cx);
 

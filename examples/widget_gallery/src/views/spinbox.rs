@@ -100,13 +100,11 @@ pub fn spinbox(cx: &mut Context) {
     .build(cx);
 
     VStack::new(cx, |cx| {
-        Markdown::new(cx, "# Spinbox");
+        Label::new(cx, Localized::new("spinbox")).class("panel-title");
 
         Divider::new(cx);
 
-        Label::new(cx, "### Basic spinbox");
-
-        DemoRegion::new(cx, "Basic Spinbox", move |cx| {
+        DemoRegion::new(cx, "Spinbox", move |cx| {
             Spinbox::new(cx, spinbox_value_1)
                 .width(Pixels(100.0))
                 .on_increment(|ex| ex.emit(SpinboxEvent::Increment1))

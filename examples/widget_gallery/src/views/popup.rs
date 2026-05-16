@@ -6,28 +6,21 @@ pub fn popup(cx: &mut Context) {
     let is_open = Signal::new(false);
 
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# Popup
-A popup displays floating content anchored to a trigger element. \
-It closes when focus moves outside.",
-        );
+        Label::new(cx, Localized::new("popover")).class("panel-title");
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic Popup");
-
-        DemoRegion::new(cx, "Basic Popup", move |cx| {
-            // The HStack acts as the anchor – Popup is absolutely positioned within it.
+        DemoRegion::new(cx, "Basic Popover", move |cx| {
+            // The HStack acts as the anchor – Popover is absolutely positioned within it.
             HStack::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "Open Popup"))
+                Button::new(cx, |cx| Label::new(cx, "Open Popover"))
                     .on_press(move |_cx| is_open.set(true));
 
                 Binding::new(cx, is_open, move |cx| {
                     if is_open.get() {
                         Popover::new(cx, move |cx| {
                             VStack::new(cx, |cx| {
-                                Label::new(cx, "Popup Content");
+                                Label::new(cx, "Popover Content");
                                 Label::new(cx, "Click outside or press Close to dismiss.")
                                     .text_wrap(true);
                                 Button::new(cx, |cx| Label::new(cx, "Close"))
@@ -45,8 +38,6 @@ It closes when focus moves outside.",
             })
             .size(Auto);
         });
-
-        Markdown::new(cx, "### Placement Options");
 
         DemoRegion::new(cx, "Placement Options", |cx| {
             HStack::new(cx, |cx| {

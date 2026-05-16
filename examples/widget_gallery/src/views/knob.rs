@@ -25,7 +25,7 @@ pub fn knob(cx: &mut Context) {
     VStack::new(cx, |cx| {
         KnobState { value }.build(cx);
 
-        Markdown::new(cx, "# Knob");
+        Label::new(cx, Localized::new("knob")).class("panel-title");
 
         Divider::new(cx);
 

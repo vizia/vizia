@@ -4,15 +4,9 @@ use crate::DemoRegion;
 
 pub fn grid(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# Grid
-A grid arranges children into rows and columns defined by explicit track sizes.",
-        );
+        Label::new(cx, Localized::new("grid")).class("panel-title");
 
         Divider::new(cx);
-
-        Markdown::new(cx, "### 2×2 Grid");
 
         DemoRegion::new(cx, "2×2 Grid", |cx| {
             Grid::new(
@@ -59,8 +53,6 @@ A grid arranges children into rows and columns defined by explicit track sizes."
             .width(Stretch(1.0))
             .height(Pixels(160.0));
         });
-
-        Markdown::new(cx, "### CSS-driven Grid");
 
         DemoRegion::new(cx, "CSS Grid", |cx| {
             VStack::new(cx, |cx| {
