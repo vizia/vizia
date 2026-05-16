@@ -34,6 +34,7 @@ type Device = ProtocolObject<dyn MTLDevice>;
 type Drawable = ProtocolObject<dyn MTLDrawable>;
 type CommandQueue = ProtocolObject<dyn MTLCommandQueue>;
 
+#[allow(dead_code)]
 pub struct WinState {
     entity: Entity,
     window: Arc<Window>,

@@ -89,6 +89,25 @@ impl Display for ApplicationError {
 
 impl std::error::Error for ApplicationError {}
 
+#[derive(Debug)]
+struct GraphicsBackendMismatchError {
+    expected: GraphicsBackend,
+    got: GraphicsBackend,
+}
+
+impl Display for GraphicsBackendMismatchError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Graphics backend mismatch: expected {}, got {}",
+            self.expected.as_str(),
+            self.got.as_str()
+        )
+    }
+}
+
+impl Error for GraphicsBackendMismatchError {}
+
 ///Creating a new application creates a root `Window` and a `Context`. Views declared within the closure passed to `Application::new()` are added to the context and rendered into the root window.
 ///
 /// # Example
@@ -206,15 +225,11 @@ impl Application {
                     window_attributes = window_attributes.with_owner_window(handle.hwnd.get());
                 }
 
-                // TODO:
                 // Setting this attribute with dx12 backends makes resizing look better.
-                // But we don't know which backend was available until after the window
-                // is already created, and using it on non-dx12 backends breaks display.
-                // On Windows, Dx12 is the platform default when no preference is set.
-                let effective_backend = preferred_backend.unwrap_or(GraphicsBackend::Dx12);
-                if effective_backend == GraphicsBackend::Dx12 {
-                    window_attributes = window_attributes.with_no_redirection_bitmap(true);
-                }
+                // However, create_draw_surface() may fall back to a non-dx12 backend, and
+                // using no_redirection_bitmap on those backends breaks display. Because the
+                // actual backend is not known until after the window is created, do not set
+                // this attribute here based on the preferred/default backend.
 
                 // The current version of winit spawns new windows with unspecified position/size.
                 // As a workaround, we'll hide the window during creation and reveal it afterward.
@@ -253,14 +268,10 @@ impl Application {
         let active_backend = graphics_backend.backend();
         if let Some(locked_backend) = self.resolved_graphics_backend {
             if active_backend != locked_backend {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    format!(
-                        "Graphics backend mismatch: expected {}, got {}",
-                        locked_backend.as_str(),
-                        active_backend.as_str()
-                    ),
-                )
+                return Err(GraphicsBackendMismatchError {
+                    expected: locked_backend,
+                    got: active_backend,
+                }
                 .into());
             }
         } else {

@@ -165,7 +165,7 @@ impl WinState {
 
     fn image_bounds(&self) -> BoundingBox {
         let (w, h) = self.inner_size.into();
-        BoundingBox { x: 0.0, y: 0.0, w, h }
+        BoundingBox { x: 0.0, y: 0.0, w: w as f32, h: h as f32 }
     }
 }
 
@@ -337,7 +337,7 @@ fn get_present_args(
     let mut sync_interval = 1;
     let mut present_flags = DXGI_PRESENT(0);
 
-    if vsync == false {
+    if !vsync {
         sync_interval = 0;
 
         // Support variable refresh rate displays. (AMD FreeSync, NVIDIA G-Sync, etc)

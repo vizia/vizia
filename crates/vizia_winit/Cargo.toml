@@ -29,7 +29,6 @@ metal = [
     "dep:objc2-app-kit",
     "dep:objc2-foundation",
     "dep:objc2-metal",
-    "dep:objc2-metal-kit",
     "dep:objc2-quartz-core",
     "skia-safe/metal",
 ]
@@ -87,11 +86,6 @@ objc2-app-kit = { version = "0.3", optional = true, features = [
 ] }
 objc2-foundation = { version = "0.3", optional = true }
 objc2-metal = { version = "0.3", optional = true, features = [] }
-objc2-metal-kit = { version = "0.3", optional = true, features = [
-    "MTKView",
-    "objc2-app-kit",
-    "objc2-quartz-core",
-] }
 
 [build-dependencies]
 cfg_aliases = "0.2.1"
