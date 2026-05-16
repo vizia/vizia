@@ -1071,7 +1071,6 @@ where
                         ));
                     }
                 } else {
-                    cx.emit(TextEvent::Submit(false));
                     cx.release();
 
                     // Forward event to hovered
@@ -1502,8 +1501,7 @@ where
                 cx.release();
                 cx.stop_timer(self.caret_timer);
 
-                let text = self.value.get_value(cx);
-                let text = text.to_string_local(cx);
+                let text = self.clone_text(cx);
                 self.show_placeholder.set(text.is_empty());
 
                 if let Some(text_overflow) = self.text_overflow {
