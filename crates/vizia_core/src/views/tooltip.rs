@@ -81,8 +81,7 @@ impl Tooltip {
                             if tooltip.placement == Placement::Cursor && !x.is_nan() && !y.is_nan()
                             {
                                 let scale = ex.scale_factor();
-                                let parent = ex.parent();
-                                let parent_bounds = ex.cache.get_bounds(parent);
+                                let parent_bounds = ex.parent_transformed_bounds();
                                 if parent_bounds.contains_point(*x, *y) {
                                     ex.set_left(Pixels(
                                         ((*x - parent_bounds.x) - ex.bounds().width() / 2.0)
@@ -109,8 +108,7 @@ impl View for Tooltip {
         event.map(|window_event, _| match window_event {
             // Reposition popup if there isn't enough room for it.
             WindowEvent::GeometryChanged(_) => {
-                let parent = cx.parent();
-                let parent_bounds = cx.cache.get_bounds(parent);
+                let parent_bounds = cx.parent_transformed_bounds();
                 let bounds = cx.bounds();
                 let window_bounds = cx.cache.get_bounds(cx.parent_window());
 
