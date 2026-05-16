@@ -12,16 +12,6 @@ enum CheckState {
 }
 
 #[derive(Clone, PartialEq)]
-struct TreeRow {
-    id: NodeId,
-    parent_id: Option<NodeId>,
-    name: String,
-    kind: String,
-    size: String,
-    modified: String,
-}
-
-#[derive(Clone)]
 struct FsNode {
     name: String,
     kind: String,
@@ -213,42 +203,6 @@ fn add_dir_to_tree(tree: &mut Tree<FsNode>, parent_node: NodeId, root: &Path) {
     }
 }
 
-fn flatten_tree_rows(tree: &Tree<FsNode>) -> Vec<TreeRow> {
-    fn visit(
-        tree: &Tree<FsNode>,
-        node_id: NodeId,
-        parent_id: Option<NodeId>,
-        out: &mut Vec<TreeRow>,
-    ) {
-        let node = tree.get(node_id).expect("tree node should exist");
-        let value = node.value();
-        let current_id = node.id();
-
-        out.push(TreeRow {
-            id: current_id,
-            parent_id,
-            name: value.name.clone(),
-            kind: value.kind.clone(),
-            size: value.size.clone(),
-            modified: value.modified.clone(),
-        });
-
-        let child_ids = node.children().map(|child| child.id()).collect::<Vec<_>>();
-        for child_id in child_ids {
-            visit(tree, child_id, Some(current_id), out);
-        }
-    }
-
-    let mut rows = Vec::new();
-    let root = tree.root();
-    let top_level_ids = root.children().map(|child| child.id()).collect::<Vec<_>>();
-    for child_id in top_level_ids {
-        visit(tree, child_id, None, &mut rows);
-    }
-
-    rows
-}
-
 fn build_fs_tree() -> Tree<FsNode> {
     // Walk the vizia workspace root (one directory up from examples/)
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -265,17 +219,26 @@ fn build_fs_tree() -> Tree<FsNode> {
     tree
 }
 
-fn columns(tree: Signal<Tree<FsNode>>) -> Vec<TreeTableColumn<TreeRow, NodeId, TableHeader>> {
+fn columns(
+    tree: Signal<Tree<FsNode>>,
+) -> Vec<TreeTableColumn<TreeNodeRow<NodeId>, NodeId, TableHeader>> {
     vec![
         TreeTableColumn::new(
             "name",
             |cx, sort_dir| TableHeader::new(cx, "Name", sort_dir),
             move |cx, row| {
-                let row_for_first_cell: TreeTableRow<TreeRow, NodeId> = row.get();
+                let row_for_first_cell: TreeTableRow<TreeNodeRow<NodeId>, NodeId> = row.get();
 
                 TreeTableFirstCell::new(cx, row_for_first_cell, move |cx, row| {
                     let row_id = row.id;
-                    let text = row.row.name.clone();
+                    let text = tree.map({
+                        let node_id = row_id.clone();
+                        move |tree| {
+                            tree.get(node_id)
+                                .map(|node| node.value().name.clone())
+                                .unwrap_or_default()
+                        }
+                    });
                     let checked = tree.map({
                         let node_id = row_id.clone();
                         move |tree| node_check_state(tree, node_id) == CheckState::Checked
@@ -306,8 +269,11 @@ fn columns(tree: Signal<Tree<FsNode>>) -> Vec<TreeTableColumn<TreeRow, NodeId, T
         TreeTableColumn::new(
             "kind",
             |cx, sort_dir| TableHeader::new(cx, "Kind", sort_dir),
-            |cx, row| {
-                let text = row.map(|r: &TreeTableRow<TreeRow, NodeId>| r.row.kind.clone());
+            move |cx, row| {
+                let row_id = row.get().id;
+                let text = tree.map(move |tree| {
+                    tree.get(row_id).map(|node| node.value().kind.clone()).unwrap_or_default()
+                });
                 Label::new(cx, text).class("table-cell-text");
             },
         )
@@ -317,8 +283,11 @@ fn columns(tree: Signal<Tree<FsNode>>) -> Vec<TreeTableColumn<TreeRow, NodeId, T
         TreeTableColumn::new(
             "size",
             |cx, sort_dir| TableHeader::new(cx, "Size", sort_dir),
-            |cx, row| {
-                let text = row.map(|r: &TreeTableRow<TreeRow, NodeId>| r.row.size.clone());
+            move |cx, row| {
+                let row_id = row.get().id;
+                let text = tree.map(move |tree| {
+                    tree.get(row_id).map(|node| node.value().size.clone()).unwrap_or_default()
+                });
                 Label::new(cx, text).class("table-cell-text");
             },
         )
@@ -328,8 +297,11 @@ fn columns(tree: Signal<Tree<FsNode>>) -> Vec<TreeTableColumn<TreeRow, NodeId, T
         TreeTableColumn::new(
             "modified",
             |cx, sort_dir| TableHeader::new(cx, "Modified", sort_dir),
-            |cx, row| {
-                let text = row.map(|r: &TreeTableRow<TreeRow, NodeId>| r.row.modified.clone());
+            move |cx, row| {
+                let row_id = row.get().id;
+                let text = tree.map(move |tree| {
+                    tree.get(row_id).map(|node| node.value().modified.clone()).unwrap_or_default()
+                });
                 Label::new(cx, text).class("table-cell-text");
             },
         )
@@ -350,14 +322,19 @@ fn main() -> Result<(), ApplicationError> {
         AppData { tree, sort_state, selected_rows, expanded_rows }.build(cx);
 
         ExamplePage::vertical(cx, move |cx| {
-            VirtualTreeTable::new(
+            VirtualTreeTable::from_hierarchy(
                 cx,
                 tree,
                 cols,
                 34.0,
-                |tree: &Tree<FsNode>| flatten_tree_rows(tree),
-                |row: &TreeRow| row.id,
-                |row: &TreeRow| row.parent_id,
+                |tree: &Tree<FsNode>| {
+                    tree.root().children().map(|child| child.id()).collect::<Vec<_>>()
+                },
+                |tree: &Tree<FsNode>, node_id: &NodeId| {
+                    tree.get(node_id.clone())
+                        .map(|node| node.children().map(|child| child.id()).collect::<Vec<_>>())
+                        .unwrap_or_default()
+                },
             )
             .sort_state(sort_state)
             .sort_cycle(TableSortCycle::TriState)
