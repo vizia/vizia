@@ -116,7 +116,7 @@ impl GraphicsBackend {
     /// Returns the string representation of the backend.
     ///
     /// The string returned from this function can be used with `from_str` to
-    /// reconstruct a `GraphicsdBackend` instance.
+    /// reconstruct a `GraphicsBackend` instance.
     ///
     pub fn as_str(&self) -> &'static str {
         match self {

@@ -2,6 +2,8 @@ use std::{error::Error, fmt::Display, sync::Arc};
 
 use skia_safe::{SamplingOptions, Surface};
 
+#[cfg(all(feature = "dx12", target_os = "windows"))]
+use winit::platform::windows::WindowAttributesExtWindows;
 use winit::{
     dpi::PhysicalSize,
     event_loop::ActiveEventLoop,
@@ -126,7 +128,7 @@ pub trait DrawSurface {
 /// An error reported when creation failed for all possible graphics backends.
 ///
 /// As we have multiple backend options, this error type is used to group each
-/// error that occursed with the associated backend that caused it.
+/// error that occurred with the associated backend that caused it.
 ///
 #[derive(Debug)]
 pub struct BackendCreationError {
@@ -215,8 +217,9 @@ fn create(
         }
         #[cfg(all(feature = "dx12", target_os = "windows"))]
         GraphicsBackend::Dx12 => {
+            let window_attributes = window_attributes.clone().with_no_redirection_bitmap(true);
             let ws =
-                dx12::WinState::new(entity, window_attributes, window_description, event_loop)?;
+                dx12::WinState::new(entity, &window_attributes, window_description, event_loop)?;
             Ok(Box::new(ws) as _)
         }
         #[cfg(all(feature = "metal", target_os = "macos"))]
