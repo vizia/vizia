@@ -10,9 +10,42 @@ use std::{
 use crate::prelude::*;
 
 use super::{
-    TableSortCycle, TableSortDirection, TableSortState, TreeTableColumn, TreeTableFirstCellEvent,
-    TreeTableRow, table::next_sort_direction, table::sort_direction_for_column,
+    TableSortCycle, TableSortDirection, TableSortState, TreeNodeRow, TreeTableColumn,
+    TreeTableFirstCellEvent, TreeTableRow, table::next_sort_direction,
+    table::sort_direction_for_column,
 };
+
+fn flatten_hierarchy_rows<U, Id>(
+    tree: &U,
+    root_ids: &dyn Fn(&U) -> Vec<Id>,
+    child_ids: &dyn Fn(&U, &Id) -> Vec<Id>,
+) -> Vec<TreeNodeRow<Id>>
+where
+    Id: Clone + Eq + Hash + 'static,
+{
+    fn visit<U, Id>(
+        tree: &U,
+        node_id: Id,
+        parent_id: Option<Id>,
+        child_ids: &dyn Fn(&U, &Id) -> Vec<Id>,
+        out: &mut Vec<TreeNodeRow<Id>>,
+    ) where
+        Id: Clone + Eq + Hash + 'static,
+    {
+        out.push(TreeNodeRow { id: node_id.clone(), parent_id });
+
+        for child_id in child_ids(tree, &node_id) {
+            visit(tree, child_id, Some(node_id.clone()), child_ids, out);
+        }
+    }
+
+    let mut rows = Vec::new();
+    for root_id in root_ids(tree) {
+        visit(tree, root_id, None, child_ids, &mut rows);
+    }
+
+    rows
+}
 
 fn flatten_visible_rows<T, V, Id>(
     rows: &V,
@@ -437,6 +470,46 @@ where
         );
 
         visible_rows.into_iter().find(|row| row.id == selected_id)
+    }
+}
+
+impl<Id, H, K> VirtualTreeTable<TreeNodeRow<Id>, Vec<TreeNodeRow<Id>>, Id, H, K>
+where
+    Id: Eq + Hash + Clone + Send + Sync + 'static,
+    H: Clone + View,
+    K: Clone + PartialEq + Send + Sync + 'static,
+{
+    /// Creates a [`VirtualTreeTable`] directly from hierarchical data.
+    ///
+    /// Provide closures to enumerate root node IDs and child node IDs for a given parent.
+    /// The table manages expand/collapse state and internally projects IDs into
+    /// [`TreeNodeRow`] values.
+    pub fn from_hierarchy<S, U, C, R>(
+        cx: &mut Context,
+        tree: S,
+        columns: C,
+        item_height: f32,
+        root_ids: impl Fn(&U) -> Vec<Id> + 'static,
+        child_ids: impl Fn(&U, &Id) -> Vec<Id> + 'static,
+    ) -> Handle<Self>
+    where
+        S: Res<U> + 'static,
+        U: Clone + 'static,
+        C: Res<R> + 'static,
+        R: Deref<Target = [TreeTableColumn<TreeNodeRow<Id>, Id, H, K>]> + Clone + 'static,
+    {
+        let root_ids: Rc<dyn Fn(&U) -> Vec<Id>> = Rc::new(root_ids);
+        let child_ids: Rc<dyn Fn(&U, &Id) -> Vec<Id>> = Rc::new(child_ids);
+
+        Self::new(
+            cx,
+            tree,
+            columns,
+            item_height,
+            move |tree: &U| flatten_hierarchy_rows(tree, &*root_ids, &*child_ids),
+            |row: &TreeNodeRow<Id>| row.id.clone(),
+            |row: &TreeNodeRow<Id>| row.parent_id.clone(),
+        )
     }
 }
 
