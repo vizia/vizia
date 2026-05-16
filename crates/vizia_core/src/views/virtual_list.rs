@@ -362,7 +362,8 @@ impl VirtualList {
                                                 Self::evaluate_index(i, range.start, range.end)
                                             });
                                             Binding::new(cx, item_index, move |cx| {
-                                                let index = item_index.get();
+                                                let max_index = num_items.saturating_sub(1);
+                                                let index = item_index.get().min(max_index);
                                                 let item =
                                                     list.map(move |list| list_index(list, index));
 
@@ -402,7 +403,8 @@ impl VirtualList {
                                                 Self::evaluate_index(i, range.start, range.end)
                                             });
                                             Binding::new(cx, item_index, move |cx| {
-                                                let index = item_index.get();
+                                                let max_index = num_items.saturating_sub(1);
+                                                let index = item_index.get().min(max_index);
                                                 let item =
                                                     list.map(move |list| list_index(list, index));
 
