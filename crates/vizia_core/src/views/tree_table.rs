@@ -654,6 +654,11 @@ where
     Id: Eq + Hash + Clone + Send + Sync + 'static,
     K: Clone + PartialEq + Send + Sync + 'static,
 {
+    /// Creates a [`TreeTable`] directly from hierarchical data.
+    ///
+    /// Provide closures to enumerate root node IDs and child node IDs for a given parent.
+    /// The table manages expand/collapse state and internally projects IDs into
+    /// [`TreeNodeRow`] values.
     pub fn from_hierarchy<S, U, C, R, H>(
         cx: &mut Context,
         tree: S,
