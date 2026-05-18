@@ -71,7 +71,7 @@ impl WinState {
         let window = Arc::new(event_loop.create_window(window_attributes.clone())?);
 
         let inner_size = window.inner_size();
-        let buffer_size = window.current_monitor().map_or(inner_size, |monitor| monitor.size());;
+        let buffer_size = window.current_monitor().map_or(inner_size, |monitor| monitor.size());
 
         let (factory, adapter, device) =
             get_hardware_adapter_and_device() //
@@ -130,7 +130,7 @@ impl WinState {
     }
 
     pub fn create_surfaces(&mut self) {
-        let size = self.inner_size.into();
+        let size = self.buffer_size.into();
 
         self.surfaces.clear();
         self.surfaces.extend((0..BUFFER_COUNT).map(|i| {
@@ -253,36 +253,46 @@ impl DrawSurface for WinState {
 
         self.inner_size = size;
 
-        // Re-use the same flags the swap chain was created with.
-        let mut flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
-        if (self.present_flags & DXGI_PRESENT_ALLOW_TEARING) != DXGI_PRESENT(0) {
-            flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
-        }
-
         // We only need to resize the buffers if the inner size is larger than the buffer size.
 
         if self.inner_size.width > self.buffer_size.width
             || self.inner_size.height > self.buffer_size.height
         {
-            self.buffer_size =
+            let buffer_size =
                 self.window.current_monitor().map_or(self.inner_size, |monitor| monitor.size());
 
             // All references to our buffers must be released before calling `ResizeBuffers`.
 
+            self.direct_context.flush_submit_and_sync_cpu();
             self.direct_context.free_gpu_resources();
             self.direct_context.reset(None);
             self.surfaces.clear();
 
-            unsafe {
-                self.swap_chain.ResizeBuffers(
-                        BUFFER_COUNT,
-                        self.buffer_size.width,
-                        self.buffer_size.height,
-                        DXGI_FORMAT_R8G8B8A8_UNORM,
-                        flags,
-                    )
-                    .unwrap();
+            // Re-use the same flags the swap chain was created with.
+
+            let mut flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
+
+            if (self.present_flags & DXGI_PRESENT_ALLOW_TEARING) != DXGI_PRESENT(0) {
+                flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
             }
+
+            let result = unsafe {
+                self.swap_chain.ResizeBuffers(
+                    BUFFER_COUNT,
+                    buffer_size.width,
+                    buffer_size.height,
+                    DXGI_FORMAT_R8G8B8A8_UNORM,
+                    flags,
+                )
+            };
+
+            if let Err(error) = result {
+                eprintln!("Failed to resize DX12 swap chain buffers: {error:?}");
+                self.create_surfaces();
+                return false;
+            }
+
+            self.buffer_size = buffer_size;
         }
 
         self.create_surfaces();
