@@ -1,8 +1,9 @@
 use morphorm::Units;
 use vizia_style::{
     Angle, BackgroundSize, ClipPath, Color, ColorStop, Display, Filter, FontSize, Gradient, Length,
-    LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LineDirection, LineHeight,
-    LinearGradient, Opacity, PercentageOrNumber, RGBA, Rect, Scale, Shadow, Transform, Translate,
+    LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LetterSpacing, LineDirection,
+    LineHeight, LinearGradient, Opacity, PercentageOrNumber, RGBA, Rect, Scale, Shadow, Transform,
+    Translate,
 };
 
 use skia_safe::Matrix;
@@ -336,6 +337,18 @@ impl<T: Interpolator + Clone + Default> Interpolator for Option<T> {
 impl Interpolator for FontSize {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         FontSize(Length::interpolate(&start.0, &end.0, t))
+    }
+}
+
+impl Interpolator for LetterSpacing {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        match (start, end) {
+            (LetterSpacing::Normal, LetterSpacing::Normal) => LetterSpacing::Normal,
+            (LetterSpacing::Length(start), LetterSpacing::Length(end)) => {
+                LetterSpacing::Length(Length::interpolate(start, end, t))
+            }
+            _ => end.clone(),
+        }
     }
 }
 

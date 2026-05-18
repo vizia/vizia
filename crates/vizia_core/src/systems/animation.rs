@@ -130,6 +130,8 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     reflow_entities.extend(cx.style.font_color.tick(time));
     // Font Size
     reflow_entities.extend(cx.style.font_size.tick(time));
+    // Letter Spacing
+    reflow_entities.extend(cx.style.letter_spacing.tick(time));
     // Line Height
     reflow_entities.extend(cx.style.line_height.tick(time));
 
@@ -174,6 +176,10 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     }
     // Tick animations on custom font-size properties
     for store in cx.style.custom_font_size_props.values_mut() {
+        reflow_entities.extend(store.tick(time));
+    }
+    // Tick animations on custom letter-spacing properties
+    for store in cx.style.custom_letter_spacing_props.values_mut() {
         reflow_entities.extend(store.tick(time));
     }
     // Tick animations on custom line-height properties
