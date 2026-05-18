@@ -4,27 +4,27 @@ use std::{
 };
 
 use skia_safe::{
-    gpu::{
-        backend_render_targets, direct_contexts, surfaces,
-        vk::{BackendContext, Format, GetProc, GetProcOf, ImageInfo, ImageLayout},
-        BackendRenderTarget, DirectContext, SurfaceOrigin,
-    },
     ColorSpace, ColorType, Surface, SurfaceProps,
+    gpu::{
+        BackendRenderTarget, DirectContext, SurfaceOrigin, backend_render_targets, direct_contexts,
+        surfaces,
+        vk::{BackendContext, Format, GetProc, GetProcOf, ImageInfo, ImageLayout},
+    },
 };
 
 use vulkano::{
+    Handle, LoadingError, Validated, Version, VulkanError, VulkanLibrary, VulkanObject,
     device::{
-        physical::{PhysicalDevice, PhysicalDeviceType},
         Device, DeviceCreateInfo, DeviceExtensions, Queue, QueueCreateInfo, QueueFlags,
+        physical::{PhysicalDevice, PhysicalDeviceType},
     },
     image::{Image, ImageUsage},
     instance::{Instance, InstanceCreateFlags, InstanceCreateInfo, InstanceExtensions},
     swapchain::{
-        acquire_next_image, PresentMode, RectangleLayer, Surface as VulkanSurface, Swapchain,
-        SwapchainAcquireFuture, SwapchainCreateInfo, SwapchainPresentInfo,
+        PresentMode, RectangleLayer, Surface as VulkanSurface, Swapchain, SwapchainAcquireFuture,
+        SwapchainCreateInfo, SwapchainPresentInfo, acquire_next_image,
     },
     sync::{self, GpuFuture},
-    Handle, LoadingError, Validated, Version, VulkanError, VulkanLibrary, VulkanObject,
 };
 
 use vizia_core::prelude::{BoundingBox, Entity};
@@ -332,11 +332,7 @@ impl WinState {
 
     #[inline]
     fn current_present_mode(&mut self) -> PresentMode {
-        if self.vsync {
-            PresentMode::Fifo
-        } else {
-            PresentMode::Immediate
-        }
+        if self.vsync { PresentMode::Fifo } else { PresentMode::Immediate }
     }
 
     #[inline]
