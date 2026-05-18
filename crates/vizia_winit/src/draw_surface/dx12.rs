@@ -71,7 +71,7 @@ impl WinState {
         let window = Arc::new(event_loop.create_window(window_attributes.clone())?);
 
         let inner_size = window.inner_size();
-        let buffer_size = inner_size;
+        let buffer_size = window.current_monitor().map_or(inner_size, |monitor| monitor.size());;
 
         let (factory, adapter, device) =
             get_hardware_adapter_and_device() //
@@ -252,7 +252,6 @@ impl DrawSurface for WinState {
         }
 
         self.inner_size = size;
-        self.buffer_size = size;
 
         // Flush, submit, and block until the GPU is idle before releasing D3D12 buffer
         // references. Without a CPU sync, ResizeBuffers may fail with DXGI_ERROR_INVALID_CALL
@@ -267,16 +266,30 @@ impl DrawSurface for WinState {
             flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
         }
 
-        unsafe {
-            if let Err(e) = self.swap_chain.ResizeBuffers(
-                BUFFER_COUNT,
-                self.buffer_size.width,
-                self.buffer_size.height,
-                DXGI_FORMAT_R8G8B8A8_UNORM,
-                flags,
-            ) {
-                eprintln!("Failed to resize swap chain buffers: {:?}", e);
-                return false;
+        // We only need to resize the buffers if the inner size is larger than the buffer size.
+
+        if self.inner_size.width > self.buffer_size.width
+            || self.inner_size.height > self.buffer_size.height
+        {
+            self.buffer_size =
+                self.window.current_monitor().map_or(self.inner_size, |monitor| monitor.size());
+
+            // All references to our buffers must be released before calling `ResizeBuffers`.
+
+            self.direct_context.free_gpu_resources();
+            self.direct_context.reset(None);
+            self.surfaces.clear();
+
+            unsafe {
+                self.swap_chain
+                    .ResizeBuffers(
+                        BUFFER_COUNT,
+                        self.buffer_size.width,
+                        self.buffer_size.height,
+                        DXGI_FORMAT_R8G8B8A8_UNORM,
+                        Default::default(),
+                    )
+                    .unwrap();
             }
         }
 
