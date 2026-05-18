@@ -25,8 +25,22 @@ use std::{
 use vizia_id::IdManager;
 use vizia_window::WindowDescription;
 
+#[cfg(all(
+    feature = "clipboard",
+    not(all(
+        any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd"
+        ),
+        feature = "wayland",
+    ))
+))]
+use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
-use copypasta::{ClipboardContext, ClipboardProvider, nop_clipboard::NopClipboardContext};
+use copypasta::{ClipboardProvider, nop_clipboard::NopClipboardContext};
 use hashbrown::{HashMap, HashSet, hash_map::Entry};
 
 pub use access::*;
@@ -65,6 +79,41 @@ static NEXT_CONTEXT_ID: AtomicU64 = AtomicU64::new(1);
 pub(crate) struct SignalRebuild {
     pub(crate) context_id: u64,
     pub(crate) entity: Entity,
+}
+
+#[cfg(feature = "clipboard")]
+fn default_clipboard_provider() -> Box<dyn ClipboardProvider> {
+    #[cfg(all(
+        any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd"
+        ),
+        feature = "wayland"
+    ))]
+    {
+        Box::new(NopClipboardContext::new().unwrap())
+    }
+
+    #[cfg(not(all(
+        any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd"
+        ),
+        feature = "wayland",
+    )))]
+    {
+        if let Ok(context) = ClipboardContext::new() {
+            Box::new(context)
+        } else {
+            Box::new(NopClipboardContext::new().unwrap())
+        }
+    }
 }
 
 thread_local! {
@@ -209,13 +258,7 @@ impl Context {
             event_proxy: None,
 
             #[cfg(feature = "clipboard")]
-            clipboard: {
-                if let Ok(context) = ClipboardContext::new() {
-                    Box::new(context)
-                } else {
-                    Box::new(NopClipboardContext::new().unwrap())
-                }
-            },
+            clipboard: default_clipboard_provider(),
             click_time: Instant::now(),
             clicks: 0,
             click_pos: (0.0, 0.0),
