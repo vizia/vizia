@@ -22,10 +22,25 @@ markdown = ["vizia_core/markdown"]
 rayon = ["vizia_core/rayon"]
 serde = ["vizia_core/serde"]
 
+gl = ["vizia_winit/gl"]
+dx12 = ["vizia_winit/dx12"]
+metal = ["vizia_winit/metal"]
+vulkan = ["vizia_winit/vulkan"]
+
 [dependencies]
 vizia_core.workspace = true
 vizia_winit = { workspace = true, optional = true, default-features = false}
 vizia_baseview = { workspace = true, optional = true }
+
+# Activate the native GPU backend on each platform by default.
+[target.'cfg(target_os = "macos")'.dependencies]
+vizia_winit = { workspace = true, optional = true, default-features = false, features = ["metal"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+vizia_winit = { workspace = true, optional = true, default-features = false, features = ["dx12", "vulkan", "gl"] }
+
+[target.'cfg(all(not(target_os = "macos"), not(target_os = "windows")))'.dependencies]
+vizia_winit = { workspace = true, optional = true, default-features = false, features = ["vulkan"] }
 
 [dev-dependencies]
 chrono.workspace = true
@@ -89,9 +104,9 @@ sys-locale = "0.3"
 tokio = { version = "1.52.3", features = ["rt-multi-thread"] }
 unic-langid = { version = "0.9.6", features = ["macros"] }
 unicode-segmentation = "1.12"
-unicode-bidi = "0.3"
-windows-sys = { version = "0.59", default-features = false, features = ["Win32_Graphics_Dwm"] }
-winit = { version = "0.30", default-features = false }
+unicode-bidi = "0.3.18"
+windows-sys = { version = "0.62", default-features = false, features = ["Win32_Graphics_Dwm"] }
+winit = { version = "0.30.13", default-features = false }
 
 [target."cfg(target_os = \"macos\")".dependencies.skia-safe]
 version = "0.97"

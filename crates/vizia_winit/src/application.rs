@@ -1,13 +1,12 @@
-#[cfg(target_os = "windows")]
-use crate::window::set_cloak;
 use crate::{
     convert::{winit_key_code_to_code, winit_key_to_key},
-    window::{WinState, Window},
+    draw_surface::{DrawSurface, create_draw_surface},
+    window::Window,
     window_modifiers::WindowModifiers,
 };
 #[cfg(feature = "accesskit")]
 use accesskit_winit::Adapter;
-use hashbrown::HashMap;
+use hashbrown::{HashMap, HashSet};
 use log::warn;
 use std::{error::Error, fmt::Display, sync::Arc};
 use vizia_input::ImeState;
@@ -43,7 +42,13 @@ use winit::{
 //     )
 // ))]
 // use raw_window_handle::{HasRawDisplayHandle, RawDisplayHandle};
-use vizia_window::{Anchor, AnchorTarget, WindowPosition};
+use vizia_window::{Anchor, AnchorTarget, GraphicsBackend, WindowPosition};
+
+#[cfg(target_os = "windows")]
+use winit::{
+    platform::windows::WindowAttributesExtWindows,
+    raw_window_handle::{HasWindowHandle, RawWindowHandle},
+};
 
 #[derive(Debug)]
 pub enum UserEvent {
@@ -84,6 +89,25 @@ impl Display for ApplicationError {
 
 impl std::error::Error for ApplicationError {}
 
+#[derive(Debug)]
+struct GraphicsBackendMismatchError {
+    expected: GraphicsBackend,
+    got: GraphicsBackend,
+}
+
+impl Display for GraphicsBackendMismatchError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Graphics backend mismatch: expected {}, got {}",
+            self.expected.as_str(),
+            self.got.as_str()
+        )
+    }
+}
+
+impl Error for GraphicsBackendMismatchError {}
+
 ///Creating a new application creates a root `Window` and a `Context`. Views declared within the closure passed to `Application::new()` are added to the context and rendered into the root window.
 ///
 /// # Example
@@ -104,8 +128,10 @@ pub struct Application {
     window_description: WindowDescription,
     control_flow: ControlFlow,
     event_loop_proxy: EventLoopProxy<UserEvent>,
-    windows: HashMap<WindowId, WinState>,
+    windows: HashMap<WindowId, Box<dyn DrawSurface>>,
     window_ids: HashMap<Entity, WindowId>,
+    resize_relayout_windows: HashSet<WindowId>,
+    resolved_graphics_backend: Option<GraphicsBackend>,
     #[cfg(feature = "accesskit")]
     accesskit_adapter: Option<accesskit_winit::Adapter>,
     #[cfg(feature = "accesskit")]
@@ -164,6 +190,8 @@ impl Application {
             event_loop_proxy: proxy,
             windows: HashMap::new(),
             window_ids: HashMap::new(),
+            resize_relayout_windows: HashSet::new(),
+            resolved_graphics_backend: None,
             #[cfg(feature = "accesskit")]
             accesskit_adapter: None,
             #[cfg(feature = "accesskit")]
@@ -181,8 +209,78 @@ impl Application {
         #[allow(unused_mut)]
         let mut window_attributes = apply_window_description(window_description);
 
-        let window_state = WinState::new(event_loop, window_entity, window_attributes, owner)?;
-        let window = window_state.window.clone();
+        let preferred_backend = self
+            .resolved_graphics_backend
+            .or(self.window_description.graphics_backend)
+            .or(window_description.graphics_backend);
+
+        let graphics_backend = {
+            #[cfg(target_os = "windows")]
+            {
+                if let Some(owner) = owner {
+                    let RawWindowHandle::Win32(handle) = owner.window_handle().unwrap().as_raw()
+                    else {
+                        unreachable!();
+                    };
+                    window_attributes = window_attributes.with_owner_window(handle.hwnd.get());
+                }
+
+                // Setting this attribute with dx12 backends makes resizing look better.
+                // However, create_draw_surface() may fall back to a non-dx12 backend, and
+                // using no_redirection_bitmap on those backends breaks display. Because the
+                // actual backend is not known until after the window is created, do not set
+                // this attribute here based on the preferred/default backend.
+
+                // The current version of winit spawns new windows with unspecified position/size.
+                // As a workaround, we'll hide the window during creation and reveal it afterward.
+                let visible = window_attributes.visible;
+                window_attributes = window_attributes.with_visible(false);
+
+                let mut graphics_backend = create_draw_surface(
+                    preferred_backend,
+                    window_entity,
+                    window_attributes,
+                    window_description,
+                    event_loop,
+                )?;
+
+                // Another problem is the white background that briefly flashes on window creation.
+                // To avoid this one we must wait until the first draw is complete before revealing
+                // our window. The visible property won't work in this case as it prevents drawing.
+                // Instead we use the "cloak" attribute, which hides the window without that issue.
+                graphics_backend.set_cloak(true);
+                graphics_backend.window().set_visible(visible);
+                graphics_backend
+            }
+
+            #[cfg(not(target_os = "windows"))]
+            {
+                create_draw_surface(
+                    preferred_backend,
+                    window_entity,
+                    window_attributes,
+                    window_description,
+                    event_loop,
+                )?
+            }
+        };
+
+        let active_backend = graphics_backend.backend();
+        if let Some(locked_backend) = self.resolved_graphics_backend {
+            if active_backend != locked_backend {
+                return Err(GraphicsBackendMismatchError {
+                    expected: locked_backend,
+                    got: active_backend,
+                }
+                .into());
+            }
+        } else {
+            self.resolved_graphics_backend = Some(active_backend);
+        }
+
+        let window = graphics_backend.window();
+
+        window.set_ime_allowed(true);
 
         if let Some(position) = window_description.position {
             window.set_outer_position(LogicalPosition::new(position.x, position.y));
@@ -221,11 +319,12 @@ impl Application {
                         .get_parent_window(window_entity)
                         .and_then(|parent_window| self.window_ids.get(&parent_window))
                         .and_then(|id| self.windows.get(id))
-                        .and_then(|WinState { window, .. }| {
-                            let position = window
+                        .and_then(|win_state| {
+                            let position = win_state
+                                .window()
                                 .outer_position()
                                 .inspect_err(|e| warn!("can't get window position: {e:?}"));
-                            Some((position.ok()?, window.inner_size()))
+                            Some((position.ok()?, win_state.window().inner_size()))
                         }),
                     AnchorTarget::Mouse => self
                         .cx
@@ -234,8 +333,9 @@ impl Application {
                         .get_parent_window(window_entity)
                         .and_then(|parent_window| self.window_ids.get(&parent_window))
                         .and_then(|id| self.windows.get(id))
-                        .and_then(|WinState { window, .. }| {
-                            window
+                        .and_then(|win_state| {
+                            win_state
+                                .window()
                                 .outer_position()
                                 .inspect_err(|e| warn!("can't get window position: {e:?}"))
                                 .ok()
@@ -289,9 +389,9 @@ impl Application {
             }
         }
 
-        let window_id = window_state.window.id();
-        self.windows.insert(window_id, window_state);
-        self.window_ids.insert(window_entity, window_id);
+        self.windows.insert(window.id(), graphics_backend);
+        self.window_ids.insert(window_entity, window.id());
+
         Ok(window)
     }
 
@@ -340,6 +440,44 @@ impl Application {
 
     pub fn run(mut self) -> Result<(), ApplicationError> {
         self.event_loop.take().unwrap().run_app(&mut self).map_err(ApplicationError::EventLoopError)
+    }
+
+    fn redraw_window(&mut self, window_id: WindowId) {
+        if self.resize_relayout_windows.remove(&window_id) {
+            self.cx.process_style_updates();
+            self.cx.process_visual_updates();
+        }
+
+        let Some(window) = self.windows.get_mut(&window_id) else {
+            return;
+        };
+
+        let Some(mut draw) = self.cx.draw(window.entity()) else {
+            return;
+        };
+
+        window.draw_surface(&mut draw);
+
+        #[cfg(target_os = "windows")]
+        {
+            let is_cloaked = window.is_initially_cloaked();
+            if *is_cloaked {
+                *is_cloaked = false;
+                window.set_cloak(false);
+            }
+        }
+    }
+
+    pub fn redraw(&mut self) {
+        let window_ids = self.windows.keys().copied().collect::<Vec<_>>();
+        for window_id in window_ids {
+            self.redraw_window(window_id);
+        }
+    }
+
+    pub fn graphics_backend(mut self, graphics_backend: Option<GraphicsBackend>) -> Self {
+        self.window_description.graphics_backend = graphics_backend;
+        self
     }
 }
 
@@ -445,7 +583,7 @@ impl ApplicationHandler<UserEvent> for Application {
                 let owner = window_state.owner.and_then(|entity| {
                     self.window_ids
                         .get(&entity)
-                        .and_then(|id| self.windows.get(id).map(|ws| ws.window.clone()))
+                        .and_then(|id| self.windows.get(id).map(|ws| ws.window()))
                 });
 
                 let window = self
@@ -498,48 +636,47 @@ impl ApplicationHandler<UserEvent> for Application {
 
         match event {
             winit::event::WindowEvent::Resized(size) => {
-                window.resize(size);
-                self.cx.set_window_size(window.entity, size.width as f32, size.height as f32);
-                self.cx.needs_refresh(window.entity);
-                window.window().request_redraw();
+                #[cfg(target_os = "macos")]
+                window.set_presents_with_transaction(true);
 
-                #[cfg(target_os = "windows")]
+                if !window.resize(size) {
+                    #[cfg(target_os = "macos")]
+                    window.set_presents_with_transaction(false);
+                    return;
+                }
+
+                let entity = window.entity();
+                self.cx.set_window_size(entity, size.width as f32, size.height as f32);
+                // Reuse incremental update systems for resize.
+                // set_window_size already marks relayout/retransform/reclip.
+                self.cx.needs_refresh(entity);
+                self.resize_relayout_windows.insert(window_id);
+
+                // On macOS, `request_redraw` defers drawing to the next event-loop iteration.
+                // By then Core Animation has already composited the window at its new size using
+                // old/stretched content, producing visible jiggle. Redrawing synchronously here
+                // ensures the rendered frame is presented inside the same CA transaction as the
+                // window resize, eliminating the flicker.
+                #[cfg(target_os = "macos")]
                 {
-                    self.event_manager.flush_events(self.cx.context(), |_| {});
-
                     self.cx.process_style_updates();
-
-                    if self.cx.process_animations() {
-                        window.window().request_redraw();
-                    }
-
                     self.cx.process_visual_updates();
+                    if let Some(mut draw) = self.cx.draw(entity) {
+                        window.draw_surface(&mut draw);
+                    }
+                    window.set_presents_with_transaction(false);
+                    // Clear the resize flag since we already drew synchronously
+                    self.resize_relayout_windows.remove(&window_id);
+                }
 
-                    // #[cfg(feature = "accesskit")]
-
-                    // self.cx.process_tree_updates(|tree_updates| {
-                    //     for update in tree_updates.iter_mut() {
-                    //         self.accesskit_adapter
-                    //             .unwrap()
-                    //             .update_if_active(|| update.take().unwrap());
-                    //     }
-                    // });
-
-                    // for update in self.cx.0.tree_updates.iter_mut() {
-                    //     self.accesskit_adapter
-                    //         .as_mut()
-                    //         .unwrap()
-                    //         .update_if_active(|| update.take().unwrap());
-                    // }
-
-                    // self.cx.0.tree_updates.clear();
-
+                #[cfg(not(target_os = "macos"))]
+                {
                     window.window().request_redraw();
                 }
             }
 
             winit::event::WindowEvent::Moved(position) => {
-                let window_entity = window.entity;
+                let window_entity = window.entity();
                 self.cx.emit_window_event(
                     window_entity,
                     WindowEvent::WindowMoved(WindowPosition { x: position.x, y: position.y }),
@@ -579,17 +716,17 @@ impl ApplicationHandler<UserEvent> for Application {
             }
 
             winit::event::WindowEvent::CloseRequested | winit::event::WindowEvent::Destroyed => {
-                let window_entity = window.entity;
+                let window_entity = window.entity();
                 self.cx.emit_window_event(window_entity, WindowEvent::WindowClose);
             }
             winit::event::WindowEvent::DroppedFile(path) => {
-                self.cx.emit_window_event(window.entity, WindowEvent::Drop(DropData::File(path)));
+                self.cx.emit_window_event(window.entity(), WindowEvent::Drop(DropData::File(path)));
             }
 
             winit::event::WindowEvent::HoveredFile(_) => {}
             winit::event::WindowEvent::HoveredFileCancelled => {}
             winit::event::WindowEvent::Focused(is_focused) => {
-                self.cx.emit_window_event(window.entity, WindowEvent::WindowFocused(is_focused));
+                self.cx.emit_window_event(window.entity(), WindowEvent::WindowFocused(is_focused));
 
                 self.cx.0.window_has_focus = is_focused;
                 // #[cfg(feature = "accesskit")]
@@ -618,14 +755,14 @@ impl ApplicationHandler<UserEvent> for Application {
                         winit::keyboard::Key::Character(character) => {
                             if let Some(character) = character.as_str().chars().next() {
                                 self.cx.emit_window_event(
-                                    window.entity,
+                                    window.entity(),
                                     WindowEvent::CharInput(character),
                                 );
                             }
                         }
                         // Some platforms report space as a named key instead of character text.
                         winit::keyboard::Key::Named(winit::keyboard::NamedKey::Space) => {
-                            self.cx.emit_window_event(window.entity, WindowEvent::CharInput(' '));
+                            self.cx.emit_window_event(window.entity(), WindowEvent::CharInput(' '));
                         }
                         _ => {}
                     }
@@ -636,7 +773,7 @@ impl ApplicationHandler<UserEvent> for Application {
                     winit::event::ElementState::Released => WindowEvent::KeyUp(code, key),
                 };
 
-                self.cx.emit_window_event(window.entity, event);
+                self.cx.emit_window_event(window.entity(), event);
             }
             winit::event::WindowEvent::ModifiersChanged(modifiers) => {
                 self.cx.modifiers().set(Modifiers::SHIFT, modifiers.state().shift_key());
@@ -650,35 +787,36 @@ impl ApplicationHandler<UserEvent> for Application {
             winit::event::WindowEvent::Ime(ime) => match ime {
                 winit::event::Ime::Enabled => {
                     self.cx.0.set_ime_state(ImeState::StartComposition);
-                    self.cx.emit_window_event(window.entity, WindowEvent::ImeActivate(true));
+                    self.cx.emit_window_event(window.entity(), WindowEvent::ImeActivate(true));
                 }
                 winit::event::Ime::Preedit(text, cursor) => {
                     self.cx.0.set_ime_state(ImeState::Composing {
                         preedit: Some(text.clone()),
                         cursor_pos: cursor,
                     });
-                    self.cx.emit_window_event(window.entity, WindowEvent::ImePreedit(text, cursor));
+                    self.cx
+                        .emit_window_event(window.entity(), WindowEvent::ImePreedit(text, cursor));
                 }
                 winit::event::Ime::Commit(text) => {
                     self.cx.0.set_ime_state(ImeState::EndComposition);
-                    self.cx.emit_window_event(window.entity, WindowEvent::ImeCommit(text));
+                    self.cx.emit_window_event(window.entity(), WindowEvent::ImeCommit(text));
                 }
                 winit::event::Ime::Disabled => {
                     self.cx.0.set_ime_state(ImeState::Inactive);
-                    self.cx.emit_window_event(window.entity, WindowEvent::ImeActivate(false));
+                    self.cx.emit_window_event(window.entity(), WindowEvent::ImeActivate(false));
                 }
             },
             winit::event::WindowEvent::CursorMoved { device_id: _, position } => {
                 self.cx.emit_window_event(
-                    window.entity,
+                    window.entity(),
                     WindowEvent::MouseMove(position.x as f32, position.y as f32),
                 );
             }
             winit::event::WindowEvent::CursorEntered { device_id: _ } => {
-                self.cx.emit_window_event(window.entity, WindowEvent::MouseEnter);
+                self.cx.emit_window_event(window.entity(), WindowEvent::MouseEnter);
             }
             winit::event::WindowEvent::CursorLeft { device_id: _ } => {
-                self.cx.emit_window_event(window.entity, WindowEvent::MouseLeave);
+                self.cx.emit_window_event(window.entity(), WindowEvent::MouseLeave);
             }
             winit::event::WindowEvent::MouseWheel { device_id: _, delta, phase: _ } => {
                 let out_event = match delta {
@@ -693,7 +831,7 @@ impl ApplicationHandler<UserEvent> for Application {
                     }
                 };
 
-                self.cx.emit_window_event(window.entity, out_event);
+                self.cx.emit_window_event(window.entity(), out_event);
             }
             winit::event::WindowEvent::MouseInput { device_id: _, state, button } => {
                 let button = match button {
@@ -710,7 +848,7 @@ impl ApplicationHandler<UserEvent> for Application {
                     winit::event::ElementState::Released => WindowEvent::MouseUp(button),
                 };
 
-                self.cx.emit_window_event(window.entity, event);
+                self.cx.emit_window_event(window.entity(), event);
             }
 
             winit::event::WindowEvent::ScaleFactorChanged {
@@ -718,31 +856,22 @@ impl ApplicationHandler<UserEvent> for Application {
                 inner_size_writer: _,
             } => {
                 self.cx.set_scale_factor(scale_factor);
-                self.cx.needs_refresh(window.entity);
+                let size = window.window().inner_size();
+                self.cx.set_window_size(window.entity(), size.width as f32, size.height as f32);
+                self.cx.needs_refresh(window.entity());
+                self.resize_relayout_windows.insert(window_id);
+                window.window().request_redraw();
             }
             winit::event::WindowEvent::ThemeChanged(theme) => {
                 let theme = match theme {
                     winit::window::Theme::Light => ThemeMode::LightMode,
                     winit::window::Theme::Dark => ThemeMode::DarkMode,
                 };
-                self.cx.emit_window_event(window.entity, WindowEvent::ThemeChanged(theme));
+                self.cx.emit_window_event(window.entity(), WindowEvent::ThemeChanged(theme));
             }
             winit::event::WindowEvent::Occluded(_) => {}
             winit::event::WindowEvent::RedrawRequested => {
-                for window in self.windows.values_mut() {
-                    window.make_current();
-                    //self.cx.needs_refresh(window.entity);
-                    if self.cx.draw(window.entity, &mut window.surface, &mut window.dirty_surface) {
-                        window.swap_buffers();
-                    }
-
-                    // Un-cloak
-                    #[cfg(target_os = "windows")]
-                    if window.is_initially_cloaked {
-                        window.is_initially_cloaked = false;
-                        set_cloak(window.window(), false);
-                    }
-                }
+                self.redraw_window(window_id);
             }
 
             _ => {}
@@ -769,7 +898,9 @@ impl ApplicationHandler<UserEvent> for Application {
             }
         }
 
-        self.cx.process_visual_updates();
+        if self.resize_relayout_windows.is_empty() {
+            self.cx.process_visual_updates();
+        }
 
         #[cfg(feature = "accesskit")]
         {
@@ -825,7 +956,7 @@ impl ApplicationHandler<UserEvent> for Application {
         }
 
         // Sync window state with context
-        self.windows.retain(|_, win| self.cx.0.windows.contains_key(&win.entity));
+        self.windows.retain(|_, win| self.cx.0.windows.contains_key(&win.entity()));
         self.window_ids.retain(|e, _| self.cx.0.windows.contains_key(e));
 
         if self.windows.len() != self.cx.0.windows.len() {
@@ -834,7 +965,7 @@ impl ApplicationHandler<UserEvent> for Application {
                     let owner = window_state.owner.and_then(|entity| {
                         self.window_ids
                             .get(&entity)
-                            .and_then(|id| self.windows.get(id).map(|ws| ws.window.clone()))
+                            .and_then(|id| self.windows.get(id).map(|ws| ws.window()))
                     });
 
                     let window = self
