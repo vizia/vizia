@@ -7,6 +7,18 @@ use crate::{
 };
 #[cfg(feature = "accesskit")]
 use accesskit_winit::Adapter;
+#[cfg(all(
+    feature = "clipboard",
+    feature = "wayland",
+    any(
+        target_os = "linux",
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "netbsd",
+        target_os = "openbsd"
+    )
+))]
+use copypasta::wayland_clipboard::create_clipboards_from_external;
 use hashbrown::HashMap;
 use log::warn;
 use std::{error::Error, fmt::Display, sync::Arc};
@@ -30,6 +42,19 @@ use winit::{
     keyboard::{NativeKeyCode, PhysicalKey},
     window::{CursorIcon, CustomCursor, WindowAttributes, WindowId, WindowLevel},
 };
+
+#[cfg(all(
+    feature = "clipboard",
+    feature = "wayland",
+    any(
+        target_os = "linux",
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "netbsd",
+        target_os = "openbsd"
+    )
+))]
+use winit::raw_window_handle::{HasDisplayHandle, RawDisplayHandle};
 
 // #[cfg(all(
 //     feature = "clipboard",
@@ -295,6 +320,31 @@ impl Application {
         Ok(window)
     }
 
+    #[cfg(all(
+        feature = "clipboard",
+        feature = "wayland",
+        any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd"
+        )
+    ))]
+    fn init_wayland_clipboard(&mut self, window: &winit::window::Window) {
+        let Ok(display_handle) = window.display_handle() else {
+            return;
+        };
+
+        if let RawDisplayHandle::Wayland(handle) = display_handle.as_raw() {
+            // SAFETY: The display handle comes from a live winit window and remains valid for
+            // at least as long as the window/application lifetime where the provider is used.
+            let (_, clipboard) =
+                unsafe { create_clipboards_from_external(handle.display.as_ptr()) };
+            self.cx.set_clipboard_provider(Box::new(clipboard));
+        }
+    }
+
     /// Sets the default built-in theming to be ignored.
     pub fn ignore_default_theme(mut self) -> Self {
         self.cx.context().ignore_default_theme = true;
@@ -393,6 +443,20 @@ impl ApplicationHandler<UserEvent> for Application {
             let main_window: Arc<winit::window::Window> = self
                 .create_window(event_loop, Entity::root(), &self.window_description.clone(), None)
                 .expect("failed to create initial window");
+
+            #[cfg(all(
+                feature = "clipboard",
+                feature = "wayland",
+                any(
+                    target_os = "linux",
+                    target_os = "dragonfly",
+                    target_os = "freebsd",
+                    target_os = "netbsd",
+                    target_os = "openbsd"
+                )
+            ))]
+            self.init_wayland_clipboard(&main_window);
+
             let custom_cursors = Arc::new(load_default_cursors(event_loop));
             self.cx.add_main_window(
                 Entity::root(),

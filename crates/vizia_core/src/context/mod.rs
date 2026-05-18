@@ -24,8 +24,22 @@ use std::{
 use vizia_id::IdManager;
 use vizia_window::WindowDescription;
 
+#[cfg(all(
+    feature = "clipboard",
+    not(all(
+        any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd"
+        ),
+        feature = "wayland",
+    ))
+))]
+use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
-use copypasta::{ClipboardContext, ClipboardProvider, nop_clipboard::NopClipboardContext};
+use copypasta::{ClipboardProvider, nop_clipboard::NopClipboardContext};
 use hashbrown::{HashMap, HashSet, hash_map::Entry};
 
 pub use access::*;
@@ -57,6 +71,41 @@ static DEFAULT_TRANSLATION_EN_US: &str =
 type Views = HashMap<Entity, Box<dyn ViewHandler>>;
 type Models = HashMap<Entity, HashMap<TypeId, Box<dyn ModelData>>>;
 type Bindings = HashMap<Entity, Box<dyn BindingHandler>>;
+
+#[cfg(feature = "clipboard")]
+fn default_clipboard_provider() -> Box<dyn ClipboardProvider> {
+    #[cfg(all(
+        any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd"
+        ),
+        feature = "wayland"
+    ))]
+    {
+        Box::new(NopClipboardContext::new().unwrap())
+    }
+
+    #[cfg(not(all(
+        any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd"
+        ),
+        feature = "wayland",
+    )))]
+    {
+        if let Ok(context) = ClipboardContext::new() {
+            Box::new(context)
+        } else {
+            Box::new(NopClipboardContext::new().unwrap())
+        }
+    }
+}
 
 thread_local! {
     /// Entities for `Binding` views that need to be rebuilt because a reactive signal changed.
@@ -198,13 +247,7 @@ impl Context {
             event_proxy: None,
 
             #[cfg(feature = "clipboard")]
-            clipboard: {
-                if let Ok(context) = ClipboardContext::new() {
-                    Box::new(context)
-                } else {
-                    Box::new(NopClipboardContext::new().unwrap())
-                }
-            },
+            clipboard: default_clipboard_provider(),
             click_time: Instant::now(),
             clicks: 0,
             click_pos: (0.0, 0.0),
