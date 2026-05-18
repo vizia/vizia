@@ -165,7 +165,7 @@ impl WinState {
 
     fn image_bounds(&self) -> BoundingBox {
         let (w, h) = self.inner_size.into();
-        BoundingBox { x: 0.0, y: 0.0, w: w as f32, h: h as f32 }
+        BoundingBox { x: 0.0, y: 0.0, w, h }
     }
 }
 
