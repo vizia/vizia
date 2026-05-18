@@ -262,10 +262,16 @@ impl WinState {
                 vulkano::format::Format::R8G8B8A8_UNORM => {
                     (Format::R8G8B8A8_UNORM, ColorType::RGBA8888)
                 }
+                vulkano::format::Format::R8G8B8A8_SRGB => {
+                    (Format::R8G8B8A8_SRGB, ColorType::RGBA8888)
+                }
                 vulkano::format::Format::B8G8R8A8_UNORM => {
                     (Format::B8G8R8A8_UNORM, ColorType::BGRA8888)
                 }
-                _ => unimplemented!(),
+                vulkano::format::Format::B8G8R8A8_SRGB => {
+                    (Format::B8G8R8A8_SRGB, ColorType::BGRA8888)
+                }
+                format => panic!("unsupported swapchain image format for skia surface: {format:?}"),
             };
 
             let mut image_info = ImageInfo::default();
