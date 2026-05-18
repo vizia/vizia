@@ -208,6 +208,12 @@ impl<'a> KeyframeBuilder<'a> {
         self
     }
 
+    pub fn letter_spacing(mut self, val: impl Into<LetterSpacing>) -> Self {
+        self.properties.push(Property::LetterSpacing(val.into()));
+
+        self
+    }
+
     pub fn caret_color(mut self, val: impl Into<Color>) -> Self {
         self.properties.push(Property::CaretColor(val.into()));
 

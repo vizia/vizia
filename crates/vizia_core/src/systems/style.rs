@@ -435,6 +435,7 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context, redraw_entities: &mut 
 
             if cx.style.font_color.inherit_inline(entity, parent)
                 | cx.style.font_size.inherit_inline(entity, parent)
+                | cx.style.letter_spacing.inherit_inline(entity, parent)
                 | cx.style.line_height.inherit_inline(entity, parent)
                 | cx.style.font_family.inherit_inline(entity, parent)
                 | cx.style.font_weight.inherit_inline(entity, parent)
@@ -461,6 +462,7 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context, redraw_entities: &mut 
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
             if cx.style.font_color.inherit_shared(entity, parent)
                 | cx.style.font_size.inherit_shared(entity, parent)
+                | cx.style.letter_spacing.inherit_shared(entity, parent)
                 | cx.style.line_height.inherit_shared(entity, parent)
                 | cx.style.font_family.inherit_shared(entity, parent)
                 | cx.style.font_weight.inherit_shared(entity, parent)
@@ -550,6 +552,20 @@ fn link_variable_data(
         }
     }
 
+    // -- Letter-spacing variables --
+    let resolved_letter_spacings: HashMap<u64, _> = {
+        let props = &style.custom_letter_spacing_props;
+        props
+            .iter()
+            .filter_map(|(h, p)| p.get_with_variables(entity, props).map(|v| (*h, v)))
+            .collect()
+    };
+    for prop in style.custom_letter_spacing_props.values_mut() {
+        if prop.link_with_resolved(entity, matched_rules, &resolved_letter_spacings) {
+            redraw_entities.push(entity);
+        }
+    }
+
     // -- Line-height variables --
     let resolved_line_heights: HashMap<u64, _> = {
         let props = &style.custom_line_height_props;
@@ -611,6 +627,11 @@ fn inherit_variable_data(
                 }
             }
             for prop in style.custom_font_size_props.values_mut() {
+                if prop.inherit_shared(entity, parent) {
+                    redraw_entities.push(entity);
+                }
+            }
+            for prop in style.custom_letter_spacing_props.values_mut() {
                 if prop.inherit_shared(entity, parent) {
                     redraw_entities.push(entity);
                 }
@@ -916,6 +937,12 @@ fn link_style_data(
     }
 
     if style.font_size.link(entity, matched_rules, &style.custom_font_size_props) {
+        should_relayout = true;
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.letter_spacing.link(entity, matched_rules, &style.custom_letter_spacing_props) {
         should_relayout = true;
         should_redraw = true;
         should_reflow = true;

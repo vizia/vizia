@@ -393,6 +393,16 @@ fn add_block(
                 .unwrap_or(16.0);
             text_style.set_font_size(font_size * style.scale_factor());
 
+            if let Some(letter_spacing) =
+                style.letter_spacing.get_resolved(entity, &style.custom_letter_spacing_props)
+            {
+                let spacing = match letter_spacing {
+                    LetterSpacing::Normal => 0.0,
+                    LetterSpacing::Length(length) => length.to_px().unwrap_or(0.0),
+                };
+                text_style.set_letter_spacing(spacing * style.scale_factor());
+            }
+
             if let Some(line_height) =
                 style.line_height.get_resolved(entity, &style.custom_line_height_props)
             {

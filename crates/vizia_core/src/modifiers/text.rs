@@ -121,6 +121,19 @@ pub trait TextModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets the letter spacing of the view text.
+    fn letter_spacing<U: Into<LetterSpacing>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, move |cx| {
+            value.set_or_bind(cx, move |cx, v| {
+                cx.style.letter_spacing.insert(entity, v.get_value(cx).into());
+                cx.style.needs_text_update(entity);
+            });
+        });
+        self
+    }
+
     modifier!(
         /// Sets the ext caret color of the view.
         caret_color,

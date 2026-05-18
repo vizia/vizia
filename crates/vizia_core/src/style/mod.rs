@@ -76,10 +76,11 @@ pub use vizia_style::{
     CornerShape, CssRule, CursorIcon, Direction, Display, Filter, FontFamily, FontSize,
     FontSizeKeyword, FontSlant, FontVariation, FontWeight, FontWeightKeyword, FontWidth,
     GenericFontFamily, Gradient, HorizontalPosition, HorizontalPositionKeyword, LayoutWrap, Length,
-    LengthOrPercentage, LengthValue, LineClamp, LineDirection, LineHeight, LinearGradient, Matrix,
-    Opacity, Overflow, PointerEvents, Position, PositionType, RGBA, Scale, Shadow, TextAlign,
-    TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform,
-    Transition, Translate, VerticalPosition, VerticalPositionKeyword, Visibility,
+    LengthOrPercentage, LengthValue, LetterSpacing, LineClamp, LineDirection, LineHeight,
+    LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position, PositionType, RGBA, Scale,
+    Shadow, TextAlign, TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke,
+    TextStrokeStyle, Transform, Transition, Translate, VerticalPosition, VerticalPositionKeyword,
+    Visibility,
 };
 
 use cssparser::Token as CssToken;
@@ -302,6 +303,7 @@ pub struct Style {
     pub(crate) text: SparseSet<String>,
     pub(crate) text_wrap: StyleSet<bool>,
     pub(crate) text_overflow: StyleSet<TextOverflow>,
+    pub(crate) letter_spacing: AnimatableVarSet<LetterSpacing>,
     pub(crate) line_height: AnimatableVarSet<LineHeight>,
     pub(crate) line_clamp: StyleSet<LineClamp>,
     pub(crate) text_align: StyleSet<TextAlign>,
@@ -403,6 +405,7 @@ pub struct Style {
     pub(crate) custom_color_props: HashMap<u64, AnimatableVarSet<Color>>,
     pub(crate) custom_length_props: HashMap<u64, AnimatableVarSet<LengthOrPercentage>>,
     pub(crate) custom_font_size_props: HashMap<u64, AnimatableVarSet<FontSize>>,
+    pub(crate) custom_letter_spacing_props: HashMap<u64, AnimatableVarSet<LetterSpacing>>,
     pub(crate) custom_line_height_props: HashMap<u64, AnimatableVarSet<LineHeight>>,
     pub(crate) custom_units_props: HashMap<u64, AnimatableVarSet<Units>>,
     pub(crate) custom_opacity_props: HashMap<u64, AnimatableVarSet<Opacity>>,
@@ -618,6 +621,10 @@ impl Style {
                     insert_keyframe2(&mut self.font_size, animation_id, time, value.clone());
                 }
 
+                Property::LetterSpacing(value) => {
+                    insert_keyframe2(&mut self.letter_spacing, animation_id, time, value.clone());
+                }
+
                 Property::LineHeight(value) => {
                     insert_keyframe2(&mut self.line_height, animation_id, time, value.clone());
                 }
@@ -812,6 +819,7 @@ impl Style {
 
         self.font_color.play_animation(entity, animation, start_time, duration, delay);
         self.font_size.play_animation(entity, animation, start_time, duration, delay);
+        self.letter_spacing.play_animation(entity, animation, start_time, duration, delay);
         self.line_height.play_animation(entity, animation, start_time, duration, delay);
         self.caret_color.play_animation(entity, animation, start_time, duration, delay);
         self.selection_color.play_animation(entity, animation, start_time, duration, delay);
@@ -857,6 +865,10 @@ impl Style {
         for store in self.custom_font_size_props.values_mut() {
             store.play_animation(entity, animation, start_time, duration, delay);
         }
+        // Play animations on custom letter-spacing properties
+        for store in self.custom_letter_spacing_props.values_mut() {
+            store.play_animation(entity, animation, start_time, duration, delay);
+        }
         // Play animations on custom line-height properties
         for store in self.custom_line_height_props.values_mut() {
             store.play_animation(entity, animation, start_time, duration, delay);
@@ -899,6 +911,7 @@ impl Style {
             | self.shadow.has_active_animation(entity, animation)
             | self.font_color.has_active_animation(entity, animation)
             | self.font_size.has_active_animation(entity, animation)
+            | self.letter_spacing.has_active_animation(entity, animation)
             | self.line_height.has_active_animation(entity, animation)
             | self.caret_color.has_active_animation(entity, animation)
             | self.selection_color.has_active_animation(entity, animation)
@@ -1141,6 +1154,11 @@ impl Style {
                 self.font_size.insert_transition(rule_id, animation);
             }
 
+            "letter-spacing" => {
+                self.letter_spacing.insert_animation(animation, self.add_transition(transition));
+                self.letter_spacing.insert_transition(rule_id, animation);
+            }
+
             "line-height" => {
                 self.line_height.insert_animation(animation, self.add_transition(transition));
                 self.line_height.insert_transition(rule_id, animation);
@@ -1286,6 +1304,8 @@ impl Style {
                 let anim_length: AnimationState<LengthOrPercentage> =
                     self.add_transition(transition);
                 let anim_font_size: AnimationState<FontSize> = self.add_transition(transition);
+                let anim_letter_spacing: AnimationState<LetterSpacing> =
+                    self.add_transition(transition);
                 let anim_line_height: AnimationState<LineHeight> = self.add_transition(transition);
                 let anim_units: AnimationState<Units> = self.add_transition(transition);
                 let anim_opacity: AnimationState<Opacity> = self.add_transition(transition);
@@ -1320,6 +1340,16 @@ impl Style {
                     store.insert_animation(animation, anim_font_size);
                     store.insert_transition(rule_id, animation);
                     self.custom_font_size_props.insert(variable_name_hash, store);
+                }
+
+                if let Some(store) = self.custom_letter_spacing_props.get_mut(&variable_name_hash) {
+                    store.insert_animation(animation, anim_letter_spacing);
+                    store.insert_transition(rule_id, animation);
+                } else {
+                    let mut store = AnimatableVarSet::default();
+                    store.insert_animation(animation, anim_letter_spacing);
+                    store.insert_transition(rule_id, animation);
+                    self.custom_letter_spacing_props.insert(variable_name_hash, store);
                 }
 
                 if let Some(store) = self.custom_line_height_props.get_mut(&variable_name_hash) {
@@ -1397,6 +1427,24 @@ impl Style {
                     if unit.as_ref().eq_ignore_ascii_case("px") =>
                 {
                     Some(FontSize(Length::Value(LengthValue::Px(*value))))
+                }
+
+                _ => None,
+            }
+        }
+
+        fn letter_spacing_fallback(var: &Variable<'_>) -> Option<LetterSpacing> {
+            match first_fallback_token(var) {
+                Some(TokenOrValue::Token(CssToken::Dimension { value, unit, .. }))
+                    if unit.as_ref().eq_ignore_ascii_case("px") =>
+                {
+                    Some(LetterSpacing::Length(Length::Value(LengthValue::Px(*value))))
+                }
+
+                Some(TokenOrValue::Token(CssToken::Ident(ident)))
+                    if ident.as_ref().eq_ignore_ascii_case("normal") =>
+                {
+                    Some(LetterSpacing::Normal)
                 }
 
                 _ => None,
@@ -1870,6 +1918,11 @@ impl Style {
                 self.font_size.insert_rule(rule_id, font_size);
             }
 
+            // Letter Spacing
+            Property::LetterSpacing(letter_spacing) => {
+                self.letter_spacing.insert_rule(rule_id, letter_spacing);
+            }
+
             // Font Weight
             Property::FontWeight(font_weight) => {
                 self.font_weight.insert_rule(rule_id, font_weight);
@@ -2080,6 +2133,17 @@ impl Style {
                         }
                     };
                 }
+                macro_rules! parse_letter_spacing_var {
+                    ($prop:expr) => {
+                        if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
+                            $prop.insert_variable_rule(
+                                rule_id,
+                                variable_hash(var),
+                                letter_spacing_fallback(var),
+                            );
+                        }
+                    };
+                }
                 macro_rules! parse_line_height_var {
                     ($prop:expr) => {
                         if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
@@ -2110,6 +2174,7 @@ impl Style {
                     "fill" => parse_color_var!(self.fill),
                     "text-decoration-color" => parse_color_var!(self.text_decoration_color),
                     "font-size" => parse_font_size_var!(self.font_size),
+                    "letter-spacing" => parse_letter_spacing_var!(self.letter_spacing),
                     "line-height" => parse_line_height_var!(self.line_height),
                     "corner-radius" => parse_length_var!(
                         self.corner_top_left_radius,
@@ -2272,6 +2337,19 @@ impl Style {
                                     store.insert_rule(rule_id, fs);
                                     self.custom_font_size_props.insert(variable_name_hash, store);
                                 }
+                                // Also try storing as LetterSpacing::Length
+                                let letter_spacing =
+                                    LetterSpacing::Length(Length::Value(LengthValue::Px(*value)));
+                                if let Some(store) =
+                                    self.custom_letter_spacing_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, letter_spacing);
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, letter_spacing);
+                                    self.custom_letter_spacing_props
+                                        .insert(variable_name_hash, store);
+                                }
                                 // Also try storing as LineHeight::Length
                                 let line_height =
                                     LineHeight::Length(Length::Value(LengthValue::Px(*value)));
@@ -2417,6 +2495,24 @@ impl Style {
                                 self.custom_font_size_props.insert(variable_name_hash, store);
                             }
                             if let Some(store) =
+                                self.custom_letter_spacing_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    letter_spacing_fallback(var),
+                                );
+                            } else {
+                                let mut store: AnimatableVarSet<LetterSpacing> =
+                                    AnimatableVarSet::default();
+                                store.insert_variable_rule(
+                                    rule_id,
+                                    name_hash,
+                                    letter_spacing_fallback(var),
+                                );
+                                self.custom_letter_spacing_props.insert(variable_name_hash, store);
+                            }
+                            if let Some(store) =
                                 self.custom_line_height_props.get_mut(&variable_name_hash)
                             {
                                 store.insert_variable_rule(
@@ -2519,6 +2615,17 @@ impl Style {
                                 let mut store = AnimatableVarSet::default();
                                 store.insert_rule(rule_id, line_height);
                                 self.custom_line_height_props.insert(variable_name_hash, store);
+                            }
+
+                            let letter_spacing = LetterSpacing::Normal;
+                            if let Some(store) =
+                                self.custom_letter_spacing_props.get_mut(&variable_name_hash)
+                            {
+                                store.insert_rule(rule_id, letter_spacing);
+                            } else {
+                                let mut store = AnimatableVarSet::default();
+                                store.insert_rule(rule_id, letter_spacing);
+                                self.custom_letter_spacing_props.insert(variable_name_hash, store);
                             }
                         }
                         _ => {}
@@ -2657,6 +2764,7 @@ impl Style {
         self.text.remove(entity);
         self.text_wrap.remove(entity);
         self.text_overflow.remove(entity);
+        self.letter_spacing.remove(entity);
         self.line_height.remove(entity);
         self.line_clamp.remove(entity);
         self.text_align.remove(entity);
@@ -2744,6 +2852,9 @@ impl Style {
             store.remove(entity);
         }
         for store in self.custom_font_size_props.values_mut() {
+            store.remove(entity);
+        }
+        for store in self.custom_letter_spacing_props.values_mut() {
             store.remove(entity);
         }
         for store in self.custom_line_height_props.values_mut() {
@@ -2910,6 +3021,7 @@ impl Style {
         // Text and Font
         self.text_wrap.clear_rules();
         self.text_overflow.clear_rules();
+        self.letter_spacing.clear_rules();
         self.line_height.clear_rules();
         self.line_clamp.clear_rules();
         self.text_align.clear_rules();
@@ -2950,6 +3062,11 @@ impl Style {
             store.clear_rules();
         }
         self.custom_font_size_props
+            .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
+        for store in self.custom_letter_spacing_props.values_mut() {
+            store.clear_rules();
+        }
+        self.custom_letter_spacing_props
             .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
         for store in self.custom_line_height_props.values_mut() {
             store.clear_rules();
