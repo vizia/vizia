@@ -54,6 +54,7 @@ pub(super) struct WinState {
 
     sync_interval: u32,
     present_flags: DXGI_PRESENT,
+    full_present_pending: bool,
 
     inner_size: PhysicalSize<u32>,
     buffer_size: PhysicalSize<u32>,
@@ -112,6 +113,7 @@ impl WinState {
 
             sync_interval,
             present_flags,
+            full_present_pending: true,
 
             inner_size,
             buffer_size,
@@ -199,6 +201,13 @@ impl DrawSurface for WinState {
             return;
         }
 
+        let mut rects = [RECT {
+            left: dirty_rect.left() as i32,
+            top: dirty_rect.top() as i32,
+            right: dirty_rect.right() as i32,
+            bottom: dirty_rect.bottom() as i32,
+        }];
+
         let index = self.current_surface_index();
         let (surface, _) = &mut self.surfaces[index];
 
@@ -207,10 +216,28 @@ impl DrawSurface for WinState {
 
             self.direct_context.flush_and_submit_surface(surface, None);
 
-            let hr = self.swap_chain.Present(self.sync_interval, self.present_flags);
+            let mut present_parameters = DXGI_PRESENT_PARAMETERS {
+                DirtyRectsCount: 1,
+                pDirtyRects: rects.as_mut_ptr(),
+                pScrollRect: std::ptr::null_mut(),
+                pScrollOffset: std::ptr::null_mut(),
+            };
+
+            if self.full_present_pending {
+                present_parameters.DirtyRectsCount = 0;
+                present_parameters.pDirtyRects = std::ptr::null_mut();
+            }
+
+            let hr = self.swap_chain.Present1(
+                self.sync_interval,
+                self.present_flags,
+                &present_parameters,
+            );
             if hr.is_err() {
                 // Log device errors but don't panic - the device may recover
                 eprintln!("Failed to present frame: {:?}", hr);
+            } else {
+                self.full_present_pending = false;
             }
         }
     }
@@ -236,6 +263,7 @@ impl DrawSurface for WinState {
         }
 
         self.inner_size = size;
+        self.full_present_pending = true;
 
         // We only need to resize the buffers if the inner size is larger than the buffer size.
 
