@@ -271,6 +271,18 @@ impl WinState {
                 vulkano::format::Format::B8G8R8A8_SRGB => {
                     (Format::B8G8R8A8_SRGB, ColorType::BGRA8888)
                 }
+                vulkano::format::Format::A2B10G10R10_UNORM_PACK32 => {
+                    (Format::A2B10G10R10_UNORM_PACK32, ColorType::RGBA1010102)
+                }
+                vulkano::format::Format::A2B10G10R10_UINT_PACK32 => {
+                    (Format::A2B10G10R10_UINT_PACK32, ColorType::RGBA1010102)
+                }
+                vulkano::format::Format::A2R10G10B10_UNORM_PACK32 => {
+                    (Format::A2R10G10B10_UNORM_PACK32, ColorType::BGRA1010102)
+                }
+                vulkano::format::Format::A2R10G10B10_UINT_PACK32 => {
+                    (Format::A2R10G10B10_UINT_PACK32, ColorType::BGRA1010102)
+                }
                 format => panic!("unsupported swapchain image format for skia surface: {format:?}"),
             };
 
