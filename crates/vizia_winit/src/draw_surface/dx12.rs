@@ -253,13 +253,6 @@ impl DrawSurface for WinState {
 
         self.inner_size = size;
 
-        // Flush, submit, and block until the GPU is idle before releasing D3D12 buffer
-        // references. Without a CPU sync, ResizeBuffers may fail with DXGI_ERROR_INVALID_CALL
-        // because the GPU is still reading from the back buffers.
-        self.direct_context.flush_submit_and_sync_cpu();
-        self.direct_context.free_gpu_resources();
-        self.surfaces.clear();
-
         // Re-use the same flags the swap chain was created with.
         let mut flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
         if (self.present_flags & DXGI_PRESENT_ALLOW_TEARING) != DXGI_PRESENT(0) {
@@ -281,13 +274,12 @@ impl DrawSurface for WinState {
             self.surfaces.clear();
 
             unsafe {
-                self.swap_chain
-                    .ResizeBuffers(
+                self.swap_chain.ResizeBuffers(
                         BUFFER_COUNT,
                         self.buffer_size.width,
                         self.buffer_size.height,
                         DXGI_FORMAT_R8G8B8A8_UNORM,
-                        Default::default(),
+                        flags,
                     )
                     .unwrap();
             }
