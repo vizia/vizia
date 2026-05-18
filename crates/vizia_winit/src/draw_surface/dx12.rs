@@ -199,13 +199,6 @@ impl DrawSurface for WinState {
             return;
         }
 
-        let mut rects = [RECT {
-            left: dirty_rect.left() as i32,
-            top: dirty_rect.top() as i32,
-            right: dirty_rect.right() as i32,
-            bottom: dirty_rect.bottom() as i32,
-        }];
-
         let index = self.current_surface_index();
         let (surface, _) = &mut self.surfaces[index];
 
@@ -214,16 +207,7 @@ impl DrawSurface for WinState {
 
             self.direct_context.flush_and_submit_surface(surface, None);
 
-            let hr = self.swap_chain.Present1(
-                self.sync_interval,
-                self.present_flags,
-                &DXGI_PRESENT_PARAMETERS {
-                    DirtyRectsCount: 1,
-                    pDirtyRects: rects.as_mut_ptr(),
-                    pScrollRect: std::ptr::null_mut(),
-                    pScrollOffset: std::ptr::null_mut(),
-                },
-            );
+            let hr = self.swap_chain.Present(self.sync_interval, self.present_flags);
             if hr.is_err() {
                 // Log device errors but don't panic - the device may recover
                 eprintln!("Failed to present frame: {:?}", hr);
