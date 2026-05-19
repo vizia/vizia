@@ -2,9 +2,23 @@ use crate::{context::SIGNAL_REBUILDS, prelude::*};
 use hashbrown::HashSet;
 
 pub(crate) fn binding_system(cx: &mut Context) {
-    // Drain reactive signal rebuild requests queued by `Binding` updater effects.
-    let signal_rebuilds =
-        SIGNAL_REBUILDS.with_borrow_mut(|set| set.drain().collect::<HashSet<_>>());
+    // Drain reactive signal rebuild requests queued by `Binding` updater effects,
+    // but only consume entries for this context. Leave other contexts' entries queued.
+    let signal_rebuilds = SIGNAL_REBUILDS.with_borrow_mut(|set| {
+        let mut ours = HashSet::new();
+        let mut keep = HashSet::new();
+
+        for rebuild in set.drain() {
+            if rebuild.context_id == cx.context_id {
+                ours.insert(rebuild.entity);
+            } else {
+                keep.insert(rebuild);
+            }
+        }
+
+        *set = keep;
+        ours
+    });
 
     if !signal_rebuilds.is_empty() {
         // Update bindings in tree order to ensure parents are updated before children.
