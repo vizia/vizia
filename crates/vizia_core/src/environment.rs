@@ -23,9 +23,9 @@ use crate::{context::EventContext, events::Event};
 /// A model for system specific state which can be accessed by any model or view.
 pub struct Environment {
     /// The locale used for localization.
-    pub locale: Signal<LanguageIdentifier>,
+    pub locale: SyncSignal<LanguageIdentifier>,
     /// The text and layout direction used by the application.
-    pub direction: Signal<Direction>,
+    pub direction: SyncSignal<Direction>,
     /// The maximum interval between two clicks to be recognised as a double-click.
     pub double_click_interval: Duration,
     /// The delay before a tooltip fades in.
@@ -37,7 +37,7 @@ pub struct Environment {
     /// The timer used to blink the caret of a textbox.
     pub(crate) caret_timer: Timer,
     /// The distance the mouse has to be dragged to start a drag operation.
-    pub drag_distance: Signal<u32>,
+    pub drag_distance: SyncSignal<u32>,
 }
 
 fn direction_from_locale(locale: &LanguageIdentifier) -> Direction {
@@ -85,14 +85,14 @@ impl Environment {
         });
         let direction = direction_from_locale(&locale);
         Self {
-            locale: Signal::new(locale.clone()),
-            direction: Signal::new(direction),
+            locale: SyncSignal::new(locale.clone()),
+            direction: SyncSignal::new(direction),
             double_click_interval: Duration::from_millis(500),
             tooltip_delay: Duration::from_millis(1500),
             theme_mode: ThemeMode::default(),
             system_theme_mode: detect_theme(),
             caret_timer,
-            drag_distance: Signal::new(4),
+            drag_distance: SyncSignal::new(4),
         }
     }
 
