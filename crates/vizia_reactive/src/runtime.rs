@@ -27,19 +27,20 @@ thread_local! {
 pub static RUNTIME: Runtime = Runtime::new();
 }
 
-static UI_THREAD_REGISTRY: OnceLock<Mutex<HashMap<ThreadId, usize>>> = OnceLock::new();
+static UI_THREAD_REGISTRY: OnceLock<Mutex<HashSet<ThreadId>>> = OnceLock::new();
 #[cfg(debug_assertions)]
 static UI_THREAD_SET_LOCATION: OnceLock<
     Mutex<HashMap<ThreadId, &'static std::panic::Location<'static>>>,
 > = OnceLock::new();
 static ENFORCE_UI_THREAD: AtomicBool = AtomicBool::new(false);
 
-fn ui_thread_registry() -> &'static Mutex<HashMap<ThreadId, usize>> {
-    UI_THREAD_REGISTRY.get_or_init(|| Mutex::new(HashMap::new()))
+fn ui_thread_registry() -> &'static Mutex<HashSet<ThreadId>> {
+    UI_THREAD_REGISTRY.get_or_init(|| Mutex::new(HashSet::new()))
 }
 
 #[cfg(debug_assertions)]
-fn ui_thread_locations() -> &'static Mutex<HashMap<ThreadId, &'static std::panic::Location<'static>>> {
+fn ui_thread_locations() -> &'static Mutex<HashMap<ThreadId, &'static std::panic::Location<'static>>>
+{
     UI_THREAD_SET_LOCATION.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
@@ -88,7 +89,7 @@ impl Runtime {
         let current = thread::current().id();
         {
             let mut registry = ui_thread_registry().lock().unwrap_or_else(|e| e.into_inner());
-            *registry.entry(current).or_insert(0) += 1;
+            registry.insert(current);
         }
         #[cfg(debug_assertions)]
         {
@@ -106,17 +107,12 @@ impl Runtime {
         let current = thread::current().id();
         let mut registry = ui_thread_registry().lock().unwrap_or_else(|e| e.into_inner());
 
-        if let Some(count) = registry.get_mut(&current) {
-            if *count > 1 {
-                *count -= 1;
-            } else {
-                registry.remove(&current);
-                #[cfg(debug_assertions)]
-                {
-                    let mut locations =
-                        ui_thread_locations().lock().unwrap_or_else(|e| e.into_inner());
-                    locations.remove(&current);
-                }
+        if registry.remove(&current) {
+            #[cfg(debug_assertions)]
+            {
+                let mut locations =
+                    ui_thread_locations().lock().unwrap_or_else(|e| e.into_inner());
+                locations.remove(&current);
             }
         }
 
@@ -133,13 +129,13 @@ impl Runtime {
 
         let current = thread::current().id();
         let registry = ui_thread_registry().lock().unwrap_or_else(|e| e.into_inner());
-        if !registry.contains_key(&current) {
+        if !registry.contains(&current) {
             #[cfg(debug_assertions)]
             {
                 let caller = std::panic::Location::caller();
                 let locations = ui_thread_locations().lock().unwrap_or_else(|e| e.into_inner());
                 let expected = registry
-                    .keys()
+                    .iter()
                     .map(|id| {
                         let set_info = locations
                             .get(id)
@@ -174,7 +170,7 @@ impl Runtime {
             ui_thread_registry()
                 .lock()
                 .unwrap_or_else(|e| e.into_inner())
-                .contains_key(&thread::current().id())
+                .contains(&thread::current().id())
         }
     }
 

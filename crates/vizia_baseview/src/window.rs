@@ -240,6 +240,9 @@ impl ViziaWindow {
 
 impl WindowHandler for ViziaWindow {
     fn on_frame(&mut self, window: &mut Window) {
+        // Some hosts dispatch baseview callbacks from a different UI thread than
+        // window construction; ensure this callback thread is registered.
+        Runtime::init_on_ui_thread();
         self.application.on_frame_update(window);
 
         // Run the embedder's idle callback on every frame tick, not only after
@@ -257,6 +260,9 @@ impl WindowHandler for ViziaWindow {
     }
 
     fn on_event(&mut self, window: &mut Window<'_>, event: Event) -> EventStatus {
+        // Some hosts dispatch baseview callbacks from a different UI thread than
+        // window construction; ensure this callback thread is registered.
+        Runtime::init_on_ui_thread();
         let mut should_quit = false;
 
         // If a text input currently holds focus, a native keyboard event is
