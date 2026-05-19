@@ -169,6 +169,7 @@ impl ViziaWindow {
             parent,
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
+                Runtime::init_on_ui_thread();
                 let mut cx = Context::new();
 
                 cx.ignore_default_theme = ignore_default_theme;
@@ -216,6 +217,7 @@ impl ViziaWindow {
         Window::open_blocking(
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
+                Runtime::init_on_ui_thread();
                 let mut cx = Context::new();
 
                 cx.ignore_default_theme = ignore_default_theme;
