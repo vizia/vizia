@@ -279,6 +279,12 @@ impl WindowHandler for ViziaWindow {
     }
 }
 
+impl Drop for ViziaWindow {
+    fn drop(&mut self) {
+        Runtime::deinit_on_ui_thread();
+    }
+}
+
 pub struct WindowView {}
 
 impl View for WindowView {}

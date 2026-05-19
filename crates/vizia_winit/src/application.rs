@@ -883,7 +883,9 @@ impl ApplicationHandler<UserEvent> for Application {
         self.cx.emit_scheduled_events();
     }
 
-    fn exiting(&mut self, _event_loop: &ActiveEventLoop) {}
+    fn exiting(&mut self, _event_loop: &ActiveEventLoop) {
+        Runtime::deinit_on_ui_thread();
+    }
 }
 
 impl WindowModifiers for Application {
