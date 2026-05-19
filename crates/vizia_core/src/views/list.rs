@@ -2,7 +2,7 @@ use std::{collections::BTreeSet, ops::Deref, rc::Rc};
 use vizia_reactive::{Scope, SignalGet, SignalWith, UpdaterEffect};
 
 use crate::prelude::*;
-use crate::{binding::BindingHandler, context::SIGNAL_REBUILDS};
+use crate::{binding::BindingHandler, context::SIGNAL_REBUILDS, context::SignalRebuild};
 
 /// Represents how items can be selected in a list.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -103,6 +103,7 @@ impl<T: PartialEq + Clone + 'static> ListItemsBinding<T> {
         V: Deref<Target = [T]> + Clone + 'static,
     {
         let entity = cx.entity_manager.create();
+        let context_id = cx.context_id;
         cx.tree.add(entity, cx.current()).expect("Failed to add to tree");
         cx.tree.set_ignored(entity, true);
 
@@ -112,7 +113,7 @@ impl<T: PartialEq + Clone + 'static> ListItemsBinding<T> {
                 move || list.with(|list| list.deref().to_vec()),
                 move |_new_value| {
                     SIGNAL_REBUILDS.with_borrow_mut(|set| {
-                        set.insert(entity);
+                        set.insert(SignalRebuild { context_id, entity });
                     });
                 },
             )

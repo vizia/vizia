@@ -1,6 +1,8 @@
 use vizia_reactive::{Scope, SignalGet, UpdaterEffect};
 
-use crate::{binding::BindingHandler, context::SIGNAL_REBUILDS, prelude::*};
+use crate::{
+    binding::BindingHandler, context::SIGNAL_REBUILDS, context::SignalRebuild, prelude::*,
+};
 
 /// A binding view that observes a reactive [`vizia_reactive`] signal and rebuilds its
 /// contents whenever the signal value changes.
@@ -49,6 +51,7 @@ impl<T: 'static + Clone> Binding<T> {
         F: 'static + Fn(&mut Context),
     {
         let entity = cx.entity_manager.create();
+        let context_id = cx.context_id;
         cx.tree.add(entity, cx.current()).expect("Failed to add to tree");
         cx.tree.set_ignored(entity, true);
 
@@ -61,7 +64,7 @@ impl<T: 'static + Clone> Binding<T> {
                 move || signal.get(),
                 move |_new_value| {
                     SIGNAL_REBUILDS.with_borrow_mut(|set| {
-                        set.insert(entity);
+                        set.insert(SignalRebuild { context_id, entity });
                     });
                 },
             )

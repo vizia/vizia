@@ -17,6 +17,7 @@ use std::cell::RefCell;
 use std::collections::{BinaryHeap, VecDeque};
 use std::rc::Rc;
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::{
     any::{Any, TypeId},
     sync::Arc,
@@ -58,10 +59,18 @@ type Views = HashMap<Entity, Box<dyn ViewHandler>>;
 type Models = HashMap<Entity, HashMap<TypeId, Box<dyn ModelData>>>;
 type Bindings = HashMap<Entity, Box<dyn BindingHandler>>;
 
+static NEXT_CONTEXT_ID: AtomicU64 = AtomicU64::new(1);
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub(crate) struct SignalRebuild {
+    pub(crate) context_id: u64,
+    pub(crate) entity: Entity,
+}
+
 thread_local! {
     /// Entities for `Binding` views that need to be rebuilt because a reactive signal changed.
-    /// Signal effects push to this set; the binding system drains it each frame.
-    pub(crate) static SIGNAL_REBUILDS: RefCell<HashSet<Entity>> = RefCell::new(HashSet::new());
+    /// Signal effects push to this set; the binding system drains matching context entries each frame.
+    pub(crate) static SIGNAL_REBUILDS: RefCell<HashSet<SignalRebuild>> = RefCell::new(HashSet::new());
 }
 
 #[derive(Default, Clone)]
@@ -80,6 +89,7 @@ pub struct WindowState {
 
 /// The main storage and control object for a Vizia application.
 pub struct Context {
+    pub(crate) context_id: u64,
     pub(crate) entity_manager: IdManager<Entity>,
     pub(crate) entity_identifiers: HashMap<String, Entity>,
     pub tree: Tree<Entity>,
@@ -147,6 +157,7 @@ impl Context {
         cache.add(Entity::root());
 
         let mut result = Self {
+            context_id: NEXT_CONTEXT_ID.fetch_add(1, Ordering::Relaxed),
             entity_manager: IdManager::new(),
             entity_identifiers: HashMap::new(),
             tree: Tree::new(),
