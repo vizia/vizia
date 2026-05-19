@@ -5,7 +5,7 @@ use std::{
     collections::{HashMap, HashSet},
     rc::Rc,
     sync::{
-        OnceLock,
+        Mutex, OnceLock,
         atomic::{AtomicBool, Ordering},
     },
     thread::{self, ThreadId},
@@ -27,10 +27,22 @@ thread_local! {
 pub static RUNTIME: Runtime = Runtime::new();
 }
 
-static UI_THREAD_ID: OnceLock<ThreadId> = OnceLock::new();
+static UI_THREAD_REGISTRY: OnceLock<Mutex<HashSet<ThreadId>>> = OnceLock::new();
 #[cfg(debug_assertions)]
-static UI_THREAD_SET_LOCATION: OnceLock<&'static std::panic::Location<'static>> = OnceLock::new();
+static UI_THREAD_SET_LOCATION: OnceLock<
+    Mutex<HashMap<ThreadId, &'static std::panic::Location<'static>>>,
+> = OnceLock::new();
 static ENFORCE_UI_THREAD: AtomicBool = AtomicBool::new(false);
+
+fn ui_thread_registry() -> &'static Mutex<HashSet<ThreadId>> {
+    UI_THREAD_REGISTRY.get_or_init(|| Mutex::new(HashSet::new()))
+}
+
+#[cfg(debug_assertions)]
+fn ui_thread_locations() -> &'static Mutex<HashMap<ThreadId, &'static std::panic::Location<'static>>>
+{
+    UI_THREAD_SET_LOCATION.get_or_init(|| Mutex::new(HashMap::new()))
+}
 
 /// The internal reactive Runtime which stores all the reactive system states in a
 /// thread local.
@@ -69,26 +81,43 @@ impl Runtime {
         }
     }
 
-    /// Call this once on the UI thread during initialization.
+    /// Register the current thread as a UI thread.
+    ///
+    /// Backends should call this when a UI event loop/window starts on a thread.
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn init_on_ui_thread() {
         let current = thread::current().id();
-        match UI_THREAD_ID.set(current) {
-            Ok(_) => {}
-            Err(_) => {
-                assert_eq!(
-                    UI_THREAD_ID.get(),
-                    Some(&current),
-                    "UI thread id already set to a different thread"
-                );
-            }
+        {
+            let mut registry = ui_thread_registry().lock().unwrap_or_else(|e| e.into_inner());
+            registry.insert(current);
         }
         #[cfg(debug_assertions)]
         {
             let caller = std::panic::Location::caller();
-            let _ = UI_THREAD_SET_LOCATION.set(caller);
+            let mut locations = ui_thread_locations().lock().unwrap_or_else(|e| e.into_inner());
+            locations.entry(current).or_insert(caller);
         }
         ENFORCE_UI_THREAD.store(true, Ordering::Relaxed);
+    }
+
+    /// Unregister the current thread as a UI thread.
+    ///
+    /// Backends should call this when a UI event loop/window stops on a thread.
+    pub fn deinit_on_ui_thread() {
+        let current = thread::current().id();
+        let mut registry = ui_thread_registry().lock().unwrap_or_else(|e| e.into_inner());
+
+        if registry.remove(&current) {
+            #[cfg(debug_assertions)]
+            {
+                let mut locations = ui_thread_locations().lock().unwrap_or_else(|e| e.into_inner());
+                locations.remove(&current);
+            }
+        }
+
+        if registry.is_empty() {
+            ENFORCE_UI_THREAD.store(false, Ordering::Relaxed);
+        }
     }
 
     #[cfg_attr(debug_assertions, track_caller)]
@@ -98,38 +127,37 @@ impl Runtime {
         }
 
         let current = thread::current().id();
-        match UI_THREAD_ID.get() {
-            Some(ui_id) => {
-                if *ui_id != current {
-                    #[cfg(debug_assertions)]
-                    {
-                        let caller = std::panic::Location::caller();
-                        let set_at = UI_THREAD_SET_LOCATION.get();
-                        let set_info = set_at
-                            .map(|loc| format!(" (set at {}:{})", loc.file(), loc.line()))
+        let registry = ui_thread_registry().lock().unwrap_or_else(|e| e.into_inner());
+        if !registry.contains(&current) {
+            #[cfg(debug_assertions)]
+            {
+                let caller = std::panic::Location::caller();
+                let locations = ui_thread_locations().lock().unwrap_or_else(|e| e.into_inner());
+                let expected = registry
+                    .iter()
+                    .map(|id| {
+                        let set_info = locations
+                            .get(id)
+                            .map(|loc| format!(" (registered at {}:{})", loc.file(), loc.line()))
                             .unwrap_or_default();
-                        panic!(
-                            "Unsync runtime access from non-UI thread\n  expected UI thread: {:?}{}\n  current thread: {:?}\n  caller: {}:{}",
-                            ui_id,
-                            set_info,
-                            current,
-                            caller.file(),
-                            caller.line(),
-                        );
-                    }
-                    #[cfg(not(debug_assertions))]
-                    {
-                        assert_eq!(
-                            *ui_id, current,
-                            "Unsync runtime access from non-UI thread: expected {:?}, got {:?}",
-                            ui_id, current
-                        );
-                    }
-                }
+                        format!("{:?}{}", id, set_info)
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                panic!(
+                    "Unsync runtime access from non-UI thread\n  expected one of UI threads: [{}]\n  current thread: {:?}\n  caller: {}:{}",
+                    expected,
+                    current,
+                    caller.file(),
+                    caller.line(),
+                );
             }
-            None => {
-                // Once enforcement is on, first access defines the UI thread.
-                let _ = UI_THREAD_ID.set(current);
+            #[cfg(not(debug_assertions))]
+            {
+                panic!(
+                    "Unsync runtime access from non-UI thread: current {:?} is not a registered UI thread",
+                    current
+                );
             }
         }
     }
@@ -138,7 +166,10 @@ impl Runtime {
         if !ENFORCE_UI_THREAD.load(Ordering::Relaxed) {
             true
         } else {
-            UI_THREAD_ID.get().map(|id| *id == thread::current().id()).unwrap_or(false)
+            ui_thread_registry()
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .contains(&thread::current().id())
         }
     }
 
