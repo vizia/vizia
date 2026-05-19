@@ -110,8 +110,7 @@ impl Runtime {
         if registry.remove(&current) {
             #[cfg(debug_assertions)]
             {
-                let mut locations =
-                    ui_thread_locations().lock().unwrap_or_else(|e| e.into_inner());
+                let mut locations = ui_thread_locations().lock().unwrap_or_else(|e| e.into_inner());
                 locations.remove(&current);
             }
         }
