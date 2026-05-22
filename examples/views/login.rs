@@ -1,5 +1,6 @@
 mod helpers;
 use helpers::*;
+use vizia::icons::{ICON_EYE, ICON_EYE_OFF};
 use vizia::prelude::*;
 
 const LOGIN_STYLES: &str = r#"
@@ -34,6 +35,7 @@ const LOGIN_STYLES: &str = r#"
 struct LoginData {
     username: Signal<String>,
     password: Signal<String>,
+    password_visible: Signal<bool>,
     username_error: Signal<String>,
     password_error: Signal<String>,
     can_submit: Signal<bool>,
@@ -45,6 +47,7 @@ impl LoginData {
         Self {
             username: Signal::new(String::new()),
             password: Signal::new(String::new()),
+            password_visible: Signal::new(false),
             username_error: Signal::new(String::new()),
             password_error: Signal::new(String::new()),
             can_submit: Signal::new(false),
@@ -95,6 +98,7 @@ impl LoginData {
 enum LoginEvent {
     SetUsername(String),
     SetPassword(String),
+    TogglePasswordVisible,
     Submit,
 }
 
@@ -113,6 +117,10 @@ impl Model for LoginData {
                 self.status.set(String::new());
             }
 
+            LoginEvent::TogglePasswordVisible => {
+                self.password_visible.update(|visible| *visible ^= true);
+            }
+
             LoginEvent::Submit => {
                 if self.can_submit.get() {
                     self.status.set("Login successful (demo)".to_string());
@@ -128,8 +136,15 @@ fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(LOGIN_STYLES).expect("Failed to add login stylesheet");
 
-        let &LoginData { username, password, username_error, password_error, can_submit, status } =
-            LoginData::new().build(cx);
+        let &LoginData {
+            username,
+            password,
+            password_visible,
+            username_error,
+            password_error,
+            can_submit,
+            status,
+        } = LoginData::new().build(cx);
 
         ExamplePage::vertical(cx, |cx| {
             VStack::new(cx, |cx| {
@@ -148,12 +163,31 @@ fn main() -> Result<(), ApplicationError> {
                 .gap(Pixels(4.0));
                 VStack::new(cx, |cx| {
                     Label::new(cx, "Password").height(Auto).font_weight(FontWeightKeyword::Bold);
-                    Textbox::new(cx, password)
-                        .width(Stretch(1.0))
-                        .placeholder("Enter password")
-                        .mask_char(Some('*'))
-                        .validate(|value: &String| LoginData::password_error(value).is_none())
-                        .on_edit(|cx, text| cx.emit(LoginEvent::SetPassword(text)));
+                    ZStack::new(cx, |cx| {
+                        let password_entity = Textbox::new(cx, password)
+                            .width(Stretch(1.0))
+                            .placeholder("Enter password")
+                            .mask_char(Some('*'))
+                            .validate(|value: &String| LoginData::password_error(value).is_none())
+                            .on_edit(|cx, text| cx.emit(LoginEvent::SetPassword(text)))
+                            .padding_right(Pixels(50.0))
+                            .entity();
+
+                        ToggleButton::with_contents(
+                            cx,
+                            password_visible,
+                            |cx| Svg::new(cx, ICON_EYE),
+                            |cx| Svg::new(cx, ICON_EYE_OFF),
+                        )
+                        .on_toggle(move |cx| {
+                            cx.emit(LoginEvent::TogglePasswordVisible);
+                            cx.emit_to(password_entity, TextEvent::ToggleMaskVisible);
+                        });
+                    })
+                    .width(Stretch(1.0))
+                    .height(Auto)
+                    .alignment(Alignment::Right);
+
                     Label::new(cx, password_error).class("error-text");
                 })
                 .height(Auto)
@@ -161,7 +195,7 @@ fn main() -> Result<(), ApplicationError> {
                 Button::new(cx, |cx| Label::new(cx, "Login"))
                     .width(Stretch(1.0))
                     .on_press(|cx| cx.emit(LoginEvent::Submit))
-                    .disabled(can_submit.map(|ready| !*ready));
+                    .disabled(can_submit);
 
                 Label::new(cx, status).class("status-text");
             })

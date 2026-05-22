@@ -427,7 +427,8 @@ where
                 text.insert_str(start, &clamped_preedit);
 
                 if let Some((cursor_index, _)) = cursor {
-                    let new_caret = original_selection.min() + cursor_index.min(clamped_preedit.len());
+                    let new_caret =
+                        original_selection.min() + cursor_index.min(clamped_preedit.len());
                     new_caret_grapheme = Self::byte_to_grapheme_index(text, new_caret);
                 } else {
                     // If there is no valid cursor, the default behavior is to move to the end of the text.
@@ -435,10 +436,7 @@ where
                     new_caret_grapheme = Self::byte_to_grapheme_index(text, new_caret);
                 }
 
-                self.preedit_backup
-                    .as_mut()
-                    .unwrap()
-                    .set_prev_preedit(clamped_preedit);
+                self.preedit_backup.as_mut().unwrap().set_prev_preedit(clamped_preedit);
             }
 
             self.show_placeholder.set(self.real_text.is_empty());
