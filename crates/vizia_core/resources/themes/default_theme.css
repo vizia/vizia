@@ -1030,8 +1030,10 @@ textbox {
     transition: background-color 100ms;
 }
 
-textbox:focus {
-    border-color: var(--ring);
+textbox:focus-visible {
+    outline-width: 3px;
+    outline-color: var(--ring);
+    outline-offset: 0px;
 }
 
 textbox:focus.caret {

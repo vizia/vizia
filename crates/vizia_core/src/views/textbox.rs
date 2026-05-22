@@ -9,7 +9,7 @@ use crate::text::{
 };
 use accesskit::{ActionData, ActionRequest, TextDirection, TextPosition, TextSelection};
 use skia_safe::textlayout::{RectHeightStyle, RectWidthStyle};
-use skia_safe::{Paint, PaintStyle, Rect};
+use skia_safe::{ClipOp, Paint, PaintStyle, Rect};
 use unicode_segmentation::UnicodeSegmentation;
 
 /// Events for modifying a textbox.
@@ -1257,7 +1257,7 @@ where
 
                 if cx.is_over() {
                     if !cx.is_disabled() {
-                        cx.focus_with_visibility(false);
+                        cx.focus_with_visibility(true);
                         cx.capture();
                         cx.lock_cursor_icon();
 
@@ -1662,7 +1662,7 @@ where
             TextEvent::StartEdit => {
                 if !cx.is_disabled() && !self.edit {
                     self.edit = true;
-                    cx.focus_with_visibility(false);
+                    cx.focus_with_visibility(true);
                     cx.capture();
                     self.reset_caret_timer(cx);
                     self.reset_ime_position(cx);
@@ -1736,6 +1736,13 @@ where
             }
 
             TextEvent::Blur => {
+                // Clicking outside a textbox can end editing while retaining keyboard focus
+                // (for example when clicking non-focusable chrome). Keep focus but remove
+                // the visible focus indicator for pointer-driven blur.
+                if cx.focused() == cx.current() {
+                    cx.focus_with_visibility(false);
+                }
+
                 if let Some(callback) = &self.on_blur {
                     (callback)(cx);
                 } else {
@@ -1868,7 +1875,41 @@ where
         cx.draw_background(canvas);
         cx.draw_border(canvas);
         cx.draw_outline(canvas);
+
+        // Clip only the text content to the textbox shape so long text is contained
+        // without clipping outside effects such as outlines.
         canvas.save();
+        let path = cx.path();
+        canvas.clip_path(&path, ClipOp::Intersect, true);
+
+        let bounds = cx.bounds();
+        let padding_left = match cx.padding_left() {
+            Units::Pixels(val) => val,
+            _ => 0.0,
+        };
+        let padding_right = match cx.padding_right() {
+            Units::Pixels(val) => val,
+            _ => 0.0,
+        };
+        let padding_top = match cx.padding_top() {
+            Units::Pixels(val) => val,
+            _ => 0.0,
+        };
+        let padding_bottom = match cx.padding_bottom() {
+            Units::Pixels(val) => val,
+            _ => 0.0,
+        };
+
+        let content_left = bounds.x + padding_left;
+        let content_top = bounds.y + padding_top;
+        let content_right = (bounds.x + bounds.w - padding_right).max(content_left);
+        let content_bottom = (bounds.y + bounds.h - padding_bottom).max(content_top);
+        canvas.clip_rect(
+            Rect::new(content_left, content_top, content_right, content_bottom),
+            ClipOp::Intersect,
+            true,
+        );
+
         let transform = *self.transform.borrow();
         canvas.translate((transform.0, transform.1));
         cx.draw_text(canvas);

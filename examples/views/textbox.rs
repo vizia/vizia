@@ -66,7 +66,7 @@ fn main() -> Result<(), ApplicationError> {
                     .placeholder("Password")
                     .mask_char(Some('*'))
                     .on_edit(|cx, text| cx.emit(AppEvent::SetPasswordText(text)))
-                    .padding_right(Pixels(30.0))
+                    .padding_right(Pixels(50.0))
                     .entity();
 
                 ToggleButton::with_contents(
