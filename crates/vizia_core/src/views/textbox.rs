@@ -324,10 +324,17 @@ where
             text.edit(self.selection.range(), txt);
             self.real_text.edit(real_selection.range(), txt);
 
-            self.selection = Selection::caret(self.selection.min() + txt.len());
+            // Track the caret in grapheme space so we can remap it safely after
+            // display text is regenerated (for example when masking is enabled).
+            let new_caret_grapheme =
+                Self::byte_to_grapheme_index(text, self.selection.min() + txt.len());
 
             self.show_placeholder.set(self.real_text.is_empty());
             self.sync_display_text(cx);
+            if let Some(new_display) = cx.style.text.get(cx.current) {
+                let new_caret = Self::grapheme_index_to_byte(new_display, new_caret_grapheme);
+                self.selection = Selection::caret(new_caret);
+            }
             cx.style.needs_access_update(cx.current);
         }
     }
@@ -371,10 +378,12 @@ where
                 (preedit_backup.original_selection, preedit_backup.prev_preedit.clone())
             };
 
+            let new_caret_grapheme;
+
             if prev_preedit_text == preedit_txt {
                 // Move the cursor only
-                let new_selection = Selection::caret(original_selection.min() + cursor.unwrap().0);
-                self.selection = new_selection;
+                let caret = original_selection.min() + cursor.unwrap().0;
+                new_caret_grapheme = Self::byte_to_grapheme_index(text, caret);
             } else {
                 // Bytes index
                 let start = original_selection.min();
@@ -402,11 +411,11 @@ where
 
                 if let Some((cursor_index, _)) = cursor {
                     let new_caret = original_selection.min() + cursor_index;
-                    self.selection = Selection::caret(new_caret);
+                    new_caret_grapheme = Self::byte_to_grapheme_index(text, new_caret);
                 } else {
                     // If there is no valid cursor, the default behavior is to move to the end of the text.
                     let new_caret = original_selection.min() + preedit_txt.chars().count();
-                    self.selection = Selection::caret(new_caret);
+                    new_caret_grapheme = Self::byte_to_grapheme_index(text, new_caret);
                 }
 
                 self.preedit_backup.as_mut().unwrap().set_prev_preedit(preedit_txt.to_string());
@@ -414,6 +423,10 @@ where
 
             self.show_placeholder.set(self.real_text.is_empty());
             self.sync_display_text(cx);
+            if let Some(new_display) = cx.style.text.get(cx.current) {
+                let new_caret = Self::grapheme_index_to_byte(new_display, new_caret_grapheme);
+                self.selection = Selection::caret(new_caret);
+            }
         }
     }
 
