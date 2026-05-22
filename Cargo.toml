@@ -265,6 +265,10 @@ name = "textbox"
 path = "examples/views/textbox.rs"
 
 [[example]]
+name = "login"
+path = "examples/views/login.rs"
+
+[[example]]
 name = "list"
 path = "examples/views/list.rs"
 

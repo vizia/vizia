@@ -1055,9 +1055,19 @@ textbox:disabled {
 }
 
 textbox:invalid {
-    border-color: var(--error);
-    transition: border-color 100ms;
-    border-width: 2px;
+    border-color: var(--destructive);
+    outline-width: 2px;
+    outline-color: var(--destructive);
+    outline-offset: 0px;
+    transition:
+        border-color 100ms,
+        outline-color 100ms;
+}
+
+textbox:invalid:focus-visible {
+    outline-width: 3px;
+    outline-color: var(--destructive);
+    outline-offset: 0px;
 }
 
 /* TOGGLE BUTTON */

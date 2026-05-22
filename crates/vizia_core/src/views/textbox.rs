@@ -90,6 +90,8 @@ pub struct Textbox<R, T> {
     selection: Selection,
     preedit_backup: Option<PreeditBackup>,
     text_overflow: Option<TextOverflow>,
+    edited_since_focus: bool,
+    edited_once: bool,
 }
 
 // Determines whether the enter key submits the text or inserts a new line.
@@ -201,6 +203,8 @@ where
             selection: Selection::new(0, 0),
             preedit_backup: None,
             text_overflow: None,
+            edited_since_focus: false,
+            edited_once: false,
         }
         .build(cx, move |cx| {
             cx.add_listener(move |textbox: &mut Self, cx, event| {
@@ -742,6 +746,14 @@ where
         }
 
         self.real_text.clone()
+    }
+
+    fn is_text_valid(&self, text: &str) -> bool {
+        if let Ok(value) = text.parse::<T>() {
+            if let Some(validate) = &self.validate { validate(&value) } else { true }
+        } else {
+            false
+        }
     }
 
     fn reset_caret_timer(&mut self, cx: &mut EventContext) {
@@ -1586,6 +1598,9 @@ where
                     return;
                 }
 
+                self.edited_since_focus = true;
+                self.edited_once = true;
+
                 if self.show_placeholder.get() {
                     self.reset_text(cx);
                 }
@@ -1594,15 +1609,7 @@ where
 
                 let text = self.clone_text(cx);
 
-                if let Ok(value) = &text.parse::<T>() {
-                    if let Some(validate) = &self.validate {
-                        cx.set_valid(validate(value));
-                    } else {
-                        cx.set_valid(true);
-                    }
-                } else {
-                    cx.set_valid(false);
-                }
+                cx.set_valid(self.is_text_valid(&text));
 
                 if self.edit {
                     if let Some(callback) = &self.on_edit {
@@ -1628,19 +1635,13 @@ where
 
             TextEvent::DeleteText(movement) => {
                 if self.edit {
+                    self.edited_since_focus = true;
+                    self.edited_once = true;
                     self.delete_text(cx, *movement);
 
                     let text = self.clone_text(cx);
 
-                    if let Ok(value) = &text.parse::<T>() {
-                        if let Some(validate) = &self.validate {
-                            cx.set_valid(validate(value));
-                        } else {
-                            cx.set_valid(true);
-                        }
-                    } else {
-                        cx.set_valid(false);
-                    }
+                    cx.set_valid(self.is_text_valid(&text));
 
                     if let Some(callback) = &self.on_edit {
                         (callback)(cx, text);
@@ -1662,6 +1663,7 @@ where
             TextEvent::StartEdit => {
                 if !cx.is_disabled() && !self.edit {
                     self.edit = true;
+                    self.edited_since_focus = false;
                     cx.focus_with_visibility(true);
                     cx.capture();
                     self.reset_caret_timer(cx);
@@ -1683,14 +1685,12 @@ where
                         self.select_all(cx);
                     }
 
-                    if let Ok(value) = &text.parse::<T>() {
-                        if let Some(validate) = &self.validate {
-                            cx.set_valid(validate(value));
-                        } else {
-                            cx.set_valid(true);
-                        }
+                    // Keep textbox pristine only until first user edit; once edited,
+                    // preserve validation across blur/focus cycles.
+                    if self.edited_once || !text.is_empty() {
+                        cx.set_valid(self.is_text_valid(&text));
                     } else {
-                        cx.set_valid(false);
+                        cx.set_valid(true);
                     }
                 }
 
@@ -1714,14 +1714,8 @@ where
 
                 self.select_all(cx);
 
-                if let Ok(value) = &text.parse::<T>() {
-                    if let Some(validate) = &self.validate {
-                        cx.set_valid(validate(value));
-                    } else {
-                        cx.set_valid(true);
-                    }
-                } else {
-                    cx.set_valid(false);
+                if self.edited_since_focus {
+                    cx.set_valid(self.is_text_valid(&text));
                 }
 
                 // Reset transform to 0,0
@@ -1773,11 +1767,11 @@ where
 
             TextEvent::Submit(reason) => {
                 if let Some(callback) = &self.on_submit {
-                    if cx.is_valid() {
-                        let text = self.clone_text(cx);
-                        if let Ok(value) = text.parse::<T>() {
-                            (callback)(cx, value, *reason);
-                        }
+                    let text = self.clone_text(cx);
+                    let is_valid = self.is_text_valid(&text);
+                    cx.set_valid(is_valid);
+                    if is_valid && let Ok(value) = text.parse::<T>() {
+                        (callback)(cx, value, *reason);
                     }
                 }
             }
@@ -1839,21 +1833,15 @@ where
                 if self.edit {
                     if let Some(selected_text) = self.clone_selected(cx) {
                         if !selected_text.is_empty() {
+                            self.edited_since_focus = true;
+                            self.edited_once = true;
                             cx.set_clipboard(selected_text)
                                 .expect("Failed to add text to clipboard");
                             self.delete_text(cx, Movement::Grapheme(Direction::Upstream));
 
                             let text = self.clone_text(cx);
 
-                            if let Ok(value) = &text.parse::<T>() {
-                                if let Some(validate) = &self.validate {
-                                    cx.set_valid(validate(value));
-                                } else {
-                                    cx.set_valid(true);
-                                }
-                            } else {
-                                cx.set_valid(false);
-                            }
+                            cx.set_valid(self.is_text_valid(&text));
 
                             if let Some(callback) = &self.on_edit {
                                 (callback)(cx, text);
