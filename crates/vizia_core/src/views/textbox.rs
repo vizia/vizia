@@ -1085,6 +1085,37 @@ where
         })
     }
 
+    /// Sets whether masked text should be visible.
+    pub fn mask_visible<U: Into<bool> + Clone + 'static>(
+        self,
+        visible: impl Res<U> + 'static,
+    ) -> Self {
+        let visible = visible.to_signal(self.cx);
+        self.bind(visible, move |mut handle| {
+            let entity = handle.entity();
+            let new_visible = visible.get().into();
+            let mut display_text = String::new();
+            let mut changed = false;
+
+            handle = handle.modify(|textbox| {
+                if textbox.mask_visible != new_visible {
+                    let old_display = textbox.display_text_from_real();
+                    textbox.mask_visible = new_visible;
+                    let new_display = textbox.display_text_from_real();
+                    textbox.remap_selection_for_display_change(&old_display, &new_display);
+                    display_text = new_display;
+                    changed = true;
+                }
+            });
+
+            if changed {
+                handle = handle.text(display_text);
+                handle.context().style.needs_text_update(entity);
+                handle.context().needs_redraw(entity);
+            }
+        })
+    }
+
     /// Sets an optional maximum number of graphemes for textbox input.
     ///
     /// Use `Some(n)` to limit input length and `None` to remove the limit.

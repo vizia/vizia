@@ -164,14 +164,14 @@ fn main() -> Result<(), ApplicationError> {
                 VStack::new(cx, |cx| {
                     Label::new(cx, "Password").height(Auto).font_weight(FontWeightKeyword::Bold);
                     ZStack::new(cx, |cx| {
-                        let password_entity = Textbox::new(cx, password)
+                        Textbox::new(cx, password)
                             .width(Stretch(1.0))
                             .placeholder("Enter password")
                             .mask_char(Some('*'))
+                            .mask_visible(password_visible)
                             .validate(|value: &String| LoginData::password_error(value).is_none())
                             .on_edit(|cx, text| cx.emit(LoginEvent::SetPassword(text)))
-                            .padding_right(Pixels(50.0))
-                            .entity();
+                            .padding_right(Pixels(50.0));
 
                         ToggleButton::with_contents(
                             cx,
@@ -181,7 +181,6 @@ fn main() -> Result<(), ApplicationError> {
                         )
                         .on_toggle(move |cx| {
                             cx.emit(LoginEvent::TogglePasswordVisible);
-                            cx.emit_to(password_entity, TextEvent::ToggleMaskVisible);
                         });
                     })
                     .width(Stretch(1.0))
