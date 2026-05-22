@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::ops::Range;
 use std::rc::Rc;
 
 use crate::prelude::*;
@@ -82,6 +83,7 @@ pub struct Textbox<R, T> {
     show_placeholder: Signal<bool>,
     show_caret: Signal<bool>,
     mask_char: Signal<Option<char>>,
+    max_length: Signal<Option<usize>>,
     can_copy: Signal<bool>,
     can_paste: Signal<bool>,
     mask_visible: bool,
@@ -176,6 +178,7 @@ where
         let initial_text = value.get_value(cx).to_string_local(cx);
         let show_caret = Signal::new(false);
         let mask_char = Signal::new(None);
+        let max_length = Signal::new(None);
         let can_copy = Signal::new(true);
         let can_paste = Signal::new(true);
         let placeholder = Signal::new(String::from(""));
@@ -195,6 +198,7 @@ where
             show_placeholder,
             show_caret,
             mask_char,
+            max_length,
             can_copy,
             can_paste,
             mask_visible: false,
@@ -331,13 +335,15 @@ where
             let real_selection =
                 Self::selection_display_to_real(&old_display, &self.real_text, self.selection);
 
-            text.edit(self.selection.range(), txt);
-            self.real_text.edit(real_selection.range(), txt);
+            let clamped = self.clamp_insert_text(txt, real_selection.range());
+
+            text.edit(self.selection.range(), &clamped);
+            self.real_text.edit(real_selection.range(), &clamped);
 
             // Track the caret in grapheme space so we can remap it safely after
             // display text is regenerated (for example when masking is enabled).
             let new_caret_grapheme =
-                Self::byte_to_grapheme_index(text, self.selection.min() + txt.len());
+                Self::byte_to_grapheme_index(text, self.selection.min() + clamped.len());
 
             self.show_placeholder.set(self.real_text.is_empty());
             self.sync_display_text(cx);
@@ -404,8 +410,6 @@ where
                     text.replace_range(start..end, "");
                 }
 
-                text.insert_str(start, preedit_txt);
-
                 let original_real_selection = Self::selection_display_to_real(
                     &old_display,
                     &self.real_text,
@@ -414,21 +418,27 @@ where
                 let real_start = original_real_selection.min();
                 let real_end =
                     real_start + prev_preedit_text.chars().map(|c| c.len_utf8()).sum::<usize>();
+                let clamped_preedit = self.clamp_insert_text(preedit_txt, real_start..real_end);
                 if real_end > real_start && real_end <= self.real_text.len() {
                     self.real_text.replace_range(real_start..real_end, "");
                 }
-                self.real_text.insert_str(real_start, preedit_txt);
+                self.real_text.insert_str(real_start, &clamped_preedit);
+
+                text.insert_str(start, &clamped_preedit);
 
                 if let Some((cursor_index, _)) = cursor {
-                    let new_caret = original_selection.min() + cursor_index;
+                    let new_caret = original_selection.min() + cursor_index.min(clamped_preedit.len());
                     new_caret_grapheme = Self::byte_to_grapheme_index(text, new_caret);
                 } else {
                     // If there is no valid cursor, the default behavior is to move to the end of the text.
-                    let new_caret = original_selection.min() + preedit_txt.chars().count();
+                    let new_caret = original_selection.min() + clamped_preedit.chars().count();
                     new_caret_grapheme = Self::byte_to_grapheme_index(text, new_caret);
                 }
 
-                self.preedit_backup.as_mut().unwrap().set_prev_preedit(preedit_txt.to_string());
+                self.preedit_backup
+                    .as_mut()
+                    .unwrap()
+                    .set_prev_preedit(clamped_preedit);
             }
 
             self.show_placeholder.set(self.real_text.is_empty());
@@ -748,6 +758,23 @@ where
         self.real_text.clone()
     }
 
+    fn clamp_insert_text(&self, txt: &str, replace_range: Range<usize>) -> String {
+        let Some(max_length) = self.max_length.get() else {
+            return txt.to_string();
+        };
+
+        let current_len = self.real_text.graphemes(true).count();
+        let replaced_len = self.real_text[replace_range].graphemes(true).count();
+        let preserved_len = current_len.saturating_sub(replaced_len);
+        let remaining = max_length.saturating_sub(preserved_len);
+
+        if remaining == 0 {
+            return String::new();
+        }
+
+        txt.graphemes(true).take(remaining).collect()
+    }
+
     fn is_text_valid(&self, text: &str) -> bool {
         if let Ok(value) = text.parse::<T>() {
             if let Some(validate) = &self.validate { validate(&value) } else { true }
@@ -1057,6 +1084,20 @@ where
             handle = handle.text(display_text);
             handle.context().style.needs_text_update(entity);
             handle.context().needs_redraw(entity);
+        })
+    }
+
+    /// Sets an optional maximum number of graphemes for textbox input.
+    ///
+    /// Use `Some(n)` to limit input length and `None` to remove the limit.
+    pub fn max_length<U: Into<Option<usize>> + Clone + 'static>(
+        self,
+        max_length: impl Res<U> + 'static,
+    ) -> Self {
+        let max_length = max_length.to_signal(self.cx);
+        self.bind(max_length, move |handle| {
+            let value = max_length.get().into();
+            handle.modify(|textbox| textbox.max_length.set_if_changed(value));
         })
     }
 
