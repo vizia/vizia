@@ -82,6 +82,8 @@ pub struct Textbox<R, T> {
     show_placeholder: Signal<bool>,
     show_caret: Signal<bool>,
     mask_char: Signal<Option<char>>,
+    can_copy: Signal<bool>,
+    can_paste: Signal<bool>,
     mask_visible: bool,
     real_text: String,
     caret_timer: Timer,
@@ -172,6 +174,8 @@ where
         let initial_text = value.get_value(cx).to_string_local(cx);
         let show_caret = Signal::new(false);
         let mask_char = Signal::new(None);
+        let can_copy = Signal::new(true);
+        let can_paste = Signal::new(true);
         let placeholder = Signal::new(String::from(""));
         let show_placeholder = Signal::new(initial_text.is_empty());
 
@@ -189,6 +193,8 @@ where
             show_placeholder,
             show_caret,
             mask_char,
+            can_copy,
+            can_paste,
             mask_visible: false,
             real_text: initial_text.clone(),
             caret_timer,
@@ -1041,6 +1047,24 @@ where
             handle.context().needs_redraw(entity);
         })
     }
+
+    /// Sets whether text in this textbox can be copied to the clipboard.
+    pub fn can_copy<U: Into<bool> + Clone + 'static>(self, state: impl Res<U> + 'static) -> Self {
+        let state = state.to_signal(self.cx);
+        self.bind(state, move |handle| {
+            let value = state.get().into();
+            handle.modify(|textbox| textbox.can_copy.set_if_changed(value));
+        })
+    }
+
+    /// Sets whether text can be pasted into this textbox from the clipboard.
+    pub fn can_paste<U: Into<bool> + Clone + 'static>(self, state: impl Res<U> + 'static) -> Self {
+        let state = state.to_signal(self.cx);
+        self.bind(state, move |handle| {
+            let value = state.get().into();
+            handle.modify(|textbox| textbox.can_paste.set_if_changed(value));
+        })
+    }
 }
 
 /// Converts a byte offset (relative to line start) into a character index
@@ -1513,7 +1537,7 @@ where
                     #[cfg(not(target_os = "macos"))]
                     let modifier = Modifiers::CTRL;
 
-                    if cx.modifiers == &modifier {
+                    if cx.modifiers == &modifier && self.can_copy.get() {
                         cx.emit(TextEvent::Copy);
                     }
                 }
@@ -1524,7 +1548,7 @@ where
                     #[cfg(not(target_os = "macos"))]
                     let modifier = Modifiers::CTRL;
 
-                    if cx.modifiers == &modifier {
+                    if cx.modifiers == &modifier && self.can_paste.get() {
                         cx.emit(TextEvent::Paste);
                     }
                 }
@@ -1782,7 +1806,7 @@ where
             TextEvent::Copy =>
             {
                 #[cfg(feature = "clipboard")]
-                if self.edit {
+                if self.edit && self.can_copy.get() {
                     if let Some(selected_text) = self.clone_selected(cx) {
                         if !selected_text.is_empty() {
                             cx.set_clipboard(selected_text)
@@ -1795,7 +1819,7 @@ where
             TextEvent::Paste =>
             {
                 #[cfg(feature = "clipboard")]
-                if self.edit {
+                if self.edit && self.can_paste.get() {
                     if let Ok(text) = cx.get_clipboard() {
                         cx.emit(TextEvent::InsertText(text));
                     }
