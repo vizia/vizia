@@ -922,7 +922,6 @@ tabbar scrollbar.horizontal {
 /* TEXTBOX */
 
 textbox {
-    overflow: hidden;
     width: auto;
     height: 32px;
     padding-left: 8px;

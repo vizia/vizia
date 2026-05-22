@@ -61,13 +61,13 @@ fn main() -> Result<(), ApplicationError> {
                 .on_edit(|cx, text| cx.emit(AppEvent::SetEditableText(text)));
 
             ZStack::new(cx, |cx| {
-                let password_entity = Textbox::new(cx, password_text)
+                Textbox::new(cx, password_text)
                     .width(Stretch(1.0))
                     .placeholder("Password")
                     .mask_char(Some('*'))
+                    .mask_visible(password_visible)
                     .on_edit(|cx, text| cx.emit(AppEvent::SetPasswordText(text)))
-                    .padding_right(Pixels(30.0))
-                    .entity();
+                    .padding_right(Pixels(50.0));
 
                 ToggleButton::with_contents(
                     cx,
@@ -78,7 +78,6 @@ fn main() -> Result<(), ApplicationError> {
                 //.variant(ButtonVariant::Text)
                 .on_toggle(move |cx| {
                     cx.emit(AppEvent::TogglePasswordVisible);
-                    cx.emit_to(password_entity, TextEvent::ToggleMaskVisible);
                 });
             })
             .width(Pixels(300.0))

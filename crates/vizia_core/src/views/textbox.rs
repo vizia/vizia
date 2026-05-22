@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::ops::Range;
 use std::rc::Rc;
 
 use crate::prelude::*;
@@ -9,7 +10,7 @@ use crate::text::{
 };
 use accesskit::{ActionData, ActionRequest, TextDirection, TextPosition, TextSelection};
 use skia_safe::textlayout::{RectHeightStyle, RectWidthStyle};
-use skia_safe::{Paint, PaintStyle, Rect};
+use skia_safe::{ClipOp, Paint, PaintStyle, Rect};
 use unicode_segmentation::UnicodeSegmentation;
 
 /// Events for modifying a textbox.
@@ -82,6 +83,7 @@ pub struct Textbox<R, T> {
     show_placeholder: Signal<bool>,
     show_caret: Signal<bool>,
     mask_char: Signal<Option<char>>,
+    max_length: Signal<Option<usize>>,
     can_copy: Signal<bool>,
     can_paste: Signal<bool>,
     mask_visible: bool,
@@ -90,6 +92,8 @@ pub struct Textbox<R, T> {
     selection: Selection,
     preedit_backup: Option<PreeditBackup>,
     text_overflow: Option<TextOverflow>,
+    edited_since_focus: bool,
+    edited_once: bool,
 }
 
 // Determines whether the enter key submits the text or inserts a new line.
@@ -174,6 +178,7 @@ where
         let initial_text = value.get_value(cx).to_string_local(cx);
         let show_caret = Signal::new(false);
         let mask_char = Signal::new(None);
+        let max_length = Signal::new(None);
         let can_copy = Signal::new(true);
         let can_paste = Signal::new(true);
         let placeholder = Signal::new(String::from(""));
@@ -193,6 +198,7 @@ where
             show_placeholder,
             show_caret,
             mask_char,
+            max_length,
             can_copy,
             can_paste,
             mask_visible: false,
@@ -201,6 +207,8 @@ where
             selection: Selection::new(0, 0),
             preedit_backup: None,
             text_overflow: None,
+            edited_since_focus: false,
+            edited_once: false,
         }
         .build(cx, move |cx| {
             cx.add_listener(move |textbox: &mut Self, cx, event| {
@@ -327,13 +335,15 @@ where
             let real_selection =
                 Self::selection_display_to_real(&old_display, &self.real_text, self.selection);
 
-            text.edit(self.selection.range(), txt);
-            self.real_text.edit(real_selection.range(), txt);
+            let clamped = self.clamp_insert_text(txt, real_selection.range());
+
+            text.edit(self.selection.range(), &clamped);
+            self.real_text.edit(real_selection.range(), &clamped);
 
             // Track the caret in grapheme space so we can remap it safely after
             // display text is regenerated (for example when masking is enabled).
             let new_caret_grapheme =
-                Self::byte_to_grapheme_index(text, self.selection.min() + txt.len());
+                Self::byte_to_grapheme_index(text, self.selection.min() + clamped.len());
 
             self.show_placeholder.set(self.real_text.is_empty());
             self.sync_display_text(cx);
@@ -400,8 +410,6 @@ where
                     text.replace_range(start..end, "");
                 }
 
-                text.insert_str(start, preedit_txt);
-
                 let original_real_selection = Self::selection_display_to_real(
                     &old_display,
                     &self.real_text,
@@ -410,21 +418,25 @@ where
                 let real_start = original_real_selection.min();
                 let real_end =
                     real_start + prev_preedit_text.chars().map(|c| c.len_utf8()).sum::<usize>();
+                let clamped_preedit = self.clamp_insert_text(preedit_txt, real_start..real_end);
                 if real_end > real_start && real_end <= self.real_text.len() {
                     self.real_text.replace_range(real_start..real_end, "");
                 }
-                self.real_text.insert_str(real_start, preedit_txt);
+                self.real_text.insert_str(real_start, &clamped_preedit);
+
+                text.insert_str(start, &clamped_preedit);
 
                 if let Some((cursor_index, _)) = cursor {
-                    let new_caret = original_selection.min() + cursor_index;
+                    let new_caret =
+                        original_selection.min() + cursor_index.min(clamped_preedit.len());
                     new_caret_grapheme = Self::byte_to_grapheme_index(text, new_caret);
                 } else {
                     // If there is no valid cursor, the default behavior is to move to the end of the text.
-                    let new_caret = original_selection.min() + preedit_txt.chars().count();
+                    let new_caret = original_selection.min() + clamped_preedit.chars().count();
                     new_caret_grapheme = Self::byte_to_grapheme_index(text, new_caret);
                 }
 
-                self.preedit_backup.as_mut().unwrap().set_prev_preedit(preedit_txt.to_string());
+                self.preedit_backup.as_mut().unwrap().set_prev_preedit(clamped_preedit);
             }
 
             self.show_placeholder.set(self.real_text.is_empty());
@@ -744,6 +756,31 @@ where
         self.real_text.clone()
     }
 
+    fn clamp_insert_text(&self, txt: &str, replace_range: Range<usize>) -> String {
+        let Some(max_length) = self.max_length.get() else {
+            return txt.to_string();
+        };
+
+        let current_len = self.real_text.graphemes(true).count();
+        let replaced_len = self.real_text[replace_range].graphemes(true).count();
+        let preserved_len = current_len.saturating_sub(replaced_len);
+        let remaining = max_length.saturating_sub(preserved_len);
+
+        if remaining == 0 {
+            return String::new();
+        }
+
+        txt.graphemes(true).take(remaining).collect()
+    }
+
+    fn is_text_valid(&self, text: &str) -> bool {
+        if let Ok(value) = text.parse::<T>() {
+            if let Some(validate) = &self.validate { validate(&value) } else { true }
+        } else {
+            false
+        }
+    }
+
     fn reset_caret_timer(&mut self, cx: &mut EventContext) {
         cx.stop_timer(self.caret_timer);
         if !cx.is_read_only() {
@@ -1048,6 +1085,51 @@ where
         })
     }
 
+    /// Sets whether masked text should be visible.
+    pub fn mask_visible<U: Into<bool> + Clone + 'static>(
+        self,
+        visible: impl Res<U> + 'static,
+    ) -> Self {
+        let visible = visible.to_signal(self.cx);
+        self.bind(visible, move |mut handle| {
+            let entity = handle.entity();
+            let new_visible = visible.get().into();
+            let mut display_text = String::new();
+            let mut changed = false;
+
+            handle = handle.modify(|textbox| {
+                if textbox.mask_visible != new_visible {
+                    let old_display = textbox.display_text_from_real();
+                    textbox.mask_visible = new_visible;
+                    let new_display = textbox.display_text_from_real();
+                    textbox.remap_selection_for_display_change(&old_display, &new_display);
+                    display_text = new_display;
+                    changed = true;
+                }
+            });
+
+            if changed {
+                handle = handle.text(display_text);
+                handle.context().style.needs_text_update(entity);
+                handle.context().needs_redraw(entity);
+            }
+        })
+    }
+
+    /// Sets an optional maximum number of graphemes for textbox input.
+    ///
+    /// Use `Some(n)` to limit input length and `None` to remove the limit.
+    pub fn max_length<U: Into<Option<usize>> + Clone + 'static>(
+        self,
+        max_length: impl Res<U> + 'static,
+    ) -> Self {
+        let max_length = max_length.to_signal(self.cx);
+        self.bind(max_length, move |handle| {
+            let value = max_length.get().into();
+            handle.modify(|textbox| textbox.max_length.set_if_changed(value));
+        })
+    }
+
     /// Sets whether text in this textbox can be copied to the clipboard.
     pub fn can_copy<U: Into<bool> + Clone + 'static>(self, state: impl Res<U> + 'static) -> Self {
         let state = state.to_signal(self.cx);
@@ -1257,7 +1339,7 @@ where
 
                 if cx.is_over() {
                     if !cx.is_disabled() {
-                        cx.focus_with_visibility(false);
+                        cx.focus_with_visibility(true);
                         cx.capture();
                         cx.lock_cursor_icon();
 
@@ -1586,6 +1668,9 @@ where
                     return;
                 }
 
+                self.edited_since_focus = true;
+                self.edited_once = true;
+
                 if self.show_placeholder.get() {
                     self.reset_text(cx);
                 }
@@ -1594,15 +1679,7 @@ where
 
                 let text = self.clone_text(cx);
 
-                if let Ok(value) = &text.parse::<T>() {
-                    if let Some(validate) = &self.validate {
-                        cx.set_valid(validate(value));
-                    } else {
-                        cx.set_valid(true);
-                    }
-                } else {
-                    cx.set_valid(false);
-                }
+                cx.set_valid(self.is_text_valid(&text));
 
                 if self.edit {
                     if let Some(callback) = &self.on_edit {
@@ -1628,19 +1705,13 @@ where
 
             TextEvent::DeleteText(movement) => {
                 if self.edit {
+                    self.edited_since_focus = true;
+                    self.edited_once = true;
                     self.delete_text(cx, *movement);
 
                     let text = self.clone_text(cx);
 
-                    if let Ok(value) = &text.parse::<T>() {
-                        if let Some(validate) = &self.validate {
-                            cx.set_valid(validate(value));
-                        } else {
-                            cx.set_valid(true);
-                        }
-                    } else {
-                        cx.set_valid(false);
-                    }
+                    cx.set_valid(self.is_text_valid(&text));
 
                     if let Some(callback) = &self.on_edit {
                         (callback)(cx, text);
@@ -1662,7 +1733,8 @@ where
             TextEvent::StartEdit => {
                 if !cx.is_disabled() && !self.edit {
                     self.edit = true;
-                    cx.focus_with_visibility(false);
+                    self.edited_since_focus = false;
+                    cx.focus_with_visibility(true);
                     cx.capture();
                     self.reset_caret_timer(cx);
                     self.reset_ime_position(cx);
@@ -1683,14 +1755,12 @@ where
                         self.select_all(cx);
                     }
 
-                    if let Ok(value) = &text.parse::<T>() {
-                        if let Some(validate) = &self.validate {
-                            cx.set_valid(validate(value));
-                        } else {
-                            cx.set_valid(true);
-                        }
+                    // Keep textbox pristine only until first user edit; once edited,
+                    // preserve validation across blur/focus cycles.
+                    if self.edited_once || !text.is_empty() {
+                        cx.set_valid(self.is_text_valid(&text));
                     } else {
-                        cx.set_valid(false);
+                        cx.set_valid(true);
                     }
                 }
 
@@ -1714,14 +1784,8 @@ where
 
                 self.select_all(cx);
 
-                if let Ok(value) = &text.parse::<T>() {
-                    if let Some(validate) = &self.validate {
-                        cx.set_valid(validate(value));
-                    } else {
-                        cx.set_valid(true);
-                    }
-                } else {
-                    cx.set_valid(false);
+                if self.edited_since_focus {
+                    cx.set_valid(self.is_text_valid(&text));
                 }
 
                 // Reset transform to 0,0
@@ -1736,6 +1800,13 @@ where
             }
 
             TextEvent::Blur => {
+                // Clicking outside a textbox can end editing while retaining keyboard focus
+                // (for example when clicking non-focusable chrome). Keep focus but remove
+                // the visible focus indicator for pointer-driven blur.
+                if cx.focused() == cx.current() {
+                    cx.focus_with_visibility(false);
+                }
+
                 if let Some(callback) = &self.on_blur {
                     (callback)(cx);
                 } else {
@@ -1766,11 +1837,11 @@ where
 
             TextEvent::Submit(reason) => {
                 if let Some(callback) = &self.on_submit {
-                    if cx.is_valid() {
-                        let text = self.clone_text(cx);
-                        if let Ok(value) = text.parse::<T>() {
-                            (callback)(cx, value, *reason);
-                        }
+                    let text = self.clone_text(cx);
+                    let is_valid = self.is_text_valid(&text);
+                    cx.set_valid(is_valid);
+                    if is_valid && let Ok(value) = text.parse::<T>() {
+                        (callback)(cx, value, *reason);
                     }
                 }
             }
@@ -1832,21 +1903,15 @@ where
                 if self.edit {
                     if let Some(selected_text) = self.clone_selected(cx) {
                         if !selected_text.is_empty() {
+                            self.edited_since_focus = true;
+                            self.edited_once = true;
                             cx.set_clipboard(selected_text)
                                 .expect("Failed to add text to clipboard");
                             self.delete_text(cx, Movement::Grapheme(Direction::Upstream));
 
                             let text = self.clone_text(cx);
 
-                            if let Ok(value) = &text.parse::<T>() {
-                                if let Some(validate) = &self.validate {
-                                    cx.set_valid(validate(value));
-                                } else {
-                                    cx.set_valid(true);
-                                }
-                            } else {
-                                cx.set_valid(false);
-                            }
+                            cx.set_valid(self.is_text_valid(&text));
 
                             if let Some(callback) = &self.on_edit {
                                 (callback)(cx, text);
@@ -1868,7 +1933,41 @@ where
         cx.draw_background(canvas);
         cx.draw_border(canvas);
         cx.draw_outline(canvas);
+
+        // Clip only the text content to the textbox shape so long text is contained
+        // without clipping outside effects such as outlines.
         canvas.save();
+        let path = cx.path();
+        canvas.clip_path(&path, ClipOp::Intersect, true);
+
+        let bounds = cx.bounds();
+        let padding_left = match cx.padding_left() {
+            Units::Pixels(val) => val,
+            _ => 0.0,
+        };
+        let padding_right = match cx.padding_right() {
+            Units::Pixels(val) => val,
+            _ => 0.0,
+        };
+        let padding_top = match cx.padding_top() {
+            Units::Pixels(val) => val,
+            _ => 0.0,
+        };
+        let padding_bottom = match cx.padding_bottom() {
+            Units::Pixels(val) => val,
+            _ => 0.0,
+        };
+
+        let content_left = bounds.x + padding_left;
+        let content_top = bounds.y + padding_top;
+        let content_right = (bounds.x + bounds.w - padding_right).max(content_left);
+        let content_bottom = (bounds.y + bounds.h - padding_bottom).max(content_top);
+        canvas.clip_rect(
+            Rect::new(content_left, content_top, content_right, content_bottom),
+            ClipOp::Intersect,
+            true,
+        );
+
         let transform = *self.transform.borrow();
         canvas.translate((transform.0, transform.1));
         cx.draw_text(canvas);
