@@ -54,6 +54,10 @@ pub enum TextEvent {
     SetPlaceholder(String),
     /// Trigger the `on_blur` callback.
     Blur,
+    /// Set whether masked text should be visible.
+    SetMaskVisible(bool),
+    /// Toggle whether masked text should be visible.
+    ToggleMaskVisible,
     /// Toggle the visibility of the text Caret.
     ToggleCaret,
 }
@@ -77,6 +81,9 @@ pub struct Textbox<R, T> {
     placeholder: Signal<String>,
     show_placeholder: Signal<bool>,
     show_caret: Signal<bool>,
+    mask_char: Signal<Option<char>>,
+    mask_visible: bool,
+    real_text: String,
     caret_timer: Timer,
     selection: Selection,
     preedit_backup: Option<PreeditBackup>,
@@ -164,6 +171,7 @@ where
         let caret_timer = cx.environment().caret_timer;
         let initial_text = value.get_value(cx).to_string_local(cx);
         let show_caret = Signal::new(false);
+        let mask_char = Signal::new(None);
         let placeholder = Signal::new(String::from(""));
         let show_placeholder = Signal::new(initial_text.is_empty());
 
@@ -180,6 +188,9 @@ where
             placeholder,
             show_placeholder,
             show_caret,
+            mask_char,
+            mask_visible: false,
+            real_text: initial_text.clone(),
             caret_timer,
             selection: Selection::new(0, 0),
             preedit_backup: None,
@@ -214,33 +225,109 @@ where
             handle.bind(placeholder, move |handle| {
                 let text = value_text.get();
                 let txt = text.to_string_local(&handle);
+                let mut display_text = String::new();
                 let handle = handle.modify(|textbox| {
+                    textbox.real_text = txt.clone();
                     textbox.show_placeholder.set_if_changed(txt.is_empty());
+                    display_text = textbox.display_text_from_real();
                 });
-                let placeholder_text = placeholder.get().to_string_local(&handle);
-
-                if show_placeholder.get() {
-                    handle.text(placeholder_text);
-                } else {
-                    handle.text(txt);
-                }
+                handle.text(display_text);
             });
         })
     }
 
+    fn display_text_from_real(&self) -> String {
+        if self.show_placeholder.get() {
+            return self.placeholder.get().clone();
+        }
+
+        if self.mask_visible {
+            return self.real_text.clone();
+        }
+
+        let Some(mask) = self.mask_char.get() else {
+            return self.real_text.clone();
+        };
+
+        let mut masked = String::with_capacity(self.real_text.len());
+        for grapheme in self.real_text.graphemes(true) {
+            if grapheme == "\n" {
+                masked.push('\n');
+            } else {
+                masked.push(mask);
+            }
+        }
+
+        masked
+    }
+
+    fn sync_display_text(&self, cx: &mut EventContext) {
+        cx.style.text.insert(cx.current, self.display_text_from_real());
+        cx.style.needs_text_update(cx.current);
+    }
+
+    fn grapheme_index_to_byte(text: &str, idx: usize) -> usize {
+        if idx == 0 {
+            return 0;
+        }
+
+        for (i, (byte, _)) in text.grapheme_indices(true).enumerate() {
+            if i == idx {
+                return byte;
+            }
+        }
+
+        text.len()
+    }
+
+    fn byte_to_grapheme_index(text: &str, byte_offset: usize) -> usize {
+        let mut idx = 0;
+        for (byte, _) in text.grapheme_indices(true) {
+            if byte >= byte_offset {
+                break;
+            }
+            idx += 1;
+        }
+        idx
+    }
+
+    fn selection_display_to_real(
+        display_text: &str,
+        real_text: &str,
+        selection: Selection,
+    ) -> Selection {
+        let anchor_g = Self::byte_to_grapheme_index(display_text, selection.anchor);
+        let active_g = Self::byte_to_grapheme_index(display_text, selection.active);
+        let anchor = Self::grapheme_index_to_byte(real_text, anchor_g);
+        let active = Self::grapheme_index_to_byte(real_text, active_g);
+        Selection::new(anchor, active).with_h_pos(selection.h_pos)
+    }
+
+    fn remap_selection_for_display_change(&mut self, old_display: &str, new_display: &str) {
+        let anchor_g = Self::byte_to_grapheme_index(old_display, self.selection.anchor);
+        let active_g = Self::byte_to_grapheme_index(old_display, self.selection.active);
+        self.selection.anchor = Self::grapheme_index_to_byte(new_display, anchor_g);
+        self.selection.active = Self::grapheme_index_to_byte(new_display, active_g);
+    }
+
     fn insert_text(&mut self, cx: &mut EventContext, txt: &str) {
         if let Some(text) = cx.style.text.get_mut(cx.current) {
+            let old_display = text.clone();
             if self.show_placeholder.get() && !txt.is_empty() {
                 text.clear();
                 self.show_placeholder.set(false);
             }
 
+            let real_selection =
+                Self::selection_display_to_real(&old_display, &self.real_text, self.selection);
+
             text.edit(self.selection.range(), txt);
+            self.real_text.edit(real_selection.range(), txt);
 
             self.selection = Selection::caret(self.selection.min() + txt.len());
 
-            self.show_placeholder.set(text.is_empty());
-            cx.style.needs_text_update(cx.current);
+            self.show_placeholder.set(self.real_text.is_empty());
+            self.sync_display_text(cx);
             cx.style.needs_access_update(cx.current);
         }
     }
@@ -256,6 +343,7 @@ where
         }
 
         if let Some(text) = cx.style.text.get_mut(cx.current) {
+            let old_display = text.clone();
             if self.show_placeholder.get() {
                 text.clear();
                 self.show_placeholder.set(false);
@@ -264,19 +352,24 @@ where
             if !self.selection.is_caret() {
                 let start = self.selection.min();
                 let end = self.selection.max();
+                let real_selection =
+                    Self::selection_display_to_real(&old_display, &self.real_text, self.selection);
 
                 if end > start && end <= text.len() {
                     text.replace_range(start..end, "");
                 }
+                if real_selection.max() <= self.real_text.len() {
+                    self.real_text.replace_range(real_selection.range(), "");
+                }
                 self.selection = Selection::caret(start);
             }
 
-            let preedit_backup = self
-                .preedit_backup
-                .get_or_insert_with(|| PreeditBackup::new(String::new(), self.selection));
-
-            let original_selection = preedit_backup.original_selection;
-            let prev_preedit_text = &preedit_backup.prev_preedit;
+            let (original_selection, prev_preedit_text) = {
+                let preedit_backup = self
+                    .preedit_backup
+                    .get_or_insert_with(|| PreeditBackup::new(String::new(), self.selection));
+                (preedit_backup.original_selection, preedit_backup.prev_preedit.clone())
+            };
 
             if prev_preedit_text == preedit_txt {
                 // Move the cursor only
@@ -294,6 +387,19 @@ where
 
                 text.insert_str(start, preedit_txt);
 
+                let original_real_selection = Self::selection_display_to_real(
+                    &old_display,
+                    &self.real_text,
+                    original_selection,
+                );
+                let real_start = original_real_selection.min();
+                let real_end =
+                    real_start + prev_preedit_text.chars().map(|c| c.len_utf8()).sum::<usize>();
+                if real_end > real_start && real_end <= self.real_text.len() {
+                    self.real_text.replace_range(real_start..real_end, "");
+                }
+                self.real_text.insert_str(real_start, preedit_txt);
+
                 if let Some((cursor_index, _)) = cursor {
                     let new_caret = original_selection.min() + cursor_index;
                     self.selection = Selection::caret(new_caret);
@@ -306,13 +412,15 @@ where
                 self.preedit_backup.as_mut().unwrap().set_prev_preedit(preedit_txt.to_string());
             }
 
-            cx.style.needs_text_update(cx.current);
+            self.show_placeholder.set(self.real_text.is_empty());
+            self.sync_display_text(cx);
         }
     }
 
     fn clear_preedit(&mut self, cx: &mut EventContext) {
         if let Some(text) = cx.style.text.get_mut(cx.current) {
             if let Some(preedit_backup) = self.preedit_backup.as_ref() {
+                let old_display = text.clone();
                 let original_selection = preedit_backup.original_selection;
                 let prev_preedit_text = preedit_backup.prev_preedit.clone();
 
@@ -321,9 +429,23 @@ where
 
                 text.replace_range(start..end, "");
 
+                let original_real_selection = Self::selection_display_to_real(
+                    &old_display,
+                    &self.real_text,
+                    original_selection,
+                );
+                let real_start = original_real_selection.min();
+                let real_end =
+                    real_start + prev_preedit_text.chars().map(|c| c.len_utf8()).sum::<usize>();
+                if real_end <= self.real_text.len() {
+                    self.real_text.replace_range(real_start..real_end, "");
+                }
+
                 self.selection = original_selection;
 
                 self.preedit_backup = None;
+                self.show_placeholder.set(self.real_text.is_empty());
+                self.sync_display_text(cx);
             }
         }
     }
@@ -343,52 +465,67 @@ where
                     return;
                 }
                 if let Some(text) = cx.style.text.get_mut(cx.current) {
+                    let old_display = text.clone();
                     let del_offset = offset_for_delete_backwards(&self.selection, text);
                     let del_range = del_offset..self.selection.active;
+                    let real_del_range = Self::selection_display_to_real(
+                        &old_display,
+                        &self.real_text,
+                        Selection::new(del_range.start, del_range.end),
+                    )
+                    .range();
 
                     self.selection = Selection::caret(del_range.start);
 
                     text.edit(del_range, "");
+                    self.real_text.edit(real_del_range, "");
 
-                    cx.style.needs_text_update(cx.current);
+                    self.sync_display_text(cx);
                     cx.style.needs_access_update(cx.current);
                 }
             } else if let Some(text) = cx.style.text.get_mut(cx.current) {
                 if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+                    let old_display = text.clone();
                     let to_delete = apply_movement(movement, self.selection, text, paragraph, true);
+                    let real_to_delete =
+                        Self::selection_display_to_real(&old_display, &self.real_text, to_delete);
                     self.selection = to_delete;
                     let new_cursor_pos = self.selection.min();
 
                     text.edit(to_delete.range(), "");
+                    self.real_text.edit(real_to_delete.range(), "");
                     self.selection = Selection::caret(new_cursor_pos);
 
-                    cx.style.needs_text_update(cx.current);
+                    self.sync_display_text(cx);
                     cx.style.needs_access_update(cx.current);
                 }
             }
         } else if let Some(text) = cx.style.text.get_mut(cx.current) {
+            let old_display = text.clone();
             let del_range = self.selection.range();
+            let real_del_range =
+                Self::selection_display_to_real(&old_display, &self.real_text, self.selection)
+                    .range();
 
             self.selection = Selection::caret(del_range.start);
 
             text.edit(del_range, "");
+            self.real_text.edit(real_del_range, "");
 
-            cx.style.needs_text_update(cx.current);
+            self.sync_display_text(cx);
             cx.style.needs_access_update(cx.current);
         }
 
-        if let Some(text) = cx.style.text.get_mut(cx.current) {
-            self.show_placeholder.set(text.is_empty());
-        }
+        self.show_placeholder.set(self.real_text.is_empty());
     }
 
     fn reset_text(&mut self, cx: &mut EventContext) {
         if let Some(text) = cx.style.text.get_mut(cx.current) {
             text.clear();
+            self.real_text.clear();
             self.selection = Selection::caret(0);
             self.show_placeholder.set(true);
-            *text = self.placeholder.get().clone();
-            cx.style.needs_text_update(cx.current);
+            self.sync_display_text(cx);
             cx.style.needs_access_update(cx.current);
         }
     }
@@ -571,19 +708,21 @@ where
     #[cfg(feature = "clipboard")]
     fn clone_selected(&self, cx: &mut EventContext) -> Option<String> {
         if let Some(text) = cx.style.text.get(cx.current) {
-            let substring = &text[self.selection.range()];
+            let real_selection =
+                Self::selection_display_to_real(text, &self.real_text, self.selection);
+            let substring = &self.real_text[real_selection.range()];
             return Some(substring.to_string());
         }
 
         None
     }
 
-    fn clone_text(&self, cx: &mut EventContext) -> String {
+    fn clone_text(&self, _cx: &mut EventContext) -> String {
         if self.show_placeholder.get() {
             return String::new();
         }
 
-        if let Some(text) = cx.style.text.get(cx.current) { text.clone() } else { String::new() }
+        self.real_text.clone()
     }
 
     fn reset_caret_timer(&mut self, cx: &mut EventContext) {
@@ -696,8 +835,8 @@ where
                     // At end-of-text, use the previous grapheme box and place the caret on its trailing edge.
                     (current - 1, current, true)
                 } else {
-                    // Empty text or no valid grapheme box to anchor the caret.
-                    return;
+                    // Empty text: anchor caret to the paragraph's first position.
+                    (0, 1, false)
                 };
 
                 let rects = paragraph.get_rects_for_range(
@@ -862,6 +1001,31 @@ where
             let entity = handle.entity();
             handle = handle.modify(|textbox| textbox.placeholder.set(txt));
             handle.context().style.needs_access_update(entity);
+        })
+    }
+
+    /// Sets an optional character used to visually mask textbox text.
+    ///
+    /// Use `Some('*')` (or any character) to enable masking and `None` to disable it.
+    pub fn mask_char<U: Into<Option<char>> + Clone + 'static>(
+        self,
+        mask: impl Res<U> + 'static,
+    ) -> Self {
+        let mask = mask.to_signal(self.cx);
+        self.bind(mask, move |mut handle| {
+            let entity = handle.entity();
+            let new_mask = mask.get().into();
+            let mut display_text = String::new();
+            handle = handle.modify(|textbox| {
+                let old_display = textbox.display_text_from_real();
+                textbox.mask_char.set_if_changed(new_mask);
+                let new_display = textbox.display_text_from_real();
+                textbox.remap_selection_for_display_change(&old_display, &new_display);
+                display_text = new_display;
+            });
+            handle = handle.text(display_text);
+            handle.context().style.needs_text_update(entity);
+            handle.context().needs_redraw(entity);
         })
     }
 }
@@ -1471,6 +1635,7 @@ where
 
                     let text = self.value.get_value(cx);
                     let text = text.to_string_local(cx);
+                    self.real_text = text.clone();
 
                     if text.is_empty() {
                         self.show_placeholder.set(true);
@@ -1492,7 +1657,7 @@ where
                     }
                 }
 
-                cx.style.needs_text_update(cx.current);
+                self.sync_display_text(cx);
             }
 
             TextEvent::EndEdit => {
@@ -1529,7 +1694,7 @@ where
                 // Reset cursor position
                 self.selection = Selection::caret(0);
 
-                cx.style.needs_text_update(cx.current);
+                self.sync_display_text(cx);
                 cx.style.needs_access_update(cx.current);
             }
 
@@ -1540,6 +1705,26 @@ where
                     cx.emit(TextEvent::Submit(false));
                     cx.emit(TextEvent::EndEdit);
                 }
+            }
+
+            TextEvent::SetMaskVisible(visible) => {
+                if self.mask_visible != *visible {
+                    let old_display = self.display_text_from_real();
+                    self.mask_visible = *visible;
+                    let new_display = self.display_text_from_real();
+                    self.remap_selection_for_display_change(&old_display, &new_display);
+                    self.sync_display_text(cx);
+                    cx.needs_redraw();
+                }
+            }
+
+            TextEvent::ToggleMaskVisible => {
+                let old_display = self.display_text_from_real();
+                self.mask_visible = !self.mask_visible;
+                let new_display = self.display_text_from_real();
+                self.remap_selection_for_display_change(&old_display, &new_display);
+                self.sync_display_text(cx);
+                cx.needs_redraw();
             }
 
             TextEvent::Submit(reason) => {
