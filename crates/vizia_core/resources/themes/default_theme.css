@@ -781,6 +781,85 @@ tree-table divider > .divider-line {
     background-color: var(--border);
 }
 
+/* TREE VIEW */
+tree-view,
+virtual-tree-view {
+    background-color: var(--background);
+    border-width: 1px;
+    border-color: var(--border);
+    corner-radius: 4px;
+    overflow: hidden;
+    padding: 1px;
+}
+
+tree-view .tree-view-body,
+virtual-tree-view .tree-view-body {
+    background-color: var(--background);
+}
+
+tree-view .tree-view-row,
+virtual-tree-view .tree-view-row {
+    padding-top: 6px;
+    padding-bottom: 6px;
+    min-height: 30px;
+}
+
+tree-view .tree-view-row.odd,
+tree-view .tree-view-row.even,
+virtual-tree-view .tree-view-row.odd,
+virtual-tree-view .tree-view-row.even {
+    background-color: transparent;
+}
+
+tree-view .tree-view-row-content,
+virtual-tree-view .tree-view-row-content {
+    padding-left: 4px;
+    padding-right: 8px;
+    gap: 0px;
+    alignment: left;
+}
+
+tree-view .tree-view-indent,
+virtual-tree-view .tree-view-indent {
+    background-color: transparent;
+}
+
+tree-view .tree-view-disclosure,
+virtual-tree-view .tree-view-disclosure {
+    width: 20px;
+    height: 20px;
+}
+
+tree-view .tree-view-disclosure-placeholder,
+virtual-tree-view .tree-view-disclosure-placeholder {
+    width: 20px;
+    height: 20px;
+}
+
+tree-view .tree-view-row.collapsible,
+virtual-tree-view .tree-view-row.collapsible {
+    cursor: default;
+}
+
+tree-view list.selectable list-item:hover,
+virtual-tree-view virtual-list.selectable list-item:hover {
+    background-color: var(--accent);
+}
+
+tree-view list.selectable list-item.focused,
+tree-view list.selectable list-item:checked,
+virtual-tree-view virtual-list.selectable list-item.focused,
+virtual-tree-view virtual-list.selectable list-item:checked {
+    background-color: var(--accent);
+}
+
+tree-view divider > .divider-line,
+virtual-tree-view divider > .divider-line {
+    height: 1px;
+    width: 1s;
+    background-color: var(--border);
+}
+
 /* TREE TABLE */
 tree-table {
     border-width: 1px;
