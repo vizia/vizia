@@ -8,8 +8,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-vizia.workspace = true
-tokio.workspace = true
+vizia = { workspace = true, features = ["tokio"] }
 serde.workspace = true
 reqwest.workspace = true
 bytes = "1"
