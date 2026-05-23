@@ -44,6 +44,7 @@ open = { workspace = true, optional = true }
 fxhash.workspace = true
 rayon = { workspace = true, optional = true }
 dashmap = { workspace = true, optional = true }
+tokio.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
 mundy = "0.2.3"

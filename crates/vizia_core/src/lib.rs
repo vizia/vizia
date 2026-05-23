@@ -75,8 +75,10 @@ pub mod prelude {
 
     pub use super::animation::{Animation, AnimationBuilder, KeyframeBuilder};
     pub use super::context::{
-        AccessContext, AccessNode, Context, ContextProxy, DataContext, DrawContext, EmitContext,
-        EventContext, ProxyEmitError, WindowState,
+        AccessContext, AccessNode, AddTask, CompletionTaskBuilder, Context, ContextProxy,
+        DataContext, DrawContext, EmitContext, EventContext, ProxyEmitError, Task, TaskBuilder,
+        TaskContext, TaskHandle, TaskId, TaskResult, TaskRetryPolicy, TaskTimeoutPolicy,
+        WindowState,
     };
     pub use super::entity::Entity;
     pub use super::environment::{Environment, EnvironmentEvent, ThemeMode};

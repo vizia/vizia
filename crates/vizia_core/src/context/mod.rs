@@ -7,6 +7,7 @@ mod draw;
 mod event;
 mod proxy;
 mod resource;
+mod task;
 
 use log::debug;
 use skia_safe::{
@@ -48,6 +49,7 @@ pub use draw::*;
 pub use event::*;
 pub use proxy::*;
 pub use resource::*;
+pub use task::*;
 
 use crate::{
     events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler},
@@ -174,6 +176,8 @@ pub struct Context {
 
     pub text_context: TextContext,
 
+    pub(crate) task_runtime: Arc<tokio::runtime::Runtime>,
+
     pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
 
     #[cfg(feature = "clipboard")]
@@ -255,6 +259,13 @@ impl Context {
                     text_paragraphs: Default::default(),
                 }
             },
+
+            task_runtime: Arc::new(
+                tokio::runtime::Builder::new_multi_thread()
+                    .enable_all()
+                    .build()
+                    .expect("failed to build context task runtime"),
+            ),
 
             event_proxy: None,
 
@@ -984,6 +995,11 @@ impl Context {
             current: self.current,
             event_proxy: self.event_proxy.as_ref().map(|p| p.make_clone()),
         }
+    }
+
+    /// Submits a built task pipeline to run asynchronously.
+    pub fn add_task<T: AddTask>(&self, task: T) -> TaskHandle {
+        task.add_to(self)
     }
 
     /// Finds the entity that identifier identifies
