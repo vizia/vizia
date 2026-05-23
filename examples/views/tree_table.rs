@@ -104,6 +104,7 @@ fn node_matches_query(node: &FsNode, query: &str) -> bool {
 fn apply_filter_state(tree: &mut Tree<FsNode>, query: &str) -> (HashSet<NodeId>, Vec<NodeId>) {
     let mut include_set = HashSet::new();
     let mut expanded_ids = Vec::new();
+    let root_id = tree.root().id();
 
     fn visit(
         tree: &mut Tree<FsNode>,
@@ -139,9 +140,19 @@ fn apply_filter_state(tree: &mut Tree<FsNode>, query: &str) -> (HashSet<NodeId>,
         included
     }
 
-    let root_ids = tree.root().children().map(|child| child.id()).collect::<Vec<_>>();
-    for child_id in root_ids {
-        visit(tree, child_id, query, &mut include_set, &mut expanded_ids);
+    let child_ids = tree.root().children().map(|child| child.id()).collect::<Vec<_>>();
+    let mut has_visible_descendant = false;
+    for child_id in child_ids {
+        has_visible_descendant |= visit(tree, child_id, query, &mut include_set, &mut expanded_ids);
+    }
+
+    include_set.insert(root_id);
+    if !query.is_empty() && has_visible_descendant {
+        expanded_ids.push(root_id);
+    }
+
+    if let Some(mut root) = tree.get_mut(root_id) {
+        root.value().visible = true;
     }
 
     (include_set, expanded_ids)
@@ -167,18 +178,11 @@ fn compare_nodes(left: &FsNode, right: &FsNode, sort_state: Option<&TableSortSta
     }
 }
 
-fn sorted_child_ids(
-    tree: &Tree<FsNode>,
-    parent_id: Option<NodeId>,
-    sort_state: Option<&TableSortState>,
-) -> Vec<NodeId> {
-    let mut child_ids = match parent_id {
-        None => tree.root().children().map(|child| child.id()).collect::<Vec<_>>(),
-        Some(parent_id) => tree
-            .get(parent_id)
-            .map(|node| node.children().map(|child| child.id()).collect::<Vec<_>>())
-            .unwrap_or_default(),
-    };
+fn sorted_child_ids(tree: &Tree<FsNode>, parent_id: NodeId, sort_state: Option<&TableSortState>) -> Vec<NodeId> {
+    let mut child_ids = tree
+        .get(parent_id)
+        .map(|node| node.children().map(|child| child.id()).collect::<Vec<_>>())
+        .unwrap_or_default();
 
     child_ids.sort_by(|left_id, right_id| {
         let left = tree.get(*left_id).map(|node| node.value());
@@ -366,8 +370,13 @@ fn add_dir_to_tree(tree: &mut Tree<FsNode>, parent_node: NodeId, root: &Path, de
 fn build_fs_tree() -> Tree<FsNode> {
     // Walk the vizia workspace root (one directory up from examples/)
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let root_name = root
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("workspace")
+        .to_string();
     let mut tree = Tree::new(FsNode {
-        name: String::new(),
+        name: root_name,
         kind: "Folder".to_string(),
         size: "—".to_string(),
         size_bytes: None,
@@ -476,10 +485,11 @@ fn columns(
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         let tree = Signal::new(build_fs_tree());
+        let root_id = tree.with(|tree| tree.root().id());
         let cols = Signal::new(columns(tree));
         let sort_state: Signal<Option<TableSortState>> = Signal::new(None);
         let selected_rows: Signal<Vec<NodeId>> = Signal::new(vec![]);
-        let expanded_rows: Signal<Vec<NodeId>> = Signal::new(vec![]);
+        let expanded_rows: Signal<Vec<NodeId>> = Signal::new(vec![root_id]);
         let filter_text = Signal::new(String::new());
 
         AppData { tree, sort_state, selected_rows, expanded_rows, filter_text }.build(cx);
@@ -496,19 +506,20 @@ fn main() -> Result<(), ApplicationError> {
                 tree,
                 cols,
                 {
-                    let sort_state = sort_state;
-                    move |tree: &Tree<FsNode>| {
-                        sorted_child_ids(tree, None, sort_state.get().as_ref())
-                    }
+                    move |tree: &Tree<FsNode>| vec![tree.root().id()]
                 },
                 {
                     let sort_state = sort_state;
                     move |tree: &Tree<FsNode>, parent_id: &NodeId| {
-                        sorted_child_ids(tree, Some(*parent_id), sort_state.get().as_ref())
+                        sorted_child_ids(tree, *parent_id, sort_state.get().as_ref())
                     }
                 },
                 |tree: &Tree<FsNode>, node_id: &NodeId| {
-                    tree.get(*node_id).map(|node| node.value().visible).unwrap_or(false)
+                    if *node_id == tree.root().id() {
+                        true
+                    } else {
+                        tree.get(*node_id).map(|node| node.value().visible).unwrap_or(false)
+                    }
                 },
             )
             .sort_state(sort_state)
