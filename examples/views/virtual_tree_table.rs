@@ -178,7 +178,11 @@ fn compare_nodes(left: &FsNode, right: &FsNode, sort_state: Option<&TableSortSta
     }
 }
 
-fn sorted_child_ids(tree: &Tree<FsNode>, parent_id: NodeId, sort_state: Option<&TableSortState>) -> Vec<NodeId> {
+fn sorted_child_ids(
+    tree: &Tree<FsNode>,
+    parent_id: NodeId,
+    sort_state: Option<&TableSortState>,
+) -> Vec<NodeId> {
     let mut child_ids = tree
         .get(parent_id)
         .map(|node| node.children().map(|child| child.id()).collect::<Vec<_>>())
@@ -370,11 +374,8 @@ fn add_dir_to_tree(tree: &mut Tree<FsNode>, parent_node: NodeId, root: &Path, de
 fn build_fs_tree() -> Tree<FsNode> {
     // Walk the vizia workspace root (one directory up from examples/)
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let root_name = root
-        .file_name()
-        .and_then(|name| name.to_str())
-        .unwrap_or("workspace")
-        .to_string();
+    let root_name =
+        root.file_name().and_then(|name| name.to_str()).unwrap_or("workspace").to_string();
     let mut tree = Tree::new(FsNode {
         name: root_name,
         kind: "Folder".to_string(),
@@ -506,9 +507,7 @@ fn main() -> Result<(), ApplicationError> {
                 tree,
                 cols,
                 34.0,
-                {
-                    move |tree: &Tree<FsNode>| vec![tree.root().id()]
-                },
+                { move |tree: &Tree<FsNode>| vec![tree.root().id()] },
                 {
                     let sort_state = sort_state;
                     move |tree: &Tree<FsNode>, parent_id: &NodeId| {
