@@ -1,7 +1,7 @@
 mod helpers;
 use ego_tree::{NodeId, Tree};
 use helpers::*;
-use std::{fs, path::Path, time::SystemTime};
+use std::{cmp::Ordering, collections::HashSet, fs, path::Path, time::SystemTime};
 use vizia::prelude::*;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -16,8 +16,10 @@ struct FsNode {
     name: String,
     kind: String,
     size: String,
+    size_bytes: Option<u64>,
     modified: String,
     check_state: CheckState,
+    visible: bool,
 }
 
 struct AppData {
@@ -25,6 +27,7 @@ struct AppData {
     sort_state: Signal<Option<TableSortState>>,
     selected_rows: Signal<Vec<NodeId>>,
     expanded_rows: Signal<Vec<NodeId>>,
+    filter_text: Signal<String>,
 }
 
 enum AppEvent {
@@ -32,6 +35,7 @@ enum AppEvent {
     SetSort(String, TableSortDirection),
     SelectRow(NodeId),
     ToggleRow(NodeId, bool),
+    SetFilterText(String),
 }
 
 impl Model for AppData {
@@ -44,8 +48,12 @@ impl Model for AppData {
             }
 
             AppEvent::SetSort(key, direction) => {
-                self.sort_state
-                    .set(Some(TableSortState { key: key.clone(), direction: *direction }));
+                let next_sort_state =
+                    Some(TableSortState { key: key.clone(), direction: *direction });
+                self.sort_state.set(next_sort_state.clone());
+
+                let tree = self.tree.get();
+                self.tree.set(tree);
             }
 
             AppEvent::SelectRow(id) => {
@@ -63,8 +71,125 @@ impl Model for AppData {
                     }
                 });
             }
+
+            AppEvent::SetFilterText(text) => {
+                self.filter_text.set(text.clone());
+
+                let query = text.trim().to_lowercase();
+                let (include_set, expanded_rows) = self
+                    .tree
+                    .try_update(|tree| apply_filter_state(tree, &query))
+                    .unwrap_or_else(|| (HashSet::new(), Vec::new()));
+
+                self.selected_rows.update(|rows| rows.retain(|id| include_set.contains(id)));
+
+                if query.is_empty() {
+                    self.expanded_rows.update(|rows| rows.retain(|id| include_set.contains(id)));
+                } else {
+                    self.expanded_rows.set(expanded_rows);
+                }
+            }
         });
     }
+}
+
+fn node_matches_query(node: &FsNode, query: &str) -> bool {
+    if query.is_empty() {
+        return true;
+    }
+
+    node.name.to_lowercase().contains(query)
+}
+
+fn apply_filter_state(tree: &mut Tree<FsNode>, query: &str) -> (HashSet<NodeId>, Vec<NodeId>) {
+    let mut include_set = HashSet::new();
+    let mut expanded_ids = Vec::new();
+
+    fn visit(
+        tree: &mut Tree<FsNode>,
+        node_id: NodeId,
+        query: &str,
+        include_set: &mut HashSet<NodeId>,
+        expanded_ids: &mut Vec<NodeId>,
+    ) -> bool {
+        let Some(node) = tree.get(node_id) else {
+            return false;
+        };
+
+        let child_ids = node.children().map(|child| child.id()).collect::<Vec<_>>();
+        let self_matches = node_matches_query(node.value(), query);
+        let mut descendant_matches = false;
+
+        for child_id in child_ids {
+            descendant_matches |= visit(tree, child_id, query, include_set, expanded_ids);
+        }
+
+        let included = query.is_empty() || self_matches || descendant_matches;
+        if included {
+            include_set.insert(node_id);
+            if descendant_matches {
+                expanded_ids.push(node_id);
+            }
+        }
+
+        if let Some(mut node) = tree.get_mut(node_id) {
+            node.value().visible = included;
+        }
+
+        included
+    }
+
+    let root_ids = tree.root().children().map(|child| child.id()).collect::<Vec<_>>();
+    for child_id in root_ids {
+        visit(tree, child_id, query, &mut include_set, &mut expanded_ids);
+    }
+
+    (include_set, expanded_ids)
+}
+
+fn compare_nodes(left: &FsNode, right: &FsNode, sort_state: Option<&TableSortState>) -> Ordering {
+    let Some(sort_state) = sort_state else {
+        return Ordering::Equal;
+    };
+
+    let key_order = match sort_state.key.as_str() {
+        "name" => left.name.cmp(&right.name),
+        "kind" => left.kind.cmp(&right.kind),
+        "size" => left.size_bytes.cmp(&right.size_bytes),
+        "modified" => left.modified.cmp(&right.modified),
+        _ => Ordering::Equal,
+    };
+
+    match sort_state.direction {
+        TableSortDirection::Ascending => key_order,
+        TableSortDirection::Descending => key_order.reverse(),
+        TableSortDirection::None => Ordering::Equal,
+    }
+}
+
+fn sorted_child_ids(
+    tree: &Tree<FsNode>,
+    parent_id: Option<NodeId>,
+    sort_state: Option<&TableSortState>,
+) -> Vec<NodeId> {
+    let mut child_ids = match parent_id {
+        None => tree.root().children().map(|child| child.id()).collect::<Vec<_>>(),
+        Some(parent_id) => tree
+            .get(parent_id)
+            .map(|node| node.children().map(|child| child.id()).collect::<Vec<_>>())
+            .unwrap_or_default(),
+    };
+
+    child_ids.sort_by(|left_id, right_id| {
+        let left = tree.get(*left_id).map(|node| node.value());
+        let right = tree.get(*right_id).map(|node| node.value());
+        match (left, right) {
+            (Some(left), Some(right)) => compare_nodes(left, right, sort_state),
+            _ => Ordering::Equal,
+        }
+    });
+
+    child_ids
 }
 
 fn aggregate_check_state(child_states: impl Iterator<Item = CheckState>) -> CheckState {
@@ -159,7 +284,21 @@ fn format_modified(t: SystemTime) -> String {
     format!("{year}-{month:02}-{day:02}")
 }
 
-fn add_dir_to_tree(tree: &mut Tree<FsNode>, parent_node: NodeId, root: &Path) {
+const MAX_SCAN_DEPTH: usize = 4;
+
+fn should_skip_entry(path: &Path) -> bool {
+    let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+        return false;
+    };
+
+    matches!(name, ".git" | "target" | "node_modules") || name.starts_with("target")
+}
+
+fn add_dir_to_tree(tree: &mut Tree<FsNode>, parent_node: NodeId, root: &Path, depth: usize) {
+    if depth >= MAX_SCAN_DEPTH {
+        return;
+    }
+
     let Ok(mut entries) = fs::read_dir(root) else { return };
 
     // Collect and sort: directories first, then files, both alphabetically
@@ -167,6 +306,18 @@ fn add_dir_to_tree(tree: &mut Tree<FsNode>, parent_node: NodeId, root: &Path) {
     let mut files = Vec::new();
     while let Some(Ok(entry)) = entries.next() {
         let path = entry.path();
+        if should_skip_entry(&path) {
+            continue;
+        }
+
+        let file_type = match entry.file_type() {
+            Ok(file_type) => file_type,
+            Err(_) => continue,
+        };
+        if file_type.is_symlink() {
+            continue;
+        }
+
         let meta = match fs::metadata(&path) {
             Ok(m) => m,
             Err(_) => continue,
@@ -187,18 +338,27 @@ fn add_dir_to_tree(tree: &mut Tree<FsNode>, parent_node: NodeId, root: &Path) {
         } else {
             ("File".to_string(), format_size(meta.len()))
         };
+        let size_bytes = if meta.is_dir() { None } else { Some(meta.len()) };
 
         let modified = meta.modified().map(format_modified).unwrap_or_else(|_| "—".to_string());
 
         let child_id = {
             let mut parent = tree.get_mut(parent_node).expect("tree parent node should exist");
             parent
-                .append(FsNode { name, kind, size, modified, check_state: CheckState::Unchecked })
+                .append(FsNode {
+                    name,
+                    kind,
+                    size,
+                    size_bytes,
+                    modified,
+                    check_state: CheckState::Unchecked,
+                    visible: true,
+                })
                 .id()
         };
 
         if meta.is_dir() {
-            add_dir_to_tree(tree, child_id, &path);
+            add_dir_to_tree(tree, child_id, &path, depth + 1);
         }
     }
 }
@@ -210,12 +370,14 @@ fn build_fs_tree() -> Tree<FsNode> {
         name: String::new(),
         kind: "Folder".to_string(),
         size: "—".to_string(),
+        size_bytes: None,
         modified: "—".to_string(),
         check_state: CheckState::Unchecked,
+        visible: true,
     });
 
     let root_id = tree.root().id();
-    add_dir_to_tree(&mut tree, root_id, root);
+    add_dir_to_tree(&mut tree, root_id, root, 0);
     tree
 }
 
@@ -318,21 +480,35 @@ fn main() -> Result<(), ApplicationError> {
         let sort_state: Signal<Option<TableSortState>> = Signal::new(None);
         let selected_rows: Signal<Vec<NodeId>> = Signal::new(vec![]);
         let expanded_rows: Signal<Vec<NodeId>> = Signal::new(vec![]);
+        let filter_text = Signal::new(String::new());
 
-        AppData { tree, sort_state, selected_rows, expanded_rows }.build(cx);
+        AppData { tree, sort_state, selected_rows, expanded_rows, filter_text }.build(cx);
 
         ExamplePage::vertical(cx, move |cx| {
+            Textbox::new(cx, filter_text).width(Pixels(320.0)).placeholder("Filter rows").on_edit(
+                move |cx, text| {
+                    cx.emit(AppEvent::SetFilterText(text));
+                },
+            );
+
             TreeTable::from_hierarchy(
                 cx,
                 tree,
                 cols,
-                |tree: &Tree<FsNode>| {
-                    tree.root().children().map(|child| child.id()).collect::<Vec<_>>()
+                {
+                    let sort_state = sort_state;
+                    move |tree: &Tree<FsNode>| {
+                        sorted_child_ids(tree, None, sort_state.get().as_ref())
+                    }
+                },
+                {
+                    let sort_state = sort_state;
+                    move |tree: &Tree<FsNode>, parent_id: &NodeId| {
+                        sorted_child_ids(tree, Some(*parent_id), sort_state.get().as_ref())
+                    }
                 },
                 |tree: &Tree<FsNode>, node_id: &NodeId| {
-                    tree.get(node_id.clone())
-                        .map(|node| node.children().map(|child| child.id()).collect::<Vec<_>>())
-                        .unwrap_or_default()
+                    tree.get(*node_id).map(|node| node.value().visible).unwrap_or(false)
                 },
             )
             .sort_state(sort_state)
