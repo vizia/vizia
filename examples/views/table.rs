@@ -15,6 +15,7 @@ struct DynamicTableDemo {
     columns: Signal<Vec<TableColumn<RowData, TableHeader>>>,
     sort_state: Signal<Option<TableSortState>>,
     selected_rows: Signal<Vec<u32>>,
+    filter_text: Signal<String>,
     show_group: Signal<bool>,
     show_notes: Signal<bool>,
     emphasize_status: Signal<bool>,
@@ -27,6 +28,7 @@ enum DynamicTableEvent {
     ToggleOrder,
     SetSortState(String, TableSortDirection),
     SelectRow(u32),
+    SetFilterText(String),
 }
 
 impl DynamicTableDemo {
@@ -99,6 +101,18 @@ impl Model for DynamicTableDemo {
             DynamicTableEvent::SelectRow(id) => {
                 self.selected_rows.set(vec![*id]);
                 self.status_text.set(format!("Selected row {id}."));
+            }
+
+            DynamicTableEvent::SetFilterText(text) => {
+                self.filter_text.set(text.clone());
+
+                if text.trim().is_empty() {
+                    self.status_text.set(
+                        "Filter cleared. Showing all rows matching current sort.".to_string(),
+                    );
+                } else {
+                    self.status_text.set(format!("Filtering rows by \"{}\".", text.trim()));
+                }
             }
         });
     }
@@ -222,12 +236,29 @@ fn sort_rows(mut rows: Vec<RowData>, sort_state: Option<TableSortState>) -> Vec<
     rows
 }
 
+fn row_matches_query(row: &RowData, query: &str) -> bool {
+    if query.is_empty() {
+        return true;
+    }
+
+    row.name.to_lowercase().contains(query)
+        || row.group.to_lowercase().contains(query)
+        || row.status.to_lowercase().contains(query)
+        || row.notes.to_lowercase().contains(query)
+}
+
+fn filter_rows(rows: Vec<RowData>, filter_text: &str) -> Vec<RowData> {
+    let query = filter_text.trim().to_lowercase();
+    rows.into_iter().filter(|row| row_matches_query(row, &query)).collect()
+}
+
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         let rows = Signal::new(make_rows());
         let columns = Signal::new(build_columns());
         let sort_state = Signal::new(None);
         let selected_rows = Signal::new(Vec::<u32>::new());
+        let filter_text = Signal::new(String::new());
         let show_group = Signal::new(true);
         let show_notes = Signal::new(true);
         let emphasize_status = Signal::new(false);
@@ -240,6 +271,7 @@ fn main() -> Result<(), ApplicationError> {
             columns,
             sort_state,
             selected_rows,
+            filter_text,
             show_group,
             show_notes,
             emphasize_status,
@@ -247,9 +279,18 @@ fn main() -> Result<(), ApplicationError> {
         }
         .build(cx);
 
-        let sorted_rows = Memo::new(move |_| sort_rows(rows.get(), sort_state.get()));
+        let sorted_rows = Memo::new(move |_| {
+            let filtered_rows = filter_rows(rows.get(), &filter_text.get());
+            sort_rows(filtered_rows, sort_state.get())
+        });
 
         ExamplePage::vertical(cx, |cx| {
+            Textbox::new(cx, filter_text).width(Pixels(320.0)).placeholder("Filter rows").on_edit(
+                |cx, text| {
+                    cx.emit(DynamicTableEvent::SetFilterText(text));
+                },
+            );
+
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
                     Switch::new(cx, show_group)

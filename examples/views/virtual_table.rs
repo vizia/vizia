@@ -13,11 +13,13 @@ struct PerfRow {
 struct PerfTableDemo {
     sort_state: Signal<Option<TableSortState>>,
     selected_rows: Signal<Vec<u32>>,
+    filter_text: Signal<String>,
 }
 
 enum PerfTableEvent {
     SetSortState(String, TableSortDirection),
     SelectRow(u32),
+    SetFilterText(String),
 }
 
 impl Model for PerfTableDemo {
@@ -29,6 +31,10 @@ impl Model for PerfTableDemo {
             }
             PerfTableEvent::SelectRow(id) => {
                 self.selected_rows.set(vec![*id]);
+            }
+
+            PerfTableEvent::SetFilterText(text) => {
+                self.filter_text.set(text.clone());
             }
         });
     }
@@ -63,15 +69,34 @@ fn sort_rows(mut rows: Vec<PerfRow>, state: Option<TableSortState>) -> Vec<PerfR
     rows
 }
 
+fn row_matches_query(row: &PerfRow, query: &str) -> bool {
+    if query.is_empty() {
+        return true;
+    }
+
+    row.name.to_lowercase().contains(query)
+        || row.group.to_lowercase().contains(query)
+        || row.notes.to_lowercase().contains(query)
+}
+
+fn filter_rows(rows: Vec<PerfRow>, filter_text: &str) -> Vec<PerfRow> {
+    let query = filter_text.trim().to_lowercase();
+    rows.into_iter().filter(|row| row_matches_query(row, &query)).collect()
+}
+
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         let rows = Signal::new(make_rows(5000));
         let sort_state = Signal::new(None);
         let selected_rows = Signal::new(Vec::<u32>::new());
+        let filter_text = Signal::new(String::new());
 
-        PerfTableDemo { sort_state, selected_rows }.build(cx);
+        PerfTableDemo { sort_state, selected_rows, filter_text }.build(cx);
 
-        let sorted_rows = Memo::new(move |_| sort_rows(rows.get(), sort_state.get()));
+        let sorted_rows = Memo::new(move |_| {
+            let filtered_rows = filter_rows(rows.get(), &filter_text.get());
+            sort_rows(filtered_rows, sort_state.get())
+        });
 
         let columns: Signal<Vec<TableColumn<PerfRow, TableHeader>>> = Signal::new(vec![
             TableColumn::new(
@@ -115,6 +140,12 @@ fn main() -> Result<(), ApplicationError> {
             Label::new(cx, Localized::new("virtual-table-description"))
                 .class("table-cell-meta")
                 .height(Auto);
+
+            Textbox::new(cx, filter_text).width(Pixels(320.0)).placeholder("Filter rows").on_edit(
+                |cx, text| {
+                    cx.emit(PerfTableEvent::SetFilterText(text));
+                },
+            );
 
             VirtualTable::new(cx, sorted_rows, columns, 34.0, |row: &PerfRow| row.id)
                 .sort_state(sort_state)
