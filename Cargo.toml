@@ -392,6 +392,10 @@ name = "virtual_tree_table"
 path = "examples/views/virtual_tree_table.rs"
 
 [[example]]
+name = "virtual_tree_view"
+path = "examples/views/virtual_tree_view.rs"
+
+[[example]]
 name = "table"
 path = "examples/views/table.rs"
 
@@ -403,3 +407,7 @@ required-features = ["tokio"]
 [[example]]
 name = "tree_table"
 path = "examples/views/tree_table.rs"
+
+[[example]]
+name = "tree_view"
+path = "examples/views/tree_view.rs"
