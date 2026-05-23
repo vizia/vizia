@@ -176,7 +176,7 @@ impl Application {
         });
 
         cx.renegotiate_language();
-        cx.0.add_built_in_styles();
+        cx.0.add_built_in_translations();
         (content)(cx.context());
 
         Self {
