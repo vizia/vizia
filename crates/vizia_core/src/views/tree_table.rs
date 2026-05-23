@@ -105,6 +105,7 @@ fn flatten_hierarchy_rows<U, Id>(
     tree: &U,
     root_ids: &dyn Fn(&U) -> Vec<Id>,
     child_ids: &dyn Fn(&U, &Id) -> Vec<Id>,
+    is_visible: &dyn Fn(&U, &Id) -> bool,
 ) -> Vec<TreeNodeRow<Id>>
 where
     Id: Clone + Eq + Hash + 'static,
@@ -114,20 +115,25 @@ where
         node_id: Id,
         parent_id: Option<Id>,
         child_ids: &dyn Fn(&U, &Id) -> Vec<Id>,
+        is_visible: &dyn Fn(&U, &Id) -> bool,
         out: &mut Vec<TreeNodeRow<Id>>,
     ) where
         Id: Clone + Eq + Hash + 'static,
     {
+        if !is_visible(tree, &node_id) {
+            return;
+        }
+
         out.push(TreeNodeRow { id: node_id.clone(), parent_id });
 
         for child_id in child_ids(tree, &node_id) {
-            visit(tree, child_id, Some(node_id.clone()), child_ids, out);
+            visit(tree, child_id, Some(node_id.clone()), child_ids, is_visible, out);
         }
     }
 
     let mut rows = Vec::new();
     for root_id in root_ids(tree) {
-        visit(tree, root_id, None, child_ids, &mut rows);
+        visit(tree, root_id, None, child_ids, is_visible, &mut rows);
     }
 
     rows
@@ -657,6 +663,8 @@ where
     /// Creates a [`TreeTable`] directly from hierarchical data.
     ///
     /// Provide closures to enumerate root node IDs and child node IDs for a given parent.
+    /// The returned order is the order provided by those closures; filtering only removes
+    /// invisible nodes and their descendants.
     /// The table manages expand/collapse state and internally projects IDs into
     /// [`TreeNodeRow`] values.
     pub fn from_hierarchy<S, U, C, R, H>(
@@ -665,6 +673,7 @@ where
         columns: C,
         root_ids: impl Fn(&U) -> Vec<Id> + 'static,
         child_ids: impl Fn(&U, &Id) -> Vec<Id> + 'static,
+        is_visible: impl Fn(&U, &Id) -> bool + 'static,
     ) -> Handle<Self>
     where
         S: Res<U> + 'static,
@@ -675,12 +684,13 @@ where
     {
         let root_ids: Rc<dyn Fn(&U) -> Vec<Id>> = Rc::new(root_ids);
         let child_ids: Rc<dyn Fn(&U, &Id) -> Vec<Id>> = Rc::new(child_ids);
+        let is_visible: Rc<dyn Fn(&U, &Id) -> bool> = Rc::new(is_visible);
 
         Self::new(
             cx,
             tree,
             columns,
-            move |tree: &U| flatten_hierarchy_rows(tree, &*root_ids, &*child_ids),
+            move |tree: &U| flatten_hierarchy_rows(tree, &*root_ids, &*child_ids, &*is_visible),
             |row: &TreeNodeRow<Id>| row.id.clone(),
             |row: &TreeNodeRow<Id>| row.parent_id.clone(),
         )
