@@ -11,7 +11,7 @@ rust-version.workspace = true
 exclude = ["assets/", "examples/"]
 
 [features]
-default = ["winit", "clipboard", "x11", "wayland", "markdown", "accesskit"]
+default = ["winit", "clipboard", "x11", "wayland", "markdown", "accesskit", "tokio"]
 clipboard = ["vizia_core/clipboard", "vizia_winit?/clipboard"]
 winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]
@@ -21,6 +21,7 @@ accesskit = ["vizia_winit?/accesskit"]
 markdown = ["vizia_core/markdown"]
 rayon = ["vizia_core/rayon"]
 serde = ["vizia_core/serde"]
+tokio = ["vizia_core/tokio"]
 
 [dependencies]
 vizia_core.workspace = true
@@ -45,7 +46,7 @@ rust-version = "1.85"
 
 [workspace.dependencies]
 vizia = { version = "0.4.0", path = "." }
-vizia_core = { version = "0.4.0", path = "crates/vizia_core" }
+vizia_core = { version = "0.4.0", path = "crates/vizia_core", default-features = false }
 vizia_winit = { version = "0.4.0", path = "crates/vizia_winit", default-features = false }
 vizia_baseview = { version = "0.4.0", path = "crates/vizia_baseview" }
 vizia_id = { version = "0.4.0", path = "crates/vizia_id" }

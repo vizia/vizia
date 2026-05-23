@@ -3,7 +3,6 @@ use std::collections::{BinaryHeap, VecDeque};
 #[cfg(feature = "clipboard")]
 use std::error::Error;
 use std::rc::Rc;
-use std::sync::Arc;
 
 use hashbrown::hash_map::Entry;
 use hashbrown::{HashMap, HashSet};
@@ -77,7 +76,7 @@ pub struct EventContext<'a> {
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub(crate) resource_manager: &'a mut ResourceManager,
     pub(crate) text_context: &'a mut TextContext,
-    pub(crate) task_runtime: &'a Arc<tokio::runtime::Runtime>,
+    pub(crate) task_runtime: &'a super::TaskRuntime,
     pub(crate) modifiers: &'a Modifiers,
     pub(crate) mouse: &'a MouseState<Entity>,
     pub(crate) event_queue: &'a mut VecDeque<Event>,
@@ -821,6 +820,7 @@ impl<'a> EventContext<'a> {
     }
 
     /// Submits a built task pipeline to run asynchronously.
+    #[cfg(feature = "tokio")]
     pub fn add_task<T: AddTask>(&self, task: T) -> TaskHandle {
         task.add_to(self)
     }

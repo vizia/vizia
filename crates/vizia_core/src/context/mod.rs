@@ -7,6 +7,7 @@ mod draw;
 mod event;
 mod proxy;
 mod resource;
+#[cfg(feature = "tokio")]
 mod task;
 
 use log::debug;
@@ -49,6 +50,7 @@ pub use draw::*;
 pub use event::*;
 pub use proxy::*;
 pub use resource::*;
+#[cfg(feature = "tokio")]
 pub use task::*;
 
 use crate::{
@@ -64,6 +66,11 @@ use crate::resource::ResourceManager;
 use crate::text::TextContext;
 use vizia_input::{ImeState, MouseState};
 use vizia_storage::{ChildIterator, LayoutTreeIterator};
+
+#[cfg(feature = "tokio")]
+pub(crate) type TaskRuntime = Arc<tokio::runtime::Runtime>;
+#[cfg(not(feature = "tokio"))]
+pub(crate) type TaskRuntime = ();
 
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
@@ -176,7 +183,7 @@ pub struct Context {
 
     pub text_context: TextContext,
 
-    pub(crate) task_runtime: Arc<tokio::runtime::Runtime>,
+    pub(crate) task_runtime: TaskRuntime,
 
     pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
 
@@ -260,12 +267,7 @@ impl Context {
                 }
             },
 
-            task_runtime: Arc::new(
-                tokio::runtime::Builder::new_multi_thread()
-                    .enable_all()
-                    .build()
-                    .expect("failed to build context task runtime"),
-            ),
+            task_runtime: Self::new_task_runtime(),
 
             event_proxy: None,
 
@@ -306,6 +308,21 @@ impl Context {
         result.style.role.insert(Entity::root(), Role::Window);
 
         result
+    }
+
+    #[cfg(feature = "tokio")]
+    fn new_task_runtime() -> TaskRuntime {
+        Arc::new(
+            tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()
+                .expect("failed to build context task runtime"),
+        )
+    }
+
+    #[cfg(not(feature = "tokio"))]
+    fn new_task_runtime() -> TaskRuntime {
+        ()
     }
 
     /// The "current" entity, generally the entity which is currently being built or the entity
@@ -997,6 +1014,7 @@ impl Context {
         }
     }
 
+    #[cfg(feature = "tokio")]
     /// Submits a built task pipeline to run asynchronously.
     pub fn add_task<T: AddTask>(&self, task: T) -> TaskHandle {
         task.add_to(self)

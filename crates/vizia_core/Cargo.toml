@@ -9,12 +9,14 @@ repository.workspace = true
 rust-version.workspace = true
 
 [features]
+default = ["tokio"]
 clipboard = ["copypasta"]
 x11 = ["copypasta?/x11"]
 wayland = ["copypasta?/wayland"]
 markdown = ["comrak", "dep:open"]
 rayon = ["dep:rayon", "dep:dashmap", "hashbrown/rayon"]
 serde = ["vizia_reactive/serde"]
+tokio = ["dep:tokio"]
 
 [dependencies]
 vizia_storage.workspace = true
@@ -44,7 +46,7 @@ open = { workspace = true, optional = true }
 fxhash.workspace = true
 rayon = { workspace = true, optional = true }
 dashmap = { workspace = true, optional = true }
-tokio.workspace = true
+tokio = { workspace = true, optional = true }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 mundy = "0.2.3"
