@@ -186,6 +186,7 @@ pub struct Context {
 
     pub ignore_default_theme: bool,
     built_in_translations_added: bool,
+    built_in_styles_added: bool,
     pub window_has_focus: bool,
     pub ime_state: ImeState,
 
@@ -266,6 +267,7 @@ impl Context {
 
             ignore_default_theme: false,
             built_in_translations_added: false,
+            built_in_styles_added: false,
             window_has_focus: true,
 
             ime_state: Default::default(),
@@ -675,18 +677,23 @@ impl Context {
     pub fn add_built_in_styles(&mut self) {
         self.add_built_in_translations();
 
-        let mut user_styles = Vec::new();
-        if self.resource_manager.styles.len() >= 3 {
-            user_styles = self.resource_manager.styles.drain(3..).collect::<Vec<_>>();
-        }
+        let user_styles = if self.built_in_styles_added {
+            if self.resource_manager.styles.len() >= 3 {
+                self.resource_manager.styles.drain(3..).collect::<Vec<_>>()
+            } else {
+                Vec::new()
+            }
+        } else {
+            self.resource_manager.styles.drain(..).collect::<Vec<_>>()
+        };
 
         self.resource_manager.styles.clear();
 
-        self.add_stylesheet(DEFAULT_LAYOUT).unwrap();
-        self.add_stylesheet(MARKDOWN).unwrap();
+        self.resource_manager.styles.push(Box::new(DEFAULT_LAYOUT));
+        self.resource_manager.styles.push(Box::new(MARKDOWN));
 
         if !self.ignore_default_theme {
-            self.add_stylesheet(DEFAULT_THEME).unwrap();
+            self.resource_manager.styles.push(Box::new(DEFAULT_THEME));
             let environment = self.data::<Environment>();
             let theme_mode = environment.effective_theme();
             let direction = environment.direction.get();
@@ -697,10 +704,11 @@ impl Context {
             })
         } else {
             // Add an empty stylesheet to ensure that the list of styles contains at least three entries.
-            self.add_stylesheet("").unwrap();
+            self.resource_manager.styles.push(Box::new(""));
         }
 
         self.resource_manager.styles.extend(user_styles);
+        self.built_in_styles_added = true;
 
         EventContext::new(self).reload_styles().unwrap();
     }
