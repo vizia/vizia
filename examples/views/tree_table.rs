@@ -506,7 +506,7 @@ fn main() -> Result<(), ApplicationError> {
                 cx,
                 tree,
                 cols,
-                { move |tree: &Tree<FsNode>| vec![tree.root().id()] },
+                move |tree: &Tree<FsNode>| vec![tree.root().id()],
                 {
                     let sort_state = sort_state;
                     move |tree: &Tree<FsNode>, parent_id: &NodeId| {
