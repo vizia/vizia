@@ -1,7 +1,3 @@
-use std::sync::{
-    Arc,
-    atomic::{AtomicBool, Ordering},
-};
 use std::time::Duration;
 
 use vizia::prelude::*;
@@ -19,7 +15,6 @@ struct AppData {
     progress: Signal<f32>,
     request_id: Signal<u32>,
     active_download: Option<TaskHandle>,
-    active_cancel: Option<Arc<AtomicBool>>,
 }
 
 impl AppData {
@@ -27,14 +22,7 @@ impl AppData {
         let status = Signal::new("Press Download File to start".to_string());
         let progress = Signal::new(0.0);
 
-        Self {
-            status,
-            progress,
-            request_id: Signal::new(0),
-            active_download: None,
-            active_cancel: None,
-        }
-        .build(cx);
+        Self { status, progress, request_id: Signal::new(0), active_download: None }.build(cx);
 
         (status, progress)
     }
@@ -47,9 +35,6 @@ impl Model for AppData {
                 if let Some(handle) = self.active_download.take() {
                     handle.cancel();
                 }
-                if let Some(cancel_flag) = self.active_cancel.take() {
-                    cancel_flag.store(true, Ordering::Release);
-                }
 
                 let request = self.request_id.get().saturating_add(1);
                 self.request_id.set(request);
@@ -60,22 +45,20 @@ impl Model for AppData {
 
                 // Build a fresh future per attempt so retry policies can re-run work.
                 let mut attempt = 0usize;
-                let cancel_flag = Arc::new(AtomicBool::new(false));
                 let proxy = cx.get_proxy();
-                let task_cancel = cancel_flag.clone();
                 let handle = cx.add_task(
-                    Task::new(move || {
+                    Task::new(move |cancellation| {
                         attempt = attempt.saturating_add(1);
                         let attempt_num = attempt;
                         let file_name = file_name.clone();
-                        let cancel_flag = task_cancel.clone();
+                        let cancellation = cancellation.clone();
                         let mut proxy = proxy.clone();
 
                         async move {
                             // Simulate a large file transfer with chunked progress over several seconds.
                             let total_chunks = 40_u32;
                             for chunk in 1..=total_chunks {
-                                if cancel_flag.load(Ordering::Acquire) {
+                                if cancellation.is_cancelled() {
                                     return Err(format!("Cancelled {}", file_name));
                                 }
                                 std::thread::sleep(Duration::from_millis(120));
@@ -91,12 +74,10 @@ impl Model for AppData {
                         }
                     })
                     .name("download-file")
-                    .timeout_policy(TaskTimeoutPolicy::CancelAfter(Duration::from_secs(8)))
-                    .retry_policy(TaskRetryPolicy::Attempts {
-                        retries: 1,
-                        delay: Some(Duration::from_millis(20)),
-                    })
-                    .on_result(move |result, proxy| match result.flatten() {
+                    .timeout(Duration::from_secs(8))
+                    .retry(1)
+                    .retry_delay(Duration::from_millis(20))
+                    .on_result(move |result, proxy| match result {
                         TaskResult::Completed(status) => {
                             let _ = proxy.emit(AppEvent::DownloadFinished(request, status));
                         }
@@ -124,7 +105,6 @@ impl Model for AppData {
                     }),
                 );
 
-                self.active_cancel = Some(cancel_flag);
                 self.active_download = Some(handle);
             }
 
@@ -140,7 +120,6 @@ impl Model for AppData {
                     return;
                 }
                 self.active_download = None;
-                self.active_cancel = None;
                 self.progress.set(1.0);
                 self.status.set(status);
             }
@@ -150,7 +129,6 @@ impl Model for AppData {
                     return;
                 }
                 self.active_download = None;
-                self.active_cancel = None;
                 self.status.set(status);
             }
         });

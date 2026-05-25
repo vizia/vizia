@@ -60,7 +60,6 @@ type Models = HashMap<Entity, HashMap<TypeId, Box<dyn ModelData>>>;
 /// }
 /// ```
 pub struct EventContext<'a> {
-    pub(crate) context_id: u64,
     pub(crate) current: Entity,
     pub(crate) captured: &'a mut Entity,
     pub(crate) focused: &'a mut Entity,
@@ -76,7 +75,10 @@ pub struct EventContext<'a> {
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub(crate) resource_manager: &'a mut ResourceManager,
     pub(crate) text_context: &'a mut TextContext,
+    #[cfg(feature = "tokio")]
     pub(crate) task_runtime: &'a super::TaskRuntime,
+    #[cfg(feature = "tokio")]
+    pub(crate) named_tasks: &'a super::NamedTaskMap,
     pub(crate) modifiers: &'a Modifiers,
     pub(crate) mouse: &'a MouseState<Entity>,
     pub(crate) event_queue: &'a mut VecDeque<Event>,
@@ -116,7 +118,6 @@ impl<'a> EventContext<'a> {
     /// Creates a new [EventContext].
     pub fn new(cx: &'a mut Context) -> Self {
         Self {
-            context_id: cx.context_id,
             current: cx.current,
             captured: &mut cx.captured,
             focused: &mut cx.focused,
@@ -131,7 +132,10 @@ impl<'a> EventContext<'a> {
             listeners: &mut cx.listeners,
             resource_manager: &mut cx.resource_manager,
             text_context: &mut cx.text_context,
+            #[cfg(feature = "tokio")]
             task_runtime: &cx.task_runtime,
+            #[cfg(feature = "tokio")]
+            named_tasks: &cx.named_tasks,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
             event_queue: &mut cx.event_queue,
@@ -152,7 +156,6 @@ impl<'a> EventContext<'a> {
     /// Creates a new [EventContext] with the given current [Entity].
     pub fn new_with_current(cx: &'a mut Context, current: Entity) -> Self {
         Self {
-            context_id: cx.context_id,
             current,
             captured: &mut cx.captured,
             focused: &mut cx.focused,
@@ -167,7 +170,10 @@ impl<'a> EventContext<'a> {
             listeners: &mut cx.listeners,
             resource_manager: &mut cx.resource_manager,
             text_context: &mut cx.text_context,
+            #[cfg(feature = "tokio")]
             task_runtime: &cx.task_runtime,
+            #[cfg(feature = "tokio")]
+            named_tasks: &cx.named_tasks,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
             event_queue: &mut cx.event_queue,
@@ -821,8 +827,13 @@ impl<'a> EventContext<'a> {
 
     /// Submits a built task pipeline to run asynchronously.
     #[cfg(feature = "tokio")]
-    pub fn add_task<T: AddTask>(&self, task: T) -> TaskHandle {
-        task.add_to(self)
+    pub fn add_task<T, E, Map>(&self, task: TaskBuilder<T, E, Map>) -> TaskHandle
+    where
+        T: Send + 'static,
+        E: Send + 'static,
+        Map: FnOnce(TaskResult<T, E>, &mut ContextProxy) + Send + 'static,
+    {
+        task.add_to_event_context(self)
     }
 
     pub fn modify<V: View>(&mut self, f: impl FnOnce(&mut V)) {

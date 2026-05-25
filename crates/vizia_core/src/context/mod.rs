@@ -69,8 +69,6 @@ use vizia_storage::{ChildIterator, LayoutTreeIterator};
 
 #[cfg(feature = "tokio")]
 pub(crate) type TaskRuntime = Arc<tokio::runtime::Runtime>;
-#[cfg(not(feature = "tokio"))]
-pub(crate) type TaskRuntime = ();
 
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
@@ -183,7 +181,10 @@ pub struct Context {
 
     pub text_context: TextContext,
 
+    #[cfg(feature = "tokio")]
     pub(crate) task_runtime: TaskRuntime,
+    #[cfg(feature = "tokio")]
+    pub(crate) named_tasks: NamedTaskMap,
 
     pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
 
@@ -266,8 +267,10 @@ impl Context {
                     text_paragraphs: Default::default(),
                 }
             },
-
+            #[cfg(feature = "tokio")]
             task_runtime: Self::new_task_runtime(),
+            #[cfg(feature = "tokio")]
+            named_tasks: new_named_task_map(),
 
             event_proxy: None,
 
@@ -318,11 +321,6 @@ impl Context {
                 .build()
                 .expect("failed to build context task runtime"),
         )
-    }
-
-    #[cfg(not(feature = "tokio"))]
-    fn new_task_runtime() -> TaskRuntime {
-        ()
     }
 
     /// The "current" entity, generally the entity which is currently being built or the entity
@@ -1016,8 +1014,13 @@ impl Context {
 
     #[cfg(feature = "tokio")]
     /// Submits a built task pipeline to run asynchronously.
-    pub fn add_task<T: AddTask>(&self, task: T) -> TaskHandle {
-        task.add_to(self)
+    pub fn add_task<T, E, Map>(&self, task: TaskBuilder<T, E, Map>) -> TaskHandle
+    where
+        T: Send + 'static,
+        E: Send + 'static,
+        Map: FnOnce(TaskResult<T, E>, &mut ContextProxy) + Send + 'static,
+    {
+        task.add_to_context(self)
     }
 
     /// Finds the entity that identifier identifies
