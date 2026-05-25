@@ -87,8 +87,14 @@ impl TaskHandle {
     /// The cancellation request is visible to the running task body through the
     /// [`TaskCancellation`] token passed to [`Task::new`].
     ///
-    /// Returns `true` if this call changed the task into a cancelled state.
+    /// Returns `true` if this call requested cancellation for an in-flight task.
+    ///
+    /// Returns `false` if cancellation was already requested or the task already finished.
     pub fn cancel(&self) -> bool {
+        if self.is_finished() {
+            return false;
+        }
+
         !self.cancelled.swap(true, Ordering::AcqRel)
     }
 
@@ -295,7 +301,7 @@ where
                     attempt + 1 < max_attempts
                 };
 
-                if should_retry {
+                if should_retry && !worker_cancelled.load(Ordering::Acquire) {
                     if let Some(delay) = options.retry_delay {
                         tokio::time::sleep(delay).await;
                     }
@@ -587,5 +593,35 @@ mod tests {
             TaskResult::Completed(2) => {}
             other => panic!("expected replacement task to complete, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn cancel_after_finish_returns_false_and_does_not_mark_cancelled() {
+        let runtime = test_runtime();
+        let (result_tx, result_rx) = mpsc::channel();
+
+        let builder = Task::new(|_| async move { Ok::<usize, std::convert::Infallible>(42usize) })
+            .on_result(move |result, _| {
+                result_tx.send(result).unwrap();
+            });
+
+        let handle = execute_task_with_source(
+            test_proxy(),
+            runtime.clone(),
+            test_named_tasks(),
+            None,
+            builder.options,
+            builder.source,
+            builder.completion_handler,
+        );
+
+        match result_rx.recv_timeout(Duration::from_secs(1)).unwrap() {
+            TaskResult::Completed(42) => {}
+            other => panic!("expected completed result, got {other:?}"),
+        }
+
+        assert!(handle.is_finished());
+        assert!(!handle.cancel());
+        assert!(!handle.is_cancelled());
     }
 }
