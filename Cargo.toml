@@ -21,11 +21,13 @@ accesskit = ["vizia_winit?/accesskit"]
 markdown = ["vizia_core/markdown"]
 rayon = ["vizia_core/rayon"]
 serde = ["vizia_core/serde"]
+tokio = ["vizia_core/tokio", "dep:tokio"]
 
 [dependencies]
 vizia_core.workspace = true
 vizia_winit = { workspace = true, optional = true, default-features = false}
 vizia_baseview = { workspace = true, optional = true }
+tokio = { workspace = true, optional = true }
 
 [dev-dependencies]
 chrono.workspace = true
@@ -45,7 +47,7 @@ rust-version = "1.85"
 
 [workspace.dependencies]
 vizia = { version = "0.4.0", path = "." }
-vizia_core = { version = "0.4.0", path = "crates/vizia_core" }
+vizia_core = { version = "0.4.0", path = "crates/vizia_core", default-features = false }
 vizia_winit = { version = "0.4.0", path = "crates/vizia_winit", default-features = false }
 vizia_baseview = { version = "0.4.0", path = "crates/vizia_baseview" }
 vizia_id = { version = "0.4.0", path = "crates/vizia_id" }
@@ -85,7 +87,7 @@ selectors = "0.38"
 serde = { version = "1.0", features = ["derive"] }
 skia-safe = { version = "0.97", features = ["gl", "textlayout", "svg"] }
 sys-locale = "0.3"
-tokio = { version = "1.52.3", features = ["rt-multi-thread"] }
+tokio = { version = "1.52.3", features = ["rt-multi-thread", "time"] }
 unic-langid = { version = "0.9.6", features = ["macros"] }
 unicode-segmentation = "1.12"
 unicode-bidi = "0.3"
@@ -368,3 +370,8 @@ path = "examples/views/virtual_table.rs"
 [[example]]
 name = "table"
 path = "examples/views/table.rs"
+
+[[example]]
+name = "task_download"
+path = "examples/task_download.rs"
+required-features = ["tokio"]

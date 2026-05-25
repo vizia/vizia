@@ -11,7 +11,6 @@ pub struct AppData {
     images: Signal<Vec<Vec<Id>>>,
     thumbnails: Signal<HashMap<Id, (ImageData, Status)>>,
     original: Signal<Option<Id>>,
-    runtime: tokio::runtime::Runtime,
 }
 
 type GallerySignals =
@@ -19,19 +18,31 @@ type GallerySignals =
 
 impl AppData {
     pub fn create(cx: &mut Context) -> GallerySignals {
-        let runtime = tokio::runtime::Runtime::new().unwrap();
-
-        let mut c = cx.get_proxy();
-        runtime.spawn(async move {
-            let images = list().await;
-            let _ = c.emit(AppEvent::ImagesListed(images));
-        });
+        cx.add_task(Task::new(|_| async move { list().await }).on_result(|result, proxy| {
+            match result {
+                TaskResult::Completed(images) => {
+                    let _ = proxy.emit(AppEvent::ImagesListed(Ok(images)));
+                }
+                TaskResult::Error(error) => {
+                    let _ = proxy.emit(AppEvent::ImagesListed(Err(error)));
+                }
+                TaskResult::Timeout => {
+                    eprintln!("Image list request timed out");
+                }
+                TaskResult::Cancelled => {
+                    eprintln!("Image list request was cancelled");
+                }
+                TaskResult::Disconnected { .. } => {
+                    eprintln!("Image list worker disconnected");
+                }
+            }
+        }));
 
         let images = Signal::new(Vec::default());
         let thumbnails = Signal::new(HashMap::default());
         let original = Signal::new(None);
 
-        Self { images, thumbnails, original, runtime }.build(cx);
+        Self { images, thumbnails, original }.build(cx);
 
         (images, thumbnails, original)
     }
@@ -64,12 +75,30 @@ impl Model for AppData {
                         tn.1 = Status::Loading;
                     }
                 });
-                if let Some(image) = self.thumbnails.get().get(&id).cloned() {
-                    let mut c = cx.get_proxy();
-                    self.runtime.spawn(async move {
-                        let image = download(image.0.url, Size::Thumbnail).await;
-                        let _ = c.emit(AppEvent::ImageDownloaded(id, image));
-                    });
+                if let Some(url) = self.thumbnails.get().get(&id).map(|image| image.0.url.clone()) {
+                    cx.add_task(
+                        Task::new(move |_| {
+                            let url = url.clone();
+                            async move { download(url, Size::Thumbnail).await }
+                        })
+                        .on_result(move |result, proxy| match result {
+                            TaskResult::Completed(image) => {
+                                let _ = proxy.emit(AppEvent::ImageDownloaded(id, Ok(image)));
+                            }
+                            TaskResult::Error(error) => {
+                                let _ = proxy.emit(AppEvent::ImageDownloaded(id, Err(error)));
+                            }
+                            TaskResult::Timeout => {
+                                eprintln!("Thumbnail download timed out for image {}", id.0);
+                            }
+                            TaskResult::Cancelled => {
+                                eprintln!("Thumbnail download cancelled for image {}", id.0);
+                            }
+                            TaskResult::Disconnected { .. } => {
+                                eprintln!("Thumbnail worker disconnected for image {}", id.0);
+                            }
+                        }),
+                    );
                 }
             }
 
@@ -100,14 +129,30 @@ impl Model for AppData {
             }
 
             AppEvent::ShowOriginal(id) => {
-                if let Some(image) = self.thumbnails.get().get(&id).cloned() {
-                    let mut c = cx.get_proxy();
-                    self.runtime.block_on(async move {
-                        tokio::spawn(async move {
-                            let image = download(image.0.url, Size::Original).await;
-                            let _ = c.emit(AppEvent::OriginalDownloaded(id, image));
-                        });
-                    });
+                if let Some(url) = self.thumbnails.get().get(&id).map(|image| image.0.url.clone()) {
+                    cx.add_task(
+                        Task::new(move |_| {
+                            let url = url.clone();
+                            async move { download(url, Size::Original).await }
+                        })
+                        .on_result(move |result, proxy| match result {
+                            TaskResult::Completed(image) => {
+                                let _ = proxy.emit(AppEvent::OriginalDownloaded(id, Ok(image)));
+                            }
+                            TaskResult::Error(error) => {
+                                let _ = proxy.emit(AppEvent::OriginalDownloaded(id, Err(error)));
+                            }
+                            TaskResult::Timeout => {
+                                eprintln!("Original download timed out for image {}", id.0);
+                            }
+                            TaskResult::Cancelled => {
+                                eprintln!("Original download cancelled for image {}", id.0);
+                            }
+                            TaskResult::Disconnected { .. } => {
+                                eprintln!("Original worker disconnected for image {}", id.0);
+                            }
+                        }),
+                    );
                 }
             }
 

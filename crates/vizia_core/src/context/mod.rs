@@ -7,6 +7,8 @@ mod draw;
 mod event;
 mod proxy;
 mod resource;
+#[cfg(feature = "tokio")]
+mod task;
 
 use log::debug;
 use skia_safe::{
@@ -48,6 +50,8 @@ pub use draw::*;
 pub use event::*;
 pub use proxy::*;
 pub use resource::*;
+#[cfg(feature = "tokio")]
+pub use task::*;
 
 use crate::{
     events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler},
@@ -62,6 +66,9 @@ use crate::resource::ResourceManager;
 use crate::text::TextContext;
 use vizia_input::{ImeState, MouseState};
 use vizia_storage::{ChildIterator, LayoutTreeIterator};
+
+#[cfg(feature = "tokio")]
+pub(crate) type TaskRuntime = Arc<tokio::runtime::Runtime>;
 
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
@@ -174,6 +181,11 @@ pub struct Context {
 
     pub text_context: TextContext,
 
+    #[cfg(feature = "tokio")]
+    pub(crate) task_runtime: TaskRuntime,
+    #[cfg(feature = "tokio")]
+    pub(crate) named_tasks: NamedTaskMap,
+
     pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
 
     #[cfg(feature = "clipboard")]
@@ -255,6 +267,10 @@ impl Context {
                     text_paragraphs: Default::default(),
                 }
             },
+            #[cfg(feature = "tokio")]
+            task_runtime: Self::new_task_runtime(),
+            #[cfg(feature = "tokio")]
+            named_tasks: new_named_task_map(),
 
             event_proxy: None,
 
@@ -295,6 +311,16 @@ impl Context {
         result.style.role.insert(Entity::root(), Role::Window);
 
         result
+    }
+
+    #[cfg(feature = "tokio")]
+    fn new_task_runtime() -> TaskRuntime {
+        Arc::new(
+            tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()
+                .expect("failed to build context task runtime"),
+        )
     }
 
     /// The "current" entity, generally the entity which is currently being built or the entity
@@ -984,6 +1010,42 @@ impl Context {
             current: self.current,
             event_proxy: self.event_proxy.as_ref().map(|p| p.make_clone()),
         }
+    }
+
+    #[cfg(feature = "tokio")]
+    /// Submits a configured [`TaskBuilder`] for asynchronous execution.
+    ///
+    /// Tasks run on Vizia's shared Tokio runtime and complete through the
+    /// `on_result(...)` callback attached to the builder, when one is provided.
+    ///
+    /// Returns a [`TaskHandle`] that can be used to request cancellation.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vizia_core::prelude::*;
+    /// # #[cfg(feature = "tokio")]
+    /// # {
+    /// # let cx = Context::default();
+    /// // Fire-and-forget:
+    /// cx.add_task(Task::new(|_| async move { Ok::<(), &'static str>(()) }));
+    ///
+    /// // With completion handling:
+    /// cx.add_task(
+    ///     Task::new(|_| async move { Ok::<_, &'static str>("loaded") })
+    ///         .on_result(|result, proxy| {
+    ///             if let TaskResult::Completed(message) = result {
+    ///                 let _ = proxy.emit(message);
+    ///             }
+    ///         }),
+    /// );
+    /// # }
+    /// ```
+    pub fn add_task<T, E>(&self, task: TaskBuilder<T, E>) -> TaskHandle
+    where
+        T: Send + 'static,
+        E: Send + 'static,
+    {
+        task.add_to_context(self)
     }
 
     /// Finds the entity that identifier identifies

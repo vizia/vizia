@@ -78,6 +78,8 @@ pub mod prelude {
         AccessContext, AccessNode, Context, ContextProxy, DataContext, DrawContext, EmitContext,
         EventContext, ProxyEmitError, WindowState,
     };
+    #[cfg(feature = "tokio")]
+    pub use super::context::{Task, TaskBuilder, TaskCancellation, TaskHandle, TaskResult};
     pub use super::entity::Entity;
     pub use super::environment::{Environment, EnvironmentEvent, ThemeMode};
     pub use super::events::{Event, Propagation, Timer, TimerAction};

@@ -75,6 +75,10 @@ pub struct EventContext<'a> {
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub(crate) resource_manager: &'a mut ResourceManager,
     pub(crate) text_context: &'a mut TextContext,
+    #[cfg(feature = "tokio")]
+    pub(crate) task_runtime: &'a super::TaskRuntime,
+    #[cfg(feature = "tokio")]
+    pub(crate) named_tasks: &'a super::NamedTaskMap,
     pub(crate) modifiers: &'a Modifiers,
     pub(crate) mouse: &'a MouseState<Entity>,
     pub(crate) event_queue: &'a mut VecDeque<Event>,
@@ -128,6 +132,10 @@ impl<'a> EventContext<'a> {
             listeners: &mut cx.listeners,
             resource_manager: &mut cx.resource_manager,
             text_context: &mut cx.text_context,
+            #[cfg(feature = "tokio")]
+            task_runtime: &cx.task_runtime,
+            #[cfg(feature = "tokio")]
+            named_tasks: &cx.named_tasks,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
             event_queue: &mut cx.event_queue,
@@ -162,6 +170,10 @@ impl<'a> EventContext<'a> {
             listeners: &mut cx.listeners,
             resource_manager: &mut cx.resource_manager,
             text_context: &mut cx.text_context,
+            #[cfg(feature = "tokio")]
+            task_runtime: &cx.task_runtime,
+            #[cfg(feature = "tokio")]
+            named_tasks: &cx.named_tasks,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
             event_queue: &mut cx.event_queue,
@@ -811,6 +823,38 @@ impl<'a> EventContext<'a> {
             current: self.current,
             event_proxy: self.event_proxy.as_ref().map(|p| p.make_clone()),
         }
+    }
+
+    /// Submits a configured [`TaskBuilder`] for asynchronous execution.
+    ///
+    /// Tasks run on Vizia's shared Tokio runtime and complete through the
+    /// `on_result(...)` callback attached to the builder, when one is provided.
+    ///
+    /// Returns a [`TaskHandle`] that can be used to request cancellation.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vizia_core::prelude::*;
+    /// # #[cfg(feature = "tokio")]
+    /// # fn trigger(cx: &EventContext) {
+    /// // Fire-and-forget:
+    /// cx.add_task(Task::new(|_| async move { Ok::<(), &'static str>(()) }));
+    ///
+    /// // With completion handling:
+    /// cx.add_task(
+    ///     Task::new(|_| async move { Ok::<_, &'static str>(()) })
+    ///         .name("refresh")
+    ///         .on_result(|_, _| {}),
+    /// );
+    /// # }
+    /// ```
+    #[cfg(feature = "tokio")]
+    pub fn add_task<T, E>(&self, task: TaskBuilder<T, E>) -> TaskHandle
+    where
+        T: Send + 'static,
+        E: Send + 'static,
+    {
+        task.add_to_event_context(self)
     }
 
     pub fn modify<V: View>(&mut self, f: impl FnOnce(&mut V)) {
