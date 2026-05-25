@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::collections::HashMap;
 use std::future::Future;
 use std::hash::{Hash, Hasher};
@@ -18,6 +19,13 @@ pub(crate) fn new_named_task_map() -> NamedTaskMap {
 }
 
 /// Entry point for constructing async task pipelines.
+///
+/// A task pipeline is built with [`Task::new`], configured through [`TaskBuilder`],
+/// and submitted with [`Context::add_task`](crate::context::Context::add_task) or
+/// [`EventContext::add_task`](crate::context::EventContext::add_task).
+///
+/// Tasks run on Vizia's Tokio runtime (enabled with the `tokio` feature) and
+/// report completion through [`TaskResult`].
 pub struct Task;
 
 impl Task {
@@ -25,8 +33,35 @@ impl Task {
     ///
     /// The provided token is shared with [`TaskHandle::cancel`] and named-task replacement.
     ///
+    /// The factory is called once per attempt, so retries get a fresh future.
+    ///
     /// Ignore the token for one-shot tasks, for example
     /// `Task::new(|_| async move { Ok::<_, MyError>(value) })`.
+    ///
+    /// # Examples
+    ///
+    /// Fire-and-forget task (no completion callback):
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # let cx = Context::default();
+    /// cx.add_task(Task::new(|_| async move { Ok::<(), &'static str>(()) }));
+    /// ```
+    ///
+    /// Task with completion handling:
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use std::time::Duration;
+    /// # let cx = Context::default();
+    /// cx.add_task(
+    ///     Task::new(|_| async move { Ok::<usize, &'static str>(42) })
+    ///         .timeout(Duration::from_secs(2))
+    ///         .on_result(|result, proxy| {
+    ///             if let TaskResult::Completed(value) = result {
+    ///                 let _ = proxy.emit(value);
+    ///             }
+    ///         }),
+    /// );
+    /// ```
     pub fn new<Factory, Fut, T, E>(mut factory: Factory) -> TaskBuilder<T, E>
     where
         Factory: FnMut(TaskCancellation) -> Fut + Send + 'static,
@@ -43,6 +78,9 @@ impl Task {
 }
 
 /// Cooperative cancellation token passed to every [`Task::new`] attempt.
+///
+/// Check [`TaskCancellation::is_cancelled`] at appropriate points inside long
+/// operations or loops and return early when cancellation is requested.
 #[derive(Debug, Clone)]
 pub struct TaskCancellation {
     cancelled: Arc<AtomicBool>,
@@ -54,12 +92,34 @@ impl TaskCancellation {
     }
 
     /// Returns `true` if cancellation has been requested for the task.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vizia_core::prelude::*;
+    /// # use std::time::Duration;
+    /// # #[cfg(feature = "tokio")]
+    /// # {
+    /// # let cx = Context::default();
+    /// let _handle = cx.add_task(
+    ///     Task::new(|cancellation| async move {
+    ///         while !cancellation.is_cancelled() {
+    ///             tokio::time::sleep(Duration::from_millis(16)).await;
+    ///         }
+    ///         Err::<(), _>("cancelled")
+    ///     })
+    ///     .on_result(|_, _| {}),
+    /// );
+    /// # }
+    /// ```
     pub fn is_cancelled(&self) -> bool {
         self.cancelled.load(Ordering::Acquire)
     }
 }
 
 /// Handle for observing and cancelling an asynchronous task.
+///
+/// Keep this handle if you need to cancel in-flight work manually, or to query
+/// whether it has been cancelled or completed.
 #[derive(Debug, Clone)]
 pub struct TaskHandle {
     cancelled: Arc<AtomicBool>,
@@ -90,6 +150,21 @@ impl TaskHandle {
     /// Returns `true` if this call requested cancellation for an in-flight task.
     ///
     /// Returns `false` if cancellation was already requested or the task already finished.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vizia_core::prelude::*;
+    /// # #[cfg(feature = "tokio")]
+    /// # {
+    /// # let cx = Context::default();
+    /// let handle = cx.add_task(
+    ///     Task::new(|_| async move { Ok::<_, &'static str>(()) })
+    ///         .on_result(|_, _| {}),
+    /// );
+    ///
+    /// let _requested = handle.cancel();
+    /// # }
+    /// ```
     pub fn cancel(&self) -> bool {
         if self.is_finished() {
             return false;
@@ -112,12 +187,29 @@ impl TaskHandle {
 /// Final completion state delivered to `TaskBuilder::on_result(...)`.
 #[derive(Debug)]
 pub enum TaskResult<T, E> {
+    /// The task produced a successful value.
     Completed(T),
+    /// The task returned an `Err(E)` on its final attempt.
     Error(E),
+    /// The task timed out on its final attempt.
     Timeout,
+    /// Cancellation was requested before successful completion.
     Cancelled,
     /// The worker task panicked or was aborted before producing a completion result.
-    Disconnected,
+    ///
+    /// `panic` contains a message when the worker unwound with a `String` or `&'static str`
+    /// payload, and `None` when the worker was aborted or used a non-string panic payload.
+    Disconnected { panic: Option<String> },
+}
+
+fn panic_payload_to_string(payload: Box<dyn Any + Send>) -> String {
+    match payload.downcast::<String>() {
+        Ok(message) => *message,
+        Err(payload) => match payload.downcast::<&'static str>() {
+            Ok(message) => (*message).to_string(),
+            Err(_) => "non-string panic payload".to_string(),
+        },
+    }
 }
 
 #[derive(Default)]
@@ -141,72 +233,191 @@ fn hash_task_name<K: Hash>(key: &K) -> u64 {
 }
 
 /// Builder for configuring asynchronous task execution before completion handling.
-pub struct TaskBuilder<T, E, Map = NoCompletion> {
+///
+/// Typical flow:
+/// 1. Build with [`Task::new`]
+/// 2. Configure options such as [`TaskBuilder::timeout`], [`TaskBuilder::retry`],
+///    and [`TaskBuilder::name`]
+/// 3. Optionally attach completion handling with [`TaskBuilder::on_result`]
+/// 4. Submit via `add_task(...)`
+pub struct TaskBuilder<T, E> {
     source: TaskSourceFn<T, E>,
     options: TaskSpawnOptions,
-    completion_handler: Map,
+    completion_handler:
+        Option<Box<dyn FnMut(TaskResult<T, E>, &mut ContextProxy) + Send + 'static>>,
 }
 
-pub struct NoCompletion;
-
-impl<T, E> TaskBuilder<T, E, NoCompletion>
+impl<T, E> TaskBuilder<T, E>
 where
     T: Send + 'static,
     E: Send + 'static,
 {
     fn new(source: TaskSourceFn<T, E>) -> Self {
-        Self { source, options: TaskSpawnOptions::default(), completion_handler: NoCompletion }
+        Self { source, options: TaskSpawnOptions::default(), completion_handler: None }
     }
 
     /// Handle task completion with direct access to the context proxy.
     ///
     /// Use this to emit one or many messages by calling `proxy.emit(...)` and/or
     /// `proxy.emit_to(...)` yourself.
-    pub fn on_result<Map>(self, completion_handler: Map) -> TaskBuilder<T, E, Map>
+    ///
+    /// This callback is invoked for every terminal result, including timeout,
+    /// cancellation, and worker disconnection.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vizia_core::prelude::*;
+    /// # #[cfg(feature = "tokio")]
+    /// # {
+    /// # let cx = Context::default();
+    /// cx.add_task(
+    ///     Task::new(|_| async move { Ok::<usize, &'static str>(7) })
+    ///         .on_result(|result, proxy| {
+    ///             match result {
+    ///                 TaskResult::Completed(value) => {
+    ///                     let _ = proxy.emit(value);
+    ///                 }
+    ///                 TaskResult::Error(err) => {
+    ///                     let _ = proxy.emit(err.to_string());
+    ///                 }
+    ///                 TaskResult::Timeout | TaskResult::Cancelled => {}
+    ///                 TaskResult::Disconnected { panic } => {
+    ///                     if let Some(message) = panic {
+    ///                         eprintln!("task worker panicked: {message}");
+    ///                     }
+    ///                 }
+    ///             }
+    ///         }),
+    /// );
+    /// # }
+    /// ```
+    pub fn on_result<Map>(self, completion_handler: Map) -> Self
     where
         Map: FnOnce(TaskResult<T, E>, &mut ContextProxy) + Send + 'static,
     {
-        TaskBuilder { source: self.source, options: self.options, completion_handler }
+        let mut completion_handler = Some(completion_handler);
+        let completion_handler =
+            Box::new(move |result: TaskResult<T, E>, proxy: &mut ContextProxy| {
+                if let Some(handler) = completion_handler.take() {
+                    handler(result, proxy);
+                }
+            });
+
+        TaskBuilder {
+            source: self.source,
+            options: self.options,
+            completion_handler: Some(completion_handler),
+        }
     }
 }
 
-impl<T, E, Map> TaskBuilder<T, E, Map> {
+impl<T, E> TaskBuilder<T, E> {
     fn map_options(mut self, f: impl FnOnce(&mut TaskSpawnOptions)) -> Self {
         f(&mut self.options);
         self
     }
 
-    /// Set a timeout for completion waiting.
+    /// Set a timeout for each attempt.
     ///
-    /// If the timeout elapses, completion yields `TaskResult::Timeout`.
+    /// If an attempt exceeds this timeout, it is treated as timed out.
+    ///
+    /// When retries are enabled, a timed-out attempt can be retried. The final
+    /// completion state is [`TaskResult::Timeout`] only if all attempts time out.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vizia_core::prelude::*;
+    /// # use std::time::Duration;
+    /// # #[cfg(feature = "tokio")]
+    /// # {
+    /// # let cx = Context::default();
+    /// cx.add_task(
+    ///     Task::new(|_| async move {
+    ///         tokio::time::sleep(Duration::from_secs(3)).await;
+    ///         Ok::<_, &'static str>(())
+    ///     })
+    ///     .timeout(Duration::from_millis(500))
+    ///     .on_result(|_, _| {}),
+    /// );
+    /// # }
+    /// ```
     pub fn timeout(self, timeout: Duration) -> Self {
         self.map_options(|options| options.timeout = Some(timeout))
     }
 
     /// Name this task and automatically cancel the previous in-flight task with the same key
     /// for this context/entity.
+    ///
+    /// This is useful for "latest wins" workflows such as search-as-you-type.
+    ///
+    /// The key is hashed and scoped to the submitting entity, so identical names
+    /// on different entities do not cancel each other.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vizia_core::prelude::*;
+    /// # #[cfg(feature = "tokio")]
+    /// # {
+    /// # let cx = Context::default();
+    /// // A newer "search" task replaces and cancels the previous in-flight one.
+    /// cx.add_task(
+    ///     Task::new(|_| async move { Ok::<_, &'static str>(()) })
+    ///         .name("search")
+    ///         .on_result(|_, _| {}),
+    /// );
+    /// # }
+    /// ```
     pub fn name<K: Hash>(self, key: K) -> Self {
         self.map_options(|options| options.task_name_hash = Some(hash_task_name(&key)))
     }
 
-    /// Retry `Err(_)` or timed out attempts up to `retries` times.
+    /// Retry failed attempts up to `retries` times.
     ///
-    /// Total attempts = 1 + retries.
+    /// Retries apply to `Err(_)` and timed-out attempts.
+    ///
+    /// Total attempts = `1 + retries`.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vizia_core::prelude::*;
+    /// # use std::time::Duration;
+    /// # #[cfg(feature = "tokio")]
+    /// # {
+    /// # let cx = Context::default();
+    /// let mut attempt = 0usize;
+    /// cx.add_task(
+    ///     Task::new(move |_| {
+    ///         attempt += 1;
+    ///         async move {
+    ///             if attempt < 3 {
+    ///                 Err::<(), _>("temporary error")
+    ///             } else {
+    ///                 Ok::<(), &'static str>(())
+    ///             }
+    ///         }
+    ///     })
+    ///     .retry(2)
+    ///     .retry_delay(Duration::from_millis(50))
+    ///     .on_result(|_, _| {}),
+    /// );
+    /// # }
+    /// ```
     pub fn retry(self, retries: usize) -> Self {
         self.map_options(|options| options.retries = retries)
     }
 
     /// Delay between retry attempts.
+    ///
+    /// This delay is only used when a retry is actually scheduled.
     pub fn retry_delay(self, delay: Duration) -> Self {
         self.map_options(|options| options.retry_delay = Some(delay))
     }
 }
 
-impl<T, E, Map> TaskBuilder<T, E, Map>
+impl<T, E> TaskBuilder<T, E>
 where
     T: Send + 'static,
     E: Send + 'static,
-    Map: FnOnce(TaskResult<T, E>, &mut ContextProxy) + Send + 'static,
 {
     pub(crate) fn add_to_context(self, cx: &Context) -> TaskHandle {
         execute_task_with_source(
@@ -233,19 +444,20 @@ where
     }
 }
 
-fn execute_task_with_source<T, E, Map>(
+fn execute_task_with_source<T, E>(
     mut proxy: ContextProxy,
     runtime: Arc<tokio::runtime::Runtime>,
     named_tasks: NamedTaskMap,
     task_entity: Option<Entity>,
     options: TaskSpawnOptions,
     mut source: TaskSourceFn<T, E>,
-    completion_handler: Map,
+    completion_handler: Option<
+        Box<dyn FnMut(TaskResult<T, E>, &mut ContextProxy) + Send + 'static>,
+    >,
 ) -> TaskHandle
 where
     T: Send + 'static,
     E: Send + 'static,
-    Map: FnOnce(TaskResult<T, E>, &mut ContextProxy) + Send + 'static,
 {
     let handle = TaskHandle::new();
     let cancelled = handle.cancelled_flag();
@@ -323,13 +535,19 @@ where
 
         let completion_result = match worker.await {
             Ok(result) => result,
-            Err(_) => TaskResult::Disconnected,
+            Err(join_error) => {
+                let panic =
+                    join_error.is_panic().then(|| panic_payload_to_string(join_error.into_panic()));
+                TaskResult::Disconnected { panic }
+            }
         };
 
         clear_named_task(&named_tasks, named_task_key, &cancelled);
         finished.store(true, Ordering::Release);
 
-        completion_handler(completion_result, &mut proxy);
+        if let Some(mut completion_handler) = completion_handler {
+            completion_handler(completion_result, &mut proxy);
+        }
     });
 
     handle
@@ -532,8 +750,10 @@ mod tests {
         );
 
         match result_rx.recv_timeout(Duration::from_secs(1)).unwrap() {
-            TaskResult::Disconnected => {}
-            other => panic!("expected disconnected result, got {other:?}"),
+            TaskResult::Disconnected { panic: Some(message) } => {
+                assert!(message.contains("boom"));
+            }
+            other => panic!("expected disconnected panic result, got {other:?}"),
         }
     }
 

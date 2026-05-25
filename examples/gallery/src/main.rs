@@ -32,7 +32,7 @@ impl AppData {
                 TaskResult::Cancelled => {
                     eprintln!("Image list request was cancelled");
                 }
-                TaskResult::Disconnected => {
+                TaskResult::Disconnected { .. } => {
                     eprintln!("Image list worker disconnected");
                 }
             }
@@ -94,7 +94,7 @@ impl Model for AppData {
                             TaskResult::Cancelled => {
                                 eprintln!("Thumbnail download cancelled for image {}", id.0);
                             }
-                            TaskResult::Disconnected => {
+                            TaskResult::Disconnected { .. } => {
                                 eprintln!("Thumbnail worker disconnected for image {}", id.0);
                             }
                         }),
@@ -148,7 +148,7 @@ impl Model for AppData {
                             TaskResult::Cancelled => {
                                 eprintln!("Original download cancelled for image {}", id.0);
                             }
-                            TaskResult::Disconnected => {
+                            TaskResult::Disconnected { .. } => {
                                 eprintln!("Original worker disconnected for image {}", id.0);
                             }
                         }),

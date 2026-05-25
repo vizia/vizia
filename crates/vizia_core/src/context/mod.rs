@@ -1013,12 +1013,37 @@ impl Context {
     }
 
     #[cfg(feature = "tokio")]
-    /// Submits a built task pipeline to run asynchronously.
-    pub fn add_task<T, E, Map>(&self, task: TaskBuilder<T, E, Map>) -> TaskHandle
+    /// Submits a configured [`TaskBuilder`] for asynchronous execution.
+    ///
+    /// Tasks run on Vizia's shared Tokio runtime and complete through the
+    /// `on_result(...)` callback attached to the builder, when one is provided.
+    ///
+    /// Returns a [`TaskHandle`] that can be used to request cancellation.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vizia_core::prelude::*;
+    /// # #[cfg(feature = "tokio")]
+    /// # {
+    /// # let cx = Context::default();
+    /// // Fire-and-forget:
+    /// cx.add_task(Task::new(|_| async move { Ok::<(), &'static str>(()) }));
+    ///
+    /// // With completion handling:
+    /// cx.add_task(
+    ///     Task::new(|_| async move { Ok::<_, &'static str>("loaded") })
+    ///         .on_result(|result, proxy| {
+    ///             if let TaskResult::Completed(message) = result {
+    ///                 let _ = proxy.emit(message);
+    ///             }
+    ///         }),
+    /// );
+    /// # }
+    /// ```
+    pub fn add_task<T, E>(&self, task: TaskBuilder<T, E>) -> TaskHandle
     where
         T: Send + 'static,
         E: Send + 'static,
-        Map: FnOnce(TaskResult<T, E>, &mut ContextProxy) + Send + 'static,
     {
         task.add_to_context(self)
     }

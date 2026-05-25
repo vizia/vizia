@@ -96,7 +96,7 @@ impl Model for AppData {
                                 "Download cancelled".to_string(),
                             ));
                         }
-                        TaskResult::Disconnected => {
+                        TaskResult::Disconnected { .. } => {
                             let _ = proxy.emit(AppEvent::DownloadFailed(
                                 request,
                                 "Task worker disconnected".to_string(),
