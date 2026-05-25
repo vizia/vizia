@@ -42,16 +42,16 @@ impl std::fmt::Display for ProxyEmitError {
 impl std::error::Error for ProxyEmitError {}
 
 impl ContextProxy {
-    pub fn emit<M: Any + Send>(&mut self, message: M) -> Result<(), ProxyEmitError> {
+    pub fn emit<M: Any + Send>(&mut self, message: M) {
         if let Some(proxy) = &self.event_proxy {
             let event = Event::new(message)
                 .target(self.current)
                 .origin(self.current)
                 .propagate(Propagation::Up);
 
-            proxy.send(event).map_err(|_| ProxyEmitError::EventLoopClosed)
+            proxy.send(event).expect("Sending an event to an event loop which has been closed");
         } else {
-            Err(ProxyEmitError::Unsupported)
+            panic!("The current runtime does not support proxying events");
         }
     }
 
@@ -73,7 +73,8 @@ impl ContextProxy {
     }
 
     pub fn redraw(&mut self) -> Result<(), ProxyEmitError> {
-        self.emit(InternalEvent::Redraw)
+        self.emit(InternalEvent::Redraw);
+        Ok(())
     }
 
     pub fn load_image(
@@ -83,7 +84,7 @@ impl ContextProxy {
         policy: ImageRetentionPolicy,
     ) -> Result<(), ProxyEmitError> {
         if let Some(image) = skia_safe::Image::from_encoded(skia_safe::Data::new_copy(data)) {
-            self.emit(InternalEvent::LoadImage { path, image: Mutex::new(Some(image)), policy })?
+            self.emit(InternalEvent::LoadImage { path, image: Mutex::new(Some(image)), policy });
         }
 
         Ok(())

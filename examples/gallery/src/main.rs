@@ -21,10 +21,10 @@ impl AppData {
         cx.add_task(Task::new(|_| async move { list().await }).on_result(|result, proxy| {
             match result {
                 TaskResult::Completed(images) => {
-                    let _ = proxy.emit(AppEvent::ImagesListed(Ok(images)));
+                    proxy.emit(AppEvent::ImagesListed(Ok(images)));
                 }
                 TaskResult::Error(error) => {
-                    let _ = proxy.emit(AppEvent::ImagesListed(Err(error)));
+                    proxy.emit(AppEvent::ImagesListed(Err(error)));
                 }
                 TaskResult::Timeout => {
                     eprintln!("Image list request timed out");
@@ -83,10 +83,10 @@ impl Model for AppData {
                         })
                         .on_result(move |result, proxy| match result {
                             TaskResult::Completed(image) => {
-                                let _ = proxy.emit(AppEvent::ImageDownloaded(id, Ok(image)));
+                                proxy.emit(AppEvent::ImageDownloaded(id, Ok(image)));
                             }
                             TaskResult::Error(error) => {
-                                let _ = proxy.emit(AppEvent::ImageDownloaded(id, Err(error)));
+                                proxy.emit(AppEvent::ImageDownloaded(id, Err(error)));
                             }
                             TaskResult::Timeout => {
                                 eprintln!("Thumbnail download timed out for image {}", id.0);
@@ -137,10 +137,10 @@ impl Model for AppData {
                         })
                         .on_result(move |result, proxy| match result {
                             TaskResult::Completed(image) => {
-                                let _ = proxy.emit(AppEvent::OriginalDownloaded(id, Ok(image)));
+                                proxy.emit(AppEvent::OriginalDownloaded(id, Ok(image)));
                             }
                             TaskResult::Error(error) => {
-                                let _ = proxy.emit(AppEvent::OriginalDownloaded(id, Err(error)));
+                                proxy.emit(AppEvent::OriginalDownloaded(id, Err(error)));
                             }
                             TaskResult::Timeout => {
                                 eprintln!("Original download timed out for image {}", id.0);
