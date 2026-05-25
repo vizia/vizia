@@ -63,7 +63,7 @@ impl Model for AppData {
                                 }
                                 std::thread::sleep(Duration::from_millis(120));
                                 let progress = (chunk as f32 / total_chunks as f32) * 0.95;
-                                proxy.emit(AppEvent::DownloadProgress(request, progress));
+                                let _ = proxy.emit(AppEvent::DownloadProgress(request, progress));
                             }
 
                             if request % 4 == 0 {
@@ -79,25 +79,25 @@ impl Model for AppData {
                     .retry_delay(Duration::from_millis(20))
                     .on_result(move |result, proxy| match result {
                         TaskResult::Completed(status) => {
-                            proxy.emit(AppEvent::DownloadFinished(request, status));
+                            let _ = proxy.emit(AppEvent::DownloadFinished(request, status));
                         }
                         TaskResult::Error(error) => {
-                            proxy.emit(AppEvent::DownloadFailed(request, error));
+                            let _ = proxy.emit(AppEvent::DownloadFailed(request, error));
                         }
                         TaskResult::Timeout => {
-                            proxy.emit(AppEvent::DownloadFailed(
+                            let _ = proxy.emit(AppEvent::DownloadFailed(
                                 request,
                                 "Download timed out".to_string(),
                             ));
                         }
                         TaskResult::Cancelled => {
-                            proxy.emit(AppEvent::DownloadFailed(
+                            let _ = proxy.emit(AppEvent::DownloadFailed(
                                 request,
                                 "Download cancelled".to_string(),
                             ));
                         }
                         TaskResult::Disconnected => {
-                            proxy.emit(AppEvent::DownloadFailed(
+                            let _ = proxy.emit(AppEvent::DownloadFailed(
                                 request,
                                 "Task worker disconnected".to_string(),
                             ));
