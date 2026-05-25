@@ -183,7 +183,7 @@ impl<T, E, Map> TaskBuilder<T, E, Map> {
         self.map_options(|options| options.task_name_hash = Some(hash_task_name(&key)))
     }
 
-    /// Retry `Err(_)`, timed out, or disconnected attempts up to `retries` times.
+    /// Retry `Err(_)` or timed out attempts up to `retries` times.
     ///
     /// Total attempts = 1 + retries.
     pub fn retry(self, retries: usize) -> Self {
@@ -320,11 +320,10 @@ where
             Err(_) => TaskResult::Disconnected,
         };
 
-        completion_handler(completion_result, &mut proxy);
-
         clear_named_task(&named_tasks, named_task_key, &cancelled);
-
         finished.store(true, Ordering::Release);
+
+        completion_handler(completion_result, &mut proxy);
     });
 
     handle

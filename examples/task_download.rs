@@ -61,7 +61,7 @@ impl Model for AppData {
                                 if cancellation.is_cancelled() {
                                     return Err(format!("Cancelled {}", file_name));
                                 }
-                                std::thread::sleep(Duration::from_millis(120));
+                                tokio::time::sleep(Duration::from_millis(120)).await;
                                 let progress = (chunk as f32 / total_chunks as f32) * 0.95;
                                 let _ = proxy.emit(AppEvent::DownloadProgress(request, progress));
                             }

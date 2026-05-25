@@ -21,12 +21,13 @@ accesskit = ["vizia_winit?/accesskit"]
 markdown = ["vizia_core/markdown"]
 rayon = ["vizia_core/rayon"]
 serde = ["vizia_core/serde"]
-tokio = ["vizia_core/tokio"]
+tokio = ["vizia_core/tokio", "dep:tokio"]
 
 [dependencies]
 vizia_core.workspace = true
 vizia_winit = { workspace = true, optional = true, default-features = false}
 vizia_baseview = { workspace = true, optional = true }
+tokio = { workspace = true, optional = true }
 
 [dev-dependencies]
 chrono.workspace = true
