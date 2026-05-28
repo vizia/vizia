@@ -529,6 +529,26 @@ impl List {
                         KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
                         KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
                     ));
+                } else {
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowRight),
+                        "Focus Next",
+                    ));
+
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
+                        "Focus Previous",
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowDown),
+                        KeymapEntry::new("Focus Next", |cx| cx.emit(ListEvent::FocusNext)),
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowUp),
+                        KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
+                    ));
                 }
             });
 
@@ -666,6 +686,26 @@ impl List {
 
                     cx.emit(KeymapEvent::InsertAction(
                         KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
+                        KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
+                    ));
+                } else {
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowRight),
+                        "Focus Next",
+                    ));
+
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
+                        "Focus Previous",
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowDown),
+                        KeymapEntry::new("Focus Next", |cx| cx.emit(ListEvent::FocusNext)),
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowUp),
                         KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
                     ));
                 }

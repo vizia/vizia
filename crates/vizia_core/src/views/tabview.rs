@@ -4,10 +4,6 @@ use std::sync::Arc;
 use crate::icons::ICON_X;
 use crate::prelude::*;
 
-pub enum TabEvent {
-    SetSelected(usize),
-}
-
 pub enum TabListEvent {
     SetSelected(usize),
     CloseFocused,
@@ -33,6 +29,7 @@ impl TabView {
 
         Self { selected_index, is_vertical, on_select: None }
             .build(cx, move |cx| {
+                let tabview_entity = cx.current();
                 let content_for_headers = content.clone();
 
                 TabList::new(cx, list, move |cx, index, item, is_selected| {
@@ -44,7 +41,9 @@ impl TabView {
                         .toggle_class("vertical", is_vertical);
                 })
                 .vertical(is_vertical)
-                .on_select(|cx, index| cx.emit(TabEvent::SetSelected(index)))
+                .on_select(move |cx, index| {
+                    cx.emit_to(tabview_entity, TabListEvent::SetSelected(index))
+                })
                 .toggle_class("vertical", is_vertical);
 
                 Divider::new(cx).toggle_class("vertical", is_vertical);
@@ -75,7 +74,7 @@ impl View for TabView {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|tab_event, meta| match tab_event {
-            TabEvent::SetSelected(index) => {
+            TabListEvent::SetSelected(index) => {
                 if self.selected_index.get() != *index {
                     self.selected_index.set(*index);
                     if let Some(callback) = &self.on_select {
@@ -84,6 +83,8 @@ impl View for TabView {
                 }
                 meta.consume();
             }
+
+            TabListEvent::CloseFocused => {}
         });
     }
 }
@@ -103,7 +104,7 @@ impl Handle<'_, TabView> {
         let _entity = self.entity();
         selected.set_or_bind(self.context(), |cx, selected| {
             let index = selected.get_value(cx).into();
-            cx.emit(TabEvent::SetSelected(index));
+            cx.emit(TabListEvent::SetSelected(index));
         });
 
         self
@@ -126,7 +127,6 @@ impl TabPair {
 }
 
 pub struct Tab {
-    index: usize,
     on_close: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
     has_close: Signal<bool>,
 }
@@ -138,7 +138,7 @@ impl Tab {
     {
         let has_close = Signal::new(false);
 
-        Self { index, on_close: None, has_close }
+        Self { on_close: None, has_close }
             .build(cx, move |cx| {
                 (content)(cx);
 
@@ -146,7 +146,7 @@ impl Tab {
                     if has_close.get() {
                         let on_close = cx.data::<Tab>().on_close.clone().unwrap();
                         Button::new(cx, |cx| Svg::new(cx, ICON_X))
-                            .class("close-icon")
+                            .class("close")
                             .height(Pixels(16.0))
                             .width(Pixels(16.0))
                             .alignment(Alignment::Center)
@@ -184,8 +184,6 @@ impl View for Tab {
     fn element(&self) -> Option<&'static str> {
         Some("tab")
     }
-
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {}
 }
 
 impl Handle<'_, Tab> {
