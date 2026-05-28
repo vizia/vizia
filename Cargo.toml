@@ -286,6 +286,10 @@ name = "tabview"
 path = "examples/views/tabview.rs"
 
 [[example]]
+name = "tab_list"
+path = "examples/views/tab_list.rs"
+
+[[example]]
 name = "xypad"
 path = "examples/views/xypad.rs"
 
