@@ -38,7 +38,7 @@ impl TabView {
                     Tab::with_content(cx, index, builder)
                         .checked(is_selected)
                         .selected(is_selected)
-                        .toggle_class("vertical", is_vertical);
+                        .toggle_class("vertical", is_vertical)
                 })
                 .vertical(is_vertical)
                 .on_select(move |cx, index| {
@@ -203,12 +203,13 @@ pub struct TabList {
 }
 
 impl TabList {
-    pub fn new<S, V, T, F>(cx: &mut Context, list: S, item_content: F) -> Handle<Self>
+    pub fn new<S, V, T, F, H>(cx: &mut Context, list: S, item_content: F) -> Handle<Self>
     where
         S: Res<V> + 'static,
         V: Deref<Target = [T]> + Clone + 'static,
         T: PartialEq + Clone + 'static,
-        F: 'static + Clone + Fn(&mut Context, usize, T, Memo<bool>),
+        F: 'static + Clone + for<'a> Fn(&'a mut Context, usize, T, Memo<bool>) -> Handle<'a, H>,
+        H: View,
     {
         let is_vertical = Signal::new(false);
         let selected_index = Signal::new(Some(0));
@@ -222,7 +223,15 @@ impl TabList {
                     cx,
                     list,
                     move |cx, index, item, is_selected| {
-                        (item_content)(cx, index, item.get(), is_selected);
+                        let is_selected_for_scroll = is_selected;
+                        (item_content)(cx, index, item.get(), is_selected).bind(
+                            is_selected_for_scroll,
+                            move |handle| {
+                                if is_selected_for_scroll.get() {
+                                    handle.cx.emit(ScrollEvent::ScrollToView(handle.entity()));
+                                }
+                            },
+                        )
                     },
                 )
                 .horizontal(is_vertical.map(|vertical| !*vertical))

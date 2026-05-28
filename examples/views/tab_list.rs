@@ -84,9 +84,9 @@ fn main() -> Result<(), ApplicationError> {
                         TabList::new(cx, tabs, move |cx, index, item, is_selected| {
                             if index != 0 {
                                 Tab::new(cx, index, item, is_selected)
-                                    .on_close(move |cx| cx.emit(AppEvent::CloseTab(index)));
+                                    .on_close(move |cx| cx.emit(AppEvent::CloseTab(index)))
                             } else {
-                                Tab::new(cx, index, item, is_selected);
+                                Tab::new(cx, index, item, is_selected)
                             }
                         })
                         .selection(selected_tab)
@@ -105,9 +105,9 @@ fn main() -> Result<(), ApplicationError> {
                         TabList::new(cx, tabs, move |cx, index, item, is_selected| {
                             if index != 0 {
                                 Tab::new(cx, index, item, is_selected)
-                                    .on_close(move |cx| cx.emit(AppEvent::CloseTab(index)));
+                                    .on_close(move |cx| cx.emit(AppEvent::CloseTab(index)))
                             } else {
-                                Tab::new(cx, index, item, is_selected);
+                                Tab::new(cx, index, item, is_selected)
                             }
                         })
                         .selection(selected_vertical_tab)

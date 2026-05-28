@@ -98,7 +98,7 @@ struct CustomListItemsBinding<T: 'static> {
     entity: Entity,
     list_entity: Entity,
     get_fn: Box<dyn Fn() -> Vec<T>>,
-    item_content: Rc<dyn Fn(&mut Context, usize, Signal<T>, Memo<bool>)>,
+    item_content: Rc<dyn for<'a> Fn(&'a mut Context, usize, Signal<T>, Memo<bool>) -> Entity>,
     selection: Signal<BTreeSet<usize>>,
     /// Internal signals for each list item.
     item_signals: Vec<Signal<T>>,
@@ -247,7 +247,7 @@ impl<T: PartialEq + Clone + 'static> CustomListItemsBinding<T> {
         list_entity: Entity,
         list: S,
         selection: Signal<BTreeSet<usize>>,
-        item_content: Rc<dyn Fn(&mut Context, usize, Signal<T>, Memo<bool>)>,
+        item_content: Rc<dyn for<'a> Fn(&'a mut Context, usize, Signal<T>, Memo<bool>) -> Entity>,
     ) where
         S: SignalGet<V> + SignalWith<V> + Copy + 'static,
         V: Deref<Target = [T]> + Clone + 'static,
@@ -309,29 +309,14 @@ impl<T: PartialEq + Clone + 'static> CustomListItemsBinding<T> {
     fn create_item_entity(&self, cx: &mut Context, index: usize, signal: Signal<T>) -> Entity {
         let item_content = self.item_content.clone();
         let selection = self.selection;
-        let before_last_child = self.entity.child_iter(&cx.tree).last();
-        let is_selected_for_scroll = selection.map(move |selection| selection.contains(&index));
+        let mut created = Entity::null();
 
         cx.with_current(self.entity, |cx| {
             let is_selected = selection.map(move |selection| selection.contains(&index));
-            (item_content)(cx, index, signal, is_selected);
+            created = (item_content)(cx, index, signal, is_selected);
         });
 
-        let after_last_child = self.entity.child_iter(&cx.tree).last();
-        if let Some(created) = after_last_child {
-            if Some(created) != before_last_child {
-                cx.with_current(created, |cx| {
-                    Binding::new(cx, is_selected_for_scroll, move |cx| {
-                        if is_selected_for_scroll.get() {
-                            cx.emit(ScrollEvent::ScrollToView(created));
-                        }
-                    });
-                });
-                return created;
-            }
-        }
-
-        panic!("List::new_custom_items item_content must create exactly one root view")
+        created
     }
 }
 
@@ -585,35 +570,41 @@ impl List {
     ///
     /// This keeps the list's diffing, keyboard, focus, and scrolling behavior while allowing
     /// custom item semantics.
-    pub fn new_custom_items<S, V, T>(
+    pub fn new_custom_items<S, V, T, H>(
         cx: &mut Context,
         list: S,
-        item_content: impl 'static + Fn(&mut Context, usize, Signal<T>),
+        item_content: impl 'static + for<'a> Fn(&'a mut Context, usize, Signal<T>) -> Handle<'a, H>,
     ) -> Handle<Self>
     where
         S: Res<V> + 'static,
         V: Deref<Target = [T]> + Clone + 'static,
         T: PartialEq + Clone + 'static,
+        H: View,
     {
         Self::new_custom_items_with_selection(cx, list, move |cx, index, item, _is_selected| {
-            item_content(cx, index, item);
+            item_content(cx, index, item)
         })
     }
 
     /// Creates a new [List] view from a reactive or static list of values using caller-provided
     /// item views directly, without wrapping each item in a [ListItem], and provides each item
     /// with a memo of whether it is currently selected in this list.
-    pub fn new_custom_items_with_selection<S, V, T>(
+    pub fn new_custom_items_with_selection<S, V, T, H>(
         cx: &mut Context,
         list: S,
-        item_content: impl 'static + Fn(&mut Context, usize, Signal<T>, Memo<bool>),
+        item_content: impl 'static
+        + for<'a> Fn(&'a mut Context, usize, Signal<T>, Memo<bool>) -> Handle<'a, H>,
     ) -> Handle<Self>
     where
         S: Res<V> + 'static,
         V: Deref<Target = [T]> + Clone + 'static,
         T: PartialEq + Clone + 'static,
+        H: View,
     {
-        let content: Rc<dyn Fn(&mut Context, usize, Signal<T>, Memo<bool>)> = Rc::new(item_content);
+        let content: Rc<dyn for<'a> Fn(&'a mut Context, usize, Signal<T>, Memo<bool>) -> Entity> =
+            Rc::new(move |cx, index, item, is_selected| {
+                item_content(cx, index, item, is_selected).entity()
+            });
         let selection = Signal::new(BTreeSet::default());
         let selectable = Signal::new(Selectable::None);
         let focused = Signal::new(None);
