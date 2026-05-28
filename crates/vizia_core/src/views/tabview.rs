@@ -147,9 +147,6 @@ impl Tab {
                         let on_close = cx.data::<Tab>().on_close.clone().unwrap();
                         Button::new(cx, |cx| Svg::new(cx, ICON_X))
                             .class("close")
-                            .height(Pixels(16.0))
-                            .width(Pixels(16.0))
-                            .alignment(Alignment::Center)
                             .variant(ButtonVariant::Text)
                             .navigable(false)
                             .focusable(false)

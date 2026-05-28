@@ -824,7 +824,6 @@ tab {
     height: 1s;
     min-height: auto;
     alignment: left;
-    background-color: var(--muted);
     padding-left: 12px;
     padding-top: 8px;
     padding-bottom: 8px;
@@ -833,13 +832,15 @@ tab {
     gap: 1s;
 }
 
-tab:checked {
-    background-color: var(--background);
-}
-
 tablist.vertical tab {
     width: 1s;
     min-width: auto;
+}
+
+tab button.close {
+    width: 16px;
+    height: 16px;
+    alignment: center;
 }
 
 tablist {
@@ -860,7 +861,6 @@ tablist scrollview {
 tablist scroll-content {
     height: auto;
     width: auto;
-    background-color: var(--border);
     gap: 1px;
 }
 

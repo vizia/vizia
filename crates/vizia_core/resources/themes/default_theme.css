@@ -989,16 +989,17 @@ switch:disabled .thumb {
 }
 
 /* TABVIEW */
-tabheader:disabled {
-    background-color: transparent;
+
+tab {
+    background-color: var(--muted);
 }
 
-tabheader:checked .indicator {
-    background-color: #51afef;
+tab:checked {
+    background-color: var(--background);
 }
 
-tabview .tabview-divider {
-    background-color: #c4c4c4;
+tablist scroll-content {
+    background-color: var(--border);
 }
 
 /* TEXTBOX */
