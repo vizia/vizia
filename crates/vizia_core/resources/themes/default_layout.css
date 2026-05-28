@@ -846,19 +846,6 @@ tablist {
     height: auto;
 }
 
-tablist list-item {
-    min-width: auto;
-    width: auto;
-    height: auto;
-    min-height: auto;
-}
-
-tablist.vertical list-item {
-    width: 1s;
-    min-width: auto;
-    height: auto;
-}
-
 tablist list {
     width: 1s;
     height: auto;

@@ -8,6 +8,11 @@ pub enum TabEvent {
     SetSelected(usize),
 }
 
+pub enum TabListEvent {
+    SetSelected(usize),
+    CloseFocused,
+}
+
 pub struct TabView {
     selected_index: Signal<usize>,
     is_vertical: Signal<bool>,
@@ -30,16 +35,16 @@ impl TabView {
             .build(cx, move |cx| {
                 let content_for_headers = content.clone();
 
-                TabList::new(cx, list, move |cx, index, item| {
+                TabList::new(cx, list, move |cx, index, item, is_selected| {
                     let builder = (content_for_headers)(cx, index, item).header;
-                    let is_selected =
-                        selected_index.map(move |selected_index| *selected_index == index);
 
-                    Tab::with_content(cx, Some(index), builder)
+                    Tab::with_content(cx, index, builder)
                         .checked(is_selected)
+                        .selected(is_selected)
                         .toggle_class("vertical", is_vertical);
                 })
                 .vertical(is_vertical)
+                .on_select(|cx, index| cx.emit(TabEvent::SetSelected(index)))
                 .toggle_class("vertical", is_vertical);
 
                 Divider::new(cx).toggle_class("vertical", is_vertical);
@@ -121,13 +126,13 @@ impl TabPair {
 }
 
 pub struct Tab {
-    index: Option<usize>,
+    index: usize,
     on_close: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
     has_close: Signal<bool>,
 }
 
 impl Tab {
-    pub fn with_content<F>(cx: &mut Context, index: Option<usize>, content: F) -> Handle<Self>
+    pub fn with_content<F>(cx: &mut Context, index: usize, content: F) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context),
     {
@@ -146,21 +151,29 @@ impl Tab {
                             .width(Pixels(16.0))
                             .alignment(Alignment::Center)
                             .variant(ButtonVariant::Text)
+                            .navigable(false)
                             .on_press(move |cx| (on_close)(cx));
                     }
                 });
             })
-            .toggle_class("close", has_close)
+            .role(Role::Tab)
+            .toggle_class("closeable", has_close)
             .layout_type(LayoutType::Row)
+            .on_press(move |cx| {
+                cx.emit(ListEvent::Select(index));
+            })
     }
 
     pub fn new<T: ToStringLocalized + 'static>(
         cx: &mut Context,
+        index: usize,
         label: impl Res<T> + Clone + 'static,
+        selected: impl Res<bool> + 'static,
     ) -> Handle<Self> {
-        Self::with_content(cx, None, move |cx| {
+        Self::with_content(cx, index, move |cx| {
             Label::new(cx, label.clone()).hoverable(false);
         })
+        .checked(selected)
     }
 }
 
@@ -169,17 +182,7 @@ impl View for Tab {
         Some("tab")
     }
 
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|window_event, _meta| match window_event {
-            WindowEvent::PressDown { mouse: _ } => {
-                if let Some(index) = self.index {
-                    cx.emit(TabEvent::SetSelected(index));
-                }
-            }
-
-            _ => {}
-        });
-    }
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {}
 }
 
 impl Handle<'_, Tab> {
@@ -195,6 +198,10 @@ impl Handle<'_, Tab> {
 
 pub struct TabList {
     is_vertical: Signal<bool>,
+    selected_index: Signal<Option<usize>>,
+    selected_indices: Signal<Vec<usize>>,
+    on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
+    on_close: Option<Box<dyn Fn(&mut EventContext, usize)>>,
 }
 
 impl TabList {
@@ -203,25 +210,62 @@ impl TabList {
         S: Res<V> + 'static,
         V: Deref<Target = [T]> + Clone + 'static,
         T: PartialEq + Clone + 'static,
-        F: 'static + Clone + Fn(&mut Context, usize, T),
+        F: 'static + Clone + Fn(&mut Context, usize, T, Memo<bool>),
     {
         let is_vertical = Signal::new(false);
+        let selected_index = Signal::new(Some(0));
+        let selected_indices = Signal::new(vec![0usize]);
 
-        Self { is_vertical }
+        Self { is_vertical, selected_index, selected_indices, on_select: None, on_close: None }
             .build(cx, move |cx| {
                 let item_content = item_content.clone();
-                List::new(cx, list, move |cx, index, item| {
-                    (item_content)(cx, index, item.get());
-                })
+                let selected_indices = selected_indices;
+                let list_entity = List::new_custom_items_with_selection(
+                    cx,
+                    list,
+                    move |cx, index, item, is_selected| {
+                        (item_content)(cx, index, item.get(), is_selected);
+                    },
+                )
                 .horizontal(is_vertical.map(|vertical| !*vertical))
+                .selectable(Selectable::Single)
+                .selection(selected_indices)
+                .selection_follows_focus(true)
+                .on_select(|cx, index| cx.emit(TabListEvent::SetSelected(index)))
+                .role(Role::TabList)
                 .show_horizontal_scrollbar(is_vertical.map(|vertical| !*vertical))
-                .show_vertical_scrollbar(is_vertical.map(|vertical| *vertical));
+                .show_vertical_scrollbar(is_vertical.map(|vertical| *vertical))
+                .entity();
+
+                cx.with_current(list_entity, |cx| {
+                    Keymap::from(vec![(
+                        KeyChord::new(Modifiers::empty(), Code::Delete),
+                        KeymapEntry::new("Close Focused Tab", |cx| {
+                            cx.emit(TabListEvent::CloseFocused)
+                        }),
+                    )])
+                    .build(cx);
+                });
             })
             .toggle_class("vertical", is_vertical)
     }
 }
 
 impl Handle<'_, TabList> {
+    pub fn selection<U: Into<usize> + Clone + 'static>(
+        self,
+        selected: impl Res<U> + 'static,
+    ) -> Self {
+        let selected = selected.to_signal(self.cx);
+        self.bind(selected, move |handle| {
+            let index = selected.get().into();
+            handle.modify(|tablist: &mut TabList| {
+                tablist.selected_indices.set(vec![index]);
+                tablist.selected_index.set(Some(index));
+            });
+        })
+    }
+
     pub fn vertical(self, vertical: impl Res<bool> + 'static) -> Self {
         let vertical = vertical.to_signal(self.cx);
         self.bind(vertical, move |handle| {
@@ -229,10 +273,40 @@ impl Handle<'_, TabList> {
             handle.modify(|tablist: &mut TabList| tablist.is_vertical.set(vertical));
         })
     }
+
+    pub fn on_select(self, callback: impl Fn(&mut EventContext, usize) + 'static) -> Self {
+        self.modify(|tablist: &mut TabList| tablist.on_select = Some(Box::new(callback)))
+    }
+
+    pub fn on_close(self, callback: impl Fn(&mut EventContext, usize) + 'static) -> Self {
+        self.modify(|tablist: &mut TabList| tablist.on_close = Some(Box::new(callback)))
+    }
 }
 
 impl View for TabList {
     fn element(&self) -> Option<&'static str> {
         Some("tablist")
+    }
+
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|tab_list_event, meta| match tab_list_event {
+            TabListEvent::SetSelected(index) => {
+                self.selected_indices.set(vec![*index]);
+                self.selected_index.set(Some(*index));
+                if let Some(callback) = &self.on_select {
+                    (callback)(cx, *index);
+                }
+                meta.consume();
+            }
+
+            TabListEvent::CloseFocused => {
+                if let Some(index) = self.selected_index.get() {
+                    if let Some(callback) = &self.on_close {
+                        (callback)(cx, index);
+                    }
+                }
+                meta.consume();
+            }
+        });
     }
 }

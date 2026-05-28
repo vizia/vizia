@@ -81,20 +81,17 @@ fn main() -> Result<(), ApplicationError> {
                     VStack::new(cx, |cx| {
                         Label::new(cx, "Horizontal").hoverable(false);
 
-                        TabList::new(cx, tabs, move |cx, index, item| {
-                            let is_selected = selected_tab.map(move |selected| *selected == index);
-
+                        TabList::new(cx, tabs, move |cx, index, item, is_selected| {
                             if index != 0 {
-                                Tab::new(cx, item)
-                                    .checked(is_selected)
-                                    .on_press(move |cx| cx.emit(AppEvent::SetSelectedTab(index)))
+                                Tab::new(cx, index, item, is_selected)
                                     .on_close(move |cx| cx.emit(AppEvent::CloseTab(index)));
                             } else {
-                                Tab::new(cx, item)
-                                    .checked(is_selected)
-                                    .on_press(move |cx| cx.emit(AppEvent::SetSelectedTab(index)));
+                                Tab::new(cx, index, item, is_selected);
                             }
                         })
+                        .selection(selected_tab)
+                        .on_select(|cx, index| cx.emit(AppEvent::SetSelectedTab(index)))
+                        .on_close(|cx, index| cx.emit(AppEvent::CloseTab(index)))
                         .width(Pixels(400.0))
                         .height(Auto);
                     })
@@ -105,23 +102,22 @@ fn main() -> Result<(), ApplicationError> {
                     VStack::new(cx, |cx| {
                         Label::new(cx, "Vertical").hoverable(false);
 
-                        TabList::new(cx, tabs, move |cx, index, item| {
-                            let is_selected =
-                                selected_vertical_tab.map(move |selected| *selected == index);
-
+                        TabList::new(cx, tabs, move |cx, index, item, is_selected| {
                             if index != 0 {
-                                Tab::new(cx, item)
-                                    .checked(is_selected)
+                                Tab::new(cx, index, item, is_selected)
                                     .on_press(move |cx| {
                                         cx.emit(AppEvent::SetSelectedVerticalTab(index))
                                     })
                                     .on_close(move |cx| cx.emit(AppEvent::CloseTab(index)));
                             } else {
-                                Tab::new(cx, item).checked(is_selected).on_press(move |cx| {
+                                Tab::new(cx, index, item, is_selected).on_press(move |cx| {
                                     cx.emit(AppEvent::SetSelectedVerticalTab(index))
                                 });
                             }
                         })
+                        .selection(selected_vertical_tab)
+                        .on_select(|cx, index| cx.emit(AppEvent::SetSelectedVerticalTab(index)))
+                        .on_close(|cx, index| cx.emit(AppEvent::CloseTab(index)))
                         .vertical(true)
                         .height(Pixels(150.0));
                     })
