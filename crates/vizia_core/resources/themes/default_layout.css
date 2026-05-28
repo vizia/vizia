@@ -821,7 +821,8 @@ switch:checked .thumb {
 
 tab {
     width: auto;
-    height: auto;
+    height: 1s;
+    min-height: auto;
     alignment: left;
     background-color: var(--muted);
     padding-left: 12px;

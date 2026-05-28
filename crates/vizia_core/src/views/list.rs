@@ -310,6 +310,7 @@ impl<T: PartialEq + Clone + 'static> CustomListItemsBinding<T> {
         let item_content = self.item_content.clone();
         let selection = self.selection;
         let before_last_child = self.entity.child_iter(&cx.tree).last();
+        let is_selected_for_scroll = selection.map(move |selection| selection.contains(&index));
 
         cx.with_current(self.entity, |cx| {
             let is_selected = selection.map(move |selection| selection.contains(&index));
@@ -319,6 +320,13 @@ impl<T: PartialEq + Clone + 'static> CustomListItemsBinding<T> {
         let after_last_child = self.entity.child_iter(&cx.tree).last();
         if let Some(created) = after_last_child {
             if Some(created) != before_last_child {
+                cx.with_current(created, |cx| {
+                    Binding::new(cx, is_selected_for_scroll, move |cx| {
+                        if is_selected_for_scroll.get() {
+                            cx.emit(ScrollEvent::ScrollToView(created));
+                        }
+                    });
+                });
                 return created;
             }
         }

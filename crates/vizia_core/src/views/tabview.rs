@@ -152,11 +152,14 @@ impl Tab {
                             .alignment(Alignment::Center)
                             .variant(ButtonVariant::Text)
                             .navigable(false)
+                            .focusable(false)
                             .on_press(move |cx| (on_close)(cx));
                     }
                 });
             })
             .role(Role::Tab)
+            .navigable(false)
+            .focusable(false)
             .toggle_class("closeable", has_close)
             .layout_type(LayoutType::Row)
             .on_press(move |cx| {
