@@ -75,6 +75,7 @@ impl TabView {
                 if *vertical { Orientation::Vertical } else { Orientation::Horizontal }
             }))
             .name(tablist_name)
+            .selection(selected_index)
             .on_select(move |cx, index| {
                 cx.emit_to(tabview_entity, TabListEvent::SetSelected(index))
             })
@@ -197,14 +198,18 @@ impl Handle<'_, TabView> {
         self
     }
 
-    pub fn with_selected<U: Into<usize>>(mut self, selected: impl Res<U>) -> Self {
+    pub fn with_selected<U: Into<usize> + Clone + 'static>(
+        mut self,
+        selected: impl Res<U> + 'static,
+    ) -> Self {
         let _entity = self.entity();
-        selected.set_or_bind(self.context(), |cx, selected| {
-            let index = selected.get_value(cx).into();
-            cx.emit(TabListEvent::SetSelected(index));
-        });
-
-        self
+        let selected = selected.to_signal(self.context());
+        self.bind(selected, move |handle| {
+            let index = selected.get().into();
+            handle.modify(|tabview: &mut TabView| {
+                tabview.selected_index.set(index);
+            });
+        })
     }
 }
 
@@ -361,14 +366,19 @@ impl TabList {
                     list,
                     move |cx, index, item, is_selected| {
                         let is_selected_for_scroll = is_selected;
-                        (item_content)(cx, index, item.get(), is_selected).bind(
-                            is_selected_for_scroll,
-                            move |handle| {
+                        (item_content)(cx, index, item.get(), is_selected)
+                            .bind(is_selected_for_scroll, move |handle| {
                                 if is_selected_for_scroll.get() {
                                     handle.cx.emit(ScrollEvent::ScrollToView(handle.entity()));
                                 }
-                            },
-                        )
+                            })
+                            .on_geo_changed(move |cx, geo| {
+                                if is_selected_for_scroll.get()
+                                    && geo.intersects(GeoChanged::WIDTH_CHANGED)
+                                {
+                                    cx.emit(ScrollEvent::ScrollToView(cx.current()));
+                                }
+                            })
                     },
                 )
                 .horizontal(is_vertical.map(|vertical| !*vertical))
