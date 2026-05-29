@@ -7,6 +7,7 @@ use crate::prelude::*;
 pub enum TabListEvent {
     SetSelected(usize),
     CloseFocused,
+    RequestClose(usize),
     SetTabListName(String),
     SetTabListLabeledBy(String),
 }
@@ -17,6 +18,7 @@ pub struct TabView {
     tablist_name: Signal<String>,
     tablist_labeled_by: Signal<Option<String>>,
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
+    on_close: Option<Box<dyn Fn(&mut EventContext, usize)>>,
 }
 
 impl TabView {
@@ -33,68 +35,88 @@ impl TabView {
         let tablist_labeled_by = Signal::new(None::<String>);
         let list = list.to_signal(cx);
 
-        Self { selected_index, is_vertical, tablist_name, tablist_labeled_by, on_select: None }
-            .build(cx, move |cx| {
-                let tabview_entity = cx.current();
-                let content_for_headers = content.clone();
+        Self {
+            selected_index,
+            is_vertical,
+            tablist_name,
+            tablist_labeled_by,
+            on_select: None,
+            on_close: None,
+        }
+        .build(cx, move |cx| {
+            let tabview_entity = cx.current();
+            let content_for_headers = content.clone();
 
-                let tablist_entity = TabList::new(cx, list, move |cx, index, item, is_selected| {
-                    let tab_id = format!("{}-tab-{}", tabview_entity, index);
-                    let panel_id = format!("{}-panel-{}", tabview_entity, index);
-                    let builder = (content_for_headers)(cx, index, item).header;
+            let tablist_entity = TabList::new(cx, list, move |cx, index, item, is_selected| {
+                let tab_id = format!("{}-tab-{}", tabview_entity, index);
+                let panel_id = format!("{}-panel-{}", tabview_entity, index);
+                let tab_pair = (content_for_headers)(cx, index, item);
+                let builder = tab_pair.header;
+                let closeable = tab_pair.closeable;
 
-                    Tab::with_content(cx, index, builder)
-                        .id(tab_id)
-                        .controls(panel_id)
-                        .checked(is_selected)
-                        .focused(is_selected)
-                        .selected(is_selected)
-                        .toggle_class("vertical", is_vertical)
-                })
-                .vertical(is_vertical)
-                .orientation(is_vertical.map(|vertical| {
-                    if *vertical { Orientation::Vertical } else { Orientation::Horizontal }
-                }))
-                .name(tablist_name)
-                .on_select(move |cx, index| {
-                    cx.emit_to(tabview_entity, TabListEvent::SetSelected(index))
-                })
-                .toggle_class("vertical", is_vertical)
-                .entity();
+                let mut tab = Tab::with_content(cx, index, builder)
+                    .id(tab_id)
+                    .controls(panel_id)
+                    .checked(is_selected)
+                    .focused(is_selected)
+                    .selected(is_selected)
+                    .toggle_class("vertical", is_vertical);
 
-                Binding::new(cx, tablist_labeled_by, move |cx| {
-                    if let Some(label_id) = tablist_labeled_by.get() {
-                        cx.style.labelled_by.insert(tablist_entity, label_id);
-                        cx.style.needs_access_update(tablist_entity);
-                    }
-                });
-
-                Divider::new(cx).toggle_class("vertical", is_vertical);
-
-                VStack::new(cx, move |cx| {
-                    Binding::new(cx, list, move |cx| {
-                        let list_values = list.get();
-                        let content_for_panels = content.clone();
-
-                        for (index, item) in list_values.iter().cloned().enumerate() {
-                            let content_for_panel = content_for_panels.clone();
-                            let tab_id = format!("{}-tab-{}", tabview_entity, index);
-                            let panel_id = format!("{}-panel-{}", tabview_entity, index);
-
-                            TabPanel::new(cx, index, selected_index, move |cx| {
-                                ((content_for_panel)(cx, index, item.clone()).content)(cx);
-                            })
-                            .id(panel_id)
-                            .role(Role::TabPanel)
-                            .labeled_by(tab_id)
-                            .hidden(selected_index.map(move |selected| *selected != index));
-                        }
+                if closeable {
+                    tab = tab.on_close(move |cx| {
+                        cx.emit_to(tabview_entity, TabListEvent::RequestClose(index));
                     });
-                })
-                .overflow(Overflow::Hidden)
-                .class("tabview-content-wrapper");
+                }
+
+                tab
+            })
+            .vertical(is_vertical)
+            .orientation(is_vertical.map(|vertical| {
+                if *vertical { Orientation::Vertical } else { Orientation::Horizontal }
+            }))
+            .name(tablist_name)
+            .on_select(move |cx, index| {
+                cx.emit_to(tabview_entity, TabListEvent::SetSelected(index))
+            })
+            .on_close(move |cx, index| {
+                cx.emit_to(tabview_entity, TabListEvent::RequestClose(index))
             })
             .toggle_class("vertical", is_vertical)
+            .entity();
+
+            Binding::new(cx, tablist_labeled_by, move |cx| {
+                if let Some(label_id) = tablist_labeled_by.get() {
+                    cx.style.labelled_by.insert(tablist_entity, label_id);
+                    cx.style.needs_access_update(tablist_entity);
+                }
+            });
+
+            Divider::new(cx).toggle_class("vertical", is_vertical);
+
+            VStack::new(cx, move |cx| {
+                Binding::new(cx, list, move |cx| {
+                    let list_values = list.get();
+                    let content_for_panels = content.clone();
+
+                    for (index, item) in list_values.iter().cloned().enumerate() {
+                        let content_for_panel = content_for_panels.clone();
+                        let tab_id = format!("{}-tab-{}", tabview_entity, index);
+                        let panel_id = format!("{}-panel-{}", tabview_entity, index);
+
+                        TabPanel::new(cx, index, selected_index, move |cx| {
+                            ((content_for_panel)(cx, index, item.clone()).content)(cx);
+                        })
+                        .id(panel_id)
+                        .role(Role::TabPanel)
+                        .labeled_by(tab_id)
+                        .hidden(selected_index.map(move |selected| *selected != index));
+                    }
+                });
+            })
+            .overflow(Overflow::Hidden)
+            .class("tabview-content-wrapper");
+        })
+        .toggle_class("vertical", is_vertical)
     }
 }
 
@@ -116,6 +138,13 @@ impl View for TabView {
             }
 
             TabListEvent::CloseFocused => {}
+
+            TabListEvent::RequestClose(index) => {
+                if let Some(callback) = &self.on_close {
+                    (callback)(cx, *index);
+                }
+                meta.consume();
+            }
 
             TabListEvent::SetTabListName(name) => {
                 self.tablist_name.set_if_changed(name.clone());
@@ -139,6 +168,10 @@ impl Handle<'_, TabView> {
 
     pub fn on_select(self, callback: impl Fn(&mut EventContext, usize) + 'static) -> Self {
         self.modify(|tabview: &mut TabView| tabview.on_select = Some(Box::new(callback)))
+    }
+
+    pub fn on_close(self, callback: impl Fn(&mut EventContext, usize) + 'static) -> Self {
+        self.modify(|tabview: &mut TabView| tabview.on_close = Some(Box::new(callback)))
     }
 
     pub fn tablist_name<U>(mut self, name: impl Res<U>) -> Self
@@ -193,13 +226,13 @@ impl TabPanel {
     {
         let selected_index = selected_index.to_signal(cx);
 
-        Self {}.build(cx, move |cx| {
-            Binding::new(cx, selected_index, move |cx| {
-                if selected_index.get().into() == index {
-                    (content)(cx);
-                }
-            });
-        })
+        Self {}
+            .build(cx, move |cx| {
+                (content)(cx);
+            })
+            .display(selected_index.map(move |selected| {
+                if selected.clone().into() == index { Display::Flex } else { Display::None }
+            }))
     }
 }
 
@@ -212,6 +245,7 @@ impl View for TabPanel {
 pub struct TabPair {
     pub header: Box<dyn Fn(&mut Context)>,
     pub content: Box<dyn Fn(&mut Context)>,
+    pub closeable: bool,
 }
 
 impl TabPair {
@@ -220,7 +254,12 @@ impl TabPair {
         H: 'static + Fn(&mut Context),
         C: 'static + Fn(&mut Context),
     {
-        Self { header: Box::new(header), content: Box::new(content) }
+        Self { header: Box::new(header), content: Box::new(content), closeable: false }
+    }
+
+    pub fn closeable(mut self, closeable: bool) -> Self {
+        self.closeable = closeable;
+        self
     }
 }
 
@@ -413,6 +452,8 @@ impl View for TabList {
                 }
                 meta.consume();
             }
+
+            TabListEvent::RequestClose(_) => {}
 
             TabListEvent::SetTabListName(_) => {}
 

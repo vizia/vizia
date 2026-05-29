@@ -9,12 +9,31 @@ pub struct TabData {
 
 pub enum TabEvent {
     SetSelected(usize),
+    CloseTab(usize),
 }
 
 impl Model for TabData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|tab_event, _| match tab_event {
             TabEvent::SetSelected(index) => self.selected_tab.set(*index),
+
+            TabEvent::CloseTab(index) => {
+                let mut tabs = self.tabs.get();
+                if *index < tabs.len() {
+                    tabs.remove(*index);
+                    let len = tabs.len();
+                    self.tabs.set(tabs);
+
+                    if len == 0 {
+                        self.selected_tab.set(0);
+                    } else {
+                        let current = self.selected_tab.get();
+                        let next =
+                            if current > *index { current.saturating_sub(1) } else { current };
+                        self.selected_tab.set(next.min(len.saturating_sub(1)));
+                    }
+                }
+            }
         });
 
         let _ = self.tabs;
@@ -41,7 +60,8 @@ pub fn tabview(cx: &mut Context) {
                     |cx| {
                         Element::new(cx).size(Pixels(200.0)).background_color(Color::red());
                     },
-                ),
+                )
+                .closeable(false),
 
                 "Tab2" => TabPair::new(
                     move |cx| {
@@ -51,12 +71,14 @@ pub fn tabview(cx: &mut Context) {
                     |cx| {
                         Element::new(cx).size(Pixels(200.0)).background_color(Color::blue());
                     },
-                ),
+                )
+                .closeable(true),
 
                 _ => unreachable!(),
             })
             .with_selected(selected_tab)
             .on_select(|cx, index| cx.emit(TabEvent::SetSelected(index)))
+            .on_close(|cx, index| cx.emit(TabEvent::CloseTab(index)))
             .width(Pixels(300.0))
             .height(Pixels(300.0));
         });
