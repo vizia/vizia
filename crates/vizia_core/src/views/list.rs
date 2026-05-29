@@ -28,6 +28,10 @@ pub enum ListEvent {
     FocusNext,
     ///  Moves the focus to the previous item in the list.
     FocusPrev,
+    /// Moves the focus to the first item in the list.
+    FocusFirst,
+    /// Moves the focus to the last item in the list.
+    FocusLast,
     /// Deselects all items from the list
     ClearSelection,
     /// Scrolls the list to the given x and y position.
@@ -494,6 +498,14 @@ impl List {
                     KeymapEntry::new("Select Focused", |cx| cx.emit(ListEvent::SelectFocused)),
                 ),
                 (
+                    KeyChord::new(Modifiers::empty(), Code::Home),
+                    KeymapEntry::new("Focus First", |cx| cx.emit(ListEvent::FocusFirst)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::End),
+                    KeymapEntry::new("Focus Last", |cx| cx.emit(ListEvent::FocusLast)),
+                ),
+                (
                     KeyChord::new(Modifiers::empty(), Code::Enter),
                     KeymapEntry::new("Select Focused", |cx| cx.emit(ListEvent::SelectFocused)),
                 ),
@@ -569,6 +581,7 @@ impl List {
             });
         })
         .toggle_class("selectable", selectable.map(|s| *s != Selectable::None))
+        .multiselectable(selectable.map(|s| *s == Selectable::Multi))
         .orientation(orientation)
         .navigable(true)
         .role(Role::ListBox)
@@ -668,6 +681,14 @@ impl List {
                     KeymapEntry::new("Select Focused", |cx| cx.emit(ListEvent::SelectFocused)),
                 ),
                 (
+                    KeyChord::new(Modifiers::empty(), Code::Home),
+                    KeymapEntry::new("Focus First", |cx| cx.emit(ListEvent::FocusFirst)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::End),
+                    KeymapEntry::new("Focus Last", |cx| cx.emit(ListEvent::FocusLast)),
+                ),
+                (
                     KeyChord::new(Modifiers::empty(), Code::Enter),
                     KeymapEntry::new("Select Focused", |cx| cx.emit(ListEvent::SelectFocused)),
                 ),
@@ -741,6 +762,7 @@ impl List {
             });
         })
         .toggle_class("selectable", selectable.map(|s| *s != Selectable::None))
+        .multiselectable(selectable.map(|s| *s == Selectable::Multi))
         .orientation(orientation)
         .navigable(true)
     }
@@ -906,6 +928,30 @@ impl View for List {
                 }
 
                 self.focused.set(focused);
+
+                meta.consume();
+            }
+
+            ListEvent::FocusFirst => {
+                if self.num_items > 0 {
+                    self.focus_visibility.set(true);
+                    self.focused.set(Some(0));
+                    if self.selection_follows_focus.get() {
+                        cx.emit(ListEvent::SelectFocused);
+                    }
+                }
+
+                meta.consume();
+            }
+
+            ListEvent::FocusLast => {
+                if self.num_items > 0 {
+                    self.focus_visibility.set(true);
+                    self.focused.set(Some(self.num_items.saturating_sub(1)));
+                    if self.selection_follows_focus.get() {
+                        cx.emit(ListEvent::SelectFocused);
+                    }
+                }
 
                 meta.consume();
             }

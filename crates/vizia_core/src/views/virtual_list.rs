@@ -186,6 +186,14 @@ impl VirtualList {
                     KeymapEntry::new("Select Focused", |cx| cx.emit(ListEvent::SelectFocused)),
                 ),
                 (
+                    KeyChord::new(Modifiers::empty(), Code::Home),
+                    KeymapEntry::new("Focus First", |cx| cx.emit(ListEvent::FocusFirst)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::End),
+                    KeymapEntry::new("Focus Last", |cx| cx.emit(ListEvent::FocusLast)),
+                ),
+                (
                     KeyChord::new(Modifiers::empty(), Code::Enter),
                     KeymapEntry::new("Select Focused", |cx| cx.emit(ListEvent::SelectFocused)),
                 ),
@@ -365,6 +373,31 @@ impl View for VirtualList {
                 }
 
                 self.focused.set(focused);
+
+                meta.consume();
+            }
+
+            ListEvent::FocusFirst => {
+                if self.num_items.get() > 0 {
+                    self.focus_visibility.set(true);
+                    self.focused.set(Some(0));
+                    if self.selection_follows_focus.get() {
+                        cx.emit(ListEvent::SelectFocused);
+                    }
+                }
+
+                meta.consume();
+            }
+
+            ListEvent::FocusLast => {
+                let num_items = self.num_items.get();
+                if num_items > 0 {
+                    self.focus_visibility.set(true);
+                    self.focused.set(Some(num_items.saturating_sub(1)));
+                    if self.selection_follows_focus.get() {
+                        cx.emit(ListEvent::SelectFocused);
+                    }
+                }
 
                 meta.consume();
             }

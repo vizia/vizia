@@ -226,6 +226,7 @@ pub struct Style {
     pub(crate) active_descendant: SparseSet<String>,
     pub(crate) expanded: SparseSet<bool>,
     pub(crate) selected: SparseSet<bool>,
+    pub(crate) multiselectable: SparseSet<bool>,
     pub(crate) hidden: SparseSet<bool>,
     pub(crate) orientation: SparseSet<Orientation>,
     pub(crate) text_value: SparseSet<String>,
@@ -2690,6 +2691,7 @@ impl Style {
         self.active_descendant.remove(entity);
         self.expanded.remove(entity);
         self.selected.remove(entity);
+        self.multiselectable.remove(entity);
         self.hidden.remove(entity);
         self.orientation.remove(entity);
         self.text_value.remove(entity);

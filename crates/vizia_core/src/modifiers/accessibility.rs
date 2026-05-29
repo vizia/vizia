@@ -140,6 +140,20 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets whether the view allows multiple selected descendants.
+    fn multiselectable<U: Into<bool>>(mut self, multiselectable: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            multiselectable.set_or_bind(cx, move |cx, multiselectable| {
+                cx.style.multiselectable.insert(entity, multiselectable.get_value(cx).into());
+                cx.style.needs_access_update(entity);
+            });
+        });
+
+        self
+    }
+
     /// Sets the accessibility orientation of the view.
     /// This does not affect the layout of the view, but is used to inform
     /// assistive technologies of the orientation of the view.
