@@ -548,6 +548,11 @@ virtual-list.selectable list-item.focused {
     background-color: var(--accent);
 }
 
+list.selectable list-item:focus-visible,
+virtual-list.selectable list-item:focus-visible {
+    background-color: red;
+}
+
 list.selectable list-item:hover,
 virtual-list.selectable list-item:hover {
     background-color: var(--accent);
@@ -996,6 +1001,12 @@ tab {
 
 tab:checked {
     background-color: var(--background);
+}
+
+tab:focus-visible {
+    border-width: 2px;
+    border-color: var(--ring);
+    outline-width: 0px;
 }
 
 tablist scroll-content {

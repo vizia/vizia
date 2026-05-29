@@ -37,6 +37,7 @@ impl TabView {
 
                     Tab::with_content(cx, index, builder)
                         .checked(is_selected)
+                        .focused(is_selected)
                         .selected(is_selected)
                         .toggle_class("vertical", is_vertical)
                 })
@@ -149,7 +150,7 @@ impl Tab {
                             .class("close")
                             .variant(ButtonVariant::Text)
                             .navigable(false)
-                            .focusable(false)
+                            .focusable(true)
                             .on_press(move |cx| (on_close)(cx));
                     }
                 });

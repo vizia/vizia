@@ -31,6 +31,8 @@ pub struct VirtualList {
     selectable: Signal<Selectable>,
     /// The index of the currently focused item in the list.
     focused: Signal<Option<usize>>,
+    /// Whether focused list items should show focus visibility.
+    focus_visibility: Signal<bool>,
     /// Whether the selection should follow the focus.
     selection_follows_focus: Signal<bool>,
     /// Callback that is called when an item is selected.
@@ -148,6 +150,7 @@ impl VirtualList {
         let selection = Signal::new(BTreeSet::default());
         let selectable = Signal::new(Selectable::None);
         let focused = Signal::new(None);
+        let focus_visibility = Signal::new(false);
         let selection_follows_focus = Signal::new(false);
         let scroll_to_cursor = Signal::new(true);
 
@@ -164,6 +167,7 @@ impl VirtualList {
             selection,
             selectable,
             focused,
+            focus_visibility,
             selection_follows_focus,
             on_select: None,
         }
@@ -216,6 +220,7 @@ impl VirtualList {
                                         item,
                                         selection,
                                         focused,
+                                        focus_visibility,
                                         move |cx, index, item| {
                                             item_content(cx, index, item).height(Percentage(100.0));
                                         },
@@ -262,7 +267,6 @@ impl View for VirtualList {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.take(|list_event, meta| match list_event {
             ListEvent::Select(index) => {
-                cx.focus();
                 let selectable = self.selectable.get();
                 let mut selection = self.selection.get();
                 let mut focused = self.focused.get();
@@ -306,6 +310,7 @@ impl View for VirtualList {
 
             ListEvent::SelectFocused => {
                 if let Some(focused) = self.focused.get() {
+                    self.focus_visibility.set(true);
                     cx.emit(ListEvent::Select(focused))
                 }
                 meta.consume();
@@ -323,12 +328,14 @@ impl View for VirtualList {
                     if *f < num_items.saturating_sub(1) {
                         *f = f.saturating_add(1);
                         if self.selection_follows_focus.get() {
+                            self.focus_visibility.set(true);
                             cx.emit(ListEvent::SelectFocused);
                         }
                     }
                 } else {
                     focused = Some(0);
                     if self.selection_follows_focus.get() {
+                        self.focus_visibility.set(true);
                         cx.emit(ListEvent::SelectFocused);
                     }
                 }
@@ -345,12 +352,14 @@ impl View for VirtualList {
                     if *f > 0 {
                         *f = f.saturating_sub(1);
                         if self.selection_follows_focus.get() {
+                            self.focus_visibility.set(true);
                             cx.emit(ListEvent::SelectFocused);
                         }
                     }
                 } else {
                     focused = Some(num_items.saturating_sub(1));
                     if self.selection_follows_focus.get() {
+                        self.focus_visibility.set(true);
                         cx.emit(ListEvent::SelectFocused);
                     }
                 }
@@ -375,6 +384,10 @@ impl View for VirtualList {
         });
 
         event.map(|window_event, _| match window_event {
+            WindowEvent::Press { mouse } => {
+                self.focus_visibility.set(!*mouse);
+            }
+
             WindowEvent::GeometryChanged(geo) => {
                 if geo.intersects(GeoChanged::WIDTH_CHANGED | GeoChanged::HEIGHT_CHANGED) {
                     self.recalc(cx);
