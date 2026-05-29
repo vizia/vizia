@@ -270,10 +270,6 @@ impl VirtualList {
                     KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
                 ),
                 (
-                    KeyChord::new(Modifiers::empty(), Code::Space),
-                    KeymapEntry::new("Select Focused", |cx| cx.emit(ListEvent::SelectFocused)),
-                ),
-                (
                     KeyChord::new(Modifiers::empty(), Code::Home),
                     KeymapEntry::new("Focus First", |cx| cx.emit(ListEvent::FocusFirst)),
                 ),
@@ -510,7 +506,10 @@ impl View for VirtualList {
             }
 
             WindowEvent::CharInput(c) => {
-                if self.try_type_ahead(cx, *c) {
+                if *c == ' ' && meta.target == cx.current() {
+                    cx.emit(ListEvent::SelectFocused);
+                    meta.consume();
+                } else if self.try_type_ahead(cx, *c) {
                     meta.consume();
                 }
             }

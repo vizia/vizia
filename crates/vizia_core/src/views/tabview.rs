@@ -237,6 +237,7 @@ impl TabList {
                 )
                 .horizontal(is_vertical.map(|vertical| !*vertical))
                 .selectable(Selectable::Single)
+                .min_selected(1)
                 .selection(selected_indices)
                 .selection_follows_focus(true)
                 .on_select(|cx, index| cx.emit(TabListEvent::SetSelected(index)))

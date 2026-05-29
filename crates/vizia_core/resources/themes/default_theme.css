@@ -543,11 +543,6 @@ virtual-list.selectable list-item {
     background-color: transparent;
 }
 
-list.selectable list-item.focused,
-virtual-list.selectable list-item.focused {
-    background-color: var(--accent);
-}
-
 list.selectable list-item:focus-visible,
 virtual-list.selectable list-item:focus-visible {
     border-width: 2px;
