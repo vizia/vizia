@@ -7,11 +7,15 @@ use crate::prelude::*;
 pub enum TabListEvent {
     SetSelected(usize),
     CloseFocused,
+    SetTabListName(String),
+    SetTabListLabeledBy(String),
 }
 
 pub struct TabView {
     selected_index: Signal<usize>,
     is_vertical: Signal<bool>,
+    tablist_name: Signal<String>,
+    tablist_labeled_by: Signal<Option<String>>,
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
 }
 
@@ -25,40 +29,66 @@ impl TabView {
     {
         let selected_index = Signal::new(0usize);
         let is_vertical = Signal::new(false);
+        let tablist_name = Signal::new(String::from("Tabs"));
+        let tablist_labeled_by = Signal::new(None::<String>);
         let list = list.to_signal(cx);
 
-        Self { selected_index, is_vertical, on_select: None }
+        Self { selected_index, is_vertical, tablist_name, tablist_labeled_by, on_select: None }
             .build(cx, move |cx| {
                 let tabview_entity = cx.current();
                 let content_for_headers = content.clone();
 
-                TabList::new(cx, list, move |cx, index, item, is_selected| {
+                let tablist_entity = TabList::new(cx, list, move |cx, index, item, is_selected| {
+                    let tab_id = format!("{}-tab-{}", tabview_entity, index);
+                    let panel_id = format!("{}-panel-{}", tabview_entity, index);
                     let builder = (content_for_headers)(cx, index, item).header;
 
                     Tab::with_content(cx, index, builder)
+                        .id(tab_id)
+                        .controls(panel_id)
                         .checked(is_selected)
                         .focused(is_selected)
                         .selected(is_selected)
                         .toggle_class("vertical", is_vertical)
                 })
                 .vertical(is_vertical)
+                .orientation(is_vertical.map(|vertical| {
+                    if *vertical { Orientation::Vertical } else { Orientation::Horizontal }
+                }))
+                .name(tablist_name)
                 .on_select(move |cx, index| {
                     cx.emit_to(tabview_entity, TabListEvent::SetSelected(index))
                 })
-                .toggle_class("vertical", is_vertical);
+                .toggle_class("vertical", is_vertical)
+                .entity();
+
+                Binding::new(cx, tablist_labeled_by, move |cx| {
+                    if let Some(label_id) = tablist_labeled_by.get() {
+                        cx.style.labelled_by.insert(tablist_entity, label_id);
+                        cx.style.needs_access_update(tablist_entity);
+                    }
+                });
 
                 Divider::new(cx).toggle_class("vertical", is_vertical);
 
                 VStack::new(cx, move |cx| {
                     Binding::new(cx, list, move |cx| {
                         let list_values = list.get();
-                        let content = content.clone();
-                        Binding::new(cx, selected_index, move |cx| {
-                            let selected = selected_index.get();
-                            if let Some(item) = list_values.get(selected).cloned() {
-                                ((content)(cx, selected, item).content)(cx);
-                            }
-                        });
+                        let content_for_panels = content.clone();
+
+                        for (index, item) in list_values.iter().cloned().enumerate() {
+                            let content_for_panel = content_for_panels.clone();
+                            let tab_id = format!("{}-tab-{}", tabview_entity, index);
+                            let panel_id = format!("{}-panel-{}", tabview_entity, index);
+
+                            TabPanel::new(cx, index, selected_index, move |cx| {
+                                ((content_for_panel)(cx, index, item.clone()).content)(cx);
+                            })
+                            .id(panel_id)
+                            .role(Role::TabPanel)
+                            .labeled_by(tab_id)
+                            .hidden(selected_index.map(move |selected| *selected != index));
+                        }
                     });
                 })
                 .overflow(Overflow::Hidden)
@@ -86,6 +116,16 @@ impl View for TabView {
             }
 
             TabListEvent::CloseFocused => {}
+
+            TabListEvent::SetTabListName(name) => {
+                self.tablist_name.set_if_changed(name.clone());
+                meta.consume();
+            }
+
+            TabListEvent::SetTabListLabeledBy(id) => {
+                self.tablist_labeled_by.set_if_changed(Some(id.clone()));
+                meta.consume();
+            }
         });
     }
 }
@@ -101,6 +141,29 @@ impl Handle<'_, TabView> {
         self.modify(|tabview: &mut TabView| tabview.on_select = Some(Box::new(callback)))
     }
 
+    pub fn tablist_name<U>(mut self, name: impl Res<U>) -> Self
+    where
+        U: ToStringLocalized + 'static,
+    {
+        name.set_or_bind(self.context(), |cx, name| {
+            let name = name.get_value(cx).to_string_local(cx);
+            cx.emit(TabListEvent::SetTabListName(name));
+        });
+
+        self
+    }
+
+    pub fn tablist_labeled_by<U>(mut self, id: impl Res<U>) -> Self
+    where
+        U: Into<String> + Clone + 'static,
+    {
+        id.set_or_bind(self.context(), |cx, id| {
+            cx.emit(TabListEvent::SetTabListLabeledBy(id.get_value(cx).into()));
+        });
+
+        self
+    }
+
     pub fn with_selected<U: Into<usize>>(mut self, selected: impl Res<U>) -> Self {
         let _entity = self.entity();
         selected.set_or_bind(self.context(), |cx, selected| {
@@ -109,6 +172,40 @@ impl Handle<'_, TabView> {
         });
 
         self
+    }
+}
+
+/// A panel associated with a tab index.
+///
+/// The panel content is shown when its index matches the selected index and hidden otherwise.
+pub struct TabPanel {}
+
+impl TabPanel {
+    pub fn new<U, F>(
+        cx: &mut Context,
+        index: usize,
+        selected_index: impl Res<U> + 'static,
+        content: F,
+    ) -> Handle<Self>
+    where
+        U: Into<usize> + Clone + 'static,
+        F: 'static + Fn(&mut Context),
+    {
+        let selected_index = selected_index.to_signal(cx);
+
+        Self {}.build(cx, move |cx| {
+            Binding::new(cx, selected_index, move |cx| {
+                if selected_index.get().into() == index {
+                    (content)(cx);
+                }
+            });
+        })
+    }
+}
+
+impl View for TabPanel {
+    fn element(&self) -> Option<&'static str> {
+        Some("tabpanel")
     }
 }
 
@@ -316,6 +413,10 @@ impl View for TabList {
                 }
                 meta.consume();
             }
+
+            TabListEvent::SetTabListName(_) => {}
+
+            TabListEvent::SetTabListLabeledBy(_) => {}
         });
     }
 }
