@@ -33,7 +33,8 @@ fn main() -> Result<(), ApplicationError> {
             .selection(selected)
             .on_select(|cx, index| cx.emit(AppEvent::SetSelected(index)))
             .selectable(Selectable::Single)
-            .selection_follows_focus(selection_follows_focus);
+            .selection_follows_focus(selection_follows_focus)
+            .type_ahead_text(move |_cx, index| list.get().get(index).map(|item| item.to_string()));
         });
     })
     .title(Localized::new("view-title-virtual-list"))

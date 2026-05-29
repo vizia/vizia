@@ -1,4 +1,9 @@
-use std::{collections::BTreeSet, ops::Deref, rc::Rc};
+use std::{
+    collections::BTreeSet,
+    ops::Deref,
+    rc::Rc,
+    time::{Duration, Instant},
+};
 use vizia_reactive::{Scope, SignalGet, SignalWith, UpdaterEffect};
 
 use crate::prelude::*;
@@ -72,6 +77,14 @@ pub struct List {
     show_vertical_scrollbar: Signal<bool>,
     /// Whether focused list items should show focus visibility.
     focus_visibility: Signal<bool>,
+    /// Returns the searchable text for each item index when type-ahead is enabled.
+    type_ahead_text: Option<Box<dyn Fn(&mut EventContext, usize) -> Option<String>>>,
+    /// Buffered type-ahead query built from rapid character input.
+    type_ahead_buffer: String,
+    /// Timestamp of the last accepted type-ahead character.
+    type_ahead_last_input: Option<Instant>,
+    /// Maximum elapsed time before resetting type-ahead buffer.
+    type_ahead_timeout: Duration,
 }
 
 /// A binding handler that manages list item entities for a [List].
@@ -376,6 +389,80 @@ impl<T: PartialEq + Clone + 'static> BindingHandler for CustomListItemsBinding<T
 }
 
 impl List {
+    fn find_type_ahead_match(
+        &self,
+        cx: &mut EventContext,
+        query: &str,
+        start_index: usize,
+    ) -> Option<usize> {
+        let get_text = self.type_ahead_text.as_ref()?;
+        if self.num_items == 0 {
+            return None;
+        }
+
+        for offset in 0..self.num_items {
+            let index = (start_index + offset) % self.num_items;
+            let item_text = get_text(cx, index)
+                .map(|text| text.trim_start().to_lowercase())
+                .unwrap_or_default();
+
+            if !item_text.is_empty() && item_text.starts_with(query) {
+                return Some(index);
+            }
+        }
+
+        None
+    }
+
+    fn try_type_ahead(&mut self, cx: &mut EventContext, typed: char) -> bool {
+        if self.type_ahead_text.is_none() || self.num_items == 0 {
+            return false;
+        }
+
+        if typed.is_control() || typed.is_whitespace() {
+            return false;
+        }
+
+        let now = Instant::now();
+        let within_timeout = self
+            .type_ahead_last_input
+            .is_some_and(|last| now.saturating_duration_since(last) <= self.type_ahead_timeout);
+
+        let ch = typed.to_lowercase().collect::<String>();
+        let query = if within_timeout {
+            let repeated_char_cycle = !self.type_ahead_buffer.is_empty()
+                && self.type_ahead_buffer.chars().all(|c| c == typed.to_ascii_lowercase());
+
+            if repeated_char_cycle {
+                ch.clone()
+            } else {
+                format!("{}{}", self.type_ahead_buffer, ch)
+            }
+        } else {
+            ch.clone()
+        };
+
+        let start_index =
+            self.focused.get().map(|focused| (focused + 1) % self.num_items).unwrap_or(0);
+
+        if let Some(index) = self.find_type_ahead_match(cx, &query, start_index) {
+            self.type_ahead_buffer = query;
+            self.type_ahead_last_input = Some(now);
+            self.focus_visibility.set(true);
+            self.focused.set(Some(index));
+
+            if self.selection_follows_focus.get() {
+                cx.emit(ListEvent::SelectFocused);
+            }
+
+            true
+        } else {
+            self.type_ahead_buffer.clear();
+            self.type_ahead_last_input = Some(now);
+            false
+        }
+    }
+
     fn selection_limits(&self) -> (usize, usize) {
         let mut min_selected = self.min_selected.get();
         let mut max_selected = self.max_selected.get();
@@ -480,6 +567,10 @@ impl List {
             show_horizontal_scrollbar,
             show_vertical_scrollbar,
             focus_visibility,
+            type_ahead_text: None,
+            type_ahead_buffer: String::new(),
+            type_ahead_last_input: None,
+            type_ahead_timeout: Duration::from_millis(1000),
         }
         .build(cx, move |cx| {
             let list_entity = cx.current();
@@ -663,6 +754,10 @@ impl List {
             show_horizontal_scrollbar,
             show_vertical_scrollbar,
             focus_visibility,
+            type_ahead_text: None,
+            type_ahead_buffer: String::new(),
+            type_ahead_last_input: None,
+            type_ahead_timeout: Duration::from_millis(1000),
         }
         .build(cx, move |cx| {
             let list_entity = cx.current();
@@ -802,6 +897,12 @@ impl View for List {
                             self.focused.set(None);
                         }
                         self.focused.set(Some(index));
+                    }
+                }
+
+                WindowEvent::CharInput(c) => {
+                    if self.try_type_ahead(cx, *c) {
+                        meta.consume();
                     }
                 }
 
@@ -1023,6 +1124,11 @@ pub trait ListModifiers: Sized {
 
     /// Sets whether the vertical scrollbar should be visible.
     fn show_vertical_scrollbar(self, flag: impl Res<bool> + 'static) -> Self;
+
+    /// Enables type-ahead navigation by providing searchable text per item index.
+    fn type_ahead_text<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, usize) -> Option<String>;
 }
 
 impl ListModifiers for Handle<'_, List> {
@@ -1177,6 +1283,13 @@ impl ListModifiers for Handle<'_, List> {
                 list.show_vertical_scrollbar.set(s);
             });
         })
+    }
+
+    fn type_ahead_text<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, usize) -> Option<String>,
+    {
+        self.modify(|list: &mut List| list.type_ahead_text = Some(Box::new(callback)))
     }
 }
 

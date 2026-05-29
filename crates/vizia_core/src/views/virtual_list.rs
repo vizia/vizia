@@ -1,6 +1,7 @@
 use std::{
     collections::BTreeSet,
     ops::{Deref, Range},
+    time::{Duration, Instant},
 };
 
 use crate::prelude::*;
@@ -37,9 +38,92 @@ pub struct VirtualList {
     selection_follows_focus: Signal<bool>,
     /// Callback that is called when an item is selected.
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
+    /// Returns the searchable text for each item index when type-ahead is enabled.
+    type_ahead_text: Option<Box<dyn Fn(&mut EventContext, usize) -> Option<String>>>,
+    /// Buffered type-ahead query built from rapid character input.
+    type_ahead_buffer: String,
+    /// Timestamp of the last accepted type-ahead character.
+    type_ahead_last_input: Option<Instant>,
+    /// Maximum elapsed time before resetting type-ahead buffer.
+    type_ahead_timeout: Duration,
 }
 
 impl VirtualList {
+    fn find_type_ahead_match(
+        &self,
+        cx: &mut EventContext,
+        query: &str,
+        start_index: usize,
+    ) -> Option<usize> {
+        let get_text = self.type_ahead_text.as_ref()?;
+        let num_items = self.num_items.get();
+        if num_items == 0 {
+            return None;
+        }
+
+        for offset in 0..num_items {
+            let index = (start_index + offset) % num_items;
+            let item_text = get_text(cx, index)
+                .map(|text| text.trim_start().to_lowercase())
+                .unwrap_or_default();
+
+            if !item_text.is_empty() && item_text.starts_with(query) {
+                return Some(index);
+            }
+        }
+
+        None
+    }
+
+    fn try_type_ahead(&mut self, cx: &mut EventContext, typed: char) -> bool {
+        if self.type_ahead_text.is_none() {
+            return false;
+        }
+
+        let num_items = self.num_items.get();
+        if num_items == 0 || typed.is_control() || typed.is_whitespace() {
+            return false;
+        }
+
+        let now = Instant::now();
+        let within_timeout = self
+            .type_ahead_last_input
+            .is_some_and(|last| now.saturating_duration_since(last) <= self.type_ahead_timeout);
+
+        let ch = typed.to_lowercase().collect::<String>();
+        let query = if within_timeout {
+            let repeated_char_cycle = !self.type_ahead_buffer.is_empty()
+                && self.type_ahead_buffer.chars().all(|c| c == typed.to_ascii_lowercase());
+
+            if repeated_char_cycle {
+                ch.clone()
+            } else {
+                format!("{}{}", self.type_ahead_buffer, ch)
+            }
+        } else {
+            ch.clone()
+        };
+
+        let start_index = self.focused.get().map(|focused| (focused + 1) % num_items).unwrap_or(0);
+
+        if let Some(index) = self.find_type_ahead_match(cx, &query, start_index) {
+            self.type_ahead_buffer = query;
+            self.type_ahead_last_input = Some(now);
+            self.focus_visibility.set(true);
+            self.focused.set(Some(index));
+
+            if self.selection_follows_focus.get() {
+                cx.emit(ListEvent::SelectFocused);
+            }
+
+            true
+        } else {
+            self.type_ahead_buffer.clear();
+            self.type_ahead_last_input = Some(now);
+            false
+        }
+    }
+
     fn evaluate_index(index: usize, start: usize, end: usize) -> usize {
         match end - start {
             0 => 0,
@@ -170,6 +254,10 @@ impl VirtualList {
             focus_visibility,
             selection_follows_focus,
             on_select: None,
+            type_ahead_text: None,
+            type_ahead_buffer: String::new(),
+            type_ahead_last_input: None,
+            type_ahead_timeout: Duration::from_millis(1000),
         }
         .build(cx, |cx| {
             Keymap::from(vec![
@@ -416,9 +504,15 @@ impl View for VirtualList {
             }
         });
 
-        event.map(|window_event, _| match window_event {
+        event.map(|window_event, meta| match window_event {
             WindowEvent::Press { mouse } => {
                 self.focus_visibility.set(!*mouse);
+            }
+
+            WindowEvent::CharInput(c) => {
+                if self.try_type_ahead(cx, *c) {
+                    meta.consume();
+                }
             }
 
             WindowEvent::GeometryChanged(geo) => {
@@ -538,6 +632,14 @@ impl Handle<'_, VirtualList> {
             let s = flag.get();
             handle.modify(|list| list.show_vertical_scrollbar.set(s));
         })
+    }
+
+    /// Enables type-ahead navigation by providing searchable text per item index.
+    pub fn type_ahead_text<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, usize) -> Option<String>,
+    {
+        self.modify(|list: &mut VirtualList| list.type_ahead_text = Some(Box::new(callback)))
     }
 }
 

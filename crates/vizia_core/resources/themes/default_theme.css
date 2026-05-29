@@ -550,7 +550,9 @@ virtual-list.selectable list-item.focused {
 
 list.selectable list-item:focus-visible,
 virtual-list.selectable list-item:focus-visible {
-    background-color: red;
+    border-width: 2px;
+    border-color: var(--ring);
+    outline-width: 0px;
 }
 
 list.selectable list-item:hover,
