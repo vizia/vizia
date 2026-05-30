@@ -31,41 +31,63 @@ impl Select {
         T: 'static + ToStringLocalized + Clone + PartialEq,
         S: Res<Option<usize>> + 'static,
     {
+        let list = list.to_signal(cx);
         let is_open = Signal::new(false);
         let placeholder = Signal::new(String::new());
+        let display_text = Signal::new(String::new());
         let min_selected = Signal::new(0);
         let max_selected = Signal::new(usize::MAX);
         let selected = selected.to_signal(cx);
+        let locale = cx.environment().locale;
         Self { on_select: None, placeholder, is_open, min_selected, max_selected }
             .build(cx, |cx| {
                 Button::new(cx, |cx| {
                     // A Label and an optional Icon
                     HStack::new(cx, move |cx| {
-                        Label::new(cx, placeholder)
+                        Label::new(cx, display_text)
                             .bind(list, move |handle| {
-                                //let list = list.get();
-                                handle.bind(selected, move |handle| {
-                                    let selected_index = selected.get();
-                                    let list_len = list.with(|list| list.len());
-                                    if let Some(index) = selected_index {
-                                        if index < list_len {
-                                            let item = Memo::new(move |_| {
-                                                list.with(move |list| list.get(index).cloned())
-                                            });
+                                let text = if let Some(index) = selected.get() {
+                                    list.with(|list| list.get(index).cloned())
+                                        .map(|item| item.to_string_local(&handle))
+                                        .unwrap_or_else(|| placeholder.get())
+                                } else {
+                                    placeholder.get()
+                                };
 
-                                            if item.get().is_some() {
-                                                handle
-                                                    .text(item.map(move |it| it.clone().unwrap()));
-                                            } else {
-                                                handle.text(placeholder.get());
-                                            };
-                                        } else {
-                                            handle.text(placeholder.get());
-                                        }
-                                    } else {
-                                        handle.text(placeholder.get());
-                                    }
-                                });
+                                display_text.set_if_changed(text);
+                            })
+                            .bind(selected, move |handle| {
+                                let text = if let Some(index) = selected.get() {
+                                    list.with(|list| list.get(index).cloned())
+                                        .map(|item| item.to_string_local(&handle))
+                                        .unwrap_or_else(|| placeholder.get())
+                                } else {
+                                    placeholder.get()
+                                };
+
+                                display_text.set_if_changed(text);
+                            })
+                            .bind(placeholder, move |handle| {
+                                let text = if let Some(index) = selected.get() {
+                                    list.with(|list| list.get(index).cloned())
+                                        .map(|item| item.to_string_local(&handle))
+                                        .unwrap_or_else(|| placeholder.get())
+                                } else {
+                                    placeholder.get()
+                                };
+
+                                display_text.set_if_changed(text);
+                            })
+                            .bind(locale, move |handle| {
+                                let text = if let Some(index) = selected.get() {
+                                    list.with(|list| list.get(index).cloned())
+                                        .map(|item| item.to_string_local(&handle))
+                                        .unwrap_or_else(|| placeholder.get())
+                                } else {
+                                    placeholder.get()
+                                };
+
+                                display_text.set_if_changed(text);
                             })
                             .width(Stretch(2.0))
                             .text_wrap(false)
@@ -90,7 +112,7 @@ impl Select {
                     let is_open = is_open.get();
                     if is_open {
                         Popover::new(cx, |cx| {
-                            let list_signal = list.to_signal(cx);
+                            let list_signal = list;
 
                             List::new(cx, list_signal, move |cx, _, item| {
                                 Svg::new(cx, ICON_CHECK).class("checkmark").size(Pixels(16.0));
@@ -170,20 +192,18 @@ impl Handle<'_, Select> {
         //let pt = placeholder.get_value(self.cx).to_string_local(self.cx);
         //println!("Setting initial placeholder: {}", pt);
         let placeholder = placeholder.to_signal(self.cx);
-        //let direction = self.cx.environment().locale;
+        let locale = self.cx.environment().locale;
 
         self.bind(placeholder, move |handle| {
             let val = placeholder.get();
             let txt = val.to_string_local(&handle);
             handle.modify(|select| select.placeholder.set(txt));
         })
-        // .bind(direction, move |handle, _| {
-        //     // Re-evaluate placeholder whenever direction (locale) changes
-        //     let val = placeholder.get();
-        //     let txt = val.to_string_local(&handle);
-        //     println!("Direction changed, updating placeholder to: {}", txt);
-        //     handle.modify(|select| select.placeholder.set(txt));
-        // })
+        .bind(locale, move |handle| {
+            let val = placeholder.get();
+            let txt = val.to_string_local(&handle);
+            handle.modify(|select| select.placeholder.set(txt));
+        })
     }
 
     /// Sets the callback triggered when an option is selected.
