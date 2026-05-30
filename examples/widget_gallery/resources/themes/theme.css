@@ -176,3 +176,8 @@ vstack.gallery-css-grid {
     corner-radius: 4px;
     background-size: cover;
 }
+
+hstack,
+vstack {
+    size: 1s;
+}
