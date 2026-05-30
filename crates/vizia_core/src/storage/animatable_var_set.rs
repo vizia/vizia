@@ -671,6 +671,44 @@ where
         None
     }
 
+    /// Get the current value for an entity using a pre-resolved variable snapshot.
+    ///
+    /// This mirrors [`get_resolved`] but reads variable values from `resolved_vars`
+    /// (used by [`link_with_resolved`]).
+    fn get_resolved_with_snapshot(
+        &self,
+        entity: Entity,
+        resolved_vars: &HashMap<u64, T>,
+    ) -> Option<T> {
+        let entity_index = entity.index();
+        if entity_index < self.inline_data.sparse.len() {
+            // An active animation on this property itself takes priority.
+            let animation_index = self.inline_data.sparse[entity_index].anim_index as usize;
+            if animation_index < self.active_animations.len() {
+                return self.active_animations[animation_index].get_output().cloned();
+            }
+
+            let data_index = self.inline_data.sparse[entity_index].data_index;
+            if data_index.is_inline() {
+                if data_index.index() < self.inline_data.dense.len() {
+                    return Some(self.inline_data.dense[data_index.index()].value.clone());
+                }
+            } else if data_index.index() < self.shared_data.dense.len() {
+                let shared = &self.shared_data.dense[data_index.index()].value;
+                if shared.variable_name_hash != u64::MAX {
+                    return resolved_vars
+                        .get(&shared.variable_name_hash)
+                        .cloned()
+                        .or_else(|| shared.fallback.clone());
+                } else {
+                    return Some(shared.value.clone());
+                }
+            }
+        }
+
+        None
+    }
+
     /// Link an entity to some shared data.
     pub(crate) fn link(
         &mut self,
@@ -707,11 +745,29 @@ where
                     self.inline_data.sparse.resize(entity_index + 1, InlineIndex::null());
                 }
 
+                let data_index = self.inline_data.sparse[entity_index].data_index;
+                // Already linked
+                if !data_index.is_inline() && data_index.index() == shared_data_index.index() {
+                    return false;
+                }
+
+                let entity_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
+                if entity_anim_index >= self.active_animations.len() {
+                    let new_value = &self.shared_data.dense[shared_data_index.index()].value.value;
+                    let value_changed =
+                        self.get_resolved(entity, variables).as_ref() != Some(new_value);
+                    if !value_changed {
+                        // Keep linkage accurate, but do not invalidate when value is unchanged.
+                        self.inline_data.sparse[entity_index].data_index =
+                            DataIndex::shared(shared_data_index.index());
+                        return false;
+                    }
+                }
+
                 // Get the animation state index of any animations (transitions) defined for the rule
                 let rule_animation = shared_data_index.animation;
 
                 //if let Some(transition_state) = self.animations.get_mut(rule_animation) {
-                let entity_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
                 if entity_anim_index < self.active_animations.len() {
                     // Already animating
                     let current_value = self.get(entity).cloned().unwrap_or_default();
@@ -817,13 +873,6 @@ where
                 //         }
                 //     }
                 // }
-
-                let data_index = self.inline_data.sparse[entity_index].data_index;
-
-                // Already linked
-                if !data_index.is_inline() && data_index.index() == shared_data_index.index() {
-                    return false;
-                }
 
                 self.inline_data.sparse[entity_index].data_index =
                     DataIndex::shared(shared_data_index.index());
@@ -958,10 +1007,29 @@ where
                     self.inline_data.sparse.resize(entity_index + 1, InlineIndex::null());
                 }
 
+                let data_index = self.inline_data.sparse[entity_index].data_index;
+                // Already linked
+                if !data_index.is_inline() && data_index.index() == shared_data_index.index() {
+                    return false;
+                }
+
+                let entity_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
+                if entity_anim_index >= self.active_animations.len() {
+                    let new_value = &self.shared_data.dense[shared_data_index.index()].value.value;
+                    let value_changed =
+                        self.get_resolved_with_snapshot(entity, resolved_vars).as_ref()
+                            != Some(new_value);
+                    if !value_changed {
+                        // Keep linkage accurate, but do not invalidate when value is unchanged.
+                        self.inline_data.sparse[entity_index].data_index =
+                            DataIndex::shared(shared_data_index.index());
+                        return false;
+                    }
+                }
+
                 // Get the animation state index of any animations (transitions) defined for the rule
                 let rule_animation = shared_data_index.animation;
 
-                let entity_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
                 if entity_anim_index < self.active_animations.len() {
                     // Already animating
                     let current_value = self.get(entity).cloned().unwrap_or_default();
@@ -1053,13 +1121,6 @@ where
                     }
                 } else {
                     // No transition on the arriving rule — nothing to animate forward.
-                }
-
-                let data_index = self.inline_data.sparse[entity_index].data_index;
-
-                // Already linked
-                if !data_index.is_inline() && data_index.index() == shared_data_index.index() {
-                    return false;
                 }
 
                 self.inline_data.sparse[entity_index].data_index =
@@ -1165,5 +1226,83 @@ where
                 index.data_index = DataIndex::null();
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Duration;
+    use vizia_id::GenerationalId;
+
+    fn transition_state(animation: Animation) -> AnimationState<f32> {
+        AnimationState::new(animation)
+            .with_duration(Duration::from_millis(100))
+            .with_keyframe(crate::animation::Keyframe {
+                time: 0.0,
+                value: 0.0,
+                timing_function: crate::animation::TimingFunction::linear(),
+            })
+            .with_keyframe(crate::animation::Keyframe {
+                time: 1.0,
+                value: 1.0,
+                timing_function: crate::animation::TimingFunction::linear(),
+            })
+    }
+
+    #[test]
+    fn link_retargets_active_transition_when_output_matches_new_value() {
+        let mut storage = AnimatableVarSet::<f32>::default();
+        let entity = Entity::root();
+        let rule_a = Rule::new(1, 0);
+        let rule_b = Rule::new(2, 0);
+        let transition = Animation::new(1, 0);
+        let variables: HashMap<u64, AnimatableVarSet<f32>> = HashMap::new();
+
+        storage.insert_rule(rule_a, 0.0);
+        storage.insert_rule(rule_b, 10.0);
+        storage.insert_animation(transition, transition_state(transition));
+        storage.insert_transition(rule_b, transition);
+
+        assert!(storage.link(entity, &[(rule_a, 1)], &variables));
+        assert!(storage.link(entity, &[(rule_b, 1)], &variables));
+
+        let anim_index = storage.inline_data.sparse[entity.index()].anim_index as usize;
+        assert!(anim_index < storage.active_animations.len());
+
+        storage.active_animations[anim_index].t = 0.5;
+        storage.active_animations[anim_index].output = Some(0.0);
+
+        let rule_a_data_index = storage.shared_data.dense_idx(rule_a).unwrap().index();
+        assert!(storage.link(entity, &[(rule_a, 1)], &variables));
+        assert_eq!(storage.active_animations[anim_index].to_rule, rule_a_data_index);
+    }
+
+    #[test]
+    fn link_with_resolved_retargets_active_transition_when_output_matches_new_value() {
+        let mut storage = AnimatableVarSet::<f32>::default();
+        let entity = Entity::root();
+        let rule_a = Rule::new(1, 0);
+        let rule_b = Rule::new(2, 0);
+        let transition = Animation::new(1, 0);
+        let resolved_vars: HashMap<u64, f32> = HashMap::new();
+
+        storage.insert_rule(rule_a, 0.0);
+        storage.insert_rule(rule_b, 10.0);
+        storage.insert_animation(transition, transition_state(transition));
+        storage.insert_transition(rule_b, transition);
+
+        assert!(storage.link_with_resolved(entity, &[(rule_a, 1)], &resolved_vars));
+        assert!(storage.link_with_resolved(entity, &[(rule_b, 1)], &resolved_vars));
+
+        let anim_index = storage.inline_data.sparse[entity.index()].anim_index as usize;
+        assert!(anim_index < storage.active_animations.len());
+
+        storage.active_animations[anim_index].t = 0.5;
+        storage.active_animations[anim_index].output = Some(0.0);
+
+        let rule_a_data_index = storage.shared_data.dense_idx(rule_a).unwrap().index();
+        assert!(storage.link_with_resolved(entity, &[(rule_a, 1)], &resolved_vars));
+        assert_eq!(storage.active_animations[anim_index].to_rule, rule_a_data_index);
     }
 }
