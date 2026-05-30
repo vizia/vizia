@@ -19,7 +19,7 @@ pub enum ModalEvent {
 }
 
 impl Model for ModalModel {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|modal_event, _| match modal_event {
             ModalEvent::ShowTooltip => {
                 self.tooltip_visible.set((true, true));
@@ -538,8 +538,8 @@ impl<V: View> ActionModifiers<V> for Handle<'_, V> {
                 let is_visible = menu_visible.get();
                 if is_visible {
                     (content)(cx).on_build(|cx| {
-                        cx.add_listener(move |menu_bar: &mut Popover, cx, event| {
-                            event.map(|window_event, meta: &mut crate::events::EventMeta| {
+                        cx.add_listener(move |_: &mut Popover, cx, event| {
+                            event.map(|window_event, _: &mut crate::events::EventMeta| {
                                 match window_event {
                                     WindowEvent::MouseDown(_) => {
                                         //if flag && meta.origin != cx.current() {

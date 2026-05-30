@@ -265,12 +265,7 @@ impl TabPair {
         H: 'static + Fn(&mut Context),
         C: 'static + Fn(&mut Context),
     {
-        Self {
-            header: Box::new(header),
-            content: Box::new(content),
-            menu: None,
-            closeable: false,
-        }
+        Self { header: Box::new(header), content: Box::new(content), menu: None, closeable: false }
     }
 
     pub fn menu<M>(mut self, menu: M) -> Self
