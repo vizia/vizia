@@ -109,6 +109,14 @@ avatar-group.large > avatar {
     padding: 12px;
 }
 
+/* STACKS */
+
+hstack,
+vstack {
+    width: 1s;
+    height: auto;
+}
+
 /* BADGE */
 
 badge {
@@ -796,6 +804,7 @@ spinbox .spinbox-value {
 
 zstack {
     layout-type: overlay;
+    size: auto;
 }
 
 /* SWITCH */
