@@ -52,6 +52,7 @@ impl TabView {
                 let panel_id = format!("{}-panel-{}", tabview_entity, index);
                 let tab_pair = (content_for_headers)(cx, index, item);
                 let builder = tab_pair.header;
+                let menu = tab_pair.menu;
                 let closeable = tab_pair.closeable;
 
                 let mut tab = Tab::with_content(cx, index, builder)
@@ -61,6 +62,10 @@ impl TabView {
                     .focused(is_selected)
                     .selected(is_selected)
                     .toggle_class("vertical", is_vertical);
+
+                if let Some(menu_builder) = menu {
+                    tab = tab.menu(menu_builder);
+                }
 
                 if closeable {
                     tab = tab.on_close(move |cx| {
@@ -250,6 +255,7 @@ impl View for TabPanel {
 pub struct TabPair {
     pub header: Box<dyn Fn(&mut Context)>,
     pub content: Box<dyn Fn(&mut Context)>,
+    pub menu: Option<Box<dyn for<'a> Fn(&'a mut Context) -> Handle<'a, Popover>>>,
     pub closeable: bool,
 }
 
@@ -259,7 +265,20 @@ impl TabPair {
         H: 'static + Fn(&mut Context),
         C: 'static + Fn(&mut Context),
     {
-        Self { header: Box::new(header), content: Box::new(content), closeable: false }
+        Self {
+            header: Box::new(header),
+            content: Box::new(content),
+            menu: None,
+            closeable: false,
+        }
+    }
+
+    pub fn menu<M>(mut self, menu: M) -> Self
+    where
+        M: 'static + for<'a> Fn(&'a mut Context) -> Handle<'a, Popover>,
+    {
+        self.menu = Some(Box::new(menu));
+        self
     }
 
     pub fn closeable(mut self, closeable: bool) -> Self {

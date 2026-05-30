@@ -19,7 +19,7 @@ pub enum ModalEvent {
 }
 
 impl Model for ModalModel {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|modal_event, _| match modal_event {
             ModalEvent::ShowTooltip => {
                 self.tooltip_visible.set((true, true));
@@ -39,6 +39,9 @@ impl Model for ModalModel {
         });
 
         event.map(|window_event, _| match window_event {
+            WindowEvent::MouseDown(MouseButton::Right) => {
+                self.menu_visible.set(true);
+            }
             WindowEvent::MouseOver => {
                 if !self.tooltip_visible.get().0 {
                     self.tooltip_visible.set((true, true));
@@ -56,6 +59,7 @@ impl Model for ModalModel {
             }
             WindowEvent::KeyDown(code, _) if *code == Code::Escape => {
                 self.tooltip_visible.set((false, false));
+                self.menu_visible.set(false);
             }
             WindowEvent::PressDown { mouse: _ } => self.tooltip_visible.set((false, true)),
             _ => {}
@@ -468,7 +472,7 @@ pub trait ActionModifiers<V> {
     fn tooltip<C: Fn(&mut Context) -> Handle<'_, Tooltip> + 'static>(self, content: C) -> Self;
 
     /// Adds a popup menu to the view.
-    fn menu<C: FnOnce(&mut Context) -> Handle<'_, T>, T: View>(self, content: C) -> Self;
+    fn menu<C: Fn(&mut Context) -> Handle<'_, Popover> + 'static>(self, content: C) -> Self;
 }
 
 // If the entity doesn't have an `ActionsModel` then add one to the entity
@@ -523,19 +527,34 @@ impl<V: View> ActionModifiers<V> for Handle<'_, V> {
         self.described_by(format!("{entity}"))
     }
 
-    fn menu<C: FnOnce(&mut Context) -> Handle<'_, T>, T: View>(self, content: C) -> Self {
+    fn menu<C: Fn(&mut Context) -> Handle<'_, Popover> + 'static>(self, content: C) -> Self {
         let entity = self.entity();
 
         build_modal_model(self.cx, entity);
 
         self.cx.with_current(entity, |cx| {
             let menu_visible = cx.data::<ModalModel>().menu_visible;
-            (content)(cx).bind(menu_visible, move |mut handle| {
+            Binding::new(cx, menu_visible, move |cx| {
                 let is_visible = menu_visible.get();
-                handle = handle.toggle_class("vis", is_visible);
-
                 if is_visible {
-                    handle.context().emit(WindowEvent::GeometryChanged(GeoChanged::empty()));
+                    (content)(cx).on_build(|cx| {
+                        cx.add_listener(move |menu_bar: &mut Popover, cx, event| {
+                            event.map(|window_event, meta: &mut crate::events::EventMeta| {
+                                match window_event {
+                                    WindowEvent::MouseDown(_) => {
+                                        //if flag && meta.origin != cx.current() {
+                                        // Check if the mouse was pressed outside of any descendants
+                                        if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
+                                            cx.emit(ModalEvent::HideMenu);
+                                        }
+                                        //}
+                                    }
+
+                                    _ => {}
+                                }
+                            });
+                        });
+                    });
                 }
             });
         });

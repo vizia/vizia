@@ -278,6 +278,10 @@ name = "menu"
 path = "examples/views/menu.rs"
 
 [[example]]
+name = "context_menu"
+path = "examples/views/context_menu.rs"
+
+[[example]]
 name = "menubar"
 path = "examples/views/menubar.rs"
 
