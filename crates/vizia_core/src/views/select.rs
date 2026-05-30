@@ -90,13 +90,20 @@ impl Select {
                     let is_open = is_open.get();
                     if is_open {
                         Popover::new(cx, |cx| {
-                            List::new(cx, list, move |cx, _, item| {
+                            let list_signal = list.to_signal(cx);
+
+                            List::new(cx, list_signal, move |cx, _, item| {
                                 Svg::new(cx, ICON_CHECK).class("checkmark").size(Pixels(16.0));
                                 Label::new(cx, item.map(|v| v.clone())).hoverable(false);
                             })
                             .selectable(Selectable::Single)
                             .min_selected(min_selected)
                             .max_selected(max_selected)
+                            .type_ahead_text(move |cx, index| {
+                                list_signal.with(|list| {
+                                    list.get(index).map(|item| item.to_string_local(cx))
+                                })
+                            })
                             .selection(
                                 selected.map(|s| {
                                     if let Some(index) = s { vec![*index] } else { vec![] }
