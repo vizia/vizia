@@ -819,6 +819,72 @@ switch:checked .thumb {
     transition: left 100ms;
 }
 
+tab {
+    width: auto;
+    height: 1s;
+    min-height: auto;
+    alignment: left;
+    padding-left: 12px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-right: 4px;
+    min-gap: 8px;
+    gap: 1s;
+}
+
+tablist.vertical tab {
+    width: 1s;
+    min-width: auto;
+}
+
+tab button.close {
+    width: 16px;
+    height: 16px;
+    alignment: center;
+}
+
+tablist {
+    width: 1s;
+    height: auto;
+}
+
+tablist list {
+    width: 1s;
+    height: auto;
+}
+
+tablist scrollview {
+    height: auto;
+    width: 1s;
+}
+
+tablist scroll-content {
+    height: auto;
+    width: auto;
+    gap: 1px;
+}
+
+tablist.vertical {
+    height: 1s;
+    width: auto;
+}
+
+tablist.vertical list {
+    width: auto;
+    min-width: auto;
+    height: 1s;
+}
+
+tablist.vertical scrollview {
+    width: auto;
+    height: 1s;
+}
+
+tablist.vertical scroll-content {
+    width: auto;
+    height: auto;
+}
+
 /* TABVIEW */
 
 tabview {
@@ -826,7 +892,7 @@ tabview {
     height: 1s;
 }
 
-tabview > scrollview {
+tabview > tablist {
     width: 1s;
     height: auto;
 }
@@ -835,88 +901,37 @@ tabview.vertical {
     layout-type: row;
 }
 
-tabview.vertical > scrollview.vertical {
+tabview.vertical > tablist.vertical {
     width: auto;
     height: 1s;
 }
 
-tabview > scrollview > scroll-content {
+tabview > tablist > list {
+    width: 1s;
+    height: auto;
+}
+
+tabview.vertical > tablist.vertical > list {
+    width: auto;
+    height: 1s;
+}
+
+tabview > tablist > list > scrollview {
+    width: 1s;
+    height: auto;
+}
+
+tabview.vertical > tablist.vertical > list > scrollview {
+    width: auto;
+    height: 1s;
+}
+
+tabview > tablist > list > scrollview > scroll-content {
     layout-type: row;
 }
 
-tabview.vertical > scrollview.vertical > scroll-content {
+tabview.vertical > tablist.vertical > list > scrollview > scroll-content {
     layout-type: column;
-}
-
-tabheader {
-    width: auto;
-    height: 32px;
-    cursor: hand;
-}
-
-tabheader label {
-    height: 32px;
-    padding-left: 12px;
-    padding-right: 12px;
-    alignment: left;
-}
-
-tabheader .indicator {
-    height: 2px;
-    width: 1s;
-}
-
-tabheader.vertical .indicator {
-    width: 2px;
-    height: 1s;
-}
-
-tabbar {
-    height: auto;
-    gap: 4px;
-    padding-right: 4px;
-}
-
-tabbar button {
-    size: 30px;
-}
-
-tabbar > list > scrollview {
-    height: auto;
-    width: 1s;
-    max-width: auto;
-}
-
-tabbar > list {
-    height: auto;
-    max-width: auto;
-    width: 1s;
-}
-
-tabbar > list > scrollview > scroll-content {
-    height: auto;
-    layout-type: row;
-    max-width: auto;
-    width: auto;
-    gap: -1px;
-}
-
-tabbar list-item {
-    width: 100px;
-    height: 32px;
-    cursor: hand;
-}
-
-tabbar scrollbar.horizontal {
-    width: 1s;
-    height: 4px;
-}
-
-.tab {
-    width: auto;
-    min-width: 100px;
-    height: 30px;
-    alignment: left;
 }
 
 /* TEXTBOX */

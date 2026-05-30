@@ -480,6 +480,16 @@ impl Context {
 
     /// Sets application focus to the current entity with the specified focus visiblity
     pub fn focus_with_visibility(&mut self, focus_visible: bool) {
+        let focusable = self.current == Entity::root()
+            || self
+                .style
+                .abilities
+                .get(self.current)
+                .is_some_and(|abilities| abilities.contains(Abilities::FOCUSABLE));
+        if !focusable {
+            return;
+        }
+
         let old_focus = self.focused;
         let new_focus = self.current;
         self.set_focus_pseudo_classes(old_focus, false, focus_visible);

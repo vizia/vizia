@@ -1,4 +1,9 @@
-use std::{collections::BTreeSet, ops::Deref, rc::Rc};
+use std::{
+    collections::BTreeSet,
+    ops::Deref,
+    rc::Rc,
+    time::{Duration, Instant},
+};
 use vizia_reactive::{Scope, SignalGet, SignalWith, UpdaterEffect};
 
 use crate::prelude::*;
@@ -28,6 +33,10 @@ pub enum ListEvent {
     FocusNext,
     ///  Moves the focus to the previous item in the list.
     FocusPrev,
+    /// Moves the focus to the first item in the list.
+    FocusFirst,
+    /// Moves the focus to the last item in the list.
+    FocusLast,
     /// Deselects all items from the list
     ClearSelection,
     /// Scrolls the list to the given x and y position.
@@ -66,6 +75,16 @@ pub struct List {
     show_horizontal_scrollbar: Signal<bool>,
     /// Whether the vertical scrollbar should be visible.
     show_vertical_scrollbar: Signal<bool>,
+    /// Whether focused list items should show focus visibility.
+    focus_visibility: Signal<bool>,
+    /// Returns the searchable text for each item index when type-ahead is enabled.
+    type_ahead_text: Option<Box<dyn Fn(&mut EventContext, usize) -> Option<String>>>,
+    /// Buffered type-ahead query built from rapid character input.
+    type_ahead_buffer: String,
+    /// Timestamp of the last accepted type-ahead character.
+    type_ahead_last_input: Option<Instant>,
+    /// Maximum elapsed time before resetting type-ahead buffer.
+    type_ahead_timeout: Duration,
 }
 
 /// A binding handler that manages list item entities for a [List].
@@ -81,9 +100,29 @@ struct ListItemsBinding<T: 'static> {
     item_content: Rc<dyn Fn(&mut Context, usize, Signal<T>)>,
     selection: Signal<BTreeSet<usize>>,
     focused: Signal<Option<usize>>,
+    focus_visibility: Signal<bool>,
     /// Internal signals for each list item.
     item_signals: Vec<Signal<T>>,
     /// Entity IDs of the ListItem views.
+    item_entities: Vec<Entity>,
+    /// Previous values, used for value-based diffing.
+    prev_values: Vec<T>,
+    scope: Scope,
+}
+
+/// A binding handler that manages caller-provided list item entities for a [List].
+///
+/// This variant keeps list diffing and metadata updates but does not wrap items in [ListItem],
+/// allowing callers to provide their own semantics and interaction behavior.
+struct CustomListItemsBinding<T: 'static> {
+    entity: Entity,
+    list_entity: Entity,
+    get_fn: Box<dyn Fn() -> Vec<T>>,
+    item_content: Rc<dyn for<'a> Fn(&'a mut Context, usize, Signal<T>, Memo<bool>) -> Entity>,
+    selection: Signal<BTreeSet<usize>>,
+    /// Internal signals for each list item.
+    item_signals: Vec<Signal<T>>,
+    /// Entity IDs of caller-built item views.
     item_entities: Vec<Entity>,
     /// Previous values, used for value-based diffing.
     prev_values: Vec<T>,
@@ -97,6 +136,7 @@ impl<T: PartialEq + Clone + 'static> ListItemsBinding<T> {
         list: S,
         selection: Signal<BTreeSet<usize>>,
         focused: Signal<Option<usize>>,
+        focus_visibility: Signal<bool>,
         item_content: Rc<dyn Fn(&mut Context, usize, Signal<T>)>,
     ) where
         S: SignalGet<V> + SignalWith<V> + Copy + 'static,
@@ -126,6 +166,7 @@ impl<T: PartialEq + Clone + 'static> ListItemsBinding<T> {
             item_content,
             selection,
             focused,
+            focus_visibility,
             item_signals: Vec::new(),
             item_entities: Vec::new(),
             prev_values: Vec::new(),
@@ -162,9 +203,10 @@ impl<T: PartialEq + Clone + 'static> ListItemsBinding<T> {
         let item_content = self.item_content.clone();
         let selection = self.selection;
         let focused = self.focused;
+        let focus_visibility = self.focus_visibility;
 
         cx.with_current(self.entity, |cx| {
-            created = ListItem::new(cx, index, signal, selection, focused, {
+            created = ListItem::new(cx, index, signal, selection, focused, focus_visibility, {
                 let item_content = item_content.clone();
                 move |cx, index, item| (item_content)(cx, index, item)
             })
@@ -222,7 +264,205 @@ impl<T: PartialEq + Clone + 'static> BindingHandler for ListItemsBinding<T> {
     }
 }
 
+impl<T: PartialEq + Clone + 'static> CustomListItemsBinding<T> {
+    fn create<S, V>(
+        cx: &mut Context,
+        list_entity: Entity,
+        list: S,
+        selection: Signal<BTreeSet<usize>>,
+        item_content: Rc<dyn for<'a> Fn(&'a mut Context, usize, Signal<T>, Memo<bool>) -> Entity>,
+    ) where
+        S: SignalGet<V> + SignalWith<V> + Copy + 'static,
+        V: Deref<Target = [T]> + Clone + 'static,
+    {
+        let entity = cx.entity_manager.create();
+        let context_id = cx.context_id;
+        cx.tree.add(entity, cx.current()).expect("Failed to add to tree");
+        cx.tree.set_ignored(entity, true);
+
+        let scope = Scope::new();
+        let initial_values: Vec<T> = scope.enter(|| {
+            UpdaterEffect::new(
+                move || list.with(|list| list.deref().to_vec()),
+                move |_new_value| {
+                    SIGNAL_REBUILDS.with_borrow_mut(|set| {
+                        set.insert(SignalRebuild { context_id, entity });
+                    });
+                },
+            )
+        });
+
+        let mut binding = Self {
+            entity,
+            list_entity,
+            get_fn: Box::new(move || list.with_untracked(|list| list.deref().to_vec())),
+            item_content,
+            selection,
+            item_signals: Vec::new(),
+            item_entities: Vec::new(),
+            prev_values: Vec::new(),
+            scope,
+        };
+
+        // Build initial items.
+        for (index, value) in initial_values.iter().enumerate() {
+            let signal = Signal::new(value.clone());
+            let entity = binding.create_item_entity(cx, index, signal);
+            binding.item_signals.push(signal);
+            binding.item_entities.push(entity);
+            binding.prev_values.push(value.clone());
+        }
+        binding.update_list_metadata(cx, initial_values.len());
+
+        cx.bindings.insert(entity, Box::new(binding));
+
+        let _: Handle<Self> =
+            Handle { current: entity, entity, p: Default::default(), cx }.ignore();
+    }
+
+    fn update_list_metadata(&self, cx: &mut Context, len: usize) {
+        if let Some(view) = cx.views.get_mut(&self.list_entity) {
+            if let Some(list) = view.downcast_mut::<List>() {
+                list.num_items = len;
+                list.normalize_selection_state();
+            }
+        }
+    }
+
+    fn create_item_entity(&self, cx: &mut Context, index: usize, signal: Signal<T>) -> Entity {
+        let item_content = self.item_content.clone();
+        let selection = self.selection;
+        let mut created = Entity::null();
+
+        cx.with_current(self.entity, |cx| {
+            let is_selected = selection.map(move |selection| selection.contains(&index));
+            created = (item_content)(cx, index, signal, is_selected);
+        });
+
+        created
+    }
+}
+
+impl<T: PartialEq + Clone + 'static> BindingHandler for CustomListItemsBinding<T> {
+    fn update(&mut self, cx: &mut Context) {
+        let new_values = (self.get_fn)();
+        let new_len = new_values.len();
+
+        // Find the first position where values differ.
+        let first_diff = self
+            .prev_values
+            .iter()
+            .zip(new_values.iter())
+            .position(|(old, new)| old != new)
+            .unwrap_or(self.prev_values.len().min(new_len));
+
+        // Remove all entities from first_diff onward.
+        for entity in self.item_entities.drain(first_diff..) {
+            cx.remove(entity);
+        }
+        self.item_signals.truncate(first_diff);
+
+        // Update existing signals or create new items from first_diff onward.
+        for (i, value) in new_values[first_diff..].iter().enumerate() {
+            let index = first_diff + i;
+            if index < self.item_signals.len() {
+                self.item_signals[index].set(value.clone());
+            } else {
+                let signal = Signal::new(value.clone());
+                let entity = self.create_item_entity(cx, index, signal);
+                self.item_signals.push(signal);
+                self.item_entities.push(entity);
+            }
+        }
+
+        self.prev_values = new_values;
+        self.update_list_metadata(cx, new_len);
+    }
+
+    fn remove(&self, _cx: &mut Context) {
+        self.scope.dispose();
+    }
+
+    fn debug(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.write_str("CustomListItemsBinding")
+    }
+}
+
 impl List {
+    fn find_type_ahead_match(
+        &self,
+        cx: &mut EventContext,
+        query: &str,
+        start_index: usize,
+    ) -> Option<usize> {
+        let get_text = self.type_ahead_text.as_ref()?;
+        if self.num_items == 0 {
+            return None;
+        }
+
+        for offset in 0..self.num_items {
+            let index = (start_index + offset) % self.num_items;
+            let item_text = get_text(cx, index)
+                .map(|text| text.trim_start().to_lowercase())
+                .unwrap_or_default();
+
+            if !item_text.is_empty() && item_text.starts_with(query) {
+                return Some(index);
+            }
+        }
+
+        None
+    }
+
+    fn try_type_ahead(&mut self, cx: &mut EventContext, typed: char) -> bool {
+        if self.type_ahead_text.is_none() || self.num_items == 0 {
+            return false;
+        }
+
+        if typed.is_control() || typed.is_whitespace() {
+            return false;
+        }
+
+        let now = Instant::now();
+        let within_timeout = self
+            .type_ahead_last_input
+            .is_some_and(|last| now.saturating_duration_since(last) <= self.type_ahead_timeout);
+
+        let ch = typed.to_lowercase().collect::<String>();
+        let query = if within_timeout {
+            let repeated_char_cycle = !self.type_ahead_buffer.is_empty()
+                && self.type_ahead_buffer.chars().all(|c| c == typed.to_ascii_lowercase());
+
+            if repeated_char_cycle {
+                ch.clone()
+            } else {
+                format!("{}{}", self.type_ahead_buffer, ch)
+            }
+        } else {
+            ch.clone()
+        };
+
+        let start_index =
+            self.focused.get().map(|focused| (focused + 1) % self.num_items).unwrap_or(0);
+
+        if let Some(index) = self.find_type_ahead_match(cx, &query, start_index) {
+            self.type_ahead_buffer = query;
+            self.type_ahead_last_input = Some(now);
+            self.focus_visibility.set(true);
+            self.focused.set(Some(index));
+
+            if self.selection_follows_focus.get() {
+                cx.emit(ListEvent::SelectFocused);
+            }
+
+            true
+        } else {
+            self.type_ahead_buffer.clear();
+            self.type_ahead_last_input = Some(now);
+            false
+        }
+    }
+
     fn selection_limits(&self) -> (usize, usize) {
         let mut min_selected = self.min_selected.get();
         let mut max_selected = self.max_selected.get();
@@ -308,6 +548,7 @@ impl List {
         let scroll_y = Signal::new(0.0);
         let show_horizontal_scrollbar = Signal::new(true);
         let show_vertical_scrollbar = Signal::new(true);
+        let focus_visibility = Signal::new(false);
 
         Self {
             num_items: 0,
@@ -325,6 +566,11 @@ impl List {
             scroll_y,
             show_horizontal_scrollbar,
             show_vertical_scrollbar,
+            focus_visibility,
+            type_ahead_text: None,
+            type_ahead_buffer: String::new(),
+            type_ahead_last_input: None,
+            type_ahead_timeout: Duration::from_millis(1000),
         }
         .build(cx, move |cx| {
             let list_entity = cx.current();
@@ -339,8 +585,12 @@ impl List {
                     KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
                 ),
                 (
-                    KeyChord::new(Modifiers::empty(), Code::Space),
-                    KeymapEntry::new("Select Focused", |cx| cx.emit(ListEvent::SelectFocused)),
+                    KeyChord::new(Modifiers::empty(), Code::Home),
+                    KeymapEntry::new("Focus First", |cx| cx.emit(ListEvent::FocusFirst)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::End),
+                    KeymapEntry::new("Focus Last", |cx| cx.emit(ListEvent::FocusLast)),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::Enter),
@@ -371,6 +621,26 @@ impl List {
                         KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
                         KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
                     ));
+                } else {
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowRight),
+                        "Focus Next",
+                    ));
+
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
+                        "Focus Previous",
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowDown),
+                        KeymapEntry::new("Focus Next", |cx| cx.emit(ListEvent::FocusNext)),
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowUp),
+                        KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
+                    ));
                 }
             });
 
@@ -382,6 +652,7 @@ impl List {
                     list_signal,
                     selection,
                     focused,
+                    focus_visibility,
                     content.clone(),
                 );
             })
@@ -397,9 +668,190 @@ impl List {
             });
         })
         .toggle_class("selectable", selectable.map(|s| *s != Selectable::None))
+        .multiselectable(selectable.map(|s| *s == Selectable::Multi))
         .orientation(orientation)
         .navigable(true)
         .role(Role::ListBox)
+    }
+
+    /// Creates a new [List] view from a reactive or static list of values using caller-provided
+    /// item views directly, without wrapping each item in a [ListItem].
+    ///
+    /// This keeps the list's diffing, keyboard, focus, and scrolling behavior while allowing
+    /// custom item semantics.
+    pub fn new_custom_items<S, V, T, H>(
+        cx: &mut Context,
+        list: S,
+        item_content: impl 'static + for<'a> Fn(&'a mut Context, usize, Signal<T>) -> Handle<'a, H>,
+    ) -> Handle<Self>
+    where
+        S: Res<V> + 'static,
+        V: Deref<Target = [T]> + Clone + 'static,
+        T: PartialEq + Clone + 'static,
+        H: View,
+    {
+        Self::new_custom_items_with_selection(cx, list, move |cx, index, item, _is_selected| {
+            item_content(cx, index, item)
+        })
+    }
+
+    /// Creates a new [List] view from a reactive or static list of values using caller-provided
+    /// item views directly, without wrapping each item in a [ListItem], and provides each item
+    /// with a memo of whether it is currently selected in this list.
+    pub fn new_custom_items_with_selection<S, V, T, H>(
+        cx: &mut Context,
+        list: S,
+        item_content: impl 'static
+        + for<'a> Fn(&'a mut Context, usize, Signal<T>, Memo<bool>) -> Handle<'a, H>,
+    ) -> Handle<Self>
+    where
+        S: Res<V> + 'static,
+        V: Deref<Target = [T]> + Clone + 'static,
+        T: PartialEq + Clone + 'static,
+        H: View,
+    {
+        let selection = Signal::new(BTreeSet::default());
+        let selectable = Signal::new(Selectable::None);
+        let focused = Signal::new(None);
+        let min_selected = Signal::new(0);
+        let max_selected = Signal::new(usize::MAX);
+        let orientation = Signal::new(Orientation::Vertical);
+        let scroll_to_cursor = Signal::new(false);
+        let scroll_x = Signal::new(0.0);
+        let scroll_y = Signal::new(0.0);
+        let show_horizontal_scrollbar = Signal::new(true);
+        let show_vertical_scrollbar = Signal::new(true);
+        let focus_visibility = Signal::new(false);
+
+        let content: Rc<dyn for<'a> Fn(&'a mut Context, usize, Signal<T>, Memo<bool>) -> Entity> =
+            Rc::new(move |cx, index, item, is_selected| {
+                let is_focused = focused.map(move |focused| focused.is_some_and(|f| f == index));
+                item_content(cx, index, item, is_selected)
+                    .focusable(true)
+                    .navigable(false)
+                    .focused_with_visibility(is_focused, focus_visibility)
+                    .entity()
+            });
+
+        Self {
+            num_items: 0,
+            selection,
+            selectable,
+            focused,
+            selection_follows_focus: Signal::new(false),
+            min_selected,
+            max_selected,
+            orientation,
+            scroll_to_cursor,
+            on_select: None,
+            on_scroll: None,
+            scroll_x,
+            scroll_y,
+            show_horizontal_scrollbar,
+            show_vertical_scrollbar,
+            focus_visibility,
+            type_ahead_text: None,
+            type_ahead_buffer: String::new(),
+            type_ahead_last_input: None,
+            type_ahead_timeout: Duration::from_millis(1000),
+        }
+        .build(cx, move |cx| {
+            let list_entity = cx.current();
+
+            Keymap::from(vec![
+                (
+                    KeyChord::new(Modifiers::empty(), Code::ArrowDown),
+                    KeymapEntry::new("Focus Next", |cx| cx.emit(ListEvent::FocusNext)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::ArrowUp),
+                    KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::Home),
+                    KeymapEntry::new("Focus First", |cx| cx.emit(ListEvent::FocusFirst)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::End),
+                    KeymapEntry::new("Focus Last", |cx| cx.emit(ListEvent::FocusLast)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::Enter),
+                    KeymapEntry::new("Select Focused", |cx| cx.emit(ListEvent::SelectFocused)),
+                ),
+            ])
+            .build(cx);
+
+            Binding::new(cx, orientation, move |cx| {
+                let orientation = orientation.get();
+                if orientation == Orientation::Horizontal {
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowDown),
+                        "Focus Next",
+                    ));
+
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowUp),
+                        "Focus Previous",
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowRight),
+                        KeymapEntry::new("Focus Next", |cx| cx.emit(ListEvent::FocusNext)),
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
+                        KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
+                    ));
+                } else {
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowRight),
+                        "Focus Next",
+                    ));
+
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
+                        "Focus Previous",
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowDown),
+                        KeymapEntry::new("Focus Next", |cx| cx.emit(ListEvent::FocusNext)),
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowUp),
+                        KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
+                    ));
+                }
+            });
+
+            let list_signal = list.to_signal(cx);
+            ScrollView::new(cx, move |cx| {
+                CustomListItemsBinding::create(
+                    cx,
+                    list_entity,
+                    list_signal,
+                    selection,
+                    content.clone(),
+                );
+            })
+            .show_horizontal_scrollbar(show_horizontal_scrollbar)
+            .show_vertical_scrollbar(show_vertical_scrollbar)
+            .scroll_to_cursor(scroll_to_cursor)
+            .scroll_x(scroll_x)
+            .scroll_y(scroll_y)
+            .on_scroll(|cx, x, y| {
+                if y.is_finite() {
+                    cx.emit(ListEvent::Scroll(x, y));
+                }
+            });
+        })
+        .toggle_class("selectable", selectable.map(|s| *s != Selectable::None))
+        .multiselectable(selectable.map(|s| *s == Selectable::Multi))
+        .orientation(orientation)
+        .navigable(true)
     }
 }
 
@@ -409,9 +861,52 @@ impl View for List {
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|window_event, meta| {
+            match window_event {
+                WindowEvent::Press { mouse } => {
+                    self.focus_visibility.set(!*mouse);
+                }
+
+                WindowEvent::FocusIn if meta.target == cx.current() => {
+                    // Focus events originating at root are generated by keyboard navigation
+                    // (e.g. Tab/Shift+Tab), so preserve visible focus in that case.
+                    if meta.origin == Entity::root() {
+                        self.focus_visibility.set(true);
+                    }
+
+                    let next_focused = self
+                        .selection
+                        .get()
+                        .iter()
+                        .copied()
+                        .find(|index| *index < self.num_items)
+                        .or_else(|| (self.num_items > 0).then_some(0));
+
+                    if let Some(index) = next_focused {
+                        // Force a transition so focused_with_visibility re-applies focus
+                        // to the list item when focus enters the list container.
+                        if self.focused.get() == Some(index) {
+                            self.focused.set(None);
+                        }
+                        self.focused.set(Some(index));
+                    }
+                }
+
+                WindowEvent::CharInput(c) => {
+                    if *c == ' ' && meta.target == cx.current() {
+                        cx.emit(ListEvent::SelectFocused);
+                        meta.consume();
+                    } else if self.try_type_ahead(cx, *c) {
+                        meta.consume();
+                    }
+                }
+
+                _ => {}
+            }
+        });
+
         event.take(|list_event, meta| match list_event {
             ListEvent::Select(index) => {
-                cx.focus();
                 let selectable = self.selectable.get();
                 let (min_selected, max_selected) = self.selection_limits();
                 let mut selection = self.selection.get();
@@ -463,6 +958,7 @@ impl View for List {
 
             ListEvent::SelectFocused => {
                 if let Some(focused) = self.focused.get() {
+                    self.focus_visibility.set(true);
                     cx.emit(ListEvent::Select(focused))
                 }
                 meta.consume();
@@ -478,18 +974,25 @@ impl View for List {
 
             ListEvent::FocusNext => {
                 let mut focused = self.focused.get();
+                let mut moved_focus = false;
                 if let Some(f) = &mut focused {
                     if *f < self.num_items.saturating_sub(1) {
                         *f = f.saturating_add(1);
+                        moved_focus = true;
                         if self.selection_follows_focus.get() {
                             cx.emit(ListEvent::SelectFocused);
                         }
                     }
                 } else {
                     focused = Some(0);
+                    moved_focus = true;
                     if self.selection_follows_focus.get() {
                         cx.emit(ListEvent::SelectFocused);
                     }
+                }
+
+                if moved_focus {
+                    self.focus_visibility.set(true);
                 }
 
                 self.focused.set(focused);
@@ -499,21 +1002,52 @@ impl View for List {
 
             ListEvent::FocusPrev => {
                 let mut focused = self.focused.get();
+                let mut moved_focus = false;
                 if let Some(f) = &mut focused {
                     if *f > 0 {
                         *f = f.saturating_sub(1);
+                        moved_focus = true;
                         if self.selection_follows_focus.get() {
                             cx.emit(ListEvent::SelectFocused);
                         }
                     }
                 } else {
                     focused = Some(self.num_items.saturating_sub(1));
+                    moved_focus = true;
                     if self.selection_follows_focus.get() {
                         cx.emit(ListEvent::SelectFocused);
                     }
                 }
 
+                if moved_focus {
+                    self.focus_visibility.set(true);
+                }
+
                 self.focused.set(focused);
+
+                meta.consume();
+            }
+
+            ListEvent::FocusFirst => {
+                if self.num_items > 0 {
+                    self.focus_visibility.set(true);
+                    self.focused.set(Some(0));
+                    if self.selection_follows_focus.get() {
+                        cx.emit(ListEvent::SelectFocused);
+                    }
+                }
+
+                meta.consume();
+            }
+
+            ListEvent::FocusLast => {
+                if self.num_items > 0 {
+                    self.focus_visibility.set(true);
+                    self.focused.set(Some(self.num_items.saturating_sub(1)));
+                    if self.selection_follows_focus.get() {
+                        cx.emit(ListEvent::SelectFocused);
+                    }
+                }
 
                 meta.consume();
             }
@@ -585,6 +1119,11 @@ pub trait ListModifiers: Sized {
 
     /// Sets whether the vertical scrollbar should be visible.
     fn show_vertical_scrollbar(self, flag: impl Res<bool> + 'static) -> Self;
+
+    /// Enables type-ahead navigation by providing searchable text per item index.
+    fn type_ahead_text<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, usize) -> Option<String>;
 }
 
 impl ListModifiers for Handle<'_, List> {
@@ -740,6 +1279,13 @@ impl ListModifiers for Handle<'_, List> {
             });
         })
     }
+
+    fn type_ahead_text<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, usize) -> Option<String>,
+    {
+        self.modify(|list: &mut List| list.type_ahead_text = Some(Box::new(callback)))
+    }
 }
 
 /// A view which represents a selectable item within a list.
@@ -755,6 +1301,7 @@ impl ListItem {
         item: M,
         selection: impl SignalMap<BTreeSet<usize>> + SignalGet<BTreeSet<usize>>,
         focused: impl SignalMap<Option<usize>>,
+        focus_visibility: impl Res<bool> + Copy + 'static,
         item_content: impl 'static + Fn(&mut Context, usize, M),
     ) -> Handle<'a, Self> {
         let is_focused =
@@ -767,7 +1314,10 @@ impl ListItem {
                 item_content(cx, index, item);
             })
             .role(Role::ListBoxOption)
+            .focusable(true)
+            .navigable(false)
             .toggle_class("focused", focused_signal)
+            .focused_with_visibility(focused_signal, focus_visibility)
             .checked(selection.map(move |selection| selection.contains(&index)))
             .bind(focused_signal, move |handle| {
                 let focused = focused_signal.get();

@@ -183,6 +183,14 @@ pub(crate) fn get_access_node(
         node_builder.set_selected(selected);
     }
 
+    if let Some(multiselectable) = cx.style.multiselectable.get(entity).copied() {
+        if multiselectable {
+            node_builder.set_multiselectable();
+        } else {
+            node_builder.clear_multiselectable();
+        }
+    }
+
     if let Some(orientation) = cx.style.orientation.get(entity).copied() {
         let orientation = match orientation {
             Orientation::Horizontal => AccessOrientation::Horizontal,

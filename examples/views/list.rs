@@ -73,6 +73,9 @@ fn main() -> Result<(), ApplicationError> {
             })
             .orientation(orientation)
             .selectable(selectable)
+            .type_ahead_text(move |_cx, index| {
+                list.get().get(index).map(|item| item.get().to_string())
+            })
             .show_horizontal_scrollbar(show_horizontal_scrollbar)
             .show_vertical_scrollbar(show_vertical_scrollbar)
             .scroll_x(scroll_x)
@@ -84,6 +87,9 @@ fn main() -> Result<(), ApplicationError> {
             .orientation(orientation)
             .selectable(selectable)
             .selection_follows_focus(selection_follows_focus)
+            .type_ahead_text(move |_cx, index| {
+                list.get().get(index).map(|item| item.get().to_string())
+            })
             .show_horizontal_scrollbar(show_horizontal_scrollbar)
             .show_vertical_scrollbar(show_vertical_scrollbar)
             .scroll_x(scroll_x)

@@ -124,7 +124,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 let val = val.get_value(cx).into();
 
                 if val {
-                    cx.focus();
+                    cx.with_current(entity, |cx| cx.focus());
                     // cx.focus_with_visibility(true);
                 }
 
@@ -151,7 +151,7 @@ pub trait StyleModifiers: internal::Modifiable {
                     let visibility = v.get_value(cx).into();
                     if focus {
                         //cx.focus();
-                        cx.focus_with_visibility(visibility);
+                        cx.with_current(entity, |cx| cx.focus_with_visibility(visibility));
                         cx.needs_restyle(entity);
                     }
                 });

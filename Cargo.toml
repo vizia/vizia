@@ -278,12 +278,20 @@ name = "menu"
 path = "examples/views/menu.rs"
 
 [[example]]
+name = "context_menu"
+path = "examples/views/context_menu.rs"
+
+[[example]]
 name = "menubar"
 path = "examples/views/menubar.rs"
 
 [[example]]
 name = "tabview"
 path = "examples/views/tabview.rs"
+
+[[example]]
+name = "tab_list"
+path = "examples/views/tab_list.rs"
 
 [[example]]
 name = "xypad"

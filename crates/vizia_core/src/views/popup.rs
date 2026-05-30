@@ -284,6 +284,28 @@ impl View for Popover {
                         -(bounds.height() - parent_bounds.height()) / scale,
                     ),
 
+                    Placement::Cursor => {
+                        let cursor_x = cx.mouse().cursor_x;
+                        let cursor_y = cx.mouse().cursor_y;
+
+                        let max_x = window_bounds.right() - bounds.width();
+                        let max_y = window_bounds.bottom() - bounds.height();
+
+                        let clamped_x = if max_x < window_bounds.left() {
+                            window_bounds.left()
+                        } else {
+                            cursor_x.clamp(window_bounds.left(), max_x)
+                        };
+
+                        let clamped_y = if max_y < window_bounds.top() {
+                            window_bounds.top()
+                        } else {
+                            cursor_y.clamp(window_bounds.top(), max_y)
+                        };
+
+                        ((clamped_x - bounds.x) / scale, (clamped_y - bounds.y) / scale)
+                    }
+
                     _ => (0.0, 0.0),
                 };
                 cx.set_translate((Pixels(translate.0.round()), Pixels(translate.1.round())));

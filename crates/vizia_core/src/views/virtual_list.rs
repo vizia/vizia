@@ -1,6 +1,7 @@
 use std::{
     collections::BTreeSet,
     ops::{Deref, Range},
+    time::{Duration, Instant},
 };
 
 use crate::prelude::*;
@@ -31,13 +32,98 @@ pub struct VirtualList {
     selectable: Signal<Selectable>,
     /// The index of the currently focused item in the list.
     focused: Signal<Option<usize>>,
+    /// Whether focused list items should show focus visibility.
+    focus_visibility: Signal<bool>,
     /// Whether the selection should follow the focus.
     selection_follows_focus: Signal<bool>,
     /// Callback that is called when an item is selected.
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
+    /// Returns the searchable text for each item index when type-ahead is enabled.
+    type_ahead_text: Option<Box<dyn Fn(&mut EventContext, usize) -> Option<String>>>,
+    /// Buffered type-ahead query built from rapid character input.
+    type_ahead_buffer: String,
+    /// Timestamp of the last accepted type-ahead character.
+    type_ahead_last_input: Option<Instant>,
+    /// Maximum elapsed time before resetting type-ahead buffer.
+    type_ahead_timeout: Duration,
 }
 
 impl VirtualList {
+    fn find_type_ahead_match(
+        &self,
+        cx: &mut EventContext,
+        query: &str,
+        start_index: usize,
+    ) -> Option<usize> {
+        let get_text = self.type_ahead_text.as_ref()?;
+        let num_items = self.num_items.get();
+        if num_items == 0 {
+            return None;
+        }
+
+        for offset in 0..num_items {
+            let index = (start_index + offset) % num_items;
+            let item_text = get_text(cx, index)
+                .map(|text| text.trim_start().to_lowercase())
+                .unwrap_or_default();
+
+            if !item_text.is_empty() && item_text.starts_with(query) {
+                return Some(index);
+            }
+        }
+
+        None
+    }
+
+    fn try_type_ahead(&mut self, cx: &mut EventContext, typed: char) -> bool {
+        if self.type_ahead_text.is_none() {
+            return false;
+        }
+
+        let num_items = self.num_items.get();
+        if num_items == 0 || typed.is_control() || typed.is_whitespace() {
+            return false;
+        }
+
+        let now = Instant::now();
+        let within_timeout = self
+            .type_ahead_last_input
+            .is_some_and(|last| now.saturating_duration_since(last) <= self.type_ahead_timeout);
+
+        let ch = typed.to_lowercase().collect::<String>();
+        let query = if within_timeout {
+            let repeated_char_cycle = !self.type_ahead_buffer.is_empty()
+                && self.type_ahead_buffer.chars().all(|c| c == typed.to_ascii_lowercase());
+
+            if repeated_char_cycle {
+                ch.clone()
+            } else {
+                format!("{}{}", self.type_ahead_buffer, ch)
+            }
+        } else {
+            ch.clone()
+        };
+
+        let start_index = self.focused.get().map(|focused| (focused + 1) % num_items).unwrap_or(0);
+
+        if let Some(index) = self.find_type_ahead_match(cx, &query, start_index) {
+            self.type_ahead_buffer = query;
+            self.type_ahead_last_input = Some(now);
+            self.focus_visibility.set(true);
+            self.focused.set(Some(index));
+
+            if self.selection_follows_focus.get() {
+                cx.emit(ListEvent::SelectFocused);
+            }
+
+            true
+        } else {
+            self.type_ahead_buffer.clear();
+            self.type_ahead_last_input = Some(now);
+            false
+        }
+    }
+
     fn evaluate_index(index: usize, start: usize, end: usize) -> usize {
         match end - start {
             0 => 0,
@@ -148,6 +234,7 @@ impl VirtualList {
         let selection = Signal::new(BTreeSet::default());
         let selectable = Signal::new(Selectable::None);
         let focused = Signal::new(None);
+        let focus_visibility = Signal::new(false);
         let selection_follows_focus = Signal::new(false);
         let scroll_to_cursor = Signal::new(true);
 
@@ -164,8 +251,13 @@ impl VirtualList {
             selection,
             selectable,
             focused,
+            focus_visibility,
             selection_follows_focus,
             on_select: None,
+            type_ahead_text: None,
+            type_ahead_buffer: String::new(),
+            type_ahead_last_input: None,
+            type_ahead_timeout: Duration::from_millis(1000),
         }
         .build(cx, |cx| {
             Keymap::from(vec![
@@ -178,8 +270,12 @@ impl VirtualList {
                     KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
                 ),
                 (
-                    KeyChord::new(Modifiers::empty(), Code::Space),
-                    KeymapEntry::new("Select Focused", |cx| cx.emit(ListEvent::SelectFocused)),
+                    KeyChord::new(Modifiers::empty(), Code::Home),
+                    KeymapEntry::new("Focus First", |cx| cx.emit(ListEvent::FocusFirst)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::End),
+                    KeymapEntry::new("Focus Last", |cx| cx.emit(ListEvent::FocusLast)),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::Enter),
@@ -216,6 +312,7 @@ impl VirtualList {
                                         item,
                                         selection,
                                         focused,
+                                        focus_visibility,
                                         move |cx, index, item| {
                                             item_content(cx, index, item).height(Percentage(100.0));
                                         },
@@ -262,7 +359,6 @@ impl View for VirtualList {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.take(|list_event, meta| match list_event {
             ListEvent::Select(index) => {
-                cx.focus();
                 let selectable = self.selectable.get();
                 let mut selection = self.selection.get();
                 let mut focused = self.focused.get();
@@ -306,6 +402,7 @@ impl View for VirtualList {
 
             ListEvent::SelectFocused => {
                 if let Some(focused) = self.focused.get() {
+                    self.focus_visibility.set(true);
                     cx.emit(ListEvent::Select(focused))
                 }
                 meta.consume();
@@ -323,12 +420,14 @@ impl View for VirtualList {
                     if *f < num_items.saturating_sub(1) {
                         *f = f.saturating_add(1);
                         if self.selection_follows_focus.get() {
+                            self.focus_visibility.set(true);
                             cx.emit(ListEvent::SelectFocused);
                         }
                     }
                 } else {
                     focused = Some(0);
                     if self.selection_follows_focus.get() {
+                        self.focus_visibility.set(true);
                         cx.emit(ListEvent::SelectFocused);
                     }
                 }
@@ -345,17 +444,44 @@ impl View for VirtualList {
                     if *f > 0 {
                         *f = f.saturating_sub(1);
                         if self.selection_follows_focus.get() {
+                            self.focus_visibility.set(true);
                             cx.emit(ListEvent::SelectFocused);
                         }
                     }
                 } else {
                     focused = Some(num_items.saturating_sub(1));
                     if self.selection_follows_focus.get() {
+                        self.focus_visibility.set(true);
                         cx.emit(ListEvent::SelectFocused);
                     }
                 }
 
                 self.focused.set(focused);
+
+                meta.consume();
+            }
+
+            ListEvent::FocusFirst => {
+                if self.num_items.get() > 0 {
+                    self.focus_visibility.set(true);
+                    self.focused.set(Some(0));
+                    if self.selection_follows_focus.get() {
+                        cx.emit(ListEvent::SelectFocused);
+                    }
+                }
+
+                meta.consume();
+            }
+
+            ListEvent::FocusLast => {
+                let num_items = self.num_items.get();
+                if num_items > 0 {
+                    self.focus_visibility.set(true);
+                    self.focused.set(Some(num_items.saturating_sub(1)));
+                    if self.selection_follows_focus.get() {
+                        cx.emit(ListEvent::SelectFocused);
+                    }
+                }
 
                 meta.consume();
             }
@@ -374,7 +500,20 @@ impl View for VirtualList {
             }
         });
 
-        event.map(|window_event, _| match window_event {
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::Press { mouse } => {
+                self.focus_visibility.set(!*mouse);
+            }
+
+            WindowEvent::CharInput(c) => {
+                if *c == ' ' && meta.target == cx.current() {
+                    cx.emit(ListEvent::SelectFocused);
+                    meta.consume();
+                } else if self.try_type_ahead(cx, *c) {
+                    meta.consume();
+                }
+            }
+
             WindowEvent::GeometryChanged(geo) => {
                 if geo.intersects(GeoChanged::WIDTH_CHANGED | GeoChanged::HEIGHT_CHANGED) {
                     self.recalc(cx);
@@ -492,6 +631,14 @@ impl Handle<'_, VirtualList> {
             let s = flag.get();
             handle.modify(|list| list.show_vertical_scrollbar.set(s));
         })
+    }
+
+    /// Enables type-ahead navigation by providing searchable text per item index.
+    pub fn type_ahead_text<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, usize) -> Option<String>,
+    {
+        self.modify(|list: &mut VirtualList| list.type_ahead_text = Some(Box::new(callback)))
     }
 }
 

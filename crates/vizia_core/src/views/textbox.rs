@@ -1225,7 +1225,10 @@ where
 
                 // Only iterate over glyphs within the actual text range
                 let glyph_end = line.end_index.min(text_len);
-                let estimated_chars = glyph_end - line.start_index;
+                if line.start_index > glyph_end {
+                    continue;
+                }
+                let estimated_chars = glyph_end.saturating_sub(line.start_index);
                 let mut character_lengths: Vec<u8> = Vec::with_capacity(estimated_chars);
                 let mut character_positions: Vec<f32> = Vec::with_capacity(estimated_chars);
                 let mut character_widths: Vec<f32> = Vec::with_capacity(estimated_chars);
@@ -1249,11 +1252,14 @@ where
                 }
 
                 // Include the newline character for hard breaks, as AccessKit needs it
-                let line_end = if line.hard_break {
+                let mut line_end = if line.hard_break {
                     line.end_including_newline.min(text_len)
                 } else {
                     glyph_end
                 };
+                if line_end < line.start_index {
+                    line_end = line.start_index;
+                }
                 let line_text = text.get(line.start_index..line_end).unwrap_or("").to_owned();
 
                 if line.hard_break && line.end_including_newline <= text_len {
