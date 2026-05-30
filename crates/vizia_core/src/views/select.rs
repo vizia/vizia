@@ -104,6 +104,7 @@ impl Select {
                                     list.get(index).map(|item| item.to_string_local(cx))
                                 })
                             })
+                            .focus_first_item_on_focus_in(false)
                             .selection(
                                 selected.map(|s| {
                                     if let Some(index) = s { vec![*index] } else { vec![] }

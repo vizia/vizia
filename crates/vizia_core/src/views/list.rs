@@ -63,6 +63,8 @@ pub struct List {
     orientation: Signal<Orientation>,
     /// Whether the scrollview should scroll to the cursor when the scrollbar is pressed.
     scroll_to_cursor: Signal<bool>,
+    /// Whether the first item should be focused when the list gains focus with no selection.
+    focus_first_item_on_focus_in: Signal<bool>,
     /// Callback called when a list item is selected.
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
     /// Callback called when the scrollview is scrolled.
@@ -544,6 +546,7 @@ impl List {
         let max_selected = Signal::new(usize::MAX);
         let orientation = Signal::new(Orientation::Vertical);
         let scroll_to_cursor = Signal::new(false);
+        let focus_first_item_on_focus_in = Signal::new(true);
         let scroll_x = Signal::new(0.0);
         let scroll_y = Signal::new(0.0);
         let show_horizontal_scrollbar = Signal::new(true);
@@ -560,6 +563,7 @@ impl List {
             max_selected,
             orientation,
             scroll_to_cursor,
+            focus_first_item_on_focus_in,
             on_select: None,
             on_scroll: None,
             scroll_x,
@@ -717,6 +721,7 @@ impl List {
         let max_selected = Signal::new(usize::MAX);
         let orientation = Signal::new(Orientation::Vertical);
         let scroll_to_cursor = Signal::new(false);
+        let focus_first_item_on_focus_in = Signal::new(true);
         let scroll_x = Signal::new(0.0);
         let scroll_y = Signal::new(0.0);
         let show_horizontal_scrollbar = Signal::new(true);
@@ -743,6 +748,7 @@ impl List {
             max_selected,
             orientation,
             scroll_to_cursor,
+            focus_first_item_on_focus_in,
             on_select: None,
             on_scroll: None,
             scroll_x,
@@ -874,13 +880,11 @@ impl View for List {
                         self.focus_visibility.set(true);
                     }
 
-                    let next_focused = self
-                        .selection
-                        .get()
-                        .iter()
-                        .copied()
-                        .find(|index| *index < self.num_items)
-                        .or_else(|| (self.num_items > 0).then_some(0));
+                    let next_focused = focus_index_on_focus_in(
+                        &self.selection.get(),
+                        self.num_items,
+                        self.focus_first_item_on_focus_in.get(),
+                    );
 
                     if let Some(index) = next_focused {
                         // Force a transition so focused_with_visibility re-applies focus
@@ -1102,6 +1106,9 @@ pub trait ListModifiers: Sized {
     /// Sets whether the scrollbar should move to the cursor when pressed.
     fn scroll_to_cursor(self, flag: bool) -> Self;
 
+    /// Sets whether the first item should be focused when the list gains focus with no selection.
+    fn focus_first_item_on_focus_in(self, flag: impl Res<bool> + 'static) -> Self;
+
     /// Sets a callback which will be called when a scrollview is scrolled, either with the mouse wheel, touchpad, or using the scroll bars.
     fn on_scroll(
         self,
@@ -1229,6 +1236,16 @@ impl ListModifiers for Handle<'_, List> {
         })
     }
 
+    fn focus_first_item_on_focus_in(self, flag: impl Res<bool> + 'static) -> Self {
+        let flag = flag.to_signal(self.cx);
+        self.bind(flag, move |handle| {
+            let focus_first_item_on_focus_in = flag.get();
+            handle.modify(|list: &mut List| {
+                list.focus_first_item_on_focus_in.set(focus_first_item_on_focus_in);
+            });
+        })
+    }
+
     fn on_scroll(
         self,
         callback: impl Fn(&mut EventContext, f32, f32) + 'static + Send + Sync,
@@ -1341,8 +1358,47 @@ impl View for ListItem {
                     cx.emit(ScrollEvent::ScrollToView(cx.current()));
                 }
             }
-
             _ => {}
         });
+    }
+}
+
+fn focus_index_on_focus_in(
+    selection: &BTreeSet<usize>,
+    num_items: usize,
+    focus_first_item_on_focus_in: bool,
+) -> Option<usize> {
+    selection
+        .iter()
+        .copied()
+        .find(|index| *index < num_items)
+        .or_else(|| focus_first_item_on_focus_in.then_some(0).filter(|_| num_items > 0))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::focus_index_on_focus_in;
+    use std::collections::BTreeSet;
+
+    #[test]
+    fn focuses_selected_item_on_focus_in() {
+        let mut selection = BTreeSet::new();
+        selection.insert(3);
+
+        assert_eq!(focus_index_on_focus_in(&selection, 5, false), Some(3));
+    }
+
+    #[test]
+    fn can_leave_focus_empty_when_nothing_is_selected() {
+        let selection = BTreeSet::new();
+
+        assert_eq!(focus_index_on_focus_in(&selection, 5, false), None);
+    }
+
+    #[test]
+    fn falls_back_to_first_item_when_enabled() {
+        let selection = BTreeSet::new();
+
+        assert_eq!(focus_index_on_focus_in(&selection, 5, true), Some(0));
     }
 }
