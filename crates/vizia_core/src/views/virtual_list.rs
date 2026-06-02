@@ -675,10 +675,7 @@ impl View for VirtualList {
             }
 
             WindowEvent::CharInput(c) => {
-                if *c == ' '
-                    && meta.target == cx.current()
-                    && self.space_selects_focused.get()
-                {
+                if *c == ' ' && meta.target == cx.current() && self.space_selects_focused.get() {
                     cx.emit(ListEvent::SelectFocused);
                     meta.consume();
                 } else if self.try_type_ahead(cx, *c) {
