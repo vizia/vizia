@@ -251,6 +251,28 @@ impl VirtualList {
         )
     }
 
+    /// Creates a new [VirtualList] view using caller-provided item views and selection state.
+    pub fn new_custom_items_with_selection<V: View, S, L, T>(
+        cx: &mut Context,
+        list: S,
+        item_height: f32,
+        item_content: impl 'static + Copy + Fn(&mut Context, usize, Memo<T>, Memo<bool>) -> Handle<V>,
+    ) -> Handle<Self>
+    where
+        S: Res<L> + 'static,
+        L: Deref<Target = [T]> + Clone + 'static,
+        T: Clone + PartialEq + 'static,
+    {
+        Self::new_generic_custom_items_with_selection(
+            cx,
+            list,
+            |list| list.len(),
+            |list, index| list[index].clone(),
+            item_height,
+            item_content,
+        )
+    }
+
     /// Creates a new [VirtualList] view with a binding to the given source and a template for constructing the list items.
     pub fn new_generic<V: View, S, L, T>(
         cx: &mut Context,
@@ -485,6 +507,135 @@ impl VirtualList {
         .navigable(true)
         .role(Role::ListBox)
     }
+
+    /// Creates a new [VirtualList] view with custom item semantics and selected-state memo.
+    pub fn new_generic_custom_items_with_selection<V: View, S, L, T>(
+        cx: &mut Context,
+        list: S,
+        list_len: impl 'static + Fn(&L) -> usize,
+        list_index: impl 'static + Copy + Fn(&L, usize) -> T,
+        item_height: f32,
+        item_content: impl 'static + Copy + Fn(&mut Context, usize, Memo<T>, Memo<bool>) -> Handle<V>,
+    ) -> Handle<Self>
+    where
+        S: Res<L> + 'static,
+        L: Clone + 'static,
+        T: Clone + PartialEq + 'static,
+    {
+        let list = list.to_signal(cx);
+        let num_items = list.map(list_len).to_signal(cx);
+        let visible_range = Signal::new(0..0);
+        let scroll_x = Signal::new(0.0);
+        let scroll_y = Signal::new(0.0);
+        let show_horizontal_scrollbar = Signal::new(false);
+        let show_vertical_scrollbar = Signal::new(true);
+        let selection = Signal::new(BTreeSet::default());
+        let selectable = Signal::new(Selectable::None);
+        let focused = Signal::new(None);
+        let focus_visibility = Signal::new(false);
+        let selection_follows_focus = Signal::new(false);
+        let scroll_to_cursor = Signal::new(true);
+
+        Self {
+            scroll_to_cursor,
+            on_scroll: None,
+            num_items,
+            item_height,
+            visible_range,
+            scroll_x,
+            scroll_y,
+            show_horizontal_scrollbar,
+            show_vertical_scrollbar,
+            selection,
+            selectable,
+            focused,
+            focus_visibility,
+            selection_follows_focus,
+            on_select: None,
+            type_ahead_text: None,
+            type_ahead_buffer: String::new(),
+            type_ahead_last_input: None,
+            type_ahead_timeout: Duration::from_millis(1000),
+        }
+        .build(cx, |cx| {
+            Keymap::from(vec![
+                (
+                    KeyChord::new(Modifiers::empty(), Code::ArrowDown),
+                    KeymapEntry::new("Focus Next", |cx| cx.emit(ListEvent::FocusNext)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::ArrowUp),
+                    KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::Home),
+                    KeymapEntry::new("Focus First", |cx| cx.emit(ListEvent::FocusFirst)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::End),
+                    KeymapEntry::new("Focus Last", |cx| cx.emit(ListEvent::FocusLast)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::Enter),
+                    KeymapEntry::new("Select Focused", |cx| cx.emit(ListEvent::SelectFocused)),
+                ),
+            ])
+            .build(cx);
+
+            ScrollView::new(cx, move |cx| {
+                Binding::new(cx, num_items, move |cx| {
+                    let num_items = num_items.get();
+                    cx.emit(ScrollEvent::SetY(0.0));
+                    VStack::new(cx, |cx| {
+                        let num_visible_items = visible_range.map(Range::len);
+                        Binding::new(cx, num_visible_items, move |cx| {
+                            for i in 0..num_visible_items.get().min(num_items) {
+                                let item_index = visible_range.map(move |range| {
+                                    Self::evaluate_index(i, range.start, range.end)
+                                });
+                                Binding::new(cx, item_index, move |cx| {
+                                    let max_index = num_items.saturating_sub(1);
+                                    let index = item_index.get().min(max_index);
+                                    let item = list.map(move |list| list_index(list, index));
+                                    let is_selected =
+                                        selection.map(move |selection| selection.contains(&index));
+                                    let is_focused = focused
+                                        .map(move |focused| focused.is_some_and(|f| f == index));
+
+                                    item_content(cx, index, item, is_selected)
+                                        .focusable(true)
+                                        .navigable(false)
+                                        .focused_with_visibility(is_focused, focus_visibility)
+                                        .on_press(move |cx| cx.emit(ListEvent::Select(index)))
+                                        .min_width(Auto)
+                                        .height(Pixels(item_height))
+                                        .position_type(PositionType::Absolute)
+                                        .bind(item_index, move |handle| {
+                                            let index = item_index.get();
+                                            handle.top(Pixels(index as f32 * item_height));
+                                        });
+                                });
+                            }
+                        })
+                    })
+                    .height(Pixels(num_items as f32 * item_height));
+                })
+            })
+            .show_horizontal_scrollbar(show_horizontal_scrollbar)
+            .show_vertical_scrollbar(show_vertical_scrollbar)
+            .scroll_to_cursor(scroll_to_cursor)
+            .scroll_x(scroll_x)
+            .scroll_y(scroll_y)
+            .on_scroll(|cx, x, y| {
+                if y.is_finite() && x.is_finite() {
+                    cx.emit(ListEvent::Scroll(x, y));
+                }
+            });
+        })
+        .toggle_class("selectable", selectable.map(|s| *s != Selectable::None))
+        .navigable(true)
+        .role(Role::ListBox)
+    }
 }
 
 impl View for VirtualList {
@@ -515,12 +666,16 @@ impl View for VirtualList {
                     }
 
                     Selectable::Multi => {
+                        // Mirror List behavior: click target receives focus in multi-select.
+                        focused = Some(index);
+
                         if selection.contains(&index) {
                             selection.remove(&index);
-                            focused = None;
+                            if let Some(on_select) = &self.on_select {
+                                on_select(cx, index);
+                            }
                         } else {
                             selection.insert(index);
-                            focused = Some(index);
                             if let Some(on_select) = &self.on_select {
                                 on_select(cx, index);
                             }
@@ -541,6 +696,15 @@ impl View for VirtualList {
                     self.focus_visibility.set(true);
                     cx.emit(ListEvent::Select(focused))
                 }
+                meta.consume();
+            }
+
+            ListEvent::Focus(index) => {
+                if index < self.num_items.get() {
+                    self.focus_visibility.set(true);
+                    self.focused.set(Some(index));
+                }
+
                 meta.consume();
             }
 
@@ -671,12 +835,16 @@ impl Handle<'_, VirtualList> {
         self.bind(selection, move |handle| {
             selection.with(|selected_indices| {
                 handle.modify(|list| {
+                    let previous_focused = list.focused.get();
                     let mut selection = BTreeSet::default();
-                    let mut focused = None;
                     for idx in selected_indices.deref().iter().copied() {
                         selection.insert(idx);
-                        focused = Some(idx);
                     }
+
+                    let focused = previous_focused
+                        .filter(|idx| *idx < list.num_items.get())
+                        .or_else(|| selection.iter().next_back().copied());
+
                     list.selection.set(selection);
                     list.focused.set(focused);
                 });

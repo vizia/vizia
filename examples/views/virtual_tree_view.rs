@@ -394,6 +394,9 @@ fn main() -> Result<(), ApplicationError> {
             .selectable(Selectable::Single)
             .selected_row_ids(selected_rows)
             .expanded_row_ids(expanded_rows)
+            .type_ahead_text(move |row| {
+                tree.with(|tree| tree.get(row.id).map(|node| node.value().name.clone()))
+            })
             .on_row_select(move |cx, id| {
                 cx.emit(AppEvent::SelectRow(id));
             })

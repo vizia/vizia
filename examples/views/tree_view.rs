@@ -25,6 +25,8 @@ struct AppData {
     selected_rows: Signal<Vec<NodeId>>,
     expanded_rows: Signal<Vec<NodeId>>,
     filter_text: Signal<String>,
+    selectable: Signal<Selectable>,
+    selection_follows_focus: Signal<bool>,
 }
 
 enum AppEvent {
@@ -32,6 +34,8 @@ enum AppEvent {
     SelectRow(NodeId),
     ToggleRow(NodeId, bool),
     SetFilterText(String),
+    ToggleMultiSelect,
+    ToggleSelectionFollowsFocus,
 }
 
 impl Model for AppData {
@@ -44,7 +48,17 @@ impl Model for AppData {
             }
 
             AppEvent::SelectRow(id) => {
-                self.selected_rows.set(vec![*id]);
+                if self.selectable.get() == Selectable::Multi {
+                    self.selected_rows.update(|rows| {
+                        if rows.contains(id) {
+                            rows.retain(|row_id| row_id != id);
+                        } else {
+                            rows.push(*id);
+                        }
+                    });
+                } else {
+                    self.selected_rows.set(vec![*id]);
+                }
             }
 
             AppEvent::ToggleRow(id, expanded) => {
@@ -74,6 +88,30 @@ impl Model for AppData {
                     self.expanded_rows.update(|rows| rows.retain(|id| include_set.contains(id)));
                 } else {
                     self.expanded_rows.set(expanded_rows);
+                }
+            }
+
+            AppEvent::ToggleMultiSelect => {
+                self.selectable.update(|selectable| match selectable {
+                    Selectable::Single => {
+                        *selectable = Selectable::Multi;
+                        self.selection_follows_focus.set(false);
+                    }
+
+                    Selectable::Multi => {
+                        *selectable = Selectable::Single;
+                        self.selected_rows.update(|rows| rows.truncate(1));
+                    }
+
+                    Selectable::None => {
+                        *selectable = Selectable::Single;
+                    }
+                });
+            }
+
+            AppEvent::ToggleSelectionFollowsFocus => {
+                if self.selectable.get() == Selectable::Single {
+                    self.selection_follows_focus.update(|value| *value ^= true);
                 }
             }
         });
@@ -331,8 +369,21 @@ fn main() -> Result<(), ApplicationError> {
         let selected_rows: Signal<Vec<NodeId>> = Signal::new(vec![]);
         let expanded_rows: Signal<Vec<NodeId>> = Signal::new(vec![root_id]);
         let filter_text = Signal::new(String::new());
+        let selectable = Signal::new(Selectable::Single);
+        let selection_follows_focus = Signal::new(false);
+        let multiselect_enabled = Memo::new(move |_| selectable.get() == Selectable::Multi);
+        let selection_follows_focus_disabled =
+            Memo::new(move |_| selectable.get() != Selectable::Single);
 
-        AppData { tree, selected_rows, expanded_rows, filter_text }.build(cx);
+        AppData {
+            tree,
+            selected_rows,
+            expanded_rows,
+            filter_text,
+            selectable,
+            selection_follows_focus,
+        }
+        .build(cx);
 
         ExamplePage::vertical(cx, move |cx| {
             Textbox::new(cx, filter_text).width(Pixels(320.0)).placeholder("Filter rows").on_edit(
@@ -340,6 +391,33 @@ fn main() -> Result<(), ApplicationError> {
                     cx.emit(AppEvent::SetFilterText(text));
                 },
             );
+
+            HStack::new(cx, |cx| {
+                HStack::new(cx, |cx| {
+                    Switch::new(cx, multiselect_enabled)
+                        .on_toggle(|cx| cx.emit(AppEvent::ToggleMultiSelect))
+                        .id("treeview_multiselect");
+                    Label::new(cx, "Multi-select").describing("treeview_multiselect");
+                })
+                .size(Auto)
+                .alignment(Alignment::Center)
+                .gap(Pixels(6.0));
+
+                HStack::new(cx, |cx| {
+                    Switch::new(cx, selection_follows_focus)
+                        .on_toggle(|cx| cx.emit(AppEvent::ToggleSelectionFollowsFocus))
+                        .disabled(selection_follows_focus_disabled)
+                        .id("treeview_selection_follows_focus");
+                    Label::new(cx, "Selection follows focus (single-select)")
+                        .describing("treeview_selection_follows_focus");
+                })
+                .size(Auto)
+                .alignment(Alignment::Center)
+                .gap(Pixels(6.0));
+            })
+            .size(Auto)
+            .alignment(Alignment::Left)
+            .gap(Pixels(16.0));
 
             TreeView::from_hierarchy(
                 cx,
@@ -377,22 +455,30 @@ fn main() -> Result<(), ApplicationError> {
                     });
 
                     HStack::new(cx, move |cx| {
-                        Checkbox::intermediate(cx, checked, intermediate).on_toggle({
-                            let node_id = row_id;
-                            move |cx| {
-                                cx.emit(AppEvent::ToggleCheckState(node_id));
-                            }
-                        });
-                        Label::new(cx, text).text_wrap(false);
+                        Checkbox::intermediate(cx, checked, intermediate)
+                            .on_toggle({
+                                let node_id = row_id;
+                                move |cx| {
+                                    cx.emit(AppEvent::ToggleCheckState(node_id));
+                                }
+                            })
+                            .navigable(false)
+                            .pointer_events(PointerEvents::Auto);
+                        Label::new(cx, text).text_wrap(false).hoverable(false);
                     })
+                    .pointer_events(PointerEvents::None)
                     .height(Auto)
                     .alignment(Alignment::Left)
                     .gap(Pixels(8.0));
                 },
             )
-            .selectable(Selectable::Single)
+            .selectable(selectable)
+            .selection_follows_focus(selection_follows_focus)
             .selected_row_ids(selected_rows)
             .expanded_row_ids(expanded_rows)
+            .type_ahead_text(move |row| {
+                tree.with(|tree| tree.get(row.id).map(|node| node.value().name.clone()))
+            })
             .on_row_select(move |cx, id| {
                 cx.emit(AppEvent::SelectRow(id));
             })

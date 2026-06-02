@@ -154,6 +154,48 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets the accessibility level for hierarchical items.
+    fn level<U: Into<usize>>(mut self, level: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            level.set_or_bind(cx, move |cx, level| {
+                cx.style.level.insert(entity, level.get_value(cx).into());
+                cx.style.needs_access_update(entity);
+            });
+        });
+
+        self
+    }
+
+    /// Sets the total number of sibling items in a set for this item.
+    fn size_of_set<U: Into<usize>>(mut self, size_of_set: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            size_of_set.set_or_bind(cx, move |cx, size_of_set| {
+                cx.style.size_of_set.insert(entity, size_of_set.get_value(cx).into());
+                cx.style.needs_access_update(entity);
+            });
+        });
+
+        self
+    }
+
+    /// Sets the 1-based position of this item within its sibling set.
+    fn position_in_set<U: Into<usize>>(mut self, position_in_set: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            position_in_set.set_or_bind(cx, move |cx, position_in_set| {
+                cx.style.position_in_set.insert(entity, position_in_set.get_value(cx).into());
+                cx.style.needs_access_update(entity);
+            });
+        });
+
+        self
+    }
+
     /// Sets the accessibility orientation of the view.
     /// This does not affect the layout of the view, but is used to inform
     /// assistive technologies of the orientation of the view.

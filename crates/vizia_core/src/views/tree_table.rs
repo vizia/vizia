@@ -172,7 +172,8 @@ impl TreeTableFirstCell {
                 Element::new(cx)
                     .class("tree-table-indent")
                     .width(Pixels(depth))
-                    .height(Stretch(1.0));
+                    .height(Stretch(1.0))
+                    .pointer_events(PointerEvents::None);
 
                 if has_children {
                     let icon = if expanded { ICON_CHEVRON_DOWN } else { ICON_CHEVRON_RIGHT };
@@ -184,7 +185,9 @@ impl TreeTableFirstCell {
                             cx.emit(TreeTableFirstCellEvent::Toggle(node_id.clone(), !expanded));
                         });
                 } else {
-                    Element::new(cx).class("tree-table-disclosure-placeholder");
+                    Element::new(cx)
+                        .class("tree-table-disclosure-placeholder")
+                        .pointer_events(PointerEvents::None);
                 }
 
                 let cell_content = cell_content.clone();
@@ -194,7 +197,8 @@ impl TreeTableFirstCell {
                 .class("tree-table-cell-content")
                 .width(Stretch(1.0))
                 .min_width(Auto)
-                .height(Auto);
+                .height(Auto)
+                .pointer_events(PointerEvents::None);
             })
             .alignment(Alignment::Left)
             .width(Stretch(1.0))

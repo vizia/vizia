@@ -843,16 +843,21 @@ virtual-tree-view .tree-view-row.collapsible {
     cursor: default;
 }
 
-tree-view list.selectable list-item:hover,
-virtual-tree-view virtual-list.selectable list-item:hover {
+tree-view .tree-view-body.selectable .tree-view-row:hover,
+virtual-tree-view .tree-view-body.selectable .tree-view-row:hover {
     background-color: var(--accent);
 }
 
-tree-view list.selectable list-item.focused,
-tree-view list.selectable list-item:checked,
-virtual-tree-view virtual-list.selectable list-item.focused,
-virtual-tree-view virtual-list.selectable list-item:checked {
+tree-view .tree-view-body.selectable .tree-view-row:checked,
+virtual-tree-view .tree-view-body.selectable .tree-view-row:checked {
     background-color: var(--accent);
+}
+
+tree-view .tree-view-body.selectable .tree-view-row:focus-visible,
+virtual-tree-view .tree-view-body.selectable .tree-view-row:focus-visible {
+    border-width: 2px;
+    border-color: var(--ring);
+    outline-width: 0px;
 }
 
 tree-view divider > .divider-line,
