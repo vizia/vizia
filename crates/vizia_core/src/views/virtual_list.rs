@@ -38,6 +38,8 @@ pub struct VirtualList {
     focus_visibility: Signal<bool>,
     /// Whether the selection should follow the focus.
     selection_follows_focus: Signal<bool>,
+    /// Whether pressing Space should select the focused item.
+    space_selects_focused: Signal<bool>,
     /// Callback that is called when an item is selected.
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
     /// Returns the searchable text for each item index when type-ahead is enabled.
@@ -286,6 +288,7 @@ impl VirtualList {
             focused,
             focus_visibility,
             selection_follows_focus,
+            space_selects_focused: Signal::new(true),
             on_select: None,
             type_ahead_text: None,
             type_ahead_buffer: String::new(),
@@ -497,6 +500,7 @@ impl VirtualList {
         let scroll_y = Signal::new(0.0);
         let show_horizontal_scrollbar = Signal::new(false);
         let show_vertical_scrollbar = Signal::new(true);
+        let orientation = Signal::new(Orientation::Vertical);
         let selection = Signal::new(BTreeSet::default());
         let selectable = Signal::new(Selectable::None);
         let focused = Signal::new(None);
@@ -509,6 +513,7 @@ impl VirtualList {
             on_scroll: None,
             num_items,
             item_height,
+            orientation,
             visible_range,
             scroll_x,
             scroll_y,
@@ -519,6 +524,7 @@ impl VirtualList {
             focused,
             focus_visibility,
             selection_follows_focus,
+            space_selects_focused: Signal::new(true),
             on_select: None,
             type_ahead_text: None,
             type_ahead_buffer: String::new(),
@@ -601,6 +607,7 @@ impl VirtualList {
             });
         })
         .toggle_class("selectable", selectable.map(|s| *s != Selectable::None))
+        .orientation(orientation)
         .navigable(true)
         .role(Role::ListBox)
     }
@@ -774,7 +781,10 @@ impl View for VirtualList {
             }
 
             WindowEvent::CharInput(c) => {
-                if *c == ' ' && meta.target == cx.current() {
+                if *c == ' '
+                    && meta.target == cx.current()
+                    && self.space_selects_focused.get()
+                {
                     cx.emit(ListEvent::SelectFocused);
                     meta.consume();
                 } else if self.try_type_ahead(cx, *c) {
@@ -870,6 +880,19 @@ impl Handle<'_, VirtualList> {
                     Orientation::Vertical
                 });
             });
+        })
+    }
+
+    /// Sets whether pressing Space should select the currently focused item.
+    pub fn space_selects_focused<U: Into<bool> + Clone + 'static>(
+        self,
+        flag: impl Res<U> + 'static,
+    ) -> Self {
+        let flag = flag.to_signal(self.cx);
+        self.bind(flag, move |handle| {
+            let space_selects_focused = flag.get();
+            let s = space_selects_focused.into();
+            handle.modify(|list| list.space_selects_focused.set(s));
         })
     }
 

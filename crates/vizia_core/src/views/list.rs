@@ -57,6 +57,8 @@ pub struct List {
     focused: Signal<Option<usize>>,
     /// Whether the selection should follow the focus.
     selection_follows_focus: Signal<bool>,
+    /// Whether pressing Space should select the focused item.
+    space_selects_focused: Signal<bool>,
     /// Minimum number of selected items.
     min_selected: Signal<usize>,
     /// Maximum number of selected items.
@@ -561,6 +563,7 @@ impl List {
             selectable,
             focused,
             selection_follows_focus: Signal::new(false),
+            space_selects_focused: Signal::new(true),
             min_selected,
             max_selected,
             orientation,
@@ -746,6 +749,7 @@ impl List {
             selectable,
             focused,
             selection_follows_focus: Signal::new(false),
+            space_selects_focused: Signal::new(true),
             min_selected,
             max_selected,
             orientation,
@@ -899,7 +903,10 @@ impl View for List {
                 }
 
                 WindowEvent::CharInput(c) => {
-                    if *c == ' ' && meta.target == cx.current() {
+                    if *c == ' '
+                        && meta.target == cx.current()
+                        && self.space_selects_focused.get()
+                    {
                         cx.emit(ListEvent::SelectFocused);
                         meta.consume();
                     } else if self.try_type_ahead(cx, *c) {
@@ -1111,6 +1118,12 @@ pub trait ListModifiers: Sized {
         flag: impl Res<U> + 'static,
     ) -> Self;
 
+    /// Sets whether pressing Space should select the currently focused item.
+    fn space_selects_focused<U: Into<bool> + Clone + 'static>(
+        self,
+        flag: impl Res<U> + 'static,
+    ) -> Self;
+
     /// Sets the orientation of the list.
     fn horizontal<U: Into<bool> + Clone + 'static>(self, horizontal: impl Res<U> + 'static)
     -> Self;
@@ -1225,6 +1238,18 @@ impl ListModifiers for Handle<'_, List> {
             let selection_follows_focus = flag.get();
             let s = selection_follows_focus.into();
             handle.modify(|list: &mut List| list.selection_follows_focus.set(s));
+        })
+    }
+
+    fn space_selects_focused<U: Into<bool> + Clone + 'static>(
+        self,
+        flag: impl Res<U> + 'static,
+    ) -> Self {
+        let flag = flag.to_signal(self.cx);
+        self.bind(flag, move |handle| {
+            let space_selects_focused = flag.get();
+            let s = space_selects_focused.into();
+            handle.modify(|list: &mut List| list.space_selects_focused.set(s));
         })
     }
 
