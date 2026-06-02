@@ -476,11 +476,21 @@ fn main() -> Result<(), ApplicationError> {
             .selection_follows_focus(selection_follows_focus)
             .selected_row_ids(selected_rows)
             .expanded_row_ids(expanded_rows)
+            .checked_row(move |row| {
+                tree.with(|tree| {
+                    tree.get(row.id)
+                        .map(|node| node.value().check_state != CheckState::Unchecked)
+                        .unwrap_or(false)
+                })
+            })
             .type_ahead_text(move |row| {
                 tree.with(|tree| tree.get(row.id).map(|node| node.value().name.clone()))
             })
             .on_row_select(move |cx, id| {
                 cx.emit(AppEvent::SelectRow(id));
+            })
+            .on_row_check_toggle(move |cx, id| {
+                cx.emit(AppEvent::ToggleCheckState(id));
             })
             .on_row_toggle(move |cx, id, expanded| {
                 cx.emit(AppEvent::ToggleRow(id, expanded));

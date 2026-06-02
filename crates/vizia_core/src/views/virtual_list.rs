@@ -36,6 +36,8 @@ pub struct VirtualList {
     focus_visibility: Signal<bool>,
     /// Whether the selection should follow the focus.
     selection_follows_focus: Signal<bool>,
+    /// Whether pressing Space should select the focused item.
+    space_selects_focused: Signal<bool>,
     /// Callback that is called when an item is selected.
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
     /// Returns the searchable text for each item index when type-ahead is enabled.
@@ -275,6 +277,7 @@ impl VirtualList {
             focused,
             focus_visibility,
             selection_follows_focus,
+            space_selects_focused: Signal::new(true),
             on_select: None,
             type_ahead_text: None,
             type_ahead_buffer: String::new(),
@@ -416,6 +419,7 @@ impl VirtualList {
             focused,
             focus_visibility,
             selection_follows_focus,
+            space_selects_focused: Signal::new(true),
             on_select: None,
             type_ahead_text: None,
             type_ahead_buffer: String::new(),
@@ -671,7 +675,10 @@ impl View for VirtualList {
             }
 
             WindowEvent::CharInput(c) => {
-                if *c == ' ' && meta.target == cx.current() {
+                if *c == ' '
+                    && meta.target == cx.current()
+                    && self.space_selects_focused.get()
+                {
                     cx.emit(ListEvent::SelectFocused);
                     meta.consume();
                 } else if self.try_type_ahead(cx, *c) {
@@ -748,6 +755,19 @@ impl Handle<'_, VirtualList> {
             let selection_follows_focus = flag.get();
             let s = selection_follows_focus.into();
             handle.modify(|list| list.selection_follows_focus.set(s));
+        })
+    }
+
+    /// Sets whether pressing Space should select the currently focused item.
+    pub fn space_selects_focused<U: Into<bool> + Clone + 'static>(
+        self,
+        flag: impl Res<U> + 'static,
+    ) -> Self {
+        let flag = flag.to_signal(self.cx);
+        self.bind(flag, move |handle| {
+            let space_selects_focused = flag.get();
+            let s = space_selects_focused.into();
+            handle.modify(|list| list.space_selects_focused.set(s));
         })
     }
 

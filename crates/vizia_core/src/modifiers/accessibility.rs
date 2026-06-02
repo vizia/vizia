@@ -127,7 +127,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     }
 
     /// Sets whether the view should be announced as selected (`true`) or not selected (`false`).
-    fn selected<U: Into<bool>>(mut self, selected: impl Res<U>) -> Self {
+    fn accessibility_selected<U: Into<bool>>(mut self, selected: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
@@ -138,6 +138,13 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         });
 
         self
+    }
+
+    /// Sets whether the view should be announced as selected (`true`) or not selected (`false`).
+    ///
+    /// This is an alias of [`AccessibilityModifiers::accessibility_selected`].
+    fn selected<U: Into<bool>>(self, selected: impl Res<U>) -> Self {
+        self.accessibility_selected(selected)
     }
 
     /// Sets whether the view allows multiple selected descendants.
