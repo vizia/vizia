@@ -903,9 +903,7 @@ impl View for List {
                 }
 
                 WindowEvent::CharInput(c) => {
-                    if *c == ' '
-                        && meta.target == cx.current()
-                        && self.space_selects_focused.get()
+                    if *c == ' ' && meta.target == cx.current() && self.space_selects_focused.get()
                     {
                         cx.emit(ListEvent::SelectFocused);
                         meta.consume();
