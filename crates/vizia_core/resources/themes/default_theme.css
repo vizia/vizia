@@ -848,8 +848,8 @@ virtual-tree-view .tree-view-body.selectable .tree-view-row:hover {
     background-color: var(--accent);
 }
 
-tree-view .tree-view-body.selectable .tree-view-row:checked,
-virtual-tree-view .tree-view-body.selectable .tree-view-row:checked {
+tree-view .tree-view-body.selectable .tree-view-row.selected,
+virtual-tree-view .tree-view-body.selectable .tree-view-row.selected {
     background-color: var(--accent);
 }
 
