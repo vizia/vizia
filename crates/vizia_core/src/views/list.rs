@@ -29,6 +29,8 @@ pub enum ListEvent {
     Select(usize),
     /// Selects the focused list item.
     SelectFocused,
+    /// Moves focus to a specific item index without changing selection.
+    Focus(usize),
     ///  Moves the focus to the next item in the list.
     FocusNext,
     ///  Moves the focus to the previous item in the list.
@@ -933,20 +935,21 @@ impl View for List {
                     }
 
                     Selectable::Multi => {
+                        // In multi-select mode, clicking an item should move focus to that item
+                        // regardless of whether the click selects or deselects it.
+                        focused = Some(index);
+
                         if selection.contains(&index) {
                             if selection.len() > min_selected {
                                 selection.remove(&index);
-                                if focused == Some(index) {
-                                    focused = selection.iter().next_back().copied();
-                                }
-                            }
-                        } else {
-                            if selection.len() < max_selected {
-                                selection.insert(index);
-                                focused = Some(index);
                                 if let Some(on_select) = &self.on_select {
                                     on_select(cx, index);
                                 }
+                            }
+                        } else if selection.len() < max_selected {
+                            selection.insert(index);
+                            if let Some(on_select) = &self.on_select {
+                                on_select(cx, index);
                             }
                         }
                     }
@@ -965,6 +968,15 @@ impl View for List {
                     self.focus_visibility.set(true);
                     cx.emit(ListEvent::Select(focused))
                 }
+                meta.consume();
+            }
+
+            ListEvent::Focus(index) => {
+                if index < self.num_items {
+                    self.focus_visibility.set(true);
+                    self.focused.set(Some(index));
+                }
+
                 meta.consume();
             }
 
@@ -1142,12 +1154,16 @@ impl ListModifiers for Handle<'_, List> {
         self.bind(selection, move |handle| {
             selection.with(|selected_indices| {
                 handle.modify(|list| {
+                    let previous_focused = list.focused.get();
                     let mut selection = BTreeSet::default();
-                    let mut focused = None;
                     for idx in selected_indices.deref().iter().copied() {
                         selection.insert(idx);
-                        focused = Some(idx);
                     }
+
+                    let focused = previous_focused
+                        .filter(|idx| *idx < list.num_items)
+                        .or_else(|| selection.iter().next_back().copied());
+
                     list.selection.set(selection);
                     list.focused.set(focused);
                     list.normalize_selection_state();

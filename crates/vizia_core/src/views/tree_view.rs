@@ -120,6 +120,7 @@ enum TreeViewEvent<Id> {
 }
 
 type TreeViewItemContent<T, Id> = dyn Fn(&mut Context, Memo<TreeTableRow<T, Id>>);
+type TreeViewTypeAheadText<T> = dyn Fn(&T) -> Option<String>;
 
 pub struct TreeView<T, V, Id>
 where
@@ -134,6 +135,9 @@ where
     selection_follows_focus: Signal<bool>,
     selected_row_ids: Signal<Vec<Id>>,
     expanded_row_ids: Signal<Vec<Id>>,
+    focused_row_id: Signal<Option<Id>>,
+    list_entity: Signal<Entity>,
+    type_ahead_text: Signal<Option<Rc<TreeViewTypeAheadText<T>>>>,
     on_row_select: Option<Box<dyn Fn(&mut EventContext, Id)>>,
     on_row_toggle: Option<Box<dyn Fn(&mut EventContext, Id, bool)>>,
 }
@@ -168,6 +172,9 @@ where
         let selection_follows_focus = Signal::new(false);
         let selected_row_ids = Signal::new(Vec::new());
         let expanded_row_ids = Signal::new(Vec::new());
+        let focused_row_id = Signal::new(None);
+        let list_entity = Signal::new(Entity::null());
+        let type_ahead_text = Signal::new(None);
 
         let visible_rows = Memo::new({
             let row_id = row_id.clone();
@@ -181,18 +188,19 @@ where
             }
         });
 
-        let selected_indices = Memo::new(move |_| {
-            visible_rows.with(|rows| {
-                selected_row_ids.with(|selected_ids| {
-                    rows.iter()
-                        .enumerate()
-                        .filter_map(|(index, row)| {
-                            if selected_ids.contains(&row.id) { Some(index) } else { None }
-                        })
-                        .collect::<Vec<usize>>()
+        let selected_indices =
+            Memo::new(move |_| {
+                visible_rows.with(|rows| {
+                    selected_row_ids.with(|selected_ids| {
+                        rows.iter()
+                            .enumerate()
+                            .filter_map(|(index, row)| {
+                                if selected_ids.contains(&row.id) { Some(index) } else { None }
+                            })
+                            .collect::<Vec<usize>>()
+                    })
                 })
-            })
-        });
+            });
 
         let handle = Self {
             rows: row_signal,
@@ -202,6 +210,9 @@ where
             selection_follows_focus,
             selected_row_ids,
             expanded_row_ids,
+            focused_row_id,
+            list_entity,
+            type_ahead_text,
             on_row_select: None,
             on_row_toggle: None,
         }
@@ -222,67 +233,118 @@ where
             ])
             .build(cx);
 
-            List::new(cx, visible_rows, move |cx, row_index, row| {
-                let row: Memo<TreeTableRow<T, Id>> = Memo::new(move |_| row.get());
-                let row_data = row.get();
-                let has_children = row_data.has_children;
-                let expanded = row_data.expanded;
-                let row_id = row_data.id.clone();
-                let indent = row_data.depth as f32 * 16.0;
-                let item_content = item_content.clone();
+            let list = List::new_custom_items_with_selection(
+                cx,
+                visible_rows,
+                move |cx, row_index, row, is_selected| {
+                    let row: Memo<TreeTableRow<T, Id>> = Memo::new(move |_| row.get());
+                    let row_data = row.get();
+                    let has_children = row_data.has_children;
+                    let expanded = row_data.expanded;
+                    let row_id = row_data.id.clone();
+                    let focus_row_id = row_data.id.clone();
+                    let indent = row_data.depth as f32 * 16.0;
+                    let item_content = item_content.clone();
+                    let row_for_size_of_set = row;
+                    let size_of_set = Memo::new(move |_| {
+                        let row_data = row_for_size_of_set.get();
+                        visible_rows.with(|rows| {
+                            rows.iter()
+                                .filter(|candidate| candidate.parent_id == row_data.parent_id)
+                                .count()
+                        })
+                    });
+                    let row_for_position = row;
+                    let position_in_set = Memo::new(move |_| {
+                        let row_data = row_for_position.get();
+                        visible_rows.with(|rows| {
+                            rows.iter()
+                                .filter(|candidate| candidate.parent_id == row_data.parent_id)
+                                .position(|candidate| candidate.id == row_data.id)
+                                .map(|position| position + 1)
+                                .unwrap_or(1)
+                        })
+                    });
 
-                HStack::new(cx, move |cx| {
-                    Element::new(cx)
-                        .class("tree-view-indent")
-                        .width(Pixels(indent))
-                        .height(Stretch(1.0));
-
-                    if has_children {
-                        let icon = if expanded { ICON_CHEVRON_DOWN } else { ICON_CHEVRON_RIGHT };
-                        Button::new(cx, move |cx| Svg::new(cx, icon).text_wrap(false))
-                            .variant(ButtonVariant::Text)
-                            .class("tree-view-disclosure")
-                            .on_press({
-                                let row_id = row_id.clone();
-                                move |cx| {
-                                    cx.emit(TreeViewEvent::ToggleRow(row_id.clone(), !expanded));
-                                }
-                            });
-                    } else {
+                    let row_handle = HStack::new(cx, move |cx| {
                         Element::new(cx)
-                            .class("tree-view-disclosure-placeholder");
-                    }
+                            .class("tree-view-indent")
+                            .width(Pixels(indent))
+                            .height(Stretch(1.0))
+                            .pointer_events(PointerEvents::None);
 
-                    HStack::new(cx, move |cx| {
-                        item_content(cx, row);
+                        if has_children {
+                            let icon =
+                                if expanded { ICON_CHEVRON_DOWN } else { ICON_CHEVRON_RIGHT };
+                            Button::new(cx, move |cx| Svg::new(cx, icon).text_wrap(false))
+                                .variant(ButtonVariant::Text)
+                                .class("tree-view-disclosure")
+                                .navigable(false)
+                                .on_press({
+                                    let row_id = row_id.clone();
+                                    move |cx| {
+                                        cx.emit(TreeViewEvent::ToggleRow(
+                                            row_id.clone(),
+                                            !expanded,
+                                        ));
+                                    }
+                                });
+                        } else {
+                            Element::new(cx)
+                                .class("tree-view-disclosure-placeholder")
+                                .pointer_events(PointerEvents::None);
+                        }
+
+                        HStack::new(cx, move |cx| {
+                            item_content(cx, row);
+                        })
+                        .class("tree-view-row-content")
+                        .width(Stretch(1.0))
+                        .min_width(Auto)
+                        .height(Auto)
+                        .pointer_events(PointerEvents::None);
                     })
-                    .class("tree-view-row-content")
+                    .class("tree-view-row")
+                    .toggle_class("odd", row_index % 2 == 1)
+                    .toggle_class("even", row_index % 2 == 0)
+                    .toggle_class("expanded", row.map(|value| value.expanded))
+                    .toggle_class("collapsible", row.map(|value| value.has_children))
+                    .alignment(Alignment::Left)
+                    .height(Auto)
                     .width(Stretch(1.0))
                     .min_width(Auto)
-                    .height(Auto);
-                })
-                .class("tree-view-row")
-                .toggle_class("odd", row_index % 2 == 1)
-                .toggle_class("even", row_index % 2 == 0)
-                .toggle_class("expanded", row.map(|value| value.expanded))
-                .toggle_class("collapsible", row.map(|value| value.has_children))
-                .alignment(Alignment::Left)
-                .height(Auto)
-                .width(Stretch(1.0))
-                .min_width(Auto);
+                    .role(Role::TreeItem)
+                    .selected(is_selected)
+                    .checked(is_selected)
+                    .level(row.map(|value| value.depth + 1))
+                    .size_of_set(size_of_set)
+                    .position_in_set(position_in_set)
+                    .on_focus_in(move |_cx| focused_row_id.set(Some(focus_row_id.clone())))
+                    .on_press(move |cx| cx.emit(ListEvent::Select(row_index)));
 
-                Divider::new(cx).width(Stretch(1.0));
-            })
+                    if has_children {
+                        row_handle.expanded(row.map(|value| value.expanded))
+                    } else {
+                        row_handle
+                    }
+                },
+            )
             .width(Stretch(1.0))
             .height(Stretch(1.0))
             .class("tree-view-body")
             .selection(selected_indices)
             .selectable(selectable)
             .selection_follows_focus(selection_follows_focus)
-            .on_select(move |cx, index| cx.emit(TreeViewEvent::<Id>::SelectRow(index)));
+            .type_ahead_text(move |_cx, index| {
+                let text_fn = type_ahead_text.get()?;
+                visible_rows.with(|rows| rows.get(index).and_then(|row| text_fn(&row.row)))
+            })
+            .on_select(move |cx, index| cx.emit(TreeViewEvent::<Id>::SelectRow(index)))
+            .role(Role::Tree);
+
+            list_entity.set(list.entity());
         })
-        .class("tree-view")
-        .navigable(true);
+        .navigable(false);
 
         let flatten_rows_for_bind = flatten_rows.clone();
         handle.bind(tree_signal, move |handle| {
@@ -310,16 +372,43 @@ where
         }
     }
 
-    fn selected_visible_row(&self) -> Option<TreeTableRow<T, Id>> {
-        let selected_id = self.selected_row_ids.get().first().cloned()?;
-        let visible_rows = flatten_visible_rows(
+    fn emit_select(&self, cx: &mut EventContext, row_id: Id) {
+        if let Some(callback) = &self.on_row_select {
+            (callback)(cx, row_id);
+        }
+    }
+
+    fn visible_rows(&self) -> Vec<TreeTableRow<T, Id>> {
+        flatten_visible_rows(
             &self.rows.get(),
             &*self.row_id,
             &*self.parent_id,
             &self.expanded_row_ids.get(),
-        );
+        )
+    }
 
+    fn focused_or_selected_visible_row(&self) -> Option<TreeTableRow<T, Id>> {
+        let visible_rows = self.visible_rows();
+
+        if let Some(focused_id) = self.focused_row_id.get() {
+            if let Some(row) = visible_rows.iter().find(|row| row.id == focused_id) {
+                return Some(row.clone());
+            }
+        }
+
+        let selected_id = self.selected_row_ids.get().first().cloned()?;
         visible_rows.into_iter().find(|row| row.id == selected_id)
+    }
+
+    fn focus_row_id(&self, cx: &mut EventContext, row_id: Id) {
+        let visible_rows = self.visible_rows();
+        if let Some(index) = visible_rows.iter().position(|row| row.id == row_id) {
+            let list_entity = self.list_entity.get();
+            if list_entity != Entity::null() {
+                cx.emit_to(list_entity, ListEvent::Focus(index));
+                self.focused_row_id.set(Some(row_id));
+            }
+        }
     }
 }
 
@@ -367,34 +456,37 @@ where
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|tree_event: &TreeViewEvent<Id>, _| match tree_event {
             TreeViewEvent::SelectRow(index) => {
-                let visible_rows = flatten_visible_rows(
-                    &self.rows.get(),
-                    &*self.row_id,
-                    &*self.parent_id,
-                    &self.expanded_row_ids.get(),
-                );
+                let visible_rows = self.visible_rows();
 
                 if let Some(row) = visible_rows.get(*index) {
-                    if let Some(callback) = &self.on_row_select {
-                        (callback)(cx, row.id.clone());
-                    }
+                    self.emit_select(cx, row.id.clone());
                 }
             }
 
             TreeViewEvent::ExpandSelected => {
-                if let Some(row) = self.selected_visible_row() {
+                if let Some(row) = self.focused_or_selected_visible_row() {
                     if row.has_children && !row.expanded {
                         self.emit_toggle(cx, row.id, true);
+                    } else if row.has_children {
+                        let child_id = self
+                            .visible_rows()
+                            .into_iter()
+                            .find(|candidate| candidate.parent_id.as_ref() == Some(&row.id))
+                            .map(|candidate| candidate.id);
+
+                        if let Some(child_id) = child_id {
+                            self.focus_row_id(cx, child_id);
+                        }
                     }
                 }
             }
 
             TreeViewEvent::CollapseSelected => {
-                if let Some(row) = self.selected_visible_row() {
+                if let Some(row) = self.focused_or_selected_visible_row() {
                     if row.has_children && row.expanded {
                         self.emit_toggle(cx, row.id, false);
                     } else if let Some(parent_id) = row.parent_id {
-                        self.emit_toggle(cx, parent_id, false);
+                        self.focus_row_id(cx, parent_id);
                     }
                 }
             }
@@ -450,7 +542,8 @@ where
         let selectable = selectable.to_signal(self.cx);
         self.bind(selectable, move |handle| {
             let selectable = selectable.get().into();
-            handle.modify(|tree_view: &mut TreeView<T, V, Id>| tree_view.selectable.set(selectable));
+            handle
+                .modify(|tree_view: &mut TreeView<T, V, Id>| tree_view.selectable.set(selectable));
         })
     }
 
@@ -504,6 +597,23 @@ where
     {
         self.modify(|tree_view: &mut TreeView<T, V, Id>| {
             tree_view.on_row_toggle = Some(Box::new(callback))
+        })
+    }
+}
+
+impl<T, V, Id> Handle<'_, TreeView<T, V, Id>>
+where
+    V: Deref<Target = [T]> + Clone + 'static,
+    T: PartialEq + Clone + 'static,
+    Id: Eq + Hash + Clone + Send + Sync + 'static,
+{
+    pub fn type_ahead_text<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&T) -> Option<String>,
+    {
+        let callback: Rc<TreeViewTypeAheadText<T>> = Rc::new(callback);
+        self.modify(|tree_view: &mut TreeView<T, V, Id>| {
+            tree_view.type_ahead_text.set(Some(callback.clone()))
         })
     }
 }
