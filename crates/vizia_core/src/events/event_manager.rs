@@ -866,13 +866,7 @@ fn mutate_direct_or_up(meta: &mut EventMeta, direct: Entity, up: Entity, root: b
     }
 }
 
-fn emit_direct_or_up<M: Any + Send>(
-    cx: &mut Context,
-    message: M,
-    direct: Entity,
-    up: Entity,
-    root: bool,
-) {
+fn emit_direct_or_up<M: Any>(cx: &mut Context, message: M, direct: Entity, up: Entity, root: bool) {
     let mut event = Event::new(message);
     mutate_direct_or_up(&mut event.meta, direct, up, root);
     cx.emit_custom(event);

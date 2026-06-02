@@ -1,6 +1,7 @@
 use morphorm::Node;
 use vizia_storage::LayoutTreeIterator;
 
+use crate::events::ProxyEvent;
 use crate::layout::node::SubLayout;
 use crate::prelude::*;
 
@@ -128,7 +129,7 @@ pub(crate) fn layout_system(cx: &mut Context) {
         if let Some(proxy) = &cx.event_proxy {
             if cx.captured.is_null() {
                 let event =
-                    Event::new(WindowEvent::MouseMove(cx.mouse.cursor_x, cx.mouse.cursor_y))
+                    ProxyEvent::new(WindowEvent::MouseMove(cx.mouse.cursor_x, cx.mouse.cursor_y))
                         .target(Entity::root())
                         .origin(Entity::root())
                         .propagate(Propagation::Up);

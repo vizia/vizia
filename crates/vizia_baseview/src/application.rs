@@ -287,7 +287,7 @@ impl ApplicationRunner {
         Runtime::drain_pending_work();
 
         while let Some(event) = queue_get() {
-            self.cx.send_event(event);
+            self.cx.send_event(event.into_event());
         }
 
         // Events. The flush callback can't borrow `&mut self`, so size /

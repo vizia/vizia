@@ -1458,7 +1458,7 @@ impl DataContext for EventContext<'_> {
 }
 
 impl EmitContext for EventContext<'_> {
-    fn emit<M: Any + Send>(&mut self, message: M) {
+    fn emit<M: Any>(&mut self, message: M) {
         self.event_queue.push_back(
             Event::new(message)
                 .target(self.current)
@@ -1467,7 +1467,7 @@ impl EmitContext for EventContext<'_> {
         );
     }
 
-    fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
+    fn emit_to<M: Any>(&mut self, target: Entity, message: M) {
         self.event_queue.push_back(
             Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
         );
@@ -1477,7 +1477,7 @@ impl EmitContext for EventContext<'_> {
         self.event_queue.push_back(event);
     }
 
-    fn schedule_emit<M: Any + Send>(&mut self, message: M, at: Instant) -> TimedEventHandle {
+    fn schedule_emit<M: Any>(&mut self, message: M, at: Instant) -> TimedEventHandle {
         self.schedule_emit_custom(
             Event::new(message)
                 .target(self.current)
@@ -1486,7 +1486,7 @@ impl EmitContext for EventContext<'_> {
             at,
         )
     }
-    fn schedule_emit_to<M: Any + Send>(
+    fn schedule_emit_to<M: Any>(
         &mut self,
         target: Entity,
         message: M,

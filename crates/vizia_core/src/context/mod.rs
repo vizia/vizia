@@ -1137,7 +1137,7 @@ pub trait EmitContext {
     /// # enum AppEvent {Increment}
     /// cx.emit(AppEvent::Increment);
     /// ```
-    fn emit<M: Any + Send>(&mut self, message: M);
+    fn emit<M: Any>(&mut self, message: M);
 
     /// Send an event containing the provided message directly to a specified entity from the current entity.
     ///
@@ -1149,7 +1149,7 @@ pub trait EmitContext {
     /// # enum AppEvent {Increment}
     /// cx.emit_to(Entity::root(), AppEvent::Increment);
     /// ```
-    fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M);
+    fn emit_to<M: Any>(&mut self, target: Entity, message: M);
 
     /// Send a custom event with custom origin and propagation information.
     ///
@@ -1181,7 +1181,7 @@ pub trait EmitContext {
     /// # enum AppEvent {Increment}
     /// cx.schedule_emit(AppEvent::Increment, Instant::now() + Duration::from_secs(2));
     /// ```
-    fn schedule_emit<M: Any + Send>(&mut self, message: M, at: Instant) -> TimedEventHandle;
+    fn schedule_emit<M: Any>(&mut self, message: M, at: Instant) -> TimedEventHandle;
 
     /// Send an event containing the provided message directly to a specified view at a particular time instant.
     ///
@@ -1196,7 +1196,7 @@ pub trait EmitContext {
     /// # enum AppEvent {Increment}
     /// cx.schedule_emit_to(Entity::root(), AppEvent::Increment, Instant::now() + Duration::from_secs(2));
     /// ```
-    fn schedule_emit_to<M: Any + Send>(
+    fn schedule_emit_to<M: Any>(
         &mut self,
         target: Entity,
         message: M,
@@ -1297,7 +1297,7 @@ impl DataContext for LocalizationContext<'_> {
 }
 
 impl EmitContext for Context {
-    fn emit<M: Any + Send>(&mut self, message: M) {
+    fn emit<M: Any>(&mut self, message: M) {
         self.event_queue.push_back(
             Event::new(message)
                 .target(self.current)
@@ -1306,7 +1306,7 @@ impl EmitContext for Context {
         );
     }
 
-    fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
+    fn emit_to<M: Any>(&mut self, target: Entity, message: M) {
         self.event_queue.push_back(
             Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
         );
@@ -1316,7 +1316,7 @@ impl EmitContext for Context {
         self.event_queue.push_back(event);
     }
 
-    fn schedule_emit<M: Any + Send>(&mut self, message: M, at: Instant) -> TimedEventHandle {
+    fn schedule_emit<M: Any>(&mut self, message: M, at: Instant) -> TimedEventHandle {
         self.schedule_emit_custom(
             Event::new(message)
                 .target(self.current)
@@ -1326,7 +1326,7 @@ impl EmitContext for Context {
         )
     }
 
-    fn schedule_emit_to<M: Any + Send>(
+    fn schedule_emit_to<M: Any>(
         &mut self,
         target: Entity,
         message: M,
