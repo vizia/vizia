@@ -52,8 +52,8 @@ impl Model for AppData {
                     Some(TableSortState { key: key.clone(), direction: *direction });
                 self.sort_state.set(next_sort_state.clone());
 
-                let tree = self.tree.get();
-                self.tree.set(tree);
+                // Trigger row recomputation after sort state changes.
+                self.tree.update(|_| {});
             }
 
             AppEvent::SelectRow(id) => {
