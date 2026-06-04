@@ -1,3 +1,4 @@
+use accesskit::SortDirection as AccessSortDirection;
 use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
@@ -362,11 +363,12 @@ enum TreeTableEvent<K> {
     SelectRow(usize),
     SelectFocused,
     ExpandSelected,
-    CollapseSelected,
     FocusRight,
     FocusLeft,
     FocusUp,
     FocusDown,
+    FocusHome,
+    FocusEnd,
 }
 
 impl<T, V, Id, K> TreeTable<T, V, Id, K>
@@ -485,6 +487,14 @@ where
                     KeymapEntry::new("Focus Down", |cx| cx.emit(TreeTableEvent::<K>::FocusDown)),
                 ),
                 (
+                    KeyChord::new(Modifiers::empty(), Code::Home),
+                    KeymapEntry::new("Focus Home", |cx| cx.emit(TreeTableEvent::<K>::FocusHome)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::End),
+                    KeymapEntry::new("Focus End", |cx| cx.emit(TreeTableEvent::<K>::FocusEnd)),
+                ),
+                (
                     KeyChord::new(Modifiers::empty(), Code::Enter),
                     KeymapEntry::new("Select Focused", |cx| {
                         cx.emit(TreeTableEvent::<K>::SelectFocused)
@@ -547,6 +557,16 @@ where
                                 });
                             })
                             .class("table-header-cell")
+                            .role(Role::ColumnHeader)
+                            .sort_direction(sort_direction.map(|direction| match direction {
+                                TableSortDirection::Ascending => {
+                                    Some(AccessSortDirection::Ascending)
+                                }
+                                TableSortDirection::Descending => {
+                                    Some(AccessSortDirection::Descending)
+                                }
+                                TableSortDirection::None => None,
+                            }))
                             .toggle_class("sortable", sortable)
                             .toggle_class("resizable", false)
                             .width(Stretch(1.0))
@@ -584,6 +604,16 @@ where
                                 },
                             )
                             .class("table-header-cell")
+                            .role(Role::ColumnHeader)
+                            .sort_direction(sort_direction.map(|direction| match direction {
+                                TableSortDirection::Ascending => {
+                                    Some(AccessSortDirection::Ascending)
+                                }
+                                TableSortDirection::Descending => {
+                                    Some(AccessSortDirection::Descending)
+                                }
+                                TableSortDirection::None => None,
+                            }))
                             .toggle_class("sortable", sortable)
                             .toggle_class(
                                 "resizable",
@@ -602,7 +632,7 @@ where
                     visible_rows.with(|rows| {
                         let focused_row_id = focused.with(|focused| match focused {
                             Some(TableFocus::Row(id)) => Some(id.clone()),
-                            Some(TableFocus::Cell(id, _)) => None,
+                            Some(TableFocus::Cell(_id, _)) => None,
                             None => None,
                         });
 
@@ -613,9 +643,9 @@ where
                 List::new_custom_items_with_selection(
                     cx,
                     visible_rows,
-                    move |cx, row_index, row, selected| {
+                    move |cx, row_index, row, _selected| {
                         let row: Memo<TreeTableRow<T, Id>> = Memo::new(move |_| row.get());
-                        let row_handle = HStack::new(cx, |cx| {
+                        let mut row_handle = HStack::new(cx, |cx| {
                             for (column_index, column) in body_columns.iter().enumerate() {
                                 let width_signal = column.width;
                                 let min_width = column.min_width;
@@ -642,7 +672,9 @@ where
                                         cell_content(cx, row);
                                     })
                                     .class("table-cell")
+                                    .role(Role::GridCell)
                                     .toggle_class("selected", cell_is_selected)
+                                    .selected(cell_is_selected)
                                     .focusable(true)
                                     .navigable(false)
                                     .focused_with_visibility(cell_is_focused, true)
@@ -655,7 +687,9 @@ where
                                         cell_content(cx, row);
                                     })
                                     .class("table-cell")
+                                    .role(Role::GridCell)
                                     .toggle_class("selected", cell_is_selected)
+                                    .selected(cell_is_selected)
                                     .focusable(true)
                                     .navigable(false)
                                     .focused_with_visibility(cell_is_focused, true)
@@ -676,8 +710,12 @@ where
                         .width(Stretch(1.0))
                         .min_width(Auto)
                         .role(Role::Row)
-                        .expanded(row.map(|value| value.expanded))
+                        .level(row.map(|value| value.depth + 1))
                         .on_press(move |cx| cx.emit(ListEvent::Select(row_index)));
+
+                        if row.get().has_children {
+                            row_handle = row_handle.expanded(row.map(|value| value.expanded));
+                        }
 
                         //Divider::new(cx).width(Stretch(1.0));
 
@@ -691,7 +729,7 @@ where
                 .class("table-body")
                 .class("tree-table-body")
                 .focused_index(focused_index)
-                .on_focus(move |cx, index| {
+                .on_focus(move |_cx, index| {
                     visible_rows.with(|rows| {
                         if let Some(row) = rows.get(index) {
                             focused.set(Some(TableFocus::Row(row.id.clone())));
@@ -725,7 +763,8 @@ where
         .class("table")
         .class("tree-table")
         .navigable(true)
-        .role(Role::Table);
+        .multiselectable(selectable.map(|mode| *mode == Selectable::Multi))
+        .role(Role::TreeGrid);
 
         let flatten_rows_for_bind = flatten_rows.clone();
         handle.bind(tree_signal, move |handle| {
@@ -896,16 +935,6 @@ where
                 }
             }
 
-            TreeTableEvent::CollapseSelected => {
-                if let Some(row) = self.focused_visible_row() {
-                    if row.has_children && row.expanded {
-                        self.emit_toggle(cx, row.id, false);
-                    } else if let Some(parent_id) = row.parent_id {
-                        self.focus_row_id(parent_id);
-                    }
-                }
-            }
-
             TreeTableEvent::FocusRight => {
                 // If focus is on a row, move it to the first cell. If it's on a cell, move it to the next cell.
                 let next_focus = match self.focused.get() {
@@ -945,7 +974,11 @@ where
                 let next_focus = match self.focused.get() {
                     // If focus is on an expanded row, collapse it. Otherwise, move focus to the parent row if there is one.
                     Some(TableFocus::Row(_)) => {
-                        cx.emit(TreeTableEvent::<K>::CollapseSelected);
+                        if let Some(row) = self.focused_visible_row() {
+                            if row.has_children && row.expanded {
+                                self.emit_toggle(cx, row.id, false);
+                            }
+                        }
                         None
                     }
                     Some(TableFocus::Cell(id, col)) => {
@@ -964,6 +997,38 @@ where
                     }
                     None => None,
                 };
+
+                if next_focus.is_some() {
+                    self.focused.set(next_focus);
+                }
+            }
+
+            TreeTableEvent::FocusHome => {
+                let next_focus = self.focused.with(|focused| match focused {
+                    Some(TableFocus::Row(_)) => self
+                        .visible_rows
+                        .with(|rows| rows.first().map(|row| TableFocus::Row(row.id.clone()))),
+                    Some(TableFocus::Cell(_, col)) => self.visible_rows.with(|rows| {
+                        rows.first().map(|row| TableFocus::Cell(row.id.clone(), col.clone()))
+                    }),
+                    None => None,
+                });
+
+                if next_focus.is_some() {
+                    self.focused.set(next_focus);
+                }
+            }
+
+            TreeTableEvent::FocusEnd => {
+                let next_focus = self.focused.with(|focused| match focused {
+                    Some(TableFocus::Row(_)) => self
+                        .visible_rows
+                        .with(|rows| rows.last().map(|row| TableFocus::Row(row.id.clone()))),
+                    Some(TableFocus::Cell(_, col)) => self.visible_rows.with(|rows| {
+                        rows.last().map(|row| TableFocus::Cell(row.id.clone(), col.clone()))
+                    }),
+                    None => None,
+                });
 
                 if next_focus.is_some() {
                     self.focused.set(next_focus);
