@@ -25,7 +25,7 @@ struct FsNode {
 struct AppData {
     tree: Signal<Tree<FsNode>>,
     sort_state: Signal<Option<TableSortState>>,
-    selected_rows: Signal<Vec<NodeId>>,
+    selected_rows: Signal<HashSet<Cell<NodeId, String>>>,
     expanded_rows: Signal<Vec<NodeId>>,
     filter_text: Signal<String>,
 }
@@ -33,7 +33,7 @@ struct AppData {
 enum AppEvent {
     ToggleCheckState(NodeId),
     SetSort(String, TableSortDirection),
-    SelectRow(NodeId),
+    SelectRows(HashSet<Cell<NodeId, String>>),
     ToggleRow(NodeId, bool),
     SetFilterText(String),
 }
@@ -56,8 +56,8 @@ impl Model for AppData {
                 self.tree.update(|_| {});
             }
 
-            AppEvent::SelectRow(id) => {
-                self.selected_rows.set(vec![*id]);
+            AppEvent::SelectRows(ids) => {
+                self.selected_rows.set(ids.clone());
             }
 
             AppEvent::ToggleRow(id, expanded) => {
@@ -81,7 +81,7 @@ impl Model for AppData {
                     .try_update(|tree| apply_filter_state(tree, &query))
                     .unwrap_or_else(|| (HashSet::new(), Vec::new()));
 
-                self.selected_rows.update(|rows| rows.retain(|id| include_set.contains(id)));
+                self.selected_rows.update(|rows| rows.retain(|cell| include_set.contains(&cell.0)));
 
                 if query.is_empty() {
                     self.expanded_rows.update(|rows| rows.retain(|id| include_set.contains(id)));
@@ -489,7 +489,7 @@ fn main() -> Result<(), ApplicationError> {
         let root_id = tree.with(|tree| tree.root().id());
         let cols = Signal::new(columns(tree));
         let sort_state: Signal<Option<TableSortState>> = Signal::new(None);
-        let selected_rows: Signal<Vec<NodeId>> = Signal::new(vec![]);
+        let selected_rows: Signal<HashSet<Cell<NodeId, String>>> = Signal::new(HashSet::new());
         let expanded_rows: Signal<Vec<NodeId>> = Signal::new(vec![root_id]);
         let filter_text = Signal::new(String::new());
 
@@ -525,13 +525,13 @@ fn main() -> Result<(), ApplicationError> {
             .sort_cycle(TableSortCycle::TriState)
             .resizable_columns(true)
             .selectable(Selectable::Single)
-            .selected_row_ids(selected_rows)
+            .selection(selected_rows.map(|s| s.iter().cloned().collect::<Vec<_>>()))
             .expanded_row_ids(expanded_rows)
             .on_sort(move |cx, key, direction| {
                 cx.emit(AppEvent::SetSort(key, direction));
             })
-            .on_row_select(move |cx, id| {
-                cx.emit(AppEvent::SelectRow(id));
+            .on_select(move |cx, ids| {
+                cx.emit(AppEvent::SelectRows(ids));
             })
             .on_row_toggle(move |cx, id, expanded| {
                 cx.emit(AppEvent::ToggleRow(id, expanded));

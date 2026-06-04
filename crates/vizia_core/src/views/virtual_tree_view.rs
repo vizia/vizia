@@ -112,8 +112,29 @@ where
     visible_rows
 }
 
+fn focused_visible_index<T, Id>(
+    visible_rows: &[TreeTableRow<T, Id>],
+    focused_row_id: Option<&Id>,
+    selected_row_ids: &[Id],
+) -> Option<usize>
+where
+    T: PartialEq + Clone + 'static,
+    Id: Clone + Eq + Hash + 'static,
+{
+    if let Some(focused_row_id) = focused_row_id {
+        if let Some(index) = visible_rows.iter().position(|row| &row.id == focused_row_id) {
+            return Some(index);
+        }
+    }
+
+    visible_rows
+        .iter()
+        .position(|row| selected_row_ids.iter().any(|selected_id| selected_id == &row.id))
+}
+
 enum VirtualTreeViewEvent<Id> {
     SelectRow(usize),
+    FocusRow(Id),
     SelectFocused,
     ToggleCheckedFocused,
     ExpandSelected,
@@ -143,6 +164,7 @@ where
     checked_row: Signal<Option<Rc<VirtualTreeViewCheckedRow<T>>>>,
     type_ahead_text: Signal<Option<Rc<VirtualTreeViewTypeAheadText<T>>>>,
     on_row_select: Option<Box<dyn Fn(&mut EventContext, Id)>>,
+    on_row_focus: Option<Box<dyn Fn(&mut EventContext, Id)>>,
     on_row_check_toggle: Option<Box<dyn Fn(&mut EventContext, Id)>>,
     on_row_toggle: Option<Box<dyn Fn(&mut EventContext, Id, bool)>>,
 }
@@ -210,6 +232,15 @@ where
                 })
             });
 
+        let focused_index = Memo::new(move |_| {
+            visible_rows.with(|rows| {
+                let focused_row_id = focused_row_id.get();
+                selected_row_ids.with(|selected_ids| {
+                    focused_visible_index(rows, focused_row_id.as_ref(), selected_ids)
+                })
+            })
+        });
+
         let handle = Self {
             rows: row_signal,
             row_id,
@@ -223,6 +254,7 @@ where
             checked_row,
             type_ahead_text,
             on_row_select: None,
+            on_row_focus: None,
             on_row_check_toggle: None,
             on_row_toggle: None,
         }
@@ -265,7 +297,6 @@ where
                     let has_children = row_data.has_children;
                     let expanded = row_data.expanded;
                     let row_id = row_data.id.clone();
-                    let focus_row_id = row_data.id.clone();
                     let checked_row_callback = checked_row.get();
                     let indent = row_data.depth as f32 * 16.0;
                     let item_content = item_content_signal.get();
@@ -350,7 +381,6 @@ where
                     .level(row.map(|value| value.depth + 1))
                     .size_of_set(size_of_set)
                     .position_in_set(position_in_set)
-                    .on_focus_in(move |_cx| focused_row_id.set(Some(focus_row_id.clone())))
                     .on_mouse_down(move |cx, button| {
                         if button == MouseButton::Left {
                             cx.emit(ListEvent::Select(row_index));
@@ -368,6 +398,15 @@ where
             .height(Stretch(1.0))
             .class("tree-view-body")
             .selection(selected_indices)
+            .focused_index(focused_index)
+            .on_focus(move |cx, index| {
+                visible_rows.with(|rows| {
+                    if let Some(row) = rows.get(index) {
+                        focused_row_id.set(Some(row.id.clone()));
+                        cx.emit(VirtualTreeViewEvent::FocusRow(row.id.clone()));
+                    }
+                });
+            })
             .selectable(selectable)
             .selection_follows_focus(selection_follows_focus)
             .space_selects_focused(false)
@@ -411,6 +450,12 @@ where
 
     fn emit_select(&self, cx: &mut EventContext, row_id: Id) {
         if let Some(callback) = &self.on_row_select {
+            (callback)(cx, row_id);
+        }
+    }
+
+    fn emit_focus(&self, cx: &mut EventContext, row_id: Id) {
+        if let Some(callback) = &self.on_row_focus {
             (callback)(cx, row_id);
         }
     }
@@ -514,6 +559,10 @@ where
                 }
             }
 
+            VirtualTreeViewEvent::FocusRow(row_id) => {
+                self.emit_focus(cx, row_id.clone());
+            }
+
             VirtualTreeViewEvent::ToggleCheckedFocused => {
                 if let Some(row) = self.focused_or_selected_visible_row() {
                     self.emit_check_toggle(cx, row.id);
@@ -578,6 +627,10 @@ where
         R: Deref<Target = [Id]> + Clone + 'static;
 
     fn on_row_select<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, Id);
+
+    fn on_row_focus<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, Id);
 
@@ -657,6 +710,15 @@ where
         })
     }
 
+    fn on_row_focus<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, Id),
+    {
+        self.modify(|tree_view: &mut VirtualTreeView<T, V, Id>| {
+            tree_view.on_row_focus = Some(Box::new(callback))
+        })
+    }
+
     fn on_row_check_toggle<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, Id),
@@ -700,5 +762,42 @@ where
         self.modify(|tree_view: &mut VirtualTreeView<T, V, Id>| {
             tree_view.checked_row.set(Some(callback.clone()))
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_row(id: i32) -> TreeTableRow<i32, i32> {
+        TreeTableRow {
+            row: id,
+            id,
+            parent_id: None,
+            depth: 0,
+            has_children: false,
+            expanded: false,
+        }
+    }
+
+    #[test]
+    fn focused_visible_index_prefers_focused_row() {
+        let visible_rows = vec![make_row(1), make_row(2), make_row(3)];
+
+        assert_eq!(focused_visible_index(&visible_rows, Some(&2), &[1, 3]), Some(1));
+    }
+
+    #[test]
+    fn focused_visible_index_falls_back_to_first_visible_selected_row() {
+        let visible_rows = vec![make_row(4), make_row(5), make_row(6)];
+
+        assert_eq!(focused_visible_index(&visible_rows, Some(&9), &[6, 4]), Some(0));
+    }
+
+    #[test]
+    fn focused_visible_index_returns_none_when_nothing_is_visible() {
+        let visible_rows = vec![make_row(7), make_row(8)];
+
+        assert_eq!(focused_visible_index(&visible_rows, None, &[9]), None);
     }
 }
