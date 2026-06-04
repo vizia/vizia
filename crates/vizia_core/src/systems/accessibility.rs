@@ -191,6 +191,12 @@ pub(crate) fn get_access_node(
         }
     }
 
+    if let Some(sort_direction) = cx.style.sort_direction.get(entity).copied() {
+        node_builder.set_sort_direction(sort_direction);
+    } else {
+        node_builder.clear_sort_direction();
+    }
+
     if let Some(level) = cx.style.level.get(entity).copied() {
         node_builder.set_level(level);
     }
