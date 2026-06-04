@@ -634,29 +634,26 @@ virtual-tree-table .table-body scrollview {
     min-width: auto;
 }
 
-table .table-row,
-virtual-table .table-row,
-tree-table .table-row,
-virtual-tree-table .table-row {
-    padding-top: 6px;
-    padding-bottom: 6px;
+.table-row {
     min-height: 30px;
+    alignment: left;
 }
 
-table .table-row.odd,
-virtual-table .table-row.odd {
-    background-color: var(--muted);
+.table-row:hover {
+    background-color: var(--accent);
 }
 
-table .table-row.even,
-virtual-table .table-row.even {
+.table-row:focus-visible {
+    outline-color: var(--ring);
+    outline-width: 2px;
+    outline-offset: -2px;
+}
+
+.table-row.odd {
     background-color: transparent;
 }
 
-tree-table .table-row.odd,
-tree-table .table-row.even,
-virtual-tree-table .table-row.odd,
-virtual-tree-table .table-row.even {
+.table-row.even {
     background-color: transparent;
 }
 
@@ -733,16 +730,6 @@ virtual-tree-table virtual-list.selectable list-item:checked {
     background-color: var(--accent);
 }
 
-tree-table .tree-table-cell {
-    padding-left: 4px;
-    gap: 0px;
-}
-
-virtual-tree-table .tree-table-cell {
-    padding-left: 4px;
-    gap: 0px;
-}
-
 tree-table .tree-table-indent {
     background-color: transparent;
 }
@@ -771,18 +758,20 @@ virtual-tree-table .tree-table-disclosure-placeholder {
     height: 20px;
 }
 
-tree-table .tree-table-row.collapsible {
-    cursor: default;
-}
-
-virtual-tree-table .tree-table-row.collapsible {
-    cursor: default;
-}
-
 tree-table divider > .divider-line {
     height: 1px;
     width: 1s;
     background-color: var(--border);
+}
+
+.table-cell.selected {
+    background-color: var(--accent);
+}
+
+.table-cell:focus-visible {
+    outline-width: 2px;
+    outline-color: var(--ring);
+    outline-offset: -2px;
 }
 
 /* TREE VIEW */
@@ -853,13 +842,6 @@ virtual-tree-view .tree-view-body.selectable .tree-view-row:hover {
 tree-view .tree-view-body.selectable .tree-view-row.selected,
 virtual-tree-view .tree-view-body.selectable .tree-view-row.selected {
     background-color: var(--accent);
-}
-
-tree-view .tree-view-body.selectable .tree-view-row:focus-visible,
-virtual-tree-view .tree-view-body.selectable .tree-view-row:focus-visible {
-    border-width: 2px;
-    border-color: var(--ring);
-    outline-width: 0px;
 }
 
 tree-view divider > .divider-line,

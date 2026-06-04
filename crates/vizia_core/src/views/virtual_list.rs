@@ -42,6 +42,8 @@ pub struct VirtualList {
     space_selects_focused: Signal<bool>,
     /// Callback that is called when an item is selected.
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
+    /// Callback called when the focused list item changes.
+    on_focus: Option<Box<dyn Fn(&mut EventContext, usize)>>,
     /// Returns the searchable text for each item index when type-ahead is enabled.
     type_ahead_text: Option<Box<dyn Fn(&mut EventContext, usize) -> Option<String>>>,
     /// Buffered type-ahead query built from rapid character input.
@@ -53,6 +55,17 @@ pub struct VirtualList {
 }
 
 impl VirtualList {
+    fn set_focused_with_callback(&mut self, cx: &mut EventContext, focused: Option<usize>) {
+        let previous = self.focused.get();
+        self.focused.set(focused);
+
+        if previous != focused {
+            if let (Some(index), Some(callback)) = (focused, self.on_focus.as_ref()) {
+                callback(cx, index);
+            }
+        }
+    }
+
     fn find_type_ahead_match(
         &self,
         cx: &mut EventContext,
@@ -114,7 +127,7 @@ impl VirtualList {
             self.type_ahead_buffer = query;
             self.type_ahead_last_input = Some(now);
             self.focus_visibility.set(true);
-            self.focused.set(Some(index));
+            self.set_focused_with_callback(cx, Some(index));
 
             if self.selection_follows_focus.get() {
                 cx.emit(ListEvent::SelectFocused);
@@ -322,6 +335,7 @@ impl VirtualList {
             selection_follows_focus,
             space_selects_focused: Signal::new(true),
             on_select: None,
+            on_focus: None,
             type_ahead_text: None,
             type_ahead_buffer: String::new(),
             type_ahead_last_input: None,
@@ -558,6 +572,7 @@ impl VirtualList {
             selection_follows_focus,
             space_selects_focused: Signal::new(true),
             on_select: None,
+            on_focus: None,
             type_ahead_text: None,
             type_ahead_buffer: String::new(),
             type_ahead_last_input: None,
@@ -693,7 +708,7 @@ impl View for VirtualList {
                 }
 
                 self.selection.set(selection);
-                self.focused.set(focused);
+                self.set_focused_with_callback(cx, focused);
 
                 meta.consume();
             }
@@ -709,7 +724,7 @@ impl View for VirtualList {
             ListEvent::Focus(index) => {
                 if index < self.num_items.get() {
                     self.focus_visibility.set(true);
-                    self.focused.set(Some(index));
+                    self.set_focused_with_callback(cx, Some(index));
                 }
 
                 meta.consume();
@@ -739,7 +754,7 @@ impl View for VirtualList {
                     }
                 }
 
-                self.focused.set(focused);
+                self.set_focused_with_callback(cx, focused);
 
                 meta.consume();
             }
@@ -763,7 +778,7 @@ impl View for VirtualList {
                     }
                 }
 
-                self.focused.set(focused);
+                self.set_focused_with_callback(cx, focused);
 
                 meta.consume();
             }
@@ -771,7 +786,7 @@ impl View for VirtualList {
             ListEvent::FocusFirst => {
                 if self.num_items.get() > 0 {
                     self.focus_visibility.set(true);
-                    self.focused.set(Some(0));
+                    self.set_focused_with_callback(cx, Some(0));
                     if self.selection_follows_focus.get() {
                         cx.emit(ListEvent::SelectFocused);
                     }
@@ -784,7 +799,7 @@ impl View for VirtualList {
                 let num_items = self.num_items.get();
                 if num_items > 0 {
                     self.focus_visibility.set(true);
-                    self.focused.set(Some(num_items.saturating_sub(1)));
+                    self.set_focused_with_callback(cx, Some(num_items.saturating_sub(1)));
                     if self.selection_follows_focus.get() {
                         cx.emit(ListEvent::SelectFocused);
                     }
@@ -859,12 +874,31 @@ impl Handle<'_, VirtualList> {
         })
     }
 
+    /// Sets the focused item of the list from a signal of an optional index.
+    pub fn focused_index(self, focused: impl Res<Option<usize>> + 'static) -> Self {
+        let focused = focused.to_signal(self.cx);
+        self.bind(focused, move |handle| {
+            let focused = focused.get();
+            handle.modify(|list| {
+                list.focused.set(normalize_focused_index(focused, list.num_items.get()));
+            });
+        })
+    }
+
     /// Sets the callback triggered when a [ListItem] is selected.
     pub fn on_select<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, usize),
     {
         self.modify(|list| list.on_select = Some(Box::new(callback)))
+    }
+
+    /// Sets the callback triggered when a [ListItem] receives focus.
+    pub fn on_focus<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, usize),
+    {
+        self.modify(|list| list.on_focus = Some(Box::new(callback)))
     }
 
     /// Set the selectable state of the [List].
@@ -985,6 +1019,10 @@ impl Handle<'_, VirtualList> {
     }
 }
 
+fn normalize_focused_index(focused: Option<usize>, num_items: usize) -> Option<usize> {
+    focused.filter(|index| *index < num_items)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1017,5 +1055,15 @@ mod tests {
         assert_eq!(evaluate_indices(8..12), [8, 9, 10, 11]);
         // Move forward by 9
         assert_eq!(evaluate_indices(9..13), [12, 9, 10, 11]);
+    }
+
+    #[test]
+    fn keeps_focused_index_when_in_range() {
+        assert_eq!(normalize_focused_index(Some(3), 5), Some(3));
+    }
+
+    #[test]
+    fn clears_focused_index_when_out_of_range() {
+        assert_eq!(normalize_focused_index(Some(5), 5), None);
     }
 }
