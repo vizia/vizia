@@ -71,6 +71,8 @@ pub struct List {
     focus_first_item_on_focus_in: Signal<bool>,
     /// Callback called when a list item is selected.
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
+    /// Callback called when the focused list item changes.
+    on_focus: Option<Box<dyn Fn(&mut EventContext, usize)>>,
     /// Callback called when the scrollview is scrolled.
     on_scroll: Option<Box<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>>,
     /// The horizontal scroll position of the list.
@@ -395,6 +397,17 @@ impl<T: PartialEq + Clone + 'static> BindingHandler for CustomListItemsBinding<T
 }
 
 impl List {
+    fn set_focused_with_callback(&mut self, cx: &mut EventContext, focused: Option<usize>) {
+        let previous = self.focused.get();
+        self.focused.set(focused);
+
+        if previous != focused {
+            if let (Some(index), Some(callback)) = (focused, self.on_focus.as_ref()) {
+                callback(cx, index);
+            }
+        }
+    }
+
     fn find_type_ahead_match(
         &self,
         cx: &mut EventContext,
@@ -455,7 +468,7 @@ impl List {
             self.type_ahead_buffer = query;
             self.type_ahead_last_input = Some(now);
             self.focus_visibility.set(true);
-            self.focused.set(Some(index));
+            self.set_focused_with_callback(cx, Some(index));
 
             if self.selection_follows_focus.get() {
                 cx.emit(ListEvent::SelectFocused);
@@ -570,6 +583,7 @@ impl List {
             scroll_to_cursor,
             focus_first_item_on_focus_in,
             on_select: None,
+            on_focus: None,
             on_scroll: None,
             scroll_x,
             scroll_y,
@@ -756,6 +770,7 @@ impl List {
             scroll_to_cursor,
             focus_first_item_on_focus_in,
             on_select: None,
+            on_focus: None,
             on_scroll: None,
             scroll_x,
             scroll_y,
@@ -898,7 +913,7 @@ impl View for List {
                         if self.focused.get() == Some(index) {
                             self.focused.set(None);
                         }
-                        self.focused.set(Some(index));
+                        self.set_focused_with_callback(cx, Some(index));
                     }
                 }
 
@@ -963,7 +978,7 @@ impl View for List {
                 }
 
                 self.selection.set(selection);
-                self.focused.set(focused);
+                self.set_focused_with_callback(cx, focused);
 
                 meta.consume();
             }
@@ -979,7 +994,7 @@ impl View for List {
             ListEvent::Focus(index) => {
                 if index < self.num_items {
                     self.focus_visibility.set(true);
-                    self.focused.set(Some(index));
+                    self.set_focused_with_callback(cx, Some(index));
                 }
 
                 meta.consume();
@@ -994,6 +1009,11 @@ impl View for List {
             }
 
             ListEvent::FocusNext => {
+                println!(
+                    "FocusNext received, num_items: {}, focused: {:?}",
+                    self.num_items,
+                    self.focused.get()
+                );
                 let mut focused = self.focused.get();
                 let mut moved_focus = false;
                 if let Some(f) = &mut focused {
@@ -1016,7 +1036,7 @@ impl View for List {
                     self.focus_visibility.set(true);
                 }
 
-                self.focused.set(focused);
+                self.set_focused_with_callback(cx, focused);
 
                 meta.consume();
             }
@@ -1044,7 +1064,7 @@ impl View for List {
                     self.focus_visibility.set(true);
                 }
 
-                self.focused.set(focused);
+                self.set_focused_with_callback(cx, focused);
 
                 meta.consume();
             }
@@ -1052,7 +1072,7 @@ impl View for List {
             ListEvent::FocusFirst => {
                 if self.num_items > 0 {
                     self.focus_visibility.set(true);
-                    self.focused.set(Some(0));
+                    self.set_focused_with_callback(cx, Some(0));
                     if self.selection_follows_focus.get() {
                         cx.emit(ListEvent::SelectFocused);
                     }
@@ -1064,7 +1084,7 @@ impl View for List {
             ListEvent::FocusLast => {
                 if self.num_items > 0 {
                     self.focus_visibility.set(true);
-                    self.focused.set(Some(self.num_items.saturating_sub(1)));
+                    self.set_focused_with_callback(cx, Some(self.num_items.saturating_sub(1)));
                     if self.selection_follows_focus.get() {
                         cx.emit(ListEvent::SelectFocused);
                     }
@@ -1093,8 +1113,16 @@ pub trait ListModifiers: Sized {
     where
         R: Deref<Target = [usize]> + Clone + 'static;
 
+    /// Sets the focused item of the list from a signal of an optional index.
+    fn focused_index(self, focused: impl Res<Option<usize>> + 'static) -> Self;
+
     /// Sets the callback triggered when a [ListItem] is selected.
     fn on_select<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, usize);
+
+    /// Sets the callback triggered when a [ListItem] receives focus.
+    fn on_focus<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, usize);
 
@@ -1183,11 +1211,28 @@ impl ListModifiers for Handle<'_, List> {
         })
     }
 
+    fn focused_index(self, focused: impl Res<Option<usize>> + 'static) -> Self {
+        let focused = focused.to_signal(self.cx);
+        self.bind(focused, move |handle| {
+            let focused = focused.get();
+            handle.modify(|list| {
+                list.focused.set(normalize_focused_index(focused, list.num_items));
+            });
+        })
+    }
+
     fn on_select<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, usize),
     {
         self.modify(|list: &mut List| list.on_select = Some(Box::new(callback)))
+    }
+
+    fn on_focus<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, usize),
+    {
+        self.modify(|list: &mut List| list.on_focus = Some(Box::new(callback)))
     }
 
     fn selectable<U: Into<Selectable> + Clone + 'static>(
@@ -1410,9 +1455,13 @@ fn focus_index_on_focus_in(
         .or_else(|| focus_first_item_on_focus_in.then_some(0).filter(|_| num_items > 0))
 }
 
+fn normalize_focused_index(focused: Option<usize>, num_items: usize) -> Option<usize> {
+    focused.filter(|index| *index < num_items)
+}
+
 #[cfg(test)]
 mod tests {
-    use super::focus_index_on_focus_in;
+    use super::{focus_index_on_focus_in, normalize_focused_index};
     use std::collections::BTreeSet;
 
     #[test]
@@ -1435,5 +1484,15 @@ mod tests {
         let selection = BTreeSet::new();
 
         assert_eq!(focus_index_on_focus_in(&selection, 5, true), Some(0));
+    }
+
+    #[test]
+    fn keeps_focused_index_when_in_range() {
+        assert_eq!(normalize_focused_index(Some(3), 5), Some(3));
+    }
+
+    #[test]
+    fn clears_focused_index_when_out_of_range() {
+        assert_eq!(normalize_focused_index(Some(5), 5), None);
     }
 }

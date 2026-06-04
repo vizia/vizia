@@ -112,12 +112,33 @@ where
     visible_rows
 }
 
+fn focused_visible_index<T, Id>(
+    visible_rows: &[TreeTableRow<T, Id>],
+    focused_row_id: Option<&Id>,
+    selected_row_ids: &[Id],
+) -> Option<usize>
+where
+    T: PartialEq + Clone + 'static,
+    Id: Clone + Eq + Hash + 'static,
+{
+    if let Some(focused_row_id) = focused_row_id {
+        if let Some(index) = visible_rows.iter().position(|row| &row.id == focused_row_id) {
+            return Some(index);
+        }
+    }
+
+    visible_rows
+        .iter()
+        .position(|row| selected_row_ids.iter().any(|selected_id| selected_id == &row.id))
+}
+
 enum TreeViewEvent<Id> {
     SelectRow(usize),
+    FocusRow(Id),
     SelectFocused,
     ToggleCheckedFocused,
-    ExpandSelected,
-    CollapseSelected,
+    ExpandFocused,
+    CollapseFocused,
     ToggleRow(Id, bool),
 }
 
@@ -143,6 +164,7 @@ where
     checked_row: Signal<Option<Rc<TreeViewCheckedRow<T>>>>,
     type_ahead_text: Signal<Option<Rc<TreeViewTypeAheadText<T>>>>,
     on_row_select: Option<Box<dyn Fn(&mut EventContext, Id)>>,
+    on_row_focus: Option<Box<dyn Fn(&mut EventContext, Id)>>,
     on_row_check_toggle: Option<Box<dyn Fn(&mut EventContext, Id)>>,
     on_row_toggle: Option<Box<dyn Fn(&mut EventContext, Id, bool)>>,
 }
@@ -208,6 +230,15 @@ where
                 })
             });
 
+        let focused_index = Memo::new(move |_| {
+            visible_rows.with(|rows| {
+                let focused_row_id = focused_row_id.get();
+                selected_row_ids.with(|selected_ids| {
+                    focused_visible_index(rows, focused_row_id.as_ref(), selected_ids)
+                })
+            })
+        });
+
         let handle = Self {
             rows: row_signal,
             row_id,
@@ -221,6 +252,7 @@ where
             checked_row,
             type_ahead_text,
             on_row_select: None,
+            on_row_focus: None,
             on_row_check_toggle: None,
             on_row_toggle: None,
         }
@@ -241,13 +273,13 @@ where
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowRight),
                     KeymapEntry::new("Expand Selected", |cx| {
-                        cx.emit(TreeViewEvent::<Id>::ExpandSelected)
+                        cx.emit(TreeViewEvent::<Id>::ExpandFocused)
                     }),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
-                    KeymapEntry::new("Collapse Selected", |cx| {
-                        cx.emit(TreeViewEvent::<Id>::CollapseSelected)
+                    KeymapEntry::new("Collapse Focused", |cx| {
+                        cx.emit(TreeViewEvent::<Id>::CollapseFocused)
                     }),
                 ),
             ])
@@ -262,7 +294,6 @@ where
                     let has_children = row_data.has_children;
                     let expanded = row_data.expanded;
                     let row_id = row_data.id.clone();
-                    let focus_row_id = row_data.id.clone();
                     let checked_row_callback = checked_row.get();
                     let indent = row_data.depth as f32 * 16.0;
                     let item_content = item_content.clone();
@@ -347,7 +378,6 @@ where
                     .level(row.map(|value| value.depth + 1))
                     .size_of_set(size_of_set)
                     .position_in_set(position_in_set)
-                    .on_focus_in(move |_cx| focused_row_id.set(Some(focus_row_id.clone())))
                     .on_mouse_down(move |cx, button| {
                         if button == MouseButton::Left {
                             cx.emit(ListEvent::Select(row_index));
@@ -365,6 +395,15 @@ where
             .height(Stretch(1.0))
             .class("tree-view-body")
             .selection(selected_indices)
+            .focused_index(focused_index)
+            .on_focus(move |cx, index| {
+                visible_rows.with(|rows| {
+                    if let Some(row) = rows.get(index) {
+                        focused_row_id.set(Some(row.id.clone()));
+                        cx.emit(TreeViewEvent::FocusRow(row.id.clone()));
+                    }
+                });
+            })
             .selectable(selectable)
             .selection_follows_focus(selection_follows_focus)
             .space_selects_focused(false)
@@ -377,7 +416,7 @@ where
 
             list_entity.set(list.entity());
         })
-        .navigable(true);
+        .navigable(false);
 
         let flatten_rows_for_bind = flatten_rows.clone();
         handle.bind(tree_signal, move |handle| {
@@ -411,6 +450,12 @@ where
         }
     }
 
+    fn emit_focus(&self, cx: &mut EventContext, row_id: Id) {
+        if let Some(callback) = &self.on_row_focus {
+            (callback)(cx, row_id);
+        }
+    }
+
     fn emit_check_toggle(&self, cx: &mut EventContext, row_id: Id) {
         if let Some(callback) = &self.on_row_check_toggle {
             (callback)(cx, row_id);
@@ -426,6 +471,7 @@ where
         )
     }
 
+    // Returns the currently focused row if it's visible, otherwise falls back to the first selected row that is visible.
     fn focused_or_selected_visible_row(&self) -> Option<TreeTableRow<T, Id>> {
         let visible_rows = self.visible_rows();
 
@@ -508,13 +554,17 @@ where
                 }
             }
 
+            TreeViewEvent::FocusRow(row_id) => {
+                self.emit_focus(cx, row_id.clone());
+            }
+
             TreeViewEvent::ToggleCheckedFocused => {
                 if let Some(row) = self.focused_or_selected_visible_row() {
                     self.emit_check_toggle(cx, row.id);
                 }
             }
 
-            TreeViewEvent::ExpandSelected => {
+            TreeViewEvent::ExpandFocused => {
                 if let Some(row) = self.focused_or_selected_visible_row() {
                     if row.has_children && !row.expanded {
                         self.emit_toggle(cx, row.id, true);
@@ -532,7 +582,7 @@ where
                 }
             }
 
-            TreeViewEvent::CollapseSelected => {
+            TreeViewEvent::CollapseFocused => {
                 if let Some(row) = self.focused_or_selected_visible_row() {
                     if row.has_children && row.expanded {
                         self.emit_toggle(cx, row.id, false);
@@ -572,6 +622,10 @@ where
         R: Deref<Target = [Id]> + Clone + 'static;
 
     fn on_row_select<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, Id);
+
+    fn on_row_focus<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, Id);
 
@@ -643,6 +697,15 @@ where
     {
         self.modify(|tree_view: &mut TreeView<T, V, Id>| {
             tree_view.on_row_select = Some(Box::new(callback))
+        })
+    }
+
+    fn on_row_focus<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, Id),
+    {
+        self.modify(|tree_view: &mut TreeView<T, V, Id>| {
+            tree_view.on_row_focus = Some(Box::new(callback))
         })
     }
 

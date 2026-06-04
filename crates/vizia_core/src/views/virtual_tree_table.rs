@@ -121,7 +121,7 @@ where
     T: PartialEq + Clone + 'static,
     Id: Eq + Hash + Clone + Send + Sync + 'static,
     H: View,
-    K: Clone + PartialEq + Send + Sync + 'static,
+    K: Eq + Hash + Clone + PartialEq + Send + Sync + 'static,
 {
     rows: Signal<V>,
     _header: PhantomData<H>,
@@ -153,7 +153,7 @@ where
     T: PartialEq + Clone + 'static,
     Id: Eq + Hash + Clone + Send + Sync + 'static,
     H: Clone + View,
-    K: Clone + PartialEq + Send + Sync + 'static,
+    K: Eq + Hash + Clone + PartialEq + Send + Sync + 'static,
 {
     pub fn new<S, U, C, R, F>(
         cx: &mut Context,
@@ -483,7 +483,7 @@ impl<Id, H, K> VirtualTreeTable<TreeNodeRow<Id>, Vec<TreeNodeRow<Id>>, Id, H, K>
 where
     Id: Eq + Hash + Clone + Send + Sync + 'static,
     H: Clone + View,
-    K: Clone + PartialEq + Send + Sync + 'static,
+    K: Eq + Hash + Clone + PartialEq + Send + Sync + 'static,
 {
     /// Creates a [`VirtualTreeTable`] directly from hierarchical data.
     ///
@@ -529,7 +529,7 @@ where
     T: PartialEq + Clone + 'static,
     Id: Eq + Hash + Clone + Send + Sync + 'static,
     H: Clone + View,
-    K: Clone + PartialEq + Send + Sync + 'static,
+    K: Eq + Hash + Clone + PartialEq + Send + Sync + 'static,
 {
     fn element(&self) -> Option<&'static str> {
         Some("virtual-tree-table")
@@ -591,7 +591,7 @@ where
 pub trait VirtualTreeTableModifiers<Id, K = String>: Sized
 where
     Id: Eq + Hash + Clone + Send + Sync + 'static,
-    K: Clone + PartialEq + Send + Sync + 'static,
+    K: Eq + Hash + Clone + PartialEq + Send + Sync + 'static,
 {
     fn sort_state(self, sort_state: impl Res<Option<TableSortState<K>>> + 'static) -> Self;
 
@@ -643,7 +643,7 @@ where
     T: PartialEq + Clone + 'static,
     Id: Eq + Hash + Clone + Send + Sync + 'static,
     H: Clone + View,
-    K: Clone + PartialEq + Send + Sync + 'static,
+    K: Eq + Hash + Clone + PartialEq + Send + Sync + 'static,
 {
     fn sort_state(self, sort_state: impl Res<Option<TableSortState<K>>> + 'static) -> Self {
         let sort_state = sort_state.to_signal(self.cx);
