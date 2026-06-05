@@ -1,5 +1,6 @@
 use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 use std::ffi::CStr;
+use std::rc::Rc;
 use vizia_core::prelude::*;
 use vizia_vulkan::prelude::*;
 use winit::application::ApplicationHandler;
@@ -9,6 +10,52 @@ use winit::event::{
 use winit::event_loop::{ActiveEventLoop, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::Window;
+
+use vizia_core::prelude::CursorIcon as ViziaCursorIcon;
+use vizia_core::window::WindowEvent as ViziaWindowEvent;
+use winit::window::CursorIcon as WinitCursorIcon;
+
+// From vizia_winit::convert (private module)
+pub fn cursor_icon_to_cursor_icon(cursor_icon: ViziaCursorIcon) -> Option<WinitCursorIcon> {
+    match cursor_icon {
+        ViziaCursorIcon::Default => Some(WinitCursorIcon::Default),
+        ViziaCursorIcon::Crosshair => Some(WinitCursorIcon::Crosshair),
+        ViziaCursorIcon::Hand => Some(WinitCursorIcon::Pointer),
+        ViziaCursorIcon::Arrow => Some(WinitCursorIcon::Default),
+        ViziaCursorIcon::Move => Some(WinitCursorIcon::Move),
+        ViziaCursorIcon::Text => Some(WinitCursorIcon::Text),
+        ViziaCursorIcon::Wait => Some(WinitCursorIcon::Wait),
+        ViziaCursorIcon::Help => Some(WinitCursorIcon::Help),
+        ViziaCursorIcon::Progress => Some(WinitCursorIcon::Progress),
+        ViziaCursorIcon::NotAllowed => Some(WinitCursorIcon::NotAllowed),
+        ViziaCursorIcon::ContextMenu => Some(WinitCursorIcon::ContextMenu),
+        ViziaCursorIcon::Cell => Some(WinitCursorIcon::Cell),
+        ViziaCursorIcon::VerticalText => Some(WinitCursorIcon::VerticalText),
+        ViziaCursorIcon::Alias => Some(WinitCursorIcon::Alias),
+        ViziaCursorIcon::Copy => Some(WinitCursorIcon::Copy),
+        ViziaCursorIcon::NoDrop => Some(WinitCursorIcon::NoDrop),
+        ViziaCursorIcon::Grab => Some(WinitCursorIcon::Grab),
+        ViziaCursorIcon::Grabbing => Some(WinitCursorIcon::Grabbing),
+        ViziaCursorIcon::AllScroll => Some(WinitCursorIcon::AllScroll),
+        ViziaCursorIcon::ZoomIn => Some(WinitCursorIcon::ZoomIn),
+        ViziaCursorIcon::ZoomOut => Some(WinitCursorIcon::ZoomOut),
+        ViziaCursorIcon::EResize => Some(WinitCursorIcon::EResize),
+        ViziaCursorIcon::NResize => Some(WinitCursorIcon::NResize),
+        ViziaCursorIcon::NeResize => Some(WinitCursorIcon::NeResize),
+        ViziaCursorIcon::NwResize => Some(WinitCursorIcon::NwResize),
+        ViziaCursorIcon::SResize => Some(WinitCursorIcon::SResize),
+        ViziaCursorIcon::SeResize => Some(WinitCursorIcon::SeResize),
+        ViziaCursorIcon::SwResize => Some(WinitCursorIcon::SwResize),
+        ViziaCursorIcon::WResize => Some(WinitCursorIcon::WResize),
+        ViziaCursorIcon::EwResize => Some(WinitCursorIcon::EwResize),
+        ViziaCursorIcon::NsResize => Some(WinitCursorIcon::NsResize),
+        ViziaCursorIcon::NeswResize => Some(WinitCursorIcon::NeswResize),
+        ViziaCursorIcon::NwseResize => Some(WinitCursorIcon::NwseResize),
+        ViziaCursorIcon::ColResize => Some(WinitCursorIcon::ColResize),
+        ViziaCursorIcon::RowResize => Some(WinitCursorIcon::RowResize),
+        ViziaCursorIcon::None => None,
+    }
+}
 
 unsafe extern "system" fn vulkan_debug_callback(
     severity: ash::vk::DebugUtilsMessageSeverityFlagsEXT,
@@ -83,18 +130,18 @@ impl EventCatcher {
                         }
                     });
                 })
-                .alignment(Alignment::Center)
-                .hoverable(false);
+                .alignment(Alignment::Center);
             })
             .size(Auto)
             .hoverable(false)
             .alignment(Alignment::Center);
         })
         .size(Auto)
+        .cursor(ViziaCursorIcon::Hand)
     }
 }
 impl View for EventCatcher {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         use vizia_core::window::WindowEvent;
         event.map(|event: &WindowEvent, _meta| match event {
             WindowEvent::MouseScroll(x, y) => {
@@ -105,9 +152,11 @@ impl View for EventCatcher {
             }
             WindowEvent::PressDown { .. } => {
                 self.clicked.update(|state| *state = true);
+                cx.lock_cursor_icon();
             }
             WindowEvent::MouseUp(_) => {
                 self.clicked.update(|state| *state = false);
+                cx.unlock_cursor_icon();
             }
             WindowEvent::MouseOver => self.mouse_over.update(|over| *over = true),
             WindowEvent::MouseOut => self.mouse_over.update(|over| *over = false),
@@ -120,8 +169,8 @@ impl Model for EventCatcher {}
 
 struct VulkanExample {
     ui_app: VulkanApplication,
-    vulkan_state: State,
-    window: Option<Window>,
+    state: State,
+    window: Option<Rc<Window>>,
 
     current_frame: usize,
     in_flight_fences: Vec<ash::vk::Fence>,
@@ -161,13 +210,15 @@ struct VulkanExample {
 
 impl VulkanExample {
     fn new(event_loop: &ActiveEventLoop) -> Self {
-        let window = event_loop
-            .create_window(
-                Window::default_attributes()
-                    .with_title("Vizia Vulkan headless UI")
-                    .with_inner_size(winit::dpi::PhysicalSize::new(800, 600)),
-            )
-            .expect("Failed to create window");
+        let window = Rc::new(
+            event_loop
+                .create_window(
+                    Window::default_attributes()
+                        .with_title("Vizia Vulkan headless UI")
+                        .with_inner_size(winit::dpi::PhysicalSize::new(800, 600)),
+                )
+                .expect("Failed to create window"),
+        );
 
         let entry = unsafe { ash::Entry::load().expect("Failed to load Vulkan entry") };
         let (instance, debug_instance, debug_messenger) = Self::create_instance(&entry, &window);
@@ -213,7 +264,7 @@ impl VulkanExample {
             swapchain_extent,
         );
 
-        let vulkan_state = unsafe {
+        let state = unsafe {
             State::new(
                 entry.clone(),
                 instance.clone(),
@@ -227,8 +278,11 @@ impl VulkanExample {
         };
 
         let ui_target = RenderTarget::new(ui_image, swapchain_extent, swapchain_format, 1);
-        let ui_app =
-            VulkanApplication::new(vulkan_state.clone(), ui_target, window.scale_factor(), |cx| {
+        let ui_app = VulkanApplication::new(
+            state.clone(),
+            ui_target,
+            window.scale_factor(),
+            |cx| {
                 cx.add_stylesheet(include_str!(
                     "../../vizia_core/resources/themes/default_layout.css"
                 ))
@@ -265,8 +319,22 @@ impl VulkanExample {
                 .padding(Pixels(20.0))
                 .background_color(Color::rgb(50, 50, 50))
                 .alignment(Alignment::Center);
-            })
-            .expect("Failed to create VulkanApplication");
+            },
+            {
+                let window = window.clone();
+                Some(move |event: &ViziaWindowEvent| {
+                    if let ViziaWindowEvent::SetCursor(cursor) = event {
+                        let Some(icon) = cursor_icon_to_cursor_icon(*cursor) else {
+                            window.set_cursor_visible(false);
+                            return;
+                        };
+
+                        window.set_cursor(icon);
+                    }
+                })
+            },
+        )
+        .expect("Failed to create VulkanApplication");
 
         let (
             swapchain_image_views,
@@ -310,7 +378,7 @@ impl VulkanExample {
 
         Self {
             ui_app,
-            vulkan_state,
+            state,
             window: Some(window),
             current_frame: 0,
             in_flight_fences,

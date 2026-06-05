@@ -27,6 +27,7 @@
 //!     |cx| {
 //!         Label::new(cx, "Hello, Vulkan!");
 //!     },
+//!     None::<fn(&_)>, // event_callback
 //! );
 //!
 //! app.handle_event(WindowEvent::MouseMove { x: 100.0, y: 200.0 }, Some(window));

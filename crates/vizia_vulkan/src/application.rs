@@ -113,16 +113,18 @@ fn vulkan_format_to_skia_color_type(format: ash::vk::Format) -> skia_safe::Color
 pub struct VulkanApplication {
     cx: BackendContext,
     event_manager: EventManager,
-    vulkan_state: State,
+    state: State,
     render_target: Option<RenderTargetState>,
     needs_render: bool,
+    pub(crate) event_callback: Option<Box<dyn Fn(&WindowEvent)>>,
 }
 impl VulkanApplication {
-    pub fn new(
+    pub fn new<F: Fn(&WindowEvent) + 'static>(
         mut vulkan_state: State,
         target: RenderTarget,
         scale_factor: f64,
         content: impl FnOnce(&mut Context) + 'static,
+        event_callback: Option<F>,
     ) -> Option<Self> {
         let mut cx = BackendContext::new(Context::new());
 
@@ -152,15 +154,17 @@ impl VulkanApplication {
         Some(Self {
             cx,
             event_manager: EventManager::new(),
-            vulkan_state,
+            state: vulkan_state,
             render_target: Some(render_target),
             needs_render: true,
+            event_callback: event_callback
+                .map(|callback| Box::new(callback) as Box<dyn Fn(&WindowEvent)>),
         })
     }
 
     pub fn replace_render_target(&mut self, new_target: RenderTarget) -> bool {
         if let Some(target_state) = self.render_target.as_mut() {
-            let skia_context = self.vulkan_state.skia_context_mut();
+            let skia_context = self.state.skia_context_mut();
 
             if unsafe { target_state.replace_render_target(skia_context, new_target) } {
                 self.cx.set_window_size(
@@ -188,11 +192,18 @@ impl VulkanApplication {
         }
 
         self.needs_render = true;
+        if let Some(callback) = &self.event_callback {
+            callback(&event);
+        }
         self.cx.emit_window_event(Entity::root(), event);
     }
 
     pub fn update(&mut self) -> bool {
-        self.event_manager.flush_events(self.cx.context(), |_| {});
+        self.event_manager.flush_events(self.cx.context(), |event| {
+            if let Some(callback) = &self.event_callback {
+                callback(event);
+            }
+        });
 
         self.cx.process_style_updates();
         self.cx.process_visual_updates();
@@ -215,7 +226,7 @@ impl VulkanApplication {
             );
         }
 
-        self.vulkan_state.skia_context_mut().flush_and_submit();
+        self.state.skia_context_mut().flush_and_submit();
 
         self.needs_render = false;
         true
