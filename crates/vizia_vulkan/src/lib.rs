@@ -24,6 +24,7 @@
 //!     shared,
 //!     ui_target,
 //!     1.0, // Scale factor (probably want to use system scale for HUDs and 1.0 for off-screen needs)
+//!     false, // use_default_styles
 //!     |cx| {
 //!         Label::new(cx, "Hello, Vulkan!");
 //!     },

@@ -282,12 +282,8 @@ impl VulkanExample {
             state.clone(),
             ui_target,
             window.scale_factor(),
+            true,
             |cx| {
-                cx.add_stylesheet(include_str!(
-                    "../../vizia_core/resources/themes/default_layout.css"
-                ))
-                .expect("failed to load style");
-
                 VStack::new(cx, |cx| {
                     Element::new(cx)
                         .width(Units::Auto)

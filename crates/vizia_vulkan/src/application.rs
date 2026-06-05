@@ -123,6 +123,7 @@ impl VulkanApplication {
         mut vulkan_state: State,
         target: RenderTarget,
         scale_factor: f64,
+        use_default_styles: bool,
         content: impl FnOnce(&mut Context) + 'static,
         event_callback: Option<F>,
     ) -> Option<Self> {
@@ -143,6 +144,11 @@ impl VulkanApplication {
 
         cx.set_scale_factor(scale_factor);
         cx.set_window_size(Entity::root(), target.extent.width as f32, target.extent.height as f32);
+
+        cx.renegotiate_language();
+        if use_default_styles {
+            cx.context().add_built_in_styles();
+        }
 
         content(cx.context());
 
