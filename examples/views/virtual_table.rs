@@ -98,10 +98,10 @@ fn main() -> Result<(), ApplicationError> {
             sort_rows(filtered_rows, sort_state.get())
         });
 
-        let columns: Signal<Vec<TableColumn<PerfRow, TableHeader>>> = Signal::new(vec![
+        let columns: Signal<Vec<TableColumn<PerfRow, TableHeader<String>>>> = Signal::new(vec![
             TableColumn::new(
                 "Name",
-                |cx, sort_direction| TableHeader::new(cx, "Name", sort_direction),
+                |cx, sort_direction| TableHeader::new(cx, "Name", "Name", sort_direction),
                 |cx, row| {
                     let text = row.map(|row: &PerfRow| row.name.clone());
                     Label::new(cx, text).class("table-cell-text").text_wrap(true);
@@ -112,7 +112,7 @@ fn main() -> Result<(), ApplicationError> {
             .resizable(true),
             TableColumn::new(
                 "Group",
-                |cx, sort_direction| TableHeader::new(cx, "Group", sort_direction),
+                |cx, sort_direction| TableHeader::new(cx, "Group", "Group", sort_direction),
                 |cx, row| {
                     let text = row.map(|row: &PerfRow| row.group.clone());
                     Label::new(cx, text).class("table-cell-text").text_wrap(true);
@@ -123,7 +123,7 @@ fn main() -> Result<(), ApplicationError> {
             .resizable(true),
             TableColumn::new(
                 "notes",
-                |cx, sort_direction| TableHeader::new(cx, "Notes", sort_direction),
+                |cx, sort_direction| TableHeader::new(cx, "notes", "Notes", sort_direction),
                 |cx, row| {
                     let notes = row.map(|row: &PerfRow| row.notes.clone());
                     Label::new(cx, notes).class("table-cell-text").text_wrap(true);

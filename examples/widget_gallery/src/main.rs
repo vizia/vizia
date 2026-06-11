@@ -802,11 +802,11 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
         }
         "Table" => {
             let rows = Signal::new(vec![PreviewTableRow { id: 1, name: "Button".to_string() }]);
-            let columns: Signal<Vec<TableColumn<PreviewTableRow, TableHeader>>> =
+            let columns: Signal<Vec<TableColumn<PreviewTableRow, TableHeader<String>>>> =
                 Signal::new(vec![
                     TableColumn::new(
                         "name",
-                        |cx, sort_dir| TableHeader::new(cx, "Name", sort_dir),
+                        |cx, sort_dir| TableHeader::new(cx, "name", "Name", sort_dir),
                         |cx, row| {
                             let text = row.map(|r: &PreviewTableRow| r.name.clone());
                             Label::new(cx, text);
@@ -831,11 +831,11 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
                 PreviewTreeRow { id: 2, parent_id: Some(1), name: "Table".to_string() },
                 PreviewTreeRow { id: 3, parent_id: Some(1), name: "List".to_string() },
             ]);
-            let columns: Signal<Vec<TreeTableColumn<PreviewTreeRow, u32, TableHeader>>> =
+            let columns: Signal<Vec<TreeTableColumn<PreviewTreeRow, u32, TableHeader<String>>>> =
                 Signal::new(vec![
                     TreeTableColumn::new(
                         "name",
-                        |cx, sort_dir| TableHeader::new(cx, "Name", sort_dir),
+                        |cx, sort_dir| TableHeader::new(cx, "name", "Name", sort_dir),
                         |cx, row| {
                             let text =
                                 row.map(|r: &TreeTableRow<PreviewTreeRow, u32>| r.row.name.clone());
@@ -927,11 +927,11 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
                     .map(|id| PreviewTableRow { id, name: format!("Widget {}", id) })
                     .collect::<Vec<_>>(),
             );
-            let columns: Signal<Vec<TableColumn<PreviewTableRow, TableHeader>>> =
+            let columns: Signal<Vec<TableColumn<PreviewTableRow, TableHeader<String>>>> =
                 Signal::new(vec![
                     TableColumn::new(
                         "name",
-                        |cx, sort_dir| TableHeader::new(cx, "Name", sort_dir),
+                        |cx, sort_dir| TableHeader::new(cx, "name", "Name", sort_dir),
                         |cx, row| {
                             let text = row.map(|r: &PreviewTableRow| r.name.clone());
                             Label::new(cx, text);
