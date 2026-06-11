@@ -25,17 +25,22 @@ struct FsNode {
 struct AppData {
     tree: Signal<Tree<FsNode>>,
     sort_state: Signal<Option<TableSortState>>,
-    selected_rows: Signal<Vec<NodeId>>,
+    selected_rows: Signal<HashSet<Cell<NodeId, String>>>,
     expanded_rows: Signal<Vec<NodeId>>,
     filter_text: Signal<String>,
+    is_cell_mode: Signal<bool>,
+    selectable: Signal<Selectable>,
+    selectable_index: Signal<Option<usize>>,
 }
 
 enum AppEvent {
     ToggleCheckState(NodeId),
     SetSort(String, TableSortDirection),
-    SelectRow(NodeId),
+    SelectRows(HashSet<Cell<NodeId, String>>),
     ToggleRow(NodeId, bool),
     SetFilterText(String),
+    ToggleSelectionMode,
+    SetSelectable(usize),
 }
 
 impl Model for AppData {
@@ -52,12 +57,12 @@ impl Model for AppData {
                     Some(TableSortState { key: key.clone(), direction: *direction });
                 self.sort_state.set(next_sort_state.clone());
 
-                let tree = self.tree.get();
-                self.tree.set(tree);
+                // Trigger row recomputation after sort state changes.
+                self.tree.update(|_| {});
             }
 
-            AppEvent::SelectRow(id) => {
-                self.selected_rows.set(vec![*id]);
+            AppEvent::SelectRows(ids) => {
+                self.selected_rows.set(ids.clone());
             }
 
             AppEvent::ToggleRow(id, expanded) => {
@@ -76,18 +81,34 @@ impl Model for AppData {
                 self.filter_text.set(text.clone());
 
                 let query = text.trim().to_lowercase();
-                let (include_set, expanded_ids) = self
+                let (include_set, expanded_rows) = self
                     .tree
                     .try_update(|tree| apply_filter_state(tree, &query))
                     .unwrap_or_else(|| (HashSet::new(), Vec::new()));
 
-                self.selected_rows.update(|rows| rows.retain(|id| include_set.contains(id)));
+                self.selected_rows.update(|rows| rows.retain(|cell| include_set.contains(&cell.0)));
 
                 if query.is_empty() {
                     self.expanded_rows.update(|rows| rows.retain(|id| include_set.contains(id)));
                 } else {
-                    self.expanded_rows.set(expanded_ids);
+                    self.expanded_rows.set(expanded_rows);
                 }
+            }
+
+            AppEvent::ToggleSelectionMode => {
+                self.is_cell_mode.update(|is_cell_mode| {
+                    *is_cell_mode = !*is_cell_mode;
+                });
+            }
+
+            AppEvent::SetSelectable(index) => {
+                let mode = match index {
+                    0 => Selectable::None,
+                    1 => Selectable::Single,
+                    _ => Selectable::Multi,
+                };
+                self.selectable.set(mode);
+                self.selectable_index.set(Some(*index));
             }
         });
     }
@@ -421,13 +442,18 @@ fn columns(
                     });
 
                     HStack::new(cx, move |cx| {
-                        Checkbox::intermediate(cx, checked, intermediate).on_toggle({
-                            let node_id = row_id.clone();
-                            move |cx| {
-                                cx.emit(AppEvent::ToggleCheckState(node_id));
-                            }
-                        });
-                        Label::new(cx, text).class("table-cell-text");
+                        Checkbox::intermediate(cx, checked, intermediate)
+                            .pointer_events(PointerEvents::Auto)
+                            .navigable(false)
+                            .on_toggle({
+                                let node_id = row_id.clone();
+                                move |cx| {
+                                    cx.emit(AppEvent::ToggleCheckState(node_id));
+                                }
+                            });
+                        Label::new(cx, text)
+                            .class("table-cell-text")
+                            .pointer_events(PointerEvents::None);
                     })
                     .height(Auto)
                     .alignment(Alignment::Left)
@@ -446,7 +472,7 @@ fn columns(
                 let text = tree.map(move |tree| {
                     tree.get(row_id).map(|node| node.value().kind.clone()).unwrap_or_default()
                 });
-                Label::new(cx, text).class("table-cell-text");
+                Label::new(cx, text).class("table-cell-text").pointer_events(PointerEvents::None);
             },
         )
         .width(Pixels(80.0))
@@ -460,7 +486,10 @@ fn columns(
                 let text = tree.map(move |tree| {
                     tree.get(row_id).map(|node| node.value().size.clone()).unwrap_or_default()
                 });
-                Label::new(cx, text).class("table-cell-text");
+                Label::new(cx, text)
+                    .class("table-cell-text")
+                    .text_wrap(false)
+                    .pointer_events(PointerEvents::None);
             },
         )
         .width(Pixels(90.0))
@@ -474,7 +503,7 @@ fn columns(
                 let text = tree.map(move |tree| {
                     tree.get(row_id).map(|node| node.value().modified.clone()).unwrap_or_default()
                 });
-                Label::new(cx, text).class("table-cell-text");
+                Label::new(cx, text).class("table-cell-text").pointer_events(PointerEvents::None);
             },
         )
         .width(Pixels(110.0))
@@ -489,18 +518,48 @@ fn main() -> Result<(), ApplicationError> {
         let root_id = tree.with(|tree| tree.root().id());
         let cols = Signal::new(columns(tree));
         let sort_state: Signal<Option<TableSortState>> = Signal::new(None);
-        let selected_rows: Signal<Vec<NodeId>> = Signal::new(vec![]);
+        let selected_rows: Signal<HashSet<Cell<NodeId, String>>> = Signal::new(HashSet::new());
         let expanded_rows: Signal<Vec<NodeId>> = Signal::new(vec![root_id]);
         let filter_text = Signal::new(String::new());
+        let is_cell_mode = Signal::new(false);
+        let selectable = Signal::new(Selectable::Single);
+        let selectable_options =
+            Signal::new(vec!["None".to_string(), "Single".to_string(), "Multi".to_string()]);
+        let selectable_index = Signal::new(Some(1usize));
 
-        AppData { tree, sort_state, selected_rows, expanded_rows, filter_text }.build(cx);
+        AppData {
+            tree,
+            sort_state,
+            selected_rows,
+            expanded_rows,
+            filter_text,
+            is_cell_mode,
+            selectable,
+            selectable_index,
+        }
+        .build(cx);
 
         ExamplePage::vertical(cx, move |cx| {
-            Textbox::new(cx, filter_text).width(Pixels(320.0)).placeholder("Filter rows").on_edit(
-                move |cx, text| {
-                    cx.emit(AppEvent::SetFilterText(text));
-                },
-            );
+            HStack::new(cx, move |cx| {
+                Textbox::new(cx, filter_text)
+                    .width(Pixels(320.0))
+                    .placeholder("Filter rows")
+                    .on_edit(move |cx, text| {
+                        cx.emit(AppEvent::SetFilterText(text));
+                    });
+
+                Label::new(cx, "Cell selection").pointer_events(PointerEvents::None);
+                Switch::new(cx, is_cell_mode)
+                    .on_toggle(|cx| cx.emit(AppEvent::ToggleSelectionMode));
+
+                Label::new(cx, "Selection").pointer_events(PointerEvents::None);
+                Select::new(cx, selectable_options, selectable_index, false)
+                    .on_select(|cx, index| cx.emit(AppEvent::SetSelectable(index)))
+                    .width(Pixels(90.0));
+            })
+            .gap(Pixels(12.0))
+            .left(Pixels(12.0))
+            .top(Pixels(12.0));
 
             VirtualTreeTable::from_hierarchy(
                 cx,
@@ -525,20 +584,23 @@ fn main() -> Result<(), ApplicationError> {
             .sort_state(sort_state)
             .sort_cycle(TableSortCycle::TriState)
             .resizable_columns(true)
-            .selectable(Selectable::Single)
-            .selected_row_ids(selected_rows)
+            .selectable(selectable)
+            .selection(selected_rows.map(|s| s.iter().cloned().collect::<Vec<_>>()))
             .expanded_row_ids(expanded_rows)
+            .selection_mode(is_cell_mode.map(|is_cell| {
+                if *is_cell { TableSelectionMode::Cell } else { TableSelectionMode::Row }
+            }))
             .on_sort(move |cx, key, direction| {
                 cx.emit(AppEvent::SetSort(key, direction));
             })
-            .on_row_select(move |cx, id| {
-                cx.emit(AppEvent::SelectRow(id));
+            .on_select(move |cx, ids| {
+                cx.emit(AppEvent::SelectRows(ids));
             })
             .on_row_toggle(move |cx, id, expanded| {
                 cx.emit(AppEvent::ToggleRow(id, expanded));
             })
             .width(Stretch(1.0))
-            .height(Stretch(1.0));
+            .height(Pixels(360.0));
         });
     })
     .run()

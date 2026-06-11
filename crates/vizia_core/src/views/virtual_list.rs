@@ -40,6 +40,12 @@ pub struct VirtualList {
     selection_follows_focus: Signal<bool>,
     /// Whether pressing Space should select the focused item.
     space_selects_focused: Signal<bool>,
+    /// Minimum number of selected items.
+    min_selected: Signal<usize>,
+    /// Maximum number of selected items.
+    max_selected: Signal<usize>,
+    /// Whether the first item should be focused when the list gains focus with no selection.
+    focus_first_item_on_focus_in: Signal<bool>,
     /// Callback that is called when an item is selected.
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
     /// Callback called when the focused list item changes.
@@ -241,6 +247,63 @@ impl VirtualList {
 
         self.visible_range.set_if_changed(start_index..end_index);
     }
+
+    fn selection_limits(&self) -> (usize, usize) {
+        let mut min_selected = self.min_selected.get();
+        let mut max_selected = self.max_selected.get();
+
+        match self.selectable.get() {
+            Selectable::None => {
+                min_selected = 0;
+                max_selected = 0;
+            }
+
+            Selectable::Single => {
+                min_selected = min_selected.min(1);
+                max_selected = 1;
+            }
+
+            Selectable::Multi => {}
+        }
+
+        max_selected = max_selected.min(self.num_items.get());
+        min_selected = min_selected.min(max_selected);
+
+        (min_selected, max_selected)
+    }
+
+    fn normalize_selection_state(&mut self) {
+        let (min_selected, max_selected) = self.selection_limits();
+        let num_items = self.num_items.get();
+
+        let mut selection = self.selection.get();
+        selection.retain(|index| *index < num_items);
+
+        while selection.len() > max_selected {
+            if let Some(last) = selection.iter().next_back().copied() {
+                selection.remove(&last);
+            } else {
+                break;
+            }
+        }
+
+        if selection.len() < min_selected {
+            for index in 0..num_items {
+                selection.insert(index);
+                if selection.len() >= min_selected {
+                    break;
+                }
+            }
+        }
+
+        let mut focused = self.focused.get();
+        if focused.is_some_and(|index| index >= num_items) {
+            focused = num_items.checked_sub(1);
+        }
+
+        self.selection.set(selection);
+        self.focused.set(focused);
+    }
 }
 
 impl VirtualList {
@@ -288,6 +351,24 @@ impl VirtualList {
         )
     }
 
+    /// Creates a new [VirtualList] view using caller-provided item views directly,
+    /// without an explicit selected-state memo.
+    pub fn new_custom_items<V: View, S, L, T>(
+        cx: &mut Context,
+        list: S,
+        item_height: f32,
+        item_content: impl 'static + Copy + Fn(&mut Context, usize, Memo<T>) -> Handle<V>,
+    ) -> Handle<Self>
+    where
+        S: Res<L> + 'static,
+        L: Deref<Target = [T]> + Clone + 'static,
+        T: Clone + PartialEq + 'static,
+    {
+        Self::new_custom_items_with_selection(cx, list, item_height, move |cx, index, item, _| {
+            item_content(cx, index, item)
+        })
+    }
+
     /// Creates a new [VirtualList] view with a binding to the given source and a template for constructing the list items.
     pub fn new_generic<V: View, S, L, T>(
         cx: &mut Context,
@@ -307,7 +388,7 @@ impl VirtualList {
         let visible_range = Signal::new(0..0);
         let scroll_x = Signal::new(0.0);
         let scroll_y = Signal::new(0.0);
-        let show_horizontal_scrollbar = Signal::new(false);
+        let show_horizontal_scrollbar = Signal::new(true);
         let show_vertical_scrollbar = Signal::new(true);
         let orientation = Signal::new(Orientation::Vertical);
         let selection = Signal::new(BTreeSet::default());
@@ -315,7 +396,10 @@ impl VirtualList {
         let focused = Signal::new(None);
         let focus_visibility = Signal::new(false);
         let selection_follows_focus = Signal::new(false);
-        let scroll_to_cursor = Signal::new(true);
+        let scroll_to_cursor = Signal::new(false);
+        let min_selected = Signal::new(0);
+        let max_selected = Signal::new(usize::MAX);
+        let focus_first_item_on_focus_in = Signal::new(true);
 
         Self {
             scroll_to_cursor,
@@ -334,6 +418,9 @@ impl VirtualList {
             focus_visibility,
             selection_follows_focus,
             space_selects_focused: Signal::new(true),
+            min_selected,
+            max_selected,
+            focus_first_item_on_focus_in,
             on_select: None,
             on_focus: None,
             type_ahead_text: None,
@@ -520,6 +607,7 @@ impl VirtualList {
             });
         })
         .toggle_class("selectable", selectable.map(|s| *s != Selectable::None))
+        .multiselectable(selectable.map(|s| *s == Selectable::Multi))
         .orientation(orientation)
         .navigable(true)
         .role(Role::ListBox)
@@ -544,7 +632,7 @@ impl VirtualList {
         let visible_range = Signal::new(0..0);
         let scroll_x = Signal::new(0.0);
         let scroll_y = Signal::new(0.0);
-        let show_horizontal_scrollbar = Signal::new(false);
+        let show_horizontal_scrollbar = Signal::new(true);
         let show_vertical_scrollbar = Signal::new(true);
         let orientation = Signal::new(Orientation::Vertical);
         let selection = Signal::new(BTreeSet::default());
@@ -552,7 +640,10 @@ impl VirtualList {
         let focused = Signal::new(None);
         let focus_visibility = Signal::new(false);
         let selection_follows_focus = Signal::new(false);
-        let scroll_to_cursor = Signal::new(true);
+        let scroll_to_cursor = Signal::new(false);
+        let min_selected = Signal::new(0);
+        let max_selected = Signal::new(usize::MAX);
+        let focus_first_item_on_focus_in = Signal::new(true);
 
         Self {
             scroll_to_cursor,
@@ -571,6 +662,9 @@ impl VirtualList {
             focus_visibility,
             selection_follows_focus,
             space_selects_focused: Signal::new(true),
+            min_selected,
+            max_selected,
+            focus_first_item_on_focus_in,
             on_select: None,
             on_focus: None,
             type_ahead_text: None,
@@ -602,6 +696,51 @@ impl VirtualList {
                 ),
             ])
             .build(cx);
+
+            Binding::new(cx, orientation, move |cx| {
+                let orientation = orientation.get();
+                if orientation == Orientation::Horizontal {
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowDown),
+                        "Focus Next",
+                    ));
+
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowUp),
+                        "Focus Previous",
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowRight),
+                        KeymapEntry::new("Focus Next", |cx| cx.emit(ListEvent::FocusNext)),
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
+                        KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
+                    ));
+                } else {
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowRight),
+                        "Focus Next",
+                    ));
+
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
+                        "Focus Previous",
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowDown),
+                        KeymapEntry::new("Focus Next", |cx| cx.emit(ListEvent::FocusNext)),
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowUp),
+                        KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
+                    ));
+                }
+            });
 
             ScrollView::new(cx, move |cx| {
                 Binding::new(cx, num_items, move |cx| {
@@ -654,9 +793,35 @@ impl VirtualList {
             });
         })
         .toggle_class("selectable", selectable.map(|s| *s != Selectable::None))
+        .multiselectable(selectable.map(|s| *s == Selectable::Multi))
         .orientation(orientation)
         .navigable(true)
         .role(Role::ListBox)
+    }
+
+    /// Creates a new [VirtualList] view with custom list accessors and caller-provided
+    /// item views directly, without an explicit selected-state memo.
+    pub fn new_generic_custom_items<V: View, S, L, T>(
+        cx: &mut Context,
+        list: S,
+        list_len: impl 'static + Fn(&L) -> usize,
+        list_index: impl 'static + Copy + Fn(&L, usize) -> T,
+        item_height: f32,
+        item_content: impl 'static + Copy + Fn(&mut Context, usize, Memo<T>) -> Handle<V>,
+    ) -> Handle<Self>
+    where
+        S: Res<L> + 'static,
+        L: Clone + 'static,
+        T: Clone + PartialEq + 'static,
+    {
+        Self::new_generic_custom_items_with_selection(
+            cx,
+            list,
+            list_len,
+            list_index,
+            item_height,
+            move |cx, index, item, _| item_content(cx, index, item),
+        )
     }
 }
 
@@ -669,14 +834,17 @@ impl View for VirtualList {
         event.take(|list_event, meta| match list_event {
             ListEvent::Select(index) => {
                 let selectable = self.selectable.get();
+                let (min_selected, max_selected) = self.selection_limits();
                 let mut selection = self.selection.get();
                 let mut focused = self.focused.get();
 
                 match selectable {
                     Selectable::Single => {
                         if selection.contains(&index) {
-                            selection.clear();
-                            focused = None;
+                            if min_selected == 0 {
+                                selection.clear();
+                                focused = None;
+                            }
                         } else {
                             selection.clear();
                             selection.insert(index);
@@ -692,11 +860,13 @@ impl View for VirtualList {
                         focused = Some(index);
 
                         if selection.contains(&index) {
-                            selection.remove(&index);
-                            if let Some(on_select) = &self.on_select {
-                                on_select(cx, index);
+                            if selection.len() > min_selected {
+                                selection.remove(&index);
+                                if let Some(on_select) = &self.on_select {
+                                    on_select(cx, index);
+                                }
                             }
-                        } else {
+                        } else if selection.len() < max_selected {
                             selection.insert(index);
                             if let Some(on_select) = &self.on_select {
                                 on_select(cx, index);
@@ -731,27 +901,35 @@ impl View for VirtualList {
             }
 
             ListEvent::ClearSelection => {
-                self.selection.set(BTreeSet::default());
+                let (min_selected, _) = self.selection_limits();
+                if min_selected == 0 {
+                    self.selection.set(BTreeSet::default());
+                }
                 meta.consume();
             }
 
             ListEvent::FocusNext => {
                 let mut focused = self.focused.get();
                 let num_items = self.num_items.get();
+                let mut moved_focus = false;
                 if let Some(f) = &mut focused {
                     if *f < num_items.saturating_sub(1) {
                         *f = f.saturating_add(1);
+                        moved_focus = true;
                         if self.selection_follows_focus.get() {
-                            self.focus_visibility.set(true);
                             cx.emit(ListEvent::SelectFocused);
                         }
                     }
                 } else {
                     focused = Some(0);
+                    moved_focus = true;
                     if self.selection_follows_focus.get() {
-                        self.focus_visibility.set(true);
                         cx.emit(ListEvent::SelectFocused);
                     }
+                }
+
+                if moved_focus {
+                    self.focus_visibility.set(true);
                 }
 
                 self.set_focused_with_callback(cx, focused);
@@ -762,20 +940,25 @@ impl View for VirtualList {
             ListEvent::FocusPrev => {
                 let mut focused = self.focused.get();
                 let num_items = self.num_items.get();
+                let mut moved_focus = false;
                 if let Some(f) = &mut focused {
                     if *f > 0 {
                         *f = f.saturating_sub(1);
+                        moved_focus = true;
                         if self.selection_follows_focus.get() {
-                            self.focus_visibility.set(true);
                             cx.emit(ListEvent::SelectFocused);
                         }
                     }
                 } else {
                     focused = Some(num_items.saturating_sub(1));
+                    moved_focus = true;
                     if self.selection_follows_focus.get() {
-                        self.focus_visibility.set(true);
                         cx.emit(ListEvent::SelectFocused);
                     }
+                }
+
+                if moved_focus {
+                    self.focus_visibility.set(true);
                 }
 
                 self.set_focused_with_callback(cx, focused);
@@ -827,6 +1010,25 @@ impl View for VirtualList {
                 self.focus_visibility.set(!*mouse);
             }
 
+            WindowEvent::FocusIn if meta.target == cx.current() => {
+                if meta.origin == Entity::root() {
+                    self.focus_visibility.set(true);
+                }
+
+                let next_focused = focus_index_on_focus_in(
+                    &self.selection.get(),
+                    self.num_items.get(),
+                    self.focus_first_item_on_focus_in.get(),
+                );
+
+                if let Some(index) = next_focused {
+                    if self.focused.get() == Some(index) {
+                        self.focused.set(None);
+                    }
+                    self.set_focused_with_callback(cx, Some(index));
+                }
+            }
+
             WindowEvent::CharInput(c) => {
                 if *c == ' ' && meta.target == cx.current() && self.space_selects_focused.get() {
                     cx.emit(ListEvent::SelectFocused);
@@ -869,6 +1071,7 @@ impl Handle<'_, VirtualList> {
 
                     list.selection.set(selection);
                     list.focused.set(focused);
+                    list.normalize_selection_state();
                 });
             });
         })
@@ -910,7 +1113,34 @@ impl Handle<'_, VirtualList> {
         self.bind(selectable, move |handle| {
             let selectable = selectable.get();
             let s = selectable.into();
-            handle.modify(|list| list.selectable.set(s));
+            handle.modify(|list| {
+                list.selectable.set(s);
+                list.normalize_selection_state();
+            });
+        })
+    }
+
+    /// Sets the minimum number of selected items.
+    pub fn min_selected(self, min_selected: impl Res<usize> + 'static) -> Self {
+        let min_selected = min_selected.to_signal(self.cx);
+        self.bind(min_selected, move |handle| {
+            let min_selected = min_selected.get();
+            handle.modify(|list| {
+                list.min_selected.set(min_selected);
+                list.normalize_selection_state();
+            });
+        })
+    }
+
+    /// Sets the maximum number of selected items.
+    pub fn max_selected(self, max_selected: impl Res<usize> + 'static) -> Self {
+        let max_selected = max_selected.to_signal(self.cx);
+        self.bind(max_selected, move |handle| {
+            let max_selected = max_selected.get();
+            handle.modify(|list| {
+                list.max_selected.set(max_selected);
+                list.normalize_selection_state();
+            });
         })
     }
 
@@ -963,6 +1193,17 @@ impl Handle<'_, VirtualList> {
     pub fn scroll_to_cursor(self, flag: bool) -> Self {
         self.modify(|virtual_list: &mut VirtualList| {
             virtual_list.scroll_to_cursor.set(flag);
+        })
+    }
+
+    /// Sets whether the first item should be focused when the list gains focus with no selection.
+    pub fn focus_first_item_on_focus_in(self, flag: impl Res<bool> + 'static) -> Self {
+        let flag = flag.to_signal(self.cx);
+        self.bind(flag, move |handle| {
+            let focus_first_item_on_focus_in = flag.get();
+            handle.modify(|list| {
+                list.focus_first_item_on_focus_in.set(focus_first_item_on_focus_in);
+            });
         })
     }
 
@@ -1023,6 +1264,18 @@ fn normalize_focused_index(focused: Option<usize>, num_items: usize) -> Option<u
     focused.filter(|index| *index < num_items)
 }
 
+fn focus_index_on_focus_in(
+    selection: &BTreeSet<usize>,
+    num_items: usize,
+    focus_first_item_on_focus_in: bool,
+) -> Option<usize> {
+    selection
+        .iter()
+        .copied()
+        .find(|index| *index < num_items)
+        .or_else(|| focus_first_item_on_focus_in.then_some(0).filter(|_| num_items > 0))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1065,5 +1318,27 @@ mod tests {
     #[test]
     fn clears_focused_index_when_out_of_range() {
         assert_eq!(normalize_focused_index(Some(5), 5), None);
+    }
+
+    #[test]
+    fn focuses_selected_item_on_focus_in() {
+        let mut selection = BTreeSet::new();
+        selection.insert(3);
+
+        assert_eq!(focus_index_on_focus_in(&selection, 5, false), Some(3));
+    }
+
+    #[test]
+    fn can_leave_focus_empty_when_nothing_is_selected() {
+        let selection = BTreeSet::new();
+
+        assert_eq!(focus_index_on_focus_in(&selection, 5, false), None);
+    }
+
+    #[test]
+    fn falls_back_to_first_item_when_enabled() {
+        let selection = BTreeSet::new();
+
+        assert_eq!(focus_index_on_focus_in(&selection, 5, true), Some(0));
     }
 }
