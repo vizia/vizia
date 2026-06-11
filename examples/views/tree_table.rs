@@ -421,12 +421,14 @@ fn columns(
                     });
 
                     HStack::new(cx, move |cx| {
-                        Checkbox::intermediate(cx, checked, intermediate).on_toggle({
-                            let node_id = row_id.clone();
-                            move |cx| {
-                                cx.emit(AppEvent::ToggleCheckState(node_id));
-                            }
-                        });
+                        Checkbox::intermediate(cx, checked, intermediate)
+                            .navigable(false)
+                            .on_toggle({
+                                let node_id = row_id.clone();
+                                move |cx| {
+                                    cx.emit(AppEvent::ToggleCheckState(node_id));
+                                }
+                            });
                         Label::new(cx, text).class("table-cell-text");
                     })
                     .height(Auto)

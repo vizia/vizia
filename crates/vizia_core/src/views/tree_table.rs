@@ -198,6 +198,7 @@ impl TreeTableFirstCell {
                     Button::new(cx, move |cx| Svg::new(cx, icon).text_wrap(false))
                         .variant(ButtonVariant::Text)
                         .class("tree-table-disclosure")
+                        .navigable(false)
                         .on_press(move |cx| {
                             cx.emit(TreeTableFirstCellEvent::Toggle(node_id.clone(), !expanded));
                         });
@@ -214,8 +215,7 @@ impl TreeTableFirstCell {
                 .class("tree-table-cell-content")
                 .width(Stretch(1.0))
                 .min_width(Auto)
-                .height(Auto)
-                .pointer_events(PointerEvents::None);
+                .height(Auto);
             })
             .alignment(Alignment::Left)
             .width(Stretch(1.0))
