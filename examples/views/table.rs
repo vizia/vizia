@@ -12,7 +12,7 @@ struct RowData {
 }
 
 struct DynamicTableDemo {
-    columns: Signal<Vec<TableColumn<RowData, TableHeader>>>,
+    columns: Signal<Vec<TableColumn<RowData, TableHeader<String>>>>,
     sort_state: Signal<Option<TableSortState>>,
     selected_rows: Signal<Vec<u32>>,
     filter_text: Signal<String>,
@@ -158,10 +158,10 @@ fn make_rows() -> Vec<RowData> {
     ]
 }
 
-fn build_columns() -> Vec<TableColumn<RowData, TableHeader>> {
+fn build_columns() -> Vec<TableColumn<RowData, TableHeader<String>>> {
     let name_column = TableColumn::new(
         "Name",
-        |cx, sort_direction| TableHeader::new(cx, "Name", sort_direction),
+        |cx, sort_direction| TableHeader::new(cx, "Name", "Name", sort_direction),
         |cx, row| {
             let text = row.map(|row: &RowData| row.name.clone());
             Label::new(cx, text).class("table-cell-text").text_wrap(true);
@@ -173,7 +173,7 @@ fn build_columns() -> Vec<TableColumn<RowData, TableHeader>> {
 
     let group_column = TableColumn::new(
         "Group",
-        |cx, sort_direction| TableHeader::new(cx, "Group", sort_direction),
+        |cx, sort_direction| TableHeader::new(cx, "Group", "Group", sort_direction),
         |cx, row| {
             let text = row.map(|row: &RowData| row.group.clone());
             Label::new(cx, text).class("table-cell-text").text_wrap(true);
@@ -185,7 +185,7 @@ fn build_columns() -> Vec<TableColumn<RowData, TableHeader>> {
 
     let status_column = TableColumn::new(
         "status",
-        |cx, sort_direction| TableHeader::new(cx, "Status", sort_direction),
+        |cx, sort_direction| TableHeader::new(cx, "status", "Status", sort_direction),
         |cx, row| {
             let status = row.map(|row: &RowData| row.status.clone());
             let tone = row.map(|row: &RowData| match row.status.as_str() {
@@ -205,7 +205,7 @@ fn build_columns() -> Vec<TableColumn<RowData, TableHeader>> {
 
     let notes_column = TableColumn::new(
         "notes",
-        |cx, sort_direction| TableHeader::new(cx, "Notes", sort_direction),
+        |cx, sort_direction| TableHeader::new(cx, "notes", "Notes", sort_direction),
         |cx, row| {
             let notes = row.map(|row: &RowData| row.notes.clone());
             Label::new(cx, notes).class("table-cell-text").text_wrap(true);

@@ -393,11 +393,11 @@ fn build_fs_tree() -> Tree<FsNode> {
 
 fn columns(
     tree: Signal<Tree<FsNode>>,
-) -> Vec<TreeTableColumn<TreeNodeRow<NodeId>, NodeId, TableHeader>> {
+) -> Vec<TreeTableColumn<TreeNodeRow<NodeId>, NodeId, TableHeader<String>>> {
     vec![
         TreeTableColumn::new(
             "name",
-            |cx, sort_dir| TableHeader::new(cx, "Name", sort_dir),
+            |cx, sort_dir| TableHeader::new(cx, "name", "Name", sort_dir),
             move |cx, row| {
                 let row_for_first_cell: TreeTableRow<TreeNodeRow<NodeId>, NodeId> = row.get();
 
@@ -440,7 +440,7 @@ fn columns(
         .resizable(true),
         TreeTableColumn::new(
             "kind",
-            |cx, sort_dir| TableHeader::new(cx, "Kind", sort_dir),
+            |cx, sort_dir| TableHeader::new(cx, "kind", "Kind", sort_dir),
             move |cx, row| {
                 let row_id = row.get().id;
                 let text = tree.map(move |tree| {
@@ -454,7 +454,7 @@ fn columns(
         .resizable(true),
         TreeTableColumn::new(
             "size",
-            |cx, sort_dir| TableHeader::new(cx, "Size", sort_dir),
+            |cx, sort_dir| TableHeader::new(cx, "size", "Size", sort_dir),
             move |cx, row| {
                 let row_id = row.get().id;
                 let text = tree.map(move |tree| {
@@ -468,7 +468,7 @@ fn columns(
         .resizable(true),
         TreeTableColumn::new(
             "modified",
-            |cx, sort_dir| TableHeader::new(cx, "Modified", sort_dir),
+            |cx, sort_dir| TableHeader::new(cx, "modified", "Modified", sort_dir),
             move |cx, row| {
                 let row_id = row.get().id;
                 let text = tree.map(move |tree| {
