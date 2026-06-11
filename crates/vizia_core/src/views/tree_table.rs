@@ -361,6 +361,7 @@ where
 
 pub enum TreeTableEvent<K> {
     RequestSort(K, TableSortDirection),
+    SelectColumn(K),
     SelectRow(usize),
     SelectFocused,
     ExpandSelected,
@@ -550,7 +551,6 @@ where
                     for (column_index, column) in header_columns.iter().cloned().enumerate() {
                         let width_signal = column.width;
                         let sort_state = sort_state;
-                        let sort_cycle = sort_cycle;
                         let resizable_columns = resizable_columns;
                         let min_width = column.min_width;
                         let sortable = column.sortable;
@@ -564,7 +564,9 @@ where
                         });
 
                         if is_last_column {
-                            header_content(cx, sort_direction)
+                            let header = header_content(cx, sort_direction);
+                            let on_press_column_key = column_key.clone();
+                            header
                                 .class("table-header-cell")
                                 .role(Role::ColumnHeader)
                                 .sort_direction(sort_direction.map(|direction| match direction {
@@ -579,7 +581,12 @@ where
                                 .toggle_class("sortable", sortable)
                                 .toggle_class("resizable", false)
                                 .width(Stretch(1.0))
-                                .min_width(Auto);
+                                .min_width(Auto)
+                                .on_press(move |cx| {
+                                    cx.emit(TreeTableEvent::<K>::SelectColumn(
+                                        on_press_column_key.clone(),
+                                    ));
+                                });
                         } else {
                             Resizable::new(
                                 cx,
@@ -591,7 +598,9 @@ where
                                     }
                                 },
                                 move |cx| {
-                                    header_content(cx, sort_direction)
+                                    let header = header_content(cx, sort_direction);
+                                    let on_press_column_key = column_key.clone();
+                                    header
                                         .class("table-header-cell")
                                         .role(Role::ColumnHeader)
                                         .sort_direction(sort_direction.map(|direction| {
@@ -611,7 +620,12 @@ where
                                             resizable_columns
                                                 .map(move |enabled| *enabled && resizable.get()),
                                         )
-                                        .min_width(min_width.map(|value| Pixels(*value)));
+                                        .min_width(min_width.map(|value| Pixels(*value)))
+                                        .on_press(move |cx| {
+                                            cx.emit(TreeTableEvent::<K>::SelectColumn(
+                                                on_press_column_key.clone(),
+                                            ));
+                                        });
                                 },
                             )
                             .width(width_signal)
@@ -890,6 +904,31 @@ where
                     if let Some(callback) = &self.on_select {
                         (callback)(cx, self.selection.get());
                     }
+                }
+            }
+
+            TreeTableEvent::SelectColumn(column_key) => {
+                let visible_rows = flatten_visible_rows(
+                    &self.rows.get(),
+                    &*self.row_id,
+                    &*self.parent_id,
+                    &self.expanded_row_ids.get(),
+                );
+
+                let column_cells = HashSet::from_iter(
+                    visible_rows.iter().map(|row| Cell(row.id.clone(), column_key.clone())),
+                );
+
+                let current_selection = self.selection.get();
+
+                // If the column is already fully selected, deselect it; otherwise select it.
+                let next_selection =
+                    if current_selection == column_cells { HashSet::new() } else { column_cells };
+
+                self.selection.set(next_selection.clone());
+
+                if let Some(callback) = &self.on_select {
+                    (callback)(cx, next_selection);
                 }
             }
 
@@ -1173,6 +1212,29 @@ where
 
         event.map(|tree_event: &TableEvent<K>, _| match tree_event {
             TableEvent::ToggleSort(col) => {
+                let visible_rows = flatten_visible_rows(
+                    &self.rows.get(),
+                    &*self.row_id,
+                    &*self.parent_id,
+                    &self.expanded_row_ids.get(),
+                );
+
+                let column_cells = HashSet::from_iter(
+                    visible_rows.iter().map(|row| Cell(row.id.clone(), col.clone())),
+                );
+
+                let current_selection = self.selection.get();
+
+                // If the column is already fully selected, deselect it; otherwise select it.
+                let next_selection =
+                    if current_selection == column_cells { HashSet::new() } else { column_cells };
+
+                self.selection.set(next_selection.clone());
+
+                if let Some(callback) = &self.on_select {
+                    (callback)(cx, next_selection);
+                }
+
                 if let Some(callback) = &self.on_sort {
                     let current_direction =
                         sort_direction_for_column(self.sort_state.get().as_ref(), col);

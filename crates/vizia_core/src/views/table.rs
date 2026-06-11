@@ -86,6 +86,7 @@ where
                 let title = title.into();
                 Label::new(cx, title)
                     .class("table-header-title")
+                    .pointer_events(PointerEvents::None)
                     .width(Stretch(1.0))
                     .min_width(Auto);
                 let sort_indicator = Memo::new(move |_| match sort_direction.get() {
