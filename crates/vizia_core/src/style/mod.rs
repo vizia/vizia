@@ -368,10 +368,6 @@ pub struct Style {
     pub(crate) vertical_gap: AnimatableVarSet<Units>,
     pub(crate) horizontal_gap: AnimatableVarSet<Units>,
 
-    // Scrolling
-    pub(crate) vertical_scroll: AnimatableSet<f32>,
-    pub(crate) horizontal_scroll: AnimatableSet<f32>,
-
     // Size
     pub(crate) width: AnimatableVarSet<Units>,
     pub(crate) height: AnimatableVarSet<Units>,
@@ -2822,10 +2818,6 @@ impl Style {
         self.vertical_gap.remove(entity);
         self.horizontal_gap.remove(entity);
 
-        // Scrolling
-        self.vertical_scroll.remove(entity);
-        self.horizontal_scroll.remove(entity);
-
         // Size
         self.width.remove(entity);
         self.height.remove(entity);
@@ -3015,10 +3007,6 @@ impl Style {
         self.padding_bottom.clear_rules();
         self.horizontal_gap.clear_rules();
         self.vertical_gap.clear_rules();
-
-        // Scrolling
-        self.horizontal_scroll.clear_rules();
-        self.vertical_scroll.clear_rules();
 
         // Text and Font
         self.text_wrap.clear_rules();
