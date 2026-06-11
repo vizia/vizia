@@ -61,41 +61,42 @@ pub fn tree_table(cx: &mut Context) {
     let selected_rows: Signal<Vec<u32>> = Signal::new(vec![]);
     let expanded_rows: Signal<Vec<u32>> = Signal::new(vec![1, 4]);
 
-    let columns: Signal<Vec<TreeTableColumn<TreeRow, u32, TableHeader>>> = Signal::new(vec![
-        TreeTableColumn::new(
-            "name",
-            |cx, sort_dir| TableHeader::new(cx, "Name", sort_dir),
-            |cx, row| {
-                let text = row.map(|r: &TreeTableRow<TreeRow, u32>| r.row.name.clone());
-                Label::new(cx, text).class("table-cell-text");
-            },
-        )
-        .width(Pixels(220.0))
-        .min_width(140.0)
-        .resizable(true),
-        TreeTableColumn::new(
-            "category",
-            |cx, sort_dir| TableHeader::new(cx, "Category", sort_dir),
-            |cx, row| {
-                let text = row.map(|r: &TreeTableRow<TreeRow, u32>| r.row.category.clone());
-                Label::new(cx, text).class("table-cell-text");
-            },
-        )
-        .width(Pixels(140.0))
-        .min_width(100.0)
-        .resizable(true),
-        TreeTableColumn::new(
-            "status",
-            |cx, sort_dir| TableHeader::new(cx, "Status", sort_dir),
-            |cx, row| {
-                let text = row.map(|r: &TreeTableRow<TreeRow, u32>| r.row.status.clone());
-                Label::new(cx, text).class("table-cell-text");
-            },
-        )
-        .width(Pixels(120.0))
-        .min_width(90.0)
-        .resizable(true),
-    ]);
+    let columns: Signal<Vec<TreeTableColumn<TreeRow, u32, TableHeader<String>>>> =
+        Signal::new(vec![
+            TreeTableColumn::new(
+                "name",
+                |cx, sort_dir| TableHeader::new(cx, "name", "Name", sort_dir),
+                |cx, row| {
+                    let text = row.map(|r: &TreeTableRow<TreeRow, u32>| r.row.name.clone());
+                    Label::new(cx, text).class("table-cell-text");
+                },
+            )
+            .width(Pixels(220.0))
+            .min_width(140.0)
+            .resizable(true),
+            TreeTableColumn::new(
+                "category",
+                |cx, sort_dir| TableHeader::new(cx, "category", "Category", sort_dir),
+                |cx, row| {
+                    let text = row.map(|r: &TreeTableRow<TreeRow, u32>| r.row.category.clone());
+                    Label::new(cx, text).class("table-cell-text");
+                },
+            )
+            .width(Pixels(140.0))
+            .min_width(100.0)
+            .resizable(true),
+            TreeTableColumn::new(
+                "status",
+                |cx, sort_dir| TableHeader::new(cx, "status", "Status", sort_dir),
+                |cx, row| {
+                    let text = row.map(|r: &TreeTableRow<TreeRow, u32>| r.row.status.clone());
+                    Label::new(cx, text).class("table-cell-text");
+                },
+            )
+            .width(Pixels(120.0))
+            .min_width(90.0)
+            .resizable(true),
+        ]);
 
     VStack::new(cx, |cx| {
         Markdown::new(
@@ -118,13 +119,12 @@ A TreeTable combines table columns with expandable hierarchical rows.",
             .sort_cycle(TableSortCycle::TriState)
             .resizable_columns(true)
             .selectable(Selectable::Single)
-            .selected_row_ids(selected_rows)
             .expanded_row_ids(expanded_rows)
             .on_sort(move |_cx, key, direction| {
                 sort_state.set(Some(TableSortState { key, direction }));
             })
-            .on_row_select(move |_cx, id| {
-                selected_rows.set(vec![id]);
+            .on_select(move |_cx, ids| {
+                selected_rows.set(ids.iter().map(|cell| cell.0).collect());
             })
             .on_row_toggle(move |_cx, id, expanded| {
                 expanded_rows.update(|rows| {
