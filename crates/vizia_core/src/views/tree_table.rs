@@ -17,6 +17,17 @@ use super::{
     table::sort_direction_for_column,
 };
 
+/// Determines which cells are selected when clicking a cell in the tree table.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TableSelectionMode {
+    /// Clicking a cell selects only that cell.
+    Cell,
+    /// Clicking a cell selects the entire row.
+    Row,
+}
+
+impl_res_simple!(TableSelectionMode);
+
 #[derive(Clone, PartialEq)]
 enum TableFocus<Id, K>
 where
@@ -198,6 +209,7 @@ impl TreeTableFirstCell {
                     Button::new(cx, move |cx| Svg::new(cx, icon).text_wrap(false))
                         .variant(ButtonVariant::Text)
                         .class("tree-table-disclosure")
+                        .pointer_events(PointerEvents::Auto)
                         .navigable(false)
                         .on_press(move |cx| {
                             cx.emit(TreeTableFirstCellEvent::Toggle(node_id.clone(), !expanded));
@@ -215,15 +227,18 @@ impl TreeTableFirstCell {
                 .class("tree-table-cell-content")
                 .width(Stretch(1.0))
                 .min_width(Auto)
-                .height(Auto);
+                .height(Auto)
+                .pointer_events(PointerEvents::None);
             })
             .alignment(Alignment::Left)
             .width(Stretch(1.0))
             .min_width(Auto)
-            .height(Auto);
+            .height(Auto)
+            .pointer_events(PointerEvents::None);
         })
         .width(Stretch(1.0))
         .height(Auto)
+        .pointer_events(PointerEvents::None)
     }
 }
 
@@ -351,6 +366,7 @@ where
     selectable: Signal<Selectable>,
     selection_follows_focus: Signal<bool>,
     selection: Signal<HashSet<Cell<Id, K>>>,
+    selection_mode: Signal<TableSelectionMode>,
     expanded_row_ids: Signal<Vec<Id>>,
     focused: Signal<Option<TableFocus<Id, K>>>,
     treegrid_label: Signal<Option<String>>,
@@ -359,9 +375,10 @@ where
     on_row_toggle: Option<Box<dyn Fn(&mut EventContext, Id, bool)>>,
 }
 
-pub enum TreeTableEvent<K> {
+pub enum TreeTableEvent<K, Id = String> {
     RequestSort(K, TableSortDirection),
     SelectColumn(K),
+    SelectCell(Id, K),
     SelectRow(usize),
     SelectFocused,
     ExpandSelected,
@@ -412,6 +429,7 @@ where
         let selectable = Signal::new(Selectable::None);
         let selection_follows_focus = Signal::new(false);
         let selection = Signal::new(HashSet::new());
+        let selection_mode = Signal::new(TableSelectionMode::Cell);
         let expanded_row_ids = Signal::new(Vec::new());
         let focused = Signal::new(None);
         let treegrid_label = Signal::new(None::<String>);
@@ -467,6 +485,7 @@ where
             selectable,
             selection_follows_focus,
             selection,
+            selection_mode,
             expanded_row_ids,
             focused,
             treegrid_label,
@@ -480,54 +499,64 @@ where
             Keymap::from(vec![
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowRight),
-                    KeymapEntry::new("Focus Right", |cx| cx.emit(TreeTableEvent::<K>::FocusRight)),
+                    KeymapEntry::new("Focus Right", |cx| {
+                        cx.emit(TreeTableEvent::<K, Id>::FocusRight)
+                    }),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
-                    KeymapEntry::new("Focus Left", |cx| cx.emit(TreeTableEvent::<K>::FocusLeft)),
+                    KeymapEntry::new("Focus Left", |cx| {
+                        cx.emit(TreeTableEvent::<K, Id>::FocusLeft)
+                    }),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowUp),
-                    KeymapEntry::new("Focus Up", |cx| cx.emit(TreeTableEvent::<K>::FocusUp)),
+                    KeymapEntry::new("Focus Up", |cx| cx.emit(TreeTableEvent::<K, Id>::FocusUp)),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowDown),
-                    KeymapEntry::new("Focus Down", |cx| cx.emit(TreeTableEvent::<K>::FocusDown)),
+                    KeymapEntry::new("Focus Down", |cx| {
+                        cx.emit(TreeTableEvent::<K, Id>::FocusDown)
+                    }),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::Home),
-                    KeymapEntry::new("Focus Home", |cx| cx.emit(TreeTableEvent::<K>::FocusHome)),
+                    KeymapEntry::new("Focus Home", |cx| {
+                        cx.emit(TreeTableEvent::<K, Id>::FocusHome)
+                    }),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::End),
-                    KeymapEntry::new("Focus End", |cx| cx.emit(TreeTableEvent::<K>::FocusEnd)),
+                    KeymapEntry::new("Focus End", |cx| cx.emit(TreeTableEvent::<K, Id>::FocusEnd)),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::PageUp),
-                    KeymapEntry::new("Focus Page Up", |cx| cx.emit(TreeTableEvent::<K>::PageUp)),
+                    KeymapEntry::new("Focus Page Up", |cx| {
+                        cx.emit(TreeTableEvent::<K, Id>::PageUp)
+                    }),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::PageDown),
                     KeymapEntry::new("Focus Page Down", |cx| {
-                        cx.emit(TreeTableEvent::<K>::PageDown)
+                        cx.emit(TreeTableEvent::<K, Id>::PageDown)
                     }),
                 ),
                 (
                     KeyChord::new(Modifiers::CTRL, Code::Home),
                     KeymapEntry::new("Focus Control Home", |cx| {
-                        cx.emit(TreeTableEvent::<K>::CtrlHome)
+                        cx.emit(TreeTableEvent::<K, Id>::CtrlHome)
                     }),
                 ),
                 (
                     KeyChord::new(Modifiers::CTRL, Code::End),
                     KeymapEntry::new("Focus Control End", |cx| {
-                        cx.emit(TreeTableEvent::<K>::CtrlEnd)
+                        cx.emit(TreeTableEvent::<K, Id>::CtrlEnd)
                     }),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::Enter),
                     KeymapEntry::new("Select Focused", |cx| {
-                        cx.emit(TreeTableEvent::<K>::SelectFocused)
+                        cx.emit(TreeTableEvent::<K, Id>::SelectFocused)
                     }),
                 ),
             ])
@@ -583,7 +612,7 @@ where
                                 .width(Stretch(1.0))
                                 .min_width(Auto)
                                 .on_press(move |cx| {
-                                    cx.emit(TreeTableEvent::<K>::SelectColumn(
+                                    cx.emit(TreeTableEvent::<K, Id>::SelectColumn(
                                         on_press_column_key.clone(),
                                     ));
                                 });
@@ -622,7 +651,7 @@ where
                                         )
                                         .min_width(min_width.map(|value| Pixels(*value)))
                                         .on_press(move |cx| {
-                                            cx.emit(TreeTableEvent::<K>::SelectColumn(
+                                            cx.emit(TreeTableEvent::<K, Id>::SelectColumn(
                                                 on_press_column_key.clone(),
                                             ));
                                         });
@@ -663,19 +692,30 @@ where
                                 let is_last_column = column_index + 1 == body_columns.len();
 
                                 let col_key = column.key.clone();
-                                let row_id = row.map(|value| value.id.clone());
+                                let _row_id = row.map(|value| value.id.clone());
+                                let cell_row_id = row.map(|value| value.id.clone());
+                                let cell_col_key = col_key.clone();
+
+                                let col_key_for_focus = col_key.clone();
+                                let row_id_for_focus = row.map(|value| value.id.clone());
                                 let cell_is_focused = focused.map(move |focused| match focused {
                                     Some(TableFocus::Cell(id, col)) => {
-                                        *col == col_key && *id == row_id.get()
+                                        *col == col_key_for_focus && *id == row_id_for_focus.get()
                                     }
                                     _ => false,
                                 });
 
-                                let col_key = column.key.clone();
-                                let row_id = row.map(|value| value.id.clone());
+                                let col_key_for_select = col_key.clone();
+                                let row_id_for_select = row.map(|value| value.id.clone());
                                 let cell_is_selected = selection.map(move |selection| {
-                                    selection.contains(&Cell(row_id.get(), col_key.clone()))
+                                    selection.contains(&Cell(
+                                        row_id_for_select.get(),
+                                        col_key_for_select.clone(),
+                                    ))
                                 });
+
+                                let cell_col_key_1 = cell_col_key.clone();
+                                let cell_col_key_2 = cell_col_key.clone();
 
                                 if is_last_column {
                                     VStack::new(cx, move |cx| {
@@ -691,7 +731,13 @@ where
                                     .width(Stretch(1.0))
                                     .min_width(Auto)
                                     .height(Stretch(1.0))
-                                    .min_height(Auto);
+                                    .min_height(Auto)
+                                    .on_press(move |cx| {
+                                        cx.emit(TreeTableEvent::<K, Id>::SelectCell(
+                                            cell_row_id.get(),
+                                            cell_col_key_1.clone(),
+                                        ));
+                                    });
                                 } else {
                                     VStack::new(cx, move |cx| {
                                         cell_content(cx, row);
@@ -706,7 +752,13 @@ where
                                     .width(width_signal)
                                     .min_width(min_width.map(|value| Pixels(*value)))
                                     .height(Stretch(1.0))
-                                    .min_height(Auto);
+                                    .min_height(Auto)
+                                    .on_press(move |cx| {
+                                        cx.emit(TreeTableEvent::<K, Id>::SelectCell(
+                                            cell_row_id.get(),
+                                            cell_col_key_2.clone(),
+                                        ));
+                                    });
                                 }
                             }
                         })
@@ -880,7 +932,7 @@ where
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|tree_event: &TreeTableEvent<K>, _| match tree_event {
+        event.map(|tree_event: &TreeTableEvent<K, Id>, _| match tree_event {
             TreeTableEvent::RequestSort(key, direction) => {
                 if let Some(callback) = &self.on_sort {
                     (callback)(cx, key.clone(), *direction);
@@ -888,6 +940,10 @@ where
             }
 
             TreeTableEvent::SelectRow(index) => {
+                if self.selectable.get() == Selectable::None {
+                    return;
+                }
+
                 let visible_rows = flatten_visible_rows(
                     &self.rows.get(),
                     &*self.row_id,
@@ -932,8 +988,75 @@ where
                 }
             }
 
+            TreeTableEvent::SelectCell(row_id, column_key) => {
+                let selectable = self.selectable.get();
+                if selectable == Selectable::None {
+                    return;
+                }
+
+                let selection_mode = self.selection_mode.get();
+
+                let next_selection = match selection_mode {
+                    TableSelectionMode::Cell => {
+                        let cell = Cell(row_id.clone(), column_key.clone());
+                        if selectable == Selectable::Single {
+                            // Single mode: replace selection, or deselect if same cell clicked again
+                            let current = self.selection.get();
+                            if current.contains(&cell) {
+                                HashSet::new()
+                            } else {
+                                HashSet::from([cell])
+                            }
+                        } else {
+                            // Multi mode: toggle the clicked cell in the set
+                            let current = self.selection.get();
+                            let mut next = current;
+                            if next.contains(&cell) {
+                                next.remove(&cell);
+                            } else {
+                                next.insert(cell);
+                            }
+                            next
+                        }
+                    }
+                    TableSelectionMode::Row => {
+                        let cols = self.columns.get();
+                        let row_cells: HashSet<Cell<Id, K>> = HashSet::from_iter(
+                            cols.iter().map(|col| Cell(row_id.clone(), col.clone())),
+                        );
+
+                        if selectable == Selectable::Single {
+                            // Single: replace with this row, or deselect if already selected
+                            let current = self.selection.get();
+                            if current == row_cells { HashSet::new() } else { row_cells }
+                        } else {
+                            // Multi: toggle this row in/out of the accumulated selection
+                            let mut next = self.selection.get();
+                            let row_selected = row_cells.iter().all(|c| next.contains(c));
+                            if row_selected {
+                                for c in &row_cells {
+                                    next.remove(c);
+                                }
+                            } else {
+                                next.extend(row_cells);
+                            }
+                            next
+                        }
+                    }
+                };
+
+                self.selection.set(next_selection.clone());
+
+                if let Some(callback) = &self.on_select {
+                    (callback)(cx, next_selection);
+                }
+            }
+
             TreeTableEvent::SelectFocused => self.focused.with(|focused| match focused {
                 Some(TableFocus::Row(id)) => {
+                    if self.selectable.get() == Selectable::None {
+                        return;
+                    }
                     let cols = self.columns.get();
                     self.selection.set(HashSet::from_iter(
                         cols.iter().map(|col| Cell(id.clone(), col.clone())),
@@ -977,7 +1100,7 @@ where
                     Some(TableFocus::Row(id)) => {
                         if let Some(row) = self.focused_visible_row() {
                             if row.has_children && !row.expanded {
-                                cx.emit(TreeTableEvent::<K>::ExpandSelected);
+                                cx.emit(TreeTableEvent::<K, Id>::ExpandSelected);
                                 return;
                             }
                         }
@@ -1276,6 +1399,11 @@ where
         flag: impl Res<U> + 'static,
     ) -> Self;
 
+    fn selection_mode<U: Into<TableSelectionMode> + Clone + 'static>(
+        self,
+        mode: impl Res<U> + 'static,
+    ) -> Self;
+
     fn treegrid_label<U: Into<Option<String>> + Clone + 'static>(
         self,
         label: impl Res<U> + 'static,
@@ -1360,6 +1488,17 @@ where
             handle.modify(|table: &mut TreeTable<T, V, Id, K>| {
                 table.selection_follows_focus.set(flag)
             });
+        })
+    }
+
+    fn selection_mode<U: Into<TableSelectionMode> + Clone + 'static>(
+        self,
+        mode: impl Res<U> + 'static,
+    ) -> Self {
+        let mode = mode.to_signal(self.cx);
+        self.bind(mode, move |handle| {
+            let mode = mode.get().into();
+            handle.modify(|table: &mut TreeTable<T, V, Id, K>| table.selection_mode.set(mode));
         })
     }
 
