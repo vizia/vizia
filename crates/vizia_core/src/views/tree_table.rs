@@ -353,12 +353,13 @@ where
     selection: Signal<HashSet<Cell<Id, K>>>,
     expanded_row_ids: Signal<Vec<Id>>,
     focused: Signal<Option<TableFocus<Id, K>>>,
+    treegrid_label: Signal<Option<String>>,
     on_sort: Option<Arc<dyn Fn(&mut EventContext, K, TableSortDirection) + Send + Sync>>,
     on_select: Option<Box<dyn Fn(&mut EventContext, HashSet<Cell<Id, K>>) + Send + Sync>>,
     on_row_toggle: Option<Box<dyn Fn(&mut EventContext, Id, bool)>>,
 }
 
-enum TreeTableEvent<K> {
+pub enum TreeTableEvent<K> {
     RequestSort(K, TableSortDirection),
     SelectRow(usize),
     SelectFocused,
@@ -367,8 +368,12 @@ enum TreeTableEvent<K> {
     FocusLeft,
     FocusUp,
     FocusDown,
+    PageUp,
+    PageDown,
     FocusHome,
     FocusEnd,
+    CtrlHome,
+    CtrlEnd,
 }
 
 impl<T, V, Id, K> TreeTable<T, V, Id, K>
@@ -408,6 +413,7 @@ where
         let selection = Signal::new(HashSet::new());
         let expanded_row_ids = Signal::new(Vec::new());
         let focused = Signal::new(None);
+        let treegrid_label = Signal::new(None::<String>);
         let visible_rows = Memo::new({
             let row_id = row_id.clone();
             let parent_id = parent_id.clone();
@@ -462,6 +468,7 @@ where
             selection,
             expanded_row_ids,
             focused,
+            treegrid_label,
             on_sort: None,
             on_select: None,
             on_row_toggle: None,
@@ -493,6 +500,28 @@ where
                 (
                     KeyChord::new(Modifiers::empty(), Code::End),
                     KeymapEntry::new("Focus End", |cx| cx.emit(TreeTableEvent::<K>::FocusEnd)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::PageUp),
+                    KeymapEntry::new("Focus Page Up", |cx| cx.emit(TreeTableEvent::<K>::PageUp)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::PageDown),
+                    KeymapEntry::new("Focus Page Down", |cx| {
+                        cx.emit(TreeTableEvent::<K>::PageDown)
+                    }),
+                ),
+                (
+                    KeyChord::new(Modifiers::CTRL, Code::Home),
+                    KeymapEntry::new("Focus Control Home", |cx| {
+                        cx.emit(TreeTableEvent::<K>::CtrlHome)
+                    }),
+                ),
+                (
+                    KeyChord::new(Modifiers::CTRL, Code::End),
+                    KeymapEntry::new("Focus Control End", |cx| {
+                        cx.emit(TreeTableEvent::<K>::CtrlEnd)
+                    }),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::Enter),
@@ -535,42 +564,22 @@ where
                         });
 
                         if is_last_column {
-                            HStack::new(cx, move |cx| {
-                                let header = header_content(cx, sort_direction);
-
-                                let column_key = column_key.clone();
-                                header.on_press(move |cx| {
-                                    if sortable.get() {
-                                        let current_direction = sort_direction_for_column(
-                                            sort_state.get().as_ref(),
-                                            &column_key,
-                                        );
-                                        let next_direction = next_sort_direction(
-                                            sort_cycle.get(),
-                                            current_direction,
-                                        );
-                                        cx.emit(TreeTableEvent::<K>::RequestSort(
-                                            column_key.clone(),
-                                            next_direction,
-                                        ));
+                            header_content(cx, sort_direction)
+                                .class("table-header-cell")
+                                .role(Role::ColumnHeader)
+                                .sort_direction(sort_direction.map(|direction| match direction {
+                                    TableSortDirection::Ascending => {
+                                        Some(AccessSortDirection::Ascending)
                                     }
-                                });
-                            })
-                            .class("table-header-cell")
-                            .role(Role::ColumnHeader)
-                            .sort_direction(sort_direction.map(|direction| match direction {
-                                TableSortDirection::Ascending => {
-                                    Some(AccessSortDirection::Ascending)
-                                }
-                                TableSortDirection::Descending => {
-                                    Some(AccessSortDirection::Descending)
-                                }
-                                TableSortDirection::None => None,
-                            }))
-                            .toggle_class("sortable", sortable)
-                            .toggle_class("resizable", false)
-                            .width(Stretch(1.0))
-                            .min_width(Auto);
+                                    TableSortDirection::Descending => {
+                                        Some(AccessSortDirection::Descending)
+                                    }
+                                    TableSortDirection::None => None,
+                                }))
+                                .toggle_class("sortable", sortable)
+                                .toggle_class("resizable", false)
+                                .width(Stretch(1.0))
+                                .min_width(Auto);
                         } else {
                             Resizable::new(
                                 cx,
@@ -582,43 +591,30 @@ where
                                     }
                                 },
                                 move |cx| {
-                                    let header = header_content(cx, sort_direction);
-
-                                    let column_key = column_key.clone();
-                                    header.on_press(move |cx| {
-                                        if sortable.get() {
-                                            let current_direction = sort_direction_for_column(
-                                                sort_state.get().as_ref(),
-                                                &column_key,
-                                            );
-                                            let next_direction = next_sort_direction(
-                                                sort_cycle.get(),
-                                                current_direction,
-                                            );
-                                            cx.emit(TreeTableEvent::<K>::RequestSort(
-                                                column_key.clone(),
-                                                next_direction,
-                                            ));
-                                        }
-                                    });
+                                    header_content(cx, sort_direction)
+                                        .class("table-header-cell")
+                                        .role(Role::ColumnHeader)
+                                        .sort_direction(sort_direction.map(|direction| {
+                                            match direction {
+                                                TableSortDirection::Ascending => {
+                                                    Some(AccessSortDirection::Ascending)
+                                                }
+                                                TableSortDirection::Descending => {
+                                                    Some(AccessSortDirection::Descending)
+                                                }
+                                                TableSortDirection::None => None,
+                                            }
+                                        }))
+                                        .toggle_class("sortable", sortable)
+                                        .toggle_class(
+                                            "resizable",
+                                            resizable_columns
+                                                .map(move |enabled| *enabled && resizable.get()),
+                                        )
+                                        .min_width(min_width.map(|value| Pixels(*value)));
                                 },
                             )
-                            .class("table-header-cell")
-                            .role(Role::ColumnHeader)
-                            .sort_direction(sort_direction.map(|direction| match direction {
-                                TableSortDirection::Ascending => {
-                                    Some(AccessSortDirection::Ascending)
-                                }
-                                TableSortDirection::Descending => {
-                                    Some(AccessSortDirection::Descending)
-                                }
-                                TableSortDirection::None => None,
-                            }))
-                            .toggle_class("sortable", sortable)
-                            .toggle_class(
-                                "resizable",
-                                resizable_columns.map(move |enabled| *enabled && resizable.get()),
-                            )
+                            .width(width_signal)
                             .min_width(min_width.map(|value| Pixels(*value)));
                         }
                     }
@@ -763,6 +759,7 @@ where
         .class("table")
         .class("tree-table")
         .navigable(true)
+        .name(treegrid_label.map(|label| label.clone().unwrap_or_else(|| "Tree table".to_string())))
         .multiselectable(selectable.map(|mode| *mode == Selectable::Multi))
         .role(Role::TreeGrid);
 
@@ -1035,6 +1032,94 @@ where
                 }
             }
 
+            TreeTableEvent::PageUp => {
+                let page_size = self.visible_rows.with(|rows| rows.len().saturating_div(2).max(1));
+                let next_focus = self.focused.with(|focused| {
+                    self.visible_rows.with(|rows| {
+                        let current_index = focused.as_ref().and_then(|focused| match focused {
+                            TableFocus::Row(id) | TableFocus::Cell(id, _) => {
+                                rows.iter().position(|row| row.id == id.clone())
+                            }
+                        });
+
+                        current_index.and_then(|index| {
+                            let next_index = index.saturating_sub(page_size);
+                            rows.get(next_index).map(|row| match focused.as_ref() {
+                                Some(TableFocus::Cell(_, col)) => {
+                                    TableFocus::Cell(row.id.clone(), col.clone())
+                                }
+                                _ => TableFocus::Row(row.id.clone()),
+                            })
+                        })
+                    })
+                });
+
+                if next_focus.is_some() {
+                    self.focused.set(next_focus);
+                }
+            }
+
+            TreeTableEvent::PageDown => {
+                let page_size = self.visible_rows.with(|rows| rows.len().saturating_div(2).max(1));
+                let next_focus = self.focused.with(|focused| {
+                    self.visible_rows.with(|rows| {
+                        let current_index = focused.as_ref().and_then(|focused| match focused {
+                            TableFocus::Row(id) | TableFocus::Cell(id, _) => {
+                                rows.iter().position(|row| row.id == id.clone())
+                            }
+                        });
+
+                        current_index.and_then(|index| {
+                            let next_index = (index + page_size).min(rows.len().saturating_sub(1));
+                            rows.get(next_index).map(|row| match focused.as_ref() {
+                                Some(TableFocus::Cell(_, col)) => {
+                                    TableFocus::Cell(row.id.clone(), col.clone())
+                                }
+                                _ => TableFocus::Row(row.id.clone()),
+                            })
+                        })
+                    })
+                });
+
+                if next_focus.is_some() {
+                    self.focused.set(next_focus);
+                }
+            }
+
+            TreeTableEvent::CtrlHome => {
+                let next_focus = self.focused.with(|focused| {
+                    self.visible_rows.with(|rows| {
+                        rows.first().map(|row| match focused {
+                            Some(TableFocus::Cell(_, col)) => {
+                                TableFocus::Cell(row.id.clone(), col.clone())
+                            }
+                            _ => TableFocus::Row(row.id.clone()),
+                        })
+                    })
+                });
+
+                if next_focus.is_some() {
+                    self.focused.set(next_focus);
+                }
+            }
+
+            TreeTableEvent::CtrlEnd => {
+                let next_focus = self.focused.with(|focused| {
+                    self.visible_rows.with(|rows| {
+                        rows.last().map(|row| match focused {
+                            Some(TableFocus::Cell(_, col)) => {
+                                TableFocus::Cell(row.id.clone(), col.clone())
+                            }
+                            _ => TableFocus::Row(row.id.clone()),
+                        })
+                    })
+                });
+
+                if next_focus.is_some() {
+                    self.focused.set(next_focus);
+                }
+            }
+
             TreeTableEvent::FocusUp => {
                 // Move focus to the previous row, keeping the same column if possible.
                 let next_focus = self.focused.with(|focused| match focused {
@@ -1085,6 +1170,20 @@ where
             let TreeTableFirstCellEvent::Toggle(id, next) = cell_event;
             self.emit_toggle(cx, id.clone(), *next);
         });
+
+        event.map(|tree_event: &TableEvent<K>, _| match tree_event {
+            TableEvent::ToggleSort(col) => {
+                if let Some(callback) = &self.on_sort {
+                    let current_direction =
+                        sort_direction_for_column(self.sort_state.get().as_ref(), col);
+                    let next_direction =
+                        next_sort_direction(self.sort_cycle.get(), current_direction);
+                    (callback)(cx, col.clone(), next_direction);
+                }
+            }
+
+            _ => {}
+        });
     }
 }
 
@@ -1113,6 +1212,11 @@ where
     fn selection_follows_focus<U: Into<bool> + Clone + 'static>(
         self,
         flag: impl Res<U> + 'static,
+    ) -> Self;
+
+    fn treegrid_label<U: Into<Option<String>> + Clone + 'static>(
+        self,
+        label: impl Res<U> + 'static,
     ) -> Self;
 
     fn selection<R>(self, selection: impl Res<R> + 'static) -> Self
@@ -1194,6 +1298,17 @@ where
             handle.modify(|table: &mut TreeTable<T, V, Id, K>| {
                 table.selection_follows_focus.set(flag)
             });
+        })
+    }
+
+    fn treegrid_label<U: Into<Option<String>> + Clone + 'static>(
+        self,
+        label: impl Res<U> + 'static,
+    ) -> Self {
+        let label = label.to_signal(self.cx);
+        self.bind(label, move |handle| {
+            let label = label.get().into();
+            handle.modify(|table: &mut TreeTable<T, V, Id, K>| table.treegrid_label.set(label));
         })
     }
 
