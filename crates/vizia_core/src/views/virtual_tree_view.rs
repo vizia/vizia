@@ -137,8 +137,8 @@ enum VirtualTreeViewEvent<Id> {
     FocusRow(Id),
     SelectFocused,
     ToggleCheckedFocused,
-    ExpandSelected,
-    CollapseSelected,
+    ExpandFocused,
+    CollapseFocused,
     ToggleRow(Id, bool),
 }
 
@@ -274,14 +274,14 @@ where
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowRight),
-                    KeymapEntry::new("Expand Selected", |cx| {
-                        cx.emit(VirtualTreeViewEvent::<Id>::ExpandSelected)
+                    KeymapEntry::new("Expand Focused", |cx| {
+                        cx.emit(VirtualTreeViewEvent::<Id>::ExpandFocused)
                     }),
                 ),
                 (
                     KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
-                    KeymapEntry::new("Collapse Selected", |cx| {
-                        cx.emit(VirtualTreeViewEvent::<Id>::CollapseSelected)
+                    KeymapEntry::new("Collapse Focused", |cx| {
+                        cx.emit(VirtualTreeViewEvent::<Id>::CollapseFocused)
                     }),
                 ),
             ])
@@ -372,7 +372,7 @@ where
                     .toggle_class("expanded", row.map(|value| value.expanded))
                     .toggle_class("collapsible", row.map(|value| value.has_children))
                     .alignment(Alignment::Left)
-                    .height(Percentage(100.0))
+                    .height(Auto)
                     .width(Stretch(1.0))
                     .min_width(Auto)
                     .role(Role::TreeItem)
@@ -419,7 +419,7 @@ where
 
             list_entity.set(list.entity());
         })
-        .navigable(true);
+        .navigable(false);
 
         let flatten_rows_for_bind = flatten_rows.clone();
         handle.bind(tree_signal, move |handle| {
@@ -569,7 +569,7 @@ where
                 }
             }
 
-            VirtualTreeViewEvent::ExpandSelected => {
+            VirtualTreeViewEvent::ExpandFocused => {
                 if let Some(row) = self.focused_or_selected_visible_row() {
                     if row.has_children && !row.expanded {
                         self.emit_toggle(cx, row.id, true);
@@ -587,7 +587,7 @@ where
                 }
             }
 
-            VirtualTreeViewEvent::CollapseSelected => {
+            VirtualTreeViewEvent::CollapseFocused => {
                 if let Some(row) = self.focused_or_selected_visible_row() {
                     if row.has_children && row.expanded {
                         self.emit_toggle(cx, row.id, false);
