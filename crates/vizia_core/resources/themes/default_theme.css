@@ -758,7 +758,8 @@ virtual-tree-table .tree-table-disclosure-placeholder {
     height: 20px;
 }
 
-tree-table divider > .divider-line {
+tree-table divider > .divider-line,
+virtual-tree-table divider > .divider-line {
     height: 1px;
     width: 1s;
     background-color: var(--border);
