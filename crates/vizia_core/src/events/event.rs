@@ -23,6 +23,14 @@ pub struct Event {
     /// The meta data of the event
     pub(crate) meta: EventMeta,
     /// The message of the event
+    pub(crate) message: Option<Box<dyn Any>>,
+}
+
+/// A sendable event payload used by context proxies to forward events from non-UI threads.
+pub struct ProxyEvent {
+    /// The meta data of the event
+    pub(crate) meta: EventMeta,
+    /// The sendable message payload
     pub(crate) message: Option<Box<dyn Any + Send>>,
 }
 
@@ -32,11 +40,17 @@ impl Debug for Event {
     }
 }
 
+impl Debug for ProxyEvent {
+    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Ok(())
+    }
+}
+
 impl Event {
     /// Creates a new event with a specified message.
     pub fn new<M>(message: M) -> Self
     where
-        M: Any + Send,
+        M: Any,
     {
         Event { meta: Default::default(), message: Some(Box::new(message)) }
     }
@@ -102,7 +116,7 @@ impl Event {
     /// ```
     pub fn map<M, F>(&mut self, f: F)
     where
-        M: Any + Send,
+        M: Any,
         F: FnOnce(&M, &mut EventMeta),
     {
         if let Some(message) = &self.message {
@@ -141,7 +155,7 @@ impl Event {
     /// #     }
     /// # }
     /// ```
-    pub fn take<M: Any + Send, F>(&mut self, f: F)
+    pub fn take<M: Any, F>(&mut self, f: F)
     where
         F: FnOnce(M, &mut EventMeta),
     {
@@ -155,6 +169,39 @@ impl Event {
                 (f)(*v, &mut self.meta);
             }
         }
+    }
+}
+
+impl ProxyEvent {
+    /// Creates a new proxy event with a sendable message.
+    pub fn new<M>(message: M) -> Self
+    where
+        M: Any + Send,
+    {
+        ProxyEvent { meta: Default::default(), message: Some(Box::new(message)) }
+    }
+
+    /// Sets the target of the event.
+    pub fn target(mut self, entity: Entity) -> Self {
+        self.meta.target = entity;
+        self
+    }
+
+    /// Sets the origin of the event.
+    pub fn origin(mut self, entity: Entity) -> Self {
+        self.meta.origin = entity;
+        self
+    }
+
+    /// Sets the propagation of the event.
+    pub fn propagate(mut self, propagation: Propagation) -> Self {
+        self.meta.propagation = propagation;
+        self
+    }
+
+    /// Converts a proxy event into a normal event on the UI thread.
+    pub fn into_event(self) -> Event {
+        Event { meta: self.meta, message: self.message.map(|message| message as Box<dyn Any>) }
     }
 }
 

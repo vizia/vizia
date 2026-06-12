@@ -236,7 +236,7 @@ impl BackendContext {
         layout_system(&mut self.0);
     }
 
-    pub fn emit_origin<M: Send + Any>(&mut self, message: M) {
+    pub fn emit_origin<M: Any>(&mut self, message: M) {
         self.0.event_queue.push_back(
             Event::new(message)
                 .target(self.0.current)
@@ -245,7 +245,7 @@ impl BackendContext {
         );
     }
 
-    pub fn emit_window_event<M: Send + Any>(&mut self, window_entity: Entity, message: M) {
+    pub fn emit_window_event<M: Any>(&mut self, window_entity: Entity, message: M) {
         self.0.event_queue.push_back(
             Event::new(message)
                 .target(window_entity)

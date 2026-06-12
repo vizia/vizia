@@ -4,6 +4,7 @@ use std::sync::Mutex;
 
 use super::InternalEvent;
 
+use crate::events::ProxyEvent;
 use crate::prelude::*;
 
 /// A bundle of data representing a snapshot of the context when a thread was spawned.
@@ -44,7 +45,7 @@ impl std::error::Error for ProxyEmitError {}
 impl ContextProxy {
     pub fn emit<M: Any + Send>(&mut self, message: M) -> Result<(), ProxyEmitError> {
         if let Some(proxy) = &self.event_proxy {
-            let event = Event::new(message)
+            let event = ProxyEvent::new(message)
                 .target(self.current)
                 .origin(self.current)
                 .propagate(Propagation::Up);
@@ -61,7 +62,7 @@ impl ContextProxy {
         message: M,
     ) -> Result<(), ProxyEmitError> {
         if let Some(proxy) = &self.event_proxy {
-            let event = Event::new(message)
+            let event = ProxyEvent::new(message)
                 .target(target)
                 .origin(self.current)
                 .propagate(Propagation::Direct);
@@ -109,6 +110,6 @@ impl Clone for ContextProxy {
 
 pub trait EventProxy: Send {
     #[allow(clippy::result_unit_err)]
-    fn send(&self, event: Event) -> Result<(), ()>;
+    fn send(&self, event: ProxyEvent) -> Result<(), ()>;
     fn make_clone(&self) -> Box<dyn EventProxy>;
 }
