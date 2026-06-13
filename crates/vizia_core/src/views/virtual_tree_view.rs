@@ -382,7 +382,7 @@ where
                     .size_of_set(size_of_set)
                     .position_in_set(position_in_set)
                     .on_mouse_down(move |cx, button| {
-                        if button == MouseButton::Left {
+                        if button == MouseButton::Left && cx.hovered() == cx.current() {
                             cx.emit(ListEvent::Select(row_index));
                         }
                     });
