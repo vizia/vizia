@@ -802,11 +802,11 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
         }
         "Table" => {
             let rows = Signal::new(vec![PreviewTableRow { id: 1, name: "Button".to_string() }]);
-            let columns: Signal<Vec<TableColumn<PreviewTableRow, TableHeader>>> =
+            let columns: Signal<Vec<TableColumn<PreviewTableRow, TableHeader<String>>>> =
                 Signal::new(vec![
                     TableColumn::new(
                         "name",
-                        |cx, sort_dir| TableHeader::new(cx, "Name", sort_dir),
+                        |cx, sort_dir| TableHeader::new(cx, "name", "Name", sort_dir),
                         |cx, row| {
                             let text = row.map(|r: &PreviewTableRow| r.name.clone());
                             Label::new(cx, text);
@@ -817,6 +817,56 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
             Table::new(cx, rows, columns, |row: &PreviewTableRow| row.id)
                 .width(Stretch(1.0))
                 .height(Pixels(120.0));
+        }
+        "TreeTable" => {
+            #[derive(Clone, PartialEq)]
+            struct PreviewTreeRow {
+                id: u32,
+                parent_id: Option<u32>,
+                name: String,
+            }
+
+            let rows = Signal::new(vec![
+                PreviewTreeRow { id: 1, parent_id: None, name: "Data".to_string() },
+                PreviewTreeRow { id: 2, parent_id: Some(1), name: "Table".to_string() },
+                PreviewTreeRow { id: 3, parent_id: Some(1), name: "List".to_string() },
+            ]);
+            let columns: Signal<Vec<TreeTableColumn<PreviewTreeRow, u32, TableHeader<String>>>> =
+                Signal::new(vec![
+                    TreeTableColumn::new(
+                        "name",
+                        |cx, sort_dir| TableHeader::new(cx, "name", "Name", sort_dir),
+                        |cx, row| {
+                            let text =
+                                row.map(|r: &TreeTableRow<PreviewTreeRow, u32>| r.row.name.clone());
+                            Label::new(cx, text);
+                        },
+                    )
+                    .width(Pixels(180.0)),
+                ]);
+            let expanded = Signal::new(vec![1u32]);
+
+            TreeTable::from_rows(
+                cx,
+                rows,
+                columns,
+                |row: &PreviewTreeRow| row.id,
+                |row: &PreviewTreeRow| row.parent_id,
+            )
+            .expanded_row_ids(expanded)
+            .on_row_toggle(move |_cx, id, is_open| {
+                expanded.update(|rows| {
+                    if is_open {
+                        if !rows.contains(&id) {
+                            rows.push(id);
+                        }
+                    } else {
+                        rows.retain(|current| *current != id);
+                    }
+                });
+            })
+            .width(Stretch(1.0))
+            .height(Pixels(120.0));
         }
         "Tabview" => {
             let tabs = Signal::new(vec!["Tab1", "Tab2"]);
@@ -877,11 +927,11 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
                     .map(|id| PreviewTableRow { id, name: format!("Widget {}", id) })
                     .collect::<Vec<_>>(),
             );
-            let columns: Signal<Vec<TableColumn<PreviewTableRow, TableHeader>>> =
+            let columns: Signal<Vec<TableColumn<PreviewTableRow, TableHeader<String>>>> =
                 Signal::new(vec![
                     TableColumn::new(
                         "name",
-                        |cx, sort_dir| TableHeader::new(cx, "Name", sort_dir),
+                        |cx, sort_dir| TableHeader::new(cx, "name", "Name", sort_dir),
                         |cx, row| {
                             let text = row.map(|r: &PreviewTableRow| r.name.clone());
                             Label::new(cx, text);
@@ -966,6 +1016,7 @@ fn render_view_page(cx: &mut Context, view_name: &'static str) {
         "Svg" => svg(cx),
         "Switch" => switch(cx),
         "Table" => table(cx),
+        "TreeTable" => tree_table(cx),
         "Tabview" => tabview(cx),
         "Textbox" => textbox(cx),
         "ToggleButton" => toggle_button(cx),

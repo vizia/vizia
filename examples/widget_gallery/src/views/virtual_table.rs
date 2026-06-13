@@ -42,10 +42,10 @@ pub fn virtual_table(cx: &mut Context) {
         r
     });
 
-    let columns: Signal<Vec<TableColumn<VTableRow, TableHeader>>> = Signal::new(vec![
+    let columns: Signal<Vec<TableColumn<VTableRow, TableHeader<String>>>> = Signal::new(vec![
         TableColumn::new(
             "name",
-            |cx, sort_dir| TableHeader::new(cx, "Name", sort_dir),
+            |cx, sort_dir| TableHeader::new(cx, "name", "Name", sort_dir),
             |cx, row| {
                 let text = row.map(|r: &VTableRow| r.name.clone());
                 Label::new(cx, text).class("table-cell-text");
@@ -56,7 +56,7 @@ pub fn virtual_table(cx: &mut Context) {
         .resizable(true),
         TableColumn::new(
             "category",
-            |cx, sort_dir| TableHeader::new(cx, "Category", sort_dir),
+            |cx, sort_dir| TableHeader::new(cx, "category", "Category", sort_dir),
             |cx, row| {
                 let text = row.map(|r: &VTableRow| r.category.clone());
                 Label::new(cx, text).class("table-cell-text");
@@ -67,7 +67,7 @@ pub fn virtual_table(cx: &mut Context) {
         .resizable(true),
         TableColumn::new(
             "notes",
-            |cx, sort_dir| TableHeader::new(cx, "Notes", sort_dir),
+            |cx, sort_dir| TableHeader::new(cx, "notes", "Notes", sort_dir),
             |cx, row| {
                 let text = row.map(|r: &VTableRow| r.notes.clone());
                 Label::new(cx, text).class("table-cell-text").text_wrap(true);
