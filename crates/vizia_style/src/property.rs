@@ -239,6 +239,36 @@ mod tests {
     }
 
     #[test]
+    fn parse_background_position_property_rejects_empty_value() {
+        let mut parser_input = ParserInput::new("");
+        let mut parser = Parser::new(&mut parser_input);
+        let parsed_property =
+            Property::parse_value(CowRcStr::from("background-position"), &mut parser)
+                .expect("Property parsing should fall back to Unparsed");
+
+        assert!(!matches!(parsed_property, Property::BackgroundPosition(_)));
+    }
+
+    #[test]
+    fn parse_background_repeat_property() {
+        let mut parser_input = ParserInput::new("repeat-x, no-repeat");
+        let mut parser = Parser::new(&mut parser_input);
+        let parsed_property =
+            Property::parse_value(CowRcStr::from("background-repeat"), &mut parser)
+                .expect("Failed to parse background-repeat");
+
+        match parsed_property {
+            Property::BackgroundRepeat(repeats) => {
+                assert_eq!(repeats.len(), 2);
+                assert_eq!(repeats[0], BackgroundRepeat::RepeatX);
+                assert_eq!(repeats[1], BackgroundRepeat::NoRepeat);
+            }
+
+            _ => panic!("background-repeat parsed to wrong property"),
+        }
+    }
+
+    #[test]
     fn parse_filter_property() {
         let mut parser_input = ParserInput::new("blur(5px)");
         let mut parser = Parser::new(&mut parser_input);

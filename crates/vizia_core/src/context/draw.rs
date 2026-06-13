@@ -1113,14 +1113,16 @@ impl DrawContext<'_> {
                                                 .or_else(|| image_positions.last().cloned())
                                                 .unwrap_or_default();
 
-                                            let posx = position
-                                                .x
-                                                .to_length_or_percentage()
-                                                .to_pixels(bounds.width() - width, self.scale_factor());
-                                            let posy = position
-                                                .y
-                                                .to_length_or_percentage()
-                                                .to_pixels(bounds.height() - height, self.scale_factor());
+                                            let posx =
+                                                position.x.to_length_or_percentage().to_pixels(
+                                                    bounds.width() - width,
+                                                    self.scale_factor(),
+                                                );
+                                            let posy =
+                                                position.y.to_length_or_percentage().to_pixels(
+                                                    bounds.height() - height,
+                                                    self.scale_factor(),
+                                                );
                                             let repeat = image_repeats
                                                 .get(index)
                                                 .copied()
@@ -1140,14 +1142,28 @@ impl DrawContext<'_> {
                                             let mut start_x = origin_x;
                                             let mut start_y = origin_y;
 
-                                            if matches!(repeat, BackgroundRepeat::Repeat | BackgroundRepeat::RepeatX) {
-                                                while start_x > bounds.left() {
+                                            if matches!(
+                                                repeat,
+                                                BackgroundRepeat::Repeat
+                                                    | BackgroundRepeat::RepeatX
+                                            ) {
+                                                let tiles_to_left =
+                                                    ((bounds.left() - origin_x) / width).floor();
+                                                start_x = origin_x + tiles_to_left * width;
+                                                if start_x > bounds.left() {
                                                     start_x -= width;
                                                 }
                                             }
 
-                                            if matches!(repeat, BackgroundRepeat::Repeat | BackgroundRepeat::RepeatY) {
-                                                while start_y > bounds.top() {
+                                            if matches!(
+                                                repeat,
+                                                BackgroundRepeat::Repeat
+                                                    | BackgroundRepeat::RepeatY
+                                            ) {
+                                                let tiles_to_top =
+                                                    ((bounds.top() - origin_y) / height).floor();
+                                                start_y = origin_y + tiles_to_top * height;
+                                                if start_y > bounds.top() {
                                                     start_y -= height;
                                                 }
                                             }
@@ -1181,13 +1197,14 @@ impl DrawContext<'_> {
                                                             x + width,
                                                             origin_y + height,
                                                         );
-                                                        canvas.draw_image_rect_with_sampling_options(
-                                                            image,
-                                                            None,
-                                                            dst,
-                                                            SamplingOptions::default(),
-                                                            &paint,
-                                                        );
+                                                        canvas
+                                                            .draw_image_rect_with_sampling_options(
+                                                                image,
+                                                                None,
+                                                                dst,
+                                                                SamplingOptions::default(),
+                                                                &paint,
+                                                            );
                                                         x += width;
                                                     }
                                                 }
@@ -1201,13 +1218,14 @@ impl DrawContext<'_> {
                                                             origin_x + width,
                                                             y + height,
                                                         );
-                                                        canvas.draw_image_rect_with_sampling_options(
-                                                            image,
-                                                            None,
-                                                            dst,
-                                                            SamplingOptions::default(),
-                                                            &paint,
-                                                        );
+                                                        canvas
+                                                            .draw_image_rect_with_sampling_options(
+                                                                image,
+                                                                None,
+                                                                dst,
+                                                                SamplingOptions::default(),
+                                                                &paint,
+                                                            );
                                                         y += height;
                                                     }
                                                 }
@@ -1217,7 +1235,12 @@ impl DrawContext<'_> {
                                                     while y < bounds.bottom() {
                                                         let mut x = start_x;
                                                         while x < bounds.right() {
-                                                            let dst = Rect::new(x, y, x + width, y + height);
+                                                            let dst = Rect::new(
+                                                                x,
+                                                                y,
+                                                                x + width,
+                                                                y + height,
+                                                            );
                                                             canvas.draw_image_rect_with_sampling_options(
                                                                 image,
                                                                 None,

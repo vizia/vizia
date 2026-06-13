@@ -1,9 +1,9 @@
 use morphorm::Units;
 use vizia_style::{
-    Angle, BackgroundRepeat, BackgroundSize, ClipPath, Color, ColorStop, Display, Filter,
-    FontSize, Gradient, Length, LengthOrPercentage, LengthPercentageOrAuto, LengthValue,
-    LetterSpacing, LineDirection, LineHeight, LinearGradient, Opacity, PercentageOrNumber,
-    Position, RGBA, Rect, Scale, Shadow, Transform, Translate,
+    Angle, BackgroundRepeat, BackgroundSize, ClipPath, Color, ColorStop, Display, Filter, FontSize,
+    Gradient, Length, LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LetterSpacing,
+    LineDirection, LineHeight, LinearGradient, Opacity, PercentageOrNumber, Position, RGBA, Rect,
+    Scale, Shadow, Transform, Translate,
 };
 
 use skia_safe::Matrix;
@@ -259,7 +259,38 @@ impl Interpolator for BackgroundRepeat {
 
 impl Interpolator for Position {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        if t < 0.5 { start.clone() } else { end.clone() }
+        fn interpolate_axis<T: Copy + Into<LengthOrPercentage>>(
+            start: &vizia_style::PositionComponent<T>,
+            end: &vizia_style::PositionComponent<T>,
+            t: f32,
+        ) -> vizia_style::PositionComponent<T> {
+            let start_value = start.to_length_or_percentage();
+            let end_value = end.to_length_or_percentage();
+
+            match (&start_value, &end_value) {
+                (LengthOrPercentage::Length(_), LengthOrPercentage::Length(_))
+                | (LengthOrPercentage::Percentage(_), LengthOrPercentage::Percentage(_)) => {
+                    vizia_style::PositionComponent::Length(LengthOrPercentage::interpolate(
+                        &start_value,
+                        &end_value,
+                        t,
+                    ))
+                }
+
+                _ => {
+                    if t < 0.5 {
+                        start.clone()
+                    } else {
+                        end.clone()
+                    }
+                }
+            }
+        }
+
+        Position {
+            x: interpolate_axis(&start.x, &end.x, t),
+            y: interpolate_axis(&start.y, &end.y, t),
+        }
     }
 }
 
