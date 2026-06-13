@@ -482,6 +482,16 @@ impl DrawContext<'_> {
         self.style.background_size.get(self.current).cloned().unwrap_or_default()
     }
 
+    /// Returns a list of background positions for the current view.
+    pub fn background_position(&self) -> Vec<Position> {
+        self.style.background_position.get(self.current).cloned().unwrap_or_default()
+    }
+
+    /// Returns a list of background repeat modes for the current view.
+    pub fn background_repeat(&self) -> Vec<BackgroundRepeat> {
+        self.style.background_repeat.get(self.current).cloned().unwrap_or_default()
+    }
+
     pub fn path(&mut self) -> Path {
         if self.cache.path.get(self.current).is_none() {
             self.cache.path.insert(self.current, self.build_path(self.bounds(), (0.0, 0.0)));
@@ -820,6 +830,8 @@ impl DrawContext<'_> {
             let path = self.path();
             if let Some(images) = self.background_images() {
                 let image_sizes = self.background_size();
+                let image_positions = self.background_position();
+                let image_repeats = self.background_repeat();
 
                 for (index, image) in images.iter().enumerate() {
                     match image {
@@ -1095,35 +1107,155 @@ impl DrawContext<'_> {
                                                 (image_width as f32, image_height as f32)
                                             };
 
-                                            let posx = bounds.width() - width;
-                                            let posy = bounds.height() - height;
+                                            let position = image_positions
+                                                .get(index)
+                                                .cloned()
+                                                .or_else(|| image_positions.last().cloned())
+                                                .unwrap_or_default();
 
-                                            let matrix = Matrix::rect_2_rect(
-                                                Rect::new(
-                                                    0.0,
-                                                    0.0,
-                                                    image.width() as f32,
-                                                    image.height() as f32,
-                                                ),
-                                                Rect::new(
-                                                    bounds.left() + posx,
-                                                    bounds.top() + posy,
-                                                    bounds.left() + width,
-                                                    bounds.top() + height,
-                                                ),
-                                                None,
-                                            )
-                                            .unwrap_or_else(Matrix::new_identity);
+                                            let posx =
+                                                position.x.to_length_or_percentage().to_pixels(
+                                                    bounds.width() - width,
+                                                    self.scale_factor(),
+                                                );
+                                            let posy =
+                                                position.y.to_length_or_percentage().to_pixels(
+                                                    bounds.height() - height,
+                                                    self.scale_factor(),
+                                                );
+                                            let repeat = image_repeats
+                                                .get(index)
+                                                .copied()
+                                                .or_else(|| image_repeats.last().copied())
+                                                .unwrap_or(BackgroundRepeat::Repeat);
+
+                                            if width <= 0.0 || height <= 0.0 {
+                                                continue;
+                                            }
 
                                             let mut paint = Paint::default();
                                             paint.set_anti_alias(true);
-                                            paint.set_shader(image.to_shader(
-                                                (TileMode::Repeat, TileMode::Repeat),
-                                                SamplingOptions::default(),
-                                                &matrix,
-                                            ));
 
-                                            canvas.draw_path(&path, &paint);
+                                            let origin_x = bounds.left() + posx;
+                                            let origin_y = bounds.top() + posy;
+
+                                            let mut start_x = origin_x;
+                                            let mut start_y = origin_y;
+
+                                            if matches!(
+                                                repeat,
+                                                BackgroundRepeat::Repeat
+                                                    | BackgroundRepeat::RepeatX
+                                            ) {
+                                                let tiles_to_left =
+                                                    ((bounds.left() - origin_x) / width).floor();
+                                                start_x = origin_x + tiles_to_left * width;
+                                                if start_x > bounds.left() {
+                                                    start_x -= width;
+                                                }
+                                            }
+
+                                            if matches!(
+                                                repeat,
+                                                BackgroundRepeat::Repeat
+                                                    | BackgroundRepeat::RepeatY
+                                            ) {
+                                                let tiles_to_top =
+                                                    ((bounds.top() - origin_y) / height).floor();
+                                                start_y = origin_y + tiles_to_top * height;
+                                                if start_y > bounds.top() {
+                                                    start_y -= height;
+                                                }
+                                            }
+
+                                            canvas.save();
+                                            canvas.clip_path(&path, ClipOp::Intersect, true);
+
+                                            match repeat {
+                                                BackgroundRepeat::NoRepeat => {
+                                                    let dst = Rect::new(
+                                                        origin_x,
+                                                        origin_y,
+                                                        origin_x + width,
+                                                        origin_y + height,
+                                                    );
+                                                    canvas.draw_image_rect_with_sampling_options(
+                                                        image,
+                                                        None,
+                                                        dst,
+                                                        SamplingOptions::default(),
+                                                        &paint,
+                                                    );
+                                                }
+
+                                                BackgroundRepeat::RepeatX => {
+                                                    let mut x = start_x;
+                                                    while x < bounds.right() {
+                                                        let dst = Rect::new(
+                                                            x,
+                                                            origin_y,
+                                                            x + width,
+                                                            origin_y + height,
+                                                        );
+                                                        canvas
+                                                            .draw_image_rect_with_sampling_options(
+                                                                image,
+                                                                None,
+                                                                dst,
+                                                                SamplingOptions::default(),
+                                                                &paint,
+                                                            );
+                                                        x += width;
+                                                    }
+                                                }
+
+                                                BackgroundRepeat::RepeatY => {
+                                                    let mut y = start_y;
+                                                    while y < bounds.bottom() {
+                                                        let dst = Rect::new(
+                                                            origin_x,
+                                                            y,
+                                                            origin_x + width,
+                                                            y + height,
+                                                        );
+                                                        canvas
+                                                            .draw_image_rect_with_sampling_options(
+                                                                image,
+                                                                None,
+                                                                dst,
+                                                                SamplingOptions::default(),
+                                                                &paint,
+                                                            );
+                                                        y += height;
+                                                    }
+                                                }
+
+                                                BackgroundRepeat::Repeat => {
+                                                    let mut y = start_y;
+                                                    while y < bounds.bottom() {
+                                                        let mut x = start_x;
+                                                        while x < bounds.right() {
+                                                            let dst = Rect::new(
+                                                                x,
+                                                                y,
+                                                                x + width,
+                                                                y + height,
+                                                            );
+                                                            canvas.draw_image_rect_with_sampling_options(
+                                                                image,
+                                                                None,
+                                                                dst,
+                                                                SamplingOptions::default(),
+                                                                &paint,
+                                                            );
+                                                            x += width;
+                                                        }
+                                                        y += height;
+                                                    }
+                                                }
+                                            }
+
+                                            canvas.restore();
                                         }
 
                                         ImageOrSvg::Svg(svg) => {

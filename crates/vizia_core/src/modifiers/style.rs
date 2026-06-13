@@ -445,9 +445,23 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     modifier!(
+        /// Sets the background position of the view.
+        background_position,
+        Vec<Position>,
+        SystemFlags::REDRAW
+    );
+
+    modifier!(
         /// Sets the background size of the view.
         background_size,
         Vec<BackgroundSize>,
+        SystemFlags::REDRAW
+    );
+
+    modifier!(
+        /// Sets the background repeat mode of the view.
+        background_repeat,
+        Vec<BackgroundRepeat>,
         SystemFlags::REDRAW
     );
 
