@@ -786,7 +786,7 @@ virtual-tree-view {
 
 tree-view .tree-view-body,
 virtual-tree-view .tree-view-body {
-    background-color: var(--background);
+    background-color: transparent;
 }
 
 tree-view .tree-view-row,
@@ -794,6 +794,12 @@ virtual-tree-view .tree-view-row {
     padding-top: 6px;
     padding-bottom: 6px;
     min-height: 30px;
+}
+
+.tree-view-row:focus-visible {
+    outline-color: var(--ring);
+    outline-width: 2px;
+    outline-offset: -2px;
 }
 
 tree-view .tree-view-row.odd,
