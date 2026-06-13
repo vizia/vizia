@@ -72,9 +72,9 @@ use crate::prelude::*;
 use crate::storage::animatable_var_set::AnimatableVarSet;
 
 pub use vizia_style::{
-    Alignment, Angle, BackgroundImage, BackgroundSize, BorderStyleKeyword, ClipPath, Color,
-    CornerShape, CssRule, CursorIcon, Direction, Display, Filter, FontFamily, FontSize,
-    FontSizeKeyword, FontSlant, FontVariation, FontWeight, FontWeightKeyword, FontWidth,
+    Alignment, Angle, BackgroundImage, BackgroundRepeat, BackgroundSize, BorderStyleKeyword,
+    ClipPath, Color, CornerShape, CssRule, CursorIcon, Direction, Display, Filter, FontFamily,
+    FontSize, FontSizeKeyword, FontSlant, FontVariation, FontWeight, FontWeightKeyword, FontWidth,
     GenericFontFamily, Gradient, HorizontalPosition, HorizontalPositionKeyword, LayoutWrap, Length,
     LengthOrPercentage, LengthValue, LetterSpacing, LineClamp, LineDirection, LineHeight,
     LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position, PositionType, RGBA, Scale,
@@ -295,6 +295,8 @@ pub struct Style {
     // Background
     pub(crate) background_color: AnimatableVarSet<Color>,
     pub(crate) background_image: AnimatableSet<Vec<ImageOrGradient>>,
+    pub(crate) background_position: AnimatableSet<Vec<Position>>,
+    pub(crate) background_repeat: AnimatableSet<Vec<BackgroundRepeat>>,
     pub(crate) background_size: AnimatableSet<Vec<BackgroundSize>>,
 
     // Shadow
@@ -600,8 +602,21 @@ impl Style {
                     insert_keyframe(&mut self.background_image, animation_id, time, images);
                 }
 
+                Property::BackgroundPosition(value) => {
+                    insert_keyframe(
+                        &mut self.background_position,
+                        animation_id,
+                        time,
+                        value.clone(),
+                    );
+                }
+
                 Property::BackgroundSize(value) => {
                     insert_keyframe(&mut self.background_size, animation_id, time, value.clone());
+                }
+
+                Property::BackgroundRepeat(value) => {
+                    insert_keyframe(&mut self.background_repeat, animation_id, time, value.clone());
                 }
 
                 // BOX SHADOW
@@ -810,6 +825,8 @@ impl Style {
 
         self.background_color.play_animation(entity, animation, start_time, duration, delay);
         self.background_image.play_animation(entity, animation, start_time, duration, delay);
+        self.background_position.play_animation(entity, animation, start_time, duration, delay);
+        self.background_repeat.play_animation(entity, animation, start_time, duration, delay);
         self.background_size.play_animation(entity, animation, start_time, duration, delay);
 
         self.shadow.play_animation(entity, animation, start_time, duration, delay);
@@ -904,6 +921,8 @@ impl Style {
             | self.outline_offset.has_active_animation(entity, animation)
             | self.background_color.has_active_animation(entity, animation)
             | self.background_image.has_active_animation(entity, animation)
+            | self.background_position.has_active_animation(entity, animation)
+            | self.background_repeat.has_active_animation(entity, animation)
             | self.background_size.has_active_animation(entity, animation)
             | self.shadow.has_active_animation(entity, animation)
             | self.font_color.has_active_animation(entity, animation)
@@ -1131,9 +1150,20 @@ impl Style {
                 self.background_image.insert_transition(rule_id, animation);
             }
 
+            "background-position" => {
+                self.background_position
+                    .insert_animation(animation, self.add_transition(transition));
+                self.background_position.insert_transition(rule_id, animation);
+            }
+
             "background-size" => {
                 self.background_size.insert_animation(animation, self.add_transition(transition));
                 self.background_size.insert_transition(rule_id, animation);
+            }
+
+            "background-repeat" => {
+                self.background_repeat.insert_animation(animation, self.add_transition(transition));
+                self.background_repeat.insert_transition(rule_id, animation);
             }
 
             "shadow" => {
@@ -2031,9 +2061,19 @@ impl Style {
                 self.background_image.insert_rule(rule_id, images);
             }
 
+            // Background Position
+            Property::BackgroundPosition(positions) => {
+                self.background_position.insert_rule(rule_id, positions);
+            }
+
             // Background Size
             Property::BackgroundSize(sizes) => {
                 self.background_size.insert_rule(rule_id, sizes);
+            }
+
+            // Background Repeat
+            Property::BackgroundRepeat(repeats) => {
+                self.background_repeat.insert_rule(rule_id, repeats);
             }
 
             // Text Wrapping
@@ -2753,6 +2793,8 @@ impl Style {
         // Background
         self.background_color.remove(entity);
         self.background_image.remove(entity);
+        self.background_position.remove(entity);
+        self.background_repeat.remove(entity);
         self.background_size.remove(entity);
 
         // Box Shadow
@@ -2963,6 +3005,8 @@ impl Style {
         // Background
         self.background_color.clear_rules();
         self.background_image.clear_rules();
+        self.background_position.clear_rules();
+        self.background_repeat.clear_rules();
         self.background_size.clear_rules();
 
         self.shadow.clear_rules();

@@ -1,9 +1,9 @@
 use morphorm::Units;
 use vizia_style::{
-    Angle, BackgroundSize, ClipPath, Color, ColorStop, Display, Filter, FontSize, Gradient, Length,
-    LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LetterSpacing, LineDirection,
-    LineHeight, LinearGradient, Opacity, PercentageOrNumber, RGBA, Rect, Scale, Shadow, Transform,
-    Translate,
+    Angle, BackgroundRepeat, BackgroundSize, ClipPath, Color, ColorStop, Display, Filter,
+    FontSize, Gradient, Length, LengthOrPercentage, LengthPercentageOrAuto, LengthValue,
+    LetterSpacing, LineDirection, LineHeight, LinearGradient, Opacity, PercentageOrNumber,
+    Position, RGBA, Rect, Scale, Shadow, Transform, Translate,
 };
 
 use skia_safe::Matrix;
@@ -248,6 +248,18 @@ impl Interpolator for BackgroundSize {
 
             _ => end.clone(),
         }
+    }
+}
+
+impl Interpolator for BackgroundRepeat {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        if t < 0.5 { *start } else { *end }
+    }
+}
+
+impl Interpolator for Position {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        if t < 0.5 { start.clone() } else { end.clone() }
     }
 }
 

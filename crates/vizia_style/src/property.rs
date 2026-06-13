@@ -1,12 +1,12 @@
 use crate::{
-    Alignment, Angle, BackgroundImage, BackgroundSize, BlendMode, Border, BorderStyle, BorderWidth,
-    ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError, CustomProperty,
-    Direction, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
-    FontWidth, LayoutType, LayoutWrap, Length, LengthOrPercentage, LetterSpacing, LineClamp,
-    LineHeight, Opacity, Outline, Overflow, Parse, PointerEvents, Position, PositionType, Rect,
-    Scale, Shadow, TextAlign, TextDecoration, TextDecorationLine, TextDecorationStyle,
-    TextOverflow, TextStroke, TextStrokeStyle, Transform, Transition, Translate, Units,
-    UnparsedProperty, Visibility, define_property,
+    Alignment, Angle, BackgroundImage, BackgroundRepeat, BackgroundSize, BlendMode, Border,
+    BorderStyle, BorderWidth, ClipPath, Color, CornerRadius, CornerShape, CursorIcon,
+    CustomParseError, CustomProperty, Direction, Display, Filter, FontFamily, FontSize, FontSlant,
+    FontVariation, FontWeight, FontWidth, LayoutType, LayoutWrap, Length, LengthOrPercentage,
+    LetterSpacing, LineClamp, LineHeight, Opacity, Outline, Overflow, Parse, PointerEvents,
+    Position, PositionType, Rect, Scale, Shadow, TextAlign, TextDecoration, TextDecorationLine,
+    TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform, Transition,
+    Translate, Units, UnparsedProperty, Visibility, define_property,
 };
 use cssparser::Parser;
 
@@ -150,6 +150,8 @@ define_property! {
         // Background
         "background-color": BackgroundColor(Color),
         "background-image": BackgroundImage(Vec<BackgroundImage<'i>>),
+        "background-position": BackgroundPosition(Vec<Position>),
+        "background-repeat": BackgroundRepeat(Vec<BackgroundRepeat>),
         "background-size": BackgroundSize(Vec<BackgroundSize>),
 
         "fill": Fill(Color),
@@ -216,6 +218,24 @@ mod tests {
         let mut parser = Parser::new(&mut parser_input);
         let _parsed_property =
             Property::parse_value(CowRcStr::from("background-color"), &mut parser);
+    }
+
+    #[test]
+    fn parse_background_position_property() {
+        let mut parser_input = ParserInput::new("center");
+        let mut parser = Parser::new(&mut parser_input);
+        let parsed_property =
+            Property::parse_value(CowRcStr::from("background-position"), &mut parser)
+                .expect("Failed to parse background-position");
+
+        match parsed_property {
+            Property::BackgroundPosition(positions) => {
+                assert_eq!(positions.len(), 1);
+                assert!(positions[0].is_center());
+            }
+
+            _ => panic!("background-position parsed to wrong property"),
+        }
     }
 
     #[test]

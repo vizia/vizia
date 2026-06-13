@@ -78,6 +78,12 @@ impl<'i> Parse<'i> for Position {
     }
 }
 
+impl<'i> Parse<'i> for Vec<Position> {
+    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+        input.parse_comma_separated(Position::parse)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum PositionComponent<S: Copy + Into<LengthOrPercentage>> {
     /// `center`

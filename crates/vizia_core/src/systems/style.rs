@@ -926,7 +926,15 @@ fn link_style_data(
         should_redraw = true;
     }
 
+    if style.background_position.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
     if style.background_size.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.background_repeat.link(entity, matched_rules) {
         should_redraw = true;
     }
 
