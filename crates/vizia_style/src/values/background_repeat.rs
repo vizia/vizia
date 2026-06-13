@@ -1,18 +1,13 @@
 use crate::{CustomParseError, Parse};
 use cssparser::*;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum BackgroundRepeat {
+    #[default]
     Repeat,
     RepeatX,
     RepeatY,
     NoRepeat,
-}
-
-impl Default for BackgroundRepeat {
-    fn default() -> Self {
-        Self::Repeat
-    }
 }
 
 impl<'i> Parse<'i> for BackgroundRepeat {
