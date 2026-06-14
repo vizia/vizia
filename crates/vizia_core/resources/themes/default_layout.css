@@ -147,9 +147,9 @@ toggle-button {
     padding-right: 8px;
 }
 
-button > *,
-toggle-button > * {
-    width: auto;
+button > hstack,
+toggle-button > hstack {
+    size: auto;
     alignment: center;
     horizontal-gap: 4px;
 }
@@ -439,6 +439,10 @@ image {
 knob {
     size: 32px;
     corner-radius: 50%;
+}
+
+knob > zstack {
+    size: 1s;
 }
 
 .knob-track {

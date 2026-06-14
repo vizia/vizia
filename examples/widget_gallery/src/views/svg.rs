@@ -1,5 +1,5 @@
 use vizia::{
-    icons::{ICON_HEART, ICON_HEART_FILLED, ICON_USER},
+    icons::{ICON_HEART_FILLED, ICON_USER},
     prelude::*,
 };
 
