@@ -31,6 +31,7 @@ struct AppData {
     is_cell_mode: Signal<bool>,
     selectable: Signal<Selectable>,
     selectable_index: Signal<Option<usize>>,
+    offset: Signal<f32>,
 }
 
 enum AppEvent {
@@ -41,6 +42,7 @@ enum AppEvent {
     SetFilterText(String),
     ToggleSelectionMode,
     SetSelectable(usize),
+    SetOffset(f32),
 }
 
 impl Model for AppData {
@@ -109,6 +111,10 @@ impl Model for AppData {
                 };
                 self.selectable.set(mode);
                 self.selectable_index.set(Some(*index));
+            }
+
+            AppEvent::SetOffset(offset) => {
+                self.offset.set(*offset);
             }
         });
     }
@@ -414,6 +420,7 @@ fn build_fs_tree() -> Tree<FsNode> {
 
 fn columns(
     tree: Signal<Tree<FsNode>>,
+    offset: Signal<f32>,
 ) -> Vec<TreeTableColumn<TreeNodeRow<NodeId>, NodeId, TableHeader<String>>> {
     vec![
         TreeTableColumn::new(
@@ -458,7 +465,8 @@ fn columns(
                     .height(Auto)
                     .alignment(Alignment::Left)
                     .gap(Pixels(8.0));
-                });
+                })
+                .offset(offset);
             },
         )
         .width(Percentage(50.0))
@@ -516,7 +524,8 @@ fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         let tree = Signal::new(build_fs_tree());
         let root_id = tree.with(|tree| tree.root().id());
-        let cols = Signal::new(columns(tree));
+        let offset = Signal::new(16.0);
+        let cols = Signal::new(columns(tree, offset));
         let sort_state: Signal<Option<TableSortState>> = Signal::new(None);
         let selected_rows: Signal<HashSet<Cell<NodeId, String>>> = Signal::new(HashSet::new());
         let expanded_rows: Signal<Vec<NodeId>> = Signal::new(vec![root_id]);
@@ -536,6 +545,7 @@ fn main() -> Result<(), ApplicationError> {
             is_cell_mode,
             selectable,
             selectable_index,
+            offset,
         }
         .build(cx);
 
@@ -556,6 +566,12 @@ fn main() -> Result<(), ApplicationError> {
                 Select::new(cx, selectable_options, selectable_index, false)
                     .on_select(|cx, index| cx.emit(AppEvent::SetSelectable(index)))
                     .width(Pixels(90.0));
+
+                Label::new(cx, "Offset").pointer_events(PointerEvents::None);
+                Slider::new(cx, offset)
+                    .width(Pixels(320.0))
+                    .range(0.0..500.0)
+                    .on_change(move |cx, val| cx.emit(AppEvent::SetOffset(val)));
             })
             .gap(Pixels(12.0))
             .left(Pixels(12.0))

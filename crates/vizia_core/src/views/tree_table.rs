@@ -173,7 +173,9 @@ pub enum TreeTableFirstCellEvent<Id: Send + Sync + 'static> {
 }
 
 #[derive(Clone)]
-pub struct TreeTableFirstCell;
+pub struct TreeTableFirstCell {
+    offset: Signal<f32>,
+}
 
 impl TreeTableFirstCell {
     /// Creates the tree-column first cell, showing an indent spacer, disclosure toggle, and
@@ -190,61 +192,82 @@ impl TreeTableFirstCell {
         F: Fn(&mut Context, TreeTableRow<T, Id>) + 'static,
     {
         let cell_content: Rc<dyn Fn(&mut Context, TreeTableRow<T, Id>)> = Rc::new(cell_content);
-        let depth = row.depth as f32 * 16.0;
+        let offset = Signal::new(16.0);
+        let depth = offset.map(move |value| Pixels(row.depth as f32 * value));
         let has_children = row.has_children;
         let expanded = row.expanded;
         let node_id = row.id.clone();
 
-        Self.build(cx, move |cx| {
-            HStack::new(cx, move |cx| {
-                Element::new(cx)
-                    .class("tree-table-indent")
-                    .width(Pixels(depth))
-                    .height(Stretch(1.0))
-                    .pointer_events(PointerEvents::None);
-
-                if has_children {
-                    let icon = if expanded { ICON_CHEVRON_DOWN } else { ICON_CHEVRON_RIGHT };
-
-                    Button::new(cx, move |cx| Svg::new(cx, icon).text_wrap(false))
-                        .variant(ButtonVariant::Text)
-                        .class("tree-table-disclosure")
-                        .pointer_events(PointerEvents::Auto)
-                        .navigable(false)
-                        .on_press(move |cx| {
-                            cx.emit(TreeTableFirstCellEvent::Toggle(node_id.clone(), !expanded));
-                        });
-                } else {
+        Self { offset }
+            .build(cx, move |cx| {
+                HStack::new(cx, move |cx| {
                     Element::new(cx)
-                        .class("tree-table-disclosure-placeholder")
+                        .class("tree-table-indent")
+                        .width(depth)
+                        .height(Stretch(1.0))
                         .pointer_events(PointerEvents::None);
-                }
 
-                let cell_content = cell_content.clone();
-                VStack::new(cx, move |cx| {
-                    cell_content(cx, row.clone());
+                    if has_children {
+                        let icon = if expanded { ICON_CHEVRON_DOWN } else { ICON_CHEVRON_RIGHT };
+
+                        Button::new(cx, move |cx| Svg::new(cx, icon).text_wrap(false))
+                            .variant(ButtonVariant::Text)
+                            .class("tree-table-disclosure")
+                            .pointer_events(PointerEvents::Auto)
+                            .navigable(false)
+                            .on_press(move |cx| {
+                                cx.emit(TreeTableFirstCellEvent::Toggle(
+                                    node_id.clone(),
+                                    !expanded,
+                                ));
+                            });
+                    } else {
+                        Element::new(cx)
+                            .class("tree-table-disclosure-placeholder")
+                            .pointer_events(PointerEvents::None);
+                    }
+
+                    let cell_content = cell_content.clone();
+                    VStack::new(cx, move |cx| {
+                        cell_content(cx, row.clone());
+                    })
+                    .class("tree-table-cell-content")
+                    .width(Stretch(1.0))
+                    .min_width(Auto)
+                    .height(Auto)
+                    .pointer_events(PointerEvents::None);
                 })
-                .class("tree-table-cell-content")
+                .alignment(Alignment::Left)
                 .width(Stretch(1.0))
                 .min_width(Auto)
                 .height(Auto)
                 .pointer_events(PointerEvents::None);
             })
-            .alignment(Alignment::Left)
             .width(Stretch(1.0))
-            .min_width(Auto)
             .height(Auto)
-            .pointer_events(PointerEvents::None);
-        })
-        .width(Stretch(1.0))
-        .height(Auto)
-        .pointer_events(PointerEvents::None)
+            .pointer_events(PointerEvents::None)
     }
 }
 
 impl View for TreeTableFirstCell {
     fn element(&self) -> Option<&'static str> {
         Some("tree-table-first-cell")
+    }
+}
+
+pub trait TreeTableFirstCellModifiers {
+    fn offset<U: Into<f32> + Clone + 'static>(self, sort_state: impl Res<U> + 'static) -> Self;
+}
+
+impl TreeTableFirstCellModifiers for Handle<'_, TreeTableFirstCell> {
+    fn offset<U: Into<f32> + Clone + 'static>(self, offset: impl Res<U> + 'static) -> Self {
+        let offset_signal = offset.to_signal(self.cx);
+        self.bind(offset_signal, move |handle| {
+            let offset = offset_signal.get().into();
+            handle.modify(|tree_table_first_cell| {
+                tree_table_first_cell.offset.set(offset);
+            });
+        })
     }
 }
 
