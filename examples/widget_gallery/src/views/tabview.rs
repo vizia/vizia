@@ -90,6 +90,7 @@ pub fn tabview(cx: &mut Context) {
                     Button::new(cx, |cx| Label::new(cx, "Next").hoverable(false))
                         .on_press(|cx| cx.emit(TabEvent::NextTab));
                 })
+                .height(Auto)
                 .horizontal_gap(Pixels(8.0));
 
                 TabView::new(cx, tabs, |_, _, item| match item {
@@ -115,7 +116,18 @@ pub fn tabview(cx: &mut Context) {
                     )
                     .closeable(true),
 
-                    _ => unreachable!(),
+                    _ => TabPair::new(
+                        move |cx| {
+                            Label::new(cx, item).hoverable(false);
+                            Element::new(cx).class("indicator");
+                        },
+                        |cx| {
+                            Element::new(cx)
+                                .size(Pixels(200.0))
+                                .background_color(Color::rgb(60, 160, 80));
+                        },
+                    )
+                    .closeable(true),
                 })
                 .with_selected(selected_tab)
                 .on_select(|cx, index| cx.emit(TabEvent::SetSelected(index)))
@@ -123,6 +135,7 @@ pub fn tabview(cx: &mut Context) {
                 .width(Pixels(300.0))
                 .height(Pixels(300.0));
             })
+            .height(Auto)
             .vertical_gap(Pixels(8.0));
         });
     })
