@@ -30,6 +30,7 @@ use vizia_input::ImeState;
 // use accesskit_winit;
 // use std::cell::RefCell;
 use vizia_core::context::EventProxy;
+use vizia_core::events::ProxyEvent;
 use vizia_core::prelude::*;
 use vizia_core::{backend::*, events::EventManager};
 use vizia_reactive::Runtime;
@@ -72,7 +73,7 @@ use vizia_window::{Anchor, AnchorTarget, WindowPosition};
 
 #[derive(Debug)]
 pub enum UserEvent {
-    Event(Event),
+    Event(ProxyEvent),
     #[cfg(feature = "accesskit")]
     AccessKitEvent(accesskit_winit::Event),
 }
@@ -81,12 +82,6 @@ pub enum UserEvent {
 impl From<accesskit_winit::Event> for UserEvent {
     fn from(action_request_event: accesskit_winit::Event) -> Self {
         UserEvent::AccessKitEvent(action_request_event)
-    }
-}
-
-impl From<vizia_core::events::Event> for UserEvent {
-    fn from(event: vizia_core::events::Event) -> Self {
-        UserEvent::Event(event)
     }
 }
 
@@ -140,7 +135,7 @@ pub struct Application {
 pub struct WinitEventProxy(EventLoopProxy<UserEvent>);
 
 impl EventProxy for WinitEventProxy {
-    fn send(&self, event: Event) -> Result<(), ()> {
+    fn send(&self, event: ProxyEvent) -> Result<(), ()> {
         self.0.send_event(UserEvent::Event(event)).map_err(|_| ())
     }
 
@@ -172,7 +167,7 @@ impl Application {
         // Ensure we wake the event loop when a SyncSignal is mutated off the UI thread.
         let waker_proxy = proxy.clone();
         Runtime::set_sync_effect_waker(move || {
-            let _ = waker_proxy.send_event(UserEvent::Event(Event::new(())));
+            let _ = waker_proxy.send_event(UserEvent::Event(ProxyEvent::new(())));
         });
 
         cx.renegotiate_language();
@@ -397,7 +392,7 @@ impl ApplicationHandler<UserEvent> for Application {
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, user_event: UserEvent) {
         match user_event {
             UserEvent::Event(event) => {
-                self.cx.send_event(event);
+                self.cx.send_event(event.into_event());
             }
 
             #[cfg(feature = "accesskit")]
@@ -858,7 +853,7 @@ impl ApplicationHandler<UserEvent> for Application {
 
         if self.cx.has_queued_events() {
             self.event_loop_proxy
-                .send_event(UserEvent::Event(Event::new(())))
+                .send_event(UserEvent::Event(ProxyEvent::new(())))
                 .expect("Failed to send event");
         }
 
