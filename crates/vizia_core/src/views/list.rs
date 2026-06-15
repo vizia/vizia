@@ -1119,7 +1119,7 @@ pub trait ListModifiers: Sized {
     fn scroll_x(self, scrollx: impl Res<f32> + 'static) -> Self;
 
     /// Set the vertical scroll position of the [ScrollView]. Accepts a value or signal of type an `f32` between 0 and 1.
-    fn scroll_y(self, scrollx: impl Res<f32> + 'static) -> Self;
+    fn scroll_y(self, scrolly: impl Res<f32> + 'static) -> Self;
 
     /// Sets whether the horizontal scrollbar should be visible.
     fn show_horizontal_scrollbar(self, flag: impl Res<bool> + 'static) -> Self;
@@ -1257,20 +1257,18 @@ impl ListModifiers for Handle<'_, List> {
         let scrollx = scrollx.to_signal(self.cx);
         self.bind(scrollx, move |handle| {
             let scrollx = scrollx.get();
-            let sx = scrollx;
             handle.modify(|list| {
-                list.scroll_x.set(sx);
+                list.scroll_x.set(scrollx);
             });
         })
     }
 
-    fn scroll_y(self, scrollx: impl Res<f32> + 'static) -> Self {
-        let scrollx = scrollx.to_signal(self.cx);
-        self.bind(scrollx, move |handle| {
-            let scrolly = scrollx.get();
-            let sy = scrolly;
+    fn scroll_y(self, scrolly: impl Res<f32> + 'static) -> Self {
+        let scrolly = scrolly.to_signal(self.cx);
+        self.bind(scrolly, move |handle| {
+            let scrolly = scrolly.get();
             handle.modify(|list| {
-                list.scroll_y.set(sy);
+                list.scroll_y.set(scrolly);
             });
         })
     }
@@ -1279,9 +1277,8 @@ impl ListModifiers for Handle<'_, List> {
         let flag = flag.to_signal(self.cx);
         self.bind(flag, move |handle| {
             let show_scrollbar = flag.get();
-            let s = show_scrollbar;
             handle.modify(|list| {
-                list.show_horizontal_scrollbar.set(s);
+                list.show_horizontal_scrollbar.set(show_scrollbar);
             });
         })
     }
@@ -1290,9 +1287,8 @@ impl ListModifiers for Handle<'_, List> {
         let flag = flag.to_signal(self.cx);
         self.bind(flag, move |handle| {
             let show_scrollbar = flag.get();
-            let s = show_scrollbar;
             handle.modify(|list| {
-                list.show_vertical_scrollbar.set(s);
+                list.show_vertical_scrollbar.set(show_scrollbar);
             });
         })
     }
