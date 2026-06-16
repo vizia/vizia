@@ -1127,6 +1127,24 @@ card-header > .description {
     color: var(--muted-foreground);
 }
 
+/* FRAME */
+
+frame {
+    background-color: var(--background);
+    color: var(--foreground);
+    border-width: 1px;
+    border-color: var(--border);
+    corner-radius: 8px;
+    padding: 16px;
+}
+
+frame .frame-title {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-size: 14px;
+    font-weight: 500;
+}
+
 /* SIDEBAR */
 
 sidebar {

@@ -1112,3 +1112,31 @@ card-footer {
     padding-right: 12px;
     padding-bottom: 12px;
 }
+
+/* FRAME */
+
+frame {
+    width: auto;
+    height: auto;
+    layout-type: column;
+}
+
+frame .frame-title {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+frame .frame-title.left {
+    left: 8px;
+    right: 1s;
+}
+
+frame .frame-title.center {
+    left: 1s;
+    right: 1s;
+}
+
+frame .frame-title.right {
+    right: 8px;
+    left: 1s;
+}

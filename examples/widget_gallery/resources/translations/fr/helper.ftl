@@ -59,6 +59,8 @@ dropdown = Menu déroulant
     .description = Un menu déroulant affiche une liste d'options qui peuvent être ouvertes et fermées.
 element = Élément
     .description = Element est une vue dépouillée sans contenu intégré. C'est un bloc de construction flexible pour les mises en page personnalisées, les formes décoratives et les régions d'espace réservé stylisées.
+frame = Cadre
+    .description = Un cadre regroupe du contenu lié avec un titre optionnel qui intersecte la bordure du cadre.
 grid = Grille
     .description = Une grille organise les enfants en lignes et colonnes définies par des tailles de piste explicites.
 hstack = Pile horizontale
@@ -263,3 +265,12 @@ demo-region-virtual-list = Virtual List
 demo-region-virtualtable-500-rows = VirtualTable (500 rows)
 demo-region-xypad = XYPad
 demo-region-zstack = ZStack
+
+## Titres des régions de démo Frame
+frame-demo-title-positions = Cadre avec positions du titre
+frame-demo-without-title = Cadre sans titre
+frame-demo-complex-content = Cadre avec contenu complexe
+frame-title-top-left = Haut-gauche
+frame-title-top-center = Haut-centre
+frame-title-top-right = Haut-droite
+frame-title-details = Détails

@@ -103,6 +103,9 @@ pub use accordion::*;
 pub mod card;
 pub use card::*;
 
+pub mod frame;
+pub use frame::*;
+
 pub mod collapsible;
 pub use collapsible::*;
 

@@ -511,6 +511,19 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
         "Element" => {
             Element::new(cx).size(Pixels(64.0)).background_color(Color::rgb(58, 134, 255));
         }
+        "Frame" => {
+            Frame::with_title(
+                cx,
+                |cx| {
+                    Label::new(cx, "Frame").hoverable(false);
+                },
+                |cx| {
+                    Label::new(cx, "Frame with title").hoverable(false).padding(Pixels(12.0));
+                },
+            )
+            .title_position(FrameTitlePosition::TopCenter)
+            .width(Stretch(1.0));
+        }
         "Grid" => {
             Grid::new(
                 cx,
@@ -945,6 +958,7 @@ fn render_view_page(cx: &mut Context, view_name: &'static str) {
         "Divider" => divider(cx),
         "Dropdown" => dropdown(cx),
         "Element" => element(cx),
+        "Frame" => frame(cx),
         "Grid" => grid(cx),
         "HStack" => hstack(cx),
         "Image" => image(cx),
