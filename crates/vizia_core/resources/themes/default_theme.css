@@ -291,39 +291,39 @@ button-group.vertical > textbox {
 }
 
 button-group > :first-child {
-    corner-top-left-radius: 4px;
-    corner-bottom-left-radius: 4px;
+    corner-top-left-radius: var(--control-radius);
+    corner-bottom-left-radius: var(--control-radius);
 }
 
 button-group:dir(rtl) > :first-child {
     corner-top-left-radius: 0px;
     corner-bottom-left-radius: 0px;
-    corner-top-right-radius: 4px;
-    corner-bottom-right-radius: 4px;
+    corner-top-right-radius: var(--control-radius);
+    corner-bottom-right-radius: var(--control-radius);
 }
 
 button-group > :last-child {
-    corner-top-right-radius: 4px;
-    corner-bottom-right-radius: 4px;
+    corner-top-right-radius: var(--control-radius);
+    corner-bottom-right-radius: var(--control-radius);
 }
 
 button-group:dir(rtl) > :last-child {
     corner-top-right-radius: 0px;
     corner-bottom-right-radius: 0px;
-    corner-top-left-radius: 4px;
-    corner-bottom-left-radius: 4px;
+    corner-top-left-radius: var(--control-radius);
+    corner-bottom-left-radius: var(--control-radius);
 }
 
 button-group.vertical > :first-child {
     corner-radius: 0px;
-    corner-top-right-radius: 4px;
-    corner-top-left-radius: 4px;
+    corner-top-right-radius: var(--control-radius);
+    corner-top-left-radius: var(--control-radius);
 }
 
 button-group.vertical > :last-child {
     corner-radius: 0px;
-    corner-bottom-right-radius: 4px;
-    corner-bottom-left-radius: 4px;
+    corner-bottom-right-radius: var(--control-radius);
+    corner-bottom-left-radius: var(--control-radius);
 }
 
 /* CHECKBOX */
