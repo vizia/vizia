@@ -16,6 +16,8 @@ pub struct VirtualList {
     num_items: Signal<usize>,
     /// The height of each item in the list.
     item_height: f32,
+    /// The orientation of the list, either vertical or horizontal.
+    orientation: Signal<Orientation>,
     /// The range of visible items in the list.
     visible_range: Signal<Range<usize>>,
     /// The horizontal scroll position of the list.
@@ -139,28 +141,35 @@ impl VirtualList {
         }
 
         let current = cx.current();
-        let current_height = cx.cache.get_height(current);
-        if current_height == f32::MAX {
+        let current_extent = match self.orientation.get() {
+            Orientation::Horizontal => cx.cache.get_width(current),
+            Orientation::Vertical => cx.cache.get_height(current),
+        };
+        if current_extent == f32::MAX {
             return;
         }
 
-        let item_height = self.item_height;
-        let total_height = item_height * (num_items as f32);
-        let visible_height = current_height / cx.scale_factor();
+        let item_extent = self.item_height;
+        let total_extent = item_extent * (num_items as f32);
+        let visible_extent = current_extent / cx.scale_factor();
 
-        let mut num_visible_items = (visible_height / item_height).ceil();
+        let mut num_visible_items = (visible_extent / item_extent).ceil();
         num_visible_items += 1.0; // To account for partially-visible items.
 
-        let visible_items_height = item_height * num_visible_items;
-        let empty_height = (total_height - visible_items_height).max(0.0);
+        let visible_items_extent = item_extent * num_visible_items;
+        let empty_extent = (total_extent - visible_items_extent).max(0.0);
 
         // The pixel offsets within the container to the visible area.
-        let visible_start = empty_height * self.scroll_y.get();
-        let visible_end = visible_start + visible_items_height;
+        let axis_scroll = match self.orientation.get() {
+            Orientation::Horizontal => self.scroll_x.get(),
+            Orientation::Vertical => self.scroll_y.get(),
+        };
+        let visible_start = empty_extent * axis_scroll;
+        let visible_end = visible_start + visible_items_extent;
 
         // The indices of the first and last item of the visible area.
-        let mut start_index = (visible_start / item_height).trunc() as usize;
-        let mut end_index = 1 + (visible_end / item_height).trunc() as usize;
+        let mut start_index = (visible_start / item_extent).trunc() as usize;
+        let mut end_index = 1 + (visible_end / item_extent).trunc() as usize;
 
         // Ensure we always have (num_visible_items + 1) items when possible
         let desired_range_size = (num_visible_items as usize) + 1;
@@ -231,6 +240,7 @@ impl VirtualList {
         let scroll_y = Signal::new(0.0);
         let show_horizontal_scrollbar = Signal::new(false);
         let show_vertical_scrollbar = Signal::new(true);
+        let orientation = Signal::new(Orientation::Vertical);
         let selection = Signal::new(BTreeSet::default());
         let selectable = Signal::new(Selectable::None);
         let focused = Signal::new(None);
@@ -243,6 +253,7 @@ impl VirtualList {
             on_scroll: None,
             num_items,
             item_height,
+            orientation,
             visible_range,
             scroll_x,
             scroll_y,
@@ -284,54 +295,143 @@ impl VirtualList {
             ])
             .build(cx);
 
-            ScrollView::new(cx, move |cx| {
-                Binding::new(cx, num_items, move |cx| {
-                    let num_items = num_items.get();
-                    cx.emit(ScrollEvent::SetY(0.0));
-                    // The ScrollView contains a VStack which is sized to the total height
-                    // needed to fit all items. This ensures we have a correct scroll bar.
-                    VStack::new(cx, |cx| {
-                        // Within the VStack we create a view for each visible item.
-                        // This binding ensures the amount of views stay up to date.
-                        let num_visible_items = visible_range.map(Range::len);
-                        Binding::new(cx, num_visible_items, move |cx| {
-                            for i in 0..num_visible_items.get().min(num_items) {
-                                // Each item of the range maps to an index into the backing list.
-                                // As we scroll the index may change, representing an item going in/out of visibility.
-                                // Wrap `item_content` in a binding to said index, so it rebuilds only when necessary.
-                                let item_index = visible_range.map(move |range| {
-                                    Self::evaluate_index(i, range.start, range.end)
-                                });
-                                Binding::new(cx, item_index, move |cx| {
-                                    let index = item_index.get();
-                                    let item = list.map(move |list| list_index(list, index));
+            Binding::new(cx, orientation, move |cx| {
+                let orientation = orientation.get();
+                if orientation == Orientation::Horizontal {
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowDown),
+                        "Focus Next",
+                    ));
 
-                                    ListItem::new(
-                                        cx,
-                                        index,
-                                        item,
-                                        selection,
-                                        focused,
-                                        focus_visibility,
-                                        move |cx, index, item| {
-                                            item_content(cx, index, item).height(Percentage(100.0));
-                                        },
-                                    )
-                                    .min_width(Auto)
-                                    .height(Pixels(item_height))
-                                    .position_type(PositionType::Absolute)
-                                    .bind(
-                                        item_index,
-                                        move |handle| {
-                                            let index = item_index.get();
-                                            handle.top(Pixels(index as f32 * item_height));
-                                        },
-                                    );
-                                });
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowUp),
+                        "Focus Previous",
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowRight),
+                        KeymapEntry::new("Focus Next", |cx| cx.emit(ListEvent::FocusNext)),
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
+                        KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
+                    ));
+                } else {
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowRight),
+                        "Focus Next",
+                    ));
+
+                    cx.emit(KeymapEvent::RemoveAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
+                        "Focus Previous",
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowDown),
+                        KeymapEntry::new("Focus Next", |cx| cx.emit(ListEvent::FocusNext)),
+                    ));
+
+                    cx.emit(KeymapEvent::InsertAction(
+                        KeyChord::new(Modifiers::empty(), Code::ArrowUp),
+                        KeymapEntry::new("Focus Previous", |cx| cx.emit(ListEvent::FocusPrev)),
+                    ));
+                }
+            });
+
+            ScrollView::new(cx, move |cx| {
+                Binding::new(cx, orientation, move |cx| {
+                    let orientation = orientation.get();
+                    Binding::new(cx, num_items, move |cx| {
+                        let num_items = num_items.get();
+
+                        match orientation {
+                            Orientation::Horizontal => cx.emit(ScrollEvent::SetX(0.0)),
+                            Orientation::Vertical => cx.emit(ScrollEvent::SetY(0.0)),
+                        }
+
+                        let num_visible_items = visible_range.map(Range::len);
+
+                        match orientation {
+                            Orientation::Horizontal => {
+                                HStack::new(cx, |cx| {
+                                    Binding::new(cx, num_visible_items, move |cx| {
+                                        for i in 0..num_visible_items.get().min(num_items) {
+                                            let item_index = visible_range.map(move |range| {
+                                                Self::evaluate_index(i, range.start, range.end)
+                                            });
+                                            Binding::new(cx, item_index, move |cx| {
+                                                let index = item_index.get();
+                                                let item =
+                                                    list.map(move |list| list_index(list, index));
+
+                                                ListItem::new(
+                                                    cx,
+                                                    index,
+                                                    item,
+                                                    selection,
+                                                    focused,
+                                                    focus_visibility,
+                                                    move |cx, index, item| {
+                                                        item_content(cx, index, item)
+                                                            .height(Percentage(100.0));
+                                                    },
+                                                )
+                                                .min_size(Auto)
+                                                .width(Pixels(item_height))
+                                                .height(Percentage(100.0))
+                                                .position_type(PositionType::Absolute)
+                                                .bind(item_index, move |handle| {
+                                                    let index = item_index.get();
+                                                    handle.left(Pixels(index as f32 * item_height));
+                                                });
+                                            });
+                                        }
+                                    })
+                                })
+                                .width(Pixels(num_items as f32 * item_height));
                             }
-                        })
+
+                            Orientation::Vertical => {
+                                VStack::new(cx, |cx| {
+                                    Binding::new(cx, num_visible_items, move |cx| {
+                                        for i in 0..num_visible_items.get().min(num_items) {
+                                            let item_index = visible_range.map(move |range| {
+                                                Self::evaluate_index(i, range.start, range.end)
+                                            });
+                                            Binding::new(cx, item_index, move |cx| {
+                                                let index = item_index.get();
+                                                let item =
+                                                    list.map(move |list| list_index(list, index));
+
+                                                ListItem::new(
+                                                    cx,
+                                                    index,
+                                                    item,
+                                                    selection,
+                                                    focused,
+                                                    focus_visibility,
+                                                    move |cx, index, item| {
+                                                        item_content(cx, index, item)
+                                                            .height(Percentage(100.0));
+                                                    },
+                                                )
+                                                .min_width(Auto)
+                                                .height(Pixels(item_height))
+                                                .position_type(PositionType::Absolute)
+                                                .bind(item_index, move |handle| {
+                                                    let index = item_index.get();
+                                                    handle.top(Pixels(index as f32 * item_height));
+                                                });
+                                            });
+                                        }
+                                    })
+                                })
+                                .height(Pixels(num_items as f32 * item_height));
+                            }
+                        }
                     })
-                    .height(Pixels(num_items as f32 * item_height));
                 })
             })
             .show_horizontal_scrollbar(show_horizontal_scrollbar)
@@ -346,6 +446,7 @@ impl VirtualList {
             });
         })
         .toggle_class("selectable", selectable.map(|s| *s != Selectable::None))
+        .orientation(orientation)
         .navigable(true)
         .role(Role::ListBox)
     }
@@ -579,6 +680,25 @@ impl Handle<'_, VirtualList> {
             let selection_follows_focus = flag.get();
             let s = selection_follows_focus.into();
             handle.modify(|list| list.selection_follows_focus.set(s));
+        })
+    }
+
+    /// Sets the orientation of the [VirtualList].
+    pub fn horizontal<U: Into<bool> + Clone + 'static>(
+        self,
+        horizontal: impl Res<U> + 'static,
+    ) -> Self {
+        let horizontal = horizontal.to_signal(self.cx);
+        self.bind(horizontal, move |handle| {
+            let horizontal = horizontal.get();
+            let horizontal = horizontal.into();
+            handle.modify(|list| {
+                list.orientation.set(if horizontal {
+                    Orientation::Horizontal
+                } else {
+                    Orientation::Vertical
+                });
+            });
         })
     }
 

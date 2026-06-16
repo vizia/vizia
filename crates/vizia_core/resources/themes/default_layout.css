@@ -905,6 +905,11 @@ tabview {
     height: 1s;
 }
 
+tabview .tabview-content-wrapper {
+    width: 1s;
+    height: 1s;
+}
+
 tabview > tablist {
     width: 1s;
     height: auto;
