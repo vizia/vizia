@@ -44,46 +44,45 @@ impl Frame {
     /// Creates a new frame with a title and content.
     ///
     /// The title is positioned to intersect the frame's border.
-    pub fn with_title(
+    pub fn with_title<S: View>(
         cx: &mut Context,
-        title: impl FnOnce(&mut Context),
+        title: impl FnOnce(&mut Context) -> Handle<S>,
         content: impl FnOnce(&mut Context),
     ) -> Handle<Self> {
         let title_position = Signal::new(FrameTitlePosition::default());
 
         Self { title_position }.build(cx, |cx| {
             // Title - positioned absolutely with negative top offset
-            HStack::new(cx, |cx| {
-                title(cx);
-            })
-            .class("frame-title")
-            .position_type(PositionType::Absolute)
-            .top(Pixels(0.0))
-            .translate((Pixels(0.0), Percentage(-50.0)))
-            .size(Auto)
-            .bind(title_position, move |handle| {
-                let pos = title_position.get();
-                match pos {
-                    FrameTitlePosition::TopLeft => {
-                        handle
-                            .toggle_class("left", true)
-                            .toggle_class("center", false)
-                            .toggle_class("right", false);
+
+            title(cx)
+                .class("frame-title")
+                .position_type(PositionType::Absolute)
+                .top(Pixels(0.0))
+                .translate((Pixels(0.0), Percentage(-50.0)))
+                .size(Auto)
+                .bind(title_position, move |handle| {
+                    let pos = title_position.get();
+                    match pos {
+                        FrameTitlePosition::TopLeft => {
+                            handle
+                                .toggle_class("left", true)
+                                .toggle_class("center", false)
+                                .toggle_class("right", false);
+                        }
+                        FrameTitlePosition::TopCenter => {
+                            handle
+                                .toggle_class("left", false)
+                                .toggle_class("center", true)
+                                .toggle_class("right", false);
+                        }
+                        FrameTitlePosition::TopRight => {
+                            handle
+                                .toggle_class("left", false)
+                                .toggle_class("center", false)
+                                .toggle_class("right", true);
+                        }
                     }
-                    FrameTitlePosition::TopCenter => {
-                        handle
-                            .toggle_class("left", false)
-                            .toggle_class("center", true)
-                            .toggle_class("right", false);
-                    }
-                    FrameTitlePosition::TopRight => {
-                        handle
-                            .toggle_class("left", false)
-                            .toggle_class("center", false)
-                            .toggle_class("right", true);
-                    }
-                }
-            });
+                });
 
             // Content
             content(cx);

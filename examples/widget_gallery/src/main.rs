@@ -514,9 +514,7 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
         "Frame" => {
             Frame::with_title(
                 cx,
-                |cx| {
-                    Label::new(cx, "Frame").hoverable(false);
-                },
+                |cx| Label::new(cx, "Frame").hoverable(false),
                 |cx| {
                     Label::new(cx, "Frame with title").hoverable(false).padding(Pixels(12.0));
                 },

@@ -55,7 +55,7 @@ fn main() -> Result<(), ApplicationError> {
                     Frame::with_title(
                         cx,
                         |cx| {
-                            Label::new(cx, Localized::new("frame-title-settings")).hoverable(false);
+                            Label::new(cx, Localized::new("frame-title-settings")).hoverable(false)
                         },
                         |cx| {
                             radio_group(cx, left_choice, "frame-left");
@@ -68,7 +68,7 @@ fn main() -> Result<(), ApplicationError> {
                         cx,
                         |cx| {
                             Label::new(cx, Localized::new("frame-title-user-profile"))
-                                .hoverable(false);
+                                .hoverable(false)
                         },
                         |cx| {
                             radio_group(cx, center_choice, "frame-center");
@@ -85,9 +85,7 @@ fn main() -> Result<(), ApplicationError> {
                     // Frame with title at top-right
                     Frame::with_title(
                         cx,
-                        |cx| {
-                            Label::new(cx, Localized::new("frame-title-details")).hoverable(false);
-                        },
+                        |cx| Label::new(cx, Localized::new("frame-title-details")).hoverable(false),
                         |cx| {
                             radio_group(cx, right_choice, "frame-right");
                         },

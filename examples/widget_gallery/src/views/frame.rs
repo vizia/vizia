@@ -56,9 +56,7 @@ pub fn frame(cx: &mut Context) {
                 // Top-left
                 Frame::with_title(
                     cx,
-                    |cx| {
-                        Label::new(cx, Localized::new("frame-title-top-left")).hoverable(false);
-                    },
+                    |cx| Label::new(cx, Localized::new("frame-title-top-left")).hoverable(false),
                     |cx| {
                         frame_radio_group(cx, left_choice, "wg-frame-left");
                     },
@@ -69,9 +67,7 @@ pub fn frame(cx: &mut Context) {
                 // Top-center
                 Frame::with_title(
                     cx,
-                    |cx| {
-                        Label::new(cx, Localized::new("frame-title-top-center")).hoverable(false);
-                    },
+                    |cx| Label::new(cx, Localized::new("frame-title-top-center")).hoverable(false),
                     |cx| {
                         frame_radio_group(cx, center_choice, "wg-frame-center");
                     },
@@ -82,9 +78,7 @@ pub fn frame(cx: &mut Context) {
                 // Top-right
                 Frame::with_title(
                     cx,
-                    |cx| {
-                        Label::new(cx, Localized::new("frame-title-top-right")).hoverable(false);
-                    },
+                    |cx| Label::new(cx, Localized::new("frame-title-top-right")).hoverable(false),
                     |cx| {
                         frame_radio_group(cx, right_choice, "wg-frame-right");
                     },
