@@ -14,7 +14,7 @@ pub struct VirtualList {
     on_scroll: Option<Box<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>>,
     /// The number of items in the list.
     num_items: Signal<usize>,
-    /// The height of each item in the list.
+    /// The extent of each item in the list (height for vertical, width for horizontal).
     item_height: f32,
     /// The orientation of the list, either vertical or horizontal.
     orientation: Signal<Orientation>,
@@ -390,7 +390,8 @@ impl VirtualList {
                                         }
                                     })
                                 })
-                                .width(Pixels(num_items as f32 * item_height));
+                                .width(Pixels(num_items as f32 * item_height))
+                                .height(Stretch(1.0));
                             }
 
                             Orientation::Vertical => {
