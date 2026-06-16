@@ -59,6 +59,8 @@ dropdown = Dropdown
     .description = A dropdown displays a list of options that can be opened and closed.
 element = Element
     .description = Element is a bare-bones view with no built-in content. It is a flexible building block for custom layouts, decorative shapes, and styled placeholder regions.
+frame = Frame
+    .description = A frame groups related content with an optional title that intersects the frame border.
 grid = Grid
     .description = A grid arranges children into rows and columns defined by explicit track sizes.
 hstack = HStack
@@ -227,3 +229,12 @@ demo-region-virtual-list = Virtual List
 demo-region-virtualtable-500-rows = VirtualTable (500 rows)
 demo-region-xypad = XYPad
 demo-region-zstack = ZStack
+
+## Frame Demo Region Titles
+frame-demo-title-positions = Frame with Title Positions
+frame-demo-without-title = Frame without Title
+frame-demo-complex-content = Frame with Complex Content
+frame-title-top-left = Top-Left
+frame-title-top-center = Top-Center
+frame-title-top-right = Top-Right
+frame-title-details = Details

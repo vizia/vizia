@@ -59,6 +59,8 @@ dropdown = قائمة منسدلة
     .description = تعرض القائمة المنسدلة قائمة بالخيارات التي يمكن فتحها وإغلاقها.
 element = عنصر
     .description = العنصر عبارة عن عرض خام بدون محتوى مدمج. إنه كتلة بناء مرنة للتخطيطات المخصصة والأشكال الزخرفية والمناطق الإحاطة المصممة.
+frame = إطار
+    .description = يقوم الإطار بتجميع المحتوى المرتبط مع عنوان اختياري يتقاطع مع حدود الإطار.
 grid = شبكة
     .description = تنظم الشبكة العناصر الفرعية في صفوف وأعمدة محددة بأحجام مسارات صريحة.
 hstack = مكدس أفقي
@@ -263,3 +265,12 @@ demo-region-virtual-list = Virtual List
 demo-region-virtualtable-500-rows = VirtualTable (500 rows)
 demo-region-xypad = XYPad
 demo-region-zstack = ZStack
+
+## عناوين مناطق العرض للإطار
+frame-demo-title-positions = إطار مع مواضع العنوان
+frame-demo-without-title = إطار بدون عنوان
+frame-demo-complex-content = إطار بمحتوى معقد
+frame-title-top-left = أعلى اليسار
+frame-title-top-center = أعلى الوسط
+frame-title-top-right = أعلى اليمين
+frame-title-details = التفاصيل

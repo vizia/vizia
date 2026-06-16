@@ -17,6 +17,7 @@ outline-button = زر بإطار
 text-button = زر نصي
 button-with-icon = زر مع أيقونة
 checkbox = صندوق اختيار
+frame = إطار
 one = واحد
 two = اثنان
 three = ثلاثة
@@ -122,6 +123,17 @@ view-title-switch = مفتاح تبديل
 view-title-zstack = مكدس Z
 view-title-combobox = مربع تحرير وسرد
 view-title-rating = تقييم
+view-title-frame = إطار
+frame-example-heading = أمثلة عنصر الإطار
+frame-title-settings = الإعدادات
+frame-title-user-profile = ملف المستخدم
+frame-title-details = التفاصيل
+frame-demo-title-positions = إطار مع مواضع العنوان
+frame-demo-without-title = إطار بدون عنوان
+frame-demo-complex-content = إطار بمحتوى معقد
+frame-title-top-left = أعلى اليسار
+frame-title-top-center = أعلى الوسط
+frame-title-top-right = أعلى اليمين
 
 ## Textbox and scrolling
 textbox-placeholder-type = اكتب شيئًا...

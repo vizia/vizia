@@ -73,7 +73,10 @@ pub const CATEGORIES: &[(&str, &[(&str, &str)])] = &[
         "category-feedback",
         &[("Popup", "popup"), ("Progressbar", "progress-bar"), ("Tooltip", "tooltip")],
     ),
-    ("category-containers", &[("Accordion", "accordion"), ("Collapsible", "collapsible")]),
+    (
+        "category-containers",
+        &[("Accordion", "accordion"), ("Collapsible", "collapsible"), ("Frame", "frame")],
+    ),
 ];
 
 pub fn localized_view_key(view_id: &str) -> &'static str {
