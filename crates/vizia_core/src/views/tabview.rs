@@ -97,8 +97,6 @@ impl TabView {
                 }
             });
 
-            Divider::new(cx).toggle_class("vertical", is_vertical);
-
             VStack::new(cx, move |cx| {
                 Binding::new(cx, list, move |cx| {
                     let list_values = list.get();

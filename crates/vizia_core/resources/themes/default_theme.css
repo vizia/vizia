@@ -44,6 +44,7 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+    --control-radius: 4px;
 }
 
 .dark {
@@ -82,6 +83,7 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+    --control-radius: 4px;
 }
 
 .rtl {
@@ -152,7 +154,7 @@ badge.error {
 /* BUTTON  */
 
 button {
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
     background-color: var(--primary);
     color: var(--primary-foreground);
     fill: var(--primary-foreground);
@@ -393,14 +395,14 @@ chip:disabled .icon {
 /* COMBOBOX */
 
 combobox {
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
     background-color: var(--background);
 }
 
 combobox .title {
     border-width: 1px;
     border-color: var(--border);
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
 }
 
 combobox > textbox:placeholder-shown {
@@ -419,7 +421,7 @@ combobox .list label:checked {
 
 calendar {
     background-color: var(--background);
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
     border-color: var(--border);
     border-width: 1px;
 }
@@ -432,7 +434,7 @@ calendar {
 .calendar-day {
     color: var(--foreground);
     cursor: hand;
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
 }
 
 .calendar-day:hover {
@@ -447,19 +449,19 @@ calendar {
 .calendar-day:checked {
     color: var(--primary-foreground);
     background-color: var(--primary);
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
 }
 
 .calendar-day-selected {
     color: var(--primary-foreground);
     background-color: var(--primary);
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
 }
 
 .calendar-day-selected:hover {
     color: var(--primary-foreground);
     background-color: var(--primary);
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
 }
 
 .calendar-day-disabled {
@@ -567,7 +569,7 @@ virtual-table {
     background-color: var(--background);
     border-width: 1px;
     border-color: var(--border);
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
     overflow: hidden;
 }
 
@@ -692,7 +694,7 @@ virtual-table virtual-list.selectable list-item:checked {
 
 menubutton {
     background-color: transparent;
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
 }
 
 menubutton:focus-visible {
@@ -715,7 +717,7 @@ menubutton .shortcut {
 
 submenu {
     background-color: transparent;
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
 }
 
 submenu:checked {
@@ -764,7 +766,7 @@ progressbar:disabled .progressbar-bar {
 /* SELECT */
 
 select {
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
 }
 
 select list.selectable list-item:checked {
@@ -797,7 +799,7 @@ select list.selectable list-item:focus-visible {
 
 popup {
     background-color: var(--popover);
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
     border-width: 1px;
     border-color: var(--border);
     padding: 1px;
@@ -942,7 +944,7 @@ slider .thumb {
 /* SPINBOX */
 
 spinbox {
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
     border-width: 1px;
     border-color: var(--border);
     background-color: var(--background);
@@ -1012,7 +1014,7 @@ tablist scroll-content {
 
 /* TEXTBOX */
 textbox {
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
     border-width: 1px;
     border-color: var(--border);
     background-color: var(--background);
@@ -1064,7 +1066,7 @@ textbox:invalid:focus-visible {
 /* TOGGLE BUTTON */
 
 toggle-button {
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
     border-width: 1px;
     border-color: var(--border);
     background-color: var(--background);
@@ -1089,7 +1091,7 @@ toggle-button:disabled {
 tooltip {
     padding: 8px;
     background-color: var(--primary);
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
     color: var(--primary-foreground);
     fill: var(--primary-foreground);
 }
