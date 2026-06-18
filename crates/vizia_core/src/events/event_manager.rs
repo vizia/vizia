@@ -535,17 +535,6 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                             if w == f32::MAX { "inf".to_string() } else { w.to_string() },
                             if h == f32::MAX { "inf".to_string() } else { h.to_string() },
                         );
-                    } else {
-                        println!(
-                            "{}{} {}",
-                            indents(entity),
-                            entity,
-                            if views.get(&entity).is_some() {
-                                "unnamed view"
-                            } else {
-                                "no binding or view"
-                            }
-                        );
                     }
                 }
             }
