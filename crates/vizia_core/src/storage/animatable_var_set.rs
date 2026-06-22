@@ -761,7 +761,7 @@ where
                         != u64::MAX
                     {
                         if let Some(prop) = variables.get(&candidate_shared.variable_name_hash) {
-                            prop.get_with_variables(entity, variables)
+                            prop.get_resolved(entity, variables)
                                 .or_else(|| candidate_shared.fallback.clone())
                         } else {
                             candidate_shared.fallback.clone()
