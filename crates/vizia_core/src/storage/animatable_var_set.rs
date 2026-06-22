@@ -753,9 +753,25 @@ where
 
                 let entity_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
                 if entity_anim_index >= self.active_animations.len() {
-                    let new_value = &self.shared_data.dense[shared_data_index.index()].value.value;
+                    // Compute the resolved value of the candidate rule, applying variable lookup
+                    // and fallback so we compare against the correct resolved value, not just the
+                    // raw baked value.value field (which may be default if the variable is missing).
+                    let candidate_shared = &self.shared_data.dense[shared_data_index.index()].value;
+                    let candidate_resolved_value = if candidate_shared.variable_name_hash
+                        != u64::MAX
+                    {
+                        if let Some(prop) = variables.get(&candidate_shared.variable_name_hash) {
+                            prop.get_with_variables(entity, variables)
+                                .or_else(|| candidate_shared.fallback.clone())
+                        } else {
+                            candidate_shared.fallback.clone()
+                        }
+                    } else {
+                        Some(candidate_shared.value.clone())
+                    };
+
                     let value_changed =
-                        self.get_resolved(entity, variables).as_ref() != Some(new_value);
+                        self.get_resolved(entity, variables) != candidate_resolved_value;
                     if !value_changed {
                         // Keep linkage accurate, but do not invalidate when value is unchanged.
                         self.inline_data.sparse[entity_index].data_index =
@@ -1015,10 +1031,23 @@ where
 
                 let entity_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
                 if entity_anim_index >= self.active_animations.len() {
-                    let new_value = &self.shared_data.dense[shared_data_index.index()].value.value;
-                    let value_changed =
-                        self.get_resolved_with_snapshot(entity, resolved_vars).as_ref()
-                            != Some(new_value);
+                    // Compute the resolved value of the candidate rule, applying variable lookup
+                    // (from the resolved_vars snapshot) and fallback so we compare against the
+                    // correct resolved value, not just the raw baked value.value field (which may
+                    // be default if the variable is missing from the snapshot).
+                    let candidate_shared = &self.shared_data.dense[shared_data_index.index()].value;
+                    let candidate_resolved_value =
+                        if candidate_shared.variable_name_hash != u64::MAX {
+                            resolved_vars
+                                .get(&candidate_shared.variable_name_hash)
+                                .cloned()
+                                .or_else(|| candidate_shared.fallback.clone())
+                        } else {
+                            Some(candidate_shared.value.clone())
+                        };
+
+                    let value_changed = self.get_resolved_with_snapshot(entity, resolved_vars)
+                        != candidate_resolved_value;
                     if !value_changed {
                         // Keep linkage accurate, but do not invalidate when value is unchanged.
                         self.inline_data.sparse[entity_index].data_index =
