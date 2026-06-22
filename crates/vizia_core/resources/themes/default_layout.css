@@ -1129,6 +1129,10 @@ frame {
 frame .frame-title {
     padding-left: 8px;
     padding-right: 8px;
+    size: auto;
+    translate: 0px -50%;
+    top: 0px;
+    position-type: absolute;
 }
 
 frame .frame-title.left {

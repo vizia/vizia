@@ -54,35 +54,29 @@ impl Frame {
         Self { title_position }.build(cx, |cx| {
             // Title - positioned absolutely with negative top offset
 
-            title(cx)
-                .class("frame-title")
-                .position_type(PositionType::Absolute)
-                .top(Pixels(0.0))
-                .translate((Pixels(0.0), Percentage(-50.0)))
-                .size(Auto)
-                .bind(title_position, move |handle| {
-                    let pos = title_position.get();
-                    match pos {
-                        FrameTitlePosition::TopLeft => {
-                            handle
-                                .toggle_class("left", true)
-                                .toggle_class("center", false)
-                                .toggle_class("right", false);
-                        }
-                        FrameTitlePosition::TopCenter => {
-                            handle
-                                .toggle_class("left", false)
-                                .toggle_class("center", true)
-                                .toggle_class("right", false);
-                        }
-                        FrameTitlePosition::TopRight => {
-                            handle
-                                .toggle_class("left", false)
-                                .toggle_class("center", false)
-                                .toggle_class("right", true);
-                        }
+            title(cx).class("frame-title").bind(title_position, move |handle| {
+                let pos = title_position.get();
+                match pos {
+                    FrameTitlePosition::TopLeft => {
+                        handle
+                            .toggle_class("left", true)
+                            .toggle_class("center", false)
+                            .toggle_class("right", false);
                     }
-                });
+                    FrameTitlePosition::TopCenter => {
+                        handle
+                            .toggle_class("left", false)
+                            .toggle_class("center", true)
+                            .toggle_class("right", false);
+                    }
+                    FrameTitlePosition::TopRight => {
+                        handle
+                            .toggle_class("left", false)
+                            .toggle_class("center", false)
+                            .toggle_class("right", true);
+                    }
+                }
+            });
 
             // Content
             content(cx);
