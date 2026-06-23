@@ -60,6 +60,7 @@
 //! Element::new(cx).class("foo");
 //! ```
 
+use accesskit::SortDirection;
 use hashbrown::{HashMap, HashSet};
 use indexmap::IndexMap;
 use log::warn;
@@ -227,6 +228,10 @@ pub struct Style {
     pub(crate) expanded: SparseSet<bool>,
     pub(crate) selected: SparseSet<bool>,
     pub(crate) multiselectable: SparseSet<bool>,
+    pub(crate) sort_direction: SparseSet<SortDirection>,
+    pub(crate) level: SparseSet<usize>,
+    pub(crate) size_of_set: SparseSet<usize>,
+    pub(crate) position_in_set: SparseSet<usize>,
     pub(crate) hidden: SparseSet<bool>,
     pub(crate) orientation: SparseSet<Orientation>,
     pub(crate) text_value: SparseSet<String>,
@@ -2728,6 +2733,10 @@ impl Style {
         self.expanded.remove(entity);
         self.selected.remove(entity);
         self.multiselectable.remove(entity);
+        self.sort_direction.remove(entity);
+        self.level.remove(entity);
+        self.size_of_set.remove(entity);
+        self.position_in_set.remove(entity);
         self.hidden.remove(entity);
         self.orientation.remove(entity);
         self.text_value.remove(entity);

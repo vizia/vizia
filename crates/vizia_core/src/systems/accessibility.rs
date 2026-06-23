@@ -191,6 +191,24 @@ pub(crate) fn get_access_node(
         }
     }
 
+    if let Some(sort_direction) = cx.style.sort_direction.get(entity).copied() {
+        node_builder.set_sort_direction(sort_direction);
+    } else {
+        node_builder.clear_sort_direction();
+    }
+
+    if let Some(level) = cx.style.level.get(entity).copied() {
+        node_builder.set_level(level);
+    }
+
+    if let Some(size_of_set) = cx.style.size_of_set.get(entity).copied() {
+        node_builder.set_size_of_set(size_of_set);
+    }
+
+    if let Some(position_in_set) = cx.style.position_in_set.get(entity).copied() {
+        node_builder.set_position_in_set(position_in_set);
+    }
+
     if let Some(orientation) = cx.style.orientation.get(entity).copied() {
         let orientation = match orientation {
             Orientation::Horizontal => AccessOrientation::Horizontal,

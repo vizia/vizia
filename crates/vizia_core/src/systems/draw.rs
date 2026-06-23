@@ -270,20 +270,22 @@ fn draw_entity(
         (_, Some(Visibility::Visible)) => true,
     };
 
-    // Draw the view
-    if is_visible {
-        let should_draw = if let Some(dirty_rect) = dirty_rect {
+    let should_draw = if is_visible {
+        if let Some(dirty_rect) = dirty_rect {
             let bounds = cached_draw_bounds(cx, current);
             bounds.intersects(dirty_rect)
         } else {
             true
-        };
+        }
+    } else {
+        false
+    };
 
-        if should_draw {
-            if let Some(view) = cx.views.remove(&current) {
-                view.draw(cx, canvas);
-                cx.views.insert(current, view);
-            }
+    // Draw the view
+    if should_draw {
+        if let Some(view) = cx.views.remove(&current) {
+            view.draw(cx, canvas);
+            cx.views.insert(current, view);
         }
     }
     canvas.restore();
@@ -296,11 +298,26 @@ fn draw_entity(
         draw_entity(cx, dirty_rect, canvas, current_z, queue, is_visible);
     }
 
+    cx.current = current;
+
+    // Draw outline after children so it appears above descendant content.
+    if should_draw {
+        canvas.save();
+        if let Some(Some(clip_path)) = cx.cache.clip_path.get(current) {
+            canvas.clip_path(clip_path, ClipOp::Intersect, true);
+        }
+
+        if let Some(transform) = cx.cache.transform.get(current) {
+            canvas.set_matrix(&(transform.into()));
+        }
+
+        cx.draw_outline(canvas);
+        canvas.restore();
+    }
+
     if let Some(count) = layer_count {
         canvas.restore_to_count(count);
     }
-
-    cx.current = current;
 }
 
 fn cached_draw_bounds(cx: &mut DrawContext, entity: Entity) -> BoundingBox {

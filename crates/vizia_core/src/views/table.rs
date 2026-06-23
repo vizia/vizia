@@ -1,6 +1,9 @@
 use std::{ops::Deref, rc::Rc, sync::Arc};
 
-use crate::prelude::*;
+use crate::{
+    icons::{ICON_ARROWS_SORT, ICON_SORT_ASCENDING, ICON_SORT_DESCENDING},
+    prelude::*,
+};
 
 /// Sort direction for a table column.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -62,32 +65,55 @@ impl<T: PartialEq + 'static, S: View, K: Clone + PartialEq + Send + Sync + 'stat
 
 /// Reusable helpers for building table header content.
 #[derive(Clone)]
-pub struct TableHeader;
+pub struct TableHeader<K> {
+    key: K,
+}
 
-impl TableHeader {
+impl<K> TableHeader<K>
+where
+    K: Eq + std::hash::Hash + Clone + PartialEq + Send + Sync + 'static,
+{
     pub fn new(
         cx: &mut Context,
+        key: impl Into<K>,
         title: impl Into<String>,
         sort_direction: Memo<TableSortDirection>,
-    ) -> Handle<'_, TableHeader> {
-        Self.build(cx, move |cx| {
-            let title = title.into();
-            Label::new(cx, title).class("table-header-title").width(Stretch(1.0)).min_width(Auto);
-            let sort_indicator = Memo::new(move |_| match sort_direction.get() {
-                TableSortDirection::Ascending => "^".to_string(),
-                TableSortDirection::Descending => "v".to_string(),
-                TableSortDirection::None => "·".to_string(),
-            });
-
-            Label::new(cx, sort_indicator).class("table-sort-indicator").text_wrap(false);
-        })
-        .layout_type(LayoutType::Row)
-        .width(Stretch(1.0))
-        .min_width(Auto)
+    ) -> Handle<'_, TableHeader<K>> {
+        let key = key.into();
+        Self { key: key.clone() }
+            .build(cx, move |cx| {
+                let key = key.clone();
+                let title = title.into();
+                Label::new(cx, title)
+                    .class("table-header-title")
+                    .pointer_events(PointerEvents::None)
+                    .width(Stretch(1.0))
+                    .min_width(Auto);
+                let sort_indicator = Memo::new(move |_| match sort_direction.get() {
+                    TableSortDirection::Ascending => ICON_SORT_ASCENDING,
+                    TableSortDirection::Descending => ICON_SORT_DESCENDING,
+                    TableSortDirection::None => ICON_ARROWS_SORT,
+                });
+                Button::new(cx, move |cx| {
+                    Svg::new(cx, sort_indicator).class("table-sort-indicator")
+                })
+                .variant(ButtonVariant::Text)
+                .on_press(move |cx| cx.emit(TableEvent::<K>::ToggleSort(key.clone())));
+            })
+            .navigable(true)
+            .layout_type(LayoutType::Row)
+            .alignment(Alignment::Left)
+            .padding_left(Pixels(8.0))
+            .padding_right(Pixels(8.0))
+            .width(Stretch(1.0))
+            .min_width(Auto)
     }
 }
 
-impl View for TableHeader {
+impl<K> View for TableHeader<K>
+where
+    K: Eq + std::hash::Hash + Clone + PartialEq + Send + Sync + 'static,
+{
     fn element(&self) -> Option<&'static str> {
         Some("table-header")
     }
@@ -246,8 +272,9 @@ where
     on_row_select: Option<Box<dyn Fn(&mut EventContext, Id)>>,
 }
 
-enum TableEvent<K> {
+pub enum TableEvent<K> {
     RequestSort(K, TableSortDirection),
+    ToggleSort(K),
     SelectRow(usize),
 }
 
@@ -517,6 +544,16 @@ where
                     if let Some(callback) = &self.on_row_select {
                         (callback)(cx, (self.row_id)(row));
                     }
+                }
+            }
+
+            TableEvent::ToggleSort(key) => {
+                if let Some(callback) = &self.on_sort {
+                    let current_direction =
+                        sort_direction_for_column(self.sort_state.get().as_ref(), key);
+                    let next_direction =
+                        next_sort_direction(self.sort_cycle.get(), current_direction);
+                    (callback)(cx, key.clone(), next_direction);
                 }
             }
         });
