@@ -22,6 +22,17 @@ impl Node for Entity {
         MorphormChildIter::new(tree, *self)
     }
 
+    fn parent<'t>(&'t self, tree: &'t Self::Tree) -> Option<&'t Self> {
+        // Return the *layout* parent, skipping ignored (e.g. binding) nodes. This matches the
+        // layout tree seen by `MorphormChildIter`, which flattens ignored nodes, so that walking up
+        // the tree (for incremental relayout) never lands on a node that is not a real layout node.
+        let mut parent = tree.parent.get(self.index()).and_then(|parent| parent.as_ref())?;
+        while tree.is_ignored(*parent) {
+            parent = tree.parent.get(parent.index()).and_then(|parent| parent.as_ref())?;
+        }
+        Some(parent)
+    }
+
     fn key(&self) -> Self::CacheKey {
         *self
     }
@@ -337,22 +348,6 @@ impl Node for Entity {
         })
     }
 
-    fn border_left(&self, _store: &Self::Store) -> Option<morphorm::Units> {
-        None
-    }
-
-    fn border_right(&self, _store: &Self::Store) -> Option<morphorm::Units> {
-        None
-    }
-
-    fn border_top(&self, _store: &Self::Store) -> Option<morphorm::Units> {
-        None
-    }
-
-    fn border_bottom(&self, _store: &Self::Store) -> Option<morphorm::Units> {
-        None
-    }
-
     fn alignment(&self, store: &Self::Store) -> Option<morphorm::Alignment> {
         store.alignment.get(*self).copied()
     }
@@ -367,18 +362,6 @@ impl Node for Entity {
 
     fn wrap(&self, store: &Self::Store) -> Option<morphorm::LayoutWrap> {
         store.wrap.get(*self).copied()
-    }
-
-    fn vertical_scroll(&self, _store: &Self::Store) -> Option<f32> {
-        // Scroll offset is applied via transform on ScrollContent, not through morphorm.
-        // Return None so morphorm takes its non-scroll code path.
-        None
-    }
-
-    fn horizontal_scroll(&self, _store: &Self::Store) -> Option<f32> {
-        // Scroll offset is applied via transform on ScrollContent, not through morphorm.
-        // Return None so morphorm takes its non-scroll code path.
-        None
     }
 
     fn min_vertical_gap(&self, store: &Self::Store) -> Option<Units> {

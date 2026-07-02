@@ -388,7 +388,17 @@ pub struct Style {
 
     pub(crate) system_flags: SystemFlags,
 
+    /// Whether the layout debug overlay is enabled. Mirrored from the [`Environment`] model so
+    /// that the layout and draw systems can read it directly.
+    pub(crate) debug_layout: bool,
+
     pub(crate) restyle: HashSet<Entity>,
+    /// Set of entities which need (incremental) relayout. Marking the root signals a full
+    /// relayout of the whole tree.
+    pub(crate) relayout: HashSet<Entity>,
+    /// Debug overlay: set of entities which underwent layout in the last relayout pass. Only
+    /// populated when the layout debug overlay is enabled (see `debug_layout`).
+    pub(crate) laid_out: HashSet<Entity>,
     pub(crate) text_construction: HashSet<Entity>,
     pub(crate) text_layout: HashSet<Entity>,
     pub(crate) reaccess: HashSet<Entity>,
@@ -2703,6 +2713,8 @@ impl Style {
         self.classes.insert(entity, HashSet::new());
         self.abilities.insert(entity, Abilities::default());
         self.system_flags = SystemFlags::RELAYOUT;
+        // Adding an entity is a structural change, so request a full relayout.
+        self.relayout.insert(Entity::root());
         self.restyle.insert(entity);
         self.reaccess.insert(entity);
         self.retransform.insert(entity);
@@ -2711,6 +2723,8 @@ impl Style {
 
     // Remove style data for the given entity.
     pub(crate) fn remove(&mut self, entity: Entity) {
+        self.relayout.remove(&entity);
+        self.laid_out.remove(&entity);
         self.ids.remove(entity);
         self.classes.remove(entity);
         self.pseudo_classes.remove(entity);
@@ -2913,6 +2927,21 @@ impl Style {
 
     pub(crate) fn needs_relayout(&mut self) {
         self.system_flags.set(SystemFlags::RELAYOUT, true);
+        // Marking the root as dirty signals a full relayout of the tree.
+        self.relayout.insert(Entity::root());
+    }
+
+    /// Marks a specific entity as needing relayout.
+    ///
+    /// Layout will restart from the best ancestor of the entity (see `morphorm::Node::layout`)
+    /// rather than from the root of the tree, enabling incremental layout.
+    pub(crate) fn needs_relayout_of(&mut self, entity: Entity) {
+        if entity == Entity::null() {
+            self.needs_relayout();
+            return;
+        }
+        self.system_flags.set(SystemFlags::RELAYOUT, true);
+        self.relayout.insert(entity);
     }
 
     pub(crate) fn needs_access_update(&mut self, entity: Entity) {

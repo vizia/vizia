@@ -40,6 +40,9 @@ pub struct Environment {
     pub(crate) caret_timer: Timer,
     /// The distance the mouse has to be dragged to start a drag operation.
     pub drag_distance: Signal<u32>,
+    /// Whether the layout debug overlay is enabled. When set, views which undergo layout
+    /// are briefly flashed with an orange outline for a single frame.
+    pub debug_layout: bool,
 }
 
 fn direction_from_locale(locale: &LanguageIdentifier) -> Direction {
@@ -95,6 +98,7 @@ impl Environment {
             }
         });
         let direction = direction_from_locale(&locale);
+        cx.style.debug_layout = true;
         Self {
             locale: Signal::new(locale.clone()),
             direction: Signal::new(direction),
@@ -104,6 +108,7 @@ impl Environment {
             system_theme_mode: detect_theme(),
             caret_timer,
             drag_distance: Signal::new(4),
+            debug_layout: true,
         }
     }
 
@@ -136,6 +141,10 @@ pub enum EnvironmentEvent {
     SetTooltipDelay(Duration),
     /// Set the distance the mouse has to be dragged to start a drag operation.
     SetDragDistance(u32),
+    /// Enable or disable the layout debug overlay.
+    SetDebugLayout(bool),
+    /// Toggle the layout debug overlay on or off.
+    ToggleDebugLayout,
 }
 
 impl Model for Environment {
@@ -201,6 +210,24 @@ impl Model for Environment {
 
             EnvironmentEvent::SetDragDistance(distance) => {
                 self.drag_distance.set_if_changed(distance);
+            }
+
+            EnvironmentEvent::SetDebugLayout(enabled) => {
+                self.debug_layout = enabled;
+                cx.style.debug_layout = enabled;
+                if !enabled {
+                    cx.style.laid_out.clear();
+                }
+                cx.needs_redraw();
+            }
+
+            EnvironmentEvent::ToggleDebugLayout => {
+                self.debug_layout = !self.debug_layout;
+                cx.style.debug_layout = self.debug_layout;
+                if !self.debug_layout {
+                    cx.style.laid_out.clear();
+                }
+                cx.needs_redraw();
             }
         });
 

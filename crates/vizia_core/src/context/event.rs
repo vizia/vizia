@@ -780,7 +780,7 @@ impl<'a> EventContext<'a> {
 
     /// Marks the current view as needing a layout computation.
     pub fn needs_relayout(&mut self) {
-        self.style.needs_relayout();
+        self.style.needs_relayout_of(self.current);
         self.needs_redraw();
     }
 

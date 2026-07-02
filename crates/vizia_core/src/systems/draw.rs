@@ -162,6 +162,33 @@ pub(crate) fn draw_system(
     // surface.canvas().clear(Color::transparent());
     dirty_surface.draw(surface.canvas(), (0, 0), SamplingOptions::default(), None);
 
+    // Debug overlay: outline the views which underwent layout in the most recent layout pass by
+    // stroking their transformed bounds with an orange rectangle. The overlay persists across
+    // frames (it is redrawn in full on every draw) until the layout system runs again, at which
+    // point the layout system repopulates `laid_out` and schedules the previous outlines to be
+    // erased.
+    if cx.style.debug_layout && !cx.style.laid_out.is_empty() {
+        let canvas = surface.canvas();
+        let mut paint = Paint::default();
+        paint.set_anti_alias(true);
+        paint.set_style(skia_safe::PaintStyle::Stroke);
+        paint.set_stroke_width(1.0);
+        // Orange (RGB 255, 165, 0).
+        paint.set_color(skia_safe::Color::from_argb(255, 255, 165, 0));
+
+        for entity in cx.style.laid_out.iter().copied() {
+            let Some(bounds) = cx.cache.bounds.get(entity).copied() else {
+                continue;
+            };
+            if bounds.w <= 0.0 || bounds.h <= 0.0 {
+                continue;
+            }
+            let matrix = cx.cache.transform.get(entity).copied().unwrap_or_default();
+            let (rect, _) = matrix.map_rect(Rect::from(bounds));
+            canvas.draw_rect(rect, &paint);
+        }
+    }
+
     // Debug draw dirty rect
     // if let Some(rect) = dirty_rect.map(Rect::from) {
     //     let mut paint = Paint::default();
