@@ -1470,7 +1470,8 @@ pub(crate) fn style_system(cx: &mut Context) {
             compute_matched_direction_rules(entity, &cx.style, &cx.tree, &direction_bloom);
 
         if cx.style.direction.link(entity, &matched_direction_rules) {
-            cx.style.system_flags.set(SystemFlags::RELAYOUT, true);
+            // Direction affects layout flow; mark this entity dirty so incremental layout runs.
+            cx.style.needs_relayout(entity);
             redraw_entities.push(entity);
 
             let iter = LayoutParentIterator::new(&cx.tree, entity);

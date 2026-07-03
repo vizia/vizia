@@ -40,8 +40,8 @@ pub struct Environment {
     pub(crate) caret_timer: Timer,
     /// The distance the mouse has to be dragged to start a drag operation.
     pub drag_distance: Signal<u32>,
-    /// Whether the layout debug overlay is enabled. When set, views which undergo layout
-    /// are briefly flashed with an orange outline for a single frame.
+    /// Whether the layout debug overlay is enabled. When set, views which underwent layout in the
+    /// most recent layout pass are outlined in orange until the next layout pass.
     pub debug_layout: bool,
 }
 
