@@ -536,12 +536,18 @@ impl Context {
 
         if !delete_list.is_empty() {
             self.style.needs_restyle(self.current);
-            // Relayout incrementally from the parent of the removed entity so its remaining
-            // children are repositioned, rather than forcing a full tree relayout.
-            if let Some(parent) = self.tree.get_layout_parent(entity) {
-                self.style.needs_relayout_of(parent);
-            } else {
-                self.style.needs_relayout();
+            // An absolutely-positioned node is out of its parent's flow, so removing it cannot
+            // change the parent's layout — no relayout is needed (the vacated region is unioned
+            // into the window's dirty_rect below). Otherwise relayout incrementally from the parent
+            // of the removed entity so its remaining children reflow, rather than the whole tree.
+            let is_absolute = self.style.position_type.get(entity).copied().unwrap_or_default()
+                == PositionType::Absolute;
+            if !is_absolute {
+                if let Some(parent) = self.tree.get_layout_parent(entity) {
+                    self.style.needs_relayout_of(parent);
+                } else {
+                    self.style.needs_relayout();
+                }
             }
             self.needs_redraw(self.current);
         }
