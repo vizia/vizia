@@ -98,7 +98,7 @@ impl Environment {
             }
         });
         let direction = direction_from_locale(&locale);
-        cx.style.debug_layout = true;
+        cx.style.debug_layout = false;
         Self {
             locale: Signal::new(locale.clone()),
             direction: Signal::new(direction),
@@ -108,7 +108,7 @@ impl Environment {
             system_theme_mode: detect_theme(),
             caret_timer,
             drag_distance: Signal::new(4),
-            debug_layout: true,
+            debug_layout: false,
         }
     }
 

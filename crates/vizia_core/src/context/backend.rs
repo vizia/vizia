@@ -163,7 +163,7 @@ impl BackendContext {
         self.0.style.width.insert(window_entity, Units::Pixels(logical_width));
         self.0.style.height.insert(window_entity, Units::Pixels(logical_height));
 
-        self.0.style.needs_relayout();
+        self.0.style.needs_relayout(window_entity);
         self.0.style.needs_retransform(window_entity);
         self.0.style.needs_reclip(window_entity);
     }
@@ -259,7 +259,7 @@ impl BackendContext {
         self.0.style.system_flags = SystemFlags::all();
         self.0.needs_redraw(window_entity);
         self.0.style.needs_restyle(window_entity);
-        self.0.style.needs_relayout();
+        self.0.style.needs_relayout(window_entity);
         let iter = LayoutTreeIterator::full(&self.0.tree);
         for entity in iter {
             self.0.style.needs_text_layout(entity);

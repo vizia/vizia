@@ -2927,22 +2927,7 @@ impl Style {
         self.restyle.insert(entity);
     }
 
-    pub(crate) fn needs_relayout(&mut self) {
-        self.system_flags.set(SystemFlags::RELAYOUT, true);
-        // Marking the root as dirty signals a full relayout of the tree.
-        self.relayout.insert(Entity::root());
-    }
-
-    /// Marks a specific entity as needing relayout.
-    ///
-    /// Layout will restart from the best ancestor of the entity (see `morphorm::Node::layout`)
-    /// rather than from the root of the tree, enabling incremental layout.
-    pub(crate) fn needs_relayout_of(&mut self, entity: Entity) {
-        if entity == Entity::null() {
-            self.needs_relayout();
-            return;
-        }
-        self.system_flags.set(SystemFlags::RELAYOUT, true);
+    pub(crate) fn needs_relayout(&mut self, entity: Entity) {
         self.relayout.insert(entity);
     }
 

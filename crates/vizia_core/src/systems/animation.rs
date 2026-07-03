@@ -196,7 +196,7 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     }
 
     for entity in relayout_entities.iter() {
-        cx.style.needs_relayout_of(*entity);
+        cx.style.needs_relayout(*entity);
     }
 
     for entity in redraw_entities.iter() {

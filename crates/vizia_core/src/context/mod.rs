@@ -295,7 +295,7 @@ impl Context {
         result.tree.set_window(Entity::root(), true);
 
         result.style.needs_restyle(Entity::root());
-        result.style.needs_relayout();
+        result.style.needs_relayout(Entity::root());
         result.style.needs_retransform(Entity::root());
         result.style.needs_reclip(Entity::root());
         result.needs_redraw(Entity::root());
@@ -405,12 +405,12 @@ impl Context {
 
     /// Mark the application as needing to rerun layout computations
     pub fn needs_relayout(&mut self) {
-        self.style.needs_relayout();
+        self.style.needs_relayout(Entity::root());
     }
 
     pub(crate) fn set_system_flags(&mut self, entity: Entity, system_flags: SystemFlags) {
         if system_flags.contains(SystemFlags::RELAYOUT) {
-            self.style.needs_relayout_of(entity);
+            self.style.needs_relayout(entity);
         }
 
         if system_flags.contains(SystemFlags::RESTYLE) {
@@ -544,9 +544,9 @@ impl Context {
                 == PositionType::Absolute;
             if !is_absolute {
                 if let Some(parent) = self.tree.get_layout_parent(entity) {
-                    self.style.needs_relayout_of(parent);
+                    self.style.needs_relayout(parent);
                 } else {
-                    self.style.needs_relayout();
+                    self.style.needs_relayout(entity);
                 }
             }
             self.needs_redraw(self.current);
@@ -978,7 +978,7 @@ impl Context {
                     });
                 }
             }
-            self.style.needs_relayout();
+            self.style.needs_relayout(self.current);
         }
     }
 
@@ -1019,9 +1019,9 @@ impl Context {
                 .map(|img| img.observers.iter().copied().collect())
                 .unwrap_or_default();
             for observer in observers {
-                self.style.needs_relayout_of(observer);
+                self.style.needs_relayout(observer);
             }
-            self.style.needs_relayout_of(self.current);
+            self.style.needs_relayout(self.current);
         }
 
         id

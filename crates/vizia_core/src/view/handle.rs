@@ -143,7 +143,7 @@ impl<V> Handle<'_, V> {
 
     /// Marks the view as needing a relayout.
     pub fn needs_relayout(&mut self) {
-        self.cx.style.needs_relayout_of(self.entity);
+        self.cx.style.needs_relayout(self.entity);
     }
 
     /// Marks the view as needing a restyle.

@@ -84,8 +84,8 @@ impl<'a> ResourceContext<'a> {
             .map(|img| img.observers.iter().copied().collect())
             .unwrap_or_default();
         for observer in observers {
-            self.style.needs_relayout_of(observer);
+            self.style.needs_relayout(observer);
         }
-        self.style.needs_relayout_of(self.current);
+        self.style.needs_relayout(self.current);
     }
 }

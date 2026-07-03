@@ -61,10 +61,10 @@ fn layout_restart_root(style: &Style, tree: &Tree<Entity>, entity: Entity) -> En
 pub(crate) fn layout_system(cx: &mut Context) {
     text_system(cx);
 
-    if cx.style.system_flags.contains(SystemFlags::RELAYOUT) {
+    if !cx.style.relayout.is_empty() {
         // Determine the minimal set of subtree roots to lay out. An empty dirty set (a relayout
         // flag raised without a specific entity) falls back to a full relayout from the root.
-        let relayout_roots: Vec<Entity> = if cx.style.relayout.is_empty() {
+        let relayout_roots: Vec<Entity> = if cx.style.relayout.contains(&Entity::root()) {
             vec![Entity::root()]
         } else {
             let dirty = std::mem::take(&mut cx.style.relayout);

@@ -498,9 +498,9 @@ impl<'a> EventContext<'a> {
                 .map(|img| img.observers.iter().copied().collect())
                 .unwrap_or_default();
             for observer in observers {
-                self.style.needs_relayout_of(observer);
+                self.style.needs_relayout(observer);
             }
-            self.style.needs_relayout_of(self.current);
+            self.style.needs_relayout(self.current);
         }
     }
 
@@ -791,7 +791,7 @@ impl<'a> EventContext<'a> {
 
     /// Marks the current view as needing a layout computation.
     pub fn needs_relayout(&mut self) {
-        self.style.needs_relayout_of(self.current);
+        self.style.needs_relayout(self.current);
         self.needs_redraw();
     }
 
@@ -849,9 +849,11 @@ impl<'a> EventContext<'a> {
 
         self.style.parse_theme(&overall_theme);
 
+        self.style.needs_relayout(Entity::root());
+
         for entity in self.tree.into_iter() {
             self.style.needs_restyle(entity);
-            self.style.needs_relayout();
+
             //self.style.needs_redraw(entity);
             self.style.needs_text_update(entity);
         }
