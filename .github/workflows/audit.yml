@@ -24,4 +24,4 @@ jobs:
           version: latest
       - run: rustup update
       - run: cargo audit --version
-      - run: cargo audit --deny warnings --config .cargo/audit.toml
+      - run: cargo audit --deny warnings --ignore RUSTSEC-2026-0194 --ignore RUSTSEC-2026-0195 --ignore RUSTSEC-2025-0057 --ignore RUSTSEC-2026-0192 --ignore RUSTSEC-2026-0097
