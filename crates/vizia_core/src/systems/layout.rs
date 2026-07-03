@@ -57,7 +57,7 @@ fn layout_restart_root(style: &Style, tree: &Tree<Entity>, entity: Entity) -> En
 /// [`Style::relayout`](crate::style::Style)) are recomputed. Dirty descendants covered by a dirty
 /// ancestor are collapsed away via [`minimal_layout_dirty_roots`], and for each remaining root
 /// `Node::layout` walks up to the best ancestor to restart layout from before recomputing that
-/// subtree. Marking the root dirty (or an empty dirty set) performs a full relayout.
+/// subtree. Marking the root dirty performs a full relayout.
 pub(crate) fn layout_system(cx: &mut Context) {
     text_system(cx);
 
