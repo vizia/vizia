@@ -295,7 +295,7 @@ impl Context {
         result.tree.set_window(Entity::root(), true);
 
         result.style.needs_restyle(Entity::root());
-        result.style.needs_relayout();
+        result.style.needs_relayout(Entity::root());
         result.style.needs_retransform(Entity::root());
         result.style.needs_reclip(Entity::root());
         result.needs_redraw(Entity::root());
@@ -405,12 +405,12 @@ impl Context {
 
     /// Mark the application as needing to rerun layout computations
     pub fn needs_relayout(&mut self) {
-        self.style.needs_relayout();
+        self.style.needs_relayout(Entity::root());
     }
 
     pub(crate) fn set_system_flags(&mut self, entity: Entity, system_flags: SystemFlags) {
         if system_flags.contains(SystemFlags::RELAYOUT) {
-            self.needs_relayout();
+            self.style.needs_relayout(entity);
         }
 
         if system_flags.contains(SystemFlags::RESTYLE) {
@@ -536,7 +536,19 @@ impl Context {
 
         if !delete_list.is_empty() {
             self.style.needs_restyle(self.current);
-            self.style.needs_relayout();
+            // An absolutely-positioned node is out of its parent's flow, so removing it cannot
+            // change the parent's layout — no relayout is needed (the vacated region is unioned
+            // into the window's dirty_rect below). Otherwise relayout incrementally from the parent
+            // of the removed entity so its remaining children reflow, rather than the whole tree.
+            let is_absolute = self.style.position_type.get(entity).copied().unwrap_or_default()
+                == PositionType::Absolute;
+            if !is_absolute {
+                if let Some(parent) = self.tree.get_layout_parent(entity) {
+                    self.style.needs_relayout(parent);
+                } else {
+                    self.style.needs_relayout(entity);
+                }
+            }
             self.needs_redraw(self.current);
         }
 
@@ -966,7 +978,7 @@ impl Context {
                     });
                 }
             }
-            self.style.needs_relayout();
+            self.style.needs_relayout(self.current);
         }
     }
 
@@ -997,7 +1009,19 @@ impl Context {
                     });
                 }
             }
-            self.style.needs_relayout();
+            // Relayout only the entities that display this resource (its observers) plus the
+            // current entity (e.g. the freshly-built Svg view triggering the load), rather than
+            // forcing a full tree relayout.
+            let observers: Vec<Entity> = self
+                .resource_manager
+                .images
+                .get(&id)
+                .map(|img| img.observers.iter().copied().collect())
+                .unwrap_or_default();
+            for observer in observers {
+                self.style.needs_relayout(observer);
+            }
+            self.style.needs_relayout(self.current);
         }
 
         id

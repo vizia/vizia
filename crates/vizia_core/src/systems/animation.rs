@@ -195,8 +195,8 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
         redraw_entities.extend(store.tick(time));
     }
 
-    if !relayout_entities.is_empty() {
-        cx.style.system_flags.set(SystemFlags::RELAYOUT, true);
+    for entity in relayout_entities.iter() {
+        cx.style.needs_relayout(*entity);
     }
 
     for entity in redraw_entities.iter() {

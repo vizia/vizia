@@ -450,7 +450,9 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context, redraw_entities: &mut 
                 | cx.style.direction.inherit_inline(entity, parent)
             {
                 cx.style.needs_text_update(entity);
-                cx.style.needs_relayout();
+                // Only this entity's text changed; relayout incrementally from it (morphorm
+                // restarts from at least its parent) rather than forcing a full tree relayout.
+                cx.style.needs_relayout(entity);
             }
         }
     }
@@ -477,7 +479,8 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context, redraw_entities: &mut 
                 | cx.style.direction.inherit_shared(entity, parent)
             {
                 cx.style.needs_text_update(entity);
-                cx.style.needs_relayout();
+                // Only this entity's text changed; relayout incrementally from it.
+                cx.style.needs_relayout(entity);
             }
 
             if cx.style.disabled.inherit_shared(entity, parent)
@@ -1121,7 +1124,10 @@ fn link_style_data(
 
     //
     if should_relayout {
-        style.system_flags.set(SystemFlags::RELAYOUT, true);
+        // Register the specific entity for incremental relayout. Setting the RELAYOUT system flag
+        // alone would leave `style.relayout` empty and force a full tree relayout (see
+        // `layout_system`), e.g. every time a popover toggles its `display`.
+        style.needs_relayout(entity);
     }
 
     if should_redraw {
@@ -1464,7 +1470,8 @@ pub(crate) fn style_system(cx: &mut Context) {
             compute_matched_direction_rules(entity, &cx.style, &cx.tree, &direction_bloom);
 
         if cx.style.direction.link(entity, &matched_direction_rules) {
-            cx.style.system_flags.set(SystemFlags::RELAYOUT, true);
+            // Direction affects layout flow; mark this entity dirty so incremental layout runs.
+            cx.style.needs_relayout(entity);
             redraw_entities.push(entity);
 
             let iter = LayoutParentIterator::new(&cx.tree, entity);
@@ -1481,7 +1488,8 @@ pub(crate) fn style_system(cx: &mut Context) {
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
             if cx.style.direction.inherit_shared(entity, parent) {
                 cx.style.needs_text_update(entity);
-                cx.style.needs_relayout();
+                // Only this entity's direction changed; relayout incrementally from it.
+                cx.style.needs_relayout(entity);
             }
         }
     }

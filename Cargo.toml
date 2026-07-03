@@ -77,7 +77,7 @@ hashbrown = "0.17"
 indexmap = "2.13"
 keyboard-types = { version = "0.7", default-features = false }
 log = "0.4"
-morphorm = {git = "https://github.com/vizia/morphorm.git", rev = "ea74e341f73bd6e9f7e487cff8f8b98707fd3d0b"}
+morphorm = { git = "https://github.com/vizia/morphorm.git", rev = "adf7a4e484a5d4a2d4cc6a25770c419f7a8e3f65" }
 open = "5.3"
 parking_lot = "0.12"
 raw-window-handle = "0.5"

@@ -388,7 +388,17 @@ pub struct Style {
 
     pub(crate) system_flags: SystemFlags,
 
+    /// Whether the layout debug overlay is enabled. Mirrored from the [`Environment`] model so
+    /// that the layout and draw systems can read it directly.
+    pub(crate) debug_layout: bool,
+
     pub(crate) restyle: HashSet<Entity>,
+    /// Set of entities which need (incremental) relayout. Marking the root signals a full
+    /// relayout of the whole tree.
+    pub(crate) relayout: HashSet<Entity>,
+    /// Debug overlay: set of entities which underwent layout in the last relayout pass. Only
+    /// populated when the layout debug overlay is enabled (see `debug_layout`).
+    pub(crate) laid_out: HashSet<Entity>,
     pub(crate) text_construction: HashSet<Entity>,
     pub(crate) text_layout: HashSet<Entity>,
     pub(crate) reaccess: HashSet<Entity>,
@@ -2703,6 +2713,10 @@ impl Style {
         self.classes.insert(entity, HashSet::new());
         self.abilities.insert(entity, Abilities::default());
         self.system_flags = SystemFlags::RELAYOUT;
+        // Adding an entity is a structural change. Relayout incrementally from the new entity;
+        // morphorm restarts from at least its parent, which repositions all of the parent's
+        // children. Marking the root here would force a full tree relayout on every view creation.
+        self.relayout.insert(entity);
         self.restyle.insert(entity);
         self.reaccess.insert(entity);
         self.retransform.insert(entity);
@@ -2711,6 +2725,8 @@ impl Style {
 
     // Remove style data for the given entity.
     pub(crate) fn remove(&mut self, entity: Entity) {
+        self.relayout.remove(&entity);
+        self.laid_out.remove(&entity);
         self.ids.remove(entity);
         self.classes.remove(entity);
         self.pseudo_classes.remove(entity);
@@ -2911,8 +2927,8 @@ impl Style {
         self.restyle.insert(entity);
     }
 
-    pub(crate) fn needs_relayout(&mut self) {
-        self.system_flags.set(SystemFlags::RELAYOUT, true);
+    pub(crate) fn needs_relayout(&mut self, entity: Entity) {
+        self.relayout.insert(entity);
     }
 
     pub(crate) fn needs_access_update(&mut self, entity: Entity) {

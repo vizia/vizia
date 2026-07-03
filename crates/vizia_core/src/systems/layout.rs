@@ -1,31 +1,105 @@
+use hashbrown::HashSet;
 use morphorm::Node;
 use vizia_storage::LayoutTreeIterator;
 
 use crate::events::ProxyEvent;
 use crate::layout::node::SubLayout;
 use crate::prelude::*;
+use crate::tree::minimal_layout_dirty_roots;
 
 use super::{clipping_system, text_layout_system, text_system, transform_system};
 
+/// Returns whether an entity is a valid restart point for incremental layout, mirroring
+/// morphorm's `NodeExt::is_restartable`: its width and height must both be `Pixels` or `Stretch`.
+fn is_restartable(style: &Style, entity: Entity) -> bool {
+    let width =
+        style.width.get_resolved(entity, &style.custom_units_props).unwrap_or(Units::Stretch(1.0));
+    let height =
+        style.height.get_resolved(entity, &style.custom_units_props).unwrap_or(Units::Stretch(1.0));
+    matches!(width, Units::Pixels(_) | Units::Stretch(_))
+        && matches!(height, Units::Pixels(_) | Units::Stretch(_))
+}
+
+/// Returns the ancestor that morphorm restarts layout from for a dirty `entity`, mirroring
+/// `NodeExt::find_relayout_root`. Used to determine which views undergo layout for the debug overlay.
+fn layout_restart_root(style: &Style, tree: &Tree<Entity>, entity: Entity) -> Entity {
+    let mut root = match tree.get_layout_parent(entity) {
+        Some(parent) => parent,
+        None => return entity,
+    };
+    // If the dirty node is itself absolutely positioned it is out of its parent's flow, so a change
+    // to it cannot alter the parent's size — restart from the parent without walking up (mirrors
+    // morphorm).
+    if style.position_type.get(entity).copied().unwrap_or_default()
+        == morphorm::PositionType::Absolute
+    {
+        return root;
+    }
+    while let Some(parent) = tree.get_layout_parent(root) {
+        // An absolutely-positioned node is out of its parent's flow, so its size never affects the
+        // parent's layout — stop here regardless of its own sizing (mirrors morphorm).
+        if style.position_type.get(root).copied().unwrap_or_default()
+            == morphorm::PositionType::Absolute
+        {
+            break;
+        }
+        if is_restartable(style, root) {
+            break;
+        }
+        root = parent;
+    }
+    root
+}
+
 /// Determines the size and position of views.
-/// TODO: Currently relayout is done on an entire tree rather than incrementally.
-/// Incremental relayout can be done by keeping a list of nodes that need relayout,
-/// and when a node undergoes relayout remove the descendants that have been processed from the list,
-/// then continue relayout on the remaining nodes in the list.
+///
+/// Relayout is performed incrementally: only the subtrees rooted at the dirty nodes (tracked in
+/// [`Style::relayout`](crate::style::Style)) are recomputed. Dirty descendants covered by a dirty
+/// ancestor are collapsed away via [`minimal_layout_dirty_roots`], and for each remaining root
+/// `Node::layout` walks up to the best ancestor to restart layout from before recomputing that
+/// subtree. Marking the root dirty performs a full relayout.
 pub(crate) fn layout_system(cx: &mut Context) {
     text_system(cx);
 
-    if cx.style.system_flags.contains(SystemFlags::RELAYOUT) {
-        // Perform layout on the whole tree.
-        Entity::root().layout(
-            &mut cx.cache,
-            &cx.tree,
-            &cx.style,
-            &mut SubLayout {
-                text_context: &mut cx.text_context,
-                resource_manager: &cx.resource_manager,
-            },
-        );
+    if !cx.style.relayout.is_empty() {
+        // Determine the minimal set of subtree roots to lay out. Marking the root dirty triggers a full relayout.
+        // Otherwise, relayout only the minimal set of dirty subtrees.
+        let relayout_roots: Vec<Entity> = if cx.style.relayout.contains(&Entity::root()) {
+            vec![Entity::root()]
+        } else {
+            let dirty = std::mem::take(&mut cx.style.relayout);
+            minimal_layout_dirty_roots(&cx.tree, &dirty).into_iter().collect()
+        };
+        cx.style.relayout.clear();
+
+        // Debug overlay: record which views undergo layout (the subtree of each restart root).
+        // The overlay persists until the next layout pass, so schedule a redraw of the previously
+        // highlighted views to erase their outlines before recording the new set.
+        if cx.style.debug_layout {
+            for entity in std::mem::take(&mut cx.style.laid_out) {
+                cx.needs_redraw(entity);
+            }
+            let mut laid_out = HashSet::new();
+            for &root in &relayout_roots {
+                let restart = layout_restart_root(&cx.style, &cx.tree, root);
+                for entity in LayoutTreeIterator::subtree(&cx.tree, restart) {
+                    laid_out.insert(entity);
+                }
+            }
+            cx.style.laid_out = laid_out;
+        }
+
+        for entity in relayout_roots {
+            entity.layout(
+                &mut cx.cache,
+                &cx.tree,
+                &cx.style,
+                &mut SubLayout {
+                    text_context: &mut cx.text_context,
+                    resource_manager: &cx.resource_manager,
+                },
+            );
+        }
 
         let cx = &mut EventContext::new(cx);
 
