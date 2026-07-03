@@ -62,8 +62,8 @@ pub(crate) fn layout_system(cx: &mut Context) {
     text_system(cx);
 
     if !cx.style.relayout.is_empty() {
-        // Determine the minimal set of subtree roots to lay out. An empty dirty set (a relayout
-        // flag raised without a specific entity) falls back to a full relayout from the root.
+        // Determine the minimal set of subtree roots to lay out. Marking the root dirty triggers a full relayout.
+        // Otherwise, relayout only the minimal set of dirty subtrees.
         let relayout_roots: Vec<Entity> = if cx.style.relayout.contains(&Entity::root()) {
             vec![Entity::root()]
         } else {
