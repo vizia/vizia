@@ -1,0 +1,10 @@
+[advisories]
+ignore = [
+  # quick-xml is pinned transitively by zbus_xml (^0.38) and wayland-scanner (^0.39)
+  # in our current MSRV-compatible dependency set.
+  "RUSTSEC-2026-0194",
+  "RUSTSEC-2026-0195",
+  # Transitive ecosystem warnings (no direct replacement path in this workspace).
+  "RUSTSEC-2025-0057",
+  "RUSTSEC-2026-0192",
+]
