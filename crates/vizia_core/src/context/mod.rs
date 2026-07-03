@@ -1009,7 +1009,19 @@ impl Context {
                     });
                 }
             }
-            self.style.needs_relayout();
+            // Relayout only the entities that display this resource (its observers) plus the
+            // current entity (e.g. the freshly-built Svg view triggering the load), rather than
+            // forcing a full tree relayout.
+            let observers: Vec<Entity> = self
+                .resource_manager
+                .images
+                .get(&id)
+                .map(|img| img.observers.iter().copied().collect())
+                .unwrap_or_default();
+            for observer in observers {
+                self.style.needs_relayout_of(observer);
+            }
+            self.style.needs_relayout_of(self.current);
         }
 
         id
