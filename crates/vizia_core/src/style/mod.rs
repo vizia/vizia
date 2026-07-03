@@ -2713,8 +2713,10 @@ impl Style {
         self.classes.insert(entity, HashSet::new());
         self.abilities.insert(entity, Abilities::default());
         self.system_flags = SystemFlags::RELAYOUT;
-        // Adding an entity is a structural change, so request a full relayout.
-        self.relayout.insert(Entity::root());
+        // Adding an entity is a structural change. Relayout incrementally from the new entity;
+        // morphorm restarts from at least its parent, which repositions all of the parent's
+        // children. Marking the root here would force a full tree relayout on every view creation.
+        self.relayout.insert(entity);
         self.restyle.insert(entity);
         self.reaccess.insert(entity);
         self.retransform.insert(entity);

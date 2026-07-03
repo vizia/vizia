@@ -28,6 +28,13 @@ fn layout_restart_root(style: &Style, tree: &Tree<Entity>, entity: Entity) -> En
         None => return entity,
     };
     while let Some(parent) = tree.get_layout_parent(root) {
+        // An absolutely-positioned node is out of its parent's flow, so its size never affects the
+        // parent's layout — stop here regardless of its own sizing (mirrors morphorm).
+        if style.position_type.get(root).copied().unwrap_or_default()
+            == morphorm::PositionType::Absolute
+        {
+            break;
+        }
         if is_restartable(style, root) {
             break;
         }

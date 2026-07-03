@@ -536,7 +536,13 @@ impl Context {
 
         if !delete_list.is_empty() {
             self.style.needs_restyle(self.current);
-            self.style.needs_relayout();
+            // Relayout incrementally from the parent of the removed entity so its remaining
+            // children are repositioned, rather than forcing a full tree relayout.
+            if let Some(parent) = self.tree.get_layout_parent(entity) {
+                self.style.needs_relayout_of(parent);
+            } else {
+                self.style.needs_relayout();
+            }
             self.needs_redraw(self.current);
         }
 

@@ -29,7 +29,8 @@ pub(crate) fn text_system(cx: &mut Context) {
                 build_paragraph(entity, &mut cx.style, &cx.tree, cx.text_context.font_collection())
             {
                 cx.text_context.text_paragraphs.insert(entity, paragraph);
-                cx.style.needs_relayout();
+                // Only this entity's text was (re)built; relayout incrementally from it.
+                cx.style.needs_relayout_of(entity);
                 cx.style.needs_text_layout(entity);
             }
         }
