@@ -774,6 +774,11 @@ where
                         self.get_resolved(entity, variables) != candidate_resolved_value;
                     if !value_changed {
                         // Keep linkage accurate, but do not invalidate when value is unchanged.
+                        let rule_animation = shared_data_index.animation;
+                        if let Some(transition_state) = self.animations.get_mut(rule_animation) {
+                            transition_state.from_rule = data_index.index();
+                            transition_state.to_rule = shared_data_index.index();
+                        }
                         self.inline_data.sparse[entity_index].data_index =
                             DataIndex::shared(shared_data_index.index());
                         return false;
