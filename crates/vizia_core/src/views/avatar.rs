@@ -69,25 +69,6 @@ pub trait AvatarModifiers: Sized {
         self,
         variant: impl Res<U> + 'static,
     ) -> Self;
-
-    /// Adds a badge to the Avatar.
-    ///
-    /// ```
-    /// # use vizia_core::prelude::*;
-    /// # use vizia_core::icons::ICON_USER;
-    /// # let cx = &mut Context::default();
-    /// Avatar::new(cx, |cx|{
-    ///     Svg::new(cx, ICON_USER);
-    /// })
-    /// .badge(|cx| Badge::empty(cx).class("error"));
-    /// ```
-    #[allow(unused_variables)]
-    fn badge<F>(self, content: F) -> Self
-    where
-        F: FnOnce(&mut Context) -> Handle<'_, Badge>,
-    {
-        self
-    }
 }
 
 impl AvatarModifiers for Handle<'_, Avatar> {
@@ -106,19 +87,6 @@ impl AvatarModifiers for Handle<'_, Avatar> {
         self.toggle_class("circle", is_circle)
             .toggle_class("square", is_square)
             .toggle_class("rounded", is_rounded)
-    }
-
-    fn badge<F>(mut self, content: F) -> Self
-    where
-        F: FnOnce(&mut Context) -> Handle<'_, Badge>,
-    {
-        let entity = self.entity();
-
-        self.context().with_current(entity, |cx| {
-            (content)(cx);
-        });
-
-        self
     }
 }
 
