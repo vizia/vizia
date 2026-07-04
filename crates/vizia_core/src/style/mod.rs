@@ -2590,13 +2590,9 @@ impl Style {
                                 lf.clone(),
                             );
                             self.border_left_width.insert_variable_rule(rule_id, hash, lf);
-                            self.border_top_color.insert_variable_rule(rule_id, hash, cf.clone());
-                            self.border_right_color.insert_variable_rule(rule_id, hash, cf.clone());
-                            self.border_bottom_color.insert_variable_rule(
-                                rule_id,
-                                hash,
-                                cf.clone(),
-                            );
+                            self.border_top_color.insert_variable_rule(rule_id, hash, cf);
+                            self.border_right_color.insert_variable_rule(rule_id, hash, cf);
+                            self.border_bottom_color.insert_variable_rule(rule_id, hash, cf);
                             self.border_left_color.insert_variable_rule(rule_id, hash, cf);
                         }
                     }
