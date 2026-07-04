@@ -3,7 +3,7 @@ use vizia::prelude::*;
 use crate::DemoRegion;
 
 struct SelectData {
-    options: Signal<Vec<Signal<&'static str>>>,
+    options: Signal<Vec<Localized>>,
     selected_option_1: Signal<Option<usize>>,
     selected_option_2: Signal<Option<usize>>,
 }
@@ -31,7 +31,9 @@ impl Model for SelectData {
 
 pub fn select(cx: &mut Context) {
     let options = Signal::new(
-        ["Red", "Green", "Blue", "Yellow", "Cyan", "Magenta"].map(Signal::new).to_vec(),
+        ["red", "green", "blue", "yellow", "cyan", "magenta"]
+            .map(Localized::new)
+            .to_vec(),
     );
     let selected_option_1 = Signal::new(Some(0usize));
     let selected_option_2 = Signal::new(None);
@@ -43,15 +45,15 @@ pub fn select(cx: &mut Context) {
 
         Divider::new(cx);
 
-        DemoRegion::new(cx, "Select", move |cx| {
+        DemoRegion::new(cx, Localized::new("demo-region-select"), move |cx| {
             Select::new(cx, options, selected_option_1, true)
                 .on_select(|cx, index| cx.emit(SelectEvent::SetOption1(index)))
                 .width(Pixels(150.0));
         });
 
-        DemoRegion::new(cx, "Select with Placeholder ", move |cx| {
+        DemoRegion::new(cx, Localized::new("demo-region-placeholder-select"), move |cx| {
             Select::new(cx, options, selected_option_2, true)
-                .placeholder(String::from("Select a color..."))
+                .placeholder(Localized::new("select-color-placeholder"))
                 .on_select(|cx, index| cx.emit(SelectEvent::SetOption2(index)))
                 .width(Pixels(150.0));
         });

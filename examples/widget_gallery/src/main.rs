@@ -787,7 +787,7 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
             .size(Pixels(160.0));
         }
         "Select" => {
-            let options = Signal::new(["Red", "Green", "Blue"].map(Signal::new).to_vec());
+            let options = Signal::new(["red", "green", "blue"].map(Localized::new).to_vec());
             let selected = Signal::new(Some(0usize));
             Select::new(cx, options, selected, true)
                 .on_select(move |_cx, index| selected.set(Some(index)))

@@ -3,7 +3,12 @@
 system-theme = System
 dark-theme = Dark
 light-theme = Light
+red = Red
+green = Green
 blue = Blue
+yellow = Yellow
+cyan = Cyan
+magenta = Magenta
 emerald = Emerald
 crimson = Crimson
 amber = Amber
@@ -144,6 +149,7 @@ two = Two
 three = Three
 toggle-disabled = Toggle Disabled
 default = Default
+select-color-placeholder = Select a color...
 
 ## Example message with attributes
 form-submission = Form Submission
