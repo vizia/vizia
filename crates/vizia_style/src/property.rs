@@ -1,6 +1,6 @@
 use crate::{
-    Alignment, Angle, BackgroundImage, BackgroundRepeat, BackgroundSize, BlendMode, Border,
-    BorderStyle, BorderWidth, ClipPath, Color, CornerRadius, CornerShape, CursorIcon,
+    Alignment, Angle, AspectRatio, BackgroundImage, BackgroundRepeat, BackgroundSize, BlendMode,
+    Border, BorderStyle, BorderWidth, ClipPath, Color, CornerRadius, CornerShape, CursorIcon,
     CustomParseError, CustomProperty, Direction, Display, Filter, FontFamily, FontSize, FontSlant,
     FontVariation, FontWeight, FontWidth, LayoutType, LayoutWrap, Length, LengthOrPercentage,
     LetterSpacing, LineClamp, LineHeight, Opacity, Outline, Overflow, Parse, PointerEvents,
@@ -47,6 +47,7 @@ define_property! {
         "top": Top(Units),
         "size": Size(Units),
         "height": Height(Units),
+        "aspect-ratio": AspectRatio(AspectRatio),
         "bottom": Bottom(Units),
 
         // Constraints
@@ -265,6 +266,22 @@ mod tests {
             }
 
             _ => panic!("background-repeat parsed to wrong property"),
+        }
+    }
+
+    #[test]
+    fn parse_aspect_ratio_property() {
+        let mut parser_input = ParserInput::new("auto 16/9");
+        let mut parser = Parser::new(&mut parser_input);
+        let parsed_property = Property::parse_value(CowRcStr::from("aspect-ratio"), &mut parser)
+            .expect("Failed to parse aspect-ratio");
+
+        match parsed_property {
+            Property::AspectRatio(AspectRatio::AutoRatio(ratio)) => {
+                assert_eq!(ratio, 16.0 / 9.0);
+            }
+
+            _ => panic!("aspect-ratio parsed to wrong property"),
         }
     }
 

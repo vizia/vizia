@@ -254,19 +254,16 @@ impl Node for Entity {
                                 .map(|stored_img| &stored_img.image)
                             {
                                 Some(ImageOrSvg::Image(image)) => {
-                                    max_width =
-                                        max_width.max(image.width() as f32 * store.scale_factor());
-                                    max_height = max_height
-                                        .max(image.height() as f32 * store.scale_factor());
+                                    // Intrinsic image dimensions are already in physical pixels.
+                                    // Do not apply scale-factor again or auto sizing doubles on HiDPI.
+                                    max_width = max_width.max(image.width() as f32);
+                                    max_height = max_height.max(image.height() as f32);
                                 }
 
                                 Some(ImageOrSvg::Svg(svg)) => {
-                                    max_width = max_width.max(
-                                        svg.inner().fContainerSize.fWidth * store.scale_factor(),
-                                    );
-                                    max_height = max_height.max(
-                                        svg.inner().fContainerSize.fWidth * store.scale_factor(),
-                                    );
+                                    // Use SVG intrinsic container size directly in physical pixels.
+                                    max_width = max_width.max(svg.inner().fContainerSize.fWidth);
+                                    max_height = max_height.max(svg.inner().fContainerSize.fHeight);
                                 }
 
                                 _ => {}
@@ -277,8 +274,31 @@ impl Node for Entity {
                 }
             }
 
-            let width = if let Some(width) = width { width } else { max_width };
-            let height = if let Some(height) = height { height } else { max_height };
+            let intrinsic_ratio = if max_width > 0.0 && max_height > 0.0 {
+                Some(max_width / max_height)
+            } else {
+                None
+            };
+
+            let aspect_ratio = store.aspect_ratio.get(*self).copied();
+            let auto_ratio = match aspect_ratio {
+                Some(AspectRatio::Auto) => intrinsic_ratio,
+                Some(AspectRatio::AutoRatio(fallback_ratio)) => {
+                    intrinsic_ratio.or(Some(fallback_ratio))
+                }
+                _ => None,
+            };
+
+            let (width, height) = match (width, height, auto_ratio) {
+                (Some(width), None, Some(ratio)) if ratio > 0.0 => (width, width / ratio),
+                (None, Some(height), Some(ratio)) if ratio > 0.0 => (height * ratio, height),
+                (width, height, _) => {
+                    let width = width.unwrap_or(max_width);
+                    let height = height.unwrap_or(max_height);
+                    (width, height)
+                }
+            };
+
             Some((width, height))
         } else {
             None
@@ -290,6 +310,23 @@ impl Node for Entity {
             Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
+    }
+
+    fn aspect_ratio(&self, store: &Self::Store) -> Option<f32> {
+        match store.aspect_ratio.get(*self).copied() {
+            Some(AspectRatio::Ratio(ratio)) => Some(ratio),
+
+            // For image-backed nodes, `auto` and `auto <ratio>` are resolved from intrinsic
+            // dimensions inside `content_size`, where resource data is available.
+            Some(AspectRatio::Auto) | Some(AspectRatio::AutoRatio(_))
+                if store.background_image.get(*self).is_some() =>
+            {
+                None
+            }
+
+            Some(AspectRatio::AutoRatio(ratio)) => Some(ratio),
+            _ => None,
+        }
     }
 
     fn min_height(&self, store: &Self::Store) -> Option<morphorm::Units> {

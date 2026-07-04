@@ -783,6 +783,11 @@ fn link_style_data(
         should_redraw = true;
     }
 
+    if style.aspect_ratio.link(entity, matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
     // Size Constraints
     if style.max_width.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
