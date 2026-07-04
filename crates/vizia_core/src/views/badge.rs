@@ -146,6 +146,39 @@ impl View for Badge {
     }
 }
 
+/// Modifiers for attaching a [Badge] to a view.
+pub trait BadgeModifiers: Sized {
+    /// Adds a badge to the view.
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// # let cx = &mut Context::default();
+    /// Button::new(cx, |cx| Label::new(cx, "Inbox"))
+    ///     .badge(|cx| Badge::new(cx, |cx| Label::new(cx, "2")));
+    /// ```
+    fn badge<F>(self, content: F) -> Self
+    where
+        F: FnOnce(&mut Context) -> Handle<'_, Badge>;
+}
+
+impl<V> BadgeModifiers for Handle<'_, V>
+where
+    V: View,
+{
+    fn badge<F>(mut self, content: F) -> Self
+    where
+        F: FnOnce(&mut Context) -> Handle<'_, Badge>,
+    {
+        let entity = self.entity();
+
+        self.context().with_current(entity, |cx| {
+            (content)(cx);
+        });
+
+        self
+    }
+}
+
 impl Handle<'_, Badge> {
     /// Sets the placement of a badge relative to its parent. Accepts a value or signal of type [BadgePlacement].
     pub fn placement<U: Into<BadgePlacement> + Clone + 'static>(
