@@ -291,9 +291,12 @@ fn build_window(
 ///
 #[cfg(target_os = "windows")]
 pub fn set_cloak(window: &winit::window::Window, state: bool) -> bool {
-    use windows_sys::Win32::{
-        Foundation::{BOOL, FALSE, HWND, TRUE},
-        Graphics::Dwm::{DWMWA_CLOAK, DwmSetWindowAttribute},
+    use windows_sys::{
+        Win32::{
+            Foundation::{FALSE, HWND, TRUE},
+            Graphics::Dwm::{DWMWA_CLOAK, DwmSetWindowAttribute},
+        },
+        core::BOOL,
     };
 
     let RawWindowHandle::Win32(handle) = window.window_handle().unwrap().as_raw() else {

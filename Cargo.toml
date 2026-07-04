@@ -57,11 +57,11 @@ vizia_style = { version = "0.4.0", path = "crates/vizia_style" }
 vizia_window = { version = "0.4.0", path = "crates/vizia_window" }
 vizia_reactive = { version = "0.4.0", path = "crates/vizia_reactive" }
 accesskit = "0.24"
-accesskit_winit = "0.32"
+accesskit_winit = "0.33"
 baseview = { git = "https://github.com/vizia/baseview.git", rev = "70e4e05ba1de837970b5b5457a99893aae0b6cfa", features = ["opengl"] }
-bitflags = "2.11"
+bitflags = "2.13"
 chrono = "0.4"
-comrak = { version = "0.52", default-features = false }
+comrak = { version = "0.53", default-features = false }
 copypasta = { version = "0.10", default-features = false }
 cssparser = "0.37"
 cssparser-color = "0.5"
@@ -83,27 +83,27 @@ parking_lot = "0.12"
 raw-window-handle = "0.5"
 rayon = "1.11"
 reqwest = { version = "0.13", features = ["json", "query"] }
-selectors = "0.38"
+selectors = "0.39"
 serde = { version = "1.0", features = ["derive"] }
-skia-safe = { version = "0.97", features = ["gl", "textlayout", "svg"] }
+skia-safe = { version = "0.99", features = ["gl", "textlayout", "svg"] }
 sys-locale = "0.3"
 tokio = { version = "1.52.3", features = ["rt-multi-thread", "time"] }
 unic-langid = { version = "0.9.6", features = ["macros"] }
 unicode-segmentation = "1.12"
 unicode-bidi = "0.3"
-windows-sys = { version = "0.59", default-features = false, features = ["Win32_Graphics_Dwm"] }
+windows-sys = { version = "0.61", default-features = false, features = ["Win32_Graphics_Dwm"] }
 winit = { version = "0.30", default-features = false }
 
 [target."cfg(target_os = \"macos\")".dependencies.skia-safe]
-version = "0.97"
+version = "0.99"
 features = ["textlayout", "svg", "metal", "gl"]
 
 [target."cfg(target_os = \"linux\")".dependencies.skia-safe]
-version = "0.97"
+version = "0.99"
 features = ["textlayout", "svg", "x11", "wayland", "gl"]
 
 [target."cfg(target_os = \"windows\")".dependencies.skia-safe]
-version = "0.97"
+version = "0.99"
 features = ["textlayout", "svg", "d3d", "vulkan", "gl"]
 
 [workspace.lints.rust]
