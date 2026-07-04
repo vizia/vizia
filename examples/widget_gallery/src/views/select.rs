@@ -34,7 +34,7 @@ pub fn select(cx: &mut Context) {
         ["Red", "Green", "Blue", "Yellow", "Cyan", "Magenta"].map(Signal::new).to_vec(),
     );
     let selected_option_1 = Signal::new(Some(0usize));
-    let selected_option_2 = Signal::new(Some(2usize));
+    let selected_option_2 = Signal::new(None);
 
     SelectData { options, selected_option_1, selected_option_2 }.build(cx);
 
@@ -44,26 +44,16 @@ pub fn select(cx: &mut Context) {
         Divider::new(cx);
 
         DemoRegion::new(cx, "Select", move |cx| {
-            VStack::new(cx, |cx| {
-                Label::new(cx, "Color:").class("field-label");
-                Select::new(cx, options, selected_option_1, true)
-                    .on_select(|cx, index| cx.emit(SelectEvent::SetOption1(index)))
-                    .width(Pixels(150.0));
-            })
-            .gap(Pixels(2.0))
-            .size(Auto);
+            Select::new(cx, options, selected_option_1, true)
+                .on_select(|cx, index| cx.emit(SelectEvent::SetOption1(index)))
+                .width(Pixels(150.0));
         });
 
-        DemoRegion::new(cx, "Placeholder Select", move |cx| {
-            VStack::new(cx, |cx| {
-                Label::new(cx, "Color:").class("field-label");
-                Select::new(cx, options, selected_option_2, true)
-                    .placeholder(String::from("Select a color..."))
-                    .on_select(|cx, index| cx.emit(SelectEvent::SetOption2(index)))
-                    .width(Pixels(150.0));
-            })
-            .gap(Pixels(2.0))
-            .size(Auto);
+        DemoRegion::new(cx, "Select with Placeholder ", move |cx| {
+            Select::new(cx, options, selected_option_2, true)
+                .placeholder(String::from("Select a color..."))
+                .on_select(|cx, index| cx.emit(SelectEvent::SetOption2(index)))
+                .width(Pixels(150.0));
         });
     })
     .class("panel");
