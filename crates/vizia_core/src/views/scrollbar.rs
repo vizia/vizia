@@ -19,6 +19,32 @@ enum ScrollBarEvent {
 }
 
 impl Scrollbar {
+    fn is_horizontal_rtl(&self, cx: &EventContext) -> bool {
+        self.orientation == Orientation::Horizontal
+            && cx.environment().direction.get() == Direction::RightToLeft
+    }
+
+    fn apply_thumb_translate(&self, cx: &mut EventContext) {
+        let child = cx.first_child();
+        let (size, thumb_size) = self.container_and_thumb_size(cx);
+        let movable = (size - thumb_size).max(0.0);
+        let scale_factor = cx.scale_factor().max(f32::EPSILON);
+        let offset = (self.value.get().clamp(0.0, 1.0) * movable) / scale_factor;
+
+        cx.with_current(child, |cx| {
+            match self.orientation {
+                Orientation::Horizontal => cx.set_translate(Translate {
+                    x: LengthOrPercentage::Length(Length::px(offset)),
+                    y: LengthOrPercentage::Length(Length::px(0.0)),
+                }),
+                Orientation::Vertical => cx.set_translate(Translate {
+                    x: LengthOrPercentage::Length(Length::px(0.0)),
+                    y: LengthOrPercentage::Length(Length::px(offset)),
+                }),
+            }
+        });
+    }
+
     /// Create a new [Scrollbar] view.
     pub fn new<F, V, R>(
         cx: &mut Context,
@@ -48,20 +74,31 @@ impl Scrollbar {
             Element::new(cx)
                 .class("thumb")
                 .focusable(true)
-                .bind(translate_state, move |handle| {
-                    let (value, ratio) = translate_state.get();
-                    let ratio = ratio.clamp(0.0001, 1.0);
-                    let offset =
-                        if ratio >= 1.0 { 0.0 } else { (value * (1.0 - ratio) / ratio) * 100.0 };
+                .bind(translate_state, move |mut handle| {
+                    let (value, _ratio) = translate_state.get();
+                    let thumb = handle.entity();
+                    let track = handle.parent();
+                    let cx = handle.context();
+                    let (size, thumb_size) = match orientation {
+                        Orientation::Horizontal => {
+                            (cx.cache.get_width(track), cx.cache.get_width(thumb))
+                        }
+                        Orientation::Vertical => {
+                            (cx.cache.get_height(track), cx.cache.get_height(thumb))
+                        }
+                    };
+                    let movable = (size.max(0.0) - thumb_size.clamp(0.0, size.max(0.0))).max(0.0);
+                    let scale_factor = cx.scale_factor().max(f32::EPSILON);
+                    let offset = (value.clamp(0.0, 1.0) * movable) / scale_factor;
 
                     match orientation {
                         Orientation::Horizontal => handle.translate(Translate {
-                            x: LengthOrPercentage::Percentage(offset),
+                            x: LengthOrPercentage::Length(Length::px(offset)),
                             y: LengthOrPercentage::Length(Length::px(0.0)),
                         }),
                         Orientation::Vertical => handle.translate(Translate {
                             x: LengthOrPercentage::Length(Length::px(0.0)),
-                            y: LengthOrPercentage::Percentage(offset),
+                            y: LengthOrPercentage::Length(Length::px(offset)),
                         }),
                     };
                 })
@@ -82,25 +119,31 @@ impl Scrollbar {
     fn container_and_thumb_size(&self, cx: &mut EventContext) -> (f32, f32) {
         let current = cx.current();
         let child = cx.tree.get_child(current, 0).unwrap();
-        match &self.orientation {
+        let (size, thumb_size) = match &self.orientation {
             Orientation::Horizontal => (cx.cache.get_width(current), cx.cache.get_width(child)),
             Orientation::Vertical => (cx.cache.get_height(current), cx.cache.get_height(child)),
-        }
+        };
+
+        let size = size.max(0.0);
+        let thumb_size = thumb_size.clamp(0.0, size);
+        (size, thumb_size)
     }
 
     fn thumb_bounds(&self, cx: &mut EventContext) -> BoundingBox {
         let child = cx.first_child();
-        cx.transformed_bounds(child)
+        cx.with_current(child, |cx| cx.bounds())
     }
 
     fn compute_new_value(&self, cx: &mut EventContext, physical_delta: f32, value_ref: f32) -> f32 {
         // delta is moving within the negative space of the thumb: (1 - ratio) * container
         let (size, thumb_size) = self.container_and_thumb_size(cx);
-        let negative_space = size - thumb_size;
-        if negative_space == 0.0 {
+        let negative_space = (size - thumb_size).max(0.0);
+        if negative_space <= f32::EPSILON {
             value_ref
         } else {
             // what percentage of negative space have we crossed?
+            let physical_delta =
+                if self.is_horizontal_rtl(cx) { -physical_delta } else { physical_delta };
             let logical_delta = physical_delta / negative_space;
             value_ref + logical_delta
         }
@@ -153,16 +196,27 @@ impl View for Scrollbar {
                         let sy = bounds.h - thumb_bounds.h;
                         match self.orientation {
                             Orientation::Horizontal => {
-                                let px = cx.mouse.cursor_x - cx.bounds().x - thumb_bounds.w / 2.0;
-                                let x = (px / sx).clamp(0.0, 1.0);
+                                let px = cx.mouse.cursor_x - bounds.x - thumb_bounds.w / 2.0;
+                                let mut x = if sx <= f32::EPSILON {
+                                    0.0
+                                } else {
+                                    (px / sx).clamp(0.0, 1.0)
+                                };
+                                if self.is_horizontal_rtl(cx) {
+                                    x = 1.0 - x;
+                                }
                                 if let Some(callback) = &self.on_changing {
                                     (callback)(cx, x);
                                 }
                             }
 
                             Orientation::Vertical => {
-                                let py = cx.mouse.cursor_y - cx.bounds().y - thumb_bounds.h / 2.0;
-                                let y = (py / sy).clamp(0.0, 1.0);
+                                let py = cx.mouse.cursor_y - bounds.y - thumb_bounds.h / 2.0;
+                                let y = if sy <= f32::EPSILON {
+                                    0.0
+                                } else {
+                                    (py / sy).clamp(0.0, 1.0)
+                                };
                                 if let Some(callback) = &self.on_changing {
                                     (callback)(cx, y);
                                 }
@@ -222,8 +276,15 @@ impl View for Scrollbar {
                             match self.orientation {
                                 Orientation::Horizontal => {
                                     let px =
-                                        cx.mouse.cursor_x - cx.bounds().x - thumb_bounds.w / 2.0;
-                                    let x = (px / sx).clamp(0.0, 1.0);
+                                        cx.mouse.cursor_x - bounds.x - thumb_bounds.w / 2.0;
+                                    let mut x = if sx <= f32::EPSILON {
+                                        0.0
+                                    } else {
+                                        (px / sx).clamp(0.0, 1.0)
+                                    };
+                                    if self.is_horizontal_rtl(cx) {
+                                        x = 1.0 - x;
+                                    }
                                     if let Some(callback) = &self.on_changing {
                                         (callback)(cx, x);
                                     }
@@ -231,8 +292,12 @@ impl View for Scrollbar {
 
                                 Orientation::Vertical => {
                                     let py =
-                                        cx.mouse.cursor_y - cx.bounds().y - thumb_bounds.h / 2.0;
-                                    let y = (py / sy).clamp(0.0, 1.0);
+                                        cx.mouse.cursor_y - bounds.y - thumb_bounds.h / 2.0;
+                                    let y = if sy <= f32::EPSILON {
+                                        0.0
+                                    } else {
+                                        (py / sy).clamp(0.0, 1.0)
+                                    };
                                     if let Some(callback) = &self.on_changing {
                                         (callback)(cx, y);
                                     }
@@ -240,6 +305,10 @@ impl View for Scrollbar {
                             }
                         }
                     }
+                }
+
+                WindowEvent::GeometryChanged(_) => {
+                    self.apply_thumb_translate(cx);
                 }
 
                 _ => {}

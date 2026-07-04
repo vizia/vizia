@@ -79,7 +79,9 @@ fn main() -> Result<(), ApplicationError> {
             .show_horizontal_scrollbar(show_horizontal_scrollbar)
             .show_vertical_scrollbar(show_vertical_scrollbar)
             .scroll_x(scroll_x)
-            .scroll_y(scroll_y);
+            .scroll_y(scroll_y)
+            .width(Pixels(180.0))
+            .height(Pixels(240.0));
 
             List::new(cx, list, |cx, _, item| {
                 Label::new(cx, item).hoverable(false);
@@ -93,7 +95,9 @@ fn main() -> Result<(), ApplicationError> {
             .show_horizontal_scrollbar(show_horizontal_scrollbar)
             .show_vertical_scrollbar(show_vertical_scrollbar)
             .scroll_x(scroll_x)
-            .scroll_y(scroll_y);
+            .scroll_y(scroll_y)
+            .width(Pixels(180.0))
+            .height(Pixels(240.0));
 
             // List::new_filtered(
             //     cx,
