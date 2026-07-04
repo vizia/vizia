@@ -26,17 +26,15 @@ impl Scrollbar {
         let scale_factor = cx.scale_factor().max(f32::EPSILON);
         let offset = (self.value.get().clamp(0.0, 1.0) * movable) / scale_factor;
 
-        cx.with_current(child, |cx| {
-            match self.orientation {
-                Orientation::Horizontal => cx.set_translate(Translate {
-                    x: LengthOrPercentage::Length(Length::px(offset)),
-                    y: LengthOrPercentage::Length(Length::px(0.0)),
-                }),
-                Orientation::Vertical => cx.set_translate(Translate {
-                    x: LengthOrPercentage::Length(Length::px(0.0)),
-                    y: LengthOrPercentage::Length(Length::px(offset)),
-                }),
-            }
+        cx.with_current(child, |cx| match self.orientation {
+            Orientation::Horizontal => cx.set_translate(Translate {
+                x: LengthOrPercentage::Length(Length::px(offset)),
+                y: LengthOrPercentage::Length(Length::px(0.0)),
+            }),
+            Orientation::Vertical => cx.set_translate(Translate {
+                x: LengthOrPercentage::Length(Length::px(0.0)),
+                y: LengthOrPercentage::Length(Length::px(offset)),
+            }),
         });
     }
 
@@ -265,8 +263,7 @@ impl View for Scrollbar {
                             let sy = bounds.h - thumb_bounds.h;
                             match self.orientation {
                                 Orientation::Horizontal => {
-                                    let px =
-                                        cx.mouse.cursor_x - bounds.x - thumb_bounds.w / 2.0;
+                                    let px = cx.mouse.cursor_x - bounds.x - thumb_bounds.w / 2.0;
                                     let x = if sx <= f32::EPSILON {
                                         0.0
                                     } else {
@@ -278,8 +275,7 @@ impl View for Scrollbar {
                                 }
 
                                 Orientation::Vertical => {
-                                    let py =
-                                        cx.mouse.cursor_y - bounds.y - thumb_bounds.h / 2.0;
+                                    let py = cx.mouse.cursor_y - bounds.y - thumb_bounds.h / 2.0;
                                     let y = if sy <= f32::EPSILON {
                                         0.0
                                     } else {
