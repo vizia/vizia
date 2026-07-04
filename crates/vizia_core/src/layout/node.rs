@@ -261,9 +261,15 @@ impl Node for Entity {
                                 }
 
                                 Some(ImageOrSvg::Svg(svg)) => {
-                                    // Use SVG intrinsic container size directly in physical pixels.
-                                    max_width = max_width.max(svg.inner().fContainerSize.fWidth);
-                                    max_height = max_height.max(svg.inner().fContainerSize.fHeight);
+                                    // Skia SVG container sizes are CSS/logical pixels. Layout runs
+                                    // in physical pixels, so convert here to keep SVG auto sizing
+                                    // consistent with raster images on HiDPI displays.
+                                    max_width = max_width.max(
+                                        svg.inner().fContainerSize.fWidth * store.scale_factor(),
+                                    );
+                                    max_height = max_height.max(
+                                        svg.inner().fContainerSize.fHeight * store.scale_factor(),
+                                    );
                                 }
 
                                 _ => {}
