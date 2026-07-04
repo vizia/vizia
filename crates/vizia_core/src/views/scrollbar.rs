@@ -19,11 +19,6 @@ enum ScrollBarEvent {
 }
 
 impl Scrollbar {
-    fn is_horizontal_rtl(&self, cx: &EventContext) -> bool {
-        self.orientation == Orientation::Horizontal
-            && cx.environment().direction.get() == Direction::RightToLeft
-    }
-
     fn apply_thumb_translate(&self, cx: &mut EventContext) {
         let child = cx.first_child();
         let (size, thumb_size) = self.container_and_thumb_size(cx);
@@ -142,8 +137,6 @@ impl Scrollbar {
             value_ref
         } else {
             // what percentage of negative space have we crossed?
-            let physical_delta =
-                if self.is_horizontal_rtl(cx) { -physical_delta } else { physical_delta };
             let logical_delta = physical_delta / negative_space;
             value_ref + logical_delta
         }
@@ -197,14 +190,11 @@ impl View for Scrollbar {
                         match self.orientation {
                             Orientation::Horizontal => {
                                 let px = cx.mouse.cursor_x - bounds.x - thumb_bounds.w / 2.0;
-                                let mut x = if sx <= f32::EPSILON {
+                                let x = if sx <= f32::EPSILON {
                                     0.0
                                 } else {
                                     (px / sx).clamp(0.0, 1.0)
                                 };
-                                if self.is_horizontal_rtl(cx) {
-                                    x = 1.0 - x;
-                                }
                                 if let Some(callback) = &self.on_changing {
                                     (callback)(cx, x);
                                 }
@@ -277,14 +267,11 @@ impl View for Scrollbar {
                                 Orientation::Horizontal => {
                                     let px =
                                         cx.mouse.cursor_x - bounds.x - thumb_bounds.w / 2.0;
-                                    let mut x = if sx <= f32::EPSILON {
+                                    let x = if sx <= f32::EPSILON {
                                         0.0
                                     } else {
                                         (px / sx).clamp(0.0, 1.0)
                                     };
-                                    if self.is_horizontal_rtl(cx) {
-                                        x = 1.0 - x;
-                                    }
                                     if let Some(callback) = &self.on_changing {
                                         (callback)(cx, x);
                                     }
