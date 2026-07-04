@@ -72,15 +72,15 @@ use crate::prelude::*;
 use crate::storage::animatable_var_set::AnimatableVarSet;
 
 pub use vizia_style::{
-    Alignment, Angle, BackgroundImage, BackgroundRepeat, BackgroundSize, BorderStyleKeyword,
-    ClipPath, Color, CornerShape, CssRule, CursorIcon, Direction, Display, Filter, FontFamily,
-    FontSize, FontSizeKeyword, FontSlant, FontVariation, FontWeight, FontWeightKeyword, FontWidth,
-    GenericFontFamily, Gradient, HorizontalPosition, HorizontalPositionKeyword, LayoutWrap, Length,
-    LengthOrPercentage, LengthValue, LetterSpacing, LineClamp, LineDirection, LineHeight,
-    LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position, PositionType, RGBA, Scale,
-    Shadow, TextAlign, TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke,
-    TextStrokeStyle, Transform, Transition, Translate, VerticalPosition, VerticalPositionKeyword,
-    Visibility,
+    Alignment, Angle, AspectRatio, BackgroundImage, BackgroundRepeat, BackgroundSize,
+    BorderStyleKeyword, ClipPath, Color, CornerShape, CssRule, CursorIcon, Direction, Display,
+    Filter, FontFamily, FontSize, FontSizeKeyword, FontSlant, FontVariation, FontWeight,
+    FontWeightKeyword, FontWidth, GenericFontFamily, Gradient, HorizontalPosition,
+    HorizontalPositionKeyword, LayoutWrap, Length, LengthOrPercentage, LengthValue, LetterSpacing,
+    LineClamp, LineDirection, LineHeight, LinearGradient, Matrix, Opacity, Overflow, PointerEvents,
+    Position, PositionType, RGBA, Scale, Shadow, TextAlign, TextDecorationLine,
+    TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform, Transition,
+    Translate, VerticalPosition, VerticalPositionKeyword, Visibility,
 };
 
 use cssparser::Token as CssToken;
@@ -373,6 +373,7 @@ pub struct Style {
     // Size
     pub(crate) width: AnimatableVarSet<Units>,
     pub(crate) height: AnimatableVarSet<Units>,
+    pub(crate) aspect_ratio: StyleSet<AspectRatio>,
 
     // Size Constraints
     pub(crate) min_width: AnimatableVarSet<Units>,
@@ -1759,6 +1760,10 @@ impl Style {
                 self.height.insert_rule(rule_id, height);
             }
 
+            Property::AspectRatio(aspect_ratio) => {
+                self.aspect_ratio.insert_rule(rule_id, aspect_ratio);
+            }
+
             // Padding
             Property::Padding(padding) => {
                 self.padding_left.insert_rule(rule_id, padding);
@@ -2879,6 +2884,7 @@ impl Style {
         // Size
         self.width.remove(entity);
         self.height.remove(entity);
+        self.aspect_ratio.remove(entity);
 
         // Size Constraints
         self.min_width.remove(entity);

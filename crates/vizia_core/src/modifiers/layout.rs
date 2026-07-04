@@ -173,6 +173,13 @@ pub trait LayoutModifiers: internal::Modifiable {
         SystemFlags::RELAYOUT
     );
 
+    modifier!(
+        /// Sets the preferred aspect ratio of the view.
+        aspect_ratio,
+        AspectRatio,
+        SystemFlags::RELAYOUT
+    );
+
     /// Sets the width and height of the view.
     fn size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
