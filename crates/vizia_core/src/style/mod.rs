@@ -264,10 +264,23 @@ pub struct Style {
     pub(crate) rotate: AnimatableSet<Angle>,
     pub(crate) scale: AnimatableSet<Scale>,
 
-    // Border
-    pub(crate) border_width: AnimatableVarSet<LengthOrPercentage>,
-    pub(crate) border_color: AnimatableVarSet<Color>,
-    pub(crate) border_style: StyleSet<BorderStyleKeyword>,
+    // Border widths (per side)
+    pub(crate) border_top_width: AnimatableVarSet<LengthOrPercentage>,
+    pub(crate) border_right_width: AnimatableVarSet<LengthOrPercentage>,
+    pub(crate) border_bottom_width: AnimatableVarSet<LengthOrPercentage>,
+    pub(crate) border_left_width: AnimatableVarSet<LengthOrPercentage>,
+
+    // Border colors (per side)
+    pub(crate) border_top_color: AnimatableVarSet<Color>,
+    pub(crate) border_right_color: AnimatableVarSet<Color>,
+    pub(crate) border_bottom_color: AnimatableVarSet<Color>,
+    pub(crate) border_left_color: AnimatableVarSet<Color>,
+
+    // Border styles (per side)
+    pub(crate) border_top_style: StyleSet<BorderStyleKeyword>,
+    pub(crate) border_right_style: StyleSet<BorderStyleKeyword>,
+    pub(crate) border_bottom_style: StyleSet<BorderStyleKeyword>,
+    pub(crate) border_left_style: StyleSet<BorderStyleKeyword>,
 
     // Corner Shape
     pub(crate) corner_top_left_shape: StyleSet<CornerShape>,
@@ -525,17 +538,116 @@ impl Style {
                 }
 
                 // BORDER
+                Property::Border(value) => {
+                    if let Some(color) = value.color {
+                        insert_keyframe2(&mut self.border_top_color, animation_id, time, color);
+                        insert_keyframe2(&mut self.border_right_color, animation_id, time, color);
+                        insert_keyframe2(&mut self.border_bottom_color, animation_id, time, color);
+                        insert_keyframe2(&mut self.border_left_color, animation_id, time, color);
+                    }
+                    if let Some(width) = value.width.clone() {
+                        let w: LengthOrPercentage = width.into();
+                        insert_keyframe2(&mut self.border_top_width, animation_id, time, w.clone());
+                        insert_keyframe2(
+                            &mut self.border_right_width,
+                            animation_id,
+                            time,
+                            w.clone(),
+                        );
+                        insert_keyframe2(
+                            &mut self.border_bottom_width,
+                            animation_id,
+                            time,
+                            w.clone(),
+                        );
+                        insert_keyframe2(&mut self.border_left_width, animation_id, time, w);
+                    }
+                }
+
                 Property::BorderWidth(value) => {
                     insert_keyframe2(
-                        &mut self.border_width,
+                        &mut self.border_top_width,
+                        animation_id,
+                        time,
+                        value.top.0.clone(),
+                    );
+                    insert_keyframe2(
+                        &mut self.border_right_width,
+                        animation_id,
+                        time,
+                        value.right.0.clone(),
+                    );
+                    insert_keyframe2(
+                        &mut self.border_bottom_width,
+                        animation_id,
+                        time,
+                        value.bottom.0.clone(),
+                    );
+                    insert_keyframe2(
+                        &mut self.border_left_width,
                         animation_id,
                         time,
                         value.left.0.clone(),
                     );
                 }
 
+                Property::BorderTopWidth(value) => {
+                    insert_keyframe2(
+                        &mut self.border_top_width,
+                        animation_id,
+                        time,
+                        value.0.clone(),
+                    );
+                }
+
+                Property::BorderRightWidth(value) => {
+                    insert_keyframe2(
+                        &mut self.border_right_width,
+                        animation_id,
+                        time,
+                        value.0.clone(),
+                    );
+                }
+
+                Property::BorderBottomWidth(value) => {
+                    insert_keyframe2(
+                        &mut self.border_bottom_width,
+                        animation_id,
+                        time,
+                        value.0.clone(),
+                    );
+                }
+
+                Property::BorderLeftWidth(value) => {
+                    insert_keyframe2(
+                        &mut self.border_left_width,
+                        animation_id,
+                        time,
+                        value.0.clone(),
+                    );
+                }
+
                 Property::BorderColor(value) => {
-                    insert_keyframe2(&mut self.border_color, animation_id, time, *value);
+                    insert_keyframe2(&mut self.border_top_color, animation_id, time, *value);
+                    insert_keyframe2(&mut self.border_right_color, animation_id, time, *value);
+                    insert_keyframe2(&mut self.border_bottom_color, animation_id, time, *value);
+                    insert_keyframe2(&mut self.border_left_color, animation_id, time, *value);
+                }
+
+                Property::BorderTopColor(value) => {
+                    insert_keyframe2(&mut self.border_top_color, animation_id, time, *value);
+                }
+
+                Property::BorderRightColor(value) => {
+                    insert_keyframe2(&mut self.border_right_color, animation_id, time, *value);
+                }
+
+                Property::BorderBottomColor(value) => {
+                    insert_keyframe2(&mut self.border_bottom_color, animation_id, time, *value);
+                }
+
+                Property::BorderLeftColor(value) => {
+                    insert_keyframe2(&mut self.border_left_color, animation_id, time, *value);
                 }
 
                 Property::CornerTopLeftRadius(value) => {
@@ -820,8 +932,14 @@ impl Style {
         self.rotate.play_animation(entity, animation, start_time, duration, delay);
         self.scale.play_animation(entity, animation, start_time, duration, delay);
 
-        self.border_width.play_animation(entity, animation, start_time, duration, delay);
-        self.border_color.play_animation(entity, animation, start_time, duration, delay);
+        self.border_top_width.play_animation(entity, animation, start_time, duration, delay);
+        self.border_right_width.play_animation(entity, animation, start_time, duration, delay);
+        self.border_bottom_width.play_animation(entity, animation, start_time, duration, delay);
+        self.border_left_width.play_animation(entity, animation, start_time, duration, delay);
+        self.border_top_color.play_animation(entity, animation, start_time, duration, delay);
+        self.border_right_color.play_animation(entity, animation, start_time, duration, delay);
+        self.border_bottom_color.play_animation(entity, animation, start_time, duration, delay);
+        self.border_left_color.play_animation(entity, animation, start_time, duration, delay);
 
         self.corner_top_left_radius.play_animation(entity, animation, start_time, duration, delay);
         self.corner_top_right_radius.play_animation(entity, animation, start_time, duration, delay);
@@ -921,8 +1039,14 @@ impl Style {
             | self.translate.has_active_animation(entity, animation)
             | self.rotate.has_active_animation(entity, animation)
             | self.scale.has_active_animation(entity, animation)
-            | self.border_width.has_active_animation(entity, animation)
-            | self.border_color.has_active_animation(entity, animation)
+            | self.border_top_width.has_active_animation(entity, animation)
+            | self.border_right_width.has_active_animation(entity, animation)
+            | self.border_bottom_width.has_active_animation(entity, animation)
+            | self.border_left_width.has_active_animation(entity, animation)
+            | self.border_top_color.has_active_animation(entity, animation)
+            | self.border_right_color.has_active_animation(entity, animation)
+            | self.border_bottom_color.has_active_animation(entity, animation)
+            | self.border_left_color.has_active_animation(entity, animation)
             | self.corner_top_left_radius.has_active_animation(entity, animation)
             | self.corner_top_right_radius.has_active_animation(entity, animation)
             | self.corner_bottom_left_radius.has_active_animation(entity, animation)
@@ -1074,20 +1198,96 @@ impl Style {
             }
 
             "border" => {
-                self.border_width.insert_animation(animation, self.add_transition(transition));
-                self.border_width.insert_transition(rule_id, animation);
-                self.border_color.insert_animation(animation, self.add_transition(transition));
-                self.border_color.insert_transition(rule_id, animation);
+                self.border_top_width.insert_animation(animation, self.add_transition(transition));
+                self.border_top_width.insert_transition(rule_id, animation);
+                self.border_right_width
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_right_width.insert_transition(rule_id, animation);
+                self.border_bottom_width
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_bottom_width.insert_transition(rule_id, animation);
+                self.border_left_width.insert_animation(animation, self.add_transition(transition));
+                self.border_left_width.insert_transition(rule_id, animation);
+                self.border_top_color.insert_animation(animation, self.add_transition(transition));
+                self.border_top_color.insert_transition(rule_id, animation);
+                self.border_right_color
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_right_color.insert_transition(rule_id, animation);
+                self.border_bottom_color
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_bottom_color.insert_transition(rule_id, animation);
+                self.border_left_color.insert_animation(animation, self.add_transition(transition));
+                self.border_left_color.insert_transition(rule_id, animation);
             }
 
             "border-width" => {
-                self.border_width.insert_animation(animation, self.add_transition(transition));
-                self.border_width.insert_transition(rule_id, animation);
+                self.border_top_width.insert_animation(animation, self.add_transition(transition));
+                self.border_top_width.insert_transition(rule_id, animation);
+                self.border_right_width
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_right_width.insert_transition(rule_id, animation);
+                self.border_bottom_width
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_bottom_width.insert_transition(rule_id, animation);
+                self.border_left_width.insert_animation(animation, self.add_transition(transition));
+                self.border_left_width.insert_transition(rule_id, animation);
+            }
+
+            "border-top-width" => {
+                self.border_top_width.insert_animation(animation, self.add_transition(transition));
+                self.border_top_width.insert_transition(rule_id, animation);
+            }
+
+            "border-right-width" => {
+                self.border_right_width
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_right_width.insert_transition(rule_id, animation);
+            }
+
+            "border-bottom-width" => {
+                self.border_bottom_width
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_bottom_width.insert_transition(rule_id, animation);
+            }
+
+            "border-left-width" => {
+                self.border_left_width.insert_animation(animation, self.add_transition(transition));
+                self.border_left_width.insert_transition(rule_id, animation);
             }
 
             "border-color" => {
-                self.border_color.insert_animation(animation, self.add_transition(transition));
-                self.border_color.insert_transition(rule_id, animation);
+                self.border_top_color.insert_animation(animation, self.add_transition(transition));
+                self.border_top_color.insert_transition(rule_id, animation);
+                self.border_right_color
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_right_color.insert_transition(rule_id, animation);
+                self.border_bottom_color
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_bottom_color.insert_transition(rule_id, animation);
+                self.border_left_color.insert_animation(animation, self.add_transition(transition));
+                self.border_left_color.insert_transition(rule_id, animation);
+            }
+
+            "border-top-color" => {
+                self.border_top_color.insert_animation(animation, self.add_transition(transition));
+                self.border_top_color.insert_transition(rule_id, animation);
+            }
+
+            "border-right-color" => {
+                self.border_right_color
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_right_color.insert_transition(rule_id, animation);
+            }
+
+            "border-bottom-color" => {
+                self.border_bottom_color
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_bottom_color.insert_transition(rule_id, animation);
+            }
+
+            "border-left-color" => {
+                self.border_left_color.insert_animation(animation, self.add_transition(transition));
+                self.border_left_color.insert_transition(rule_id, animation);
             }
 
             "corner-radius" => {
@@ -1862,30 +2062,148 @@ impl Style {
 
             // Border
             Property::Border(border) => {
-                if let Some(border_color) = border.color {
-                    self.border_color.insert_rule(rule_id, border_color);
+                if let Some(color) = border.color {
+                    self.border_top_color.insert_rule(rule_id, color);
+                    self.border_right_color.insert_rule(rule_id, color);
+                    self.border_bottom_color.insert_rule(rule_id, color);
+                    self.border_left_color.insert_rule(rule_id, color);
                 }
 
-                if let Some(border_width) = border.width {
-                    self.border_width.insert_rule(rule_id, border_width.into());
+                if let Some(width) = border.width {
+                    let w: LengthOrPercentage = width.into();
+                    self.border_top_width.insert_rule(rule_id, w.clone());
+                    self.border_right_width.insert_rule(rule_id, w.clone());
+                    self.border_bottom_width.insert_rule(rule_id, w.clone());
+                    self.border_left_width.insert_rule(rule_id, w);
                 }
 
-                if let Some(border_style) = border.style {
-                    self.border_style.insert_rule(rule_id, border_style.top);
+                if let Some(style) = border.style {
+                    self.border_top_style.insert_rule(rule_id, style.top);
+                    self.border_right_style.insert_rule(rule_id, style.right);
+                    self.border_bottom_style.insert_rule(rule_id, style.bottom);
+                    self.border_left_style.insert_rule(rule_id, style.left);
                 }
             }
 
-            // Border
+            // Border side shorthands
+            Property::BorderTop(border) => {
+                if let Some(color) = border.color {
+                    self.border_top_color.insert_rule(rule_id, color);
+                }
+                if let Some(width) = border.width {
+                    self.border_top_width.insert_rule(rule_id, width.into());
+                }
+                if let Some(style) = border.style {
+                    self.border_top_style.insert_rule(rule_id, style.top);
+                }
+            }
+
+            Property::BorderRight(border) => {
+                if let Some(color) = border.color {
+                    self.border_right_color.insert_rule(rule_id, color);
+                }
+                if let Some(width) = border.width {
+                    self.border_right_width.insert_rule(rule_id, width.into());
+                }
+                if let Some(style) = border.style {
+                    self.border_right_style.insert_rule(rule_id, style.right);
+                }
+            }
+
+            Property::BorderBottom(border) => {
+                if let Some(color) = border.color {
+                    self.border_bottom_color.insert_rule(rule_id, color);
+                }
+                if let Some(width) = border.width {
+                    self.border_bottom_width.insert_rule(rule_id, width.into());
+                }
+                if let Some(style) = border.style {
+                    self.border_bottom_style.insert_rule(rule_id, style.bottom);
+                }
+            }
+
+            Property::BorderLeft(border) => {
+                if let Some(color) = border.color {
+                    self.border_left_color.insert_rule(rule_id, color);
+                }
+                if let Some(width) = border.width {
+                    self.border_left_width.insert_rule(rule_id, width.into());
+                }
+                if let Some(style) = border.style {
+                    self.border_left_style.insert_rule(rule_id, style.left);
+                }
+            }
+
+            // Border Width
             Property::BorderWidth(border_width) => {
-                self.border_width.insert_rule(rule_id, border_width.top.0);
+                self.border_top_width.insert_rule(rule_id, border_width.top.0);
+                self.border_right_width.insert_rule(rule_id, border_width.right.0);
+                self.border_bottom_width.insert_rule(rule_id, border_width.bottom.0);
+                self.border_left_width.insert_rule(rule_id, border_width.left.0);
             }
 
+            Property::BorderTopWidth(width) => {
+                self.border_top_width.insert_rule(rule_id, width.into());
+            }
+
+            Property::BorderRightWidth(width) => {
+                self.border_right_width.insert_rule(rule_id, width.into());
+            }
+
+            Property::BorderBottomWidth(width) => {
+                self.border_bottom_width.insert_rule(rule_id, width.into());
+            }
+
+            Property::BorderLeftWidth(width) => {
+                self.border_left_width.insert_rule(rule_id, width.into());
+            }
+
+            // Border Color
             Property::BorderColor(color) => {
-                self.border_color.insert_rule(rule_id, color);
+                self.border_top_color.insert_rule(rule_id, color);
+                self.border_right_color.insert_rule(rule_id, color);
+                self.border_bottom_color.insert_rule(rule_id, color);
+                self.border_left_color.insert_rule(rule_id, color);
             }
 
+            Property::BorderTopColor(color) => {
+                self.border_top_color.insert_rule(rule_id, color);
+            }
+
+            Property::BorderRightColor(color) => {
+                self.border_right_color.insert_rule(rule_id, color);
+            }
+
+            Property::BorderBottomColor(color) => {
+                self.border_bottom_color.insert_rule(rule_id, color);
+            }
+
+            Property::BorderLeftColor(color) => {
+                self.border_left_color.insert_rule(rule_id, color);
+            }
+
+            // Border Style
             Property::BorderStyle(style) => {
-                self.border_style.insert_rule(rule_id, style.top);
+                self.border_top_style.insert_rule(rule_id, style.top);
+                self.border_right_style.insert_rule(rule_id, style.right);
+                self.border_bottom_style.insert_rule(rule_id, style.bottom);
+                self.border_left_style.insert_rule(rule_id, style.left);
+            }
+
+            Property::BorderTopStyle(style) => {
+                self.border_top_style.insert_rule(rule_id, style);
+            }
+
+            Property::BorderRightStyle(style) => {
+                self.border_right_style.insert_rule(rule_id, style);
+            }
+
+            Property::BorderBottomStyle(style) => {
+                self.border_bottom_style.insert_rule(rule_id, style);
+            }
+
+            Property::BorderLeftStyle(style) => {
+                self.border_left_style.insert_rule(rule_id, style);
             }
 
             // Border Radius
@@ -2155,13 +2473,11 @@ impl Style {
             // Unparsed. TODO: Log the error.
             Property::Unparsed(unparsed) => {
                 macro_rules! parse_color_var {
-                    ($prop:expr) => {
+                    ($($prop:expr),+) => {
                         if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
-                            $prop.insert_variable_rule(
-                                rule_id,
-                                variable_hash(var),
-                                color_fallback(var),
-                            );
+                            let hash = variable_hash(var);
+                            let fallback = color_fallback(var);
+                            $($prop.insert_variable_rule(rule_id, hash, fallback.clone());)+
                         }
                     };
                 }
@@ -2218,7 +2534,12 @@ impl Style {
                 }
                 match unparsed.name.as_ref() {
                     "background-color" => parse_color_var!(self.background_color),
-                    "border-color" => parse_color_var!(self.border_color),
+                    "border-color" => parse_color_var!(
+                        self.border_top_color,
+                        self.border_right_color,
+                        self.border_bottom_color,
+                        self.border_left_color
+                    ),
                     "outline-color" => parse_color_var!(self.outline_color),
                     "color" => parse_color_var!(self.font_color),
                     "caret-color" => parse_color_var!(self.caret_color),
@@ -2242,20 +2563,41 @@ impl Style {
                     "corner-bottom-right-radius" => {
                         parse_length_var!(self.corner_bottom_right_radius)
                     }
-                    "border-width" => parse_length_var!(self.border_width),
+                    "border-width" => parse_length_var!(
+                        self.border_top_width,
+                        self.border_right_width,
+                        self.border_bottom_width,
+                        self.border_left_width
+                    ),
+                    "border-top-width" => parse_length_var!(self.border_top_width),
+                    "border-right-width" => parse_length_var!(self.border_right_width),
+                    "border-bottom-width" => parse_length_var!(self.border_bottom_width),
+                    "border-left-width" => parse_length_var!(self.border_left_width),
+                    "border-top-color" => parse_color_var!(self.border_top_color),
+                    "border-right-color" => parse_color_var!(self.border_right_color),
+                    "border-bottom-color" => parse_color_var!(self.border_bottom_color),
+                    "border-left-color" => parse_color_var!(self.border_left_color),
                     "border" => {
                         if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
                             let hash = variable_hash(var);
-                            self.border_width.insert_variable_rule(
+                            let lf = length_fallback(var);
+                            let cf = color_fallback(var);
+                            self.border_top_width.insert_variable_rule(rule_id, hash, lf.clone());
+                            self.border_right_width.insert_variable_rule(rule_id, hash, lf.clone());
+                            self.border_bottom_width.insert_variable_rule(
                                 rule_id,
                                 hash,
-                                length_fallback(var),
+                                lf.clone(),
                             );
-                            self.border_color.insert_variable_rule(
+                            self.border_left_width.insert_variable_rule(rule_id, hash, lf);
+                            self.border_top_color.insert_variable_rule(rule_id, hash, cf.clone());
+                            self.border_right_color.insert_variable_rule(rule_id, hash, cf.clone());
+                            self.border_bottom_color.insert_variable_rule(
                                 rule_id,
                                 hash,
-                                color_fallback(var),
+                                cf.clone(),
                             );
+                            self.border_left_color.insert_variable_rule(rule_id, hash, cf);
                         }
                     }
                     "outline" => {
@@ -2783,10 +3125,21 @@ impl Style {
         self.rotate.remove(entity);
         self.scale.remove(entity);
 
-        // Border
-        self.border_width.remove(entity);
-        self.border_color.remove(entity);
-        self.border_style.remove(entity);
+        // Border widths
+        self.border_top_width.remove(entity);
+        self.border_right_width.remove(entity);
+        self.border_bottom_width.remove(entity);
+        self.border_left_width.remove(entity);
+        // Border colors
+        self.border_top_color.remove(entity);
+        self.border_right_color.remove(entity);
+        self.border_bottom_color.remove(entity);
+        self.border_left_color.remove(entity);
+        // Border styles
+        self.border_top_style.remove(entity);
+        self.border_right_style.remove(entity);
+        self.border_bottom_style.remove(entity);
+        self.border_left_style.remove(entity);
 
         // Corner Shape
         self.corner_bottom_left_shape.remove(entity);
@@ -2996,10 +3349,21 @@ impl Style {
         self.overflowx.clear_rules();
         self.overflowy.clear_rules();
 
-        // Border
-        self.border_width.clear_rules();
-        self.border_color.clear_rules();
-        self.border_style.clear_rules();
+        // Border widths
+        self.border_top_width.clear_rules();
+        self.border_right_width.clear_rules();
+        self.border_bottom_width.clear_rules();
+        self.border_left_width.clear_rules();
+        // Border colors
+        self.border_top_color.clear_rules();
+        self.border_right_color.clear_rules();
+        self.border_bottom_color.clear_rules();
+        self.border_left_color.clear_rules();
+        // Border styles
+        self.border_top_style.clear_rules();
+        self.border_right_style.clear_rules();
+        self.border_bottom_style.clear_rules();
+        self.border_left_style.clear_rules();
 
         // Corner Shape
         self.corner_bottom_left_shape.clear_rules();

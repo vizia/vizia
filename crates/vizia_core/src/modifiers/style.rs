@@ -493,29 +493,151 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     // Border Properties
+
+    /// Sets the border width for all four sides of the view.
     fn border_width<U: Into<LengthOrPercentage>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
-        let _current = self.current();
         value.set_or_bind(self.context(), move |cx, v| {
-            cx.style.border_width.insert(entity, v.get_value(cx).into());
+            let w: LengthOrPercentage = v.get_value(cx).into();
+            cx.style.border_top_width.insert(entity, w.clone());
+            cx.style.border_right_width.insert(entity, w.clone());
+            cx.style.border_bottom_width.insert(entity, w.clone());
+            cx.style.border_left_width.insert(entity, w);
             cx.cache.path.remove(entity);
             cx.style.system_flags |= SystemFlags::RELAYOUT | SystemFlags::REDRAW;
             cx.set_system_flags(entity, SystemFlags::RELAYOUT | SystemFlags::REDRAW);
         });
+        self
+    }
 
+    /// Sets the top border width of the view.
+    fn border_top_width<U: Into<LengthOrPercentage>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), move |cx, v| {
+            cx.style.border_top_width.insert(entity, v.get_value(cx).into());
+            cx.cache.path.remove(entity);
+            cx.style.system_flags |= SystemFlags::RELAYOUT | SystemFlags::REDRAW;
+            cx.set_system_flags(entity, SystemFlags::RELAYOUT | SystemFlags::REDRAW);
+        });
+        self
+    }
+
+    /// Sets the right border width of the view.
+    fn border_right_width<U: Into<LengthOrPercentage>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), move |cx, v| {
+            cx.style.border_right_width.insert(entity, v.get_value(cx).into());
+            cx.cache.path.remove(entity);
+            cx.style.system_flags |= SystemFlags::RELAYOUT | SystemFlags::REDRAW;
+            cx.set_system_flags(entity, SystemFlags::RELAYOUT | SystemFlags::REDRAW);
+        });
+        self
+    }
+
+    /// Sets the bottom border width of the view.
+    fn border_bottom_width<U: Into<LengthOrPercentage>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), move |cx, v| {
+            cx.style.border_bottom_width.insert(entity, v.get_value(cx).into());
+            cx.cache.path.remove(entity);
+            cx.style.system_flags |= SystemFlags::RELAYOUT | SystemFlags::REDRAW;
+            cx.set_system_flags(entity, SystemFlags::RELAYOUT | SystemFlags::REDRAW);
+        });
+        self
+    }
+
+    /// Sets the left border width of the view.
+    fn border_left_width<U: Into<LengthOrPercentage>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), move |cx, v| {
+            cx.style.border_left_width.insert(entity, v.get_value(cx).into());
+            cx.cache.path.remove(entity);
+            cx.style.system_flags |= SystemFlags::RELAYOUT | SystemFlags::REDRAW;
+            cx.set_system_flags(entity, SystemFlags::RELAYOUT | SystemFlags::REDRAW);
+        });
+        self
+    }
+
+    /// Sets the border color for all four sides of the view.
+    fn border_color(mut self, value: impl Res<Color>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), move |cx, v| {
+            let c = v.get_value(cx);
+            cx.style.border_top_color.insert(entity, c);
+            cx.style.border_right_color.insert(entity, c);
+            cx.style.border_bottom_color.insert(entity, c);
+            cx.style.border_left_color.insert(entity, c);
+            cx.needs_redraw(entity);
+        });
         self
     }
 
     modifier!(
-        /// Sets the border color of the view.
-        border_color,
+        /// Sets the top border color of the view.
+        border_top_color,
         Color,
         SystemFlags::REDRAW
     );
 
     modifier!(
-        /// Sets the border color of the view.
-        border_style,
+        /// Sets the right border color of the view.
+        border_right_color,
+        Color,
+        SystemFlags::REDRAW
+    );
+
+    modifier!(
+        /// Sets the bottom border color of the view.
+        border_bottom_color,
+        Color,
+        SystemFlags::REDRAW
+    );
+
+    modifier!(
+        /// Sets the left border color of the view.
+        border_left_color,
+        Color,
+        SystemFlags::REDRAW
+    );
+
+    /// Sets the border style for all four sides of the view.
+    fn border_style(mut self, value: impl Res<BorderStyleKeyword>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), move |cx, v| {
+            let s = v.get_value(cx);
+            cx.style.border_top_style.insert(entity, s);
+            cx.style.border_right_style.insert(entity, s);
+            cx.style.border_bottom_style.insert(entity, s);
+            cx.style.border_left_style.insert(entity, s);
+            cx.needs_redraw(entity);
+        });
+        self
+    }
+
+    modifier!(
+        /// Sets the top border style of the view.
+        border_top_style,
+        BorderStyleKeyword,
+        SystemFlags::REDRAW
+    );
+
+    modifier!(
+        /// Sets the right border style of the view.
+        border_right_style,
+        BorderStyleKeyword,
+        SystemFlags::REDRAW
+    );
+
+    modifier!(
+        /// Sets the bottom border style of the view.
+        border_bottom_style,
+        BorderStyleKeyword,
+        SystemFlags::REDRAW
+    );
+
+    modifier!(
+        /// Sets the left border style of the view.
+        border_left_style,
         BorderStyleKeyword,
         SystemFlags::REDRAW
     );

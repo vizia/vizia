@@ -319,6 +319,12 @@ impl Res<PositionType> for PositionType {
     }
 }
 
+impl Res<BorderStyleKeyword> for BorderStyleKeyword {
+    fn get_value(&self, _: &impl DataContext) -> BorderStyleKeyword {
+        *self
+    }
+}
+
 impl<T: Clone + Res<T>> Res<Option<T>> for Option<T> {
     fn get_value(&self, _: &impl DataContext) -> Option<T> {
         self.clone()

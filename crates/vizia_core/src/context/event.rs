@@ -1306,10 +1306,48 @@ impl<'a> EventContext<'a> {
     }
 
     // GETTERS
-    get_length_property!(
-        /// Returns the border width of the current view in physical pixels.
-        border_width
-    );
+
+    /// Returns the top border width of the current view in physical pixels.
+    pub fn border_top_width(&self) -> f32 {
+        if let Some(length) = self.style.border_top_width.get(self.current) {
+            let bounds = self.bounds();
+            return length.to_pixels(bounds.w.min(bounds.h), self.scale_factor()).round();
+        }
+        0.0
+    }
+
+    /// Returns the right border width of the current view in physical pixels.
+    pub fn border_right_width(&self) -> f32 {
+        if let Some(length) = self.style.border_right_width.get(self.current) {
+            let bounds = self.bounds();
+            return length.to_pixels(bounds.w.min(bounds.h), self.scale_factor()).round();
+        }
+        0.0
+    }
+
+    /// Returns the bottom border width of the current view in physical pixels.
+    pub fn border_bottom_width(&self) -> f32 {
+        if let Some(length) = self.style.border_bottom_width.get(self.current) {
+            let bounds = self.bounds();
+            return length.to_pixels(bounds.w.min(bounds.h), self.scale_factor()).round();
+        }
+        0.0
+    }
+
+    /// Returns the left border width of the current view in physical pixels.
+    pub fn border_left_width(&self) -> f32 {
+        if let Some(length) = self.style.border_left_width.get(self.current) {
+            let bounds = self.bounds();
+            return length.to_pixels(bounds.w.min(bounds.h), self.scale_factor()).round();
+        }
+        0.0
+    }
+
+    /// Returns the top border width of the current view in physical pixels.
+    /// Equivalent to `border_top_width`; kept for backward compatibility.
+    pub fn border_width(&self) -> f32 {
+        self.border_top_width()
+    }
 
     /// Returns the font-size of the current view in physical pixels.
     pub fn font_size(&self) -> f32 {
