@@ -1135,6 +1135,191 @@ impl DrawContext<'_> {
         Some(path.detach())
     }
 
+    fn round_corner_side_stroke_path(
+        side_ix: usize,
+        bounds: BoundingBox,
+        outer_radii: (f32, f32, f32, f32),
+    ) -> Option<Path> {
+        let bx = bounds.x;
+        let by = bounds.y;
+        let bw = bounds.w;
+        let bh = bounds.h;
+
+        let (r_tl, r_tr, r_br, r_bl) = outer_radii;
+
+        let mut path = PathBuilder::new();
+        let diag = SQRT_2.recip();
+
+        let outer_tl_center = Point::new(bx + r_tl, by + r_tl);
+        let outer_tr_center = Point::new(bx + bw - r_tr, by + r_tr);
+        let outer_br_center = Point::new(bx + bw - r_br, by + bh - r_br);
+        let outer_bl_center = Point::new(bx + r_bl, by + bh - r_bl);
+
+        match side_ix {
+            0 => {
+                let outer_start = if r_tl > 0.0 {
+                    Point::new(outer_tl_center.x - r_tl * diag, outer_tl_center.y - r_tl * diag)
+                } else {
+                    Point::new(bx, by)
+                };
+                path.move_to(outer_start);
+                if r_tl > 0.0 {
+                    path.arc_to(
+                        Self::corner_oval(outer_tl_center.x, outer_tl_center.y, r_tl),
+                        225.0,
+                        45.0,
+                        false,
+                    );
+                }
+                path.line_to((bx + bw - r_tr, by));
+                if r_tr > 0.0 {
+                    path.arc_to(
+                        Self::corner_oval(outer_tr_center.x, outer_tr_center.y, r_tr),
+                        270.0,
+                        45.0,
+                        false,
+                    );
+                }
+            }
+            1 => {
+                let outer_start = if r_tr > 0.0 {
+                    Point::new(outer_tr_center.x + r_tr * diag, outer_tr_center.y - r_tr * diag)
+                } else {
+                    Point::new(bx + bw, by)
+                };
+                path.move_to(outer_start);
+                if r_tr > 0.0 {
+                    path.arc_to(
+                        Self::corner_oval(outer_tr_center.x, outer_tr_center.y, r_tr),
+                        315.0,
+                        45.0,
+                        false,
+                    );
+                }
+                path.line_to((bx + bw, by + bh - r_br));
+                if r_br > 0.0 {
+                    path.arc_to(
+                        Self::corner_oval(outer_br_center.x, outer_br_center.y, r_br),
+                        0.0,
+                        45.0,
+                        false,
+                    );
+                }
+            }
+            2 => {
+                let outer_start = if r_br > 0.0 {
+                    Point::new(outer_br_center.x + r_br * diag, outer_br_center.y + r_br * diag)
+                } else {
+                    Point::new(bx + bw, by + bh)
+                };
+                path.move_to(outer_start);
+                if r_br > 0.0 {
+                    path.arc_to(
+                        Self::corner_oval(outer_br_center.x, outer_br_center.y, r_br),
+                        45.0,
+                        45.0,
+                        false,
+                    );
+                }
+                path.line_to((bx + r_bl, by + bh));
+                if r_bl > 0.0 {
+                    path.arc_to(
+                        Self::corner_oval(outer_bl_center.x, outer_bl_center.y, r_bl),
+                        90.0,
+                        45.0,
+                        false,
+                    );
+                }
+            }
+            3 => {
+                let outer_start = if r_bl > 0.0 {
+                    Point::new(outer_bl_center.x - r_bl * diag, outer_bl_center.y + r_bl * diag)
+                } else {
+                    Point::new(bx, by + bh)
+                };
+                path.move_to(outer_start);
+                if r_bl > 0.0 {
+                    path.arc_to(
+                        Self::corner_oval(outer_bl_center.x, outer_bl_center.y, r_bl),
+                        135.0,
+                        45.0,
+                        false,
+                    );
+                }
+                path.line_to((bx, by + r_tl));
+                if r_tl > 0.0 {
+                    path.arc_to(
+                        Self::corner_oval(outer_tl_center.x, outer_tl_center.y, r_tl),
+                        180.0,
+                        45.0,
+                        false,
+                    );
+                }
+            }
+            _ => return None,
+        }
+
+        Some(path.detach())
+    }
+
+    fn bevel_corner_side_stroke_path(
+        side_ix: usize,
+        bounds: BoundingBox,
+        outer_radii: (f32, f32, f32, f32),
+    ) -> Option<Path> {
+        let bx = bounds.x;
+        let by = bounds.y;
+        let bw = bounds.w;
+        let bh = bounds.h;
+
+        let (r_tl, r_tr, r_br, r_bl) = outer_radii;
+
+        let otl = r_tl.min(bw * 0.5).min(bh * 0.5);
+        let otr = r_tr.min(bw * 0.5).min(bh * 0.5);
+        let obr = r_br.min(bw * 0.5).min(bh * 0.5);
+        let obl = r_bl.min(bw * 0.5).min(bh * 0.5);
+
+        let outer_tl_top = Point::new(bx + otl, by);
+        let outer_tl_left = Point::new(bx, by + otl);
+        let outer_tr_top = Point::new(bx + bw - otr, by);
+        let outer_tr_right = Point::new(bx + bw, by + otr);
+        let outer_br_right = Point::new(bx + bw, by + bh - obr);
+        let outer_br_bottom = Point::new(bx + bw - obr, by + bh);
+        let outer_bl_bottom = Point::new(bx + obl, by + bh);
+        let outer_bl_left = Point::new(bx, by + bh - obl);
+
+        let mut path = PathBuilder::new();
+        match side_ix {
+            0 => {
+                path.move_to(outer_tl_left);
+                path.line_to(outer_tl_top);
+                path.line_to(outer_tr_top);
+                path.line_to(outer_tr_right);
+            }
+            1 => {
+                path.move_to(outer_tr_top);
+                path.line_to(outer_tr_right);
+                path.line_to(outer_br_right);
+                path.line_to(outer_br_bottom);
+            }
+            2 => {
+                path.move_to(outer_br_right);
+                path.line_to(outer_br_bottom);
+                path.line_to(outer_bl_bottom);
+                path.line_to(outer_bl_left);
+            }
+            3 => {
+                path.move_to(outer_bl_bottom);
+                path.line_to(outer_bl_left);
+                path.line_to(outer_tl_left);
+                path.line_to(outer_tl_top);
+            }
+            _ => return None,
+        }
+
+        Some(path.detach())
+    }
+
     fn smooth_corner_side_path(
         side_ix: usize,
         bounds: BoundingBox,
@@ -1955,37 +2140,123 @@ impl DrawContext<'_> {
                     canvas.save();
                     canvas.clip_path(&side_region, ClipOp::Intersect, true);
 
-                    // Side-local center-line stroke with independent dashing.
-                    let mut side_path = PathBuilder::new();
-                    let (sx, sy, ex, ey) = match side_ix {
-                        0 => (
-                            bx + left_width * 0.5,
-                            by + top_width * 0.5,
-                            bx + bw - right_width * 0.5,
-                            by + top_width * 0.5,
-                        ),
-                        1 => (
-                            bx + bw - right_width * 0.5,
-                            by + top_width * 0.5,
-                            bx + bw - right_width * 0.5,
-                            by + bh - bottom_width * 0.5,
-                        ),
-                        2 => (
-                            bx + left_width * 0.5,
-                            by + bh - bottom_width * 0.5,
-                            bx + bw - right_width * 0.5,
-                            by + bh - bottom_width * 0.5,
-                        ),
-                        _ => (
-                            bx + left_width * 0.5,
-                            by + top_width * 0.5,
-                            bx + left_width * 0.5,
-                            by + bh - bottom_width * 0.5,
-                        ),
+                    let stroke_path = if exact_round_solid {
+                        Self::round_corner_side_stroke_path(
+                            side_ix,
+                            bounds,
+                            (r_tl, r_tr, r_br, r_bl),
+                        )
+                        .unwrap_or_else(|| {
+                            let mut side_path = PathBuilder::new();
+                            let (sx, sy, ex, ey) = match side_ix {
+                                0 => (
+                                    bx + left_width * 0.5,
+                                    by + top_width * 0.5,
+                                    bx + bw - right_width * 0.5,
+                                    by + top_width * 0.5,
+                                ),
+                                1 => (
+                                    bx + bw - right_width * 0.5,
+                                    by + top_width * 0.5,
+                                    bx + bw - right_width * 0.5,
+                                    by + bh - bottom_width * 0.5,
+                                ),
+                                2 => (
+                                    bx + left_width * 0.5,
+                                    by + bh - bottom_width * 0.5,
+                                    bx + bw - right_width * 0.5,
+                                    by + bh - bottom_width * 0.5,
+                                ),
+                                _ => (
+                                    bx + left_width * 0.5,
+                                    by + top_width * 0.5,
+                                    bx + left_width * 0.5,
+                                    by + bh - bottom_width * 0.5,
+                                ),
+                            };
+                            side_path.move_to((sx, sy));
+                            side_path.line_to((ex, ey));
+                            side_path.detach()
+                        })
+                    } else if exact_bevel_solid {
+                        Self::bevel_corner_side_stroke_path(
+                            side_ix,
+                            bounds,
+                            (r_tl, r_tr, r_br, r_bl),
+                        )
+                        .unwrap_or_else(|| {
+                            let mut side_path = PathBuilder::new();
+                            let (sx, sy, ex, ey) = match side_ix {
+                                0 => (
+                                    bx + left_width * 0.5,
+                                    by + top_width * 0.5,
+                                    bx + bw - right_width * 0.5,
+                                    by + top_width * 0.5,
+                                ),
+                                1 => (
+                                    bx + bw - right_width * 0.5,
+                                    by + top_width * 0.5,
+                                    bx + bw - right_width * 0.5,
+                                    by + bh - bottom_width * 0.5,
+                                ),
+                                2 => (
+                                    bx + left_width * 0.5,
+                                    by + bh - bottom_width * 0.5,
+                                    bx + bw - right_width * 0.5,
+                                    by + bh - bottom_width * 0.5,
+                                ),
+                                _ => (
+                                    bx + left_width * 0.5,
+                                    by + top_width * 0.5,
+                                    bx + left_width * 0.5,
+                                    by + bh - bottom_width * 0.5,
+                                ),
+                            };
+                            side_path.move_to((sx, sy));
+                            side_path.line_to((ex, ey));
+                            side_path.detach()
+                        })
+                    } else if exact_smooth_solid {
+                        self.build_path_with_corners(
+                            bounds,
+                            (-side_width * 0.5, -side_width * 0.5),
+                            (r_tl, r_tr, r_br, r_bl),
+                            corner_shapes,
+                            corner_smoothing,
+                        )
+                        .make_offset(bounds.top_left())
+                    } else {
+                        let mut side_path = PathBuilder::new();
+                        let (sx, sy, ex, ey) = match side_ix {
+                            0 => (
+                                bx + left_width * 0.5,
+                                by + top_width * 0.5,
+                                bx + bw - right_width * 0.5,
+                                by + top_width * 0.5,
+                            ),
+                            1 => (
+                                bx + bw - right_width * 0.5,
+                                by + top_width * 0.5,
+                                bx + bw - right_width * 0.5,
+                                by + bh - bottom_width * 0.5,
+                            ),
+                            2 => (
+                                bx + left_width * 0.5,
+                                by + bh - bottom_width * 0.5,
+                                bx + bw - right_width * 0.5,
+                                by + bh - bottom_width * 0.5,
+                            ),
+                            _ => (
+                                bx + left_width * 0.5,
+                                by + top_width * 0.5,
+                                bx + left_width * 0.5,
+                                by + bh - bottom_width * 0.5,
+                            ),
+                        };
+                        side_path.move_to((sx, sy));
+                        side_path.line_to((ex, ey));
+                        side_path.detach()
                     };
-                    side_path.move_to((sx, sy));
-                    side_path.line_to((ex, ey));
-                    let stroke_path = side_path.detach();
                     let mut paint = Paint::default();
                     paint.set_style(PaintStyle::Stroke);
                     paint.set_color(color);
