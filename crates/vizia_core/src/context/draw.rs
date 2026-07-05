@@ -2131,9 +2131,9 @@ impl DrawContext<'_> {
             side_mask.line_to(mask_pts[3]);
             side_mask.close();
             let side_mask = side_mask.detach();
-            let side_region = ring_path
-                .op(&side_mask, skia_safe::PathOp::Intersect)
-                .unwrap_or_else(|| ring_path.clone());
+            let Some(side_region) = ring_path.op(&side_mask, skia_safe::PathOp::Intersect) else {
+                continue;
+            };
 
             match style {
                 BorderStyleKeyword::Dashed | BorderStyleKeyword::Dotted => {
@@ -2309,8 +2309,11 @@ impl DrawContext<'_> {
                     paint.set_color(color);
                     paint.set_anti_alias(true);
                     if let Some(path) = exact_side_path {
-                        let constrained_path =
-                            path.op(&ring_path, skia_safe::PathOp::Intersect).unwrap_or(path);
+                        let Some(constrained_path) =
+                            path.op(&ring_path, skia_safe::PathOp::Intersect)
+                        else {
+                            continue;
+                        };
                         canvas.draw_path(&constrained_path, &paint);
                     } else {
                         canvas.draw_path(&side_region, &paint);
