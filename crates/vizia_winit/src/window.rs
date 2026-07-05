@@ -43,14 +43,14 @@ use winit::{dpi::*, window::WindowId};
 
 pub struct WinState {
     pub entity: Entity,
-    gl_config: Config,
-    gl_context: glutin::context::PossiblyCurrentContext,
-    pub gl_surface: glutin::surface::Surface<glutin::surface::WindowSurface>,
     pub id: WindowId,
-    pub gr_context: skia_safe::gpu::DirectContext,
     pub window: Arc<winit::window::Window>,
     pub surface: skia_safe::Surface,
     pub dirty_surface: skia_safe::Surface,
+    pub gr_context: skia_safe::gpu::DirectContext,
+    pub gl_surface: glutin::surface::Surface<glutin::surface::WindowSurface>,
+    gl_context: glutin::context::PossiblyCurrentContext,
+    gl_config: Config,
     pub should_close: bool,
     #[cfg(target_os = "windows")]
     pub is_initially_cloaked: bool,
