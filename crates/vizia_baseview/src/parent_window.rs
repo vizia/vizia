@@ -1,39 +1,42 @@
-use raw_window_handle::{HasRawWindowHandle, RawWindowHandle};
+use raw_window_handle::{HandleError, HasWindowHandle, RawWindowHandle, WindowHandle};
+use std::ptr::NonNull;
 
 pub struct ParentWindow(pub *mut ::std::ffi::c_void);
 
 #[cfg(target_os = "macos")]
-unsafe impl HasRawWindowHandle for ParentWindow {
-    fn raw_window_handle(&self) -> RawWindowHandle {
+impl HasWindowHandle for ParentWindow {
+    fn window_handle(&self) -> Result<WindowHandle<'_>, HandleError> {
         use raw_window_handle::AppKitWindowHandle;
 
-        let mut handle = AppKitWindowHandle::empty();
-        handle.ns_view = self.0;
+        let ns_view = NonNull::new(self.0).ok_or(HandleError::Unavailable)?;
+        let handle = RawWindowHandle::AppKit(AppKitWindowHandle::new(ns_view));
 
-        RawWindowHandle::AppKit(handle)
+        Ok(unsafe { WindowHandle::borrow_raw(handle) })
     }
 }
 
 #[cfg(target_os = "windows")]
-unsafe impl HasRawWindowHandle for ParentWindow {
-    fn raw_window_handle(&self) -> RawWindowHandle {
+impl HasWindowHandle for ParentWindow {
+    fn window_handle(&self) -> Result<WindowHandle<'_>, HandleError> {
         use raw_window_handle::Win32WindowHandle;
+        use std::num::NonZeroIsize;
 
-        let mut handle = Win32WindowHandle::empty();
-        handle.hwnd = self.0;
+        let hwnd = NonZeroIsize::new(self.0 as isize).ok_or(HandleError::Unavailable)?;
+        let handle = RawWindowHandle::Win32(Win32WindowHandle::new(hwnd));
 
-        RawWindowHandle::Win32(handle)
+        Ok(unsafe { WindowHandle::borrow_raw(handle) })
     }
 }
 
 #[cfg(target_os = "linux")]
-unsafe impl HasRawWindowHandle for ParentWindow {
-    fn raw_window_handle(&self) -> RawWindowHandle {
+impl HasWindowHandle for ParentWindow {
+    fn window_handle(&self) -> Result<WindowHandle<'_>, HandleError> {
         use raw_window_handle::XcbWindowHandle;
+        use std::num::NonZeroU32;
 
-        let mut handle = XcbWindowHandle::empty();
-        handle.window = self.0 as u32;
+        let window = NonZeroU32::new(self.0 as u32).ok_or(HandleError::Unavailable)?;
+        let handle = RawWindowHandle::Xcb(XcbWindowHandle::new(window));
 
-        RawWindowHandle::Xcb(handle)
+        Ok(unsafe { WindowHandle::borrow_raw(handle) })
     }
 }

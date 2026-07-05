@@ -291,8 +291,5 @@ pub fn winit_key_to_key(virtual_key_code: NamedKey) -> Option<ViziaKey> {
     // `keyboard-types` now wraps non-character keys in `Key::Named(...)`.
     // Convert via string representation so new/removed named keys do not require
     // touching this conversion table for every upstream update.
-    format!("{virtual_key_code:?}")
-        .parse::<vizia_input::NamedKey>()
-        .ok()
-        .map(ViziaKey::from)
+    format!("{virtual_key_code:?}").parse::<vizia_input::NamedKey>().ok().map(ViziaKey::from)
 }
