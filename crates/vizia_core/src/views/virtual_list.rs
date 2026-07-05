@@ -133,6 +133,38 @@ impl VirtualList {
         }
     }
 
+    /// Builds a memo that resolves the item at `index` from the backing list,
+    /// guarding against stale indices.
+    ///
+    /// Recycled items keep a captured `index` and re-evaluate whenever the
+    /// backing list changes. When the list shrinks (or empties) the item can
+    /// briefly reference an out-of-bounds index before the enclosing binding
+    /// rebuilds and removes it, so the index is clamped to the current length
+    /// and the previous value is reused while the list is transiently empty.
+    fn resolve_item<L, T>(
+        list: impl SignalWith<L> + Copy + 'static,
+        index: usize,
+        list_len: impl 'static + Fn(&L) -> usize,
+        list_index: impl 'static + Fn(&L, usize) -> T,
+    ) -> Memo<T>
+    where
+        L: 'static,
+        T: Clone + PartialEq + 'static,
+    {
+        Memo::new(move |prev| {
+            list.with(|list| {
+                let len = list_len(list);
+                if len == 0 {
+                    // The list emptied while this recycled item still references
+                    // a stale index; keep the previous value until it is removed.
+                    prev.cloned().unwrap_or_else(|| list_index(list, 0))
+                } else {
+                    list_index(list, index.min(len - 1))
+                }
+            })
+        })
+    }
+
     fn recalc(&self, cx: &mut EventContext) {
         let num_items = self.num_items.get();
         if num_items == 0 {
@@ -223,7 +255,7 @@ impl VirtualList {
     pub fn new_generic<V: View, S, L, T>(
         cx: &mut Context,
         list: S,
-        list_len: impl 'static + Fn(&L) -> usize,
+        list_len: impl 'static + Copy + Fn(&L) -> usize,
         list_index: impl 'static + Copy + Fn(&L, usize) -> T,
         item_height: f32,
         item_content: impl 'static + Copy + Fn(&mut Context, usize, Memo<T>) -> Handle<V>,
@@ -363,8 +395,9 @@ impl VirtualList {
                                             });
                                             Binding::new(cx, item_index, move |cx| {
                                                 let index = item_index.get();
-                                                let item =
-                                                    list.map(move |list| list_index(list, index));
+                                                let item = Self::resolve_item(
+                                                    list, index, list_len, list_index,
+                                                );
 
                                                 ListItem::new(
                                                     cx,
@@ -403,8 +436,9 @@ impl VirtualList {
                                             });
                                             Binding::new(cx, item_index, move |cx| {
                                                 let index = item_index.get();
-                                                let item =
-                                                    list.map(move |list| list_index(list, index));
+                                                let item = Self::resolve_item(
+                                                    list, index, list_len, list_index,
+                                                );
 
                                                 ListItem::new(
                                                     cx,
