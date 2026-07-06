@@ -312,6 +312,20 @@ impl Application {
         let window_id = window_state.window.id();
         self.windows.insert(window_id, window_state);
         self.window_ids.insert(window_entity, window_id);
+
+        #[cfg(all(
+            feature = "clipboard",
+            feature = "wayland",
+            any(
+                target_os = "linux",
+                target_os = "dragonfly",
+                target_os = "freebsd",
+                target_os = "netbsd",
+                target_os = "openbsd"
+            )
+        ))]
+        self.init_wayland_clipboard(window_entity, &window);
+
         Ok(window)
     }
 
@@ -326,7 +340,7 @@ impl Application {
             target_os = "openbsd"
         )
     ))]
-    fn init_wayland_clipboard(&mut self, window: &winit::window::Window) {
+    fn init_wayland_clipboard(&mut self, window_entity: Entity, window: &winit::window::Window) {
         let Ok(display_handle) = window.display_handle() else {
             return;
         };
@@ -336,7 +350,7 @@ impl Application {
             // at least as long as the window/application lifetime where the provider is used.
             let (_, clipboard) =
                 unsafe { create_clipboards_from_external(handle.display.as_ptr()) };
-            self.cx.set_clipboard_provider(Box::new(clipboard));
+            self.cx.set_clipboard_provider(window_entity, Box::new(clipboard));
         }
     }
 
@@ -438,19 +452,6 @@ impl ApplicationHandler<UserEvent> for Application {
             let main_window: Arc<winit::window::Window> = self
                 .create_window(event_loop, Entity::root(), &self.window_description.clone(), None)
                 .expect("failed to create initial window");
-
-            #[cfg(all(
-                feature = "clipboard",
-                feature = "wayland",
-                any(
-                    target_os = "linux",
-                    target_os = "dragonfly",
-                    target_os = "freebsd",
-                    target_os = "netbsd",
-                    target_os = "openbsd"
-                )
-            ))]
-            self.init_wayland_clipboard(&main_window);
 
             let custom_cursors = Arc::new(load_default_cursors(event_loop));
             self.cx.add_main_window(
