@@ -5,7 +5,10 @@ use vizia_storage::Tree;
 
 use crate::{
     entity::Entity,
-    resource::{ImageOrSvg, ImageRetentionPolicy, LoadingStatus, ResourceManager, StoredImage},
+    resource::{
+        ImageOrSvg, ImageRetentionPolicy, LoadingStatus, ResourceManager, ResourceRequest,
+        StoredImage,
+    },
     style::Style,
     text::TextContext,
 };
@@ -70,6 +73,29 @@ impl<'a> ResourceContext<'a> {
         E: Send + 'static,
     {
         task.add_to_resource_context(self)
+    }
+
+    /// Dispatches a resource request through the configured loader chain.
+    ///
+    /// Returns `true` when a loader accepts the request.
+    pub fn request_resource(&mut self, request: ResourceRequest) -> bool {
+        // Temporarily move loaders out so each `load` call can borrow `self` mutably.
+        let mut loaders = std::mem::take(&mut self.resource_manager.resource_loaders);
+
+        for loader in &loaders {
+            if loader.load(request.clone(), self) {
+                // Preserve any loaders registered while handling requests.
+                loaders.append(&mut self.resource_manager.resource_loaders);
+                self.resource_manager.resource_loaders = loaders;
+                return true;
+            }
+        }
+
+        // Preserve any loaders registered while handling requests.
+        loaders.append(&mut self.resource_manager.resource_loaders);
+        self.resource_manager.resource_loaders = loaders;
+
+        false
     }
 
     /// Loads the provided image into the resource manager.

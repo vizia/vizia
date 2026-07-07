@@ -1,8 +1,13 @@
 //! Resource management for fonts, themes, images, and translations.
 
+mod file_resource_loader;
 mod image_id;
+mod url_resource_loader;
 
+pub use file_resource_loader::FileResourceLoader;
 pub use image_id::ImageId;
+#[cfg(feature = "url-loader")]
+pub use url_resource_loader::UrlResourceLoader;
 use vizia_id::{GenerationalId, IdManager};
 use vizia_reactive::{Signal, SignalGet, SignalUpdate};
 
@@ -194,6 +199,8 @@ impl fmt::Display for LocalizationIssue {
 /// Request to load an image resource.
 #[derive(Debug, Clone)]
 pub struct ImageRequest {
+    /// Name used to reference the loaded image in styles and image views.
+    pub name: String,
     /// Path or URL to the image resource.
     pub path: String,
     /// How long the image should be retained in memory.
@@ -241,6 +248,17 @@ pub enum ResourceRequest {
     Translation(TranslationRequest),
 }
 
+impl ResourceRequest {
+    /// Returns the canonical resource path associated with this request.
+    pub fn path(&self) -> &str {
+        match self {
+            ResourceRequest::Image(req) => &req.path,
+            ResourceRequest::Font(req) => &req.path,
+            ResourceRequest::Translation(req) => &req.path,
+        }
+    }
+}
+
 /// Trait for loading resources asynchronously or from various sources.
 ///
 /// Loaders are invoked in chain-of-responsibility order when a resource is requested.
@@ -260,6 +278,7 @@ pub trait ResourceLoader: Send + Sync + 'static {
     }
 }
 
+<<<<<<< HEAD
 /// Built-in resource loader for local file paths and `file://` URLs.
 pub struct FileResourceLoader;
 
@@ -366,411 +385,7 @@ impl ResourceLoader for FileResourceLoader {
                         } else {
                             let _ = proxy
                                 .update_resource_status(req_path.clone(), LoadingStatus::Error);
-                        }
-                    }),
-                );
 
-                true
-            }
-            ResourceRequest::Font(req) => {
-                let path = if req.path.starts_with("file://") {
-                    req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
-                } else {
-                    req.path.clone()
-                };
-
-                let req_path = req.path.clone();
-
-                cx.resource_manager.set_resource_status(req_path.clone(), LoadingStatus::Loading);
-
-                cx.spawn_task(
-                    crate::context::Task::new(move |_| {
-                        let path = path.clone();
-                        async move { tokio::fs::read(&path).await }
-                    })
-                    .on_result(move |result, proxy| {
-                        use crate::context::TaskResult;
-                        if let TaskResult::Completed(data) = result {
-                            if proxy.load_font(req_path.clone(), &data).is_err() {
-                                let _ = proxy
-                                    .update_resource_status(req_path.clone(), LoadingStatus::Error);
-                            }
-                        } else {
-                            let _ = proxy
-                                .update_resource_status(req_path.clone(), LoadingStatus::Error);
-                        }
-                    }),
-                );
-
-                true
-            }
-            ResourceRequest::Translation(req) => {
-                let path = if req.path.starts_with("file://") {
-                    req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
-                } else {
-                    req.path.clone()
-                };
-
-                let req_path = req.path.clone();
-                let lang = req.lang;
-
-                cx.resource_manager.set_resource_status(req_path.clone(), LoadingStatus::Loading);
-
-                cx.spawn_task(
-                    crate::context::Task::new(move |_| {
-                        let path = path.clone();
-                        async move { tokio::fs::read(&path).await }
-                    })
-                    .on_result(move |result, proxy| {
-                        use crate::context::TaskResult;
-                        if let TaskResult::Completed(data) = result {
-                            match String::from_utf8(data) {
-                                Ok(ftl) => {
-                                    if proxy
-                                        .load_translation(lang.clone(), req_path.clone(), ftl)
-                                        .is_err()
-                                    {
-                                        let _ = proxy.update_resource_status(
-                                            req_path.clone(),
-                                            LoadingStatus::Error,
-                                        );
-                                    }
-                                }
-                                Err(_) => {
-                                    let _ = proxy.update_resource_status(
-                                        req_path.clone(),
-                                        LoadingStatus::Error,
-                                    );
-                                }
-                            }
-                        } else {
-                            let _ = proxy
-                                .update_resource_status(req_path.clone(), LoadingStatus::Error);
-                        }
-                    }),
-                );
-
-                true
-            }
-        }
-    }
-}
-
-/// Built-in resource loader for HTTP(S) URLs (requires `url-loader` feature).
-#[cfg(feature = "url-loader")]
-pub struct UrlResourceLoader;
-
-#[cfg(feature = "url-loader")]
-fn is_likely_svg(path: &str, data: &[u8]) -> bool {
-    if path.to_ascii_lowercase().ends_with(".svg") {
-        return true;
-    }
-
-    // Allow leading whitespace/BOM before checking for an SVG tag.
-    let trimmed = data
-        .strip_prefix(&[0xEF, 0xBB, 0xBF])
-        .unwrap_or(data)
-        .iter()
-        .copied()
-        .skip_while(|b| b.is_ascii_whitespace())
-        .collect::<Vec<u8>>();
-
-    trimmed.starts_with(b"<svg") || trimmed.starts_with(b"<?xml")
-}
-
-#[cfg(all(feature = "url-loader", not(feature = "tokio")))]
-impl ResourceLoader for UrlResourceLoader {
-    fn load(&self, request: ResourceRequest, cx: &mut ResourceContext) -> bool {
-        match request {
-            ResourceRequest::Image(req) => {
-                if req.path.starts_with("http://") || req.path.starts_with("https://") {
-                    let path = req.path.clone();
-                    let policy = req.policy;
-
-                    // Mark as loading before spawning
-                    cx.resource_manager.set_resource_status(path.clone(), LoadingStatus::Loading);
-
-                    cx.spawn(move |proxy| match reqwest::blocking::get(&path) {
-                        Ok(response) => match response.bytes() {
-                            Ok(data) => {
-                                let loaded = match proxy.load_image(path.clone(), &data, policy) {
-                                    Ok(true) => true,
-                                    Ok(false) => {
-                                        if is_likely_svg(&path, &data) {
-                                            proxy.load_svg(path.clone(), &data, policy).is_ok()
-                                        } else {
-                                            false
-                                        }
-                                    }
-                                    Err(_) => false,
-                                };
-
-                                let _ = proxy.update_resource_status(
-                                    path,
-                                    if loaded {
-                                        LoadingStatus::Loaded
-                                    } else {
-                                        LoadingStatus::Error
-                                    },
-                                );
-                            }
-                            Err(_) => {
-                                let _ = proxy.update_resource_status(path, LoadingStatus::Error);
-                            }
-                        },
-                        Err(_) => {
-                            let _ = proxy.update_resource_status(path, LoadingStatus::Error);
-                        }
-                    });
-                    return true;
-                }
-                false
-            }
-            ResourceRequest::Font(req) => {
-                if req.path.starts_with("http://") || req.path.starts_with("https://") {
-                    let path = req.path.clone();
-
-                    cx.resource_manager.set_resource_status(path.clone(), LoadingStatus::Loading);
-
-                    cx.spawn(move |proxy| match reqwest::blocking::get(&path) {
-                        Ok(response) => match response.bytes() {
-                            Ok(data) => {
-                                if proxy.load_font(path.clone(), &data).is_err() {
-                                    let _ =
-                                        proxy.update_resource_status(path, LoadingStatus::Error);
-                                }
-                            }
-                            Err(_) => {
-                                let _ = proxy.update_resource_status(path, LoadingStatus::Error);
-                            }
-                        },
-                        Err(_) => {
-                            let _ = proxy.update_resource_status(path, LoadingStatus::Error);
-                        }
-                    });
-
-                    return true;
-                }
-
-                false
-            }
-            ResourceRequest::Translation(req) => {
-                if req.path.starts_with("http://") || req.path.starts_with("https://") {
-                    let path = req.path.clone();
-                    let lang = req.lang;
-
-                    cx.resource_manager.set_resource_status(path.clone(), LoadingStatus::Loading);
-
-                    cx.spawn(move |proxy| match reqwest::blocking::get(&path) {
-                        Ok(response) => match response.bytes() {
-                            Ok(data) => match String::from_utf8(data.to_vec()) {
-                                Ok(ftl) => {
-                                    if proxy.load_translation(lang, path.clone(), ftl).is_err() {
-                                        let _ = proxy
-                                            .update_resource_status(path, LoadingStatus::Error);
-                                    }
-                                }
-                                Err(_) => {
-                                    let _ =
-                                        proxy.update_resource_status(path, LoadingStatus::Error);
-                                }
-                            },
-                            Err(_) => {
-                                let _ = proxy.update_resource_status(path, LoadingStatus::Error);
-                            }
-                        },
-                        Err(_) => {
-                            let _ = proxy.update_resource_status(path, LoadingStatus::Error);
-                        }
-                    });
-
-                    return true;
-                }
-
-                false
-            }
-        }
-    }
-}
-
-#[cfg(all(feature = "url-loader", feature = "tokio"))]
-impl ResourceLoader for UrlResourceLoader {
-    fn load(&self, request: ResourceRequest, cx: &mut ResourceContext) -> bool {
-        match request {
-            ResourceRequest::Image(req) => {
-                if req.path.starts_with("http://") || req.path.starts_with("https://") {
-                    let path = req.path.clone();
-                    let path_for_result = path.clone();
-                    let policy = req.policy;
-
-                    // Mark as loading before spawning
-                    cx.resource_manager
-                        .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
-
-                    // Spawn an async task to fetch the URL
-                    cx.spawn_task(
-                        crate::context::Task::new(move |_| {
-                            let path = path.clone();
-                            async move {
-                                match reqwest::get(&path).await {
-                                    Ok(response) => match response.bytes().await {
-                                        Ok(data) => Ok::<_, String>(Some(data)),
-                                        Err(_) => Ok(None),
-                                    },
-                                    Err(_) => Ok(None),
-                                }
-                            }
-                        })
-                        .on_result(move |result, proxy| {
-                            use crate::context::TaskResult;
-                            match result {
-                                TaskResult::Completed(Some(data)) => {
-                                    let loaded = match proxy.load_image(
-                                        path_for_result.clone(),
-                                        &data,
-                                        policy,
-                                    ) {
-                                        Ok(true) => true,
-                                        Ok(false) => {
-                                            if is_likely_svg(&path_for_result, &data) {
-                                                proxy
-                                                    .load_svg(
-                                                        path_for_result.clone(),
-                                                        &data,
-                                                        policy,
-                                                    )
-                                                    .is_ok()
-                                            } else {
-                                                false
-                                            }
-                                        }
-                                        Err(_) => false,
-                                    };
-
-                                    let _ = proxy.update_resource_status(
-                                        path_for_result,
-                                        if loaded {
-                                            LoadingStatus::Loaded
-                                        } else {
-                                            LoadingStatus::Error
-                                        },
-                                    );
-                                }
-                                TaskResult::Completed(None) => {
-                                    let _ = proxy.update_resource_status(
-                                        path_for_result,
-                                        LoadingStatus::Error,
-                                    );
-                                }
-                                _ => {}
-                            }
-                        }),
-                    );
-
-                    return true;
-                }
-                false
-            }
-            ResourceRequest::Font(req) => {
-                if req.path.starts_with("http://") || req.path.starts_with("https://") {
-                    let path = req.path.clone();
-                    let path_for_result = path.clone();
-
-                    cx.resource_manager
-                        .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
-
-                    cx.spawn_task(
-                        crate::context::Task::new(move |_| {
-                            let path = path.clone();
-                            async move {
-                                match reqwest::get(&path).await {
-                                    Ok(response) => match response.bytes().await {
-                                        Ok(data) => Ok::<_, String>(Some(data)),
-                                        Err(_) => Ok(None),
-                                    },
-                                    Err(_) => Ok(None),
-                                }
-                            }
-                        })
-                        .on_result(move |result, proxy| {
-                            use crate::context::TaskResult;
-                            match result {
-                                TaskResult::Completed(Some(data)) => {
-                                    if proxy.load_font(path_for_result.clone(), &data).is_err() {
-                                        let _ = proxy.update_resource_status(
-                                            path_for_result,
-                                            LoadingStatus::Error,
-                                        );
-                                    }
-                                }
-                                TaskResult::Completed(None) => {
-                                    let _ = proxy.update_resource_status(
-                                        path_for_result,
-                                        LoadingStatus::Error,
-                                    );
-                                }
-                                _ => {}
-                            }
-                        }),
-                    );
-
-                    return true;
-                }
-
-                false
-            }
-            ResourceRequest::Translation(req) => {
-                if req.path.starts_with("http://") || req.path.starts_with("https://") {
-                    let path = req.path.clone();
-                    let path_for_result = path.clone();
-                    let lang = req.lang;
-
-                    cx.resource_manager
-                        .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
-
-                    cx.spawn_task(
-                        crate::context::Task::new(move |_| {
-                            let path = path.clone();
-                            async move {
-                                match reqwest::get(&path).await {
-                                    Ok(response) => match response.bytes().await {
-                                        Ok(data) => Ok::<_, String>(Some(data)),
-                                        Err(_) => Ok(None),
-                                    },
-                                    Err(_) => Ok(None),
-                                }
-                            }
-                        })
-                        .on_result(move |result, proxy| {
-                            use crate::context::TaskResult;
-                            match result {
-                                TaskResult::Completed(Some(data)) => {
-                                    match String::from_utf8(data.to_vec()) {
-                                        Ok(ftl) => {
-                                            if proxy
-                                                .load_translation(
-                                                    lang.clone(),
-                                                    path_for_result.clone(),
-                                                    ftl,
-                                                )
-                                                .is_err()
-                                            {
-                                                let _ = proxy.update_resource_status(
-                                                    path_for_result.clone(),
-                                                    LoadingStatus::Error,
-                                                );
-                                            }
-                                        }
-                                        Err(_) => {
-                                            let _ = proxy.update_resource_status(
-                                                path_for_result.clone(),
-                                                LoadingStatus::Error,
-                                            );
-                                        }
-                                    }
-                                }
-                                TaskResult::Completed(None) => {
-                                    let _ = proxy.update_resource_status(
                                         path_for_result.clone(),
                                         LoadingStatus::Error,
                                     );
@@ -789,6 +404,8 @@ impl ResourceLoader for UrlResourceLoader {
     }
 }
 
+=======
+>>>>>>> f31a0f8a (Refactor resource loading to use a queue)
 pub(crate) enum ImageOrSvg {
     Svg(skia_safe::svg::Dom),
     Image(skia_safe::Image),
@@ -827,6 +444,8 @@ pub struct ResourceManager {
     pub language: LanguageIdentifier,
 
     pub(crate) resource_loaders: Vec<Box<dyn ResourceLoader>>,
+    /// Resource requests waiting to be dispatched through the configured loader chain.
+    pub(crate) pending_requests: Vec<ResourceRequest>,
     /// Reactive status tracking per resource path.
     /// Signals allow automatic updates to Memos when status changes.
     pub(crate) loading_status: HashMap<String, Signal<LoadingStatus>>,
@@ -837,56 +456,12 @@ impl ResourceManager {
         // Get the system locale
         let locale = sys_locale::get_locale().and_then(|l| l.parse().ok()).unwrap_or_default();
 
-        let _default_image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>> = None;
-
-        // Disable this for now because reqwest pulls in too many dependencies.
-        // let default_image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>> =
-        //     Some(Box::new(|cx: &mut ResourceContext, path: &str| {
-        //         if path.starts_with("https://") {
-        //             let path = path.to_string();
-        //             cx.spawn(move |cx| {
-        //                 let data = reqwest::blocking::get(&path).unwrap().bytes().unwrap();
-        //                 cx.load_image(
-        //                     path,
-        //                     image::load_from_memory_with_format(
-        //                         &data,
-        //                         image::guess_format(&data).unwrap(),
-        //                     )
-        //                     .unwrap(),
-        //                     ImageRetentionPolicy::DropWhenUnusedForOneFrame,
-        //                 )
-        //                 .unwrap();
-        //             });
-        //         } else {
-        //             // TODO: Try to load path from file
-        //         }
-        //     }));
-
         let mut image_id_manager = IdManager::new();
 
         // Create root id for broken image
         image_id_manager.create();
 
-        let mut images = HashMap::new();
-
-        images.insert(
-            ImageId::root(),
-            StoredImage {
-                image: ImageOrSvg::Image(
-                    skia_safe::Image::from_encoded(unsafe {
-                        skia_safe::Data::new_bytes(include_bytes!(
-                            "../../resources/images/broken_image.png"
-                        ))
-                    })
-                    .unwrap(),
-                ),
-
-                retention_policy: ImageRetentionPolicy::Forever,
-                used: true,
-                dirty: false,
-                observers: HashSet::new(),
-            },
-        );
+        let images = HashMap::new();
 
         let resource_loaders: Vec<Box<dyn ResourceLoader>> = vec![Box::new(FileResourceLoader)];
 
@@ -910,6 +485,7 @@ impl ResourceManager {
 
             language: locale,
             resource_loaders,
+            pending_requests: Vec::new(),
             loading_status: HashMap::new(),
         }
     }
@@ -1033,7 +609,7 @@ impl ResourceManager {
             .images
             .iter()
             .filter_map(|(id, img)| match img.retention_policy {
-                ImageRetentionPolicy::DropWhenUnusedForOneFrame => (img.used).then_some(*id),
+                ImageRetentionPolicy::DropWhenUnusedForOneFrame => (!img.used).then_some(*id),
 
                 ImageRetentionPolicy::DropWhenNoObservers => {
                     img.observers.is_empty().then_some(*id)
@@ -1045,7 +621,19 @@ impl ResourceManager {
 
         for id in rem {
             self.images.remove(&id);
-            self.image_ids.retain(|_, img| *img != id);
+
+            // Clear path mappings and reactive loading-status entries for evicted images.
+            // Otherwise a stale Loaded/Error status can prevent future reloads for the same path.
+            let removed_paths = self
+                .image_ids
+                .iter()
+                .filter_map(|(path, img)| (*img == id).then_some(path.clone()))
+                .collect::<Vec<_>>();
+            for path in removed_paths {
+                self.image_ids.remove(&path);
+                self.loading_status.remove(&path);
+            }
+
             self.image_id_manager.destroy(id);
         }
     }
@@ -1068,19 +656,52 @@ impl ResourceManager {
         LoadingStatus::NotLoaded
     }
 
+    /// Enqueue a resource request to be handled by the resource system.
+    pub(crate) fn queue_resource_request(&mut self, request: ResourceRequest) {
+        self.pending_requests.push(request);
+    }
+
+    /// Drain pending resource requests for this frame.
+    pub(crate) fn take_pending_resource_requests(&mut self) -> Vec<ResourceRequest> {
+        std::mem::take(&mut self.pending_requests)
+    }
+
     /// Update the loading status of a resource path.
     pub(crate) fn set_resource_status(&mut self, path: impl Into<String>, status: LoadingStatus) {
         let path = path.into();
         // Get or create the signal for this path
         let signal = self.loading_status.entry(path).or_insert_with(|| Signal::new(status));
         // Update the signal - this will notify any observers (Memos, Bindings)
-        signal.set(status);
+        signal.set_if_changed(status);
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::entity::Entity;
+    use hashbrown::HashSet;
+
+    fn test_image() -> skia_safe::Image {
+        skia_safe::Image::from_encoded(unsafe {
+            skia_safe::Data::new_bytes(include_bytes!("../../resources/images/broken_image.png"))
+        })
+        .unwrap()
+    }
+
+    fn stored_image(
+        policy: ImageRetentionPolicy,
+        used: bool,
+        observers: HashSet<Entity>,
+    ) -> StoredImage {
+        StoredImage {
+            image: ImageOrSvg::Image(test_image()),
+            retention_policy: policy,
+            used,
+            dirty: false,
+            observers,
+        }
+    }
 
     #[test]
     fn add_translation_returns_error_for_invalid_ftl() {
@@ -1154,5 +775,47 @@ mod tests {
             key: "missing-key".to_string(),
             requested_locale: "en-US".to_string(),
         });
+    }
+
+    #[test]
+    fn evict_unused_images_keeps_used_one_frame_images() {
+        let mut manager = ResourceManager::new();
+
+        let used_id = manager.image_id_manager.create();
+        manager.images.insert(
+            used_id,
+            stored_image(ImageRetentionPolicy::DropWhenUnusedForOneFrame, true, HashSet::new()),
+        );
+
+        let unused_id = manager.image_id_manager.create();
+        manager.images.insert(
+            unused_id,
+            stored_image(ImageRetentionPolicy::DropWhenUnusedForOneFrame, false, HashSet::new()),
+        );
+
+        manager.evict_unused_images();
+
+        assert!(manager.images.contains_key(&used_id));
+        assert!(!manager.images.contains_key(&unused_id));
+    }
+
+    #[test]
+    fn evict_unused_images_clears_status_for_evicted_paths() {
+        let mut manager = ResourceManager::new();
+
+        let id = manager.image_id_manager.create();
+        let path = "test://evicted-image".to_string();
+
+        manager.images.insert(
+            id,
+            stored_image(ImageRetentionPolicy::DropWhenNoObservers, false, HashSet::new()),
+        );
+        manager.image_ids.insert(path.clone(), id);
+        manager.set_resource_status(path.clone(), LoadingStatus::Loaded);
+
+        manager.evict_unused_images();
+
+        assert!(!manager.image_ids.contains_key(&path));
+        assert_eq!(manager.resource_status(&path), LoadingStatus::NotLoaded);
     }
 }

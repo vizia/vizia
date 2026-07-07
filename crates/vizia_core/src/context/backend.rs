@@ -225,8 +225,8 @@ impl BackendContext {
     pub fn process_style_updates(&mut self) {
         style_system(&mut self.0);
 
-        // Load any unloaded images and remove unused images.
-        image_system(&mut self.0);
+        // Load queued resources (fonts/translations/cursors/images) and maintain image cache.
+        resource_system(&mut self.0);
     }
 
     // Returns true if animations are playing

@@ -8,9 +8,9 @@ use vizia::{
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        cx.load_image(
+        cx.add_image_encoded(
             "sample-hut",
-            include_bytes!("../resources/images/sample-hut-400x300.png"),
+            "examples/resources/images/sample-hut-400x300.png",
             ImageRetentionPolicy::DropWhenNoObservers,
         );
 

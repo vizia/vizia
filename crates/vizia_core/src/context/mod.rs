@@ -707,39 +707,79 @@ impl Context {
         );
     }
 
+    fn request_resource_if_not_loaded(
+        &mut self,
+        path: String,
+        request: crate::resource::ResourceRequest,
+    ) {
+        // Avoid re-issuing requests for resources that are already loading or resolved.
+        if self.resource_manager.resource_status(&path) != LoadingStatus::NotLoaded {
+            return;
+        }
+
+        self.resource_manager.queue_resource_request(request);
+    }
+
+    /// Returns a reactive loading-status signal for the provided resource path.
+    ///
+    /// The signal value is updated by resource loaders as the request progresses.
+    pub fn resource_status_signal(&mut self, path: impl Into<String>) -> Signal<LoadingStatus> {
+        let path = path.into();
+
+        if let Some(signal) = self.resource_manager.loading_status.get(&path).copied() {
+            return signal;
+        }
+
+        let status = self.resource_manager.resource_status(&path);
+        let signal = Signal::new(status);
+        self.resource_manager.loading_status.insert(path, signal);
+        signal
+    }
+
+    /// Returns the current loading status for the provided resource path.
+    ///
+    /// This reads from the same reactive signal used by [`Context::resource_status_signal`].
+    pub fn resource_status(&mut self, path: impl Into<String>) -> LoadingStatus {
+        self.resource_status_signal(path).get()
+    }
+
     /// Adds a font to the application by loading it through the configured resource loaders.
     ///
     /// This supports local files (including `file://` URLs) and any custom loader you register.
     pub fn add_font(&mut self, path: impl Into<String>) {
         let path = path.into();
 
-        // Avoid re-issuing requests for resources that are already loading or resolved.
-        if self.resource_manager.resource_status(&path) != LoadingStatus::NotLoaded {
-            return;
-        }
-
-        let mut resource_cx = ResourceContext::new(self);
-        let loaders: Vec<*const dyn crate::resource::ResourceLoader> = resource_cx
-            .resource_manager
-            .resource_loaders
-            .iter()
-            .map(|loader| &**loader as *const _)
-            .collect();
-
-        for loader_ptr in loaders {
-            let request = crate::resource::ResourceRequest::Font(crate::resource::FontRequest {
-                path: path.clone(),
-            });
-
-            // SAFETY: Pointers are collected from stable references and the loader list is not
-            // modified while iterating.
-            if unsafe { (*loader_ptr).load(request, &mut resource_cx) } {
-                return;
-            }
-        }
-
-        resource_cx.resource_manager.set_resource_status(path, LoadingStatus::Error);
+        self.request_resource_if_not_loaded(
+            path.clone(),
+            crate::resource::ResourceRequest::Font(crate::resource::FontRequest { path }),
+        );
     }
+
+    /// Queues an image resource request and returns a reactive loading-status signal.
+    ///
+    /// `name` is the key used to reference the image from CSS and [`Image::new`].
+    /// `path` can be a filesystem path, `file://` URL, or HTTP(S) URL (with `url-loader`).
+    pub fn add_image_encoded(
+        &mut self,
+        name: impl Into<String>,
+        path: impl Into<String>,
+        policy: ImageRetentionPolicy,
+    ) -> Signal<LoadingStatus> {
+        let name = name.into();
+        let path = path.into();
+
+        self.request_resource_if_not_loaded(
+            path.clone(),
+            crate::resource::ResourceRequest::Image(crate::resource::ImageRequest {
+                name,
+                path: path.clone(),
+                policy,
+            }),
+        );
+
+        self.resource_status_signal(path)
+    }
+
 
     /// Adds a translation file to the application by loading it through the configured resource
     /// loaders.
@@ -749,32 +789,13 @@ impl Context {
     pub fn add_translation_file(&mut self, lang: LanguageIdentifier, path: impl Into<String>) {
         let path = path.into();
 
-        // Avoid re-issuing requests for resources that are already loading or resolved.
-        if self.resource_manager.resource_status(&path) != LoadingStatus::NotLoaded {
-            return;
-        }
-
-        let mut resource_cx = ResourceContext::new(self);
-        let loaders: Vec<*const dyn crate::resource::ResourceLoader> = resource_cx
-            .resource_manager
-            .resource_loaders
-            .iter()
-            .map(|loader| &**loader as *const _)
-            .collect();
-
-        for loader_ptr in loaders {
-            let request = crate::resource::ResourceRequest::Translation(
-                crate::resource::TranslationRequest { lang: lang.clone(), path: path.clone() },
-            );
-
-            // SAFETY: Pointers are collected from stable references and the loader list is not
-            // modified while iterating.
-            if unsafe { (*loader_ptr).load(request, &mut resource_cx) } {
-                return;
-            }
-        }
-
-        resource_cx.resource_manager.set_resource_status(path, LoadingStatus::Error);
+        self.request_resource_if_not_loaded(
+            path.clone(),
+            crate::resource::ResourceRequest::Translation(crate::resource::TranslationRequest {
+                lang,
+                path,
+            }),
+        );
     }
 
     /// Returns the element name (e.g. `"textbox"`) of the currently focused
