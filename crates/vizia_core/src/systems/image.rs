@@ -1,6 +1,6 @@
 use crate::context::{Context, ResourceContext};
 use crate::prelude::*;
-use crate::resource::{ImageRequest, ResourceRequest};
+use crate::resource::{ImageRequest, LoadingStatus, ResourceRequest};
 use crate::style::ImageOrGradient;
 // use crate::resource::{ImageId, ImageRetentionPolicy, StoredImage};
 // use hashbrown::HashSet;
@@ -32,6 +32,12 @@ pub(crate) fn image_system(cx: &mut Context) {
 fn load_image(cx: &mut ResourceContext, entity: Entity, image_name: &str) {
     // If the image is already loaded, just register the observer
     if try_load_image(cx, entity, image_name) {
+        return;
+    }
+
+    // Avoid re-issuing loads every frame while a resource is already in-flight
+    // (or has already failed/succeeded), which causes status churn and flicker.
+    if cx.resource_manager.resource_status(image_name) != LoadingStatus::NotLoaded {
         return;
     }
 

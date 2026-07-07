@@ -82,12 +82,30 @@ impl ContextProxy {
         path: String,
         data: &[u8],
         policy: ImageRetentionPolicy,
-    ) -> Result<(), ProxyEmitError> {
+    ) -> Result<bool, ProxyEmitError> {
         if let Some(image) = skia_safe::Image::from_encoded(skia_safe::Data::new_copy(data)) {
-            self.emit(InternalEvent::LoadImage { path, image: Mutex::new(Some(image)), policy })?
+            self.emit(InternalEvent::LoadImage { path, image: Mutex::new(Some(image)), policy })?;
+            return Ok(true);
         }
 
-        Ok(())
+        Ok(false)
+    }
+
+    pub fn load_svg(
+        &mut self,
+        path: String,
+        data: &[u8],
+        policy: ImageRetentionPolicy,
+    ) -> Result<(), ProxyEmitError> {
+        self.emit(InternalEvent::LoadSvg { path, data: data.to_vec(), policy })
+    }
+
+    pub fn update_resource_status(
+        &mut self,
+        path: String,
+        status: crate::resource::LoadingStatus,
+    ) -> Result<(), ProxyEmitError> {
+        self.emit(InternalEvent::UpdateResourceStatus { path, status })
     }
 
     pub fn spawn<F>(&self, target: F)

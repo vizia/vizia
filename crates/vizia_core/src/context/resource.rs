@@ -111,5 +111,15 @@ impl<'a> ResourceContext<'a> {
             self.style.needs_relayout(observer);
         }
         self.style.needs_relayout(self.current);
+
+        // Resource loading can complete off the normal interaction path; request a redraw so
+        // newly available image content is painted immediately without waiting for external input.
+        if let Some(proxy) = self.event_proxy.as_ref() {
+            let mut cxp = ContextProxy {
+                current: self.current,
+                event_proxy: Some(proxy.make_clone()),
+            };
+            let _ = cxp.redraw();
+        }
     }
 }

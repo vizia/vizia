@@ -58,7 +58,7 @@ use crate::{
     model::ModelData,
 };
 
-use crate::{binding::BindingHandler, resource::StoredImage};
+use crate::{binding::BindingHandler, resource::{LoadingStatus, StoredImage}};
 use crate::{cache::CachedData, resource::ImageOrSvg};
 
 use crate::prelude::*;
@@ -982,7 +982,18 @@ impl Context {
                     });
                 }
             }
+            let observers: Vec<Entity> = self
+                .resource_manager
+                .images
+                .get(&id)
+                .map(|img| img.observers.iter().copied().collect())
+                .unwrap_or_default();
+            for observer in observers {
+                self.style.needs_relayout(observer);
+                self.needs_redraw(observer);
+            }
             self.style.needs_relayout(self.current);
+            self.needs_redraw(self.current);
         }
     }
 
@@ -1024,8 +1035,10 @@ impl Context {
                 .unwrap_or_default();
             for observer in observers {
                 self.style.needs_relayout(observer);
+                self.needs_redraw(observer);
             }
             self.style.needs_relayout(self.current);
+            self.needs_redraw(self.current);
         }
 
         id
@@ -1099,6 +1112,8 @@ impl Context {
 pub(crate) enum InternalEvent {
     Redraw,
     LoadImage { path: String, image: Mutex<Option<skia_safe::Image>>, policy: ImageRetentionPolicy },
+    LoadSvg { path: String, data: Vec<u8>, policy: ImageRetentionPolicy },
+    UpdateResourceStatus { path: String, status: LoadingStatus },
 }
 
 pub struct LocalizationContext<'a> {

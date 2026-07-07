@@ -4,6 +4,7 @@ mod image_id;
 
 pub use image_id::ImageId;
 use vizia_id::{GenerationalId, IdManager};
+use vizia_reactive::{Signal, SignalGet, SignalUpdate};
 
 use crate::context::ResourceContext;
 use crate::entity::Entity;
@@ -317,6 +318,24 @@ impl ResourceLoader for FileResourceLoader {
 #[cfg(feature = "url-loader")]
 pub struct UrlResourceLoader;
 
+#[cfg(feature = "url-loader")]
+fn is_likely_svg(path: &str, data: &[u8]) -> bool {
+    if path.to_ascii_lowercase().ends_with(".svg") {
+        return true;
+    }
+
+    // Allow leading whitespace/BOM before checking for an SVG tag.
+    let trimmed = data
+        .strip_prefix(&[0xEF, 0xBB, 0xBF])
+        .unwrap_or(data)
+        .iter()
+        .copied()
+        .skip_while(|b| b.is_ascii_whitespace())
+        .collect::<Vec<u8>>();
+
+    trimmed.starts_with(b"<svg") || trimmed.starts_with(b"<?xml")
+}
+
 #[cfg(all(feature = "url-loader", not(feature = "tokio")))]
 impl ResourceLoader for UrlResourceLoader {
     fn load(&self, request: ResourceRequest, cx: &mut ResourceContext) -> bool {
@@ -329,14 +348,40 @@ impl ResourceLoader for UrlResourceLoader {
                     // Mark as loading before spawning
                     cx.resource_manager.set_resource_status(path.clone(), LoadingStatus::Loading);
 
-                    cx.spawn(move |proxy| match reqwest::blocking::get(&path) {
-                        Ok(response) => match response.bytes() {
-                            Ok(data) => {
-                                let _ = proxy.load_image(path, &data, policy);
+                    cx.spawn(move |proxy| {
+                        match reqwest::blocking::get(&path) {
+                            Ok(response) => match response.bytes() {
+                                Ok(data) => {
+                                    let loaded = match proxy.load_image(path.clone(), &data, policy)
+                                    {
+                                        Ok(true) => true,
+                                        Ok(false) => {
+                                            if is_likely_svg(&path, &data) {
+                                                proxy.load_svg(path.clone(), &data, policy).is_ok()
+                                            } else {
+                                                false
+                                            }
+                                        }
+                                        Err(_) => false,
+                                    };
+
+                                    let _ = proxy.update_resource_status(
+                                        path,
+                                        if loaded {
+                                            LoadingStatus::Loaded
+                                        } else {
+                                            LoadingStatus::Error
+                                        },
+                                    );
+                                }
+                                Err(_) => {
+                                    let _ = proxy.update_resource_status(path, LoadingStatus::Error);
+                                }
+                            },
+                            Err(_) => {
+                                let _ = proxy.update_resource_status(path, LoadingStatus::Error);
                             }
-                            Err(_) => {}
-                        },
-                        Err(_) => {}
+                        }
                     });
                     return true;
                 }
@@ -376,8 +421,37 @@ impl ResourceLoader for UrlResourceLoader {
                         })
                         .on_result(move |result, proxy| {
                             use crate::context::TaskResult;
-                            if let TaskResult::Completed(Some(data)) = result {
-                                let _ = proxy.load_image(path_for_result.clone(), &data, policy);
+                            match result {
+                                TaskResult::Completed(Some(data)) => {
+                                    let loaded = match proxy
+                                        .load_image(path_for_result.clone(), &data, policy)
+                                    {
+                                        Ok(true) => true,
+                                        Ok(false) => {
+                                            if is_likely_svg(&path_for_result, &data) {
+                                                proxy
+                                                    .load_svg(path_for_result.clone(), &data, policy)
+                                                    .is_ok()
+                                            } else {
+                                                false
+                                            }
+                                        }
+                                        Err(_) => false,
+                                    };
+
+                                    let _ = proxy.update_resource_status(
+                                        path_for_result,
+                                        if loaded {
+                                            LoadingStatus::Loaded
+                                        } else {
+                                            LoadingStatus::Error
+                                        },
+                                    );
+                                }
+                                TaskResult::Completed(None) => {
+                                    let _ = proxy.update_resource_status(path_for_result, LoadingStatus::Error);
+                                }
+                                _ => {}
                             }
                         }),
                     );
@@ -428,7 +502,9 @@ pub struct ResourceManager {
     pub language: LanguageIdentifier,
 
     pub(crate) resource_loaders: Vec<Box<dyn ResourceLoader>>,
-    pub(crate) loading_status: HashMap<String, LoadingStatus>,
+    /// Reactive status tracking per resource path.
+    /// Signals allow automatic updates to Memos when status changes.
+    pub(crate) loading_status: HashMap<String, Signal<LoadingStatus>>,
 }
 
 impl ResourceManager {
@@ -651,9 +727,9 @@ impl ResourceManager {
 
     /// Query the loading status of a resource path.
     pub fn resource_status(&self, path: &str) -> LoadingStatus {
-        // First check cached status
-        if let Some(status) = self.loading_status.get(path) {
-            return *status;
+        // First check cached status signal
+        if let Some(signal) = self.loading_status.get(path) {
+            return signal.get();
         }
 
         // If not in cache, ask each loader in the chain
@@ -669,7 +745,11 @@ impl ResourceManager {
 
     /// Update the loading status of a resource path.
     pub(crate) fn set_resource_status(&mut self, path: impl Into<String>, status: LoadingStatus) {
-        self.loading_status.insert(path.into(), status);
+        let path = path.into();
+        // Get or create the signal for this path
+        let signal = self.loading_status.entry(path).or_insert_with(|| Signal::new(status));
+        // Update the signal - this will notify any observers (Memos, Bindings)
+        signal.set(status);
     }
 }
 

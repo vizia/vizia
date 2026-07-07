@@ -218,6 +218,11 @@ name = "dropdown"
 path = "examples/views/dropdown.rs"
 
 [[example]]
+name = "image"
+path = "examples/views/image.rs"
+required-features = ["url-loader"]
+
+[[example]]
 name = "knob"
 path = "examples/views/knob.rs"
 

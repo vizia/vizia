@@ -65,6 +65,12 @@ impl EventManager {
                             ResourceContext::new(cx).load_image(path, image, policy);
                         }
                     }
+                    InternalEvent::LoadSvg { path, data, policy } => {
+                        cx.load_svg(&path, &data, policy);
+                    }
+                    InternalEvent::UpdateResourceStatus { path, status } => {
+                        cx.resource_manager.set_resource_status(path, status);
+                    }
                 });
 
                 // Send events to any global listeners.
