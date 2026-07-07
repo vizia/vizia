@@ -107,16 +107,12 @@ fn main() -> Result<(), ApplicationError> {
                     }
 
                     _ => {
-                        VStack::new(cx, |cx| {
-                            Label::new(cx, "Loaded from file").color(Color::rgb(80, 80, 80));
-                            Image::new(cx, SAMPLE_HUT_NAME)
-                                .width(Pixels(300.0))
-                                .height(Pixels(300.0))
-                                .background_size(vec![BackgroundSize::Contain])
-                                .background_position(vec![Position::center()])
-                                .background_color(Color::rgb(240, 240, 240));
-                        })
-                        .gap(Pixels(8.0));
+                        Image::new(cx, SAMPLE_HUT_NAME)
+                            .width(Pixels(300.0))
+                            .height(Pixels(300.0))
+                            .background_size(vec![BackgroundSize::Contain])
+                            .background_position(vec![Position::center()])
+                            .background_color(Color::rgb(240, 240, 240));
                     }
                 });
             })
