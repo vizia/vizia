@@ -868,6 +868,14 @@ impl Context {
 
     /// Modifies the state of an existing timer with the provided `Timer` id.
     pub fn modify_timer(&mut self, timer: Timer, timer_function: impl Fn(&mut TimerState)) {
+        // `running_timers` is a min-heap ordered by trigger time, not by id -
+        // the target timer isn't necessarily at the top. The previous version
+        // only ever `peek()`ed the top and returned early on a mismatch
+        // without advancing, so a target that wasn't already the top-of-heap
+        // entry spun this loop forever (`peek()` keeps returning the same
+        // element). Pop non-matching entries aside, keep searching, and push
+        // everything back (including the modified target) before returning.
+        let mut passed_over = Vec::new();
         while let Some(next_timer_state) = self.running_timers.peek() {
             if next_timer_state.id == timer {
                 let mut timer_state = self.running_timers.pop().unwrap();
@@ -875,9 +883,17 @@ impl Context {
                 (timer_function)(&mut timer_state);
 
                 self.running_timers.push(timer_state);
+                for t in passed_over {
+                    self.running_timers.push(t);
+                }
 
                 return;
             }
+
+            passed_over.push(self.running_timers.pop().unwrap());
+        }
+        for t in passed_over {
+            self.running_timers.push(t);
         }
 
         for pending_timer in self.timers.iter_mut() {
