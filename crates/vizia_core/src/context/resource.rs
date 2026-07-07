@@ -1,4 +1,5 @@
 use hashbrown::{HashSet, hash_map::Entry};
+use unic_langid::LanguageIdentifier;
 
 use vizia_storage::Tree;
 
@@ -118,10 +119,8 @@ impl<'a> ResourceContext<'a> {
         // Resource loading can complete off the normal interaction path; request a redraw so
         // newly available image content is painted immediately without waiting for external input.
         if let Some(proxy) = self.event_proxy.as_ref() {
-            let mut cxp = ContextProxy {
-                current: self.current,
-                event_proxy: Some(proxy.make_clone()),
-            };
+            let mut cxp =
+                ContextProxy { current: self.current, event_proxy: Some(proxy.make_clone()) };
             let _ = cxp.redraw();
         }
     }
@@ -140,10 +139,31 @@ impl<'a> ResourceContext<'a> {
             self.resource_manager.set_resource_status(path, LoadingStatus::Loaded);
 
             if let Some(proxy) = self.event_proxy.as_ref() {
-                let mut cxp = ContextProxy {
-                    current: self.current,
-                    event_proxy: Some(proxy.make_clone()),
-                };
+                let mut cxp =
+                    ContextProxy { current: self.current, event_proxy: Some(proxy.make_clone()) };
+                let _ = cxp.redraw();
+            }
+
+            true
+        } else {
+            self.resource_manager.set_resource_status(path, LoadingStatus::Error);
+            false
+        }
+    }
+
+    /// Loads a translation file and marks text as dirty so localized content can refresh.
+    pub fn load_translation(&mut self, lang: LanguageIdentifier, path: String, ftl: &str) -> bool {
+        if self.resource_manager.add_translation(lang, ftl.to_string()).is_ok() {
+            let entities: Vec<Entity> = self.tree.into_iter().collect();
+            for entity in entities {
+                self.style.needs_text_update(entity);
+            }
+
+            self.resource_manager.set_resource_status(path, LoadingStatus::Loaded);
+
+            if let Some(proxy) = self.event_proxy.as_ref() {
+                let mut cxp =
+                    ContextProxy { current: self.current, event_proxy: Some(proxy.make_clone()) };
                 let _ = cxp.redraw();
             }
 

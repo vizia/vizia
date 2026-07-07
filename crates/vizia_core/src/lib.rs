@@ -94,7 +94,7 @@ pub mod prelude {
     };
     pub use super::resource::{
         FontRequest, ImageId, ImageRequest, ImageRetentionPolicy, LoadingStatus, ResourceLoader,
-        ResourceRequest,
+        ResourceRequest, TranslationRequest,
     };
     pub use super::util::{CSS, IntoCssStr};
     pub use super::view::{Handle, View};

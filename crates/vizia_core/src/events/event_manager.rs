@@ -71,6 +71,9 @@ impl EventManager {
                     InternalEvent::LoadFont { path, data } => {
                         ResourceContext::new(cx).load_font(path, &data);
                     }
+                    InternalEvent::LoadTranslation { lang, path, ftl } => {
+                        ResourceContext::new(cx).load_translation(lang, path, &ftl);
+                    }
                     InternalEvent::UpdateResourceStatus { path, status } => {
                         cx.resource_manager.set_resource_status(path, status);
                     }

@@ -104,6 +104,15 @@ impl ContextProxy {
         self.emit(InternalEvent::LoadFont { path, data: data.to_vec() })
     }
 
+    pub fn load_translation(
+        &mut self,
+        lang: LanguageIdentifier,
+        path: String,
+        ftl: String,
+    ) -> Result<(), ProxyEmitError> {
+        self.emit(InternalEvent::LoadTranslation { lang, path, ftl })
+    }
+
     pub fn update_resource_status(
         &mut self,
         path: String,

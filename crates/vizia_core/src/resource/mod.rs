@@ -207,6 +207,15 @@ pub struct FontRequest {
     pub path: String,
 }
 
+/// Request to load a translation resource.
+#[derive(Debug, Clone)]
+pub struct TranslationRequest {
+    /// Language identifier this translation file belongs to.
+    pub lang: LanguageIdentifier,
+    /// Path or URL to the translation resource.
+    pub path: String,
+}
+
 /// Loading status of a resource.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LoadingStatus {
@@ -228,6 +237,8 @@ pub enum ResourceRequest {
     Image(ImageRequest),
     /// Request to load a font.
     Font(FontRequest),
+    /// Request to load a translation file.
+    Translation(TranslationRequest),
 }
 
 /// Trait for loading resources asynchronously or from various sources.
@@ -299,6 +310,24 @@ impl ResourceLoader for FileResourceLoader {
                 cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Error);
                 false
             }
+            ResourceRequest::Translation(req) => {
+                let path = if req.path.starts_with("file://") {
+                    req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
+                } else {
+                    req.path.clone()
+                };
+
+                cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Loading);
+
+                if let Ok(data) = std::fs::read(&path) {
+                    if let Ok(ftl) = String::from_utf8(data) {
+                        return cx.load_translation(req.lang, req.path.clone(), &ftl);
+                    }
+                }
+
+                cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Error);
+                false
+            }
         }
     }
 }
@@ -335,8 +364,8 @@ impl ResourceLoader for FileResourceLoader {
                             };
                             let _ = proxy.update_resource_status(req_path.clone(), status);
                         } else {
-                            let _ =
-                                proxy.update_resource_status(req_path.clone(), LoadingStatus::Error);
+                            let _ = proxy
+                                .update_resource_status(req_path.clone(), LoadingStatus::Error);
                         }
                     }),
                 );
@@ -367,8 +396,56 @@ impl ResourceLoader for FileResourceLoader {
                                     .update_resource_status(req_path.clone(), LoadingStatus::Error);
                             }
                         } else {
-                            let _ =
-                                proxy.update_resource_status(req_path.clone(), LoadingStatus::Error);
+                            let _ = proxy
+                                .update_resource_status(req_path.clone(), LoadingStatus::Error);
+                        }
+                    }),
+                );
+
+                true
+            }
+            ResourceRequest::Translation(req) => {
+                let path = if req.path.starts_with("file://") {
+                    req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
+                } else {
+                    req.path.clone()
+                };
+
+                let req_path = req.path.clone();
+                let lang = req.lang;
+
+                cx.resource_manager.set_resource_status(req_path.clone(), LoadingStatus::Loading);
+
+                cx.spawn_task(
+                    crate::context::Task::new(move |_| {
+                        let path = path.clone();
+                        async move { tokio::fs::read(&path).await }
+                    })
+                    .on_result(move |result, proxy| {
+                        use crate::context::TaskResult;
+                        if let TaskResult::Completed(data) = result {
+                            match String::from_utf8(data) {
+                                Ok(ftl) => {
+                                    if proxy
+                                        .load_translation(lang.clone(), req_path.clone(), ftl)
+                                        .is_err()
+                                    {
+                                        let _ = proxy.update_resource_status(
+                                            req_path.clone(),
+                                            LoadingStatus::Error,
+                                        );
+                                    }
+                                }
+                                Err(_) => {
+                                    let _ = proxy.update_resource_status(
+                                        req_path.clone(),
+                                        LoadingStatus::Error,
+                                    );
+                                }
+                            }
+                        } else {
+                            let _ = proxy
+                                .update_resource_status(req_path.clone(), LoadingStatus::Error);
                         }
                     }),
                 );
@@ -463,6 +540,41 @@ impl ResourceLoader for UrlResourceLoader {
                                         proxy.update_resource_status(path, LoadingStatus::Error);
                                 }
                             }
+                            Err(_) => {
+                                let _ = proxy.update_resource_status(path, LoadingStatus::Error);
+                            }
+                        },
+                        Err(_) => {
+                            let _ = proxy.update_resource_status(path, LoadingStatus::Error);
+                        }
+                    });
+
+                    return true;
+                }
+
+                false
+            }
+            ResourceRequest::Translation(req) => {
+                if req.path.starts_with("http://") || req.path.starts_with("https://") {
+                    let path = req.path.clone();
+                    let lang = req.lang;
+
+                    cx.resource_manager.set_resource_status(path.clone(), LoadingStatus::Loading);
+
+                    cx.spawn(move |proxy| match reqwest::blocking::get(&path) {
+                        Ok(response) => match response.bytes() {
+                            Ok(data) => match String::from_utf8(data.to_vec()) {
+                                Ok(ftl) => {
+                                    if proxy.load_translation(lang, path.clone(), ftl).is_err() {
+                                        let _ = proxy
+                                            .update_resource_status(path, LoadingStatus::Error);
+                                    }
+                                }
+                                Err(_) => {
+                                    let _ =
+                                        proxy.update_resource_status(path, LoadingStatus::Error);
+                                }
+                            },
                             Err(_) => {
                                 let _ = proxy.update_resource_status(path, LoadingStatus::Error);
                             }
@@ -594,6 +706,72 @@ impl ResourceLoader for UrlResourceLoader {
                                 TaskResult::Completed(None) => {
                                     let _ = proxy.update_resource_status(
                                         path_for_result,
+                                        LoadingStatus::Error,
+                                    );
+                                }
+                                _ => {}
+                            }
+                        }),
+                    );
+
+                    return true;
+                }
+
+                false
+            }
+            ResourceRequest::Translation(req) => {
+                if req.path.starts_with("http://") || req.path.starts_with("https://") {
+                    let path = req.path.clone();
+                    let path_for_result = path.clone();
+                    let lang = req.lang;
+
+                    cx.resource_manager
+                        .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
+
+                    cx.spawn_task(
+                        crate::context::Task::new(move |_| {
+                            let path = path.clone();
+                            async move {
+                                match reqwest::get(&path).await {
+                                    Ok(response) => match response.bytes().await {
+                                        Ok(data) => Ok::<_, String>(Some(data)),
+                                        Err(_) => Ok(None),
+                                    },
+                                    Err(_) => Ok(None),
+                                }
+                            }
+                        })
+                        .on_result(move |result, proxy| {
+                            use crate::context::TaskResult;
+                            match result {
+                                TaskResult::Completed(Some(data)) => {
+                                    match String::from_utf8(data.to_vec()) {
+                                        Ok(ftl) => {
+                                            if proxy
+                                                .load_translation(
+                                                    lang.clone(),
+                                                    path_for_result.clone(),
+                                                    ftl,
+                                                )
+                                                .is_err()
+                                            {
+                                                let _ = proxy.update_resource_status(
+                                                    path_for_result.clone(),
+                                                    LoadingStatus::Error,
+                                                );
+                                            }
+                                        }
+                                        Err(_) => {
+                                            let _ = proxy.update_resource_status(
+                                                path_for_result.clone(),
+                                                LoadingStatus::Error,
+                                            );
+                                        }
+                                    }
+                                }
+                                TaskResult::Completed(None) => {
+                                    let _ = proxy.update_resource_status(
+                                        path_for_result.clone(),
                                         LoadingStatus::Error,
                                     );
                                 }
