@@ -10,6 +10,9 @@ use crate::{
 
 use super::{Context, ContextProxy, EventProxy};
 
+#[cfg(feature = "tokio")]
+use std::sync::Arc;
+
 /// A context used when loading images.
 pub struct ResourceContext<'a> {
     pub(crate) current: Entity,
@@ -17,6 +20,10 @@ pub struct ResourceContext<'a> {
     pub(crate) resource_manager: &'a mut ResourceManager,
     pub(crate) style: &'a mut Style,
     pub(crate) tree: &'a Tree<Entity>,
+    #[cfg(feature = "tokio")]
+    pub(crate) task_runtime: Arc<tokio::runtime::Runtime>,
+    #[cfg(feature = "tokio")]
+    pub(crate) named_tasks: crate::context::NamedTaskMap,
 }
 
 impl<'a> ResourceContext<'a> {
@@ -28,6 +35,10 @@ impl<'a> ResourceContext<'a> {
             resource_manager: &mut cx.resource_manager,
             style: &mut cx.style,
             tree: &cx.tree,
+            #[cfg(feature = "tokio")]
+            task_runtime: cx.task_runtime.clone(),
+            #[cfg(feature = "tokio")]
+            named_tasks: cx.named_tasks.clone(),
         }
     }
 
@@ -42,6 +53,19 @@ impl<'a> ResourceContext<'a> {
         };
 
         std::thread::spawn(move || target(&mut cxp));
+    }
+
+    /// Submits a configured `TaskBuilder` for asynchronous execution (requires `tokio` feature).
+    #[cfg(feature = "tokio")]
+    pub fn spawn_task<T, E>(
+        &self,
+        task: crate::context::TaskBuilder<T, E>,
+    ) -> crate::context::TaskHandle
+    where
+        T: Send + 'static,
+        E: Send + 'static,
+    {
+        task.add_to_resource_context(self)
     }
 
     /// Loads the provided image into the resource manager.

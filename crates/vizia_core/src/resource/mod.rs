@@ -190,6 +190,167 @@ impl fmt::Display for LocalizationIssue {
     }
 }
 
+/// Request to load an image resource.
+#[derive(Debug, Clone)]
+pub struct ImageRequest {
+    /// Path or URL to the image resource.
+    pub path: String,
+    /// How long the image should be retained in memory.
+    pub policy: ImageRetentionPolicy,
+}
+
+/// A resource request that loaders can handle.
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub enum ResourceRequest {
+    /// Request to load an image.
+    Image(ImageRequest),
+}
+
+/// Trait for loading resources asynchronously or from various sources.
+///
+/// Loaders are invoked in chain-of-responsibility order when a resource is requested.
+/// Return `true` to indicate the request was handled (no further loaders are tried),
+/// or `false` to continue to the next loader.
+pub trait ResourceLoader: Send + Sync + 'static {
+    /// Attempt to load a resource.
+    ///
+    /// Return `true` if this loader handled the request, `false` to try the next loader.
+    fn load(&self, request: ResourceRequest, cx: &mut ResourceContext) -> bool;
+}
+
+/// Built-in resource loader for local file paths and `file://` URLs.
+pub struct FileResourceLoader;
+
+#[cfg(not(feature = "tokio"))]
+impl ResourceLoader for FileResourceLoader {
+    fn load(&self, request: ResourceRequest, cx: &mut ResourceContext) -> bool {
+        match request {
+            ResourceRequest::Image(req) => {
+                let path = if req.path.starts_with("file://") {
+                    req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
+                } else {
+                    req.path.clone()
+                };
+
+                // Try to read the file synchronously
+                if let Ok(data) = std::fs::read(&path) {
+                    if let Some(image) =
+                        skia_safe::Image::from_encoded(skia_safe::Data::new_copy(&data))
+                    {
+                        cx.load_image(req.path.clone(), image, req.policy);
+                        return true;
+                    }
+                }
+                false
+            }
+        }
+    }
+}
+
+#[cfg(feature = "tokio")]
+impl ResourceLoader for FileResourceLoader {
+    fn load(&self, request: ResourceRequest, cx: &mut ResourceContext) -> bool {
+        match request {
+            ResourceRequest::Image(req) => {
+                let path = if req.path.starts_with("file://") {
+                    req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
+                } else {
+                    req.path.clone()
+                };
+
+                let req_path = req.path.clone();
+                let policy = req.policy;
+
+                // Spawn an async task to read the file
+                cx.spawn_task(
+                    crate::context::Task::new(move |_| {
+                        let path = path.clone();
+                        async move { tokio::fs::read(&path).await }
+                    })
+                    .on_result(move |result, proxy| {
+                        use crate::context::TaskResult;
+                        if let TaskResult::Completed(data) = result {
+                            let _ = proxy.load_image(req_path.clone(), &data, policy);
+                        }
+                    }),
+                );
+
+                true
+            }
+        }
+    }
+}
+
+/// Built-in resource loader for HTTP(S) URLs (requires `url-loader` feature).
+#[cfg(feature = "url-loader")]
+pub struct UrlResourceLoader;
+
+#[cfg(all(feature = "url-loader", not(feature = "tokio")))]
+impl ResourceLoader for UrlResourceLoader {
+    fn load(&self, request: ResourceRequest, cx: &mut ResourceContext) -> bool {
+        match request {
+            ResourceRequest::Image(req) => {
+                if req.path.starts_with("http://") || req.path.starts_with("https://") {
+                    let path = req.path.clone();
+                    let policy = req.policy;
+                    cx.spawn(move |proxy| match reqwest::blocking::get(&path) {
+                        Ok(response) => match response.bytes() {
+                            Ok(data) => {
+                                let _ = proxy.load_image(path, &data, policy);
+                            }
+                            Err(_) => {}
+                        },
+                        Err(_) => {}
+                    });
+                    return true;
+                }
+                false
+            }
+        }
+    }
+}
+
+#[cfg(all(feature = "url-loader", feature = "tokio"))]
+impl ResourceLoader for UrlResourceLoader {
+    fn load(&self, request: ResourceRequest, cx: &mut ResourceContext) -> bool {
+        match request {
+            ResourceRequest::Image(req) => {
+                if req.path.starts_with("http://") || req.path.starts_with("https://") {
+                    let path = req.path.clone();
+                    let path_for_result = path.clone();
+                    let policy = req.policy;
+
+                    // Spawn an async task to fetch the URL
+                    cx.spawn_task(
+                        crate::context::Task::new(move |_| {
+                            let path = path.clone();
+                            async move {
+                                match reqwest::get(&path).await {
+                                    Ok(response) => match response.bytes().await {
+                                        Ok(data) => Ok::<_, String>(Some(data)),
+                                        Err(_) => Ok(None),
+                                    },
+                                    Err(_) => Ok(None),
+                                }
+                            }
+                        })
+                        .on_result(move |result, proxy| {
+                            use crate::context::TaskResult;
+                            if let TaskResult::Completed(Some(data)) = result {
+                                let _ = proxy.load_image(path_for_result.clone(), &data, policy);
+                            }
+                        }),
+                    );
+
+                    return true;
+                }
+                false
+            }
+        }
+    }
+}
+
 pub(crate) enum ImageOrSvg {
     Svg(skia_safe::svg::Dom),
     Image(skia_safe::Image),
@@ -204,7 +365,7 @@ pub(crate) struct StoredImage {
 }
 
 /// An image should be stored in the resource manager.
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum ImageRetentionPolicy {
     ///  The image should live for the entire duration of the application.
     Forever,
@@ -227,7 +388,7 @@ pub struct ResourceManager {
 
     pub language: LanguageIdentifier,
 
-    pub image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>>,
+    pub(crate) resource_loaders: Vec<Box<dyn ResourceLoader>>,
 }
 
 impl ResourceManager {
@@ -235,7 +396,7 @@ impl ResourceManager {
         // Get the system locale
         let locale = sys_locale::get_locale().and_then(|l| l.parse().ok()).unwrap_or_default();
 
-        let default_image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>> = None;
+        let _default_image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>> = None;
 
         // Disable this for now because reqwest pulls in too many dependencies.
         // let default_image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>> =
@@ -286,6 +447,15 @@ impl ResourceManager {
             },
         );
 
+        let resource_loaders: Vec<Box<dyn ResourceLoader>> = vec![Box::new(FileResourceLoader)];
+
+        #[cfg(feature = "url-loader")]
+        let resource_loaders = {
+            let mut loaders = resource_loaders;
+            loaders.push(Box::new(UrlResourceLoader));
+            loaders
+        };
+
         ResourceManager {
             image_id_manager,
             images,
@@ -298,7 +468,7 @@ impl ResourceManager {
             )]),
 
             language: locale,
-            image_loader: default_image_loader,
+            resource_loaders,
         }
     }
 

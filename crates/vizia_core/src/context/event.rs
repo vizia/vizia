@@ -444,6 +444,14 @@ impl<'a> EventContext<'a> {
         }
     }
 
+    /// Adds a resource loader to the loading chain.
+    ///
+    /// Loaders are tried in the order they were added. The first loader that returns `true`
+    /// will handle the resource request, and subsequent loaders in the chain are skipped.
+    pub fn add_resource_loader<L: crate::resource::ResourceLoader>(&mut self, loader: L) {
+        self.resource_manager.resource_loaders.push(Box::new(loader));
+    }
+
     pub fn add_image_encoded(&mut self, path: &str, data: &[u8], policy: ImageRetentionPolicy) {
         let id = if let Some(image_id) = self.resource_manager.image_ids.get(path) {
             *image_id

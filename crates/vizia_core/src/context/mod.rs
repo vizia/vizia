@@ -778,8 +778,12 @@ impl Context {
         self.style.add_animation(animation)
     }
 
-    pub fn set_image_loader<F: 'static + Fn(&mut ResourceContext, &str)>(&mut self, loader: F) {
-        self.resource_manager.image_loader = Some(Box::new(loader));
+    /// Adds a resource loader to the loading chain.
+    ///
+    /// Loaders are tried in the order they were added. The first loader that returns `true`
+    /// will handle the resource request, and subsequent loaders in the chain are skipped.
+    pub fn add_resource_loader<L: crate::resource::ResourceLoader>(&mut self, loader: L) {
+        self.resource_manager.resource_loaders.push(Box::new(loader));
     }
 
     /// Adds a translation to the application for the provided language.

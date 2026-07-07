@@ -1,7 +1,8 @@
 use crate::context::{Context, ResourceContext};
 use crate::prelude::*;
-// use crate::resource::{ImageId, ImageRetentionPolicy, StoredImage};
+use crate::resource::{ImageRequest, ResourceRequest};
 use crate::style::ImageOrGradient;
+// use crate::resource::{ImageId, ImageRetentionPolicy, StoredImage};
 // use hashbrown::HashSet;
 
 // Iterate the tree and load any images used by entities which aren't already loaded. Remove any images no longer being used.
@@ -29,17 +30,27 @@ pub(crate) fn image_system(cx: &mut Context) {
 }
 
 fn load_image(cx: &mut ResourceContext, entity: Entity, image_name: &str) {
-    // if let Some(image_id) = cx.resource_manager.image_ids.get(image_name) {}
+    // If the image is already loaded, just register the observer
+    if try_load_image(cx, entity, image_name) {
+        return;
+    }
 
-    if !try_load_image(cx, entity, image_name) {
-        // Image doesn't exists yet so call the image loader
-        if let Some(callback) = cx.resource_manager.image_loader.take() {
-            (callback)(cx, image_name);
+    // Image doesn't exist yet, so try each loader in the chain
+    // Collect loader references as pointers to avoid borrow issues during iteration
+    let loaders: Vec<*const dyn crate::resource::ResourceLoader> =
+        cx.resource_manager.resource_loaders.iter().map(|loader| &**loader as *const _).collect();
 
-            cx.resource_manager.image_loader = Some(callback);
+    for loader_ptr in loaders {
+        let request = ResourceRequest::Image(ImageRequest {
+            path: image_name.to_string(),
+            policy: ImageRetentionPolicy::DropWhenNoObservers,
+        });
 
-            // Then try to load the image again
+        // SAFETY: We collected pointers from valid references and are not modifying the vector during iteration
+        if unsafe { (*loader_ptr).load(request, cx) } {
+            // Loader handled the request, try to register as observer
             try_load_image(cx, entity, image_name);
+            break;
         }
     }
 }
