@@ -1,12 +1,13 @@
 use crate::{
     Alignment, Angle, AspectRatio, BackgroundImage, BackgroundRepeat, BackgroundSize, BlendMode,
-    Border, BorderStyle, BorderWidth, ClipPath, Color, CornerRadius, CornerShape, CursorIcon,
-    CustomParseError, CustomProperty, Direction, Display, Filter, FontFamily, FontSize, FontSlant,
-    FontVariation, FontWeight, FontWidth, LayoutType, LayoutWrap, Length, LengthOrPercentage,
-    LetterSpacing, LineClamp, LineHeight, Opacity, Outline, Overflow, Parse, PointerEvents,
-    Position, PositionType, Rect, Scale, Shadow, TextAlign, TextDecoration, TextDecorationLine,
-    TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform, Transition,
-    Translate, Units, UnparsedProperty, Visibility, define_property,
+    Border, BorderStyle, BorderStyleKeyword, BorderWidth, BorderWidthValue, ClipPath, Color,
+    CornerRadius, CornerShape, CursorIcon, CustomParseError, CustomProperty, Direction, Display,
+    Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight, FontWidth, LayoutType,
+    LayoutWrap, Length, LengthOrPercentage, LetterSpacing, LineClamp, LineHeight, Opacity, Outline,
+    Overflow, Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign,
+    TextDecoration, TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke,
+    TextStrokeStyle, Transform, Transition, Translate, Units, UnparsedProperty, Visibility,
+    define_property,
 };
 use cssparser::Parser;
 
@@ -81,13 +82,18 @@ define_property! {
         // Border Shorthand
         "border": Border(Border),
 
+        // Border Side Shorthands
+        "border-top": BorderTop(Border),
+        "border-right": BorderRight(Border),
+        "border-bottom": BorderBottom(Border),
+        "border-left": BorderLeft(Border),
+
         // Border Color
         "border-color": BorderColor(Color),
-        // TODO: Support coloring individual borders.
-        // "border-top-color": BorderTopColor(Color),
-        // "border-right-color": BorderRightColor(Color),
-        // "border-bottom-color": BorderBottomColor(Color),
-        // "border-left-color": BorderLeftColor(Color),
+        "border-top-color": BorderTopColor(Color),
+        "border-right-color": BorderRightColor(Color),
+        "border-bottom-color": BorderBottomColor(Color),
+        "border-left-color": BorderLeftColor(Color),
 
         // Corner Shape
         "corner-shape": CornerShape(Rect<CornerShape>),
@@ -104,19 +110,18 @@ define_property! {
         "corner-bottom-right-radius": CornerBottomRightRadius(LengthOrPercentage),
 
         // Border Style
-        // TODO: Support styling borders.
         "border-style": BorderStyle(BorderStyle),
-        // "border-top-style": BorderTopStyle(BorderStyleKeyword),
-        // "border-right-style": BorderRightStyle(BorderStyleKeyword),
-        // "border-bottom-style": BorderBottomStyle(BorderStyleKeyword),
-        // "border-left-style": BorderLeftStyle(BorderStyleKeyword),
+        "border-top-style": BorderTopStyle(BorderStyleKeyword),
+        "border-right-style": BorderRightStyle(BorderStyleKeyword),
+        "border-bottom-style": BorderBottomStyle(BorderStyleKeyword),
+        "border-left-style": BorderLeftStyle(BorderStyleKeyword),
 
         // Border Width
         "border-width": BorderWidth(BorderWidth),
-        // "border-top-width": BorderTopWidth(BorderWidthValue),
-        // "border-right-width": BorderRightWidth(BorderWidthValue),
-        // "border-bottom-width": BorderBottomWidth(BorderWidthValue),
-        // "border-left-width": BorderLeftWidth(BorderWidthValue),
+        "border-top-width": BorderTopWidth(BorderWidthValue),
+        "border-right-width": BorderRightWidth(BorderWidthValue),
+        "border-bottom-width": BorderBottomWidth(BorderWidthValue),
+        "border-left-width": BorderLeftWidth(BorderWidthValue),
 
 
         // ----- Outline -----

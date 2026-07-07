@@ -830,18 +830,62 @@ fn link_style_data(
         should_redraw = true;
     }
 
-    // Border
-    if style.border_width.link(entity, matched_rules, &style.custom_length_props) {
+    // Border widths
+    if style.border_top_width.link(entity, matched_rules, &style.custom_length_props) {
         should_relayout = true;
         should_redraw = true;
         cache.path.remove(entity);
     }
 
-    if style.border_color.link(entity, matched_rules, &style.custom_color_props) {
+    if style.border_right_width.link(entity, matched_rules, &style.custom_length_props) {
+        should_relayout = true;
+        should_redraw = true;
+        cache.path.remove(entity);
+    }
+
+    if style.border_bottom_width.link(entity, matched_rules, &style.custom_length_props) {
+        should_relayout = true;
+        should_redraw = true;
+        cache.path.remove(entity);
+    }
+
+    if style.border_left_width.link(entity, matched_rules, &style.custom_length_props) {
+        should_relayout = true;
+        should_redraw = true;
+        cache.path.remove(entity);
+    }
+
+    // Border colors
+    if style.border_top_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
     }
 
-    if style.border_style.link(entity, matched_rules) {
+    if style.border_right_color.link(entity, matched_rules, &style.custom_color_props) {
+        should_redraw = true;
+    }
+
+    if style.border_bottom_color.link(entity, matched_rules, &style.custom_color_props) {
+        should_redraw = true;
+    }
+
+    if style.border_left_color.link(entity, matched_rules, &style.custom_color_props) {
+        should_redraw = true;
+    }
+
+    // Border styles
+    if style.border_top_style.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.border_right_style.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.border_bottom_style.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.border_left_style.link(entity, matched_rules) {
         should_redraw = true;
     }
 

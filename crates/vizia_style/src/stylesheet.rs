@@ -65,6 +65,10 @@ button label {
     padding-right: 10px;
     border-width: 1px;
     border-color: #e5e5e5;
+    border-top: 2px solid red;
+    border-top-width: 3px;
+    border-top-color: blue;
+    border-top-style: dotted;
     outer-shadow: 0px 1px 1px #00000055;
     overflow: visible;
     position: relative;

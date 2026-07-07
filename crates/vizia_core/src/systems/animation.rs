@@ -99,7 +99,10 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     // Opacity
     redraw_entities.extend(cx.style.opacity.tick(time));
     // Corner Colour
-    redraw_entities.extend(cx.style.border_color.tick(time));
+    redraw_entities.extend(cx.style.border_top_color.tick(time));
+    redraw_entities.extend(cx.style.border_right_color.tick(time));
+    redraw_entities.extend(cx.style.border_bottom_color.tick(time));
+    redraw_entities.extend(cx.style.border_left_color.tick(time));
     // Corner Radius
     redraw_entities.extend(cx.style.corner_top_left_radius.tick(time));
     redraw_entities.extend(cx.style.corner_top_right_radius.tick(time));
@@ -138,7 +141,10 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     // Properties which affect layout
     relayout_entities.extend(cx.style.display.tick(time));
     // Border Width
-    relayout_entities.extend(cx.style.border_width.tick(time));
+    relayout_entities.extend(cx.style.border_top_width.tick(time));
+    relayout_entities.extend(cx.style.border_right_width.tick(time));
+    relayout_entities.extend(cx.style.border_bottom_width.tick(time));
+    relayout_entities.extend(cx.style.border_left_width.tick(time));
     // Space
     relayout_entities.extend(cx.style.left.tick(time));
     relayout_entities.extend(cx.style.right.tick(time));
