@@ -200,6 +200,13 @@ pub struct ImageRequest {
     pub policy: ImageRetentionPolicy,
 }
 
+/// Request to load a font resource.
+#[derive(Debug, Clone)]
+pub struct FontRequest {
+    /// Path or URL to the font resource.
+    pub path: String,
+}
+
 /// Loading status of a resource.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LoadingStatus {
@@ -219,6 +226,8 @@ pub enum LoadingStatus {
 pub enum ResourceRequest {
     /// Request to load an image.
     Image(ImageRequest),
+    /// Request to load a font.
+    Font(FontRequest),
 }
 
 /// Trait for loading resources asynchronously or from various sources.
@@ -273,6 +282,23 @@ impl ResourceLoader for FileResourceLoader {
                 cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Error);
                 false
             }
+            ResourceRequest::Font(req) => {
+                let path = if req.path.starts_with("file://") {
+                    req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
+                } else {
+                    req.path.clone()
+                };
+
+                // Mark as loading
+                cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Loading);
+
+                if let Ok(data) = std::fs::read(&path) {
+                    return cx.load_font(req.path.clone(), &data);
+                }
+
+                cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Error);
+                false
+            }
         }
     }
 }
@@ -303,7 +329,46 @@ impl ResourceLoader for FileResourceLoader {
                     .on_result(move |result, proxy| {
                         use crate::context::TaskResult;
                         if let TaskResult::Completed(data) = result {
-                            let _ = proxy.load_image(req_path.clone(), &data, policy);
+                            let status = match proxy.load_image(req_path.clone(), &data, policy) {
+                                Ok(true) => LoadingStatus::Loaded,
+                                _ => LoadingStatus::Error,
+                            };
+                            let _ = proxy.update_resource_status(req_path.clone(), status);
+                        } else {
+                            let _ =
+                                proxy.update_resource_status(req_path.clone(), LoadingStatus::Error);
+                        }
+                    }),
+                );
+
+                true
+            }
+            ResourceRequest::Font(req) => {
+                let path = if req.path.starts_with("file://") {
+                    req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
+                } else {
+                    req.path.clone()
+                };
+
+                let req_path = req.path.clone();
+
+                cx.resource_manager.set_resource_status(req_path.clone(), LoadingStatus::Loading);
+
+                cx.spawn_task(
+                    crate::context::Task::new(move |_| {
+                        let path = path.clone();
+                        async move { tokio::fs::read(&path).await }
+                    })
+                    .on_result(move |result, proxy| {
+                        use crate::context::TaskResult;
+                        if let TaskResult::Completed(data) = result {
+                            if proxy.load_font(req_path.clone(), &data).is_err() {
+                                let _ = proxy
+                                    .update_resource_status(req_path.clone(), LoadingStatus::Error);
+                            }
+                        } else {
+                            let _ =
+                                proxy.update_resource_status(req_path.clone(), LoadingStatus::Error);
                         }
                     }),
                 );
@@ -348,43 +413,68 @@ impl ResourceLoader for UrlResourceLoader {
                     // Mark as loading before spawning
                     cx.resource_manager.set_resource_status(path.clone(), LoadingStatus::Loading);
 
-                    cx.spawn(move |proxy| {
-                        match reqwest::blocking::get(&path) {
-                            Ok(response) => match response.bytes() {
-                                Ok(data) => {
-                                    let loaded = match proxy.load_image(path.clone(), &data, policy)
-                                    {
-                                        Ok(true) => true,
-                                        Ok(false) => {
-                                            if is_likely_svg(&path, &data) {
-                                                proxy.load_svg(path.clone(), &data, policy).is_ok()
-                                            } else {
-                                                false
-                                            }
-                                        }
-                                        Err(_) => false,
-                                    };
-
-                                    let _ = proxy.update_resource_status(
-                                        path,
-                                        if loaded {
-                                            LoadingStatus::Loaded
+                    cx.spawn(move |proxy| match reqwest::blocking::get(&path) {
+                        Ok(response) => match response.bytes() {
+                            Ok(data) => {
+                                let loaded = match proxy.load_image(path.clone(), &data, policy) {
+                                    Ok(true) => true,
+                                    Ok(false) => {
+                                        if is_likely_svg(&path, &data) {
+                                            proxy.load_svg(path.clone(), &data, policy).is_ok()
                                         } else {
-                                            LoadingStatus::Error
-                                        },
-                                    );
-                                }
-                                Err(_) => {
-                                    let _ = proxy.update_resource_status(path, LoadingStatus::Error);
-                                }
-                            },
+                                            false
+                                        }
+                                    }
+                                    Err(_) => false,
+                                };
+
+                                let _ = proxy.update_resource_status(
+                                    path,
+                                    if loaded {
+                                        LoadingStatus::Loaded
+                                    } else {
+                                        LoadingStatus::Error
+                                    },
+                                );
+                            }
                             Err(_) => {
                                 let _ = proxy.update_resource_status(path, LoadingStatus::Error);
                             }
+                        },
+                        Err(_) => {
+                            let _ = proxy.update_resource_status(path, LoadingStatus::Error);
                         }
                     });
                     return true;
                 }
+                false
+            }
+            ResourceRequest::Font(req) => {
+                if req.path.starts_with("http://") || req.path.starts_with("https://") {
+                    let path = req.path.clone();
+
+                    cx.resource_manager.set_resource_status(path.clone(), LoadingStatus::Loading);
+
+                    cx.spawn(move |proxy| match reqwest::blocking::get(&path) {
+                        Ok(response) => match response.bytes() {
+                            Ok(data) => {
+                                if proxy.load_font(path.clone(), &data).is_err() {
+                                    let _ =
+                                        proxy.update_resource_status(path, LoadingStatus::Error);
+                                }
+                            }
+                            Err(_) => {
+                                let _ = proxy.update_resource_status(path, LoadingStatus::Error);
+                            }
+                        },
+                        Err(_) => {
+                            let _ = proxy.update_resource_status(path, LoadingStatus::Error);
+                        }
+                    });
+
+                    return true;
+                }
+
                 false
             }
         }
@@ -423,14 +513,20 @@ impl ResourceLoader for UrlResourceLoader {
                             use crate::context::TaskResult;
                             match result {
                                 TaskResult::Completed(Some(data)) => {
-                                    let loaded = match proxy
-                                        .load_image(path_for_result.clone(), &data, policy)
-                                    {
+                                    let loaded = match proxy.load_image(
+                                        path_for_result.clone(),
+                                        &data,
+                                        policy,
+                                    ) {
                                         Ok(true) => true,
                                         Ok(false) => {
                                             if is_likely_svg(&path_for_result, &data) {
                                                 proxy
-                                                    .load_svg(path_for_result.clone(), &data, policy)
+                                                    .load_svg(
+                                                        path_for_result.clone(),
+                                                        &data,
+                                                        policy,
+                                                    )
                                                     .is_ok()
                                             } else {
                                                 false
@@ -449,7 +545,10 @@ impl ResourceLoader for UrlResourceLoader {
                                     );
                                 }
                                 TaskResult::Completed(None) => {
-                                    let _ = proxy.update_resource_status(path_for_result, LoadingStatus::Error);
+                                    let _ = proxy.update_resource_status(
+                                        path_for_result,
+                                        LoadingStatus::Error,
+                                    );
                                 }
                                 _ => {}
                             }
@@ -458,6 +557,54 @@ impl ResourceLoader for UrlResourceLoader {
 
                     return true;
                 }
+                false
+            }
+            ResourceRequest::Font(req) => {
+                if req.path.starts_with("http://") || req.path.starts_with("https://") {
+                    let path = req.path.clone();
+                    let path_for_result = path.clone();
+
+                    cx.resource_manager
+                        .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
+
+                    cx.spawn_task(
+                        crate::context::Task::new(move |_| {
+                            let path = path.clone();
+                            async move {
+                                match reqwest::get(&path).await {
+                                    Ok(response) => match response.bytes().await {
+                                        Ok(data) => Ok::<_, String>(Some(data)),
+                                        Err(_) => Ok(None),
+                                    },
+                                    Err(_) => Ok(None),
+                                }
+                            }
+                        })
+                        .on_result(move |result, proxy| {
+                            use crate::context::TaskResult;
+                            match result {
+                                TaskResult::Completed(Some(data)) => {
+                                    if proxy.load_font(path_for_result.clone(), &data).is_err() {
+                                        let _ = proxy.update_resource_status(
+                                            path_for_result,
+                                            LoadingStatus::Error,
+                                        );
+                                    }
+                                }
+                                TaskResult::Completed(None) => {
+                                    let _ = proxy.update_resource_status(
+                                        path_for_result,
+                                        LoadingStatus::Error,
+                                    );
+                                }
+                                _ => {}
+                            }
+                        }),
+                    );
+
+                    return true;
+                }
+
                 false
             }
         }

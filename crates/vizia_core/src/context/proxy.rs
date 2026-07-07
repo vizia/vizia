@@ -100,6 +100,10 @@ impl ContextProxy {
         self.emit(InternalEvent::LoadSvg { path, data: data.to_vec(), policy })
     }
 
+    pub fn load_font(&mut self, path: String, data: &[u8]) -> Result<(), ProxyEmitError> {
+        self.emit(InternalEvent::LoadFont { path, data: data.to_vec() })
+    }
+
     pub fn update_resource_status(
         &mut self,
         path: String,

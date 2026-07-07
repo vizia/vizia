@@ -4,8 +4,9 @@ use vizia_storage::Tree;
 
 use crate::{
     entity::Entity,
-    resource::{ImageOrSvg, ImageRetentionPolicy, ResourceManager, StoredImage},
+    resource::{ImageOrSvg, ImageRetentionPolicy, LoadingStatus, ResourceManager, StoredImage},
     style::Style,
+    text::TextContext,
 };
 
 use super::{Context, ContextProxy, EventProxy};
@@ -19,6 +20,7 @@ pub struct ResourceContext<'a> {
     pub(crate) event_proxy: &'a Option<Box<dyn EventProxy>>,
     pub(crate) resource_manager: &'a mut ResourceManager,
     pub(crate) style: &'a mut Style,
+    pub(crate) text_context: &'a mut TextContext,
     pub(crate) tree: &'a Tree<Entity>,
     #[cfg(feature = "tokio")]
     pub(crate) task_runtime: Arc<tokio::runtime::Runtime>,
@@ -34,6 +36,7 @@ impl<'a> ResourceContext<'a> {
             event_proxy: &cx.event_proxy,
             resource_manager: &mut cx.resource_manager,
             style: &mut cx.style,
+            text_context: &mut cx.text_context,
             tree: &cx.tree,
             #[cfg(feature = "tokio")]
             task_runtime: cx.task_runtime.clone(),
@@ -120,6 +123,34 @@ impl<'a> ResourceContext<'a> {
                 event_proxy: Some(proxy.make_clone()),
             };
             let _ = cxp.redraw();
+        }
+    }
+
+    /// Loads a font from bytes, making it available to text layout.
+    pub fn load_font(&mut self, path: String, data: &[u8]) -> bool {
+        if let Some(typeface) = self.text_context.default_font_manager.new_from_data(data, None) {
+            self.text_context.asset_provider.register_typeface(typeface, None);
+
+            // Rebuild text for all entities so newly available fonts can be selected immediately.
+            let entities: Vec<Entity> = self.tree.into_iter().collect();
+            for entity in entities {
+                self.style.needs_text_update(entity);
+            }
+
+            self.resource_manager.set_resource_status(path, LoadingStatus::Loaded);
+
+            if let Some(proxy) = self.event_proxy.as_ref() {
+                let mut cxp = ContextProxy {
+                    current: self.current,
+                    event_proxy: Some(proxy.make_clone()),
+                };
+                let _ = cxp.redraw();
+            }
+
+            true
+        } else {
+            self.resource_manager.set_resource_status(path, LoadingStatus::Error);
+            false
         }
     }
 }

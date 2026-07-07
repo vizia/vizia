@@ -68,6 +68,9 @@ impl EventManager {
                     InternalEvent::LoadSvg { path, data, policy } => {
                         cx.load_svg(&path, &data, policy);
                     }
+                    InternalEvent::LoadFont { path, data } => {
+                        ResourceContext::new(cx).load_font(path, &data);
+                    }
                     InternalEvent::UpdateResourceStatus { path, status } => {
                         cx.resource_manager.set_resource_status(path, status);
                     }

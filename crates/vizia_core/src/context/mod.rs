@@ -704,6 +704,40 @@ impl Context {
         );
     }
 
+    /// Adds a font to the application by loading it through the configured resource loaders.
+    ///
+    /// This supports local files (including `file://` URLs) and any custom loader you register.
+    pub fn add_font(&mut self, path: impl Into<String>) {
+        let path = path.into();
+
+        // Avoid re-issuing requests for resources that are already loading or resolved.
+        if self.resource_manager.resource_status(&path) != LoadingStatus::NotLoaded {
+            return;
+        }
+
+        let mut resource_cx = ResourceContext::new(self);
+        let loaders: Vec<*const dyn crate::resource::ResourceLoader> = resource_cx
+            .resource_manager
+            .resource_loaders
+            .iter()
+            .map(|loader| &**loader as *const _)
+            .collect();
+
+        for loader_ptr in loaders {
+            let request = crate::resource::ResourceRequest::Font(crate::resource::FontRequest {
+                path: path.clone(),
+            });
+
+            // SAFETY: Pointers are collected from stable references and the loader list is not
+            // modified while iterating.
+            if unsafe { (*loader_ptr).load(request, &mut resource_cx) } {
+                return;
+            }
+        }
+
+        resource_cx.resource_manager.set_resource_status(path, LoadingStatus::Error);
+    }
+
     /// Returns the element name (e.g. `"textbox"`) of the currently focused
     /// view, or `None` if the focused entity has no view or the view doesn't
     /// declare an element name.
@@ -1113,6 +1147,7 @@ pub(crate) enum InternalEvent {
     Redraw,
     LoadImage { path: String, image: Mutex<Option<skia_safe::Image>>, policy: ImageRetentionPolicy },
     LoadSvg { path: String, data: Vec<u8>, policy: ImageRetentionPolicy },
+    LoadFont { path: String, data: Vec<u8> },
     UpdateResourceStatus { path: String, status: LoadingStatus },
 }
 

@@ -6,8 +6,7 @@ use crate::prelude::*;
 ///
 /// The image URL can be static or reactive (via a Signal). Loading and error
 /// UI can be composed externally with `Binding` and `LoadingStatus`.
-pub struct Image {
-}
+pub struct Image {}
 
 impl Image {
     /// Creates a new [Image] view.
@@ -42,12 +41,8 @@ impl Svg {
         let svg_data = data.get_value(cx);
         let h = format!("{:x}", fxhash::hash64(svg_data.as_ref()));
         let mut handle = Self {}.build(cx, |_| {});
-        handle
-            .context()
-            .load_svg(&h, svg_data.as_ref(), ImageRetentionPolicy::DropWhenNoObservers);
-        handle
-            .background_image(format!("'{}'", h).as_str())
-            .hoverable(false)
+        handle.context().load_svg(&h, svg_data.as_ref(), ImageRetentionPolicy::DropWhenNoObservers);
+        handle.background_image(format!("'{}'", h).as_str()).hoverable(false)
     }
 }
 
