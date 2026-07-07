@@ -88,7 +88,7 @@ pub struct EventContext<'a> {
     pub(crate) running_timers: &'a mut BinaryHeap<TimerState>,
     cursor_icon_locked: &'a mut bool,
     #[cfg(feature = "clipboard")]
-    clipboard: &'a mut Box<dyn ClipboardProvider>,
+    clipboards: &'a mut HashMap<Entity, Box<dyn ClipboardProvider>>,
     pub(crate) event_proxy: &'a mut Option<Box<dyn crate::context::EventProxy>>,
     pub(crate) drop_data: &'a mut Option<DropData>,
     pub(crate) active_drag_view: &'a mut Option<Entity>,
@@ -145,7 +145,7 @@ impl<'a> EventContext<'a> {
             running_timers: &mut cx.running_timers,
             cursor_icon_locked: &mut cx.cursor_icon_locked,
             #[cfg(feature = "clipboard")]
-            clipboard: &mut cx.clipboard,
+            clipboards: &mut cx.clipboards,
             event_proxy: &mut cx.event_proxy,
             drop_data: &mut cx.drop_data,
             active_drag_view: &mut cx.active_drag_view,
@@ -183,7 +183,7 @@ impl<'a> EventContext<'a> {
             running_timers: &mut cx.running_timers,
             cursor_icon_locked: &mut cx.cursor_icon_locked,
             #[cfg(feature = "clipboard")]
-            clipboard: &mut cx.clipboard,
+            clipboards: &mut cx.clipboards,
             event_proxy: &mut cx.event_proxy,
             drop_data: &mut cx.drop_data,
             active_drag_view: &mut cx.active_drag_view,
@@ -736,7 +736,7 @@ impl<'a> EventContext<'a> {
     /// This may fail for a variety of backend-specific reasons.
     #[cfg(feature = "clipboard")]
     pub fn get_clipboard(&mut self) -> Result<String, Box<dyn Error + Send + Sync + 'static>> {
-        self.clipboard.get_contents()
+        self.current_window_clipboard().get_contents()
     }
 
     /// Set the contents of the system clipboard.
@@ -747,7 +747,18 @@ impl<'a> EventContext<'a> {
         &mut self,
         text: String,
     ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-        self.clipboard.set_contents(text)
+        self.current_window_clipboard().set_contents(text)
+    }
+
+    #[cfg(feature = "clipboard")]
+    fn current_window_clipboard(&mut self) -> &mut Box<dyn ClipboardProvider> {
+        let window = if self.tree.is_window(self.current) {
+            self.current
+        } else {
+            self.tree.get_parent_window(self.current).unwrap_or(Entity::root())
+        };
+
+        self.clipboards.entry(window).or_insert_with(super::default_clipboard_provider)
     }
 
     /// Toggles the addition/removal of a class name for the current view.

@@ -194,8 +194,12 @@ impl BackendContext {
     /// You should not call this method unless you are writing a windowing backend, in which case
     /// you should consult the existing windowing backends for usage information.
     #[cfg(feature = "clipboard")]
-    pub fn set_clipboard_provider(&mut self, clipboard: Box<dyn ClipboardProvider>) {
-        self.0.clipboard = clipboard;
+    pub fn set_clipboard_provider(
+        &mut self,
+        window: Entity,
+        clipboard: Box<dyn ClipboardProvider>,
+    ) {
+        self.0.clipboards.insert(window, clipboard);
     }
 
     /// Send an event with custom origin and propagation information.

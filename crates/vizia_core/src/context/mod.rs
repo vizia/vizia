@@ -189,7 +189,7 @@ pub struct Context {
     pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
 
     #[cfg(feature = "clipboard")]
-    pub(crate) clipboard: Box<dyn ClipboardProvider>,
+    pub(crate) clipboards: HashMap<Entity, Box<dyn ClipboardProvider>>,
 
     pub(crate) click_time: Instant,
     pub(crate) clicks: usize,
@@ -275,7 +275,7 @@ impl Context {
             event_proxy: None,
 
             #[cfg(feature = "clipboard")]
-            clipboard: default_clipboard_provider(),
+            clipboards: HashMap::new(),
             click_time: Instant::now(),
             clicks: 0,
             click_pos: (0.0, 0.0),
@@ -628,6 +628,8 @@ impl Context {
 
             if self.windows.contains_key(entity) {
                 self.windows.remove(entity);
+                #[cfg(feature = "clipboard")]
+                self.clipboards.remove(entity);
             }
 
             self.tree.remove(*entity).expect("");
