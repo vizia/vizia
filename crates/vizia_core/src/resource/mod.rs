@@ -199,6 +199,19 @@ pub struct ImageRequest {
     pub policy: ImageRetentionPolicy,
 }
 
+/// Loading status of a resource.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LoadingStatus {
+    /// Resource has not been loaded yet.
+    NotLoaded,
+    /// Resource is currently loading.
+    Loading,
+    /// Resource has been successfully loaded.
+    Loaded,
+    /// Resource failed to load.
+    Error,
+}
+
 /// A resource request that loaders can handle.
 #[non_exhaustive]
 #[derive(Debug, Clone)]
@@ -217,6 +230,13 @@ pub trait ResourceLoader: Send + Sync + 'static {
     ///
     /// Return `true` if this loader handled the request, `false` to try the next loader.
     fn load(&self, request: ResourceRequest, cx: &mut ResourceContext) -> bool;
+
+    /// Query the loading status of a resource path.
+    ///
+    /// Default implementation returns `NotLoaded` — override to track async loading progress.
+    fn status(&self, _path: &str) -> LoadingStatus {
+        LoadingStatus::NotLoaded
+    }
 }
 
 /// Built-in resource loader for local file paths and `file://` URLs.
@@ -233,15 +253,23 @@ impl ResourceLoader for FileResourceLoader {
                     req.path.clone()
                 };
 
+                // Mark as loading
+                cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Loading);
+
                 // Try to read the file synchronously
                 if let Ok(data) = std::fs::read(&path) {
                     if let Some(image) =
                         skia_safe::Image::from_encoded(skia_safe::Data::new_copy(&data))
                     {
                         cx.load_image(req.path.clone(), image, req.policy);
+                        cx.resource_manager
+                            .set_resource_status(req.path.clone(), LoadingStatus::Loaded);
                         return true;
                     }
                 }
+
+                // Mark as error if loading failed
+                cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Error);
                 false
             }
         }
@@ -261,6 +289,9 @@ impl ResourceLoader for FileResourceLoader {
 
                 let req_path = req.path.clone();
                 let policy = req.policy;
+
+                // Mark as loading before spawning task
+                cx.resource_manager.set_resource_status(req_path.clone(), LoadingStatus::Loading);
 
                 // Spawn an async task to read the file
                 cx.spawn_task(
@@ -294,6 +325,10 @@ impl ResourceLoader for UrlResourceLoader {
                 if req.path.starts_with("http://") || req.path.starts_with("https://") {
                     let path = req.path.clone();
                     let policy = req.policy;
+
+                    // Mark as loading before spawning
+                    cx.resource_manager.set_resource_status(path.clone(), LoadingStatus::Loading);
+
                     cx.spawn(move |proxy| match reqwest::blocking::get(&path) {
                         Ok(response) => match response.bytes() {
                             Ok(data) => {
@@ -320,6 +355,10 @@ impl ResourceLoader for UrlResourceLoader {
                     let path = req.path.clone();
                     let path_for_result = path.clone();
                     let policy = req.policy;
+
+                    // Mark as loading before spawning
+                    cx.resource_manager
+                        .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
 
                     // Spawn an async task to fetch the URL
                     cx.spawn_task(
@@ -389,6 +428,7 @@ pub struct ResourceManager {
     pub language: LanguageIdentifier,
 
     pub(crate) resource_loaders: Vec<Box<dyn ResourceLoader>>,
+    pub(crate) loading_status: HashMap<String, LoadingStatus>,
 }
 
 impl ResourceManager {
@@ -469,6 +509,7 @@ impl ResourceManager {
 
             language: locale,
             resource_loaders,
+            loading_status: HashMap::new(),
         }
     }
 
@@ -606,6 +647,29 @@ impl ResourceManager {
             self.image_ids.retain(|_, img| *img != id);
             self.image_id_manager.destroy(id);
         }
+    }
+
+    /// Query the loading status of a resource path.
+    pub fn resource_status(&self, path: &str) -> LoadingStatus {
+        // First check cached status
+        if let Some(status) = self.loading_status.get(path) {
+            return *status;
+        }
+
+        // If not in cache, ask each loader in the chain
+        for loader in &self.resource_loaders {
+            let status = loader.status(path);
+            if status != LoadingStatus::NotLoaded {
+                return status;
+            }
+        }
+
+        LoadingStatus::NotLoaded
+    }
+
+    /// Update the loading status of a resource path.
+    pub(crate) fn set_resource_status(&mut self, path: impl Into<String>, status: LoadingStatus) {
+        self.loading_status.insert(path.into(), status);
     }
 }
 
