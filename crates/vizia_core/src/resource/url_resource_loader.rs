@@ -14,13 +14,33 @@ pub struct UrlResourceLoader {
     blocking_client: reqwest::blocking::Client,
 }
 
+#[cfg(all(feature = "url-loader", feature = "tokio"))]
+impl UrlResourceLoader {
+    /// Creates a URL resource loader with caller-provided reqwest clients.
+    pub fn new(async_client: reqwest::Client, blocking_client: reqwest::blocking::Client) -> Self {
+        Self { async_client, blocking_client }
+    }
+}
+
+#[cfg(all(feature = "url-loader", not(feature = "tokio")))]
+impl UrlResourceLoader {
+    /// Creates a URL resource loader with a caller-provided blocking reqwest client.
+    pub fn new(blocking_client: reqwest::blocking::Client) -> Self {
+        Self { blocking_client }
+    }
+}
+
 #[cfg(feature = "url-loader")]
 impl Default for UrlResourceLoader {
     fn default() -> Self {
-        Self {
-            #[cfg(feature = "tokio")]
-            async_client: reqwest::Client::new(),
-            blocking_client: reqwest::blocking::Client::new(),
+        #[cfg(feature = "tokio")]
+        {
+            return Self::new(reqwest::Client::new(), reqwest::blocking::Client::new());
+        }
+
+        #[cfg(not(feature = "tokio"))]
+        {
+            Self::new(reqwest::blocking::Client::new())
         }
     }
 }
