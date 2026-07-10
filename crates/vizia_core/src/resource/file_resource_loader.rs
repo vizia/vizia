@@ -1,8 +1,8 @@
 use crate::context::ResourceContext;
 
-use super::{LoadingStatus, ResourceLoader, ResourceRequest};
 #[cfg(feature = "tokio")]
 use super::ResourceLoadExecution;
+use super::{LoadingStatus, ResourceLoader, ResourceRequest};
 
 /// Built-in resource loader for local file paths and `file://` URLs.
 pub struct FileResourceLoader;
