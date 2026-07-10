@@ -144,39 +144,6 @@ impl ResourceLoader for UrlResourceLoader {
 
                 false
             }
-            ResourceRequest::CursorIcon(req) => {
-                if req.path.starts_with("http://") || req.path.starts_with("https://") {
-                    let path = req.path.clone();
-                    let name = req.name;
-                    let hotspot = req.hotspot;
-
-                    cx.resource_manager.set_resource_status(path.clone(), LoadingStatus::Loading);
-
-                    cx.spawn(move |proxy| match reqwest::blocking::get(&path) {
-                        Ok(response) => match response.bytes() {
-                            Ok(data) => {
-                                if proxy
-                                    .load_cursor_icon(path.clone(), name.clone(), &data, hotspot)
-                                    .is_err()
-                                {
-                                    let _ =
-                                        proxy.update_resource_status(path, LoadingStatus::Error);
-                                }
-                            }
-                            Err(_) => {
-                                let _ = proxy.update_resource_status(path, LoadingStatus::Error);
-                            }
-                        },
-                        Err(_) => {
-                            let _ = proxy.update_resource_status(path, LoadingStatus::Error);
-                        }
-                    });
-
-                    return true;
-                }
-
-                false
-            }
         }
     }
 }
@@ -431,90 +398,6 @@ impl ResourceLoader for UrlResourceLoader {
                                                 LoadingStatus::Error,
                                             );
                                         }
-                                    }
-                                }
-                                TaskResult::Completed(None) => {
-                                    let _ = proxy.update_resource_status(
-                                        path_for_result.clone(),
-                                        LoadingStatus::Error,
-                                    );
-                                }
-                                _ => {}
-                            }
-                        }),
-                    );
-
-                    return true;
-                }
-
-                false
-            }
-            ResourceRequest::CursorIcon(req) => {
-                if req.path.starts_with("http://") || req.path.starts_with("https://") {
-                    let path = req.path.clone();
-                    let path_for_result = path.clone();
-                    let name = req.name;
-                    let hotspot = req.hotspot;
-                    let execution = options.execution;
-
-                    if matches!(execution, ResourceLoadExecution::Sync) {
-                        cx.resource_manager
-                            .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
-
-                        let loaded = match reqwest::blocking::get(&path) {
-                            Ok(response) => match response.bytes() {
-                                Ok(data) => cx.load_cursor_icon(
-                                    path_for_result.clone(),
-                                    name,
-                                    &data,
-                                    hotspot,
-                                ),
-                                Err(_) => false,
-                            },
-                            Err(_) => false,
-                        };
-
-                        if !loaded {
-                            cx.resource_manager
-                                .set_resource_status(path_for_result, LoadingStatus::Error);
-                        }
-
-                        return true;
-                    }
-
-                    cx.resource_manager
-                        .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
-
-                    cx.spawn_task(
-                        crate::context::Task::new(move |_| {
-                            let path = path.clone();
-                            async move {
-                                match reqwest::get(&path).await {
-                                    Ok(response) => match response.bytes().await {
-                                        Ok(data) => Ok::<_, String>(Some(data)),
-                                        Err(_) => Ok(None),
-                                    },
-                                    Err(_) => Ok(None),
-                                }
-                            }
-                        })
-                        .on_result(move |result, proxy| {
-                            use crate::context::TaskResult;
-                            match result {
-                                TaskResult::Completed(Some(data)) => {
-                                    if proxy
-                                        .load_cursor_icon(
-                                            path_for_result.clone(),
-                                            name.clone(),
-                                            &data,
-                                            hotspot,
-                                        )
-                                        .is_err()
-                                    {
-                                        let _ = proxy.update_resource_status(
-                                            path_for_result.clone(),
-                                            LoadingStatus::Error,
-                                        );
                                     }
                                 }
                                 TaskResult::Completed(None) => {

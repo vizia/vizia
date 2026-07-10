@@ -93,26 +93,6 @@ impl ResourceLoader for FileResourceLoader {
                 cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Error);
                 false
             }
-            ResourceRequest::CursorIcon(req) => {
-                if is_http_url(&req.path) {
-                    return false;
-                }
-
-                let path = if req.path.starts_with("file://") {
-                    req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
-                } else {
-                    req.path.clone()
-                };
-
-                cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Loading);
-
-                if let Ok(data) = std::fs::read(&path) {
-                    return cx.load_cursor_icon(req.path.clone(), req.name, &data, req.hotspot);
-                }
-
-                cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Error);
-                false
-            }
         }
     }
 }
@@ -294,60 +274,6 @@ impl ResourceLoader for FileResourceLoader {
                                         LoadingStatus::Error,
                                     );
                                 }
-                            }
-                        } else {
-                            let _ = proxy
-                                .update_resource_status(req_path.clone(), LoadingStatus::Error);
-                        }
-                    }),
-                );
-
-                true
-            }
-            ResourceRequest::CursorIcon(req) => {
-                if is_http_url(&req.path) {
-                    return false;
-                }
-
-                let path = if req.path.starts_with("file://") {
-                    req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
-                } else {
-                    req.path.clone()
-                };
-
-                let req_path = req.path.clone();
-                let name = req.name;
-                let hotspot = req.hotspot;
-                let execution = options.execution;
-
-                if matches!(execution, ResourceLoadExecution::Sync) {
-                    cx.resource_manager
-                        .set_resource_status(req_path.clone(), LoadingStatus::Loading);
-
-                    if let Ok(data) = std::fs::read(&path) {
-                        return cx.load_cursor_icon(req_path, name, &data, hotspot);
-                    }
-
-                    cx.resource_manager.set_resource_status(req_path, LoadingStatus::Error);
-                    return false;
-                }
-
-                cx.resource_manager.set_resource_status(req_path.clone(), LoadingStatus::Loading);
-
-                cx.spawn_task(
-                    crate::context::Task::new(move |_| {
-                        let path = path.clone();
-                        async move { tokio::fs::read(&path).await }
-                    })
-                    .on_result(move |result, proxy| {
-                        use crate::context::TaskResult;
-                        if let TaskResult::Completed(data) = result {
-                            if proxy
-                                .load_cursor_icon(req_path.clone(), name.clone(), &data, hotspot)
-                                .is_err()
-                            {
-                                let _ = proxy
-                                    .update_resource_status(req_path.clone(), LoadingStatus::Error);
                             }
                         } else {
                             let _ = proxy
