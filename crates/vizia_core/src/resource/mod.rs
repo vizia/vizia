@@ -8,7 +8,7 @@ pub use file_resource_loader::FileResourceLoader;
 pub use image_id::ImageId;
 #[cfg(feature = "url-loader")]
 pub use url_resource_loader::UrlResourceLoader;
-use vizia_id::{GenerationalId, IdManager};
+use vizia_id::IdManager;
 use vizia_reactive::{Signal, SignalGet, SignalUpdate};
 
 use crate::context::ResourceContext;
@@ -236,6 +236,42 @@ pub enum LoadingStatus {
     Error,
 }
 
+/// Preferred execution strategy for handling a single resource request.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub enum ResourceLoadExecution {
+    /// Let loaders choose their default strategy.
+    #[default]
+    Auto,
+    /// Prefer asynchronous loading.
+    Async,
+    /// Prefer synchronous loading.
+    Sync,
+}
+
+/// Per-request options that influence how a resource is loaded.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct ResourceLoadOptions {
+    /// Preferred execution strategy for this request.
+    pub execution: ResourceLoadExecution,
+}
+
+impl ResourceLoadOptions {
+    /// Construct options with automatic execution strategy selection.
+    pub const fn auto() -> Self {
+        Self { execution: ResourceLoadExecution::Auto }
+    }
+
+    /// Construct options that prefer asynchronous loading.
+    pub const fn asynchronous() -> Self {
+        Self { execution: ResourceLoadExecution::Async }
+    }
+
+    /// Construct options that prefer synchronous loading.
+    pub const fn synchronous() -> Self {
+        Self { execution: ResourceLoadExecution::Sync }
+    }
+}
+
 /// A resource request that loaders can handle.
 #[non_exhaustive]
 #[derive(Debug, Clone)]
@@ -259,6 +295,15 @@ impl ResourceRequest {
     }
 }
 
+/// A resource request queued for dispatch, paired with loader policy.
+#[derive(Debug, Clone)]
+pub struct QueuedResourceRequest {
+    /// Request payload describing what to load.
+    pub request: ResourceRequest,
+    /// Loader policy describing how to perform the load.
+    pub options: ResourceLoadOptions,
+}
+
 /// Trait for loading resources asynchronously or from various sources.
 ///
 /// Loaders are invoked in chain-of-responsibility order when a resource is requested.
@@ -267,8 +312,14 @@ impl ResourceRequest {
 pub trait ResourceLoader: Send + Sync + 'static {
     /// Attempt to load a resource.
     ///
+    /// `request` describes what to load, while `options` describes how to load it.
     /// Return `true` if this loader handled the request, `false` to try the next loader.
-    fn load(&self, request: ResourceRequest, cx: &mut ResourceContext) -> bool;
+    fn load(
+        &self,
+        request: ResourceRequest,
+        options: ResourceLoadOptions,
+        cx: &mut ResourceContext,
+    ) -> bool;
 
     /// Query the loading status of a resource path.
     ///
@@ -278,134 +329,7 @@ pub trait ResourceLoader: Send + Sync + 'static {
     }
 }
 
-<<<<<<< HEAD
-/// Built-in resource loader for local file paths and `file://` URLs.
-pub struct FileResourceLoader;
 
-#[cfg(not(feature = "tokio"))]
-impl ResourceLoader for FileResourceLoader {
-    fn load(&self, request: ResourceRequest, cx: &mut ResourceContext) -> bool {
-        match request {
-            ResourceRequest::Image(req) => {
-                let path = if req.path.starts_with("file://") {
-                    req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
-                } else {
-                    req.path.clone()
-                };
-
-                // Mark as loading
-                cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Loading);
-
-                // Try to read the file synchronously
-                if let Ok(data) = std::fs::read(&path) {
-                    if let Some(image) =
-                        skia_safe::Image::from_encoded(skia_safe::Data::new_copy(&data))
-                    {
-                        cx.load_image(req.path.clone(), image, req.policy);
-                        cx.resource_manager
-                            .set_resource_status(req.path.clone(), LoadingStatus::Loaded);
-                        return true;
-                    }
-                }
-
-                // Mark as error if loading failed
-                cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Error);
-                false
-            }
-            ResourceRequest::Font(req) => {
-                let path = if req.path.starts_with("file://") {
-                    req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
-                } else {
-                    req.path.clone()
-                };
-
-                // Mark as loading
-                cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Loading);
-
-                if let Ok(data) = std::fs::read(&path) {
-                    return cx.load_font(req.path.clone(), &data);
-                }
-
-                cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Error);
-                false
-            }
-            ResourceRequest::Translation(req) => {
-                let path = if req.path.starts_with("file://") {
-                    req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
-                } else {
-                    req.path.clone()
-                };
-
-                cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Loading);
-
-                if let Ok(data) = std::fs::read(&path) {
-                    if let Ok(ftl) = String::from_utf8(data) {
-                        return cx.load_translation(req.lang, req.path.clone(), &ftl);
-                    }
-                }
-
-                cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Error);
-                false
-            }
-        }
-    }
-}
-
-#[cfg(feature = "tokio")]
-impl ResourceLoader for FileResourceLoader {
-    fn load(&self, request: ResourceRequest, cx: &mut ResourceContext) -> bool {
-        match request {
-            ResourceRequest::Image(req) => {
-                let path = if req.path.starts_with("file://") {
-                    req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
-                } else {
-                    req.path.clone()
-                };
-
-                let req_path = req.path.clone();
-                let policy = req.policy;
-
-                // Mark as loading before spawning task
-                cx.resource_manager.set_resource_status(req_path.clone(), LoadingStatus::Loading);
-
-                // Spawn an async task to read the file
-                cx.spawn_task(
-                    crate::context::Task::new(move |_| {
-                        let path = path.clone();
-                        async move { tokio::fs::read(&path).await }
-                    })
-                    .on_result(move |result, proxy| {
-                        use crate::context::TaskResult;
-                        if let TaskResult::Completed(data) = result {
-                            let status = match proxy.load_image(req_path.clone(), &data, policy) {
-                                Ok(true) => LoadingStatus::Loaded,
-                                _ => LoadingStatus::Error,
-                            };
-                            let _ = proxy.update_resource_status(req_path.clone(), status);
-                        } else {
-                            let _ = proxy
-                                .update_resource_status(req_path.clone(), LoadingStatus::Error);
-
-                                        path_for_result.clone(),
-                                        LoadingStatus::Error,
-                                    );
-                                }
-                                _ => {}
-                            }
-                        }),
-                    );
-
-                    return true;
-                }
-
-                false
-            }
-        }
-    }
-}
-
-=======
->>>>>>> f31a0f8a (Refactor resource loading to use a queue)
 pub(crate) enum ImageOrSvg {
     Svg(skia_safe::svg::Dom),
     Image(skia_safe::Image),
@@ -445,7 +369,7 @@ pub struct ResourceManager {
 
     pub(crate) resource_loaders: Vec<Box<dyn ResourceLoader>>,
     /// Resource requests waiting to be dispatched through the configured loader chain.
-    pub(crate) pending_requests: Vec<ResourceRequest>,
+    pub(crate) pending_requests: Vec<QueuedResourceRequest>,
     /// Reactive status tracking per resource path.
     /// Signals allow automatic updates to Memos when status changes.
     pub(crate) loading_status: HashMap<String, Signal<LoadingStatus>>,
@@ -657,12 +581,16 @@ impl ResourceManager {
     }
 
     /// Enqueue a resource request to be handled by the resource system.
-    pub(crate) fn queue_resource_request(&mut self, request: ResourceRequest) {
-        self.pending_requests.push(request);
+    pub(crate) fn queue_resource_request(
+        &mut self,
+        request: ResourceRequest,
+        options: ResourceLoadOptions,
+    ) {
+        self.pending_requests.push(QueuedResourceRequest { request, options });
     }
 
     /// Drain pending resource requests for this frame.
-    pub(crate) fn take_pending_resource_requests(&mut self) -> Vec<ResourceRequest> {
+    pub(crate) fn take_pending_resource_requests(&mut self) -> Vec<QueuedResourceRequest> {
         std::mem::take(&mut self.pending_requests)
     }
 

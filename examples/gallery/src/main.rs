@@ -111,6 +111,7 @@ impl Model for AppData {
                     &id.0.to_string(),
                     &img,
                     ImageRetentionPolicy::DropWhenNoObservers,
+                    None,
                 );
                 self.thumbnails.update(|thumbnails| {
                     if let Some(tn) = thumbnails.get_mut(&id) {
@@ -124,6 +125,7 @@ impl Model for AppData {
                     &format!("original_{}", id.0),
                     &img,
                     ImageRetentionPolicy::DropWhenNoObservers,
+                    None,
                 );
                 self.original.set(Some(id));
             }

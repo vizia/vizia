@@ -12,7 +12,7 @@
 //! # let mut cx = &mut Context::default();
 //! // Adds a fluent file to the application resource manager.
 //! // This file is then used for translations to the corresponding locale.
-//! cx.add_translation(
+//! cx.load_translation(
 //!     langid!("en-US"),
 //!     include_str!("resources/en-US/translation.ftl").to_owned(),
 //! );
@@ -606,7 +606,8 @@ mod tests {
     fn missing_attribute_falls_back_to_key_attribute() {
         let mut cx = Context::default();
         cx.data::<Environment>().locale.set("en-US".parse().unwrap());
-        cx.add_translation("en-US".parse().unwrap(), "dialog = File Dialog".to_string()).unwrap();
+        cx.load_translation("en-US".parse().unwrap(), "dialog = File Dialog".to_string())
+            .unwrap();
 
         let text = Localized::new("dialog").attribute("title").to_string_local(&cx);
 
@@ -617,8 +618,11 @@ mod tests {
     fn format_error_returns_partial_resolved_text() {
         let mut cx = Context::default();
         cx.data::<Environment>().locale.set("en-US".parse().unwrap());
-        cx.add_translation("en-US".parse().unwrap(), "welcome = Welcome, { $name }!".to_string())
-            .unwrap();
+        cx.load_translation(
+            "en-US".parse().unwrap(),
+            "welcome = Welcome, { $name }!".to_string(),
+        )
+        .unwrap();
 
         let text = Localized::new("welcome").to_string_local(&cx);
         assert!(text.contains("Welcome"));
@@ -631,10 +635,10 @@ mod tests {
         cx.data::<Environment>().locale.set("fr".parse().unwrap());
 
         // Ensure the requested locale exists but does not contain the requested key.
-        cx.add_translation("fr".parse().unwrap(), "bonjour = Bonjour".to_string()).unwrap();
+        cx.load_translation("fr".parse().unwrap(), "bonjour = Bonjour".to_string()).unwrap();
 
         // Provide the requested key only in the default bundle.
-        cx.add_translation(
+        cx.load_translation(
             LanguageIdentifier::default(),
             "greeting = Hello from default".to_string(),
         )
@@ -651,10 +655,10 @@ mod tests {
         cx.data::<Environment>().locale.set("fr".parse().unwrap());
 
         // Requested locale has the message but not the attribute.
-        cx.add_translation("fr".parse().unwrap(), "dialog = Dialogue".to_string()).unwrap();
+        cx.load_translation("fr".parse().unwrap(), "dialog = Dialogue".to_string()).unwrap();
 
         // Default locale provides the missing attribute.
-        cx.add_translation(
+        cx.load_translation(
             LanguageIdentifier::default(),
             "dialog = Dialog\n    .title = Default Title".to_string(),
         )

@@ -1,6 +1,6 @@
 use crate::context::ResourceContext;
 
-use super::{LoadingStatus, ResourceLoader, ResourceRequest};
+use super::{LoadingStatus, ResourceLoadExecution, ResourceLoader, ResourceRequest};
 
 /// Built-in resource loader for HTTP(S) URLs (requires `url-loader` feature).
 #[cfg(feature = "url-loader")]
@@ -26,7 +26,12 @@ fn is_likely_svg(path: &str, data: &[u8]) -> bool {
 
 #[cfg(all(feature = "url-loader", not(feature = "tokio")))]
 impl ResourceLoader for UrlResourceLoader {
-    fn load(&self, request: ResourceRequest, cx: &mut ResourceContext) -> bool {
+    fn load(
+        &self,
+        request: ResourceRequest,
+        _options: super::ResourceLoadOptions,
+        cx: &mut ResourceContext,
+    ) -> bool {
         match request {
             ResourceRequest::Image(req) => {
                 if req.path.starts_with("http://") || req.path.starts_with("https://") {
@@ -40,17 +45,18 @@ impl ResourceLoader for UrlResourceLoader {
                     cx.spawn(move |proxy| match reqwest::blocking::get(&path) {
                         Ok(response) => match response.bytes() {
                             Ok(data) => {
-                                let loaded = match proxy.load_image(name.clone(), &data, policy) {
-                                    Ok(true) => true,
-                                    Ok(false) => {
-                                        if is_likely_svg(&path, &data) {
-                                            proxy.load_svg(name.clone(), &data, policy).is_ok()
-                                        } else {
-                                            false
+                                let loaded =
+                                    match proxy.load_image_encoded(name.clone(), &data, policy) {
+                                        Ok(true) => true,
+                                        Ok(false) => {
+                                            if is_likely_svg(&path, &data) {
+                                                proxy.load_svg(name.clone(), &data, policy).is_ok()
+                                            } else {
+                                                false
+                                            }
                                         }
-                                    }
-                                    Err(_) => false,
-                                };
+                                        Err(_) => false,
+                                    };
 
                                 let _ = proxy.update_resource_status(
                                     path,
@@ -175,7 +181,12 @@ impl ResourceLoader for UrlResourceLoader {
 
 #[cfg(all(feature = "url-loader", feature = "tokio"))]
 impl ResourceLoader for UrlResourceLoader {
-    fn load(&self, request: ResourceRequest, cx: &mut ResourceContext) -> bool {
+    fn load(
+        &self,
+        request: ResourceRequest,
+        options: super::ResourceLoadOptions,
+        cx: &mut ResourceContext,
+    ) -> bool {
         match request {
             ResourceRequest::Image(req) => {
                 if req.path.starts_with("http://") || req.path.starts_with("https://") {
@@ -183,6 +194,35 @@ impl ResourceLoader for UrlResourceLoader {
                     let name = req.name.clone();
                     let path_for_result = path.clone();
                     let policy = req.policy;
+                    let execution = options.execution;
+
+                    if matches!(execution, ResourceLoadExecution::Sync) {
+                        cx.resource_manager
+                            .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
+
+                        let loaded = match reqwest::blocking::get(&path) {
+                            Ok(response) => match response.bytes() {
+                                Ok(data) => {
+                                    if let Some(image) = skia_safe::Image::from_encoded(
+                                        skia_safe::Data::new_copy(&data),
+                                    ) {
+                                        cx.load_image(name, image, policy);
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                }
+                                Err(_) => false,
+                            },
+                            Err(_) => false,
+                        };
+
+                        cx.resource_manager.set_resource_status(
+                            path_for_result,
+                            if loaded { LoadingStatus::Loaded } else { LoadingStatus::Error },
+                        );
+                        return true;
+                    }
 
                     // Mark as loading before spawning
                     cx.resource_manager
@@ -206,18 +246,21 @@ impl ResourceLoader for UrlResourceLoader {
                             use crate::context::TaskResult;
                             match result {
                                 TaskResult::Completed(Some(data)) => {
-                                    let loaded = match proxy.load_image(name.clone(), &data, policy)
-                                    {
-                                        Ok(true) => true,
-                                        Ok(false) => {
-                                            if is_likely_svg(&path_for_result, &data) {
-                                                proxy.load_svg(name.clone(), &data, policy).is_ok()
-                                            } else {
-                                                false
+                                    let loaded =
+                                        match proxy.load_image_encoded(name.clone(), &data, policy)
+                                        {
+                                            Ok(true) => true,
+                                            Ok(false) => {
+                                                if is_likely_svg(&path_for_result, &data) {
+                                                    proxy
+                                                        .load_svg(name.clone(), &data, policy)
+                                                        .is_ok()
+                                                } else {
+                                                    false
+                                                }
                                             }
-                                        }
-                                        Err(_) => false,
-                                    };
+                                            Err(_) => false,
+                                        };
 
                                     let _ = proxy.update_resource_status(
                                         path_for_result,
@@ -247,6 +290,27 @@ impl ResourceLoader for UrlResourceLoader {
                 if req.path.starts_with("http://") || req.path.starts_with("https://") {
                     let path = req.path.clone();
                     let path_for_result = path.clone();
+                    let execution = options.execution;
+
+                    if matches!(execution, ResourceLoadExecution::Sync) {
+                        cx.resource_manager
+                            .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
+
+                        let loaded = match reqwest::blocking::get(&path) {
+                            Ok(response) => match response.bytes() {
+                                Ok(data) => cx.load_font(path_for_result.clone(), &data),
+                                Err(_) => false,
+                            },
+                            Err(_) => false,
+                        };
+
+                        if !loaded {
+                            cx.resource_manager
+                                .set_resource_status(path_for_result, LoadingStatus::Error);
+                        }
+
+                        return true;
+                    }
 
                     cx.resource_manager
                         .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
@@ -296,6 +360,32 @@ impl ResourceLoader for UrlResourceLoader {
                     let path = req.path.clone();
                     let path_for_result = path.clone();
                     let lang = req.lang;
+                    let execution = options.execution;
+
+                    if matches!(execution, ResourceLoadExecution::Sync) {
+                        cx.resource_manager
+                            .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
+
+                        let loaded = match reqwest::blocking::get(&path) {
+                            Ok(response) => match response.bytes() {
+                                Ok(data) => match String::from_utf8(data.to_vec()) {
+                                    Ok(ftl) => {
+                                        cx.load_translation(lang, path_for_result.clone(), &ftl)
+                                    }
+                                    Err(_) => false,
+                                },
+                                Err(_) => false,
+                            },
+                            Err(_) => false,
+                        };
+
+                        if !loaded {
+                            cx.resource_manager
+                                .set_resource_status(path_for_result, LoadingStatus::Error);
+                        }
+
+                        return true;
+                    }
 
                     cx.resource_manager
                         .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
@@ -363,6 +453,32 @@ impl ResourceLoader for UrlResourceLoader {
                     let path_for_result = path.clone();
                     let name = req.name;
                     let hotspot = req.hotspot;
+                    let execution = options.execution;
+
+                    if matches!(execution, ResourceLoadExecution::Sync) {
+                        cx.resource_manager
+                            .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
+
+                        let loaded = match reqwest::blocking::get(&path) {
+                            Ok(response) => match response.bytes() {
+                                Ok(data) => cx.load_cursor_icon(
+                                    path_for_result.clone(),
+                                    name,
+                                    &data,
+                                    hotspot,
+                                ),
+                                Err(_) => false,
+                            },
+                            Err(_) => false,
+                        };
+
+                        if !loaded {
+                            cx.resource_manager
+                                .set_resource_status(path_for_result, LoadingStatus::Error);
+                        }
+
+                        return true;
+                    }
 
                     cx.resource_manager
                         .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);

@@ -452,7 +452,7 @@ impl<'a> EventContext<'a> {
         self.resource_manager.resource_loaders.push(Box::new(loader));
     }
 
-    pub fn add_image_encoded(&mut self, path: &str, data: &[u8], policy: ImageRetentionPolicy) {
+    pub fn load_image_encoded(&mut self, path: &str, data: &[u8], policy: ImageRetentionPolicy) {
         let id = if let Some(image_id) = self.resource_manager.image_ids.get(path) {
             *image_id
         } else {

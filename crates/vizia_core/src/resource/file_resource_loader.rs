@@ -1,13 +1,18 @@
 use crate::context::ResourceContext;
 
-use super::{LoadingStatus, ResourceLoader, ResourceRequest};
+use super::{LoadingStatus, ResourceLoadExecution, ResourceLoader, ResourceRequest};
 
 /// Built-in resource loader for local file paths and `file://` URLs.
 pub struct FileResourceLoader;
 
 #[cfg(not(feature = "tokio"))]
 impl ResourceLoader for FileResourceLoader {
-    fn load(&self, request: ResourceRequest, cx: &mut ResourceContext) -> bool {
+    fn load(
+        &self,
+        request: ResourceRequest,
+        _options: super::ResourceLoadOptions,
+        cx: &mut ResourceContext,
+    ) -> bool {
         match request {
             ResourceRequest::Image(req) => {
                 let path = if req.path.starts_with("file://") {
@@ -92,7 +97,12 @@ impl ResourceLoader for FileResourceLoader {
 
 #[cfg(feature = "tokio")]
 impl ResourceLoader for FileResourceLoader {
-    fn load(&self, request: ResourceRequest, cx: &mut ResourceContext) -> bool {
+    fn load(
+        &self,
+        request: ResourceRequest,
+        options: super::ResourceLoadOptions,
+        cx: &mut ResourceContext,
+    ) -> bool {
         match request {
             ResourceRequest::Image(req) => {
                 let path = if req.path.starts_with("file://") {
@@ -104,6 +114,26 @@ impl ResourceLoader for FileResourceLoader {
                 let req_name = req.name.clone();
                 let req_path = req.path.clone();
                 let policy = req.policy;
+                let execution = options.execution;
+
+                if matches!(execution, ResourceLoadExecution::Sync) {
+                    cx.resource_manager
+                        .set_resource_status(req_path.clone(), LoadingStatus::Loading);
+
+                    if let Ok(data) = std::fs::read(&path) {
+                        if let Some(image) =
+                            skia_safe::Image::from_encoded(skia_safe::Data::new_copy(&data))
+                        {
+                            cx.load_image(req_name, image, policy);
+                            cx.resource_manager
+                                .set_resource_status(req_path, LoadingStatus::Loaded);
+                            return true;
+                        }
+                    }
+
+                    cx.resource_manager.set_resource_status(req_path, LoadingStatus::Error);
+                    return false;
+                }
 
                 // Mark as loading before spawning task
                 cx.resource_manager.set_resource_status(req_path.clone(), LoadingStatus::Loading);
@@ -117,10 +147,11 @@ impl ResourceLoader for FileResourceLoader {
                     .on_result(move |result, proxy| {
                         use crate::context::TaskResult;
                         if let TaskResult::Completed(data) = result {
-                            let status = match proxy.load_image(req_name.clone(), &data, policy) {
-                                Ok(true) => LoadingStatus::Loaded,
-                                _ => LoadingStatus::Error,
-                            };
+                            let status =
+                                match proxy.load_image_encoded(req_name.clone(), &data, policy) {
+                                    Ok(true) => LoadingStatus::Loaded,
+                                    _ => LoadingStatus::Error,
+                                };
                             let _ = proxy.update_resource_status(req_path.clone(), status);
                         } else {
                             let _ = proxy
@@ -139,6 +170,19 @@ impl ResourceLoader for FileResourceLoader {
                 };
 
                 let req_path = req.path.clone();
+                let execution = options.execution;
+
+                if matches!(execution, ResourceLoadExecution::Sync) {
+                    cx.resource_manager
+                        .set_resource_status(req_path.clone(), LoadingStatus::Loading);
+
+                    if let Ok(data) = std::fs::read(&path) {
+                        return cx.load_font(req_path, &data);
+                    }
+
+                    cx.resource_manager.set_resource_status(req_path, LoadingStatus::Error);
+                    return false;
+                }
 
                 cx.resource_manager.set_resource_status(req_path.clone(), LoadingStatus::Loading);
 
@@ -172,6 +216,21 @@ impl ResourceLoader for FileResourceLoader {
 
                 let req_path = req.path.clone();
                 let lang = req.lang;
+                let execution = options.execution;
+
+                if matches!(execution, ResourceLoadExecution::Sync) {
+                    cx.resource_manager
+                        .set_resource_status(req_path.clone(), LoadingStatus::Loading);
+
+                    if let Ok(data) = std::fs::read(&path) {
+                        if let Ok(ftl) = String::from_utf8(data) {
+                            return cx.load_translation(lang, req_path, &ftl);
+                        }
+                    }
+
+                    cx.resource_manager.set_resource_status(req_path, LoadingStatus::Error);
+                    return false;
+                }
 
                 cx.resource_manager.set_resource_status(req_path.clone(), LoadingStatus::Loading);
 
@@ -221,6 +280,19 @@ impl ResourceLoader for FileResourceLoader {
                 let req_path = req.path.clone();
                 let name = req.name;
                 let hotspot = req.hotspot;
+                let execution = options.execution;
+
+                if matches!(execution, ResourceLoadExecution::Sync) {
+                    cx.resource_manager
+                        .set_resource_status(req_path.clone(), LoadingStatus::Loading);
+
+                    if let Ok(data) = std::fs::read(&path) {
+                        return cx.load_cursor_icon(req_path, name, &data, hotspot);
+                    }
+
+                    cx.resource_manager.set_resource_status(req_path, LoadingStatus::Error);
+                    return false;
+                }
 
                 cx.resource_manager.set_resource_status(req_path.clone(), LoadingStatus::Loading);
 

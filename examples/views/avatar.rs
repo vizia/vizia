@@ -12,6 +12,7 @@ fn main() -> Result<(), ApplicationError> {
             "sample-hut",
             "examples/resources/images/sample-hut-400x300.png",
             ImageRetentionPolicy::DropWhenNoObservers,
+            None,
         );
 
         ExamplePage::vertical(cx, |cx| {

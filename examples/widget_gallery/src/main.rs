@@ -1012,16 +1012,16 @@ fn main() -> Result<(), ApplicationError> {
     // setup_logging()?;
 
     Application::new(|cx: &mut Context| {
-        cx.add_translation(
+        cx.load_translation(
             langid!("en-US"),
             include_str!("../resources/translations/en-US/helper.ftl"),
         )
         .unwrap();
 
-        cx.add_translation(langid!("fr"), include_str!("../resources/translations/fr/helper.ftl"))
+        cx.load_translation(langid!("fr"), include_str!("../resources/translations/fr/helper.ftl"))
             .unwrap();
 
-        cx.add_translation(langid!("ar"), include_str!("../resources/translations/ar/helper.ftl"))
+        cx.load_translation(langid!("ar"), include_str!("../resources/translations/ar/helper.ftl"))
             .unwrap();
 
         cx.load_image(

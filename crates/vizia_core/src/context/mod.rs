@@ -699,8 +699,8 @@ impl Context {
         self.global_listeners.push(Box::new(listener));
     }
 
-    /// Adds a font to the application from memory.
-    pub fn add_font_mem(&mut self, data: impl AsRef<[u8]>) {
+    /// Loads a font into the application from in-memory bytes.
+    pub fn load_font_mem(&mut self, data: impl AsRef<[u8]>) {
         self.text_context.asset_provider.register_typeface(
             self.text_context.default_font_manager.new_from_data(data.as_ref(), None).unwrap(),
             None,
@@ -711,13 +711,14 @@ impl Context {
         &mut self,
         path: String,
         request: crate::resource::ResourceRequest,
+        options: crate::resource::ResourceLoadOptions,
     ) {
         // Avoid re-issuing requests for resources that are already loading or resolved.
         if self.resource_manager.resource_status(&path) != LoadingStatus::NotLoaded {
             return;
         }
 
-        self.resource_manager.queue_resource_request(request);
+        self.resource_manager.queue_resource_request(request, options);
     }
 
     /// Returns a reactive loading-status signal for the provided resource path.
@@ -746,12 +747,18 @@ impl Context {
     /// Adds a font to the application by loading it through the configured resource loaders.
     ///
     /// This supports local files (including `file://` URLs) and any custom loader you register.
-    pub fn add_font(&mut self, path: impl Into<String>) {
+    pub fn add_font(
+        &mut self,
+        path: impl Into<String>,
+        options: Option<crate::resource::ResourceLoadOptions>,
+    ) {
         let path = path.into();
+        let options = options.unwrap_or_default();
 
         self.request_resource_if_not_loaded(
             path.clone(),
             crate::resource::ResourceRequest::Font(crate::resource::FontRequest { path }),
+            options,
         );
     }
 
@@ -764,9 +771,11 @@ impl Context {
         name: impl Into<String>,
         path: impl Into<String>,
         policy: ImageRetentionPolicy,
+        options: Option<crate::resource::ResourceLoadOptions>,
     ) -> Signal<LoadingStatus> {
         let name = name.into();
         let path = path.into();
+        let options = options.unwrap_or_default();
 
         self.request_resource_if_not_loaded(
             path.clone(),
@@ -775,10 +784,12 @@ impl Context {
                 path: path.clone(),
                 policy,
             }),
+            options,
         );
 
         self.resource_status_signal(path)
     }
+
 
 
     /// Adds a translation file to the application by loading it through the configured resource
@@ -786,8 +797,14 @@ impl Context {
     ///
     /// This supports local files (including `file://` URLs), HTTP(S) URLs when the
     /// `url-loader` feature is enabled, and any custom loader you register.
-    pub fn add_translation_file(&mut self, lang: LanguageIdentifier, path: impl Into<String>) {
+    pub fn add_translation_file(
+        &mut self,
+        lang: LanguageIdentifier,
+        path: impl Into<String>,
+        options: Option<crate::resource::ResourceLoadOptions>,
+    ) {
         let path = path.into();
+        let options = options.unwrap_or_default();
 
         self.request_resource_if_not_loaded(
             path.clone(),
@@ -795,6 +812,7 @@ impl Context {
                 lang,
                 path,
             }),
+            options,
         );
     }
 
@@ -863,7 +881,7 @@ impl Context {
             return;
         }
 
-        self.add_translation("en-US".parse().unwrap(), DEFAULT_TRANSLATION_EN_US)
+        self.load_translation("en-US".parse().unwrap(), DEFAULT_TRANSLATION_EN_US)
             .expect("Failed to load built-in en-US translation resources");
         self.built_in_translations_added = true;
     }
@@ -880,10 +898,10 @@ impl Context {
         self.resource_manager.resource_loaders.push(Box::new(loader));
     }
 
-    /// Adds a translation to the application for the provided language.
+    /// Loads a translation into the application for the provided language.
     ///
     /// Returns an error if the FTL syntax is invalid or the resource cannot be added to the bundle.
-    pub fn add_translation(
+    pub fn load_translation(
         &mut self,
         lang: LanguageIdentifier,
         ftl: impl ToString,

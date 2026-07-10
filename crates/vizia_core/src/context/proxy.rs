@@ -77,7 +77,7 @@ impl ContextProxy {
         self.emit(InternalEvent::Redraw)
     }
 
-    pub fn load_image(
+    pub fn load_image_encoded(
         &mut self,
         path: String,
         data: &[u8],

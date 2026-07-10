@@ -78,12 +78,16 @@ impl<'a> ResourceContext<'a> {
     /// Dispatches a resource request through the configured loader chain.
     ///
     /// Returns `true` when a loader accepts the request.
-    pub fn request_resource(&mut self, request: ResourceRequest) -> bool {
+    pub fn request_resource(
+        &mut self,
+        request: ResourceRequest,
+        options: crate::resource::ResourceLoadOptions,
+    ) -> bool {
         // Temporarily move loaders out so each `load` call can borrow `self` mutably.
         let mut loaders = std::mem::take(&mut self.resource_manager.resource_loaders);
 
         for loader in &loaders {
-            if loader.load(request.clone(), self) {
+            if loader.load(request.clone(), options, self) {
                 // Preserve any loaders registered while handling requests.
                 loaders.append(&mut self.resource_manager.resource_loaders);
                 self.resource_manager.resource_loaders = loaders;

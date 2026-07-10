@@ -12,16 +12,23 @@ const SAMPLE_HUT_NAME: &str = "sample-hut";
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         let rust_status =
-            cx.add_image_encoded(RUST_LOGO_NAME, RUST_LOGO_URL, ImageRetentionPolicy::Forever);
+            cx.add_image_encoded(
+                RUST_LOGO_NAME,
+                RUST_LOGO_URL,
+                ImageRetentionPolicy::Forever,
+                None,
+            );
         let broken_status = cx.add_image_encoded(
             BROKEN_IMAGE_NAME,
             BROKEN_IMAGE_URL,
             ImageRetentionPolicy::DropWhenNoObservers,
+            None,
         );
         let sample_status = cx.add_image_encoded(
             SAMPLE_HUT_NAME,
             SAMPLE_HUT_PATH,
             ImageRetentionPolicy::DropWhenNoObservers,
+            None,
         );
 
         ExamplePage::vertical(cx, |cx| {

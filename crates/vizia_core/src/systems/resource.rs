@@ -1,5 +1,7 @@
 use crate::context::{Context, ResourceContext};
-use crate::resource::{ImageRequest, ImageRetentionPolicy, LoadingStatus, ResourceRequest};
+use crate::resource::{
+    ImageRequest, ImageRetentionPolicy, LoadingStatus, ResourceLoadOptions, ResourceRequest,
+};
 use crate::style::ImageOrGradient;
 
 use super::image_system;
@@ -38,7 +40,7 @@ fn request_image_if_not_loaded(cx: &mut ResourceContext, path: &str) {
         policy: ImageRetentionPolicy::DropWhenNoObservers,
     });
 
-    if !cx.request_resource(request) {
+    if !cx.request_resource(request, ResourceLoadOptions::default()) {
         cx.resource_manager.set_resource_status(path.to_owned(), LoadingStatus::Error);
     }
 }
@@ -46,15 +48,15 @@ fn request_image_if_not_loaded(cx: &mut ResourceContext, path: &str) {
 fn process_pending_requests(cx: &mut ResourceContext) {
     let requests = cx.resource_manager.take_pending_resource_requests();
 
-    for request in requests {
-        let path = request.path().to_owned();
+    for pending in requests {
+        let path = pending.request.path().to_owned();
 
         // Requests can become stale if another code path loaded the same resource first.
         if cx.resource_manager.resource_status(&path) != LoadingStatus::NotLoaded {
             continue;
         }
 
-        if !cx.request_resource(request) {
+        if !cx.request_resource(pending.request, pending.options) {
             cx.resource_manager.set_resource_status(path, LoadingStatus::Error);
         }
     }
