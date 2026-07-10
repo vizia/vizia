@@ -790,8 +790,6 @@ impl Context {
         self.resource_status_signal(path)
     }
 
-
-
     /// Adds a translation file to the application by loading it through the configured resource
     /// loaders.
     ///

@@ -2,11 +2,28 @@
 use crate::context::ResourceContext;
 
 #[cfg(feature = "url-loader")]
-use super::{LoadingStatus, ResourceLoadExecution, ResourceLoader, ResourceRequest};
+use super::{LoadingStatus, ResourceLoader, ResourceRequest};
+#[cfg(all(feature = "url-loader", feature = "tokio"))]
+use super::ResourceLoadExecution;
 
 /// Built-in resource loader for HTTP(S) URLs (requires `url-loader` feature).
 #[cfg(feature = "url-loader")]
-pub struct UrlResourceLoader;
+pub struct UrlResourceLoader {
+    #[cfg(feature = "tokio")]
+    async_client: reqwest::Client,
+    blocking_client: reqwest::blocking::Client,
+}
+
+#[cfg(feature = "url-loader")]
+impl Default for UrlResourceLoader {
+    fn default() -> Self {
+        Self {
+            #[cfg(feature = "tokio")]
+            async_client: reqwest::Client::new(),
+            blocking_client: reqwest::blocking::Client::new(),
+        }
+    }
+}
 
 #[cfg(feature = "url-loader")]
 fn is_likely_svg(path: &str, data: &[u8]) -> bool {
@@ -40,11 +57,12 @@ impl ResourceLoader for UrlResourceLoader {
                     let path = req.path.clone();
                     let name = req.name.clone();
                     let policy = req.policy;
+                    let client = self.blocking_client.clone();
 
                     // Mark as loading before spawning
                     cx.resource_manager.set_resource_status(path.clone(), LoadingStatus::Loading);
 
-                    cx.spawn(move |proxy| match reqwest::blocking::get(&path) {
+                    cx.spawn(move |proxy| match client.get(&path).send() {
                         Ok(response) => match response.bytes() {
                             Ok(data) => {
                                 let loaded =
@@ -84,10 +102,11 @@ impl ResourceLoader for UrlResourceLoader {
             ResourceRequest::Font(req) => {
                 if req.path.starts_with("http://") || req.path.starts_with("https://") {
                     let path = req.path.clone();
+                    let client = self.blocking_client.clone();
 
                     cx.resource_manager.set_resource_status(path.clone(), LoadingStatus::Loading);
 
-                    cx.spawn(move |proxy| match reqwest::blocking::get(&path) {
+                    cx.spawn(move |proxy| match client.get(&path).send() {
                         Ok(response) => match response.bytes() {
                             Ok(data) => {
                                 if proxy.load_font(path.clone(), &data).is_err() {
@@ -113,10 +132,11 @@ impl ResourceLoader for UrlResourceLoader {
                 if req.path.starts_with("http://") || req.path.starts_with("https://") {
                     let path = req.path.clone();
                     let lang = req.lang;
+                    let client = self.blocking_client.clone();
 
                     cx.resource_manager.set_resource_status(path.clone(), LoadingStatus::Loading);
 
-                    cx.spawn(move |proxy| match reqwest::blocking::get(&path) {
+                    cx.spawn(move |proxy| match client.get(&path).send() {
                         Ok(response) => match response.bytes() {
                             Ok(data) => match String::from_utf8(data.to_vec()) {
                                 Ok(ftl) => {
@@ -169,7 +189,7 @@ impl ResourceLoader for UrlResourceLoader {
                         cx.resource_manager
                             .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
 
-                        let loaded = match reqwest::blocking::get(&path) {
+                        let loaded = match self.blocking_client.get(&path).send() {
                             Ok(response) => match response.bytes() {
                                 Ok(data) => {
                                     if let Some(image) = skia_safe::Image::from_encoded(
@@ -198,11 +218,13 @@ impl ResourceLoader for UrlResourceLoader {
                         .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
 
                     // Spawn an async task to fetch the URL
+                    let client = self.async_client.clone();
                     cx.spawn_task(
                         crate::context::Task::new(move |_| {
                             let path = path.clone();
+                            let client = client.clone();
                             async move {
-                                match reqwest::get(&path).await {
+                                match client.get(&path).send().await {
                                     Ok(response) => match response.bytes().await {
                                         Ok(data) => Ok::<_, String>(Some(data)),
                                         Err(_) => Ok(None),
@@ -265,7 +287,7 @@ impl ResourceLoader for UrlResourceLoader {
                         cx.resource_manager
                             .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
 
-                        let loaded = match reqwest::blocking::get(&path) {
+                        let loaded = match self.blocking_client.get(&path).send() {
                             Ok(response) => match response.bytes() {
                                 Ok(data) => cx.load_font(path_for_result.clone(), &data),
                                 Err(_) => false,
@@ -284,11 +306,13 @@ impl ResourceLoader for UrlResourceLoader {
                     cx.resource_manager
                         .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
 
+                    let client = self.async_client.clone();
                     cx.spawn_task(
                         crate::context::Task::new(move |_| {
                             let path = path.clone();
+                            let client = client.clone();
                             async move {
-                                match reqwest::get(&path).await {
+                                match client.get(&path).send().await {
                                     Ok(response) => match response.bytes().await {
                                         Ok(data) => Ok::<_, String>(Some(data)),
                                         Err(_) => Ok(None),
@@ -335,7 +359,7 @@ impl ResourceLoader for UrlResourceLoader {
                         cx.resource_manager
                             .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
 
-                        let loaded = match reqwest::blocking::get(&path) {
+                        let loaded = match self.blocking_client.get(&path).send() {
                             Ok(response) => match response.bytes() {
                                 Ok(data) => match String::from_utf8(data.to_vec()) {
                                     Ok(ftl) => {
@@ -359,11 +383,13 @@ impl ResourceLoader for UrlResourceLoader {
                     cx.resource_manager
                         .set_resource_status(path_for_result.clone(), LoadingStatus::Loading);
 
+                    let client = self.async_client.clone();
                     cx.spawn_task(
                         crate::context::Task::new(move |_| {
                             let path = path.clone();
+                            let client = client.clone();
                             async move {
-                                match reqwest::get(&path).await {
+                                match client.get(&path).send().await {
                                     Ok(response) => match response.bytes().await {
                                         Ok(data) => Ok::<_, String>(Some(data)),
                                         Err(_) => Ok(None),

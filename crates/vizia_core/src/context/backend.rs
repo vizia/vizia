@@ -225,7 +225,7 @@ impl BackendContext {
     pub fn process_style_updates(&mut self) {
         style_system(&mut self.0);
 
-        // Load queued resources (fonts/translations/cursors/images) and maintain image cache.
+        // Load queued resources and maintain image cache.
         resource_system(&mut self.0);
     }
 

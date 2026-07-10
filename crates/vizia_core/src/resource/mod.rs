@@ -329,7 +329,6 @@ pub trait ResourceLoader: Send + Sync + 'static {
     }
 }
 
-
 pub(crate) enum ImageOrSvg {
     Svg(skia_safe::svg::Dom),
     Image(skia_safe::Image),
@@ -392,7 +391,7 @@ impl ResourceManager {
         #[cfg(feature = "url-loader")]
         let resource_loaders = {
             let mut loaders = resource_loaders;
-            loaders.push(Box::new(UrlResourceLoader));
+            loaders.push(Box::new(UrlResourceLoader::default()));
             loaders
         };
 
