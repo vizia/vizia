@@ -35,7 +35,7 @@ impl Default for UrlResourceLoader {
     fn default() -> Self {
         #[cfg(feature = "tokio")]
         {
-            return Self::new(reqwest::Client::new(), reqwest::blocking::Client::new());
+            Self::new(reqwest::Client::new(), reqwest::blocking::Client::new())
         }
 
         #[cfg(not(feature = "tokio"))]
