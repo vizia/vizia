@@ -5,6 +5,10 @@ use super::{LoadingStatus, ResourceLoadExecution, ResourceLoader, ResourceReques
 /// Built-in resource loader for local file paths and `file://` URLs.
 pub struct FileResourceLoader;
 
+fn is_http_url(path: &str) -> bool {
+    path.starts_with("http://") || path.starts_with("https://")
+}
+
 #[cfg(not(feature = "tokio"))]
 impl ResourceLoader for FileResourceLoader {
     fn load(
@@ -15,6 +19,10 @@ impl ResourceLoader for FileResourceLoader {
     ) -> bool {
         match request {
             ResourceRequest::Image(req) => {
+                if is_http_url(&req.path) {
+                    return false;
+                }
+
                 let path = if req.path.starts_with("file://") {
                     req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
                 } else {
@@ -41,6 +49,10 @@ impl ResourceLoader for FileResourceLoader {
                 false
             }
             ResourceRequest::Font(req) => {
+                if is_http_url(&req.path) {
+                    return false;
+                }
+
                 let path = if req.path.starts_with("file://") {
                     req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
                 } else {
@@ -58,6 +70,10 @@ impl ResourceLoader for FileResourceLoader {
                 false
             }
             ResourceRequest::Translation(req) => {
+                if is_http_url(&req.path) {
+                    return false;
+                }
+
                 let path = if req.path.starts_with("file://") {
                     req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
                 } else {
@@ -76,6 +92,10 @@ impl ResourceLoader for FileResourceLoader {
                 false
             }
             ResourceRequest::CursorIcon(req) => {
+                if is_http_url(&req.path) {
+                    return false;
+                }
+
                 let path = if req.path.starts_with("file://") {
                     req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
                 } else {
@@ -105,6 +125,10 @@ impl ResourceLoader for FileResourceLoader {
     ) -> bool {
         match request {
             ResourceRequest::Image(req) => {
+                if is_http_url(&req.path) {
+                    return false;
+                }
+
                 let path = if req.path.starts_with("file://") {
                     req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
                 } else {
@@ -163,6 +187,10 @@ impl ResourceLoader for FileResourceLoader {
                 true
             }
             ResourceRequest::Font(req) => {
+                if is_http_url(&req.path) {
+                    return false;
+                }
+
                 let path = if req.path.starts_with("file://") {
                     req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
                 } else {
@@ -208,6 +236,10 @@ impl ResourceLoader for FileResourceLoader {
                 true
             }
             ResourceRequest::Translation(req) => {
+                if is_http_url(&req.path) {
+                    return false;
+                }
+
                 let path = if req.path.starts_with("file://") {
                     req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
                 } else {
@@ -271,6 +303,10 @@ impl ResourceLoader for FileResourceLoader {
                 true
             }
             ResourceRequest::CursorIcon(req) => {
+                if is_http_url(&req.path) {
+                    return false;
+                }
+
                 let path = if req.path.starts_with("file://") {
                     req.path.strip_prefix("file://").unwrap_or(&req.path).to_string()
                 } else {
