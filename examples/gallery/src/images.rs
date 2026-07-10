@@ -39,4 +39,3 @@ pub const LIMIT: usize = 99;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize)]
 pub struct Id(pub u32);
-

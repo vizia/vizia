@@ -606,8 +606,7 @@ mod tests {
     fn missing_attribute_falls_back_to_key_attribute() {
         let mut cx = Context::default();
         cx.data::<Environment>().locale.set("en-US".parse().unwrap());
-        cx.load_translation("en-US".parse().unwrap(), "dialog = File Dialog".to_string())
-            .unwrap();
+        cx.load_translation("en-US".parse().unwrap(), "dialog = File Dialog".to_string()).unwrap();
 
         let text = Localized::new("dialog").attribute("title").to_string_local(&cx);
 
@@ -618,11 +617,8 @@ mod tests {
     fn format_error_returns_partial_resolved_text() {
         let mut cx = Context::default();
         cx.data::<Environment>().locale.set("en-US".parse().unwrap());
-        cx.load_translation(
-            "en-US".parse().unwrap(),
-            "welcome = Welcome, { $name }!".to_string(),
-        )
-        .unwrap();
+        cx.load_translation("en-US".parse().unwrap(), "welcome = Welcome, { $name }!".to_string())
+            .unwrap();
 
         let text = Localized::new("welcome").to_string_local(&cx);
         assert!(text.contains("Welcome"));

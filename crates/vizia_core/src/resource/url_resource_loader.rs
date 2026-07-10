@@ -1,5 +1,7 @@
+#[cfg(feature = "url-loader")]
 use crate::context::ResourceContext;
 
+#[cfg(feature = "url-loader")]
 use super::{LoadingStatus, ResourceLoadExecution, ResourceLoader, ResourceRequest};
 
 /// Built-in resource loader for HTTP(S) URLs (requires `url-loader` feature).

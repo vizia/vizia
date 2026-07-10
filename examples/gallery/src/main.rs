@@ -12,8 +12,7 @@ pub struct AppData {
     original: Signal<Option<Id>>,
 }
 
-type GallerySignals =
-    (Signal<Vec<Vec<Id>>>, Signal<HashMap<Id, ImageData>>, Signal<Option<Id>>);
+type GallerySignals = (Signal<Vec<Vec<Id>>>, Signal<HashMap<Id, ImageData>>, Signal<Option<Id>>);
 
 impl AppData {
     pub fn create(cx: &mut Context) -> GallerySignals {
@@ -132,9 +131,8 @@ fn main() -> Result<(), ApplicationError> {
                                 ImageRetentionPolicy::DropWhenNoObservers,
                                 None,
                             );
-                            let is_loaded = Memo::new(move |_| {
-                                matches!(status.get(), LoadingStatus::Loaded)
-                            });
+                            let is_loaded =
+                                Memo::new(move |_| matches!(status.get(), LoadingStatus::Loaded));
                             HStack::new(cx, |cx| {
                                 Image::new(cx, image_name)
                                     .on_press(move |cx| cx.emit(AppEvent::ShowOriginal(id)))
