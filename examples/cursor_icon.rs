@@ -159,7 +159,6 @@ const STYLE: &str = r#"
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
         HStack::new(cx, |cx| {
