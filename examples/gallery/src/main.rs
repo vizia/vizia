@@ -1,20 +1,19 @@
 use std::collections::HashMap;
 
-use bytes::Bytes;
-use images::{Status, download, list};
+use images::list;
 use vizia::prelude::*;
 
 mod images;
-use crate::images::{Id, ImageData, Size};
+use crate::images::{Id, ImageData};
 
 pub struct AppData {
     images: Signal<Vec<Vec<Id>>>,
-    thumbnails: Signal<HashMap<Id, (ImageData, Status)>>,
+    thumbnails: Signal<HashMap<Id, ImageData>>,
     original: Signal<Option<Id>>,
 }
 
 type GallerySignals =
-    (Signal<Vec<Vec<Id>>>, Signal<HashMap<Id, (ImageData, Status)>>, Signal<Option<Id>>);
+    (Signal<Vec<Vec<Id>>>, Signal<HashMap<Id, ImageData>>, Signal<Option<Id>>);
 
 impl AppData {
     pub fn create(cx: &mut Context) -> GallerySignals {
@@ -49,7 +48,7 @@ impl AppData {
 }
 
 impl Model for AppData {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.take(|app_event, _| match app_event {
             AppEvent::ImagesListed(Err(e)) => {
                 eprintln!("Failed to list images: {e}");
@@ -58,7 +57,7 @@ impl Model for AppData {
             AppEvent::ImagesListed(Ok(images)) => {
                 self.thumbnails.update(|thumbnails| {
                     for img in images.iter() {
-                        thumbnails.insert(img.id, (img.clone(), Status::Loading));
+                        thumbnails.insert(img.id, img.clone());
                     }
                 });
                 self.images.set(
@@ -69,109 +68,19 @@ impl Model for AppData {
                 );
             }
 
-            AppEvent::ImagePoppedIn(id) => {
-                self.thumbnails.update(|thumbnails| {
-                    if let Some(tn) = thumbnails.get_mut(&id) {
-                        tn.1 = Status::Loading;
-                    }
-                });
-                if let Some(url) = self.thumbnails.get().get(&id).map(|image| image.0.url.clone()) {
-                    cx.add_task(
-                        Task::new(move |_| {
-                            let url = url.clone();
-                            async move { download(url, Size::Thumbnail).await }
-                        })
-                        .on_result(move |result, proxy| match result {
-                            TaskResult::Completed(image) => {
-                                let _ = proxy.emit(AppEvent::ImageDownloaded(id, Ok(image)));
-                            }
-                            TaskResult::Error(error) => {
-                                let _ = proxy.emit(AppEvent::ImageDownloaded(id, Err(error)));
-                            }
-                            TaskResult::Timeout => {
-                                eprintln!("Thumbnail download timed out for image {}", id.0);
-                            }
-                            TaskResult::Cancelled => {
-                                eprintln!("Thumbnail download cancelled for image {}", id.0);
-                            }
-                            TaskResult::Disconnected { .. } => {
-                                eprintln!("Thumbnail worker disconnected for image {}", id.0);
-                            }
-                        }),
-                    );
-                }
-            }
-
-            AppEvent::ImageDownloaded(id, Err(e)) => {
-                eprintln!("Failed to download image {}: {e}", id.0);
-            }
-
-            AppEvent::ImageDownloaded(id, Ok(img)) => {
-                cx.add_image_encoded(
-                    &id.0.to_string(),
-                    &img,
-                    ImageRetentionPolicy::DropWhenNoObservers,
-                    None,
-                );
-                self.thumbnails.update(|thumbnails| {
-                    if let Some(tn) = thumbnails.get_mut(&id) {
-                        tn.1 = Status::Loaded;
-                    }
-                });
-            }
-
-            AppEvent::OriginalDownloaded(id, Ok(img)) => {
-                cx.add_image_encoded(
-                    &format!("original_{}", id.0),
-                    &img,
-                    ImageRetentionPolicy::DropWhenNoObservers,
-                    None,
-                );
-                self.original.set(Some(id));
-            }
-
             AppEvent::ShowOriginal(id) => {
-                if let Some(url) = self.thumbnails.get().get(&id).map(|image| image.0.url.clone()) {
-                    cx.add_task(
-                        Task::new(move |_| {
-                            let url = url.clone();
-                            async move { download(url, Size::Original).await }
-                        })
-                        .on_result(move |result, proxy| match result {
-                            TaskResult::Completed(image) => {
-                                let _ = proxy.emit(AppEvent::OriginalDownloaded(id, Ok(image)));
-                            }
-                            TaskResult::Error(error) => {
-                                let _ = proxy.emit(AppEvent::OriginalDownloaded(id, Err(error)));
-                            }
-                            TaskResult::Timeout => {
-                                eprintln!("Original download timed out for image {}", id.0);
-                            }
-                            TaskResult::Cancelled => {
-                                eprintln!("Original download cancelled for image {}", id.0);
-                            }
-                            TaskResult::Disconnected { .. } => {
-                                eprintln!("Original worker disconnected for image {}", id.0);
-                            }
-                        }),
-                    );
-                }
+                self.original.set(Some(id));
             }
 
             AppEvent::HideOriginal => {
                 self.original.set(None);
             }
-
-            _ => (),
         });
     }
 }
 
 enum AppEvent {
     ImagesListed(Result<Vec<ImageData>, reqwest::Error>),
-    ImagePoppedIn(Id),
-    ImageDownloaded(Id, Result<Bytes, reqwest::Error>),
-    OriginalDownloaded(Id, Result<Bytes, reqwest::Error>),
     ShowOriginal(Id),
     HideOriginal,
 }
@@ -188,22 +97,46 @@ fn main() -> Result<(), ApplicationError> {
             original.get().map_or(String::default(), |id| format!("original_{}", id.0))
         });
 
+        Binding::new(cx, original, move |cx| {
+            if let Some(id) = original.get() {
+                let base_url = thumbnails
+                    .get()
+                    .get(&id)
+                    .map(|image| image.url.clone())
+                    .unwrap_or_else(|| format!("https://picsum.photos/id/{}", id.0));
+
+                cx.add_image_encoded(
+                    format!("original_{}", id.0),
+                    format!("{base_url}/1920/1200"),
+                    ImageRetentionPolicy::DropWhenNoObservers,
+                    None,
+                );
+            }
+        });
+
         Binding::new(cx, has_images, move |cx| {
             let has_images = has_images.get();
             if has_images {
                 VirtualList::new(cx, images, 420.0, move |cx, _, item| {
                     HStack::new(cx, |cx| {
                         for id in item.get() {
+                            let image_name = format!("thumbnail_{}", id.0);
+                            let base_url = thumbnails
+                                .get()
+                                .get(&id)
+                                .map(|image| image.url.clone())
+                                .unwrap_or_else(|| format!("https://picsum.photos/id/{}", id.0));
+                            let status = cx.add_image_encoded(
+                                image_name.clone(),
+                                format!("{base_url}/640/410"),
+                                ImageRetentionPolicy::DropWhenNoObservers,
+                                None,
+                            );
                             let is_loaded = Memo::new(move |_| {
-                                thumbnails
-                                    .get()
-                                    .get(&id)
-                                    .map(|(_, status)| *status == Status::Loaded)
-                                    .unwrap_or(false)
+                                matches!(status.get(), LoadingStatus::Loaded)
                             });
                             HStack::new(cx, |cx| {
-                                Image::new(cx, id.0.to_string())
-                                    .on_build(move |cx| cx.emit(AppEvent::ImagePoppedIn(id)))
+                                Image::new(cx, image_name)
                                     .on_press(move |cx| cx.emit(AppEvent::ShowOriginal(id)))
                                     .toggle_class("loaded", is_loaded)
                                     .class("thumbnail")
