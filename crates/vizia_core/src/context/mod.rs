@@ -890,10 +890,11 @@ impl Context {
 
     /// Adds a resource loader to the loading chain.
     ///
-    /// Loaders are tried in the order they were added. The first loader that returns `true`
-    /// will handle the resource request, and subsequent loaders in the chain are skipped.
+    /// Loaders are tried in list order, and this method inserts at the front so custom
+    /// loaders take priority over built-in loaders. The first loader that returns `true`
+    /// handles the request, and subsequent loaders are skipped.
     pub fn add_resource_loader<L: crate::resource::ResourceLoader>(&mut self, loader: L) {
-        self.resource_manager.resource_loaders.push(Box::new(loader));
+        self.resource_manager.resource_loaders.insert(0, Box::new(loader));
     }
 
     /// Loads a translation into the application for the provided language.

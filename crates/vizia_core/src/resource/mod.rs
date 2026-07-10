@@ -386,14 +386,13 @@ impl ResourceManager {
 
         let images = HashMap::new();
 
-        let resource_loaders: Vec<Box<dyn ResourceLoader>> = vec![Box::new(FileResourceLoader)];
-
         #[cfg(feature = "url-loader")]
-        let resource_loaders = {
-            let mut loaders = resource_loaders;
-            loaders.push(Box::new(UrlResourceLoader::default()));
-            loaders
-        };
+        // Keep file loading ahead of URL loading so local/file:// paths are resolved first.
+        let resource_loaders: Vec<Box<dyn ResourceLoader>> =
+            vec![Box::new(FileResourceLoader), Box::new(UrlResourceLoader::default())];
+
+        #[cfg(not(feature = "url-loader"))]
+        let resource_loaders: Vec<Box<dyn ResourceLoader>> = vec![Box::new(FileResourceLoader)];
 
         ResourceManager {
             image_id_manager,
