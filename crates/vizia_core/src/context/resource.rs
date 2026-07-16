@@ -6,7 +6,7 @@ use vizia_storage::Tree;
 use crate::{
     entity::Entity,
     resource::{
-        ImageOrSvg, ImageRetentionPolicy, LoadingStatus, ResourceManager, ResourceRequest,
+        ImageId, ImageOrSvg, ImageRetentionPolicy, LoadingStatus, ResourceManager, ResourceRequest,
         StoredImage,
     },
     style::Style,
@@ -152,6 +152,64 @@ impl<'a> ResourceContext<'a> {
             let mut cxp =
                 ContextProxy { current: self.current, event_proxy: Some(proxy.make_clone()) };
             let _ = cxp.redraw();
+        }
+    }
+
+    /// Loads an SVG from bytes and associates it with the provided path.
+    pub fn load_svg(
+        &mut self,
+        path: String,
+        data: &[u8],
+        policy: ImageRetentionPolicy,
+    ) -> Option<ImageId> {
+        let id = if let Some(image_id) = self.resource_manager.image_ids.get(&path) {
+            return Some(*image_id);
+        } else {
+            let id = self.resource_manager.image_id_manager.create();
+            self.resource_manager.image_ids.insert(path.clone(), id);
+            id
+        };
+
+        if let Ok(svg) = skia_safe::svg::Dom::from_bytes(
+            data,
+            self.text_context.default_font_manager.clone(),
+        ) {
+            match self.resource_manager.images.entry(id) {
+                Entry::Occupied(mut occ) => {
+                    occ.get_mut().image = ImageOrSvg::Svg(svg);
+                    occ.get_mut().dirty = true;
+                    occ.get_mut().retention_policy = policy;
+                }
+                Entry::Vacant(vac) => {
+                    vac.insert(StoredImage {
+                        image: ImageOrSvg::Svg(svg),
+                        retention_policy: policy,
+                        used: true,
+                        dirty: false,
+                        observers: HashSet::new(),
+                    });
+                }
+            }
+            let observers: Vec<Entity> = self
+                .resource_manager
+                .images
+                .get(&id)
+                .map(|img| img.observers.iter().copied().collect())
+                .unwrap_or_default();
+            for observer in observers {
+                self.style.needs_relayout(observer);
+            }
+            self.style.needs_relayout(self.current);
+
+            if let Some(proxy) = self.event_proxy.as_ref() {
+                let mut cxp =
+                    ContextProxy { current: self.current, event_proxy: Some(proxy.make_clone()) };
+                let _ = cxp.redraw();
+            }
+
+            Some(id)
+        } else {
+            None
         }
     }
 

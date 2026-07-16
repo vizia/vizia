@@ -217,6 +217,8 @@ impl ResourceLoader for UrlResourceLoader {
                                     ) {
                                         cx.load_image(name, image, policy);
                                         true
+                                    } else if is_likely_svg(&path_for_result, &data) {
+                                        cx.load_svg(name, &data, policy).is_some()
                                     } else {
                                         false
                                     }

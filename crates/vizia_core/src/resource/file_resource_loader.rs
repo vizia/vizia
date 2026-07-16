@@ -170,18 +170,18 @@ impl ResourceLoader for FileResourceLoader {
                     .on_result(move |result, proxy| {
                         use crate::context::TaskResult;
                         if let TaskResult::Completed(data) = result {
-                            let loaded = match proxy.load_image_encoded(req_name.clone(), &data, policy)
-                            {
-                                Ok(true) => true,
-                                Ok(false) => {
-                                    if is_likely_svg(&req_path, &data) {
-                                        proxy.load_svg(req_name.clone(), &data, policy).is_ok()
-                                    } else {
-                                        false
+                            let loaded =
+                                match proxy.load_image_encoded(req_name.clone(), &data, policy) {
+                                    Ok(true) => true,
+                                    Ok(false) => {
+                                        if is_likely_svg(&req_path, &data) {
+                                            proxy.load_svg(req_name.clone(), &data, policy).is_ok()
+                                        } else {
+                                            false
+                                        }
                                     }
-                                }
-                                Err(_) => false,
-                            };
+                                    Err(_) => false,
+                                };
 
                             let _ = proxy.update_resource_status(
                                 req_path.clone(),
