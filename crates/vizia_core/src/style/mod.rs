@@ -1886,11 +1886,8 @@ impl Style {
                         }
 
                         other => {
-                            if let Some(length) = parse_shadow_length(other) {
-                                lengths.push(length);
-                            } else {
-                                return None;
-                            }
+                            let length = parse_shadow_length(other)?;
+                            lengths.push(length);
                         }
                     }
                 }

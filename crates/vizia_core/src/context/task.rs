@@ -465,8 +465,7 @@ where
     let cancellation = TaskCancellation::new(cancelled.clone());
     let worker_cancelled = cancelled.clone();
 
-    let named_task_key =
-        task_entity.and_then(|entity| options.task_name_hash.map(|name_hash| (entity, name_hash)));
+    let named_task_key = task_entity.zip(options.task_name_hash);
 
     register_named_task(&named_tasks, named_task_key, &cancelled);
 

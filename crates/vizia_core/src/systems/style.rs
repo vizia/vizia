@@ -1252,35 +1252,6 @@ fn sort_matched_rules(matched_rules: &mut [(Rule, u32)]) {
     });
 }
 
-#[cfg(test)]
-mod tests {
-    use super::sort_matched_rules;
-    use crate::style::Rule;
-    use vizia_id::GenerationalId;
-
-    #[test]
-    fn sort_matched_rules_uses_rule_order_for_specificity_ties() {
-        let mut matched_rules = vec![
-            (Rule::new(1, 0), 10),
-            (Rule::new(3, 0), 10),
-            (Rule::new(2, 0), 11),
-            (Rule::new(4, 0), 10),
-        ];
-
-        sort_matched_rules(&mut matched_rules);
-
-        assert_eq!(
-            matched_rules,
-            vec![
-                (Rule::new(2, 0), 11),
-                (Rule::new(4, 0), 10),
-                (Rule::new(3, 0), 10),
-                (Rule::new(1, 0), 10),
-            ]
-        );
-    }
-}
-
 /// Compute a list of matching style rules for a given entity.
 pub(crate) fn compute_matched_rules(
     entity: Entity,
@@ -1634,4 +1605,33 @@ fn invalidate_focus_on_hidden(cx: &mut Context) {
         focus_backward(&cx.tree, &cx.style, focused, lock_focus_to).unwrap_or(Entity::root());
 
     cx.with_current(new_target, |cx| cx.focus());
+}
+
+#[cfg(test)]
+mod tests {
+    use super::sort_matched_rules;
+    use crate::style::Rule;
+    use vizia_id::GenerationalId;
+
+    #[test]
+    fn sort_matched_rules_uses_rule_order_for_specificity_ties() {
+        let mut matched_rules = vec![
+            (Rule::new(1, 0), 10),
+            (Rule::new(3, 0), 10),
+            (Rule::new(2, 0), 11),
+            (Rule::new(4, 0), 10),
+        ];
+
+        sort_matched_rules(&mut matched_rules);
+
+        assert_eq!(
+            matched_rules,
+            vec![
+                (Rule::new(2, 0), 11),
+                (Rule::new(4, 0), 10),
+                (Rule::new(3, 0), 10),
+                (Rule::new(1, 0), 10),
+            ]
+        );
+    }
 }
