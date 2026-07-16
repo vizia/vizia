@@ -1886,10 +1886,8 @@ impl Style {
                         }
 
                         other => {
-                            {
-                                let length = parse_shadow_length(other)?;
-                                lengths.push(length);
-                            }
+                            let length = parse_shadow_length(other)?;
+                            lengths.push(length);
                         }
                     }
                 }
