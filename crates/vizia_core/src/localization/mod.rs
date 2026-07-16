@@ -426,7 +426,7 @@ impl Localized {
                     requested_locale: requested_locale.to_string(),
                 });
             }
-            (self.map)(&format!("{}.{}", &self.key, attr_name))
+            (self.map)(&format!("{}.{}", self.key, attr_name))
         } else {
             cx.resource_manager.report_localization_issue(LocalizationIssue::MissingMessage {
                 key: self.key.clone(),
