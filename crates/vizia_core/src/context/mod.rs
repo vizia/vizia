@@ -868,17 +868,17 @@ impl Context {
 
     /// Modifies the state of an existing timer with the provided `Timer` id.
     pub fn modify_timer(&mut self, timer: Timer, timer_function: impl Fn(&mut TimerState)) {
-        while let Some(next_timer_state) = self.running_timers.peek() {
-            if next_timer_state.id == timer {
-                let mut timer_state = self.running_timers.pop().unwrap();
+        let mut running_timers = std::mem::take(&mut self.running_timers).into_vec();
 
-                (timer_function)(&mut timer_state);
-
-                self.running_timers.push(timer_state);
-
-                return;
-            }
+        if let Some(timer_state) =
+            running_timers.iter_mut().find(|timer_state| timer_state.id == timer)
+        {
+            (timer_function)(timer_state);
+            self.running_timers = running_timers.into();
+            return;
         }
+
+        self.running_timers = running_timers.into();
 
         for pending_timer in self.timers.iter_mut() {
             if pending_timer.id == timer {
