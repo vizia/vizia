@@ -766,7 +766,7 @@ impl Context {
     ///
     /// `name` is the key used to reference the image from CSS and [`Image::new`].
     /// `path` can be a filesystem path, `file://` URL, or HTTP(S) URL (with `url-loader`).
-    pub fn add_image_encoded(
+    pub fn add_image(
         &mut self,
         name: impl Into<String>,
         path: impl Into<String>,

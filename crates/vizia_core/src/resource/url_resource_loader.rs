@@ -288,7 +288,12 @@ impl ResourceLoader for UrlResourceLoader {
                                         LoadingStatus::Error,
                                     );
                                 }
-                                _ => {}
+                                _ => {
+                                    let _ = proxy.update_resource_status(
+                                        path_for_result,
+                                        LoadingStatus::Error,
+                                    );
+                                }
                             }
                         }),
                     );
@@ -358,7 +363,12 @@ impl ResourceLoader for UrlResourceLoader {
                                         LoadingStatus::Error,
                                     );
                                 }
-                                _ => {}
+                                _ => {
+                                    let _ = proxy.update_resource_status(
+                                        path_for_result,
+                                        LoadingStatus::Error,
+                                    );
+                                }
                             }
                         }),
                     );
@@ -452,7 +462,12 @@ impl ResourceLoader for UrlResourceLoader {
                                         LoadingStatus::Error,
                                     );
                                 }
-                                _ => {}
+                                _ => {
+                                    let _ = proxy.update_resource_status(
+                                        path_for_result.clone(),
+                                        LoadingStatus::Error,
+                                    );
+                                }
                             }
                         }),
                     );

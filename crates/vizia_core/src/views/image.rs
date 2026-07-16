@@ -12,14 +12,18 @@ impl Image {
     /// Creates a new [Image] view.
     ///
     /// The `img` parameter can be a static string or a reactive signal of image paths/URLs.
-    pub fn new<T: ToString>(cx: &mut Context, img: impl Res<T>) -> Handle<'_, Self> {
-        let img = img.get_value(cx);
-        let path = img.to_string();
-        let img_url = BackgroundImage::Url(Url { url: path.clone().into() });
+    pub fn new<T>(cx: &mut Context, img: impl Res<T> + Clone + 'static) -> Handle<'_, Self>
+    where
+        T: ToString + Clone + 'static,
+    {
+        let img = img.to_signal(cx).map(|img| {
+            let path = img.to_string();
+            BackgroundImage::Url(Url { url: path.into() })
+        });
 
         let handle = Self {}.build(cx, |_| {});
 
-        handle.background_image(img_url)
+        handle.background_image(img)
     }
 }
 

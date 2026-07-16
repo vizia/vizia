@@ -8,7 +8,7 @@ use vizia::{
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        cx.add_image_encoded(
+        cx.add_image(
             "sample-hut",
             "examples/resources/images/sample-hut-400x300.png",
             ImageRetentionPolicy::DropWhenNoObservers,

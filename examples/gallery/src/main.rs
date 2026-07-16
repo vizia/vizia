@@ -104,7 +104,7 @@ fn main() -> Result<(), ApplicationError> {
                     .map(|image| image.url.clone())
                     .unwrap_or_else(|| format!("https://picsum.photos/id/{}", id.0));
 
-                cx.add_image_encoded(
+                cx.add_image(
                     format!("original_{}", id.0),
                     format!("{base_url}/1920/1200"),
                     ImageRetentionPolicy::DropWhenNoObservers,
@@ -125,7 +125,7 @@ fn main() -> Result<(), ApplicationError> {
                                 .get(&id)
                                 .map(|image| image.url.clone())
                                 .unwrap_or_else(|| format!("https://picsum.photos/id/{}", id.0));
-                            let status = cx.add_image_encoded(
+                            let status = cx.add_image(
                                 image_name.clone(),
                                 format!("{base_url}/640/410"),
                                 ImageRetentionPolicy::DropWhenNoObservers,
