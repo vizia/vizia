@@ -11,6 +11,23 @@ fn is_http_url(path: &str) -> bool {
     path.starts_with("http://") || path.starts_with("https://")
 }
 
+#[cfg(feature = "tokio")]
+fn is_likely_svg(path: &str, data: &[u8]) -> bool {
+    if path.to_ascii_lowercase().ends_with(".svg") {
+        return true;
+    }
+
+    let trimmed = data
+        .strip_prefix(&[0xEF, 0xBB, 0xBF])
+        .unwrap_or(data)
+        .iter()
+        .copied()
+        .skip_while(|b| b.is_ascii_whitespace())
+        .collect::<Vec<u8>>();
+
+    trimmed.starts_with(b"<svg") || trimmed.starts_with(b"<?xml")
+}
+
 #[cfg(not(feature = "tokio"))]
 impl ResourceLoader for FileResourceLoader {
     fn load(
@@ -153,12 +170,23 @@ impl ResourceLoader for FileResourceLoader {
                     .on_result(move |result, proxy| {
                         use crate::context::TaskResult;
                         if let TaskResult::Completed(data) = result {
-                            let status =
-                                match proxy.load_image_encoded(req_name.clone(), &data, policy) {
-                                    Ok(true) => LoadingStatus::Loaded,
-                                    _ => LoadingStatus::Error,
-                                };
-                            let _ = proxy.update_resource_status(req_path.clone(), status);
+                            let loaded = match proxy.load_image_encoded(req_name.clone(), &data, policy)
+                            {
+                                Ok(true) => true,
+                                Ok(false) => {
+                                    if is_likely_svg(&req_path, &data) {
+                                        proxy.load_svg(req_name.clone(), &data, policy).is_ok()
+                                    } else {
+                                        false
+                                    }
+                                }
+                                Err(_) => false,
+                            };
+
+                            let _ = proxy.update_resource_status(
+                                req_path.clone(),
+                                if loaded { LoadingStatus::Loaded } else { LoadingStatus::Error },
+                            );
                         } else {
                             let _ = proxy
                                 .update_resource_status(req_path.clone(), LoadingStatus::Error);
