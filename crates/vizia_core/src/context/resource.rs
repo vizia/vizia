@@ -170,10 +170,9 @@ impl<'a> ResourceContext<'a> {
             id
         };
 
-        if let Ok(svg) = skia_safe::svg::Dom::from_bytes(
-            data,
-            self.text_context.default_font_manager.clone(),
-        ) {
+        if let Ok(svg) =
+            skia_safe::svg::Dom::from_bytes(data, self.text_context.default_font_manager.clone())
+        {
             match self.resource_manager.images.entry(id) {
                 Entry::Occupied(mut occ) => {
                     occ.get_mut().image = ImageOrSvg::Svg(svg);

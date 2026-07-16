@@ -361,6 +361,7 @@ pub struct ResourceManager {
     pub(crate) image_id_manager: IdManager<ImageId>,
     pub(crate) images: HashMap<ImageId, StoredImage>,
     pub(crate) image_ids: HashMap<String, ImageId>,
+    pub(crate) image_sources: HashMap<String, String>,
 
     pub translations: HashMap<LanguageIdentifier, FluentBundle<FluentResource>>,
 
@@ -398,6 +399,7 @@ impl ResourceManager {
             image_id_manager,
             images,
             image_ids: HashMap::new(),
+            image_sources: HashMap::new(),
             styles: Vec::new(),
 
             translations: HashMap::from([(
@@ -410,6 +412,16 @@ impl ResourceManager {
             pending_requests: Vec::new(),
             loading_status: HashMap::new(),
         }
+    }
+
+    /// Registers a stable image key to source path/URL mapping.
+    pub(crate) fn register_image_source(&mut self, name: String, path: String) {
+        self.image_sources.insert(name, path);
+    }
+
+    /// Resolves an image key to its source path/URL when registered.
+    pub(crate) fn resolve_image_source<'a>(&'a self, name_or_path: &'a str) -> &'a str {
+        self.image_sources.get(name_or_path).map(String::as_str).unwrap_or(name_or_path)
     }
 
     pub(crate) fn report_localization_issue(&self, issue: LocalizationIssue) {

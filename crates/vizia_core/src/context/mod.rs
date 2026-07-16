@@ -777,6 +777,8 @@ impl Context {
         let path = path.into();
         let options = options.unwrap_or_default();
 
+        self.resource_manager.register_image_source(name.clone(), path.clone());
+
         self.request_resource_if_not_loaded(
             path.clone(),
             crate::resource::ResourceRequest::Image(crate::resource::ImageRequest {
