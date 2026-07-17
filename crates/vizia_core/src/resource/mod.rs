@@ -556,16 +556,29 @@ impl ResourceManager {
         for id in rem {
             self.images.remove(&id);
 
-            // Clear path mappings and reactive loading-status entries for evicted images.
-            // Otherwise a stale Loaded/Error status can prevent future reloads for the same path.
-            let removed_paths = self
+            // Collect all name→id mappings that point to this id.
+            let removed_names = self
                 .image_ids
                 .iter()
-                .filter_map(|(path, img)| (*img == id).then_some(path.clone()))
+                .filter_map(|(name, img_id)| (*img_id == id).then_some(name.clone()))
                 .collect::<Vec<_>>();
-            for path in removed_paths {
-                self.image_ids.remove(&path);
-                self.loading_status.remove(&path);
+
+            // Remove each name from image_ids and image_sources, recording the resolved
+            // source paths (image_sources maps name→path; for direct-path references the
+            // name IS the path, so fall back to the name itself).
+            let mut source_paths = Vec::new();
+            for name in removed_names {
+                self.image_ids.remove(&name);
+                let source_path = self.image_sources.remove(&name).unwrap_or(name);
+                source_paths.push(source_path);
+            }
+
+            // Clear loading_status for each source path, but only when no remaining
+            // image_sources entry still references it (another name may alias the same path).
+            for source_path in source_paths {
+                if !self.image_sources.values().any(|p| p == &source_path) {
+                    self.loading_status.remove(&source_path);
+                }
             }
 
             self.image_id_manager.destroy(id);
@@ -742,18 +755,22 @@ mod tests {
         let mut manager = ResourceManager::new();
 
         let id = manager.image_id_manager.create();
+        let name = "my-image".to_string();
         let path = "test://evicted-image".to_string();
 
         manager.images.insert(
             id,
             stored_image(ImageRetentionPolicy::DropWhenNoObservers, false, HashSet::new()),
         );
-        manager.image_ids.insert(path.clone(), id);
+        // image_ids is keyed by name; image_sources maps name → source path.
+        manager.image_ids.insert(name.clone(), id);
+        manager.image_sources.insert(name.clone(), path.clone());
         manager.set_resource_status(path.clone(), LoadingStatus::Loaded);
 
         manager.evict_unused_images();
 
-        assert!(!manager.image_ids.contains_key(&path));
+        assert!(!manager.image_ids.contains_key(&name));
+        assert!(!manager.image_sources.contains_key(&name));
         assert_eq!(manager.resource_status(&path), LoadingStatus::NotLoaded);
     }
 }
