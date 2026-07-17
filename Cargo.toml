@@ -57,11 +57,11 @@ vizia_style = { version = "0.4.0", path = "crates/vizia_style" }
 vizia_window = { version = "0.4.0", path = "crates/vizia_window" }
 vizia_reactive = { version = "0.4.0", path = "crates/vizia_reactive" }
 accesskit = "0.24"
-accesskit_winit = "0.33"
+accesskit_winit = "0.33.2"
 baseview = { git = "https://github.com/vizia/baseview.git", rev = "70e4e05ba1de837970b5b5457a99893aae0b6cfa", features = ["opengl"] }
-bitflags = "2.13"
+bitflags = "2.13.1"
 chrono = "0.4"
-comrak = { version = "0.53", default-features = false }
+comrak = { version = "0.54", default-features = false }
 copypasta = { version = "0.10", default-features = false }
 cssparser = "0.37"
 cssparser-color = "0.5"
@@ -77,8 +77,8 @@ hashbrown = "0.17"
 indexmap = "2.13"
 keyboard-types = { version = "0.7", default-features = false }
 log = "0.4"
-morphorm = { git = "https://github.com/vizia/morphorm.git", rev = "ff08ec25b79e1bd6c638270b36317d092da861e8" }
-open = "5.3"
+morphorm = "0.9"
+open = "5.4"
 parking_lot = "0.12"
 raw-window-handle = "0.5"
 rayon = "1.11"
@@ -87,7 +87,7 @@ selectors = "0.39"
 serde = { version = "1.0", features = ["derive"] }
 skia-safe = { version = "0.99", features = ["gl", "textlayout", "svg"] }
 sys-locale = "0.3"
-tokio = { version = "1.52.3", features = ["rt-multi-thread", "time"] }
+tokio = { version = "1.53", features = ["rt-multi-thread", "time"] }
 unic-langid = { version = "0.9.6", features = ["macros"] }
 unicode-segmentation = "1.12"
 unicode-bidi = "0.3"
