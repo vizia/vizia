@@ -12,7 +12,7 @@ impl Image {
     /// Creates a new [Image] view.
     ///
     /// The `img` parameter can be a static string or a reactive signal of image paths/URLs.
-    pub fn new<T>(cx: &mut Context, img: impl Res<T> + Clone + 'static) -> Handle<'_, Self>
+    pub fn new<T>(cx: &mut Context, img: impl Res<T> + 'static) -> Handle<'_, Self>
     where
         T: ToString + Clone + 'static,
     {
