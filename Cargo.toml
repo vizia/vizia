@@ -83,7 +83,7 @@ open = "5.4"
 parking_lot = "0.12"
 raw-window-handle = "0.6"
 rayon = "1.12"
-reqwest = { version = "0.13", features = ["json", "query"] }
+reqwest = { version = "0.13" }
 selectors = "0.39"
 serde = { version = "1.0", features = ["derive"] }
 skia-safe = { version = "0.99", features = ["gl", "textlayout", "svg"] }

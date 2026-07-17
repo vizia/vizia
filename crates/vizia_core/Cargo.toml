@@ -17,7 +17,7 @@ markdown = ["comrak", "dep:open"]
 rayon = ["dep:rayon", "dep:dashmap", "hashbrown/rayon"]
 serde = ["vizia_reactive/serde"]
 tokio = ["dep:tokio"]
-url-loader = ["dep:reqwest"]
+url-loader = ["dep:reqwest", "reqwest/blocking"]
 
 [dependencies]
 vizia_storage.workspace = true
