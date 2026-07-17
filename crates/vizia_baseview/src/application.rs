@@ -567,10 +567,8 @@ impl ApplicationRunner {
     }
 
     pub fn handle_resized(&mut self, new_size: baseview::WindowSize) {
-        let context = self
-            .window_context
-            .gl_context()
-            .expect("Window was created without OpenGL support");
+        let context =
+            self.window_context.gl_context().expect("Window was created without OpenGL support");
         unsafe { context.make_current() };
 
         let fb_info = {
