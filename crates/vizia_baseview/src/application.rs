@@ -405,10 +405,8 @@ impl ApplicationRunner {
         //     // self.event_manager.flush_events(cx.context());
         // }
 
-        let context = self
-            .window_context
-            .gl_context()
-            .expect("Window was created without OpenGL support");
+        let context =
+            self.window_context.gl_context().expect("Window was created without OpenGL support");
         unsafe { context.make_current() };
         self.cx.process_style_updates();
         unsafe { context.make_not_current() };

@@ -91,9 +91,8 @@ impl ViziaWindow {
 
         let mut surface = create_surface((initial_width, initial_height), fb_info, &mut gr_context);
 
-        let dirty_surface = surface
-            .new_surface_with_dimensions((initial_width, initial_height))
-            .unwrap();
+        let dirty_surface =
+            surface.new_surface_with_dimensions((initial_width, initial_height)).unwrap();
 
         // Scaling is a combination of the window's current scale factor (system-provided unless
         // explicitly overridden by the hosting application) and a custom user scale factor.
@@ -208,29 +207,26 @@ impl ViziaWindow {
             .with_scale_policy(scale_policy)
             .with_gl_config(GlConfig { vsync: true, ..GlConfig::default() });
 
-        Window::open_blocking(
-            window_settings,
-            move |window: WindowContext| -> ViziaWindow {
-                Runtime::init_on_ui_thread();
-                let mut cx = Context::new();
+        Window::open_blocking(window_settings, move |window: WindowContext| -> ViziaWindow {
+            Runtime::init_on_ui_thread();
+            let mut cx = Context::new();
 
-                cx.ignore_default_theme = ignore_default_theme;
-                cx.add_built_in_styles();
+            cx.ignore_default_theme = ignore_default_theme;
+            cx.add_built_in_styles();
 
-                let mut cx = BackendContext::new(cx);
+            let mut cx = BackendContext::new(cx);
 
-                cx.set_event_proxy(Box::new(BaseviewProxy));
-                ViziaWindow::new(
-                    cx,
-                    win_desc,
-                    scale_policy,
-                    window,
-                    Some(Box::new(app)),
-                    on_idle,
-                    false, // is_parented
-                )
-            },
-        )
+            cx.set_event_proxy(Box::new(BaseviewProxy));
+            ViziaWindow::new(
+                cx,
+                win_desc,
+                scale_policy,
+                window,
+                Some(Box::new(app)),
+                on_idle,
+                false, // is_parented
+            )
+        })
     }
 }
 
@@ -278,7 +274,8 @@ impl WindowHandler for ViziaWindow {
         // does not forward the platform event further — otherwise the host
         // (e.g. a DAW) also processes the same keystroke, producing double
         // handling and a system beep on macOS.
-        let captured = matches!(event, Event::Keyboard(_)) && application.focused_element() == Some("textbox");
+        let captured =
+            matches!(event, Event::Keyboard(_)) && application.focused_element() == Some("textbox");
 
         application.handle_event(event);
 
