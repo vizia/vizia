@@ -60,12 +60,12 @@ impl ResourceLoader for FileResourceLoader {
                             .set_resource_status(req.path.clone(), LoadingStatus::Loaded);
                         return true;
                     }
-                    if is_likely_svg(&req.path, &data) {
-                        if cx.load_svg(req.name.clone(), &data, req.policy).is_some() {
-                            cx.resource_manager
-                                .set_resource_status(req.path.clone(), LoadingStatus::Loaded);
-                            return true;
-                        }
+                    if is_likely_svg(&req.path, &data)
+                        && cx.load_svg(req.name.clone(), &data, req.policy).is_some()
+                    {
+                        cx.resource_manager
+                            .set_resource_status(req.path.clone(), LoadingStatus::Loaded);
+                        return true;
                     }
                 }
 
