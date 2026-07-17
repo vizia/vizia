@@ -163,7 +163,7 @@ impl<'a> ResourceContext<'a> {
         policy: ImageRetentionPolicy,
     ) -> Option<ImageId> {
         let id = if let Some(image_id) = self.resource_manager.image_ids.get(&path) {
-            return Some(*image_id);
+            *image_id
         } else {
             let id = self.resource_manager.image_id_manager.create();
             self.resource_manager.image_ids.insert(path.clone(), id);
