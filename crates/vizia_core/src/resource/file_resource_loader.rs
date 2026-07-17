@@ -65,7 +65,7 @@ impl ResourceLoader for FileResourceLoader {
 
                 // Mark as error if loading failed
                 cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Error);
-                false
+                true
             }
             ResourceRequest::Font(req) => {
                 if is_http_url(&req.path) {
@@ -82,11 +82,12 @@ impl ResourceLoader for FileResourceLoader {
                 cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Loading);
 
                 if let Ok(data) = std::fs::read(&path) {
-                    return cx.load_font(req.path.clone(), &data);
+                    cx.load_font(req.path.clone(), &data);
+                    return true;
                 }
 
                 cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Error);
-                false
+                true
             }
             ResourceRequest::Translation(req) => {
                 if is_http_url(&req.path) {
@@ -103,12 +104,13 @@ impl ResourceLoader for FileResourceLoader {
 
                 if let Ok(data) = std::fs::read(&path) {
                     if let Ok(ftl) = String::from_utf8(data) {
-                        return cx.load_translation(req.lang, req.path.clone(), &ftl);
+                        cx.load_translation(req.lang, req.path.clone(), &ftl);
+                        return true;
                     }
                 }
 
                 cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Error);
-                false
+                true
             }
         }
     }
@@ -155,7 +157,7 @@ impl ResourceLoader for FileResourceLoader {
                     }
 
                     cx.resource_manager.set_resource_status(req_path, LoadingStatus::Error);
-                    return false;
+                    return true;
                 }
 
                 // Mark as loading before spawning task
@@ -215,11 +217,12 @@ impl ResourceLoader for FileResourceLoader {
                         .set_resource_status(req_path.clone(), LoadingStatus::Loading);
 
                     if let Ok(data) = std::fs::read(&path) {
-                        return cx.load_font(req_path, &data);
+                        cx.load_font(req_path, &data);
+                        return true;
                     }
 
                     cx.resource_manager.set_resource_status(req_path, LoadingStatus::Error);
-                    return false;
+                    return true;
                 }
 
                 cx.resource_manager.set_resource_status(req_path.clone(), LoadingStatus::Loading);
@@ -266,12 +269,13 @@ impl ResourceLoader for FileResourceLoader {
 
                     if let Ok(data) = std::fs::read(&path) {
                         if let Ok(ftl) = String::from_utf8(data) {
-                            return cx.load_translation(lang, req_path, &ftl);
+                            cx.load_translation(lang, req_path, &ftl);
+                            return true;
                         }
                     }
 
                     cx.resource_manager.set_resource_status(req_path, LoadingStatus::Error);
-                    return false;
+                    return true;
                 }
 
                 cx.resource_manager.set_resource_status(req_path.clone(), LoadingStatus::Loading);

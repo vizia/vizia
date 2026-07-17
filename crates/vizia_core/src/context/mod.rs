@@ -782,14 +782,14 @@ impl Context {
         // If the path is already loaded and load_image ran before this add_image call,
         // immediately alias the existing ImageId to the new name so it resolves without
         // waiting for another load cycle.
-        if self.resource_manager.resource_status(&path) != crate::resource::LoadingStatus::NotLoaded {
+        if self.resource_manager.resource_status(&path) != crate::resource::LoadingStatus::NotLoaded
+        {
             let existing_id = self
                 .resource_manager
                 .image_sources
                 .iter()
                 .find(|(alias, alias_path)| {
-                    *alias_path == &path
-                        && self.resource_manager.image_ids.contains_key(*alias)
+                    *alias_path == &path && self.resource_manager.image_ids.contains_key(*alias)
                 })
                 .and_then(|(alias, _)| self.resource_manager.image_ids.get(alias).copied());
             if let Some(id) = existing_id {
