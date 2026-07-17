@@ -668,9 +668,17 @@ impl ApplicationHandler<UserEvent> for Application {
                     },
                 };
 
-                let key = match event.logical_key {
-                    winit::keyboard::Key::Named(named_key) => winit_key_to_key(named_key),
-                    _ => None,
+                let key = match &event.logical_key {
+                    winit::keyboard::Key::Named(named_key) => winit_key_to_key(*named_key),
+                    winit::keyboard::Key::Character(character) => {
+                        Some(vizia_input::Key::Character(character.to_string()))
+                    }
+                    winit::keyboard::Key::Unidentified(_) => {
+                        Some(vizia_input::Key::Named(vizia_input::NamedKey::Unidentified))
+                    }
+                    winit::keyboard::Key::Dead(_) => {
+                        Some(vizia_input::Key::Named(vizia_input::NamedKey::Dead))
+                    }
                 };
 
                 if event.state == ElementState::Pressed {
