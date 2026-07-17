@@ -1,6 +1,4 @@
 use raw_window_handle::{HandleError, HasWindowHandle, RawWindowHandle, WindowHandle};
-use std::ptr::NonNull;
-
 pub struct ParentWindow(pub *mut ::std::ffi::c_void);
 
 #[cfg(target_os = "macos")]
@@ -8,7 +6,7 @@ impl HasWindowHandle for ParentWindow {
     fn window_handle(&self) -> Result<WindowHandle<'_>, HandleError> {
         use raw_window_handle::AppKitWindowHandle;
 
-        let ns_view = NonNull::new(self.0).ok_or(HandleError::Unavailable)?;
+        let ns_view = std::ptr::NonNull::new(self.0).ok_or(HandleError::Unavailable)?;
         let handle = RawWindowHandle::AppKit(AppKitWindowHandle::new(ns_view));
 
         Ok(unsafe { WindowHandle::borrow_raw(handle) })
