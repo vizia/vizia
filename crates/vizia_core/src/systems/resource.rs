@@ -22,6 +22,15 @@ fn request_style_images(cx: &mut ResourceContext) {
         if let Some(background_images) = cx.style.background_image.get(entity).cloned() {
             for image in background_images.iter() {
                 if let ImageOrGradient::Image(name_or_path) = image {
+                    // Borrow resource_manager immutably to check status without allocating.
+                    let already_queued = {
+                        let resolved = cx.resource_manager.resolve_image_source(name_or_path);
+                        cx.resource_manager.resource_status(resolved) != LoadingStatus::NotLoaded
+                    };
+                    if already_queued {
+                        continue;
+                    }
+                    // Only allocate when we actually need to enqueue a request.
                     let source_path =
                         cx.resource_manager.resolve_image_source(name_or_path).to_string();
                     request_image_if_not_loaded(cx, name_or_path, &source_path);
