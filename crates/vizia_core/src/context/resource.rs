@@ -117,6 +117,26 @@ impl<'a> ResourceContext<'a> {
             id
         };
 
+        // Register the same ImageId under every name in image_sources that resolves to the same
+        // source path as `path`. This ensures that multiple names registered via `add_image` with
+        // the same physical path all receive an image_ids entry when loading completes, even though
+        // only one ImageRequest was enqueued (the loader is called once, with the first name).
+        if let Some(source_path) = self.resource_manager.image_sources.get(&path).cloned() {
+            let aliases: Vec<String> = self
+                .resource_manager
+                .image_sources
+                .iter()
+                .filter(|(alias, alias_path)| {
+                    *alias_path == &source_path
+                        && !self.resource_manager.image_ids.contains_key(*alias)
+                })
+                .map(|(alias, _)| alias.clone())
+                .collect();
+            for alias in aliases {
+                self.resource_manager.image_ids.insert(alias, id);
+            }
+        }
+
         match self.resource_manager.images.entry(id) {
             Entry::Occupied(mut occ) => {
                 occ.get_mut().image = ImageOrSvg::Image(image);
@@ -169,6 +189,24 @@ impl<'a> ResourceContext<'a> {
             self.resource_manager.image_ids.insert(path.clone(), id);
             id
         };
+
+        // Back-fill aliases: any other name registered via add_image that resolves to the same
+        // source path should share this ImageId (same logic as in load_image).
+        if let Some(source_path) = self.resource_manager.image_sources.get(&path).cloned() {
+            let aliases: Vec<String> = self
+                .resource_manager
+                .image_sources
+                .iter()
+                .filter(|(alias, alias_path)| {
+                    *alias_path == &source_path
+                        && !self.resource_manager.image_ids.contains_key(*alias)
+                })
+                .map(|(alias, _)| alias.clone())
+                .collect();
+            for alias in aliases {
+                self.resource_manager.image_ids.insert(alias, id);
+            }
+        }
 
         if let Ok(svg) =
             skia_safe::svg::Dom::from_bytes(data, self.text_context.default_font_manager.clone())
