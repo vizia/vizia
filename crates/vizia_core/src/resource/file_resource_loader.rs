@@ -11,7 +11,6 @@ fn is_http_url(path: &str) -> bool {
     path.starts_with("http://") || path.starts_with("https://")
 }
 
-#[cfg(feature = "tokio")]
 fn is_likely_svg(path: &str, data: &[u8]) -> bool {
     if path.to_ascii_lowercase().ends_with(".svg") {
         return true;
@@ -60,6 +59,13 @@ impl ResourceLoader for FileResourceLoader {
                         cx.resource_manager
                             .set_resource_status(req.path.clone(), LoadingStatus::Loaded);
                         return true;
+                    }
+                    if is_likely_svg(&req.path, &data) {
+                        if cx.load_svg(req.name.clone(), &data, req.policy).is_some() {
+                            cx.resource_manager
+                                .set_resource_status(req.path.clone(), LoadingStatus::Loaded);
+                            return true;
+                        }
                     }
                 }
 
@@ -153,6 +159,13 @@ impl ResourceLoader for FileResourceLoader {
                             cx.resource_manager
                                 .set_resource_status(req_path, LoadingStatus::Loaded);
                             return true;
+                        }
+                        if is_likely_svg(&req_path, &data) {
+                            if cx.load_svg(req_name, &data, policy).is_some() {
+                                cx.resource_manager
+                                    .set_resource_status(req_path, LoadingStatus::Loaded);
+                                return true;
+                            }
                         }
                     }
 
