@@ -8,10 +8,9 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-vizia = { workspace = true, features = ["tokio"] }
+vizia = { workspace = true, features = ["tokio", "url-loader"] }
 serde.workspace = true
-reqwest.workspace = true
-bytes = "1"
+reqwest = { workspace = true, features = ["json", "query"] }
 
 [lints]
 workspace = true

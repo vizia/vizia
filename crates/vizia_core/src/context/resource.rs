@@ -1,14 +1,22 @@
 use hashbrown::{HashSet, hash_map::Entry};
+use unic_langid::LanguageIdentifier;
 
 use vizia_storage::Tree;
 
 use crate::{
     entity::Entity,
-    resource::{ImageOrSvg, ImageRetentionPolicy, ResourceManager, StoredImage},
+    resource::{
+        ImageId, ImageOrSvg, ImageRetentionPolicy, LoadingStatus, ResourceManager, ResourceRequest,
+        StoredImage,
+    },
     style::Style,
+    text::TextContext,
 };
 
 use super::{Context, ContextProxy, EventProxy};
+
+#[cfg(feature = "tokio")]
+use std::sync::Arc;
 
 /// A context used when loading images.
 pub struct ResourceContext<'a> {
@@ -16,7 +24,12 @@ pub struct ResourceContext<'a> {
     pub(crate) event_proxy: &'a Option<Box<dyn EventProxy>>,
     pub(crate) resource_manager: &'a mut ResourceManager,
     pub(crate) style: &'a mut Style,
+    pub(crate) text_context: &'a mut TextContext,
     pub(crate) tree: &'a Tree<Entity>,
+    #[cfg(feature = "tokio")]
+    pub(crate) task_runtime: Arc<tokio::runtime::Runtime>,
+    #[cfg(feature = "tokio")]
+    pub(crate) named_tasks: crate::context::NamedTaskMap,
 }
 
 impl<'a> ResourceContext<'a> {
@@ -27,7 +40,12 @@ impl<'a> ResourceContext<'a> {
             event_proxy: &cx.event_proxy,
             resource_manager: &mut cx.resource_manager,
             style: &mut cx.style,
+            text_context: &mut cx.text_context,
             tree: &cx.tree,
+            #[cfg(feature = "tokio")]
+            task_runtime: cx.task_runtime.clone(),
+            #[cfg(feature = "tokio")]
+            named_tasks: cx.named_tasks.clone(),
         }
     }
 
@@ -44,6 +62,46 @@ impl<'a> ResourceContext<'a> {
         std::thread::spawn(move || target(&mut cxp));
     }
 
+    /// Submits a configured `TaskBuilder` for asynchronous execution (requires `tokio` feature).
+    #[cfg(feature = "tokio")]
+    pub fn spawn_task<T, E>(
+        &self,
+        task: crate::context::TaskBuilder<T, E>,
+    ) -> crate::context::TaskHandle
+    where
+        T: Send + 'static,
+        E: Send + 'static,
+    {
+        task.add_to_resource_context(self)
+    }
+
+    /// Dispatches a resource request through the configured loader chain.
+    ///
+    /// Returns `true` when a loader accepts the request.
+    pub fn request_resource(
+        &mut self,
+        request: ResourceRequest,
+        options: crate::resource::ResourceLoadOptions,
+    ) -> bool {
+        // Temporarily move loaders out so each `load` call can borrow `self` mutably.
+        let mut loaders = std::mem::take(&mut self.resource_manager.resource_loaders);
+
+        for loader in &loaders {
+            if loader.load(request.clone(), options, self) {
+                // Preserve any loaders registered while handling requests.
+                loaders.append(&mut self.resource_manager.resource_loaders);
+                self.resource_manager.resource_loaders = loaders;
+                return true;
+            }
+        }
+
+        // Preserve any loaders registered while handling requests.
+        loaders.append(&mut self.resource_manager.resource_loaders);
+        self.resource_manager.resource_loaders = loaders;
+
+        false
+    }
+
     /// Loads the provided image into the resource manager.
     pub fn load_image(
         &mut self,
@@ -58,6 +116,26 @@ impl<'a> ResourceContext<'a> {
             self.resource_manager.image_ids.insert(path.clone(), id);
             id
         };
+
+        // Register the same ImageId under every name in image_sources that resolves to the same
+        // source path as `path`. This ensures that multiple names registered via `add_image` with
+        // the same physical path all receive an image_ids entry when loading completes, even though
+        // only one ImageRequest was enqueued (the loader is called once, with the first name).
+        if let Some(source_path) = self.resource_manager.image_sources.get(&path).cloned() {
+            let aliases: Vec<String> = self
+                .resource_manager
+                .image_sources
+                .iter()
+                .filter(|(alias, alias_path)| {
+                    *alias_path == &source_path
+                        && !self.resource_manager.image_ids.contains_key(*alias)
+                })
+                .map(|(alias, _)| alias.clone())
+                .collect();
+            for alias in aliases {
+                self.resource_manager.image_ids.insert(alias, id);
+            }
+        }
 
         match self.resource_manager.images.entry(id) {
             Entry::Occupied(mut occ) => {
@@ -87,5 +165,137 @@ impl<'a> ResourceContext<'a> {
             self.style.needs_relayout(observer);
         }
         self.style.needs_relayout(self.current);
+
+        // Resource loading can complete off the normal interaction path; request a redraw so
+        // newly available image content is painted immediately without waiting for external input.
+        if let Some(proxy) = self.event_proxy.as_ref() {
+            let mut cxp =
+                ContextProxy { current: self.current, event_proxy: Some(proxy.make_clone()) };
+            let _ = cxp.redraw();
+        }
+    }
+
+    /// Loads an SVG from bytes and associates it with the provided path.
+    pub fn load_svg(
+        &mut self,
+        path: String,
+        data: &[u8],
+        policy: ImageRetentionPolicy,
+    ) -> Option<ImageId> {
+        let id = if let Some(image_id) = self.resource_manager.image_ids.get(&path) {
+            *image_id
+        } else {
+            let id = self.resource_manager.image_id_manager.create();
+            self.resource_manager.image_ids.insert(path.clone(), id);
+            id
+        };
+
+        // Back-fill aliases: any other name registered via add_image that resolves to the same
+        // source path should share this ImageId (same logic as in load_image).
+        if let Some(source_path) = self.resource_manager.image_sources.get(&path).cloned() {
+            let aliases: Vec<String> = self
+                .resource_manager
+                .image_sources
+                .iter()
+                .filter(|(alias, alias_path)| {
+                    *alias_path == &source_path
+                        && !self.resource_manager.image_ids.contains_key(*alias)
+                })
+                .map(|(alias, _)| alias.clone())
+                .collect();
+            for alias in aliases {
+                self.resource_manager.image_ids.insert(alias, id);
+            }
+        }
+
+        if let Ok(svg) =
+            skia_safe::svg::Dom::from_bytes(data, self.text_context.default_font_manager.clone())
+        {
+            match self.resource_manager.images.entry(id) {
+                Entry::Occupied(mut occ) => {
+                    occ.get_mut().image = ImageOrSvg::Svg(svg);
+                    occ.get_mut().dirty = true;
+                    occ.get_mut().retention_policy = policy;
+                }
+                Entry::Vacant(vac) => {
+                    vac.insert(StoredImage {
+                        image: ImageOrSvg::Svg(svg),
+                        retention_policy: policy,
+                        used: true,
+                        dirty: false,
+                        observers: HashSet::new(),
+                    });
+                }
+            }
+            let observers: Vec<Entity> = self
+                .resource_manager
+                .images
+                .get(&id)
+                .map(|img| img.observers.iter().copied().collect())
+                .unwrap_or_default();
+            for observer in observers {
+                self.style.needs_relayout(observer);
+            }
+            self.style.needs_relayout(self.current);
+
+            if let Some(proxy) = self.event_proxy.as_ref() {
+                let mut cxp =
+                    ContextProxy { current: self.current, event_proxy: Some(proxy.make_clone()) };
+                let _ = cxp.redraw();
+            }
+
+            Some(id)
+        } else {
+            None
+        }
+    }
+
+    /// Loads a font from bytes, making it available to text layout.
+    pub fn load_font(&mut self, path: String, data: &[u8]) -> bool {
+        if let Some(typeface) = self.text_context.default_font_manager.new_from_data(data, None) {
+            self.text_context.asset_provider.register_typeface(typeface, None);
+
+            // Rebuild text for all entities so newly available fonts can be selected immediately.
+            let entities: Vec<Entity> = self.tree.into_iter().collect();
+            for entity in entities {
+                self.style.needs_text_update(entity);
+            }
+
+            self.resource_manager.set_resource_status(path, LoadingStatus::Loaded);
+
+            if let Some(proxy) = self.event_proxy.as_ref() {
+                let mut cxp =
+                    ContextProxy { current: self.current, event_proxy: Some(proxy.make_clone()) };
+                let _ = cxp.redraw();
+            }
+
+            true
+        } else {
+            self.resource_manager.set_resource_status(path, LoadingStatus::Error);
+            false
+        }
+    }
+
+    /// Loads a translation file and marks text as dirty so localized content can refresh.
+    pub fn load_translation(&mut self, lang: LanguageIdentifier, path: String, ftl: &str) -> bool {
+        if self.resource_manager.add_translation(lang, ftl.to_string()).is_ok() {
+            let entities: Vec<Entity> = self.tree.into_iter().collect();
+            for entity in entities {
+                self.style.needs_text_update(entity);
+            }
+
+            self.resource_manager.set_resource_status(path, LoadingStatus::Loaded);
+
+            if let Some(proxy) = self.event_proxy.as_ref() {
+                let mut cxp =
+                    ContextProxy { current: self.current, event_proxy: Some(proxy.make_clone()) };
+                let _ = cxp.redraw();
+            }
+
+            true
+        } else {
+            self.resource_manager.set_resource_status(path, LoadingStatus::Error);
+            false
+        }
     }
 }

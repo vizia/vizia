@@ -163,19 +163,19 @@ impl ExamplePage {
 
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
 
-        cx.add_translation(
+        cx.load_translation(
             langid!("en-US"),
             include_str!("../../resources/translations/en-US/helper.ftl"),
         )
         .expect("Failed to add en-US helper translation");
 
-        cx.add_translation(
+        cx.load_translation(
             langid!("fr"),
             include_str!("../../resources/translations/fr/helper.ftl"),
         )
         .expect("Failed to add fr helper translation");
 
-        cx.add_translation(
+        cx.load_translation(
             langid!("ar"),
             include_str!("../../resources/translations/ar/helper.ftl"),
         )
@@ -237,19 +237,19 @@ impl ExamplePage {
 
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
 
-        cx.add_translation(
+        cx.load_translation(
             langid!("en-US"),
             include_str!("../../resources/translations/en-US/helper.ftl"),
         )
         .expect("Failed to add en-US helper translation");
 
-        cx.add_translation(
+        cx.load_translation(
             langid!("fr"),
             include_str!("../../resources/translations/fr/helper.ftl"),
         )
         .expect("Failed to add fr helper translation");
 
-        cx.add_translation(
+        cx.load_translation(
             langid!("ar"),
             include_str!("../../resources/translations/ar/helper.ftl"),
         )

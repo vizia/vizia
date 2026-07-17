@@ -3,15 +3,27 @@ use vizia_style::Url;
 use crate::prelude::*;
 
 /// A view which presents an image.
+///
+/// The image URL can be static or reactive (via a Signal). Loading and error
+/// UI can be composed externally with `Binding` and `LoadingStatus`.
 pub struct Image {}
 
 impl Image {
     /// Creates a new [Image] view.
-    pub fn new<T: ToString>(cx: &mut Context, img: impl Res<T>) -> Handle<'_, Self> {
-        // TODO: Make this reactive
-        let img = img.get_value(cx);
-        let img = BackgroundImage::Url(Url { url: img.to_string().into() });
-        Self {}.build(cx, |_| {}).background_image(img)
+    ///
+    /// The `img` parameter can be a static string or a reactive signal of image paths/URLs.
+    pub fn new<T>(cx: &mut Context, img: impl Res<T> + 'static) -> Handle<'_, Self>
+    where
+        T: ToString + Clone + 'static,
+    {
+        let img = img.to_signal(cx).map(|img| {
+            let path = img.to_string();
+            BackgroundImage::Url(Url { url: path.into() })
+        });
+
+        let handle = Self {}.build(cx, |_| {});
+
+        handle.background_image(img)
     }
 }
 

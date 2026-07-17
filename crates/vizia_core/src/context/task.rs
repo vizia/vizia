@@ -442,6 +442,24 @@ where
             self.completion_handler,
         )
     }
+
+    pub(crate) fn add_to_resource_context(
+        self,
+        cx: &crate::context::ResourceContext<'_>,
+    ) -> TaskHandle {
+        execute_task_with_source(
+            ContextProxy {
+                current: cx.current,
+                event_proxy: cx.event_proxy.as_ref().map(|p| p.make_clone()),
+            },
+            cx.task_runtime.clone(),
+            cx.named_tasks.clone(),
+            Some(cx.current),
+            self.options,
+            self.source,
+            self.completion_handler,
+        )
+    }
 }
 
 fn execute_task_with_source<T, E>(

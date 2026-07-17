@@ -1,9 +1,15 @@
 //! Resource management for fonts, themes, images, and translations.
 
+mod file_resource_loader;
 mod image_id;
+mod url_resource_loader;
 
+pub use file_resource_loader::FileResourceLoader;
 pub use image_id::ImageId;
-use vizia_id::{GenerationalId, IdManager};
+#[cfg(feature = "url-loader")]
+pub use url_resource_loader::UrlResourceLoader;
+use vizia_id::IdManager;
+use vizia_reactive::{Signal, SignalGet, SignalUpdate};
 
 use crate::context::ResourceContext;
 use crate::entity::Entity;
@@ -190,6 +196,139 @@ impl fmt::Display for LocalizationIssue {
     }
 }
 
+/// Request to load an image resource.
+#[derive(Debug, Clone)]
+pub struct ImageRequest {
+    /// Name used to reference the loaded image in styles and image views.
+    pub name: String,
+    /// Path or URL to the image resource.
+    pub path: String,
+    /// How long the image should be retained in memory.
+    pub policy: ImageRetentionPolicy,
+}
+
+/// Request to load a font resource.
+#[derive(Debug, Clone)]
+pub struct FontRequest {
+    /// Path or URL to the font resource.
+    pub path: String,
+}
+
+/// Request to load a translation resource.
+#[derive(Debug, Clone)]
+pub struct TranslationRequest {
+    /// Language identifier this translation file belongs to.
+    pub lang: LanguageIdentifier,
+    /// Path or URL to the translation resource.
+    pub path: String,
+}
+
+/// Loading status of a resource.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LoadingStatus {
+    /// Resource has not been loaded yet.
+    NotLoaded,
+    /// Resource is currently loading.
+    Loading,
+    /// Resource has been successfully loaded.
+    Loaded,
+    /// Resource failed to load.
+    Error,
+}
+
+/// Preferred execution strategy for handling a single resource request.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub enum ResourceLoadExecution {
+    /// Let loaders choose their default strategy.
+    #[default]
+    Auto,
+    /// Prefer asynchronous loading.
+    Async,
+    /// Prefer synchronous loading.
+    Sync,
+}
+
+/// Per-request options that influence how a resource is loaded.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct ResourceLoadOptions {
+    /// Preferred execution strategy for this request.
+    pub execution: ResourceLoadExecution,
+}
+
+impl ResourceLoadOptions {
+    /// Construct options with automatic execution strategy selection.
+    pub const fn auto() -> Self {
+        Self { execution: ResourceLoadExecution::Auto }
+    }
+
+    /// Construct options that prefer asynchronous loading.
+    pub const fn asynchronous() -> Self {
+        Self { execution: ResourceLoadExecution::Async }
+    }
+
+    /// Construct options that prefer synchronous loading.
+    pub const fn synchronous() -> Self {
+        Self { execution: ResourceLoadExecution::Sync }
+    }
+}
+
+/// A resource request that loaders can handle.
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub enum ResourceRequest {
+    /// Request to load an image.
+    Image(ImageRequest),
+    /// Request to load a font.
+    Font(FontRequest),
+    /// Request to load a translation file.
+    Translation(TranslationRequest),
+}
+
+impl ResourceRequest {
+    /// Returns the canonical resource path associated with this request.
+    pub fn path(&self) -> &str {
+        match self {
+            ResourceRequest::Image(req) => &req.path,
+            ResourceRequest::Font(req) => &req.path,
+            ResourceRequest::Translation(req) => &req.path,
+        }
+    }
+}
+
+/// A resource request queued for dispatch, paired with loader policy.
+#[derive(Debug, Clone)]
+pub struct QueuedResourceRequest {
+    /// Request payload describing what to load.
+    pub request: ResourceRequest,
+    /// Loader policy describing how to perform the load.
+    pub options: ResourceLoadOptions,
+}
+
+/// Trait for loading resources asynchronously or from various sources.
+///
+/// Loaders are invoked in chain-of-responsibility order when a resource is requested.
+/// Return `true` to indicate the request was handled (no further loaders are tried),
+/// or `false` to continue to the next loader.
+pub trait ResourceLoader: Send + Sync + 'static {
+    /// Attempt to load a resource.
+    ///
+    /// `request` describes what to load, while `options` describes how to load it.
+    /// Return `true` if this loader handled the request, `false` to try the next loader.
+    fn load(
+        &self,
+        request: ResourceRequest,
+        options: ResourceLoadOptions,
+        cx: &mut ResourceContext,
+    ) -> bool;
+
+    /// Query the loading status of a resource path.
+    ///
+    /// Default implementation returns `NotLoaded` — override to track async loading progress.
+    fn status(&self, _path: &str) -> LoadingStatus {
+        LoadingStatus::NotLoaded
+    }
+}
+
 pub(crate) enum ImageOrSvg {
     Svg(skia_safe::svg::Dom),
     Image(skia_safe::Image),
@@ -204,7 +343,7 @@ pub(crate) struct StoredImage {
 }
 
 /// An image should be stored in the resource manager.
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum ImageRetentionPolicy {
     ///  The image should live for the entire duration of the application.
     Forever,
@@ -222,12 +361,18 @@ pub struct ResourceManager {
     pub(crate) image_id_manager: IdManager<ImageId>,
     pub(crate) images: HashMap<ImageId, StoredImage>,
     pub(crate) image_ids: HashMap<String, ImageId>,
+    pub(crate) image_sources: HashMap<String, String>,
 
     pub translations: HashMap<LanguageIdentifier, FluentBundle<FluentResource>>,
 
     pub language: LanguageIdentifier,
 
-    pub image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>>,
+    pub(crate) resource_loaders: Vec<Box<dyn ResourceLoader>>,
+    /// Resource requests waiting to be dispatched through the configured loader chain.
+    pub(crate) pending_requests: Vec<QueuedResourceRequest>,
+    /// Reactive status tracking per resource path.
+    /// Signals allow automatic updates to Memos when status changes.
+    pub(crate) loading_status: HashMap<String, Signal<LoadingStatus>>,
 }
 
 impl ResourceManager {
@@ -235,61 +380,26 @@ impl ResourceManager {
         // Get the system locale
         let locale = sys_locale::get_locale().and_then(|l| l.parse().ok()).unwrap_or_default();
 
-        let default_image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>> = None;
-
-        // Disable this for now because reqwest pulls in too many dependencies.
-        // let default_image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>> =
-        //     Some(Box::new(|cx: &mut ResourceContext, path: &str| {
-        //         if path.starts_with("https://") {
-        //             let path = path.to_string();
-        //             cx.spawn(move |cx| {
-        //                 let data = reqwest::blocking::get(&path).unwrap().bytes().unwrap();
-        //                 cx.load_image(
-        //                     path,
-        //                     image::load_from_memory_with_format(
-        //                         &data,
-        //                         image::guess_format(&data).unwrap(),
-        //                     )
-        //                     .unwrap(),
-        //                     ImageRetentionPolicy::DropWhenUnusedForOneFrame,
-        //                 )
-        //                 .unwrap();
-        //             });
-        //         } else {
-        //             // TODO: Try to load path from file
-        //         }
-        //     }));
-
         let mut image_id_manager = IdManager::new();
 
         // Create root id for broken image
         image_id_manager.create();
 
-        let mut images = HashMap::new();
+        let images = HashMap::new();
 
-        images.insert(
-            ImageId::root(),
-            StoredImage {
-                image: ImageOrSvg::Image(
-                    skia_safe::Image::from_encoded(unsafe {
-                        skia_safe::Data::new_bytes(include_bytes!(
-                            "../../resources/images/broken_image.png"
-                        ))
-                    })
-                    .unwrap(),
-                ),
+        #[cfg(feature = "url-loader")]
+        // Keep file loading ahead of URL loading so local/file:// paths are resolved first.
+        let resource_loaders: Vec<Box<dyn ResourceLoader>> =
+            vec![Box::new(FileResourceLoader), Box::new(UrlResourceLoader::default())];
 
-                retention_policy: ImageRetentionPolicy::Forever,
-                used: true,
-                dirty: false,
-                observers: HashSet::new(),
-            },
-        );
+        #[cfg(not(feature = "url-loader"))]
+        let resource_loaders: Vec<Box<dyn ResourceLoader>> = vec![Box::new(FileResourceLoader)];
 
         ResourceManager {
             image_id_manager,
             images,
             image_ids: HashMap::new(),
+            image_sources: HashMap::new(),
             styles: Vec::new(),
 
             translations: HashMap::from([(
@@ -298,8 +408,20 @@ impl ResourceManager {
             )]),
 
             language: locale,
-            image_loader: default_image_loader,
+            resource_loaders,
+            pending_requests: Vec::new(),
+            loading_status: HashMap::new(),
         }
+    }
+
+    /// Registers a stable image key to source path/URL mapping.
+    pub(crate) fn register_image_source(&mut self, name: String, path: String) {
+        self.image_sources.insert(name, path);
+    }
+
+    /// Resolves an image key to its source path/URL when registered.
+    pub(crate) fn resolve_image_source<'a>(&'a self, name_or_path: &'a str) -> &'a str {
+        self.image_sources.get(name_or_path).map(String::as_str).unwrap_or(name_or_path)
     }
 
     pub(crate) fn report_localization_issue(&self, issue: LocalizationIssue) {
@@ -421,7 +543,7 @@ impl ResourceManager {
             .images
             .iter()
             .filter_map(|(id, img)| match img.retention_policy {
-                ImageRetentionPolicy::DropWhenUnusedForOneFrame => (img.used).then_some(*id),
+                ImageRetentionPolicy::DropWhenUnusedForOneFrame => (!img.used).then_some(*id),
 
                 ImageRetentionPolicy::DropWhenNoObservers => {
                     img.observers.is_empty().then_some(*id)
@@ -433,15 +555,104 @@ impl ResourceManager {
 
         for id in rem {
             self.images.remove(&id);
-            self.image_ids.retain(|_, img| *img != id);
+
+            // Collect all name→id mappings that point to this id.
+            let removed_names = self
+                .image_ids
+                .iter()
+                .filter_map(|(name, img_id)| (*img_id == id).then_some(name.clone()))
+                .collect::<Vec<_>>();
+
+            // Remove each name from image_ids and image_sources, recording the resolved
+            // source paths (image_sources maps name→path; for direct-path references the
+            // name IS the path, so fall back to the name itself).
+            let mut source_paths = Vec::new();
+            for name in removed_names {
+                self.image_ids.remove(&name);
+                let source_path = self.image_sources.remove(&name).unwrap_or(name);
+                source_paths.push(source_path);
+            }
+
+            // Clear loading_status for each source path, but only when no remaining
+            // image_sources entry still references it (another name may alias the same path).
+            for source_path in source_paths {
+                if !self.image_sources.values().any(|p| p == &source_path) {
+                    self.loading_status.remove(&source_path);
+                }
+            }
+
             self.image_id_manager.destroy(id);
         }
+    }
+
+    /// Query the loading status of a resource path.
+    pub fn resource_status(&self, path: &str) -> LoadingStatus {
+        // First check cached status signal
+        if let Some(signal) = self.loading_status.get(path) {
+            return signal.get();
+        }
+
+        // If not in cache, ask each loader in the chain
+        for loader in &self.resource_loaders {
+            let status = loader.status(path);
+            if status != LoadingStatus::NotLoaded {
+                return status;
+            }
+        }
+
+        LoadingStatus::NotLoaded
+    }
+
+    /// Enqueue a resource request to be handled by the resource system.
+    pub(crate) fn queue_resource_request(
+        &mut self,
+        request: ResourceRequest,
+        options: ResourceLoadOptions,
+    ) {
+        self.pending_requests.push(QueuedResourceRequest { request, options });
+    }
+
+    /// Drain pending resource requests for this frame.
+    pub(crate) fn take_pending_resource_requests(&mut self) -> Vec<QueuedResourceRequest> {
+        std::mem::take(&mut self.pending_requests)
+    }
+
+    /// Update the loading status of a resource path.
+    pub(crate) fn set_resource_status(&mut self, path: impl Into<String>, status: LoadingStatus) {
+        let path = path.into();
+        // Get or create the signal for this path
+        let signal = self.loading_status.entry(path).or_insert_with(|| Signal::new(status));
+        // Update the signal - this will notify any observers (Memos, Bindings)
+        signal.set_if_changed(status);
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::entity::Entity;
+    use hashbrown::HashSet;
+
+    fn test_image() -> skia_safe::Image {
+        skia_safe::Image::from_encoded(unsafe {
+            skia_safe::Data::new_bytes(include_bytes!("../../resources/images/broken_image.png"))
+        })
+        .unwrap()
+    }
+
+    fn stored_image(
+        policy: ImageRetentionPolicy,
+        used: bool,
+        observers: HashSet<Entity>,
+    ) -> StoredImage {
+        StoredImage {
+            image: ImageOrSvg::Image(test_image()),
+            retention_policy: policy,
+            used,
+            dirty: false,
+            observers,
+        }
+    }
 
     #[test]
     fn add_translation_returns_error_for_invalid_ftl() {
@@ -515,5 +726,51 @@ mod tests {
             key: "missing-key".to_string(),
             requested_locale: "en-US".to_string(),
         });
+    }
+
+    #[test]
+    fn evict_unused_images_keeps_used_one_frame_images() {
+        let mut manager = ResourceManager::new();
+
+        let used_id = manager.image_id_manager.create();
+        manager.images.insert(
+            used_id,
+            stored_image(ImageRetentionPolicy::DropWhenUnusedForOneFrame, true, HashSet::new()),
+        );
+
+        let unused_id = manager.image_id_manager.create();
+        manager.images.insert(
+            unused_id,
+            stored_image(ImageRetentionPolicy::DropWhenUnusedForOneFrame, false, HashSet::new()),
+        );
+
+        manager.evict_unused_images();
+
+        assert!(manager.images.contains_key(&used_id));
+        assert!(!manager.images.contains_key(&unused_id));
+    }
+
+    #[test]
+    fn evict_unused_images_clears_status_for_evicted_paths() {
+        let mut manager = ResourceManager::new();
+
+        let id = manager.image_id_manager.create();
+        let name = "my-image".to_string();
+        let path = "test://evicted-image".to_string();
+
+        manager.images.insert(
+            id,
+            stored_image(ImageRetentionPolicy::DropWhenNoObservers, false, HashSet::new()),
+        );
+        // image_ids is keyed by name; image_sources maps name → source path.
+        manager.image_ids.insert(name.clone(), id);
+        manager.image_sources.insert(name.clone(), path.clone());
+        manager.set_resource_status(path.clone(), LoadingStatus::Loaded);
+
+        manager.evict_unused_images();
+
+        assert!(!manager.image_ids.contains_key(&name));
+        assert!(!manager.image_sources.contains_key(&name));
+        assert_eq!(manager.resource_status(&path), LoadingStatus::NotLoaded);
     }
 }

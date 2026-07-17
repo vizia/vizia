@@ -32,14 +32,14 @@ impl Model for AppData {
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         // Add fluent file for the `en-US` locale (American English).
-        cx.add_translation(
+        cx.load_translation(
             "en-US".parse().unwrap(),
             include_str!("resources/translations/en-US/hello.ftl").to_owned(),
         )
         .expect("Failed to add en-US translation");
 
         // Add fluent file for the `fr` locale (French).
-        cx.add_translation(
+        cx.load_translation(
             "fr".parse().unwrap(),
             include_str!("resources/translations/fr/hello.ftl").to_owned(),
         )

@@ -58,7 +58,10 @@ use crate::{
     model::ModelData,
 };
 
-use crate::{binding::BindingHandler, resource::StoredImage};
+use crate::{
+    binding::BindingHandler,
+    resource::{LoadingStatus, StoredImage},
+};
 use crate::{cache::CachedData, resource::ImageOrSvg};
 
 use crate::prelude::*;
@@ -696,11 +699,140 @@ impl Context {
         self.global_listeners.push(Box::new(listener));
     }
 
-    /// Adds a font to the application from memory.
-    pub fn add_font_mem(&mut self, data: impl AsRef<[u8]>) {
+    /// Loads a font into the application from in-memory bytes.
+    pub fn load_font_mem(&mut self, data: impl AsRef<[u8]>) {
         self.text_context.asset_provider.register_typeface(
             self.text_context.default_font_manager.new_from_data(data.as_ref(), None).unwrap(),
             None,
+        );
+    }
+
+    fn request_resource_if_not_loaded(
+        &mut self,
+        path: String,
+        request: crate::resource::ResourceRequest,
+        options: crate::resource::ResourceLoadOptions,
+    ) {
+        // Avoid re-issuing requests for resources that are already loading or resolved.
+        if self.resource_manager.resource_status(&path) != LoadingStatus::NotLoaded {
+            return;
+        }
+
+        self.resource_manager.queue_resource_request(request, options);
+    }
+
+    /// Returns a reactive loading-status signal for the provided resource path.
+    ///
+    /// The signal value is updated by resource loaders as the request progresses.
+    pub fn resource_status_signal(&mut self, path: impl Into<String>) -> Signal<LoadingStatus> {
+        let path = path.into();
+
+        if let Some(signal) = self.resource_manager.loading_status.get(&path).copied() {
+            return signal;
+        }
+
+        let status = self.resource_manager.resource_status(&path);
+        let signal = Signal::new(status);
+        self.resource_manager.loading_status.insert(path, signal);
+        signal
+    }
+
+    /// Returns the current loading status for the provided resource path.
+    ///
+    /// This reads from the same reactive signal used by [`Context::resource_status_signal`].
+    pub fn resource_status(&mut self, path: impl Into<String>) -> LoadingStatus {
+        self.resource_status_signal(path).get()
+    }
+
+    /// Adds a font to the application by loading it through the configured resource loaders.
+    ///
+    /// This supports local files (including `file://` URLs) and any custom loader you register.
+    pub fn add_font(
+        &mut self,
+        path: impl Into<String>,
+        options: Option<crate::resource::ResourceLoadOptions>,
+    ) {
+        let path = path.into();
+        let options = options.unwrap_or_default();
+
+        self.request_resource_if_not_loaded(
+            path.clone(),
+            crate::resource::ResourceRequest::Font(crate::resource::FontRequest { path }),
+            options,
+        );
+    }
+
+    /// Queues an image resource request and returns a reactive loading-status signal.
+    ///
+    /// `name` is the key used to reference the image from CSS and [`Image::new`].
+    /// `path` can be a filesystem path, `file://` URL, or HTTP(S) URL (with `url-loader`).
+    pub fn add_image(
+        &mut self,
+        name: impl Into<String>,
+        path: impl Into<String>,
+        policy: ImageRetentionPolicy,
+        options: Option<crate::resource::ResourceLoadOptions>,
+    ) -> Signal<LoadingStatus> {
+        let name = name.into();
+        let path = path.into();
+        let options = options.unwrap_or_default();
+
+        self.resource_manager.register_image_source(name.clone(), path.clone());
+
+        // If the path is already loaded and load_image ran before this add_image call,
+        // immediately alias the existing ImageId to the new name so it resolves without
+        // waiting for another load cycle.
+        if self.resource_manager.resource_status(&path) != crate::resource::LoadingStatus::NotLoaded
+        {
+            let existing_id = self
+                .resource_manager
+                .image_sources
+                .iter()
+                .find(|(alias, alias_path)| {
+                    *alias_path == &path && self.resource_manager.image_ids.contains_key(*alias)
+                })
+                .and_then(|(alias, _)| self.resource_manager.image_ids.get(alias).copied());
+            if let Some(id) = existing_id {
+                self.resource_manager.image_ids.entry(name.clone()).or_insert(id);
+            }
+            // If no id exists yet the path is still loading; load_image will back-fill via
+            // the alias scan above when it runs.
+        }
+
+        self.request_resource_if_not_loaded(
+            path.clone(),
+            crate::resource::ResourceRequest::Image(crate::resource::ImageRequest {
+                name,
+                path: path.clone(),
+                policy,
+            }),
+            options,
+        );
+
+        self.resource_status_signal(path)
+    }
+
+    /// Adds a translation file to the application by loading it through the configured resource
+    /// loaders.
+    ///
+    /// This supports local files (including `file://` URLs), HTTP(S) URLs when the
+    /// `url-loader` feature is enabled, and any custom loader you register.
+    pub fn add_translation_file(
+        &mut self,
+        lang: LanguageIdentifier,
+        path: impl Into<String>,
+        options: Option<crate::resource::ResourceLoadOptions>,
+    ) {
+        let path = path.into();
+        let options = options.unwrap_or_default();
+
+        self.request_resource_if_not_loaded(
+            path.clone(),
+            crate::resource::ResourceRequest::Translation(crate::resource::TranslationRequest {
+                lang,
+                path,
+            }),
+            options,
         );
     }
 
@@ -769,7 +901,7 @@ impl Context {
             return;
         }
 
-        self.add_translation("en-US".parse().unwrap(), DEFAULT_TRANSLATION_EN_US)
+        self.load_translation("en-US".parse().unwrap(), DEFAULT_TRANSLATION_EN_US)
             .expect("Failed to load built-in en-US translation resources");
         self.built_in_translations_added = true;
     }
@@ -778,14 +910,19 @@ impl Context {
         self.style.add_animation(animation)
     }
 
-    pub fn set_image_loader<F: 'static + Fn(&mut ResourceContext, &str)>(&mut self, loader: F) {
-        self.resource_manager.image_loader = Some(Box::new(loader));
+    /// Adds a resource loader to the loading chain.
+    ///
+    /// Loaders are tried in list order, and this method inserts at the front so custom
+    /// loaders take priority over built-in loaders. The first loader that returns `true`
+    /// handles the request, and subsequent loaders are skipped.
+    pub fn add_resource_loader<L: crate::resource::ResourceLoader>(&mut self, loader: L) {
+        self.resource_manager.resource_loaders.insert(0, Box::new(loader));
     }
 
-    /// Adds a translation to the application for the provided language.
+    /// Loads a translation into the application for the provided language.
     ///
     /// Returns an error if the FTL syntax is invalid or the resource cannot be added to the bundle.
-    pub fn add_translation(
+    pub fn load_translation(
         &mut self,
         lang: LanguageIdentifier,
         ftl: impl ToString,
@@ -978,7 +1115,18 @@ impl Context {
                     });
                 }
             }
+            let observers: Vec<Entity> = self
+                .resource_manager
+                .images
+                .get(&id)
+                .map(|img| img.observers.iter().copied().collect())
+                .unwrap_or_default();
+            for observer in observers {
+                self.style.needs_relayout(observer);
+                self.needs_redraw(observer);
+            }
             self.style.needs_relayout(self.current);
+            self.needs_redraw(self.current);
         }
     }
 
@@ -1020,8 +1168,10 @@ impl Context {
                 .unwrap_or_default();
             for observer in observers {
                 self.style.needs_relayout(observer);
+                self.needs_redraw(observer);
             }
             self.style.needs_relayout(self.current);
+            self.needs_redraw(self.current);
         }
 
         id
@@ -1095,6 +1245,10 @@ impl Context {
 pub(crate) enum InternalEvent {
     Redraw,
     LoadImage { path: String, image: Mutex<Option<skia_safe::Image>>, policy: ImageRetentionPolicy },
+    LoadSvg { path: String, data: Vec<u8>, policy: ImageRetentionPolicy },
+    LoadFont { path: String, data: Vec<u8> },
+    LoadTranslation { lang: LanguageIdentifier, path: String, ftl: String },
+    UpdateResourceStatus { path: String, status: LoadingStatus },
 }
 
 pub struct LocalizationContext<'a> {

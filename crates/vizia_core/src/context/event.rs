@@ -444,7 +444,16 @@ impl<'a> EventContext<'a> {
         }
     }
 
-    pub fn add_image_encoded(&mut self, path: &str, data: &[u8], policy: ImageRetentionPolicy) {
+    /// Adds a resource loader to the loading chain.
+    ///
+    /// Loaders are tried in list order, and this method inserts at the front so custom
+    /// loaders take priority over built-in loaders. The first loader that returns `true`
+    /// handles the request, and subsequent loaders are skipped.
+    pub fn add_resource_loader<L: crate::resource::ResourceLoader>(&mut self, loader: L) {
+        self.resource_manager.resource_loaders.insert(0, Box::new(loader));
+    }
+
+    pub fn load_image_encoded(&mut self, path: &str, data: &[u8], policy: ImageRetentionPolicy) {
         let id = if let Some(image_id) = self.resource_manager.image_ids.get(path) {
             *image_id
         } else {

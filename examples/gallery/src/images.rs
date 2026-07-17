@@ -1,12 +1,4 @@
-use bytes::Bytes;
 use serde::Deserialize;
-
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Status {
-    #[default]
-    Loading,
-    Loaded,
-}
 
 #[derive(Debug, Clone)]
 pub struct ImageData {
@@ -43,24 +35,7 @@ pub async fn list() -> Result<Vec<ImageData>, reqwest::Error> {
         .collect())
 }
 
-pub async fn download(url: String, size: Size) -> Result<Bytes, reqwest::Error> {
-    let client = reqwest::Client::new();
-
-    let url = match size {
-        Size::Thumbnail => format!("{url}/640/410"),
-        Size::Original => format!("{url}/1920/1200"),
-    };
-
-    client.get(url).send().await?.error_for_status()?.bytes().await
-}
-
 pub const LIMIT: usize = 99;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize)]
 pub struct Id(pub u32);
-
-#[derive(Debug, Clone, Copy)]
-pub enum Size {
-    Original,
-    Thumbnail,
-}
