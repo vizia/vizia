@@ -22,6 +22,7 @@ markdown = ["vizia_core/markdown"]
 rayon = ["vizia_core/rayon"]
 serde = ["vizia_core/serde"]
 tokio = ["vizia_core/tokio", "dep:tokio"]
+url-loader = ["vizia_core/url-loader"]
 
 [dependencies]
 vizia_core.workspace = true
@@ -75,21 +76,21 @@ glutin = { version = "0.32", default-features = false, features = ["egl", "wgl",
 glutin-winit = { version = "0.5", default-features = false, features = ["egl", "wgl", "glx"] }
 hashbrown = "0.17"
 indexmap = "2.13"
-keyboard-types = { version = "0.8.3", default-features = false }
+keyboard-types = { version = "0.8", default-features = false }
 log = "0.4"
 morphorm = "0.9"
 open = "5.4"
 parking_lot = "0.12"
 raw-window-handle = "0.6"
-rayon = "1.11"
+rayon = "1.12"
 reqwest = { version = "0.13", features = ["json", "query"] }
 selectors = "0.39"
 serde = { version = "1.0", features = ["derive"] }
 skia-safe = { version = "0.99", features = ["gl", "textlayout", "svg"] }
 sys-locale = "0.3"
-tokio = { version = "1.53", features = ["rt-multi-thread", "time"] }
+tokio = { version = "1.53", features = ["rt-multi-thread", "time", "fs", "io-util"] }
 unic-langid = { version = "0.9.6", features = ["macros"] }
-unicode-segmentation = "1.12"
+unicode-segmentation = "1.13"
 unicode-bidi = "0.3"
 windows-sys = { version = "0.61", default-features = false, features = ["Win32_Graphics_Dwm"] }
 winit = { version = "0.30", default-features = false }
