@@ -567,6 +567,12 @@ impl ApplicationRunner {
     }
 
     pub fn handle_resized(&mut self, new_size: baseview::WindowSize) {
+        let context = self
+            .window_context
+            .gl_context()
+            .expect("Window was created without OpenGL support");
+        unsafe { context.make_current() };
+
         let fb_info = {
             let mut fboid: GLint = 0;
             unsafe { gl::GetIntegerv(gl::FRAMEBUFFER_BINDING, &mut fboid) };
@@ -578,19 +584,14 @@ impl ApplicationRunner {
             }
         };
 
-        self.surface = create_surface(
-            (new_size.physical.width as i32, new_size.physical.height as i32),
-            fb_info,
-            &mut self.gr_context,
-        );
+        let width = new_size.physical.width.max(1) as i32;
+        let height = new_size.physical.height.max(1) as i32;
 
-        self.dirty_surface = self
-            .surface
-            .new_surface_with_dimensions((
-                new_size.physical.width as i32,
-                new_size.physical.height as i32,
-            ))
-            .unwrap();
+        self.surface = create_surface((width, height), fb_info, &mut self.gr_context);
+
+        self.dirty_surface = self.surface.new_surface_with_dimensions((width, height)).unwrap();
+
+        unsafe { context.make_not_current() };
 
         // Only use new DPI settings when `WindowScalePolicy::SystemScaleFactor` was used.
         if self.use_system_scaling {
