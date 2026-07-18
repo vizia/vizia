@@ -159,7 +159,7 @@ pub(crate) fn draw_system(
 
     canvas.restore();
 
-    // surface.canvas().clear(Color::transparent());
+    surface.canvas().clear(Color::transparent());
     dirty_surface.draw(surface.canvas(), (0, 0), SamplingOptions::default(), None);
 
     // Debug overlay: outline the views which underwent layout in the most recent layout pass by
