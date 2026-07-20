@@ -949,9 +949,8 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
                         "kind",
                         |cx, sort_dir| TableHeader::new(cx, "kind", "Kind", sort_dir),
                         |cx, row| {
-                            let text = row.map(|r: &TreeTableRow<PreviewTreeRow, u32>| {
-                                r.row.kind.clone()
-                            });
+                            let text =
+                                row.map(|r: &TreeTableRow<PreviewTreeRow, u32>| r.row.kind.clone());
                             Label::new(cx, text);
                         },
                     )
@@ -1040,7 +1039,11 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
                     .map(|id| PreviewTableRow {
                         id,
                         name: format!("Widget {}", id),
-                        category: if id % 2 == 0 { "Data".to_string() } else { "Input".to_string() },
+                        category: if id % 2 == 0 {
+                            "Data".to_string()
+                        } else {
+                            "Input".to_string()
+                        },
                     })
                     .collect::<Vec<_>>(),
             );

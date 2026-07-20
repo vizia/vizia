@@ -59,9 +59,7 @@ pub fn tree_view(cx: &mut Context) {
             .expanded_row_ids(expanded_rows)
             .type_ahead_text(move |row| {
                 rows.with(|rows| {
-                    rows.iter()
-                        .find(|node| node.id == row.id)
-                        .map(|node| node.name.clone())
+                    rows.iter().find(|node| node.id == row.id).map(|node| node.name.clone())
                 })
             })
             .on_row_select(move |_cx, id| {

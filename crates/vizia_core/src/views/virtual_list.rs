@@ -149,11 +149,7 @@ impl VirtualList {
 
     fn evaluate_index(index: usize, start: usize, end: usize) -> usize {
         let len = end.saturating_sub(start);
-        if len == 0 {
-            0
-        } else {
-            start + (index % len)
-        }
+        if len == 0 { 0 } else { start + (index % len) }
     }
 
     /// Builds a memo that resolves the item at `index` from the backing list,
@@ -326,9 +322,9 @@ impl VirtualList {
             list,
             |list| list.len(),
             |list, index| {
-                list.get(index)
-                    .cloned()
-                    .unwrap_or_else(|| list.last().cloned().expect("virtual list item requested from empty list"))
+                list.get(index).cloned().unwrap_or_else(|| {
+                    list.last().cloned().expect("virtual list item requested from empty list")
+                })
             },
             item_height,
             item_content,
@@ -352,9 +348,9 @@ impl VirtualList {
             list,
             |list| list.len(),
             |list, index| {
-                list.get(index)
-                    .cloned()
-                    .unwrap_or_else(|| list.last().cloned().expect("virtual list item requested from empty list"))
+                list.get(index).cloned().unwrap_or_else(|| {
+                    list.last().cloned().expect("virtual list item requested from empty list")
+                })
             },
             item_height,
             item_content,
