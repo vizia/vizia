@@ -65,8 +65,12 @@ pub const CATEGORIES: &[(&str, &[(&str, &str)])] = &[
         &[
             ("List", "list"),
             ("Table", "table"),
+            ("TreeView", "tree-view"),
+            ("TreeTable", "tree-table"),
             ("VirtualList", "virtual-list"),
             ("VirtualTable", "virtual-table"),
+            ("VirtualTreeView", "virtual-tree-view"),
+            ("VirtualTreeTable", "virtual-tree-table"),
         ],
     ),
     (

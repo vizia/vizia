@@ -355,6 +355,7 @@ fn all_views_page(cx: &mut Context) {
 struct PreviewTableRow {
     id: u32,
     name: String,
+    category: String,
 }
 
 fn render_view_preview(cx: &mut Context, view_name: &'static str) {
@@ -812,7 +813,11 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
             Switch::new(cx, enabled).on_toggle(move |_cx| enabled.update(|v| *v ^= true));
         }
         "Table" => {
-            let rows = Signal::new(vec![PreviewTableRow { id: 1, name: "Button".to_string() }]);
+            let rows = Signal::new(vec![PreviewTableRow {
+                id: 1,
+                name: "Button".to_string(),
+                category: "Input".to_string(),
+            }]);
             let columns: Signal<Vec<TableColumn<PreviewTableRow, TableHeader<String>>>> =
                 Signal::new(vec![
                     TableColumn::new(
@@ -823,11 +828,80 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
                             Label::new(cx, text);
                         },
                     )
-                    .width(160.0),
+                    .width(120.0),
+                    TableColumn::new(
+                        "category",
+                        |cx, sort_dir| TableHeader::new(cx, "category", "Category", sort_dir),
+                        |cx, row| {
+                            let text = row.map(|r: &PreviewTableRow| r.category.clone());
+                            Label::new(cx, text);
+                        },
+                    )
+                    .width(100.0),
                 ]);
             Table::new(cx, rows, columns, |row: &PreviewTableRow| row.id)
                 .width(Stretch(1.0))
                 .height(Pixels(120.0));
+        }
+        "TreeView" => {
+            #[derive(Clone, PartialEq)]
+            struct PreviewTreeNode {
+                id: u32,
+                parent_id: Option<u32>,
+                name: String,
+            }
+
+            let rows = Signal::new(vec![
+                PreviewTreeNode { id: 1, parent_id: None, name: "Widgets".to_string() },
+                PreviewTreeNode { id: 2, parent_id: Some(1), name: "Layout".to_string() },
+                PreviewTreeNode { id: 3, parent_id: Some(1), name: "Data".to_string() },
+                PreviewTreeNode { id: 4, parent_id: Some(2), name: "HStack".to_string() },
+                PreviewTreeNode { id: 5, parent_id: Some(3), name: "Table".to_string() },
+            ]);
+
+            let selected = Signal::new(vec![2u32]);
+            let expanded = Signal::new(vec![1u32]);
+
+            TreeView::from_hierarchy(
+                cx,
+                rows,
+                move |rows: &Vec<PreviewTreeNode>| {
+                    rows.iter().filter(|row| row.parent_id.is_none()).map(|row| row.id).collect()
+                },
+                move |rows: &Vec<PreviewTreeNode>, parent_id: &u32| {
+                    rows.iter()
+                        .filter(|row| row.parent_id == Some(*parent_id))
+                        .map(|row| row.id)
+                        .collect()
+                },
+                |_rows: &Vec<PreviewTreeNode>, _node_id: &u32| true,
+                move |cx, row| {
+                    let row_id = row.get().id;
+                    let text = rows.map(move |rows| {
+                        rows.iter()
+                            .find(|node| node.id == row_id)
+                            .map(|node| node.name.clone())
+                            .unwrap_or_default()
+                    });
+
+                    Label::new(cx, text).hoverable(false);
+                },
+            )
+            .selected_row_ids(selected)
+            .expanded_row_ids(expanded)
+            .on_row_toggle(move |_cx, id, is_open| {
+                expanded.update(|rows| {
+                    if is_open {
+                        if !rows.contains(&id) {
+                            rows.push(id);
+                        }
+                    } else {
+                        rows.retain(|current| *current != id);
+                    }
+                });
+            })
+            .width(Stretch(1.0))
+            .height(Pixels(120.0));
         }
         "TreeTable" => {
             #[derive(Clone, PartialEq)]
@@ -835,12 +909,28 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
                 id: u32,
                 parent_id: Option<u32>,
                 name: String,
+                kind: String,
             }
 
             let rows = Signal::new(vec![
-                PreviewTreeRow { id: 1, parent_id: None, name: "Data".to_string() },
-                PreviewTreeRow { id: 2, parent_id: Some(1), name: "Table".to_string() },
-                PreviewTreeRow { id: 3, parent_id: Some(1), name: "List".to_string() },
+                PreviewTreeRow {
+                    id: 1,
+                    parent_id: None,
+                    name: "Data".to_string(),
+                    kind: "Folder".to_string(),
+                },
+                PreviewTreeRow {
+                    id: 2,
+                    parent_id: Some(1),
+                    name: "Table".to_string(),
+                    kind: "Widget".to_string(),
+                },
+                PreviewTreeRow {
+                    id: 3,
+                    parent_id: Some(1),
+                    name: "List".to_string(),
+                    kind: "Widget".to_string(),
+                },
             ]);
             let columns: Signal<Vec<TreeTableColumn<PreviewTreeRow, u32, TableHeader<String>>>> =
                 Signal::new(vec![
@@ -848,12 +938,24 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
                         "name",
                         |cx, sort_dir| TableHeader::new(cx, "name", "Name", sort_dir),
                         |cx, row| {
-                            let text =
-                                row.map(|r: &TreeTableRow<PreviewTreeRow, u32>| r.row.name.clone());
+                            let row_for_first_cell: TreeTableRow<PreviewTreeRow, u32> = row.get();
+                            TreeTableFirstCell::new(cx, row_for_first_cell, move |cx, row| {
+                                Label::new(cx, row.row.name.clone());
+                            });
+                        },
+                    )
+                    .width(Pixels(140.0)),
+                    TreeTableColumn::new(
+                        "kind",
+                        |cx, sort_dir| TableHeader::new(cx, "kind", "Kind", sort_dir),
+                        |cx, row| {
+                            let text = row.map(|r: &TreeTableRow<PreviewTreeRow, u32>| {
+                                r.row.kind.clone()
+                            });
                             Label::new(cx, text);
                         },
                     )
-                    .width(Pixels(180.0)),
+                    .width(Pixels(90.0)),
                 ]);
             let expanded = Signal::new(vec![1u32]);
 
@@ -935,7 +1037,11 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
         "VirtualTable" => {
             let rows = Signal::new(
                 (0u32..50)
-                    .map(|id| PreviewTableRow { id, name: format!("Widget {}", id) })
+                    .map(|id| PreviewTableRow {
+                        id,
+                        name: format!("Widget {}", id),
+                        category: if id % 2 == 0 { "Data".to_string() } else { "Input".to_string() },
+                    })
                     .collect::<Vec<_>>(),
             );
             let columns: Signal<Vec<TableColumn<PreviewTableRow, TableHeader<String>>>> =
@@ -953,6 +1059,172 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
             VirtualTable::new(cx, rows, columns, 24.0, |row: &PreviewTableRow| row.id)
                 .width(Stretch(1.0))
                 .height(Pixels(120.0));
+        }
+        "VirtualTreeView" => {
+            #[derive(Clone, PartialEq)]
+            struct PreviewTreeNode {
+                id: u32,
+                parent_id: Option<u32>,
+                name: String,
+            }
+
+            let rows = Signal::new(vec![
+                PreviewTreeNode { id: 1, parent_id: None, name: "Widgets".to_string() },
+                PreviewTreeNode { id: 2, parent_id: Some(1), name: "Layout".to_string() },
+                PreviewTreeNode { id: 3, parent_id: Some(1), name: "Display".to_string() },
+                PreviewTreeNode { id: 4, parent_id: Some(1), name: "Data".to_string() },
+                PreviewTreeNode { id: 5, parent_id: Some(2), name: "Grid".to_string() },
+                PreviewTreeNode { id: 6, parent_id: Some(2), name: "VStack".to_string() },
+                PreviewTreeNode { id: 7, parent_id: Some(4), name: "Table".to_string() },
+            ]);
+
+            let expanded = Signal::new(vec![1u32, 2u32, 4u32]);
+
+            VirtualTreeView::from_hierarchy(
+                cx,
+                rows,
+                24.0,
+                move |rows: &Vec<PreviewTreeNode>| {
+                    rows.iter().filter(|row| row.parent_id.is_none()).map(|row| row.id).collect()
+                },
+                move |rows: &Vec<PreviewTreeNode>, parent_id: &u32| {
+                    rows.iter()
+                        .filter(|row| row.parent_id == Some(*parent_id))
+                        .map(|row| row.id)
+                        .collect()
+                },
+                |_rows: &Vec<PreviewTreeNode>, _node_id: &u32| true,
+                move |cx, row| {
+                    let row_id = row.get().id;
+                    let text = rows.map(move |rows| {
+                        rows.iter()
+                            .find(|node| node.id == row_id)
+                            .map(|node| node.name.clone())
+                            .unwrap_or_default()
+                    });
+
+                    Label::new(cx, text).hoverable(false);
+                },
+            )
+            .expanded_row_ids(expanded)
+            .on_row_toggle(move |_cx, id, is_open| {
+                expanded.update(|rows| {
+                    if is_open {
+                        if !rows.contains(&id) {
+                            rows.push(id);
+                        }
+                    } else {
+                        rows.retain(|current| *current != id);
+                    }
+                });
+            })
+            .width(Stretch(1.0))
+            .height(Pixels(120.0));
+        }
+        "VirtualTreeTable" => {
+            #[derive(Clone, PartialEq)]
+            struct PreviewTreeRow {
+                id: u32,
+                parent_id: Option<u32>,
+                name: String,
+                status: String,
+            }
+
+            let rows = Signal::new(vec![
+                PreviewTreeRow {
+                    id: 1,
+                    parent_id: None,
+                    name: "Widgets".to_string(),
+                    status: "Ready".to_string(),
+                },
+                PreviewTreeRow {
+                    id: 2,
+                    parent_id: Some(1),
+                    name: "Data".to_string(),
+                    status: "Ready".to_string(),
+                },
+                PreviewTreeRow {
+                    id: 3,
+                    parent_id: Some(2),
+                    name: "TreeTable".to_string(),
+                    status: "Stable".to_string(),
+                },
+                PreviewTreeRow {
+                    id: 4,
+                    parent_id: Some(2),
+                    name: "VirtualTreeTable".to_string(),
+                    status: "New".to_string(),
+                },
+            ]);
+
+            let columns: Signal<Vec<TreeTableColumn<TreeNodeRow<u32>, u32, TableHeader<String>>>> =
+                Signal::new(vec![
+                    TreeTableColumn::new(
+                        "name",
+                        |cx, sort_dir| TableHeader::new(cx, "name", "Name", sort_dir),
+                        move |cx, row| {
+                            let row_for_cell: TreeTableRow<TreeNodeRow<u32>, u32> = row.get();
+                            TreeTableFirstCell::new(cx, row_for_cell.clone(), move |cx, row| {
+                                let text = rows.map(move |rows| {
+                                    rows.iter()
+                                        .find(|r| r.id == row.id)
+                                        .map(|r| r.name.clone())
+                                        .unwrap_or_default()
+                                });
+                                Label::new(cx, text);
+                            });
+                        },
+                    )
+                    .width(Pixels(180.0)),
+                    TreeTableColumn::new(
+                        "status",
+                        |cx, sort_dir| TableHeader::new(cx, "status", "Status", sort_dir),
+                        move |cx, row| {
+                            let row_for_cell: TreeTableRow<TreeNodeRow<u32>, u32> = row.get();
+                            let text = rows.map(move |rows| {
+                                rows.iter()
+                                    .find(|r| r.id == row_for_cell.row.id)
+                                    .map(|r| r.status.clone())
+                                    .unwrap_or_default()
+                            });
+                            Label::new(cx, text);
+                        },
+                    )
+                    .width(Pixels(100.0)),
+                ]);
+
+            let expanded = Signal::new(vec![1u32, 2u32]);
+
+            VirtualTreeTable::from_hierarchy(
+                cx,
+                rows,
+                columns,
+                24.0,
+                move |rows: &Vec<PreviewTreeRow>| {
+                    rows.iter().filter(|row| row.parent_id.is_none()).map(|row| row.id).collect()
+                },
+                move |rows: &Vec<PreviewTreeRow>, parent_id: &u32| {
+                    rows.iter()
+                        .filter(|row| row.parent_id == Some(*parent_id))
+                        .map(|row| row.id)
+                        .collect()
+                },
+                |_rows: &Vec<PreviewTreeRow>, _node_id: &u32| true,
+            )
+            .expanded_row_ids(expanded)
+            .on_row_toggle(move |_cx, id, is_open| {
+                expanded.update(|rows| {
+                    if is_open {
+                        if !rows.contains(&id) {
+                            rows.push(id);
+                        }
+                    } else {
+                        rows.retain(|current| *current != id);
+                    }
+                });
+            })
+            .width(Stretch(1.0))
+            .height(Pixels(120.0));
         }
         "VStack" => {
             VStack::new(cx, |cx| {
@@ -1028,6 +1300,7 @@ fn render_view_page(cx: &mut Context, view_name: &'static str) {
         "Svg" => svg(cx),
         "Switch" => switch(cx),
         "Table" => table(cx),
+        "TreeView" => tree_view(cx),
         "TreeTable" => tree_table(cx),
         "Tabview" => tabview(cx),
         "Textbox" => textbox(cx),
@@ -1035,6 +1308,8 @@ fn render_view_page(cx: &mut Context, view_name: &'static str) {
         "Tooltip" => tooltip(cx),
         "VirtualList" => virtual_list(cx),
         "VirtualTable" => virtual_table(cx),
+        "VirtualTreeView" => virtual_tree_view(cx),
+        "VirtualTreeTable" => virtual_tree_table(cx),
         "VStack" => vstack(cx),
         "XYPad" => xypad(cx),
         "ZStack" => zstack(cx),

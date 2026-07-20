@@ -66,6 +66,7 @@ impl<T: PartialEq + 'static, S: View, K: Clone + PartialEq + Send + Sync + 'stat
 /// Reusable helpers for building table header content.
 #[derive(Clone)]
 pub struct TableHeader<K> {
+    #[allow(dead_code)]
     key: K,
 }
 

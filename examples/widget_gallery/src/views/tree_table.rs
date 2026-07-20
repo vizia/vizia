@@ -67,8 +67,10 @@ pub fn tree_table(cx: &mut Context) {
                 "name",
                 |cx, sort_dir| TableHeader::new(cx, "name", "Name", sort_dir),
                 |cx, row| {
-                    let text = row.map(|r: &TreeTableRow<TreeRow, u32>| r.row.name.clone());
-                    Label::new(cx, text).class("table-cell-text");
+                    let row_for_first_cell: TreeTableRow<TreeRow, u32> = row.get();
+                    TreeTableFirstCell::new(cx, row_for_first_cell, move |cx, row| {
+                        Label::new(cx, row.row.name.clone()).class("table-cell-text");
+                    });
                 },
             )
             .width(Pixels(220.0))

@@ -148,9 +148,11 @@ impl VirtualList {
     }
 
     fn evaluate_index(index: usize, start: usize, end: usize) -> usize {
-        match end - start {
-            0 => 0,
-            len => start + (len - (start % len) + index) % len,
+        let len = end.saturating_sub(start);
+        if len == 0 {
+            0
+        } else {
+            start + (index % len)
         }
     }
 
@@ -323,7 +325,11 @@ impl VirtualList {
             cx,
             list,
             |list| list.len(),
-            |list, index| list[index].clone(),
+            |list, index| {
+                list.get(index)
+                    .cloned()
+                    .unwrap_or_else(|| list.last().cloned().expect("virtual list item requested from empty list"))
+            },
             item_height,
             item_content,
         )
@@ -345,7 +351,11 @@ impl VirtualList {
             cx,
             list,
             |list| list.len(),
-            |list, index| list[index].clone(),
+            |list, index| {
+                list.get(index)
+                    .cloned()
+                    .unwrap_or_else(|| list.last().cloned().expect("virtual list item requested from empty list"))
+            },
             item_height,
             item_content,
         )
