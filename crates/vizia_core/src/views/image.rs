@@ -42,11 +42,19 @@ impl Svg {
     where
         T: AsRef<[u8]> + 'static,
     {
-        let svg_data = data.get_value(cx);
-        let h = format!("{:x}", fxhash::hash64(svg_data.as_ref()));
         let mut handle = Self {}.build(cx, |_| {});
-        handle.context().load_svg(&h, svg_data.as_ref(), ImageRetentionPolicy::DropWhenNoObservers);
-        handle.background_image(format!("'{}'", h).as_str()).hoverable(false)
+        let entity = handle.entity();
+
+        data.set_or_bind(handle.context(), move |cx, data| {
+            let svg_data = data.get_value(cx);
+            let hash = format!("{:x}", fxhash::hash64(svg_data.as_ref()));
+
+            cx.load_svg(&hash, svg_data.as_ref(), ImageRetentionPolicy::DropWhenNoObservers);
+            cx.style.background_image.insert(entity, vec![ImageOrGradient::Image(hash)]);
+            cx.needs_redraw(entity);
+        });
+
+        handle.hoverable(false)
     }
 }
 
