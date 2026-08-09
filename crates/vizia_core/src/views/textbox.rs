@@ -5,11 +5,11 @@ use std::rc::Rc;
 use crate::prelude::*;
 
 use crate::text::{
-    Direction, EditableText, Movement, PreeditBackup, Selection, VerticalMovement, apply_movement,
+    Direction, EditableText, Movement, PreeditBackup, Selection, VerticalMovement,
+    apply_movement,
     enforce_text_bounds, ensure_visible, offset_for_delete_backwards, resolved_text_direction,
 };
 use accesskit::{ActionData, ActionRequest, TextDirection, TextPosition, TextSelection};
-use skia_safe::textlayout::{RectHeightStyle, RectWidthStyle};
 use skia_safe::{ClipOp, Paint, PaintStyle, Rect};
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -515,21 +515,20 @@ where
                     cx.style.needs_access_update(cx.current);
                 }
             } else if let Some(text) = cx.style.text.get_mut(cx.current) {
-                if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-                    let old_display = text.clone();
-                    let to_delete = apply_movement(movement, self.selection, text, paragraph, true);
-                    let real_to_delete =
-                        Self::selection_display_to_real(&old_display, &self.real_text, to_delete);
-                    self.selection = to_delete;
-                    let new_cursor_pos = self.selection.min();
+                let Some(shaped) = cx.text_context.text_shaped.get(cx.current) else { return; };
+                let to_delete = apply_movement(movement, self.selection, text, shaped, true);
+                let old_display = text.clone();
+                let real_to_delete =
+                    Self::selection_display_to_real(&old_display, &self.real_text, to_delete);
+                self.selection = to_delete;
+                let new_cursor_pos = self.selection.min();
 
-                    text.edit(to_delete.range(), "");
-                    self.real_text.edit(real_to_delete.range(), "");
-                    self.selection = Selection::caret(new_cursor_pos);
+                text.edit(to_delete.range(), "");
+                self.real_text.edit(real_to_delete.range(), "");
+                self.selection = Selection::caret(new_cursor_pos);
 
-                    self.sync_display_text(cx);
-                    cx.style.needs_access_update(cx.current);
-                }
+                self.sync_display_text(cx);
+                cx.style.needs_access_update(cx.current);
             }
         } else if let Some(text) = cx.style.text.get_mut(cx.current) {
             let old_display = text.clone();
@@ -566,9 +565,9 @@ where
     /// [`update_preedit`]: Textbox::update_preedit
     fn move_cursor(&mut self, cx: &mut EventContext, movement: Movement, selection: bool) {
         if let Some(text) = cx.style.text.get_mut(cx.current) {
-            if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+            if let Some(shaped) = cx.text_context.text_shaped.get(cx.current) {
                 let new_selection =
-                    apply_movement(movement, self.selection, text, paragraph, selection);
+                    apply_movement(movement, self.selection, text, shaped, selection);
                 self.selection = new_selection;
                 cx.needs_redraw();
                 cx.style.needs_access_update(cx.current);
@@ -614,7 +613,7 @@ where
     fn coordinates_global_to_text(&self, cx: &EventContext, x: f32, y: f32) -> (f32, f32) {
         let bounds = cx.bounds();
 
-        if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+        if let Some(shaped) = cx.text_context.text_shaped.get(cx.current) {
             let padding_left = cx
                 .style
                 .padding_left
@@ -665,7 +664,7 @@ where
                 Alignment::BottomRight => (1.0, 1.0),
             };
 
-            top *= bounds.height() - padding_top - padding_bottom - paragraph.height();
+            top *= bounds.height() - padding_top - padding_bottom - shaped.height();
 
             let x = x - bounds.x - padding_left;
             let y = y - bounds.y - padding_top - top;
@@ -679,57 +678,45 @@ where
     /// This function takes window-global physical coordinates.
     fn hit(&mut self, cx: &mut EventContext, x: f32, y: f32, selection: bool) {
         if let Some(text) = cx.style.text.get(cx.current) {
-            if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-                let x = x - self.transform.borrow().0;
-                let y = y - self.transform.borrow().1;
-                let gp = paragraph
-                    .get_glyph_position_at_coordinate(self.coordinates_global_to_text(cx, x, y));
-                let num_graphemes = text.graphemes(true).count();
-                let pos = (gp.position as usize).min(num_graphemes);
-                let mut cursor = text.len();
-                for (i, (j, _)) in text.grapheme_indices(true).enumerate() {
-                    if pos == i {
-                        cursor = j;
-                        break;
-                    }
-                }
+            let x = x - self.transform.borrow().0;
+            let y = y - self.transform.borrow().1;
+            let local = self.coordinates_global_to_text(cx, x, y);
 
-                if selection {
-                    self.selection.active = cursor;
-                } else {
-                    self.selection = Selection::caret(cursor);
-                }
+            let cursor = if let Some(shaped) = cx.text_context.text_shaped.get(cx.current) {
+                let gp = shaped.get_glyph_position_at_coordinate(local);
+                gp.position.min(text.len())
+            } else {
+                return;
+            };
 
-                cx.needs_redraw();
-                cx.style.needs_access_update(cx.current);
+            if selection {
+                self.selection.active = cursor;
+            } else {
+                self.selection = Selection::caret(cursor);
             }
+
+            cx.needs_redraw();
+            cx.style.needs_access_update(cx.current);
         }
     }
 
     /// This function takes window-global physical coordinates.
     fn drag(&mut self, cx: &mut EventContext, x: f32, y: f32) {
         if let Some(text) = cx.style.text.get(cx.current) {
-            if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-                let x = x - self.transform.borrow().0;
-                let y = y - self.transform.borrow().1;
-                let gp = paragraph
-                    .get_glyph_position_at_coordinate(self.coordinates_global_to_text(cx, x, y));
-                let num_graphemes = text.graphemes(true).count();
-                let pos = (gp.position as usize).min(num_graphemes);
+            let x = x - self.transform.borrow().0;
+            let y = y - self.transform.borrow().1;
+            let local = self.coordinates_global_to_text(cx, x, y);
 
-                let mut cursor = text.len();
-                for (i, (j, _)) in text.grapheme_indices(true).enumerate() {
-                    if pos == i {
-                        cursor = j;
-                        break;
-                    }
-                }
+            let cursor = if let Some(shaped) = cx.text_context.text_shaped.get(cx.current) {
+                let gp = shaped.get_glyph_position_at_coordinate(local);
+                gp.position.min(text.len())
+            } else {
+                return;
+            };
 
-                self.selection.active = cursor;
-
-                cx.needs_redraw();
-                cx.style.needs_access_update(cx.current);
-            }
+            self.selection.active = cursor;
+            cx.needs_redraw();
+            cx.style.needs_access_update(cx.current);
         }
     }
 
@@ -802,75 +789,77 @@ where
 
     fn draw_selection(&self, cx: &mut DrawContext, canvas: &Canvas) {
         if !self.selection.is_caret() {
-            if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-                if let Some(text) = cx.style.text.get(cx.current) {
-                    let min = text.current_grapheme_offset(self.selection.min());
-                    let max = text.current_grapheme_offset(self.selection.max());
+            if let Some(text) = cx.style.text.get(cx.current) {
+                let min = text.current_grapheme_offset(self.selection.min());
+                let max = text.current_grapheme_offset(self.selection.max());
+                let range = min..max;
 
-                    let cursor_rects = paragraph.get_rects_for_range(
-                        min..max,
-                        RectHeightStyle::Tight,
-                        RectWidthStyle::Tight,
-                    );
+                // Prefer shaped path.
+                let cursor_rects: Vec<crate::text::shaped_text::TextBox> =
+                    if let Some(shaped) = cx.text_context.text_shaped.get(cx.current) {
+                        shaped.get_rects_for_range(range.clone())
+                    } else {
+                        return;
+                    };
 
-                    for cursor_rect in cursor_rects {
-                        let bounds = cx.bounds();
+                for cursor_rect in cursor_rects {
+                    let bounds = cx.bounds();
+                    let alignment = cx.alignment();
 
-                        let alignment = cx.alignment();
+                    let (mut top, left) = match alignment {
+                        Alignment::TopLeft => (0.0, 0.0),
+                        Alignment::TopCenter => (0.0, 0.5),
+                        Alignment::TopRight => (0.0, 1.0),
+                        Alignment::Left => (0.5, 0.0),
+                        Alignment::Center => (0.5, 0.5),
+                        Alignment::Right => (0.5, 1.0),
+                        Alignment::BottomLeft => (1.0, 0.0),
+                        Alignment::BottomCenter => (1.0, 0.5),
+                        Alignment::BottomRight => (1.0, 1.0),
+                    };
 
-                        let (mut top, left) = match alignment {
-                            Alignment::TopLeft => (0.0, 0.0),
-                            Alignment::TopCenter => (0.0, 0.5),
-                            Alignment::TopRight => (0.0, 1.0),
-                            Alignment::Left => (0.5, 0.0),
-                            Alignment::Center => (0.5, 0.5),
-                            Alignment::Right => (0.5, 1.0),
-                            Alignment::BottomLeft => (1.0, 0.0),
-                            Alignment::BottomCenter => (1.0, 0.5),
-                            Alignment::BottomRight => (1.0, 1.0),
-                        };
+                    let padding_top = match cx.padding_top() {
+                        Units::Pixels(val) => val,
+                        _ => 0.0,
+                    };
+                    let padding_bottom = match cx.padding_bottom() {
+                        Units::Pixels(val) => val,
+                        _ => 0.0,
+                    };
 
-                        let padding_top = match cx.padding_top() {
-                            Units::Pixels(val) => val,
-                            _ => 0.0,
-                        };
+                    let text_height = cx
+                        .text_context
+                        .text_shaped
+                        .get(cx.current)
+                        .map(|s| s.height())
+                        .unwrap_or(0.0);
 
-                        let padding_bottom = match cx.padding_bottom() {
-                            Units::Pixels(val) => val,
-                            _ => 0.0,
-                        };
+                    top *= bounds.height() - padding_top - padding_bottom - text_height;
 
-                        top *= bounds.height() - padding_top - padding_bottom - paragraph.height();
-
-                        let mut padding_left = match cx.padding_left() {
-                            Units::Pixels(val) => val,
-                            _ => 0.0,
-                        };
-
-                        let mut padding_right = match cx.padding_right() {
-                            Units::Pixels(val) => val,
-                            _ => 0.0,
-                        };
-
-                        if resolved_text_direction(cx.style, cx.current)
-                            == crate::style::Direction::RightToLeft
-                        {
-                            std::mem::swap(&mut padding_left, &mut padding_right);
-                        }
-
-                        let x = bounds.x + padding_left + cursor_rect.rect.left + left;
-                        let y = bounds.y + padding_top + cursor_rect.rect.top + top;
-
-                        let x2 = x + (cursor_rect.rect.right - cursor_rect.rect.left);
-                        let y2 = y + (cursor_rect.rect.bottom - cursor_rect.rect.top);
-
-                        let mut paint = Paint::default();
-                        paint.set_anti_alias(true);
-                        paint.set_style(PaintStyle::Fill);
-                        paint.set_color(cx.selection_color());
-
-                        canvas.draw_rect(Rect::new(x, y, x2, y2), &paint);
+                    let mut padding_left = match cx.padding_left() {
+                        Units::Pixels(val) => val,
+                        _ => 0.0,
+                    };
+                    let mut padding_right = match cx.padding_right() {
+                        Units::Pixels(val) => val,
+                        _ => 0.0,
+                    };
+                    if resolved_text_direction(cx.style, cx.current)
+                        == crate::style::Direction::RightToLeft
+                    {
+                        std::mem::swap(&mut padding_left, &mut padding_right);
                     }
+
+                    let x = bounds.x + padding_left + cursor_rect.rect.left + left;
+                    let y = bounds.y + padding_top + cursor_rect.rect.top + top;
+                    let x2 = x + cursor_rect.rect.width();
+                    let y2 = y + cursor_rect.rect.height();
+
+                    let mut paint = Paint::default();
+                    paint.set_anti_alias(true);
+                    paint.set_style(PaintStyle::Fill);
+                    paint.set_color(cx.selection_color());
+                    canvas.draw_rect(Rect::new(x, y, x2, y2), &paint);
                 }
             }
         }
@@ -878,116 +867,89 @@ where
 
     /// Draw text caret for the current view.
     pub fn draw_text_caret(&self, cx: &mut DrawContext, canvas: &Canvas) {
-        if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-            if let Some(text) = cx.style.text.get(cx.current) {
-                let bounds = cx.bounds();
+        if let Some(text) = cx.style.text.get(cx.current) {
+            let bounds = cx.bounds();
+            let current = text.current_grapheme_offset(self.selection.active);
+            let grapheme_count = text.graphemes(true).count();
+            let (range_start, range_end, use_trailing_edge) = if current < grapheme_count {
+                (current, current + 1, false)
+            } else if current > 0 {
+                (current - 1, current, true)
+            } else {
+                (0, 1, false)
+            };
 
-                let current = text.current_grapheme_offset(self.selection.active);
+            // Get the caret rect from either the shaped or paragraph path.
+            let cursor_rect = if let Some(shaped) = cx.text_context.text_shaped.get(cx.current) {
+                shaped.get_rects_for_range(range_start..range_end).into_iter().next()
+            } else {
+                return;
+            };
 
-                let grapheme_count = text.graphemes(true).count();
-                let (range_start, range_end, use_trailing_edge) = if current < grapheme_count {
-                    (current, current + 1, false)
-                } else if current > 0 {
-                    // At end-of-text, use the previous grapheme box and place the caret on its trailing edge.
-                    (current - 1, current, true)
-                } else {
-                    // Empty text: anchor caret to the paragraph's first position.
-                    (0, 1, false)
-                };
+            let Some(cursor_rect) = cursor_rect else { return };
 
-                let rects = paragraph.get_rects_for_range(
-                    range_start..range_end,
-                    RectHeightStyle::Tight,
-                    RectWidthStyle::Tight,
-                );
+            let text_height = cx
+                .text_context
+                .text_shaped
+                .get(cx.current)
+                .map(|s| s.height())
+                .unwrap_or(0.0);
+            let text_max_w = cx
+                .text_context
+                .text_shaped
+                .get(cx.current)
+                .map(|s| s.max_intrinsic_width())
+                .unwrap_or(0.0);
 
-                let Some(cursor_rect) = rects.first() else {
-                    return;
-                };
+            let alignment = cx.alignment();
+            let (mut top, _) = match alignment {
+                Alignment::TopLeft => (0.0_f32, 0.0),
+                Alignment::TopCenter => (0.0, 0.5),
+                Alignment::TopRight => (0.0, 1.0),
+                Alignment::Left => (0.5, 0.0),
+                Alignment::Center => (0.5, 0.5),
+                Alignment::Right => (0.5, 1.0),
+                Alignment::BottomLeft => (1.0, 0.0),
+                Alignment::BottomCenter => (1.0, 0.5),
+                Alignment::BottomRight => (1.0, 1.0),
+            };
+            let padding_top = match cx.padding_top() { Units::Pixels(v) => v, _ => 0.0 };
+            let padding_bottom = match cx.padding_bottom() { Units::Pixels(v) => v, _ => 0.0 };
+            top *= bounds.height() - padding_top - padding_bottom - text_height;
 
-                let alignment = cx.alignment();
+            let mut padding_left = match cx.padding_left() { Units::Pixels(v) => v, _ => 0.0 };
+            let mut padding_right = match cx.padding_right() { Units::Pixels(v) => v, _ => 0.0 };
+            if resolved_text_direction(cx.style, cx.current) == crate::style::Direction::RightToLeft {
+                std::mem::swap(&mut padding_left, &mut padding_right);
+            }
 
-                let (mut top, _) = match alignment {
-                    Alignment::TopLeft => (0.0, 0.0),
-                    Alignment::TopCenter => (0.0, 0.5),
-                    Alignment::TopRight => (0.0, 1.0),
-                    Alignment::Left => (0.5, 0.0),
-                    Alignment::Center => (0.5, 0.5),
-                    Alignment::Right => (0.5, 1.0),
-                    Alignment::BottomLeft => (1.0, 0.0),
-                    Alignment::BottomCenter => (1.0, 0.5),
-                    Alignment::BottomRight => (1.0, 1.0),
-                };
+            let caret_x = if use_trailing_edge { cursor_rect.rect.right } else { cursor_rect.rect.left };
+            let x = (bounds.x + padding_left + caret_x).round();
+            let y = (bounds.y + padding_top + cursor_rect.rect.top + top).round();
+            let x2 = x + 1.0;
+            let y2 = y + cursor_rect.rect.height();
 
-                let padding_top = match cx.padding_top() {
-                    Units::Pixels(val) => val,
-                    _ => 0.0,
-                };
+            let mut paint = Paint::default();
+            paint.set_anti_alias(true);
+            paint.set_style(PaintStyle::Fill);
+            paint.set_color(cx.caret_color());
+            canvas.draw_rect(Rect::new(x, y, x2, y2), &paint);
 
-                let padding_bottom = match cx.padding_bottom() {
-                    Units::Pixels(val) => val,
-                    _ => 0.0,
-                };
-
-                top *= bounds.height() - padding_top - padding_bottom - paragraph.height();
-
-                let mut padding_left = match cx.padding_left() {
-                    Units::Pixels(val) => val,
-                    _ => 0.0,
-                };
-
-                let mut padding_right = match cx.padding_right() {
-                    Units::Pixels(val) => val,
-                    _ => 0.0,
-                };
-
-                if resolved_text_direction(cx.style, cx.current)
-                    == crate::style::Direction::RightToLeft
-                {
-                    std::mem::swap(&mut padding_left, &mut padding_right);
-                }
-
-                let caret_x =
-                    if use_trailing_edge { cursor_rect.rect.right } else { cursor_rect.rect.left };
-
-                let x = (bounds.x + padding_left + caret_x).round();
-                let y = (bounds.y + padding_top + cursor_rect.rect.top + top).round();
-
-                let x2 = x + 1.0;
-                let y2 = y + (cursor_rect.rect.bottom - cursor_rect.rect.top);
-
-                let mut paint = Paint::default();
-                paint.set_anti_alias(true);
-                paint.set_style(PaintStyle::Fill);
-                paint.set_color(cx.caret_color());
-
-                canvas.draw_rect(Rect::new(x, y, x2, y2), &paint);
-
-                let mut transform = self.transform.borrow_mut();
-
-                let text_bounds = BoundingBox::from_min_max(
-                    bounds.x + padding_left,
-                    bounds.y + padding_top + top,
-                    bounds.x + padding_left + paragraph.max_intrinsic_width(),
-                    bounds.y + padding_top + top + paragraph.height(),
-                );
-
-                let mut bounds = bounds;
-
-                bounds =
-                    bounds.shrink_sides(padding_left, padding_top, padding_right, padding_bottom);
-
-                let (tx, ty) =
-                    enforce_text_bounds(&text_bounds, &bounds, (transform.0, transform.1));
-
-                let caret_box = BoundingBox::from_min_max(x, y, x2, y2);
-
-                let (new_tx, new_ty) = ensure_visible(&caret_box, &bounds, (tx, ty));
-
-                if new_tx != transform.0 || new_ty != transform.1 {
-                    *transform = (new_tx, new_ty);
-                    cx.needs_redraw();
-                }
+            let mut transform = self.transform.borrow_mut();
+            let text_bounds = BoundingBox::from_min_max(
+                bounds.x + padding_left,
+                bounds.y + padding_top + top,
+                bounds.x + padding_left + text_max_w,
+                bounds.y + padding_top + top + text_height,
+            );
+            let mut clip_bounds = bounds;
+            clip_bounds = clip_bounds.shrink_sides(padding_left, padding_top, padding_right, padding_bottom);
+            let (tx, ty) = enforce_text_bounds(&text_bounds, &clip_bounds, (transform.0, transform.1));
+            let caret_box = BoundingBox::from_min_max(x, y, x2, y2);
+            let (new_tx, new_ty) = ensure_visible(&caret_box, &clip_bounds, (tx, ty));
+            if new_tx != transform.0 || new_ty != transform.1 {
+                *transform = (new_tx, new_ty);
+                cx.needs_redraw();
             }
         }
     }
@@ -1196,7 +1158,7 @@ where
         // actual text. We use text.len() as the upper bound for all slicing.
         let text_len = text.len();
 
-        if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+        if cx.text_context.text_shaped.get(cx.current).is_some() {
             let text_direction = if resolved_text_direction(cx.style, cx.current)
                 == crate::style::Direction::RightToLeft
             {
@@ -1205,14 +1167,19 @@ where
                 TextDirection::LeftToRight
             };
 
-            let line_metrics = paragraph.get_line_metrics();
-            for line in line_metrics.iter() {
-                // Skip lines that start beyond the actual text (i.e., the ZWS-only line)
+            // Collect line metrics from shaped path, falling back to paragraph.
+            let all_line_metrics: Vec<crate::text::shaped_text::LineMetrics> =
+                if let Some(shaped) = cx.text_context.text_shaped.get(cx.current) {
+                    shaped.get_line_metrics()
+                } else {
+                    Vec::new()
+                };
+
+            for line in all_line_metrics.iter() {
                 if line.start_index >= text_len && text_len > 0 {
                     continue;
                 }
 
-                // We need a child node per line
                 let mut line_node = AccessNode::new_from_parent(node_id, line.line_number);
                 line_node.set_role(Role::TextRun);
                 line_node.set_text_direction(text_direction);
@@ -1223,7 +1190,6 @@ where
                     h: line.height as f32,
                 });
 
-                // Only iterate over glyphs within the actual text range
                 let glyph_end = line.end_index.min(text_len);
                 if line.start_index > glyph_end {
                     continue;
@@ -1235,31 +1201,34 @@ where
                 let mut glyph_pos = line.start_index;
 
                 while glyph_pos < glyph_end {
-                    if let Some(cluster_info) = paragraph.get_glyph_cluster_at(glyph_pos) {
-                        let length = cluster_info.text_range.end - cluster_info.text_range.start;
-                        if length == 0 {
-                            break;
-                        }
+                    // Try shaped path first.
+                    let cluster_opt = if let Some(shaped) =
+                        cx.text_context.text_shaped.get(cx.current)
+                    {
+                        shaped.get_glyph_cluster_at(glyph_pos).map(|c| {
+                            (c.text_range.end - c.text_range.start, c.bounds.left(), c.bounds.width())
+                        })
+                    } else {
+                        None
+                    };
 
+                    if let Some((length, pos_x, width)) = cluster_opt {
+                        if length == 0 { break; }
                         character_lengths.push(length as u8);
-                        character_positions.push(cluster_info.bounds.left());
-                        character_widths.push(cluster_info.bounds.width());
-
+                        character_positions.push(pos_x);
+                        character_widths.push(width);
                         glyph_pos += length;
                     } else {
                         break;
                     }
                 }
 
-                // Include the newline character for hard breaks, as AccessKit needs it
                 let mut line_end = if line.hard_break {
                     line.end_including_newline.min(text_len)
                 } else {
                     glyph_end
                 };
-                if line_end < line.start_index {
-                    line_end = line.start_index;
-                }
+                if line_end < line.start_index { line_end = line.start_index; }
                 let line_text = text.get(line.start_index..line_end).unwrap_or("").to_owned();
 
                 if line.hard_break && line.end_including_newline <= text_len {
@@ -1278,14 +1247,12 @@ where
                 for (character_index, grapheme) in line_text.graphemes(true).enumerate() {
                     let current_is_alphanumeric =
                         grapheme.chars().next().is_some_and(|ch| ch.is_alphanumeric());
-
                     if current_is_alphanumeric
                         && !previous_is_alphanumeric
                         && let Ok(character_index) = u8::try_from(character_index)
                     {
                         word_starts.push(character_index);
                     }
-
                     previous_is_alphanumeric = current_is_alphanumeric;
                 }
 
@@ -1293,7 +1260,6 @@ where
                     first_line_node_id = Some(line_node.node_id());
                 }
 
-                // Check if this line contains the selection active (focus) position
                 if selection.active >= line.start_index && selection.active <= line_end {
                     selection_active_line = Some(line_node.node_id());
                     selection_active_cursor = byte_offset_to_char_index(
@@ -1302,7 +1268,6 @@ where
                     );
                 }
 
-                // Check if this line contains the selection anchor position
                 if selection.anchor >= line.start_index && selection.anchor <= line_end {
                     selection_anchor_line = Some(line_node.node_id());
                     selection_anchor_cursor = byte_offset_to_char_index(
@@ -1316,7 +1281,6 @@ where
                 line_node.set_character_positions(character_positions.into_boxed_slice());
                 line_node.set_character_widths(character_widths.into_boxed_slice());
                 line_node.set_word_starts(word_starts.into_boxed_slice());
-
                 node.add_child(line_node);
             }
         }

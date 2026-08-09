@@ -2912,13 +2912,17 @@ impl DrawContext<'_> {
 
     /// Draw any text for the current view.
     pub fn draw_text(&mut self, canvas: &Canvas) {
-        if let Some(paragraph) = self.text_context.text_paragraphs.get(self.current) {
-            let bounds = self.bounds();
+        // ── New shaped-text path ──────────────────────────────────────────────
+        if let Some(shaped) = self.text_context.text_shaped.get(self.current) {
+            if shaped.lines.is_empty() {
+                return;
+            }
 
+            let bounds = self.bounds();
             let alignment = self.alignment();
 
             let (mut top, _) = match alignment {
-                Alignment::TopLeft => (0.0, 0.0),
+                Alignment::TopLeft => (0.0_f32, 0.0),
                 Alignment::TopCenter => (0.0, 0.5),
                 Alignment::TopRight => (0.0, 1.0),
                 Alignment::Left => (0.5, 0.0),
@@ -2933,32 +2937,69 @@ impl DrawContext<'_> {
                 Units::Pixels(val) => val,
                 _ => 0.0,
             };
-
             let padding_bottom = match self.padding_bottom() {
                 Units::Pixels(val) => val,
                 _ => 0.0,
             };
-
-            top *= bounds.height() - padding_top - padding_bottom - paragraph.height();
+            top *= bounds.height() - padding_top - padding_bottom - shaped.height();
 
             let mut padding_left = match self.padding_left() {
                 Units::Pixels(val) => val,
                 _ => 0.0,
             };
-
             let mut padding_right = match self.padding_right() {
                 Units::Pixels(val) => val,
                 _ => 0.0,
             };
-
             if resolved_text_direction(self.style, self.current) == Direction::RightToLeft {
                 std::mem::swap(&mut padding_left, &mut padding_right);
             }
 
-            paragraph.paint(
-                canvas,
-                ((bounds.x + padding_left).round(), (bounds.y + padding_top + top).round()),
-            );
+            let base_x = (bounds.x + padding_left).round();
+            let base_y = (bounds.y + padding_top + top).round();
+
+            for line in &shaped.lines {
+                for run in &line.runs {
+                    canvas.draw_text_blob(
+                        &run.blob,
+                        skia_safe::Point::new(base_x + run.x_offset, base_y),
+                        &run.paint,
+                    );
+
+                    // Underline.
+                    if run.underline {
+                        let lm = &line.metrics;
+                        let y = base_y + run.baseline_y + lm.descent as f32 * 0.3;
+                        let x_start = base_x + run.x_offset;
+                        let x_end = x_start
+                            + run.clusters.iter().map(|c| c.x + c.advance).fold(0.0f32, f32::max);
+                        let mut paint = run.decoration_paint.clone();
+                        paint.set_stroke_width(1.0);
+                        canvas.draw_line(
+                            skia_safe::Point::new(x_start, y),
+                            skia_safe::Point::new(x_end, y),
+                            &paint,
+                        );
+                    }
+
+                    // Strikethrough.
+                    if run.strikethrough {
+                        let lm = &line.metrics;
+                        let y = base_y + run.baseline_y - lm.ascent as f32 * 0.4;
+                        let x_start = base_x + run.x_offset;
+                        let x_end = x_start
+                            + run.clusters.iter().map(|c| c.x + c.advance).fold(0.0f32, f32::max);
+                        let mut paint = run.decoration_paint.clone();
+                        paint.set_stroke_width(1.0);
+                        canvas.draw_line(
+                            skia_safe::Point::new(x_start, y),
+                            skia_safe::Point::new(x_end, y),
+                            &paint,
+                        );
+                    }
+                }
+            }
+            return;
         }
     }
 }

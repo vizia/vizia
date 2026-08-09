@@ -94,6 +94,7 @@ tokio = { version = "1.53", features = ["rt-multi-thread", "time", "fs", "io-uti
 unic-langid = { version = "0.9.6", features = ["macros"] }
 unicode-segmentation = "1.13"
 unicode-bidi = "0.3"
+unicode-linebreak = "0.1"
 windows-sys = { version = "0.61", default-features = false, features = ["Win32_Graphics_Dwm"] }
 winit = { version = "0.30", default-features = false }
 

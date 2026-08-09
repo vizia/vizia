@@ -1,7 +1,7 @@
 use log::warn;
-use skia_safe::textlayout::Paragraph;
 
 use super::{EditableText, Selection};
+use crate::text::shaped_text::ShapedText;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Direction {
@@ -61,26 +61,17 @@ pub enum WritingDirection {
     Natural,
 }
 
-/// Compute the result of a [`Movement`] on a [`Selection`].
+/// Compute the result of a [`Movement`] on a [`Selection`] against a [`ShapedText`].
 ///
-/// returns a new selection representing the state after the movement.
-///
-/// If `modify` is true, only the 'active' edge (the `end`) of the selection
-/// should be changed; this is the case when the user moves with the shift
-/// key pressed.
+/// If `modify` is true, only the active edge of the selection changes
+/// (i.e. shift is held).
 pub fn apply_movement<T: EditableText>(
     m: Movement,
     s: Selection,
     text: &T,
-    paragraph: &Paragraph,
+    shaped: &ShapedText,
     modify: bool,
 ) -> Selection {
-    // let writing_direction = if crate::piet::util::first_strong_rtl(text.as_str()) {
-    //     WritingDirection::RightToLeft
-    // } else {
-    //     WritingDirection::LeftToRight
-    // };
-
     let writing_direction = WritingDirection::LeftToRight;
 
     let (offset, h_pos) = match m {
@@ -101,49 +92,41 @@ pub fn apply_movement<T: EditableText>(
             }
         }
         Movement::Vertical(VerticalMovement::LineUp) => {
-            let cluster = paragraph.get_glyph_cluster_at(s.active).unwrap();
-            let glyph_bounds = cluster.bounds;
-            let line = paragraph.get_line_number_at(s.active).unwrap();
-            let h_pos = s.h_pos.unwrap_or(glyph_bounds.x());
+            let Some(cluster) = shaped.get_glyph_cluster_at(s.active) else {
+                return Selection::new(if modify { s.anchor } else { 0 }, 0).with_h_pos(s.h_pos);
+            };
+            let h_pos = s.h_pos.unwrap_or(cluster.bounds.x());
+            let line = shaped.get_line_number_at(s.active).unwrap_or(0);
             if line == 0 {
                 (0, Some(h_pos))
             } else {
-                let lm = paragraph.get_line_metrics_at(line).unwrap();
-                let up_pos = paragraph
-                    .get_closest_glyph_cluster_at((h_pos, glyph_bounds.y() - lm.height as f32))
-                    .unwrap();
-                let s = if h_pos < up_pos.bounds.center_x() {
+                let lm = shaped.get_line_metrics_at(line).unwrap();
+                let up_y = cluster.bounds.y() - lm.height as f32;
+                let up_pos =
+                    shaped.get_closest_glyph_cluster_at((h_pos, up_y)).unwrap_or(cluster);
+                let s = if h_pos < up_pos.center_x() {
                     up_pos.text_range.start
                 } else {
                     up_pos.text_range.end
                 };
-                // if up_pos.is_inside {
                 (s, Some(h_pos))
-                // } else {
-                //     // because we can't specify affinity, moving up when h_pos
-                //     // is wider than both the current line and the previous line
-                //     // can result in a cursor position at the visual start of the
-                //     // current line; so we handle this as a special-case.
-                //     let lm_prev =
-                //         paragraph.get_line_metrics_at(line.saturating_sub(1)).unwrap();
-                //     let up_pos = lm_prev.end_excluding_whitespaces;
-                //     (up_pos, Some(h_pos))
-                // }
             }
         }
         Movement::Vertical(VerticalMovement::LineDown) => {
-            let cluster = paragraph.get_glyph_cluster_at(s.active).unwrap();
+            let Some(cluster) = shaped.get_glyph_cluster_at(s.active) else {
+                return Selection::new(if modify { s.anchor } else { text.len() }, text.len())
+                    .with_h_pos(s.h_pos);
+            };
             let h_pos = s.h_pos.unwrap_or(cluster.bounds.x());
-            let line = paragraph.get_line_number_at(s.active).unwrap();
-            if line == paragraph.line_number() - 1 {
+            let line = shaped.get_line_number_at(s.active).unwrap_or(0);
+            if line + 1 >= shaped.line_count() {
                 (text.len(), Some(h_pos))
             } else {
-                let lm = paragraph.get_line_metrics_at(line).unwrap();
-                // may not work correctly for point sizes below 1.0
-                let y_below = lm.baseline - lm.ascent + lm.height + 1.0;
+                let lm = shaped.get_line_metrics_at(line).unwrap();
+                let down_y = lm.baseline as f32 - lm.ascent as f32 + lm.height as f32 + 1.0;
                 let down_pos =
-                    paragraph.get_closest_glyph_cluster_at((h_pos, y_below as f32)).unwrap();
-                let s = if h_pos < down_pos.bounds.center_x() {
+                    shaped.get_closest_glyph_cluster_at((h_pos, down_y)).unwrap_or(cluster);
+                let s = if h_pos < down_pos.center_x() {
                     down_pos.text_range.start
                 } else {
                     down_pos.text_range.end
@@ -176,24 +159,25 @@ pub fn apply_movement<T: EditableText>(
             };
             (offset, None)
         }
-
-        // These two are not handled; they require knowledge of the size
-        // of the viewport.
-        Movement::Vertical(VerticalMovement::PageDown)
-        | Movement::Vertical(VerticalMovement::PageUp) => (s.active, s.h_pos),
-
+        Movement::Vertical(VerticalMovement::PageDown | VerticalMovement::PageUp) => {
+            (s.active, s.h_pos)
+        }
         Movement::LineStart => {
-            let line = paragraph.get_line_number_at(s.active).unwrap();
-            let lm = paragraph.get_line_metrics_at(line).unwrap();
+            let line = shaped.get_line_number_at(s.active).unwrap_or(0);
+            let lm = shaped
+                .get_line_metrics_at(line)
+                .or_else(|| shaped.get_line_metrics().into_iter().next())
+                .unwrap_or_else(|| return_default_lm());
             (lm.start_index, None)
         }
-
         Movement::LineEnd => {
-            let line = paragraph.get_line_number_at(s.active).unwrap();
-            let lm = paragraph.get_line_metrics_at(line).unwrap();
-            (lm.end_index - 1, None)
+            let line = shaped.get_line_number_at(s.active).unwrap_or(0);
+            let lm = shaped
+                .get_line_metrics_at(line)
+                .or_else(|| shaped.get_line_metrics().into_iter().last())
+                .unwrap_or_else(|| return_default_lm());
+            (lm.end_index.saturating_sub(1), None)
         }
-
         other => {
             warn!("unhandled movement {:?}", other);
             (s.anchor, s.h_pos)
@@ -202,4 +186,22 @@ pub fn apply_movement<T: EditableText>(
 
     let start = if modify { s.anchor } else { offset };
     Selection::new(start, offset).with_h_pos(h_pos)
+}
+
+fn return_default_lm() -> crate::text::shaped_text::LineMetrics {
+    crate::text::shaped_text::LineMetrics {
+        start_index: 0,
+        end_index: 0,
+        end_excluding_whitespace: 0,
+        end_including_newline: 0,
+        hard_break: false,
+        ascent: 0.0,
+        descent: 0.0,
+        unscaled_ascent: 0.0,
+        height: 0.0,
+        width: 0.0,
+        left: 0.0,
+        baseline: 0.0,
+        line_number: 0,
+    }
 }
