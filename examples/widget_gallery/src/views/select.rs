@@ -31,9 +31,7 @@ impl Model for SelectData {
 
 pub fn select(cx: &mut Context) {
     let options = Signal::new(
-        ["red", "green", "blue", "yellow", "cyan", "magenta"]
-            .map(Localized::new)
-            .to_vec(),
+        ["red", "green", "blue", "yellow", "cyan", "magenta"].map(Localized::new).to_vec(),
     );
     let selected_option_1 = Signal::new(Some(0usize));
     let selected_option_2 = Signal::new(None);

@@ -35,7 +35,6 @@ category-containers = Containers
 
 button-group = Button Group
     .description = Buttons can be grouped by wrapping them in a ButtonGroup view.
-popup = Popup
 
 ## Widget Gallery Titles
 accordion = Accordion

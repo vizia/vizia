@@ -730,7 +730,7 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
             })
             .width(Stretch(1.0));
         }
-        "Popup" => {
+        "Popover" => {
             let is_open = Signal::new(false);
             HStack::new(cx, move |cx| {
                 Button::new(cx, |cx| Label::new(cx, "Open")).on_press(move |_cx| is_open.set(true));
@@ -1291,7 +1291,7 @@ fn render_view_page(cx: &mut Context, view_name: &'static str) {
         "Markdown" => markdown_panel(cx),
         "Menu" => menu(cx),
         "MenuBar" => menu_bar(cx),
-        "Popup" => popup(cx),
+        "Popover" => popover(cx),
         "Progressbar" => progressbar(cx),
         "Radiobutton" => radiobutton(cx),
         "Rating" => rating(cx),

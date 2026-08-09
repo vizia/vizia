@@ -35,8 +35,7 @@ category-containers = الحاويات
 
 button-group = مجموعة الأزرار
     .description = يمكن تجميع الأزرار عبر وضعها داخل عرض ButtonGroup.
-popup = نافذة منبثقة
-
+    
 ## Widget Gallery Titles
 accordion = أكورديون
     .description = يعرض الأكورديون قائمة من الرؤوس التي يمكن توسيعها واحدة تلو الأخرى للكشف عن المحتوى.

@@ -75,7 +75,7 @@ pub const CATEGORIES: &[(&str, &[(&str, &str)])] = &[
     ),
     (
         "category-feedback",
-        &[("Popup", "popup"), ("Progressbar", "progress-bar"), ("Tooltip", "tooltip")],
+        &[("Popover", "popover"), ("Progressbar", "progress-bar"), ("Tooltip", "tooltip")],
     ),
     (
         "category-containers",

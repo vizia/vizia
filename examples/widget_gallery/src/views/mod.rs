@@ -115,8 +115,8 @@ pub use grid::*;
 pub mod markdown_panel;
 pub use markdown_panel::*;
 
-pub mod popup;
-pub use popup::*;
+pub mod popover;
+pub use popover::*;
 
 pub mod resizable;
 pub use resizable::*;

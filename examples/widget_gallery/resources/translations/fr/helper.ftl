@@ -35,7 +35,6 @@ category-containers = Conteneurs
 
 button-group = Groupe de boutons
     .description = Les boutons peuvent être regroupés en les plaçant dans une vue ButtonGroup.
-popup = Fenêtre contextuelle
 
 ## Widget Gallery Titles
 accordion = Accordéon
@@ -85,7 +84,7 @@ menu = Menu
 menu-bar = Barre de menu
     .description = Une barre de menu contient plusieurs éléments de menu pour la navigation et les actions.
 popover = Popover
-    .description = Un popover affiche du contenu flottant ancré à un élément déclencheur. Il se ferme lorsque la focus se déplace en dehors.
+    .description = Un popover affiche du contenu flottant ancré à un élément déclencheur. Il se ferme lorsque le focus se déplace en dehors.
 progress-bar = Barre de progression
     .description = Une barre de progression affiche la progression d'un processus ou d'une tâche.
 radiobutton = Bouton radio

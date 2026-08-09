@@ -53,54 +53,60 @@ impl Badge {
         let direction = cx.environment().direction;
         let combined = Memo::new(move |_| (placement.get(), direction.get()));
 
-        Self { placement }.build(cx, content).bind(combined, move |mut handle| {
-            let (raw_placement, env_dir) = combined.get();
-            // Prefer the per-entity computed direction (set via CSS or a direction modifier)
-            // so a user can override direction on a specific badge without changing the global
-            // setting. Fall back to env_dir to stay reactive on global direction changes.
-            let entity = handle.entity();
-            let dir = handle.cx.style.direction.get(entity).copied().unwrap_or(env_dir);
-            let placement =
-                if dir == Direction::RightToLeft { raw_placement.flip_h() } else { raw_placement };
+        Self { placement }.build(cx, content).control_size(ControlSize::Medium).bind(
+            combined,
+            move |mut handle| {
+                let (raw_placement, env_dir) = combined.get();
+                // Prefer the per-entity computed direction (set via CSS or a direction modifier)
+                // so a user can override direction on a specific badge without changing the global
+                // setting. Fall back to env_dir to stay reactive on global direction changes.
+                let entity = handle.entity();
+                let dir = handle.cx.style.direction.get(entity).copied().unwrap_or(env_dir);
+                let placement = if dir == Direction::RightToLeft {
+                    raw_placement.flip_h()
+                } else {
+                    raw_placement
+                };
 
-            let (t, b) = match placement {
-                BadgePlacement::TopLeft | BadgePlacement::TopRight => {
-                    (Stretch(1.0), Percentage(85.35))
-                }
-                BadgePlacement::Top => (Stretch(1.0), Percentage(100.0)),
-                BadgePlacement::Bottom => (Percentage(100.0), Stretch(1.0)),
-                BadgePlacement::BottomLeft | BadgePlacement::BottomRight => {
-                    (Percentage(85.35), Stretch(1.0))
-                }
-                BadgePlacement::Left | BadgePlacement::Right => (Stretch(1.0), Stretch(1.0)),
-            };
+                let (t, b) = match placement {
+                    BadgePlacement::TopLeft | BadgePlacement::TopRight => {
+                        (Stretch(1.0), Percentage(85.35))
+                    }
+                    BadgePlacement::Top => (Stretch(1.0), Percentage(100.0)),
+                    BadgePlacement::Bottom => (Percentage(100.0), Stretch(1.0)),
+                    BadgePlacement::BottomLeft | BadgePlacement::BottomRight => {
+                        (Percentage(85.35), Stretch(1.0))
+                    }
+                    BadgePlacement::Left | BadgePlacement::Right => (Stretch(1.0), Stretch(1.0)),
+                };
 
-            let (l, r) = match placement {
-                BadgePlacement::TopLeft | BadgePlacement::BottomLeft => {
-                    (Stretch(1.0), Percentage(85.35))
-                }
-                BadgePlacement::TopRight | BadgePlacement::BottomRight => {
-                    (Percentage(85.35), Stretch(1.0))
-                }
-                BadgePlacement::Left => (Stretch(1.0), Percentage(100.0)),
-                BadgePlacement::Right => (Percentage(100.0), Stretch(1.0)),
-                BadgePlacement::Top | BadgePlacement::Bottom => (Stretch(1.0), Stretch(1.0)),
-            };
+                let (l, r) = match placement {
+                    BadgePlacement::TopLeft | BadgePlacement::BottomLeft => {
+                        (Stretch(1.0), Percentage(85.35))
+                    }
+                    BadgePlacement::TopRight | BadgePlacement::BottomRight => {
+                        (Percentage(85.35), Stretch(1.0))
+                    }
+                    BadgePlacement::Left => (Stretch(1.0), Percentage(100.0)),
+                    BadgePlacement::Right => (Percentage(100.0), Stretch(1.0)),
+                    BadgePlacement::Top | BadgePlacement::Bottom => (Stretch(1.0), Stretch(1.0)),
+                };
 
-            handle = handle.top(t).bottom(b).left(l).right(r);
+                handle = handle.top(t).bottom(b).left(l).right(r);
 
-            let translate = match placement {
-                BadgePlacement::TopLeft => (Percentage(50.0), Percentage(50.0)),
-                BadgePlacement::Top => (Percentage(0.0), Percentage(50.0)),
-                BadgePlacement::TopRight => (Percentage(-50.0), Percentage(50.0)),
-                BadgePlacement::BottomLeft => (Percentage(50.0), Percentage(-50.0)),
-                BadgePlacement::Bottom => (Percentage(0.0), Percentage(-50.0)),
-                BadgePlacement::BottomRight => (Percentage(-50.0), Percentage(-50.0)),
-                BadgePlacement::Left => (Percentage(50.0), Percentage(0.0)),
-                BadgePlacement::Right => (Percentage(-50.0), Percentage(0.0)),
-            };
-            handle.translate(translate);
-        })
+                let translate = match placement {
+                    BadgePlacement::TopLeft => (Percentage(50.0), Percentage(50.0)),
+                    BadgePlacement::Top => (Percentage(0.0), Percentage(50.0)),
+                    BadgePlacement::TopRight => (Percentage(-50.0), Percentage(50.0)),
+                    BadgePlacement::BottomLeft => (Percentage(50.0), Percentage(-50.0)),
+                    BadgePlacement::Bottom => (Percentage(0.0), Percentage(-50.0)),
+                    BadgePlacement::BottomRight => (Percentage(-50.0), Percentage(-50.0)),
+                    BadgePlacement::Left => (Percentage(50.0), Percentage(0.0)),
+                    BadgePlacement::Right => (Percentage(-50.0), Percentage(0.0)),
+                };
+                handle.translate(translate);
+            },
+        )
     }
 
     /// Creates an empty badge.
@@ -143,6 +149,15 @@ impl Badge {
 impl View for Badge {
     fn element(&self) -> Option<&'static str> {
         Some("badge")
+    }
+}
+
+impl ControlModifiers for Handle<'_, Badge> {
+    fn control_size<U: Into<ControlSize> + Clone + 'static>(
+        self,
+        size: impl Res<U> + 'static,
+    ) -> Self {
+        crate::modifiers::bind_control_size(self, size)
     }
 }
 
