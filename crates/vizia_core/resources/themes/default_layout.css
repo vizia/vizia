@@ -126,8 +126,23 @@ badge {
     alignment: center;
 }
 
+badge.xsmall {
+    size: 14px;
+}
+
+badge.small {
+    size: 18px;
+}
+
+badge.medium {
+    size: 20px;
+}
+
+badge.large {
+    size: 24px;
+}
+
 badge > label {
-    font-size: 12px;
     alignment: center;
     size: 1s;
 }

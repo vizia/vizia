@@ -139,6 +139,23 @@ badge {
     background-color: var(--primary);
     color: var(--primary-foreground);
     fill: var(--primary-foreground);
+    font-size: 10px;
+}
+
+badge.xsmall {
+    font-size: 8px;
+}
+
+badge.small {
+    font-size: 9px;
+}
+
+badge.medium {
+    font-size: 10px;
+}
+
+badge.large {
+    font-size: 12px;
 }
 
 badge.success {
@@ -947,6 +964,14 @@ progressbar:disabled .progressbar-bar {
 /* SELECT */
 
 select {
+    corner-radius: var(--control-radius);
+}
+
+select list.selectable scroll-content {
+    padding: var(--control-radius);
+}
+
+select list.selectable list-item {
     corner-radius: var(--control-radius);
 }
 
