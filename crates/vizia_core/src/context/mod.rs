@@ -268,7 +268,7 @@ impl Context {
                     default_font_manager,
                     asset_provider,
                     text_bounds: Default::default(),
-                    text_paragraphs: Default::default(),
+                    text_shaped: Default::default(),
                 }
             },
             #[cfg(feature = "tokio")]
@@ -697,7 +697,7 @@ impl Context {
             self.views.remove(entity);
             self.listeners.remove(entity);
             self.text_context.text_bounds.remove(*entity);
-            self.text_context.text_paragraphs.remove(*entity);
+            self.text_context.text_shaped.remove(*entity);
             self.entity_manager.destroy(*entity);
         }
 

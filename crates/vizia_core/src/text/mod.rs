@@ -21,3 +21,13 @@ pub use backspace::*;
 
 pub mod preedit_backup;
 pub use preedit_backup::*;
+
+#[allow(unused_imports)]
+pub mod shaped_text;
+#[allow(unused_imports)]
+pub use shaped_text::{
+    GlyphClusterInfo, GlyphPosition, LineMetrics, ShapedText, TextBox,
+};
+
+pub(crate) mod shaper;
+pub(crate) use shaper::build_pre_shaped_text;
