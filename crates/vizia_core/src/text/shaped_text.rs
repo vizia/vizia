@@ -197,10 +197,8 @@ fn compute_run_clusters(
     }
 
     // Collect in ascending byte order.
-    let by_byte: Vec<(usize, GlyphId, f32)> = cluster_map
-        .into_iter()
-        .map(|(b, (gid, x))| (b, gid, x))
-        .collect();
+    let by_byte: Vec<(usize, GlyphId, f32)> =
+        cluster_map.into_iter().map(|(b, (gid, x))| (b, gid, x)).collect();
     let n = by_byte.len();
 
     // Compute per-cluster advance using visual x ordering.
@@ -214,11 +212,7 @@ fn compute_run_clusters(
     for (visual_rank, item) in by_x.iter().enumerate() {
         let orig_idx = by_byte.iter().position(|c| c.0 == item.0).unwrap_or(0);
         let x = item.2;
-        let next_x = if visual_rank + 1 < n {
-            by_x[visual_rank + 1].2
-        } else {
-            total_advance
-        };
+        let next_x = if visual_rank + 1 < n { by_x[visual_rank + 1].2 } else { total_advance };
         advances[orig_idx] = (next_x - x).max(0.0);
     }
 
@@ -704,10 +698,7 @@ fn perform_layout(pre: &PreShapedText, constraint_width: f32) -> LayoutResult {
     let mut cur_width = 0.0f32;
 
     for seg in &segments {
-        if cur_width > 0.0
-            && cur_width + seg.advance > constraint_width
-            && !seg.mandatory_break
-        {
+        if cur_width > 0.0 && cur_width + seg.advance > constraint_width && !seg.mandatory_break {
             // Emit the current line before this segment.
             line_ranges.push(LineRange {
                 byte_start: cur_start,
@@ -757,10 +748,10 @@ fn perform_layout(pre: &PreShapedText, constraint_width: f32) -> LayoutResult {
 
     // ── Step 3: compute global font metrics (line height) ────────────────────
     // Use the maximum ascent / descent / leading across all runs.
-    let (global_ascent, global_descent, global_leading) = pre.runs.iter().fold(
-        (0.0f32, 0.0f32, 0.0f32),
-        |(a, d, l), r| (a.max(r.ascent), d.max(r.descent), l.max(r.leading)),
-    );
+    let (global_ascent, global_descent, global_leading) =
+        pre.runs.iter().fold((0.0f32, 0.0f32, 0.0f32), |(a, d, l), r| {
+            (a.max(r.ascent), d.max(r.descent), l.max(r.leading))
+        });
     let line_height = global_ascent + global_descent + global_leading;
 
     // ── Step 4: build ShapedLines with TextBlobs ──────────────────────────────
@@ -796,18 +787,12 @@ fn perform_layout(pre: &PreShapedText, constraint_width: f32) -> LayoutResult {
         );
 
         // Build runs for this line.
-        let line_runs =
-            build_line_runs(pre, lr.byte_start, lr.byte_end, baseline_y, line_x_offset);
+        let line_runs = build_line_runs(pre, lr.byte_start, lr.byte_end, baseline_y, line_x_offset);
 
         // Compute actual line width from runs (may differ slightly from lr.width due to trimming).
         let actual_width = line_runs
             .iter()
-            .map(|r| {
-                r.clusters
-                    .iter()
-                    .map(|c| r.x_offset + c.x + c.advance)
-                    .fold(0.0f32, f32::max)
-            })
+            .map(|r| r.clusters.iter().map(|c| r.x_offset + c.x + c.advance).fold(0.0f32, f32::max))
             .fold(0.0f32, f32::max);
 
         let metrics = LineMetrics {
@@ -899,8 +884,7 @@ fn build_line_runs(
 
         let n = line_glyphs.len();
         let mut builder = TextBlobBuilder::new();
-        let (glyph_ids, x_positions) =
-            builder.alloc_run_pos_h(&pre_run.font, n, baseline_y, None);
+        let (glyph_ids, x_positions) = builder.alloc_run_pos_h(&pre_run.font, n, baseline_y, None);
 
         for (i, g) in line_glyphs.iter().enumerate() {
             glyph_ids[i] = g.glyph_id;
