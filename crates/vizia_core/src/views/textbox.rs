@@ -941,14 +941,18 @@ where
                     _ => 0.0,
                 };
 
-                if resolved_text_direction(cx.style, cx.current)
-                    == crate::style::Direction::RightToLeft
-                {
+                let is_rtl = resolved_text_direction(cx.style, cx.current)
+                    == crate::style::Direction::RightToLeft;
+
+                if is_rtl {
                     std::mem::swap(&mut padding_left, &mut padding_right);
                 }
 
-                let caret_x =
-                    if use_trailing_edge { cursor_rect.rect.right } else { cursor_rect.rect.left };
+                let caret_x = if is_rtl {
+                    if use_trailing_edge { cursor_rect.rect.left } else { cursor_rect.rect.right }
+                } else {
+                    if use_trailing_edge { cursor_rect.rect.right } else { cursor_rect.rect.left }
+                };
 
                 let x = (bounds.x + padding_left + caret_x).round();
                 let y = (bounds.y + padding_top + cursor_rect.rect.top + top).round();
