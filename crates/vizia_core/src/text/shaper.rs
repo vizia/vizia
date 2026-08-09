@@ -23,9 +23,7 @@ use crate::{
     style::Style,
     text::{
         resolved_text_direction,
-        shaped_text::{
-            PreGlyph, PreShapedRun, PreShapedText, RunPaint,
-        },
+        shaped_text::{PreGlyph, PreShapedRun, PreShapedText, RunPaint},
     },
     tree::Tree,
 };
@@ -142,10 +140,7 @@ pub fn build_pre_shaped_text(
 
     let text_align = resolve_text_align(style, entity);
 
-    let ellipsis = matches!(
-        style.text_overflow.get(entity),
-        Some(&TextOverflow::Ellipsis)
-    );
+    let ellipsis = matches!(style.text_overflow.get(entity), Some(&TextOverflow::Ellipsis));
 
     let max_lines = style.line_clamp.get(entity).map(|c| c.0 as usize);
 
@@ -160,15 +155,7 @@ pub fn build_pre_shaped_text(
     };
 
     // Walk the entity and its text_span children to collect styled runs.
-    add_run(
-        &shaper,
-        style,
-        tree,
-        entity,
-        font_collection,
-        &mut pre,
-        base_direction_rtl,
-    );
+    add_run(&shaper, style, tree, entity, font_collection, &mut pre, base_direction_rtl);
 
     if pre.text.is_empty() {
         return None;
@@ -227,13 +214,11 @@ fn add_run(
         // ── Decoration paint ──────────────────────────────────────────────────
         let font_color =
             style.font_color.get_resolved(entity, &style.custom_color_props).unwrap_or_default();
-        let dec_color = match style
-            .text_decoration_color
-            .get_resolved(entity, &style.custom_color_props)
-        {
-            Some(crate::prelude::Color::CurrentColor) | None => font_color,
-            Some(c) => c,
-        };
+        let dec_color =
+            match style.text_decoration_color.get_resolved(entity, &style.custom_color_props) {
+                Some(crate::prelude::Color::CurrentColor) | None => font_color,
+                Some(c) => c,
+            };
         let mut decoration_paint = Paint::default();
         decoration_paint.set_color(dec_color);
         decoration_paint.set_anti_alias(true);
@@ -260,30 +245,31 @@ fn add_run(
         // ── Resolve line-height ───────────────────────────────────────────────
         // If a fixed line-height is set, override ascent/descent accordingly.
         let font_size = font.size();
-        let (ascent, descent, leading) =
-            if let Some(lh) = style.line_height.get_resolved(entity, &style.custom_line_height_props) {
-                match lh {
-                    LineHeight::Normal => (ascent, descent, leading),
-                    LineHeight::Number(n) => {
-                        let half_extra = (font_size * n - (ascent + descent)) * 0.5;
+        let (ascent, descent, leading) = if let Some(lh) =
+            style.line_height.get_resolved(entity, &style.custom_line_height_props)
+        {
+            match lh {
+                LineHeight::Normal => (ascent, descent, leading),
+                LineHeight::Number(n) => {
+                    let half_extra = (font_size * n - (ascent + descent)) * 0.5;
+                    (ascent + half_extra.max(0.0), descent + half_extra.max(0.0), 0.0)
+                }
+                LineHeight::Percentage(p) => {
+                    let half_extra = (font_size * p / 100.0 - (ascent + descent)) * 0.5;
+                    (ascent + half_extra.max(0.0), descent + half_extra.max(0.0), 0.0)
+                }
+                LineHeight::Length(len) => {
+                    if let Some(px) = len.to_px() {
+                        let half_extra = (px * style.scale_factor() - (ascent + descent)) * 0.5;
                         (ascent + half_extra.max(0.0), descent + half_extra.max(0.0), 0.0)
-                    }
-                    LineHeight::Percentage(p) => {
-                        let half_extra = (font_size * p / 100.0 - (ascent + descent)) * 0.5;
-                        (ascent + half_extra.max(0.0), descent + half_extra.max(0.0), 0.0)
-                    }
-                    LineHeight::Length(len) => {
-                        if let Some(px) = len.to_px() {
-                            let half_extra = (px * style.scale_factor() - (ascent + descent)) * 0.5;
-                            (ascent + half_extra.max(0.0), descent + half_extra.max(0.0), 0.0)
-                        } else {
-                            (ascent, descent, leading)
-                        }
+                    } else {
+                        (ascent, descent, leading)
                     }
                 }
-            } else {
-                (ascent, descent, leading)
-            };
+            }
+        } else {
+            (ascent, descent, leading)
+        };
 
         // ── Shape the text ────────────────────────────────────────────────────
         let byte_start = pre.text.len();
@@ -330,11 +316,7 @@ fn add_run(
 // ─── Font resolution ──────────────────────────────────────────────────────────
 
 /// Resolve a `skia_safe::Font` from the style properties of `entity`.
-fn resolve_font(
-    style: &Style,
-    entity: Entity,
-    font_collection: &mut FontCollection,
-) -> Font {
+fn resolve_font(style: &Style, entity: Entity, font_collection: &mut FontCollection) -> Font {
     let scale = style.scale_factor();
 
     let font_size = style
@@ -349,14 +331,10 @@ fn resolve_font(
     let slant = style.font_slant.get(entity).copied().unwrap_or_default();
     let font_style = FontStyle::new(weight.into(), width.into(), slant.into());
 
-    let default_families: Vec<FamilyOwned> = vec![FamilyOwned::Generic(
-        crate::prelude::GenericFontFamily::SansSerif,
-    )];
-    let families: &[FamilyOwned] = style
-        .font_family
-        .get(entity)
-        .map(Vec::as_slice)
-        .unwrap_or(default_families.as_slice());
+    let default_families: Vec<FamilyOwned> =
+        vec![FamilyOwned::Generic(crate::prelude::GenericFontFamily::SansSerif)];
+    let families: &[FamilyOwned] =
+        style.font_family.get(entity).map(Vec::as_slice).unwrap_or(default_families.as_slice());
 
     // Try to find a typeface via FontCollection (includes custom/asset fonts).
     let typefaces = font_collection.find_typefaces(families, font_style);
@@ -402,8 +380,7 @@ fn resolve_font(
 fn resolve_text_align(style: &Style, entity: Entity) -> TextAlign {
     use crate::prelude::Alignment;
 
-    let is_rtl =
-        resolved_text_direction(style, entity) == crate::style::Direction::RightToLeft;
+    let is_rtl = resolved_text_direction(style, entity) == crate::style::Direction::RightToLeft;
 
     if let Some(align) = style.text_align.get(entity).copied() {
         return flip_for_rtl(align, is_rtl);
@@ -412,9 +389,7 @@ fn resolve_text_align(style: &Style, entity: Entity) -> TextAlign {
     if let Some(alignment) = style.alignment.get(entity).copied() {
         let align = match alignment {
             Alignment::TopLeft | Alignment::Left | Alignment::BottomLeft => TextAlign::Left,
-            Alignment::TopCenter | Alignment::Center | Alignment::BottomCenter => {
-                TextAlign::Center
-            }
+            Alignment::TopCenter | Alignment::Center | Alignment::BottomCenter => TextAlign::Center,
             Alignment::TopRight | Alignment::Right | Alignment::BottomRight => TextAlign::Right,
         };
         return flip_for_rtl(align, is_rtl);
