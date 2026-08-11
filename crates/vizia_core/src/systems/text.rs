@@ -1,4 +1,4 @@
-use vizia_storage::{LayoutChildIterator, LayoutTreeIterator};
+use vizia_storage::LayoutChildIterator;
 
 use crate::text::resolved_text_direction;
 use crate::text::{build_pre_shaped_text, shaped_text::ShapedText};
@@ -9,12 +9,8 @@ pub(crate) fn text_system(cx: &mut Context) {
         return;
     }
 
-    let iterator = LayoutTreeIterator::full(&cx.tree);
-    for entity in iterator {
-        if !cx.style.text_construction.contains(&entity) {
-            continue;
-        }
-
+    let dirty_entities = std::mem::take(&mut cx.style.text_construction);
+    for entity in dirty_entities {
         if cx.style.text.contains(entity)
             && cx.style.display.get(entity).copied().unwrap_or_default() != Display::None
         {
@@ -32,8 +28,6 @@ pub(crate) fn text_system(cx: &mut Context) {
             cx.style.needs_text_layout(entity);
         }
     }
-
-    cx.style.text_construction.clear();
 }
 
 pub(crate) fn text_layout_system(cx: &mut Context) {
@@ -41,13 +35,9 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
         return;
     }
 
-    let iterator = LayoutTreeIterator::full(&cx.tree);
+    let dirty_entities = std::mem::take(&mut cx.style.text_layout);
     let mut redraw_entities = Vec::new();
-    for entity in iterator {
-        if !cx.style.text_layout.contains(&entity) {
-            continue;
-        }
-
+    for entity in dirty_entities {
         if let Some(shaped) = cx.text_context.text_shaped.get_mut(entity) {
             let bounds = cx.cache.get_bounds(entity);
             let mut padding_left = cx
@@ -131,7 +121,6 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
     for entity in redraw_entities {
         cx.needs_redraw(entity);
     }
-    cx.style.text_layout.clear();
 }
 
 pub fn layout_span(
