@@ -255,6 +255,110 @@ pub struct PreShapedText {
     pub(crate) break_opportunities: Vec<(usize, bool)>,
 }
 
+struct BreakSegment {
+    byte_start: usize,
+    byte_end: usize,
+    advance: f32,
+    mandatory_break: bool,
+}
+
+fn collect_break_segments(pre: &PreShapedText) -> Vec<BreakSegment> {
+    let mut segments = Vec::new();
+    let mut prev_break = 0usize;
+    let mut run_index = 0usize;
+    let mut cluster_index = 0usize;
+
+    for &(break_pos, is_mandatory) in &pre.break_opportunities {
+        if break_pos <= prev_break {
+            continue;
+        }
+
+        let mut advance = 0.0f32;
+
+        while run_index < pre.runs.len() {
+            let run = &pre.runs[run_index];
+
+            if run.byte_range.end <= prev_break {
+                run_index += 1;
+                cluster_index = 0;
+                continue;
+            }
+
+            while cluster_index < run.clusters.len() {
+                let cluster = &run.clusters[cluster_index];
+
+                if cluster.byte_start < prev_break {
+                    cluster_index += 1;
+                    continue;
+                }
+
+                if cluster.byte_start >= break_pos {
+                    break;
+                }
+
+                advance += cluster.advance;
+                cluster_index += 1;
+            }
+
+            if cluster_index < run.clusters.len()
+                && run.clusters[cluster_index].byte_start >= break_pos
+            {
+                break;
+            }
+
+            run_index += 1;
+            cluster_index = 0;
+        }
+
+        segments.push(BreakSegment {
+            byte_start: prev_break,
+            byte_end: break_pos,
+            advance,
+            mandatory_break: is_mandatory,
+        });
+
+        prev_break = break_pos;
+    }
+
+    if prev_break < pre.text.len() {
+        let mut advance = 0.0f32;
+
+        while run_index < pre.runs.len() {
+            let run = &pre.runs[run_index];
+
+            if run.byte_range.end <= prev_break {
+                run_index += 1;
+                cluster_index = 0;
+                continue;
+            }
+
+            while cluster_index < run.clusters.len() {
+                let cluster = &run.clusters[cluster_index];
+
+                if cluster.byte_start < prev_break {
+                    cluster_index += 1;
+                    continue;
+                }
+
+                advance += cluster.advance;
+                cluster_index += 1;
+            }
+
+            run_index += 1;
+            cluster_index = 0;
+        }
+
+        segments.push(BreakSegment {
+            byte_start: prev_break,
+            byte_end: pre.text.len(),
+            advance,
+            mandatory_break: false,
+        });
+    }
+
+    segments
+}
+
 impl PreShapedText {
     /// Compute break opportunities from `self.text` and store them.
     pub(crate) fn compute_break_opportunities(&mut self) {
@@ -272,32 +376,10 @@ impl PreShapedText {
 
     /// Minimum advance: the widest single break segment (used for `min_intrinsic_width`).
     fn min_segment_advance(&self) -> f32 {
-        let mut max_seg = 0.0f32;
-        let mut seg_start = 0usize;
-        for &(break_pos, _) in &self.break_opportunities {
-            let seg_advance = self.advance_in_range(seg_start, break_pos);
-            max_seg = max_seg.max(seg_advance);
-            seg_start = break_pos;
-        }
-        max_seg
-    }
-
-    /// Compute total advance for a byte range across all runs.
-    pub(crate) fn advance_in_range(&self, start: usize, end: usize) -> f32 {
-        let mut total = 0.0f32;
-        for run in &self.runs {
-            let overlap_start = run.byte_range.start.max(start);
-            let overlap_end = run.byte_range.end.min(end);
-            if overlap_start >= overlap_end {
-                continue;
-            }
-            for cluster in &run.clusters {
-                if cluster.byte_start >= overlap_start && cluster.byte_start < overlap_end {
-                    total += cluster.advance;
-                }
-            }
-        }
-        total
+        collect_break_segments(self)
+            .into_iter()
+            .map(|segment| segment.advance)
+            .fold(0.0f32, f32::max)
     }
 }
 
@@ -647,38 +729,7 @@ fn perform_layout(pre: &PreShapedText, constraint_width: f32) -> LayoutResult {
     // A "segment" is text between two consecutive break opportunities.
     // We greedily pack segments onto lines.
 
-    struct Segment {
-        byte_start: usize,
-        byte_end: usize,
-        advance: f32,
-        mandatory_break: bool,
-    }
-
-    let mut segments: Vec<Segment> = Vec::new();
-    let mut prev_break = 0usize;
-    for &(break_pos, is_mandatory) in &pre.break_opportunities {
-        if break_pos <= prev_break {
-            continue;
-        }
-        let advance = pre.advance_in_range(prev_break, break_pos);
-        segments.push(Segment {
-            byte_start: prev_break,
-            byte_end: break_pos,
-            advance,
-            mandatory_break: is_mandatory,
-        });
-        prev_break = break_pos;
-    }
-    // Trailing text after the last break opportunity.
-    if prev_break < pre.text.len() {
-        let advance = pre.advance_in_range(prev_break, pre.text.len());
-        segments.push(Segment {
-            byte_start: prev_break,
-            byte_end: pre.text.len(),
-            advance,
-            mandatory_break: false,
-        });
-    }
+    let segments = collect_break_segments(pre);
 
     if segments.is_empty() {
         return LayoutResult { lines: Vec::new(), height: 0.0 };
