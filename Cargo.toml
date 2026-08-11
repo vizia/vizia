@@ -51,6 +51,7 @@ license = "MIT"
 repository = "https://github.com/vizia/vizia"
 rust-version = "1.95"
 
+
 [workspace.dependencies]
 vizia = { version = "0.5.0", path = "." }
 vizia_core = { version = "0.5.0", path = "crates/vizia_core", default-features = false }
@@ -87,6 +88,8 @@ log = "0.4"
 morphorm = "0.9"
 open = "5.4.5"
 parking_lot = "0.13"
+parley = "0.11"
+
 raw-window-handle = "0.6"
 rayon = "1.12"
 reqwest = { version = "0.13.5" }
@@ -102,7 +105,6 @@ objc2-core-foundation = { version = "0.3.2", default-features = false, features 
 unic-langid = { version = "0.9.6", features = ["macros"] }
 unicode-segmentation = "1.13"
 unicode-bidi = "0.3"
-unicode-linebreak = "0.1"
 windows-sys = { version = "0.61", default-features = false, features = ["Win32_Graphics_Dwm"] }
 winit = { version = "0.30", default-features = false }
 

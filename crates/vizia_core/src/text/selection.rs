@@ -1,5 +1,9 @@
 use std::ops::Range;
 
+use parley::{Affinity, editing::Cursor as ParleyCursor, editing::Selection as ParleySelection};
+
+use crate::text::ShapedText;
+
 #[derive(Debug, Clone, Copy)]
 pub struct Selection {
     pub anchor: usize,
@@ -49,5 +53,24 @@ impl Selection {
 
     pub fn is_caret(&self) -> bool {
         self.min() == self.max()
+    }
+
+    pub fn to_parley(&self, shaped: &ShapedText) -> ParleySelection {
+        let layout = &shaped.pre_shaped.parley_layout;
+        let text_len = shaped.pre_shaped.text.len();
+        let anchor =
+            ParleyCursor::from_byte_index(layout, self.anchor.min(text_len), Affinity::Downstream);
+        let focus =
+            ParleyCursor::from_byte_index(layout, self.active.min(text_len), Affinity::Downstream);
+
+        ParleySelection::new(anchor, focus)
+    }
+
+    pub fn from_parley(selection: ParleySelection, text_len: usize, h_pos: Option<f32>) -> Self {
+        Selection::new(
+            selection.anchor().index().min(text_len),
+            selection.focus().index().min(text_len),
+        )
+        .with_h_pos(h_pos)
     }
 }
