@@ -1,11 +1,14 @@
+use parley::{FontContext as ParleyFontContext, LayoutContext as ParleyLayoutContext};
 use skia_safe::textlayout::TypefaceFontProvider;
 use skia_safe::{FontMgr, textlayout::FontCollection};
 use vizia_storage::SparseSet;
 
-use crate::{entity::Entity, layout::BoundingBox};
 use crate::text::shaped_text::ShapedText;
+use crate::{entity::Entity, layout::BoundingBox};
 
 pub struct TextContext {
+    pub parley_font_context: ParleyFontContext,
+    pub parley_layout_context: ParleyLayoutContext,
     pub font_collection: FontCollection,
     pub default_font_manager: FontMgr,
     pub asset_provider: TypefaceFontProvider,

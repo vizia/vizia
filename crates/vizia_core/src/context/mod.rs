@@ -7,6 +7,7 @@ mod draw;
 mod event;
 mod proxy;
 mod resource;
+mod text_draw_helpers;
 #[cfg(feature = "tokio")]
 mod task;
 
@@ -263,6 +264,8 @@ impl Context {
                 font_collection.set_asset_font_manager(asset_font_manager);
 
                 TextContext {
+                    parley_font_context: parley::FontContext::new(),
+                    parley_layout_context: parley::LayoutContext::new(),
                     font_collection,
                     default_font_manager,
                     asset_provider,

@@ -5,11 +5,14 @@ use std::rc::Rc;
 use crate::prelude::*;
 
 use crate::text::{
-    Direction, EditableText, Movement, PreeditBackup, Selection, VerticalMovement,
-    apply_movement,
-    enforce_text_bounds, ensure_visible, offset_for_delete_backwards, resolved_text_direction,
+    Direction, EditableText, Movement, PreeditBackup, Selection, VerticalMovement, apply_movement,
+    enforce_text_bounds, ensure_visible, resolved_text_direction,
 };
 use accesskit::{ActionData, ActionRequest, TextDirection, TextPosition, TextSelection};
+use parley::Affinity as ParleyAffinity;
+use parley::BreakReason;
+use parley::editing::Cursor as ParleyCursor;
+use parley::editing::Selection as ParleySelection;
 use skia_safe::{ClipOp, Paint, PaintStyle, Rect};
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -491,32 +494,14 @@ where
         }
 
         if self.selection.is_caret() {
-            if movement == Movement::Grapheme(Direction::Upstream) {
-                if self.selection.active == 0 {
+            if let Some(text) = cx.style.text.get_mut(cx.current) {
+                let Some(shaped) = cx.text_context.text_shaped.get(cx.current) else {
+                    return;
+                };
+                let to_delete = apply_movement(movement, self.selection, text, shaped, true);
+                if to_delete.range().is_empty() {
                     return;
                 }
-                if let Some(text) = cx.style.text.get_mut(cx.current) {
-                    let old_display = text.clone();
-                    let del_offset = offset_for_delete_backwards(&self.selection, text);
-                    let del_range = del_offset..self.selection.active;
-                    let real_del_range = Self::selection_display_to_real(
-                        &old_display,
-                        &self.real_text,
-                        Selection::new(del_range.start, del_range.end),
-                    )
-                    .range();
-
-                    self.selection = Selection::caret(del_range.start);
-
-                    text.edit(del_range, "");
-                    self.real_text.edit(real_del_range, "");
-
-                    self.sync_display_text(cx);
-                    cx.style.needs_access_update(cx.current);
-                }
-            } else if let Some(text) = cx.style.text.get_mut(cx.current) {
-                let Some(shaped) = cx.text_context.text_shaped.get(cx.current) else { return; };
-                let to_delete = apply_movement(movement, self.selection, text, shaped, true);
                 let old_display = text.clone();
                 let real_to_delete =
                     Self::selection_display_to_real(&old_display, &self.real_text, to_delete);
@@ -682,18 +667,27 @@ where
             let y = y - self.transform.borrow().1;
             let local = self.coordinates_global_to_text(cx, x, y);
 
-            let cursor = if let Some(shaped) = cx.text_context.text_shaped.get(cx.current) {
-                let gp = shaped.get_glyph_position_at_coordinate(local);
-                gp.position.min(text.len())
+            let new_selection = if let Some(shaped) = cx.text_context.text_shaped.get(cx.current) {
+                let layout = &shaped.pre_shaped.parley_layout;
+                if selection {
+                    let current = self.selection.to_parley(shaped);
+                    Selection::from_parley(
+                        current.extend_to_point(layout, local.0, local.1),
+                        text.len(),
+                        None,
+                    )
+                } else {
+                    Selection::from_parley(
+                        ParleySelection::from_point(layout, local.0, local.1),
+                        text.len(),
+                        None,
+                    )
+                }
             } else {
                 return;
             };
 
-            if selection {
-                self.selection.active = cursor;
-            } else {
-                self.selection = Selection::caret(cursor);
-            }
+            self.selection = new_selection;
 
             cx.needs_redraw();
             cx.style.needs_access_update(cx.current);
@@ -707,14 +701,19 @@ where
             let y = y - self.transform.borrow().1;
             let local = self.coordinates_global_to_text(cx, x, y);
 
-            let cursor = if let Some(shaped) = cx.text_context.text_shaped.get(cx.current) {
-                let gp = shaped.get_glyph_position_at_coordinate(local);
-                gp.position.min(text.len())
+            let new_selection = if let Some(shaped) = cx.text_context.text_shaped.get(cx.current) {
+                let layout = &shaped.pre_shaped.parley_layout;
+                let current = self.selection.to_parley(shaped);
+                Selection::from_parley(
+                    current.extend_to_point(layout, local.0, local.1),
+                    text.len(),
+                    None,
+                )
             } else {
                 return;
             };
 
-            self.selection.active = cursor;
+            self.selection = new_selection;
             cx.needs_redraw();
             cx.style.needs_access_update(cx.current);
         }
@@ -888,12 +887,8 @@ where
 
             let Some(cursor_rect) = cursor_rect else { return };
 
-            let text_height = cx
-                .text_context
-                .text_shaped
-                .get(cx.current)
-                .map(|s| s.height())
-                .unwrap_or(0.0);
+            let text_height =
+                cx.text_context.text_shaped.get(cx.current).map(|s| s.height()).unwrap_or(0.0);
             let text_max_w = cx
                 .text_context
                 .text_shaped
@@ -913,17 +908,31 @@ where
                 Alignment::BottomCenter => (1.0, 0.5),
                 Alignment::BottomRight => (1.0, 1.0),
             };
-            let padding_top = match cx.padding_top() { Units::Pixels(v) => v, _ => 0.0 };
-            let padding_bottom = match cx.padding_bottom() { Units::Pixels(v) => v, _ => 0.0 };
+            let padding_top = match cx.padding_top() {
+                Units::Pixels(v) => v,
+                _ => 0.0,
+            };
+            let padding_bottom = match cx.padding_bottom() {
+                Units::Pixels(v) => v,
+                _ => 0.0,
+            };
             top *= bounds.height() - padding_top - padding_bottom - text_height;
 
-            let mut padding_left = match cx.padding_left() { Units::Pixels(v) => v, _ => 0.0 };
-            let mut padding_right = match cx.padding_right() { Units::Pixels(v) => v, _ => 0.0 };
-            if resolved_text_direction(cx.style, cx.current) == crate::style::Direction::RightToLeft {
+            let mut padding_left = match cx.padding_left() {
+                Units::Pixels(v) => v,
+                _ => 0.0,
+            };
+            let mut padding_right = match cx.padding_right() {
+                Units::Pixels(v) => v,
+                _ => 0.0,
+            };
+            if resolved_text_direction(cx.style, cx.current) == crate::style::Direction::RightToLeft
+            {
                 std::mem::swap(&mut padding_left, &mut padding_right);
             }
 
-            let caret_x = if use_trailing_edge { cursor_rect.rect.right } else { cursor_rect.rect.left };
+            let caret_x =
+                if use_trailing_edge { cursor_rect.rect.right } else { cursor_rect.rect.left };
             let x = (bounds.x + padding_left + caret_x).round();
             let y = (bounds.y + padding_top + cursor_rect.rect.top + top).round();
             let x2 = x + 1.0;
@@ -943,8 +952,10 @@ where
                 bounds.y + padding_top + top + text_height,
             );
             let mut clip_bounds = bounds;
-            clip_bounds = clip_bounds.shrink_sides(padding_left, padding_top, padding_right, padding_bottom);
-            let (tx, ty) = enforce_text_bounds(&text_bounds, &clip_bounds, (transform.0, transform.1));
+            clip_bounds =
+                clip_bounds.shrink_sides(padding_left, padding_top, padding_right, padding_bottom);
+            let (tx, ty) =
+                enforce_text_bounds(&text_bounds, &clip_bounds, (transform.0, transform.1));
             let caret_box = BoundingBox::from_min_max(x, y, x2, y2);
             let (new_tx, new_ty) = ensure_visible(&caret_box, &clip_bounds, (tx, ty));
             if new_tx != transform.0 || new_ty != transform.1 {
@@ -1167,112 +1178,139 @@ where
                 TextDirection::LeftToRight
             };
 
-            // Collect line metrics from shaped path, falling back to paragraph.
-            let all_line_metrics: Vec<crate::text::shaped_text::LineMetrics> =
-                if let Some(shaped) = cx.text_context.text_shaped.get(cx.current) {
-                    shaped.get_line_metrics()
-                } else {
-                    Vec::new()
-                };
+            let Some(shaped) = cx.text_context.text_shaped.get(cx.current) else {
+                return;
+            };
+            let parley_layout = &shaped.pre_shaped.parley_layout;
 
-            for line in all_line_metrics.iter() {
-                if line.start_index >= text_len && text_len > 0 {
+            for (line_number, parley_line) in parley_layout.lines().enumerate() {
+                let line_range = parley_line.text_range();
+                let line_start = line_range.start.min(text_len);
+                let line_end_including_newline = line_range.end.min(text_len);
+                if line_start >= text_len && text_len > 0 {
                     continue;
                 }
 
-                let mut line_node = AccessNode::new_from_parent(node_id, line.line_number);
+                let break_reason = parley_line.break_reason();
+                let line_metrics = parley_line.metrics();
+
+                let line_slice_full =
+                    text.get(line_start..line_end_including_newline).unwrap_or("");
+                let trimmed_len = line_slice_full.trim_end().len();
+                let glyph_end = (line_start + trimmed_len).min(text_len);
+
+                let mut line_node = AccessNode::new_from_parent(node_id, line_number);
                 line_node.set_role(Role::TextRun);
                 line_node.set_text_direction(text_direction);
                 line_node.set_bounds(BoundingBox {
-                    x: line.left as f32,
-                    y: (line.baseline - line.ascent) as f32,
-                    w: line.width as f32,
-                    h: line.height as f32,
+                    x: line_metrics.offset,
+                    y: line_metrics.baseline - line_metrics.ascent,
+                    w: line_metrics.advance,
+                    h: line_metrics.line_height,
                 });
 
-                let glyph_end = line.end_index.min(text_len);
-                if line.start_index > glyph_end {
+                if line_start > glyph_end {
                     continue;
                 }
-                let estimated_chars = glyph_end.saturating_sub(line.start_index);
+                let line_slice = text.get(line_start..glyph_end).unwrap_or("");
+                let estimated_chars = line_slice.graphemes(true).count();
                 let mut character_lengths: Vec<u8> = Vec::with_capacity(estimated_chars);
                 let mut character_positions: Vec<f32> = Vec::with_capacity(estimated_chars);
                 let mut character_widths: Vec<f32> = Vec::with_capacity(estimated_chars);
-                let mut glyph_pos = line.start_index;
+                for (rel_start, grapheme) in line_slice.grapheme_indices(true) {
+                    let start = line_start + rel_start;
+                    let end = (start + grapheme.len()).min(glyph_end);
+                    if end <= start {
+                        continue;
+                    }
 
-                while glyph_pos < glyph_end {
-                    // Try shaped path first.
-                    let cluster_opt = if let Some(shaped) =
-                        cx.text_context.text_shaped.get(cx.current)
-                    {
-                        shaped.get_glyph_cluster_at(glyph_pos).map(|c| {
-                            (c.text_range.end - c.text_range.start, c.bounds.left(), c.bounds.width())
-                        })
+                    let anchor = ParleyCursor::from_byte_index(
+                        parley_layout,
+                        start,
+                        ParleyAffinity::Downstream,
+                    );
+                    let focus =
+                        ParleyCursor::from_byte_index(parley_layout, end, ParleyAffinity::Upstream);
+                    let sel = ParleySelection::new(anchor, focus);
+
+                    let mut geometry = None;
+                    sel.geometry_with(parley_layout, |bbox, line_idx| {
+                        if geometry.is_none() && line_idx == line_number {
+                            geometry = Some(bbox);
+                        }
+                    });
+
+                    let (pos_x, width) = if let Some(bbox) = geometry {
+                        (bbox.x0 as f32, (bbox.x1 - bbox.x0) as f32)
                     } else {
-                        None
+                        // No geometry can happen for zero-width graphemes.
+                        (line_metrics.offset, 0.0)
                     };
 
-                    if let Some((length, pos_x, width)) = cluster_opt {
-                        if length == 0 { break; }
-                        character_lengths.push(length as u8);
-                        character_positions.push(pos_x);
-                        character_widths.push(width);
-                        glyph_pos += length;
-                    } else {
-                        break;
-                    }
+                    character_lengths.push((end - start) as u8);
+                    character_positions.push(pos_x);
+                    character_widths.push(width.max(0.0));
                 }
 
-                let mut line_end = if line.hard_break {
-                    line.end_including_newline.min(text_len)
+                let mut line_end = if matches!(break_reason, BreakReason::Explicit) {
+                    line_end_including_newline
                 } else {
                     glyph_end
                 };
-                if line_end < line.start_index { line_end = line.start_index; }
-                let line_text = text.get(line.start_index..line_end).unwrap_or("").to_owned();
+                if line_end < line_start {
+                    line_end = line_start;
+                }
+                let line_text = text.get(line_start..line_end).unwrap_or("").to_owned();
 
-                if line.hard_break && line.end_including_newline <= text_len {
+                if matches!(break_reason, BreakReason::Explicit)
+                    && line_end_including_newline <= text_len
+                {
                     character_lengths.push(1);
-                    character_positions.push(line.width as f32);
+                    character_positions.push(line_metrics.advance);
                     character_widths.push(0.0);
                 }
 
                 let mut word_starts = Vec::new();
-                let mut previous_is_alphanumeric = text
-                    .get(..line.start_index)
-                    .and_then(|prefix| prefix.graphemes(true).next_back())
-                    .and_then(|grapheme| grapheme.chars().next())
-                    .is_some_and(|ch| ch.is_alphanumeric());
+                let mut last_word_start = None;
+                for run in parley_line.runs() {
+                    for cluster in run.clusters() {
+                        if !cluster.is_word_boundary() {
+                            continue;
+                        }
 
-                for (character_index, grapheme) in line_text.graphemes(true).enumerate() {
-                    let current_is_alphanumeric =
-                        grapheme.chars().next().is_some_and(|ch| ch.is_alphanumeric());
-                    if current_is_alphanumeric
-                        && !previous_is_alphanumeric
-                        && let Ok(character_index) = u8::try_from(character_index)
-                    {
-                        word_starts.push(character_index);
+                        let cluster_start = cluster.text_range().start;
+                        if cluster_start < line_start || cluster_start >= line_end {
+                            continue;
+                        }
+
+                        let rel_byte = cluster_start - line_start;
+                        let char_index = byte_offset_to_char_index(&character_lengths, rel_byte);
+                        if let Ok(char_index_u8) = u8::try_from(char_index)
+                            && last_word_start != Some(char_index_u8)
+                        {
+                            word_starts.push(char_index_u8);
+                            last_word_start = Some(char_index_u8);
+                        }
                     }
-                    previous_is_alphanumeric = current_is_alphanumeric;
                 }
 
                 if first_line_node_id.is_none() {
                     first_line_node_id = Some(line_node.node_id());
                 }
 
-                if selection.active >= line.start_index && selection.active <= line_end {
+                if selection.active >= line_start && selection.active <= line_end {
                     selection_active_line = Some(line_node.node_id());
                     selection_active_cursor = byte_offset_to_char_index(
                         &character_lengths,
-                        selection.active - line.start_index,
+                        selection.active - line_start,
                     );
                 }
 
-                if selection.anchor >= line.start_index && selection.anchor <= line_end {
+                if selection.anchor >= line_start && selection.anchor <= line_end {
                     selection_anchor_line = Some(line_node.node_id());
                     selection_anchor_cursor = byte_offset_to_char_index(
                         &character_lengths,
-                        selection.anchor - line.start_index,
+                        selection.anchor - line_start,
                     );
                 }
 

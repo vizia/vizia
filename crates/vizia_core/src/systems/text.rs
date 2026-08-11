@@ -14,15 +14,14 @@ pub(crate) fn text_system(cx: &mut Context) {
         if cx.style.text.contains(entity)
             && cx.style.display.get(entity).copied().unwrap_or_default() != Display::None
         {
-            if let Some(pre_shaped) = build_pre_shaped_text(
+            let pre_shaped = build_pre_shaped_text(
                 entity,
                 &mut cx.style,
                 &cx.tree,
-                &mut cx.text_context.font_collection,
-            ) {
-                let shaped = ShapedText::new(pre_shaped);
-                cx.text_context.text_shaped.insert(entity, shaped);
-            }
+                &mut cx.text_context,
+            );
+            let shaped = ShapedText::new(pre_shaped);
+            cx.text_context.text_shaped.insert(entity, shaped);
 
             cx.style.needs_relayout(entity);
             cx.style.needs_text_layout(entity);
