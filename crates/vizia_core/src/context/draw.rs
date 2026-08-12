@@ -20,7 +20,9 @@ use crate::text::{TextContext, resolved_text_direction};
 use vizia_input::MouseState;
 
 use super::ModelData;
-use super::text_draw_helpers::{build_line_runs, build_run_cluster_advances, compute_line_x_offset};
+use super::text_draw_helpers::{
+    build_line_runs, build_run_cluster_advances, compute_line_x_offset,
+};
 
 /// A context used when drawing a view.
 ///

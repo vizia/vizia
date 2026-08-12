@@ -14,12 +14,8 @@ pub(crate) fn text_system(cx: &mut Context) {
         if cx.style.text.contains(entity)
             && cx.style.display.get(entity).copied().unwrap_or_default() != Display::None
         {
-            let pre_shaped = build_pre_shaped_text(
-                entity,
-                &mut cx.style,
-                &cx.tree,
-                &mut cx.text_context,
-            );
+            let pre_shaped =
+                build_pre_shaped_text(entity, &mut cx.style, &cx.tree, &mut cx.text_context);
             let shaped = ShapedText::new(pre_shaped);
             cx.text_context.text_shaped.insert(entity, shaped);
 

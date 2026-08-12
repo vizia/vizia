@@ -414,7 +414,8 @@ where
         let avail_w = (bounds.w - padding_left_px - padding_right_px).max(0.0);
         let align = resolve_parley_alignment(cx.style, entity);
 
-        let width_changed = self.last_width.get().map(|w| (w - avail_w).abs() > 0.5).unwrap_or(true);
+        let width_changed =
+            self.last_width.get().map(|w| (w - avail_w).abs() > 0.5).unwrap_or(true);
         let scale_changed = (self.last_scale.get() - scale_factor).abs() > f32::EPSILON;
         let align_changed = self.last_align.get() != Some(align);
 
@@ -443,8 +444,12 @@ where
     /// current text, then rebuilds the shaped-glyph cache.
     fn resync_display_text(&self, cx: &mut EventContext) {
         let entity = cx.current;
-        let old_display =
-            cx.text_context.plain_editors.get(entity).map(|e| e.text().to_string()).unwrap_or_default();
+        let old_display = cx
+            .text_context
+            .plain_editors
+            .get(entity)
+            .map(|e| e.text().to_string())
+            .unwrap_or_default();
         let new_display = self.display_text_from_real();
         if old_display == new_display {
             return;
@@ -491,7 +496,11 @@ where
 
     /// Converts a byte range expressed in display-text coordinates into the equivalent
     /// byte range in `real_text` coordinates (grapheme-index remapping).
-    fn range_display_to_real(display_text: &str, real_text: &str, range: Range<usize>) -> Range<usize> {
+    fn range_display_to_real(
+        display_text: &str,
+        real_text: &str,
+        range: Range<usize>,
+    ) -> Range<usize> {
         let start_g = Self::byte_to_grapheme_index(display_text, range.start);
         let end_g = Self::byte_to_grapheme_index(display_text, range.end);
         let start = Self::grapheme_index_to_byte(real_text, start_g);
@@ -521,7 +530,8 @@ where
             suffix += 1;
         }
         while suffix > 0
-            && (!old.is_char_boundary(old.len() - suffix) || !new.is_char_boundary(new.len() - suffix))
+            && (!old.is_char_boundary(old.len() - suffix)
+                || !new.is_char_boundary(new.len() - suffix))
         {
             suffix -= 1;
         }
@@ -544,8 +554,12 @@ where
             }
         }
 
-        let old_display =
-            cx.text_context.plain_editors.get(entity).map(|e| e.text().to_string()).unwrap_or_default();
+        let old_display = cx
+            .text_context
+            .plain_editors
+            .get(entity)
+            .map(|e| e.text().to_string())
+            .unwrap_or_default();
         let sel_range = cx
             .text_context
             .plain_editors
@@ -617,8 +631,12 @@ where
             return;
         }
 
-        let old_display =
-            cx.text_context.plain_editors.get(entity).map(|e| e.text().to_string()).unwrap_or_default();
+        let old_display = cx
+            .text_context
+            .plain_editors
+            .get(entity)
+            .map(|e| e.text().to_string())
+            .unwrap_or_default();
 
         let Some(mut driver) = cx.text_context.editor_driver(entity) else { return };
         match movement {
@@ -635,8 +653,12 @@ where
         }
         drop(driver);
 
-        let new_display =
-            cx.text_context.plain_editors.get(entity).map(|e| e.text().to_string()).unwrap_or_default();
+        let new_display = cx
+            .text_context
+            .plain_editors
+            .get(entity)
+            .map(|e| e.text().to_string())
+            .unwrap_or_default();
 
         if old_display != new_display {
             let removed_display_range = Self::diff_removed_range(&old_display, &new_display);
@@ -973,18 +995,17 @@ where
         let entity = cx.current;
         let bounds = cx.bounds();
 
-        let cursor_rect =
-            cx.text_context.plain_editors.get(entity).and_then(|editor| editor.cursor_geometry(1.0));
+        let cursor_rect = cx
+            .text_context
+            .plain_editors
+            .get(entity)
+            .and_then(|editor| editor.cursor_geometry(1.0));
         let Some(cursor_rect) = cursor_rect else { return };
 
         let text_height =
             cx.text_context.text_shaped.get(entity).map(|s| s.height()).unwrap_or(0.0);
-        let text_max_w = cx
-            .text_context
-            .text_shaped
-            .get(entity)
-            .map(|s| s.max_intrinsic_width())
-            .unwrap_or(0.0);
+        let text_max_w =
+            cx.text_context.text_shaped.get(entity).map(|s| s.max_intrinsic_width()).unwrap_or(0.0);
 
         let alignment = cx.alignment();
         let (mut top, _) = match alignment {
@@ -1041,8 +1062,7 @@ where
         let mut clip_bounds = bounds;
         clip_bounds =
             clip_bounds.shrink_sides(padding_left, padding_top, padding_right, padding_bottom);
-        let (tx, ty) =
-            enforce_text_bounds(&text_bounds, &clip_bounds, (transform.0, transform.1));
+        let (tx, ty) = enforce_text_bounds(&text_bounds, &clip_bounds, (transform.0, transform.1));
         let caret_box = BoundingBox::from_min_max(x, y, x2, y2);
         let (new_tx, new_ty) = ensure_visible(&caret_box, &clip_bounds, (tx, ty));
         if new_tx != transform.0 || new_ty != transform.1 {
@@ -1269,7 +1289,8 @@ where
         let mut selection_anchor_cursor = 0;
         let mut first_line_node_id = None;
 
-        let text = if self.show_placeholder.get() { String::new() } else { editor.raw_text().to_string() };
+        let text =
+            if self.show_placeholder.get() { String::new() } else { editor.raw_text().to_string() };
         let text = text.as_str();
         // build_paragraph() appends a zero-width space (\u{200B}, 3 UTF-8 bytes)
         // to every paragraph, so skia's line metrics include indices beyond the
@@ -1761,7 +1782,13 @@ where
         event.map(|text_event, _| match text_event {
             TextEvent::InsertText(text) => {
                 let entity = cx.current;
-                if cx.text_context.plain_editors.get(entity).map(|e| e.is_composing()).unwrap_or(false) {
+                if cx
+                    .text_context
+                    .plain_editors
+                    .get(entity)
+                    .map(|e| e.is_composing())
+                    .unwrap_or(false)
+                {
                     return;
                 }
 
@@ -1816,8 +1843,12 @@ where
 
             TextEvent::MoveCursor(movement, selection) => {
                 let entity = cx.current;
-                let is_composing =
-                    cx.text_context.plain_editors.get(entity).map(|e| e.is_composing()).unwrap_or(false);
+                let is_composing = cx
+                    .text_context
+                    .plain_editors
+                    .get(entity)
+                    .map(|e| e.is_composing())
+                    .unwrap_or(false);
                 if self.edit && !self.show_placeholder.get() && !is_composing {
                     self.move_cursor(cx, *movement, *selection);
                 }
