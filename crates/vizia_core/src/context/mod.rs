@@ -271,6 +271,7 @@ impl Context {
                     asset_provider,
                     text_bounds: Default::default(),
                     text_shaped: Default::default(),
+                    plain_editors: Default::default(),
                 }
             },
             #[cfg(feature = "tokio")]
@@ -645,6 +646,7 @@ impl Context {
             self.views.remove(entity);
             self.text_context.text_bounds.remove(*entity);
             self.text_context.text_shaped.remove(*entity);
+            self.text_context.plain_editors.remove(*entity);
             self.entity_manager.destroy(*entity);
         }
     }
