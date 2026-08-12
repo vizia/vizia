@@ -269,7 +269,7 @@ fn shape_run_with_parley(
     groups
 }
 
-fn build_run_paint(style: &Style, entity: Entity) -> RunPaint {
+pub(crate) fn build_run_paint(style: &Style, entity: Entity) -> RunPaint {
     let mut fill_paint = Paint::default();
     if let Some(color) = style.font_color.get_resolved(entity, &style.custom_color_props) {
         fill_paint.set_color(color);
