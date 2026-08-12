@@ -254,7 +254,13 @@ fn perform_layout(pre: &mut PreShapedText, constraint_width: f32) -> LayoutResul
         }
 
         let lm = line.metrics();
-        height = lm.baseline + lm.descent;
+        // Use `block_max_coord` (baseline + descent + leading-below) rather than
+        // `baseline + descent` alone. Parley distributes the line-height leading
+        // split above/below the natural ascent/descent; omitting `leading_below`
+        // undercounts total content height whenever `line-height` exceeds the
+        // font's natural metrics (e.g. 1.5), causing auto-height boxes to be
+        // slightly shorter than the rendered content and requiring a tiny scroll.
+        height = lm.block_max_coord;
 
         line_ranges.push(LineByteRange {
             start_index: text_range.start,
