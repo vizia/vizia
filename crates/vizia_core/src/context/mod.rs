@@ -7,9 +7,9 @@ mod draw;
 mod event;
 mod proxy;
 mod resource;
-mod text_draw_helpers;
 #[cfg(feature = "tokio")]
 mod task;
+mod text_draw_helpers;
 
 use log::debug;
 use skia_safe::{
@@ -273,6 +273,7 @@ impl Context {
                     text_bounds: Default::default(),
                     text_shaped: Default::default(),
                     plain_editors: Default::default(),
+                    typeface_cache: Default::default(),
                 }
             },
             #[cfg(feature = "tokio")]
@@ -762,13 +763,21 @@ impl Context {
 
     /// Loads a font into the application from in-memory bytes.
     pub fn load_font_mem(&mut self, data: impl AsRef<[u8]>) {
+        let bytes = data.as_ref();
         self.text_context.asset_provider.register_typeface(
             self.text_context
                 .default_font_manager
-                .new_from_data(skia_safe::Data::new_copy(data.as_ref()), None)
+                .new_from_data(skia_safe::Data::new_copy(bytes), None)
                 .unwrap(),
             None,
         );
+        // Also register with Parley's fontique collection so the shaper (which drives
+        // font/fallback selection) can actually find and select this font by family
+        // name, rather than only Skia knowing about it for drawing.
+        self.text_context
+            .parley_font_context
+            .collection
+            .register_fonts(parley::fontique::Blob::from(bytes.to_vec()), None);
     }
 
     fn request_resource_if_not_loaded(

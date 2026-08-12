@@ -167,12 +167,42 @@ fn build_parley_layout(
     layout
 }
 
+/// A group of glyphs that were all shaped using the same physical font (as chosen by
+/// Parley's fontique-based script/font fallback), along with the exact Skia [`Font`]
+/// built from that same font's raw data.
+struct ShapedFontRun {
+    font: Font,
+    glyphs: Vec<PreGlyph>,
+    total_advance: f32,
+}
+
+/// Resolves (and caches) a Skia [`Typeface`] built directly from the raw font bytes that
+/// Parley/fontique selected for a shaped run. Building the typeface from the exact same
+/// data (rather than re-resolving a typeface from the CSS family list via Skia's own font
+/// manager) guarantees that the glyph ids produced by shaping refer to glyphs that exist
+/// in the typeface used for drawing. This matters most for script fallback (e.g. Arabic,
+/// CJK) where Parley may pick a different physical font than Skia's family-name matching
+/// would, which previously caused shaped glyph ids to be drawn against the wrong font and
+/// render as incorrect/garbled glyphs.
+fn typeface_for_font_data(text_context: &mut TextContext, font_data: &parley::FontData) -> Option<Typeface> {
+    let key = (font_data.data.id(), font_data.index);
+    if let Some(typeface) = text_context.typeface_cache.get(&key) {
+        return Some(typeface.clone());
+    }
+
+    let typeface =
+        text_context.default_font_manager.new_from_data(font_data.data.data(), font_data.index as usize)?;
+    text_context.typeface_cache.insert(key, typeface.clone());
+    Some(typeface)
+}
+
 fn shape_run_with_parley(
     text_context: &mut TextContext,
     run_text: &str,
     byte_start: usize,
     run_style: &ParleyRunStyle,
-) -> Option<(Vec<PreGlyph>, f32, bool)> {
+    fallback_font: &Font,
+) -> Vec<ShapedFontRun> {
     let mut builder = text_context.parley_layout_context.ranged_builder(
         &mut text_context.parley_font_context,
         run_text,
@@ -193,19 +223,22 @@ fn shape_run_with_parley(
     let mut layout: Layout<[u8; 4]> = builder.build(run_text);
     layout.break_all_lines(None);
 
-    let mut glyphs = Vec::new();
-    let mut total_advance = 0.0f32;
-    let mut is_rtl = false;
+    let mut groups: Vec<ShapedFontRun> = Vec::new();
+    let mut running_x = 0.0f32;
 
     for line in layout.lines() {
         for item in line.items() {
             if let PositionedLayoutItem::GlyphRun(glyph_run) = item {
-                is_rtl |= glyph_run.run().is_rtl();
+                let run = glyph_run.run();
+                let font = typeface_for_font_data(text_context, run.font())
+                    .map(|typeface| Font::new(typeface, run.font_size()))
+                    .unwrap_or_else(|| fallback_font.clone());
 
-                for cluster in glyph_run.run().visual_clusters() {
+                let mut glyphs = Vec::new();
+                for cluster in run.visual_clusters() {
                     let cluster_range = cluster.text_range();
                     let cluster_byte = byte_start + cluster_range.start;
-                    let cluster_x = total_advance;
+                    let cluster_x = running_x;
                     for glyph in cluster.glyphs() {
                         // Skia glyph IDs are u16; skip unrepresentable ids to avoid truncation.
                         if glyph.id > u16::MAX as u32 {
@@ -219,17 +252,17 @@ fn shape_run_with_parley(
                         });
                     }
 
-                    total_advance += cluster.advance();
+                    running_x += cluster.advance();
+                }
+
+                if !glyphs.is_empty() {
+                    groups.push(ShapedFontRun { font, glyphs, total_advance: running_x });
                 }
             }
         }
     }
 
-    if glyphs.is_empty() {
-        return None;
-    }
-
-    Some((glyphs, total_advance, is_rtl))
+    groups
 }
 
 fn build_run_paint(style: &Style, entity: Entity) -> RunPaint {
@@ -395,7 +428,7 @@ fn add_run(
 ) {
     if let Some(text) = style.text.get(entity).cloned() {
         if !text.is_empty() {
-            let font = resolve_font(style, entity, &mut text_context.font_collection);
+            let fallback_font = resolve_font(style, entity, &mut text_context.font_collection);
             let run_paint = build_run_paint(style, entity);
 
             let byte_start = acc.text.len();
@@ -403,18 +436,34 @@ fn add_run(
             let byte_end = acc.text.len();
             style.text_range.insert(entity, byte_start..byte_end);
 
-            let run_style = parley_run_style(style, entity, font.size());
-            let (glyphs, total_advance, _is_rtl) =
-                shape_run_with_parley(text_context, text.as_str(), byte_start, &run_style)
-                    .unwrap_or_else(|| (Vec::new(), 0.0, base_direction_rtl));
+            let run_style = parley_run_style(style, entity, fallback_font.size());
+            let font_runs = shape_run_with_parley(
+                text_context,
+                text.as_str(),
+                byte_start,
+                &run_style,
+                &fallback_font,
+            );
 
-            acc.runs.push(PreShapedRun {
-                font,
-                paint: run_paint,
-                byte_range: byte_start..byte_end,
-                glyphs,
-                total_advance,
-            });
+            if font_runs.is_empty() {
+                acc.runs.push(PreShapedRun {
+                    font: fallback_font,
+                    paint: run_paint,
+                    byte_range: byte_start..byte_end,
+                    glyphs: Vec::new(),
+                    total_advance: 0.0,
+                });
+            } else {
+                for font_run in font_runs {
+                    acc.runs.push(PreShapedRun {
+                        font: font_run.font,
+                        paint: run_paint.clone(),
+                        byte_range: byte_start..byte_end,
+                        glyphs: font_run.glyphs,
+                        total_advance: font_run.total_advance,
+                    });
+                }
+            }
         }
     }
 
@@ -444,19 +493,25 @@ pub(crate) fn pre_shaped_from_editor_layout(
         resolved_text_direction(style, entity) == crate::style::Direction::RightToLeft;
     let text_align = resolve_text_align(style, entity);
 
-    let font = resolve_font(style, entity, &mut text_context.font_collection);
+    let fallback_font = resolve_font(style, entity, &mut text_context.font_collection);
     let paint = build_run_paint(style, entity);
 
-    let mut glyphs = Vec::new();
-    let mut total_advance = 0.0f32;
+    let mut runs: Vec<PreShapedRun> = Vec::new();
+    let mut running_x = 0.0f32;
 
     for line in layout.lines() {
         for item in line.items() {
             if let PositionedLayoutItem::GlyphRun(glyph_run) = item {
-                for cluster in glyph_run.run().visual_clusters() {
+                let run = glyph_run.run();
+                let font = typeface_for_font_data(text_context, run.font())
+                    .map(|typeface| Font::new(typeface, run.font_size()))
+                    .unwrap_or_else(|| fallback_font.clone());
+
+                let mut glyphs = Vec::new();
+                for cluster in run.visual_clusters() {
                     let cluster_range = cluster.text_range();
                     let cluster_byte = cluster_range.start;
-                    let cluster_x = total_advance;
+                    let cluster_x = running_x;
                     for glyph in cluster.glyphs() {
                         // Skia glyph IDs are u16; skip unrepresentable ids to avoid truncation.
                         if glyph.id > u16::MAX as u32 {
@@ -470,14 +525,21 @@ pub(crate) fn pre_shaped_from_editor_layout(
                         });
                     }
 
-                    total_advance += cluster.advance();
+                    running_x += cluster.advance();
+                }
+
+                if !glyphs.is_empty() {
+                    runs.push(PreShapedRun {
+                        font,
+                        paint: paint.clone(),
+                        byte_range: 0..text.len(),
+                        glyphs,
+                        total_advance: running_x,
+                    });
                 }
             }
         }
     }
-
-    let run = PreShapedRun { font, paint, byte_range: 0..text.len(), glyphs, total_advance };
-    let runs = if text.is_empty() { Vec::new() } else { vec![run] };
 
     PreShapedText {
         runs,
