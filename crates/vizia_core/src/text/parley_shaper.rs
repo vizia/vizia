@@ -352,6 +352,34 @@ fn flip_for_rtl(align: TextAlign, is_rtl: bool) -> TextAlign {
     }
 }
 
+/// Resolves the visual text alignment for `entity` (already RTL-flipped, matching
+/// [`resolve_text_align`]) into a [`parley::Alignment`] suitable for [`parley::editing::PlainEditor::set_alignment`].
+///
+/// This is only needed so that Parley's own hit-testing/caret-geometry (which is computed
+/// against the editor's internal layout) agrees with the manually-computed visual offsets
+/// used by the Skia draw path (see `compute_line_x_offset` in `context/text_draw_helpers.rs`).
+pub(crate) fn resolve_parley_alignment(style: &Style, entity: Entity) -> parley::Alignment {
+    // Mirrors the (pre-existing) double-flip semantics of `resolve_text_align` +
+    // `compute_line_x_offset` so hit-testing agrees with what is actually drawn.
+    let is_rtl = resolved_text_direction(style, entity) == crate::style::Direction::RightToLeft;
+    let align = resolve_text_align(style, entity);
+    let effective = if is_rtl {
+        match align {
+            TextAlign::Left => TextAlign::Right,
+            TextAlign::Right => TextAlign::Left,
+            other => other,
+        }
+    } else {
+        align
+    };
+
+    match effective {
+        TextAlign::Right => parley::Alignment::Right,
+        TextAlign::Center => parley::Alignment::Center,
+        _ => parley::Alignment::Left,
+    }
+}
+
 struct PreShapedAccumulator {
     runs: Vec<PreShapedRun>,
     text: String,
@@ -396,6 +424,96 @@ fn add_run(
             add_run(style, tree, child, text_context, acc, base_direction_rtl);
         }
     }
+}
+
+/// Build a [`PreShapedText`] directly from a `PlainEditor`'s own up-to-date parley
+/// [`Layout`], for glyph drawing only. Selection/caret geometry should be queried
+/// directly from the editor (`selection_geometry_with`/`cursor_geometry`) instead of
+/// through this bridge, since the editor already owns an authoritative layout.
+///
+/// This performs a single pass over the editor's already-broken lines instead of
+/// re-shaping the text a second time via [`build_pre_shaped_text`].
+pub(crate) fn pre_shaped_from_editor_layout(
+    entity: Entity,
+    style: &Style,
+    text: &str,
+    layout: &Layout<[u8; 4]>,
+    text_context: &mut TextContext,
+) -> PreShapedText {
+    let base_direction_rtl =
+        resolved_text_direction(style, entity) == crate::style::Direction::RightToLeft;
+    let text_align = resolve_text_align(style, entity);
+
+    let font = resolve_font(style, entity, &mut text_context.font_collection);
+    let paint = build_run_paint(style, entity);
+
+    let mut glyphs = Vec::new();
+    let mut total_advance = 0.0f32;
+
+    for line in layout.lines() {
+        for item in line.items() {
+            if let PositionedLayoutItem::GlyphRun(glyph_run) = item {
+                for cluster in glyph_run.run().visual_clusters() {
+                    let cluster_range = cluster.text_range();
+                    let cluster_byte = cluster_range.start;
+                    let cluster_x = total_advance;
+                    for glyph in cluster.glyphs() {
+                        // Skia glyph IDs are u16; skip unrepresentable ids to avoid truncation.
+                        if glyph.id > u16::MAX as u32 {
+                            continue;
+                        }
+
+                        glyphs.push(PreGlyph {
+                            glyph_id: glyph.id as u16,
+                            cluster_byte,
+                            x: cluster_x + glyph.x,
+                        });
+                    }
+
+                    total_advance += cluster.advance();
+                }
+            }
+        }
+    }
+
+    let run = PreShapedRun { font, paint, byte_range: 0..text.len(), glyphs, total_advance };
+    let runs = if text.is_empty() { Vec::new() } else { vec![run] };
+
+    PreShapedText {
+        runs,
+        text: text.to_string(),
+        text_align,
+        base_direction_rtl,
+        max_lines: None,
+        parley_layout: layout.clone(),
+    }
+}
+
+/// Populate a `PlainEditor`'s style set from an entity's resolved CSS style.
+pub(crate) fn apply_editor_style(
+    entity: Entity,
+    style: &Style,
+    editor: &mut parley::editing::PlainEditor<[u8; 4]>,
+) {
+    let font_size = style
+        .font_size
+        .get_resolved(entity, &style.custom_font_size_props)
+        .and_then(|size| size.0.to_px())
+        .unwrap_or(16.0);
+    let run_style = parley_run_style(style, entity, font_size);
+
+    let family: FontFamily<'static> =
+        FontFamily::from(run_style.family_css.as_str()).into_owned();
+
+    let styles = editor.edit_styles();
+    styles.insert(StyleProperty::FontSize(run_style.font_size));
+    styles.insert(StyleProperty::FontFamily(family));
+    styles.insert(StyleProperty::FontWeight(run_style.font_weight));
+    styles.insert(StyleProperty::FontWidth(run_style.font_width));
+    styles.insert(StyleProperty::FontStyle(run_style.font_style));
+    styles.insert(StyleProperty::LineHeight(run_style.line_height));
+    styles.insert(StyleProperty::LetterSpacing(run_style.letter_spacing));
+    styles.insert(StyleProperty::TextWrapMode(run_style.text_wrap_mode));
 }
 
 /// Build pre-shaped text for an entity.
