@@ -14,6 +14,6 @@ pub use shaped_text::{ShapedText, TextBox};
 
 pub(crate) mod parley_shaper;
 pub(crate) use parley_shaper::{
-    apply_editor_style, build_pre_shaped_text, pre_shaped_from_editor_layout,
+    apply_editor_style, build_pre_shaped_text, build_run_paint, pre_shaped_from_editor_layout,
     resolve_parley_alignment,
 };

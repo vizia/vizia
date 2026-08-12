@@ -1,26 +1,42 @@
 use vizia_storage::LayoutChildIterator;
 
 use crate::text::resolved_text_direction;
-use crate::text::{build_pre_shaped_text, shaped_text::ShapedText};
+use crate::text::{build_pre_shaped_text, build_run_paint, shaped_text::ShapedText};
 use crate::{cache::CachedData, prelude::*};
 
 pub(crate) fn text_system(cx: &mut Context) {
-    if cx.style.text.is_empty() || cx.style.text_construction.is_empty() {
+    if cx.style.text_construction.is_empty() {
         return;
     }
 
     let dirty_entities = std::mem::take(&mut cx.style.text_construction);
     for entity in dirty_entities {
-        if cx.style.text.contains(entity)
-            && cx.style.display.get(entity).copied().unwrap_or_default() != Display::None
-        {
-            let pre_shaped =
-                build_pre_shaped_text(entity, &mut cx.style, &cx.tree, &mut cx.text_context);
-            let shaped = ShapedText::new(pre_shaped);
-            cx.text_context.text_shaped.insert(entity, shaped);
+        if cx.style.text.contains(entity) {
+            if cx.style.display.get(entity).copied().unwrap_or_default() != Display::None {
+                let pre_shaped =
+                    build_pre_shaped_text(entity, &mut cx.style, &cx.tree, &mut cx.text_context);
+                let shaped = ShapedText::new(pre_shaped);
+                cx.text_context.text_shaped.insert(entity, shaped);
 
-            cx.style.needs_relayout(entity);
-            cx.style.needs_text_layout(entity);
+                cx.style.needs_relayout(entity);
+                cx.style.needs_text_layout(entity);
+            }
+        } else if cx.text_context.plain_editors.contains(entity) {
+            // Entities driven by a `PlainEditor` (e.g. `Textbox`) don't populate `cx.style.text`,
+            // so they're never rebuilt by the branch above. Their glyph runs/layout are instead
+            // rebuilt from `WindowEvent::GeometryChanged` (see `Textbox::sync_editor_layout`),
+            // which only fires when the entity's actual bounds change. An inherited-style change
+            // that only affects paint (e.g. `color` flipping with a light/dark theme) doesn't
+            // change geometry, so that path never runs and the cached glyph run keeps its stale
+            // paint. Refresh just the paint here (fill/decoration color, underline/strikethrough)
+            // without touching the cached glyphs/layout.
+            if let Some(shaped) = cx.text_context.text_shaped.get_mut(entity) {
+                let paint = build_run_paint(&cx.style, entity);
+                for run in shaped.pre_shaped.runs.iter_mut() {
+                    run.paint = paint.clone();
+                }
+                cx.needs_redraw(entity);
+            }
         }
     }
 }
